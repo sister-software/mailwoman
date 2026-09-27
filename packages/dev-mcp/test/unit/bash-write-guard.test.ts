@@ -15,7 +15,7 @@ import { describe, expect, it } from "vitest"
 import { runHook } from "../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "bash", "write", "guard.ts")
-const REPO_ROOT = String(repoRootPath()).replace(/\/$/u, "")
+const REPO_ROOT = repoRootPath().replace(/\/$/u, "")
 
 function refusalFor(command: string): string | null {
 	return judgeCommand(command, REPO_ROOT, REPO_ROOT)?.reason ?? null
@@ -50,8 +50,8 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 		["a writer inside a command substitution", `echo $(sed -i 's/a/b/' AGENTS.md)`],
 		["a writer after a single ampersand", `true & sed -i 's/a/b/' AGENTS.md`],
 		["a writer in a conditional head", `if sed -i 's/a/b/' AGENTS.md; then echo ok; fi`],
-		// A real brace group still opens a command, because bash's own rule is that `{` opens one only when
-		// whitespace follows it — which is exactly the boundary the segmenter now splits on.
+		// A real brace group still opens a command, because bash's own rule is that `{` opens one only
+		// when whitespace follows it, which is exactly the boundary the segmenter now splits on.
 		["a writer inside a brace group", `{ sed -i 's/a/b/' AGENTS.md; }`],
 		["a writer after an apostrophe in prose", `echo "don't" && sed -i 's/a/b/' AGENTS.md`],
 		["git restoring a path", `git restore packages/core/lib/env.ts`],
@@ -84,9 +84,11 @@ describe("bash-write-guard: the direct spellings of a file edit", () => {
 })
 
 describe("bash-write-guard: a Modal launch this shell could kill", () => {
-	// Both spellings have cost a training run. `timeout 600 modal run -d …` killed the v3.0.0 span-head probe at step
-	// ~1000 of 2000 on 2026-07-15 with no checkpoint written; `run_in_background` on `modal run -d …` was stopped by the
-	// host's memory guard on 2026-09-09 and Modal cancelled the input at step 21,000 of 60,000, last save at 20,000.
+	// Both spellings have cost a training run.
+	// `timeout 600 modal run -d …` killed the v3.0.0 span-head probe at step ~1000 of 2000
+	// on 2026-07-15 with no checkpoint written; `run_in_background` on `modal run -d …`
+	// was stopped by the host's memory guard on 2026-09-09 and Modal cancelled the
+	// input at step 21,000 of 60,000, last save at 20,000.
 	it.each([
 		["a detached launch", `modal run -d corpus-python/launch/train_remote.py --config x.yaml`],
 		["a detached launch, long flag", `modal run --detach corpus-python/launch/train_remote.py --config x.yaml`],
@@ -116,6 +118,32 @@ describe("bash-write-guard: a Modal launch this shell could kill", () => {
 	})
 })
 
+describe("bash-write-guard: GitHub mutations owned by the development MCP", () => {
+	it.each([
+		["creating an issue", `gh issue create --title "Feature" --body "Body"`],
+		["editing an issue", `gh issue edit 2365 --body "Body"`],
+		["commenting on an issue", `gh issue comment 2365 --body "Comment"`],
+		["creating a pull request", `gh pr create --title "Feature" --body "Body"`],
+		["editing a pull request", `gh pr edit 2366 --body "Body"`],
+		["commenting on a pull request", `gh pr comment 2366 --body "Comment"`],
+	])("refuses %s", (_label, command) => {
+		expect(refusalFor(command)).not.toBeNull()
+		expect(guidanceFor(command)).toContain("mwdev_issue")
+		expect(guidanceFor(command)).toContain("mwdev_pull_request")
+	})
+
+	it.each([
+		["viewing an issue", `gh issue view 2365`],
+		["closing an issue", `gh issue close 2365`],
+		["viewing a pull request", `gh pr view 2366`],
+		["watching checks", `gh pr checks 2366 --watch`],
+		["merging a pull request", `gh pr merge 2366 --squash`],
+		["reading a workflow run", `gh run view 36142066728`],
+	])("still admits %s", (_label, command) => {
+		expect(refusalFor(command)).toBeNull()
+	})
+})
+
 describe("bash-write-guard: the work a session actually does", () => {
 	it.each([
 		["a build whose log lands outside the repository", `{ yarn compile; echo "EXIT=$?"; } > /tmp/compile.log 2>&1`],
@@ -126,8 +154,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a probe writing to stdout", `node -e "process.stdout.write('hi')"`],
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
 		["git staging", `git add -A && git status --porcelain`],
-		// A patch is an artifact the author produced and can dry-run. it fails rather than clobbering when the context
-		// does not match, and it is the only exact way to land a bulk deletion without retyping every removed line.
+		// A patch is an artifact the author produced and can dry-run.
+		// It fails rather than clobbering when the context does not match, and it is the
+		// only exact way to land a bulk deletion without retyping every removed line.
 		["applying a patch", `git apply /tmp/prune.patch`],
 		["dry-running a patch", `git apply --check /tmp/prune.patch`],
 		["a formatter over its own inputs", `npx oxfmt .`],
@@ -142,8 +171,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a subshell group piped into a reader", `(git diff --name-only HEAD; git diff --cached --name-only) | sort -u`],
 		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
 		["reading the stash", `git stash list`],
-		// Writes no file, and the standing rule says to clear an entry once it has been restored. The explicit index
-		// is the condition: it is what stops a bare `drop` from silently taking another session's `stash@{0}`.
+		// Writes no file, and the standing rule says to clear an entry once it has been restored.
+		// The explicit index is the condition: it is what stops a bare `drop` from
+		// silently taking another session's `stash@{0}`.
 		["dropping a named stash entry", `git stash drop stash@{0}`],
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
 		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
@@ -156,8 +186,8 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["switching branch", `git checkout -b feature/x`],
 		["a conditional", `if test -f AGENTS.md; then head -1 AGENTS.md; fi`],
 		["a scratch directory", `mkdir -p /tmp/scratch && rm -rf /tmp/scratch`],
-		// A directory carries no content for the symbol precheck to read, and git tracks no empty one, so a path inside
-		// the tree is admitted where every other path writer's is refused.
+		// A directory carries no content for the symbol precheck to read, and git tracks no empty one,
+		// so a path inside the tree is admitted where every other path writer's is refused.
 		["a directory inside the tree", `mkdir -p packages/mailwoman/lib/dev-tools/codex`],
 		["the state directory a linked session writes", `mkdir -p .claude/state`],
 		["clearing a workspace's build output", `rm -rf packages/repo-health/out`],
@@ -184,13 +214,16 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["a release checksum", `sha256sum /tmp/package.tgz`],
 		["a database probe", `sqlite3 /tmp/wof.db 'select count(*) from place'`],
 		["an environment assignment", `MAILWOMAN_DATA_ROOT=\${HOME}/data yarn test`],
-		// A quoted value used to split the assignment into two words, so the head became the quote placeholder and the
-		// refusal named `quoted` — a word nobody typed, for a command admitted the moment the quotes came off. Quoting a
-		// value that carries `$PWD` or a space is how anyone writes one.
-		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/mnt/playpen/x" yarn test`],
+		// A quoted value used to split the assignment into two words, so the head became
+		// the quote placeholder and the refusal named `quoted` — a word nobody typed,
+		// for a command admitted the moment the quotes came off.
+		// Quoting a value that carries `$PWD` or a space is how anyone writes one.
+		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/srv/mailwoman-data/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
-		// A quote nested inside another kind of quote. The pair must be read as one span. mis-pairing it leaves a stray
-		// delimiter that swallows the rest of the command, and the head then comes from inside someone's `-e` script.
+		// A quote nested inside another kind of quote.
+		// The pair must be read as one span.
+		// Mis-pairing it leaves a stray delimiter that swallows the rest of the command,
+		// and the head then comes from inside someone's `-e` script.
 		["a grep pattern quoting a JSON key", `grep -rc '"spliterator": "^6.5.0"' package.json packages/*/package.json`],
 		[
 			"that grep before a multi-line node probe",
@@ -198,8 +231,9 @@ describe("bash-write-guard: the work a session actually does", () => {
 		],
 		["a redirect after changing directory", `cd /tmp && echo hi > probe.txt`],
 		["a home-relative redirect", `echo x > ~/notes.txt`],
-		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's own name as `yarn node …` and
-		// refused a read-only guard. The subcommand has to be a whole argument.
+		// `\b` ends a word at a hyphen, so the arbitrary-program rule read this check's
+		// own name as `yarn node …` and refused a read-only guard.
+		// The subcommand has to be a whole argument.
 		["a health check whose name starts with a refused subcommand", `yarn mwops health node-modules-reacharound`],
 		["a script whose name starts with a refused subcommand", `yarn exec-plan --dry-run`],
 	])("admits %s", (_label, command) => {

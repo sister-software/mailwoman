@@ -6,7 +6,7 @@
  *
  *   The property under test throughout is that the four states stay distinct. A report that collapsed
  *   "has no manifest" into "could not be opened", or counted a third party's artifact as our debt, would
- *   still print a number — it would just print one nobody can act on, which is the failure mode this
+ *   still print a number. It would just print one nobody can act on, which is the failure mode this
  *   whole phase exists to fix.
  */
 
@@ -23,24 +23,22 @@ import {
 	rebuildHint,
 	takeInventory,
 } from "mailwoman/data"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function dataRoot(): Promise<string> {
-	const root = fixtures.use(await temporaryDirectory("mw-inventory-")).path.toString()
-
-	return root
+async function dataRoot(): Promise<PathBuilder> {
+	return fixtures.use(await temporaryDirectory("mw-inventory-")).path
 }
 
 /**
  * A database with a `layer_manifest`, in the shipped shape.
  */
-async function manifested(path: string, name: string, buildCmd: string): Promise<void> {
-	await makeDirectories(join(path, ".."))
+async function manifested(path: PathBuilder, name: string, buildCmd: string): Promise<void> {
+	await makeDirectories(path.dirname())
 
 	using db = new DatabaseClient<layerschemadatabase>(path)
 
@@ -58,7 +56,7 @@ async function manifested(path: string, name: string, buildCmd: string): Promise
 /**
  * A built database with no manifest — the ordinary state of most of the data root.
  */
-function bare(path: string): void {
+function bare(path: PathBuilder): void {
 	using db = new DatabaseClient<layerschemadatabase>(path)
 
 	db.exec("CREATE TABLE rows (id INTEGER PRIMARY KEY)")
@@ -68,14 +66,18 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("separates manifested, unprovenanced, foreign and unreadable", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "poi"))
-		await makeDirectories(join(root, "wof"))
-		await makeDirectories(join(root, "pelias-rig", "deep"))
+		// `db/<layer>/<file>.db`, three segments down, which is where the data root's
+		// database group puts every artifact.
+		// Planting at two would pass whatever the walk's depth bound is.
+		await makeDirectories(root("db", "poi"))
+		await makeDirectories(root("db", "wof"))
+		await makeDirectories(root("pelias-rig", "deep"))
 
-		await manifested(join(root, "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
-		bare(join(root, "wof", "candidate.db"))
-		// Not SQLite at all. "We could not look" must not read as "it has no manifest".
-		await writeLocalTextFile("this is not a database", join(root, "wof", "broken.db"))
+		await manifested(root("db", "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
+		bare(root("db", "wof", "candidate.db"))
+		// Not SQLite at all.
+		// "We could not look" must not read as "it has no manifest".
+		await writeLocalTextFile("this is not a database", root("db", "wof", "broken.db"))
 
 		const report = await takeInventory({ dataRoot: root })
 
@@ -87,15 +89,16 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("does not descend into a foreign root, and says how many it skipped", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "pelias-rig", "data"))
-		await makeDirectories(join(root, "poi"))
-		bare(join(root, "pelias-rig", "data", "theirs.db"))
-		await manifested(join(root, "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
+		await makeDirectories(root("pelias-rig", "data"))
+		await makeDirectories(root("db", "poi"))
+		bare(root("pelias-rig", "data", "theirs.db"))
+		await manifested(root("db", "poi", "poi.db"), "poi", "mailwoman gazetteer build poi")
 
 		const report = await takeInventory({ dataRoot: root })
 
-		// Counting a third party's build as our debt makes the number unimprovable, so it is skipped rather
-		// than classified — and the skip is reported, because a silently bounded walk reads as coverage.
+		// Counting a third party's build as our debt makes the number unimprovable,
+		// so it is skipped rather than classified, and the skip is reported,
+		// because a silently bounded walk reads as coverage.
 		expect(report.skippedForeign).toBe(1)
 		expect(report.entries.some((e) => e.path.startsWith("pelias-rig"))).toBe(false)
 		expect(Object.keys(FOREIGN_ROOTS)).toContain("pelias-rig")
@@ -104,14 +107,15 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("reports a symlinked artifact's target, because the link IS the choice", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "wof"))
-		bare(join(root, "wof", "candidate-2026-08-15.db"))
-		await createSymbolicLink(join(root, "wof", "candidate-2026-08-15.db"), join(root, "wof", "candidate.db"))
+		await makeDirectories(root("db", "wof"))
+		bare(root("db", "wof", "candidate-2026-08-15.db"))
+
+		await createSymbolicLink(root("db", "wof", "candidate-2026-08-15.db"), root("db", "wof", "candidate.db"))
 
 		const report = await takeInventory({ dataRoot: root })
-		const link = report.entries.find((e) => e.path === "wof/candidate.db")
+		const link = report.entries.find((e) => e.path === "db/wof/candidate.db")
 
-		expect(link?.linkTarget).toBe("wof/candidate-2026-08-15.db")
+		expect(link?.linkTarget).toBe("db/wof/candidate-2026-08-15.db")
 		// And it still reports the size of what it points at rather than the size of the link.
 		expect(link?.bytes).toBeGreaterThan(0)
 	})
@@ -119,12 +123,28 @@ describe("takeInventory — the four states stay distinct", () => {
 	it("respects maxDepth and reports the depth it used", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "a", "b", "c"))
-		bare(join(root, "a", "b", "c", "deep.db"))
+		await makeDirectories(root("a", "b", "c"))
+		bare(root("a", "b", "c", "deep.db"))
 
 		expect((await takeInventory({ dataRoot: root, maxDepth: 1 })).entries).toHaveLength(0)
 		expect((await takeInventory({ dataRoot: root, maxDepth: 3 })).entries).toHaveLength(1)
 		expect((await takeInventory({ dataRoot: root, maxDepth: 1 })).maxDepth).toBe(1)
+	})
+
+	it("reaches a database at the depth the data root's db/ group puts it", async () => {
+		// `db/<layer>/<file>.db` is three segments from the root.
+		// The default bound was two, which stopped the walk at `db/<layer>/`
+		// and made the report describe a data root holding no database at all —
+		// a coverage reading produced by the walk rather than by the disk.
+		const root = await dataRoot()
+
+		await makeDirectories(root("db", "wof"))
+		bare(root("db", "wof", "candidate.db"))
+
+		const report = await takeInventory({ dataRoot: root })
+
+		expect(report.entries.map((entry) => entry.path)).toEqual(["db/wof/candidate.db"])
+		expect(report.maxDepth).toBeGreaterThanOrEqual(3)
 	})
 })
 
@@ -132,19 +152,19 @@ describe("probeManifest", () => {
 	it("returns nothing for a database with no manifest, and an error for a non-database", async () => {
 		const root = await dataRoot()
 
-		bare(join(root, "plain.db"))
-		await writeLocalTextFile("nope", join(root, "junk.db"))
+		bare(root("plain.db"))
+		await writeLocalTextFile("nope", root("junk.db"))
 
-		expect(probeManifest(join(root, "plain.db"))).toEqual({})
-		expect(probeManifest(join(root, "junk.db")).error).toBeDefined()
+		expect(probeManifest(root("plain.db"))).toEqual({})
+		expect(probeManifest(root("junk.db")).error).toBeDefined()
 	})
 
 	it("reads the build command, which is what reproduction needs", async () => {
 		const root = await dataRoot()
 
-		await manifested(join(root, "poi.db"), "poi", "mailwoman gazetteer build poi")
+		await manifested(root("poi.db"), "poi", "mailwoman gazetteer build poi")
 
-		expect(probeManifest(join(root, "poi.db")).manifest?.build_cmd).toBe("mailwoman gazetteer build poi")
+		expect(probeManifest(root("poi.db")).manifest?.build_cmd).toBe("mailwoman gazetteer build poi")
 	})
 })
 
@@ -152,11 +172,11 @@ describe("the reported rate", () => {
 	it("excludes foreign and unreadable from the denominator, so the number is improvable", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "poi"))
-		await makeDirectories(join(root, "wof"))
-		await manifested(join(root, "poi", "poi.db"), "poi", "cmd")
-		bare(join(root, "wof", "a.db"))
-		await writeLocalTextFile("nope", join(root, "wof", "junk.db"))
+		await makeDirectories(root("db", "poi"))
+		await makeDirectories(root("db", "wof"))
+		await manifested(root("db", "poi", "poi.db"), "poi", "cmd")
+		bare(root("db", "wof", "a.db"))
+		await writeLocalTextFile("nope", root("db", "wof", "junk.db"))
 
 		const sentence = inventorySentence(await takeInventory({ dataRoot: root }))
 
@@ -174,7 +194,7 @@ describe("rebuildHint", () => {
 	it("gives the build command when the artifact carries one", async () => {
 		const root = await dataRoot()
 
-		await manifested(join(root, "poi.db"), "poi", "mailwoman gazetteer build poi")
+		await manifested(root("poi.db"), "poi", "mailwoman gazetteer build poi")
 
 		const entry = (await takeInventory({ dataRoot: root })).entries[0]!
 
@@ -184,7 +204,7 @@ describe("rebuildHint", () => {
 	it("says unreproducible rather than inventing a command", async () => {
 		const root = await dataRoot()
 
-		bare(join(root, "mystery.db"))
+		bare(root("mystery.db"))
 
 		expect(rebuildHint((await takeInventory({ dataRoot: root })).entries[0]!)).toContain("no provenance")
 	})
@@ -192,9 +212,10 @@ describe("rebuildHint", () => {
 
 describe("buildCommandGaps — a manifest is only worth its build command", () => {
 	it("flags a path the workspace regroup moved", async () => {
-		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`, which
-		// now lives under `packages/osm/`. The literal survived the move inside a built database, where no lint
-		// reaches it, and the artifact still passes every "has a manifest" check.
+		// Measured on the shipped osm databases: they record `node osm/out/scripts/build-rooftop-database.js`,
+		// which now lives under `packages/osm/`.
+		// The literal survived the move inside a built database, where no lint reaches it,
+		// and the artifact still passes every "has a manifest" check.
 		const root = await dataRoot()
 
 		expect(await buildCommandGaps("node osm/out/scripts/build-rooftop-database.js", root)).toEqual([
@@ -203,16 +224,16 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	})
 
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
-		// Verifying `mailwoman gazetteer build poi` means running the CLI. Reporting it as a gap would flood the
-		// report with the artifacts that are actually in the best shape.
+		// Verifying `mailwoman gazetteer build poi` means running the CLI.
+		// Reporting it as a gap would flood the report with the artifacts that are actually in the best shape.
 		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
 	})
 
 	it("passes a path that does exist", async () => {
 		const root = await dataRoot()
 
-		await makeDirectories(join(root, "scripts"))
-		await writeLocalTextFile("", join(root, "scripts", "build.ts"))
+		await makeDirectories(root("scripts"))
+		await writeLocalTextFile("", root("scripts", "build.ts"))
 
 		expect(await buildCommandGaps("node scripts/build.ts", root)).toEqual([])
 	})

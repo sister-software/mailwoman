@@ -86,7 +86,7 @@ decision the decoder reads is unchanged on every token of every address.
 The right reading is therefore not "the gap was harmless." It is that a graph quantized by one
 runtime and served by another was being checked by an instrument that is not the one in the user's
 hands, and the difference between those instruments is about 1e-1 on a logit — comfortably enough to
-flip a token whose top two labels are close. Closing the gap costs nothing, since the artifact is
+flip a token whose top two labels are close. Closing the gap costs no extra work, since the artifact is
 byte-identical either way.
 
 `verify_toolchain.py` now refuses a gap between the pyproject pin and both npm call sites, so the

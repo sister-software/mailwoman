@@ -1,12 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The markdown report for `oa-resolver-eval`. Split out because it is a separable concern — the eval
- *   measures, this renders — and because eval figures are never hand-typed into docs: every number in
- *   `docs/articles/evals/` comes from a run of this emitter.
- */
-
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { formatPercent, percentile } from "@mailwoman/core/stats"
 
@@ -40,7 +35,10 @@ export interface OaReportInput {
 }
 
 /**
- * Render the run's markdown report. Pure — every number comes from `input`.
+ * Renders the OpenAddresses resolver evaluation report as Markdown from the run's aggregates and flags.
+ *
+ * When interpolation diagnostics are on and there are misses, it also writes them
+ * to `interp-misses.txt` under the temp root.
  */
 export async function renderOaResolverReport(input: OaReportInput): Promise<string> {
 	const {
@@ -109,7 +107,7 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 		lines.push("")
 
 		lines.push(
-			`interpolation hit rate (interp coord, no exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
+			`interpolation hit rate (interp coord without exact point): ${interpHits}/${neuralInterpAgg.overall.n} (${((100 * interpHits) / Math.max(1, neuralInterpAgg.overall.n)).toFixed(1)}%)`
 		)
 
 		if (cascadeOn) {
@@ -144,8 +142,6 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				`- interp HITS: ${interpHits} → of full-parse non-exact rows, hit rate ${((100 * interpHits) / Math.max(1, interpFullParseMiss + interpHits)).toFixed(1)}%`
 			)
 
-			// Error CDF over the neural+interp coordinate (DeepSeek: "where's the cliff?"). Cumulative % of
-			// all rows within each radius — the within-100m DoD metric + the shape of the tail.
 			const ierrs = neuralInterpAgg.overall.errs
 			lines.push("")
 			lines.push(`error CDF (neural+interp, n=${ierrs.length}) — cumulative % within radius:`)
@@ -155,12 +151,11 @@ export async function renderOaResolverReport(input: OaReportInput): Promise<stri
 				lines.push(`  ≤ ${m} m: ${((100 * within) / Math.max(1, ierrs.length)).toFixed(1)}%`)
 			}
 
-			// Dump all full-parse misses for the standalone database-membership categorization (segment-not-found
-			// vs in-database-range-miss vs normalization). Bump cap done at collection site.
 			if (diagMisses.length) {
-				await writeLocalTextFile(diagMisses.join("\n"), "/tmp/interp-misses.txt")
+				const missesPath = tempRootPathBuilder("interp-misses.txt")
+				await writeLocalTextFile(diagMisses.join("\n"), missesPath)
 				lines.push("")
-				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → /tmp/interp-misses.txt`)
+				lines.push(`full-parse interp misses dumped: ${diagMisses.length} → ${missesPath}`)
 				lines.push("sample (house_number | street | postcode ← input):")
 
 				for (const m of diagMisses.slice(0, 12)) {

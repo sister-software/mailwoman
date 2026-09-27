@@ -212,6 +212,12 @@ nightshift
 # Wrangler's local state (the local D1, cached builds) beside a worker
 .wrangler/
 
+# A source archive of the tree itself, produced by hand for a one-off comparison. `src9.tgz` reached commit
+# 76f5e3544 that way, and `readLocalTextFile` decodes a tarball far enough for the debt check's vocabulary
+# pattern to match inside it, so a committed archive fails a check that has nothing to do with archives.
+*.tgz
+*.tar.gz
+
 # `styleframe build` writes a TypeScript companion beside the CSS it compiles from styleframe.config.ts. Nothing
 # imports it — consumers read tokens/index.css and tokens/tokens.json, and both of those ARE committed so a build
 # never needs the token compiler.

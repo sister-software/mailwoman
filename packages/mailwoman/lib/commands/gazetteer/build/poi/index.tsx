@@ -23,6 +23,7 @@
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { LatLonBounds } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 
 import {
@@ -33,7 +34,7 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
+import type { POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
 import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
@@ -64,10 +65,12 @@ export const spec = {
 const BBOX_FIELD_COUNT = 4
 
 /**
- * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}. Throws with the raw input echoed back on any
- * shape/finiteness mismatch — a silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
+ * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link LatLonBounds}.
+ *
+ * @throws With the raw input echoed back on any shape/finiteness mismatch.
+ * A silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
  */
-function parseBBoxFlag(raw: string): BBox {
+function parseBBoxFlag(raw: string): LatLonBounds {
 	const parts = raw.split(",").map((s) => Number(s.trim()))
 
 	if (parts.length !== BBOX_FIELD_COUNT || parts.some((n) => !Number.isFinite(n))) {
@@ -82,11 +85,12 @@ function parseBBoxFlag(raw: string): BBox {
 const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const { bboxCoverageCells, buildPOIDatabase, ingestPlaces } = await import("#gazetteer-pipeline/poi/build/poi")
 
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		if (options.source === "osm") {
 			const { pbf, country: rawCountry, release, bbox: bboxFlag } = options
@@ -100,7 +104,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 
 			const country = rawCountry.trim().toUpperCase()
 			const bbox = parseBBoxFlag(bboxFlag)
-			const out = options.out ?? dataRootPath("poi", `poi-osm-${country.toLowerCase()}.db`)
+			const out = options.out ?? poiDatabasePath(`poi-osm-${country.toLowerCase()}.db`)
 
 			console.error(`▸ extract: OSM telecom-infrastructure POIs from ${pbf} (country=${country})`)
 
@@ -109,11 +113,12 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 			// twice, once here to derive coverage, once as buildPOIDatabase's `rows` injection point.
 			const rows: POISourceRow[] = []
 
-			// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off
-			// pending — see osm/readme.md), and this dependency belongs only on the selected build path,
-			// so a top-level import breaks the whole published CLI on a clean install — the smoke
-			// test's clean-install leg is what catches it. The osm source branch is build-local by
-			// design. it may only resolve its SDK when actually invoked.
+			// dynamic import, required: @mailwoman/osm is unpublished
+			// (ODbL counsel sign-off pending — see osm/readme.md), and this dependency belongs
+			// only on the selected build path, so a top-level import breaks the whole published
+			// CLI on a clean install — the smoke test's clean-install leg is what catches it.
+			// The osm source branch is build-local by design.
+			// It may only resolve its SDK when actually invoked.
 			const { extractOSMPOIs } = await import("@mailwoman/osm/sdk")
 
 			for await (const row of extractOSMPOIs(pbf)) {
@@ -149,7 +154,7 @@ const GazetteerBuildPOI: CommandComponent<typeof spec> = ({ options }) => {
 		const release = options.release ?? DEFAULT_RELEASE
 		const countries = splitCountryCodes(options.countries ?? DEFAULT_COUNTRIES)
 		const limit = options.limit ? Number.parseInt(options.limit, 10) : undefined
-		const out = options.out ?? dataRootPath("poi", "poi.db")
+		const out = options.out ?? poiDatabasePath("poi.db")
 
 		let parquetPaths: string[]
 

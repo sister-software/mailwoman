@@ -9,5 +9,5 @@
 	},
 	"include": ["./lib/**/*"],
 	"exclude": ["./out/**/*", "./test/**/*", "./**/*.test.ts", "./**/*.test.tsx"],
-	"references": [{ "path": "../sqlite" }, { "path": "../annotations" }]
+	"references": [{ "path": "../sqlite" }, { "path": "../annotations" }, { "path": "../spatial" }]
 }

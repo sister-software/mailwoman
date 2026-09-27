@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Coarse-placer (#244) loader + int8 round-trip. Builds a tiny synthetic artifact on disk (no
- *   /mnt/playpen dependency) so `CoarsePlacer.fromArtifactDir` is exercised end-to-end for both the
- *   fp32 and the int8-per-row formats, and asserts the int8 path predicts the same class with near-
- *   identical confidence. Also covers `featurize` determinism and `dequantizeInt8Weights`.
+ *   Tests the coarse placer's featurizer, artifact loading, int8 dequantization, abstention and posterior filtering.
  */
 
 import {
@@ -18,14 +15,14 @@ import {
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { makeLcg } from "@mailwoman/core/random"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test } from "vitest"
 
 const tmpRoot = await temporaryDirectory("coarse-placer-test-")
 afterAll(() => tmpRoot[Symbol.asyncDispose]())
 
 /**
- * Deterministic pseudo-random weights in [-0.05, 0.05], LCG-seeded so the test is reproducible.
+ * Generates seeded weights in `[-0.05, 0.05)`.
  */
 function seededWeights(classCount: number, dim: number, seed: number): Float32Array {
 	const w = new Float32Array(classCount * dim)
@@ -39,7 +36,7 @@ function seededWeights(classCount: number, dim: number, seed: number): Float32Ar
 }
 
 /**
- * Per-row symmetric int8 quantization (mirrors scripts/coarse-placer/quantize.mjs).
+ * Quantizes each row symmetrically to int8 with a per-row scale.
  */
 function quantize(w: Float32Array, classCount: number, dim: number) {
 	const int8 = new Int8Array(classCount * dim)
@@ -65,7 +62,7 @@ function quantize(w: Float32Array, classCount: number, dim: number) {
 }
 
 /**
- * Write an fp32 and an int8 artifact dir for the same weights. return both paths.
+ * Writes fp32 and int8 artifact directories for the same weights.
  */
 async function writeArtifacts(
 	classes: string[],
@@ -73,23 +70,20 @@ async function writeArtifacts(
 	weights: Float32Array,
 	bias: number[],
 	temperature = 1
-): Promise<{ fp32Dir: string; int8Dir: string }> {
-	const fp32Dir = tmpRoot.resolve(`fp32-${classes.join("")}-${dim}`)
-	const int8Dir = tmpRoot.resolve(`int8-${classes.join("")}-${dim}`)
+): Promise<{ fp32Dir: PathBuilder; int8Dir: PathBuilder }> {
+	const fp32Dir = tmpRoot.path(`fp32-${classes.join("")}-${dim}`)
+	const int8Dir = tmpRoot.path(`int8-${classes.join("")}-${dim}`)
 	await makeDirectories(fp32Dir)
 	await makeDirectories(int8Dir)
 
 	const baseMeta = { classes, featureDim: dim, temperature, bias }
-	await writeLocalJSONFile(baseMeta, join(fp32Dir, "meta.json"))
+	await writeLocalJSONFile(baseMeta, fp32Dir("meta.json"))
 
-	await writeLocalBuffer(
-		Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength),
-		join(fp32Dir, "weights.bin")
-	)
+	await writeLocalBuffer(Buffer.from(weights.buffer, weights.byteOffset, weights.byteLength), fp32Dir("weights.bin"))
 
 	const { int8, scales } = quantize(weights, classes.length, dim)
-	await writeLocalJSONFile({ ...baseMeta, quantization: "int8-per-row", scales }, join(int8Dir, "meta.json"))
-	await writeLocalBuffer(Buffer.from(int8.buffer), join(int8Dir, "weights.bin"))
+	await writeLocalJSONFile({ ...baseMeta, quantization: "int8-per-row", scales }, int8Dir("meta.json"))
+	await writeLocalBuffer(Buffer.from(int8.buffer), int8Dir("weights.bin"))
 
 	return { fp32Dir, int8Dir }
 }
@@ -115,7 +109,6 @@ describe("featurize", () => {
 	test("different scripts produce different feature sets", () => {
 		const latin = new Set(featurize("Main Street"))
 		const cyrillic = new Set(featurize("Тверская улица"))
-		// Script-presence tokens differ, so the sets are not equal.
 		expect([...cyrillic].some((i) => !latin.has(i))).toBe(true)
 	})
 })
@@ -126,7 +119,7 @@ describe("dequantizeInt8Weights", () => {
 		const scales = [0.01, 0.5]
 		const out = dequantizeInt8Weights(int8, scales, 2, 4)
 
-		// Float32 storage, so compare with tolerance (1.27 round-trips to 1.26999998…).
+		// The tolerance absorbs Float32 rounding.
 		for (const [i, want] of [1.27, -1.27, 0, 0.64].entries()) {
 			expect(out[i]).toBeCloseTo(want, 6)
 		}
@@ -141,7 +134,7 @@ describe("dequantizeInt8Weights", () => {
 	})
 })
 
-// Hoisted to module scope: a `describe` body cannot await, and the artifacts are written once for every case below.
+// The artifacts are written at module level because `describe` callbacks cannot await.
 const ARTIFACT_CLASSES = ["AA", "BB", "CC"]
 const ARTIFACT_BIAS = [0.1, -0.2, 0.05]
 const ARTIFACT_WEIGHTS = seededWeights(ARTIFACT_CLASSES.length, FEATURE_DIM, 12_345)
@@ -177,25 +170,22 @@ describe("CoarsePlacer.fromArtifactDir", () => {
 	})
 
 	test("int8 artifact missing scales is rejected", async () => {
-		const badDir = tmpRoot.resolve("int8-noscales")
+		const badDir = tmpRoot.path("int8-noscales")
 		await makeDirectories(badDir)
 
 		await writeLocalJSONFile(
 			{ classes, featureDim: FEATURE_DIM, temperature: 1, bias, quantization: "int8-per-row" },
-			join(badDir, "meta.json")
+			badDir("meta.json")
 		)
 
-		await writeLocalBuffer(Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer), join(badDir, "weights.bin"))
+		await writeLocalBuffer(Buffer.from(new Int8Array(classes.length * FEATURE_DIM).buffer), badDir("weights.bin"))
 		await expect(CoarsePlacer.fromArtifactDir(badDir)).rejects.toThrow(/scales/)
 	})
 })
 
 describe("open-set reject rule (#244 M2)", () => {
-	// Zero weights ⇒ logits == bias ⇒ probs == softmax(bias), independent of the input string. Lets us
-	// engineer an exact class distribution and assert the reject/route decoupling deterministically.
+	// Zero weights make each prediction depend only on the bias.
 	const classes = ["US", "FR", "OTHER"]
-	// dim must be FEATURE_DIM: featurize() returns hashed indices in [0, FEATURE_DIM); a smaller dim
-	// would index past the (zero) weight rows → NaN logits. Zero weights ⇒ logits == bias regardless.
 	const dim = FEATURE_DIM
 
 	const make = (bias: number[], opts: { abstainBelow?: number; openSet?: boolean }) =>
@@ -205,7 +195,7 @@ describe("open-set reject rule (#244 M2)", () => {
 		)
 
 	test("keeps an in-map-but-country-ambiguous address the max-prob rule rejects", () => {
-		// US .4 / FR .4 / other .2 — max-prob 0.4 < 0.5 (reject), but in-map mass 0.8 ≥ 0.5 (keep).
+		// The top class has probability 0.4, and the in-map classes together have 0.8.
 		const bias = [Math.log(0.4), Math.log(0.4), Math.log(0.2)]
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
@@ -216,18 +206,16 @@ describe("open-set reject rule (#244 M2)", () => {
 
 		const o = open.predict("x")
 		expect(o.abstained).toBe(false)
-		expect(o.country).toBe("US") // argmax over the in-map classes
-		expect(o.confidence).toBeCloseTo(0.4, 5) // routed country's marginal (the posterior weight)
+		expect(o.country).toBe("US")
+		expect(o.confidence).toBeCloseTo(0.4, 5)
 	})
 
 	test("rejects to null (never 'OTHER' as a country) when off-map mass dominates", () => {
-		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)] // other .8
+		const bias = [Math.log(0.1), Math.log(0.1), Math.log(0.8)]
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })
 
-		// Default rule: `other` wins outright (0.8 ≥ 0.5) → a confident `other`, not an abstain.
 		expect(def.predict("x").country).toBe("OTHER")
-		// Open-set: in-map mass 0.2 < 0.5 → abstain. a reject is null, never the `other` class.
 		const o = open.predict("x")
 		expect(o.abstained).toBe(true)
 		expect(o.country).toBeNull()
@@ -243,7 +231,7 @@ describe("open-set reject rule (#244 M2)", () => {
 
 describe("abstention", () => {
 	test("abstains when no class clears the threshold", () => {
-		// All-zero weights → logits are the (equal) bias → near-uniform softmax → top prob ≈ 1/C < 0.5.
+		// Four equal logits give each class probability 0.25.
 		const classes = ["AA", "BB", "CC", "DD"]
 
 		const placer = new CoarsePlacer(
@@ -264,9 +252,6 @@ describe("abstention", () => {
 	})
 })
 
-// #928: the epsilon floor — tail mass below the floor is dropped before the resolver sees the
-// posterior (the GB→US misroute class: correct argmax, damaging tail), genuine above-floor
-// ambiguity passes through, and floor 0 reproduces the untempered distribution.
 describe("inMapPosterior — #928 epsilon floor", () => {
 	const pred = {
 		country: "GB",

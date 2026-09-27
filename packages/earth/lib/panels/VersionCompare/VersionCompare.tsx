@@ -15,7 +15,7 @@ import { useMemo } from "react"
 
 import styles from "./styles.module.css"
 
-//#region Types
+// #region Types
 
 /**
  * Score delta below which two versions are shown as equivalent rather than as a change.
@@ -55,7 +55,9 @@ interface CompareRow {
 	 */
 	compareNode: ParsedComponent | null
 	/**
-	 * Confidence delta (compare − primary). Positive = improved, negative = regressed.
+	 * Confidence delta (compare − primary).
+	 *
+	 * Positive = improved, negative = regressed.
 	 */
 	delta: number | null
 	/**
@@ -64,14 +66,17 @@ interface CompareRow {
 	diffKind: "match" | "primary-only" | "compare-only" | "tag-changed"
 }
 
-//#endregion
+// #endregion
 
-//#region Diff computation
+// #region Diff computation
 
 /**
- * Build a unified diff table of component rows across two parses. Row identity is by source-order position
- * (primary-first, then interleaving). For each primary node we look for a compare node covering the same character
- * span. when the tag differs, both sides are shown as a "tag-changed" row.
+ * Build a unified diff table of component rows across two parses.
+ *
+ * Row identity is by source-order position (primary-first, then interleaving).
+ * For each primary node we look for a compare node covering the same character span.
+ *
+ * When the tag differs, both sides are shown as a "tag-changed" row.
  */
 function computeCompareRows(primary: ParseResult, compare: ParseResult): CompareRow[] {
 	const rows: CompareRow[] = []
@@ -91,8 +96,9 @@ function computeCompareRows(primary: ParseResult, compare: ParseResult): Compare
 		}
 	}
 
-	// Walk primary nodes. paired compare nodes are removed from the map so leftovers
-	// surface as compare-only. Unspanned nodes are matched positionally.
+	// Walk primary nodes.
+	// Paired compare nodes are removed from the map so leftovers surface as compare-only.
+	// Unspanned nodes are matched positionally.
 	const handledSpans = new Set<string>()
 	let cUnspannedIdx = 0
 
@@ -182,9 +188,9 @@ function diffConfidence(c: number | undefined, p: number | undefined): number | 
 	return Number.parseFloat((c - p).toFixed(3))
 }
 
-//#endregion
+// #endregion
 
-//#region Sub-components
+// #region Sub-components
 
 const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKind"] }> = ({ delta, diffKind }) => {
 	if (delta === null || diffKind === "primary-only" || diffKind === "compare-only") return null
@@ -202,9 +208,9 @@ const DeltaBadge: React.FC<{ delta: number | null; diffKind: CompareRow["diffKin
 	)
 }
 
-//#endregion
+// #endregion
 
-//#region Main component
+// #region Main component
 
 export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare, primaryVersion, compareVersion }) => {
 	const rows = useMemo(() => computeCompareRows(primary, compare), [primary, compare])
@@ -308,4 +314,4 @@ export const VersionCompare: React.FC<VersionCompareProps> = ({ primary, compare
 	)
 }
 
-//#endregion
+// #endregion

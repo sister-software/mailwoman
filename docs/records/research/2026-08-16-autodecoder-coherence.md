@@ -15,7 +15,7 @@ Date: 2026-08-16. Verification method noted per claim: **[S]** = verified by web
 
 ### 1.1 Origin and definition
 
-- **DeepSDF** (Park, Florence, Straub, Newcombe, Lovegrove, CVPR 2019) introduced the name for its shape-latent scheme: one shared decoder MLP maps (latent code z_i, query point x) → SDF value; each training shape owns a free latent z_i, randomly initialized and optimized jointly with decoder weights via backprop. **At test time there is no encoder to run** — the latent for a new observation is found by gradient descent on the reconstruction objective (MAP estimation of z given observations), which is what lets DeepSDF complete shapes from _partial_ observations. [S] (multiple secondary sources; DeepSDF summaries and follow-on papers confirm both phases)
+- **DeepSDF** (Park, Florence, Straub, Newcombe, Lovegrove, CVPR 2019) introduced the name for its shape-latent scheme: one shared decoder MLP maps (latent code z_i, query point x) → SDF value; each training shape owns a free latent z_i, randomly initialized and optimized jointly with decoder weights via backprop. **At test time there is no encoder to run**. The latent for a new observation is found by gradient descent on the reconstruction objective (MAP estimation of z given observations), which is what lets DeepSDF complete shapes from _partial_ observations. [S] (multiple secondary sources; DeepSDF summaries and follow-on papers confirm both phases)
 - DeepSDF's own citation for the concept is **Tan & Mavrovouniotis, 1995** ("Reducing data dimensionality through optimizing neural network inputs", AIChE) — so the idea predates deep learning's current era; DeepSDF supplied the name and the killer application. [S] (seen via DeepJoin's citation "AutoDecoder (Tan & Mavrovouniotis, 1995)"; the exact 1995 title is [M])
 - **GLO** (Bojanowski, Joulin, Lopez-Paz, Szlam) is the same move for image generation: "an encoder-less autoencoder, or a discriminator-less GAN" — one learnable noise vector per training image, jointly optimized with the decoder under a simple reconstruction loss, latents constrained to the unit sphere. [S]
 
@@ -40,7 +40,7 @@ The required distinction for you: the auto-decoder provides robustness-to-partia
 
 ## Part 2 — Coherence/plausibility scoring of assembled structured outputs
 
-Failure case being designed against: input "Weimar, Thüringen" parsed correctly; resolver assembled locality=Weimar (Texas), region ignored — near-zero real-world joint probability, nothing flagged.
+Failure case being designed against: input "Weimar, Thüringen" parsed correctly; resolver assembled locality=Weimar (Texas), region ignored — near-zero real-world joint probability, with no flag raised.
 
 ### 2.1 Masked modeling over structured records; energy-based and verifier models
 
@@ -75,7 +75,7 @@ The hazard is real and named in three adjacent literatures:
 - **Industry address validation**: the commercial stack decomposes the answer per level — USPS **DPV** as an _independent_ deliverability oracle; Google's Address Validation reporting per-component confirmation levels (confirmed / unconfirmed-but-plausible / suspicious); geocoder confidence + precision codes (rooftop vs interpolated vs centroid); plus blunt sanity checks (coordinates in an ocean / wrong country). [S for the landscape; Google's exact confirmation-level enum names are M] The transferable pattern: **per-component verdicts against reference data** rather than one scalar confidence — your checker should say "locality confirmed, region contradicted", which is also the actionable form for a re-query.
 - **Record-linkage QA**: Fellegi–Sunter (which `packages/match` already implements) natively defines the upper/lower-threshold **clerical-review band** — the trichotomy (accept / review / reject) is the century-old shape of "flag the confidently wrong for a second look". [M — textbook]
 - **KB consistency checking**: SDValidate/SDType (2.3), relation-assertion error detection with induced constraints (Melo & Paulheim 2017/2020), path-ranking-guided embeddings for noisy-KG error detection. [S]
-- I found **no published work naming the exact compound failure** — "parser right, assembler wrong, joint assembly implausible, nothing flagged" — as its own problem; the pieces live in toponym resolution (the disambiguation failure) and KB error detection (the joint-implausibility detector). [S — absence claim, bounded by my searches]
+- I found **no published work naming the exact compound failure** — "parser right, assembler wrong, joint assembly implausible and no flag raised" — as its own problem; the pieces live in toponym resolution (the disambiguation failure) and KB error detection (the joint-implausibility detector). [S — absence claim, bounded by my searches]
 
 ---
 

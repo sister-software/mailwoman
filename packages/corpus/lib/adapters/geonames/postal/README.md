@@ -11,7 +11,7 @@ multi-locale goal).
 ## Download
 
 ```bash
-DIR=/mnt/playpen/mailwoman-data/geonames-postal
+DIR=$MAILWOMAN_DATA_ROOT/geonames-postal
 mkdir -p "$DIR" && cd "$DIR"
 for cc in DE FR ES IT NL; do curl -O "https://download.geonames.org/export/zip/$cc.zip" && unzip -o "$cc.zip"; done
 ```
@@ -19,7 +19,7 @@ for cc in DE FR ES IT NL; do curl -O "https://download.geonames.org/export/zip/$
 ## Run
 
 ```bash
-npx mailwoman corpus run geonames-postal --input /mnt/playpen/mailwoman-data/geonames-postal/DE.txt --country DE --limit 50000
+npx mailwoman corpus run geonames-postal --input $MAILWOMAN_DATA_ROOT/geonames-postal/DE.txt --country DE --limit 50000
 ```
 
 **Prefer non-US countries.** This adapter emits postcode-FIRST (international) order — correct for

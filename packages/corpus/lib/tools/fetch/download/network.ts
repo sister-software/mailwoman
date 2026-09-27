@@ -8,7 +8,7 @@
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import type { PathBuilderLike } from "path-ts"
+import type { PathBuilder, PathBuilderLike } from "path-ts"
 
 /**
  * Rate limited — retryable, the server is asking us to back off.
@@ -16,7 +16,9 @@ import type { PathBuilderLike } from "path-ts"
 const HTTP_TOO_MANY_REQUESTS = 429
 
 /**
- * Lowest 5xx status. Server-side failures are retryable. 4xx are not.
+ * Lowest 5xx status.
+ *
+ * Server-side failures are retryable. 4xx are not.
  */
 const HTTP_SERVER_ERROR_MIN = 500
 
@@ -35,21 +37,29 @@ export const DEFAULT_RETRY_DELAY_MS = 5000
 
 export interface BaseFetchOptions {
 	/**
-	 * Destination root for downloaded source data. Each source writes its own subdirectory.
-	 */
-	outRoot: PathBuilderLike
-	/**
-	 * Pause between transfer retries, in milliseconds. Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
+	 * Destination root for downloaded source data.
 	 *
-	 * A test that exercises the failure path pays this delay once per retry in real time — measured at 20.1 s for the two
-	 * failing-transfer cases in `geonames-postal.test.ts`, which is the whole cost of that file. The retry count is the
-	 * behaviour under test there. the pause between attempts is not, so it is a caller's to shorten.
+	 * Each source writes its own subdirectory.
+	 */
+	outRoot: PathBuilder
+	/**
+	 * Pause between transfer retries, in milliseconds.
+	 *
+	 * Defaults to {@linkcode DEFAULT_RETRY_DELAY_MS}.
+	 *
+	 * A test that exercises the failure path pays this delay once per retry in real time.
+	 * Measured at 20.1 s for the two failing-transfer cases in `geonames-postal.test.ts`,
+	 * which is the whole cost of that file.
+	 * The retry count is the behaviour under test there.
+	 *
+	 * The pause between attempts is not, so it is a caller's to shorten.
 	 */
 	retryDelayMs?: number
 }
 
 /**
- * The per-run result every fetch module returns. the command maps `failed > 0` to exit code 1.
+ * The per-run result every fetch module returns.
+ * The command maps `failed > 0` to exit code 1.
  */
 export interface FetchSummary {
 	fetched: number
@@ -59,8 +69,8 @@ export interface FetchSummary {
 }
 
 /**
- * The sibling `manifest.json` shape the single-file fetch modules write: origin URL + fetch timestamp + byte count +
- * sha256, so downstream adapters can verify provenance.
+ * The sibling `manifest.json` shape the single-file fetch modules write: origin URL +
+ * fetch timestamp + byte count + sha256, so downstream adapters can verify provenance.
  */
 export interface SourceManifest {
 	source_url: string
@@ -74,11 +84,15 @@ export interface SourceManifest {
  * A status worth retrying: rate limiting or a server-side failure.
  */
 /**
- * An http failure that carries its status, so callers branch on `error.status` rather than on message prose. The prose
- * route shipped a real flake: a caller classified "not published upstream" with `message.includes("404")`, and the
- * message contains the URL — an ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
- * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind of sometimes-failure that burns a CI
- * run and vanishes locally.
+ * An http failure that carries its status, so callers branch on `error.status`
+ * rather than on message prose.
+ *
+ * The prose route shipped a real flake: a caller classified "not published upstream"
+ * with `message.includes("404")`, and the message contains the URL.
+ * An ephemeral test-server port such as `:40453` satisfies it while the actual status is 500.
+ *
+ * Roughly 1–2% of ephemeral ports contain the substring, which is exactly the kind
+ * of sometimes-failure that burns a CI run and vanishes locally.
  */
 export class HTTPStatusError extends Error {
 	readonly status: number
@@ -96,17 +110,23 @@ export function isTransientStatus(status: number): boolean {
 
 export interface DownloadOptions {
 	url: string
-	dest: string
+	dest: PathBuilderLike
 	/**
-	 * Per-attempt timeout. Default 10 minutes — these are multi-GB government dumps.
+	 * Per-attempt timeout.
+	 *
+	 * Default 10 minutes — these are multi-GB government dumps.
 	 */
 	timeoutMs?: number
 	/**
-	 * Extra attempts after the first, taken only on transient statuses or network errors. Default 0.
+	 * Extra attempts after the first, taken only on transient statuses or network errors.
+	 *
+	 * Default 0.
 	 */
 	retries?: number
 	/**
-	 * Delay between attempts. Default 5s.
+	 * Delay between attempts.
+	 *
+	 * Default 5s.
 	 */
 	retryDelayMs?: number
 	headers?: Record<string, string>
@@ -114,8 +134,10 @@ export interface DownloadOptions {
 }
 
 /**
- * Download `url` to `dest` with per-attempt timeout and transient-status retry. Throws on a non-transient http status
- * or once retries are exhausted. Returns the byte count written.
+ * Download `url` to `dest` with per-attempt timeout and transient-status retry.
+ *
+ * @throws On a non-transient http status or once retries are exhausted.
+ * Returns the byte count written.
  */
 export async function downloadToFile(options: DownloadOptions): Promise<{ bytes: number }> {
 	const {
@@ -140,8 +162,9 @@ export async function downloadToFile(options: DownloadOptions): Promise<{ bytes:
 
 		try {
 			// Raw `fetch`, deliberately: this is the shared file downloader and the body is piped to disk below.
-			// `APIClient` is the repo default for API requests — small bodies, repeated calls — and buffers a
-			// non-stream response in memory, which is the one thing a multi-gigabyte transfer must not do.
+			// `APIClient` is the repo default for API requests — small bodies,
+			// repeated calls — and buffers a non-stream response in memory, which is the
+			// one thing a multi-gigabyte transfer must not do.
 			res = await fetch(url, { headers, signal: AbortSignal.timeout(timeoutMs) })
 		} catch (error) {
 			// AbortSignal timeouts and network-level failures are retryable.
@@ -181,14 +204,15 @@ export interface StreamDownloadOptions {
 }
 
 /**
- * Stream an http download to disk, returning the final http status (0 on network error after retries). Follows
- * redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
+ * Stream an http download to disk, returning the final http status (0 on network error after retries).
  *
- * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to disk (the buffered helper
- * reads via `arrayBuffer()`) and returns the http status instead of throwing, which the per-file result collectors and
- * two-URL fallback ladders consume.
+ * Follows redirects (the Census and OpenAddresses endpoints both 302 to their real hosts).
+ *
+ * Kept separate from {@link downloadToFile} on purpose: this one streams a multi-GB body to
+ * disk (the buffered helper reads via `arrayBuffer()`) and returns the http status instead
+ * of throwing, which the per-file result collectors and two-URL fallback ladders consume.
  */
-export async function streamDownload(url: string, dest: string, opts: StreamDownloadOptions): Promise<number> {
+export async function streamDownload(url: string, dest: PathBuilderLike, opts: StreamDownloadOptions): Promise<number> {
 	for (let attempt = 0; attempt <= opts.retries; attempt++) {
 		try {
 			const res = await fetch(url, {

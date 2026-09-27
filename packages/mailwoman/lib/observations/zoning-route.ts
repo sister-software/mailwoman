@@ -2,43 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The zoning route, observation-only: after the resolver has produced a coordinate, the local authority's
- *   own zoning designation for that coordinate is recorded beside the answer — the authority's own code IN
- *   its own spelling, its description, the named plan it belongs to and that plan's stated window, and, where
- *   and only where the publisher itself publishes one, its national generic classification carried as a
- *   separate labelled value that never replaces the local code.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here is
- *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
- *   the same geocode plus one advisory, which is a statement about construction rather than about a
- *   measurement.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
- *   finds no file hands in nothing and is byte-identical to one built before this route existed.
- *
- *   no scenario, but always A jurisdiction and A plan. The coastal route answers under one of twelve named
- *   scenarios because its product publishes twelve. This product publishes one, so there is no scenario to
- *   name — and there is a jurisdiction and a plan, which are part of the claim rather than parameters of it.
- *   A zone exists inside a named Development Plan or Local Area Plan adopted by a named authority, with a
- *   stated validity window. an observation that dropped either would report a designation nobody could trace
- *   to a plan.
- *
- *   only A designation reaches A caller, and the silence is required. There is no absence observation
- *   here, and zoning is the hardest case for the rule: a location with no zoning polygon is outside any
- *   adopted plan area, or inside one on land the plan does not zone, or in a jurisdiction that has never
- *   adopted zoning, or in a jurisdiction whose records nobody has published — and no product distinguishes
- *   them. The publisher itself proves the asymmetry by stating `UNZ - Unzoned` as a positive value on a
- *   handful of rows: where it means unzoned it says so, so an absent row means nothing. The named refusal is
- *   what a receipt carries instead.
- *
- *   the observation is about the plan, never about what may be built. The publisher states that its data are
- *   "not published here as legal definitions of the current actuality with regard to Local Authority zoning
- *   or their geographic extents" and that "Original data should be sourced directly from the relevant Local
- *   Authority". So the wording reports what a plan assigns at a location, and the product's own exclusions
- *   ride on every observation.
+ *   Attaches local-authority zoning designations to a geocode answer as an observation. The route
+ *   never changes answer selection.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -50,6 +15,7 @@ import {
 	type ZoningLayerIdentity,
 	type ZoningReading,
 } from "@mailwoman/zoning"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -62,37 +28,39 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One zoning designation, recorded beside an answer.
+ * The published zoning designations for a coordinate, with their coverage and provenance.
  *
- * Everything a reader needs to check the claim is here: which authority, which plan and window, which product and
- * vintage, the polygons the location falls inside with each one's verbatim local code, how containment was established,
- * and the coverage record with the sentence saying what it does not license.
+ * A location without a designation may still be restricted.
  */
 export interface ZoningDesignationObservation {
 	/**
-	 * Always `designated`. `unknown` produces no observation — see this file's header.
+	 * Always `designated`.
+	 * Any other reading produces a refusal instead.
 	 */
 	reading: ZoningReadingKind
 	/**
-	 * Every polygon containing the point. Usually one. several where a Local Area Plan overlays a Development Plan over
-	 * the same ground, which the publisher issues as two rows.
+	 * Every designation polygon that contains the point.
+	 *
+	 * There are several when a Local Area Plan overlays a Development Plan on the same ground.
 	 */
 	designations: ZoningDesignation[]
 	containment: ZoningContainmentPath
 	/**
-	 * The coverage side of the claim. Its basis is `source_present`, which supports presence and nothing else.
+	 * The coverage record for the location.
+	 *
+	 * Its basis is `source_present`, which supports a presence claim only.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
-	 * The index cell probed.
+	 * The index cell that was probed.
 	 */
 	indexCellIndex: string
 	/**
-	 * What the product does not state, in the publisher's own words.
+	 * The product's stated limitations, in the publisher's own words.
 	 */
 	limits: ReadonlyArray<string>
 	/**
-	 * Why this layer's coverage licenses no claim that a location is unrestricted.
+	 * The reason this layer's coverage cannot show that a location is unrestricted.
 	 */
 	coverageLimit: string
 	layer: ObservationLayerRecord
@@ -101,58 +69,60 @@ export interface ZoningDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
- * silence and a silence for the right reason read identically on a receipt.
+ * The reasons a coordinate can produce no zoning observation.
  */
 export const ZONING_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode produced no coordinate.
 	 */
 	"no_coordinate",
 	/**
-	 * No adopted plan in this product assigns a zoning designation here. Not an absence claim: the location may be
-	 * outside any plan area, inside one on land the plan does not zone, in a jurisdiction that has never zoned, or in one
-	 * whose records are not published — and the product cannot tell those apart.
+	 * No adopted plan in this product designates the location.
+	 *
+	 * The product cannot distinguish land outside every plan area, unzoned land inside a plan,
+	 * a jurisdiction that never zoned, and a jurisdiction that publishes no records.
 	 */
 	"no_designation_here",
 ] as const
 
+/**
+ * One {@link ZONING_REFUSALS} value.
+ */
 export type ZoningRefusal = (typeof ZONING_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * The observation or refusal for one coordinate.
  */
 export type ZoningDecision =
 	| { fired: true; observation: ZoningDesignationObservation }
 	| { fired: false; refusal: ZoningRefusal }
 
+/**
+ * Reads zoning designations from one sealed layer.
+ */
 export interface ZoningDesignationRoute extends Disposable {
 	identity: ZoningLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
-	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
-	 * rather than a caller's problem.
+	 * Reads the layer at one coordinate.
+	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => ZoningDecision
 }
 
+/**
+ * Options for {@link createZoningDesignationRoute}.
+ */
 export interface ZoningDesignationRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that guessed one would report a
-	 * designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 * The route has no default layer.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
- * Build the route against one sealed layer.
- *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, an empty jurisdiction table, and above all a
- * coverage row whose basis would support an exclusion. That last one would otherwise present as a route reporting
- * unmapped and unzoned land alike as free of restriction.
+ * Builds the route against one sealed layer.
+ * The reader validates the layer's manifest and coverage.
  */
 export function createZoningDesignationRoute(options: ZoningDesignationRouteOptions): ZoningDesignationRoute {
 	const lookup = new ZoningLookup({ databasePath: options.databasePath })
@@ -161,12 +131,12 @@ export function createZoningDesignationRoute(options: ZoningDesignationRouteOpti
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
 		refusalFor: (reading) => (reading.kind !== ZoningReadingKind.Designated ? "no_designation_here" : undefined),
 		toObservation: (reading, latitude, longitude) =>
-			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
 }
 
 /**
- * Build the observation for a reading the refusal check let through.
+ * Builds the observation for a reading that passed the refusal check.
  */
 function toObservation(
 	reading: ZoningReading,
@@ -192,8 +162,11 @@ function toObservation(
 }
 
 /**
- * What the adopted plan assigns, in one wording — the authority's own code verbatim, the publisher's generic type
- * beside it, and the named plan — shared by the one-line description and the marker message.
+ * Returns the clause that states what the adopted plan assigns.
+ *
+ * The clause gives the authority's code verbatim, the publisher's crosswalk code
+ * when present, and the plan name.
+ * The one-line description and the marker message share this wording.
  */
 export function zoningAssignmentClause(observation: ZoningDesignationObservation): string {
 	const first = observation.designations[0]
@@ -207,7 +180,7 @@ export function zoningAssignmentClause(observation: ZoningDesignationObservation
 }
 
 /**
- * One line a reader can check the claim from, with the authority, the plan and the vintage on it.
+ * Returns a one-line description of the observation, including the plan, coverage and layer provenance.
  */
 export function describeZoningDesignation(observation: ZoningDesignationObservation): string {
 	return (

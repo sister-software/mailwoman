@@ -10,7 +10,6 @@ import {
 } from "@mailwoman/corpus/adapters/wof/postalcode-json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("wof-postalcode-json")
@@ -48,8 +47,7 @@ describe("postcodeVariantsFor (pure)", () => {
 			"with-locality-region-country",
 		])
 
-		// The region carries its postal surface form. WOF names the state in full. a US address writes the USPS code,
-		// and the adapter chooses that here so the printed span and the label are the same string.
+		// The adapter replaces the full WOF state name with its USPS code.
 		expect(v[3]!.components).toEqual({
 			postcode: "97214",
 			locality: "Portland",
@@ -82,8 +80,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const rows = await loadRows()
 		expect(rows.length).toBeGreaterThan(0)
 
-		// The FR template drops region (encoded in postcode) and emits "75008 Paris, France".
-		// Reconciliation drops region from components because it isn't in raw.
+		// The FR layout omits the region, so reconciliation removes it from the components.
 		const parisFull = rows.find(
 			(r) => r.components.postcode === "75008" && r.components.locality === "Paris" && r.components.country === "France"
 		)
@@ -105,19 +102,16 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const rows = await loadRows()
 		const portlandUS = rows.find((r) => /Portland,\s+OR\s+97214/.test(r.raw))
 		expect(portlandUS).toBeDefined()
-		// The region is printed and labeled. It used to be neither: the engine this replaced substituted its own
-		// `state_code` for the value it was handed, so `raw` said `or` while the component said `Oregon`, and the
-		// alignment check then dropped the component for not occurring in the string it had just rendered.
+		// The printed region and the region component must be the same string.
 		expect(portlandUS!.components.region).toBe("OR")
 		expect(portlandUS!.components.postcode).toBe("97214")
 		expect(portlandUS!.components.locality).toBe("Portland")
 	})
 
 	it("locality ancestry handles a parent with name:* variants without leaking them into postcode emission", async () => {
-		// Saint Petersburg (1021) has name:eng_x_colloquial=["St. Petersburg"]; one postcode (5003)
-		// points at it. The postcode adapter currently uses canonical wof:name for ancestors
-		// (cross-product with ancestor name variants is a future synthesis concern). Verify the
-		// canonical-name behavior so a future change to localize ancestors is a deliberate decision.
+		// In the fixture, Saint Petersburg (1021) has the colloquial variant "St.
+		// Petersburg", and postcode 5003 is its child.
+		// Ancestors must use the canonical `wof:name`.
 		await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
@@ -128,7 +122,6 @@ describe("wof-postalcode-json adapter against fixture", () => {
 		const rows = await loadRows()
 		const stPetePost = rows.filter((r) => r.source_id.startsWith("wof-postalcode-5003-"))
 		expect(stPetePost.some((r) => r.components.locality === "Saint Petersburg")).toBe(true)
-		// No "St. Petersburg" emitted from postcode adapter for this postcode.
 		expect(stPetePost.every((r) => r.components.locality !== "St. Petersburg")).toBe(true)
 	})
 
@@ -154,7 +147,6 @@ describe("wof-postalcode-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Every postcode row should be of the form wof-postalcode-<id>-<name-slot>-<hierarchy>.
 		for (const row of rows) {
 			expect(row.source_id).toMatch(/^wof-postalcode-\d+-(?:default|name-[a-z0-9-]+)-(?:self|with-[a-z-]+)$/)
 		}
@@ -168,7 +160,7 @@ describe("wof-postalcode-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, WOF_POSTALCODE_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(WOF_POSTALCODE_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createWOFPostalcodeAdapter(),

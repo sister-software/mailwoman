@@ -23,23 +23,25 @@
  *   - `--force` — delete an existing `./dictionaries` directory instead of erroring out
  */
 
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { isDirectory, readLocalTextFile } from "#fs/readers"
 import { temporaryDirectory } from "#fs/temporary"
 import { copyPath, removePathIfPresent, writeLocalTextFile } from "#fs/writers"
+import { resourceDictionaryPath } from "#paths"
 import { CommandError } from "#scripting/command"
-import { resourceDictionaryPath } from "#utils"
 
 const REPO_URL = "https://github.com/openvenues/libpostal.git"
 const DICTIONARIES_DIR = resourceDictionaryPath("libpostal")
 
 /**
- * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`). Blank lines sort to the top, exactly
- * as `sort` orders empty strings. a trailing newline is preserved.
+ * Sort a single dictionary file in place by code point (matching `LC_ALL=C sort`).
+ *
+ * Blank lines sort to the top, exactly as `sort` orders empty strings.
+ * A trailing newline is preserved.
  */
-async function sortFileInPlace(path: string): Promise<void> {
+async function sortFileInPlace(path: PathBuilder): Promise<void> {
 	const text = await readLocalTextFile(path)
 	const hadTrailingNewline = text.endsWith("\n")
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- Sorting needs every line resident. the largest libpostal dictionary is 409 KB.
@@ -55,9 +57,11 @@ async function sortFileInPlace(path: string): Promise<void> {
 }
 
 /**
- * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree at the checked-in
- * `core/data/libpostal/dictionaries`. Refuses to clobber an existing tree unless `force`. zx is lazy-imported
- * (dev-grade dependency — the pipeline convention).
+ * Shallow-clone libpostal, alphabetize each dictionary file, and install the tree
+ * at the checked-in `core/data/libpostal/dictionaries`.
+ *
+ * Refuses to clobber an existing tree unless `force`.
+ * Zx is lazy-imported (dev-grade dependency — the pipeline convention).
  */
 export async function downloadLibpostalResources(
 	options: { force?: boolean } = {},
@@ -76,15 +80,15 @@ export async function downloadLibpostalResources(
 	const { $ } = await import("zx")
 	await using tempDir = await temporaryDirectory("libpostal-")
 
-	const cloneDir = join(tempDir.path, "libpostal")
+	const cloneDir = tempDir.path("libpostal")
 	await $`git clone --depth 1 ${REPO_URL} ${cloneDir}`
 
-	const sourceDicts = join(cloneDir, "resources", "dictionaries")
+	const sourceDicts = cloneDir("resources", "dictionaries")
 
 	// Alphabetize the contents of each dictionary file in place.
 	for await (const entry of Globerator.from("*", { cwd: sourceDicts, withFileTypes: true, onlyFiles: false })) {
 		if (entry.isFile()) {
-			await sortFileInPlace(join(sourceDicts, entry.name))
+			await sortFileInPlace(sourceDicts(entry.name))
 		}
 	}
 

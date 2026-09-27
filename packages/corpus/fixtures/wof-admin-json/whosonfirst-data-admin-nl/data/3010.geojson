@@ -1,0 +1,14 @@
+{
+	"type": "Feature",
+	"id": 3010,
+	"properties": {
+		"wof:id": 3010,
+		"wof:name": "Friesland",
+		"wof:placetype": "region",
+		"wof:country": "Nl",
+		"wof:parent_id": 3001,
+		"mz:is_current": 1,
+		"name:nld_x_preferred": ["Friesland"]
+	},
+	"geometry": null
+}

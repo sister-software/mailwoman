@@ -12,8 +12,8 @@ const peak = (idx: number, hi: number): number[] => LABELS.map((_l, i) => (i ===
 
 describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	it("heals a fragmented word to ONE type by confidence-weighted vote (not first-piece-wins)", () => {
-		// `▁VER` leans locality (idx1, modest), `mont` is near-certain region (idx3, strong). The vote
-		// sums region mass > locality mass → the whole word becomes region (the `VER`-bleed is fixed).
+		// `▁VER` leans locality (idx1, modest), `mont` is near-certain region (idx3, strong).
+		// The vote sums region mass > locality mass → the whole word becomes region (the `VER`-bleed is fixed).
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const emissions = [peak(1, 2), peak(3, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3]) // B-locality, B-region (fragmented)
@@ -52,7 +52,8 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 	})
 
 	it("forces a clean B-/I- pattern when a mid-word piece flips to a different B-", () => {
-		// `▁Loz` locality, `ère` flips to B-region → the diacritic split. Region mass wins → both region.
+		// `▁Loz` locality, `ère` flips to B-region → the diacritic split.
+		// Region mass wins → both region.
 		const r = enforceWordConsistency([{ piece: "▁Loz" }, { piece: "ère" }], [peak(1, 3), peak(3, 7)], LABELS, [1, 3])
 		expect(r.healedWords).toBe(1)
 		expect([LABELS[r.labelIndices[0]!], LABELS[r.labelIndices[1]!]]).toEqual(["B-region", "I-region"])
@@ -61,9 +62,9 @@ describe("enforceWordConsistency (#727 / admin-token fragmentation)", () => {
 
 describe("enforceWordConsistency only arbitrates DISAGREEING words (the documented interface)", () => {
 	it("never rewrites an already-consistent multi-piece word, even when the vote mass prefers another type", () => {
-		// `▁G am le` all street (B,I,I — consistent), but the summed emissions lean locality. The heal's
-		// job is consistency rather than re-decoding: viterbi's global choice stands. (The `Gamle Drammensvei`
-		// golden regression, 2026-07-15.)
+		// `▁G am le` all street (B,I,I — consistent), but the summed emissions lean locality.
+		// The heal's job is consistency rather than re-decoding: viterbi's global choice stands.
+		// (The `Gamle Drammensvei` golden regression, 2026-07-15.)
 		const pieces = [{ piece: "▁G" }, { piece: "am" }, { piece: "le" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(3, 2)] // locality-heavy mass
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [3, 4, 4]) // B-region I-region I-region (consistent)
@@ -72,8 +73,10 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 	})
 
 	it("never flips a single-piece word (no intra-word inconsistency exists)", () => {
-		// `▁Broadway` B-street via viterbi. local mass prefers O. A one-piece word is trivially
-		// consistent — the heal must not override the decoder. (The `East Broadway` golden regression.)
+		// `▁Broadway` B-street via viterbi.
+		// Local mass prefers O. A one-piece word is trivially consistent.
+		// The heal must not override the decoder.
+		// (The `East Broadway` golden regression.)
 		const r = enforceWordConsistency([{ piece: "▁Broadway" }], [peak(0, 8)], LABELS, [1])
 		expect(r.healedWords).toBe(0)
 		expect(r.labelIndices).toEqual([1])
@@ -82,7 +85,9 @@ describe("enforceWordConsistency only arbitrates DISAGREEING words (the document
 
 describe("enforceWordConsistency confidence checks (#727 conditional variant)", () => {
 	it("minMeanConfidence skips a low-confidence heal (noise-amplification guard)", () => {
-		// Near-flat emissions: the vote has no conviction. unrestricted it still heals. conditional it must not.
+		// Near-flat emissions: the vote has no conviction.
+		// Unrestricted it still heals.
+		// Conditional it must not.
 		const flat = (idx: number): number[] => LABELS.map((_l, i) => (i === idx ? 0.1 : 0))
 		const pieces = [{ piece: "▁VER" }, { piece: "MONT" }]
 		const unrestricted = enforceWordConsistency(pieces, [flat(1), flat(3)], LABELS, [1, 3])
@@ -102,7 +107,8 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("skipByteFallbackWords leaves a word with a raw byte piece untouched", () => {
-		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word. The vote assumption fails → skip.
+		// RO `ț` byte-falls-back: `<0xC8> <0x9B>` pieces inside the word.
+		// The vote assumption fails → skip.
 		const pieces = [{ piece: "▁Gala" }, { piece: "<0xC8>" }, { piece: "<0x9B>" }, { piece: "i" }]
 		const emissions = [peak(1, 8), peak(3, 8), peak(3, 8), peak(1, 8)]
 		const r = enforceWordConsistency(pieces, emissions, LABELS, [1, 3, 3, 1], { skipByteFallbackWords: true })
@@ -111,8 +117,8 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("splitOnPunctuation lets the halves of a slash compound keep different tags", () => {
-		// `12/345` = one SentencePiece word, two components (unit 12 / house number 345). With the slash
-		// as a separator each half votes alone → already-consistent halves stay byte-identical.
+		// `12/345` = one SentencePiece word, two components (unit 12 / house number 345).
+		// With the slash as a separator each half votes alone → already-consistent halves stay byte-identical.
 		const pieces = [{ piece: "▁1" }, { piece: "2" }, { piece: "/" }, { piece: "3" }, { piece: "45" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(0, 8), peak(3, 8), peak(3, 8)]
 		const labelIndices = [1, 2, 0, 3, 4] // B-loc I-loc O B-reg I-reg (stand-ins for unit/house_number)
@@ -124,10 +130,10 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 	})
 
 	it("splitOnPunctuation keeps a trailing comma piece out of the preceding word's vote", () => {
-		// After a bare `▁` separator, `Ave` arrives with no sentinel and the following `,` would join
-		// its group as a continuation — its O label manufactures a fake disagreement and the vote kills
-		// the suffix (`1st Ave,` → Ave:O, the 2026-07-15 golden class). As a separator the comma leaves
-		// `Ave` a trivially-consistent single-piece word → untouched.
+		// After a bare `▁` separator, `Ave` arrives with no sentinel and the following `,`
+		// would join its group as a continuation — its O label manufactures a fake disagreement
+		// and the vote kills the suffix (`1st Ave,` → Ave:O, the 2026-07-15 golden class).
+		// As a separator the comma leaves `Ave` a trivially-consistent single-piece word → untouched.
 		const pieces = [{ piece: "Ave" }, { piece: "," }]
 		const emissions = [peak(1, 1), peak(0, 9)] // weak street mass on Ave, huge O mass on the comma
 		const unrestricted = enforceWordConsistency(pieces, emissions, LABELS, [1, 0])

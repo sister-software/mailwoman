@@ -1,23 +1,18 @@
 """Which countries the validation and test splits hold rows for, and how many of those rows carry a street.
 
-WHY THIS EXISTS. `evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over the whole split. A
-country contributing no row to it changes none of those numbers, so a run cannot tell a locale it
-validates well from a locale it does not validate at all. Measured on `v0.32.0-locality-shape`
-(#2353): GB holds **0** validation rows and **0** test rows, FR holds 12,898 validation rows of which
-**0** carry a street or house number, and DE's test split holds 33,801 rows of which **0** do. US
-holds 1,839,635 validation rows, 1,780,240 of them with a street. Three of the four locales iron rule
-6 blocks a default-on regression on therefore have no street-level validation signal.
+`evaluate()` reports `val_loss`, `val_rows` and `macro_f1` over the whole split. A country
+contributing no row to it changes none of those numbers, so a run cannot tell a locale it validates
+well from a locale it does not validate at all.
 
-THE SPLIT RULE PRODUCES THIS. `splitForRow` in
-`packages/corpus/lib/utils/split.ts` sends a row to val or test only when its `components.region`
-matches a declared holdout string for its country, and `defaultHoldouts()` names US, FR and DE. So
-the splits are geographic holdouts over three countries rather than a sample of the corpus, every
-other country holds zero by construction, and a street row carrying no `region` component cannot be
-held out whatever the holdouts name.
+`splitForRow` in `packages/corpus/lib/utils/split.ts` sends a row to val or test only when its
+`components.region` matches a declared holdout string for its country, and `defaultHoldouts()` names
+US, FR and DE. So the splits are geographic holdouts over three countries rather than a sample of the
+corpus, every other country holds zero by construction, and a street row carrying no `region`
+component cannot be held out whatever the holdouts name.
 
-WHAT TO DO WITH THE OUTPUT. Read a per-locale validation metric with its denominator beside it. A
-`macro_f1` computed over a split holding no GB row says nothing about GB, and `cross_pollution`'s
-per-locale readings carry the same limit.
+Read a per-locale validation metric with its denominator beside it: a `macro_f1` computed over a split
+holding no GB row makes no statement about GB, and `cross_pollution`'s per-locale readings carry the
+same limit.
 
 Scans the parquet directly rather than the loader, because the question is which rows the split
 contains. What a run draws from it is a property of the sampler and is `audit_epoch_mixture`.
@@ -33,7 +28,7 @@ from typing import Any
 
 import pyarrow.dataset as ds
 
-from ..config import load_config
+from ..config import ValidationCoverageConfig, load_config
 from ..data.loader import _parquet_paths
 
 #: Tags whose presence makes a row street-level. A validation row carrying neither measures the
@@ -118,15 +113,83 @@ def blind_countries(report: dict[str, Any], wanted: tuple[str, ...]) -> dict[str
     return findings
 
 
+class ValidationCoverageError(ValueError):
+    """A held-out split that cannot measure a locale the config asked it to, with the report attached."""
+
+    def __init__(self, message: str, report: dict[str, Any]):
+        super().__init__(message)
+        self.report = report
+
+
+def failing_requirements(
+    report: dict[str, Any],
+    required: list[ValidationCoverageConfig],
+) -> list[dict[str, Any]]:
+    """Each declared coverage floor the measured splits do not meet, with both numbers beside it.
+
+    A country absent from a split is reported as observing zero rather than skipped. Skipping it
+    would make the strongest failure. A locale the split holds no rows for is the one case the
+    check makes no statement about.
+    """
+    failures: list[dict[str, Any]] = []
+
+    for entry in required:
+        measured = report["splits"].get(entry.split)
+
+        if measured is None:
+            failures.append(
+                {
+                    "country": entry.country,
+                    "split": entry.split,
+                    "because": f"the report carries no {entry.split} split",
+                }
+            )
+            continue
+
+        observed = measured["by_country"].get(entry.country, {"rows": 0, "street_rows": 0})
+        shortfalls: list[str] = []
+
+        if observed["rows"] < entry.min_rows:
+            shortfalls.append(f"{observed['rows']:,} rows against a floor of {entry.min_rows:,}")
+
+        if observed["street_rows"] < entry.min_street_rows:
+            shortfalls.append(f"{observed['street_rows']:,} street rows against a floor of {entry.min_street_rows:,}")
+
+        if shortfalls:
+            failures.append(
+                {
+                    "country": entry.country,
+                    "split": entry.split,
+                    "rows": observed["rows"],
+                    "street_rows": observed["street_rows"],
+                    "min_rows": entry.min_rows,
+                    "min_street_rows": entry.min_street_rows,
+                    "because": "; ".join(shortfalls),
+                }
+            )
+
+    return failures
+
+
 def run(
     config_path: Path,
     *,
     json_path: Path | None = None,
     countries: tuple[str, ...] = ("US", "FR", "DE", "GB"),
+    corpus_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Print the per-country table for each split, then the countries with no street-level signal."""
+    """Print the per-country table for each split, then the countries with no street-level signal.
+
+    ``corpus_dir`` overrides ``data.corpus_dir``, which a training config states as the path the
+    corpus has on the Modal volume. On a machine that built the corpus, that path does not exist,
+    and the audit has to run there: it is the check that decides whether a run may start.
+
+    Raises {@link ValidationCoverageError} when the config declares ``data.required_validation_coverage``
+    and a split falls short of it. The report is written and printed first either way, because a
+    reader needs the numbers that failed rather than the fact that something did.
+    """
     cfg = load_config(config_path)
-    report = audit(Path(cfg.data.corpus_dir))
+    report = audit(corpus_dir or Path(cfg.data.corpus_dir))
 
     print(f"validation coverage — {config_path.name}")
     print(f"  corpus {report['corpus_dir']}\n")
@@ -152,10 +215,46 @@ def run(
     else:
         print(f"  every one of {', '.join(countries)} holds street rows in every split.")
 
+    required = cfg.data.required_validation_coverage
+    failures = failing_requirements(report, required) if required else []
+    report["required_validation_coverage"] = {
+        "declared": [
+            {
+                "country": entry.country,
+                "split": entry.split,
+                "min_rows": entry.min_rows,
+                "min_street_rows": entry.min_street_rows,
+            }
+            for entry in required
+        ],
+        "failures": failures,
+    }
+
+    if required:
+        print(f"\n  declared coverage floors ({len(required)}):")
+        for entry in required:
+            observed = (
+                report["splits"]
+                .get(entry.split, {"by_country": {}})["by_country"]
+                .get(entry.country, {"rows": 0, "street_rows": 0})
+            )
+            print(
+                f"    {entry.country} / {entry.split}: {observed['rows']:,} rows "
+                f"(floor {entry.min_rows:,}), {observed['street_rows']:,} street rows "
+                f"(floor {entry.min_street_rows:,})"
+            )
+
     if json_path is not None:
         json_path.parent.mkdir(parents=True, exist_ok=True)
         json_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
         print(f"\nwrote {json_path}")
+
+    if failures:
+        lines = "\n".join(f"  {f['country']} / {f['split']}: {f['because']}" for f in failures)
+        raise ValidationCoverageError(
+            f"{len(failures)} of {len(required)} declared validation-coverage floors are not met:\n{lines}",
+            report,
+        )
 
     return report
 
@@ -164,6 +263,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("config", type=Path)
     parser.add_argument("--json", type=Path, default=None)
+    parser.add_argument(
+        "--corpus-dir",
+        type=Path,
+        default=None,
+        help="Override data.corpus_dir, which names the path the corpus has on the Modal volume.",
+    )
     parser.add_argument(
         "--countries",
         type=str,
@@ -176,6 +281,7 @@ def main() -> None:
         args.config,
         json_path=args.json,
         countries=tuple(code.strip().upper() for code in args.countries.split(",") if code.strip()),
+        corpus_dir=args.corpus_dir,
     )
 
 

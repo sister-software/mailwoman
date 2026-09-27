@@ -11,11 +11,12 @@
  *   (WOF 890467835) carries only the Latin `Linkou`. Across the 289 units the training board holds, 102 have no
  *   Han-keyed TW row at all, 15 have one only on a namesake in another 縣市, and 10 only on a parentless row.
  *
- *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan (`overture/<release>/addresses-tw.parquet`,
- *   cdla-Permissive-2.0), whose rows come from the 15 civil-affairs bureaus' registers under the Open Government Data
- *   License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
- *   (`situs address-points --country TW`). `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
- *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either —
+ *   source + LICENSE: the pinned Overture Maps addresses parquet for Taiwan
+ *   (`overture/<release>/addresses-tw.parquet`), whose rows come from the civil-affairs bureaus' registers under the
+ *   Open Government Data License, Taiwan, v1.0 — the same input and the same license expression as the rooftop tier
+ *   (`situs address-points --country TW`). Overture declares no identifier for the addresses theme, so the expression
+ *   is the register's own. `address_levels[1]` is the 縣市 and `address_levels[2]` the 鄉鎮市區,
+ *   the register's own administrative pair. there is no free-text grouping here, so no thin-group threshold either.
  *   every pair is a real unit, and the smallest (金門縣烏坵鄉, 3 points) is reported rather than dropped.
  *
  *   shape: one `spr` row per (縣市, 鄉鎮市區), placetype `locality` — the tier `placetypeMapForCountry("tw")` maps a
@@ -33,22 +34,66 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
+import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
 import { OVERTURE_ADDRESSES_RELEASE } from "@mailwoman/core/overture-pins"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { TW_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { getRow } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import { resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
-import { DEFAULT_ADMIN_DB, wofDir } from "#gazetteer-pipeline"
+import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+import { licenseForOvertureCountry } from "#geocode/national-overture"
 
 /**
- * The license expression the artifact carries — Overture's theme license and the register's own, the pair the rooftop
- * tier stamps for the same input.
+ * The license expression this artifact carries, read from the same entry the rooftop tier reads.
+ *
+ * Both artifacts are built from one input, the pinned Overture addresses parquet for Taiwan,
+ * so one grant covers both and one entry records it.
+ * `COUNTRY_LICENSES` in `#geocode/national-overture` holds Taiwan's as two candidate
+ * readings rather than a settled expression, because Overture's attribution page and
+ * `docs/superpowers/plans/counsel-dossier.md` §6 name different grants over the same municipal 門牌 rows.
+ *
+ * So this build stops until one is settled.
+ * Stamping a candidate would record a grant nobody established, and the artifact
+ * would carry that claim for as long as it exists.
+ *
+ * @throws Through `licenseForOvertureCountry`, naming both candidates and their evidence.
  */
-export const TW_DISTRICTS_LICENSE = "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"
+export function twDistrictsLicense(): string {
+	return licenseForOvertureCountry("tw")
+}
+
+/**
+ * Compose the artifact's `layer_manifest` from the settled grant and the release it reproduces.
+ *
+ * Both candidate readings of the grant carry attribution and no share-alike term, so the tier is `shipped`.
+ * A reading that carried more would fail `assertTierMatchesLicense` here rather than reach the artifact.
+ */
+export function twDistrictsLayerManifest(input: {
+	license: string
+	release: string
+	sourceMD5: string
+	now: Date
+}): LayerManifest {
+	return foldLayerManifest({
+		name: "localities-tw-districts",
+		version: input.release,
+		tier: LayerTier.Shipped,
+		license: input.license,
+		source: "Overture Maps addresses, Taiwan (civil-affairs registers via OpenAddresses)",
+		sourceVintage: `overture ${input.release} (md5 ${input.sourceMD5})`,
+		buildCmd: "mailwoman gazetteer build tw-districts",
+		buildSHA: buildSHA(repoRootPath()),
+		createdAt: input.now.toISOString(),
+		spineKeys: { wofID: "id" },
+	})
+}
 
 /**
  * One Han name a WOF Taiwan region carries, as the admin `names` table has it.
@@ -57,22 +102,26 @@ export interface TaiwanRegionName {
 	id: number
 	name: string
 	/**
-	 * The `names.official` bit — 1 on the region's own official `zho` name, 0 on every other Han spelling it carries (a
-	 * county listed under a city's name, a pre-upgrade name, a script variant).
+	 * The `names.official` bit — 1 on the region's own official `zho` name, 0 on every other Han
+	 * spelling it carries (a county listed under a city's name, a pre-upgrade name, a script variant).
 	 */
 	official: boolean
 }
 
 /**
- * The 縣市 → WOF region match. Three rungs, each answering only when it names exactly one region:
+ * The 縣市 → WOF region match.
+ *
+ * Three rungs, each answering only when it names exactly one region:
  *
  * 1. The official `zho` name (`新竹市` → Hsinchu City, never Hsinchu County, which also lists `新竹市` as a variant);
  * 2. Any Han name, when only one region carries it.
- * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF gives the region that became a
- *    special municipality after the record was written).
+ * 3. The name minus its 縣/市 suffix against rung 1 and 2 (`桃園市` → `桃園`, the only name WOF
+ *    gives the region that became a special municipality after the record was written).
  *
- * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet. `undefined` is a real absence — a 縣市
- * the admin artifact does not know — and the caller reports it rather than guessing.
+ * Every comparison runs through the `zh` locality fold, so 臺 and 台 spellings meet.
+ * `undefined` is a real absence.
+ *
+ * A 縣市 the admin artifact does not know — and the caller reports it rather than guessing.
  */
 export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRegionName[]): number | undefined {
 	const fold = (name: string): string => normalizeLocalityForKeyLocale(name, "zh")
@@ -98,8 +147,9 @@ export function matchTaiwanRegion(regionName: string, regions: readonly TaiwanRe
 }
 
 /**
- * The register's spelling plus its 臺/台 twin, the two forms a person types. A name carrying neither character has no
- * twin and yields itself alone.
+ * The register's spelling plus its 臺/台 twin, the two forms a person types.
+ *
+ * A name carrying neither character has no twin and yields itself alone.
  */
 export function districtNameVariants(name: string): string[] {
 	const twin = name.includes("臺")
@@ -128,19 +178,27 @@ export interface TaiwanDistrictGroup {
 
 export interface BuildTWDistrictsOptions {
 	/**
-	 * The Overture release directory under `<data-root>/overture/`. Default {@link OVERTURE_ADDRESSES_RELEASE}.
+	 * The Overture release directory under `<data-root>/overture/`.
+	 *
+	 * Default {@link OVERTURE_ADDRESSES_RELEASE}.
 	 */
 	release?: string
 	/**
-	 * The Taiwan addresses parquet. Default `<data-root>/overture/<release>/addresses-tw.parquet`.
+	 * The Taiwan addresses parquet.
+	 *
+	 * Default `<data-root>/overture/<release>/addresses-tw.parquet`.
 	 */
 	parquetPath?: string
 	/**
-	 * The admin WOF database the 縣市 names are matched against. Default `<data-root>/wof/admin-global-priority.db`.
+	 * The admin WOF database the 縣市 names are matched against.
+	 *
+	 * Default `<data-root>/db/wof/admin-global-priority.db`.
 	 */
 	adminPath?: string
 	/**
-	 * Output database. Default `<data-root>/wof/localities-tw-districts.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/db/wof/localities-tw-districts.db`.
 	 */
 	out?: string
 	/**
@@ -153,7 +211,8 @@ export interface BuildTWDistrictsResult {
 	out: string
 	inserted: number
 	/**
-	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row. the remainder folded unscoped.
+	 * Rows whose 縣市 matched a WOF region and carry an `ancestors` row.
+	 * The remainder folded unscoped.
 	 */
 	scoped: number
 	/**
@@ -188,10 +247,15 @@ function readTaiwanRegions(admin: DatabaseClient<WOFDatabase>): TaiwanRegionName
 }
 
 /**
- * Aggregate the parquet into one group per (縣市, 鄉鎮市區). DuckDB's `quantile_cont` gives the median and the p5/p95
- * envelope in one scan. BigInt counts are narrowed at the boundary.
+ * Aggregate the parquet into one group per (縣市, 鄉鎮市區).
+ *
+ * DuckDB's `quantile_cont` gives the median and the p5/p95 envelope in one scan.
+ * BigInt counts are narrowed at the boundary.
  */
-async function readDistrictGroups(parquetPath: string, threads: number | undefined): Promise<TaiwanDistrictGroup[]> {
+async function readDistrictGroups(
+	parquetPath: PathBuilderLike,
+	threads: number | undefined
+): Promise<TaiwanDistrictGroup[]> {
 	let DuckDBInstance: typeof import("@duckdb/node-api").DuckDBInstance
 
 	try {
@@ -209,7 +273,7 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 		await duck.run(`SET threads TO ${Math.trunc(threads)}`)
 	}
 
-	const escaped = parquetPath.replaceAll("'", "''")
+	const escaped = parquetPath.toString().replaceAll("'", "''")
 
 	const reader = await duck.runAndReadAll(
 		`SELECT address_levels[1].value AS region, address_levels[2].value AS district, count(*) AS points,
@@ -236,19 +300,23 @@ async function readDistrictGroups(parquetPath: string, threads: number | undefin
 }
 
 /**
- * Build the sealed Taiwan districts database. Not re-exported from a barrel — the command lazy-imports it
+ * Build the sealed Taiwan districts database.
+ *
+ * Not re-exported from a barrel — the command lazy-imports it
  * (optional-peer discipline, same as the NZ and CZ builders).
  */
 export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {}): Promise<BuildTWDistrictsResult> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const release = opts.release ?? OVERTURE_ADDRESSES_RELEASE
-	const parquetPath = opts.parquetPath ?? String(dataRootPath("overture", release, "addresses-tw.parquet"))
-	const adminPath = opts.adminPath ?? resolvePath(wofDir(), DEFAULT_ADMIN_DB)
-	const outPath = opts.out ?? String(dataRootPath("wof", "localities-tw-districts.db"))
+	const parquetPath = opts.parquetPath ?? dataRootPath("overture", release, "addresses-tw.parquet")
+	const adminPath = opts.adminPath ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+	const outPath = opts.out ?? wofDatabasePath("localities-tw-districts.db")
 	const tmpPath = `${outPath}.tmp`
 
 	const sourceMD5 = await md5File(parquetPath)
+	// Read before the parquet so an unsettled grant stops the build before the expensive step.
+	const license = twDistrictsLicense()
 	const groups = await readDistrictGroups(parquetPath, opts.threads)
 
 	let regions: TaiwanRegionName[]
@@ -285,7 +353,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 		db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 		const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 		meta.run("source", "Overture Maps addresses, Taiwan (civil-affairs registers via OpenAddresses)")
-		meta.run("license", TW_DISTRICTS_LICENSE)
+		meta.run("license", license)
 		meta.run("source_release", release)
 		meta.run("source_md5", sourceMD5)
 
@@ -343,11 +411,15 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 		db.exec("ANALYZE")
 	}
 
+	// The layer interface's manifest, beside `database_meta` and stating the same terms.
+	// The candidate build reads its tier before folding the database.
+	await stampLayerManifest(tmpPath, twDistrictsLayerManifest({ license, release, sourceMD5, now: new Date() }))
+
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)
 
 	return {
-		out: outPath,
+		out: outPath.toString(),
 		inserted,
 		scoped,
 		unmatchedRegions: [...unmatched].map(([region, count]) => ({ region, groups: count })),

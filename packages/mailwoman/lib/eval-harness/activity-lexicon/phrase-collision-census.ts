@@ -2,31 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The phrase-collision census for `@mailwoman/activity-lexicon` (#1962).
- *
- *   what IT measures. An activity route is asked last: `createRuntimePipeline` consults it only where the committed
- *   category lexicon and the POI name lookup have both returned nothing. So a declared phrase whose subject either of
- *   those already claims never reaches the route at all, and the shortfall reads as the activity being unreachable
- *   rather than as the phrase being taken. `sem-act-fr-01` is the worked example: `Somewhere` is a venue name in the
- *   shipped `poi.db`, `matchPOISubject` probes the prefix before ` to `, the name rung claims it, and the answer is a
- *   womens_clothing_store 211.75 km from Toulouse.
- *
- *   the probe SET is what `matchPOISubject` would actually meet rather than what the lexicon literally declares. That routine
- *   probes the whole input and then each prefix before an anchor separator, so the strings a phrase is met through are
- *   longer than the phrase. Rather than restate its enumeration — two copies of a rule that must agree — the census
- *   drives the shipped routine with a recording lookup that answers nothing, and keeps every string it was asked about.
- *
- *   the classification and the point of the census rather than a detail of it. A colliding venue name is one of
- *   two things, and a decision about ranking rests on which:
- *
- *   - query-shaped — the name adds nothing to the query fragment it collides with. It is that fragment: an explicit
- *     query marker (`pharmacy near me`), a name made entirely of function words that any query prefix can consist of
- *     (`Somewhere`), or the bare fragment itself with no distinguishing element. Such a name cannot be told from the
- *     query by construction.
- *   - legitimate — the name contains the fragment and carries a distinguishing element beside it (`London Pharmacy`),
- *     which is an ordinary naming convention and not a query at all.
- *
- *   The census reports. It changes no ranking, demotes nothing, and writes nothing back into the lexicon.
+ *   Census of the subjects the POI intent matcher probes and the venue names and categories that collide with them.
  */
 
 import { readActivityLexicon, type ActivityPhraseLexicon, normalizeActivityPhrase } from "@mailwoman/activity-lexicon"
@@ -34,7 +10,7 @@ import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { matchPOISubject, type POIPhraseMatch } from "@mailwoman/kind-classifier"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -42,7 +18,7 @@ import { type LayerManifest, probeManifest } from "#data/inventory"
 import { poiTaxonomyLookup } from "#poi/intent"
 
 /**
- * The committed input trees the census reads carrier queries out of, repository-relative.
+ * Repository-relative directories whose JSONL files hold committed query inputs.
  */
 const COMMITTED_INPUT_ROOTS = [
 	"packages/mailwoman/lib/eval-harness/gauntlet/cases",
@@ -51,14 +27,14 @@ const COMMITTED_INPUT_ROOTS = [
 ] as const
 
 /**
- * The jsonl keys that hold a query rather than a label. Named rather than walked: a note field on the promoted board
- * rows quotes the very phrases this census is about, and a census that read prose would report its own documentation as
- * traffic.
+ * JSONL fields that hold query text.
+ *
+ * Prose fields are excluded because they can quote test phrases.
  */
 const INPUT_KEYS = ["query", "input", "raw", "base", "variant", "surface"] as const
 
 /**
- * Multi-word markers that make a venue name a query on its face.
+ * Phrases that mark a venue name as query syntax.
  */
 const QUERY_MARKERS = [
 	"near me",
@@ -75,8 +51,9 @@ const QUERY_MARKERS = [
 ] as const
 
 /**
- * Tokens a query prefix can consist entirely of. A name made only of these names no business — it captures whatever the
- * user typed before the anchor.
+ * Function words.
+ *
+ * A venue name made only of these words is classified as query-shaped.
  */
 const FUNCTION_WORDS = new Set([
 	"a",
@@ -141,20 +118,20 @@ const FUNCTION_WORDS = new Set([
 ])
 
 /**
- * Which probe family a candidate subject came from.
+ * Source of a probe.
  *
- * - `declared-phrase` — a surface form exactly as the lexicon writes it.
- * - `phrase-prefix` — a prefix of a declared phrase, where the phrase itself carries an anchor separator.
- * - `carrier-prefix` — a candidate subject of a committed query that ends in a declared phrase. This is the family the
- *   `Somewhere` collision lives in, and no amount of reading the lexicon alone would find it.
+ * A probe is a lexicon phrase, a prefix of one, or a subject taken from a committed query.
  */
 export type ProbeFamily = "declared-phrase" | "phrase-prefix" | "carrier-prefix"
 
 /**
- * How a colliding venue name is classified, and on which tell.
+ * Classification of a venue name that collides with a probe.
  */
 export type VenueNameClass = "query-shaped" | "legitimate"
 
+/**
+ * Classification of a colliding venue name and the rule that decided it.
+ */
 export interface VenueNameVerdict {
 	class: VenueNameClass
 	/**
@@ -163,6 +140,9 @@ export interface VenueNameVerdict {
 	tell: string
 }
 
+/**
+ * Venue name whose normalized form equals a probe.
+ */
 export interface NameCollision {
 	probe: string
 	families: ProbeFamily[]
@@ -171,12 +151,17 @@ export interface NameCollision {
 	country: string
 	verdict: VenueNameVerdict
 	/**
-	 * Whether the shipped name rung would actually reach this row: `createPOINameLookup` takes the first eight FTS hits
-	 * and requires normalized equality, so a name that exists is not always a name that claims.
+	 * Whether the shipped POI name lookup accepts the probe.
+	 *
+	 * The lookup reads a limited number of FTS hits and requires normalized equality,
+	 * so a matching name in the database can still go unclaimed.
 	 */
 	reachedByShippedRung: boolean
 }
 
+/**
+ * Venue name that contains a probe's tokens and has more tokens than the probe.
+ */
 export interface ContainmentRow {
 	probe: string
 	families: ProbeFamily[]
@@ -186,6 +171,9 @@ export interface ContainmentRow {
 	verdict: VenueNameVerdict
 }
 
+/**
+ * Probe that the POI taxonomy lookup matches for a locale.
+ */
 export interface CategoryCollision {
 	probe: string
 	families: ProbeFamily[]
@@ -193,6 +181,9 @@ export interface CategoryCollision {
 	match: POIPhraseMatch
 }
 
+/**
+ * Complete census report.
+ */
 export interface PhraseCollisionCensus {
 	censusID: "activity-phrase-collision-census"
 	generatedAt: string
@@ -209,9 +200,10 @@ export interface PhraseCollisionCensus {
 		exactCollisions: NameCollision[]
 		containment: ContainmentRow[]
 		/**
-		 * Names whose folded key equals a probe while the shipped rung's own normalization does not — punctuation or a
-		 * diacritic the database folds and the rung keeps. Listed rather than counted: a bare total would leave a reader
-		 * unable to tell a harmless near-miss from a collision the rung is failing to see.
+		 * Names that match a probe token for token but differ after activity-phrase normalization.
+		 *
+		 * Punctuation or diacritics usually cause the difference.
+		 * The report lists each pair so a reader can inspect it.
 		 */
 		foldOnlyMatches: Array<{ probe: string; name: string }>
 		counts: {
@@ -224,7 +216,7 @@ export interface PhraseCollisionCensus {
 }
 
 /**
- * One venue row, as the census reads it.
+ * Venue fields that the census reads from the POI database.
  */
 export interface CensusVenue {
 	name: string
@@ -233,40 +225,36 @@ export interface CensusVenue {
 }
 
 /**
- * The POI reader the census needs, and it is deliberately not the shipped name rung's reader.
- *
- * `createPOINameLookup` asks FTS for eight candidates ranked by bm25 and keeps an exact match among them. Measured
- * against a complete scan, that reads 149 of the 375 distinct names containing `prescription` — so a census built on it
- * would report an absence it had merely not looked at, which is the failure mode a census cannot afford. `containing`
- * is therefore a complete key scan, and `claimedByShippedRung` asks the shipped path the one question it is the
- * authority on: whether the rung actually takes the phrase.
+ * POI database access for the census.
  */
 export interface CensusPOIReader {
 	/**
-	 * Every distinct venue whose folded name key contains at least one probe. Complete: no ranking, no limit.
-	 *
-	 * The whole probe set at once, because the underlying read is a scan of every venue name and nineteen scans cost
-	 * nineteen times one. Whole-token containment is decided here, over what comes back.
+	 * Returns every venue whose name contains any probe.
+	 * The result must be unranked and unlimited.
 	 */
 	candidates(probes: ReadonlyArray<string>): ReadonlyArray<CensusVenue>
 	/**
-	 * Whether the shipped POI name rung claims this phrase — the top-eight FTS read plus normalized equality.
+	 * Reports whether the shipped POI name lookup accepts the probe.
 	 */
 	claimedByShippedRung(probe: string): boolean
 }
 
+/**
+ * Options for {@link runPhraseCollisionCensus}.
+ */
 export interface PhraseCollisionCensusOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	reader: CensusPOIReader
 	lexicon?: ActivityPhraseLexicon
 	/**
-	 * Repository root the committed input trees are read from. Defaults to the checkout this module was loaded from.
+	 * Checkout that holds the committed inputs.
+	 * It defaults to the current repository root.
 	 */
 	repositoryRoot?: PathBuilderLike
 }
 
 /**
- * Tokenize for containment: letters and digits only, so punctuation and case cannot hide a whole-word match.
+ * Splits a normalized value into letter and digit runs so containment ignores punctuation and case.
  */
 function tokenize(value: string): string[] {
 	return normalizeActivityPhrase(value)
@@ -275,7 +263,7 @@ function tokenize(value: string): string[] {
 }
 
 /**
- * Whether `needle`'s tokens appear as a contiguous run inside `haystack`'s.
+ * Reports whether `needle` occurs as a contiguous run in `haystack`.
  */
 function containsTokens(haystack: string[], needle: string[]): boolean {
 	if (!needle.length || needle.length > haystack.length) return false
@@ -288,11 +276,10 @@ function containsTokens(haystack: string[], needle: string[]): boolean {
 }
 
 /**
- * Classify one colliding venue name against the probe string it collided with.
+ * Classifies a colliding venue name.
  *
- * The rule is stated in the module header and implemented here in the same order: an explicit query marker determines
- * the result. otherwise a name that is the probe adds nothing and is query-shaped, on whichever of the two remaining
- * tells applies. otherwise the name carries something the probe does not, and is an ordinary name.
+ * A name with extra words is legitimate unless it contains a query marker.
+ * A name equal to the probe is always query-shaped.
  */
 export function classifyVenueName(name: string, probe: string): VenueNameVerdict {
 	const normalized = normalizeActivityPhrase(name)
@@ -315,11 +302,7 @@ export function classifyVenueName(name: string, probe: string): VenueNameVerdict
 }
 
 /**
- * Every candidate subject `matchPOISubject` probes for one input, in the order it probes them.
- *
- * Driven rather than restated: a recording lookup that answers nothing makes the shipped routine walk its whole
- * enumeration — the whole input, then each prefix before an anchor separator, stopping at its own token budget — and
- * the census keeps what it was asked. Two copies of that rule would be free to disagree. this cannot.
+ * Returns every subject that the shipped `matchPOISubject` looks up for the input, in lookup order.
  */
 export function candidateSubjects(input: string): string[] {
 	const asked: string[] = []
@@ -334,14 +317,14 @@ export function candidateSubjects(input: string): string[] {
 }
 
 /**
- * Read every committed input string out of the named trees.
+ * Reads the distinct query strings from the committed JSONL inputs.
  */
 async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ inputs: Set<string>; files: number }> {
 	const inputs = new Set<string>()
 	let files = 0
 
 	for (const relative of COMMITTED_INPUT_ROOTS) {
-		const root = join(repositoryRoot, relative)
+		const root = resolvePathBuilder(repositoryRoot, relative)
 
 		if (!(await pathExists(root))) continue
 
@@ -351,8 +334,6 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 			files++
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
-				if (!line.trim()) continue
-
 				const row = parseJSONStrict<Record<string, unknown>>(line)
 
 				for (const key of INPUT_KEYS) {
@@ -370,11 +351,13 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 }
 
 /**
- * Run the census.
+ * Builds the phrase-collision census.
+ *
+ * Committed inputs contribute probes only when the lexicon could claim one of their subjects.
  */
 export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOptions): Promise<PhraseCollisionCensus> {
 	const lexicon = options.lexicon ?? (await readActivityLexicon())
-	const repositoryRoot = options.repositoryRoot ?? String(repoRootPath())
+	const repositoryRoot = options.repositoryRoot ?? repoRootPath()
 	const declared = lexicon.phrases.map((entry) => normalizeActivityPhrase(entry.phrase))
 
 	const claims = (subject: string): boolean => {
@@ -474,8 +457,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 				continue
 			}
 
-			// The key scan folds punctuation and diacritics. the shipped rung's comparison keeps them. So a name can be the
-			// probe on tokens and differ on the rung's own test. Counted so the two readings never disagree silently.
+			// The tokens match but the normalized names differ, so the shipped lookup would not treat them as equal.
 			if (tokens.length === probeTokens.length) {
 				foldOnlyMatches.push({ probe, name: venue.name })
 
@@ -497,7 +479,7 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 			declaredPhrases: lexicon.phrases.length,
 		},
 		poiDatabase: {
-			path: options.databasePath,
+			path: options.databasePath.toString(),
 			...(manifest ? { layerManifest: manifest } : {}),
 			...(manifest ? {} : { layerManifestNote: error ?? "no layer_manifest row" }),
 		},
@@ -527,14 +509,13 @@ export async function runPhraseCollisionCensus(options: PhraseCollisionCensusOpt
 }
 
 /**
- * How many containment rows the printer lists before summarizing. The committed report carries every one. the terminal
- * summary is a reader's first look, and a few hundred ordinary venue names past this point tell them nothing new.
+ * Maximum number of containment rows printed to the terminal.
+ * The JSON report keeps every row.
  */
 const PRINTED_CONTAINMENT_ROWS = 40
 
 /**
- * The census as a reader reads it. Every colliding name is printed rather than a count of them: the decision the census
- * feeds is about which names are query-shaped, and a total cannot be re-adjudicated.
+ * Prints the census collisions and summary counts.
  */
 export function printPhraseCollisionCensus(census: PhraseCollisionCensus): void {
 	console.log(

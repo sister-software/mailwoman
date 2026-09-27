@@ -11,7 +11,7 @@
  *   The sweep that motivated it found two register entries with zero test files, and they had decayed in opposite
  *   directions — which is exactly why the two readings both have to stay open: one flag restricted a union with a parser
  *   deleted two majors earlier (removal), and one reached ~1,850 lines of well-tested implementation through a switch
- *   nothing tested (missing testing — of the switch rather than the switched).
+ *   no test covered (missing testing — of the switch rather than the switched).
  *
  *   matching is deliberately loose. A flag name appearing anywhere in a test file counts, including in prose. A stricter
  *   check (the flag passed as an option, say) would be more meaningful and far more fragile, and this check's job is to
@@ -27,14 +27,16 @@ import { trackedSourcePaths } from "#tracked-sources"
 const REGISTER = "docs/engineering/reference/runtime-flags.mdx"
 
 /**
- * A register that parses fewer flags than this is a parser that silently matched nothing, and every assertion below
- * would be vacuously true.
+ * A register that parses fewer flags than this is a parser that silently matched no flag,
+ * and every assertion below would be vacuously true.
  */
 const PLAUSIBLE_REGISTER_SIZE = 20
 
 /**
- * Register rows name their flag in leading backticks. A struck row (`~~`flag`~~`) is a record of something that no
- * longer exists and is skipped — striking is how a removed flag keeps its measurement without claiming to be live.
+ * Register rows name their flag in leading backticks.
+ *
+ * A struck row (`~~`flag`~~`) is a record of something that no longer exists and is skipped —
+ * striking is how a removed flag keeps its measurement without claiming to be live.
  */
 export function registerFlags(markdown: string): string[] {
 	const flags = new Set<string>()
@@ -54,14 +56,16 @@ export function registerFlags(markdown: string): string[] {
 }
 
 /**
- * Flags with no test, each with the reason it is allowed to have none. An entry here is a debt with a name rather than
- * an exemption — the point of the list is that it is short enough to read and every line carries who owes what.
+ * Flags with no test, each with the reason it is allowed to have none.
+ *
+ * An entry here is a debt with a name rather than an exemption.
+ * The point of the list is that it is short enough to read and every line carries who owes what.
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 
 /**
- * The `runtime-flags` check: one error per registered flag no test under `packages/` touches, plus one per stale
- * allowlist entry.
+ * The `runtime-flags` check: one error per registered flag no test under `packages/`
+ * touches, plus one per stale allowlist entry.
  */
 export const runtimeFlagsCheck: RepoCheck = {
 	id: "runtime-flags",

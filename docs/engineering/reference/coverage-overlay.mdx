@@ -11,7 +11,7 @@
 A demo-map overlay that answers **"where do we need data"** at a glance — covered → clear (basemap shows through), uncovered → gray fog. Two layers in one tileset:
 
 1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay; reveals the "looks covered until you zoom in, then the gaps go gray" holes.
-2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](./WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
+2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](../../records/engineering/WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
 - **Live:** `https://tiles.mailwoman.ai/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · measured fog_. The user picks one.
@@ -43,16 +43,16 @@ The **global holes layer** is decoupled from the US rooftop pipeline (its own Du
 | `earth/panels/LayerToggleControl/LayerToggleControl.tsx` | The toggle-group patterns (`coverage-opt`, `coverage-honest`).                                                                                             |
 | `mailwoman/commands/situs/address-points.tsx`            | `mailwoman situs address-points` — per-state situs address-point DB builder. `--oa-csv` mode reads OpenAddresses for states Overture omits (HI).           |
 
-Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
+Source data (not in git): the per-state US rooftop databases `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<st>.db` (124.9M points) + `…/interpolation/interpolation-us-<st>.db` (TIGER segments); the global postcode signal `…/geonames/allCountries-postal.txt` (GeoNames postal, 121 countries); and the civilization backdrop `…/wof/admin-global-priority-importance.db` (WOF `spr` + `place_importance`, built by `mailwoman gazetteer importance`).
 
 ## Runbook: rebuild + republish
 
 **0. Refresh the civilization backdrop** (only when WOF or the importance data changes) — `place_importance` keys the holes layer's salience. Build it onto a COPY of the canonical WOF DB so the gazetteer the resolver uses stays untouched:
 
 ```bash
-cp $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db \
-   $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
-mailwoman gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority-importance.db
+cp $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db \
+   $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db
+mailwoman gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority-importance.db
 # Downloads Nominatim's wikimedia-importance.csv.gz (needs a browser User-Agent — it 403s curl's default).
 ```
 
@@ -85,7 +85,7 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 - **Which keys write `mailwoman-tiles`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on mailwoman-tiles** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
 - **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone rather than wrangler.
-- **`mailwoman-public` ≠ `mailwoman-tiles`.** `mailwoman-public` (`public.mailwoman.ai/mailwoman/`, the `docs/scripts/publish-demo-assets-to-r2.py` target) hosts the demo's model/DBs/data files. The tile worker reads `mailwoman-tiles`. Don't put tiles in `mailwoman-public`.
+- **`mailwoman-public` ≠ `mailwoman-tiles`.** `mailwoman-public` (`public.mailwoman.ai/mailwoman/`, the `publish-demo-assets-to-r2.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `mailwoman-tiles`. Don't put tiles in `mailwoman-public`.
 
 ## Data state + the HI/NH situation
 

@@ -1,34 +1,17 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The national Overture rooftop tier: one address-point database per country, built by
- *   `mailwoman situs address-points --country <cc>` from that country's Overture addresses parquet and read here with
- *   the street locale the build keyed it under. Taiwan is the first member: the civil-affairs registers Overture
- *   carries for 15 of its 22 縣市 answer a rooftop for a `縣市 鄉鎮市區 street number` line that the admin ladder could only
- *   place at the 鄉鎮市區 centroid, or the 縣市's when the district is absent from the gazetteer.
- *
- *   The US is not a member: its Overture rows are keyed per state and served by `RegionDatabaseProvider`. The provider
- *   has the same `for(country)` shape as the BAN and OSM providers so the geocode session composes it beside them, and it
- *   is a no-op for a country with no registered locale or no database on disk.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
+import type { RegionDatabaseProvider, RegionDatabases } from "@mailwoman/core/resolver"
 import { AddressPointSqliteLookup } from "@mailwoman/resolver-wof-sqlite"
+import { addressPointDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolver-wof-sqlite/street"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
-import type { RegionDatabases } from "#geocode/regions"
-
-/**
- * Country → the street locale its national Overture extract is built and probed with. Membership is a per-register
- * decision: a country joins when its parquet has been read (which fields scope a point, how the number is written) and
- * a locale branch keys those surfaces on both sides.
- */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
-	// The Taiwanese civil-affairs registers: 縣市 + 鄉鎮市區 scope the point, no postcode, full-width digits and a
-	// trailing 號 on the number, kanji road-section numerals (`一段`).
 	["tw", "zh"],
+	["it", "it"],
+	["es", "es"],
 ])
 
 const registry = createStreetLocaleRegistry(
@@ -36,60 +19,174 @@ const registry = createStreetLocaleRegistry(
 	"Add it to COUNTRY_TO_STREET_LOCALE in national-overture.ts, with the matching branch in normalizeStreetForKeyLocale, before building its national address-point database."
 )
 
+/**
+ * Returns the street-normalization locale used to key a country's national address-point database.
+ *
+ * @throws When the country has no registered locale, since its street keys would not match at lookup time.
+ */
 export function streetLocaleForOvertureCountry(countryCode: string): StreetLocale {
 	return registry.localeFor(countryCode)
 }
 
 /**
- * The spdx expression a country's national database records in its layer manifest: Overture's theme license and the
- * source registers' own. The per-agency attribution is computed by the build from the rows it kept and stamped beside
- * it.
+ * What is known about the grant on one country's national address-point rows.
+ *
+ * Two documents can describe the same rows and disagree.
+ * Recording the stricter of them states a grant nobody established, and a stricter
+ * incorrect attribution is as incorrect as a permissive one.
+ *
+ * So an entry holds either a settled expression or the candidate readings
+ * and the evidence for each, and the build refuses to stamp an unsettled one.
  */
-const COUNTRY_TO_LICENSE = new Map<string, string>([
-	// The fifteen civil-affairs bureaus publish under the Open Government Data License, Taiwan, v1.0.
-	["tw", "CDLA-Permissive-2.0 AND OGDL-Taiwan-1.0"],
+export interface OvertureCountryLicense {
+	/**
+	 * The SPDX expression, where one document settles it.
+	 */
+	expression?: string
+	/**
+	 * The readings that remain, where more than one document describes the rows.
+	 */
+	candidates?: readonly string[]
+	/**
+	 * What each reading rests on, so a later reader does not repeat the research.
+	 */
+	evidence: readonly string[]
+	/**
+	 * The register `sources[].dataset` records, which is what any research has to be about.
+	 */
+	register: string
+}
+
+/**
+ * The grant on each country's national address-point database, which is the upstream register's alone.
+ *
+ * Overture declares no identifier for the addresses theme.
+ * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
+ * and `ODbL-1.0` for divisions, and for addresses states only that the sources carry
+ * permissive open licenses before listing the upstream register per country.
+ *
+ * An expression carrying a second Overture grant would assert a grant Overture does not make.
+ *
+ * `sources[].license` reads NULL on every row of every country here, so the identifier
+ * comes from Overture's entry for the register that `sources[].dataset` records.
+ */
+const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
+	[
+		"tw",
+		{
+			// Two documents describe the same municipal 門牌 rows and name different grants.
+			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
+			// The counsel dossier reads OGDL-Taiwan-1.0, whose attribution failure voids the
+			// grant ab initio and whose §5.2 permits an agency to withdraw data.
+			// Recording either one asserts a reading nobody has made.
+			candidates: ["CC-BY-4.0", "OGDL-Taiwan-1.0"],
+			evidence: [
+				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries",
+				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data",
+			],
+			register: "OpenAddresses/<bureau> Civil Affairs",
+		},
+	],
+	[
+		"it",
+		{
+			expression: "CC-BY-4.0",
+			evidence: ["Overture attribution page, Italy entry: ANNCSU under CC BY 4.0"],
+			register: "OpenAddresses/Istat e dall'Agenzia delle Entrate",
+		},
+	],
+	[
+		"es",
+		{
+			expression: "CC-BY-4.0",
+			// CartoCiudad, an IGN/CNIG product within the Sistema Cartográfico Nacional.
+			// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
+			evidence: [
+				"Overture attribution page, Spain entry: scne.es under CC BY 4.0",
+				"IGN license PDF, which the CNIG product page and Overture both link",
+			],
+			register: "OpenAddresses/scne.es",
+		},
+	],
 ])
 
-export function licenseForOvertureCountry(countryCode: string): string {
-	const license = COUNTRY_TO_LICENSE.get(countryCode.toLowerCase())
+/**
+ * Returns what is known about a country's grant, or `undefined` for a country with no entry.
+ *
+ * A caller that needs to reason about an unsettled grant reads this.
+ * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
+ * which refuses one that is unsettled.
+ */
+export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | undefined {
+	return COUNTRY_LICENSES.get(countryCode.toLowerCase())
+}
 
-	if (!license) {
+/**
+ * Returns the SPDX license expression a country's national address-point database is published under.
+ *
+ * @throws When the country has no entry, or when its entry holds candidate readings
+ * rather than a settled expression.
+ * A build that stamped a candidate would record a grant nobody established,
+ * and the artifact would carry that claim for as long as it exists.
+ */
+export function licenseForOvertureCountry(countryCode: string): string {
+	const entry = overtureCountryLicense(countryCode)
+
+	if (!entry) {
 		throw new Error(
-			`No license expression registered for country "${countryCode}". Add it to COUNTRY_TO_LICENSE in national-overture.ts.`
+			`No license registered for country "${countryCode}". Add it to COUNTRY_LICENSES in national-overture.ts.`
 		)
 	}
 
-	return license
+	if (!entry.expression) {
+		const candidates = entry.candidates?.join(" or ") ?? "none recorded"
+
+		throw new Error(
+			`The grant on ${countryCode}'s ${entry.register} rows is unsettled: ${candidates}. ` +
+				`Evidence: ${entry.evidence.join("; ")}. ` +
+				`Stamping either candidate would record a grant nobody established, so this build stops. ` +
+				`Settle it and give the entry an \`expression\` in COUNTRY_LICENSES.`
+		)
+	}
+
+	return entry.expression
 }
 
+/**
+ * Lists the lowercase country codes that have a registered national Overture address-point locale.
+ */
 export function supportedOvertureCountries(): string[] {
 	return registry.supported()
 }
 
 /**
- * Where a country's national address-point database lives: beside the US per-state databases, since both are Overture
- * addresses keyed by the shared schema.
+ * Returns the path of a country's national address-point database, in the same
+ * directory `selectAddressPointsDB` reads.
+ *
+ * The provider treats a missing file as no rooftop tier, so a path anywhere
+ * else would hide an existing database.
  */
-export function nationalAddressPointsPath(dataRoot: string, countryCode: string): string {
-	return join(dataRoot, "address-points", `address-points-${countryCode.toLowerCase()}.db`)
+export function nationalAddressPointsPath(dataRoot: PathBuilderLike, countryCode: string): string {
+	return addressPointDatabaseRoot(dataRoot)(`address-points-${countryCode.toLowerCase()}.db`).toString()
 }
 
 /**
- * Opens and caches the national Overture rooftop lookups by country. `warm` probes the disk once for every registered
- * country so `for` never touches the filesystem. prefer {@link OvertureNationalDatabaseProvider.create}, which warms
- * before answering.
+ * Opens and caches national Overture rooftop lookups by country.
+ *
+ * Use {@link OvertureNationalDatabaseProvider.create}, because `for` answers
+ * only from what `warm` found on disk.
  */
-export class OvertureNationalDatabaseProvider implements Disposable {
-	readonly #dataRoot: string
+export class OvertureNationalDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
+	readonly #dataRoot: PathBuilderLike
 	readonly #cache = new Map<string, RegionDatabases>()
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
 
-	constructor(dataRoot: string) {
+	constructor(dataRoot: PathBuilderLike) {
 		this.#dataRoot = dataRoot
 	}
 
-	static async create(dataRoot: string): Promise<OvertureNationalDatabaseProvider> {
+	static async create(dataRoot: PathBuilderLike): Promise<OvertureNationalDatabaseProvider> {
 		const provider = new OvertureNationalDatabaseProvider(dataRoot)
 
 		await provider.warm()
@@ -110,8 +207,8 @@ export class OvertureNationalDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * The rooftop lookup for an ISO-3166 alpha-2 country, or `{}` when the country has no registered locale or no
-	 * database on disk.
+	 * Returns the rooftop lookup for an ISO 3166-1 alpha-2 country, or `{}`
+	 * when the country is unsupported or its database is not on disk.
 	 */
 	readonly for = (country: string): RegionDatabases => {
 		const cc = country.toLowerCase()

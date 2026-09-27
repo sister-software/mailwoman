@@ -1,24 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman gazetteer postal-city` — build the postal-city candidate side-index (#741 / #475) into
- *   a candidate gazetteer so the candidate-backend resolver (the demo/CLI default) can resolve a
- *   user-typed postal city to its geographic locality. Adds one table,
- *   `postal_city_candidate(name_key, postcode → spr_id, …)`, keyed exactly by `(name_key,
- *   postcode)`.
- *
- *   Bridge (no admin-DB join): for each divergent `(postcode, postal_city)` in the alias DB, the
- *   `postcode_locality` database gives the postcode's containing `locality_id`; that locality's
- *   coordinate and name come straight from the candidate table's own row for that `spr_id`. So a
- *   postal-city query with the postcode resolves to exactly the geographic locality the FTS
- *   coordinate-first path would pick — but via one exact probe, no population/region ranking.
- *
- *   Idempotent: drops + recreates the table each run. Modifies the candidate DB IN place — run it on
- *   a copy to validate, then fold it into the canonical candidate build before republish. Progress
- *   streams to stderr. the final summary is on stdout.
- */
-
 import { allRows } from "@mailwoman/core/utils"
 import type { PostalCityCandidateDatabase } from "@mailwoman/resolver-wof-sqlite"
 import { Box, Text } from "ink"
@@ -26,7 +8,11 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer postal-city`, which adds the `postal_city_candidate`
+ * table to a candidate database so that the resolver can map a postal city
+ * and postcode to the geographic locality.
+ *
+ * The command modifies the candidate database in place and drops and recreates the table on each run.
  */
 export const spec = {
 	name: "postal-city",
@@ -41,12 +27,12 @@ export const spec = {
 const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 		const candidateDB = options.candidateDB
 
-		const aliasDB = options.aliasDB ?? dataRootPath("wof", "postal-city-alias-us.db")
-		const postcodeLocalityDB = options.postcodeLocalityDB ?? dataRootPath("wof", "postcode-locality-us.db")
+		const aliasDB = options.aliasDB ?? wofDatabasePath("postal-city-alias-us.db")
+		const postcodeLocalityDB = options.postcodeLocalityDB ?? wofDatabasePath("postcode-locality-us.db")
 
 		const { createPostalCityCandidateTable, POSTAL_CITY_CANDIDATE_COLUMNS, POSTAL_CITY_CANDIDATE_TABLE } =
 			await import("@mailwoman/resolver-wof-sqlite")
@@ -55,7 +41,6 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 
 		using db = new DatabaseClient<PostalCityCandidateDatabase>(candidateDB)
 
-		// postcode → containing locality_id (the geo-locality the postcode sits in).
 		console.error(`▸ loading postcode → locality from ${postcodeLocalityDB}`)
 
 		using pcl = new DatabaseClient<PostalCityCandidateDatabase>(postcodeLocalityDB, { readOnly: true })
@@ -64,13 +49,13 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 		for (const r of allRows<{ postcode: string; locality_id: number }>(
 			pcl.prepare("SELECT postcode, locality_id FROM postcode_locality WHERE is_containing = 1")
 		)) {
-			// First containing locality per postcode wins (postcodes with one containing polygon — the norm).
+			// Most postcodes have one containing locality, so the first row wins.
 			if (!pcToLocality.has(String(r.postcode))) {
 				pcToLocality.set(String(r.postcode), Number(r.locality_id))
 			}
 		}
 
-		// spr_id → {name, lat, lon} from the candidate table's own rows (the coord bridge).
+		// The candidate table supplies each locality's name and coordinates, so no admin-DB join is needed.
 		console.error(`▸ loading candidate coordinates from ${candidateDB}`)
 
 		const sprToPlace = new Map<number, { name: string; lat: number; lon: number }>()
@@ -83,7 +68,6 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 			}
 		}
 
-		// Divergent postal-city edges.
 		console.error(`▸ loading divergent postal-city edges from ${aliasDB}`)
 
 		using alias = new DatabaseClient<PostalCityCandidateDatabase>(aliasDB, { readOnly: true })
@@ -92,8 +76,8 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 			alias.prepare("SELECT postcode, postal_city FROM postal_city_alias WHERE divergent = 1")
 		)
 
-		// DDL via the Kysely schema-builder (the house idiom); the hot insert loop below stays on the
-		// raw `node:sqlite` handle for speed. `db` wraps `db` — the two share the one connection.
+		// Schema changes use the Kysely builder, while the insert loop uses a prepared
+		// statement on the same connection for speed.
 		await db.schema.dropTable(POSTAL_CITY_CANDIDATE_TABLE).ifExists().execute()
 		await createPostalCityCandidateTable(db)
 
@@ -135,8 +119,6 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 		db.exec("COMMIT")
 		await db.schema.createIndex("idx_pcc_spr").ifNotExists().on(POSTAL_CITY_CANDIDATE_TABLE).column("spr_id").execute()
 
-		// closes the underlying `db` handle
-
 		const summary = [
 			`postal_city_candidate built → ${candidateDB}`,
 			`${inserted.toLocaleString()} edges inserted`,
@@ -162,7 +144,7 @@ const GazetteerPostalCity: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerPostalCity

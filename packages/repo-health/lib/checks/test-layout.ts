@@ -19,16 +19,20 @@ const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const vitestSuites = new Set(["full", "integration", "unit"])
 const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 /**
- * A workspace that carries a `playwright.config.ts` runs Playwright suites too, and those live beside the vitest ones:
- * `browser` for page specs, `build` for a build-health project, `e2e` for the fixtures they share. Vitest's root
- * configs exclude those directories, so the two runners never collect each other's files.
+ * A workspace that carries a `playwright.config.ts` runs Playwright suites too,
+ * and those live beside the vitest ones: `browser` for page specs, `build` for a
+ * build-health project, `e2e` for the fixtures they share.
+ *
+ * Vitest's root configs exclude those directories, so the two runners never collect each other's files.
  */
 const playwrightSuites = new Set([...vitestSuites, "browser", "build", "e2e"])
 
 /**
- * The `test-interface` check: one error per test file outside its workspace's declared test layout and per relative
- * import a test makes. Corpus tests live next to their modules under `lib/`; other workspaces use
- * `test/{unit,integration,full}/`.
+ * The `test-interface` check: one error per test file outside its workspace's
+ * declared test layout and per relative import a test makes.
+ *
+ * Corpus tests live next to their modules under `lib/`; other workspaces
+ * use `test/{unit,integration,full}/`.
  */
 export const testLayoutCheck: RepoCheck = {
 	id: "test-interface",
@@ -68,10 +72,12 @@ export const testLayoutCheck: RepoCheck = {
 				const sourceText = await readLocalTextFile(filePath)
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
-				// Type-only specifiers count here: tests are consumers of the package interface, types included. A relative
-				// specifier that stays inside `test/` names a test helper, which has no interface to bypass. one that leaves
-				// `test/` reaches the package's source by location, and the `#` map is refused in tests by
-				// `mailwoman/no-private-import-in-test`, so the module needs an `exports` entry instead.
+				// Type-only specifiers count here: tests are consumers of the package interface, types included.
+				// A relative specifier that stays inside `test/` names a test helper,
+				// which has no interface to bypass.
+				// One that leaves `test/` reaches the package's source by location,
+				// and the `#` map is refused in tests by `mailwoman/no-private-import-in-test`,
+				// so the module needs an `exports` entry instead.
 				const testRoot = resolvePath(workspaceRoot, "test")
 
 				for (const specifier of moduleSpecifiers(sourceFile, { includeTypeOnly: true })) {

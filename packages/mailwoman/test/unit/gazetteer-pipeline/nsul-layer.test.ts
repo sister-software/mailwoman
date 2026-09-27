@@ -41,7 +41,7 @@ import {
 	type NSULRegion,
 	type NSULRegionSource,
 } from "mailwoman/gazetteer-pipeline/nsul-layer"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -152,8 +152,9 @@ describe("nsulAttribution", () => {
 })
 
 /**
- * The fixture `uprn.db`: three points. uprn 5 is deliberately absent so a register row naming it becomes
- * `skipped-no-coordinate`.
+ * The fixture `uprn.db`: three points.
+ *
+ * Uprn 5 is deliberately absent so a register row naming it becomes `skipped-no-coordinate`.
  */
 const UPRN_POINTS = [
 	{ uprn: 14_000_003, lat: 51.3742681, lon: -0.8682259 },
@@ -161,8 +162,8 @@ const UPRN_POINTS = [
 	{ uprn: 100_062_353_961, lat: 50.7876, lon: -0.6717 },
 ]
 
-async function writeFixtureUPRNDatabase(dir: string): Promise<string> {
-	const path = join(dir, "uprn.db")
+async function writeFixtureUPRNDatabase(dir: PathBuilder): Promise<PathBuilder> {
+	const path = dir("uprn.db")
 
 	using kdb = new DatabaseClient<UPRNDatabase>(path)
 
@@ -198,23 +199,24 @@ async function writeFixtureUPRNDatabase(dir: string): Promise<string> {
 }
 
 /**
- * Eleven region files in the wild file's exact shape — BOM-prefixed header, crlf terminators — with the rows spread
- * over two regions and the other nine header-only, so the region-set check and the per-region counts are exercised.
+ * Eleven region files in the wild file's exact shape — BOM-prefixed header,
+ * crlf terminators — with the rows spread over two regions and the other nine header-only,
+ * so the region-set check and the per-region counts are exercised.
  */
 async function writeFixtureRegions(
-	dir: string,
+	dir: PathBuilder,
 	rowsByRegion: Partial<Record<NSULRegion, string[]>>,
 	header: string = NSUL_HEADER
 ): Promise<NSULRegionSource[]> {
 	const sources: NSULRegionSource[] = []
 
 	for (const region of NSUL_REGIONS) {
-		const path = join(dir, `NSUL_E127_JUN_2026_${region}.csv`)
+		const path = dir(`NSUL_E127_JUN_2026_${region}.csv`)
 		const rows = rowsByRegion[region] ?? []
 
 		await writeLocalTextFile(`${BOM}${[header, ...rows].join("\r\n")}\r\n`, path)
 
-		sources.push({ region, label: path, lines: () => TextSpliterator.fromAsync(path) })
+		sources.push({ region, label: path.toString(), lines: () => TextSpliterator.fromAsync(path) })
 	}
 
 	return sources
@@ -224,7 +226,7 @@ const VINTAGE = { epoch: 127, month: "2026-06", monthName: "June", year: 2026 }
 
 describe("buildNSULLayer (fixture)", () => {
 	it("joins the register to uprn.db, counts both skipped classes, and seals a layer the reader answers from", async () => {
-		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path.toString()
+		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path
 		const uprnDatabasePath = await writeFixtureUPRNDatabase(dir)
 
 		const regions = await writeFixtureRegions(dir, {
@@ -239,7 +241,7 @@ describe("buildNSULLayer (fixture)", () => {
 			LN: [line(5, "SW1A 1AA")],
 		})
 
-		const out = join(dir, "nsul.db")
+		const out = dir("nsul.db")
 
 		const result = await buildNSULLayer({
 			sourceDir: dir,
@@ -300,7 +302,8 @@ describe("buildNSULLayer (fixture)", () => {
 		expect(manifest.sourceVintage).toBe("2026-06 (Epoch 127)")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })
 
-		// Coverage: the res-6 parent of a written point is designated-complete. an unsurveyed cell is unknown.
+		// Coverage: the res-6 parent of a written point is designated-complete.
+		// An unsurveyed cell is unknown.
 		const parent = shortCellToInt(
 			cellToParent(uprnFullCell(UPRN_POINTS[0]!.lat, UPRN_POINTS[0]!.lon), NSUL_COVERAGE_H3_RESOLUTION) as H3Cell
 		)
@@ -314,14 +317,14 @@ describe("buildNSULLayer (fixture)", () => {
 	})
 
 	it("fails loudly on header drift in any region file", async () => {
-		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path.toString()
+		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path
 		const uprnDatabasePath = await writeFixtureUPRNDatabase(dir)
 		const regions = await writeFixtureRegions(dir, {}, "UPRN,GRIDGB1E,GRIDGB1N,PCD,OA21CD")
 
 		await expect(
 			buildNSULLayer({
 				sourceDir: dir,
-				out: join(dir, "nsul.db"),
+				out: dir("nsul.db"),
 				uprnDatabasePath,
 				sources: { vintage: VINTAGE, regions },
 				buildSHA: "fixture",
@@ -331,7 +334,7 @@ describe("buildNSULLayer (fixture)", () => {
 	})
 
 	it("reports a malformed row, a duplicate and an under-floor count as mismatches, not silence", async () => {
-		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path.toString()
+		const dir = fixtures.use(await temporaryDirectory("nsul-build-")).path
 		const uprnDatabasePath = await writeFixtureUPRNDatabase(dir)
 
 		const regions = await writeFixtureRegions(dir, {
@@ -340,7 +343,7 @@ describe("buildNSULLayer (fixture)", () => {
 
 		const result = await buildNSULLayer({
 			sourceDir: dir,
-			out: join(dir, "nsul.db"),
+			out: dir("nsul.db"),
 			uprnDatabasePath,
 			sources: { vintage: VINTAGE, regions },
 			buildSHA: "fixture",

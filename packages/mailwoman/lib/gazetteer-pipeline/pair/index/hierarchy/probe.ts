@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index (static-index
- *   survey candidate #3. design: `docs/superpowers/plans/2026-07-26-pair-index-hierarchy-design.md`).
+ *   probe builder — WOF-hierarchy generalization of the PIX1 placetype-pair index.
  *   Extracts per-country (locality, region) pairs from the WOF admin DB's `ancestors` table and
- *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/wof/pair-index-hierarchy-probe/`.
+ *   writes one PIX1 binary per country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *
  *   Lives in the gazetteer pipeline (the sanctioned home for builders — scripts/agents.md's closed
  *   drawer) but is not yet behind a `mailwoman gazetteer` command: it's a probe, runnable directly
@@ -17,7 +16,7 @@
  *   inert:
  *
  *   1. `delta: 0` — the soft-prior bias magnitude is zero, so even a loaded probe artifact biases
- *      nothing (the calibration task owns any real value).
+ *      no token (the calibration task owns any real value).
  *   2. The filename (`pair-index-locality-region-<cc>.bin`) does not match the loader's auto-wire
  *      pattern (`pair-index-<cc>.bin` as a weights-package sibling).
  *   3. The output lives under the data root rather than in any `neural-weights-*` workspace.
@@ -50,7 +49,6 @@
  *   Run: `node mailwoman/gazetteer-pipeline/pair-index-hierarchy-probe.ts [--countries us,fr] [--db <path>] [--out <dir>] [--skip-source-md5]`
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { movePath, writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { md5File } from "@mailwoman/core/hash"
@@ -64,9 +62,11 @@ import {
 	type PairIndexEntry,
 	type PairIndexHeaderInput,
 } from "@mailwoman/neural/pair"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { basename, join, resolvePath } from "path-ts"
+import { basename, PathBuilder, resolvePath } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 /**
  * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
@@ -76,15 +76,20 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 	dbPath: string
 } {
 	return {
-		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
-		dbPath: String(resolvePath(values.db ?? dataRootPath("wof", "admin-global-priority.db"))),
+		countries: TextSpliterator.from(values.countries ?? "us,fr", { delimiter: "," })
+			.map((c) => c.toLowerCase())
+			.toArray(),
+		dbPath: resolvePath(values.db ?? wofDatabasePath("admin-global-priority.db")),
 	}
 }
 
 /**
- * The (locality, region) edge spec per country — ComponentTag space on the artifact side, WOF placetype space on the
- * extraction side. FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine") and WOF
- * `macroregion` (régions: "Bretagne") — either surface is a region-tagged parent in a French address.
+ * The (locality, region) edge spec per country — ComponentTag space on the artifact side,
+ * WOF placetype space on the extraction side.
+ *
+ * FR's `region` ComponentTag covers both WOF `region` (départements: "Ille-et-Vilaine")
+ * and WOF `macroregion` (régions: "Bretagne").
+ * Either surface is a region-tagged parent in a French address.
  */
 export const EDGE_SPEC_BY_COUNTRY: Readonly<
 	Record<string, { childWOFPlacetypes: string[]; parentWOFPlacetypes: string[] }>
@@ -94,9 +99,10 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 }
 
 /**
- * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's names against a fresh
- * index prints reassuring `probe miss` lines that verify nothing). Raw surfaces — folded through `normalizeFSTToken` at
- * probe time, exactly like a decode-time caller would.
+ * Post-write self-check probes, PER country (the pair-index.tsx lesson: probing another country's
+ * names against a fresh index prints reassuring `probe miss` lines that verify no name).
+ *
+ * Raw surfaces — folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [child: string, parent: string]>>> = {
 	us: [
@@ -116,7 +122,7 @@ const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [ch
  */
 export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	/**
-	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit. parent is context).
+	 * The hierarchy edge in ComponentTag space (child resolves to `edge.child` on a hit. Parent is context).
 	 */
 	edge: { child: "locality"; parent: "region" }
 	/**
@@ -198,7 +204,7 @@ async function main(): Promise<void> {
 	})
 
 	const { countries, dbPath } = resolveHierarchyRunInputs(values)
-	const outDir = resolvePath(values.out ?? dataRootPath("wof", "pair-index-hierarchy-probe"))
+	const outDir = PathBuilder.from(values.out ?? wofDatabasePath("pair-index-hierarchy-probe"))
 
 	if (!(await pathExists(dbPath))) {
 		throw new Error(`pair-index-hierarchy-probe: WOF admin DB not found: ${dbPath}`)
@@ -206,8 +212,9 @@ async function main(): Promise<void> {
 
 	await makeDirectories(outDir)
 
-	// read-only on the admin DB — this module must never write to it.
-	await using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
+	// read-only on the admin DB.
+	// This module must never write to it.
+	using db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 
 	const sourceMD5 = values["skip-source-md5"] ? "(skipped)" : await md5File(dbPath)
 
@@ -224,8 +231,8 @@ async function main(): Promise<void> {
 		const childPlaceholder = spec.childWOFPlacetypes.map(() => "?").join(",")
 		const parentPlaceholder = spec.parentWOFPlacetypes.map(() => "?").join(",")
 
-		// Phase 1: id-level edges — child place under parent place, self-edges excluded, both endpoints
-		// current + non-deprecated.
+		// Phase 1: id-level edges — child place under parent place, self-edges excluded,
+		// both endpoints current + non-deprecated.
 		const edgeRows = allRows<EdgeRow>(
 			db.prepare(
 				`SELECT DISTINCT s.id AS child_id, a.ancestor_id AS parent_id
@@ -240,16 +247,19 @@ async function main(): Promise<void> {
 			...spec.childWOFPlacetypes
 		)
 
-		// Phase 2: surfaces. Country-scoping the parent side is sound — every ancestor of a US locality
-		// is itself US. a parent outside the scope would simply have no surfaces and the edge is skipped.
+		// Phase 2: surfaces.
+		// Country-scoping the parent side is sound.
+		// Every ancestor of a US locality is itself US.
+		// A parent outside the scope would simply have no surfaces and the edge is skipped.
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 
-		// Phase 3: fold + dedupe into PIX1 entries. Tag = the child's ComponentTag — what a decode hit
-		// resolves the child span to. `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows
-		// from its own edge declaration rather than from the row: `edge.parent` below is `region`, and both
-		// WOF parent placetypes this spec selects (`region`, FR's `macroregion`) project onto that one
-		// ComponentTag — a département and a région are alike region-tagged surfaces in a French address,
+		// Phase 3: fold + dedupe into PIX1 entries.
+		// Tag = the child's ComponentTag — what a decode hit resolves the child span to.
+		// `parentTag` (PIX2 / schema 3) = the parent's, which this builder knows from its own edge
+		// declaration rather than from the row: `edge.parent` below is `region`, and both WOF parent
+		// placetypes this spec selects (`region`, FR's `macroregion`) project onto that one ComponentTag.
+		// A département and a région are alike region-tagged surfaces in a French address,
 		// which is exactly why the spec pairs them.
 		const seen = new Map<string, PairIndexEntry>()
 		let surfacePairs = 0
@@ -274,8 +284,8 @@ async function main(): Promise<void> {
 						continue
 					}
 
-					// Length-prefixed key (mirrors pair-index-resolver.ts's pairKey): folded names can
-					// contain spaces, so a plain delimiter could collide two distinct splits.
+					// Length-prefixed key (mirrors pair-index-resolver.ts's pairKey): folded names
+					// can contain spaces, so a plain delimiter could collide two distinct splits.
 					const key = `${child.length}:${child}:${parent}`
 
 					if (!seen.has(key)) {
@@ -289,8 +299,8 @@ async function main(): Promise<void> {
 
 		const header: HierarchyPairIndexHeader = {
 			country,
-			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases
-			// nothing. The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
+			// Uncalibrated probe — zero on purpose: even an accidentally-wired probe artifact biases no token.
+			// The calibration task owns any real value (the pair-index.tsx `--delta` discipline).
 			delta: 0,
 			foldVersion: 1,
 			sourceMD5s: [sourceMD5],
@@ -308,11 +318,11 @@ async function main(): Promise<void> {
 
 		const bytes = serializePairIndex(header, entries)
 		const outName = `pair-index-locality-region-${country}.bin`
-		const outPath = join(outDir, outName)
-		const tmpPath = join(outDir, `.tmp-${outName}`)
+		const outPath = outDir(outName)
+		const tmpPath = outDir(`.tmp-${outName}`)
 
-		// Temp-write + rename: the artifact is never observable half-written (agents.md sealed-artifact
-		// discipline, applied to a flat binary).
+		// Temp-write + rename: the artifact is never observable half-written
+		// (agents.md sealed-artifact discipline, applied to a flat binary).
 		await writeLocalFile(bytes, tmpPath)
 		await movePath(tmpPath, outPath)
 

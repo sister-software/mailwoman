@@ -2,37 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The canonical-form invariance law: a query that arrives decomposed must answer the same as the composed
- *   query it is canonically equivalent to. Pure — no model, no I/O beyond reading the committed suite.
- *
- *   why IT is A product commitment. `é` has two spellings the Unicode standard declares equal: one code point
- *   (`U+00E9`) and two (`e` + `U+0301`). Which one reaches the pipeline is decided by the tool that produced
- *   the text, never by the person who typed it. A macOS filesystem API hands back decomposed text, a Korean
- *   or Vietnamese input method can emit either, a form post carries whatever the browser was given, and most
- *   databases and the web platform emit composed. `Köln` and `Köln` are the same city and different bytes,
- *   and a pipeline that resolves one and not the other has failed an input its own users cannot see.
- *
- *   canonical rather than compatibility. {@linkcode canonicalFormKey} is `NFD`, which is UAX #15's own definition of
- *   canonical equivalence: two strings are canonically equivalent exactly when their decompositions match. So
- *   the key refuses, by construction, every relation this law is not — `ﬁ` against `fi` and `Ⅻ` against `XII`
- *   are compatibility pairs and move the key, an accent removed moves the key, and a case change moves it too.
- *   Those are other laws or no law at all, and none of them can enter this one wearing its name.
- *
- *   the corpus states one direction. Every committed board row is already written in NFC — 83 of 651 rows
- *   carry a canonically variant code point at all, and all 83 of those are composed — so the decompose arm is
- *   stateable everywhere and the compose arm nowhere. That is reported rather than inferred: the register's
- *   coverage line prints transformed rows over eligible rows on every run, because a suite that states one
- *   arm and declares two would otherwise imply a breadth it never exercised.
- *
- *   the variant is derived, never authored. Every committed row's `variant` is exactly the named
- *   transformation applied to its `base`, and {@linkcode auditCanonicalFormSuite} re-derives it. A hand-typed
- *   variant is how a canonical-form row quietly acquires a dropped accent, and the law then measures
- *   something else under its own name.
- *
- *   stage 1 owns this, which is the reason TO measure IT and not the reason TO skip IT. `@mailwoman/normalize`
- *   composes to NFC before anything downstream sees the text, so both forms should converge before the
- *   tokenizer runs. "Should converge" is a claim about code. a divergence here is that claim failing, and the
- *   first place to look is whichever stage received the two forms still distinct.
+ *   Canonical-form invariance suite, which asserts that NFC and NFD spellings of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -47,29 +17,20 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * The law name every row in this suite carries.
+ * Law identifier that every suite row carries.
  */
 export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 
 /**
- * The two canonical normalization forms this law states, and the only two a committed row may name.
- *
- * - `nfd` — canonical decomposition: every composed character split into its base plus its combining marks, and every
- *   Hangul syllable split into jamo. The register a macOS filesystem API, some input methods and some text pipelines
- *   produce.
- * - `nfc` — canonical composition: the inverse, and the form the web platform, most databases and this pipeline's own
- *   Stage 1 emit.
- *
- * Compatibility normalization (`nfkc` / `nfkd`) is deliberately absent. It rewrites characters that are not canonically
- * equal — `ﬁ` to `fi`, `Ⅻ` to `XII`, a full-width digit to an ascii one — so a pair related by it is not a pair this
- * law can state, and {@linkcode canonicalFormKey} refuses it.
+ * Named canonical normalization forms.
+ * The suite excludes the compatibility forms NFKC and NFKD.
  */
 export const CANONICAL_FORMS = ["nfd", "nfc"] as const
 
 export type CanonicalFormName = (typeof CANONICAL_FORMS)[number]
 
 /**
- * The transformation each name applies. Pure, total, and the source the suite's variants are re-derived from.
+ * Implementation of each named transformation.
  */
 export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: string) => string> = {
 	nfd: (text) => text.normalize("NFD"),
@@ -77,40 +38,33 @@ export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: 
 }
 
 /**
- * The canonical identity of a string — equal keys mean the two are canonically equivalent, which is the whole of what
- * this law claims about a pair.
+ * Returns the NFD form.
  *
- * `NFD` rather than `NFC` because UAX #15 defines canonical equivalence on the decomposition, and the two agree on the
- * question anyway: what matters is that the key is a canonical form, so a compatibility difference, a removed accent, a
- * case change and a spacing change all move it.
+ * Two strings are canonically equivalent when their keys are equal.
  */
 export function canonicalFormKey(text: string): string {
 	return text.normalize("NFD")
 }
 
 /**
- * Does this text hold anything a canonical transformation can act on?
- *
- * True exactly when the two forms differ, which is the eligibility rule the whole law rests on: a query of ascii, or of
- * a script with no composed characters, is byte-identical under both forms and can state nothing.
+ * Reports whether the NFC and NFD forms of the text differ.
  */
 export function canonicallyVariant(text: string): boolean {
 	return text.normalize("NFC") !== text.normalize("NFD")
 }
 
 /**
- * The three states a query's own text can be in with respect to the canonical forms.
+ * Canonical form that a string is written in.
  *
- * `mixed` is a real state and not a bookkeeping leftover: a string assembled from two sources can carry a composed `é`
- * beside a decomposed one and then neither form while being canonically equivalent to both. A text that is not
- * {@linkcode canonicallyVariant} reads `nfc`, because it is — both forms are the same bytes.
+ * The value `mixed` means the string is in neither NFC nor NFD.
  */
 export const CANONICAL_FORM_STATES = ["nfc", "nfd", "mixed"] as const
 
 export type CanonicalFormState = (typeof CANONICAL_FORM_STATES)[number]
 
 /**
- * Which form `text` is already written in.
+ * Returns the canonical form that the text is written in.
+ * Text with no decomposable character reports `nfc`.
  */
 export function canonicalFormState(text: string): CanonicalFormState {
 	if (text === text.normalize("NFC")) return "nfc"
@@ -121,10 +75,7 @@ export function canonicalFormState(text: string): CanonicalFormState {
 }
 
 /**
- * Which named transformation turns `base` into `variant`, or `null` when none does.
- *
- * Derived from the pair rather than stored on the fixture: a stored transformation name is a second copy of something
- * the two strings already say, and the copy is what goes stale.
+ * Returns the named form that maps `base` to `variant`, or `null` when neither form does.
  */
 export function classifyCanonicalTransformation(base: string, variant: string): CanonicalFormName | null {
 	if (base === variant || canonicalFormKey(base) !== canonicalFormKey(variant)) return null
@@ -137,40 +88,30 @@ export function classifyCanonicalTransformation(base: string, variant: string): 
 }
 
 /**
- * The declared reasons a canonical transformation is not stateable over a given row.
+ * Rules that exclude a transformation.
  *
- * - `no-canonical-variance` — the query's two canonical forms are the same bytes, so neither arm moves anything. Plain
- *   ascii, and every script whose characters carry no canonical decomposition, land here. Such a row is the identity
- *   law wearing a canonical-form label, and its holding would be counted as evidence that the forms are handled.
- * - `already-in-target-form` — the query is canonically variant, and it is already written in the form this arm composes
- *   or decomposes toward, so this arm alone is the identity while its sibling states the law. Reported apart from the
- *   first reading because "this query has nothing to decompose" and "this query is already decomposed" are different
- *   absences, and the second one says which direction the row does state.
+ * The first applies when the text has identical NFC and NFD forms.
+ * The second applies when the text is already in the target form.
  */
 export const CANONICAL_APPLICABILITY_RULES = ["no-canonical-variance", "already-in-target-form"] as const
 
 export type CanonicalApplicabilityRule = (typeof CANONICAL_APPLICABILITY_RULES)[number]
 
 /**
- * One applicability reading: whether the transformation may be stated as a law for this text, and why.
- *
- * The reason is populated on both verdicts, for the same reason the three shipped laws populate it on both — a row
- * silently dropped from a law suite is the absence this layer exists to refuse.
+ * Whether a form applies to a text, with an explanation.
  */
 export interface CanonicalApplicability {
 	applicable: boolean
 	/**
-	 * The rule that excluded it. Absent when `applicable`.
+	 * Rule that excluded the form.
+	 * It is absent when `applicable` is true.
 	 */
 	rule?: CanonicalApplicabilityRule
 	reason: string
 }
 
 /**
- * May `form` be stated as a canonical-form law over `text`?
- *
- * The variance rule is read first: a text with no canonical variance could never have stated either arm, and that
- * reading is more useful than one naming the direction it is already in.
+ * Checks whether normalizing the text to `form` changes it.
  */
 export function canonicalApplicability(text: string, form: CanonicalFormName): CanonicalApplicability {
 	if (!canonicallyVariant(text)) {
@@ -198,10 +139,7 @@ export function canonicalApplicability(text: string, form: CanonicalFormName): C
 }
 
 /**
- * The committed suite.
- *
- * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
- * rather than from where this module runs.
+ * Path to the committed canonical-form suite.
  */
 export const NFC_NFD_SUITE_PATH: string = resolvePackagePath(
 	"mailwoman",
@@ -212,41 +150,29 @@ export const NFC_NFD_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * How much of the population this law actually transformed.
- *
- * Every field is a count of committed rows rather than of law arms, because the question the tradeoff asks is how much
- * of the corpus the suite reached, and a row carrying two arms would otherwise read as twice the coverage.
+ * Counts that compare the suite against a corpus.
  */
 export interface CanonicalFormCoverage {
 	/**
-	 * Committed board rows read.
+	 * Number of corpus inputs read.
 	 */
 	read: number
 	/**
-	 * Of those, rows whose text is canonically variant — the only rows this law can be stated over at all.
+	 * Number of inputs whose NFC and NFD forms differ.
 	 */
 	eligible: number
 	/**
-	 * Of the eligible rows, how many this suite states a byte-distinct arm over.
-	 *
-	 * Counted by the committed row a fixture names, which is what makes the ratio a ratio: the denominator counts rows,
-	 * two rows can carry the same query text, and one row can carry several arms. Keying on the text would report the
-	 * first pair as one and keying on the fixture would report the second as several.
+	 * Number of distinct source rows among fixtures whose variant differs from the base.
 	 */
 	transformed: number
 	/**
-	 * The eligible rows counted by the form they are already written in. This is the number that says which arms the
-	 * corpus can state: a population that is entirely NFC can state the decompose arm and nothing else.
+	 * Eligible inputs grouped by the canonical form they are written in.
 	 */
 	eligibleByState: Record<CanonicalFormState, number>
 }
 
 /**
- * Measure this suite against the population it draws from.
- *
- * `corpusInputs` is every committed board row's query text. the caller supplies it rather than this module loading the
- * corpus, so the law module stays free of the corpus loader and a caller can measure the suite against any population
- * it can name.
+ * Measures how much of the corpus the suite covers.
  */
 export function canonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -259,8 +185,7 @@ export function canonicalFormCoverage(
 		eligibleByState[canonicalFormState(input)] += 1
 	}
 
-	// A fixture with no `rowRef` names no row, so it is keyed by its own text. The audit refuses such a row, which
-	// leaves this reachable only from a hand-built fixture that skipped the loader.
+	// A hand-built fixture without a `rowRef` is identified by its base text.
 	const moved = fixtures.filter((fixture) => fixture.base !== fixture.variant)
 	const transformed = new Set(moved.map((fixture) => fixture.rowRef ?? fixture.base))
 
@@ -273,8 +198,7 @@ export function canonicalFormCoverage(
 }
 
 /**
- * The coverage line a report prints — the DoD's transformed-over-eligible ratio, with the denominator's own breakdown
- * beside it so a reader can see which arms the population is able to state.
+ * Formats the coverage counts as one line.
  */
 export function describeCanonicalFormCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -290,18 +214,9 @@ export function describeCanonicalFormCoverage(
 }
 
 /**
- * Everything that must be true of a canonical-form row, checked without running anything.
+ * Audits suite rows.
  *
- * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
- *
- * The `caseCountry` requirement is not bookkeeping: a row graded with no country routes through the base en-US weights
- * package rather than its own overlay, so a canonical-form violation would be reported for an instrument that was never
- * pointed at the row's locale.
- *
- * Applicability is not re-checked here, unlike the punctuation law's audit, because both of this law's rules are
- * subsumed by the classification: a pair that classifies at all has a base its own transformation moved, so neither
- * rule can fire on a classified pair. The rules do their work in the absent-arm reading, which asks about arms the
- * suite does not carry — a question no audit over the committed rows can pose.
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named form derives from the base.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {
@@ -331,8 +246,7 @@ export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[])
 }
 
 /**
- * The transformation label a report line carries, e.g. `nfd`. `?` when the pair does not classify — which the audit
- * refuses, so it can only appear on a hand-built fixture that skipped the loader.
+ * Returns the fixture's form name, or `?` when neither form fits.
  */
 export function describeCanonicalTransformation(fixture: ConformanceFixture): string {
 	return classifyCanonicalTransformation(fixture.base, fixture.variant) ?? "?"

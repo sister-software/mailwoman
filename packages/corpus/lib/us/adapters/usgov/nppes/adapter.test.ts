@@ -9,7 +9,7 @@ import {
 	USGOV_NPPES_ADAPTER_ID,
 	USGOV_NPPES_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/us/adapters/usgov/nppes/adapter"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -26,17 +26,18 @@ const CSV_HEADER = [
 	"Provider Second Line Business Practice Location Address",
 	"Provider Business Practice Location Address City Name",
 	"Provider Business Practice Location Address State Name",
-	"Provider Business Practice Location Address Postcode",
+	// The fixture must use the publisher's exact column name so that it matches real files.
+	"Provider Business Practice Location Address Postal Code",
 ].join(",")
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-nppes-")).path
 })
 
-function writeCSV(...lines: string[]): Promise<string> {
-	return writeDelimitedFixture(join(scratch, "test.csv"), CSV_HEADER, lines)
+function writeCSV(...lines: string[]): Promise<PathBuilder> {
+	return writeDelimitedFixture(scratch("test.csv"), CSV_HEADER, lines)
 }
 
 describe("usgov-nppes adapter", () => {
@@ -44,6 +45,26 @@ describe("usgov-nppes adapter", () => {
 		const a = createUsgovNPPESAdapter()
 		expect(a.id).toBe(USGOV_NPPES_ADAPTER_ID)
 		expect(a.defaultLicense).toBe(USGOV_NPPES_DEFAULT_LICENSE)
+	})
+
+	it("refuses a file whose practice-location column it cannot find, rather than emitting zero rows", async () => {
+		// A renamed column must raise an error that names it, instead of silently dropping every row.
+		const swept = CSV_HEADER.replace(
+			"Provider Business Practice Location Address Postal Code",
+			"Provider Business Practice Location Address Postcode"
+		)
+
+		const path = await writeDelimitedFixture(scratch("swept.csv"), swept, [
+			"1000000001,2,METRO HEALTH SYSTEM,,,1234 MAIN ST,SUITE 200,NASHVILLE,TN,37203",
+		])
+
+		const adapter = createUsgovNPPESAdapter()
+
+		await expect(async () => {
+			for await (const _row of adapter.rows({ inputPath: path })) {
+				// The adapter throws on the first record, so the loop body never runs.
+			}
+		}).rejects.toThrow(/Postal Code/)
 	})
 
 	it("emits a row for a provider organization with full address", async () => {

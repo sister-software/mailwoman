@@ -1,34 +1,27 @@
-# === v8-jp-probe — CJK Leg 1: bare char-level CharCNN on JP (the Arc-2 viability check). ===
-# from scratch (no init_from): fresh MailwomanCoarseEncoder on the Latin-substrate width (hidden 384,
-# 4 layers per the probe spec), STAGE3 33-label head, use_char_embed over the sealed JP char vocab
-# (D2), one unit per character at ctx 3 → W 7, S 96 (D1/D3/D6). No anchor/gazetteer/country/street/
-# locality channels (channel re-alignment is per-unit, post-probe), no CRF, no locale conditioning.
+# v8-jp-probe trains a bare character-level encoder on Japanese addresses from scratch.
 #
-# Corpus: v8-jp-probe (200k train / 4k val), rendered native large-to-small space-free from
-# Overture-JP 2026-06-17.0 (mlit lineage) by corpus-python/src/mailwoman_train/countries/jp/probe_corpora.py —
-# stratified per-prefecture reservoirs, compact numbers as whole-span house_number (D4), 〒 fraction
-# 0.30 joined from KEN_ALL, municipality-bucket board held out (never in train/val).
+# The model has 384 hidden units and 4 layers, embeds one unit per character with 3 neighbors on each
+# side, and uses the stage3 label head. It runs without gazetteer or anchor channels, a CRF or
+# locale conditioning.
 #
-# PRE-registered check (2026-07-18-v8-jp-char-encoder-design §d, committed before any GPU):
-#   pass = JP coordinate-acceptability >= 0.70 on the held-out municipality board (the bare-Latin
-#   substrate floor). pass → Phases 2-5 (JP-seven activation, full corpus, channels, ship).
-#   fail → the written ladder: per-tag split → boundary audit → collapse check. A fail indicts only
-#   "bare char CharCNN alone reaches the floor" — never alignment (Phase 0 retired 1,560/1,560).
-#   Leg 2 (unification bake-off, char-word vs SP on Latin) runs in the same session, checks v9 only.
+# The corpus holds 200k train and 4k val rows that `countries/jp/probe_corpora.py` rendered from
+# Overture JP. A board of held-out municipalities never appears in train or val.
+#
+# The run passes when JP coordinate acceptability on the held-out board reaches 0.70.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v8-jp-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v8-jp-probe
-  # Unused in char mode (SentencePiece is skipped entirely); kept pointing at the production
-  # tokenizer so config auditing stays uniform.
+  # Char mode skips SentencePiece. The production tokenizer path stays so that config audits read
+  # the same keys in every recipe.
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 96
   country_weights:
     JP: 1.0
   coarse_filter: false
   val_rows: 4096
-  # --- The char path (D1/D3/D6): one unit per character, window = char ± 3 neighbors. ---
+  # Each unit is one character with up to 3 neighbors on each side, so a unit is at most 7 characters wide.
   char_mode: char
   char_vocab_path: /data/corpus/versioned/v8-jp-probe/char-vocab-jp-v1.json
   char_ctx: 3

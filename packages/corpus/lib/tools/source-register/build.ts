@@ -2,26 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Derive the committed address-source register from a research pass's two CSVs.
+ * Derive the committed address-source register from a research pass's two CSVs.
  *
- *   The register is a build output of the research documents, and this module is the only thing that writes it, so
- *   re-running the research means re-running this rather than editing 639 rows by hand. See
- *   `mailwoman corpus source-register` for the invocation and `packages/corpus/data/provenance.md` for the command
- *   that produced the committed copy.
- *
- *   Two inputs, and the second one is mostly not input. The functional-authority CSV carries eight global discovery
- *   lookups repeated once per jurisdiction — a gleif index probe, a health-facility-list probe, and six more — which is
- *   2,000 of its 2,389 rows and collapses to eight distinct row bodies. Those name a lookup to perform, never a
- *   national source, so they are dropped here and written once as prose in the package readme. The remainder is the
- *   register.
- *
- *   The audit runs before the write. A register that fails it is never committed, which is the point of having one.
+ * The second input is mostly not input: the eight global discovery lookups repeat once per jurisdiction and are dropped, because they name a lookup rather than a national source.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { readCSVRecords } from "#recipes/scaffold"
 import {
@@ -47,18 +37,16 @@ import {
 import { AddressRole } from "#types"
 
 /**
- * The `origin` value the research pass gives its eight repeated discovery lookups. Every row carrying it is dropped.
+ * The `origin` value the research pass gives its eight repeated discovery lookups.
+ * Every row carrying it is dropped.
  */
 const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
 
 /**
  * Joins the two parts of the per-sector counter's key.
  *
- * A NUL would be the collision-free choice and is the wrong one here: `oxfmt` normalizes a unicode escape for it into
- * the byte itself, so the escape does not survive a format pass. A raw NUL in source is what `repo-health`'s
- * `rawNULBytes` counter exists to keep out, because a sweep that would read the line cannot see it. A solidus is safe
- * instead of merely convenient — an ISO 3166-1 code is two letters and a sector is kebab-case, so neither part can
- * contain one.
+ * A solidus is used because a NUL cannot survive a format pass, and it is safe because an ISO
+ * 3166-1 code is two letters and a sector is kebab-case, so neither part can contain one.
  */
 const KEY_SEPARATOR = "/"
 
@@ -77,10 +65,8 @@ const RESEARCH_STATE_BY_NAME: Readonly<Record<string, JurisdictionResearchState>
 }
 
 /**
- * Every `AddressRole` by its wire value, for reading the CSV's `address_role` column.
- *
- * Derived from the enum rather than written out, so a role added to `AddressRole` is readable here without a second
- * edit, and a value the CSV carries that is not a role fails the build.
+ * Every `AddressRole` by its wire value, derived from the enum so a role added to `AddressRole` is
+ * readable here without a second edit and a value the CSV carries that is not a role fails the build.
  */
 const ADDRESS_ROLE_BY_NAME: Readonly<Record<string, AddressRole>> = Object.fromEntries(
 	Object.values(AddressRole).map((role) => [role, role])
@@ -107,8 +93,10 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 }
 
 /**
- * The research pass writes a source's propositions as one string. Closed, because a spelling this does not carry is a
- * vocabulary the register has not agreed to rather than a row to guess at.
+ * The research pass writes a source's propositions as one string.
+ *
+ * The table is closed, because a spelling this does not carry is a vocabulary the
+ * register has not agreed to rather than a row to guess at.
  */
 const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["asserts"][number][]>> = {
 	"IDENTITY + OBSERVATION": ["identity", "observation"],
@@ -116,18 +104,13 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
 }
 
 /**
- * The access labels the research pass recorded, each with the id prefix and note a decision derived from it carries.
+ * The access labels the research pass recorded, each with the id prefix
+ * and note a decision derived from it carries.
  *
- * These are label kinds rather than decisions. A decision is scoped to one publisher in one jurisdiction by
- * {@link scopedLicenseID}, so the register carries one per source and an election cannot reach past the grant it was
- * made about.
- *
- * Every decision is `unchecked`, and that is a finding rather than a placeholder: the pass recorded what a register
- * costs to reach and never opened anybody's terms. `Free` is the clearest case — it says the download is free of charge
- * and licenses nothing, so treating it as permissive would admit a source on a sentence about price.
- *
- * The labels are the pass's own, carried through {@link rewriteRetiredVocabulary} so a word this repository has retired
- * does not enter a committed artifact through quoted data.
+ * A decision is scoped to one publisher in one jurisdiction by {@link scopedLicenseID},
+ * so an election cannot reach past the grant it was made about.
+ * Every decision is `unchecked`, because the pass recorded what a register costs
+ * to reach and never opened anybody's terms.
  */
 const LICENSE_DECISIONS: ReadonlyArray<readonly [statement: string, licenseID: string, note: string]> = [
 	[
@@ -183,8 +166,8 @@ const LICENSE_DECISIONS: ReadonlyArray<readonly [statement: string, licenseID: s
 /**
  * Whole notes the research pass wrote in vocabulary this repository has retired, and what each becomes.
  *
- * Each rewrite must fire at least once, so a pair left behind after the upstream text changes fails the build instead
- * of sitting here being wrong.
+ * Each rewrite must fire at least once, so a pair left behind after the upstream
+ * text changes fails the build.
  */
 const RETIRED_NOTE_REWRITES: ReadonlyArray<readonly [from: string, to: string]> = [
 	[
@@ -202,12 +185,11 @@ const RETIRED_NOTE_REWRITES: ReadonlyArray<readonly [from: string, to: string]> 
 ]
 
 /**
- * Words this repository has removed from its vocabulary, and the plain synonym each takes wherever the research pass
- * used one.
+ * Words this repository has removed from its vocabulary, and the plain synonym
+ * each takes wherever the research pass used one.
  *
- * The substitution runs over every string this build emits, because `repo-health`'s `bannedVocabulary` counter reads
- * every tracked text file and a committed JSON artifact is one. Quoting somebody else's prose is not an exemption: the
- * word is removed because it stands for several different things here, and it reads no better inside a quotation.
+ * The substitution runs over every string this build emits, because `repo-health`'s
+ * `bannedVocabulary` counter reads every tracked text file and a committed JSON artifact is one.
  */
 const RETIRED_WORD_REWRITES: ReadonlyArray<readonly [pattern: RegExp, to: string]> = [
 	[/\bGated\b/g, "Restricted"],
@@ -237,17 +219,19 @@ export interface BuildSourceRegisterOptions {
 	 */
 	inventoryPath: PathBuilderLike
 	/**
-	 * The functional-authority CSV, discovery lookups included. This build drops them.
+	 * The functional-authority CSV, discovery lookups included.
+	 *
+	 * This build drops them.
 	 */
 	sourcesPath: PathBuilderLike
 	outPath: PathBuilderLike
 	/**
-	 * Licence decisions somebody made by reading a publisher's terms, applied over the `unchecked` defaults this build
-	 * derives from the research pass's access labels.
+	 * Licence decisions somebody made by reading a publisher's terms, applied over the
+	 * `unchecked` defaults this build derives from the research pass's access labels.
 	 *
-	 * An input rather than an edit of the output. The register is generated and {@linkcode buildSourceRegister} rewrites
-	 * it whole, so a decision recorded in the output would be erased by the next rebuild with no error — the loss this
-	 * separation exists to prevent (#2351). A path that does not exist is read as no decisions recorded.
+	 * An input rather than an edit of the output, because the register is generated
+	 * and {@linkcode buildSourceRegister} rewrites it whole.
+	 * A path that does not exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
 	version: string
@@ -347,8 +331,8 @@ async function readJurisdictions(
 }
 
 /**
- * What one generated license decision is about: the access label the research pass recorded, and the party whose terms
- * a reviewer would open to decide it.
+ * What one generated license decision is about: the access label the research pass recorded,
+ * and the party whose terms a reviewer would open to decide it.
  */
 interface LicenseScope {
 	licenseID: string
@@ -357,26 +341,24 @@ interface LicenseScope {
 	 */
 	statement: string
 	/**
-	 * The publisher whose terms this decision covers, or `null` when the row names none and the decision therefore covers
-	 * one source alone.
+	 * The publisher whose terms this decision covers, or `null` when the row names none
+	 * and the decision therefore covers one source alone.
 	 */
 	publisher: string | null
 	scopedTo: string
 	/**
-	 * The jurisdiction and `scopedTo` folded by {@link partyKey}. Two rows whose keys agree name one party in one
-	 * jurisdiction, however they spell it.
+	 * The jurisdiction and `scopedTo` folded by {@link partyKey}.
+	 *
+	 * Two rows whose keys agree name one party in one jurisdiction, however they spell it.
 	 */
 	partyKey: string
 	iso2: string
 }
 
 /**
- * A party's name reduced to the form that decides whether two spellings name the same party.
- *
- * Lower-cased, with every run of characters outside `a-z0-9` collapsed to one hyphen. Case and punctuation are the
- * differences a research pass introduces writing one institution twice — `Centre de formalités des entreprises` and
- * `Centre de Formalités des Entreprises` are one party — so folding them merges the spellings rather than issuing two
- * decisions over one grant.
+ * A party's name reduced to the form that decides whether two spellings name the same party:
+ * lower-cased with every run outside `a-z0-9` collapsed to one hyphen, so case
+ * and punctuation merge rather than issue two decisions over one grant.
  */
 function partyKey(value: string): string {
 	const slug = value
@@ -388,10 +370,8 @@ function partyKey(value: string): string {
 }
 
 /**
- * The id fragment for a party. It is the party's key, trimmed so one long ministry name does not dominate the id.
- *
- * Trimming is the only step that can bring two genuinely different parties to the same fragment, which is why
- * {@link scopedLicenseID} compares the untrimmed key before accepting a match.
+ * The id fragment for a party: its key trimmed so one long ministry name does not dominate the id,
+ * which is why {@link scopedLicenseID} compares the untrimmed key before accepting a match.
  */
 const ID_FRAGMENT_LENGTH = 48
 
@@ -402,26 +382,8 @@ function idFragment(partyKeyValue: string): string {
 /**
  * The license id for one source row, scoped to the party a reviewer would read.
  *
- * A license decision records what somebody concluded by opening a publisher's terms, so it can only be as wide as the
- * grant it describes. Keying it by the research pass's access label alone made one decision span every source carrying
- * that label: `CHECK NATIONAL / DATASET TERMS` covered 247 of 389 sources across 222 publishers, and `Free` covered 99.
- * Electing one of those would have granted every source under it on a single reading.
- *
- * So the id carries the publisher when the row names one, and the source id when it does not. A row with no publisher
- * comes from the original memo, which recorded no owner column, and scoping it to itself cannot over-grant.
- *
- * The jurisdiction is part of the scope because a publisher name is not unique across states. The research pass wrote
- * `Ministry of Justice` for Belarus, Lebanon and Timor-Leste, `Ministry of Commerce and Industry` for five countries,
- * and `Commercial-registration authority` as a description rather than a name. A publisher-only scope would let one
- * reading of a Lebanese ministry's terms grant Belarus.
- *
- * The cost is that a publisher genuinely serving several jurisdictions gets one decision per jurisdiction — INSEE
- * covers mainland France and nine overseas territories, so it gets ten. A reviewer who reads INSEE's terms once records
- * that conclusion against ten ids, which is a small explicit act. The alternative fails the other way, and an over-wide
- * election is the failure that cannot be undone by review.
- *
- * This changes granularity rather than state. Every decision still reads `unchecked`, and `ingestEligibilityProblems`
- * still refuses every source.
+ * The id carries the publisher when the row names one and the source id when it does not,
+ * and the jurisdiction is part of the scope because a publisher name is not unique across states.
  */
 function scopedLicenseID(
 	statementID: string,
@@ -540,10 +502,7 @@ async function readSources(
 		const upstream = readUnresolvedColumn(record["upstream"], "upstream", row)
 
 		if (upstream) {
-			source.upstreamLineage = upstream
-				.split(";")
-				.map((entry) => entry.trim())
-				.filter((entry) => entry.length > 0)
+			source.upstreamLineage = TextSpliterator.from(upstream, { delimiter: ";" }).toArray()
 		}
 
 		records.push(source)
@@ -555,20 +514,15 @@ async function readSources(
 /**
  * Values the research pass wrote into a column it did not resolve per source.
  *
- * Every one of the 389 rows carries `address_role: varies` and `coverage: country-specific`, and none carries an
- * `upstream` value at all. Those two strings are the pass saying it did not determine the field, so carrying them onto
- * a record would turn "nobody looked" into a value a consumer reads as an answer — and `ingestEligibilityProblems`
- * would then stop reporting the two blockers that apply to every source in the register.
+ * Carrying them onto a record would turn "nobody looked" into a value a consumer reads as an answer.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
 /**
  * A column's value, or `undefined` when the research pass left it unresolved.
  *
- * Reads the column rather than ignoring it. The build ignored these three entirely, which put a populated column in the
- * source CSV and an empty field in the register with nothing recording why — a reader comparing the two would
- * reasonably conclude the build was dropping usable data. Anything outside the placeholder set is returned, so a value
- * somebody fills in later reaches the register or fails the build rather than being lost.
+ * Anything outside the placeholder set is returned, so a value somebody fills in later
+ * reaches the register or fails the build rather than being lost.
  */
 export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
 	const trimmed = (value ?? "").trim()
@@ -591,17 +545,14 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
 /**
  * Build the register and write it, refusing to write one that fails the audit.
  *
- * The output is tab-indented JSON, which `oxfmt` reformats a little further. Run `yarn format` over the result, as the
- * sub-venue lexicon's build does.
+ * The output is tab-indented JSON, which `oxfmt` reformats a little further.
  *
- * @throws When an input row carries a vocabulary this build has no mapping for, when a declared rewrite never fires, or
- *   when the finished register fails {@linkcode auditAddressSourceRegister}.
+ * @throws When an input row carries a vocabulary this build has no mapping for, when a declared
+ * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
 /**
- * The shape `license-decisions.json` carries: licence id to the decision minus its own id.
- *
- * The id lives in the key rather than the value so one licence cannot carry two, which is the failure a flat array of
- * records invites and the audit would only catch afterwards.
+ * The shape `license-decisions.json` carries: licence id to the decision minus its own id,
+ * keyed by id so one licence cannot carry two.
  */
 interface LicenseDecisionsFile {
 	decisions?: Record<string, Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">>
@@ -610,23 +561,17 @@ interface LicenseDecisionsFile {
 /**
  * Licence decisions read from `decisionsPath`, keyed by licence id.
  *
- * An absent file answers an empty map, because no decision recorded is the current state of this register and a build
- * on a checkout without the file is not a different build. A file that exists and cannot be parsed raises: it was put
- * there on purpose and reading it as empty would silently drop somebody's recorded work.
- *
- * This function validates no decision it reads. `auditAddressSourceRegister` already refuses an elected record missing
- * its terms, retrieved copy or reason, and a refused record missing its reason, and `buildSourceRegister` throws when
- * that audit fails, so an incomplete decision fails the build either way. Checking here as well would give one rule two
- * homes.
+ * An absent file answers an empty map, but a file that exists and cannot be parsed raises,
+ * because reading it as empty would silently drop somebody's recorded work.
+ * This function validates no decision it reads, because `auditAddressSourceRegister` already does.
  */
 async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined): Promise<Map<string, LicenseDecision>> {
 	if (!decisionsPath || !(await pathExists(decisionsPath))) return new Map()
 
 	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
 
-	// The id comes from the key, so a record cannot disagree with the licence it is filed under. The assertion is the
-	// JSON parse boundary's: the file is data on disk, and `auditAddressSourceRegister` is what decides whether what it
-	// carries is a well-formed decision.
+	// The id comes from the key, so a record cannot disagree with the licence it is filed under;
+	// `auditAddressSourceRegister` decides whether what it carries is a well-formed decision.
 	return new Map(
 		Object.entries(file.decisions ?? {}).map(([licenseID, decision]) => [
 			licenseID,
@@ -680,8 +625,8 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	const register: AddressSourceRegister = {
 		registerID: "address-source-register",
 		version: options.version,
-		// Filled below, once every other field is in place. The digest covers the rest of the register, so it cannot be
-		// computed while the object is still being assembled.
+		// Filled below, once every other field is in place, because the digest covers the rest
+		// of the register and cannot be computed while the object is still being assembled.
 		contentDigest: "",
 		provenance: {
 			source: "mailwoman-research",
@@ -709,7 +654,7 @@ export async function buildSourceRegister(options: BuildSourceRegisterOptions): 
 	await writeLocalFile(prettyJSON(register), options.outPath)
 
 	return {
-		outPath: String(options.outPath),
+		outPath: options.outPath.toString(),
 		jurisdictions: jurisdictions.length,
 		sources: sources.length,
 		licenses: licenses.length,

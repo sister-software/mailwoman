@@ -2,56 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `geonames`: GeoNames populated-places consumer (https://www.geonames.org/, CC-BY-4.0).
+ *   Reads populated places from a GeoNames country dump and emits locality rows.
  *
- *   GeoNames is a global gazetteer of ~12M features. This adapter ingests the populated places
- *   (`feature_class = "P"`, excluding historical/abandoned/destroyed variants) from a per-country
- *   dump file — global locality coverage, including the small towns and villages a coarser admin
- *   gazetteer (WOF) lacks. It's the cheapest path to broadening the corpus's locale coverage.
- *
- *   Input: a per-country tab-separated dump (e.g. `US.txt` from
- *   `https://download.geonames.org/export/dump/`, 19 columns, no header). Two sibling files in the
- *   same directory supply human-readable names (downloaded once from the same place):
- *
- *   - `admin1CodesASCII.txt` — `<CC>.<admin1_code>` → region name (e.g. `US.VT` → "Vermont").
- *   - `countryInfo.txt` — ISO alpha-2 → country name (e.g. `US` → "United States"); `#`-commented. If a
- *       sibling is missing, the corresponding component is simply omitted (graceful degradation).
- *
- *   Output: per place, up to two hierarchy variants (mirroring `wof-admin`'s with/without-country
- *   balance so the model sees both domestic and international order) —
- *
- *   1. `{ locality, region }` → "City, Region"
- *   2. `{ locality, region, country }` → "City, Region, Country" `componentsPresentIn` drops any
- *        component that didn't survive into the rendered `raw`.
- *
- *   License: stamped `"CC-BY-4.0"` per row (GeoNames' terms); provenance is the `geonames-<id>` key.
+ *   Region and country names come from `admin1CodesASCII.txt` and `countryInfo.txt` in the same directory. When a
+ *   file is missing, rows omit that component.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * The source ID on rows from this adapter.
  */
 export const GEONAMES_ADAPTER_ID = "geonames"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * The license on rows from this adapter.
  */
 export const GEONAMES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames main-table column indices (0-based. see the export readme).
- *
- * Exported because the register's layout is one fact with more than one reader — `@mailwoman/mailwoman`'s same-data
- * benchmark panel reads `cities15000.txt`, which is the same table filtered by population. A second hand-typed copy
- * would drift the day GeoNames adds a column.
+ * Zero-based column indices in a GeoNames main-table dump.
  */
 export const GEONAMES_MAIN_COLUMNS = {
 	geonameid: 0,
@@ -70,20 +46,20 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Populated-place feature codes that are not current real places — skip them.
+ * Feature codes for historical, abandoned or destroyed populated places, which the adapter skips.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 
 /**
- * Load `admin1CodesASCII.txt` → Map("<CC>.<admin1>" → region name). Empty map if absent.
+ * Loads region names keyed by `<CC>.<admin1>`.
+ * Returns an empty map when the file is missing.
  */
-async function loadAdmin1(dir: string): Promise<Map<string, string>> {
+async function loadAdmin1(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
-	const fp = join(dir, "admin1CodesASCII.txt")
+	const fp = dir("admin1CodesASCII.txt")
 
 	if (!(await pathExists(fp))) return map
 
-	// `header: false` — the file is headerless, and the spliterator eats row 1 as a header otherwise.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0] && cols[1]) {
 			map.set(cols[0], cols[1])
@@ -94,20 +70,19 @@ async function loadAdmin1(dir: string): Promise<Map<string, string>> {
 }
 
 /**
- * Load `countryInfo.txt` → Map(ISO → country name). Empty map if absent. The file is `#`-commented.
+ * Loads country names keyed by ISO code.
+ * Returns an empty map when the file is missing.
  */
-async function loadCountries(dir: string): Promise<Map<string, string>> {
+async function loadCountries(dir: PathBuilder): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
-	const fp = join(dir, "countryInfo.txt")
+	const fp = dir("countryInfo.txt")
 
 	if (!(await pathExists(fp))) return map
 
-	// `header: false` — the file's header is a `#` comment, so it falls out with the other comments
-	// rather than being consumed as column names.
 	for await (const cols of readUnquotedTSV(fp)) {
 		if (cols[0]?.startsWith("#")) continue
 
-		// ISO(0), ISO3(1), iso-numeric(2), fips(3), Country(4), ...
+		// Column 0 holds the ISO code and column 4 the country name.
 		if (cols[0] && cols[4]) {
 			map.set(cols[0], cols[4])
 		}
@@ -116,20 +91,24 @@ async function loadCountries(dir: string): Promise<Map<string, string>> {
 	return map
 }
 
+/**
+ * Creates the GeoNames populated-place adapter.
+ */
 export function createGeonamesAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_ADAPTER_ID,
 		defaultLicense: GEONAMES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.GeoNames,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"GeoNames populated places (CC-BY-4.0) — global locality coverage incl. small towns, with region/country names from the sibling admin1/countryInfo files.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			const dir = dirname(opts.inputPath)
+			const dir = PathBuilder.from(opts.inputPath).dirname()
 			const admin1 = await loadAdmin1(dir)
 			const countries = await loadCountries(dir)
 
-			// `header: false` — the per-country dump is headerless.
 			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
@@ -156,8 +135,8 @@ export function createGeonamesAdapter(): CorpusAdapter {
 				const region = admin1.get(`${cc}.${(rec[COL.admin1] ?? "").trim()}`)
 				const country = countries.get(cc)
 
-				// Two hierarchy variants (domestic + international order) — but only emit the
-				// distinct ones the available names support.
+				// With a region, the adapter emits locality-region and locality-region-country rows.
+				// Without one, it emits a single row with the country when known.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = []
 
 				if (region) {
@@ -204,6 +183,6 @@ export function createGeonamesAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * The adapter instance registered with the corpus builder.
  */
 export const geonamesAdapter = createGeonamesAdapter()

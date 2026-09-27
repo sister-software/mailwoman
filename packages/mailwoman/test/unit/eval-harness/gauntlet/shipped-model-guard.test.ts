@@ -12,12 +12,12 @@
  *   That literal held only while the dev linker materialized binaries into that package. The moment they
  *   live anywhere else — a data-root overlay, the user weights cache, a consumer's node_modules — the path
  *   misses, `existsSync` is false, the whole block is skipped, and the check grades a model it never
- *   verified. The classifier below it resolves properly and loads the model regardless, so nothing errors
- *   and nothing is reported: a silent ungating, which is #1024's own failure mode reproduced by the fix's
+ *   verified. The classifier below it resolves properly and loads the model regardless, so no error surfaces
+ *   and no report is produced: a silent ungating, which is #1024's own failure mode reproduced by the fix's
  *   own path literal.
  *
  *   This is a source check rather than a behavioural one because the property is about how the path is
- *   obtained, and the failure is an absence — there is no wrong answer to assert against, only a check that
+ *   obtained, and the failure is an absence. There is no wrong answer to assert against, only a check that
  *   quietly stopped happening.
  */
 
@@ -25,15 +25,16 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, it } from "vitest"
 
-const HARNESS = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "harness.ts"))
+const HARNESS = repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "harness.ts")
 
 describe("the #1024 shipped-model guard", () => {
 	it("derives the graded model from the resolver, never from a package path literal", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position. The card
-		// path is deliberately not matched: a model-card is committed to its package, so reading it there is a fact
-		// about the repo rather than an assumption about where binaries were materialized.
+		// Any `neural-weights-<locale>/model.onnx` or `/tokenizer.model` spelled out in a path position.
+		// The card path is deliberately not matched: a model-card is committed to its package,
+		// so reading it there is a fact about the repo rather than an assumption about
+		// where binaries were materialized.
 		const literals = [...source.matchAll(/["'`][^"'`]*neural-weights-[a-z-]+\/(?:model\.onnx|tokenizer\.model)/g)]
 
 		expect(
@@ -51,8 +52,9 @@ describe("the #1024 shipped-model guard", () => {
 	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// A `--candidate` run grades a different artifact on purpose and is exempt. If that exemption ever widens to
-		// cover the default, the guard is off for every run and nothing else in the suite would notice.
+		// A `--candidate` run grades a different artifact on purpose and is exempt.
+		// If that exemption ever widens to cover the default, the guard is off for every run
+		// and no other check in the suite would notice.
 		expect(source).toContain("if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot)")
 		expect(source).toContain("assertShippedModelMatchesCard(md5)")
 	})

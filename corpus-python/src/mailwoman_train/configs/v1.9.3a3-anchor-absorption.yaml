@@ -1,53 +1,22 @@
-# === v1.9.3-anchor-absorption (#220/#723 — teach the leading-5-digit disambiguation the override faked) ==
-# v1.9.2 (shipped v4.14.0) is verbatim below except the "auxiliary-channel hardening" change. The #723
-# decode-time override (relabel postcode->house# when leading) was killed (scaffolding w/ a kill-date).
-# Now the model must learn the disambiguation it was faking. DeepSeek Pro consult 019efb14 (4 turns,
-# session-notes-2026-06-24-v193-anchor-absorption.md) + the implementation diagnosis below.
+# This run is v1.9.3a1-anchor-absorption.yaml trained on the v0.9.3a3-anchor-absorption corpus.
+# It resumes the v1.9.2 checkpoint at step 40000 and trains to step 80000.
 #
-# root cause (the diagnosis that sharpens the consult): the postcode anchor was painted at training only
-# on gold B/I-postcode spans (tokenizer.realign_anchor_to_pieces), but at inference on every postcode-
-# shaped span (neural/postcode-anchor.ts per-country regexes — it has no gold). So the model trained with
-# the anchor firing only on real postcodes and never on a house-number-that-looks-like-a-ZIP — exactly the
-# case it faceplants on at inference ("12345 Main St"). A train/inference where-mismatch (the zero-fill
-# trap's cousin). The counter-augmentation cannot teach override unless training also paints on shape.
+# At inference, the postcode anchor fires on every postcode-shaped span. Training painted it only on
+# gold postcode spans, so the model never saw the anchor fire on a house number shaped like a postcode,
+# such as the 12345 in "12345 Main St". With anchor_paint_mode set to shaped, training paints the anchor
+# on postcode-shaped spans as well.
 #
-# the change (one variable for attribution = "auxiliary-channel hardening", conditional as a unit):
-#  1. anchor_paint_mode: shaped   -> paint the anchor on postcode-shaped spans (port POSTCODE_PATTERNS
-#     from neural/postcode-repair.ts), mirroring inference rather than gold spans. The required fix.
-#  2. anchor_value_mode: region_agnostic_mindist -> demote the rich posterior+latlon vector to a weak
-#     scalar log(1 + min_km from the token's postcode centroid to the nearest gazetteer region centroid);
-#     non-postcode-shaped -> log(1+10000). Train/inference-congruent (gazetteer-only, no detected region
-#     -> no circularity), browser-fast. The model learns congruence internally via attention (model-first).
-#  3. postcode_anchor_dropout: 0.3  -> mask the anchor to "unknown" 30% of rows (tie-breaker not crutch).
-#     note (architecture correction to the consult): locale is self-conditioned — the model infers locale
-#     from the pooled rep + FiLM-modulates (model.py); there is no gold locale input to drop. So the
-#     consult's "locale dropout" is inapplicable (no channel to mask); the locale-crutch risk is handled
-#     by the locale-ambiguous-text counter-augmentation stratum (weak country signal -> decision rests on local
-#     tokens), not a misleading-locale-tag stratum (which would corrupt the aux head's target).
-#  4. source_weights += the counter-augmentation source (synth-anchor-absorption, weight 6.0 = targeted-fix precedent):
-#     6 strata (H-adversarial 30 / P-congruent 20 / P-incongruent[anchor-adversarial] 15 /
-#     anchor-false-positive 10 / locale-ambiguous-text 15 / standard 10). Minority floor: case-P >=35%.
+# The synth-anchor-absorption source adds six strata of counter-examples. They include house numbers
+# shaped like postcodes, anchors that disagree with the text, anchors on spans that are not postcodes,
+# and text with a weak locale signal.
 #
-# check (the $20 cap sits behind this 2k-step probe): 4 held-out eval sets (scripts/eval/anchor-absorption-
-# probe.sh) graded vs v1.9.2: H (US leading-5-digit house# recall recovers toward the no-override
-# ceiling), P (DE/Nordic leading postcode coord holds at its v1.9.2 level, a German improvement),
-# robust-drop (anchor forced unknown -> still right from tokens), robust-mislead (anchor forced
-# wrong -> follows text).
-# Checks set relative to the measured v1.9.2 baseline on each eval set (not DeepSeek's absolute %; trust
-# structure, test numbers). Early-kill @1k: train_loss not O(1) decreasing or robust-mislead still
-# heavily anchor-following. resume from v192 ckpt (grow a capability rather than init_from). CRF CE-only.
-# conventions-loss-mask off. Not promoted without operator GO + the canary.
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v1.9.3-anchor-absorption.yaml --resume <v192-ckpt>
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote --config v1.9.3a3-anchor-absorption.yaml --resume <v192-ckpt>
 data:
-  # probe A0 (this config): v192's corpus verbatim — anchor_paint_mode is a load-time transform
-  # (encode_row paints on shape rather than the parquet), so the where fix needs no new data / no rebuild. The
-  # existing US corpus already carries real 5-digit house numbers. shaped-painting fires the anchor on
-  # them at train (gold=house_number) = the override signal. Probe A1 (if A0 under-moves eval set H) swaps
-  # corpus_dir to a rebuilt overlay that adds the synth-anchor-absorption recipe output to amplify the signal.
   corpus_dir: /data/corpus/versioned/v0.9.3a3-anchor-absorption/corpus-v0.9.3a3-anchor-absorption
   tokenizer_dir: /data/models/tokenizer/v0.6.0-a0
   max_length: 128
-  country_weights: # Verbatim from v1.9.2 (22 countries) — no new locales this run (surgical, per consult).
+  country_weights: # These match v1.9.2.
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -71,7 +40,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # Verbatim from v1.9.2 + the one new counter-augmentation source.
+  source_weights: # These match v1.9.2 plus synth-anchor-absorption.
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -94,9 +63,7 @@ data:
     synth-country: 2.0
     overture: 3.0
     gnaf: 6.0
-    # probe A1 only (not A0): the counter-augmentation source (6 strata, see header) — added by the
-    # rebuilt overlay corpus iff A0 under-moves eval set H. 6.0 = the targeted-fix precedent
-    # (synth-german/synth-fr-admin-split/gnaf all 6.0). For A0 this line stays commented out.
+    # This source takes the 6.0 weight that other single-format sources such as synth-german use.
     synth-anchor-absorption: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -108,19 +75,16 @@ data:
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
-  # #220 new anchor knobs (loader honors these. default to v1.9.2 behavior when absent):
-  anchor_paint_mode: shaped # gold | shaped — paint on postcode-SHAPED spans (mirror inference). The fix.
-  # keep the posterior+latlon value by default (the review's correction): it is the anchor's designed
-  # value — the country posterior that resolves the 5-digit US/DE/FR collision + hands the parser its
-  # locale signal (project-anchor-based-parsing-direction). The region_agnostic demotion discards that;
-  # it's a probe variant only, run iff the primary probe shows the rich value is still a crutch.
-  anchor_value_mode: posterior_latlon # posterior_latlon (DEFAULT, keep value) | region_agnostic_mindist (variant)
-  # region_centroids_path: /data/anchor/region-centroids.json # Only needed for the region_agnostic variant.
-  # Anchor dropout is the existing train.py curriculum (perturb_anchor_confidence, ANCHOR_ZERO_OUT_MAX
-  # 0.15, ramped 25-50% then hold. on resume @40k it's already at full strength). reuse it — do not add a
-  # parallel knob. To probe a harder mask, bump ANCHOR_ZERO_OUT_MAX 0.15->0.30 (a probe variable).
+  # anchor_paint_mode accepts gold, the default, or shaped.
+  anchor_paint_mode: shaped
+  # The anchor value keeps the country posterior, which separates five-digit US, DE and FR postcodes.
+  # No training code reads anchor_value_mode or region_centroids_path yet.
+  anchor_value_mode: posterior_latlon
+  # region_centroids_path: /data/anchor/region-centroids.json
+  # Anchor dropout comes from the curriculum in train/noise.py, which zeroes the anchor on up to 15% of
+  # rows. The ramp starts at a quarter of max_steps and ends at half.
 
-model: # Verbatim from v1.9.2.
+model: # These match v1.9.2.
   hidden_size: 384
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -134,7 +98,7 @@ model: # Verbatim from v1.9.2.
   crf_normalization: per_sequence
   label_smoothing: 0.1
   use_locale_conditioning: true
-  locale_loss_weight: 0.3 # Not raised — deliberately weak (consult): locale must not become the new crutch.
+  locale_loss_weight: 0.3 # A low weight keeps the model from relying on the locale head for this decision.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
@@ -175,7 +139,7 @@ model: # Verbatim from v1.9.2.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Verbatim from v1.9.2 except output_dir + run_name. RESUME from v192 (set on the launch CLI).
+train: # These match v1.9.2 except for output_dir, max_steps and trackio_run_name.
   output_dir: /data/output-v193a3-anchor-absorption-s42/checkpoints
   seed: 42
   batch_size: 128
@@ -185,10 +149,7 @@ train: # Verbatim from v1.9.2 except output_dir + run_name. RESUME from v192 (se
   weight_decay: 0.01
   warmup_steps: 1000
   grad_clip_norm: 1.0
-  # probe A0 = 2k steps: resume restores the step counter (train.py:427 resume_step=ts["step"]=40000),
-  # loop is `while step < max_steps`, so max_steps must be 40000+2000 to run 2k. Constant LR holds at
-  # 1.5e-4. the anchor-dropout curriculum sits at full strength (step 40000 >> the 25% ramp). If the
-  # probe passes, resume this run's step-042000 ckpt to a full run (bump max_steps) within the $20 cap.
+  # A resume restores the step counter at 40000, so this limit trains 40000 more steps.
   max_steps: 80000
   eval_every_steps: 2000
   save_every_steps: 2000

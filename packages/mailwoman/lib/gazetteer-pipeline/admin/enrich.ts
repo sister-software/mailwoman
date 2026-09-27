@@ -6,7 +6,7 @@
  *   as separate scripts, now unskippable pipeline steps:
  *
  *   1. **Region abbreviations** (ports `scripts/add-region-abbrevs.ts`): WOF region records carry only
- *      the full name ("Illinois"); `findPlace('IL')` returned nothing, killing the parent-constraint
+ *      the full name ("Illinois"); `findPlace('IL')` returned no place, killing the parent-constraint
  *      the whole resolve walk depends on. Source of truth is the packaged chromium-i18n /
  *      libaddressinput dataset (`core/data/chromium-i18n/ssl-address/<CC>.json`): `sub_keys`
  *      (abbreviations) ↔ `sub_names` (full names), tilde-delimited and index-aligned.
@@ -16,15 +16,17 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { corePackagePath } from "@mailwoman/core/paths"
+import { corePackagePathBuilder } from "@mailwoman/core/paths"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 export interface EnrichAdminOptions {
 	/**
-	 * Chromium-i18n ssl-address spec dir. Default: the dataset packaged with `@mailwoman/core`.
+	 * Chromium-i18n ssl-address spec dir.
+	 *
+	 * Default: the dataset packaged with `@mailwoman/core`.
 	 */
-	specsDir?: string
+	specsDir?: PathBuilderLike
 }
 
 export interface EnrichAdminResult {
@@ -34,20 +36,22 @@ export interface EnrichAdminResult {
 }
 
 /**
- * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table. Idempotent.
+ * Enrich an admin staging DB: region-abbreviation `names` rows + the `place_abbr` join table.
+ *
+ * Idempotent.
  */
 export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,
 	opts: EnrichAdminOptions = {}
 ): Promise<EnrichAdminResult> {
-	const specsDir = opts.specsDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
+	const specsDir = PathBuilder.from(opts.specsDir ?? corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
 
 	db.exec("DELETE FROM names WHERE language = 'abbr'")
 
 	// idempotent re-run
 
-	// One read of every region row, bucketed by country — the per-country query it replaces was
-	// re-`prepare`d inside the loop, once for each of ~200 countries.
+	// One read of every region row, bucketed by country.
+	// The per-country query it replaces was re-`prepare`d inside the loop, once for each of ~200 countries.
 	const regionsByCountry = new Map<string, Array<{ id: number; name: string }>>()
 
 	for (const row of db.prepare("SELECT id, name, country FROM spr WHERE placetype='region'").all() as Array<{
@@ -72,7 +76,7 @@ export async function enrichAdmin<DB>(
 	let added = 0
 
 	for (const [cc, regions] of regionsByCountry) {
-		const specPath = join(specsDir, `${cc}.json`)
+		const specPath = specsDir(`${cc}.json`)
 
 		if (!(await pathExists(specPath))) continue
 		const spec = await readLocalJSONFile<{ sub_keys?: string; sub_names?: string }>(specPath)
@@ -105,8 +109,8 @@ export async function enrichAdmin<DB>(
 		db.exec("COMMIT")
 	}
 
-	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches. Rebuilt
-	// from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
+	// `place_abbr` — the id → abbreviation join the resolver probes for 2-letter exact matches.
+	// Rebuilt from the rows above (the build-slim.ts recipe); dropped first so a re-run stays idempotent.
 	db.exec("DROP TABLE IF EXISTS place_abbr")
 	db.exec("CREATE TABLE place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)")
 	db.exec("INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'")

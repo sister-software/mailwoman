@@ -1,3 +1,4 @@
+import { titleCaseGB } from "@mailwoman/codex/gb"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -5,8 +6,6 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
-
-import { titleCaseGB } from "#tools/gb-title-case"
 
 const HOUSE_NUMBER_PATTERN = /^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/
 
@@ -22,8 +21,9 @@ const quote = (value: string): string => (value ? `"${value.replaceAll('"', '""'
 
 /**
  * Convert PPD rows (`id,price,date,postcode,type,new,tenure,paon,saon,street,locality,town,district,county,cat,status`
- * — headerless) into OA-shaped tuple lines via `write`, applying the skip rules + title-casing. Accepts a plain array
- * of rows (tests) or a streamed async source (the real 31M-row extraction).
+ * — headerless) into OA-shaped tuple lines via `write`, applying the skip rules + title-casing.
+ *
+ * Accepts a plain array of rows (tests) or a streamed async source (the real 31M-row extraction).
  */
 export async function extractPPDTuples(
 	input: AsyncIterable<string[]> | Iterable<string[]>,
@@ -90,8 +90,9 @@ export async function extractPPDTuples(
  * Stream `inputPath` (PPD CSV) → `outputPath` (OA-shaped tuples CSV), returning the row-count stats.
  */
 async function runPPDExtract(inputPath: string, outputPath: string): Promise<PPDExtractStats> {
-	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself (see readTuples in
-	// recipes/international/locale.ts). `header: false` yields every row as data — PPD ships no header row.
+	// No `encoding` — CSVSpliterator delimits raw bytes and decodes utf-8 itself
+	// (see readTuples in recipes/international/locale.ts).
+	// `header: false` yields every row as data — PPD ships no header row.
 	const rows = CSVSpliterator.fromAsync<string[]>(openReadStream(inputPath), {
 		header: false,
 	})

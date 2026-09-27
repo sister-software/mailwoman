@@ -38,8 +38,8 @@ function requiredFlag(name: string, value: string | undefined): string {
 }
 
 /**
- * The probes' shared argument block: `--baseline` / `--candidate` / `--tokenizer` (required), `--model-card`,
- * `--golden`, and `--n` (whose default is per probe).
+ * The probes' shared argument block: `--baseline` / `--candidate` / `--tokenizer` (required),
+ * `--model-card`, `--golden`, and `--n` (whose default is per probe).
  */
 export function parseTwoModelArgs(nDefault: string): TwoModelArgs {
 	const { values: args } = parseArguments({
@@ -72,7 +72,8 @@ export const norm = (s?: string): string =>
 	(s ?? "").toLowerCase().replaceAll(/[.,]/g, "").replaceAll(/\s+/g, " ").trim()
 
 /**
- * True when `needle` appears in `hay` on word boundaries — `"Ave"` in `"Elm Ave"` but never in `"Avenue"`.
+ * True when `needle` appears in `hay` on word boundaries.
+ * `"Ave"` in `"Elm Ave"` but never in `"Avenue"`.
  */
 export const wordIncludes = (hay: string, needle: string): boolean =>
 	needle.length > 0 && new RegExp(`\\b${escapeRegExp(needle)}\\b`).test(hay)

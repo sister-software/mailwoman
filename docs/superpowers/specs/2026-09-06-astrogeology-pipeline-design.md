@@ -11,7 +11,7 @@ independent of the Earth app and can proceed in parallel with it.
 
 ## The problem
 
-Moon and Mars have authoritative, public-domain nomenclature and topography, and nothing in the
+Moon and Mars have authoritative, public-domain nomenclature and topography, and no package in the
 repository can read, normalize or publish them. Every existing acquisition package assumes Earth: a
 country, a WGS84 coordinate, an elevation above sea level, a radius of 6,371 km typed once in
 `@mailwoman/spatial` and refused everywhere else by the `prefer-home` rule. A planetary pipeline is
@@ -24,7 +24,7 @@ at the point where a body parameter is missing.
 DEM mosaic, and the MOLA MEGDR Martian DEM mosaic are all published by USGS Astrogeology, so the source
 name covers all three the way `tiger` covers every TIGER/Line product.
 
-**Private for v1.** Nothing published consumes it until `mw geocode --body moon` exists, which is after
+**Private for v1.** No published package consumes it until `mw geocode --body moon` exists, which is after
 v1. It joins `SANCTIONED_RELEASE_ABSENCES` with "private planetary data pipeline — no published consumer
 yet". The first publish, when it comes, goes through `bless-package`.
 
@@ -40,7 +40,7 @@ DEM archive for MapLibre terrain is a later product, in `terrarium` encoding bec
 planetocentric latitude. Source conventions are recorded in the manifest, never guessed in the browser.
 
 **Checksum drift stops the build.** A source whose SHA-256 differs from the pinned value fails the build
-with both hashes printed. Nothing rebuilds a changed world under the same version.
+with both hashes printed. No changed world is rebuilt under the same version.
 
 ## Design
 
@@ -86,7 +86,7 @@ network.
 type PlanetaryBodyID = "earth" | "moon" | "mars"
 ```
 
-`earth` is in the union so a future shared primitive can take a body without a second type; nothing in
+`earth` is in the union so a future shared primitive can take a body without a second type; no code in
 this package produces Earth data. Each record carries the IAU target name, the mean radius with its
 source, and the coordinate convention the rendering path uses.
 

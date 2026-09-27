@@ -4,40 +4,18 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 
 /**
- *   Shared validation guards for filer.db writers (pulled out of `build-filer.ts`). Before
- *   this move, `cluster-filers.ts` reached into `build-filer.ts` for {@linkcode assertISODate} (the
- *   builder's own module docstring called this out as a rule with "one implementation, no drift between
- *   the two files") — a writer importing another writer's whole module just to borrow a guard is a
- *   coupling that gets worse with every new filer.db writer this phase adds. This module is the neutral
- *   home every writer imports the guard from instead.
- *
- *   The export's name and behavior are unchanged from the pre-move implementation — this is a
- *   relocation rather than a rewrite.
+ *   Shared validation for filer database writers.
  */
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 /**
- * Validates `value` is an ISO `yyyy-MM-DD` date before it is written into a `valid_from` (or `valid_to`) column —
- * applied at every site in `build-filer.ts` and `cluster-filers.ts` (and any future filer.db writer) that writes either
- * temporal column. One implementation, shared, so the rule can't drift between writers.
+ * Returns `value` if it is an ISO `YYYY-MM-DD` date and throws otherwise.
  *
- * `valid_from` participates in every downstream `asOf`-scoped predicate (`filer-lookup.ts`'s `valid_from <= asOf`) as a
- * plain string comparison — correct only when every value compared is drawn from the same ISO-sortable `yyyy-MM-DD`
- * scheme. `source_vintage` is free to stay a human vintage label (`"2026-Q2"`, `"2026-cluster-v1"`) — that plurality is
- * exactly what the column is for (decision 7) — but that same label is not safe to also write into `valid_from`:
- * `"2026-Q2"` sorts lexicographically above any ISO date in the same year or earlier — string comparison decides at the
- * first differing character, and `"Q"` outranks every digit — so an edge dated that way silently fails `valid_from <=
- * asOf` at every `asOf` a build of that vintage is actually read against, and `filerLookup` would report the identifier
- * crosswalk as empty against a filer.db that actually has the data (reviewer probe, `build-filer.ts`'s final 3a review:
- * a fully populated filer.db built with `sourceVintage: "2026-Q2"` returned `identifiers: []`/`primary_frn: null`).
- *
- * Thrown rather than coerced: there is no honest way to turn a whole-file vintage label into a per-edge date without
- * fabricating one. The caller must supply a real ISO date through a field dedicated to that purpose
- * (`BuildFilerOptions.validFrom`, `ClusterFilersOptions.validFrom`) instead of relying on this function (or any other)
- * to guess one from a label.
+ * Temporal columns need ISO dates because `asOf` queries compare them as strings.
+ * A vintage label such as "2026-Q2" would sort after every ISO date in its year.
  */
-// repo-health-ignore export-name-affix -- a guard that refuses a malformed value; `isoDate` formats and validates none.
+// repo-health-ignore export-name-affix -- The function rejects malformed input, which `isoDate` does not do.
 export function assertISODate(value: string, context: string, caller = "buildFilerDatabase"): string {
 	if (!ISO_DATE_PATTERN.test(value)) {
 		throw new Error(

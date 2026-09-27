@@ -21,7 +21,7 @@ LAD filter E09*, wd25cd → ward name → **459 (ward, London) pairs**
 (`scratch-gbvenue/london-ward-pairs.jsonl`), incl. Nine Elms + the Clapham ward family. Boundary
 recorded: "Clapham North" is a neighborhood rather than a ward — ward grain covers part of the
 neighborhood class; the residual wants a finer source (OS Open Names) in a later increment. NI:
-ward names exist (N08*) but the PAIR parent needs post towns — an outcode→post-town table is the
+ward names exist (N08*) but the PAIR parent needs post towns. An outcode→post-town table is the
 missing piece, deferred. IE: license survey still open (Tailte Éireann/logainm).
 
 ---
@@ -71,7 +71,7 @@ admin DB, via `mailwoman gazetteer census`.
 
 **Why a second artifact instead of folding these links into the pair index.** A pair entry
 ASSERTS a surface is a dependent locality, so every batch needs a venue-confound board before it
-ships (R4b's law-1 discipline). A census node asserts nothing about any surface — it can only tilt
+ships (R4b's law-1 discipline). A census node asserts no fact about any surface — it can only tilt
 a reading the model already entertains under a parent it already identified. That is what makes it
 the safe carrier for the long tail (GB alone has 22,843 WOF dep-loc-class links; individually
 boarding them is not a plan).
@@ -93,7 +93,7 @@ change nobody measured.
 - **D-C4 (required disclosure rather than a pass/fail bar).** Report the census's dep-loc mass on the
   56-row law-1 confound board. The expected result is ~100% coverage, because every row shares the
   London parent: **the census cannot discriminate at span level by construction.** That is the
-  finding to state directly rather than to bury — it is precisely why the census is a parent-scoped prior
+  finding to state directly rather than to bury. It is precisely why the census is a parent-scoped prior
   that must compose with span-level evidence, and why this rung ships un-wired.
 
 ### R4c Addendum 1 — B-C2 is mis-specified; the amended bar, pre-registered before reading it
@@ -115,12 +115,12 @@ it is **presence and magnitude across the parent population** — most localitie
 children at all and never enter the artifact.
 
 - **B-C2′ (amended, pre-registered before computing it).** Of GB locality-class places in the
-  source, the fraction carrying ≥1 dependent-locality child is **≤ 50%** — a census hit must rule
+  source, the fraction carrying ≥1 dependent-locality child is **≤ 50%**. A census hit must rule
   out at least half the parent population to be evidence — AND the median dependent-locality child
   count on covered nodes is **≥ 2**. Failing either closes the discrimination question NEGATIVE.
 - **D-C2″ (disclosure).** Report the covered fraction among LARGE parents separately. The expected
   shape is that big cities are all covered, so the census discriminates in the small/middle tail
-  and says nothing about major-city queries. State it either way.
+  and makes no statement about major-city queries. State it either way.
 
 ### R4c Addendum 2 — the readings, and B-C3's circularity
 
@@ -137,10 +137,10 @@ population.
 
 **D-C2″ (disclosure).** The top decile of covered parents holds 8,415 of 22,545 dependent-locality
 children — 37% of the mass in 10% of the parents. The distribution is exactly as suspected: major
-cities are all covered and the census tells you nothing you didn't know there; its information is
+cities are all covered and the census adds no information you didn't know there. Its information is
 in the small/middle tail, where the median parent has two.
 
-**B-C3 VOID — the measurement is circular, and the 97.1% it produced means nothing.** The sample
+**B-C3 VOID — the measurement is circular, and the 97.1% it produced has no meaning.** The sample
 drew (child, parent) links from WOF, and the census is built from WOF under an inclusion rule that
 admits a parent precisely because it has such a child. Every sampled parent was therefore in the
 census by construction. The reading (20,186 of 22,843 links miss the shipped pair index; 97.1% of

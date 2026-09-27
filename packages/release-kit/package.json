@@ -49,6 +49,11 @@
 			"node": "./lib/release/stage.ts",
 			"default": "./out/release/stage.js"
 		},
+		"./release/rights-audit": {
+			"types": "./out/release/rights-audit.d.ts",
+			"node": "./lib/release/rights-audit.ts",
+			"default": "./out/release/rights-audit.js"
+		},
 		"./release/verify-metadata": {
 			"types": "./out/release/verify-metadata.d.ts",
 			"node": "./lib/release/verify-metadata.ts",
@@ -117,12 +122,13 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/resolver-wof-sqlite": "workspace:*",
 		"mailwoman": "workspace:*",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"semver": "^7.8.5",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},

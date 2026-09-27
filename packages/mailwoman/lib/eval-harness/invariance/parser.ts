@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Invariance production parser construction.
+ * @file Builds the production parser that the invariance runner calls.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -12,46 +12,51 @@ import { resolvePath } from "path-ts"
 
 import { createRuntimePipeline } from "#index"
 
+/**
+ * Per-call parser options.
+ */
 export interface ParseCallOpts {
 	/**
-	 * Per-call locale hint — the row's country-derived tag (e.g. `en-GB` for a GB row). Threaded into the pipeline's
-	 * normalize / query-shape / locale-hint stages exactly as a production caller hint would be. The classifier itself is
-	 * loaded once per run from `ModelSelectOptions.locale`.
+	 * Locale hint for the row, derived from the fixture's country.
 	 */
 	locale?: string
 }
 
+/**
+ * Parser that returns the decoded component map for one input.
+ */
 export type ParseFn = (raw: string, opts?: ParseCallOpts) => Promise<Record<string, string>>
 
 /**
- * Options that select a model — mirrors the shape of `eval promote` / `eval error-analysis`.
+ * Model-selection options shared with the evaluation commands.
  */
 export interface ModelSelectOptions {
 	/**
-	 * Candidate ONNX (requires `tokenizer` + `modelCard`, or falls back to co-located siblings via `weightsCache`).
+	 * Candidate ONNX model path.
+	 *
+	 * It requires `tokenizer` and `modelCard` unless `weightsCache` is set.
 	 */
 	model?: string
 	tokenizer?: string
 	modelCard?: string
 	/**
-	 * Package-shaped weights dir (`<root>/node_modules/@mailwoman/neural-weights-<locale>`) — #718-safe, resolves model +
-	 * tokenizer + card + anchor/gazetteer siblings via `loadFromWeights`. Preferred over `model` for grading a candidate
-	 * whose vocab differs (splice), and the only correct grade for a country-channel model. Alternative to `model`.
+	 * Candidate weights root laid out like a weights package.
+	 * It takes precedence over `model`.
 	 */
 	weightsCache?: string
 	/**
-	 * BCP-47-ish locale tag for weights-package resolution (which classifier + FST is loaded). Default `en-US`. This is
-	 * the RUN's locale — the per-row parse locale is derived from each fixture row's country via `localeForCountry`.
+	 * Locale used to resolve the weights package.
+	 *
+	 * It defaults to `en-US`.
+	 * Each row's parse locale still comes from its country.
 	 */
 	locale?: string
 }
 
 /**
- * The suite's fixture rows are keyed by ISO country code. the production pipeline wants a BCP-47 locale tag. These are
- * the tags for the four countries `suite.jsonl` carries (DE, FR, GB, US), and nothing more: the gauntlet's
- * `OVERLAY_LOCALE_BY_COUNTRY` lists the overlay locales (GB, NZ, DE, IN, ES, IT) and this table lists the suite's, and
- * they overlap on GB and DE only. An unlisted country falls back to en-US, so a row added for a country that ships an
- * overlay (ES, IT, NZ, IN) parses under the wrong weights unless its entry is added here beside the row.
+ * Locale tag for each country in the invariance suite.
+ *
+ * A country added to the suite needs an entry here, because unlisted countries fall back to `en-US`.
  */
 export const COUNTRY_TO_LOCALE: Readonly<Record<string, string>> = {
 	US: "en-US",
@@ -60,10 +65,17 @@ export const COUNTRY_TO_LOCALE: Readonly<Record<string, string>> = {
 	DE: "de-DE",
 }
 
+/**
+ * Returns the locale tag for a country, or `en-US` when the country is unlisted.
+ */
 export function localeForCountry(country: string): string {
 	return COUNTRY_TO_LOCALE[country] ?? "en-US"
 }
 
+/**
+ * Loads the classifier from `weightsCache`, from a standalone ONNX model,
+ * or from the installed weights, in that order of precedence.
+ */
 async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressClassifier> {
 	const locale = opts.locale ?? "en-US"
 
@@ -88,16 +100,10 @@ async function buildClassifier(opts: ModelSelectOptions): Promise<NeuralAddressC
 }
 
 /**
- * Build a `ParseFn` from model-select options. Exported so `--baseline` can build a second, independent classifier.
+ * Builds a parser on the production runtime pipeline.
  *
- * Routing (#1516): every parse runs through the production path — `createRuntimePipeline` — not the raw
- * `classifier.parse` the old runner used. That is the point of the probe: the release Gauntlet measures the
- * user-visible pipeline, and a metamorphic probe that bypasses it (no #690 case normalization, no locale-hint, no
- * kind/grouping stages, no weights-package FST auto-load) manufactures violations the shipped path never exhibits — and
- * misses the D-rule regressions that do ride the pipeline stages. With a `weightsCache` classifier this is fully
- * production-faithful: `loadFromWeights` surfaces `fstPath`, which `createRuntimePipeline`'s `autoLoadWeightsFST` uses
- * to load the locale FST from the weights package. The `--model` scorer path carries no FST (matching the gauntlet's
- * legacy `createScorer` modes — the FST belongs to the weights package rather than the scorer).
+ * A weights package also supplies its locale FST.
+ * A standalone ONNX scorer runs without one.
  */
 export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 	const classifier = await buildClassifier(opts)
@@ -110,5 +116,3 @@ export async function buildParseFn(opts: ModelSelectOptions): Promise<ParseFn> {
 		return decodeAsJSON((await pipeline(raw, runOpts)).tree) as Record<string, string>
 	}
 }
-
-//#endregion

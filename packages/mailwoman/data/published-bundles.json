@@ -1,0 +1,1220 @@
+{
+	"measuredAt": "2026-09-27T05:22:37Z",
+	"bucket": "https://public.mailwoman.ai/mailwoman/",
+	"bundles": [
+		{
+			"bundle": "candidate",
+			"rights": {
+				"database": {
+					"status": "unmeasured",
+					"reason": "no published artifact records a database-level license apart from its flat layer_manifest expression"
+				},
+				"components": []
+			},
+			"artifacts": [
+				{
+					"remotePath": "gazetteer/2026-08-25b/candidate.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 2880921600
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "local copy at /mnt/mw/db/wof/candidate.db is 3050020864 bytes and the published artifact is 2880921600 bytes, so its manifest describes a different build"
+					}
+				}
+			]
+		},
+		{
+			"bundle": "fr",
+			"rights": {
+				"database": {
+					"status": "unmeasured",
+					"reason": "no published artifact records a database-level license apart from its flat layer_manifest expression"
+				},
+				"components": []
+			},
+			"artifacts": [
+				{
+					"remotePath": "street/fr/2026-07-10/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 6952509440
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "local copy at /mnt/mw/db/ban/address-points-fr.db is 7141761024 bytes and the published artifact is 6952509440 bytes, so its manifest describes a different build"
+					}
+				}
+			]
+		},
+		{
+			"bundle": "poi",
+			"rights": {
+				"database": {
+					"status": "unmeasured",
+					"reason": "no published artifact records a database-level license apart from its flat layer_manifest expression"
+				},
+				"components": []
+			},
+			"artifacts": [
+				{
+					"remotePath": "poi/2026-07-20a/poi.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 3889184768
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "local copy at /mnt/mw/db/poi/poi.db is 4149665792 bytes and the published artifact is 3889184768 bytes, so its manifest describes a different build"
+					}
+				}
+			]
+		},
+		{
+			"bundle": "us",
+			"rights": {
+				"database": {
+					"status": "unmeasured",
+					"reason": "no published artifact records a database-level license apart from its flat layer_manifest expression"
+				},
+				"components": []
+			},
+			"artifacts": [
+				{
+					"remotePath": "street/us/ak/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 78602240
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ak.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ak/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 26771456
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ak.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/al/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 660025344
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-al.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/al/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 256548864
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-al.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ar/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 396853248
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ar.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ar/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 201338880
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ar.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/az/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 907603968
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-az.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/az/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 207245312
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-az.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ca/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 3471339520
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ca.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ca/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 779272192
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ca.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/co/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 716697600
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-co.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/co/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 216334336
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-co.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ct/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 256991232
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ct.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ct/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 94732288
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ct.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/dc/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 119889920
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-dc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/dc/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 7426048
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-dc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/de/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 125595648
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-de.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/de/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 29114368
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-de.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/fl/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 3226046464
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-fl.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/fl/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 511512576
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-fl.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ga/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 173764608
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ga.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ga/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 365641728
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ga.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/hi/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 77320192
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-hi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/hi/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 13205504
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-hi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ia/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 358260736
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ia.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ia/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 193032192
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ia.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/id/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 93683712
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-id.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/id/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 82628608
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-id.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/il/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 1134772224
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-il.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/il/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 373002240
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-il.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/in/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 767078400
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-in.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/in/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 301297664
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-in.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ks/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 240205824
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ks.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ks/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 147968000
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ks.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ky/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 545275904
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ky.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ky/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 292974592
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ky.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/la/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 63488000
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-la.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/la/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 165015552
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-la.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ma/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 865357824
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ma.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ma/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 163999744
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ma.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/md/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 594812928
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-md.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/md/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 147357696
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-md.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/me/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 165101568
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-me.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/me/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 86224896
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-me.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mi/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 229376000
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-mi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mi/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 305459200
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-mi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mn/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 646877184
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-mn.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mn/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 269025280
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-mn.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mo/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 399859712
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-mo.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mo/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 305311744
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-mo.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ms/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 271257600
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ms.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ms/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 175767552
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ms.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mt/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 146735104
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-mt.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/mt/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 88612864
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-mt.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nc/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 1380876288
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nc/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 512188416
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nd/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 103890944
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nd.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nd/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 76918784
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nd.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ne/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 187617280
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ne.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ne/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 103297024
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ne.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nh/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 20480
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nh.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nh/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 57618432
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nh.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nj/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 932855808
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nj.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nj/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 166936576
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nj.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nm/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 249671680
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nm.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nm/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 83804160
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nm.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nv/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 6553600
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-nv.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/nv/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 69890048
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-nv.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ny/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 1440923648
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ny.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ny/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 317833216
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ny.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/oh/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 1248694272
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-oh.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/oh/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 404860928
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-oh.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ok/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 354828288
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ok.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ok/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 162582528
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ok.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/or/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 1034625024
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-or.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/or/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 173268992
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-or.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/pa/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 269873152
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-pa.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/pa/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 482373632
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-pa.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ri/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 79159296
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ri.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ri/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 28938240
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ri.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/sc/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 47661056
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-sc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/sc/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 255586304
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-sc.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/sd/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 21811200
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-sd.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/sd/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 71929856
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-sd.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/tn/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 887808000
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-tn.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/tn/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 365576192
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-tn.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/tx/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 2568024064
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-tx.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/tx/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 721600512
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-tx.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ut/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 363622400
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-ut.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/ut/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 86228992
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-ut.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/va/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 933728256
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-va.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/va/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 371740672
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-va.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/vi/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 618496
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-vi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/vt/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 72945664
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-vt.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/vt/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 58507264
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-vt.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wa/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 735141888
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-wa.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wa/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 267419648
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-wa.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wi/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 340619264
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-wi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wi/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 184680448
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-wi.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wv/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 227700736
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-wv.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wv/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 120385536
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-wv.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wy/situs.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 51003392
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/address-points/address-points-us-wy.db holds no layer_manifest table"
+					}
+				},
+				{
+					"remotePath": "street/us/wy/interp.db",
+					"size": {
+						"status": "measured",
+						"contentLength": 37691392
+					},
+					"manifest": {
+						"status": "unmeasured",
+						"reason": "/mnt/mw/db/interpolation/interpolation-us-wy.db holds no layer_manifest table"
+					}
+				}
+			]
+		}
+	]
+}

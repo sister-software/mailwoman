@@ -25,8 +25,9 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -34,30 +35,33 @@ import {
 	PAIR_INDEX_PARENT_DELTA,
 	PAIR_INDEX_TRANSITION_BETA,
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
-import { resolvePath } from "path-ts"
 
 /**
- * Secondary pair sources (campaign R2/R3/R4b). Named here rather than inline at the call site because the freshness
- * guard has to md5 the same files the build reads — when those two lists drift apart the guard silently blesses a stale
- * artifact.
+ * Secondary pair sources (campaign R2/R3/R4b).
+ *
+ * Named here rather than inline at the call site because the freshness guard has to md5 the same files
+ * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
  */
-const PPD_SOURCE_CSV = String(dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"))
-const BOROUGH_DB = String(dataRootPath("wof", "admin-global-priority.db"))
-const LONDON_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "london-pairs-v2.jsonl"))
+const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
+const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
+const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
- * Northern Ireland neighbourhood pairs (campaign R7). A separate file rather than merged into the London one, so each
- * source keeps its own provenance md5 in the header and the freshness guard can tell which of them moved.
+ * Northern Ireland neighbourhood pairs (campaign R7).
+ *
+ * A separate file rather than merged into the London one, so each source keeps its own
+ * provenance md5 in the header and the freshness guard can tell which of them moved.
  */
-const NI_PAIRS_JSONL = String(repoRootPath("data", "gazetteer", "ni-pairs-v1.jsonl"))
+const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jsonl")
 /**
- * Scotland + Wales + England neighbourhood pairs (campaign R8) — the rest of Great Britain, after London (R3/R4b) and
- * Northern Ireland (R7).
+ * Scotland + Wales + England neighbourhood pairs (campaign R8) — the rest of Great Britain,
+ * after London (R3/R4b) and Northern Ireland (R7).
  */
-const GB_REGIONS_JSONL = String(repoRootPath("data", "gazetteer", "gb-regions-v1.jsonl"))
+const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
 
-// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the
-// build — without these flags a dev rebuild would silently drop them. The `sources` list is what the
-// shared freshness guard md5s, in the order the build records them (CSV, borough DB, pairs JSONLs).
+// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the build.
+// Without these flags a dev rebuild would silently drop them.
+// The `sources` list is what the shared freshness guard md5s, in the order the
+// build records them (CSV, borough DB, pairs JSONLs).
 const softFeed = await committedSoftFeedLinks()
 
 const overlay = await materializeDevOverlay({
@@ -78,52 +82,47 @@ const overlay = await materializeDevOverlay({
 			"--borough-db",
 			BOROUGH_DB,
 			"--pairs-jsonl",
-			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL].join(","),
+			[LONDON_PAIRS_JSONL, NI_PAIRS_JSONL, GB_REGIONS_JSONL].map((path) => path.toString()).join(","),
 		],
 	},
 	localeFST: true,
 	streetMorphologyFST: true,
 })
 
-// Build postcode-gb.bin only when the model card declares a compatible anchor channel.
+// Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
 //
-// The GB anchor binary is the one artifact whose correctness depends on which model is loaded, so it
-// is built only when the card says the model can use it.
+// This binary helps only models trained with shaped (letter-containing) GB anchor lookups.
+// For older models it is a measured regression, and stale bins from old checkouts
+// can silently re-enable that regression if left in place.
 //
-// The history in one paragraph. This script used to build the bin unconditionally. #1467 removed it,
-// because the encoder's GB anchor slot (slot 4 of `LOCALE_ORDER`, `neural/anchor-inference.ts`) had
-// taken no gradient — every recipe's `anchor_lookup_path` was `pilot-anchor-lookup.json`, 67,708 keys,
-// zero letter-containing, US/DE/FR only. Feeding slot 4 on a model that never trained it cost 24 exact
-// postcodes on the 120-row gb-golden board (294/318 anchor-on vs 318/318 anchor-off). Then a bare
-// `existsSync` skip turned out to be worse than never building: a bin left by an older checkout is
-// found package-dir-relative and silently re-enables the regression with no warning, because a present
-// artifact is exactly what the loader expects.
+// Policy:
+// - `span_mode: "shaped"` -> build the binary
+// - otherwise -> remove any existing binary
 //
-// The check that resolves both states is the card's `requires.anchor.span_mode`. `shaped` is declared
-// only by a model trained against a lookup with letter-containing keys (`pilot-anchor-lookup-v2` and
-// after), and that is precisely the model for which the bin helps. So: declared `shaped` → build it.
-// anything else → remove any stale copy, loudly. No flag, no lockstep constant to forget — the same
-// card the loader reads decides.
-//
-// Receipts either way: `docs/records/evals/2026-08-05-en-gb-anchor-off.md` (the anchor-off mitigation)
-// and `docs/records/evals/2026-08-05-v420-base-anchor-v2-run-b.md` (the retrain that warrants it back).
+// The model card is used by both this script and the loader.
 
 /**
  * Where the GB anchor binary lives when the card warrants it.
  */
-const POSTCODE_BIN_DEST = resolvePath(overlay.destDir, "postcode-gb.bin")
+const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 
 /**
- * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0), 1,746,976 units, every one placed.
- * The retired GeoNames-lineage `postalcode-gb.db` is not it. Coverage gap, measured: zero Northern Ireland (`BT`) codes
- * — the shaped keyer's outward fallback is what carries those rows.
+ * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0),
+ * 1,746,976 units, every one placed.
+ *
+ * The retired GeoNames-lineage `postalcode-gb.db` is not it.
+ * Coverage gap, measured: zero Northern Ireland (`BT`) codes.
+ *
+ * The shaped keyer's outward fallback is what carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 
 /**
- * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) — the GB half of the training lookup
- * `pilot-anchor-lookup-v2` verbatim. `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so
- * this number is documentation rather than a second check.
+ * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) —
+ * the GB half of the training lookup `pilot-anchor-lookup-v2` verbatim.
+ *
+ * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it,
+ * so this number is documentation rather than a second check.
  */
 const GB_POSTCODE_BIN_KEYS = 1_749_839
 

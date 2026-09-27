@@ -1,6 +1,6 @@
 ---
 title: Geocode a large file at volume
-description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process adds nothing.
+description: Find your machine's rows-per-second ceiling, then reach it with a worker pool — because async concurrency inside one process adds no measurable cost.
 role: guide
 verified-with: mailwoman 8.7.0
 ---
@@ -11,15 +11,15 @@ verified-with: mailwoman 8.7.0
 that reaches it.
 
 The short version: inference blocks the JavaScript thread, so running more geocodes concurrently inside
-one process changes nothing. Throughput comes from more processes. This page measures both claims on one
-machine so you can repeat the measurement on yours — the peak worker count is a property of your box rather than
+one process changes no throughput. Throughput comes from more processes. This page measures both claims on one
+machine so you can repeat the measurement on yours. The peak worker count is a property of your box rather than
 a constant.
 
 ## Prerequisites
 
 - The library install from [Geocode a CSV of customer addresses](../tutorials/geocode-a-csv.mdx), plus
-  `candidate.db` on disk at `<data root>/wof/candidate.db`. Every transcript below assumes both. The
-  scripts find it through `resolveCandidateDBPath()`, so nothing needs exporting.
+  `candidate.db` on disk at `<data root>/db/wof/candidate.db`. Every transcript below assumes both. The
+  scripts find it through `resolveCandidateDBPath()`, so no environment variable needs exporting.
 - [customers.csv](/examples/customers.csv) next to your scripts — twenty rows, repeated to make a file
   worth timing.
 - A machine whose core count you know. `nproc` on Linux, `sysctl -n hw.ncpu` on macOS.
@@ -39,8 +39,9 @@ Before any pool, get the number you are trying to beat. This script builds the g
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
-import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const repeats = Number(process.argv[2] ?? 250)
@@ -54,9 +55,9 @@ for (let i = 0; i < repeats; i++) queries.push(...rows)
 
 const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+using lookup = new WOFCandidateTableLookup({ databasePath: await resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, mailwomanDataRoot())
+using extracts = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
@@ -87,7 +88,7 @@ startup 0.68 s
 Run it three times. During the sweep this page reports, the three runs landed at 136.0, 138.9 and 137.9
 rows/s; a later run on the same machine under lighter load reached 153.3. Re-running the same script on
 the same box a day later, against `8.7.0` at head, gave 111.0, 111.6 and 113.3. That is a 27% spread
-across sessions on one machine with one model and one gazetteer, and none of it is a code change — it
+across sessions on one machine with one model and one gazetteer, and none of it is a code change. It
 is what a shared box does. It is also why the table in step 4 is worth more than any single figure in
 it: every row of that table was measured in one sitting, so the ratios hold even where the absolute
 rates drift. Compare your ratios to ours rather than your rows per second.
@@ -137,13 +138,16 @@ import { parentPort, workerData } from "node:worker_threads"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode-core"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 
 // Per-worker init, paid once: its own model session, its own read-only DB handle, its own extracts.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
 using lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
 const resolver = createWOFResolver(lookup)
-using extracts = new RegionDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+using extracts = await USStateDatabaseProvider.create(
+	{ AddressPointSqliteLookup, StreetInterpolator },
+	workerData.dataRoot
+)
 const deps = { classifier, resolver, databases: extracts.for, defaultCountry: workerData.country }
 
 parentPort.on("message", async (batch) => {
@@ -166,7 +170,8 @@ And this as `pool.mjs`:
 import { createWriteStream } from "node:fs"
 import { Worker } from "node:worker_threads"
 
-import { mailwomanDataRoot, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const workerCount = Number(process.argv[2] ?? 4)
@@ -189,8 +194,8 @@ for (let i = 0; i < queries.length; i += batchSize) batches.push(queries.slice(i
 const workerData = {
 	locale: "en-US",
 	country: "US",
-	candidateDB: resolveCandidateDBPath(),
-	dataRoot: mailwomanDataRoot(),
+	candidateDB: await resolveCandidateDBPath(),
+	dataRoot: dataRootPath(),
 }
 
 const out = createWriteStream("customers.pooled.jsonl")
@@ -250,7 +255,7 @@ Fastest of three runs per size:
 
 The curve peaks and then falls. Sixteen cores did not provide 16×, and eight workers were worse than two.
 One worker is the baseline plus a message hop, which is the sanity check that the pool itself costs
-nothing.
+no more than a message hop.
 
 Part of the reason the peak sits low is that each worker's inference session already claims four
 threads. `NeuralAddressClassifier.loadFromWeights` caps ONNX Runtime's intra-op pool at
@@ -307,12 +312,12 @@ the end.
 
 ## The shipped version of this
 
-`mailwoman/geocode-stream` is the same pattern already built, wired to `@mailwoman/registry`'s CSV
-normalizer:
+`geocodeStream` from `mailwoman/geocode` is the same pattern already built, wired to `@mailwoman/registry`'s
+CSV normalizer:
 
 ```js
 import { normalizeCSV } from "@mailwoman/registry"
-import { geocodeStream } from "mailwoman/geocode-stream"
+import { geocodeStream } from "mailwoman/geocode"
 
 const normalized = normalizeCSV("customers.csv", { mapping })
 for await (const rec of geocodeStream(normalized, { mapping, geocode, concurrency: 4 })) sink.write(rec)
@@ -329,7 +334,7 @@ you can run today.
 - **Memory scales with workers rather than rows.** Each worker loads its own copy of the model, so eight
   workers is eight model sessions. The gazetteer is opened read-only and shares the OS page cache
   across workers, so it does not multiply. Watch resident set size before raising the count.
-- **The peak is per-machine and per-dataset.** The module doc for `mailwoman/geocode-stream` records a
+- **The peak is per-machine and per-dataset.** The module doc for `geocodeStream` records a
   different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
   degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
 - **This is CPU inference.** The browser runtime (`@mailwoman/neural/web-onnx-runner`) has a WebGPU

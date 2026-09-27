@@ -5,10 +5,10 @@
  *   A populated locality whose own same-name administrative parent dwarfs it.
  *
  *   `Aurangabad`, Maharashtra is a city of roughly 1.2 million. Its `locality` row records 19,172 while its
- *   same-name `county` row records 3,701,282. Nothing in the resolver is wrong there. the number is. That row is
+ *   same-name `county` row records 3,701,282. No code in the resolver is wrong there. the number is. That row is
  *   also why a ranking rule cannot settle #2267 — Irvington and Aurangabad are identical on every feature the
  *   ranker can read and opposite in which bearer the query means, so correcting the population resolves one and
- *   changing the ranking to accommodate the wrong number improves nothing.
+ *   changing the ranking to accommodate the wrong number improves no outcome.
  *
  *   two signals, because the ratio alone does not separate the class. A mis-recorded city and a namesake village
  *   inside a large district both read as "small locality under big parent". What separates them is how common the
@@ -20,11 +20,11 @@
  *     node packages/mailwoman/lib/dev-tools/undersized-locality-census.run.ts --ratio 10 --json <path>
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -35,7 +35,6 @@ const { values: args } = parseArguments({
 		bearers: { type: "string" },
 		json: { type: "string" },
 	},
-	strict: false,
 })
 
 /**
@@ -44,31 +43,38 @@ const { values: args } = parseArguments({
 const RATIO = Number(args.ratio ?? 10)
 
 /**
- * At or below this many localities of the same name in the country, the name is distinctive enough that a tiny
- * population under a huge same-name parent reads as a mis-recorded settlement rather than a village.
+ * At or below this many localities of the same name in the country, the name is
+ * distinctive enough that a tiny population under a huge same-name parent reads
+ * as a mis-recorded settlement rather than a village.
  */
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
 /**
- * Placetypes a locality's same-name parent may be. A locality nested inside a same-name `region` is the ordinary
- * capital-of-its-region shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
+ * Placetypes a locality's same-name parent may be.
+ *
+ * A locality nested inside a same-name `region` is the ordinary capital-of-its-region
+ * shape (Luxembourg, Djibouti, Kuwait City) and is not this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 
 /**
- * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly 1.2 million whose `locality` row
- * records 19,172. The row this detector was written for, reported at the end so a run says whether it still reaches
- * it.
+ * Aurangabad, Maharashtra — renamed Chhatrapati Sambhajinagar, a city of roughly
+ * 1.2 million whose `locality` row records 19,172.
+ *
+ * The row this detector was written for, reported at the end so a run says whether it still reaches it.
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
-using db = new DatabaseClient<WOFDatabase>(String(args.admin ?? dataRootPath("wof", "admin-global-priority.db")), {
+using db = new DatabaseClient<WOFDatabase>(args.admin ?? wofDatabasePath("admin-global-priority.db"), {
 	readOnly: true,
 })
 
 /**
- * The comparison surface. Diacritic-folded and case-folded, but not emptied for a non-Latin name the way the resolver's
- * `foldName` is — a Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
+ * The comparison surface.
+ *
+ * Diacritic-folded and case-folded, but not emptied for a non-Latin name the
+ * way the resolver's `foldName` is.
+ * A Han or Cyrillic locality would otherwise fold equal to its parent by both being empty.
  */
 const nameKey = (name: string): string =>
 	name
@@ -87,8 +93,10 @@ interface Row {
 	parentPopulation: number
 	ratio: number
 	/**
-	 * Localities of this name in this country. High means a common village name. a handful means a real settlement and
-	 * its namesakes.
+	 * Localities of this name in this country.
+	 *
+	 * High means a common village name.
+	 * A handful means a real settlement and its namesakes.
 	 */
 	nameBearers: number
 }
@@ -122,16 +130,18 @@ const candidates = db
 
 const sameName = candidates.filter((row) => nameKey(row.name) === nameKey(row.parentName))
 
-// How many reported rows carry the `gn:id` link a second register would be read through. Counted rather than
-// followed: the GeoNames population file is a separate download, and the queue is orderable only once it is read.
+// How many reported rows carry the `gn:id` link a second register would be read through.
+// Counted rather than followed: the GeoNames population file is a separate download,
+// and the queue is orderable only once it is read.
 const wanted = new Set(sameName.map((row) => row.id))
 
 const linked = (
 	db.prepare(`SELECT id FROM concordances WHERE other_source = 'gn:id'`).all() as Array<{ id: number }>
 ).filter((link) => wanted.has(link.id)).length
 
-// Counted in SQL and on the exact name: `spr` holds 4,386,926 named localities, so folding every one in JS to key a
-// map costs the whole scan, and `Sultanpur` is spelled one way across all 312 of its Indian rows.
+// Counted in SQL and on the exact name: `spr` holds 4,386,926 named localities,
+// so folding every one in JS to key a map costs the whole scan, and `Sultanpur`
+// is spelled one way across all 312 of its Indian rows.
 const bearerCount = db.prepare(
 	`SELECT COUNT(*) AS n FROM spr WHERE placetype = 'locality' AND country = ? AND name = ?`
 )
@@ -213,7 +223,7 @@ console.log(
 if (args.json) {
 	await writeLocalTextFile(
 		prettyJSON({ ratio: RATIO, rareNameMax: RARE_NAME_MAX, parentPlacetypes: PARENT_PLACETYPES, linked, rows }),
-		String(args.json)
+		args.json
 	)
 
 	console.log(`\njson → ${args.json}`)

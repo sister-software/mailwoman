@@ -1,20 +1,3 @@
-"""P0 validation-stream policy (2026-08-09 training-substrate audit, HANDOFF-CODEX-TO-CLAUDE §6).
-
-Two defects pinned here:
-
-1. **Mixed-source parquet files lose rows.** The loader identifies a file's source from its first
-   row, buckets the whole file under it, then filters every row to that source — so in a
-   mixed-source validation file every later-source row is silently discarded. "3 val files"
-   was never a coverage receipt.
-2. **Training policy leaks into validation.** ``iter_rows`` applies the same augmentation
-   probabilities, affix-relabel pass, and source weights regardless of split, so the headline
-   validation metric scores an augmented, training-filtered sample rather than held-out data.
-
-Interface pinned here (the repair): for any split other than ``"train"``, ``iter_rows``
-yields every row of every parquet file exactly as authored — no source bucketing/filtering, no
-source weighting, no augmentation, no online label mutation.
-"""
-
 from __future__ import annotations
 
 import random
@@ -66,8 +49,6 @@ def _val_rows(corpus: Path, **overrides) -> list[dict]:
 
 
 def test_val_yields_every_row_of_a_mixed_source_file(tmp_path: Path) -> None:
-    """One parquet file, source flips from 'a' to 'b' mid-file: all 10 rows must come out.
-    Today the file is bucketed under 'a' (row 0's source) and the 5 'b' rows vanish."""
     corpus = tmp_path / "corpus"
     rows = [_row(f"{i} Alpha St", "a") for i in range(5)] + [_row(f"{i} Beta St", "b") for i in range(5)]
     _write_split(corpus, "val", {"part-mixed.parquet": rows})
@@ -78,8 +59,6 @@ def test_val_yields_every_row_of_a_mixed_source_file(tmp_path: Path) -> None:
 
 
 def test_val_ignores_training_source_weights(tmp_path: Path) -> None:
-    """``source_weights`` describes the desired TRAIN mixture. Passing it through to the
-    validation split reweights/drops held-out rows (a zero weight deletes a source outright)."""
     corpus = tmp_path / "corpus"
     _write_split(
         corpus,
@@ -96,8 +75,6 @@ def test_val_ignores_training_source_weights(tmp_path: Path) -> None:
 
 
 def test_val_receives_no_augmentation(tmp_path: Path) -> None:
-    """Augmentation probabilities are a TRAIN policy. At prob 1.0 today every val row is
-    mutated (upper-cased here); the val stream must be byte-identical to the authored rows."""
     corpus = tmp_path / "corpus"
     authored = [_row(f"{i} Quiet Lane", "a") for i in range(6)]
     _write_split(corpus, "val", {"part-a.parquet": authored})
@@ -108,9 +85,6 @@ def test_val_receives_no_augmentation(tmp_path: Path) -> None:
 
 
 def test_val_receives_no_affix_relabel(tmp_path: Path) -> None:
-    """The #511 affix relabel is an online TRAIN-label policy (and was the #1569 corruption
-    vector). Val labels must leave the loader exactly as authored. The train leg of this test
-    proves the lexicon does fire on the same row — so a silent no-op lexicon can't fake a pass."""
     lex = AffixRelabelLexicon(directionals={"west": "W"}, suffixes={"road": "Rd"}, version="test")
     street_labels = ["B-street", "I-street", "I-street"]
     corpus = tmp_path / "corpus"

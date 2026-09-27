@@ -19,15 +19,16 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwoman/core/layers"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { buildPostcodeNIOSM, NI_LIVE_POSTCODES } from "mailwoman/gazetteer-pipeline/postcode/ni/osm/database"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
-let sourceDir: string
+let sourceDir: PathBuilder
 
 /**
  * A node element — carries its coordinate directly.
@@ -37,8 +38,8 @@ function node(id: number, postcode: string, lat: number, lon: number): Record<st
 }
 
 /**
- * A way element under `out center` — carries its coordinate as `center`, which is the shape a reader that only handles
- * nodes silently drops.
+ * A way element under `out center` — carries its coordinate as `center`,
+ * which is the shape a reader that only handles nodes silently drops.
  */
 function way(id: number, postcode: string, lat: number, lon: number): Record<string, unknown> {
 	return { type: "way", id, center: { lat, lon }, tags: { "addr:postcode": postcode, building: "yes" } }
@@ -46,7 +47,7 @@ function way(id: number, postcode: string, lat: number, lon: number): Record<str
 
 beforeAll(async () => {
 	root = await temporaryDirectory("ni-osm-")
-	sourceDir = root.resolve("acquisition")
+	sourceDir = root.path("acquisition")
 	await makeDirectories(sourceDir)
 
 	const response = {
@@ -57,13 +58,14 @@ beforeAll(async () => {
 			copyright: "The data included in this document is from www.openstreetmap.org.",
 		},
 		elements: [
-			// BT3 9QQ across three elements, two of them ways — the medoid must land on one of the three,
-			// and the mean (54.6100, -5.8900) is deliberately not a member.
+			// BT3 9QQ across three elements, two of them ways.
+			// The medoid must land on one of the three, and the mean (54.6100, -5.8900)
+			// is deliberately not a member.
 			node(1, "BT3 9QQ", 54.6, -5.88),
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
-			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code, so
-			// this is one postcode with two attestations rather than two codes and a typo.
+			// Lowercase + a doubled inner space: both normalize to the same single-space uppercase code,
+			// so this is one postcode with two attestations rather than two codes and a typo.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.
@@ -75,13 +77,13 @@ beforeAll(async () => {
 		],
 	}
 
-	await writeLocalTextFile(`${stringifyJSON(response)}\n`, join(sourceDir, "response.json"))
+	await writeLocalTextFile(`${stringifyJSON(response)}\n`, sourceDir("response.json"))
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
 
 test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of-zero provenance", async () => {
-	const out = root.resolve("ni.db")
+	const out = root.path("ni.db")
 
 	const result = await buildPostcodeNIOSM({
 		sourceDir,
@@ -90,42 +92,47 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 		now: new Date("2026-08-05T00:00:00.000Z"),
 	})
 
-	// Two postcodes survive: BT3 9QQ (3 attestations) and BT1 5GS (2). The malformed value and the
-	// coordinate-less relation are dropped, and the untagged node never counts as tagged at all.
+	// Two postcodes survive: BT3 9QQ (3 attestations) and BT1 5GS (2).
+	// The malformed value and the coordinate-less relation are dropped,
+	// and the untagged node never counts as tagged at all.
 	expect(result.inserted).toBe(2)
 	expect(result.stats.elements).toBe(8)
 	expect(result.stats.tagged).toBe(7)
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// A drop counter says something broke. the named value says which value it was. `"BT36 4RU,"` is a typo rather than a bug.
+	// A drop counter says something broke.
+	// The named value says which value it was.
+	// `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways and relations are not a footnote — 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
 	expect(result.districts).toBe(2)
 	expect(result.sectors).toBe(2)
-	// Every internal identity holds. nothing is silently unaccounted for.
+	// Every internal identity holds.
+	// No identity is silently unaccounted for.
 	expect(result.reconciliationFailures).toEqual([])
 	// The data extract rather than the wall clock — the date that actually describes the rows.
 	expect(result.osmTimestamp).toBe("2026-08-05T13:14:01Z")
-	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than accessSync: root.path
-	// ignores the permission and would pass a W_OK probe on a sealed file).
+	// Sealed 0444 — the artifact is read-only from the moment it exists (mode bits rather than
+	// accessSync: root.path ignores the permission and would pass a W_OK probe on a sealed file).
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
-	await using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
+	using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
 
-	// Name law: `spr.name` is the sanitized-query token shape. the display form is an alt `names` row.
+	// Name law: `spr.name` is the sanitized-query token shape.
+	// The display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
-	// Ids come from this database's own range, and sorting by name makes them a function of the postcode set
-	// rather than of the response's element order.
+	// Ids come from this database's own range, and sorting by name makes them a function
+	// of the postcode set rather than of the response's element order.
 	expect(names.map((n) => n.id)).toEqual([NI_OSM_ID_BASE, NI_OSM_ID_BASE + 1])
 
 	const alt = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT3 9QQ'").get() as { n: number }
 	expect(alt.n).toBe(1)
 
-	// The spaced form must never be the primary name — the CZ build that stored it measured worse than no
-	// coverage at all (#920), because its bigrams partial-matched the wrong codes.
+	// The spaced form must never be the primary name — the CZ build that stored it measured
+	// worse than no coverage at all (#920), because its bigrams partial-matched the wrong codes.
 	const spaced = db.prepare("SELECT COUNT(*) AS n FROM spr WHERE name LIKE '% %'").get() as { n: number }
 	expect(spaced.n).toBe(0)
 
@@ -137,8 +144,9 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const typo = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name LIKE 'BT36%'").get() as { n: number }
 	expect(typo.n).toBe(0)
 
-	// Medoid law: the centroid is one of the three member points — here 54.61/-5.89, the member nearest the
-	// (54.6100, -5.8900) mean. A mean-of-members build would store a coordinate on no mapped address.
+	// Medoid law: the centroid is one of the three member points — here 54.61/-5.89,
+	// the member nearest the (54.6100, -5.8900) mean.
+	// A mean-of-members build would store a coordinate on no mapped address.
 	const bt3 = db.prepare("SELECT latitude, longitude FROM spr WHERE name='BT39QQ'").get() as {
 		latitude: number
 		longitude: number
@@ -184,24 +192,34 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	const drops = parseJSONStrict<{ malformedValues: Record<string, number> }>(meta.get("quality_drops")!)
 	expect(drops.malformedValues).toEqual({ "BT36 4RU,": 1 })
+
+	// The layer interface's manifest states the same tier, which is the field the candidate build reads.
+	using layer = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
+
+	const manifest = await readLayerManifest(layer)
+
+	expect(manifest.name).toBe("postalcode-ni-osm")
+	expect(manifest.tier).toBe(LayerTier.BuildLocal)
+	expect(manifest.license).toBe("ODbL-1.0")
+	expect(manifest.attribution).toContain("OpenStreetMap contributors")
+	expect(manifest.sourceVintage).toBe("2026-08-05T13:14:01Z")
+	expect(manifest.spineKeys).toEqual({ wofID: "id" })
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {
-	const dir = root.resolve("tampered")
+	const dir = root.path("tampered")
 	await makeDirectories(dir)
 
-	await writeLocalTextFile(
-		`${stringifyJSON({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`,
-		join(dir, "response.json")
-	)
+	await writeLocalTextFile(`${stringifyJSON({ elements: [node(1, "BT1 5GS", 54.6, -5.93)] })}\n`, dir("response.json"))
 
-	// A sidecar recording a different md5 — the shape a half-edited acquisition dir takes.
+	// A sidecar recording a different md5.
+	// The shape a half-edited acquisition dir takes.
 	await writeLocalJSONFile(
 		{ endpoint: "x", query: "y", queryMD5: "z", retrievedAt: "t", bytes: 1, md5: "0".repeat(32) },
-		join(dir, "acquisition.json")
+		dir("acquisition.json")
 	)
 
-	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.resolve("tampered.db"), offline: true })).rejects.toThrow(
+	await expect(buildPostcodeNIOSM({ sourceDir: dir, out: root.path("tampered.db"), offline: true })).rejects.toThrow(
 		/has been modified since acquisition/
 	)
 })

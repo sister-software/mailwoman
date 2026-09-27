@@ -180,8 +180,8 @@ export type BroadbandTechnologyCodeToCategoryName = typeof BroadbandTechnologyCo
 /**
  * Infers the member type of a `Set`.
  *
- * Local stand-in for the earlier draft's `InferTupleMember` (`@earlier-draft/core`), which supports any `SetLike` shape. This file only
- * ever applies it to a real `Set`, so a narrower local type covers the one use below.
+ * Local stand-in for the earlier draft's `InferTupleMember` (`@earlier-draft/core`), which supports any `SetLike` shape.
+ * This file only ever applies it to a real `Set`, so a narrower local type covers the one use below.
  */
 type InferSetMember<T extends ReadonlySet<unknown>> = T extends ReadonlySet<infer U> ? U : never
 

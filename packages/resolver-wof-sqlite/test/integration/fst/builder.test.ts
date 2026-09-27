@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { buildFSTFromWOF } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { FSTMatcher, BuildFSTResult, FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 
-const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
@@ -91,9 +91,10 @@ describe.skipIf(!HAS_WOF)("buildFSTFromWOF — integration", () => {
 	})
 })
 
-// The curation block runs against the canonical admin DB (the artifact the shipped per-locale FSTs
-// are actually built from) — the per-repo DB above is a legacy fixture absent on newer hosts.
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+// The curation block runs against the canonical admin DB
+// (the artifact the shipped per-locale FSTs are actually built from).
+// The per-repo DB above is a legacy fixture absent on newer hosts.
+const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
 const HAS_ADMIN = await pathExists(ADMIN_DB)
 
 describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", () => {
@@ -106,8 +107,8 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 			countries: ["US"],
 			placetypes: ["country", "region", "county", "locality"],
 			languages: ["eng", ""],
-			// The shipped-index victims: "la" = the case-folded Los Angeles alias colliding with the
-			// French article; "boulevard" = Boulevard, CA colliding with the street-type word.
+			// The shipped-index victims: "la" = the case-folded Los Angeles alias colliding with
+			// the French article; "boulevard" = Boulevard, CA colliding with the street-type word.
 			excludeSurfaces: new Set(["la", "boulevard"]),
 			excludeAllTokensOf: new Set(["de", "la", "du", "des"]),
 			exclusionPolicy: "test-policy",
@@ -123,7 +124,8 @@ describe.skipIf(!HAS_ADMIN)("buildFSTFromWOF — degenerate-surface curation", (
 	})
 
 	it("keeps multi-token names containing a degenerate token", () => {
-		// Curation is whole-surface only — Los Angeles must remain findable.
+		// Curation is whole-surface only.
+		// Los Angeles must remain findable.
 		expect(matcher.query("Los Angeles").accepting.length).toBeGreaterThan(0)
 	})
 

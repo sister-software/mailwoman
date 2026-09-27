@@ -34,8 +34,8 @@ function serializeString(value: string, ensureASCII: boolean): string {
 	const out = stringifyJSON(value)
 
 	if (!ensureASCII) return out
-	// ensure_ascii: escape every code unit >= 0x80 as \uXXXX (surrogate halves handled per-unit,
-	// exactly as CPython emits astral codepoints as a \u-pair).
+	// ensure_ascii: escape every code unit >= 0x80 as \uXXXX
+	// (surrogate halves handled per-unit, exactly as CPython emits astral codepoints as a \u-pair).
 	let escaped = ""
 
 	for (let i = 0; i < out.length; i++) {
@@ -101,6 +101,7 @@ export function pyJSONDumps(value: unknown, options: PyJSONDumpOptions = {}): st
 }
 
 /**
- * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` — single-quoted keys, `, ` / `:
- * ` separators (e.g. `{'US': 1840, 'FR': 950}`). Insertion order is preserved.
+ * Render a string->number map the way Python prints `dict(...)` / `dict(Counter(...))` —
+ * single-quoted keys, `, ` / `: ` separators (e.g. `{'US': 1840, 'FR': 950}`).
+ * Insertion order is preserved.
  */

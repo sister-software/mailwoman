@@ -5,6 +5,7 @@ import {
 	CLIUsageError,
 	type CommandSpec,
 	isCLIUsageError,
+	isLocaleTag,
 	parseCommand,
 	renderCommandHelp,
 } from "mailwoman/cli-native/spec"
@@ -126,8 +127,8 @@ describe("a renamed option keeps its old spelling working", () => {
 		const parsed = parseCommand(renamed, ["--output", "/tmp/x.json"])
 
 		expect(parsed.values.out).toBe("/tmp/x.json")
-		// A command reads `options.out`; leaving the retired key readable gives one value two homes, and a command that
-		// reaches for the old one keeps working past the removal it was warned about.
+		// A command reads `options.out`; leaving the retired key readable gives one value two homes,
+		// and a command that reaches for the old one keeps working past the removal it was warned about.
 		expect(parsed.values.output).toBeUndefined()
 	})
 
@@ -143,8 +144,9 @@ describe("a renamed option keeps its old spelling working", () => {
 	})
 
 	test("an option's own DEFAULT does not read as the new flag being passed", () => {
-		// The retired flag must still win over a default the caller never typed. comparing against the value alone would
-		// make `--style` a usage error on every command whose current flag has one.
+		// The retired flag must still win over a default the caller never typed.
+		// Comparing against the value alone would make `--style` a usage error on
+		// every command whose current flag has one.
 		expect(parseCommand(renamed, ["--style", "slow"]).values.mode).toBe("slow")
 	})
 
@@ -164,5 +166,33 @@ describe("a renamed option keeps its old spelling working", () => {
 		} as CommandSpec
 
 		expect(() => parseCommand(invalid, [])).toThrow(/old spelling/u)
+	})
+})
+
+describe("isLocaleTag", () => {
+	test("accepts a bare language subtag and a language-region tag in the cased form", () => {
+		expect(isLocaleTag("en-US")).toBe(true)
+		expect(isLocaleTag("fr-FR")).toBe(true)
+		expect(isLocaleTag("ja-JP")).toBe(true)
+		expect(isLocaleTag("en")).toBe(true)
+	})
+
+	test("refuses the other casings of a tag that is otherwise valid", () => {
+		// The tag is interpolated into a weights package specifier and a data-root directory,
+		// both of which are lower-case language and upper-case region.
+		expect(isLocaleTag("en-us")).toBe(false)
+		expect(isLocaleTag("EN-US")).toBe(false)
+		expect(isLocaleTag("En-Us")).toBe(false)
+	})
+
+	test("refuses a weights family name, which `release hf --locale` accepts instead", () => {
+		expect(isLocaleTag("cjk")).toBe(false)
+		expect(isLocaleTag("base-latn")).toBe(false)
+	})
+
+	test("refuses a script or variant subtag and an empty value", () => {
+		expect(isLocaleTag("zh-Hant")).toBe(false)
+		expect(isLocaleTag("en-US-POSIX")).toBe(false)
+		expect(isLocaleTag("")).toBe(false)
 	})
 })

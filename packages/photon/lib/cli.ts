@@ -15,9 +15,8 @@
 
 import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
-import { pyTitle } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
 import {
 	corsBannerLine,
@@ -28,8 +27,9 @@ import {
 	runDropInCLI,
 } from "mailwoman/cli-kit/dropin"
 import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
-import { geocodeAddress, RegionDatabaseProvider } from "mailwoman/geocode"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend } from "mailwoman/resolver-backend"
+import { titleCase } from "spliterator"
 
 import {
 	createPhotonApp,
@@ -57,7 +57,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 }
 
 /**
- * A real address fits comfortably. longer is malformed input (and would exceed the model's window).
+ * A real address fits comfortably.
+ *
+ * Longer is malformed input (and would exceed the model's window).
  */
 const MAX_QUERY_LEN = 512
 
@@ -69,8 +71,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive cors is on by default (upstream Photon parity — browser widgets need it). `--no-cors`
-			// turns it off for deployments where a reverse proxy already sets the headers.
+			// Permissive cors is on by default (upstream Photon parity — browser widgets need it).
+			// `--no-cors` turns it off for deployments where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
 		allowNegative: true,
@@ -87,26 +89,30 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
-	const extracts = await RegionDatabaseProvider.create(resolverMod, mailwomanDataRoot())
+	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
-	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the extract isn't on disk (conditioned on existsSync inside the provider), so the endpoint degrades cleanly.
+	// National open-register rooftop tier (#1012): BAN-FR ahead of the OSM tier for a non-US parse.
+	// A no-op when the extract isn't on disk (conditioned on existsSync inside the provider),
+	// so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
-	const banExtracts = await BANRegionDatabaseProvider.create(mailwomanDataRoot())
+	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 
 	const engine: PhotonEngine = {
 		async search(params) {
-			// Empty/whitespace → no query. absurdly long → not an address (and would blow the model's input).
+			// Empty/whitespace → no query.
+			// Absurdly long → not an address (and would blow the model's input).
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
 			// #1016: forward the client's viewport/user location as a proximity bias — a soft re-rank the resolver
-			// folds into candidate scoring (Springfield near the map center wins). Only when both coords are present.
+			// folds into candidate scoring (Springfield near the map center wins).
+			// Only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
-			// No country constraint: the default-on #244 placer routes the query's country (Berlin→DE,
-			// Boston→US). Forcing "US" here is a hard override (geocode-core.ts:102) that resolved every
+			// No country constraint: the default-on #244 placer routes the query's
+			// country (Berlin→DE, Boston→US).
+			// Forcing "US" here is a hard override (geocode-core.ts:102) that resolved every
 			// non-US query to its US namesake — wrong for a global autocomplete front.
 			const result = await geocodeAddress(query, {
 				classifier,
@@ -120,14 +126,16 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
 			// #1014: decorate from the resolved gazetteer place — proper-cased ancestry names (`hierarchy[].name`,
-			// not the parsed span) + the resolved country (ISO2 → canonical name via codex) + osm_key/value/type so
-			// Photon clients don't TypeError. The candidate backend fills only the locality (no ancestors() table),
-			// so state/county come through only on an ancestry-capable backend — country still lands from the code.
+			// not the parsed span) + the resolved country (ISO2 → canonical name via codex) +
+			// osm_key/value/type so Photon clients don't TypeError.
+			// The candidate backend fills only the locality (no ancestors() table), so state/county
+			// come through only on an ancestry-capable backend — country still lands from the code.
 			const country = matchCountry(result.countryCode)
 
 			// #1041: a rooftop (`address_point`) or house-number-estimate (`interpolated`) tier is house-grade — carry the
-			// parsed housenumber + street so photonForwardProperties decorates it `type: house` (matching upstream Photon)
-			// instead of inheriting the admin locality's `type: city`. The admin tier (a locality centroid) never does.
+			// parsed housenumber + street so photonForwardProperties decorates it `type: house`
+			// (matching upstream Photon) instead of inheriting the admin locality's `type: city`.
+			// The admin tier (a locality centroid) never does.
 			const houseGrade =
 				result.resolution_tier === "address_point" ||
 				result.resolution_tier === "interpolated" ||
@@ -137,24 +145,25 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// highway/street osm tags (the parallel of the #1041 house treatment).
 			const streetGrade = result.resolution_tier === "street"
 
-			// The register row's own scope tags (result.rooftop) decorate a house-grade answer whose
-			// hierarchy carries no locality/postcode — the register attests the rooftop's commune and
-			// postcode even when the query never named them, and #1014's decorate-from-the-resolved-place
-			// doctrine covers register attestations exactly as it covers gazetteer rows. The key form is
-			// normalized. title-case it for display (the extracts store no display-cased locality).
+			// The register row's own scope tags (result.rooftop) decorate a house-grade
+			// answer whose hierarchy carries no locality/postcode.
+			// The register attests the rooftop's commune and postcode even when the query
+			// never named them, and #1014's decorate-from-the-resolved-place doctrine covers
+			// register attestations exactly as it covers gazetteer rows.
+			// The key form is normalized.
+			// Title-case it for display (the extracts store no display-cased locality).
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
-				// The key form is normalized lowercase (the extracts store no display-cased locality);
-				// pyTitle display-cases it particle-and-apostrophe-aware.
-				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
+				places.push({ tag: "locality", name: titleCase(result.rooftop.localityNorm) })
 			}
 
-			// Locality→postcode enrichment: an admin answer for a place whose containing postcode is
-			// unambiguous (exactly one) carries that postcode — the register/WOF attests it, the query
-			// simply never said it. Multi-postcode cities (Paris) get nothing: the exactly-one rule is
-			// the abstention, per the registry doctrine. Keyed by the resolved place's WOF id, so no
-			// name matching is involved.
+			// Locality→postcode enrichment: an admin answer for a place whose containing
+			// postcode is unambiguous (exactly one) carries that postcode.
+			// The register/WOF attests it, the query simply never said it.
+			// Multi-postcode cities (Paris) get no postcode: the exactly-one rule is
+			// the abstention, per the registry doctrine.
+			// Keyed by the resolved place's WOF id, so no name matching is involved.
 			let enrichedPostcode: string | undefined
 
 			if (!result.postcode && !result.rooftop?.postcode) {
@@ -178,7 +187,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// #1016: candidates[0] is the primary itself. its ranked alternatives (Springfield MA/IL/…) become the
-			// extra features, up to the requested `limit`. Each alternative is a single resolved place.
+			// extra features, up to the requested `limit`.
+			// Each alternative is a single resolved place.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)
 

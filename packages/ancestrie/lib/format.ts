@@ -65,15 +65,20 @@
  */
 
 /**
- * File magic, "anct" (ANCestry Trie). A reader rejects anything not starting with these four bytes. Deliberately not
- * "FST\0" — this format shares ancestry with `@mailwoman/resolver-wof-sqlite`'s FST gazetteer but is its own
- * interface.
+ * File magic, "anct" (ANCestry Trie).
+ *
+ * A reader rejects anything not starting with these four bytes.
+ * Deliberately not "FST\0".
+ *
+ * This format shares ancestry with `@mailwoman/resolver-wof-sqlite`'s FST gazetteer
+ * but is its own interface.
  */
 export const ANCESTRIE_MAGIC: readonly number[] = [0x41, 0x4e, 0x43, 0x54]
 
 /**
- * Format version this module writes and the newest it reads. Published so a freshness guard can call an older artifact
- * format-stale without re-typing the number.
+ * Format version this module writes and the newest it reads.
+ *
+ * Published so a freshness guard can call an older artifact format-stale without re-typing the number.
  */
 export const ANCESTRIE_FORMAT_VERSION = 1
 
@@ -108,20 +113,25 @@ export const ENTRY_RECORD_SIZE = 32
 export const ID_INDEX_ENTRY_SIZE = 8
 
 /**
- * Entry flags bit 0: this entry carries a payload. Presence-signaled per entry so an absent payload can never surface
- * as an empty one — the meaning-of-zero rule, in bytes.
+ * Entry flags bit 0: this entry carries a payload.
+ *
+ * Presence-signaled per entry so an absent payload can never surface as an empty one —
+ * the meaning-of-zero rule, in bytes.
  */
 export const ENTRY_FLAG_HAS_PAYLOAD = 1
 
 /**
- * Entry flags bit 1: the payload bytes are UTF-8 JSON and the reader parses them. unset means the payload is opaque
- * bytes handed back verbatim.
+ * Entry flags bit 1: the payload bytes are UTF-8 JSON and the reader parses them.
+ *
+ * Unset means the payload is opaque bytes handed back verbatim.
  */
 export const ENTRY_FLAG_PAYLOAD_JSON = 2
 
 /**
- * Section alignment in bytes. Variable-length byte sections (string data, payload blob) are padded so every fixed-width
- * table starts on a 4-byte boundary.
+ * Section alignment in bytes.
+ *
+ * Variable-length byte sections (string data, payload blob) are padded
+ * so every fixed-width table starts on a 4-byte boundary.
  */
 const ALIGNMENT = 4
 
@@ -147,8 +157,9 @@ export interface AncestrieCounts {
 }
 
 /**
- * Absolute byte offset of each section, derived from the counts. `end` is the total size of the fixed layout — the
- * metadata trailer, when present, begins there.
+ * Absolute byte offset of each section, derived from the counts.
+ *
+ * `end` is the total size of the fixed layout — the metadata trailer, when present, begins there.
  */
 export interface AncestrieSections {
 	stringOffsets: number
@@ -164,8 +175,10 @@ export interface AncestrieSections {
 }
 
 /**
- * Compute every section offset from the header counts. The single source of section math — the builder sizes and writes
- * with it, the reader locates with it, so the two ends cannot drift.
+ * Compute every section offset from the header counts.
+ *
+ * The single source of section math.
+ * The builder sizes and writes with it, the reader locates with it, so the two ends cannot drift.
  */
 export function computeSections(counts: AncestrieCounts): AncestrieSections {
 	const stringOffsets = HEADER_SIZE
@@ -202,8 +215,10 @@ export interface AncestrieHeader extends AncestrieCounts {
 }
 
 /**
- * Write the 48-byte header. The field order here and in {@link readHeader} is the format — change one and the round-trip
- * tests fail, which is the point.
+ * Write the 48-byte header.
+ *
+ * The field order here and in {@link readHeader} is the format — change one
+ * and the round-trip tests fail, which is the point.
  */
 export function writeHeader(view: DataView, header: AncestrieHeader): void {
 	for (let i = 0; i < ANCESTRIE_MAGIC.length; i++) {
@@ -225,8 +240,10 @@ export function writeHeader(view: DataView, header: AncestrieHeader): void {
 }
 
 /**
- * Validate the magic and version, then decode the header. Throws on anything this module cannot read. never guesses at
- * an unknown version's layout.
+ * Validate the magic and version, then decode the header.
+ *
+ * @throws on anything this module cannot read.
+ * Never guesses at an unknown version's layout.
  */
 export function readHeader(view: DataView): AncestrieHeader {
 	if (view.byteLength < HEADER_SIZE) {

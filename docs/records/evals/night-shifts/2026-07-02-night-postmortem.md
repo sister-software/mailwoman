@@ -103,7 +103,7 @@ operator merge (no self-merge).
   next: dump the specific case before writing the "why" rather than after. The verify-before-verdict reflex fired
   on the correction rather than the claim — it needs to fire one step earlier.
 - **Branch-stacking from an aborted `git switch`.** `git switch main` silently aborts when the working tree
-  has uncommitted edits, so two new branches stacked on the previous one — the postmortem PR would have
+  has uncommitted edits, so two new branches stacked on the previous one. The postmortem PR would have
   carried #879's 18-file cast diff. Caught it on a diff-review before it mattered, rebased both onto main
   with explicit hashes. Lesson: commit (or stash) before switching, and always `git diff origin/main
 --name-only` a fresh branch before pushing.

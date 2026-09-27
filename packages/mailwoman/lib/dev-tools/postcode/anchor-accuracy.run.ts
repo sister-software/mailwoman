@@ -1,33 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Gazetteer-quality eval for the postcode anchor (#240): how close does the anchor's centroid land
- *   to the true address? For each OpenAddresses point with a postcode and real coordinates, look
- *   the postcode up in the databases, take the centroid for that country, and measure the haversine
- *   distance to the true point.
- *
- *   This measures the parent-borrow backfill rather than rooftop accuracy. A backfilled centroid is the
- *   parent locality's centre, so the expected distance is "how far is this address from the middle
- *   of its town" — a few km in a city, more in a large rural postcode. That is exactly the
- *   resolution a "which city/region" anchor needs. the eval just confirms the borrow lands in the
- *   right town.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/postcode/anchor-accuracy.run.ts\
- *   --eval data/eval/external/openaddresses-de-sample.jsonl --country DE
- */
-
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { WOFPostcodeLookup } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-/**
- * Distance within which a postcode anchor counts as correct, in kilometres.
- */
 const ANCHOR_TOLERANCE_KM = 25
 
 interface Args {
@@ -41,37 +22,28 @@ function parseArgs(): Args {
 	let country = "DE"
 
 	const databases: string[] = [
-		resolvePath(dataRootPath("wof", "postalcode-us.db")),
-		resolvePath(dataRootPath("wof", "postalcode-intl.db")),
+		resolvePath(wofDatabasePath("postalcode-us.db")),
+		resolvePath(wofDatabasePath("postalcode-intl.db")),
 	]
 
-	// node:util parseArgs (strict:false = old scan parity: unknown flags tolerated)
 	const { values } = parseArguments({
 		options: { country: { type: "string" }, eval: { type: "string" }, extract: { type: "string", multiple: true } },
-		strict: false,
 		allowPositionals: true,
 	})
 
-	if (values["eval"] != null) {
-		evalPath = values["eval"] as string
+	if (values.eval !== undefined) {
+		evalPath = values.eval
 	}
 
-	if (values["country"] != null) {
-		country = values["country"] as string
+	if (values.country !== undefined) {
+		country = values.country
 	}
 
-	for (const v of (values["extract"] as string[] | undefined) ?? []) {
-		databases.push(v)
-	}
+	databases.push(...(values.extract ?? []))
 
 	return { evalPath, country, databases }
 }
 
-/**
- * One eval row as this probe reads it. The three postcode spellings and the top-level coordinates are all optional
- * because the eval files it runs against were written by different generations of the harness. the loop skips a row
- * that carries none of them.
- */
 interface EvalRow {
 	expected?: { postcode?: string; lat?: number; lon?: number }
 	postcode?: string
@@ -127,7 +99,7 @@ async function main(): Promise<void> {
 	console.log(`rows with postcode + coords: ${withPostcode}`)
 	console.log(`  placed (centroid found):     ${placed} (${((100 * placed) / withPostcode).toFixed(1)}%)`)
 	console.log(
-		`  in gazetteer, no centroid:   ${inGazetteerNoCentroid} (${((100 * inGazetteerNoCentroid) / withPostcode).toFixed(1)}%)`
+		`  in gazetteer but unplaced:   ${inGazetteerNoCentroid} (${((100 * inGazetteerNoCentroid) / withPostcode).toFixed(1)}%)`
 	)
 	console.log(
 		`  not in gazetteer at all:     ${notInGazetteer} (${((100 * notInGazetteer) / withPostcode).toFixed(1)}%)`

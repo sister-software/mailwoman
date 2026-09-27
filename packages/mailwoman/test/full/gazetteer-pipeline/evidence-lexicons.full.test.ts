@@ -20,11 +20,12 @@
  *   claims about the gazetteer rather than about the laws.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, pathExists } from "@mailwoman/core/fs/readers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
-const ADMIN_DB = String(dataRootPath("wof", "admin-global-priority.db"))
+const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
 
 describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integration (admin DB)", () => {
 	it("applies all three laws end to end", async () => {
@@ -79,10 +80,10 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
 
-		// The lexicon still carries the ordinary locality surfaces the census rows need. (Not casper/
-		// powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier, Powell WY is below
-		// the law-2 floor — both were absent from v4 too. their census flips were family-F1 street-code
-		// evidence, fixed in the street lexicon.)
+		// The lexicon still carries the ordinary locality surfaces the census rows need.
+		// (Not casper/ powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier,
+		// Powell WY is below the law-2 floor, and both were absent from v4 too. Their census
+		// flips were family-F1 street-code evidence, fixed in the street lexicon.)
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(j.entries[s], s).toBeDefined()
 		}

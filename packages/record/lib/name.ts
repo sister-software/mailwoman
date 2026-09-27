@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+import { TextSpliterator } from "spliterator"
+
 /**
  *   Person-name parsing — split a full name into components for the matcher to canonicalize and
  *   compare.
@@ -25,7 +27,9 @@
  */
 
 /**
- * A parsed person name. All fields optional — the parser fills what it can identify.
+ * A parsed person name.
+ *
+ * All fields optional — the parser fills what it can identify.
  */
 export interface PersonName {
 	/**
@@ -59,7 +63,9 @@ export interface PersonName {
 }
 
 /**
- * Titles / salutations that lead a name. Matched case-insensitively, trailing `.` ignored.
+ * Titles / salutations that lead a name.
+ *
+ * Matched case-insensitively, trailing `.` ignored.
  */
 const TITLES = new Set([
 	"airman",
@@ -160,8 +166,10 @@ const SUFFIXES = new Set([
 ])
 
 /**
- * Surname particles. Consecutive particles fold together (`de` + `la` → `de la`), and the next non-particle token
- * begins the bare surname.
+ * Surname particles.
+ *
+ * Consecutive particles fold together (`de` + `la` → `de la`), and the next
+ * non-particle token begins the bare surname.
  */
 const PARTICLES = new Set([
 	"al",
@@ -203,8 +211,10 @@ const norm = (token: string): string => token.replace(/\.$/, "").toLowerCase()
 const countChar = (s: string, c: string): number => s.split(c).length - 1
 
 /**
- * Parse a full name into components. Returns `null` for empty input. Best-effort and non-throwing — ambiguous input
- * degrades gracefully rather than erroring.
+ * Parse a full name into components.
+ *
+ * @returns `null` for empty input.
+ * Best-effort and non-throwing — ambiguous input degrades gracefully rather than erroring.
  */
 export function parsePersonName(input: string | null | undefined): PersonName | null {
 	if (!isPresent(input)) return null
@@ -233,7 +243,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	// 2. Resolve a single comma: "Last, First" inversion, unless the tail is a known suffix
 	//    ("John Smith, Jr."), in which case keep order and treat the tail as a suffix.
 	if (countChar(working, ",") === 1) {
-		const [head, tail] = working.split(",").map((p) => p.trim())
+		const [head, tail] = TextSpliterator.from(working, { delimiter: "," }).toArray()
 
 		if (tail && tail.split(/\s+/).every((t) => SUFFIXES.has(norm(t)))) {
 			result.suffix = tail
@@ -271,7 +281,8 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 
 	if (!tokens.length) return result
 
-	// 5. Locate the surname particle run. everything from it onward is the (particled) surname.
+	// 5. Locate the surname particle run.
+	//    Everything from it onward is the (particled) surname.
 	let particleStart = -1
 
 	for (let i = 0; i < tokens.length; i++) {
@@ -326,14 +337,17 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 }
 
 /**
- * The order a person name prints in. Western / romanized only, the same scope {@linkcode parsePersonName} declares: a
- * family-first system is not this order reversed, and inventing one here would be worse than having none.
+ * The order a person name prints in.
+ *
+ * Western / romanized only, the same scope {@linkcode parsePersonName} declares: a family-first
+ * system is not this order reversed, and inventing one here would be worse than having none.
  */
 const NAME_ORDER: readonly (keyof PersonName)[] = ["prefix", "given", "middle", "familyParticle", "family", "suffix"]
 
 /**
- * The parts {@linkcode formatPersonName} prints for the short style — what a person is addressed by, without the title,
- * the nickname or the letters after.
+ * The parts {@linkcode formatPersonName} prints for the short style.
+ *
+ * What a person is addressed by, without the title, the nickname or the letters after.
  */
 const SHORT_NAME_ORDER: readonly (keyof PersonName)[] = ["given", "familyParticle", "family"]
 
@@ -345,12 +359,13 @@ export type PersonNameStyle = "full" | "short"
 /**
  * Render a {@linkcode PersonName} back to a string — the inverse of {@linkcode parsePersonName}.
  *
- * `"full"` prints every part the parser identified except the nickname, which is an alternative to the given name
- * rather than an addition to it. `"short"` prints what a person is addressed by, which is the form a display label and
- * a match key want.
+ * `"full"` prints every part the parser identified except the nickname, which is an
+ * alternative to the given name rather than an addition to it.
+ * `"short"` prints what a person is addressed by, which is the form a display label and a match key want.
  *
- * The particle travels with the surname in both styles. The parser stores it separately so the matcher can compare
- * `Vega` independently of `de la`; printing them apart would produce a name nobody wrote.
+ * The particle travels with the surname in both styles.
+ * The parser stores it separately so the matcher can compare `Vega` independently of
+ * `de la`; printing them apart would produce a name nobody wrote.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
 	if (!name) return ""

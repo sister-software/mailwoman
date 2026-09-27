@@ -79,7 +79,7 @@ describe("unreachableComponents", () => {
 
 describe("validateGoldenFile", () => {
 	it("flags both schema + reachability issues in one pass", async () => {
-		const path = scratch.resolve("test.jsonl")
+		const path = scratch.path("test.jsonl")
 
 		await writeLocalTextFile(
 			[

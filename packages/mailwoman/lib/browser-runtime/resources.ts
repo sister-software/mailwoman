@@ -2,52 +2,107 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Where the browser runtime's assets live: the public data origin, the URL of each per-release asset, the dated pins
- *   of the model-independent artifacts (the admin gazetteer, the POI layer, the national street extracts, the pair
- *   indexes), and the loaders for the two FST artifacts. Every object on the origin ships an immutable Cache-Control,
- *   so a rebuilt artifact takes a fresh dated path and the pin here is the only mutable pointer to it.
+ *   Defines browser asset URLs, version pins, data credits and FST loaders.
+ *
+ *   The CDN caches assets as immutable, so every rebuild publishes to a new dated path. The version
+ *   constants in this module select which path the runtime loads.
  */
 
+import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
+
 import { fetchWithRetry } from "#browser-runtime/fetch"
-import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
+import type { FSTMatcherLike } from "#browser-runtime/types"
 
 /**
- * All demo assets are served from our Cloudflare R2 bucket (mailwoman-public) on a custom domain. R2 + Cloudflare gives a
- * stable clean URL, raw byte ranges (no gzip mangling), configurable cors, low RTT, and free egress — the combination
- * GitHub Pages (force-gzips ranges) and HF (per-request presigned redirect) couldn't. The DBs are range-loaded via
- * sql.js-httpvfs from here. the rest is one-shot full-fetch. Mirrors the old HF key layout, so this was a base-URL
- * swap.
+ * Public asset origin.
+ * It supports byte-range reads of the databases.
  */
 const ASSET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
+/**
+ * Returns the URL of one file in a locale's release.
+ */
 export function assetURL(locale: string, version: string, filename: string): string {
 	return `${ASSET_BASE_URL}${locale}/${version}/${filename}`
 }
 
 /**
- * The per-locale releases manifest (`releases.json`) — the version pointer beside the versioned asset directories.
+ * The publisher credit and license URL for a fetched dataset.
+ */
+export interface DataCredit {
+	publisher: string
+	/**
+	 * URL of the license or attribution terms.
+	 */
+	termsURL: string
+	/**
+	 * A description of the artifacts that the credit covers.
+	 */
+	artifacts: string
+}
+
+/**
+ * Publisher credits for the runtime's fetched data.
+ * Basemap attribution is handled elsewhere.
+ */
+export const DATA_CREDITS: readonly DataCredit[] = [
+	{
+		publisher: "Who's On First",
+		termsURL: "https://whosonfirst.org/docs/licenses/",
+		artifacts: "the admin gazetteer",
+	},
+	{
+		publisher: "GeoNames",
+		termsURL: "https://creativecommons.org/licenses/by/4.0/",
+		artifacts: "the admin gazetteer",
+	},
+	{
+		publisher: "Overture Maps Foundation",
+		termsURL: "https://docs.overturemaps.org/attribution/",
+		artifacts: "the POI layer",
+	},
+	{
+		publisher: "United States Department of Transportation",
+		termsURL: "https://www.transportation.gov/gis/national-address-database/national-address-database-nad-disclaimer",
+		artifacts: "the US address-point extracts, whose National Address Database rows are 68.2% of them",
+	},
+	{
+		publisher: "United States Census Bureau",
+		termsURL: "https://www.census.gov/programs-surveys/geography/about/terms-of-use.html",
+		artifacts: "the US interpolation extracts",
+	},
+	{
+		publisher: "OpenAddresses",
+		termsURL: "https://openaddresses.io/",
+		artifacts: "the US address-point extracts, 31.5% of them from 119 county and state bodies",
+	},
+	{
+		publisher: "DINUM and IGN, for Base Adresse Nationale",
+		termsURL: "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+		artifacts: "the French address-point extract",
+	},
+]
+
+/**
+ * Returns the URL of a locale's releases manifest.
  */
 export function releasesManifestURL(locale: string): string {
 	return `${ASSET_BASE_URL}${locale}/releases.json`
 }
 
 /**
- * Same-origin base for the staged sql.js-httpvfs runtime assets (UMD + worker + wasm), under the site's base URL.
+ * Returns the same-origin path of the sql.js-httpvfs runtime assets.
  */
 export function sqljsBaseURL(siteBaseURL: string): string {
 	return `${siteBaseURL}mailwoman/sqljs`
 }
 
 /**
- * Per-state street extract URL (#377). The situs (exact address points) + interp (tiger ranges) DBs are hosted
- * byte-range at `mailwoman/street/us/<slug>/<kind>.db` — a lookup touches ~KB of a multi-GB extract, so they're loaded
- * lazily by parsed region rather than bundled. Independent of the locale/version WOF asset layout (street extracts are
- * per-state rather than per-model-version).
+ * Returns a street-extract URL.
+ *
+ * National extracts use a dated path, and US state extracts use an undated path.
  */
 export function streetExtractURL(slug: string, kind: "situs" | "interp"): string {
-	// National (non-US) extracts live under their country at a dated path (immutable Cache-Control means
-	// a rebuilt extract needs a fresh URL — the admin-gazetteer discipline); US extracts keep the
-	// per-state layout. Bump the version when the BAN artifact is rebuilt + re-uploaded.
 	if (NATIONAL_STREET_SLUGS.has(slug)) {
 		return `${ASSET_BASE_URL}street/${slug}/${NATIONAL_STREET_EXTRACT_VERSION}/${kind}.db`
 	}
@@ -56,64 +111,48 @@ export function streetExtractURL(slug: string, kind: "situs" | "interp"): string
 }
 
 /**
- * Country-level national street extracts (#1012 BAN-FR): one situs DB per country, no interpolation extract. The demo's
- * street tier tries these when the US per-state path doesn't claim the query — safe because the keyed (street, number,
- * postcode/locality) probes are self-validating against the register (a wrong-country probe is a cheap ~KB miss, never
- * a false hit).
+ * Slugs of the national street extracts.
  */
 export const NATIONAL_STREET_SLUGS = new Set(["fr"])
 
 /**
- * Dated national-extract release (2026-07-10: the #1044 quote-fix + arrondissement-fold rebuild, md5 bc387335).
+ * Version of the published national street extracts.
  */
 export const NATIONAL_STREET_EXTRACT_VERSION = "2026-07-10"
 
 /**
- * The single national slug the demo's street tier falls back to when no hosted US state claims the query.
+ * The national extract slug used when no US state extract applies.
  */
-export const NATIONAL_STREET_FALLBACK_SLUG = "fr" as const
+export const NATIONAL_STREET_FALLBACK_SLUG = "fr"
 
 /**
- * Gazetteer (date) version for the byte-ranged admin DB. The admin gazetteer is model-independent — it changes when
- * WOF/Overture coverage is rebuilt rather than on every model release — so it lives on its own dated path rather than
- * under `<locale>/<model-version>/`. Bump this when `admin-global-priority.db` is rebuilt + re-uploaded (the immutable
- * Cache-Control means a fresh DB needs a fresh URL). See releasing.md "Rebuilding + swapping the canonical admin
- * gazetteer".
+ * Version of the admin gazetteer, which every model release shares.
+ * Update it after uploading a rebuilt gazetteer.
  */
 export const ADMIN_GAZETTEER_VERSION = "2026-08-25b"
 
 /**
- * Byte-ranged global "candidate" gazetteer (`candidate-global.db`, ~2.88 GB. US + intl postcodes + the GeoNames fold
- * across 244 countries) — the single-B-tree-probe lookup that replaces the slim per-model-version `wof-hot.db` and the
- * full-DB FTS. A resolve touches a handful of contiguous pages (~12 range fetches/session vs 243 on the full DB), with
- * global coverage and no `SLIM_COUNTRIES` upkeep. It now also carries a co-located FTS5-trigram fuzzy index, consulted
- * only on an exact-name miss (typo tolerance, e.g. Manchestr→Manchester) so the contiguous fast path is untouched.
- * Resolved by {@link WOFCandidateTableLookup} (build-candidate.ts). Hosted at
- * `mailwoman/gazetteer/<date>/candidate.db`, version-independent like the street extracts.
+ * Returns the URL of the global candidate gazetteer, which the runtime reads with byte ranges.
  */
 export function adminGazetteerURL(): string {
 	return `${ASSET_BASE_URL}gazetteer/${ADMIN_GAZETTEER_VERSION}/candidate.db`
 }
 
 /**
- * Byte-ranged POI layer (`poi.db`, ~3.7 GB — 13.68M Overture-places rows across US/CA/MX/FR, spec §3.4) — the clustered
- * `(h3_cell, category_id, neg_rank, rowid_key)` `without rowid` B-tree the docs POI tester (`POIExplorer` /
- * `try-it.mdx`) range-loads for live category search. Model-independent (like the admin gazetteer), so it lives on its
- * own dated path rather than under `<locale>/<model-version>/`. Bump this when the layer is rebuilt + re-uploaded (the
- * immutable Cache-Control means a fresh DB needs a fresh URL).
+ * Version of the POI layer, which every model release shares.
+ * Update it after uploading a rebuilt layer.
  */
 export const POI_LAYER_VERSION = "2026-07-20a"
 
+/**
+ * Returns the URL of the POI layer database.
+ */
 export function poiLayerURL(): string {
 	return `${ASSET_BASE_URL}poi/${POI_LAYER_VERSION}/poi.db`
 }
 
 /**
- * Slugs we host street extracts for (byte-range on R2). A state not in this set falls through to the WOF admin
- * centroid. National rollout (#735, 2026-06-21): the 50-state situs (#476/#567, 124.9M US address points) + tiger
- * interp extracts are hosted, so any US address resolves to its building (`address_point`, ≤10 m) or a calibrated
- * interp estimate — not a city centroid. `vi` = US Virgin Islands. (`il` is the whole state incl. Cook. the separate
- * `il-cook` build extract is not hosted.)
+ * US state and territory slugs that have hosted street extracts.
  */
 export const HOSTED_STREET_SLUGS = new Set([
 	"ak",
@@ -225,7 +264,8 @@ const US_STATE_NAME_TO_SLUG: Record<string, string> = {
 }
 
 /**
- * US state/territory name or abbreviation → 2-letter extract slug, or null if not a US region we recognize.
+ * Converts a US state name or two-letter code to its extract slug.
+ * Any two-letter input passes through unchanged.
  */
 export function regionToStateSlug(region: string | undefined): string | null {
 	if (!region) return null
@@ -233,14 +273,11 @@ export function regionToStateSlug(region: string | undefined): string | null {
 
 	if (/^[a-z]{2}$/.test(r)) return r
 
-	// already a 2-letter abbreviation (how US addresses usually write it)
 	return US_STATE_NAME_TO_SLUG[r] ?? null
 }
 
 /**
- * Build the URL bag handed to `loadNeuralClassifierFromURLs` for a release. Shared by the demo's primary and compare
- * classifier loaders so the per-file asset layout (model / tokenizer / card / gazetteer lexicon, plus the optional
- * US/DE/FR postcode-anchor binaries) is defined exactly once.
+ * Returns the loader URL configuration shared by the primary and comparison classifiers.
  */
 export function neuralClassifierLoadURLs(
 	locale: string,
@@ -251,12 +288,10 @@ export function neuralClassifierLoadURLs(
 		modelURL: assetURL(locale, version, "model.onnx"),
 		tokenizerURL: assetURL(locale, version, "tokenizer.model"),
 		modelCardURL: assetURL(locale, version, "model-card.json"),
-		// Gazetteer-anchor lexicon (#464): required by gazetteer-trained bundles (v4.2.0+). The loader
-		// tolerates a 404 for older bundles (logging loudly when the model needed it).
+		// Gazetteer-trained bundles require the lexicon.
+		// Older releases may not include it.
 		gazetteerLexiconURL: assetURL(locale, version, "anchor-lexicon-v1.json"),
 		runner: { useWebGPU: !opts.forceWASM },
-		// Anchor-trained bundles (v4.0.0+) ship postcode binaries so the demo feeds the postcode anchor
-		// — US + DE + FR cover the demo's example set (native-order Berlin, French ZIPs).
 		...(opts.hasAnchor
 			? {
 					postcodeBinaryURLs: [
@@ -270,43 +305,30 @@ export function neuralClassifierLoadURLs(
 }
 
 /**
- * Countries whose placetype-pair index the demo loads (placetype-pair-prior arc, #1278). The loader fetches each
- * tolerantly (a 404 is skipped, never fatal), so this list is byte-stable for a country whose binary isn't published.
+ * Countries whose placetype-pair indexes the demo requests.
+ * The demo skips missing files.
  */
 export const PAIR_INDEX_COUNTRIES = ["gb", "nz"] as const
 
 /**
- * Generation stamp for the published pair-index binaries — the `<version>` segment in
- * `mailwoman/pair-index/<version>/pair-index-<cc>.bin`.
+ * Version of the pair-index binaries.
+ * Update it with each rebuild.
  *
- * The binaries carry the same `public, max-age=604800, immutable` Cache-Control as every other bucket object, so a
- * rebuilt index needs a fresh URL — the discipline {@link ADMIN_GAZETTEER_VERSION}, {@link POI_LAYER_VERSION} and
- * {@link NATIONAL_STREET_EXTRACT_VERSION} already follow. Bump this the same commit the binaries are rebuild and
- * re-uploaded. the mutable pointer is this constant inside the (revalidated) Pages bundle, never the binaries.
- *
- * Why a site-side constant rather than a `releases.json` field: the PIX reader that consumes these binaries
- * (`@mailwoman/neural`'s `pair-index-resolver`) is bundled into the site rather than fetched per model release, and it
- * throws on a `schemaVersion` older than its own (`KNOWN_SCHEMA_VERSION`). So the generation a page may safely request
- * is a property of the deployed site rather than of the release the visitor selected — pinning it per release entry
- * would let a schema-3 reader ask for a schema-1 generation.
- *
- * 2026-08-05: the PIX schema-3 (typed parent record) rebuild. It was overwritten IN place at the un-versioned path, and
- * the CDN kept serving the schema-1 bytes under the immutable header until a manual purge — the wound this scheme
- * closes.
+ * The site pins this version because its bundled reader accepts only one schema version.
  */
 export const PAIR_INDEX_VERSION = "2026-08-05"
 
 /**
- * Base URL for one published generation of the pair-index binaries.
+ * Returns the base URL of one pair-index version.
  */
 export function pairIndexBaseURL(version: string): string {
 	return `${ASSET_BASE_URL}pair-index/${version}`
 }
 
 /**
- * Build the per-country binary URLs under a pair-index base (see {@link PAIR_INDEX_COUNTRIES}).
+ * Returns the per-country binary URLs under a pair-index base URL.
  *
- * @param baseURL Base for the binaries — a trailing slash is tolerated.
+ * @param baseURL Base URL of the binaries, with or without a trailing slash.
  */
 export function pairIndexURLs(baseURL: string): string[] {
 	const base = baseURL.replace(/\/$/, "")
@@ -314,10 +336,13 @@ export function pairIndexURLs(baseURL: string): string[] {
 	return PAIR_INDEX_COUNTRIES.map((cc) => `${base}/pair-index-${cc}.bin`)
 }
 
+/**
+ * Loads the release's FST gazetteer and, when the binary includes it, its provenance.
+ */
 export async function loadFSTGazetteer(
 	locale: string,
 	version: string
-): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenanceLike }> {
+): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenance }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
 		fetchWithRetry(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
@@ -328,24 +353,21 @@ export async function loadFSTGazetteer(
 	])
 
 	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
-	let provenance: FSTProvenanceLike | undefined
+	let provenance: FSTProvenance | undefined
 
 	try {
-		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenanceLike | undefined
+		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenance | undefined
 	} catch {
-		/* V2 binary — no provenance */
+		// Version 2 binaries have no provenance section.
 	}
 
 	return { matcher, provenance }
 }
 
 /**
- * Load the locale-general street-morphology FST (`fst-street-morphology.bin`) for a release — the #1315 street-context
- * check's signal source, shipped as a weights-package sibling (so it rides the same per-version R2 asset layout as the
- * model). Node runtimes rebuild this matcher from the bundled libpostal dictionaries when the artifact is absent. the
- * browser cannot, which is exactly the node/browser behavior fork the sealed artifact closes. Returns `null` when the
- * release predates the artifact (http 404) — the demo then parses without the check, exactly as before. A
- * present-but-corrupt binary throws. the caller's tolerant catch treats that as absent too.
+ * Loads the release's street-morphology FST.
+ *
+ * The function returns `null` when the file is unavailable and throws when the binary is corrupt.
  */
 export async function loadStreetMorphologyFST(locale: string, version: string): Promise<FSTMatcherLike | null> {
 	const res = await fetchWithRetry(assetURL(locale, version, "fst-street-morphology.bin"))

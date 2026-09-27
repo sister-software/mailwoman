@@ -1,29 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Render resolved entities as a standalone map page — the visual complement to {@link toGeoJSON}'s
- *   QGIS/analyst export. `toMapHTML(featureCollection)` returns one html file you open in a
- *   browser. no server, no build.
- *
- *   It renders on the house stack: MapLibre GL + a Protomaps basemap (`@protomaps/basemaps` generates
- *   the `layers()` for a named flavor) over the `basemap-v4` vector tiles served from R2 at
- *   `tiles.mailwoman.ai` — the same basemap the demo uses. Each entity is a circle sized by
- *   records-merged and colored by cross-dataset-link status (≥2 sources stand out), or
- *   categorically by `bucket` when the reconciliation output carries one. Pure: GeoJSON in, html
- *   string out (the Protomaps layer specs are generated at this point and inlined). The generated
- *   page fetches MapLibre, the basemap tiles, and glyphs/sprite over the network when opened (the
- *   house infra).
- *
- *   serve IT over localhost, don't open it as a file. The house tile server (`tiles.mailwoman.ai`)
- *   cors-restricts to localhost + the docs domains, so a `file://` page shows the (accurate)
- *   markers on a blank basemap. `npx serve` / `python3 -m http.server` in the output directory is
- *   enough. the page also surfaces a hint banner when it detects it's running from `file://`.
- *
- *   Neutral entity-resolution view: it shows what resolved to what and how confidently (cohesion).
- *   Bucket labels render verbatim from the data, never editorialized.
- */
-
 import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeHTML } from "@mailwoman/core/strings/escape"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
@@ -31,23 +8,10 @@ import { layers, namedFlavor } from "@protomaps/basemaps"
 
 import type { MapFeatureData } from "#types"
 
-/**
- * MapLibre GL release the page pins (CDN + SRI). Matches the workspace's `maplibre-gl` major.
- */
 const MAPLIBRE_VERSION = "5.24.0"
 const MAPLIBRE_JS_SRI = "sha384-5+cfbwT0iiub6VsQAdn6yz16nr6sDiQoHx6tm4O8OVYXHYOxcffFmCJBL0dgdvGp"
 const MAPLIBRE_CSS_SRI = "sha384-uTttxo/aOKbdE5RlD/SPzSDoDmNvGlUYPjONi2MN/b7c9HPSvW07OIuyP7uL6jxK"
 
-/**
- * The house Protomaps basemap: `basemap-v4` PMTiles (tile-worker → R2 at `tiles.mailwoman.ai`, which sends cors for
- * localhost + the docs domains).
- *
- * Glyphs + sprite come from the upstream Protomaps assets (GitHub Pages, `acao: *`), not the house mirror at
- * `public.mailwoman.ai` — that bucket sends no cors headers, so the mirror can't be fetched cross-origin
- * (`cartographer/base/composition.ts` flags the same: "Currently upstream URLs. we mirror these … but no public route
- * fronts that bucket yet"). The upstream assets target the v4 schema, matching the `basemap-v4` tiles. Swap to the
- * house mirror once it has a cors-enabled route.
- */
 const BASEMAP_SOURCE_ID = "basemap-v4"
 const BASEMAP_TILEJSON_URL = "https://tiles.mailwoman.ai/basemap-v4.json"
 const GLYPHS_URL = "https://protomaps.github.io/basemaps-assets/fonts/{fontstack}/{range}.pbf"
@@ -58,44 +22,36 @@ const SPRITE_URL = "https://protomaps.github.io/basemaps-assets/sprites/v4/light
  */
 export type MapFlavor = "light" | "dark" | "white" | "grayscale" | "black"
 
+/**
+ * Options for {@link toMapHTML}.
+ *
+ * With `colorBy: "auto"`, markers are colored by `bucket` when any feature carries one
+ * and otherwise by whether two or more sources agree.
+ */
 export interface MapHTMLOptions {
 	/**
-	 * Document `<title>` + on-map heading. Default: "Mailwoman — resolved entities".
+	 * Sets the document title and on-map heading, defaulting to `Mailwoman — resolved entities`.
 	 */
 	title?: string
+
 	/**
-	 * Protomaps basemap flavor. Default: "light" (data points read cleanly over it).
+	 * Selects the Protomaps basemap flavor, defaulting to `light`, over which the markers read clearly.
 	 */
 	flavor?: MapFlavor
+
 	/**
-	 * How to color the markers:
-	 *
-	 * - `"auto"` (default) — by `bucket` if any feature carries one (reconciliation output), else by cross-dataset-link
-	 *   status.
-	 * - `"sources"` — always by cross-dataset-link status (≥2 sources stand out).
-	 * - `"bucket"` — always by the `bucket` property.
+	 * Chooses marker colors: `bucket` uses the `bucket` property, `sources` shows whether two
+	 * or more sources are linked, and the default `auto` picks `bucket` when any feature carries one.
 	 */
 	colorBy?: "auto" | "sources" | "bucket"
 }
 
-/**
- * Categorical palette (reused for buckets. cycles if there are more buckets than entries).
- */
 const PALETTE = ["#2f9e44", "#f08c00", "#1971c2", "#e8590c", "#9c36b5", "#0c8599", "#e03131", "#5c940d"]
-/**
- * Single-source entity.
- */
+
 const SINGLE_COLOR = "#3388ff"
-/**
- * Cross-dataset link (≥2 sources)
- */
+
 const CROSS_COLOR = "#e8590c"
 
-/**
- * Escape a value for safe inlining inside a `<script>` as JSON. `JSON.stringify` alone isn't enough — a record value
- * containing `</script>` would close the block early. escaping `<`/`>`/`&` to `\uXXXX` keeps the JSON valid and makes a
- * breakout impossible.
- */
 function safeJSONForScript(value: unknown): string {
 	return stringifyJSON(value).replaceAll("<", "\\u003c").replaceAll(">", "\\u003e").replaceAll("&", "\\u0026")
 }
@@ -105,9 +61,8 @@ function sourceCount(props: MapFeatureData): number {
 }
 
 /**
- * Render `geojson` (a {@link toGeoJSON} / reconciliation FeatureCollection) as a complete, standalone html document.
- * Entities without a coordinate are already absent from those collections. an empty collection renders a friendly empty
- * state rather than a broken map.
+ * Renders a {@link toGeoJSON} or reconciliation feature collection as a standalone MapLibre
+ * HTML document, with an empty-state panel when the collection has no features.
  */
 export function toMapHTML(
 	geojson: GeoFeatureCollection<PointLiteral, MapFeatureData>,
@@ -120,7 +75,6 @@ export function toMapHTML(
 	const hasBuckets = geojson.features.some((f) => f.properties?.["bucket"] != null)
 	const mode = colorBy === "auto" ? (hasBuckets ? "bucket" : "sources") : colorBy
 
-	// Assign a color to each distinct bucket value, in first-seen order.
 	const bucketColors: Record<string, string> = {}
 
 	if (mode === "bucket") {
@@ -145,8 +99,6 @@ export function toMapHTML(
 		return sourceCount(props) >= 2 ? CROSS_COLOR : SINGLE_COLOR
 	}
 
-	// Precompute the per-feature color (`_color`) so the circle layer is a simple `["get","_color"]`,
-	// and the bounding box, both at generate time. The data is copied (not mutated in place).
 	let minLng = Infinity
 	let minLat = Infinity
 	let maxLng = -Infinity
@@ -176,8 +128,6 @@ export function toMapHTML(
 
 	const bbox = features.length ? [[minLng, minLat] as const, [maxLng, maxLat] as const] : null
 
-	// The full MapLibre style: the Protomaps basemap layers (generated here) over the house basemap-v4
-	// vector source, plus our inlined entities source + a circle layer keyed off the precomputed color.
 	const style = {
 		version: 8,
 		glyphs: GLYPHS_URL,
@@ -215,7 +165,6 @@ export function toMapHTML(
 		],
 	}
 
-	// Legend rows, built here so arbitrary bucket sets render without client-side guessing.
 	const legendRows =
 		mode === "bucket"
 			? Object.entries(bucketColors)
@@ -230,7 +179,6 @@ export function toMapHTML(
 	const summary =
 		`${geojson.features.length} entities` + (mode === "sources" ? ` &middot; ${crossLinks} cross-dataset links` : "")
 
-	// The client script avoids template literals and `${` so it survives this outer template verbatim.
 	return `<!doctype html>
 <html lang="en">
 <head>

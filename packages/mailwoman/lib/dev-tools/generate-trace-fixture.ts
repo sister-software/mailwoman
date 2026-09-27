@@ -17,10 +17,15 @@
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
-import { dirname } from "path-ts"
+import { PathBuilder, dirname } from "path-ts"
 
-const DEFAULT_OUT = String(
-	repoRootPathBuilder("docs", "src", "components", "ModelVisualizer", "fixtures", "white-house.trace.json")
+const DEFAULT_OUT = repoRootPathBuilder(
+	"docs",
+	"src",
+	"components",
+	"ModelVisualizer",
+	"fixtures",
+	"white-house.trace.json"
 )
 
 const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
@@ -30,11 +35,15 @@ const DEFAULT_TEXT = "1600 Pennsylvania Ave NW, Washington, DC 20500"
  */
 export interface GenerateTraceFixtureOptions {
 	/**
-	 * Address to trace. Default: the White House.
+	 * Address to trace.
+	 *
+	 * Default: the White House.
 	 */
 	text?: string
 	/**
-	 * Output path override. Default: the committed ModelVisualizer fixture.
+	 * Output path override.
+	 *
+	 * Default: the committed ModelVisualizer fixture.
 	 */
 	out?: string
 }
@@ -43,7 +52,7 @@ export interface GenerateTraceFixtureOptions {
  * Summary returned by {@linkcode generateTraceFixture}.
  */
 export interface GenerateTraceFixtureSummary {
-	outPath: string
+	outPath: PathBuilder
 	pieces: number
 	labels: number
 }
@@ -55,7 +64,7 @@ export async function generateTraceFixture(
 	options: GenerateTraceFixtureOptions = {},
 	report?: (line: string) => void
 ): Promise<GenerateTraceFixtureSummary> {
-	const outPath = options.out ?? DEFAULT_OUT
+	const outPath = PathBuilder.from(options.out ?? DEFAULT_OUT)
 	const text = options.text ?? DEFAULT_TEXT
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-us" })
 	const trace = await classifier.traceParse(text, { addressSystemConventions: "auto" })

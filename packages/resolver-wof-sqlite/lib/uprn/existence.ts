@@ -20,22 +20,29 @@ import type { UPRNLookup } from "#uprn/lookup"
 import { UPRN_COVERAGE_H3_RESOLUTION, UPRN_H3_RESOLUTION, uprnH3Cell } from "#uprn/schema"
 
 /**
- * The identity fold, on purpose: this probe keys on a coordinate rather than a name, so there is no string folding for
- * the builder and the probe to disagree about. Passing the same identity as both `probeFold` and `layerFold` records
- * that the fold axis is not in play here, rather than silently omitting the check. It is not a stub.
+ * The identity fold, on purpose: this probe keys on a coordinate rather than a name,
+ * so there is no string folding for the builder and the probe to disagree about.
+ *
+ * Passing the same identity as both `probeFold` and `layerFold` records that the fold
+ * axis is not in play here, rather than silently omitting the check.
+ * It is not a stub.
  */
 export const UPRN_EXISTENCE_FOLD = foldIdentity((s) => s)
 
 /**
- * The countries OS Open uprn covers. Northern Ireland is outside the product, so a `null` there is unknown and must
- * never become evidence of absence. the country check is what keeps it out.
+ * The countries OS Open uprn covers.
+ *
+ * Northern Ireland is outside the product, so a `null` there is unknown
+ * and must never become evidence of absence.
+ * The country check is what keeps it out.
  */
 export const UPRN_COVERED_COUNTRIES: ReadonlySet<string> = new Set(["GB"])
 
 export interface UPRNAbsenceInput {
 	lookup: UPRNLookup
 	/**
-	 * The same file the lookup reads. the layer interface tables live beside the points.
+	 * The same file the lookup reads.
+	 * The layer interface tables live beside the points.
 	 */
 	schemadb: layerschemahandle
 	latitude: number
@@ -48,17 +55,19 @@ export interface UPRNAbsenceInput {
 }
 
 /**
- * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder derives it — never
- * from the centroid, which lands in a different parent for a fraction of cells.
+ * The coverage cell a coordinate falls in, derived from its stored res-9 cell exactly as the builder
+ * derives it, never from the centroid, which lands in a different parent for a fraction of cells.
  */
 export function uprnCoverageCell(latitude: number, longitude: number): number {
 	return shortCellToParentInt(uprnH3Cell(latitude, longitude), UPRN_H3_RESOLUTION, UPRN_COVERAGE_H3_RESOLUTION)
 }
 
 /**
- * An {@link Exclusion} when no uprn lies within `radiusM` and the layer's coverage licenses saying so; `null` on a hit
- * (presence is not this probe's business) and on every refusal (unsurveyed cell, `source_present` basis, a country the
- * product does not cover). Never throws on a refusal: the caller falls open to the ranking it already had.
+ * An {@link Exclusion} when no uprn lies within `radiusM` and the layer's coverage licenses
+ * saying so; `null` on a hit (presence is not this probe's business) and on every refusal
+ * (unsurveyed cell, `source_present` basis, a country the product does not cover).
+ *
+ * Never throws on a refusal: the caller falls open to the ranking it already had.
  */
 export async function uprnAbsenceAt(input: UPRNAbsenceInput): Promise<Exclusion | null> {
 	const coverageCell = uprnCoverageCell(input.latitude, input.longitude)

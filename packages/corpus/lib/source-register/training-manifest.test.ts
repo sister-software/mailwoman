@@ -88,8 +88,8 @@ describe("freezeTrainingManifest", () => {
 	})
 
 	it("records a null decision for a license the register never carried", () => {
-		// An adapter stamping its own label — `CC0-1.0`, `Public Domain` — matches no register decision. A null says
-		// that, where omitting the source would make the build look as though it never read one.
+		// An adapter stamping its own label — `CC0-1.0`, `Public Domain` — matches no register decision.
+		// A null says that, where omitting the source would make the build look as though it never read one.
 		const manifest = freeze({
 			rowsBySource: new Map([["wof-admin", { rows: 10, license: "CC0-1.0" }]]),
 		})
@@ -128,8 +128,9 @@ describe("auditTrainingManifest", () => {
 	})
 
 	it("refuses a manifest edited after its build", () => {
-		// The digest is what makes this record frozen rather than merely written. A hand edit to a generated artifact is
-		// the failure the source register's own digest exists to catch (#2352), and it applies here for the same reason.
+		// The digest is what makes this record frozen rather than merely written.
+		// A hand edit to a generated artifact is the failure the source register's own
+		// digest exists to catch (#2352), and it applies here for the same reason.
 		const edited = freeze()
 
 		edited.sources[0]!.rows = 1

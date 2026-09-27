@@ -21,7 +21,7 @@
  *     `POILookup`'s open/dispose lifecycle (`using poiLookup = new POILookup(...)`), we just call
  *     `.search()` on it.
  *   - **`nearestInfrastructure` is `async`, not sync.** `readLayerCoverage`
- *     (`@mailwoman/core/layers`) is `Promise`-returning — every layer-interface read in this codebase is
+ *     (`@mailwoman/core/layers`) is `Promise`-returning. Every layer-interface read in this codebase is
  *     (`readLayerManifest`, `filingLandscape` itself) — so pairing each POI hit with its coverage cell
  *     means awaiting one `readLayerCoverage` call per hit. A sync signature can't await that.
  *
@@ -43,24 +43,27 @@ import { latLngToCell } from "h3-js"
 import { res9ShortCellToRes6Parent } from "#sdk/filing/landscape"
 
 /**
- * Ring budget default for {@link nearestInfrastructure} — wider than `POILookup`'s own internal `DEFAULT_MAX_RINGS`
- * (16, ≈5.4 km) because telecom infrastructure (central offices, comm towers) is sparser per-area than poi.db's dense
- * categories (cafes, etc.): 32 res-9 rings ≈ 11 km, a BDC-block-scale search radius that gives real infrastructure room
- * to be found without over-restricting callers who do want a tighter budget via `options.maxRings`.
+ * Ring budget default for {@link nearestInfrastructure} — wider than `POILookup`'s own internal
+ * `DEFAULT_MAX_RINGS` (16, ≈5.4 km) because telecom infrastructure (central offices, comm towers)
+ * is sparser per-area than poi.db's dense categories (cafes, etc.): 32 res-9 rings ≈ 11 km,
+ * a BDC-block-scale search radius that gives real infrastructure room to be found without
+ * over-restricting callers who do want a tighter budget via `options.maxRings`.
  */
 export const NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS = 32
 
 /**
- * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in. `coverage: undefined`
- * means `schemadb`'s layer has never surveyed that area (the meaning-of-zero rule. see `@mailwoman/core/layers`) —
- * never conflate it with a covered-but-empty cell.
+ * One k-nearest telecom-infrastructure hit, paired with the res-6 coverage cell it falls in.
+ *
+ * `coverage: undefined` means `schemadb`'s layer has never surveyed that area
+ * (the meaning-of-zero rule. See `@mailwoman/core/layers`), never conflate it with a covered-but-empty cell.
  */
 export interface InfrastructureHit {
 	categoryID: string
 	name: string | null
 	distanceM: number
 	/**
-	 * Res-9 short H3 cell of the hit itself — not the (coarser) coverage cell. see `coverage.h3Cell` for that.
+	 * Res-9 short H3 cell of the hit itself rather than the (coarser) coverage cell.
+	 * See `coverage.h3Cell` for that.
 	 */
 	h3Cell: number
 	coverage: CoverageCell | undefined
@@ -69,23 +72,29 @@ export interface InfrastructureHit {
 export interface NearestInfrastructureOptions {
 	center: PointLiteral
 	/**
-	 * Poi-taxonomy category ids to search — fans out to `POILookup.search`'s `categoryIDs` (union across every resolved
-	 * leaf, nearest-first). Typically `["telecom_exchange", "tower_comms"]`.
+	 * Poi-taxonomy category ids to search — fans out to `POILookup.search`'s `categoryIDs`
+	 * (union across every resolved leaf, nearest-first).
+	 *
+	 * Typically `["telecom_exchange", "tower_comms"]`.
 	 */
 	categoryIDs: string[]
 	limit?: number
 	/**
-	 * Ring budget. Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32) — not `POILookup`'s own internal default
-	 * (16); see this module's docstring.
+	 * Ring budget.
+	 *
+	 * Default {@link NEAREST_INFRASTRUCTURE_DEFAULT_MAX_RINGS} (32), not `POILookup`'s
+	 * own internal default (16); see this module's docstring.
 	 */
 	maxRings?: number
 }
 
 /**
- * K-nearest telecom-infrastructure POIs from `options.center`, each paired with the coverage cell it falls in per
- * `schemadb`'s own `layer_coverage` table. Never throws on a sparse result — no infrastructure within `maxRings`, or
- * every `categoryIDs` entry unresolvable against `poiLookup`'s dictionary — returns `[]`, the same discipline
- * `POILookup.search` itself follows.
+ * K-nearest telecom-infrastructure POIs from `options.center`, each paired with the
+ * coverage cell it falls in per `schemadb`'s own `layer_coverage` table.
+ *
+ * Never throws on a sparse result — no infrastructure within `maxRings`,
+ * or every `categoryIDs` entry unresolvable against `poiLookup`'s dictionary —
+ * returns `[]`, the same discipline `POILookup.search` itself follows.
  */
 export async function nearestInfrastructure(
 	poiLookup: POILookup,
@@ -105,9 +114,10 @@ export async function nearestInfrastructure(
 
 	for (const hit of hits) {
 		if (hit.categoryID === null) {
-			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids (see
-			// POILookup#searchKRing), so a hit here always carries the category it was found under — this
-			// can't happen without a corrupted poi.db. Guard rather than silently coerce to "".
+			// `categoryIDs` above always constrains the k-ring probe to real (non-zero) category ids
+			// (see POILookup#searchKRing), so a hit here always carries the category it was found under.
+			// This can't happen without a corrupted poi.db.
+			// Guard rather than silently coerce to "".
 			throw new Error(`nearestInfrastructure: hit ${stringifyJSON(hit.name)} has no categoryID`)
 		}
 

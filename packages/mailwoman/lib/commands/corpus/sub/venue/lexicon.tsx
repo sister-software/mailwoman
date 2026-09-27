@@ -11,14 +11,14 @@
  *   mailwoman corpus sub-venue-lexicon \
  *     --wikidata-dir $MAILWOMAN_DATA_ROOT/sub-venue/sources/wikidata-subvenue \
  *     --extracts     "GB=$MAILWOMAN_DATA_ROOT/sub-venue/extracts/great-britain.jsonl,DE=…/germany.jsonl" \
- *     --overture-db  $MAILWOMAN_DATA_ROOT/poi/poi.db \
+ *     --overture-db  $MAILWOMAN_DATA_ROOT/db/poi/poi.db \
  *     --out          corpus/data/sub-venue-lexicon.json
  *   ```
  *
  *   `--extracts` takes `region=path` pairs because the region is the axis every curation decision is
  *   taken on and no extract filename carries it reliably (`ile-de-france` is FR, `great-britain` is
  *   GB). A bare path is accepted and lands region `""`, which means the surfaces it produces can never
- *   be promoted — that is the correct failure rather than a convenience.
+ *   be promoted. That is the correct failure rather than a convenience.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
@@ -41,7 +41,9 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs. A bare path keeps region `""`.
+ * Split `GB=/a.jsonl,DE=/b.jsonl` into extract inputs.
+ *
+ * A bare path keeps region `""`.
  */
 function parseExtracts(extractSpec: string | undefined): Array<{ path: string; region: string }> {
 	if (!extractSpec) return []

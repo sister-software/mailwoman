@@ -9,8 +9,8 @@
  *   city `上市` plus a district beginning with 町. Over the 1,892 municipalities in Japan Post's KEN_ALL list the
  *   shape has six members, so the boundary is stated here rather than learned — a positive attestation from the
  *   postal register, consumed after decode by `@mailwoman/neural`'s JP municipality repair. Two of the six (`上市町`,
- *   `下市町`) put 市 immediately before the suffix, the boundary the model closes at. the other four are listed for the same
- *   repair so an early close inside them is also repaired.
+ *   `下市町`) put 市 immediately before the suffix, the boundary the model closes at. The other four are listed so an
+ *   early close inside them is also repaired.
  */
 
 import { completeFromRegister } from "#register-completion"
@@ -34,7 +34,9 @@ export interface JapaneseInnerShiTown {
 }
 
 /**
- * The six towns, from KEN_ALL (1,892 municipalities). Ordered by prefecture code.
+ * The six towns, from KEN_ALL (1,892 municipalities).
+ *
+ * Ordered by prefecture code.
  */
 export const JP_INNER_SHI_TOWNS: readonly JapaneseInnerShiTown[] = [
 	{ prefecture: "北海道", county: "余市郡", town: "余市町" },
@@ -46,15 +48,16 @@ export const JP_INNER_SHI_TOWNS: readonly JapaneseInnerShiTown[] = [
 ]
 
 /**
- * Every surface a municipality span may legitimately close on for these towns: the postal form with the county
- * (`中新川郡上市町`) and the bare town (`上市町`).
+ * Every surface a municipality span may legitimately close on for these towns:
+ * the postal form with the county (`中新川郡上市町`) and the bare town (`上市町`).
  */
 export const JP_INNER_SHI_TOWN_NAMES: readonly string[] = JP_INNER_SHI_TOWNS.flatMap((t) => [t.county + t.town, t.town])
 
 /**
- * The characters a municipality surface must absorb from what follows it to become one of the register's names, or null
- * when no name extends it. `following` is the text after the surface. the answer is a prefix of it. A surface that
- * already is a register name answers null: nothing to absorb.
+ * The characters a municipality surface must absorb from `following` to become one
+ * of the register's names, or null when no name extends it.
+ *
+ * The answer is a prefix of `following`, and a surface that already is a register name answers null.
  */
 export function jpMunicipalityCompletion(surface: string, following: string): string | null {
 	return completeFromRegister(JP_INNER_SHI_TOWN_NAMES, surface, following)

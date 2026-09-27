@@ -6,34 +6,22 @@
  *   one with a hole, one narrower than a cell, plus a ground-instability polygon that must never answer an
  *   erosion question.
  *
- *   A package subpath rather than A `test/` file, for the same reason `packages/mailwoman/lib/test-kit` is one:
- *   the observation route's suite lives in another workspace, and a relative import across two TypeScript
- *   projects is refused outright (`TS2878`) because the compiled layout would not match the source layout.
+ *   A package subpath rather than a `test/` file: a relative import across two TypeScript projects is refused
+ *   (`TS2878`) when the compiled layout would not match the source layout.
  *
- *   no network and no gdal. The builder takes a {@linkcode CoastalFeatureSource}, so a fixture is a list of
- *   features — which is what lets this rung exercise the domain checks, the cell classification, the coverage
- *   rows, the manifest and the seal on every machine rather than only the ones with ogr2ogr.
+ *   No network and no gdal: the builder takes a {@linkcode CoastalFeatureSource}, so a fixture is a list of
+ *   features and every rung runs on every machine rather than only the ones with ogr2ogr.
  *
- *   the coordinates are off the english coast, and deliberately so. The bands sit in the North Sea east of
- *   Great Yarmouth where no real ncerm polygon interferes, but inside the extent the ingest asserts against —
- *   so a fixture stays a fixture and still lives in the coordinate space the product occupies.
- *
- *   the same frontage ID is reused on purpose. The real product repeats a frontage id within one layer —
- *   `NCERM_NFI_2055_0CC` holds 7,379 features over 7,369 distinct frontage ids — so the fixture repeats one
- *   too, and a build keyed on the frontage rather than on the authority's feature id fails here rather than in
- *   production.
+ *   The coordinates are in the North Sea east of Great Yarmouth, inside the extent the ingest asserts against.
+ *   The same frontage ID is reused on purpose, because the real product repeats a frontage id within one layer.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial` — a winding convention rather than this
-// product's geometry, and a second copy of it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial`, since a winding convention
+// rather than this product's geometry is a second place for a hole to stop being one.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
 import type { CoastalFeatureSource, CoastalInstabilityFeature, CoastalSourceFeature } from "#sdk/ingest/index"
 import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from "#vocabulary"
-
-/**
- * Re-exported so a fixture in another workspace builds its rings the same way this one does.
- */
 
 /**
  * South-west corner of the fixture world, in the North Sea east of Great Yarmouth.
@@ -41,7 +29,9 @@ import { NCERM_SCENARIOS_BY_KEY, NCERM_SOURCE_EPSG, type CoastalScenario } from 
 export const FIXTURE_ORIGIN = { lon: 1.9, lat: 52.6 } as const
 
 /**
- * Side of a fixture erosion band, in degrees. About 1.1 km at this latitude — several res-9 cells across, so a band has
+ * Side of a fixture erosion band, in degrees.
+ *
+ * About 1.1 km at this latitude — several res-9 cells across, so a band has
  * a real interior and a real fringe.
  */
 export const FIXTURE_SIDE = 0.01
@@ -55,8 +45,8 @@ export const FIXTURE_SCENARIOS = {
 } as const
 
 /**
- * One fixture erosion feature, with its area computed from its own rings so the build's area cross-check has something
- * true to compare against.
+ * One fixture erosion feature, with its area computed from its own rings
+ * so the build's area cross-check has something true to compare against.
  */
 export function fixtureFeature(
 	objectID: number,
@@ -81,7 +71,8 @@ export function fixtureFeature(
 		defenceType: "Vertical Wall - Concrete",
 		publishedYear: 2024,
 		maxOverlap: 0,
-		// The real source's figure comes from gdal. a fixture's comes from the same ring maths the build checks against,
+		// The real source's figure comes from gdal.
+		// A fixture's comes from the same ring maths the build checks against,
 		// so the fixture exercises the comparison rather than the tolerance.
 		sourceAreaM2: ringAreaReadings(polygons).nested,
 		polygons,
@@ -90,11 +81,10 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture erosion set: two adjacent bands in the no-intervention scenario (one of them holed), one band in the
- * with-plan scenario covering the same ground as the first, and one band narrower than a res-9 cell.
+ * The fixture erosion set: two adjacent bands in the no-intervention scenario (one holed), one band in
+ * the with-plan scenario over the same ground as the first, and one band narrower than a res-9 cell.
  *
- * The overlap between scenarios is the point. A point inside the first band must answer under both scenarios with
- * different distances, which is what proves the twelve layers stay separable rather than pooled.
+ * The overlap between scenarios is what proves the twelve layers stay separable rather than pooled.
  */
 export function fixtureFeatures(): CoastalSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -116,8 +106,9 @@ export function fixtureFeatures(): CoastalSourceFeature[] {
 		],
 	]
 
-	// About 5.5 m across — narrower than a res-11 cell, let alone a res-9 one. `polygonToCells` returns nothing for a
-	// shape this size, so it is the fixture that proves the index takes cell-touches-polygon rather than centre-in-polygon.
+	// About 5.5 m across — narrower than a res-11 cell, let alone a res-9 one.
+	// `polygonToCells` returns no cells for a shape this size, so this fixture proves
+	// the index takes cell-touches-polygon rather than centre-in-polygon.
 	const sliver = rectangleRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 
 	return [

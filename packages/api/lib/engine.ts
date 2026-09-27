@@ -49,8 +49,10 @@ export interface ResolveTreeOutcome {
 export type HealthData = Record<string, unknown>
 
 /**
- * The input register (Decision A / GTM B10. canonical docs on `@mailwoman/core/pipeline`'s `InputMode` — duplicated
- * structurally so `@mailwoman/api` stays engine-agnostic). `formatted` runs the evidence-bundle channels off.
+ * The input register (Decision A / GTM B10. Canonical docs on `@mailwoman/core/pipeline`'s
+ * `InputMode` — duplicated structurally so `@mailwoman/api` stays engine-agnostic).
+ *
+ * `formatted` runs the evidence-bundle channels off.
  */
 export type WireInputMode = "fragmented" | "formatted"
 

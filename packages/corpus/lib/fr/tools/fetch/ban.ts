@@ -23,21 +23,21 @@ import { isFile, readLocalBuffer, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below
+ * which a "download" is an error page rather than data.
  */
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"
 
 /**
- * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20) plus overseas DOM/TOM. Codes do not
- * change.
+ * All département codes — metropolitan 01-95 (with 2A/2B for Corsica instead of 20) plus overseas DOM/TOM.
+ *
+ * Codes do not change.
  */
 const DEPT_CODES = [
 	"01",
@@ -155,8 +155,8 @@ export interface BanManifestEntry {
 export type FetchBanOptions = BaseFetchOptions
 
 export async function fetchBan(options: FetchBanOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const banDir = join(options.outRoot, "ban")
-	const manifestPath = join(banDir, "MANIFEST.json")
+	const banDir = options.outRoot("ban")
+	const manifestPath = banDir("MANIFEST.json")
 	await makeDirectories(banDir)
 
 	// Load existing entries (code -> entry): skip detection + preservation of untouched codes.
@@ -169,8 +169,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 
 	for (const code of DEPT_CODES) {
 		const filename = `adresses-${code}.csv`
-		const gzFile = join(banDir, `${filename}.gz`)
-		const csvFile = join(banDir, filename)
+		const gzFile = banDir(`${filename}.gz`)
+		const csvFile = banDir(filename)
 		const url = `${BASE_URL}/adresses-${code}.csv.gz`
 
 		report?.(`=== dept ${code}`)
@@ -223,7 +223,8 @@ export async function fetchBan(options: FetchBanOptions, report?: (line: string)
 			continue
 		}
 
-		// Decompress in-place. delete the .gz.
+		// Decompress in-place.
+		// Delete the .gz.
 		try {
 			await writeLocalFile(await gunzip(await readLocalBuffer(gzFile)), csvFile)
 		} catch (error) {

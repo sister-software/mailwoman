@@ -54,22 +54,22 @@ country, clone its WOF postcode repo, build the extract, then backfill:
 ```bash
 # 1. clone the WOF postcode repo (small for most; GB is ~8 GB and deferred)
 git clone --depth 1 https://github.com/whosonfirst-data/whosonfirst-data-postalcode-fr.git \
-  /mnt/playpen/mailwoman-data/wof/repos/whosonfirst-data-postalcode-fr
+  $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data-postalcode-fr
 
 # 1b. (for GeoNames-filled locales) fetch the GeoNames postal dump (CC-BY 4.0)
 curl -sL https://download.geonames.org/export/zip/ES.zip -o /tmp/ES.zip && unzip -o /tmp/ES.zip ES.txt \
-  -d /mnt/playpen/mailwoman-data/geonames
+  -d $MAILWOMAN_DATA_ROOT/geonames
 
 # 2. build the spr extract (point --data at a dir of the repos you want combined)
 node scripts/build-unified-wof.ts \
-  --data <repos-dir> --output /mnt/playpen/mailwoman-data/wof/postalcode-intl.db --placetypes postalcode
+  --data <repos-dir> --output $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db --placetypes postalcode
 
 # 3. backfill centroids: GeoNames first (the postcode's own centroid), then the WOF admin parent-borrow
 #    + --repos ancestor fallback for what GeoNames misses.
 node scripts/backfill-postcode-centroids.ts \
-  --db /mnt/playpen/mailwoman-data/wof/postalcode-intl.db \
-  --geonames /mnt/playpen/mailwoman-data/geonames \
-  --repos /mnt/playpen/mailwoman-data/wof/repos
+  --db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db \
+  --geonames $MAILWOMAN_DATA_ROOT/geonames \
+  --repos $MAILWOMAN_DATA_ROOT/src/wof-repos
 
 # 4. functional check + accuracy
 node scripts/diagnostic/diag-postcode-anchor.ts
@@ -86,7 +86,7 @@ a coordinate for every coordinate-less postcode, in priority order:
 2. **GeoNames postal** (`--geonames <dir>`) — the postcode's OWN centroid, matched by string from the GeoNames `zip` dump (CC-BY 4.0, ~80+ countries). The cleanest fill for ES/IT and ~half of DE; it is _finer_ than the WOF parent-borrow (the postcode's point rather than a borrowed locality's), and it corrects WOF's mis-linked Italian parents (`20121` → central Milan rather than a Liguria village). WOF ids stay canonical; only the coordinate comes from GeoNames.
 3. **WOF parent-borrow / ancestor fallback** (`--admin`, `--repos`) — a coarse "which city/region" approximation from the admin hierarchy, last resort for postcodes GeoNames does not cover.
 
-Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** a extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
+Postcodes neither GeoNames nor WOF can place keep `latitude=0` (membership only — the country posterior still works). **Licensing:** an extract shipping GeoNames-sourced coordinates must attribute "GeoNames (CC-BY 4.0)".
 
 ### Coverage and accuracy
 

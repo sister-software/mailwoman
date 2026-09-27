@@ -18,7 +18,7 @@ Two signals in the resolver/FST distinguish "the famous one" from "the tiny same
 
 **`place_population`** is built during the main WOF SQLite build (`scripts/build-unified-wof.ts`). When the script reads each WOF GeoJSON file, it pulls `wof:population` (preferred) or `gn:population` (fallback) from the `properties` block and stores it in `place_population.population`. No external download needed.
 
-**`place_importance`** is built by a separate script (`scripts/build-importance.ts`) after the main DB exists — see [Wikipedia importance scores](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/WIKIPEDIA_IMPORTANCE.mdx) for the full ETL this feeds. It:
+**`place_importance`** is built by a separate script (`scripts/build-importance.ts`) after the main DB exists — see [Wikipedia importance scores](https://github.com/sister-software/mailwoman/blob/main/docs/records/engineering/WIKIPEDIA_IMPORTANCE.mdx) for the full ETL this feeds. It:
 
 1. Downloads `wikimedia-importance.csv.gz` from `nominatim.org/data/`.
 2. Parses the TSV: `(language, title, importance_score, wikidata_id)`.
@@ -72,7 +72,7 @@ This is structural duplication, but the two signals are not redundant — they f
 
 The resolver's `populationBoost: 4.0` exists because SQLite FTS5's BM25 normalizes by document length. The `place_search` table concatenates all multilingual name variants into a single `alt_names` column. Famous places have huge `alt_names` (NYC's is ~10K characters with 100+ languages); same-name peers have tiny `alt_names`. BM25 prefers the document with proportionally-more matches per token, which can rank a 50K-population namesake above the 8.8M-population city the query almost certainly means.
 
-**Attempts at column-weighted BM25** (`bm25(place_search, 1, 10, 1)` — name 10×, alt_names 1×) **don't fix this**: FTS5's doc-length normalization uses the row's total content length across all columns, notthe weighted ones. A row with bloated `alt_names` is penalized everywhere, even when scoring the `name` column in isolation.
+**Attempts at column-weighted BM25** (`bm25(place_search, 1, 10, 1)` — name 10×, alt_names 1×) **don't fix this**: FTS5's doc-length normalization uses the row's total content length across all columns, the unweighted ones included. A row with bloated `alt_names` is penalized everywhere, even when scoring the `name` column in isolation.
 
 The structural fix is to split `alt_names` into a separate FTS5 table with its own length statistics. Until then, `populationBoost: 4.0` is a tuning value that works for most cases but fails for the worst extremes; NYC vs West New York is the standing example.
 

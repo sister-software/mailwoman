@@ -30,7 +30,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -38,8 +38,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Westminster pair ~160 m apart, plus an Edinburgh outlier — enough to exercise nearest-of-several, the radius bound,
- * and a cross-cell reach.
+ * Westminster pair ~160 m apart, plus an Edinburgh outlier — enough to exercise
+ * nearest-of-several, the radius bound, and a cross-cell reach.
  */
 const POINT_A = { uprn: 100_023_336_956, lat: 51.501364, lon: -0.14189 }
 const POINT_B = { uprn: 10_008_905_923, lat: 51.50264, lon: -0.14089 }
@@ -47,13 +47,13 @@ const POINT_C = { uprn: 906_700_601_612, lat: 55.9533, lon: -3.1883 }
 
 const FIXTURE_POINTS = [POINT_A, POINT_B, POINT_C]
 
-let databasePath: string
+let databasePath: PathBuilder
 let lookup: UPRNLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("uprn-lookup-")).path
 
-	databasePath = join(dir, "uprn.db")
+	databasePath = dir("uprn.db")
 
 	using kdb = new DatabaseClient<UPRNDatabase>(databasePath)
 	const database = kdb
@@ -113,7 +113,7 @@ describe("nearestUPRN", () => {
 	})
 
 	it("ranks by true distance when several points are in radius", () => {
-		// Between A and B, nearer B — both are inside 300 m of the query.
+		// Between A and B, nearer B. Both are inside 300 m of the query.
 		const query = { lat: 51.5025, lon: -0.141 }
 		const hit = lookup.nearestUPRN(query.lat, query.lon, 300)
 

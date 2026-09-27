@@ -12,7 +12,7 @@ Design: docs/superpowers/plans/2026-07-30-fisher-capture-design.md. Two halves:
 
 - :class:`EWCPenalty` — the consumption side (the fine-tune recipe template). Adds
   ``λ/2 · Σ F_i (θ_i − θ*_i)²`` to the loss against the base checkpoint ``θ*``. Parameters
-  absent from the Fisher artifact (fresh heads) are unpenalized by construction — a fine-tune is
+  absent from the Fisher artifact (fresh heads) are unpenalized by construction. A fine-tune is
   free to LEARN new capability. the brake is on FORGETTING the base's. λ is calibrated once on
   our own next fine-tune (largest λ that leaves the increment's target within noise of λ=0) and
   becomes the template default.
@@ -79,7 +79,7 @@ class EWCPenalty:
     """``λ/2 · Σ F_i (θ_i − θ*_i)²`` against a base checkpoint, computed in fp32.
 
     Keys present in both the Fisher artifact and the reference state dict are penalized. anything
-    else (fresh heads, resized rows) is skipped silently — that asymmetry is the design: new
+    else (fresh heads, resized rows) is skipped silently. That asymmetry is the design: new
     capability trains freely, base capability is braked.
     """
 

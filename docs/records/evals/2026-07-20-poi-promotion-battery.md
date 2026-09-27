@@ -45,7 +45,7 @@ chevron near Houston       -> {"kind":"poi_query","confidence":0.9,...}
 ```
 
 Both fire `poi_query` as the top kind, confirming `poiTaxonomyLookup` and the classifier wiring
-are live — the golden-set zero is a real result rather than a no-op harness.
+are live. The golden-set zero is a real result rather than a no-op harness.
 
 Script: `scratchpad/poi-battery/leg1-golden-poi-misroute.ts` (gitignored rather than committed —
 reproducible from this doc's method description).
@@ -54,7 +54,7 @@ reproducible from this doc's method description).
 
 **Method:** the 6 demo presets from `mailwoman/eval-harness/preset-compare.ts` (`PRESETS`), run
 through a flag-OFF `createRuntimePipeline({ classifier })` and a flag-ON
-`createRuntimePipeline({ classifier, poiQueryKind: { poiDatabasePath: "/mnt/playpen/mailwoman-data/poi/poi-full.db" } })`
+`createRuntimePipeline({ classifier, poiQueryKind: { poiDatabasePath: "$MAILWOMAN_DATA_ROOT/db/poi/poi-full.db" } })`
 built from the **same classifier instance** (en-US weights, `NeuralAddressClassifier.loadFromWeights`).
 Each preset's `PipelineResult` was diffed structurally, with the `timing` field (wall-clock
 per-stage diagnostics, expected to vary run to run) excluded from the comparison — everything

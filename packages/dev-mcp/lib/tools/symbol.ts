@@ -15,7 +15,7 @@
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { z } from "zod"
 
 import { searchDeclarations } from "#symbol/index"
@@ -23,8 +23,10 @@ import { loadPurposeIndex, searchPurpose } from "#symbol/purpose"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * What the sweep does not read. Stated on every result, including the empty ones: a zero here means "no declaration in
- * the covered set", never "this symbol does not exist".
+ * What the sweep does not read.
+ *
+ * Stated on every result, including the empty ones: a zero here means "no declaration
+ * in the covered set", never "this symbol does not exist".
  */
 const NOT_COVERED = [
 	".tsx files — a component is a different reuse question",
@@ -73,7 +75,7 @@ export const symbolTool = (_deps: DevToolDeps): DevTool => ({
 		const query = args["query"] as string | undefined
 		const describes = args["describes"] as string | undefined
 		const limit = (args["limit"] as number | undefined) ?? 25
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPathBuilder()
 
 		if (!query && !describes) {
 			return { error: "Give `query` (an identifier fragment) or `describes` (what the thing does), or both." }

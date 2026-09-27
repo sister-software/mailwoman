@@ -9,7 +9,7 @@
  *   smoke already fetches this file. this is the same record, read by the page that was built from it.
  *
  *   Absence is not an error. A dev server has no `build.json`, and a page must not show an error strip because it is
- *   running locally — so a failed fetch resolves to `null` and the caller renders nothing.
+ *   running locally — so a failed fetch resolves to `null` and the caller renders no error strip.
  */
 
 import { useEffect, useState } from "react"
@@ -50,14 +50,15 @@ export function useBuildInfo(url = "/build.json"): BuildInfoRecord | null {
 
 				const record = (await response.json()) as BuildInfoRecord
 
-				// A record without a revision is not a build record. rendering half of one would put an empty
-				// link in the footer rather than saying nothing.
+				// A record without a revision is not a build record.
+				// Rendering half of one would put an empty link in the footer rather than showing no link.
 				if (!controller.signal.aborted && record?.revision) {
 					setInfo(record)
 				}
 			} catch {
-				// A dev server with no build.json, an offline first paint, or an aborted unmount. The footer
-				// shows its identity without a commit, which is the same thing it showed before this existed.
+				// A dev server with no build.json, an offline first paint, or an aborted unmount.
+				// The footer shows its identity without a commit, which is the same
+				// thing it showed before this existed.
 			}
 		})()
 

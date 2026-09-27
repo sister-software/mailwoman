@@ -7,7 +7,7 @@
  *
  *   The parse board and this one answer different questions. A parse board decodes spans and looks a predicted
  *   (region, locality) pair up in a centroid table. this runs the pipeline a caller runs and grades the coordinate it
- *   returns. A locale can read well on the first and resolve nothing on the second, so `scope.mdx`'s rule — a locale is
+ *   returns. A locale can read well on the first and resolve no place on the second, so `scope.mdx`'s rule — a locale is
  *   claimed when a coordinate-graded eval exists for it — is answered here.
  *
  *   `--locale` and `--country` are flags rather than constants because every CJK board has the same shape and a tool
@@ -24,7 +24,7 @@
  *   [--country JP] [--rows 300] [--seed 42] [--normalize false] [--tolerance-km 15] [--trace 2] [--json <out>]
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 } from "@mailwoman/core/random"
@@ -84,8 +84,7 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const boardPath =
-		values.board ?? String(dataRootPath("corpus", "versioned", "v8-jp-full-2026-08-04", "jp-board.jsonl"))
+	const boardPath = values.board ?? dataRootPath("corpus", "versioned", "v8-jp-full-2026-08-04", "jp-board.jsonl")
 
 	const wanted = Number(values.rows)
 	const toleranceKm = Number(values["tolerance-km"])
@@ -101,9 +100,10 @@ async function main(): Promise<void> {
 		.map((entry) => entry.row)
 
 	const locale = values.locale
-	// The country the board's rows are in, which scopes the resolve. It defaults from the locale's region subtag
-	// rather than a table: `zh-TW` is a Taiwanese board by construction, and a lookup keyed on locale would be one
-	// more per-country list to keep in step with the boards themselves.
+	// The country the board's rows are in, which scopes the resolve.
+	// It defaults from the locale's region subtag rather than a table: `zh-TW` is a
+	// Taiwanese board by construction, and a lookup keyed on locale would be one more
+	// per-country list to keep in step with the boards themselves.
 	const country = (values.country ?? locale.split("-").at(-1) ?? "").toUpperCase()
 
 	if (country.length !== 2) {
@@ -112,7 +112,7 @@ async function main(): Promise<void> {
 
 	const classifier = await NeuralAddressClassifier.loadFromWeights({ locale })
 	const mod = await import("@mailwoman/resolver-wof-sqlite")
-	const lookup = await createResolverBackend(mod, { dataRoot: mailwomanDataRoot(), wofPaths: [] })
+	const lookup = await createResolverBackend(mod, { dataRoot: dataRootPath(), wofPaths: [] })
 	const resolver = instrumented(createWOFResolver(lookup), traceRows > 0)
 
 	const graded: GradedRow[] = []
@@ -177,7 +177,7 @@ async function main(): Promise<void> {
 	}
 
 	if (values.json) {
-		await writeLocalJSONFile({ locale, country, board: String(boardPath), toleranceKm, rows: graded }, values.json)
+		await writeLocalJSONFile({ locale, country, board: boardPath.toString(), toleranceKm, rows: graded }, values.json)
 	}
 }
 

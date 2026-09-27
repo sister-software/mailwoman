@@ -19,8 +19,10 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 let scratch: TemporaryDirectory
 
 /**
- * `mstab.txt` is five columns: table, physical name, label, description, file base name. The file name is the last
- * column and is not derivable from the table name — `component` lives in `comp.txt`, `sacatalog` in `sacatlog.txt`.
+ * `mstab.txt` is five columns: table, physical name, label, description, file base name.
+ *
+ * The file name is the last column and is not derivable from the table name —
+ * `component` lives in `comp.txt`, `sacatalog` in `sacatlog.txt`.
  */
 const MSTAB = [
 	'"widget"|"widget_table"|"Widget"|"A widget."|"widgetfile"',
@@ -28,8 +30,8 @@ const MSTAB = [
 ].join("\r\n")
 
 /**
- * `mstabcol.txt` is fourteen columns, and one of its descriptions carries an embedded newline — which is the whole
- * point of the fixture.
+ * `mstabcol.txt` is fourteen columns, and one of its descriptions carries an embedded
+ * newline, which is the whole point of the fixture.
  */
 const MSTABCOL = [
 	'"widget"|1|"widget_key"|"widget_key"|"Key"|"String"|"Yes"|30||||||"The key."',
@@ -49,10 +51,10 @@ const MSDOMDET = [
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-soil-tabular-")
 
-	await writeLocalTextFile(`${MSTAB}\r\n`, scratch.resolve("mstab.txt"))
-	await writeLocalTextFile(`${MSTABCOL}\r\n`, scratch.resolve("mstabcol.txt"))
-	await writeLocalTextFile(`${WIDGETFILE}\r\n`, scratch.resolve("widgetfile.txt"))
-	await writeLocalTextFile(`${MSDOMDET}\r\n`, scratch.resolve("msdomdet.txt"))
+	await writeLocalTextFile(`${MSTAB}\r\n`, scratch.path("mstab.txt"))
+	await writeLocalTextFile(`${MSTABCOL}\r\n`, scratch.path("mstabcol.txt"))
+	await writeLocalTextFile(`${WIDGETFILE}\r\n`, scratch.path("widgetfile.txt"))
+	await writeLocalTextFile(`${MSDOMDET}\r\n`, scratch.path("msdomdet.txt"))
 })
 
 afterAll(() => scratch[Symbol.asyncDispose]())
@@ -69,7 +71,8 @@ describe("the tabular dictionary", () => {
 		const dictionary = await readTabularDictionary(scratch.path)
 		const table = await readTable(scratch.path, dictionary, "widget", ["widget_key", "widget_name"])
 
-		// The file holds three newline bytes and two records. A line-splitting reader would report three.
+		// The file holds three newline bytes and two records.
+		// A line-splitting reader would report three.
 		expect(table.recordCount).toBe(2)
 		expect(table.rows).toHaveLength(2)
 		expect(table.rows[1]!.widget_name).toContain("with a newline")
@@ -78,8 +81,8 @@ describe("the tabular dictionary", () => {
 	it("throws on a requested column the shipped dictionary does not declare", async () => {
 		const dictionary = await readTabularDictionary(scratch.path)
 
-		// The failure this refuses is the repo's worst measurement shape: a silently dropped column reads downstream as an
-		// empty world rather than as an error.
+		// The failure this refuses is the repo's worst measurement shape: a silently dropped
+		// column reads downstream as an empty world rather than as an error.
 		await expect(readTable(scratch.path, dictionary, "widget", ["widget_key", "renamed_column"])).rejects.toThrow(
 			/declares no column/u
 		)

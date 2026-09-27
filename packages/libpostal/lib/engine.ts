@@ -27,8 +27,10 @@ export interface ParseMatch {
 }
 
 /**
- * Mailwoman `ComponentTag` → libpostal label. libpostal's label set is OSM-derived. ours is close but not identical, so
- * map the overlap and pass unmapped classifications through unchanged.
+ * Mailwoman `ComponentTag` → libpostal label.
+ *
+ * Libpostal's label set is OSM-derived.
+ * Ours is close but not identical, so map the overlap and pass unmapped classifications through unchanged.
  */
 export const COMPONENT_TO_LIBPOSTAL: Record<string, string> = {
 	house_number: "house_number",
@@ -66,10 +68,11 @@ export function toLibpostalComponents(matches: ParseMatch[]): LibpostalComponent
 const STREET_NAME_TAGS = new Set(["street", "street_prefix", "street_prefix_particle", "street_suffix"])
 
 /**
- * Flatten a neural `AddressTree` to reading-order raw matches for {@link LibpostalEngine.parse}. The street node and
- * its street-name children collapse into one `street` match (libpostal's `road` is the full name); other children
- * (house_number, unit) emit as their own matches. Values join with a single space — original inter-part punctuation is
- * not reconstructed.
+ * Flatten a neural `AddressTree` to reading-order raw matches for {@link LibpostalEngine.parse}.
+ *
+ * The street node and its street-name children collapse into one `street` match
+ * (libpostal's `road` is the full name); other children (house_number, unit) emit as their own matches.
+ * Values join with a single space — original inter-part punctuation is not reconstructed.
  */
 export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 	const spans: Array<{ start: number; classification: string; value: string }> = []
@@ -110,8 +113,11 @@ export function treeToParseMatches(tree: AddressTree): ParseMatch[] {
 }
 
 /**
- * The parsing engine the router delegates to. `parse` is required; `expand` is optional (a missing one answers `501`).
- * The CLI wires `parse` to Mailwoman's neural parser (`@mailwoman/neural`) and `expand` to `@mailwoman/normalize`.
+ * The parsing engine the router delegates to.
+ *
+ * `parse` is required; `expand` is optional (a missing one answers `501`).
+ * The CLI wires `parse` to Mailwoman's neural parser (`@mailwoman/neural`)
+ * and `expand` to `@mailwoman/normalize`.
  */
 export interface LibpostalEngine {
 	parse(query: string): Promise<ParseMatch[]>

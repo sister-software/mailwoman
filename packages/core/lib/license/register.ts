@@ -16,7 +16,8 @@
  */
 
 /**
- * The three states a signing key moves through, in order. a key never moves back.
+ * The three states a signing key moves through, in order.
+ * A key never moves back.
  */
 export const LicenseKeyStatus = {
 	Active: "active",
@@ -40,8 +41,10 @@ export interface LicenseSigningKey {
 }
 
 /**
- * Every signing key ever registered, with its current status. `mailwoman license keygen` prints the entry to add. a key
- * leaves this list never, and changes status instead.
+ * Every signing key ever registered, with its current status.
+ *
+ * `mailwoman license keygen` prints the entry to add.
+ * A key leaves this list never, and changes status instead.
  */
 export const LICENSE_SIGNING_KEYS: readonly LicenseSigningKey[] = [
 	{

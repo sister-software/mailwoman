@@ -178,3 +178,5 @@ The corpus overlay is v0.29.0 plus one parquet, the en-GB weights overlay was
 absent from the candidate cache, and the overlay manifest declares 720 entries
 against an overlay base of v0.29.0. (OverlaySense: each mention carries its
 sense, or a following noun supplies it, so none of these four may match.)
+
+`CommaNo.yml` and `NamesVerb.yml` must each fire on the rest of this line: the build runs in one process, no server, and the flag names the output file.

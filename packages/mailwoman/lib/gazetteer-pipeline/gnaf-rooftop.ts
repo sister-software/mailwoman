@@ -22,13 +22,13 @@
  *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the
  *   same branch the GB/NZ databases use.
  *
- *   G-NAF PSV is crlf-terminated and quote-free: the trailing `\r` must be stripped at the reader
- *   boundary or the last column's name and every last-field value carry it — the geocode file's
+ *   G-NAF PSV is crlf-terminated and quote-free: the reader trims the trailing `\r`, because
+ *   otherwise the last column's name and every last-field value carry it — the geocode file's
  *   `latitude` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
  *   0-geocode failure).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { databaseRootPath, dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
@@ -49,8 +49,8 @@ import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
-import { join } from "path-ts"
-import { TextSpliterator } from "spliterator"
+import { PathBuilder } from "path-ts"
+import { TextSpliterator, titleCase } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -73,15 +73,21 @@ const SUFFIX_WORDS = new Map<string, string>([
 
 export interface GNAFRooftopOptions {
 	/**
-	 * The extracted `Standard/` PSV directory. Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
+	 * The extracted `Standard/` PSV directory.
+	 *
+	 * Default: `<data-root>/gnaf/may26/extracted/G-NAF/G-NAF may 2026/Standard`.
 	 */
 	standardDir?: string
 	/**
-	 * Output database path. Default: `<data-root>/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
+	 * Output database path.
+	 *
+	 * Default: `<data-root>/db/osm/address-points-au-au.db` (the `OSMRegionDatabaseProvider` home).
 	 */
 	out?: string
 	/**
-	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung. Default: every state present.
+	 * Restrict to these state prefixes (e.g. `["ACT"]`) — the smoke rung.
+	 *
+	 * Default: every state present.
 	 */
 	states?: string[]
 	/**
@@ -90,7 +96,9 @@ export interface GNAFRooftopOptions {
 	release?: string
 	buildSHA: string
 	/**
-	 * ISO-8601. The builder never invents provenance time.
+	 * ISO-8601.
+	 *
+	 * The builder never invents provenance time.
 	 */
 	createdAt: string
 	log?: (line: string) => void
@@ -106,15 +114,11 @@ export interface GNAFRooftopResult {
 	noStreet: number
 }
 
-function stripCR(line: string): string {
-	return line.endsWith("\r") ? line.slice(0, -1) : line
-}
-
 function rowReader(header: string): (line: string) => Record<string, string> {
-	const cols = stripCR(header).split("|")
+	const cols = header.split("|")
 
 	return (line) => {
-		const parts = stripCR(line).split("|")
+		const parts = line.split("|")
 		const rec: Record<string, string> = {}
 
 		for (let i = 0; i < cols.length; i++) {
@@ -125,12 +129,8 @@ function rowReader(header: string): (line: string) => Record<string, string> {
 	}
 }
 
-function titleCase(s: string): string {
-	return s.toLowerCase().replaceAll(/(^|[\s'-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase())
-}
-
 async function loadMap(
-	path: string,
+	path: PathBuilder,
 	build: (rec: Record<string, string>) => [string, string] | null
 ): Promise<Map<string, string>> {
 	const map = new Map<string, string>()
@@ -158,10 +158,11 @@ async function loadMap(
 export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Promise<GNAFRooftopResult> {
 	const release = options.release ?? "may26-gda2020"
 
-	const standardDir =
-		options.standardDir ?? String(dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard"))
+	const standardDir = PathBuilder.from(
+		options.standardDir ?? dataRootPath("gnaf", "may26", "extracted", "G-NAF", "G-NAF MAY 2026", "Standard")
+	)
 
-	const out = options.out ?? String(dataRootPath("osm", "address-points-au-au.db"))
+	const out = options.out ?? databaseRootPath(dataRootPath())("osm", "address-points-au-au.db")
 	const log = options.log ?? (() => {})
 
 	if (!new Date(options.createdAt).toISOString() || new Date(options.createdAt).toISOString() !== options.createdAt) {
@@ -186,7 +187,15 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 		await removePath(tmp)
 	}
 
-	const counts: GNAFRooftopResult = { out, written: 0, retired: 0, alias: 0, noNumber: 0, noGeocode: 0, noStreet: 0 }
+	const counts: GNAFRooftopResult = {
+		out: out.toString(),
+		written: 0,
+		retired: 0,
+		alias: 0,
+		noNumber: 0,
+		noGeocode: 0,
+		noStreet: 0,
+	}
 
 	{
 		using kdb = new DatabaseClient<OSMAddressPointDatabase>(tmp)
@@ -202,7 +211,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 		const BATCH = 50_000
 
 		for (const state of states) {
-			const p = (family: string) => join(standardDir, `${state}_${family}_psv.psv`)
+			const p = (family: string) => standardDir(`${state}_${family}_psv.psv`)
 
 			const localities = await loadMap(p("LOCALITY"), (r) =>
 				r["LOCALITY_PID"] && r["LOCALITY_NAME"] ? [r["LOCALITY_PID"], r["LOCALITY_NAME"]] : null
@@ -361,7 +370,7 @@ export async function buildGNAFRooftopDatabase(options: GNAFRooftopOptions): Pro
 	return counts
 }
 
-async function loadGeocodes(path: string): Promise<Map<string, [number, number]>> {
+async function loadGeocodes(path: PathBuilder): Promise<Map<string, [number, number]>> {
 	const map = new Map<string, [number, number]>()
 	let read: ((line: string) => Record<string, string>) | null = null
 

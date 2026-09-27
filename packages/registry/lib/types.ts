@@ -6,7 +6,8 @@
  *   comes out. Plain interfaces over the `@mailwoman/record` types.
  */
 
-import type { OrganizationName, PersonName, PostalAddress, ResolutionTier } from "@mailwoman/record"
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
+import type { OrganizationName, PersonName, PostalAddress } from "@mailwoman/record"
 
 /**
  * A single source record: one row of a messy contact/organization dataset, after normalization.
@@ -35,10 +36,13 @@ export interface SourceRecord {
 	phone?: string | null
 	email?: string | null
 	/**
-	 * Additional secondary-identifier fields, normalized — anything that helps tell two records apart or confirm they're
-	 * the same beyond name/org/address/phone (an authorized-official name, a provider taxonomy, a license number…). Used
-	 * as extra comparisons + corroborators when the model is built with matching `discriminators`. Keyed by a stable
-	 * field name the model references.
+	 * Additional secondary-identifier fields, normalized.
+	 *
+	 * Anything that helps tell two records apart or confirm they're the same beyond
+	 * name/org/address/phone (an authorized-official name, a provider taxonomy, a license number…).
+	 *
+	 * Used as extra comparisons + corroborators when the model is built with matching `discriminators`.
+	 * Keyed by a stable field name the model references.
 	 */
 	attributes?: Record<string, string>
 	/**
@@ -92,12 +96,14 @@ export interface EntityGeoData {
 }
 
 /**
- * Feature properties the map renderer consumes — {@link EntityGeoData} with every field optional, plus an unconstrained
- * `bucket`. The renderer assigns a color per distinct bucket value in first-seen order and builds its legend from that
- * set, so a bucket is any categorical label rather than only a {@link ReconciliationBucket}; and a collection assembled
- * from something other than resolved entities (raw address points, links read back from a file) carries no entity id or
- * display name.
+ * Feature properties the map renderer consumes — {@link EntityGeoData} with every
+ * field optional, plus an unconstrained `bucket`.
+ *
+ * The renderer assigns a color per distinct bucket value in first-seen order and builds
+ * its legend from that set, so a bucket is any categorical label rather than only a
+ * {@link ReconciliationBucket}; and a collection assembled from something other than resolved
+ * entities (raw address points, links read back from a file) carries no entity id or display name.
  */
 export type MapFeatureData = Partial<Omit<EntityGeoData, "bucket">> & { bucket?: string }
 
-//#endregion
+// #endregion

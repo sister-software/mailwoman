@@ -53,7 +53,9 @@ export class StreetRecoveryIndex {
 	}
 
 	/**
-	 * Nearest highway name within `maxKm`, or null. Scans the point's cell + the 8 neighbours.
+	 * Nearest highway name within `maxKm`, or null.
+	 *
+	 * Scans the point's cell + the 8 neighbours.
 	 */
 	nearest(lon: number, lat: number, maxKm: number): { name: string; km: number } | null {
 		const cx = Math.floor(lon / CELL_DEG)
@@ -81,8 +83,8 @@ export class StreetRecoveryIndex {
 }
 
 /**
- * Densify a LineString: yield its vertices plus interpolated points every ~DENSIFY_KM so a mid-segment address still
- * finds the street.
+ * Densify a LineString: yield its vertices plus interpolated points every ~DENSIFY_KM
+ * so a mid-segment address still finds the street.
  */
 function* densify(coords: number[][]): Generator<[number, number]> {
 	for (let i = 0; i < coords.length; i++) {

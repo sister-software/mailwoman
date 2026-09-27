@@ -2,34 +2,19 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters.
+ * Shared utilities for the `wof-admin` / `wof-postalcode` GeoJSON-bundle adapters, which read the
+ * per-record bundles published as `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>`
+ * repos: a tree of `data/<3>/<3>/<3>/<wof-id>.geojson` files plus alternate-geometry siblings like
+ * `<id>-alt-quattroshapes.geojson`, of which only the canonical record is consumed.
  *
- *   The Phase 1.5.1 pivot moved both adapters off the SpatiaLite distribution (dead mirror, empty
- *   `names` table) and onto the per-record GeoJSON bundles published as
- *   `github.com/whosonfirst-data/whosonfirst-data-{admin,postalcode}-<cc>` repos. Each repo carries
- *   a tree of `data/<3>/<3>/<3>/<wof-id>.geojson` files plus alternate-geometry siblings like
- *   `<id>-alt-quattroshapes.geojson`. The adapter only consumes the canonical record (no `-alt-`
- *   files); the alternate geometries are irrelevant to the name/hierarchy concerns Phase 1 cares
- *   about.
- *
- *   This module provides:
- *
- *   - `WOFRecord`: the lightweight per-feature shape both adapters carry in their ancestry index.
- *   - `walkFeatures`: streaming directory walk → parsed `WOFRecord`s (skips alt files, bad JSON,
- *       deprecated records).
- *   - `buildAncestryIndex`: in-memory ancestry chain construction (`Map<id, ancestors[]>`).
- *   - `extractNameVariants`: pulls `name:*` localized name lists off a feature's properties.
- *   - `normalizeNameKey`: turns `"name:eng_x_colloquial"` into `"name-eng-x-colloquial"` for safe use
- *       in `source_id` suffixes.
- *
- *   `is_current` semantics follow WOF + Pelias: `mz:is_current` ∈ {`1`, `-1`} are live; `0` is
- *   superseded. WOF's official postalcode distribution stamps every row with `-1` ("unknown but
- *   treated as active"), which is why the previous SpatiaLite adapter's `is_current = 1` filter
- *   silently emitted zero rows from the real corpus.
+ * `is_current` semantics follow WOF + Pelias: `mz:is_current` ∈ {`1`, `-1`} are live and `0` is
+ * superseded. WOF's official postalcode distribution stamps every row `-1` ("unknown but treated as
+ * active"), so an `is_current = 1` filter silently emits zero rows from the real corpus.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -42,37 +27,40 @@ export interface WOFFeature {
 }
 
 /**
- * Lightweight in-memory shape both adapters keep per record. Geometry is intentionally dropped — it's 95% of the file
- * weight and the adapters never consult it.
+ * Lightweight in-memory shape both adapters keep per record.
+ *
+ * Geometry is intentionally dropped because the adapters never consult it.
  */
 export interface WOFRecord {
 	id: number
 	parent_id: number | null
-	/**
-	 * Canonical `wof:name` of the record.
-	 */
 	name: string
 	placetype: string
 	/**
-	 * ISO 3166-1 alpha-2 from `wof:country`.
+	 * ISO 3166-1 alpha-2 from `wof:country`, upper-cased on read.
+	 *
+	 * The standard's codes are upper case and the publisher's spelling is not always,
+	 * and a consumer such as the `--country NL` filter compares the two strings directly.
 	 */
 	country: string
 	/**
 	 * Localized name variants from `name:*` properties.
 	 *
-	 * Keys are the raw `name:eng_x_preferred` form. values are the first non-empty string from the underlying array (WOF
-	 * stores variants as arrays even when only one form is present). The canonical `wof:name` is not included here —
-	 * adapters add a synthetic `"default"` slot for it.
+	 * Keys are the raw `name:eng_x_preferred` form.
+	 * Values are the first non-empty string from the underlying array, because WOF
+	 * stores variants as arrays even when only one form is present.
+	 *
+	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
 }
 
 /**
- * `mz:is_current` ∈ {`1`, `-1`} → keep. `0` → drop.
+ * `mz:is_current` ∈ {`1`, `-1`} → keep, `0` → drop.
  *
- * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active"); the Pelias importer accepts `-1`
- * alongside `1`. Tightening the predicate to `= 1` is the trap: the postalcode distros then contribute zero rows to the
- * corpus, silently, with nothing raised to notice it by.
+ * Real WOF postalcode distros tag every row `-1` ("unknown but treated as active") and the
+ * Pelias importer accepts `-1` alongside `1`; tightening the predicate to `= 1` makes the
+ * postalcode distros contribute zero rows to the corpus, silently, with no error to notice it by.
  */
 export function isCurrentFeature(props: Record<string, unknown>): boolean {
 	const raw = props["mz:is_current"]
@@ -82,9 +70,10 @@ export function isCurrentFeature(props: Record<string, unknown>): boolean {
 }
 
 /**
- * Pull `name:*` localized variants off a WOF feature's properties. WOF stores variants as arrays (`["Saint
- * Petersburg"]`). we lift the first non-empty string. Multiple-value variants (rare. usually historical aliases) are
- * not split into separate rows by this helper — adapters can opt in by iterating the underlying array if they need it.
+ * Pull `name:*` localized variants off a WOF feature's properties, lifting the first
+ * non-empty string from the array WOF stores them in (`["Saint Petersburg"]`);
+ * multiple-value variants (rare, usually historical aliases) are not split into separate rows,
+ * and an adapter that needs them can iterate the underlying array.
  */
 export function extractNameVariants(props: Record<string, unknown>): Map<string, string> {
 	const out = new Map<string, string>()
@@ -115,17 +104,16 @@ function firstNonBlankString(value: unknown): string | undefined {
 }
 
 /**
- * Turn a `name:*` property key into a hyphen-safe suffix fragment for `source_id`.
- *
- * `"name:eng_x_colloquial"` → `"name-eng-x-colloquial"`. `:` and `_` both become `-` because both collide with the
- * existing source_id separator vocabulary and downstream consumers split on `-`.
+ * Turn a `name:*` property key into a hyphen-safe suffix fragment for `source_id`
+ * (`"name:eng_x_colloquial"` → `"name-eng-x-colloquial"`); both `:` and `_` become `-`
+ * because both collide with the separator vocabulary downstream consumers split on.
  */
 export function normalizeNameKey(rawKey: string): string {
 	return rawKey.replaceAll(/[:_]/g, "-")
 }
 
 /**
- * Result of parsing a single GeoJSON file. `null` means "skip this row" (any reason).
+ * Parse a single GeoJSON feature; `null` means skip this row for any reason.
  */
 function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 	if (!feature || feature.type !== "Feature" || !feature.properties) return null
@@ -144,9 +132,11 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 
 	if (typeof placetype !== "string" || !placetype) return null
 
-	const country = props["wof:country"]
+	const rawCountry = props["wof:country"]
 
-	if (typeof country !== "string" || !country) return null
+	if (typeof rawCountry !== "string" || !rawCountry) return null
+
+	const country = rawCountry.toUpperCase()
 
 	if (!isCurrentFeature(props)) return null
 
@@ -170,22 +160,23 @@ function recordFromFeature(feature: WOFFeature): WOFRecord | null {
 }
 
 /**
- * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s.
+ * Stream every canonical GeoJSON file under `repoDir` and yield parsed `WOFRecord`s;
+ * `repoDir` may be a single cloned `whosonfirst-data-*` repo or a parent holding several
+ * (the corpus pipeline clones all four into a shared `wof/repos/` root).
  *
- * `repoDir` may point at a single cloned `whosonfirst-data-*` repo or at a parent directory holding several such repos
- * (the corpus pipeline clones all four into a shared `wof/repos/` root and runs the adapter against that root).
- * `**\/*.geojson` walks the whole tree; `-alt-` siblings are skipped since they're alternate-geometry exports rather
- * than new records.
- *
- * Errors per-file (unreadable, malformed JSON, missing properties) are swallowed so one bad file doesn't poison a 3 GB
- * walk. Adapters can add stricter validation downstream if they need it.
+ * `-alt-` siblings are skipped as alternate-geometry exports rather than new records,
+ * and per-file errors (unreadable, malformed JSON, missing properties) are swallowed
+ * so one bad file does not poison a multi-gigabyte walk.
  */
-export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSignal } = {}): AsyncIterable<WOFRecord> {
+export async function* walkFeatures(
+	repoDir: PathBuilderLike,
+	opts: { signal?: AbortSignal } = {}
+): AsyncIterable<WOFRecord> {
 	for await (const filePath of Globerator.from("**/*.geojson", {
 		cwd: repoDir,
 		absolute: true,
 		exclude: ["**/*-alt-*.geojson"],
-		// Preserve the recursive fast-glob walk this replaces: bundle repositories can expose data through a link.
+		// Bundle repositories can expose their data through a link.
 		followSymlinks: true,
 		signal: opts.signal,
 	})) {
@@ -210,16 +201,12 @@ export async function* walkFeatures(repoDir: string, opts: { signal?: AbortSigna
 }
 
 /**
- * Build an in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>` walking `parent_id` upward and stopping
- * at the first missing link. A cycle guard halts at any re-visit (defensive — WOF data is acyclic by construction but
- * corrupt fixtures shouldn't infinite-loop the adapter).
+ * An in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>`,
+ * walking `parent_id` upward and stopping at the first missing link.
  *
- * Records whose ancestors aren't in `byID` (e.g. an FR locality whose region wasn't included in the cloned repo set)
- * get a shorter chain. the variant emission gracefully degrades.
- *
- * `wof-admin-jp`'s `chainOf` walks the same parent-child relation over SQLite `spr` rows with an
- * outside-the-preloaded-set fallback query — a different substrate with a different escape hatch, kept separate on
- * purpose.
+ * A cycle guard halts at any re-visit — defensive, since WOF data is acyclic by construction
+ * but a corrupt fixture should not infinite-loop the adapter — and records whose
+ * ancestors are absent from `byID` get a shorter chain rather than failing.
  */
 export type AncestryIndex = Map<number, WOFRecord[]>
 

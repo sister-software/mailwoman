@@ -34,7 +34,8 @@ export interface PacedCachedClientProduct {
 	 */
 	minRequestIntervalMs: number
 	/**
-	 * How long a cached response stays fresh — chosen against the product's own cadence, so it lives with the product.
+	 * How long a cached response stays fresh — chosen against the product's own cadence,
+	 * so it lives with the product.
 	 */
 	cacheTTLMs: number
 	/**
@@ -59,7 +60,7 @@ export function createPacedCachedClient<Client extends APIClient>(
 		caching: {
 			ttl: product.cacheTTLMs,
 			storage: buildDiskStorage({
-				directory: options.cacheDirectory ?? String(dataRootPath(...product.cacheDirectory)),
+				directory: options.cacheDirectory ?? dataRootPath(...product.cacheDirectory),
 			}),
 		},
 	})

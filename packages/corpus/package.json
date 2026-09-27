@@ -81,6 +81,11 @@
 			"node": "./lib/types.ts",
 			"default": "./out/types.js"
 		},
+		"./registers": {
+			"types": "./out/registers.d.ts",
+			"node": "./lib/registers.ts",
+			"default": "./out/registers.js"
+		},
 		"./data/*": "./data/*",
 		"./au/*": {
 			"types": "./out/au/*.d.ts",
@@ -182,6 +187,11 @@
 			"node": "./lib/build.ts",
 			"default": "./out/build.js"
 		},
+		"./surfaces/*": {
+			"types": "./out/surfaces/*.d.ts",
+			"node": "./lib/surfaces/*.ts",
+			"default": "./out/surfaces/*.js"
+		},
 		"./synthesizers/*": {
 			"types": "./out/synthesizers/*.d.ts",
 			"node": "./lib/synthesizers/*.ts",
@@ -212,6 +222,11 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
+		"./parquet/shuffle": {
+			"types": "./out/parquet/shuffle.d.ts",
+			"node": "./lib/parquet/shuffle.ts",
+			"default": "./out/parquet/shuffle.js"
+		},
 		"./parquet/*": {
 			"types": "./out/parquet/*.d.ts",
 			"node": "./lib/parquet/*.ts",
@@ -232,15 +247,20 @@
 			"node": "./lib/tools/gauntlet-inputs.ts",
 			"default": "./out/tools/gauntlet-inputs.js"
 		},
-		"./tools/gb-title-case": {
-			"types": "./out/tools/gb-title-case.d.ts",
-			"node": "./lib/tools/gb-title-case.ts",
-			"default": "./out/tools/gb-title-case.js"
-		},
 		"./tools/golden-relabel-street": {
 			"types": "./out/tools/golden/relabel-street/index.d.ts",
 			"node": "./lib/tools/golden/relabel-street/index.ts",
 			"default": "./out/tools/golden/relabel-street/index.js"
+		},
+		"./tools/migrate-overlay-parquet": {
+			"types": "./out/tools/migrate/overlay-parquet.d.ts",
+			"node": "./lib/tools/migrate/overlay-parquet.ts",
+			"default": "./out/tools/migrate/overlay-parquet.js"
+		},
+		"./tools/migrate-recipe-output": {
+			"types": "./out/tools/migrate/recipe-output.d.ts",
+			"node": "./lib/tools/migrate/recipe-output.ts",
+			"default": "./out/tools/migrate/recipe-output.js"
 		},
 		"./tools/overture-subvenue": {
 			"types": "./out/tools/overture-subvenue.d.ts",
@@ -321,9 +341,9 @@
 		"apache-arrow": "^21.2.0",
 		"fastest-levenshtein": "^1.0.16",
 		"parquet-wasm": "0.7.2",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

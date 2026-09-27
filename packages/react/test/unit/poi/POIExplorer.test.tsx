@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Composed test: the whole POI explorer (ClientOnly → usePOISearch → presentational units) against a
- *   mock taxonomy runtime + mock live probe — no taxonomy load, no httpvfs.
- */
-
 import { POIExplorer } from "@mailwoman/react/poi/POIExplorer"
 import { expect, test, vi } from "vitest"
 import { userEvent } from "vitest/browser"

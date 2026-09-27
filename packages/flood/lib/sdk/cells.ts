@@ -30,7 +30,8 @@ interface ZoneAccumulator {
 }
 
 /**
- * What one resolution's index came out as — the numbers the resolution choice is made from.
+ * What one resolution's index came out as.
+ * The numbers the resolution choice is made from.
  */
 export interface CellIndexMeasurement {
 	resolution: number
@@ -47,8 +48,10 @@ export interface CellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. The number the resolution is chosen on: it is the share of in-layer probes that
-	 * cannot be answered from the index alone.
+	 * `partialCells / touchedCells`.
+	 *
+	 * The number the resolution is chosen on: it is the share of in-layer probes
+	 * that cannot be answered from the index alone.
 	 */
 	partialShare: number
 	/**
@@ -73,18 +76,21 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features.
  *
- * Held as short-cell strings rather than the integers the tables store, because `compactCells` and `cellToParent` are
- * h3-js functions over full indexes and round-tripping through the integer form at every step would cost more than the
- * strings do.
+ * Held as short-cell strings rather than the integers the tables store, because `compactCells`
+ * and `cellToParent` are h3-js functions over full indexes and round-tripping through
+ * the integer form at every step would cost more than the strings do.
  */
 export class FloodCellIndex {
 	readonly resolution: number
 
 	readonly #zones = new Map<string, ZoneAccumulator>()
 	/**
-	 * `partial cell → area ids`. Populated for every touched cell and pruned at {@link FloodCellIndex.finish} once the
-	 * whole-cell sets are known — a cell that turns out whole for its zone needs no candidate list, and which cells those
-	 * are is not decided until every feature has been seen.
+	 * `partial cell → area ids`.
+	 *
+	 * Populated for every touched cell and pruned at {@link FloodCellIndex.finish}
+	 * once the whole-cell sets are known.
+	 * A cell that turns out whole for its zone needs no candidate list, and
+	 * which cells those are is not decided until every feature has been seen.
 	 */
 	readonly #candidates = new Map<string, Set<string>>()
 
@@ -133,10 +139,13 @@ export class FloodCellIndex {
 	/**
 	 * Compact the whole-cell sets, prune the candidate lists, and report the rows plus the measurement.
 	 *
-	 * Compaction is where the size interface is paid: a zone's uniform interior collapses parent-ward into a handful of
-	 * coarse cells and only the fringe stays fine, which is hierarchy-respecting run-length encoding. It is applied to
-	 * the whole set only — a partial cell's parent is not partial in any useful sense, and compacting it would claim the
-	 * fringe covers ground it does not.
+	 * Compaction is where the size interface is paid: a zone's uniform interior collapses
+	 * parent-ward into a handful of coarse cells and only the fringe stays fine,
+	 * which is hierarchy-respecting run-length encoding.
+	 * It is applied to the whole set only.
+	 *
+	 * A partial cell's parent is not partial in any useful sense, and compacting it
+	 * would claim the fringe covers ground it does not.
 	 */
 	finish(): {
 		zoneCells: Array<{ h3Cell: number; resolution: number; zoneCode: string; containment: "whole" | "partial" }>
@@ -211,8 +220,8 @@ export class FloodCellIndex {
 		const candidates: Array<{ h3Cell: number; resolution: number; areaID: string }> = []
 
 		for (const [cell, areas] of this.#candidates) {
-			// A cell that is partial for no zone was covered wholly by every zone that reached it, so its candidate list
-			// would never be read.
+			// A cell that is partial for no zone was covered wholly by every zone that
+			// reached it, so its candidate list would never be read.
 			if (!partialCellKeys.has(cell)) continue
 
 			const h3Cell = shortCellToInt(cell as H3Cell)

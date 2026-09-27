@@ -6,7 +6,7 @@
  *   manifest. corpus-v0.4.0 is a pure adapter-addition revision: it points at every parquet file from
  *   v0.3.0 plus the new kryptonite file(s). No v0.3.0 bytes are touched or re-shuffled.
  *
- *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for the why. that doc also pins the
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for the why. that doc also pins the
  *   DeepSeek model version + prompt versions used to produce the jsonl.
  *
  *   Invoke via `mailwoman corpus slice kryptonite \
@@ -15,20 +15,21 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
-import type { CanonicalRow, LabeledRow } from "#types"
+import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
 export interface KryptoniteOverlayOptions {
 	jsonl: string
 	baseManifest: string
-	outDir: string
+	outDir: PathBuilderLike
 	/**
 	 * Default `"0.4.0"`.
 	 */
@@ -40,7 +41,7 @@ export interface KryptoniteOverlayOptions {
 }
 
 async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterable<CanonicalRow> {
-	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(jsonl))) {
 		// Strip sidecar underscore-prefixed fields the generator left behind for debugging.
 		const components = raw["components"] as Record<string, string>
 
@@ -53,7 +54,9 @@ async function* canonicalRows(jsonl: string, corpusVersion: string): AsyncIterab
 			source_id: raw["source_id"] as string,
 			corpus_version: corpusVersion,
 			license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-			synth: raw["synth"] as CanonicalRow["synth"],
+			recipe: raw["recipe"] as CanonicalRow["recipe"],
+			register: (raw["register"] as string | null) ?? null,
+			surface: requireSurface(raw, "deepseek-kryptonite"),
 		}
 	}
 }
@@ -81,13 +84,15 @@ export async function buildKryptoniteOverlay(
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	await makeDirectories(options.outDir)
+	const outDir = PathBuilder.from(options.outDir)
+	const corpusDir = outDir(`corpus-v${corpusVersion}`)
+	await makeDirectories(outDir)
 
 	const quarantine: string[] = []
 
 	const newManifest = await writeParquetSplits(
 		{ train: labeledRows(options.jsonl, corpusVersion, quarantine) },
-		{ outputDir: options.outDir, corpusVersion }
+		{ outputDir: outDir, corpusVersion }
 	)
 
 	report?.(
@@ -96,14 +101,15 @@ export async function buildKryptoniteOverlay(
 	)
 
 	if (quarantine.length) {
-		const qPath = join(options.outDir, `corpus-v${corpusVersion}`, "quarantine-kryptonite.tsv")
+		const qPath = corpusDir("quarantine-kryptonite.tsv")
 		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath}`)
 	}
 
-	// Stamp the new file's source field for audit.ts (which prefers the descriptor's `source` over
-	// first_source_id-prefix inference). Without this, deepseek-kryptonite IDs would have
-	// to match a prefix in KNOWN_SOURCE_PREFIXES — we add it there too as a belt-and-braces.
+	// Stamp the new file's source field for audit.ts
+	// (which prefers the descriptor's `source` over first_source_id-prefix inference).
+	// Without this, deepseek-kryptonite IDs would have to match a prefix in KNOWN_SOURCE_PREFIXES.
+	// We add it there too as a belt-and-braces.
 	for (const file of newManifest.slices) {
 		file.source = source
 	}
@@ -127,7 +133,7 @@ export async function buildKryptoniteOverlay(
 
 	// The v0.3.0 files carry no `source`: they mix sources, so audit.ts falls back to its
 	// first_source_id-prefix inference for them (it re-derives on its own when `source` is absent).
-	const combinedPath = join(options.outDir, `corpus-v${corpusVersion}`, "MANIFEST.json")
+	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newManifest.total_rows})`)

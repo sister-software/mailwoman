@@ -1,12 +1,12 @@
 # @mailwoman/address-id
 
-**Stable, parseable address primary keys** — the deterministic, exact-match
-complement to the fuzzy matcher.
+This package produces stable, parseable primary keys for addresses. It is the
+deterministic, exact-match complement to the fuzzy matcher.
 
-Where `@mailwoman/match` decides whether two messy records are _probably_ the
-same entity, `@mailwoman/address-id` produces a content-addressed key you can
-`GROUP BY` or `JOIN ON` without running the matcher at all — for the common
-"same canonical address" case.
+`@mailwoman/match` decides whether two messy records are _probably_ the same
+entity. `@mailwoman/address-id` produces a content-addressed key that you can
+`GROUP BY` or `JOIN ON` without running the matcher. The key covers the common
+case where two records share the same canonical address.
 
 ```ts
 import { createPostalAddressID } from "@mailwoman/address-id"
@@ -24,11 +24,11 @@ const id = createPostalAddressID({
 <state>.<H3-cell>.<content-hash>
 ```
 
-| Segment          | Purpose                                                                                                                                                                                         |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or plucked from the ZIP via `@mailwoman/codex`; `xx` when unknown. Makes the key region-sortable.                                     |
-| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). Coarse on purpose: two geocodes of the same place a few meters apart land in the same cell. |
-| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. This is the identity; the cell + state localize and partition it.         |
+| Segment          | Purpose                                                                                                                                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **State prefix** | Coarse region (`tx`, `ca`, `ny`, …) from a supplied state or from the ZIP via `@mailwoman/codex`. It is `xx` when the state is unknown. The prefix makes the key sortable by region.                    |
+| **H3 cell**      | Jitter-stable locality token from the resolved coordinate (`h3-js` `latLngToCell` at resolution 9). The cell is coarse so that two geocodes of the same place a few meters apart land in the same cell. |
+| **Content hash** | Hash of the address canonicalized by `@mailwoman/normalize`, so `123 Main St` and `123 MAIN STREET` hash identically. The hash carries the identity. The cell and state localize and partition it.      |
 
 ## API
 
@@ -43,28 +43,29 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
 
 ## Design
 
-- **Self-contained** on `h3-js` rather than `@mailwoman/spatial` (which wasn't
-  published when `address-id` shipped). Small, focused dependency footprint.
-- **Content-addressed rather than assigned.** The key derives from the data itself
-  — no central registry, no sequence numbers.
+- **Self-contained.** The package depends on `h3-js` rather than
+  `@mailwoman/spatial`, which was not published when `address-id` shipped. The
+  dependency footprint stays small.
+- **Content-addressed rather than assigned.** The key derives from the data
+  itself, so the package needs neither a central registry nor sequence numbers.
 - **Jitter-stable.** The H3 cell at resolution 9 (~0.03 km²) absorbs the
   small coordinate differences that come from geocoding the same address
   on different passes.
 
 ## Use cases
 
-- **Deduplication** — `GROUP BY address_id` collapses records at the same
+- **Deduplication.** `GROUP BY address_id` collapses records at the same
   canonical address without running the fuzzy matcher.
-- **Cross-dataset joins** — deterministic exact-match join key for linking
-  records across data sources.
-- **Indexing** — ordered by state prefix for efficient range scans.
+- **Cross-dataset joins.** The key is a deterministic exact-match join key for
+  linking records across data sources.
+- **Indexing.** Keys sort by state prefix, which supports efficient range scans.
 
 ## Related
 
-- [`@mailwoman/match`](../match) — the fuzzy matcher (complementary rather than competing)
-- [`@mailwoman/normalize`](../normalize) — canonicalization used by the content hash
-- [`@mailwoman/codex`](../codex) — ZIP → state prefix resolution
-- [`@mailwoman/formatter`](../formatter) — `canonicalKey` (also deterministic, used for blocking)
+- [`@mailwoman/match`](../match): the fuzzy matcher, which complements this package.
+- [`@mailwoman/normalize`](../normalize): the canonicalization used by the content hash.
+- [`@mailwoman/codex`](../codex): ZIP → state prefix resolution.
+- [`@mailwoman/formatter`](../formatter): `canonicalKey`, which is also deterministic and is used for blocking.
 
 ## License
 

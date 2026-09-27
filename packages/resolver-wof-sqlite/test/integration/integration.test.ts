@@ -11,20 +11,20 @@
  *   Resolution order for the DB path:
  *
  *   1. `MAILWOMAN_WOF_DB` env var (explicit operator override).
- *   2. `$MAILWOMAN_DATA_ROOT/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
+ *   2. `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (the canonical lab location
  *        documented in the readme + handover doc).
  *
  *   Assumes the `place_search` FTS5 table is already built (run `mailwoman gazetteer build fts` ahead of
  *   time). The resolver throws a clear error if missing — that's a sufficient signal.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { $public } from "@mailwoman/resolver-wof-sqlite/env"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite/lookup"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "whosonfirst-data-admin-us-latest.db"))
+const DEFAULT_WOF_PATH = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
@@ -45,8 +45,8 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 
 	describe("lookup smoke tests", () => {
 		test("`Paris` with locality filter returns >0 candidates, all containing Paris in US", async () => {
-			// FTS5 token-match — `Saint Paris` is a legitimate hit, so the assertion is on substring
-			// match rather than exact equality.
+			// FTS5 token-match — `Saint Paris` is a legitimate hit, so the assertion is
+			// on substring match rather than exact equality.
 			const candidates = await lookup.findPlace({ text: "Paris", placetype: "locality", limit: 20 })
 			expect(candidates.length).toBeGreaterThan(0)
 
@@ -126,8 +126,8 @@ describeIfWOF(`WOFSQLitePlaceLookup integration against ${wofPath}`, () => {
 			const parentID = springfields[0]!.parent_id
 			expect(parentID).toBeDefined()
 
-			// Now query for that Springfield by name, scoped to its parent. Should include itself plus
-			// possibly other places under the same parent.
+			// Now query for that Springfield by name, scoped to its parent.
+			// Should include itself plus possibly other places under the same parent.
 			const constrained = await lookup.findPlace({
 				text: "Springfield",
 				placetype: "locality",

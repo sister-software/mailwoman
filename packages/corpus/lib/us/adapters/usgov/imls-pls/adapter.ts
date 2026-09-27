@@ -21,17 +21,19 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_IMLS_PLS_ADAPTER_ID = "usgov-imls-pls"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_IMLS_PLS_DEFAULT_LICENSE = "Public Domain"
 
@@ -50,6 +52,8 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 		id: USGOV_IMLS_PLS_ADAPTER_ID,
 		defaultLicense: USGOV_IMLS_PLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.IMLSPublicLibraries,
+		surface: SurfaceOrigin.Attested,
 		description: "IMLS Public Libraries Survey — ~17K library outlets with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -68,11 +72,11 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const libName = (record.LIBNAME ?? "").trim()
-				const address = (record.ADDRESS ?? "").trim()
-				const city = (record.CITY ?? "").trim()
-				const zip = (record.ZIP ?? "").trim()
-				const stateAbbr = (record.STABR ?? "").trim()
+				const libName = record.LIBNAME ?? ""
+				const address = record.ADDRESS ?? ""
+				const city = record.CITY ?? ""
+				const zip = record.ZIP ?? ""
+				const stateAbbr = record.STABR ?? ""
 
 				if (!libName || !city || !zip) continue
 
@@ -91,10 +95,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 					locality: city,
 					region: state.abbreviation,
 					postcode: zip,
-					// #552: no subregion — US postal addresses don't surface the county, so emitting
-					// subregion creates a phantom component with no raw-span to align to, quarantining
-					// ~21% of rows. The county is still available in the source CSV. it just isn't
-					// a postal-surface component here.
+					// #552: no subregion — US postal addresses don't surface the county, so emitting subregion creates a phantom component with no raw-span to align to, quarantining ~21% of rows. The county is still available in the source CSV. It just isn't a postal-surface component here.
 				}
 
 				const rendered = formatAddressRow(components, "US", { singleLine: true })
@@ -105,7 +106,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const fscsKey = (record.FSCSKEY ?? "").trim()
+				const fscsKey = record.FSCSKEY ?? ""
 
 				const sourceID = fscsKey
 					? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`

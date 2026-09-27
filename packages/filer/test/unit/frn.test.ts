@@ -49,9 +49,10 @@ describe("isFRN", () => {
 	})
 
 	it("rejects a bare number, even a valid-looking one", () => {
-		// The earlier-draft guard accepted this (parseInt/finite/non-negative only, see
-		// earlier-draft/fcc/entity/frn.ts). This port requires the actual 10-char, zero-padded
-		// string shape — decision 3 calls the earlier-draft guard out by name as laxity not to copy.
+		// The earlier-draft guard accepted this (parseInt/finite/non-negative only,
+		// see earlier-draft/fcc/entity/frn.ts).
+		// This port requires the actual 10-char, zero-padded string shape — decision 3
+		// calls the earlier-draft guard out by name as laxity not to copy.
 		expect(isFRN(1_753_557)).toBe(false)
 	})
 

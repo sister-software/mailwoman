@@ -42,9 +42,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { once } from "@mailwoman/core/utils/events"
 import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromArray } from "apache-arrow"
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
-import { connectDuckDB, escapeSQLIdentifier, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import {
 	PARQUET_COLUMN_TYPES,
 	PARQUET_COLUMNS,
@@ -52,6 +52,7 @@ import {
 	type ParquetRow,
 	ROW_GROUP_SIZE,
 	rowToParquet,
+	ROWS_PER_FILE,
 } from "#parquet/schema"
 import type { LabeledRow } from "#types"
 import type { SplitName } from "#utils/split"
@@ -109,12 +110,20 @@ function parquetTable(rows: readonly ParquetRow[]) {
 			rows.map((row) => row.license),
 			new Utf8()
 		),
-		synth_method: vectorFromArray(
-			rows.map((row) => row.synth_method ?? null),
+		register: vectorFromArray(
+			rows.map((row) => row.register ?? null),
 			new Utf8()
 		),
-		synth_base_id: vectorFromArray(
-			rows.map((row) => row.synth_base_id ?? null),
+		surface: vectorFromArray(
+			rows.map((row) => row.surface),
+			new Utf8()
+		),
+		recipe: vectorFromArray(
+			rows.map((row) => row.recipe ?? null),
+			new Utf8()
+		),
+		base_source_id: vectorFromArray(
+			rows.map((row) => row.base_source_id ?? null),
 			new Utf8()
 		),
 	})
@@ -134,14 +143,17 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
 		.build()
 
 	// parquet-wasm serializes key-value metadata through a hash map, whose order is not stable between writes.
-	// File identity and provenance live in manifest.json, so omitting file metadata preserves deterministic bytes.
+	// File identity and provenance live in manifest.json, so omitting file
+	// metadata preserves deterministic bytes.
 	await writeLocalBuffer(writeParquet(wasmTable, properties), path)
 }
 
 /**
- * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split. The `slices` key it sits
- * under is the wire interface the Python loader reads (`manifest_files` in `corpus_files.py`, with its pre-rename
- * fallback); every corpus on disk carries it, so the key name is not the writer's to change.
+ * Per-file metadata captured in `manifest.json`, one entry per `.parquet` file of a split.
+ *
+ * The `slices` key it sits under is the wire interface the Python loader reads
+ * (`manifest_files` in `corpus_files.py`, with its pre-rename fallback); every corpus
+ * on disk carries it, so the key name is not the writer's to change.
  */
 export interface ParquetFileDescriptor {
 	split: SplitName
@@ -154,8 +166,10 @@ export interface ParquetFileDescriptor {
 	first_source_id: string
 	last_source_id: string
 	/**
-	 * The file's corpus source slug, when the writer knows it. `audit.ts` prefers this over inferring the source from
-	 * `first_source_id`'s prefix; {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
+	 * The file's corpus source slug, when the writer knows it.
+	 *
+	 * `audit.ts` prefers this over inferring the source from `first_source_id`'s prefix;
+	 * {@linkcode writeParquetSplits} itself writes multi-source files and leaves it unset.
 	 */
 	source?: string
 }
@@ -172,7 +186,9 @@ export interface ParquetManifest {
 
 export interface WriteParquetSplitsOptions {
 	/**
-	 * Root output directory. The corpus version directory is created beneath it.
+	 * Root output directory.
+	 *
+	 * The corpus version directory is created beneath it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -182,22 +198,26 @@ export interface WriteParquetSplitsOptions {
 	corpusVersion: string
 
 	/**
-	 * Max rows per `.parquet` file. Default 1,000,000 per the Phase 1 plan.
+	 * Max rows per `.parquet` file.
+	 *
+	 * Default 1,000,000 per the Phase 1 plan.
 	 */
 	rowsPerFile?: number
 }
 
 /**
- * Pre-partitioned labeled-row streams, one per split. Callers (`buildCorpus`) decide each row's split inline at align
- * time via `splitForRow` and route rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n)
- * lookup table.
+ * Pre-partitioned labeled-row streams, one per split.
  *
- * Splits with no rows can be omitted (or passed as an empty iterable); {@linkcode writeParquetSplits} skips them.
+ * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow` and route
+ * rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n) lookup table.
+ *
+ * Splits with no rows can be omitted (or passed as an empty iterable);
+ * {@linkcode writeParquetSplits} skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
 async function writeStagedParquet(stagePath: string, outputPath: string): Promise<void> {
-	const db = await connectDuckDB()
+	using db = await openDuckDB()
 	const columns = [...PARQUET_COLUMNS]
 
 	const columnsLiteral =
@@ -205,17 +225,13 @@ async function writeStagedParquet(stagePath: string, outputPath: string): Promis
 
 	const selectList = columns.map(escapeSQLIdentifier).join(", ")
 
-	try {
-		await db.run("SET preserve_insertion_order=true")
+	await db.run("SET preserve_insertion_order=true")
 
-		await db.run(
-			`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
-				`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-				`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
-		)
-	} finally {
-		db.closeSync()
-	}
+	await db.run(
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
+			`TO '${escapeSQLString(outputPath)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${ROW_GROUP_SIZE})`
+	)
 }
 
 async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void> {
@@ -225,17 +241,19 @@ async function writeStagedRow(stage: WriteStream, row: ParquetRow): Promise<void
 }
 
 /**
- * Stream labeled rows into `.parquet` files, one set of files per split, and write the manifest describing them.
+ * Stream labeled rows into `.parquet` files, one set of files per split,
+ * and write the manifest describing them.
  *
- * Splits are processed sequentially so only one file is open at a time. Rows are staged to newline-delimited JSON with
- * backpressure, then DuckDB writes the Parquet file from disk.
+ * Splits are processed sequentially so only one file is open at a time.
+ * Rows are staged to newline-delimited JSON with backpressure, then DuckDB
+ * writes the Parquet file from disk.
  */
 export async function writeParquetSplits(
 	perSplit: PerSplitRows,
 	opts: WriteParquetSplitsOptions
 ): Promise<ParquetManifest> {
-	const rowsPerFile = opts.rowsPerFile ?? 1_000_000
-	const corpusDir = join(opts.outputDir, `corpus-v${opts.corpusVersion}`)
+	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
+	const corpusDir = resolvePathBuilder(opts.outputDir, `corpus-v${opts.corpusVersion}`)
 	await makeDirectories(corpusDir)
 
 	const files: ParquetFileDescriptor[] = []
@@ -258,11 +276,13 @@ export async function writeParquetSplits(
 		let lastSourceID = ""
 
 		const openFile = async (): Promise<void> => {
-			const splitDir = join(corpusDir, split)
+			const splitDir = corpusDir(split)
 			await makeDirectories(splitDir)
-			path = join(splitDir, `part-${String(fileIndex).padStart(4, "0")}.parquet`)
+			// A string, because the manifest records it.
+			path = splitDir(`part-${String(fileIndex).padStart(4, "0")}.parquet`).toString()
 
-			stagePath = staging.resolve(`part-${String(fileIndex).padStart(4, "0")}.ndjson`)
+			// A string, because DuckDB reads it inside SQL text.
+			stagePath = staging.path(`part-${String(fileIndex).padStart(4, "0")}.ndjson`).toString()
 			stage = staging.use(openWriteStream(stagePath))
 			fileRows = 0
 			firstSourceID = ""
@@ -346,7 +366,7 @@ export async function writeParquetSplits(
 		total_rows: totalRows,
 	}
 
-	await writeLocalJSONFile(manifest, corpusDir, "MANIFEST.json")
+	await writeLocalJSONFile(manifest, corpusDir("MANIFEST.json"))
 
 	return manifest
 }

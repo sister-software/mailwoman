@@ -10,9 +10,9 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { GeoFeature, InferGeoFeatureCollection, MultiPolygonLiteral, PolygonLiteral } from "@mailwoman/spatial"
+import type { MultiPolygonRings } from "@mailwoman/spatial/geometries/polygon"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import type { MultiPolygonCoords } from "#index"
 import type { NUTSDatabase } from "#schema"
 
 interface NUTSProperties {
@@ -32,8 +32,8 @@ export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<
 
 	db.exec("DROP TABLE IF EXISTS nuts_regions")
 
-	// `nutsId` is a string interface with every shipped nuts.db — the acronym-casing convention applies
-	// to TS identifiers rather than DB columns (readers alias it: `select nutsId AS nutsID`).
+	// `nutsId` is a string interface with every shipped nuts.db — the acronym-casing convention
+	// applies to TS identifiers rather than DB columns (readers alias it: `select nutsId AS nutsID`).
 	db.exec(
 		"CREATE TABLE nuts_regions (nutsId TEXT NOT NULL, level INTEGER, minLat REAL, maxLat REAL, minLon REAL, maxLon REAL, geom TEXT NOT NULL)"
 	)
@@ -45,7 +45,7 @@ export async function buildNUTSDB(geojsonPath: string, dbPath: string): Promise<
 	db.exec("BEGIN")
 
 	for (const feature of data.features) {
-		const polygons: MultiPolygonCoords =
+		const polygons: MultiPolygonRings =
 			feature.geometry.type === "Polygon" ? [feature.geometry.coordinates] : feature.geometry.coordinates
 
 		let minLat = 90

@@ -4,7 +4,7 @@
 /**
  *   `OptionsOf` derives a command's options object from its own `spec`, and the router writes each flag's value to
  *   the property `optionPropertyName` derives. Those two derivations must agree exactly: a property spelled any
- *   other way is never written to, so the flag parses, validates, and does nothing.
+ *   other way is never written to, so the flag parses, validates, and has no effect.
  *
  *   Both halves are asserted against one list of expected property names — the type through `expectTypeOf`, the
  *   runtime through `optionPropertyName`. Either drifting breaks this file, which is the point. matched tables in
@@ -41,8 +41,10 @@ const fixture = {
 type Options = OptionsOf<typeof fixture>
 
 /**
- * The property each flag binds to. The type and the runtime are both checked against this list rather than against each
- * other, so a test failure names which half moved.
+ * The property each flag binds to.
+ *
+ * The type and the runtime are both checked against this list rather than against
+ * each other, so a test failure names which half moved.
  */
 const EXPECTED_PROPERTIES = [
 	"locale",

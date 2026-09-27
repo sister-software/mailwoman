@@ -37,6 +37,7 @@
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/license-worker": "workspace:*",
 		"@mailwoman/release-kit": "workspace:*",
-		"@mailwoman/repo-health": "workspace:*"
+		"@mailwoman/repo-health": "workspace:*",
+		"@mailwoman/storage-kit": "workspace:*"
 	}
 }

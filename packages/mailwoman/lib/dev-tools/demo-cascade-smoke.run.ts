@@ -31,7 +31,6 @@ async function main(): Promise<void> {
 			tokenizer: { type: "string" },
 			explain: { type: "boolean" },
 		},
-		strict: false,
 		allowPositionals: true,
 	})
 

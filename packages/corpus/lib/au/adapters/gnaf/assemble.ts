@@ -26,15 +26,15 @@
  */
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
-import { createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
+import { titleCase, createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 export interface GNAFAssembleOptions {
 	/**
 	 * G-NAF `Standard` directory (holds the per-state `*_psv.psv` tables).
 	 */
-	standardDir: string
+	standardDir: PathBuilderLike
 	/**
 	 * Target sample size (uniform reservoir → population-proportional across states).
 	 */
@@ -44,7 +44,8 @@ export interface GNAFAssembleOptions {
 	 */
 	out: string
 	/**
-	 * Optional held-out eval jsonl (rows with a `components` field) — its (street,locality,postcode) are excluded.
+	 * Optional held-out eval jsonl (rows with a `components` field) —
+	 * its (street,locality,postcode) are excluded.
 	 */
 	holdoutPath?: string
 	/**
@@ -58,16 +59,6 @@ export interface GNAFAssembleResult {
 	seen: number
 	heldOut: number
 	byState: Record<string, number>
-}
-
-/**
- * Uppercase → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
- */
-export function titlecase(s: string): string {
-	return s
-		.toLowerCase()
-		.replaceAll(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
-		.trim()
 }
 
 /**
@@ -109,8 +100,6 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
 
 	for await (const line of TextSpliterator.fromAsync(path)) {
-		if (!line.trim()) continue
-
 		const c = tryParsingJSON<{ components?: Record<string, string> }>(line)?.components
 
 		if (c?.street && c?.locality && c?.postcode) {
@@ -123,10 +112,12 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 
 export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssembleResult> {
 	const progress = opts.onProgress ?? (() => {})
-	const files = await Globerator.from("*", { cwd: opts.standardDir, absolute: false }).toArray()
+	const standardDir = PathBuilder.from(opts.standardDir)
+	const files = await Globerator.from("*", { cwd: standardDir, absolute: false }).toArray()
 
+	// Strings, because the address loop reads the state code out of each path.
 	const pick = (re: RegExp, exclude?: RegExp) =>
-		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => join(opts.standardDir, f))
+		files.filter((f) => re.test(f) && !(exclude && exclude.test(f))).map((f) => standardDir(f).toString())
 
 	// `*_LOCALITY_psv.psv` also globs `*_STREET_LOCALITY_psv.psv` — exclude the latter explicitly.
 	const streetPaths = pick(/_STREET_LOCALITY_psv\.psv$/)
@@ -167,8 +158,8 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 			const suburbRaw = localityMap.get(String(r.locality_pid ?? ""))
 
 			if (!st?.name || !suburbRaw) continue
-			const street = `${titlecase(st.name)} ${titlecase(st.type)}${st.suffix ? " " + titlecase(st.suffix) : ""}`.trim()
-			const locality = titlecase(suburbRaw)
+			const street = `${titleCase(st.name)} ${titleCase(st.type)}${st.suffix ? " " + titleCase(st.suffix) : ""}`.trim()
+			const locality = titleCase(suburbRaw)
 			const postcode = String(r.postcode)
 
 			if (holdout.has(gnafHoldoutKey(street, locality, postcode))) {

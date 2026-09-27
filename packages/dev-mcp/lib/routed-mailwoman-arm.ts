@@ -148,7 +148,8 @@ async function resolveLocale(locale: string, cacheRoot: string | undefined, deps
 }
 
 /**
- * Build one Gauntlet arm after proving that every route represented by the selected rows is candidate-contained.
+ * Build one Gauntlet arm after proving that every route represented by the
+ * selected rows is candidate-contained.
  */
 export async function buildRoutedMailwomanArm(
 	config: EngineConfig,

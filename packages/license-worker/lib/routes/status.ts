@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `post /v1/license-status`: a lid answers one of four words and nothing else. No licensee, no dates, no reason: an
- *   installation checking online learns whether its key still stands, and a stranger with a lid learns only that.
+ *   `POST /v1/license-status` returns a license's public state without disclosing licensee details, dates, or reasons.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

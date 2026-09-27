@@ -1,15 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Registry for downloadable public-data bundles. It defines remote artifacts, their local paths,
- *   and whether local state is current. the data commands own network and filesystem I/O.
- */
+import { databaseRootPath } from "@mailwoman/core/data-root"
+import { summarizeLicense } from "@mailwoman/core/license/obligations"
+import type { PathBuilderLike } from "path-ts"
 
 import type { DataReleaseManifest } from "#data/release"
 
 /**
- * Public base URL for bundle artifacts.
+ * Public artifact host.
  */
 export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
 
@@ -18,87 +17,120 @@ export const PUBLIC_BUCKET_BASE_URL = "https://public.mailwoman.ai/mailwoman/"
  */
 export interface BundleArtifact {
 	/**
-	 * The R2 object key, relative to {@link PUBLIC_BUCKET_BASE_URL} (e.g. `"gazetteer/2026-07-07a/candidate.db"`).
+	 * Gives the object key relative to {@link PUBLIC_BUCKET_BASE_URL}.
 	 */
 	remotePath: string
+
 	/**
-	 * Where the artifact lands, relative to the data root (e.g. `"wof/candidate.db"`). For a `family`-tagged (`"us"`
-	 * bundle) artifact this is the legacy unversioned path; {@link resolveBundleArtifacts} substitutes the manifest-pinned
-	 * versioned name when one is configured.
+	 * Gives the destination relative to the data root's `db/` directory,
+	 * which {@link bundleArtifactPath} resolves. {@link resolveBundleArtifacts} rewrites
+	 * a family-tagged artifact's path to its manifest-pinned version.
 	 */
 	localPath: string
+
 	/**
-	 * Whether the bucket publishes a `<remotePath>.md5` sidecar to verify against. `false` for every artifact today
-	 * (surveyed 2026-08-03 — see the module docstring); the field exists so a bundle that starts publishing one needs no
-	 * shape change, only a flip.
+	 * Says whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
 	 */
 	md5Sidecar: boolean
+
 	/**
-	 * Byte size at survey time — for the dry-run plan and `data status`'s human-readable sizes only. Not a integrity
-	 * check target (a rebuild at the same dated path would be a bug, since these paths are meant to be immutable, but
-	 * this field is not how a mismatch would be caught — the head `Content-Length` at pull time is).
+	 * Records the surveyed size in bytes, which plans and progress output display.
+	 *
+	 * `data status` without `--check-remote` compares the local file size against
+	 * it exactly, so it must match the published file.
 	 */
 	approxBytes: number
+
 	/**
-	 * The `data-release.ts` family this artifact belongs to (`"address-points"` | `"interpolation"`), for the `us`
-	 * bundle's per-state databases only. Absent for every other bundle (candidate/poi/fr are single fixed-path artifacts
-	 * with no local version-pinning story).
+	 * Names the release family of a per-state US database, which selects its
+	 * pinned version in the release manifest.
 	 */
 	family?: "address-points" | "interpolation"
+
 	/**
-	 * The 2-letter US state/territory slug this artifact belongs to, alongside {@link family}.
+	 * Gives the lowercase US state or territory slug, such as `ca`, which `--only` can also match.
 	 */
 	stateSlug?: string
 }
 
 /**
- * What a bundle's rows came from and what using them obliges an operator to.
- *
- * A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the npm
- * tarball carries. `data --list` and `data pull` print these before the transfer, since the moment to read terms is
- * before taking a copy rather than after.
- *
- * `unresolved` is a field rather than an omission. A bundle assembled from several upstream sources carries whatever is
- * unestablished about them, and leaving that blank would present a partially-read bundle as a fully-read one.
+ * Optional schema for checking publisher provenance in artifact data.
+ */
+export interface BundleSourceCensus {
+	/**
+	 * Names the table whose publisher stamps are tallied, either the per-record
+	 * `address_point` or the one-row `layer_manifest`.
+	 */
+	table: "address_point" | "layer_manifest"
+
+	/**
+	 * Names the column holding the publisher stamp, where a null value tallies as `unstamped`.
+	 */
+	column: "source"
+
+	/**
+	 * Says whether a tally counts records (`per-row`) or the single manifest
+	 * row of each artifact (`manifest`).
+	 */
+	shape: "per-row" | "manifest"
+
+	/**
+	 * Selects the family to census when a bundle mixes families, so artifacts of
+	 * other families count as out of scope.
+	 */
+	family?: BundleArtifact["family"]
+}
+
+/**
+ * Describes a bundle's licensing: who published the data, the terms it is under,
+ * what users must do, and the rights questions still open.
  */
 export interface BundleRights {
-	/**
-	 * Who published the rows, as they name themselves.
-	 */
 	publishers: readonly string[]
+
 	/**
-	 * The terms as the publisher names them. Several entries where a bundle draws on several publications.
+	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`, or, where
+	 * an artifact records none, the expression this registry assigns from the publishers' stated terms.
+	 *
+	 * A `LicenseRef-` names a grant nobody has resolved to an identifier, and reads as unresolved.
+	 * `mailwoman data pull --refuse` decides on this field, and prints the artifact's own
+	 * expression beside it once the artifact is on disk, so the two disagreeing is visible.
+	 */
+	expression: string
+
+	/**
+	 * Lists the license terms, with one entry per source where the sources differ.
 	 */
 	terms: readonly string[]
+
 	/**
-	 * What an operator must do, stated as the obligation rather than as a license name.
+	 * Lists the obligations the operator must meet, which print as `you must:` lines.
 	 */
 	conditions: readonly string[]
+
 	/**
-	 * What nobody has established about this bundle's terms.
+	 * Lists the rights questions still open, which print as `unresolved:` lines.
 	 */
 	unresolved: readonly string[]
 }
 
 /**
- * A named, downloadable subset of Mailwoman's public data — what `mailwoman data pull <name>` fetches.
+ * Named downloadable data bundle.
  */
 export interface DataBundle {
 	name: string
 	description: string
 	artifacts: BundleArtifact[]
-	/**
-	 * The terms this bundle's rows carry. Required, so a bundle added without one fails to compile rather than
-	 * downloading with its obligations unstated.
-	 */
+
 	rights: BundleRights
+
+	/**
+	 * Says where to count publisher stamps in the artifacts, and is absent
+	 * when the artifacts carry no publisher column.
+	 */
+	sourceCensus?: BundleSourceCensus
 }
 
-/**
- * Per-state hosted street-tier sizes (bytes), from the 2026-08-03 bucket survey — the source table
- * {@link usStreetArtifacts} expands into `BundleArtifact` entries. `interp` is absent for `vi` (no tiger interpolation
- * database hosted for the territory — a real, confirmed gap rather than a table-entry someone forgot).
- */
 const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number }> = {
 	ak: { situs: 78_602_240, interp: 26_771_456 },
 	al: { situs: 660_025_344, interp: 256_548_864 },
@@ -154,11 +186,6 @@ const US_STREET_DATABASE_SIZES: Record<string, { situs: number; interp?: number 
 	wy: { situs: 51_003_392, interp: 37_691_392 },
 }
 
-/**
- * Expand {@link US_STREET_DATABASE_SIZES} into the `us` bundle's artifact list: `remotePath` mirrors the bucket's
- * `street/us/<slug>/{situs,interp}.db` layout; `localPath` mirrors `geocode-core.ts`'s
- * `address-points-us-<slug>.db`/`interpolation-us-<slug>.db` legacy (unversioned) convention.
- */
 function usStreetArtifacts(): BundleArtifact[] {
 	const artifacts: BundleArtifact[] = []
 
@@ -188,9 +215,7 @@ function usStreetArtifacts(): BundleArtifact[] {
 }
 
 /**
- * The bundle registry. Every artifact here was checked against the live bucket on 2026-08-03 (see the module docstring)
- * — no invented paths. `timezone` (named in this task's brief as a candidate bundle) is absent on purpose: nothing
- * under `mailwoman/` in the bucket serves it.
+ * Downloadable data bundles and their rights metadata.
  */
 export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
@@ -206,18 +231,26 @@ export const BUNDLES: Record<string, DataBundle> = {
 			},
 		],
 		rights: {
-			publishers: ["Who's On First", "GeoNames"],
+			publishers: ["Who's On First", "GeoNames", "Overture Maps Foundation, for its Divisions theme"],
+			// The published artifact's own `layer_manifest.license`, read over HTTP range requests on 2026-09-27.
+			expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
 			terms: [
-				"Who's On First: Creative Commons Zero covers Mapzen's own work, and the dataset is also a modification of existing open data whose sources carry their own terms.",
-				"GeoNames: Creative Commons Attribution.",
+				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
+				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
+				"Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. The published artifact's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-08-25, read over HTTP range requests on 2026-09-27. The admin gazetteer under that name folds Overture Divisions. On the lab host's 2026-09-15 chain, where each fold's synthetic id range makes the rows countable, Overture Divisions contributed 1,590,314 of 4,921,635 admin places, 32.31%, and all 1,590,314 reach that chain's candidate database as 18.25% of its 8,714,235 places.",
 			],
 			conditions: [
-				"Link back to the Who's On First license, which its own LICENSE.md makes a requirement rather than a courtesy.",
+				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
+				"Read the Open Database License before redistributing this database or a database derived from it. Its share-alike term is what the unresolved question below is about.",
 			],
 			unresolved: [
+				"Whether the Open Database License's share-alike term reaches this database and its consumers. The expression on the artifact records ODbL-1.0, and what that requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. That reading is with counsel and this entry states no conclusion about it.",
+				"Whether the published 2026-08-25 artifact carries the same Overture share as the 2026-09-15 chain measured above, and which Overture Divisions release reached it. Its manifest names its admin source but not that source's own sources, and the 2026-08-25 admin gazetteer is not published, so answering either needs the 2.88 GB download.",
+				"Which Overture record each of those places came from. `fold-overture` writes a concordance under `wd:id` alone and discards the GERS id, so no row here can be traced back to its Overture division. That bears on whether an alteration file is producible.",
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
-				"Whether the Ordnance Survey and Royal Mail notice in Who's On First's LICENSE.md reaches any row in this bundle.",
+				"Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere.",
+				"Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date.",
 			],
 		},
 	},
@@ -234,16 +267,25 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["Overture Maps Foundation"],
-			terms: ["Overture Places theme: CDLA-Permissive-2.0."],
-			conditions: ["Attribute Overture Maps Foundation contributors."],
+			// The artifact's own `layer_manifest.license`, measured on the lab host's copy 2026-09-27.
+			expression: "CDLA-Permissive-2.0",
+			terms: [
+				"Overture Places theme: CDLA-Permissive-2.0. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/cdla-permissive-2.0.md.",
+			],
+			conditions: [
+				"Supply the text of the agreement with the data if you share it. That is the condition §2.1 states on sharing, and it asks for the agreement rather than for a contributor's name.",
+				"Nothing is required of a model trained on these rows. §3.1 states the agreement imposes no restriction or obligation on Results, and §5.4 defines Results to include machine learning models.",
+			],
 			unresolved: [
-				"Which upstream projects the Overture Places theme drew each row from, and whether any of them carries a condition beyond the CDLA attribution.",
+				"Which upstream projects the Overture Places theme drew each row from, and what each of those requires. §3.1 is a statement about this agreement and reaches no other source's terms.",
 			],
 		},
+		sourceCensus: { table: "layer_manifest", column: "source", shape: "manifest" },
 	},
 	fr: {
 		name: "fr",
-		description: "French national rooftop address-point database (BAN) — situs-only, no interpolation tier (~6.95 GB).",
+		description:
+			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier (~6.95 GB).",
 		artifacts: [
 			{
 				remotePath: "street/fr/2026-07-10/situs.db",
@@ -254,6 +296,9 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
+			// Assigned from the elected half of BAN's dual grant.
+			// The lab host's copy of the artifact carries no `layer_manifest`, measured 2026-09-27.
+			expression: "etalab-2.0",
 			terms: [
 				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
 			],
@@ -265,6 +310,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"Whether the election of the attribution-only half binds a redistributor of this database, since BAN is dual-licensed and the other half carries share-alike.",
 			],
 		},
+		sourceCensus: { table: "address_point", column: "source", shape: "per-row" },
 	},
 	us: {
 		name: "us",
@@ -273,26 +319,54 @@ export const BUNDLES: Record<string, DataBundle> = {
 			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 		rights: {
-			publishers: ["United States Census Bureau, for TIGER/Line", "OpenAddresses, per contributing source"],
+			publishers: [
+				"United States Department of Transportation, for the National Address Database, reaching these rows through the Overture Maps Foundation",
+				"119 county and state bodies, for the rows OpenAddresses collected from them, likewise through Overture",
+				"United States Census Bureau, for the TIGER/Line interpolation databases in this bundle",
+			],
+			// Assigned from the publishers' stated terms.
+			// The lab host's per-state copies carry no `layer_manifest`, measured 2026-09-27.
+			// `LicenseRef-OpenAddresses-PerSource` stands for the 119 contributing bodies' own terms.
+			// No one has resolved those per source, so the expression reads as unresolved.
+			expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource",
 			terms: [
+				"National Address Database: a work of the federal government carrying no copyright under 17 U.S.C. § 105, and the same page states it is not intended for use as a mailing list and is subject to state statutes prohibiting that use. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/national-address-database.md.",
+				"OpenAddresses: per-source terms that differ, which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike. Every row names its contributing body.",
 				"TIGER/Line: a work of the United States Government, which carries no copyright under 17 U.S.C. § 105.",
-				"OpenAddresses: per-source terms that differ, and which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike.",
 			],
 			conditions: [
-				"Read the terms of the contributing OpenAddresses source for the state you pulled. They are not one grant.",
+				"Do not use these rows as a mailing list. That restriction is stated on the National Address Database's own page and arises from state statutes rather than from copyright, so no copyright status discharges it.",
+				"Read the terms of the contributing body for the rows you use. The 119 OpenAddresses publishers are not one grant.",
 			],
 			unresolved: [
-				"Which OpenAddresses source supplied each state's situs rows, and what each of those sources requires. A per-state answer needs the contributing source list rather than the bundle.",
+				"What each of the 119 contributing bodies requires. The rows name who published them and nothing here records what each one asks.",
+				"Which state or local body supplied a given National Address Database row. Those rows read `overture:NAD` and go no further, and the database's own page states it is aggregated from state data which is aggregated from local data.",
+				"Which state statutes the mailing-list restriction refers to, and whether any of them reaches a use other than a mailing list.",
 			],
 		},
+		sourceCensus: { table: "address_point", column: "source", shape: "per-row", family: "address-points" },
 	},
 }
 
 /**
- * One bundle's terms as lines for a terminal, publishers first, then terms, conditions and what stays unresolved.
+ * The obligations an SPDX expression implies, for a terminal line.
+ */
+function describeExpression(expression: string): string {
+	const summary = summarizeLicense(expression)
+	const obligations = summary.obligations.length ? summary.obligations.join(", ") : "none recorded"
+
+	return summary.unrecognized.length
+		? `${expression} — obligations: ${obligations}; ${summary.unrecognized.join(", ")} resolve(s) to no recorded obligations`
+		: `${expression} — obligations: ${obligations}`
+}
+
+/**
+ * Format publishers, terms, conditions, unresolved rights questions
+ * and the recorded expression for terminal output.
  *
- * The unresolved lines are printed rather than held back. A bundle whose conditions are listed and whose gaps are not
- * reads as fully established, and an operator deciding whether to take a copy is the reader those gaps are for.
+ * The prose carries publisher names and conditions no manifest holds.
+ * The expression line is what {@link BundleRights.expression} implies, which is what
+ * a pull decides on when the artifact is not yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -302,14 +376,90 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 		...rights.terms.map((line) => `terms: ${line}`),
 		...rights.conditions.map((line) => `you must: ${line}`),
 		...rights.unresolved.map((line) => `unresolved: ${line}`),
+		`recorded expression: ${describeExpression(rights.expression)}`,
 	]
 }
 
 /**
- * Resolve `${base}${artifact.remotePath}` — the one place that string gets built. `baseURL` defaults to the public
- * bucket; `data pull --host` passes a mirror or private registry serving the same object keys (the catalog schema is
- * host-independent — an air-gapped install mirrors the key space rather than a rewritten layout). A missing trailing
- * slash is repaired rather than concatenated into a mangled key.
+ * What one of a bundle's artifacts says for itself on this machine.
+ */
+export interface ArtifactTermsObservation {
+	path: string
+	/**
+	 * `absent` when the file is not on disk, `unmanifested` when it carries no `layer_manifest`,
+	 * `unreadable` when opening it failed, and `recorded` when its manifest was read.
+	 */
+	state: "absent" | "unmanifested" | "unreadable" | "recorded"
+	tier?: string
+	license?: string
+	error?: string
+}
+
+/**
+ * Format what the bundle's artifacts on disk record, beside what the registry records.
+ *
+ * Artifacts are grouped by what they say, so a bundle of a hundred files prints
+ * a line per distinct answer rather than per file.
+ * An artifact whose own expression differs from the registry's is the finding worth
+ * surfacing, and the artifact is the authority for what it carries.
+ */
+export function describeArtifactTerms(bundle: DataBundle, observations: readonly ArtifactTermsObservation[]): string[] {
+	const groups = new Map<string, { count: number; example: ArtifactTermsObservation }>()
+
+	for (const observation of observations) {
+		const key = [observation.state, observation.tier ?? "", observation.license ?? "", observation.error ?? ""].join(
+			"\0"
+		)
+
+		const group = groups.get(key)
+
+		if (group) {
+			group.count++
+		} else {
+			groups.set(key, { count: 1, example: observation })
+		}
+	}
+
+	const lines: string[] = []
+
+	for (const { count, example } of groups.values()) {
+		const subject = count === 1 ? example.path : `${count} artifacts, such as ${example.path}`
+
+		switch (example.state) {
+			case "absent":
+				lines.push(`not on disk: ${subject}; the recorded expression above is what a pull would take on`)
+
+				break
+			case "unmanifested":
+				lines.push(`on disk: ${subject} carries no layer_manifest, so it states no terms of its own`)
+
+				break
+			case "unreadable":
+				lines.push(`on disk: ${subject} could not be read: ${example.error}`)
+
+				break
+			case "recorded": {
+				const license = example.license ?? ""
+
+				lines.push(
+					`on disk: ${subject} records tier ${example.tier ?? "absent"}, license ${describeExpression(license)}`
+				)
+
+				if (license !== bundle.rights.expression) {
+					lines.push(
+						`disagreement: the artifact records ${license || "no expression"} while this registry records ` +
+							`${bundle.rights.expression}; the artifact is the authority for what it carries`
+					)
+				}
+			}
+		}
+	}
+
+	return lines
+}
+
+/**
+ * Resolve an artifact URL against the public bucket or a compatible mirror.
  */
 export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_BUCKET_BASE_URL): string {
 	const base = baseURL.endsWith("/") ? baseURL : `${baseURL}/`
@@ -318,17 +468,8 @@ export function artifactURL(artifact: BundleArtifact, baseURL: string = PUBLIC_B
 }
 
 /**
- * Map a bundle's artifacts against a (possibly `null`) local `releases.json` manifest, resolving each `family`-tagged
- * artifact's {@link BundleArtifact.localPath} to the versioned filename (`resolveDatabasePath`'s naming convention:
- * `<family>/<family>-us-<slug>-<version>.db`) when the manifest pins that family to a version — so a download lands
- * exactly where `resolveDatabasePath` (`data-release.ts`) will find it on the next `mailwoman geocode` run. Artifacts
- * with no `family` (candidate/poi/fr — single fixed-path downloads) pass through unchanged. a family artifact with no
- * matching manifest entry also passes through unchanged (the legacy unversioned path, `resolveDatabasePath`'s
- * fallback).
- *
- * Pure: no filesystem access. This computes the intended destination path. whether something already exists there (or
- * at a differently-versioned path `resolveDatabasePath` would also accept) is the caller's `existsSync`/
- * `resolveDatabasePath` check rather than this function's.
+ * Rewrites family-tagged per-state artifacts to the local paths of the versions
+ * pinned in `manifest`, leaving other artifacts unchanged.
  */
 export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataReleaseManifest | null): BundleArtifact[] {
 	return bundle.artifacts.map((artifact) => {
@@ -346,9 +487,15 @@ export function resolveBundleArtifacts(bundle: DataBundle, manifest: DataRelease
 }
 
 /**
- * Filter a resolved artifact list to those whose `remotePath`, `localPath`, or `stateSlug` contains `only`
- * (case-insensitive). `undefined`/empty `only` returns `artifacts` unchanged. Lets `data pull us --only nh` target one
- * state instead of the whole 41 GB tier — the CLI-facing complement to the bundle-level granularity above.
+ * Resolve an artifact's local path under the data root's `db/` directory.
+ */
+export function bundleArtifactPath(dataRoot: PathBuilderLike, artifact: BundleArtifact): string {
+	return databaseRootPath(dataRoot)(artifact.localPath).toString()
+}
+
+/**
+ * Filters artifacts to those whose remote or local path contains `only` or whose state
+ * slug equals it, case-insensitively, returning all artifacts when `only` is absent.
  */
 export function filterArtifacts(artifacts: readonly BundleArtifact[], only: string | undefined): BundleArtifact[] {
 	if (!only) return [...artifacts]
@@ -364,8 +511,7 @@ export function filterArtifacts(artifacts: readonly BundleArtifact[], only: stri
 }
 
 /**
- * What's on disk for one artifact, gathered by the caller (a `statSync` + optional `md5File`) — kept separate from the
- * gathering itself so {@link needsDownload} stays pure and unit-testable without a filesystem.
+ * Local artifact state used by the pure {@link needsDownload} check.
  */
 export interface LocalArtifactState {
 	exists: boolean
@@ -374,8 +520,7 @@ export interface LocalArtifactState {
 }
 
 /**
- * What the remote object currently reports, gathered by the caller (an http head via `APIClient`, and — when
- * {@link BundleArtifact.md5Sidecar} is true — a fetch of the `.md5` sidecar text).
+ * Remote size and optional MD5 metadata.
  */
 export interface RemoteArtifactState {
 	contentLength?: number
@@ -383,11 +528,11 @@ export interface RemoteArtifactState {
 }
 
 /**
- * Decide whether an artifact needs downloading: absent locally → yes. An available md5 (sidecar present) is the
- * authoritative signal once local exists — mismatch → yes, match → no, checked before content-length so a bundle that
- * publishes a sidecar can't be short-circuited by a coincidentally-matching size. With no md5 to compare, fall back to
- * a `Content-Length` size comparison. With neither signal available, the artifact is treated as up to date (the caller
- * is expected to surface a "couldn't verify" warning in that case rather than force a redundant multi-GB re-fetch).
+ * Decides whether an artifact needs downloading by comparing MD5 when the
+ * remote has one, and otherwise size.
+ *
+ * It returns `false` when neither can be compared, so callers should report
+ * that the artifact was not verified.
  */
 export function needsDownload(local: LocalArtifactState, remote: RemoteArtifactState): boolean {
 	if (!local.exists) return true

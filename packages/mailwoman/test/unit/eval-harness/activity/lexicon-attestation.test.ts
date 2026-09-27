@@ -5,7 +5,7 @@
  *   The half of the activity lexicon's audit that needs artifacts the vocabulary itself does not depend on.
  *
  *   `@mailwoman/activity-lexicon` declares zero dependencies, so it can check that a derived form's base is
- *   present and that a citation is not empty, and nothing more. The claims that matter most are the ones
+ *   present and that a citation is not empty, and no more. The claims that matter most are the ones
  *   pointing outside it: a committed query row, a synonym in the committed POI taxonomy, a clause of the
  *   compiled concept's own description. Those are checked here, where all three artifacts are held.
  *
@@ -37,8 +37,9 @@ const overlay = await readLocalJSONFile<CuratedOverlay>(
 )
 
 /**
- * Split a `<file>#<record>` reference. Both halves are required: the file is what a reader greps, the record is what a
- * test resolves.
+ * Split a `<file>#<record>` reference.
+ *
+ * Both halves are required: the file is what a reader greps, the record is what a test resolves.
  */
 function splitReference(reference: string): { file: string; record: string } {
 	const index = reference.lastIndexOf("#")
@@ -115,7 +116,7 @@ describe("every declared activity is an activity the compiled model carries", ()
 			const concept = model.concepts.find((candidate) => String(candidate.id) === entry.activity)
 
 			expect(concept).toBeDefined()
-			expect(String(concept!.kind)).toBe("activity")
+			expect(concept!.kind).toBe("activity")
 		})
 	}
 })

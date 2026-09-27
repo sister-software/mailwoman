@@ -4,7 +4,7 @@
 /**
  *   FTS5-trigram fuzzy index over the candidate gazetteer's `name_key` — the typo-tolerant fallback
  *   the exact `name_key` B-tree probe structurally can't do (a misspelling breaks the normalized
- *   key, so the contiguous-probe lookup returns nothing). It indexes the normalized key (not the
+ *   key, so the contiguous-probe lookup returns no candidate). It indexes the normalized key (not the
  *   raw `name`), so a diacritic-stripped query (`munchen`) trigram-matches the stored `munchen`
  *   rather than missing a raw `München`. The trigram tokenizer makes `match` a substring/fuzzy
  *   operation. the reader ({@link WOFCandidateTableLookup}) or's the query's trigrams to fetch a
@@ -27,13 +27,17 @@
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 /**
- * Name of the FTS5 trigram virtual table this module owns. The reader conditions its fuzzy fallback on it.
+ * Name of the FTS5 trigram virtual table this module owns.
+ *
+ * The reader conditions its fuzzy fallback on it.
  */
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 
 /**
- * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table. Call after the candidate
- * B-tree is populated (build pipeline) or against an existing candidate DB (migration).
+ * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table.
+ *
+ * Call after the candidate B-tree is populated (build pipeline) or against an
+ * existing candidate DB (migration).
  */
 export function createCandidateFTS<DB>(db: DatabaseClient<DB>): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)

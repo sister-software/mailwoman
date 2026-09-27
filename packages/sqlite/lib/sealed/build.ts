@@ -13,34 +13,45 @@
  */
 
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 
 import { DatabaseClient } from "#client"
 import { sealDatabase, swapDatabaseIntoPlace } from "#sealed/db"
 
 export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	/**
-	 * Where the sealed artifact lands. The build writes beside it and swaps.
+	 * Where the sealed artifact lands.
+	 *
+	 * The build writes beside it and swaps.
 	 */
-	out: string
+	out: PathBuilderLike
 	/**
-	 * Create every table the build writes — the layer's own, the interface's, and any build-only scratch table (which the
-	 * finish phase drops before the artifact is sealed).
+	 * Create every table the build writes.
+	 *
+	 * The layer's own, the interface's, and any build-only scratch table
+	 * (which the finish phase drops before the artifact is sealed).
 	 */
 	createTables: (database: DatabaseClient<DB>) => Promise<void>
 	/**
-	 * The in-process ingest, run under the first handle. Return `undefined` to defer to {@link batched}; any writes made
+	 * The in-process ingest, run under the first handle.
+	 *
+	 * Return `undefined` to defer to {@link batched}; any writes made
 	 * before deferring (attribute preloads) are kept.
 	 */
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | undefined>
 	/**
-	 * The bounded child-process ingest, run while the parent holds no handle. Each child opens the temp file and appends.
-	 * chunks run one at a time, so there is exactly one writer at every instant.
+	 * The bounded child-process ingest, run while the parent holds no handle.
+	 *
+	 * Each child opens the temp file and appends.
+	 * Chunks run one at a time, so there is exactly one writer at every instant.
 	 */
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
-	 * Post-ingest work under the second handle: assertions over what was streamed, index/coverage/manifest writes,
-	 * dropping any scratch table. `vacuum`, the seal and the swap follow. the artifact's on-disk size is measurable only
-	 * after this returns and the swap lands.
+	 * Post-ingest work under the second handle: assertions over what was streamed,
+	 * index/coverage/manifest writes, dropping any scratch table.
+	 *
+	 * `vacuum`, the seal and the swap follow.
+	 * The artifact's on-disk size is measurable only after this returns and the swap lands.
 	 */
 	finish: (database: DatabaseClient<DB>, streamed: Streamed) => Promise<Result>
 }
@@ -48,9 +59,9 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 /**
  * Run one sealed-artifact build.
  *
- * Every failure path removes the temp file: a failed build otherwise leaves a partial multi-gigabyte file whose name
- * carries this process's pid, so nothing would ever pick it up again — the difference between a retry loop that fails
- * and one that fills a disk.
+ * Every failure path removes the temp file: a failed build otherwise leaves a partial multi-gigabyte
+ * file whose name carries this process's pid, so no later run would ever pick it up again.
+ * The difference between a retry loop that fails and one that fills a disk.
  */
 export async function buildSealedArtifact<DB, Streamed, Result>(
 	options: BuildSealedArtifactOptions<DB, Streamed, Result>
@@ -60,7 +71,7 @@ export async function buildSealedArtifact<DB, Streamed, Result>(
 	let streamed: Streamed | undefined
 
 	{
-		await using kdb = new DatabaseClient<DB>(tmpPath)
+		using kdb = new DatabaseClient<DB>(tmpPath)
 
 		try {
 			kdb.exec("PRAGMA journal_mode = OFF")

@@ -10,16 +10,17 @@ tags:
 # Choosing the dedup yardstick — why org-name rather than NPI
 
 "How good is the matcher at deduplication?" sounds like a question with one
-number for an answer. It isn't. The answer is _"against which ruler?"_ —
-and on the NPPES provider registry, the ruler you reach for first is the one that
-lies to you.
+number for an answer. The answer depends on which ruler you measure against.
+On the NPPES provider registry, the ruler you reach for first gives a misleading
+answer.
 
-The setup is the cleanest kind of held-out truth: the **NPI** (National Provider
-Identifier) is a stable, government-issued key, assigned once per registration.
-Run [the matcher](./geocode-first-record-matching.mdx) blind to the NPI, then grade its clusters against it. Two records
-that share an NPI _should_ land together; a cluster fusing two NPIs is an
-over-merge; an NPI split across clusters is an under-merge. No labels, no
-adjudication — just count. Tempting, and on this registry, wrong by construction.
+The **NPI** (National Provider Identifier) looks like clean held-out truth. It
+is a stable, government-issued key, assigned once per registration. You can run
+[the matcher](./geocode-first-record-matching.mdx) blind to the NPI and then grade its clusters against it. Two records
+that share an NPI _should_ land together, a cluster fusing two NPIs is an
+over-merge, and an NPI split across clusters is an under-merge. This approach
+needs no labels or adjudication, only counting. On this registry, it is wrong
+by construction.
 
 ## One organization, several NPIs
 
@@ -28,17 +29,17 @@ holds a **separate NPI for every billing subpart** — each clinic, each
 department, sometimes each location — plus legal-form variants, state qualifiers,
 and the occasional typo'd re-registration. `Baylor College of Medicine` appears
 four times at one address (`1504 Taub Loop`); `WAL-MART STORES TEXAS LLC` and
-`… LP` are the same Walmart pharmacy under two corporate skins. These are not
-distinct entities. They are one organization wearing several registration numbers.
+`… LP` are the same Walmart pharmacy under two corporate names. Each group is one
+organization with several registration numbers.
 
-So when the matcher does exactly the right thing — recognizing that four
-co-located `Baylor` records are one place — NPI-as-truth scores all six of those
-within-org pairs as **over-merges**. The matcher is penalized for being correct.
-The lower its measured precision, the better it may be working.
+When the matcher correctly recognizes that four co-located `Baylor` records are
+one place, NPI-as-truth scores all six of those within-org pairs as
+**over-merges**. The matcher is penalized for being correct, so a lower measured
+precision may indicate that it is working better.
 
 ## Four rulers, one set of clusters
 
-The fix is not a better model; it's a better ruler. We grade the **identical**
+The fix is a better ruler rather than a better model. We grade the **identical**
 matcher output against four entity-truths, ordered from over-segmenting to
 tightest:
 
@@ -60,8 +61,8 @@ Taub Lp Ste 100` key apart as strings yet geocode to one point, so this collapse
 
 The same 2757-record sample carries **1000 NPI** classes → **1456 site** → **956
 org-name** → **928 org-name (coord)**. The class count first _expands_ (site splits
-multi-address NPIs) then _interfaces_ below the NPI count (org-name fuses the
-co-located subparts, the coordinate fusing a few more) — the shape of
+multi-address NPIs) and then _contracts_ below the NPI count (org-name fuses the
+co-located subparts, and the coordinate key fuses a few more). That pattern shows
 over-segmentation being corrected.
 
 ![The dedup F1 climbs as the entity-truth gets more precise: a slope chart of entity-resolution F1 across four rulers (NPI, site, org-name, org-name-coord) for the shipped GBT scorer and the FS baseline. The GBT F1 climbs 53.6% → 55.3% → 60.7% → 68.1% across the same clusters.](https://raw.githubusercontent.com/sister-software/mailwoman/main/docs/records/evals/charts/dedup-yardstick.svg)
@@ -71,13 +72,13 @@ Grade the shipped GBT scorer's clusters against each ruler and the F1 climbs
 **+14.5pp** swing with the clusters held _identical_. The over-merge count falls
 (109 → 76) and precision rises (43.7% → 64.6%) for the same reason: the ruler stops
 counting correct same-org merges as errors, and the geocode-first building key
-catches the most of them. The climb is the yardstick getting more precise rather than the model
-changing.
+catches the most of them. The climb comes from a more precise yardstick, and the
+model does not change.
 
 ## Why we trust the org-name ruler
 
-A ruler you invent to make your number go up is worthless unless it's _right_. So
-the org-name collapse was validated against a frozen gold set: the hardest
+A ruler invented to raise a score is worthless unless it is _right_, so the
+org-name collapse was validated against a frozen gold set: the hardest
 stratum — co-located, name-similar, **distinct** NPIs that are **not** flagged
 subparts — adjudicated one pair at a time. The verdict was unanimous:
 [**120 of 120**](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-gold-set-tx120.md) were the same
@@ -86,24 +87,24 @@ Every hard pair the matcher merges at a shared address is a correct merge that
 NPI-truth was scoring as an error.
 
 That result also settled the model question. An earlier experiment added
-"corroboration" features aimed at reducing over-merges — and moved precision not at
-all. The gold set explains why: there was essentially no over-merge to
-reduce. Optimizing the scorer for precision here optimizes a phantom; the change was
-the ruler all along.
+"corroboration" features aimed at reducing over-merges, and precision did not
+move. The gold set explains why: there was almost no over-merge to reduce.
+Optimizing the scorer for precision here targets errors that do not exist. The
+ruler was the thing that needed to change.
 
 ## The discipline
 
-Report the number that matches the entity you're resolving. For NPPES
+Report the number that matches the entity you are resolving. For NPPES
 organization dedup that is the **org-name F1 — ~60.7% by the address-string key,
 ~68.1% by the geocode-first building key** — not the NPI-level 53.6%, which mostly
 measures NPI over-segmentation, a property of the registry rather than of the matcher.
-State the ruler next to the number, every time; a dedup F1 with no named
-truth-grain is unreadable.
+State the ruler next to the number every time. A dedup F1 without a named
+truth-grain cannot be interpreted.
 
-This is the same move the rest of the system makes: [grade the pipeline against
+The rest of the system follows the same principle: [grade the pipeline against
 the right target rather than a convenient proxy](./eval-discipline.mdx). The remaining
-org-name over-merge (76 clusters at the coordinate grain) is the frontier — small, and approaching
-the [irreducible ceiling](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-ceiling.md) of co-located
+org-name over-merge (76 clusters at the coordinate grain) is the remaining work. It is small and
+approaching the [irreducible ceiling](https://github.com/sister-software/mailwoman/blob/main/docs/records/evals/matcher-dedup/2026-06-16-dedup-ceiling.md) of co-located
 distinct organizations that no address-based signal can separate.
 
 A closing note on framing: NPI-as-truth is _conservative_ in the direction that

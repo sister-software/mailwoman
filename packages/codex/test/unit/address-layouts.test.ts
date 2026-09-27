@@ -3,13 +3,12 @@
 
 /**
  *   Pins each layout against the libaddressinput `fmt` it was transcribed from, so the table cannot drift from its
- *   source unnoticed. A layout is data about a country's print order. a transcription error reads as a plausible
- *   address from somewhere else, which is the failure mode a diff against the source catches and a reader does not.
+ *   source unnoticed: a transcription error reads as a plausible address from somewhere else, which a diff against
+ *   the source catches and a reader does not.
  *
- *   The comparison is over the skeleton — the order of the fields and where the line breaks fall — not over the street
- *   line, because `%A` is one opaque field in the dataset and several tags here. A layout whose skeleton departs from
- *   its source on purpose is listed in {@link ACCEPTED_DEPARTURES} with the reason, which is the difference between a
- *   decision and a mistake.
+ *   The comparison is over the skeleton — the order of the fields and where the line breaks fall — not over the
+ *   street line, because `%A` is one opaque field in the dataset and several tags here. A layout whose skeleton
+ *   departs from its source on purpose is listed in {@link ACCEPTED_DEPARTURES} with the reason.
  */
 
 import {
@@ -37,8 +36,9 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import { describe, expect, it } from "vitest"
 
 /**
- * Libaddressinput's placeholder vocabulary, in this project's tag names. `%A` is the street-address field this table
- * expands, so it maps to the marker the skeleton comparison treats as "the street line, however it is spelled".
+ * Libaddressinput's placeholder vocabulary, in this project's tag names;
+ * `%A` is the street-address field this table expands, mapped to the marker the skeleton
+ * comparison treats as "the street line, however it is spelled".
  */
 const FIELD: Readonly<Record<string, string>> = {
 	N: "attention",
@@ -53,30 +53,17 @@ const FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
- * Countries whose layout departs from the dataset skeleton, and why. An entry here is a decision. a departure without
- * one is a transcription error.
+ * Countries whose layout departs from the dataset skeleton, and why: an entry here
+ * is a decision, a departure without one is a transcription error.
  */
 const ACCEPTED_DEPARTURES: Readonly<Record<string, string>> = {
-	// The dataset has no %D for France. La Poste's line 5 is the lieu-dit, which `fr/recipes/lieudit` renders and the
-	// OpenCage FR template carries as a standalone `place` line. Therefore, the slot is kept between street and postcode.
 	FR: "the lieu-dit line, which La Poste specifies and libaddressinput omits",
-	// The dataset has no %D for Great Britain. Royal Mail's dependent locality is a real line above the post town.
 	GB: "the dependent-locality line above the post town",
-	// Japan's %A is one field below the prefecture. this table splits it into the tags the CJK model emits, and joins
-	// the prefecture to it, because on one line the whole admin run is unseparated and only the postal code takes a
-	// space.
 	JP: "the sub-prefecture run is split into its own tags, and the prefecture joins it rather than taking a line",
-	// China's %A is the street line only. the admin run above it is already %S%C%D in the dataset.
 	CN: "the street line is split into street and house number",
-	// Hong Kong's %S%n%C%n%A%n%O%n%N is the Chinese field order. This table holds one layout per country and the rest of
-	// the codex already describes HK as small-first — `isLargestFirstSystem("HK")` is false and `LINE_JOINS` has no HK
-	// entry — so the transcribed order renders `KLN, YAU tsim mong district, 21 jordan road`, which is neither register.
 	HK: "the English register's order, which the rest of the codex already assumes for HK",
 }
 
-/**
- * The skeleton a layout prints, as field names per line, with the street line collapsed to one marker.
- */
 function skeletonOf(atoms: readonly AddressAtom[]): string[] {
 	const names: string[] = []
 
@@ -98,15 +85,11 @@ function skeletonOf(atoms: readonly AddressAtom[]): string[] {
 	return names
 }
 
-/**
- * The skeleton a `fmt` string prints, as field names per line.
- */
 function skeletonOfFormat(fmt: string): string[][] {
 	return (
 		fmt
 			.split("%n")
-			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a
-			// field compares equal to one that never had it.
+			// An unmodeled placeholder is kept in its `%X` spelling rather than dropped: a skeleton that silently loses a field compares equal to one that never had it.
 			.map((line) => [...line.matchAll(/%([A-Z])/g)].map(([, code]) => FIELD[code!] ?? `%${code}`))
 			.filter((line) => line.length)
 	)
@@ -152,7 +135,8 @@ describe("the skeleton matches libaddressinput", () => {
 	})
 
 	it("reads a `fmt` into the same vocabulary the layouts use", () => {
-		// The US skeleton is the one every reader knows, so it is the fixture that proves the reader rather than the table.
+		// The US skeleton is the one every reader knows, so this is the fixture that
+		// proves the reader rather than the table.
 		expect(skeletonOfFormat("%N%n%O%n%A%n%C, %S %Z")).toEqual([
 			["attention"],
 			["venue"],
@@ -164,8 +148,8 @@ describe("the skeleton matches libaddressinput", () => {
 
 describe("a layout's printed order agrees with its system convention", () => {
 	/**
-	 * The render order comes from the layout and `LINE_JOINS` is picked by the system flag, so a disagreement prints one
-	 * system's sequence with another's separators. HK rendered `KLN, YAU tsim mong district, 21 jordan road`.
+	 * The render order comes from the layout and `LINE_JOINS` is picked by the system flag,
+	 * so a disagreement prints one system's sequence with another's separators.
 	 */
 	const both = [...new Set([...Object.keys(ADDRESS_LAYOUTS), ...Object.keys(GENERATED_ADDRESS_LAYOUTS)])]
 
@@ -204,8 +188,9 @@ describe("a layout's printed order agrees with its system convention", () => {
 
 describe("a country that writes two orders carries both", () => {
 	/**
-	 * The eight records in the shipped dataset whose `lfmt` differs from their `fmt`. Listed rather than derived so the
-	 * test states the population it covers; `layout-table-source.test.ts` is what compares the tables to the dataset.
+	 * The eight records in the shipped dataset whose `lfmt` differs from their `fmt`,
+	 * listed rather than derived so the test states the population it covers;
+	 * `layout-table-source.test.ts` is what compares the tables to the dataset.
 	 */
 	const TWO_SCRIPT_COUNTRIES = ["CN", "HK", "JP", "KP", "KR", "MO", "TH", "TW"] as const
 
@@ -221,8 +206,6 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("reaches Hong Kong's own script, which its hand-authored layout cannot state", () => {
-		// The hand-authored HK entry is the Latin order. Therefore, before the split the Chinese order had nowhere to live and
-		// `layoutForCountry("HK")` answered the English one for both scripts.
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "local")!)).toBe(true)
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK", "latin")!)).toBe(false)
 		expect(layoutPrintsLargestFirst(layoutForCountry("HK")!)).toBe(false)
@@ -242,8 +225,8 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("never joins a Latin ordering with the local script's separator", () => {
-		// The state that printed a Chinese field sequence with Latin separators: the order came from the layout while
-		// the separator came from a country flag, so the two could name different systems.
+		// The order comes from the layout while the separator comes from a country flag,
+		// so the two can name different systems.
 		for (const cc of TWO_SCRIPT_COUNTRIES) {
 			expect(lineJoinForCountry(cc, "latin"), cc).toBe(", ")
 		}
@@ -271,9 +254,8 @@ describe("a country that writes two orders carries both", () => {
 	})
 
 	it("gives a caller who names no script the separator belonging to the layout they got", () => {
-		// The defect this whole split exists for: the order came from the layout and the separator from a country flag,
-		// so HK printed a Chinese field sequence with Latin separators. Hong Kong's default layout is its english
-		// register, so its default join must be the English one even though its local join is `""`.
+		// Hong Kong's default layout is its English register, so its default join must
+		// be the English one even though its local join is `""`.
 		expect(lineJoinForCountry("HK")).toBe(", ")
 		expect(lineJoinForCountry("HK", "local")).toBe("")
 		expect(lineJoinForCountry("CN")).toBe("")
@@ -284,14 +266,14 @@ describe("a country that writes two orders carries both", () => {
 
 describe("the admin run keeps its tier order in every layout", () => {
 	/**
-	 * `layoutPrintsLargestFirst` asks whether a layout runs large to small overall, and an inversion between two adjacent
-	 * admin tiers leaves that answer unchanged: a Hong Kong layout printing the district above the area is still
-	 * largest-first. The order between tiers is a relation between tags, so it is asserted as one.
+	 * `layoutPrintsLargestFirst` asks whether a layout runs large to small overall,
+	 * and an inversion between two adjacent admin tiers leaves that answer unchanged:
+	 * a Hong Kong layout printing the district above the area is still largest-first.
 	 *
-	 * The sub-locality is the tier the generator authors wherever a `fmt` names no `%D`, and the one relation it has to
-	 * get right is which side of the locality it lands on: the sub-locality sits between the street and the locality in
-	 * either direction. Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality.
-	 * that order is transcribed from the dataset rather than authored, and this check does not judge it.
+	 * The sub-locality is the tier the generator authors wherever a `fmt` names no `%D`,
+	 * and the one relation it has to get right is which side of the locality it lands on.
+	 * Four generated skeletons (CR, KI, LV, RO) print the region between the street and the locality,
+	 * transcribed from the dataset rather than authored, and this check does not judge it.
 	 */
 	const TABLES = {
 		hand: ADDRESS_LAYOUTS,
@@ -314,8 +296,8 @@ describe("the admin run keeps its tier order in every layout", () => {
 	}
 
 	/**
-	 * The tags a layout prints, in print order, read off a render of a full address so an alternation or a nested street
-	 * node contributes what it prints rather than what it declares.
+	 * The tags a layout prints, in print order, read off a render of a full address so an alternation
+	 * or a nested street node contributes what it prints rather than what it declares.
 	 */
 	function printedOrder(layout: AddressLayout): string[] {
 		return renderAddress(layout, FULL_ADDRESS)
@@ -347,7 +329,7 @@ describe("the admin run keeps its tier order in every layout", () => {
 			}
 		}
 
-		// The count states the population, so an empty `outside` cannot be a reader that found nothing to read.
+		// The count states the population, so an empty `outside` cannot be a reader that found no entries to read.
 		expect(judged).toBeGreaterThan(190)
 		expect(outside).toEqual([])
 	})

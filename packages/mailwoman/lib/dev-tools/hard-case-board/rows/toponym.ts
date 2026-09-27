@@ -1,29 +1,12 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The hard-case board's toponym-register rows — inputs whose difficulty is the name rather than the shape.
- *
- *   The four classes here are the ways one surface can mean several places, ordered by what decides:
- *
- *   - `homonym_confound` — a trailing region determines the result (#267/#833/#905).
- *   - `bare_namesake` — nothing determines the result but ranking. the answer has to be dominant enough to pin.
- *   - `wiki_pop_conflict` — population and encyclopedic importance pick different bearers, so the row is
- *       the disagreement itself. Saint-Denis is the canonical member.
- *   - `street_head_control` — the surface is a toponym in street-head position and must not be pulled to
- *       locality (#1142). These are the arm comparison's cost side: where a bigger bias is dangerous.
- *
- *   The shape-driven half lives in `rows/index.ts`; both are concatenated by the builder.
- */
-
 import { ADMIN_TOL, CITY_TOL, type Curated } from "#dev-tools/hard-case-board/rows/index"
 
 /**
- * See the file header — the four toponym-ambiguity classes, grouped by what disambiguates them.
+ * Curated toponym cases grouped by ambiguity type.
  */
 export const TOPONYM_ROWS: Curated[] = [
-	//#region homonym_confound
-	// The #267/#833/#905 lineage, region-abbreviated form.
 	{
 		id: "us-hc-portland-maine",
 		input: "Portland, ME",
@@ -117,10 +100,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		bugRef: "#833",
 		note: "#833's surface with the region SPELLED OUT and the comma removed — the abbreviation-free path, which gains no benefit from region-abbrev recognition.",
 	},
-	//#endregion
 
-	//#region bare_namesake
-	// A bare toponym whose referential answer is dominant enough to pin.
 	{
 		id: "fr-bn-bordeaux",
 		input: "Bordeaux",
@@ -174,7 +154,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		probeSurface: "Reims",
 		expectID: 101_751_377,
 		toleranceM: ADMIN_TOL,
-		note: "Dominant-bearer control for the FR bare class (pop 196,565, no serious namesake).",
+		note: "Dominant-bearer control for the FR bare class (population 196,565 without a serious namesake).",
 	},
 	{
 		id: "gb-bn-whitby",
@@ -297,10 +277,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		toleranceM: ADMIN_TOL,
 		note: "DE city of 68,635 that shares its name with the river it sits on. Bias 0.44 → 0.59.",
 	},
-	//#endregion
 
-	//#region wiki_pop_conflict
-	// The two scorings disagree, and the disagreement is the row.
 	{
 		id: "fr-wpc-saint-denis-suburb",
 		input: "Saint-Denis",
@@ -379,13 +356,7 @@ export const TOPONYM_ROWS: Curated[] = [
 		toleranceM: ADMIN_TOL,
 		note: "The bare form of the disagreement: 149 US bearers, population leader Springfield MO (171,589), importance leader Springfield IL (0.6126 vs MO 0.5962). Pinned to the REFERENTIAL answer per the ratified §2 policy — a row the importance arm should NOT be able to move without violating it.",
 	},
-	//#endregion
 
-	//#region street_head_control
-	// A toponym in street-head position. The bias must not pull it to locality.
-	// #1142's measured failure mode: real gazetteer importance dragged the leading token of a comma-free
-	// street into `locality` ("Sweeney Ranch Road" → loc "Sweeney"), costing US golden 22 points. These rows
-	// are where a bigger bias is dangerous, so they are the arm comparison's cost side.
 	{
 		id: "us-shc-sweeney-ranch-road",
 		input: "1000 Sweeney Ranch Road Half Moon Bay CA",
@@ -482,5 +453,4 @@ export const TOPONYM_ROWS: Curated[] = [
 		bugRef: "#1142",
 		note: "GB street-head control on the surface whose LABEL inverts between arms (see gb-wpc-manchester) — the inversion arrives here as a locality pull on a street head.",
 	},
-	//#endregion
 ]

@@ -4,15 +4,17 @@
 /**
  *   `About` — the explainer for the browser geocoder: the neural model, the confidence colours, the gazetteer
  *   resolver, the byte-range database and the FST prior. Prose about the product a host places above or beside the
- *   geocoder. it renders nothing live.
+ *   geocoder. it renders no live content.
  */
 
 import type { ReactNode } from "react"
 
 export interface AboutProps {
 	/**
-	 * Wrap the prose in its own `<details>` disclosure. Set false where the host is already the disclosure — inside a
-	 * sheet opened by an About button, a summary repeating that button's words is one control too many.
+	 * Wrap the prose in its own `<details>` disclosure.
+	 *
+	 * Set false where the host is already the disclosure — inside a sheet opened by an
+	 * About button, a summary repeating that button's words is one control too many.
 	 *
 	 * @default true
 	 */

@@ -8,7 +8,7 @@
  *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
  *   lives in `ban/sdk/extract.ts`'s `cleanLieuDit`, not duplicated here). Only rows carrying a clean
  *   lieu-dit survive into the pool. the existing `ban`/`synth-fr` sources and their emitted rows are
- *   untouched — this recipe reads the same raw CSVs but emits under its own source name.
+ *   untouched. This recipe reads the same raw CSVs but emits under its own source name.
  *
  *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's
  *   FR `place`-slot convention (`fix(formatter): render dependent_locality for neither-slot templates`,
@@ -31,7 +31,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample, shuffleWith } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { stableSourceID } from "#adapters/utils"
@@ -46,7 +46,8 @@ import { alignRow } from "#utils"
 const DEFAULT_LICENSE = "Licence Ouverte 2.0"
 
 /**
- * One BAN row surviving the lieu-dit filter — the minimal tuple the pool holds.
+ * One BAN row surviving the lieu-dit filter.
+ * The minimal tuple the pool holds.
  */
 interface LieuDitTuple {
 	numero: string
@@ -58,16 +59,19 @@ interface LieuDitTuple {
 }
 
 /**
- * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département. Excludes the `merged`/`france`
- * aggregates (they duplicate the per-département rows) and, when both a `.csv` and a `.csv.gz` exist for the same dept
- * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the uncompressed `.csv` — mirrors
- * `packages/ban/lib/scripts/build/address-point-database.ts`'s `departementFiles`, which hit and fixed this exact
- * double-count trap first.
+ * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
+ *
+ * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows)
+ * and, when both a `.csv` and a `.csv.gz` exist for the same dept
+ * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the
+ * uncompressed `.csv` — mirrors `packages/ban/lib/scripts/build/address-point-database.ts`'s
+ * `departementFiles`, which hit and fixed this exact double-count trap first.
  */
-async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
+async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
+	const directory = PathBuilder.from(banDir)
 	const byDept = new Map<string, string>()
 
-	for (const name of await Globerator.from("*", { cwd: banDir, absolute: false }).toSorted()) {
+	for (const name of await Globerator.from("*", { cwd: directory, absolute: false }).toSorted()) {
 		const m = /^adresses-(.+?)\.csv(\.gz)?$/.exec(name)
 
 		if (!m) continue
@@ -79,15 +83,16 @@ async function departementFiles(banDir: PathBuilderLike): Promise<string[]> {
 		const existing = byDept.get(dept)
 
 		if (!existing || (existing.endsWith(".gz") && !name.endsWith(".gz"))) {
-			byDept.set(dept, join(banDir, name))
+			byDept.set(dept, name)
 		}
 	}
 
-	return [...byDept.keys()].toSorted().map((dept) => byDept.get(dept)!)
+	return [...byDept.keys()].toSorted().map((dept) => directory(byDept.get(dept)!))
 }
 
 /**
- * Stream every département file, keeping only rows with a clean `lieuDit` (junk/dup filtering lives in `ban/sdk`).
+ * Stream every département file, keeping only rows with a clean `lieuDit`
+ * (junk/dup filtering lives in `ban/sdk`).
  */
 async function readLieuDitPool(banDir: PathBuilderLike): Promise<LieuDitTuple[]> {
 	const files = await departementFiles(banDir)
@@ -139,8 +144,10 @@ function composeHouseNumber(numero: string, rep: string | null): string {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const frLieuditRecipe: CorpusRecipe = {
 	name: "fr-lieudit",
@@ -173,9 +180,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
-		// `random` is threaded in rather than constructed here: the recipe shares one mulberry32 stream between this
-		// shuffle and the country-fraction draw below, so a fresh generator would move every later draw and the committed
-		// rows with it.
+		// `random` is threaded in rather than constructed here: the recipe shares one
+		// mulberry32 stream between this shuffle and the country-fraction draw below,
+		// so a fresh generator would move every later draw and the committed rows with it.
 		shuffleWith(pool, random)
 
 		const selected = pool.slice(0, Math.min(count, pool.length))
@@ -206,8 +213,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line. That is
-			// La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
+			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line.
+			// That is La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
 			let raw = formatAddress(components, "FR")
 
 			if (!raw) {
@@ -216,11 +223,13 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Country-append (the fr-admin-split #728 pattern, generalized): ~`countryFraction` of the time
-			// append an explicit "France" surface form onto the trailing (postcode+commune) line + a
-			// `country` component — the model relearns to emit country when present without over-firing it
-			// on the (still-majority) country-less rows. `countryFraction <= 0` (the default) never draws
-			// from `random`, so the byte-stream is unaffected when the flag is unset.
+			// Country-append (the fr-admin-split #728 pattern, generalized):
+			// ~`countryFraction` of the time append an explicit "France" surface form onto
+			// the trailing (postcode+commune) line + a `country` component.
+			// The model relearns to emit country when present without over-firing it
+			// on the (still-majority) country-less rows.
+			// `countryFraction <= 0` (the default) never draws from `random`,
+			// so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms = COUNTRY_SURFACE_FORMS.FR
 				const form = sample(forms, random)

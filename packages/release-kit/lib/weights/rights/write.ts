@@ -10,7 +10,7 @@
  *   the `weights-rights` repository check hold the tree equal to what this writer produces, so a card edit that
  *   changes an attribution cannot land with the published statement left behind.
  *
- *   Private weights workspaces are skipped. `neural-weights-base-latn` publishes nothing and ships no model card, so a
+ *   Private weights workspaces are skipped. `neural-weights-base-latn` publishes no package and ships no model card, so a
  *   rights file there would state terms for a tarball that never reaches anyone.
  */
 
@@ -18,7 +18,7 @@ import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import {
 	LICENSE_FILE,
@@ -37,18 +37,18 @@ export interface RightsFileState {
 /**
  * Every published `neural-weights-*` workspace, in the order `readWorkspaceDirectories` lists them.
  *
- * Read from the root workspace list rather than from `.release-it.json`, because a weights workspace held out of the
- * release still publishes the moment it is added back, and a rights file that only appears at that point is one nobody
- * reviewed.
+ * Read from the root workspace list rather than from `.release-it.json`, because a
+ * weights workspace held out of the release still publishes the moment it is added back,
+ * and a rights file that only appears at that point is one nobody reviewed.
  */
-export async function publishedWeightsWorkspaces(repoRoot: string): Promise<string[]> {
+export async function publishedWeightsWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const workspaces = await readWorkspaceDirectories(repoRoot)
 	const published: string[] = []
 
 	for (const workspace of workspaces) {
 		if (!workspace.startsWith("packages/neural-weights-")) continue
 
-		const manifest = await readPackageJSON(String(resolvePath(repoRoot, workspace, "package.json")))
+		const manifest = await readPackageJSON(resolvePath(repoRoot, workspace, "package.json"))
 
 		if (manifest.private) continue
 
@@ -61,15 +61,16 @@ export async function publishedWeightsWorkspaces(repoRoot: string): Promise<stri
 /**
  * The records the writer and the check both work from.
  */
-export async function weightsRightsRecords(repoRoot: string): Promise<WeightsRightsRecord[]> {
+export async function weightsRightsRecords(repoRoot: PathBuilderLike): Promise<WeightsRightsRecord[]> {
 	return readWeightsRightsRecords(repoRoot, await publishedWeightsWorkspaces(repoRoot))
 }
 
 /**
- * Whether the committed file at `path` already holds `expected`. A missing or unreadable file reads as different rather
- * than as equal, so a first run writes it.
+ * Whether the committed file at `path` already holds `expected`.
+ *
+ * A missing or unreadable file reads as different rather than as equal, so a first run writes it.
  */
-async function licenseDiffers(repoRoot: string, workspace: string, expected: string): Promise<boolean> {
+async function licenseDiffers(repoRoot: PathBuilderLike, workspace: string, expected: string): Promise<boolean> {
 	try {
 		return (await readLocalTextFile(resolvePath(repoRoot, workspace, LICENSE_FILE))) !== expected
 	} catch {
@@ -77,7 +78,7 @@ async function licenseDiffers(repoRoot: string, workspace: string, expected: str
 	}
 }
 
-async function provenanceDiffers(repoRoot: string, record: WeightsRightsRecord): Promise<boolean> {
+async function provenanceDiffers(repoRoot: PathBuilderLike, record: WeightsRightsRecord): Promise<boolean> {
 	try {
 		const committed = await readLocalJSONFile<unknown>(resolvePath(repoRoot, record.workspace, PROVENANCE_FILE))
 
@@ -91,7 +92,7 @@ async function provenanceDiffers(repoRoot: string, record: WeightsRightsRecord):
  * Write both rights files for every published weights workspace, reporting which ones moved.
  */
 export async function writeWeightsRightsFiles(
-	repoRoot: string,
+	repoRoot: PathBuilderLike,
 	log: (line: string) => void
 ): Promise<RightsFileState[]> {
 	const states: RightsFileState[] = []

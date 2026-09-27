@@ -21,9 +21,12 @@ import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One candidate row. `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key. the
- * rest is denormalized so a resolve is one probe (no join to `spr`). Coordinates + bbox + name are nullable at the SQL
- * level (a postcode extract row may lack a bbox).
+ * One candidate row.
+ *
+ * `name_key` + the four small int keys + `neg_rank` + `spr_id` form the clustered primary key.
+ * The rest is denormalized so a resolve is one probe (no join to `spr`).
+ *
+ * Coordinates + bbox + name are nullable at the SQL level (a postcode extract row may lack a bbox).
  */
 export interface CandidateTable {
 	/**
@@ -63,42 +66,61 @@ export interface CandidateTable {
 	 */
 	is_primary: number | null
 	/**
-	 * Blended place importance in [0, 1] — the toponym-fame prior the bare-city-name class is decided on (#28). NULL
-	 * means the score source had no row for this place: unmeasured, never "an importance of zero" (meaning-of-zero).
-	 * Constant across every row of one place — primary, alias and abbrev alike — because it is a property of the place
-	 * rather than of the name that reached it, which is what lets a bare `Moscow` inherit Москва's score through the
-	 * alias row.
+	 * Blended place importance in [0, 1].
 	 *
-	 * **this is the PRE-split conflation, and the name says SO.** It is `place_importance.importance` copied verbatim
-	 * from the score source — the bounded blend `place-importance-schema.ts`'s `blendImportance` writes (the
-	 * concordance's encyclopedia-derived channel clamped around a population-derived base); that module calls the column
-	 * deprecated. It is not the split `encyclopedic` channel, and the two must not be conflated in a future build:
-	 * writing the split value here instead was measured on 2026-08-10 and makes the ranking key inert on three of the
-	 * four rows it exists to fix. The reason is coverage rather than principle — the encyclopedia-concordance join in
-	 * `admin-global-priority-importance.db` reaches 133,888 of 702,709 scored places and only eleven countries
-	 * (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW). CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA and Epping
-	 * AU carry the population fallback and nothing else. Under the strict split those three become unmeasured, the
-	 * consumer's positive-evidence-only rule leaves them exactly where population put them (first), and the famous GB
-	 * bearer can never overtake them. The conflated column is the only one on which every bearer of a name is scored on a
+	 * The toponym-fame prior the bare-city-name class is decided on (#28).
+	 *
+	 * NULL means the score source had no row for this place: unmeasured,
+	 * never "an importance of zero" (meaning-of-zero).
+	 * Constant across every row of one place — primary, alias and abbrev alike —
+	 * because it is a property of the place rather than of the name that reached it,
+	 * which is what lets a bare `Moscow` inherit Москва's score through the alias row.
+	 *
+	 * **this is the PRE-split conflation, and the name says SO.** It is
+	 * `place_importance.importance` copied verbatim from the score source.
+	 * The bounded blend `place-importance-schema.ts`'s `blendImportance` writes
+	 * (the concordance's encyclopedia-derived channel clamped around a population-derived base);
+	 * that module calls the column deprecated.
+	 *
+	 * It is not the split `encyclopedic` channel, and the two must not be conflated in
+	 * a future build: writing the split value here instead was measured on 2026-08-10
+	 * and makes the ranking key inert on three of the four rows it exists to fix.
+	 *
+	 * The reason is coverage rather than principle.
+	 * The encyclopedia-concordance join in `admin-global-priority-importance.db` reaches 133,888
+	 * of 702,709 scored places and only eleven countries (US/FR/GB/DE/IT/ES/NL/JP/CN/KR/TW).
+	 *
+	 * CA, AU and RU have zero concordance rows, so Whitby CA, Windsor CA
+	 * and Epping AU carry only the population fallback.
+	 *
+	 * Under the strict split those three become unmeasured, the consumer's
+	 * positive-evidence-only rule leaves them exactly where population put them (first),
+	 * and the famous GB bearer can never overtake them.
+	 * The conflated column is the only one on which every bearer of a name is scored on a
 	 * single comparable scale, which is the precondition for comparing them at all.
 	 *
-	 * So a consumer reads this as "fame, with population standing in where fame was never measured" — the legacy blended
-	 * semantics — and not as "this place has an encyclopedia entry of this importance". When the score source grows a
-	 * real `encyclopedic` column for every country, add a second column rather than redefining this one.
+	 * So a consumer reads this as "fame, with population standing in where fame was never measured" —
+	 * the legacy blended semantics — and not as "this place has an encyclopedia entry of this importance".
+	 * When the score source grows a real `encyclopedic` column for every country,
+	 * add a second column rather than redefining this one.
 	 */
 	importance: number | null
 	/**
-	 * The name'S detected role on this row, or NULL (#1730). Two build-time detectors stamp `is_primary = 0` rows only:
+	 * The name'S detected role on this row, or NULL (#1730).
 	 *
-	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of the place's country's official languages
-	 *   (or English) — the #936 signal, measured at a 13× key-collision rate vs preferred names.
-	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses the gloss threshold with a non-admin
-	 *   placetype and no measured prominence (population absent and importance unmeasured) — the translation-gloss
-	 *   fingerprint (#1730's sweep; `Poisson` → a US fish-name place). Provenance cannot separate a gloss from an exonym
-	 *   (WOF imported both as `x_preferred`), which is why this detector is an anomaly test and stamps only the certain
-	 *   core.
+	 * Two build-time detectors stamp `is_primary = 0` rows only:
 	 *
-	 * NULL = no role detected. The column is write-only in this build generation: no ranking consumer reads it — a rank
+	 * - `'abbr'` — provenance-based: the surface is a WOF `variant` name in one of
+	 *   the place's country's official languages (or English) — the #936 signal,
+	 *   measured at a 13× key-collision rate vs preferred names.
+	 * - `'gloss'` — anomaly-based: the row belongs to a place whose key count crosses
+	 *   the gloss threshold with a non-admin placetype and no measured prominence
+	 *   (population absent and importance unmeasured) — the translation-gloss fingerprint
+	 *   (#1730's sweep; `Poisson` → a US fish-name place).
+	 *   Provenance cannot separate a gloss from an exonym (WOF imported both as `x_preferred`),
+	 *   which is why this detector is an anomaly test and stamps only the certain core.
+	 *
+	 * NULL = no role detected. The column is write-only in this build generation: no ranking consumer reads it. A rank
 	 * penalty is its own future, D-rule-conditional step with the `gloss_key` board as regression check.
 	 */
 	name_role: string | null
@@ -121,9 +143,11 @@ export interface PlacetypeCodeTable {
 }
 
 /**
- * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`. Extends the ancestors sidecar
- * (`candidate_ancestor` + `candidate_interval` — see candidate-ancestors-schema.ts for the encoding decision), so the
- * builder's one typed client covers every table in the artifact.
+ * The candidate database schema for `new DatabaseClient<CandidateDatabase>(...)`.
+ *
+ * Extends the ancestors sidecar (`candidate_ancestor` + `candidate_interval` —
+ * see candidate-ancestors-schema.ts for the encoding decision), so the builder's
+ * one typed client covers every table in the artifact.
  */
 export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	/**
@@ -143,9 +167,11 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate`/`cand_stage` columns in clustered-key order. The materialization `insert into candidate select … from
- * cand_stage` derives its column list from this, so the two tables can't drift. Keep in sync with
- * {@link CandidateTable}.
+ * The `candidate`/`cand_stage` columns in clustered-key order.
+ *
+ * The materialization `insert into candidate select … from cand_stage` derives its
+ * column list from this, so the two tables can't drift.
+ * Keep in sync with {@link CandidateTable}.
  */
 export const CANDIDATE_COLUMNS = [
 	"name_key",
@@ -163,16 +189,18 @@ export const CANDIDATE_COLUMNS = [
 	"max_lon",
 	"population",
 	"is_primary",
-	// Appended, never inserted mid-list: the first six entries are the clustered primary key, and the
-	// positional `insert into cand_stage values (…)` in the builder binds by position.
+	// Appended, never inserted mid-list: the first six entries are the clustered primary key,
+	// and the positional `insert into cand_stage values (…)` in the builder binds by position.
 	"importance",
 	"name_role",
 ] as const
 
 /**
- * Create the code dictionaries + the transient staging table — called before the build's load passes. `cand_stage`
- * mirrors {@link CandidateTable} but every column is nullable (the loader fills them positionally). Pass a
- * {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
+ * Create the code dictionaries + the transient staging table — called before the build's load passes.
+ *
+ * `cand_stage` mirrors {@link CandidateTable} but every column is nullable
+ * (the loader fills them positionally).
+ * Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
  */
 export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -210,8 +238,9 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the clustered `without rowid` lookup table — called after staging, before the vacuum. The first six columns
- * form the clustered primary key (population-ranked via `neg_rank`).
+ * Create the clustered `without rowid` lookup table — called after staging, before the vacuum.
+ *
+ * The first six columns form the clustered primary key (population-ranked via `neg_rank`).
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -241,7 +270,7 @@ export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promi
 			"neg_rank",
 			"spr_id",
 		])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

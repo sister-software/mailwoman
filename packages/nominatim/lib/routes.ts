@@ -62,10 +62,14 @@ function parseBool(raw: unknown): boolean {
 }
 
 /**
- * A friendly html landing page for `GET /` (#1022). Nominatim itself has no root page (just `/status`), so there's no
- * wire interface to match — this is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
- * orientation with clickable example queries instead of Express's `Cannot GET /` 404, which reads as "the service is
- * broken". Relative example URLs so they resolve against whatever host/port serves this.
+ * A friendly html landing page for `GET /` (#1022).
+ *
+ * Nominatim itself has no root page (just `/status`), so there's no wire interface to match.
+ * This is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
+ * orientation with clickable example queries instead of Express's `Cannot GET /` 404,
+ * which reads as "the service is broken".
+ *
+ * Relative example URLs so they resolve against whatever host/port serves this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -191,7 +195,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {
-		if (!engine.search) return c.json({ error: "search not implemented (see #802)" }, 501)
+		if (!engine.search) return c.json({ error: "this engine does not implement search" }, 501)
 		const q = legacyQuery(c)
 
 		const params: NominatimSearchParams = {
@@ -228,7 +232,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	})
 
 	app.openapi(reverseRoute, async (c) => {
-		if (!engine.reverse) return c.json({ error: "reverse not implemented (see #803)" }, 501)
+		if (!engine.reverse) return c.json({ error: "this engine does not implement reverse" }, 501)
 		const q = legacyQuery(c)
 		const lat = Number(q["lat"])
 		const lon = Number(q["lon"])
@@ -264,7 +268,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	})
 
 	app.openapi(lookupRoute, async (c) => {
-		if (!engine.lookup) return c.json({ error: "lookup not implemented (see #805)" }, 501)
+		if (!engine.lookup) return c.json({ error: "this engine does not implement lookup" }, 501)
 		const q = legacyQuery(c)
 
 		const params: NominatimLookupParams = {
@@ -275,8 +279,9 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 
 		const results = await engine.lookup(params)
 
-		// note: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim. `format=jsonld`
-		// on `/lookup` falls through to the raw jsonv2 results, unlike `/search` and `/reverse`.
+		// note: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim.
+		// `format=jsonld` on `/lookup` falls through to the raw jsonv2 results,
+		// unlike `/search` and `/reverse`.
 		return c.json(
 			params.format === "geojson"
 				? withEngineStamp(toFeatureCollection(results), stamp)

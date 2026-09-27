@@ -14,7 +14,8 @@ import { stringifyJSON } from "#json"
 import { isPresent } from "#objects"
 
 /**
- * Shortest raw string worth keeping as an outlier example. below it there is nothing to learn from.
+ * Shortest raw string worth keeping as an outlier example.
+ * Below it there is no example to learn from.
  */
 const MIN_OUTLIER_LENGTH = 6
 
@@ -23,19 +24,21 @@ const MIN_OUTLIER_LENGTH = 6
  */
 export interface AssembleOutlierOptions {
 	/**
-	 * Derive the locality string from the source row (Overture: `postal_city` falling back to `address_levels`; OA:
-	 * `city`).
+	 * Derive the locality string from the source row
+	 * (Overture: `postal_city` falling back to `address_levels`; OA: `city`).
 	 */
 	locality: (row: Record<string, unknown>) => string
 	/**
-	 * Drop raw-coord-only / PO-box-ish noise (the OA failure mode): without a street, the locality must carry a real word
-	 * character.
+	 * Drop raw-coord-only / PO-box-ish noise (the OA failure mode): without a street,
+	 * the locality must carry a real word character.
 	 */
 	requireLetterLocality?: boolean
 }
 
 /**
- * Assemble a plausible address string from a source row. Deterministic shape variant by hash.
+ * Assemble a plausible address string from a source row.
+ *
+ * Deterministic shape variant by hash.
  */
 export function assembleOutlierRow(row: Record<string, unknown>, options: AssembleOutlierOptions): string | null {
 	const num = (row.number ?? "").toString().trim()
@@ -43,7 +46,7 @@ export function assembleOutlierRow(row: Record<string, unknown>, options: Assemb
 	const pc = (row.postcode ?? "").toString().trim()
 	const locality = options.locality(row)
 
-	// Nothing distinctive to learn from.
+	// No distinctive field to learn from.
 	if (!street && !locality) return null
 
 	if (options.requireLetterLocality && !street && !/[a-z]/i.test(locality)) return null
@@ -80,7 +83,7 @@ export function collectOutlierRows(candidates: Iterable<string | null>, cap = In
 }
 
 /**
- * Encode rows as `{raw, country: "other"}` jsonl (trailing newline included).
+ * Encode rows as `{raw, country: "OTHER"}` jsonl (trailing newline included).
  */
 export function otherRowsJSONL(rows: string[]): string {
 	return toLinesText(rows.map((raw) => stringifyJSON({ raw, country: "OTHER" })))

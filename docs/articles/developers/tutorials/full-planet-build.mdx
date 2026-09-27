@@ -12,7 +12,7 @@ resolves to a coordinate; that one is answered globally by a single gazetteer. T
 number resolves to a building; that one is answered country by country, and today it is answered for two
 countries. By the end of this page you'll have built street-level coverage for one region of France twice
 — once from the French government's address register, once from OpenStreetMap — geocoded the same address
-against both, and seen which answers it. About twenty minutes of work plus a 1.65 GB download.
+against both, and seen which answers it. About twenty minutes of work plus a 2.88 GB download.
 
 You will also know which countries you could repeat it for and which have no path at all. The
 [status page](../status.mdx) answers that question in terms of parser locales; this page answers it in
@@ -24,7 +24,7 @@ terms of data.
 run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm, so that section needs a
 repository checkout. Each requirement below says which half it belongs to.
 
-- **About 2 GB of free disk** for the path below: 1.65 GB of gazetteer and under 100 MB of everything
+- **About 3 GB of free disk** for the path below: 2.88 GB of gazetteer and under 100 MB of everything
   else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
   is 41.3 GB. Check the number for the country you want before you start it.
 - **Steps 1–2, from npm.** The CLI, plus the French register's builder:
@@ -56,7 +56,7 @@ of one.
 
 | Layer                  | Scope                       | Published today                                             |
 | ---------------------- | --------------------------- | ----------------------------------------------------------- |
-| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 1.65 GB                                     |
+| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 2.88 GB                                     |
 | Rooftop address points | Per country                 | US (30.3 GB, 52 databases) and France (6.95 GB, 1 database) |
 | Street interpolation   | Per country                 | US only (11.0 GB, 51 databases)                             |
 | POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer             |
@@ -83,13 +83,14 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-planet/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-Four minutes for 1.65 GB here. The `export` line is a leftover the pull still prints; the file landed at
-`<data root>/wof/candidate.db` and is found there without it. Take the download unless you have a reason
+Four minutes for the 1.65 GB `2026-07-07a` build shown in this transcript; the current `2026-08-25b`
+build is 2.88 GB, so your download will be larger. The `export` line is a leftover the pull still prints; the file landed at
+`<data root>/db/wof/candidate.db` and is found there without it. Take the download unless you have a reason
 not to, because the build behind it is the heaviest thing in this repository, and this page does not run
 it. What it involves, so you can price it:
 
 ```bash
-# 1. Clone the Who's On First data repositories into <data-root>/wof/repos.
+# 1. Clone the Who's On First data repositories into <data-root>/src/wof-repos.
 #    `--countries` takes ISO-2 codes and pulls each country's admin + postalcode
 #    repositories; `--repos` names them individually. One of the two is required —
 #    the org holds 823 non-archived repositories, several hundred GB checked out.
@@ -128,9 +129,9 @@ core, and it is why France is the one non-US country with a published rooftop da
 Take three départements rather than the whole country, so the step finishes while you watch:
 
 ```bash
-mkdir -p "$MAILWOMAN_DATA_ROOT/ban/sources"
+mkdir -p "$MAILWOMAN_DATA_ROOT/db/ban/sources"
 for d in 48 2A 05; do
-  curl -sL -o "$MAILWOMAN_DATA_ROOT/ban/sources/adresses-$d.csv.gz" \
+  curl -sL -o "$MAILWOMAN_DATA_ROOT/db/ban/sources/adresses-$d.csv.gz" \
     "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv/adresses-$d.csv.gz"
 done
 ```
@@ -139,8 +140,8 @@ done
 
 ```bash
 node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js \
-  --csv-dir "$MAILWOMAN_DATA_ROOT/ban/sources" --depts 48,2A,05 \
-  --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db"
+  --csv-dir "$MAILWOMAN_DATA_ROOT/db/ban/sources" --depts 48,2A,05 \
+  --release 2026-08-03 --out "$MAILWOMAN_DATA_ROOT/db/ban/address-points-fr-sample.db"
 ```
 
 ```
@@ -165,10 +166,10 @@ streams the CSV instead of loading it, so the national set is the same command w
 26 million rows, and 6.95 GB in the published database.
 
 Two things about that invocation. It is a script inside the installed package rather than a `mailwoman`
-subcommand — there is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
+subcommand. There is no `mailwoman ban` group, the fetch is a `curl` against a documented URL pattern,
 and the build is the script above. And the path is a `node_modules` path because `@mailwoman/ban` is on
 npm; if you are working from a checkout instead, the same file is at
-`ban/out/scripts/build-address-point-extract.js` after `yarn compile`.
+`packages/ban/out/scripts/build/address-point-database.js` after `yarn compile`.
 
 ## 3. Build the same ground from OpenStreetMap
 
@@ -194,7 +195,7 @@ npm error 404
 npm error 404  The requested resource '@mailwoman/osm@*' could not be found or you do not have permission to access it.
 ```
 
-That is the state today, with no date attached to it — the package is absent from the registry while the
+That is the state today, with no date attached to it. The package is absent from the registry while the
 license review is open, and this page will not guess when that changes. Until it does, the builder comes
 from a checkout:
 
@@ -203,7 +204,7 @@ git clone https://github.com/sister-software/mailwoman.git
 cd mailwoman && yarn install && yarn compile
 ```
 
-The two `node osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
+The two `node packages/osm/out/scripts/...` commands in this section run from that checkout's root. Step 4 goes
 back to the npm CLI and does not care where the database was built.
 
 Three countries have a registered street-normalization locale for this path — `fr`, `de` and `nl`. Adding
@@ -213,13 +214,13 @@ which is why the list grows one considered country at a time.
 Pull an extract and build. The Corsica extract is 34 MB, small enough to finish in seconds:
 
 ```bash
-mkdir -p "$MAILWOMAN_DATA_ROOT/osm/geofabrik"
-curl -sL -o "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf" \
+mkdir -p "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik"
+curl -sL -o "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf" \
   "https://download.geofabrik.de/europe/france/corse-latest.osm.pbf"
 
-node osm/out/scripts/build-rooftop-extract.js \
+node packages/osm/out/scripts/build-rooftop-database.js \
   --country fr --slug corse --release 260803 \
-  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
@@ -239,9 +240,9 @@ inventing a street, and that count is the input to the fix: rerun with `--recove
 attaches each orphan to the nearest named highway within 30 m.
 
 ```bash
-node osm/out/scripts/build-rooftop-extract.js \
+node packages/osm/out/scripts/build-rooftop-database.js \
   --country fr --slug corse --release 260803 --recover \
-  --pbf "$MAILWOMAN_DATA_ROOT/osm/geofabrik/corse-260803.osm.pbf"
+  --pbf "$MAILWOMAN_DATA_ROOT/db/osm/geofabrik/corse-260803.osm.pbf"
 ```
 
 ```
@@ -267,7 +268,7 @@ points the geocoder at an explicit file instead of the per-state US convention:
 
 ```bash
 npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
-  --address-points-db "$MAILWOMAN_DATA_ROOT/ban/address-points-fr-sample.db" --format text
+  --address-points-db "$MAILWOMAN_DATA_ROOT/db/ban/address-points-fr-sample.db" --format text
 ```
 
 ```
@@ -283,7 +284,7 @@ hierarchy:
 
 ```bash
 npx mailwoman geocode "12 Cours Napoléon, 20000 Ajaccio" --default-country FR \
-  --address-points-db "$MAILWOMAN_DATA_ROOT/osm/address-points-fr-corse.db" --format text
+  --address-points-db "$MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-corse.db" --format text
 ```
 
 ```

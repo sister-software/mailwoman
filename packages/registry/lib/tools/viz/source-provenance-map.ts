@@ -6,10 +6,11 @@
  *   The output requires an http origin because the tile server does not serve `file:` origins.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
+import { addressPointDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeature, GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -20,34 +21,47 @@ import { type MapFeatureData, toMapHTML } from "#index"
  */
 export interface SourceProvenanceMapOptions {
 	/**
-	 * State (lowercase postal). Default ny.
+	 * State (lowercase postal).
+	 *
+	 * Default ny.
 	 */
 	state?: string
 	/**
-	 * Address-point DB path. Default `$MAILWOMAN_DATA_ROOT/address-points/address-points-us-<state>.db`.
+	 * Address-point DB path.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/db/address-points/address-points-us-<state>.db`.
 	 */
 	db?: string
 	/**
-	 * Output html path. Default `/tmp/source-provenance.html`.
+	 * Output html path.
+	 *
+	 * Default `/tmp/source-provenance.html`.
 	 */
 	outHTML?: string
 	/**
-	 * Keep ~1/N of NAD points. Default 700.
+	 * Keep ~1/N of NAD points.
+	 *
+	 * Default 700.
 	 */
 	nadMod?: number
 	/**
-	 * Keep ~1/N of OpenAddresses points. Default 120.
+	 * Keep ~1/N of OpenAddresses points.
+	 *
+	 * Default 120.
 	 */
 	oaMod?: number
 	/**
-	 * Per-source marker cap. Default 7000.
+	 * Per-source marker cap.
+	 *
+	 * Default 7000.
 	 */
 	cap?: number
 }
 
-// Collapse the raw `source` string into a human, mappable category. The address-point DB stores e.g.
-// "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data" — the suffix is the real upstream
-// publisher, which is what we want to color by (the "overture:" prefix is just the theme it arrived in).
+// Collapse the raw `source` string into a human, mappable category.
+// The address-point DB stores e.g. "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data".
+// The suffix is the real upstream publisher, which is what we want to color by
+// (the "overture:" prefix is just the theme it arrived in).
 function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
 
@@ -74,7 +88,7 @@ export async function sourceProvenanceMap(
 	report?: (line: string) => void
 ): Promise<{ outHTML: string; points: number }> {
 	const STATE = (options.state || "ny").toLowerCase()
-	const DB = options.db || String(dataRootPath("address-points", `address-points-us-${STATE}.db`))
+	const DB = options.db || addressPointDatabasePath(`address-points-us-${STATE}.db`)
 	const OUT = options.outHTML || tempRootPath("source-provenance.html")
 	const NAD_MOD = options.nadMod ?? 700 // keep ~1/700 of NAD points
 	const OA_MOD = options.oaMod ?? 120 // keep ~1/120 of OpenAddresses points
@@ -82,8 +96,9 @@ export async function sourceProvenanceMap(
 
 	using db = new DatabaseClient<AddressPointDatabase>(DB, { readOnly: true })
 
-	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible next to NAD.
-	// abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction. limit caps the marker count.
+	// Two stratified samples so the smaller source (OpenAddresses, ~1/6 of NY) stays visible
+	// next to NAD. abs(random()) % mod == 0 keeps a spatially-uniform ~1/mod fraction.
+	// Limit caps the marker count.
 	const sample = (where: string, mod: number): Row[] =>
 		db
 			.prepare(

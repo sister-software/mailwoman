@@ -9,28 +9,33 @@
  *   instead.
  *
  *   Every function here takes the {@link GeocodeTrace} the session recorded and returns one line. A stage that
- *   produced nothing renders {@link absent} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
- *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. Nothing in
+ *   produced no output renders {@link absent} and says why — "not fed" is the #566/#685 diagnostic fact the demo's
+ *   channel band already reports, and an absent locale head is a property of the loaded bundle rather than a zero. No code in
  *   this module derives, infers, or fills in a value the trace did not carry.
  *
  *   Pure and Ink-free so the formatting is unit-testable without a render, and so a caller can truncate the result
  *   against a pane width without owning any of the vocabulary.
  */
 
+import { bareBIOTag } from "@mailwoman/codex/component"
 import { softmax } from "@mailwoman/neural/viterbi"
 
 import type { GeocodeTrace } from "#geocode/session"
 
-//#region Shared
+// #region Shared
 
 /**
- * What a row shows where the datum genuinely does not exist. One constant, because "the model has no locale head" and
- * "no channel was fed" must not read as two different kinds of nothing.
+ * What a row shows where the datum genuinely does not exist.
+ *
+ * One constant, because "the model has no locale head" and "no channel was fed"
+ * must not read as two different kinds of absence.
  */
 export const ABSENT = "—"
 
 /**
- * Field separator inside one row. Two spaces rather than a glyph: the rows are already dense, and a punctuation mark
+ * Field separator inside one row.
+ *
+ * Two spaces rather than a glyph: the rows are already dense, and a punctuation mark
  * between every field costs columns the token stream wants.
  */
 const FIELD_GAP = "  "
@@ -39,23 +44,26 @@ function fields(parts: Array<string | null>): string {
 	return parts.filter((part) => part != null && part.length).join(FIELD_GAP)
 }
 
-//#endregion
+// #endregion
 
-//#region Rows
+// #region Rows
 
 /**
- * How many locale-head classes the row names. The head's axis is nine countries wide. the tail is uniformly flat on a
- * confident parse, and three entries is what fits beside the rest of the row on a narrow pane.
+ * How many locale-head classes the row names.
+ *
+ * The head's axis is nine countries wide.
+ * The tail is uniformly flat on a confident parse, and three entries is what fits
+ * beside the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3
 
 /**
- * The addressing system whose conventions applied, the register the parse ran in, the operator's locale, and the
- * known-format spans Stage 2 detected.
+ * The addressing system whose conventions applied, the register the parse ran in,
+ * the operator's locale, and the known-format spans Stage 2 detected.
  *
- * `systemSource` is required and rides in parentheses: `auto` means the locale head chose the system, `pinned` means
- * the bundle or the caller did, and `off` means conventions never ran — three different reasons for the same `us`, and
- * the trace is the only place that distinction survives.
+ * `systemSource` is required and rides in parentheses: `auto` means the locale head chose the
+ * system, `pinned` means the bundle or the caller did, and `off` means conventions never ran.
+ * Three different reasons for the same `us`, and the trace is the only place that distinction survives.
  */
 export function systemRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -72,8 +80,8 @@ export function systemRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * The locale head's top classes as probabilities, on the head's own axis (`localeCountries` rides with the logits, so
- * nothing here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
+ * The locale head's top classes as probabilities, on the head's own axis (`localeCountries` rides
+ * with the logits, so no code here hardcodes an order — the PLACETYPE_ORDER dual-maintenance class).
  */
 export function localeHeadRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -93,9 +101,11 @@ export function localeHeadRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * The SentencePiece stream exactly as fed, pieces space-separated with the `▁` word-start sentinel intact (it is the
- * tokenizer's own mark for "a word starts here", and dropping it hides the fertility question every digit-ownership bug
- * is asked in). The count leads so it survives the caller's truncation, which eats the tail.
+ * The SentencePiece stream exactly as fed, pieces space-separated with the `▁`
+ * word-start sentinel intact (it is the tokenizer's own mark for "a word starts here",
+ * and dropping it hides the fertility question every digit-ownership bug is asked in).
+ *
+ * The count leads so it survives the caller's truncation, which eats the tail.
  */
 export function tokensRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -108,11 +118,14 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * The retrieval channels as fed to the encoder: per channel, how many pieces carried a nonzero clue and which ones.
+ * The retrieval channels as fed to the encoder: per channel, how many pieces
+ * carried a nonzero clue and which ones.
  *
- * "not fed" and `0/12` are different claims — the first is a channel with no source wired (the demo's band says so
- * too), the second is a wired channel that matched nothing on this input. Collapsing them is how "why didn't my
- * gazetteer prior fire" becomes unanswerable.
+ * "not fed" and `0/12` are different claims.
+ * The first is a channel with no source wired (the demo's band says so too),
+ * the second is a wired channel that matched no entry on this input.
+ *
+ * Collapsing them is how "why didn't my gazetteer prior fire" becomes unanswerable.
  */
 export function channelsRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -141,11 +154,12 @@ export function channelsRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * What the decode did: the algorithm, the mean per-token confidence, the component sequence it produced, which priors
- * actually moved the emissions, and which repair passes changed a label.
+ * What the decode did: the algorithm, the mean per-token confidence, the component sequence it
+ * produced, which priors actually moved the emissions, and which repair passes changed a label.
  *
- * `priors` reports effect rather than configuration — `TracePrior.applied` is true only where a composed prior carried
- * a nonzero bias — which is why this row is a usable substitute for the emissions matrix the terminal has no room for.
+ * `priors` reports effect rather than configuration — `TracePrior.applied` is true only
+ * where a composed prior carried a nonzero bias — which is why this row is a usable
+ * substitute for the emissions matrix the terminal has no room for.
  */
 export function decodeRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -155,12 +169,12 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 
 	const meanConfidence = tokens.length ? tokens.reduce((sum, token) => sum + token.confidence, 0) / tokens.length : null
 
-	// B-/I- stripped and runs collapsed: the ribbon above already carries per-character ownership, so what
-	// this row adds is the order the decode produced rather than a second copy of the spans.
+	// B-/I- stripped and runs collapsed: the ribbon above already carries per-character ownership,
+	// so what this row adds is the order the decode produced rather than a second copy of the spans.
 	const sequence: string[] = []
 
 	for (const token of tokens) {
-		const label = token.label.replace(/^[BI]-/u, "")
+		const label = bareBIOTag(token.label)
 
 		if (label !== "O" && sequence.at(-1) !== label) {
 			sequence.push(label)
@@ -176,4 +190,4 @@ export function decodeRow(trace: GeocodeTrace | undefined): string {
 	])
 }
 
-//#endregion
+// #endregion

@@ -11,61 +11,73 @@
 	"artifacts": [
 		{
 			"path": "model.onnx",
+			"role": "model-graph",
 			"md5": "98a49b5ca2948cdbe1dd981d60ef637d",
 			"digest": "recorded"
 		},
 		{
 			"path": "tokenizer.model",
+			"role": "tokenizer",
 			"md5": "5c01cdcd4ae25849c5cb26b69fd3dde9",
 			"digest": "recorded"
 		},
 		{
 			"path": "calibration.json",
+			"role": "calibration",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "calibration-per-locale.json",
+			"role": "calibration",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "postcode-us.bin",
+			"role": "postcode-binary",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "pair-index-us.bin",
+			"role": "placetype-pair-index",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "fst-en-us.bin",
+			"role": "gazetteer-fst",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "fst-street-morphology.bin",
+			"role": "gazetteer-fst",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "anchor-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "locality-surface-lexicon-v7.json",
+			"role": "lexicon",
 			"md5": "08b0305aab6e65fd3556be23b01b7756",
 			"digest": "recorded"
 		},
 		{
 			"path": "street-type-lexicon-v3.json",
+			"role": "lexicon",
 			"md5": "d0194a730805f9e6a886a98e8421061a",
 			"digest": "recorded"
 		},
 		{
 			"path": "country-surface-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		}
@@ -75,45 +87,61 @@
 		"entries": [
 			{
 				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `synth-gb-v1` training extract (800,000 rows) NEW in 6.7.0. Crown copyright, attribution required. The GB placetype-pair index is built from the same source and ships in `neural-weights-en-gb`, whose own card carries its attribution.",
-				"license_named": "OGL v3.0"
+				"license_named": "OGL v3.0",
+				"uses": ["training"]
 			},
 			{
 				"text": "LINZ-derived OpenAddresses NZ (CC-BY 4.0): the `synth-nz-v2` training extract (800,000 rows) NEW in 6.7.0.",
-				"license_named": "CC-BY 4.0"
+				"license_named": "CC-BY 4.0",
+				"uses": ["training"]
 			},
 			{
 				"text": "OpenAddresses ES tuples (CC-BY per OA source): the `synth-es-pedania-v1` training extract (800,000 rows, below-municipio pedanía place names) NEW in 6.7.0.",
-				"license_named": "CC-BY per OA source"
+				"license_named": "CC-BY per OA source",
+				"uses": ["training"]
 			},
 			{
 				"text": "BAN — Base Adresse Nationale (DINUM / IGN, Licence Ouverte 2.0): the `synth-fr-lieudit-v1` training extract (`nom_ld` lieu-dit field) NEW in 6.7.0, additional to the existing `synth-fr-fragment` extract (144,865 rows, 6.4.0).",
-				"license_named": "DINUM / IGN, Licence Ouverte 2.0"
+				"license_named": "DINUM / IGN, Licence Ouverte 2.0",
+				"uses": ["training"]
 			},
 			{
 				"text": "Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike.",
-				"license_named": "CDLA-Permissive-2.0"
+				"license_named": "CDLA-Permissive-2.0",
+				"uses": ["training"]
 			},
 			{
 				"text": "OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
-				"license_named": "CC-BY 4.0"
+				"license_named": "CC-BY 4.0",
+				"uses": ["tokenizer", "evaluation"]
 			},
 			{
 				"text": "OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
-				"license_named": null
+				"license_named": null,
+				"uses": ["tokenizer", "evaluation"]
 			},
 			{
 				"text": "OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source): oa-sk coord eval set (free-rider validation)",
-				"license_named": "CC-0/CC-BY per OA source"
+				"license_named": "CC-0/CC-BY per OA source",
+				"uses": ["evaluation"]
 			},
 			{
 				"text": "OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)",
-				"license_named": "CC-BY per OA source"
+				"license_named": "CC-BY per OA source",
+				"uses": ["evaluation"]
 			},
 			{
 				"text": "See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
-				"license_named": null
+				"license_named": null,
+				"uses": ["unstated"]
 			}
-		]
+		],
+		"by_use": {
+			"evaluation": 4,
+			"tokenizer": 2,
+			"training": 5,
+			"unstated": 1
+		}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
@@ -122,6 +150,8 @@
 		"No digest is recorded for 8 of 12 declared artifacts: calibration.json, calibration-per-locale.json, postcode-us.bin, pair-index-us.bin, fst-en-us.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
 		"One attribution entry names no license: OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice training text + the oa-pl coord eval sets",
 		"One attribution entry names no license: See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"4 of 10 attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0); OpenAddresses PL — GUGiK / PRG (public, BDOT-derived); OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source); OpenAddresses SI — GURS (CC-BY per OA source).",
+		"1 of 10 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

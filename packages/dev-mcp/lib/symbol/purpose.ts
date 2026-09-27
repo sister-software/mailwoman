@@ -2,47 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What each exported function says IT does, so the question "does something that reads a manifest already exist" can
- *   be asked without guessing the name.
+ *   Indexes the first docstring sentence of each exported function, so a search can match on behavior.
  *
- *   why A second index. `symbol-index.ts` matches names, and a name search only helps an author who already guessed the
- *   existing name — the one thing an author about to duplicate does not know. `readPackageJSON` shares no substring
- *   with `loadManifest`, `getPkg` or `readProjectJSON`, so every name-shaped query for it comes back empty and reads as
- *   an absence. This indexes the first sentence of each declaration's docstring instead, which is the sentence the
- *   repository already writes and which describes the behaviour rather than the spelling.
- *
- *   IT parses. An earlier draft matched a docstring to the `export` below it with a regular expression, which assumed
- *   an adjacency the language does not require and could not tell an exported declaration from a private one carrying
- *   the same shape. The parse reads the modifiers and the leading comment from the statement itself. What stays
- *   uncovered is stated in the tool's `not_covered`: a declaration with no docstring has nothing to index.
+ *   A name search in `symbol/index.ts` misses a function whose name shares no words with the query. The TypeScript
+ *   parser reads each statement's modifiers and leading comment. A declaration without a docstring is not indexed.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { gitHead, trackedFiles, workingTreeStatus } from "@mailwoman/core/git"
-import { resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import ts from "typescript"
 
 /**
- * One exported declaration and the sentence that introduces it.
+ * One exported function and the first sentence of its docstring.
  */
 export interface PurposeEntry {
 	name: string
 	/**
-	 * Repo-relative, so an entry reads the same from any working directory.
+	 * The repository-relative file path.
 	 */
 	file: string
 	line: number
 	/**
-	 * The first sentence of the docstring, with the tag block and the comment furniture removed.
+	 * The docstring's first sentence, without tags or comment markers.
 	 */
 	sentence: string
 }
 
 /**
- * The exported name a top-level statement declares, or `null`. A variable statement contributes its first declaration,
- * which is how `export const x = () => …` is written here. a statement declaring several names is not this shape.
+ * Returns the exported function name that a top-level statement declares, or `null`.
+ *
+ * For a variable statement, only the first declaration is read.
  */
 function exportedName(statement: ts.Statement): string | null {
 	if (!ts.canHaveModifiers(statement)) return null
@@ -57,7 +49,8 @@ function exportedName(statement: ts.Statement): string | null {
 		const [declaration] = statement.declarationList.declarations
 		const initializer = declaration?.initializer
 
-		// Only a declaration carrying logic is a reuse question: a table or a literal is a different one.
+		// Only a function value counts.
+		// Tables and literals are skipped.
 		if (
 			declaration &&
 			initializer &&
@@ -72,11 +65,11 @@ function exportedName(statement: ts.Statement): string | null {
 }
 
 /**
- * Words that appear in nearly every sentence here, so matching one says nothing about which declaration is meant.
+ * Words too common to identify a declaration.
  *
- * Prepositions warrant their place on this list the hard way: `over` is a word in `bestOver`, and a name match is
- * enough on its own to report a finding, so an unlisted preposition answers an unrelated question with a confident
- * hit.
+ * Prepositions belong here too.
+ * One name match is enough to report a finding, so a query word such as `over`
+ * would otherwise match `bestOver`.
  */
 const STOP_WORDS = new Set([
 	"a",
@@ -139,8 +132,7 @@ const STOP_WORDS = new Set([
 ])
 
 /**
- * The first sentence of a docstring body: comment furniture and tag blocks removed, newlines collapsed, and the text
- * ended at the first sentence boundary. A docstring that opens with a tag (`@file`, `@param`) contributes nothing.
+ * Returns the first sentence of a docstring body, without comment markers or tag lines.
  */
 export function firstSentence(doc: string): string {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one docstring, already resident and bounded by it.
@@ -158,7 +150,8 @@ export function firstSentence(doc: string): string {
 }
 
 /**
- * Split a phrase into the words worth matching: lowercase, camelCase separated, stop words and single characters gone.
+ * Splits a phrase into lowercase match terms, separating camelCase
+ * and dropping stop words and single characters.
  */
 function terms(phrase: string): string[] {
 	return phrase
@@ -169,19 +162,17 @@ function terms(phrase: string): string[] {
 }
 
 /**
- * Every documented export in a workspace's `lib/`, read from the working tree.
+ * Reads every documented exported function under a workspace `lib/` directory in the working tree.
  */
-async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
-	// The pathspec names a directory and the shape is filtered here. A pathspec with a globstar inside it silently drops
-	// every file sitting directly in `lib/`, because git's wildmatch requires a separator after one — which is how
-	// `packages/core/lib/stats.ts` and `packages/spatial/lib/distance.ts` went missing from the first index.
+async function readEntries(repoRoot: PathBuilder): Promise<PurposeEntry[]> {
+	// The file filter runs here because a `lib/**` pathspec would skip files directly inside `lib/`.
 	const files = await trackedFiles(repoRoot, ["packages"])
 	const entries: PurposeEntry[] = []
 
 	for (const file of files) {
 		if (!file.includes("/lib/") || !file.endsWith(".ts") || file.endsWith(".test.ts")) continue
 
-		const text = await readLocalTextFile(resolvePath(repoRoot, file))
+		const text = await readLocalTextFile(repoRoot(file))
 		const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
 
 		for (const statement of source.statements) {
@@ -189,8 +180,7 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 
 			if (!name) continue
 
-			// The last leading block comment is the declaration's own: a file header sits above an import, and a comment
-			// explaining the line before belongs to that line.
+			// The last leading JSDoc block belongs to the declaration.
 			const doc = (ts.getLeadingCommentRanges(text, statement.getFullStart()) ?? [])
 				.map((range) => text.slice(range.pos, range.end))
 				.findLast((comment) => comment.startsWith("/**"))
@@ -213,9 +203,10 @@ async function readEntries(repoRoot: string): Promise<PurposeEntry[]> {
 
 interface PurposeCache {
 	/**
-	 * The commit the index was built from, plus every working-tree change at that moment — staged, unstaged and untracked
-	 * alike. All of it is needed: keying on the commit alone goes stale over an uncommitted edit, and keying on tracked
-	 * changes alone misses a new file, which is the case this index most needs to see.
+	 * The commit the index was built from.
+	 *
+	 * Together with `status`, which lists staged, unstaged and untracked changes,
+	 * it keys the cache so uncommitted edits and new files invalidate it.
 	 */
 	head: string
 	status: string[]
@@ -227,18 +218,14 @@ function cachePath(): string {
 }
 
 /**
- * The index, from cache when the working tree has not moved since it was built.
- *
- * A stale index is worse than a slow one here: it answers "nothing like that exists" for a helper written an hour ago,
- * which is the reading this tool exists to prevent.
+ * Returns the purpose index, from cache when the working tree has not changed since the cache was built.
  */
-export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]> {
+export async function loadPurposeIndex(repoRoot: PathBuilder): Promise<PurposeEntry[]> {
 	const head = await gitHead(repoRoot)
 	const status = (await workingTreeStatus(repoRoot, ["packages"])).toSorted()
 	const cached = await readLocalJSONFile<Partial<PurposeCache>>(cachePath()).catch(() => null)
 
-	// A cache written by an earlier shape of this module is a miss rather than a crash: the fields are checked rather than
-	// assumed, so a renamed key rebuilds instead of throwing inside a tool call.
+	// The fields are checked, so a cache in an older format triggers a rebuild instead of a throw.
 	if (
 		cached?.head === head &&
 		Array.isArray(cached.status) &&
@@ -256,18 +243,17 @@ export async function loadPurposeIndex(repoRoot: string): Promise<PurposeEntry[]
 }
 
 /**
- * A declaration whose stated purpose matches a phrase, and the words that matched.
+ * An entry that matches a search phrase, with the terms that matched.
  */
 export interface PurposeFinding extends PurposeEntry {
 	matched: string[]
 }
 
 /**
- * The declarations whose name or opening sentence answers `phrase`, best first.
+ * Returns the entries whose name or sentence matches `phrase`, best first.
  *
- * Scoring is term overlap, weighted so a word in the name counts double: a name is chosen to describe the thing, while
- * a sentence also carries the words around it. A single matching term is not enough — one shared word is what every
- * sentence in a domain has in common — so a finding needs two, or one that appears in the name.
+ * A finding needs two matching terms, or one term in the name.
+ * A term in the name scores 2 and a term in the sentence scores 1.
  */
 export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], limit = 10): PurposeFinding[] {
 	const wanted = new Set(terms(phrase))
@@ -283,8 +269,8 @@ export function searchPurpose(phrase: string, entries: readonly PurposeEntry[], 
 
 		if (matched.length < 2 && !matched.some((word) => inName.has(word))) continue
 
-		// A query word that is the whole name outranks any amount of sentence overlap: asking for "percentile of a list
-		// of numbers" must answer `percentile` before `splitNumberList`, which shares two of the surrounding words.
+		// A query word equal to the whole name adds 5, so "percentile of a list of
+		// numbers" ranks `percentile` above `splitNumberList`.
 		const exact = wanted.has(entry.name.toLowerCase()) ? 5 : 0
 		const score = exact + matched.reduce((total, word) => total + (inName.has(word) ? 2 : 1), 0)
 

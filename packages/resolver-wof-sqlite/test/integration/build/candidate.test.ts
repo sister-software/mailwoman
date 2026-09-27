@@ -1,22 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Tests for {@linkcode buildCandidateTable} — the FTS-free byte-range candidate gazetteer the
- *   browser demo resolves against. Builds a tiny fixture admin WOF (the production source shape:
- *   `spr` + `place_population` + `place_search` alt-name bags + `place_abbr` + `ancestors`) plus a
- *   postcode extract, then asserts the four disciplines the resolver depends on:
- *
- *   1. **Denormalized single-probe shape** — every candidate row carries name + centroid + bbox +
- *        country/placetype codes, so a resolve is one statement (no join to spr).
- *   2. **Shared-normalizer parity** — the `name_key` is {@link normalizeLocalityForKey}, the same
- *        function the query side uses. a diacritic name keys to its folded form by construction.
- *   3. **page_size = 8192** — set right before vacuum (node:sqlite creates the file at 4096).
- *   4. **The passes** — primaries, alias bags, region abbreviations, postcode extracts (with the
- *        `latitude!=0 and longitude!=0` placeholder-coord filter), and each extract's `names`-table
- *        delivery-city aliases (#1495).
- */
-
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { allRows, getRow } from "@mailwoman/core/utils"
@@ -30,15 +11,12 @@ import { ALIAS_SEPARATOR } from "@mailwoman/resolver-wof-sqlite/fts"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
 
-/**
- * A minimal admin WOF with the tables `buildCandidateTable` reads.
- */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -88,14 +66,7 @@ function buildFixtureAdmin(path: string): void {
 	`)
 }
 
-/**
- * A postcode extract: `spr` with placetype='postalcode', plus the `names` table `createUnifiedSchema` gives every real
- * extract — that's where `postcode/centroid-fills.ts` writes the GeoNames delivery-city names (#1495). One real-coord
- * ZIP + one placeholder 0,0.
- *
- * @param withNames Build the extract without a `names` table, to cover the tolerate-and-say-so path.
- */
-function buildFixturePostcodes(path: string, withNames = true): void {
+function buildFixturePostcodes(path: PathBuilderLike, withNames = true): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -132,11 +103,7 @@ function buildFixturePostcodes(path: string, withNames = true): void {
 	}
 }
 
-/**
- * The admin fixture plus a `names` table and a second US region, Indiana (103), whose alias bag carries `Illinois` —
- * the shape of Hsinchu County carrying `新竹市`, Hsinchu City's official name. Illinois's `names` row is official.
- */
-function buildFixtureAdminWithVariantRegion(path: string): void {
+function buildFixtureAdminWithVariantRegion(path: PathBuilderLike): void {
 	buildFixtureAdmin(path)
 
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -157,11 +124,7 @@ function buildFixtureAdminWithVariantRegion(path: string): void {
 	`)
 }
 
-/**
- * A locality extract in the register-derived shape (`gazetteer build tw-districts`): two `locality` rows, one whose
- * `ancestors` table names the admin fixture's Illinois region (id 101) and one that names nothing — the NZ shape.
- */
-function buildFixtureLocalities(path: string): void {
+function buildFixtureLocalities(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -198,9 +161,6 @@ interface CandRow {
 	population: number
 }
 
-/**
- * Resolve a normalized key the way the query side does — join the code maps back to strings.
- */
 function probe(db: DatabaseClient<WOFDatabase>, key: string): CandRow[] {
 	return allRows<CandRow>(
 		db.prepare(
@@ -225,12 +185,12 @@ afterEach(async () => {
 
 describe("buildCandidateTable", () => {
 	test("builds a denormalized single-probe row for each primary, keyed by the shared normalizer", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 
 		const result = await buildCandidateTable({ input, output })
-		// 3 localities + 2 ancestors = 5 primaries (deprecated Old Town excluded).
+
 		expect(result.primaries).toBe(5)
 		expect(result.places).toBe(5)
 
@@ -238,7 +198,7 @@ describe("buildCandidateTable", () => {
 
 		const [chi] = probe(db, normalizeLocalityForKey("Chicago"))
 		expect(chi).toBeDefined()
-		// Denormalized: the row carries everything the resolver needs, no join to spr.
+
 		expect(chi!.name).toBe("Chicago")
 		expect(chi!.country).toBe("US")
 		expect(chi!.placetype).toBe("locality")
@@ -246,17 +206,14 @@ describe("buildCandidateTable", () => {
 		expect(chi!.min_lat).toBeCloseTo(41.6, 2)
 		expect(chi!.is_primary).toBe(1)
 
-		// Deprecated row must not resolve.
 		expect(probe(db, normalizeLocalityForKey("Old Town"))).toHaveLength(0)
 	})
 
-	test("falls back to the codex population for a COUNTRY row WOF carries none for (#1650)", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+	test("Falls back to the codex population for a COUNTRY row WOF carries none for", async () => {
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 
-		// Georgia the country, with no place_population row — the measured state of 147 of 237 primary
-		// country records. Without the fallback it enters every prominence race at an asserted zero.
 		using src = new DatabaseClient<WOFDatabase>(input)
 		src.exec(`INSERT INTO spr VALUES (300, 'Georgia', 'country', 'GE', 42.0, 43.5, 41.0, 40.0, 43.6, 46.7, -1, 0)`)
 
@@ -269,14 +226,13 @@ describe("buildCandidateTable", () => {
 
 		expect(country?.population).toBe(3_704_500)
 
-		// The fallback is country-scoped: a locality with no population keeps its honest zero.
 		const [springfield] = probe(db, normalizeLocalityForKey("Springfield"))
 		expect(springfield?.population).toBe(114_000)
 	})
 
-	test("stamps name roles: the gloss anomaly core, prominence-rescued fame, and the abbr provenance signal (#1730)", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+	test("Stamps name roles: the gloss anomaly core, prominence-rescued fame, and the abbr provenance signal", async () => {
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 
 		using src = new DatabaseClient<WOFDatabase>(input)
@@ -308,7 +264,6 @@ describe("buildCandidateTable", () => {
 			INSERT INTO names VALUES (201, 'SPR', 'locality', 'US', 'abbr', '', 0, 0);
 		`)
 
-		// Fixture-scale threshold: 5 staged keys (primary + 4 aliases) crosses it.
 		await buildCandidateTable({ input, output, glossKeyThreshold: 5 })
 
 		const db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -320,21 +275,16 @@ describe("buildCandidateTable", () => {
 			)
 
 		try {
-			// Gloss core: every alias of the double-absent place stamps. its primary never does.
 			expect(role("fish")[0]).toMatchObject({ role: "gloss" })
 			expect(role("vis")[0]).toMatchObject({ role: "gloss" })
 			expect(role("poisson")[0]).toMatchObject({ role: null, primary: 1 })
 
-			// Prominence rescue: same key volume, measured population — no gloss stamp.
 			expect(role("bigtown")[0]).toMatchObject({ role: null })
 
-			// Abbr provenance: official-language variant stamps. non-official variant does not. the
-			// preferred-name alias does not.
 			expect(role(normalizeLocalityForKey("Chi-Town"))[0]).toMatchObject({ role: "abbr", primary: 0 })
 			expect(role(normalizeLocalityForKey("Windy City"))[0]).toMatchObject({ role: null })
 			expect(role(normalizeLocalityForKey("St Etienne"))[0]).toMatchObject({ role: null })
 
-			// The abbreviation kind stamps by kind alone — no official-language test.
 			expect(role("spr")[0]).toMatchObject({ role: "abbr", primary: 0 })
 		} finally {
 			await db.destroy()
@@ -342,14 +292,13 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("keys diacritic names by their folded form — build/query parity by construction", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		await buildCandidateTable({ input, output })
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		// The query side normalizes the user's input the same way; "Saint-Étienne" → "saint-etienne".
 		const key = normalizeLocalityForKey("Saint-Étienne")
 		expect(key).toBe("saint-etienne")
 		const [hit] = probe(db, key)
@@ -358,24 +307,24 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("explodes alt-name bags into resolvable alias rows pointing at the primary", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		const result = await buildCandidateTable({ input, output })
-		// Chicago: Chi-Town + Windy City. Saint-Étienne: St Etienne = 3 aliases.
+
 		expect(result.aliases).toBe(3)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 		const [windy] = probe(db, normalizeLocalityForKey("Windy City"))
-		expect(windy?.name).toBe("Chicago") // alias row carries the primary's display name + coords
+		expect(windy?.name).toBe("Chicago")
 		expect(windy?.is_primary).toBe(0)
 		expect(windy?.latitude).toBeCloseTo(41.88, 2)
 	})
 
 	test("carries region abbreviations from place_abbr", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		const result = await buildCandidateTable({ input, output })
 		expect(result.abbrevs).toBe(1)
@@ -387,15 +336,15 @@ describe("buildCandidateTable", () => {
 		expect(il?.placetype).toBe("region")
 	})
 
-	test("folds postcode extracts in, dropping placeholder 0,0-coord rows", async () => {
-		const input = scratch.resolve("admin.db")
-		const pc = scratch.resolve("postcodes.db")
-		const output = scratch.resolve("candidate.db")
+	test("Folds postcode extracts in, dropping placeholder 0,0-coord rows", async () => {
+		const input = scratch.path("admin.db")
+		const pc = scratch.path("postcodes.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// The real-coord 60601 + 11201 survive. the 0,0 placeholder 20500 is filtered.
+
 		expect(result.postcodes).toBe(2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -407,8 +356,8 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("a region's alias that is another same-country region's official name is refused, not staged", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdminWithVariantRegion(input)
 
 		const result = await buildCandidateTable({ input, output })
@@ -417,17 +366,16 @@ describe("buildCandidateTable", () => {
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		// Only Illinois itself answers `illinois`; Indiana, the more populous namesake carrier, has no row for it.
 		const rows = probe(db, normalizeLocalityForKey("Illinois")).filter((r) => r.placetype === "region")
 
 		expect(rows.map((r) => r.name)).toEqual(["Illinois"])
-		// The refusal is exact: Indiana's other alias stages as before.
+
 		expect(probe(db, normalizeLocalityForKey("Hoosier State")).map((r) => r.name)).toEqual(["Indiana"])
 	})
 
 	test("without a names table the alias pass has no official evidence and refuses nothing", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 
 		const result = await buildCandidateTable({ input, output })
@@ -436,16 +384,15 @@ describe("buildCandidateTable", () => {
 	})
 
 	test("a locality extract that names its region folds in with that region's scope and a closure row", async () => {
-		const input = scratch.resolve("admin.db")
-		const localities = scratch.resolve("localities.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const localities = scratch.path("localities.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		buildFixtureLocalities(localities)
 
-		const baseline = await buildCandidateTable({ input, output: scratch.resolve("baseline.db") })
+		const baseline = await buildCandidateTable({ input, output: scratch.path("baseline.db") })
 		const result = await buildCandidateTable({ input, output, localities: [localities] })
-		// The scoped district takes its region plus the region's own chain (Illinois, then United States); the
-		// unscoped row adds none.
+
 		expect(result.ancestorRows).toBe(baseline.ancestorRows + 2)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
@@ -472,36 +419,30 @@ describe("buildCandidateTable", () => {
 		])
 	})
 
-	test("folds postcode delivery-city aliases into the exact tier (#1495)", async () => {
-		const input = scratch.resolve("admin.db")
-		const pc = scratch.resolve("postcodes.db")
-		const output = scratch.resolve("candidate.db")
+	test("Folds postcode delivery-city aliases into the exact tier", async () => {
+		const input = scratch.path("admin.db")
+		const pc = scratch.path("postcodes.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		buildFixturePostcodes(pc)
 
 		const result = await buildCandidateTable({ input, output, postcodes: [pc] })
-		// Only "Brooklyn". The extract's own '11201' names row keys to the primary and is skipped, and
-		// 'The White House' hangs off 20500, which the coord filter never staged.
+
 		expect(result.postcodeAliases).toBe(1)
 
 		using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-		// Before the fix this probe returned nothing: the delivery-city names reached
-		// `place_search.alt_names` (FTS) but never the candidate table, where every row is an
-		// exact-tier row.
 		const [brooklyn] = probe(db, normalizeLocalityForKey("Brooklyn"))
 		expect(brooklyn).toBeDefined()
 		expect(brooklyn!.placetype).toBe("postalcode")
-		// The alias row is denormalized onto the postcode — display name, coords and bbox are 11201's.
+
 		expect(brooklyn!.name).toBe("11201")
 		expect(brooklyn!.country).toBe("US")
 		expect(brooklyn!.latitude).toBeCloseTo(40.694, 3)
 		expect(brooklyn!.min_lat).toBeCloseTo(40.68, 2)
-		// `is_primary = 0` — the rank/demotion contest must treat it as an alias rather than a canonical
-		// postcode name.
+
 		expect(brooklyn!.is_primary).toBe(0)
 
-		// The primary row is untouched by the new pass.
 		const [zip] = probe(db, normalizeLocalityForKey("11201"))
 		expect(zip?.is_primary).toBe(1)
 		expect(zip?.name).toBe("11201")
@@ -509,10 +450,10 @@ describe("buildCandidateTable", () => {
 		expect(probe(db, normalizeLocalityForKey("The White House"))).toHaveLength(0)
 	})
 
-	test("a extract with no `names` table reports the absence instead of a silent zero", async () => {
-		const input = scratch.resolve("admin.db")
-		const pc = scratch.resolve("postcodes.db")
-		const output = scratch.resolve("candidate.db")
+	test("an extract with no `names` table reports the absence instead of a silent zero", async () => {
+		const input = scratch.path("admin.db")
+		const pc = scratch.path("postcodes.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		buildFixturePostcodes(pc, false)
 
@@ -527,13 +468,13 @@ describe("buildCandidateTable", () => {
 
 		expect(result.postcodes).toBe(2)
 		expect(result.postcodeAliases).toBe(0)
-		// A magnitude never carries its own absence — 0 aliases from an unread table has to say so.
+
 		expect(phases.some((p) => p.startsWith("postcode-aliases:") && p.includes("no `names` table"))).toBe(true)
 	})
 
 	test("materializes the output at page_size 8192 (the httpvfs chunk alignment)", async () => {
-		const input = scratch.resolve("admin.db")
-		const output = scratch.resolve("candidate.db")
+		const input = scratch.path("admin.db")
+		const output = scratch.path("candidate.db")
 		buildFixtureAdmin(input)
 		await buildCandidateTable({ input, output })
 
@@ -541,17 +482,13 @@ describe("buildCandidateTable", () => {
 
 		const { page_size } = db.prepare("PRAGMA page_size").get() as { page_size: number }
 		expect(page_size).toBe(8192)
-		// And the clustered table is without rowid (the rows are the B-tree).
+
 		const sql = (db.prepare("SELECT sql FROM sqlite_master WHERE name='candidate'").get() as { sql: string }).sql
 		expect(sql).toMatch(/WITHOUT ROWID/i)
 	})
 
-	describe("the importance column (#28)", () => {
-		/**
-		 * A score source whose ids share nothing with the admin fixture's — the join must work anyway. Chicago and
-		 * Saint-Étienne are scored. Springfield deliberately is not (the unmeasured case).
-		 */
-		function buildFixtureImportance(path: string): void {
+	describe("The importance column", () => {
+		function buildFixtureImportance(path: PathBuilderLike): void {
 			using db = new DatabaseClient<WOFDatabase>(path)
 
 			db.exec(`
@@ -584,52 +521,48 @@ describe("buildCandidateTable", () => {
 		}
 
 		test("joins the score onto the place, and onto its ALIAS rows too", async () => {
-			const input = scratch.resolve("admin.db")
-			const importance = scratch.resolve("importance.db")
-			const output = scratch.resolve("candidate.db")
+			const input = scratch.path("admin.db")
+			const importance = scratch.path("importance.db")
+			const output = scratch.path("candidate.db")
 			buildFixtureAdmin(input)
 			buildFixtureImportance(importance)
 
 			const result = await buildCandidateTable({ input, output, importance })
-			expect(result.importanceScored).toBe(2) // Chicago + Saint-Étienne
-			expect(result.importanceFiltered).toBe(1) // Springfield — same key, wrong town
+			expect(result.importanceScored).toBe(2)
+			expect(result.importanceFiltered).toBe(1)
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
 			expect(importanceOf(db, normalizeLocalityForKey("Chicago"))).toEqual([0.8125])
-			// The score is a property of the place, so the alias rows carry it. This is what lets a bare
-			// "Moscow" reach Москва's score through the alias row that holds the Latin key.
+
 			expect(importanceOf(db, normalizeLocalityForKey("Chi-Town"))).toEqual([0.8125])
 			expect(importanceOf(db, normalizeLocalityForKey("Windy City"))).toEqual([0.8125])
-			// Folded key parity holds on the join too: "Saint-Étienne" scores through its folded form,
-			// and its alias row inherits.
+
 			expect(importanceOf(db, normalizeLocalityForKey("Saint-Étienne"))).toEqual([0.44])
 			expect(importanceOf(db, normalizeLocalityForKey("St Etienne"))).toEqual([0.44])
 		})
 
 		test("an unmatched place is NULL — unmeasured, never 0", async () => {
-			const input = scratch.resolve("admin.db")
-			const importance = scratch.resolve("importance.db")
-			const output = scratch.resolve("candidate.db")
+			const input = scratch.path("admin.db")
+			const importance = scratch.path("importance.db")
+			const output = scratch.path("candidate.db")
 			buildFixtureAdmin(input)
 			buildFixtureImportance(importance)
 			await buildCandidateTable({ input, output, importance })
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// Springfield's only same-key scored place is 1,500 km away — a different town. The check
-			// refuses it, and the refusal is recorded as absence rather than as a zero a consumer could rank on.
 			expect(importanceOf(db, normalizeLocalityForKey("Springfield"))).toEqual([null])
-			// Illinois (region) and the US (country) were never scored at all.
+
 			expect(importanceOf(db, normalizeLocalityForKey("Illinois"))).toEqual([null])
 			expect(importanceOf(db, normalizeLocalityForKey("IL"))).toEqual([null])
 		})
 
 		test("postcode rows are NULL even when the source carries a same-named row", async () => {
-			const input = scratch.resolve("admin.db")
-			const pc = scratch.resolve("postcodes.db")
-			const importance = scratch.resolve("importance.db")
-			const output = scratch.resolve("candidate.db")
+			const input = scratch.path("admin.db")
+			const pc = scratch.path("postcodes.db")
+			const importance = scratch.path("importance.db")
+			const output = scratch.path("candidate.db")
 			buildFixtureAdmin(input)
 			buildFixturePostcodes(pc)
 			buildFixtureImportance(importance)
@@ -637,19 +570,18 @@ describe("buildCandidateTable", () => {
 
 			using db = new DatabaseClient<WOFDatabase>(output, { readOnly: true })
 
-			// A postcode has no toponym fame. the score source's 60601 row must not leak onto it.
 			expect(importanceOf(db, "60601")).toEqual([null])
-			// …including the delivery-city alias hanging off the same postcode row.
+
 			expect(importanceOf(db, normalizeLocalityForKey("Brooklyn"))).toEqual([null])
 		})
 
 		test("without a score source the column exists and is empty — and the result says so", async () => {
-			const input = scratch.resolve("admin.db")
-			const output = scratch.resolve("candidate.db")
+			const input = scratch.path("admin.db")
+			const output = scratch.path("candidate.db")
 			buildFixtureAdmin(input)
 
 			const result = await buildCandidateTable({ input, output })
-			// `undefined`, not 0: the pass did not run. A 0 would claim the source matched nothing.
+
 			expect(result.importanceScored).toBeUndefined()
 			expect(result.importanceFiltered).toBeUndefined()
 
@@ -664,7 +596,7 @@ describe("buildCandidateTable", () => {
 	})
 })
 
-describe("stageCountryDisplayNames (#1678 thread 1)", () => {
+describe("StageCountryDisplayNames ( thread 1)", () => {
 	const GEORGIA_SID = 9_000_000_249_733
 	const GE_CID = 7
 
@@ -706,7 +638,6 @@ describe("stageCountryDisplayNames (#1678 thread 1)", () => {
 		const { staged } = run(new Map([[GEORGIA_SID, attrsFor()]]))
 		const keys = staged.map((r) => r.key)
 
-		// The exact strings that returned nothing on 2026-08-15.
 		expect(keys).toContain("格鲁吉亚")
 		expect(keys).toContain("喬治亞")
 	})
@@ -748,12 +679,8 @@ describe("stageCountryDisplayNames (#1678 thread 1)", () => {
 	})
 })
 
-describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
-	/**
-	 * A GB admin fixture in the deprecated-no-successor shapes: the Rochester class (dead + distant live namesake), an
-	 * unattested blob, a near-live block, an under-floor hamlet, and a superseded record the pass must never judge.
-	 */
-	function buildFixtureCurrency(path: string): void {
+describe("ResurrectCurrencyHoles ( — the currency backfill)", () => {
+	function buildFixtureCurrency(path: PathBuilderLike): void {
 		using db = new DatabaseClient<WOFDatabase>(path)
 
 		db.exec(`
@@ -789,10 +716,6 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 		`)
 	}
 
-	/**
-	 * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 feature_class, 14
-	 * population.
-	 */
 	function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
 		const f = Array.from({ length: 19 }).fill("")
 
@@ -810,9 +733,9 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	async function buildWithBackfill(withOption: boolean): Promise<DatabaseClient<CandidateDatabase>> {
-		const input = scratch.resolve("admin-currency.db")
-		const output = scratch.resolve("candidate-currency.db")
-		const geonamesDir = scratch.resolve("geonames")
+		const input = scratch.path("admin-currency.db")
+		const output = scratch.path("candidate-currency.db")
+		const geonamesDir = scratch.path("geonames")
 
 		buildFixtureCurrency(input)
 
@@ -823,10 +746,10 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 				geonamesLine(1, "Rochester", 51.388, 0.505, "P", 28_671),
 				geonamesLine(2, "Tinyham", 54.001, -1.001, "P", 300),
 				geonamesLine(3, "Ghosttown", 55.001, -1.201, "P", 5000),
-				// an S-class row must never attest
+
 				geonamesLine(4, "Oldblob", 52.001, -1.001, "S", 90_000),
 			],
-			join(geonamesDir, "GB.txt")
+			geonamesDir("GB.txt")
 		)
 
 		await buildCandidateTable({
@@ -839,38 +762,33 @@ describe("resurrectCurrencyHoles (#1737 — the currency backfill)", () => {
 	}
 
 	test("resurrects the Rochester class: dead + attested + only a DISTANT namesake alive", async () => {
-		const db = buildWithBackfill(true)
+		using db = await buildWithBackfill(true)
 
-		const rows = (await db)
+		const rows = db
 			.prepare(`SELECT spr_id, population, is_primary FROM candidate WHERE name_key = 'rochester' ORDER BY spr_id`)
 			.all() as { spr_id: number; population: number; is_primary: number }[]
 
-		// Both the resurrected Kent record and the live namesake stand — namesakes are the race's business.
 		expect(rows.map((r) => r.spr_id)).toEqual([300, 301])
 
 		const kent = rows.find((r) => r.spr_id === 300)!
 
-		// The attestor's population, so the row can stand in prominence races (the dead record has none).
 		expect(kent.population).toBe(28_671)
 
 		expect(kent.is_primary).toBe(1)
-		;(await db).destroy()
 	})
 
 	test("keeps the checks: unattested, near-live, under-floor and superseded rows all stay dead", async () => {
-		await using db = await buildWithBackfill(true)
+		using db = await buildWithBackfill(true)
 
 		for (const key of ["oldblob", "nearlive", "tinyham", "ghosttown"]) {
 			const rows = db.prepare(`SELECT spr_id FROM candidate WHERE name_key = ?`).all(key) as { spr_id: number }[]
 
-			// `nearlive` keeps its live localadmin row (304); the dead 303 must not join it. The others
-			// stage nothing at all.
 			expect(rows.map((r) => r.spr_id)).toEqual(key === "nearlive" ? [304] : [])
 		}
 	})
 
 	test("without the option the pass never runs and every hole stays dead", async () => {
-		await using db = await buildWithBackfill(false)
+		using db = await buildWithBackfill(false)
 		const { n } = db.prepare(`SELECT COUNT(*) AS n FROM candidate WHERE spr_id = 300`).get() as { n: number }
 
 		expect(n).toBe(0)

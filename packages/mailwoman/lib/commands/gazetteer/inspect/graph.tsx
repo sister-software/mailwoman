@@ -5,10 +5,10 @@
  *   `mailwoman wof graph <localRepoDir> <placetype>` — emit a node-link graph of the WOF placetype
  *   hierarchy rooted at the given placetype.
  *
- *   Use this instead of `wof tree` when the root has many shared descendants (e.g. `planet`) — the
- *   graph shape stays compact regardless of DAG topology because each node and edge appears exactly
- *   once. Output format follows the d3-force / react-flow convention (`nodes`, `links` with
- *   `source`/`target`) so it drops into common html graph viewers without translation.
+ *   Use this instead of `wof tree` when the root has many shared descendants, because the graph shape
+ *   stays compact regardless of DAG topology — each node and edge appears exactly once. The output
+ *   follows the d3-force / react-flow convention (`nodes`, `links` with `source`/`target`) so it drops
+ *   into common html graph viewers without translation.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -68,8 +68,8 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 		if (options.out) {
 			await writeLocalFile(serialized + "\n", options.out)
 		} else {
-			// Write JSON directly to stdout so Ink's <Text> renderer doesn't word-wrap long
-			// lines (compact mode is one very long line. pretty mode is fine either way).
+			// Write JSON directly to stdout so Ink's <Text> renderer does not word-wrap
+			// long lines, since compact mode emits one very long line.
 			process.stdout.write(serialized + "\n")
 		}
 	})
@@ -86,7 +86,6 @@ const WOFGraph: CommandComponent<typeof spec, [string, string]> = ({ args, optio
 		)
 	}
 
-	// Stdout path: JSON is written above via process.stdout.write. render nothing through Ink.
 	return null
 }
 

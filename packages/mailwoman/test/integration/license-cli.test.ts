@@ -5,7 +5,7 @@
  *   `mailwoman license` end to end on the compiled CLI: `register` printing the derivation, `keygen` into a scratch
  *   config root, `issue` refused against a register that does not carry the new key, `verify` reading a token this build
  *   does not trust, and `adopt` and `refresh` refusing to write one. The compiled CLI ships its register, so no test can
- *   hand it a trusted key. what is asserted is every refusal by its word and that nothing is written on one. The worker
+ *   hand it a trusted key. what is asserted is every refusal by its word and that no file is written on one. The worker
  *   is a fetch handler on a node listener, reached through `MAILWOMAN_LICENSE_URL`.
  */
 
@@ -57,7 +57,7 @@ describe("mailwoman license", () => {
 
 	test("keygen mints a pair under the config root and issue refuses a key the register does not carry", async () => {
 		await using scratch = await temporaryDirectory("license-cli-")
-		const env = { MAILWOMAN_CONFIG_ROOT: String(scratch.path) }
+		const env = { MAILWOMAN_CONFIG_ROOT: scratch.path.toString() }
 
 		const keygen = await cli(["keygen", "--major", "9", "--json"], env)
 		const minted = parseJSONStrict<{ kid: string; publicKeyPEM: string }>(keygen.stdout)
@@ -113,9 +113,12 @@ describe("mailwoman license", () => {
 	}
 
 	/**
-	 * The worker's two customer routes and the well-known register, as a fetch handler: the refresh route answers the
-	 * self-service token for the right secret, `lapsed` for one lid, and the worker's 404 otherwise. the status route
-	 * answers `revoked`; the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
+	 * The worker's two customer routes and the well-known register, as a fetch handler:
+	 * the refresh route answers the self-service token for the right secret,
+	 * `lapsed` for one lid, and the worker's 404 otherwise.
+	 *
+	 * The status route answers `revoked`; the register lists no key, so the publication
+	 * reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {
 		const handler = async (request: Request): Promise<Response> => {
@@ -149,7 +152,7 @@ describe("mailwoman license", () => {
 	test("adopt refuses a token this build does not trust and writes nothing", async () => {
 		await using scratch = await temporaryDirectory("license-cli-adopt-")
 		const { kid, token } = await selfServiceToken()
-		const result = await cli(["adopt", token, "--secret", SECRET], { MAILWOMAN_CONFIG_ROOT: String(scratch.path) })
+		const result = await cli(["adopt", token, "--secret", SECRET], { MAILWOMAN_CONFIG_ROOT: scratch.path.toString() })
 
 		expect(result.exitCode).toBe(1)
 		expect(result.stderr).toContain(`does not trust key id ${kid}`)
@@ -161,7 +164,7 @@ describe("mailwoman license", () => {
 		await using scratch = await temporaryDirectory("license-cli-refresh-")
 		const { kid, token } = await selfServiceToken()
 		await using worker = await stubWorker(token)
-		const env = { MAILWOMAN_CONFIG_ROOT: String(scratch.path), MAILWOMAN_LICENSE_URL: worker.url }
+		const env = { MAILWOMAN_CONFIG_ROOT: scratch.path.toString(), MAILWOMAN_LICENSE_URL: worker.url }
 
 		await writePrivateTextFile(
 			stringifyJSON({ lid: LID, secret: SECRET }),

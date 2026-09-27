@@ -27,7 +27,6 @@
 
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
-import { titlecaseIfUpper } from "@mailwoman/core"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -36,16 +35,16 @@ import { SeededRandom } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pyJSONDumps } from "@mailwoman/core/utils"
 import { dirname } from "path-ts"
-import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
+import { titleCaseIfUpper, CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-//#region CSV source
+// #region CSV source
 
 /**
  * Approximates Python's default `csv.DictReader` dialect.
  *
- * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes by —
- * OpenAddresses ships all-caps headers.
+ * `normalizeKeys: false` keeps the source's own header spelling, which is what the
+ * row reader indexes by — OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -67,9 +66,9 @@ function csvRecordsFromFile(filePath: string): AsyncIterable<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(openReadStream(filePath), CSV_OPTIONS)
 }
 
-//#endregion
+// #endregion
 
-//#region Sampling
+// #region Sampling
 
 /**
  * The address orders a row can be rendered in, cycled so no single template dominates the set.
@@ -90,14 +89,15 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must open with a letter: OA rows whose street is a bare number or a lone punctuation mark are parse noise
- * rather than addresses. House number `"0"` is the dump's placeholder for "no number known".
+ * The street must open with a letter: OA rows whose street is a bare number
+ * or a lone punctuation mark are parse noise rather than addresses.
+ * House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {
-	const num = (row.NUMBER ?? "").trim()
-	const street = (row.STREET ?? "").trim()
-	const city = (row.CITY ?? "").trim()
-	const cp = (row.POSTCODE ?? "").trim()
+	const num = row.NUMBER ?? ""
+	const street = row.STREET ?? ""
+	const city = row.CITY ?? ""
+	const cp = row.POSTCODE ?? ""
 	const lat = pyFloat(row.LAT)
 	const lon = pyFloat(row.LON)
 
@@ -105,29 +105,33 @@ function parseRow(row: CSVRecord): Address | null {
 
 	if (!num || !street || !city || !cp || num === "0" || !/^\p{L}/u.test(street)) return null
 
-	return { street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon }
+	return { street: titleCaseIfUpper(street), num, cp, city: titleCaseIfUpper(city), lat, lon }
 }
 
 /**
  * Geographic diversity key: the region when the dump carries one, else the postcode's leading pair.
  */
 function bucketKey(row: CSVRecord, address: Address): string {
-	return (row.REGION ?? "").trim() || address.cp.slice(0, 2)
+	return (row.REGION ?? "") || address.cp.slice(0, 2)
 }
 
 interface SampleOptions {
 	perBucket: number
 	/**
-	 * Stop once this many rows are held. Ignored in reservoir mode, which has to see the whole stream.
+	 * Stop once this many rows are held.
+	 *
+	 * Ignored in reservoir mode, which has to see the whole stream.
 	 */
 	target: number
 	/**
 	 * Sample each bucket uniformly across the whole stream rather than taking its first `perBucket` rows.
 	 *
-	 * The default fill takes a bucket's rows from wherever its key first appears in file order. Municipality-ordered
-	 * dumps (OA CZ/PL) therefore concentrate every bucket on one city, which under-disperses the localities the
-	 * wrong-city metric needs (#291). Reservoir mode costs a full pass. selection stays deterministic per seed and input
-	 * order.
+	 * The default fill takes a bucket's rows from wherever its key first appears in file order.
+	 * Municipality-ordered dumps (OA CZ/PL) therefore concentrate every bucket on one city,
+	 * which under-disperses the localities the wrong-city metric needs (#291).
+	 *
+	 * Reservoir mode costs a full pass.
+	 * Selection stays deterministic per seed and input order.
 	 */
 	reservoir: boolean
 	rng: SeededRandom
@@ -196,8 +200,8 @@ function render(a: Address, order: Order): string {
 }
 
 /**
- * Flatten the buckets into eval rows, cycling the render order across the whole set rather than within a bucket, so no
- * region is rendered in one shape.
+ * Flatten the buckets into eval rows, cycling the render order across the whole set
+ * rather than within a bucket, so no region is rendered in one shape.
  */
 function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<string, unknown>[] {
 	const rows: Record<string, unknown>[] = []
@@ -223,7 +227,7 @@ function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<st
 	return rows
 }
 
-//#endregion
+// #endregion
 
 const { values } = parseArguments({
 	options: {

@@ -2,31 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Scaffold a data-only `@mailwoman/neural-weights-<locale>` overlay and register it everywhere it
- *   has to be registered.
+ *   Create a data-only `@mailwoman/neural-weights-<locale>` overlay package.
  *
- *   Why this exists. A weights overlay is six small files, which makes copying a sibling look like
- *   the obvious move. It is not: copying carried `repository.directory` verbatim three times in one
- *   day (de-de took en-nz's, then en-in took de-de's before that was fixed, propagating the wrong
- *   value two hops), each time turning `main` red on the #757 provenance test. The fields that must
- *   not survive a copy are precisely the ones naming the source, and a human diffing two
- *   near-identical manifests is bad at spotting them.
+ *   It writes the overlay files and updates the required registration lists so
+ *   setup is consistent and less error-prone.
  *
- *   A new overlay also has five registration points, and missing any one fails at a different stage
- *   and a different time:
- *
- *   1. root `package.json` `workspaces` — miss it and `yarn pack` says "not part of the project"
- *   2. `.release-it.json` — miss it and the package never publishes
- *   3. the clean-install smoke's pack set (`release/smoke-clean-install.ts`) — miss it and the smoke skips it
- *   4. `neural/test/pair-index-card-parity.test.ts` — miss it and its card can drift unchecked
- *   5. `release.config.json` `locales` — miss it and `copy-weights` never materializes its binary
- *
- *   This writes all six files and edits all five registers, so the failure mode is "the command was
- *   not run" rather than "the command was run and one edit was forgotten".
- *
- *   Deliberately does not touch `.github/workflows/publish.yml`: its fetch/preflight/guard lines
- *   name artifacts explicitly and a locale may or may not ship a pair index, a postcode binary or an
- *   FST. That edit stays a human decision, and the command prints the exact lines to add.
+ *   It intentionally does not edit `.github/workflows/publish.yml` because
+ *   artifact lines there are explicit and should stay a manual choice.
  *
  *   Usage:
  *     yarn mwops release scaffold-weights-overlay --locale es-ES --artifact pair-index-es.bin
@@ -34,13 +16,12 @@
 
 import { readLocalJSONFile, readLocalTextFile, tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { isRegisteredWorkspace } from "@mailwoman/core/workspaces"
 import { resolvePath } from "path-ts"
 
 /**
- * Where the clean-install smoke's pack set lives, relative to the repo root — the register this operation edits.
+ * Relative path to the clean-install smoke pack set.
  */
 const SMOKE_PACK_SET_PATH = "packages/release-kit/lib/release/smoke/clean-install.ts"
 
@@ -51,14 +32,16 @@ export interface ScaffoldWeightsOverlayOptions {
 	 */
 	locale: string
 	/**
-	 * The one artifact the overlay adds. defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
+	 * The one artifact the overlay adds.
+	 *
+	 * Defaults to `pair-index-<cc>.bin`, or `fst-<locale>.bin` under `base`.
 	 */
 	artifact?: string
 	/**
-	 * A character-path family (`cjk`) to inherit from instead of the Latin base: the overlay declares
-	 * `mailwoman.baseWeights` on `@mailwoman/neural-weights-<base>`, carries its locale FST, and registers in
-	 * `release.config.json`'s `charWeights.<base>.overlays` rather than `locales` — the family's bucket directory is
-	 * where it is staged and fetched.
+	 * Optional character-path family (for example `cjk`) to inherit from.
+	 *
+	 * When set, the overlay uses `@mailwoman/neural-weights-<base>` and is registered
+	 * under `charWeights.<base>.overlays` instead of `locales`.
 	 */
 	base?: string
 	log: (line: string) => void
@@ -84,9 +67,10 @@ export async function scaffoldWeightsOverlay(
 	const repoPath = (...segments: string[]) => resolvePath(repoRoot, ...segments)
 
 	/**
-	 * BCP-47 in, lowercase package suffix out: `es-ES` → `es-es`. The workspace directory, the package name and every
-	 * register use this form. the original casing is kept only for the model card's `locale` field, which is the one
-	 * place the tag is a tag rather than an identifier.
+	 * BCP-47 in, lowercase slug out: `es-ES` → `es-es`.
+	 *
+	 * The slug is used for directories, package names, and registrations.
+	 * Original casing is kept only in `model-card.json` (`locale`).
 	 */
 	const localeTag = options.locale
 	const slug = localeTag.toLowerCase()
@@ -102,9 +86,7 @@ export async function scaffoldWeightsOverlay(
 	}
 
 	/**
-	 * Read the root version rather than a sibling package's. `prepare-version` refuses to bump a tree that is not
-	 * version-synced, so a new workspace must be born at the root version — the v8.4.0 bdc/filer drift is what that guard
-	 * exists to catch.
+	 * Use the root version so new workspaces stay version-synced.
 	 */
 	const rootVersion = await readPackageJSON<{ version: string }>(repoPath("package.json")).then((res) => res.version)
 
@@ -117,16 +99,16 @@ export async function scaffoldWeightsOverlay(
 			description: `${localeTag} weights overlay for mailwoman — data-only; shares the base model with ${basePackage}.`,
 			license: "AGPL-3.0",
 			type: "module",
-			// `directory` names this package. It is the field that has been wrong every time an overlay was
-			// created by copying a sibling.
+			// `directory` names this package.
+			// It is the field that has been wrong every time an overlay was created by copying a sibling.
 			repository: {
 				type: "git",
 				url: "https://github.com/sister-software/mailwoman.git",
 				directory: `packages/neural-weights-${slug}`,
 			},
-			// `!scripts/**` keeps the dev linker out of the tarball. It imports the shared builder by
-			// relative path, which fails after unpacking — and a data-only overlay has no use
-			// for a dev script anyway.
+			// `!scripts/**` keeps the dev linker out of the tarball.
+			// It imports the shared builder by relative path, which fails after unpacking,
+			// and a data-only overlay has no use for a dev script anyway.
 			files: [
 				"model-card.json",
 				artifact,
@@ -138,7 +120,8 @@ export async function scaffoldWeightsOverlay(
 				"!scripts/**",
 			],
 			dependencies: { [basePackage]: "workspace:*" },
-			// The dev linker imports the shared builder. knip refuses an import no manifest declares.
+			// The dev linker imports the shared builder.
+			// Knip refuses an import no manifest declares.
 			devDependencies: { "@mailwoman/resolver-wof-sqlite": "workspace:*" },
 			mailwoman: { baseWeights: basePackage },
 		},
@@ -158,10 +141,8 @@ export async function scaffoldWeightsOverlay(
 		".npmignore"
 	)
 
-	// The dev linker, emitted rather than copied. This step used to be a printed instruction reading
-	// "copy the closest sibling's build block", and that is precisely how es-es and it-it came to ship
-	// de-de's docstring — describing German addresses, in packages whose code was correct. Generating it
-	// leaves nothing to copy. the magnitudes below are placeholders the author is told to calibrate.
+	// Generate the dev linker instead of copying from another locale.
+	// Placeholder magnitudes below should be calibrated.
 	await writeLocalTextFile(
 		base
 			? `/**
@@ -243,8 +224,9 @@ await materializeDevOverlay({
 	)
 
 	/**
-	 * Insert `entry` into a JSON array-valued key, immediately after `after`, preserving tab indentation. Returns false
-	 * when the entry is already present so re-running the command is a no-op rather than a duplicate.
+	 * Add `entry` to a JSON string array right after `findAfter`.
+	 *
+	 * @returns `false` if the entry already exists.
 	 */
 	async function registerInJSONArray(file: string, findAfter: string, entry: string): Promise<boolean> {
 		const path = repoPath(file)
@@ -259,8 +241,8 @@ await materializeDevOverlay({
 
 	const registered: string[] = []
 
-	// 1. Root workspaces. The field is `packages/*` plus literals, so a new overlay directory is covered by the glob
-	//    the moment it exists. a literal entry is only written when no pattern already names the directory.
+	// 1. Root workspaces.
+	// Add only if no existing workspace pattern already covers this directory.
 	const rootPath = repoPath("package.json")
 	const rootPkg = await readLocalJSONFile<{ workspaces: string[] }>(rootPath)
 
@@ -283,7 +265,7 @@ await materializeDevOverlay({
 		registered.push(".release-it.json")
 	}
 
-	// 3. release.config.json: the Latin `locales` list, or the family's `overlays` list.
+	// 3. release.config.json: update `locales` or `charWeights.<base>.overlays`.
 	const cfgPath = repoPath("release.config.json")
 	const cfgText = await readLocalTextFile(cfgPath)
 
@@ -297,7 +279,7 @@ await materializeDevOverlay({
 
 		if (!(family.overlays ??= []).includes(slug)) {
 			family.overlays.push(slug)
-			await writeLocalTextFile(prettyJSON(cfg), cfgPath)
+			await writeLocalJSONFile(cfg, cfgPath)
 			registered.push(`release.config.json charWeights.${base}.overlays`)
 		}
 	} else if (!cfgText.includes(`"${slug}"`)) {
@@ -336,5 +318,5 @@ await materializeDevOverlay({
 	log(`  - the docstring's "what this index is inert without", written for ${slug} specifically`)
 	log(`  - delta / transitionBeta, which are every other overlay's magnitudes until measured`)
 
-	return { packageDir: String(pkgDir), packageName, version: rootVersion, artifact, registered }
+	return { packageDir: pkgDir, packageName, version: rootVersion, artifact, registered }
 }

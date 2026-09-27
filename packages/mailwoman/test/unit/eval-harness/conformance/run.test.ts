@@ -5,7 +5,7 @@
  *   The conformance runner's three refusals and its failure line.
  *
  *   `undecidable` must not hold, an empty suite must not pass, and both sides of a law must be observed
- *   independently — a fixture whose base and variant are the same string is the identity law, and answering
+ *   independently. A fixture whose base and variant are the same string is the identity law, and answering
  *   its second side from a cache would turn the strongest nondeterminism check available into a tautology.
  *
  *   `gauntletObserver` is checked against a hand-built `GeocodeResult` so the claim "this runs through the
@@ -40,7 +40,9 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 /**
- * An observer that answers from a per-query table and counts its calls. Absent queries answer with an empty parse.
+ * An observer that answers from a per-query table and counts its calls.
+ *
+ * Absent queries answer with an empty parse.
  */
 function tableObserver(table: Record<string, Record<string, string>>): {
 	observe: ConformanceObserver
@@ -292,11 +294,13 @@ describe("gauntletObserver", () => {
 		expect(outcome.result.tier).toBe("address_point")
 		expect(outcome.result.country).toBe("United Kingdom")
 		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
-		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace, so a shape-carrying
-		// observer is the caller's to supply. Absent rather than empty.
+		// No mechanism account: the shape vocabulary lives in the private dev-mcp workspace,
+		// so a shape-carrying observer is the caller's to supply.
+		// Absent rather than empty.
 		expect(outcome.mechanismShapes).toBeUndefined()
-		// And no resolver trace either: the walk records nothing unless a sink asks it to, and this observer does
-		// not ask. Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
+		// And no resolver trace either: the walk records no resolver node unless a
+		// sink asks it to, and this observer does not ask.
+		// Absent rather than an empty walk — the distinction `candidate_admissibility` reads.
 		expect(outcome.candidates).toBeUndefined()
 	})
 })
@@ -380,8 +384,8 @@ describe("tracedGauntletObserver", () => {
 
 describe("the unmeasured verdict bucket", () => {
 	/**
-	 * A pair whose refined table sits at its window with a base candidate missing — the one shape that reads `unmeasured`
-	 * rather than deciding.
+	 * A pair whose refined table sits at its window with a base candidate missing.
+	 * The one shape that reads `unmeasured` rather than deciding.
 	 */
 	const unmeasuredObserver: ConformanceObserver = async (query) => ({
 		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
@@ -421,7 +425,7 @@ describe("the unmeasured verdict bucket", () => {
 		expect(summary.unmeasured).toHaveLength(1)
 		expect(summary.failures).toHaveLength(0)
 		expect(summary.decided).toBe(0)
-		// A suite that could measure nothing at all is not a clean suite — the same refusal an empty suite gets.
+		// A suite that could measure no row at all is not a clean suite — the same refusal an empty suite gets.
 		expect(summary.pass).toBe(false)
 	})
 

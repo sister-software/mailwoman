@@ -1,11 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   Derived from `tokenization/normalizer.js` in Pelias Parser, MIT, copyright (c) 2019 Pelias
+ *   Contributors. `THIRD_PARTY_NOTICES.md` in this package carries the MIT notice that covers it.
+ */
+
 import regenerate from "regenerate"
 
 /**
- * A pattern matching combining diacritical marks, variation selectors, and other characters that are often used in text
- * normalization.
+ * A pattern matching combining diacritical marks, variation selectors, and other
+ * characters that are often used in text normalization.
  */
 const CombiningDiacriticalPattern = regenerate()
 	.add(0x20_0d) // zero WIDTH JOINER (U+200D)

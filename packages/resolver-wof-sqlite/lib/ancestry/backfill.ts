@@ -28,7 +28,7 @@
  *
  *   A place whose `wof:hierarchy` genuinely stops short is not a candidate and needs no repair: the
  *   source is the authority on what a place should have. American Samoa's localities, for instance,
- *   have `{country_id, locality_id}` and no region in WOF itself — the artifact matching that is
+ *   have `{country_id, locality_id}` and no region in WOF itself. The artifact matching that is
  *   correct rather than truncated.
  *
  *   The authoritative hierarchy is in the source geojson: `wof:hierarchy` is an array of branches,
@@ -41,18 +41,19 @@
  *   `scripts/backfill-ancestors-from-hierarchy.ts` is a thin CLI over the same function for ad-hoc
  *   repair of an already-built DB. Idempotent by the per-pair existence check rather than by the candidate
  *   test: each (id, ancestor_id) is inserted at most once, so a second run over the same DB adds
- *   nothing.
+ *   no row.
  */
 
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, resolvePath, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { WOFDatabase } from "#schema"
 
 /**
- * Genuinely top-level placetypes — they never have (or need) an ancestor, so skip them.
+ * Genuinely top-level placetypes.
+ * They never have (or need) an ancestor, so skip them.
  */
 const TOP_PLACETYPES = new Set(["country", "continent", "empire", "ocean", "marinearea", "planet"])
 
@@ -66,22 +67,24 @@ export interface AncestryBackfillResult {
 	 */
 	rowsAdded: number
 	/**
-	 * Candidates whose source geojson could not be found (non-WOF backfilled places, or repos not present locally) —
-	 * skipped rather than an error.
+	 * Candidates whose source geojson could not be found
+	 * (non-WOF backfilled places, or repos not present locally) — skipped rather than an error.
 	 */
 	noGeojson: number
 }
 
 /**
- * Discover the `data` directories under a WOF repos root that hold attached geojson, e.g.
- * `<root>/whosonfirst-data/whosonfirst-data-admin-us/data`. Resolves an id to its geojson via these roots. Accepts both
- * the nested lab layout (a `whosonfirst-data` group dir holding the admin repos) and a flat layout (admin repos
- * directly under the root); searches at most two directory levels deep.
+ * Discover the `data` directories under a WOF repos root that hold attached geojson,
+ * e.g. `<root>/whosonfirst-data/whosonfirst-data-admin-us/data`.
+ *
+ * Resolves an id to its geojson via these roots.
+ * Accepts both the nested lab layout (a `whosonfirst-data` group dir holding the admin repos)
+ * and a flat layout (admin repos directly under the root); searches at most two directory levels deep.
  */
-export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<string[]> {
-	const roots: string[] = []
+export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promise<PathBuilder[]> {
+	const roots: PathBuilder[] = []
 
-	const visit = async (dir: string, depth: number): Promise<void> => {
+	const visit = async (dir: PathBuilder, depth: number): Promise<void> => {
 		if (depth > 2) return
 
 		let names: string[]
@@ -95,7 +98,7 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 		}
 
 		for (const name of names) {
-			const child = join(dir, name)
+			const child = dir(name)
 
 			if (name === "data") {
 				roots.push(child)
@@ -105,15 +108,17 @@ export async function discoverAdminDataRoots(reposRoot: PathBuilderLike): Promis
 		}
 	}
 
-	await visit(resolvePath(reposRoot), 0)
+	await visit(PathBuilder.from(reposRoot), 0)
 
 	return roots
 }
 
-// `<placetype>_id` key → ancestor placetype. WOF hierarchy keys are e.g. region_id, county_id. Self
-// is filtered downstream by the `aid === id` check, so we do not special-case locality here: for a
-// locality candidate `locality_id` is self (dropped by aid===id), but for a neighbourhood candidate
-// `locality_id` is its parent locality — a real ancestor we must keep.
+// `<placetype>_id` key → ancestor placetype.
+// WOF hierarchy keys are e.g. region_id, county_id.
+// Self is filtered downstream by the `aid === id` check, so we do not special-case
+// locality here: for a locality candidate `locality_id` is self (dropped by aid===id),
+// but for a neighbourhood candidate `locality_id` is its parent locality.
+// A real ancestor we must keep.
 function placetypeFromKey(key: string): string | null {
 	if (!key.endsWith("_id")) return null
 
@@ -121,27 +126,34 @@ function placetypeFromKey(key: string): string | null {
 }
 
 /**
- * Insert missing ancestor rows for every place whose ancestry chain dead-ended before reaching a country, by reading
- * `wof:hierarchy` from its source geojson under `geojsonRoots` (see {@link discoverAdminDataRoots}). Runs inside a
- * single transaction. caller owns connection lifecycle (open, WAL checkpoint, close).
+ * Insert missing ancestor rows for every place whose ancestry chain dead-ended
+ * before reaching a country, by reading `wof:hierarchy` from its source geojson
+ * under `geojsonRoots` (see {@link discoverAdminDataRoots}).
  *
- * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base (`OVERTURE_ID_BASE`, 8e12) so the
- * backfill considers only real WOF places. Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy`
- * geojson, so probing them is pure waste: on a wide-coverage DB the country-less set is millions of Overture/GeoNames
- * leaf localities, and the per-candidate geojson probe across every repo root turns a seconds-long WOF-only pass into a
- * ~40-minute one (their ancestry comes from the parent_id closure rather than this backfill). Correctness-preserving —
- * the skipped rows would have `noGeojson`-skipped anyway. Omit `maxID` (default) for the legacy WOF-only DBs.
+ * Runs inside a single transaction.
+ * Caller owns connection lifecycle (open, WAL checkpoint, close).
+ *
+ * `opts.maxID` bounds the candidate scan to ids below it — pass the synthetic-id base
+ * (`OVERTURE_ID_BASE`, 8e12) so the backfill considers only real WOF places.
+ * Overture/GeoNames rows carry synthetic ids and have no `wof:hierarchy` geojson,
+ * so probing them is pure waste: on a wide-coverage DB the country-less set is
+ * millions of Overture/GeoNames leaf localities, and the per-candidate geojson probe
+ * across every repo root turns a seconds-long WOF-only pass into a ~40-minute one
+ * (their ancestry comes from the parent_id closure rather than this backfill).
+ *
+ * Correctness-preserving — the skipped rows would have `noGeojson`-skipped anyway.
+ * Omit `maxID` (default) for the legacy WOF-only DBs.
  */
 export async function backfillAncestorsFromHierarchy(
 	db: DatabaseClient<WOFDatabase>,
-	geojsonRoots: readonly string[],
+	geojsonRoots: readonly PathBuilderLike[],
 	opts: { maxID?: number } = {}
 ): Promise<AncestryBackfillResult> {
 	const maxID = opts.maxID ?? Number.MAX_SAFE_INTEGER
 
-	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring. The
-	// earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children that
-	// inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
+	// "No country-tier ancestor" is the dead-end signal at any depth — see the module docstring.
+	// The earlier "<= 1 ancestor row" test only caught the dead end's origin, never the children
+	// that inherit it (a child of a repaired -4 place has two rows: itself and that parent) (#1445).
 	// The id bound is stated first so SQLite prunes by the PK index before the not exists runs at all.
 	const candidateBase = db
 		.selectFrom("spr")
@@ -160,12 +172,12 @@ export async function backfillAncestorsFromHierarchy(
 
 	const candidates = await candidateBase.select(["id", "placetype"]).execute()
 
-	// Every candidate's existing ancestors in one query rather than an indexed read each. The widened
-	// candidate test made that per-candidate read the dominant cost of the pass, and the set is bounded:
-	// a candidate reaching this point has a handful of rows at most. The candidate set rides in as the
-	// same predicate re-issued as a subquery, never a materialized `IN (?, ?, …)` list — node:sqlite
-	// caps a statement at 32,766 bound variables and the wide-coverage build has 67,521 candidates
-	// (measured 2026-08-04).
+	// Every candidate's existing ancestors in one query rather than an indexed read each.
+	// The widened candidate test made that per-candidate read the dominant cost of the pass,
+	// and the set is bounded: a candidate reaching this point has a handful of rows at most.
+	// The candidate set rides in as the same predicate re-issued as a subquery, never a
+	// materialized `IN (?, ?, …)` list — node:sqlite caps a statement at 32,766 bound variables
+	// and the wide-coverage build has 67,521 candidates (measured 2026-08-04).
 	const alreadyPresent = new Map<number, Set<number>>()
 
 	for (const row of await db

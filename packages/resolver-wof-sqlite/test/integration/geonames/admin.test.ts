@@ -12,7 +12,6 @@ import { writeLocalTextFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { ingestGeonamesAliases } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
@@ -23,8 +22,8 @@ type Row = Record<string, string | number | null>
 let dir: TemporaryDirectory
 let db: DatabaseClient<WOFDatabase>
 
-// One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass, fcode, country, cc2,
-// admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
+// One GeoNames row: 19 tab-separated columns (id, name, ascii, alt, lat, lon, fclass,
+// fcode, country, cc2, admin1, admin2, admin3, admin4, pop, elev, dem, tz, mod).
 function row(over: Record<number, string>): string {
 	const f = new Array(19).fill("")
 
@@ -58,7 +57,7 @@ beforeAll(async () => {
 		}),
 	].join("\n")
 
-	await writeLocalFile(lines, dir.resolve("GE.txt"))
+	await writeLocalFile(lines, dir.path("GE.txt"))
 
 	db = DatabaseClient.temp<WOFDatabase>()
 
@@ -99,7 +98,8 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row
 
-	// Locality is parented to its region. the ancestor chain carries both region and country.
+	// Locality is parented to its region.
+	// The ancestor chain carries both region and country.
 	expect(loc.parent_id).toBe(region.id)
 
 	const ancestorIDs = db
@@ -120,7 +120,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 })
 
 test("default (no includeAdmin) stays localities-only with no admin rows — byte-stable", async () => {
-	await using db2 = DatabaseClient.temp<WOFDatabase>()
+	using db2 = DatabaseClient.temp<WOFDatabase>()
 
 	db2.exec(`CREATE TABLE spr (id INTEGER PRIMARY KEY, parent_id INTEGER, name TEXT, placetype TEXT, country TEXT,
 		 latitude REAL, longitude REAL, min_latitude REAL, min_longitude REAL, max_latitude REAL, max_longitude REAL,
@@ -136,8 +136,9 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
-	// No linkage — the point of the admin check. The self row is not linkage: `populateAncestors` writes
-	// one for every spr row, so withholding it just made the fold-on-copy path disagree with a full build
+	// No linkage — the point of the admin check.
+	// The self row is not linkage: `populateAncestors` writes one for every spr row,
+	// so withholding it just made the fold-on-copy path disagree with a full build
 	// by exactly the non-gap localities (#1514).
 	expect(
 		(db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE ancestor_placetype IN ('country','region')").get() as Row).n
@@ -166,7 +167,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 				14: "7012738",
 			}),
 		].join("\n"),
-		join(d, "HK.txt")
+		d("HK.txt")
 	)
 
 	using hk = DatabaseClient.temp<WOFDatabase>()
@@ -183,7 +184,8 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
-	// pcls is a country-level code. the fold must seat Hong Kong as the country (not skip it like pre-PCL*).
+	// pcls is a country-level code.
+	// The fold must seat Hong Kong as the country (not skip it like pre-PCL*).
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)

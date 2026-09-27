@@ -46,14 +46,15 @@ vi.mock("onnxruntime-web/webgpu", () => {
  */
 let capturedConfig: { postcodeAnchorLookup?: Map<string, unknown> } | null = null
 
-// The real tokenizer needs a valid SentencePiece model. stub the load (we feed dummy bytes).
+// The real tokenizer needs a valid SentencePiece model.
+// Stub the load (we feed dummy bytes).
 vi.mock("@mailwoman/neural/tokenizer", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/tokenizer")>()),
 	MailwomanTokenizer: { loadFromBase64: vi.fn(async () => ({ tokenizerStub: true })) },
 }))
 
-// Capture-only stub: the real classifier needs the real tokenizer + label wiring. We only care
-// that it is constructed (the load reached the end) and what postcode lookup it received.
+// Capture-only stub: the real classifier needs the real tokenizer + label wiring.
+// We only care that it is constructed (the load reached the end) and what postcode lookup it received.
 vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	...(await importOriginal<typeof import("@mailwoman/neural/classifier")>()),
 	NeuralAddressClassifier: class {
@@ -63,18 +64,19 @@ vi.mock("@mailwoman/neural/classifier", async (importOriginal) => ({
 	},
 }))
 
-// vi.resetModules() before these imports: the root vitest config runs `isolate: false` (one
-// shared module graph per worker), so `./web-loader.ts` and its dependencies may already be
-// cached — evaluated without this file's mocks by an earlier file. A cached module never
-// re-evaluates, so the mock factories above would be skipped and the real tokenizer/classifier
-// would try to parse the dummy fixture bytes (SentencePiece ParseFromArray failure). resetModules
-// forces re-evaluation against the registered mocks — and reset again on the way out so the next
-// file in this fork never inherits our mocked modules from the cache.
+// vi.resetModules() before these imports: the root vitest config runs `isolate: false`
+// (one shared module graph per worker), so `./web-loader.ts` and its dependencies may
+// already be cached — evaluated without this file's mocks by an earlier file.
+// A cached module never re-evaluates, so the mock factories above would be skipped
+// and the real tokenizer/classifier would try to parse the dummy fixture bytes
+// (SentencePiece ParseFromArray failure). resetModules forces re-evaluation against
+// the registered mocks, and reset again on the way out so the next file in this
+// fork never inherits our mocked modules from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declarations + reset. `postcode-binary-resolver.ts` is not mocked, so the
-// binaries we build here decode through the real reader.
+// Import after the mock declarations + reset.
+// `postcode-binary-resolver.ts` is not mocked, so the binaries we build here decode through the real reader.
 const { serializePostcodeBinary } = await import("@mailwoman/neural/postcode")
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
@@ -98,9 +100,9 @@ const MODEL_URL = "https://cdn.example/mailwoman/v9/model.onnx"
 const TOKENIZER_URL = "https://cdn.example/mailwoman/v9/tokenizer.model"
 
 /**
- * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses carry real bytes: a decodable
- * single-record postcode binary for the `.bin` URLs, dummy bytes for model/tokenizer (the ORT session + tokenizer are
- * mocked, so the content is irrelevant).
+ * A fake `fetch` whose per-URL status is decided by `statusFor`. 200 responses carry real
+ * bytes: a decodable single-record postcode binary for the `.bin` URLs, dummy bytes for
+ * model/tokenizer (the ORT session + tokenizer are mocked, so the content is irrelevant).
  */
 function makeFetch(statusFor: (url: string) => number): typeof fetch {
 	return async (input) => {
@@ -158,7 +160,8 @@ describe("loadNeuralClassifierFromURLs — optional postcode-anchor binary toler
 		// ready fires: the load resolved and constructed a classifier.
 		expect(result.classifier).toBeDefined()
 
-		// The 200 binary's anchors are present. the 404 one is absent.
+		// The 200 binary's anchors are present.
+		// The 404 one is absent.
 		const lookup = capturedConfig?.postcodeAnchorLookup
 		expect(lookup).toBeInstanceOf(Map)
 		expect(lookup!.has("10001")).toBe(true) // US survived

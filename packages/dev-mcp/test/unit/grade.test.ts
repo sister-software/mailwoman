@@ -79,7 +79,8 @@ describe("gradeRow", () => {
 	const check = (_c: unknown, r: GauntletResult): string[] => (r.locality === "Paris" ? [] : ["locality wrong"])
 
 	it("grades by issue COUNT, so swapping one wrong value for another is neutral", () => {
-		// A text diff would call this a change. The grade is unmoved, and the grade is what a verdict rests on.
+		// A text diff would call this a change.
+		// The grade is unmoved, and the grade is what a verdict rests on.
 		const graded = gradeRow(
 			seed({ expectComponents: { locality: "Paris" } }),
 			result({ locality: "Lyon" }),
@@ -110,8 +111,8 @@ describe("gradeRow", () => {
 	})
 
 	it("marks a row with no expectations ungradeable, never neutral", () => {
-		// The distinction the 2026-08-15 failure turned on: an ungradeable row added to the neutral pile inflates the
-		// denominator of a verdict it was never part of.
+		// The distinction the 2026-08-15 failure turned on: an ungradeable row added to the
+		// neutral pile inflates the denominator of a verdict it was never part of.
 		const graded = gradeRow(seed(), result(), result(), check)
 
 		expect(graded.grade).toBe("ungradeable")

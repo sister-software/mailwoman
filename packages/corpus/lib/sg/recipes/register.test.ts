@@ -7,7 +7,6 @@ import {
 	isBuildingName,
 	renderSGRegister,
 	sgRegisterRecipe,
-	titleCaseSGName,
 } from "@mailwoman/corpus/sg/recipes/register"
 import { type RecipeRow, recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
@@ -35,14 +34,6 @@ const ROWS = [
 	{ street: "NO POSTCODE ROAD", number: "1", unit: "NIL", postcode: "", locality: "Singapore" },
 	{ street: "BAD NUMBER ROAD", number: "S-N", unit: "NIL", postcode: "123456", locality: "Singapore" },
 ]
-
-describe("titleCaseSGName", () => {
-	it("title-cases the register's upper-case names and leaves a mixed-case value alone", () => {
-		expect(titleCaseSGName("OLD CHOA CHU KANG ROAD")).toBe("Old Choa Chu Kang Road")
-		expect(titleCaseSGName("NATIONAL SHOOTING CENTRE")).toBe("National Shooting Centre")
-		expect(titleCaseSGName("Ang Mo Kio Ave 3")).toBe("Ang Mo Kio Ave 3")
-	})
-})
 
 describe("abbreviateSGStreet", () => {
 	it("abbreviates the generic wherever it sits and leaves a street without one alone", () => {
@@ -146,7 +137,7 @@ describe("sg-register recipe", () => {
 			expect(row.country).toBe("SG")
 			expect(row.locale).toBe("en-SG")
 			expect(row.source).toBe("synth-sg-register")
-			expect(row.synth_method).toMatch(/^sg-register:(official|block|bracket_postcode|building_led)$/u)
+			expect(row.recipe).toMatch(/^sg-register:(official|block|bracket_postcode|building_led)$/u)
 			expect(row.tokens?.length).toBe(row.labels?.length)
 			expect(row.labels?.filter((label) => label.endsWith("house_number"))).toHaveLength(1)
 			expect(row.labels?.filter((label) => label.endsWith("postcode"))).toHaveLength(1)

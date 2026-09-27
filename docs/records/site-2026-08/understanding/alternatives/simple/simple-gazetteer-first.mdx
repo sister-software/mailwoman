@@ -10,7 +10,7 @@ tags:
 
 # Gazetteer-first geocoding
 
-The most radical simplification: don't parse at all. Treat the input as an information retrieval problem. Tokenize the string, try every token and n-gram against a gazetteer index, return the best placetype match. The parser is a search engine. The resolver is the search result.
+The most radical simplification skips parsing entirely and treats the input as an information retrieval problem. The geocoder tokenizes the string, looks up every token and n-gram in a gazetteer index, and returns the best placetype match. A search engine takes the place of the parser, and the top search result is the resolved place.
 
 ## The approach
 
@@ -19,33 +19,33 @@ This is the architecture behind [Airmail](https://github.com/ellenhp/airmail), t
 1. **Tokenize the input.** Split on whitespace and punctuation. Produce every n-gram up to some reasonable limit (trigrams are typically sufficient for place names).
 2. **Query a gazetteer index.** The index contains every place name from Who's On First, OpenStreetMap, GeoNames, or another gazetteer. Each entry has a name, placetype, parent chain, and coordinate. The index supports prefix search and fuzzy matching.
 3. **Rank results.** Score each hit by: name match quality (exact > prefix > fuzzy), placetype priority (locality > region > country, or configurable), population (larger places score higher, all else equal), and token coverage (an n-gram that covers more of the input scores higher).
-4. **Return the best placetype match.** The result is a place with a placetype, coordinate, and parent chain. The system does not distinguish between "this token is a street" and "this token is a locality" — it only knows "this n-gram matches a place in the index."
+4. **Return the best placetype match.** The result is a place with a placetype, coordinate, and parent chain. The system does not distinguish between "this token is a street" and "this token is a locality." It only knows that an n-gram matches a place in the index.
 
-It avoids every parsing problem by not parsing: the gazetteer knows what places exist, the search engine finds which place names appear in the input, and the ranker picks the best one.
+Because it never parses, the approach avoids every parsing problem. The gazetteer knows which places exist, the search engine finds which place names appear in the input, and the ranker picks the best one.
 
 ## When it works
 
-- **You only need administrative places.** Country, region, locality, neighborhood — these are in the gazetteer. Streets, building numbers, and venue names are not (or are in a different index). If your use case is "which city is this in?", gazetteer-first works.
-- **You need global coverage.** The gazetteer covers every country. The search engine handles every script (the index stores UTF-8). No per-country regexes, no per-locale rules, no language-specific heuristics. Add a new country by adding its gazetteer data.
-- **You have ambiguous input.** `Springfield` returns 34 candidates, ranked by population. The user or downstream system picks. The search engine doesn't need to resolve ambiguity — it surfaces it.
-- **You want to avoid the parsing problem entirely.** No token-type classification, no BIO labels, no CRF, no solver, no policy registry. Just a search index and a ranking function. The architecture is a few hundred lines of code plus a pre-built index.
-- **Your addresses are short and place-name-heavy.** `Paris, France` — two tokens, both in the index. `West 26th Street, New York, NY 10010` — several tokens, some in the index (New York, NY), some not (West, 26th, Street, 10010). The more of the input that is place names, the better this works.
+- **You only need administrative places.** Countries, regions, localities, and neighborhoods are in the gazetteer. Streets, building numbers, and venue names are absent or live in a different index. If your question is "which city is this in?", gazetteer-first works.
+- **You need global coverage.** The gazetteer covers every country, and the search engine handles every script because the index stores UTF-8. The system needs no per-country regexes, per-locale rules, or language-specific heuristics. You add a new country by adding its gazetteer data.
+- **You have ambiguous input.** `Springfield` returns 34 candidates, ranked by population, and the user or downstream system picks one. The search engine surfaces the ambiguity instead of resolving it.
+- **You want to avoid the parsing problem entirely.** The system has no token-type classification, BIO labels, CRF, solver, or policy registry. It needs only a search index and a ranking function, which amount to a few hundred lines of code plus a pre-built index.
+- **Your addresses are short and place-name-heavy.** `Paris, France` has two tokens, and both are in the index. `West 26th Street, New York, NY 10010` has several tokens. Some are in the index (New York, NY) and some are not (West, 26th, Street, 10010). The larger the share of place names in the input, the better this works.
 
 ## What you lose
 
-- **Streets and building numbers.** `123 Main St, Springfield, IL` — the gazetteer finds "Springfield, IL." "123 Main St" is not a place name, so it's ignored. The geocoder returns the city centroid. If you need street-level or building-level accuracy, this architecture does not provide it.
-- **Venue names.** `Empire State Building, NYC` — the gazetteer finds "NYC." "Empire State Building" is not a place name in most gazetteers (WOF has some landmarks, but coverage is sparse). The geocoder returns the city centroid rather than the building.
-- **Component-level output.** The result is "Springfield, IL" — a place rather than a parse. The system does not tell you which tokens were the locality, which were the region, and which were noise. If you need structured output (`{locality: Springfield, region: IL, street: Main St}`), you need a parser.
-- **Token coverage as a signal.** `Paris, France` and `Paris, Texas` both match a locality. The gazetteer returns both. The ranker picks Paris, France (higher population). If the input also contains `Texas`, the ranker should boost Paris, Texas — but only if the ranker knows that `Texas` is a region that contains Paris, Texas. Gazetteer-first architectures can add this as a post-ranking filter, but it's not part of the core approach.
-- **Addresses that are not place names.** `50 miles West of Socorro, New Mexico` — the gazetteer finds "Socorro, New Mexico." "50 miles West of" is not a place name and is dropped. The geocoder returns Socorro, which is 50 miles wrong. Directional descriptions are invisible to the gazetteer.
+- **Streets and building numbers.** For `123 Main St, Springfield, IL`, the gazetteer finds "Springfield, IL." "123 Main St" is not a place name, so the geocoder ignores it. The geocoder returns the city centroid. If you need street-level or building-level accuracy, this architecture does not provide it.
+- **Venue names.** For `Empire State Building, NYC`, the gazetteer finds "NYC." "Empire State Building" is not a place name in most gazetteers (WOF has some landmarks, but coverage is sparse). The geocoder returns the city centroid rather than the building.
+- **Component-level output.** The result is a place ("Springfield, IL") rather than a parse. The system does not tell you which tokens were the locality, which were the region, and which were noise. If you need structured output (`{locality: Springfield, region: IL, street: Main St}`), you need a parser.
+- **Token coverage as a signal.** `Paris, France` and `Paris, Texas` both match a locality. The gazetteer returns both. The ranker picks Paris, France (higher population). If the input also contains `Texas`, the ranker should boost Paris, Texas, but it can do so only if it knows that `Texas` is a region containing Paris, Texas. Gazetteer-first architectures can add this as a post-ranking filter, but the core approach lacks it.
+- **Addresses that are not place names.** For `50 miles West of Socorro, New Mexico`, the gazetteer finds "Socorro, New Mexico." "50 miles West of" is not a place name and is dropped. The geocoder returns Socorro, which is 50 miles wrong. Directional descriptions are invisible to the gazetteer.
 
 ## Where Mailwoman fits
 
-Mailwoman and gazetteer-first architectures are investigating the same problem from opposite directions. Gazetteer-first says "skip parsing, search the index." Mailwoman says "parse first, then search the index with structured queries." Both converge on the same resolver — a WOF SQLite (or tantivy) index queried with place names.
+Mailwoman and gazetteer-first architectures are investigating the same problem from opposite directions. Gazetteer-first says "skip parsing, search the index." Mailwoman says "parse first, then search the index with structured queries." Both converge on the same kind of resolver: a WOF SQLite (or tantivy) index queried with place names.
 
-Mailwoman's parser produces structured components (`locality=Springfield, region=IL`) that the resolver uses for constrained lookup. The gazetteer-first approach produces unstructured n-gram matches that the ranker evaluates. The structured approach is more precise when the parser is correct; the unstructured approach is more resilient when the parser is wrong.
+Mailwoman's parser produces structured components (`locality=Springfield, region=IL`) that the resolver uses for constrained lookup. The gazetteer-first approach produces unstructured n-gram matches that the ranker evaluates. The structured approach is more precise when the parser is correct. The unstructured approach is more resilient when the parser is wrong.
 
-A hybrid is possible: use gazetteer-first as a fallback when the parser's confidence is low. If the parser returns `locality=??? confidence=0.3`, fall back to gazetteer-first on the raw input and return the best placetype match. The parser handles the well-formed addresses; the gazetteer handles the messy ones.
+A hybrid could use gazetteer-first as a fallback when the parser's confidence is low. If the parser returns `locality=??? confidence=0.3`, the system falls back to gazetteer-first on the raw input and returns the best placetype match. The parser handles the well-formed addresses, and the gazetteer handles the messy ones.
 
 ## See also
 

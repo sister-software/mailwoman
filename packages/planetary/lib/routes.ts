@@ -4,7 +4,7 @@
 /**
  *   The app's routes, read from `location.pathname` with no router. Cloudflare's SPA fallback serves `index.html`
  *   for every path, so the app decides what a path means. a path it does not know is a not-found view, so a stale
- *   link fails visibly rather than showing the globe as if nothing were wrong.
+ *   link fails visibly rather than showing the globe as if no error had occurred.
  */
 
 import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
@@ -12,8 +12,8 @@ import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
 import type { PlanetaryView } from "#bodies/config"
 
 /**
- * The two views: the globe at `/`, and the globe with one named feature selected at `/feature/<id>`, where the id is
- * the pipeline's stable feature id.
+ * The two views: the globe at `/`, and the globe with one named feature selected at
+ * `/feature/<id>`, where the id is the pipeline's stable feature id.
  */
 export type PlanetaryRoute = { kind: "map" } | { kind: "feature"; id: string }
 
@@ -42,7 +42,9 @@ export function pathForRoute(route: PlanetaryRoute): string {
 }
 
 /**
- * A viewport carried in the query as `?lon=&lat=&z=`, or null when any of the three is absent or not a finite number.
+ * A viewport carried in the query as `?lon=&lat=&z=`, or null when any of the
+ * three is absent or not a finite number.
+ *
  * All three or none: a partial viewport is not a viewport.
  */
 export function viewportFromSearch(search: string): PlanetaryView | null {

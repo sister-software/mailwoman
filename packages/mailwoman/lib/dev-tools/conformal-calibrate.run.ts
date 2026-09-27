@@ -40,13 +40,13 @@
  *   [--model neural-weights-en-us/model.onnx]\
  *   [--tokenizer neural-weights-en-us/tokenizer.model]\
  *   [--model-card neural-weights-en-us/model-card.json]\
- *   [--wof $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db,…]\
+ *   [--wof $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db,…]\
  *   [--cal-frac 0.5] [--alpha 0.9] [--seed 20260614]
  *
- *   Do not change the resolver or parser — this script only reads stamped metadata.
+ *   Do not change the resolver or parser. This script only reads stamped metadata.
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { makeGlibcLcgFloat64, shuffleBy } from "@mailwoman/core/random"
@@ -54,8 +54,9 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial"
-import { JSONSpliterator } from "spliterator"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 /**
@@ -81,7 +82,6 @@ const { values: rawValues } = parseArguments({
 		tokenizer: { type: "string" },
 		wof: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 
@@ -99,11 +99,11 @@ const values = rawValues as {
 	wof?: string
 }
 
-//#region CLI helpers
+// #region CLI helpers
 
-//#endregion
+// #endregion
 
-//#region Conformal quantile
+// #region Conformal quantile
 
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
@@ -117,31 +117,32 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-//#endregion
+// #endregion
 
-//#region Seeded deterministic shuffle — a reproducibility PIN
+// #region Seeded deterministic shuffle — a reproducibility PIN
 
 /**
- * Keep this exact glibc-constant LCG stream: the published conformal thresholds were selected under it, and
- * `@mailwoman/core/utils`' `makeLcg` uses different constants — swapping streams re-splits calibration/test and
- * silently moves Q̂.
+ * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
+ * selected under it, and `@mailwoman/core/utils`' `makeLcg` uses different constants —
+ * swapping streams re-splits calibration/test and silently moves Q̂.
  */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// The sampler takes the raw state modulo the bound rather than scaling a float, which is why this reaches for
-	// `shuffleBy` and not `shuffleWith`. Both are the same walk. the published conformal thresholds were selected under
-	// this sampler, so it stays exactly as it is.
+	// The sampler takes the raw state modulo the bound rather than scaling a float,
+	// which is why this reaches for `shuffleBy` and not `shuffleWith`.
+	// Both are the same walk.
+	// The published conformal thresholds were selected under this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
 	return out
 }
 
-//#endregion
+// #endregion
 
-//#region Tree walkers — read STAMPED metadata, never alter resolution
+// #region Tree walkers — read STAMPED metadata, never alter resolution
 
 /**
  * Fixed floor for an exact situs point (building-centroid precision).
@@ -159,9 +160,10 @@ interface StreetHit {
 }
 
 /**
- * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`: those answer only a coordinate, and
- * this walk also needs the stamped `resolution_tier` and the interpolation `uncertainty_m` to price the claimed radius
- * — neither of which the shared readers carry.
+ * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`:
+ * those answer only a coordinate, and this walk also needs the stamped `resolution_tier`
+ * and the interpolation `uncertainty_m` to price the claimed radius.
+ * Neither of which the shared readers carry.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -190,9 +192,9 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 	return null
 }
 
-//#endregion
+// #endregion
 
-//#region Holdout row type (matches /tmp/ood-truth.jsonl)
+// #region Holdout row type (matches /tmp/ood-truth.jsonl)
 
 interface HoldoutRow {
 	input: string
@@ -202,14 +204,16 @@ interface HoldoutRow {
 	state?: string
 }
 
-//#endregion
+// #endregion
 
-//#region Main
+// #region Main
 
 /**
- * Build the parse → resolve cascade this calibration measures. Mirrors `oa-resolver-eval.ts`'s construction exactly —
- * the whole point of a conformal threshold is that it was fitted against the same stack that will later apply it, so
- * the two must not drift.
+ * Build the parse → resolve cascade this calibration measures.
+ *
+ * Mirrors `oa-resolver-eval.ts`'s construction exactly.
+ * The whole point of a conformal threshold is that it was fitted against the same
+ * stack that will later apply it, so the two must not drift.
  */
 async function buildCascade(paths: {
 	modelPath: string
@@ -254,12 +258,10 @@ async function main(): Promise<void> {
 	const tokenizerPath = values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 
-	const wofPaths = (
-		values["wof"] ||
-		`${dataRootPath("wof", "admin-global-priority.db")},${dataRootPath("wof", "postcode-locality-intl.db")}`
-	)
-		.split(",")
-		.map((s) => s.trim())
+	const wofPaths = TextSpliterator.from(
+		values["wof"] || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`,
+		{ delimiter: "," }
+	).toArray()
 
 	const calFrac = Number(values["cal-frac"] || "0.5")
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level
@@ -360,16 +362,16 @@ async function main(): Promise<void> {
 		byTier[r.tier].push(r)
 	}
 
-	// Median calibrated radius = median(claimedRadiusM) × Q  per tier on all resolved rows
+	// Median calibrated radius = median(claimedRadiusM) × Q per tier on all resolved rows
 	const tierStats = tiers.map((t) => {
 		const innerRows = byTier[t]
 
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows rather than the outer holdout `rows` — the previous lax scripts tsconfig let the wrong
-		// array through and the per-tier medians silently printed NaN (the headline Q/coverage were
-		// computed on the correct splits. only this breakdown was dead).
+		// innerRows rather than the outer holdout `rows`.
+		// The previous lax scripts tsconfig let the wrong array through and the per-tier medians silently printed
+		// NaN (the headline Q/coverage were computed on the correct splits. Only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
@@ -479,7 +481,7 @@ async function main(): Promise<void> {
 	console.log(hr)
 
 	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here. interp may lack sufficient rows).
+	// Characterise the dominant tier (address_point here. Interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 
@@ -537,4 +539,4 @@ async function main(): Promise<void> {
 
 runIfScript(import.meta, main)
 
-//#endregion
+// #endregion

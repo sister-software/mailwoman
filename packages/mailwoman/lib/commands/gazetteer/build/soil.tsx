@@ -2,31 +2,22 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build soil` — acquire nrcs's ssurgo survey areas for a region and build the sealed
- *   `soil.db` layer. Thin wiring only: the catalogue read, the downloads, the metadata, the build and the
- *   verification all live in `@mailwoman/soil/sdk`, so each stays unit-testable without Ink or the network
- *   in the loop.
+ *   `mailwoman gazetteer build soil` — acquire NRCS's SSURGO survey areas for a region and build the
+ *   sealed `soil.db` layer. Thin wiring only: the catalogue read, the downloads, the metadata, the build
+ *   and the verification all live in `@mailwoman/soil/sdk`.
  *
- *   the region is A survey-area prefix, which is the authority'S own unit. `--region IA` builds every Iowa
- *   survey area; `--area IA153` builds one. That mirrors `gazetteer build bdc --state`, and it is what makes
- *   the manifest's declared extent and the coverage rows describe the same set — a list of published survey
- *   areas rather than "the United States".
+ *   `--region` names a survey-area prefix. The survey area is the authority's own unit, so `--region IA` builds
+ *   every Iowa survey area and `--area IA153` builds one. The manifest's declared extent and the coverage
+ *   rows then describe the same set of published survey areas rather than "the United States".
  *
- *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
- *   than a number argued to, and running it is a mode of its own because it produces a table rather than an
- *   artifact. It reports the `partial` share and the mean delineations per cell. the second number §4.7 asks
- *   for — the share of cells whose top class holds under half the cell — needs the attribute join and the
- *   area weighting, so it comes off the built artifact instead and rides in the build summary.
- *
- *   `--area` is the smoke rung. One real survey area, from the real archive, which verifies what fixtures
- *   structurally cannot: the shapefile's field names, that the `.prj` really resolves to epsg:4326, that the
- *   pipe-delimited export parses with its embedded newlines intact, that `mukey` joins spatial to tabular,
- *   and the seal.
+ *   `--measure-resolutions` measures instead of building. The index resolution is a measurement this layer takes rather
+ *   than a number argued to.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { Box, Text } from "ink"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -39,13 +30,13 @@ import {
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Coverage resolution. Res 6 matches what the POI and flood layers write, so a reader already keyed to another layer's
- * coverage cells finds these without knowing which build produced them.
+ * Res 6 matches what the POI and flood layers write, so a reader already keyed to another
+ * layer's coverage cells finds these without knowing which build produced them.
  */
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Index resolution, chosen from the measurement — see the workspace readme for the table and the reasoning.
+ * Index resolution, chosen from the measurement table in the workspace readme;
  * `--measure-resolutions` re-derives it.
  */
 const DEFAULT_INDEX_RESOLUTION = "9"
@@ -75,17 +66,15 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Both halves of the check, as the summary lines they produce.
- *
- * A function rather than an inline block because two modes reach it: the tail of a build, and `--verify-only` against
- * an artifact some earlier run sealed.
+ * Shared by the tail of a build and `--verify-only`, so both modes produce the same summary lines.
  */
 async function runVerification(
-	databasePath: string,
+	database: PathBuilder,
 	client: Parameters<typeof import("@mailwoman/soil/sdk").verifySoilDatabase>[0]["client"],
 	count?: number
 ): Promise<string[]> {
 	const { sampleAgreementPoints, verifySoilDatabase } = await import("@mailwoman/soil/sdk")
+	const databasePath = database.toString()
 
 	const points = sampleAgreementPoints(databasePath, count === undefined ? {} : { count })
 
@@ -108,7 +97,7 @@ async function runVerification(
 
 const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { soilDatabasePath } = await import("@mailwoman/soil/paths")
 
 		const {
 			acquireRegion,
@@ -131,12 +120,11 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const region = options.area ? options.area.toLowerCase() : prefix.toLowerCase()
 		const client = createSoilDataAccessClient()
 
-		// `--verify-only` checks an artifact that already exists and acquires nothing. A full-region build takes hours and
-		// seals its artifact before the check runs, so a check that could only run as the build's last step would cost a
-		// rebuild every time the check itself was worth re-running.
+		// `--verify-only` checks an existing artifact because a full-region build takes hours,
+		// so re-running the check must not cost a rebuild.
 		if (options.verifyOnly) {
 			return runVerification(
-				options.out ?? String(dataRootPath("soil", "soil.db")),
+				PathBuilder.from(options.out ?? soilDatabasePath("soil.db")),
 				client,
 				options.verifyPoints ? Number(options.verifyPoints) : undefined
 			)
@@ -145,7 +133,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const acquired = await acquireRegion({
 			client,
 			prefix,
-			cacheRoot: String(dataRootPath("soil", "cache", "archives")),
+			cacheRoot: soilDatabasePath("cache", "archives"),
 			onProgress: (message) => console.error(`  [acquire] ${message}`),
 		})
 
@@ -179,8 +167,8 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 
 		const coverageResolution = Number(options.coverageResolution)
 		const indexResolution = Number(options.indexResolution)
-		const out = options.out ?? String(dataRootPath("soil", "soil.db"))
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const out = PathBuilder.from(options.out ?? soilDatabasePath("soil.db"))
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
 		const buildCmd =
 			`mailwoman gazetteer build soil ${options.area ? `--area ${options.area}` : `--region ${prefix}`} ` +
@@ -189,7 +177,7 @@ const GazetteerBuildSoil: CommandComponent<typeof spec> = ({ options }) => {
 		const result = await buildSoilDatabase({
 			areas: acquired.areas,
 			region,
-			out,
+			out: out.toString(),
 			sourceVintage: acquired.sourceVintage,
 			buildCmd,
 			buildSHA,

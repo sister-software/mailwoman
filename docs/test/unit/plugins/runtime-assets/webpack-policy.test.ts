@@ -14,15 +14,19 @@ import { describe, expect, test } from "vitest"
 const docsDir = resolvePackagePath("@mailwoman/docs")
 
 /**
- * Directory subpaths whose barrel re-exports a Node-only sibling, and which the demo must therefore never import whole.
+ * Directory subpaths whose barrel re-exports a Node-only sibling, and
+ * which the demo must therefore never import whole.
  *
- * `@mailwoman/resolver-wof-sqlite/fst` carries `fst/freshness`, and `/street` carries `street/morphology-fst-loader`;
- * both reach `@mailwoman/core/fs`, and the package declares no `sideEffects`, so webpack cannot shake them out of the
- * client bundle. Enter through the leaf instead — `fst/deserialize-web`, `fst/autocomplete`, `street/normalize`.
+ * `@mailwoman/resolver-wof-sqlite/fst` carries `fst/freshness`, and `/street` carries
+ * `street/morphology-fst-loader`; both reach `@mailwoman/core/fs`, and the package
+ * declares no `sideEffects`, so webpack cannot shake them out of the client bundle.
+ * Enter through the leaf instead — `fst/deserialize-web`, `fst/autocomplete`, `street/normalize`.
  *
- * This is a cheap stand-in for a five-minute `docusaurus build`, which is otherwise the only thing that catches the
- * class. It was added after the prefix fold repointed four demo imports from those leaves onto the barrels and produced
- * 27 `'x' is not exported from 'node:fs/promises'` errors in CI — green unit suite, green typecheck, red build.
+ * This is a cheap stand-in for a five-minute `docusaurus build`, which is otherwise
+ * the only thing that catches the class.
+ * It was added after the prefix fold repointed four demo imports from those leaves
+ * onto the barrels and produced 27 `'x' is not exported from 'node:fs/promises'`
+ * errors in CI — green unit suite, green typecheck, red build.
  */
 const NODE_BACKED_BARRELS = ["@mailwoman/resolver-wof-sqlite/fst", "@mailwoman/resolver-wof-sqlite/street"]
 
@@ -34,7 +38,7 @@ describe("docs webpack policy", () => {
 	test("the demo enters browser-safe leaves, never a Node-backed barrel", async () => {
 		const offenders: string[] = []
 
-		for await (const file of browserSources(String(resolvePath(docsDir, "src")))) {
+		for await (const file of browserSources(resolvePath(docsDir, "src"))) {
 			const text = await readLocalTextFile(file)
 
 			for (const barrel of NODE_BACKED_BARRELS) {
@@ -48,14 +52,15 @@ describe("docs webpack policy", () => {
 	})
 
 	test("every package stylesheet the docs import is declared a side effect by its package", async () => {
-		// Webpack drops a bare `import "pkg/file.css"` when `pkg` declares `sideEffects: false`, and it does so
-		// silently: the page still builds and serves, with that stylesheet's rules missing. A package that ships
-		// a stylesheet must name it in its `sideEffects` array for the import to survive the production bundle.
+		// Webpack drops a bare `import "pkg/file.css"` when `pkg` declares `sideEffects: false`,
+		// and it does so silently: the page still builds and serves, with that stylesheet's rules missing.
+		// A package that ships a stylesheet must name it in its `sideEffects` array
+		// for the import to survive the production bundle.
 		const stylesheetImport = /import\s+"(@mailwoman\/([^/"]+))\/([^"]+[.]css)"/g
 		const offenders: string[] = []
 		const seen = new Set<string>()
 
-		for await (const file of browserSources(String(resolvePath(docsDir, "src")))) {
+		for await (const file of browserSources(resolvePath(docsDir, "src"))) {
 			const text = await readLocalTextFile(file)
 
 			for (const [, packageName, , stylesheet] of text.matchAll(stylesheetImport)) {

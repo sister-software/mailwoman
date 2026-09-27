@@ -26,13 +26,14 @@ import {
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL, EA_FLOOD_LAYER_NAME } from "@mailwoman/flood/vocabulary"
 import { rectangleRing } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 9
 const COVERAGE_RESOLUTION = 6
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildFloodResult
 let lookup: FloodZoneLookup
 
@@ -42,8 +43,8 @@ let lookup: FloodZoneLookup
 async function build(
 	features = fixtureFeatures(),
 	out = "flood.db"
-): Promise<{ path: string; result: BuildFloodResult }> {
-	const path = scratch.resolve(out)
+): Promise<{ path: PathBuilder; result: BuildFloodResult }> {
+	const path = scratch.path(out)
 
 	const built = await buildFloodDatabase({
 		source: fixtureSource(features),
@@ -105,9 +106,11 @@ describe("buildFloodDatabase", () => {
 	it("derives the footprint from the coverage statement, not from the polygon union", () => {
 		expect(lookup.identity.extent.statement).toBe(EA_COVERAGE_STATEMENT)
 
-		// The polygons occupy a few square kilometres. the statement's footprint is the whole outline, so the coverage
-		// cells vastly outnumber the cells any polygon reaches. A footprint taken from the polygons would be the other way
-		// round — and every Zone 1 location would read as unmapped.
+		// The polygons occupy a few square kilometres.
+		// The statement's footprint is the whole outline, so the coverage cells vastly
+		// outnumber the cells any polygon reaches.
+		// A footprint taken from the polygons would be the other way round,
+		// and every Zone 1 location would read as unmapped.
 		expect(result.coverageCells).toBeGreaterThan(result.coverageCellsWithRows * 10)
 		expect(result.coverageCellsWithRows).toBeGreaterThan(0)
 	})
@@ -131,7 +134,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: fixtureSource(fixtureFeatures()),
-				out: scratch.resolve("inverted.db"),
+				out: scratch.path("inverted.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -155,7 +158,7 @@ describe("buildFloodDatabase", () => {
 		await expect(
 			buildFloodDatabase({
 				source: { ...fixtureSource(features), declaredFeatureCount: features.length + 1 },
-				out: scratch.resolve("short.db"),
+				out: scratch.path("short.db"),
 				sourceVintage: "2026-05-20",
 				buildCmd: "vitest",
 				buildSHA: "fixture",
@@ -202,8 +205,9 @@ describe("FloodZoneLookup — the three readings", () => {
 	})
 
 	it("reads a point inside a polygon's HOLE as the designated absence, not as the polygon's zone", () => {
-		// Feature 3 is a square with a hole through its middle. The hole is inside the footprint and inside no polygon, so
-		// the authority's map assigns Zone 1 there — a hole read as an exterior ring would answer FZ3 instead.
+		// Feature 3 is a square with a hole through its middle.
+		// The hole is inside the footprint and inside no polygon, so the authority's map assigns Zone 1 there.
+		// A hole read as an exterior ring would answer FZ3 instead.
 		const reading = lookup.lookup(FIXTURE_ORIGIN.lat + FIXTURE_SIDE * 2.5, FIXTURE_ORIGIN.lon + FIXTURE_SIDE * 0.5)
 
 		expect(reading.kind).toBe(FloodReadingKind.DesignatedAbsence)
@@ -218,7 +222,7 @@ describe("FloodZoneLookup — the three readings", () => {
 		expect(reading.definition?.code).toBe("FZ1")
 		expect(reading.definition?.definition).toMatch(/less than 0\.1% annual probability/u)
 
-		// The coverage row is what licenses the reading, and it says the authority designated here and holds nothing.
+		// The coverage row is what licenses the reading, and it says the authority designated here and holds no rows.
 		expect(reading.coverage?.basis).toBe("designated")
 		expect(reading.coverage?.completeness).toBe(1)
 		expect(reading.coverage?.observedRows).toBe(0)

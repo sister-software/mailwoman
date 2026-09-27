@@ -4,7 +4,7 @@
 
 import { isDirectory } from "@mailwoman/core/fs/readers"
 import { pathToFileURL } from "@mailwoman/core/module/file-url"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 export interface OptionSpec {
@@ -39,14 +39,14 @@ export interface CommandNode {
 }
 
 export async function readCommands(
-	directory: string,
+	directory: PathBuilder,
 	ignoredEntries: ReadonlySet<string> = new Set()
 ): Promise<Map<string, CommandNode>> {
 	const commands = new Map<string, CommandNode>()
 
 	for await (const entry of Globerator.from("*", { cwd: directory, absolute: false, onlyFiles: false })) {
 		if (ignoredEntries.has(entry.replace(/\.[cm]?js$/u, ""))) continue
-		const path = join(directory, entry)
+		const path = directory(entry)
 
 		if (await isDirectory(path)) {
 			const children = await readCommands(path)
@@ -59,9 +59,11 @@ export async function readCommands(
 				continue
 			}
 
-			// A prefix directory is layout rather than a command path: every command under it declares the directory's own name
-			// as its prefix, so `build/postcode/codepoint.js` is `build postcode-codepoint` and the directory itself is
-			// not something a user types. A namespace directory looks identical from outside. the declared names decide.
+			// A prefix directory is layout rather than a command path: every command under it
+			// declares the directory's own name as its prefix, so `build/postcode/codepoint.js` is
+			// `build postcode-codepoint` and the directory itself is not something a user types.
+			// A namespace directory looks identical from outside.
+			// The declared names decide.
 			const nested = [...children.values()]
 
 			if (nested.length && nested.every((child) => !child.commands && child.name.startsWith(`${entry}-`))) {
@@ -80,8 +82,9 @@ export async function readCommands(
 		if (!/\.[cm]?js$/u.test(entry) || entry.endsWith(".d.js")) continue
 		const module = (await import(pathToFileURL(path).href)) as { spec?: CommandSpec; default?: unknown; run?: unknown }
 		const fileName = entry.replace(/\.[cm]?js$/u, "")
-		// The declared name, so a file that moves into a prefix directory keeps the name users type. `index` is the one
-		// exception: it is a position rather than a name, and the parent folds it into the directory's own entry.
+		// The declared name, so a file that moves into a prefix directory keeps the name users type.
+		// `index` is the one exception: it is a position rather than a name,
+		// and the parent folds it into the directory's own entry.
 		const name = fileName === "index" ? fileName : (module.spec?.name ?? fileName)
 
 		const executable = module.default ?? module.run

@@ -30,7 +30,6 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -56,7 +55,9 @@ const RATE_PAUSE_MS = 30_000
 
 export interface FetchLocaldataKROptions extends BaseFetchOptions {
 	/**
-	 * Category slugs to fetch (the path segment of `/file/<slug>/info`). Defaults to every category the portal lists.
+	 * Category slugs to fetch (the path segment of `/file/<slug>/info`).
+	 *
+	 * Defaults to every category the portal lists.
 	 */
 	categories?: string[]
 }
@@ -75,7 +76,8 @@ interface Session {
 const USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) mailwoman-corpus-fetch"
 
 /**
- * Open a session on the portal: the category page answers the xsrf cookie and the navigation that names every category.
+ * Open a session on the portal: the category page answers the xsrf cookie
+ * and the navigation that names every category.
  */
 async function openSession(): Promise<Session> {
 	const res = await fetch(INDEX_URL, {
@@ -99,7 +101,9 @@ async function openSession(): Promise<Session> {
 }
 
 /**
- * The portal's own rate check. a 429 carries the pause it asks for in prose, so the caller sleeps and retries.
+ * The portal's own rate check.
+ *
+ * A 429 carries the pause it asks for in prose, so the caller sleeps and retries.
  */
 async function validateDownloadCount(session: Session): Promise<boolean> {
 	const headers: Record<string, string> = { "user-agent": USER_AGENT, cookie: session.cookie, referer: INDEX_URL }
@@ -117,9 +121,9 @@ export async function fetchLocaldataKR(
 	options: FetchLocaldataKROptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	const session = await openSession()
 
@@ -129,7 +133,8 @@ export async function fetchLocaldataKR(
 
 	report?.(`=== ${SLUG}: ${wanted.length} of ${session.categories.length} categories`)
 
-	// A previous run's entries survive, keyed by file name, so a re-run after an interruption fetches only what is missing.
+	// A previous run's entries survive, keyed by file name, so a re-run
+	// after an interruption fetches only what is missing.
 	const previous = await loadCollectionFiles(manifestPath)
 	const files = new Map<string, SourceManifest>()
 	let fetched = 0
@@ -138,7 +143,7 @@ export async function fetchLocaldataKR(
 
 	for (const category of wanted) {
 		const filename = `${category.slug}.csv`
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 		const url = `${PORTAL}/file/download/${category.slug}/info`
 		const before = previous.get(filename)
 

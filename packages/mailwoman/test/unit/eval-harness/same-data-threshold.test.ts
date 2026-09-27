@@ -4,7 +4,7 @@
 /**
  *   The abstention-threshold curve (#2264) re-grades frozen results rather than re-running a resolver, so the
  *   two properties worth pinning are that it converts a withheld selection into an abstention rather than a
- *   wrong answer, and that it leaves an errored row alone — a harness failure is not a selection, and folding
+ *   wrong answer, and that it leaves an errored row alone. A harness failure is not a selection, and folding
  *   one into abstention is the confusion the benchmark's strata exist to measure.
  *
  *   The curve at threshold 0 must equal the unthresholded metrics exactly. That is what says the sweep and the
@@ -136,8 +136,9 @@ describe("same-data abstention threshold (#2264)", () => {
 
 		const curve = thresholdCurve("mailwoman", results, PANEL, [0, 0.5])
 
-		// Threshold 0 wins accuracy and loses false selection. 0.5 does the inverse. Neither dominates a
-		// reference sitting between them, which is what stops either endpoint from being reported as a win.
+		// Threshold 0 wins accuracy and loses false selection. 0.5 does the inverse.
+		// Neither dominates a reference sitting between them, which is what stops
+		// either endpoint from being reported as a win.
 		expect(dominatingPoints(curve, { selectionAccuracy: 0.5, falseSelectionRate: 0.5 })).toStrictEqual([])
 	})
 })

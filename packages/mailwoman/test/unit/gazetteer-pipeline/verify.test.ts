@@ -27,7 +27,8 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 	ins.run(1, -1, "Testland", "country", "TL", 2, 2, 1, 1, 3, 3)
 	ins.run(2, 1, "Testregion", "region", "TL", 1.5, 1.5, 1, 1, 2, 2)
 	ins.run(3, 2, "Testtown", "locality", "TL", 1.5, 1.5, 1.4, 1.4, 1.6, 1.6)
-	// The US spot-check target (VT→Vermont) — every real admin DB carries US.
+	// The US spot-check target (VT→Vermont).
+	// Every real admin DB carries US.
 	ins.run(85_688_763, -1, "Vermont", "region", "US", 44, -72.7, 42.7, -73.4, 45, -71.5)
 	await enrichAdmin(db)
 	await buildFTS(db)
@@ -36,7 +37,7 @@ async function fixtureDB(): Promise<DatabaseClient<WOFDatabase>> {
 }
 
 test("verifyAdmin passes a complete fixture", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	const r = verifyAdmin(db, TINY_BASELINE)
 
 	expect(r.checks.map((c) => `${c.check}:${c.ok}`)).toEqual([
@@ -52,7 +53,7 @@ test("verifyAdmin passes a complete fixture", async () => {
 })
 
 test("verifyAdmin fails node-census when a required country node is missing (#1026)", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	db.exec("DELETE FROM spr WHERE id = 1") // drop Testland's country node
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)
@@ -62,7 +63,7 @@ test("verifyAdmin fails node-census when a required country node is missing (#10
 })
 
 test("verifyAdmin fails place-abbr when the join table is missing (the #1015 missed-step class)", async () => {
-	await using db = await fixtureDB()
+	using db = await fixtureDB()
 	db.exec("DROP TABLE place_abbr")
 	const r = verifyAdmin(db, TINY_BASELINE)
 	expect(r.ok).toBe(false)

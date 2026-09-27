@@ -20,26 +20,32 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, statPath } from "@mailwoman/core/fs/readers"
 import { createHash } from "@mailwoman/core/hash"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { POSTCODE_BINARY_KEY_FLOORS } from "mailwoman/gazetteer-pipeline/postcode/binary"
-import { join, relative, resolvePath } from "path-ts"
+import { type PathBuilderLike, relative, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer` payload enumerated by
- * {@link derivedWeightsInputs}.
+ * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer`
+ * payload enumerated by {@link derivedWeightsInputs}.
  *
- * The first entry mirrors the retired workflow cache key. The rest are what that key missed: the modules that generate
- * the binaries — each source module paired with its compiled counterpart, because the build spawns the compiled CLI.
- * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled builder under already-fixed
- * source computes the fixed key, builds with the broken code, and the store then serves that artifact to every
- * fresh-compiled run forever. With the compiled bytes in the key, a stale compile keys separately from a fresh one, so
- * its output can never be served to a checkout whose compiled tree differs. (Transitive compiled imports are
- * deliberately not hashed — that would invalidate the store on every unrelated commit and delete its reason to exist.
- * the direct builder modules are where both real incidents lived.)
+ * The first entry mirrors the retired workflow cache key.
+ * The rest are what that key missed: the modules that generate the binaries — each source
+ * module paired with its compiled counterpart, because the build spawns the compiled CLI.
  *
- * Add here whenever a new input starts feeding the build — a key that omits an input serves stale artifacts silently,
- * which is the failure this list exists to prevent.
+ * Hashing source alone re-created the #1528 poisoning in cache form: a stale-compiled
+ * builder under already-fixed source computes the fixed key, builds with the broken code,
+ * and the store then serves that artifact to every fresh-compiled run forever.
+ * With the compiled bytes in the key, a stale compile keys separately from a fresh one,
+ * so its output can never be served to a checkout whose compiled tree differs.
+ *
+ * (Transitive compiled imports are deliberately not hashed, which would invalidate
+ * the store on every unrelated commit and delete its reason to exist. The direct
+ * builder modules are where both real incidents lived.)
+ *
+ * Add here whenever a new input starts feeding the build.
+ * A key that omits an input serves stale artifacts silently, which is the
+ * failure this list exists to prevent.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 	"release.config.json",
@@ -54,12 +60,13 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 ]
 
 /**
- * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`). Enumerated
- * rather than hardcoded so a new extract is picked up without a code change — the opposite trade from
- * {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
+ * The `data/gazetteer` payload, matched the way the retired workflow key matched it (`*.json` + `*.jsonl`).
+ *
+ * Enumerated rather than hardcoded so a new extract is picked up without a code change.
+ * The opposite trade from {@link DERIVED_WEIGHTS_INPUTS}, where an explicit list is the point.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
-	const dir = resolvePath(repoRootPath(), "data", "gazetteer")
+	const dir = repoRootPathBuilder("data", "gazetteer")
 
 	if (!(await pathExists(dir))) return []
 
@@ -67,16 +74,18 @@ async function gazetteerDataPaths(): Promise<string[]> {
 }
 
 /**
- * The postcode pipeline modules the postcode-binary command calls into — source and compiled, enumerated like the data
- * payload so a new module joins the key without a code change. The #1527 fix lived here, one import below the command
- * module the explicit list carried, which is how the stale build escaped the key.
+ * The postcode pipeline modules the postcode-binary command calls into — source and compiled,
+ * enumerated like the data payload so a new module joins the key without a code change.
+ *
+ * The #1527 fix lived here, one import below the command module the explicit list carried,
+ * which is how the stale build escaped the key.
  */
 async function postcodePipelinePaths(): Promise<string[]> {
-	const root = repoRootPath()
+	const root = repoRootPathBuilder()
 
 	const dirs = [
-		resolvePath(root, "packages/mailwoman/lib/gazetteer-pipeline/postcode"),
-		resolvePath(root, "packages/mailwoman/out/gazetteer-pipeline/postcode"),
+		root("packages", "mailwoman", "lib", "gazetteer-pipeline", "postcode"),
+		root("packages", "mailwoman", "out", "gazetteer-pipeline", "postcode"),
 	]
 
 	const paths: string[] = []
@@ -86,7 +95,7 @@ async function postcodePipelinePaths(): Promise<string[]> {
 
 		for await (const name of Globerator.from("*", { cwd: dir, absolute: false })) {
 			if ((name.endsWith(".ts") || name.endsWith(".js")) && !name.includes(".test.") && !name.endsWith(".map")) {
-				paths.push(join(dir, name))
+				paths.push(dir(name).toString())
 			}
 		}
 	}
@@ -99,13 +108,18 @@ async function postcodePipelinePaths(): Promise<string[]> {
  */
 export interface DerivedWeightsInput {
 	/**
-	 * Repo-relative identity of the input. Hashed. Must not vary by checkout location.
+	 * Repo-relative identity of the input.
+	 *
+	 * Hashed.
+	 * Must not vary by checkout location.
 	 */
 	name: string
 	/**
-	 * Absolute path to read. Not hashed — see {@link derivedWeightsKeyFrom}.
+	 * Absolute path to read.
+	 *
+	 * Not hashed — see {@link derivedWeightsKeyFrom}.
 	 */
-	path: string
+	path: PathBuilderLike
 }
 
 /**
@@ -123,18 +137,24 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 }
 
 /**
- * Hash an explicit input list. Exported for testing. production callers want {@link derivedWeightsKey}.
+ * Hash an explicit input list.
  *
- * Sorted by name, so the caller's ordering cannot change the key. Each entry contributes its name and its bytes.
+ * Exported for testing.
+ * Production callers want {@link derivedWeightsKey}.
  *
- * ⚠ The name is repo-relative and the absolute path is deliberately not hashed. Hashing absolute paths was the first
- * version's bug: every GitHub runner checks out to its own work directory, so lab-1, lab-2, lab-3 and a local worktree
- * each computed a different key over byte-identical inputs and none of them ever saw another's work. It surfaced as
- * four store directories holding the same eleven artifacts, and as a 41s `pair-index-nz.bin` rebuild on a runner where
- * that exact file was already on disk under a different key.
+ * Sorted by name, so the caller's ordering cannot change the key.
+ * Each entry contributes its name and its bytes.
  *
- * A missing input contributes a `\0absent` marker rather than nothing — "the file is gone" and "the file is empty" must
- * not collide.
+ * ⚠ The name is repo-relative and the absolute path is deliberately not hashed.
+ * Hashing absolute paths was the first version's bug: every GitHub runner checks out to
+ * its own work directory, so lab-1, lab-2, lab-3 and a local worktree each computed a
+ * different key over byte-identical inputs and none of them ever saw another's work.
+ *
+ * It surfaced as four store directories holding the same eleven artifacts, and as a 41s
+ * `pair-index-nz.bin` rebuild on a runner where that exact file was already on disk under a different key.
+ *
+ * A missing input contributes a `\0absent` marker rather than an empty contribution —
+ * "the file is gone" and "the file is empty" must not collide.
  */
 export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {
 	const hash = createHash("sha256")
@@ -157,8 +177,10 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 }
 
 /**
- * The key for this checkout's derived weights. Identical across checkouts with identical input content, wherever they
- * live on disk — that invariance is the whole point of the store.
+ * The key for this checkout's derived weights.
+ *
+ * Identical across checkouts with identical input content, wherever they live on disk.
+ * That invariance is the whole point of the store.
  */
 export async function derivedWeightsKey(): Promise<string> {
 	return derivedWeightsKeyFrom(await derivedWeightsInputs())
@@ -168,28 +190,33 @@ export async function derivedWeightsKey(): Promise<string> {
  * Where the derived binaries for `key` live.
  */
 export function derivedWeightsDir(key: string): string {
-	return String(dataRootPath("derived", "weights", key))
+	return dataRootPath("derived", "weights", key).toString()
 }
 
 /**
  * The reason a store entry must not be served (or stashed), or `null` when it looks like a product.
  *
- * The second net behind the build-time floors (#1509): the store once held a 10-byte empty `postcode-gb.bin` a
- * stale-compiled builder wrote, and served it as a HIT indefinitely (#1528). A `postcode-<cc>.bin` is refused when its
- * PCB1 header is malformed or its record count sits below the lowest calibrated floor for that country — for GB that is
- * the outward floor, so a legitimate outward-granularity bin is never false-refused while the empty/collapsed class
- * always is. The calibrated per-granularity check remains the builder's. this one only has the header to read.
+ * The second net behind the build-time floors (#1509): the store once held a 10-byte empty
+ * `postcode-gb.bin` a stale-compiled builder wrote, and served it as a HIT indefinitely (#1528).
+ * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
+ * below the lowest calibrated floor for that country, for GB that is the outward floor, so a
+ * legitimate outward-granularity bin is never false-refused while the empty/collapsed class always is.
  *
- * Non-postcode entries (pair indexes) pass — their reader validates a typed header on load, and no measured floor
- * exists for them yet.
+ * The calibrated per-granularity check remains the builder's.
+ * This one only has the header to read.
+ *
+ * Non-postcode entries (pair indexes) pass — their reader validates a typed header
+ * on load, and no measured floor exists for them yet.
  */
 /**
- * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads. anything shorter
- * cannot carry a record count at all.
+ * Magic (4) + u32 recordCount (4) + u8 countryCount (1).
+ *
+ * The PCB1 prefix the serve check reads.
+ * Anything shorter cannot carry a record count at all.
  */
 const PCB1_HEADER_BYTES = 9
 
-export async function derivedStoreServeViolation(filename: string, path: string): Promise<string | null> {
+export async function derivedStoreServeViolation(filename: string, path: PathBuilderLike): Promise<string | null> {
 	const match = /^postcode-([a-z]{2})\.bin$/.exec(filename)
 
 	if (!match) return null

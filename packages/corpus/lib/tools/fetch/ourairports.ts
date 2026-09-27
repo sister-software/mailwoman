@@ -2,43 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc (#35).
+ * Fetch the OurAirports CSV dumps — the venue side of the sub-venue corpus arc.
  *
- *   Source : https://davidmegginson.github.io/ourairports-data/ (the project's own GitHub Pages
- *            mirror of the nightly export; `ourairports.com/data/` redirects here).
- *   License: public domain. OurAirports places its data in the public domain and asks only for a
- *            courtesy credit — no attribution obligation rides on a derived recipe output, which makes this
- *            the one transport source in the arc with no licensing question at all. Tier A.
- *
- *   ## What it is good for, and what it is not
- *
- *   `airports.csv` is every airport on earth with icao/iata codes, coordinates, `municipality`, and
- *   `iso_country` — 12.7 MB, ~83,000 rows as of 2026-08-04. That is the containing venue for a
- *   `<sub-venue>, <venue>, <street>, <locality>, <postcode>` corpus line, and it is better at that job
- *   than OSM: every row is named, the name is canonical, and `municipality` gives the locality without
- *   a spatial join.
- *
- *   It carries no interior structure. There is no terminal, concourse, gate or pier table — the
- *   corpus task says as much ("Good for the venue side of each pair, weaker on interior structure")
- *   and a row-level read confirms it. Pair it with the OSM `aeroway` extractor
- *   (`@mailwoman/osm/sdk`'s `extractOSMSubVenues`), which is where the sub-venue half comes from.
- *
- *   ## Why `downloadToFile` and not `APIClient`
- *
- *   `agents.md` routes http through `APIClient`, and that rule is about API requests — small bodies,
- *   repeated calls, rate-limited hosts. This is four static file transfers against a GitHub Pages CDN
- *   with no rate limit and nothing to pace, run once per refresh. It uses the same `downloadToFile`
- *   every other module in this `fetch/` family uses, which is where the retry and timeout live.
- *   The Wikidata sibling (`wikidata-subvenue.ts`) is an API client and is built on `APIClient`
- *   accordingly. the split between the two is the one `agents.md` draws.
- *
- *   Invoke via `mailwoman corpus fetch ourairports --out-root <path>`.
+ * Source: https://davidmegginson.github.io/ourairports-data
+ * License: public domain, with a courtesy credit requested.
  */
 
 import { APIClient } from "@mailwoman/core/api"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
@@ -46,19 +18,14 @@ import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
 const SLUG = "ourairports"
 
 /**
- * The GitHub Pages mirror the project itself publishes. `ourairports.com/data/*.csv` 302s here, so pointing at the
- * mirror directly saves a redirect and is the URL the project's own readme gives.
+ * The project's own GitHub Pages mirror, which `ourairports.com/data/*.csv` redirects to.
  */
 const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
 
 /**
- * The files worth having, and why each one.
+ * `airports.csv` is the payload.
  *
- * `airports.csv` is the payload. The other three are small joins that turn its codes into text: `countries.csv` and
- * `regions.csv` expand `iso_country`/`iso_region` into names (a corpus line needs "Germany", not "DE"), and
- * `runways.csv` is the only file carrying per-airport sub-structure of any kind — runway designators, which are not
- * sub-venue designators (nobody addresses mail to a runway) but are worth having on disk as the negative class if the
- * sub-venue recipe ever needs one.
+ * The other three join its codes to text or carry the negative class.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 
@@ -70,9 +37,9 @@ interface OurAirportsFileEntry {
 	sha256: string
 	bytes: number
 	/**
-	 * The upstream `Last-Modified`, when the CDN gave one. This is the data's vintage; `downloaded_at` is only when we
-	 * asked. `corpus/agents.md` has the standing warning that a file's mtime is not its data's vintage — recording the
-	 * upstream header is how a later refresh decision gets made on the right number.
+	 * The upstream `Last-Modified`, when the CDN gave one.
+	 *
+	 * It is the data's vintage; `downloaded_at` is only when we asked.
 	 */
 	last_modified: string | null
 }
@@ -86,8 +53,8 @@ interface OurAirportsManifest {
 }
 
 /**
- * Read the upstream `Last-Modified` with a head. Returns `null` on any failure — provenance metadata is nice to have
- * and must never fail a download that otherwise succeeded.
+ * @returns `null` on any failure, because provenance metadata must never fail
+ * a download that otherwise succeeded.
  */
 async function readLastModified(url: string): Promise<string | null> {
 	try {
@@ -104,14 +71,14 @@ async function readLastModified(url: string): Promise<string | null> {
 }
 
 /**
- * Download the OurAirports CSVs into `<outRoot>/ourairports/`, with a sibling `manifest.json` carrying each file's
- * origin URL, sha256, byte count and upstream `Last-Modified`.
+ * Download the OurAirports CSVs into `<outRoot>/ourairports/`, with a sibling `manifest.json`
+ * carrying each file's origin URL, sha256, byte count and upstream `Last-Modified`.
  */
 export async function fetchOurAirports(
 	options: FetchOurAirportsOptions,
 	report?: (line: string) => void
 ): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const entries: OurAirportsFileEntry[] = []
@@ -121,7 +88,7 @@ export async function fetchOurAirports(
 
 	for (const filename of FILES) {
 		const url = `${BASE_URL}/${filename}`
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 
 		report?.(`=== ${SLUG} / ${filename}`)
 
@@ -163,7 +130,7 @@ export async function fetchOurAirports(
 		files: entries,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched, skipped: 0, failed, failedCodes }
 }

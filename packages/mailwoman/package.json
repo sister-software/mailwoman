@@ -437,6 +437,16 @@
 			"node": "./lib/data/index.ts",
 			"default": "./out/data/index.js"
 		},
+		"./data/bundles": {
+			"types": "./out/data/bundles.d.ts",
+			"node": "./lib/data/bundles.ts",
+			"default": "./out/data/bundles.js"
+		},
+		"./data/published-bundles": {
+			"types": "./out/data/published-bundles.d.ts",
+			"node": "./lib/data/published-bundles.ts",
+			"default": "./out/data/published-bundles.js"
+		},
 		"./street": {
 			"types": "./out/street/index.d.ts",
 			"node": "./lib/street/index.ts",
@@ -457,6 +467,8 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@aws-sdk/client-s3": "^3.1141.0",
+		"@aws-sdk/lib-storage": "^3.1141.0",
 		"@inkjs/ui": "^2.0.0",
 		"@isaacs/cliui": "^9.0.0",
 		"@mailwoman/activity-lexicon": "workspace:*",
@@ -497,9 +509,9 @@
 		"ink": "^7.1.1",
 		"kysely": "^0.29.5",
 		"onnxruntime-node": "^1.29.0",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"react": "^19.2.8",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"zod": "^4.5.4",
 		"zx": "^8.8.5"
 	},
@@ -508,17 +520,13 @@
 		"@mailwoman/resolver-wof-wasm": "workspace:*"
 	},
 	"peerDependencies": {
-		"@duckdb/node-api": "1.5.3-r.3",
-		"@mailwoman/resolver-wof-sqlite": "workspace:*"
+		"@duckdb/node-api": "1.5.3-r.3"
 	},
 	"peerDependenciesMeta": {
 		"@duckdb/node-api": {
 			"optional": true
 		},
 		"@inkjs/ui": {
-			"optional": true
-		},
-		"@mailwoman/resolver-wof-sqlite": {
 			"optional": true
 		},
 		"ink": {

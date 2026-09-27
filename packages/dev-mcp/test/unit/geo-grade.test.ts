@@ -19,7 +19,8 @@ describe("distanceKm", () => {
 	})
 
 	it("measures a real displacement", () => {
-		// Lyon is ~391.5 km from Paris. the exact figure matters less than that it is not 0 and not Infinity.
+		// Lyon is ~391.5 km from Paris.
+		// The exact figure matters less than that it is not 0 and not Infinity.
 		expect(distanceKm({ lat: 45.764, lon: 4.8357 }, PARIS.lat, PARIS.lon)).toBeCloseTo(391.5, 1)
 	})
 })
@@ -70,7 +71,8 @@ describe("thresholdTable", () => {
 
 describe("tostEquivalence", () => {
 	it("declines to claim parity from an underpowered run, and says that is what happened", () => {
-		// Identical rates on 20 rows. The point estimate is exactly 0pp — the reading a naive eyeball calls parity —
+		// Identical rates on 20 rows.
+		// The point estimate is exactly 0pp — the reading a naive eyeball calls parity —
 		// and the interval is far too wide to place inside ±5pp.
 		const reading = tostEquivalence(16, 16, 20)
 
@@ -87,8 +89,9 @@ describe("tostEquivalence", () => {
 	})
 
 	it("reports a real gap as not equivalent, WITHOUT denying that the arms differ", () => {
-		// The companion z-test reports a significant gap on the same rows. A boilerplate "this is not a claim that the
-		// arms differ" would contradict it in the same paragraph, so the wording turns on where the estimate fell.
+		// The companion z-test reports a significant gap on the same rows.
+		// A boilerplate "this is not a claim that the arms differ" would contradict it in
+		// the same paragraph, so the wording turns on where the estimate fell.
 		const reading = tostEquivalence(250, 150, 400)
 
 		expect(reading.equivalent).toBe(false)
@@ -116,8 +119,7 @@ describe("tostEquivalence — the degenerate sample", () => {
 	})
 
 	it("never calls a total wipeout equivalent, which is the other way to reach a zero standard error", () => {
-		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as
-		// they can be. An equivalence test that keys on the standard error alone declares parity here.
+		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as they can be. An equivalence test that keys on the standard error alone declares parity here.
 		const reading = tostEquivalence(50, 0, 50)
 
 		expect(reading.delta_pp).toBe(-100)

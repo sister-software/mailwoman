@@ -40,7 +40,8 @@ test("parseOSMHstore: decodes GDAL's quoted-pair rendering", () => {
 })
 
 test("parseOSMHstore: a comma INSIDE a value does not split the pair", () => {
-	// The reason this is a scanner and not a `.split(",")`. Real OSM names carry commas.
+	// The reason this is a scanner and not a `.split(",")`.
+	// Real OSM names carry commas.
 	expect(parseOSMHstore(`"name"=>"Terminal 1, Departures","aeroway"=>"terminal"`)).toEqual({
 		name: "Terminal 1, Departures",
 		aeroway: "terminal",
@@ -61,8 +62,8 @@ test("parseOSMHstore: empty and missing input yield an empty dict, not a throw",
 })
 
 test("buildSubVenueSQL: reads aeroway bare on multipolygons and via hstore on points", () => {
-	// The per-layer promotion split the module docstring turns on, verified against the installed
-	// osmconf.ini: `aeroway` is promoted on multipolygons only, `ref` on points only.
+	// The per-layer promotion split the module docstring turns on, verified against the
+	// installed osmconf.ini: `aeroway` is promoted on multipolygons only, `ref` on points only.
 	const points = buildSubVenueSQL("points")
 	const areas = buildSubVenueSQL("multipolygons")
 

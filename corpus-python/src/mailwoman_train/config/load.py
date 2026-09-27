@@ -1,8 +1,4 @@
-"""Read a YAML run config into the typed schema.
-
-Nothing here reads an environment variable. The default config lives at
-``configs/stage1-coarse.yaml`` and is what the trainer consumes when ``--config`` is omitted.
-"""
+"""Read a YAML run config into the typed schema without consulting environment variables."""
 
 from __future__ import annotations
 
@@ -11,7 +7,7 @@ from typing import Any
 
 import yaml
 
-from .schema import Config, CorpusReceiptConfig, DataConfig
+from .schema import Config, CorpusReceiptConfig, DataConfig, ValidationCoverageConfig
 
 
 def merge_into(
@@ -24,16 +20,12 @@ def merge_into(
 ) -> None:
     """Merge ``src`` into ``dst``, key by key.
 
-    ``strict=True`` (the default, and what every training entrypoint gets): an unknown
-    key RAISES, naming the full dotted path and the config source — the 2026-07-22
-    en-GB probe run A burned a launch cycle when a YAML carrying
-    ``train.reinit_label_rows`` + ``train.classifier_learning_rate`` met a volume-side
-    config that predated those fields and the settings went inert with zero signal
-    (#1248). Config guards raise, the same discipline as ``DataConfig``'s Norway guard.
+    With ``strict=True``, an unknown key raises a ``KeyError`` that gives its dotted path and the
+    config source. Training entrypoints must stay strict, because a skipped key silently leaves a
+    setting at its default. This happens when the volume holds older code than the YAML expects.
 
-    ``strict=False`` is the override: unknown keys are silently skipped (the
-    historical hasattr-check behavior). Reserved for tooling that intentionally
-    consumes a partial view of a config. never for training entrypoints.
+    With ``strict=False``, unknown keys are skipped. Only tooling that reads part of a config
+    should use it.
     """
     for k, v in src.items():
         dotted = f"{_path}.{k}" if _path else str(k)
@@ -62,14 +54,12 @@ def _coerce(
     path: str = "",
     source: str = "<mapping>",
 ) -> Any:
-    """Coerce ``value`` to the dataclass field's declared type when an obvious conversion
-    is safe. Targets one specific misuse hazard: PyYAML's default loader parses ``5e-4`` as a
-    string (YAML 1.1 spec requires a dot for floats), so a YAML config that writes
-    ``learning_rate: 5e-4`` silently makes its way into ``AdamW(lr="5e-4")`` and crashes
-    with a confusing ``TypeError: '<=' not supported between instances of 'float' and 'str'``.
-    Defensive coercion here means the configs work regardless of whether the human used
-    YAML 1.1 or YAML 1.2 numeric syntax. Only fires when the declared type is ``float`` or
-    ``int`` and the source is a string that parses cleanly — leaves all other values alone.
+    """Validate list-of-mapping fields and convert numeric strings to the field's declared type.
+
+    ``required_corpus_receipts`` and ``required_validation_coverage`` are parsed into their
+    dataclasses and validated here. For a ``float`` or ``int`` field, a string that parses is
+    converted, because PyYAML reads ``5e-4`` as a string under YAML 1.1. Every other value is
+    returned unchanged.
     """
     fields = getattr(dst.__class__, "__dataclass_fields__", None)
     if not fields or key not in fields:
@@ -117,6 +107,40 @@ def _coerce(
                     f"receipt {receipt.name!r} component_sequence must contain bare component tags, got {invalid!r}"
                 )
         return receipts
+    if isinstance(dst, DataConfig) and key == "required_validation_coverage":
+        if not isinstance(value, list):
+            raise TypeError("data.required_validation_coverage must be a list")
+        wanted: list[ValidationCoverageConfig] = []
+        for index, item in enumerate(value):
+            if not isinstance(item, dict):
+                raise TypeError(f"data.required_validation_coverage[{index}] must be a mapping")
+            entry = ValidationCoverageConfig()
+            merge_into(entry, item, strict=strict, _path=f"{path}[{index}]", _source=source)
+            wanted.append(entry)
+        for entry in wanted:
+            if not isinstance(entry.country, str) or not entry.country.strip():
+                raise ValueError("every data.required_validation_coverage entry needs a country")
+            if entry.split not in ("val", "test"):
+                raise ValueError(
+                    f"validation coverage for {entry.country!r} names split {entry.split!r}; "
+                    "only 'val' and 'test' are held out"
+                )
+            if type(entry.min_rows) is not int or type(entry.min_street_rows) is not int:
+                raise TypeError(f"validation coverage for {entry.country!r} needs integer minimums")
+            if entry.min_rows <= 0:
+                raise ValueError(f"validation coverage for {entry.country!r} min_rows must be positive")
+            if entry.min_street_rows < 0:
+                raise ValueError(f"validation coverage for {entry.country!r} min_street_rows cannot be negative")
+            # Street rows are a subset of rows, so this floor can never pass and is a config error.
+            if entry.min_street_rows > entry.min_rows:
+                raise ValueError(
+                    f"validation coverage for {entry.country!r} asks for {entry.min_street_rows} street rows "
+                    f"within {entry.min_rows} rows, which no split can satisfy"
+                )
+        keys = [(entry.country, entry.split) for entry in wanted]
+        if len(keys) != len(set(keys)):
+            raise ValueError("data.required_validation_coverage entries must be unique per country and split")
+        return wanted
     declared = fields[key].type
     if not isinstance(value, str):
         return value
@@ -134,6 +158,7 @@ def _coerce(
 
 
 def load_config(path: str | Path | None, *, strict: bool = True) -> Config:
+    """Load the YAML file at ``path`` over the schema defaults. ``None`` returns the defaults."""
     cfg = Config()
     if path is None:
         return cfg
@@ -147,5 +172,6 @@ def load_config(path: str | Path | None, *, strict: bool = True) -> Config:
 
 
 def csv_log_path(cfg: Config) -> Path:
+    """Return the CSV log path with ``{output_dir}`` filled in."""
     template = cfg.train.csv_log_path
     return Path(template.format(output_dir=cfg.train.output_dir))

@@ -1,0 +1,605 @@
+#!/usr/bin/env node
+// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
+// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
+
+/**
+ * @file Rewrites dash joints reported by `CommentDashJoint` directly in the prose that carries them.
+ *
+ *   This command edits only the local dash join and keeps existing line layout.
+ *   It changes the dash into a period or comma based on the right-hand clause.
+ *
+ *   It reads the same surfaces `config/vale/lint-prose.ts` lints, and each one carries prose in a
+ *   different place.
+ *   A `.ts` or `.tsx` file carries it in a block comment or a `//` run.
+ *   A `.py` file carries it in a `#` run or a docstring, and a `.yaml` or `.yml` file in a `#` run.
+ *   A `.md` or `.mdx` document is prose throughout, below its frontmatter.
+ *
+ *   Usage: `yarn comments:joints <file> [file …]`.
+ */
+
+/// <reference types="node" />
+
+import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { cliArguments } from "@mailwoman/core/scripting/arguments"
+import { runCLICommand } from "@mailwoman/core/scripting/command"
+import ts from "typescript"
+
+/**
+ * Finite verbs used by the rule token.
+ * Keep this list in sync with `CommentDashJoint.yml`.
+ */
+const VERB =
+	"(?:is|are|was|were|has|have|had|does|do|did|will|would|can|could|should|must|makes|leaves|reads|names|holds|keeps|gives|takes|means|stays|comes|goes|sits|carries|returns|fires|fails|needs|wants|uses|writes|reports|answers|drops|adds|counts|costs|pays|prefers|refuses|resolves|produces|reaches|wins)"
+
+/**
+ * Words that may open the right side of a dash clause.
+ */
+const OPENER =
+	"(?:the|a|an|it|this|that|they|we|there|each|every|its|their|these|those|both|neither|either|one|no|nothing)"
+
+/**
+ * Rule token split into left and right checks around the dash.
+ */
+const LEFT = new RegExp(`\\b${VERB}\\b[^—–\\n.!?;:()\\[\\]]{0,90}\\s$`, "i")
+const RIGHT = new RegExp(`^${OPENER}\\s+(?:[^\\s—–,.!?;:]+\\s+){0,6}${VERB}\\b\\s`, "i")
+
+const PREPOSITION_TAIL = /^(?:at|on|for|with|to|from|by|in|into|under|over|against|about|through|within)[.,;:)\]"'`]*$/i
+const VERB_WORD = new RegExp(`^${VERB}[.,;:)\\]"'\`]*$`, "i")
+const FINITE = new RegExp(`\\b${VERB}\\b`, "gi")
+
+/**
+ * Openers that usually prefer a comma instead of a sentence break.
+ */
+const COMMA_OPENERS =
+	/^(?:which|and|but|or|nor|yet|rather|while|whereas|though|although|because|since|including|not|never|with|for|leaving|making|giving|taking)\b/i
+
+/**
+ * Max words allowed for a short gloss-like right clause.
+ */
+const GLOSS_CEILING = 14
+
+/**
+ * True when the right side is a short gloss of the left side.
+ */
+function glosses(words: readonly string[]): boolean {
+	const last = words.at(-1) ?? ""
+
+	if (!PREPOSITION_TAIL.test(last) && !VERB_WORD.test(last)) return false
+
+	const text = words.join(" ")
+
+	if (words.length > GLOSS_CEILING || /[,;:—–]/.test(text)) return false
+
+	return (text.match(FINITE) ?? []).length === 1
+}
+
+const SENTENCE_BOUNDARY = /(?<=[.!?])\s+(?=[A-Z`"(])/g
+
+/**
+ * True when the first word can be capitalized like normal prose.
+ */
+const capitalizable = (word: string) =>
+	/^[a-z]/.test(word) && !/^[`[(]/.test(word) && !/[._/]/.test(word) && !/[a-z][A-Z]/.test(word)
+
+interface Joint {
+	/**
+	 * Dash position in the scanned sentence.
+	 */
+	index: number
+	/**
+	 * Replacement punctuation.
+	 * An already sentence-closed clause takes the empty string.
+	 */
+	punct: string
+	/**
+	 * Whether to capitalize the right side.
+	 */
+	capitalize: boolean
+}
+
+/**
+ * Finds dash joints in one sentence and the punctuation to use.
+ */
+function jointsIn(sentence: string): Joint[] {
+	const found: Joint[] = []
+
+	for (let i = 0; i < sentence.length; i++) {
+		if (sentence[i] !== "—" && sentence[i] !== "–") continue
+
+		const before = sentence.slice(0, i).trimEnd()
+		const after = sentence.slice(i + 1).trimStart()
+
+		if (!before || !after) continue
+
+		if (!LEFT.test(sentence.slice(0, i)) || !RIGHT.test(after)) continue
+
+		// Skip dashes inside inline code spans.
+		if ((before.match(/`/g) ?? []).length % 2 === 1) continue
+
+		let depth = 0
+
+		for (const character of before) {
+			if (character === "(" || character === "[") {
+				depth++
+			} else if (character === ")" || character === "]") {
+				depth = Math.max(0, depth - 1)
+			}
+		}
+
+		// Skip dashes inside unmatched brackets.
+		if (depth > 0) continue
+
+		// Skip tails that start by closing a bracket.
+		if (/^[^([]*[)\]]/.test(after)) continue
+
+		if (/[,;:([]$/.test(before)) continue
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Small in-memory sentence slice.
+		const words = after.replace(/[.!?]+$/, "").split(/\s+/)
+		const comma = COMMA_OPENERS.test(after) || glosses(words)
+		const closed = /[.!?][)"'\]`]*$/.test(before)
+
+		found.push({ index: i, punct: comma ? "," : closed ? "" : ".", capitalize: !comma })
+	}
+
+	return found
+}
+
+/**
+ * Joint edit keyed by dash order in the full comment.
+ */
+interface Edit {
+	dash: number
+	punct: string
+	capitalize: boolean
+}
+
+/**
+ * Scans one normalized paragraph and records joint edits by dash index.
+ */
+function scanParagraph(text: string, base: number, out: Edit[]): void {
+	const commentDivisions: [number, string][] = []
+	let last = 0
+
+	SENTENCE_BOUNDARY.lastIndex = 0
+
+	let match: RegExpExecArray | null
+
+	while ((match = SENTENCE_BOUNDARY.exec(text))) {
+		commentDivisions.push([last, text.slice(last, match.index)])
+		last = match.index + match[0].length
+	}
+
+	commentDivisions.push([last, text.slice(last)])
+
+	for (const [offset, sentence] of commentDivisions) {
+		for (const joint of jointsIn(sentence)) {
+			const at = offset + joint.index
+			const dashes = (text.slice(0, at).match(/[—–]/g) ?? []).length
+
+			out.push({ dash: base + dashes, punct: joint.punct, capitalize: joint.capitalize })
+		}
+	}
+}
+
+/**
+ * Lines that keep their own layout and should break paragraph flow.
+ */
+const STRUCTURAL_LINE: readonly RegExp[] = [
+	/^\s*https?:\/\/\S+\s*$/i,
+	/^(?:\s{4}|\t|\s*[*+-]\s|\s*\d+[.)]\s|\s*[#>|]|\s*\[[^\]]+\]:|\s*(?:---+|===+)\s*$|\s*`{3}|\s*~{3}|\s*@)/,
+	/^\s*<(?:[!?]|[^>]*$|.*>\s*$)/,
+	/(?: {2}|\\)$/,
+	/^\s*type\s+[\w$]+(?:\s*<.*>)?\s*=/,
+	/^\s*MARK:/,
+	/^\s*(?:const |let |var |function |class |import |export |return |if\s*\(|\/\/|\{(?!@)|\})/,
+	/^[^{}[\]`]*\s\|\s|^[\w.$]+\(.*\)[;]?$|^[\w.$]+\s*=\s*\S/,
+]
+
+const LIST_ITEM = /^(\s{0,3}(?:[-+*]|\d+[.)])\s+)(.*)$/
+
+const dashesIn = (line: string) => (line.match(/[—–]/g) ?? []).length
+
+/**
+ * Groups comment lines into reader-visible paragraphs, then scans them.
+ *
+ * Fenced blocks are skipped but still counted for dash indexing.
+ */
+function scanLines(lines: readonly string[]): Edit[] {
+	const out: Edit[] = []
+	let count = 0
+	let paragraph: string[] = []
+	let base = 0
+	let fenced = false
+
+	const flush = () => {
+		if (!paragraph.length) return
+
+		scanParagraph(paragraph.join(" ").replaceAll(/\s+/g, " "), base, out)
+		paragraph = []
+	}
+
+	for (const line of lines) {
+		if (/^\s*(?:`{3}|~{3})/.test(line)) {
+			flush()
+			fenced = !fenced
+			count += dashesIn(line)
+
+			continue
+		}
+
+		if (fenced) {
+			count += dashesIn(line)
+
+			continue
+		}
+
+		const item = LIST_ITEM.exec(line)
+
+		if (item) {
+			flush()
+			base = count + dashesIn(item[1]!)
+			paragraph = [item[2]!]
+			count += dashesIn(line)
+
+			continue
+		}
+
+		const structural = !line.trim() || STRUCTURAL_LINE.some((pattern) => pattern.test(line))
+
+		// Keep indented continuation lines with the active paragraph.
+		if (structural && !(paragraph.length && /^\s+\S/.test(line))) {
+			flush()
+			count += dashesIn(line)
+
+			continue
+		}
+
+		if (!paragraph.length) {
+			base = count
+		}
+
+		paragraph.push(line.trim())
+		count += dashesIn(line)
+	}
+
+	flush()
+
+	return out
+}
+
+/**
+ * Capitalizes the first word at index when allowed.
+ */
+function capitalizeAt(text: string, index: number, capitalize: boolean): string {
+	if (!capitalize) return text
+
+	const rest = text.slice(index)
+	const offset = rest.search(/\S/)
+
+	if (offset === -1) return text
+
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- First word in a tiny in-memory slice.
+	const word = rest.slice(offset).split(/\s/)[0] ?? ""
+
+	if (!capitalizable(word)) return text
+
+	const at = index + offset
+
+	return text.slice(0, at) + text[at]!.toUpperCase() + text.slice(at + 1)
+}
+
+/**
+ * Replaces one dash with chosen punctuation while preserving line layout.
+ */
+function applyEdit(text: string, at: number, punct: string, capitalize: boolean): string {
+	const lineStart = text.lastIndexOf("\n", at) + 1
+	const found = text.indexOf("\n", at)
+	const lineEnd = found === -1 ? text.length : found
+
+	if (/^[\t ]*(?:\*|\/\/|#)?[\t ]*$/.test(text.slice(lineStart, at))) {
+		let cutEnd = at + 1
+
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) {
+			cutEnd++
+		}
+
+		const previous = text.lastIndexOf("\n", lineStart - 1) + 1
+		let insert = lineStart - 1
+
+		while (insert > previous && /\s/.test(text[insert - 1]!)) {
+			insert--
+		}
+
+		const head = text.slice(0, insert) + punct + text.slice(insert, at)
+
+		return capitalizeAt(head + text.slice(cutEnd), head.length, capitalize)
+	}
+
+	let cutStart = at
+	let cutEnd = at + 1
+	let filler = ""
+
+	while (cutStart > lineStart && /[\t ]/.test(text[cutStart - 1]!)) {
+		cutStart--
+	}
+
+	if (!/^[\t ]*$/.test(text.slice(at + 1, lineEnd))) {
+		while (cutEnd < lineEnd && /[\t ]/.test(text[cutEnd]!)) {
+			cutEnd++
+		}
+
+		filler = " "
+	}
+
+	const head = text.slice(0, cutStart) + punct + filler
+
+	return capitalizeAt(head + text.slice(cutEnd), head.length, capitalize)
+}
+
+/**
+ * Returns ranges for string/template/regex literals to skip.
+ */
+function literalSpans(source: string, fileName: string): [number, number][] {
+	const kind = fileName.endsWith("tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+	const file = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true, kind)
+	const spans: [number, number][] = []
+
+	const visit = (node: ts.Node): void => {
+		if (
+			ts.isStringLiteralLike(node) ||
+			ts.isTemplateExpression(node) ||
+			ts.isTaggedTemplateExpression(node) ||
+			ts.isRegularExpressionLiteral(node)
+		) {
+			spans.push([node.getStart(file), node.getEnd()])
+
+			return
+		}
+
+		ts.forEachChild(node, visit)
+	}
+
+	ts.forEachChild(file, visit)
+
+	return spans
+}
+
+const within = (spans: readonly [number, number][], offset: number) =>
+	spans.some(([start, end]) => offset >= start && offset < end)
+
+/**
+ * Rewrites one comment using its logical lines and raw source text.
+ */
+function rewrite(raw: string, lines: readonly string[]): string {
+	const edits = scanLines(lines)
+
+	if (!edits.length) return raw
+
+	const positions: number[] = []
+
+	for (let i = 0; i < raw.length; i++) {
+		if (raw[i] === "—" || raw[i] === "–") {
+			positions.push(i)
+		}
+	}
+
+	let out = raw
+
+	// Apply edits from the end so offsets stay valid.
+	for (const edit of [...edits].toSorted((a, b) => b.dash - a.dash)) {
+		const at = positions[edit.dash]
+
+		if (at === undefined) continue
+
+		out = applyEdit(out, at, edit.punct, edit.capitalize)
+	}
+
+	return out
+}
+
+/**
+ * Strips the indentation every non-empty line shares.
+ *
+ * `scanLines` reads a four-space indent as a structural line, which is right for a
+ * markdown code block and wrong for the body of an indented docstring.
+ * Removing the common prefix first lets an indented paragraph group as a paragraph.
+ */
+function dedent(lines: readonly string[]): string[] {
+	let common = Infinity
+
+	for (const line of lines) {
+		if (!line.trim()) continue
+
+		common = Math.min(common, line.length - line.trimStart().length)
+	}
+
+	if (!Number.isFinite(common) || common === 0) return [...lines]
+
+	return lines.map((line) => (line.trim() ? line.slice(common) : line))
+}
+
+/**
+ * Rewrites the joints of a markdown or MDX document, whose whole body is prose.
+ *
+ * Leading YAML frontmatter is held out.
+ * Vale strips it before linting, so a dash inside it was never reported,
+ * and a key there is data rather than a sentence.
+ *
+ * `scanLines` handles the fenced blocks, list items and indented code the body still carries.
+ */
+function sweepMarkdown(source: string): string {
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- One document, already resident.
+	const lines = source.split("\n")
+	let start = 0
+
+	if (lines[0]?.trim() === "---") {
+		const close = lines.findIndex((line, index) => index > 0 && line.trim() === "---")
+
+		if (close !== -1) {
+			start = close + 1
+		}
+	}
+
+	const head = lines.slice(0, start)
+	const body = lines.slice(start)
+	const swept = rewrite(body.join("\n"), body)
+
+	return start ? `${head.join("\n")}\n${swept}` : swept
+}
+
+/**
+ * A triple-quoted Python string, with any prefix letters the literal carries.
+ */
+const DOCSTRING = /(?:[A-Za-z]*)("""|''')[\s\S]*?\1/g
+
+/**
+ * A run of whole-line `#` comments.
+ *
+ * The run must begin the line, so a `#` inside a YAML scalar (`key: "a # b"`) is left alone.
+ */
+const HASH_RUN = /(?:^[\t ]*#[^\n]*\n?)+/gm
+
+/**
+ * Rewrites the joints of a file whose comments open with `#`, which is Python and YAML here.
+ *
+ * Python carries prose in two places, and both are linted: a `#` run and a docstring.
+ * A docstring is swept first, because sweeping the `#` runs afterwards must not
+ * read the lines of a triple-quoted block as comments.
+ */
+function sweepHashLanguages(source: string, fileName: string): string {
+	const docstrings = fileName.endsWith(".py")
+
+	const withDocstrings = docstrings
+		? source.replaceAll(DOCSTRING, (literal: string) => {
+				// oxlint-disable-next-line mailwoman/prefer-spliterator -- One bounded literal.
+				const raw = literal.split("\n")
+
+				if (raw.length === 1) return literal
+
+				const opened = raw[0]!.replace(/^(?:[A-Za-z]*)(?:"""|''')/, "")
+				const closed = raw.at(-1)!.replace(/(?:"""|''')[\t ]*$/, "")
+				const middle = dedent(raw.slice(1, -1))
+
+				return rewrite(literal, [opened, ...middle, closed])
+			})
+		: source
+
+	const spans: [number, number][] = []
+
+	if (docstrings) {
+		DOCSTRING.lastIndex = 0
+
+		let found: RegExpExecArray | null
+
+		while ((found = DOCSTRING.exec(withDocstrings))) {
+			spans.push([found.index, found.index + found[0].length])
+		}
+	}
+
+	return withDocstrings.replaceAll(HASH_RUN, (group: string, offset: number) => {
+		if (within(spans, offset)) return group
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single contiguous `#` run.
+		const raw = group.replace(/\n$/, "").split("\n")
+		const lines = raw.map((line) => /^[\t ]*#[\t ]?(.*)$/.exec(line)?.[1])
+
+		if (lines.some((line) => line === undefined)) return group
+
+		const body = lines as string[]
+
+		// Skip directive runs: a shebang, a coding declaration, a linter pragma.
+		if (body.some((line) => line.startsWith("!")) || group.startsWith("#!")) return group
+
+		return rewrite(group.replace(/\n$/, ""), body) + (group.endsWith("\n") ? "\n" : "")
+	})
+}
+
+/**
+ * Rewrites all detected joints in the prose of one file.
+ *
+ * The dispatch follows the surfaces `config/vale/lint-prose.ts` lints: `.ts` and `.tsx` under the code
+ * surface, `.py`, `.yaml` and `.yml` beside them, and `.md` and `.mdx` under the docs surface.
+ */
+export function sweepSource(source: string, fileName: string): string {
+	if (/[.]mdx?$/.test(fileName)) return sweepMarkdown(source)
+
+	if (/[.](?:py|ya?ml)$/.test(fileName)) return sweepHashLanguages(source, fileName)
+
+	return sweepTypeScript(source, fileName)
+}
+
+/**
+ * Rewrites all detected joints in the comments of one TypeScript file.
+ */
+function sweepTypeScript(source: string, fileName: string): string {
+	const spans = literalSpans(source, fileName)
+
+	const blocks = source.replaceAll(/^[\t ]*\/\*[\s\S]*?\*\/$/gm, (block: string, offset: number) => {
+		if (within(spans, offset)) return block
+
+		// Skip shipped banner comments.
+		if (block.trimStart().startsWith("/*!")) return block
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single bounded block comment.
+		const raw = block.split("\n")
+
+		if (raw.length === 1) {
+			const single = /^[\t ]*\/\*\*?[\t ]?([\s\S]*?)[\t ]?\*\/$/.exec(block)
+
+			return single ? rewrite(block, [single[1]!]) : block
+		}
+
+		const lines = raw.slice(1, -1).map((line) => /^[\t ]*\*[\t ]?(.*)$/.exec(line)?.[1] ?? line.trim())
+
+		return rewrite(block, [raw[0]!.replace(/^[\t ]*\/\*\*?[\t ]?/, ""), ...lines])
+	})
+
+	// Recompute literal spans after block edits shift offsets.
+	const shifted = literalSpans(blocks, fileName)
+
+	return blocks.replaceAll(/(?:^[\t ]*\/\/[^\n]*\n?)+/gm, (group: string, offset: number) => {
+		if (within(shifted, offset)) return group
+
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- Single contiguous `//` group.
+		const raw = group.replace(/\n$/, "").split("\n")
+		const lines = raw.map((line) => /^[\t ]*\/\/[\t ]?(.*)$/.exec(line)?.[1])
+
+		if (lines.some((line) => line === undefined)) return group
+
+		const body = lines as string[]
+
+		// Skip directive-style comment runs.
+		if (body.some((line) => /^\s*(?:\/|#region|#endregion)/.test(line))) return group
+
+		return rewrite(group.replace(/\n$/, ""), body) + (group.endsWith("\n") ? "\n" : "")
+	})
+}
+
+process.exitCode = await runCLICommand(async () => {
+	const paths = [...cliArguments()]
+
+	if (!paths.length) {
+		process.stderr.write("usage: yarn comments:joints <file> [file …]\n")
+
+		return 1
+	}
+
+	let changed = 0
+
+	for (const path of paths) {
+		const source = await readLocalTextFile(path)
+		const swept = sweepSource(source, String(path))
+
+		if (swept === source) continue
+
+		await writeLocalTextFile(swept, path)
+
+		changed++
+	}
+
+	process.stdout.write(`answered joints in ${changed} of ${paths.length} files\n`)
+
+	return 0
+})

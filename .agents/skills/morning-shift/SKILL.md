@@ -56,7 +56,7 @@ done
 echo "=== modal / heat / disk ==="
 modal app list 2>&1 | grep -c running | sed 's/^/modal-running: /'
 sensors 2>/dev/null | grep -iE "Tctl|Package" | head -1
-df -h /home /mnt/playpen | tail -3
+df -h /home "$MAILWOMAN_DATA_ROOT" | tail -3
 ```
 
 If any PR shows `test:fail` or main CI is red, **flag it in the morning summary

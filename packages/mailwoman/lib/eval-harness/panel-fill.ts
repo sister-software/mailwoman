@@ -33,13 +33,16 @@ export interface StratumFillCensus {
 	eligible: number
 	selected: number
 	/**
-	 * Rows skipped because the identity join produced no coherent gold set. The gold reader's own census says which part
-	 * of the guard refused them.
+	 * Rows skipped because the identity join produced no coherent gold set.
+	 *
+	 * The gold reader's own census says which part of the guard refused them.
 	 */
 	droppedUngradeableGold: number
 	/**
-	 * Rows the stratum's own rule could not render. Counted apart from the gold drop because the two name different holes
-	 * — one in the gazetteer, one in the source register.
+	 * Rows the stratum's own rule could not render.
+	 *
+	 * Counted apart from the gold drop because the two name different holes —
+	 * one in the gazetteer, one in the source register.
 	 */
 	droppedUnbuildable: number
 }
@@ -50,11 +53,14 @@ export interface FillStratumOptions<Item, Row> {
 	seed: number
 	target: number
 	/**
-	 * The identity a stratum marks used, so a later stratum drawing from the same register cannot take the row again.
+	 * The identity a stratum marks used, so a later stratum drawing from the same
+	 * register cannot take the row again.
 	 */
 	identify: (item: Item) => string
 	/**
-	 * Identities already taken. Mutated as rows are selected, so strata fill in order against one set.
+	 * Identities already taken.
+	 *
+	 * Mutated as rows are selected, so strata fill in order against one set.
 	 */
 	used: Set<string>
 	build: (item: Item, index: number) => StratumOutcome<Row>
@@ -74,9 +80,11 @@ export function fillStratum<Item, Row>(
 	let droppedUngradeableGold = 0
 	let droppedUnbuildable = 0
 
-	// A copy, so the caller's array is untouched. The order this walk produces is what selects the rows a frozen panel
-	// contains, and a published record names that panel's digest — so the generator is `SeededRandom`'s, seeded the way
-	// `SeededRandom` seeds it, rather than a normalisation re-typed here.
+	// A copy, so the caller's array is untouched.
+	// The order this walk produces is what selects the rows a frozen panel contains,
+	// and a published record names that panel's digest.
+	// So the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
+	// rather than a normalisation re-typed here.
 	const shuffled = [...eligible]
 
 	new SeededRandom(seed).shuffle(shuffled)
@@ -122,8 +130,11 @@ export function padRowIndex(index: number): string {
 }
 
 /**
- * The register columns a panel builder reads to select and grade a row. `GeoNamesCity` satisfies it. the builders take
- * this shape rather than that type so the grouping and gold helpers below are not tied to one register's reader.
+ * The register columns a panel builder reads to select and grade a row.
+ *
+ * `GeoNamesCity` satisfies it.
+ * The builders take this shape rather than that type so the grouping and gold
+ * helpers below are not tied to one register's reader.
  */
 export interface PanelSubject {
 	geonameid: string
@@ -139,8 +150,8 @@ export interface PanelSubject {
 /**
  * Rows grouped by their lowercased ascii name, which is how both builders ask whether a name is borne once.
  *
- * Built once per build and passed down: the question is asked per candidate row, and re-deriving the grouping for each
- * would walk the whole register every time.
+ * Built once per build and passed down: the question is asked per candidate row,
+ * and re-deriving the grouping for each would walk the whole register every time.
  */
 export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {
 	const byName = new Map<string, Subject[]>()
@@ -159,9 +170,9 @@ export function groupByFoldedName<Subject extends PanelSubject>(subjects: readon
 /**
  * Rows whose name is borne exactly once and which no earlier stratum has taken, in geonameid order.
  *
- * The order matters and is why this is shared rather than re-typed: `fillStratum` shuffles what it is handed, so two
- * builders sorting differently would draw different rows from the same seed. `extra` is the caller's own rule — a
- * population floor, a band — applied before the sort.
+ * The order matters and is why this is shared rather than re-typed: `fillStratum` shuffles what
+ * it is handed, so two builders sorting differently would draw different rows from the same seed.
+ * `extra` is the caller's own rule — a population floor, a band — applied before the sort.
  */
 export function uniqueNameEligible<Subject extends PanelSubject>(options: {
 	subjects: readonly Subject[]
@@ -179,8 +190,10 @@ export function uniqueNameEligible<Subject extends PanelSubject>(options: {
 }
 
 /**
- * The gold a panel row carries: the register's own entity and coordinate, plus the identity set the concordance
- * reached. Every benchmark here grades against this shape, so it is written once.
+ * The gold a panel row carries: the register's own entity and coordinate,
+ * plus the identity set the concordance reached.
+ *
+ * Every benchmark here grades against this shape, so it is written once.
  */
 export function goldOf<Subject extends PanelSubject>(subject: Subject, placeIDs: number[]) {
 	return {

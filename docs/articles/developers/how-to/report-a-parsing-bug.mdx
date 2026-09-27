@@ -65,7 +65,7 @@ mailwoman parse --debug "$ADDRESS" | jq '{input, path, kind: {kind: .kind.kind, 
 ```
 
 `path` and `kind` are the two that explain the result before anyone reads the tree. `path:
-"fast-path"` means the model never ran — the input was classified confidently enough to synthesize a
+"fast-path"` means the model never ran. The input was classified confidently enough to synthesize a
 node directly, so a wrong answer there is a classifier bug rather than a model one. A surprising `kind`
 explains a surprising set of components.
 
@@ -123,7 +123,7 @@ The weights line in particular pins the model, and parses are not comparable acr
 reads the address out of the query string. `/demo?q=1275+Pennsylvania+Ave+NW,+Washington+DC` opens with
 your input already in the box.
 
-Paste that link into the issue. It costs you nothing and it removes the install step on the other side.
+Paste that link into the issue. It costs you no effort and it removes the install step on the other side.
 If the demo parses it correctly and your install does not, that difference is itself the finding — the
 demo pins a published model version, so you have found a regression or a configuration gap.
 

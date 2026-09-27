@@ -12,9 +12,9 @@
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http"
 
+import { tempRootPath } from "@mailwoman/core/data-root"
 import { statPath, type Stats } from "@mailwoman/core/fs/readers"
 import { openReadStream } from "@mailwoman/core/fs/streams"
-import { mailwomanTempRoot } from "@mailwoman/core/utils"
 import { extname, join, normalize } from "path-ts"
 
 /**
@@ -22,11 +22,15 @@ import { extname, join, normalize } from "path-ts"
  */
 export interface ServeRangeOptions {
 	/**
-	 * Directory to serve. Default `/tmp`.
+	 * Directory to serve.
+	 *
+	 * Default `/tmp`.
 	 */
 	dir?: string
 	/**
-	 * Port to listen on. Default 8899.
+	 * Port to listen on.
+	 *
+	 * Default 8899.
 	 */
 	port?: number
 }
@@ -49,14 +53,16 @@ const TYPES: Record<string, string> = {
 }
 
 /**
- * Serve `dir` over localhost with http Range support. Resolves once the server is listening. the caller owns the
- * lifetime (dispose it to stop. commands typically hold the process open instead).
+ * Serve `dir` over localhost with http Range support.
+ *
+ * Resolves once the server is listening.
+ * The caller owns the lifetime (dispose it to stop. Commands typically hold the process open instead).
  */
 export async function serveWithRangeSupport(
 	options: ServeRangeOptions = {},
 	report?: (line: string) => void
 ): Promise<RangeServer> {
-	const dir = options.dir || String(mailwomanTempRoot())
+	const dir = options.dir || tempRootPath()
 	const port = options.port ?? 8899
 
 	const server = createServer(async (req: IncomingMessage, res: ServerResponse) => {

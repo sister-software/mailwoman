@@ -28,21 +28,24 @@
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator, XLSXSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { type HiSchoolRow, schoolCellText, STATE_HI_SCHOOL_SHEETS } from "#us/adapters/state/hi-schools/workbook"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const STATE_HI_SCHOOLS_ADAPTER_ID = "state-hi-schools"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_HI_SCHOOLS_DEFAULT_LICENSE = "Public Domain"
 
@@ -53,15 +56,19 @@ function normalizeZip(raw: HiSchoolRow["zip"]): string {
 
 	if (!trimmed) return ""
 
-	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros. HI ZIPs all begin
-	// with 96, so a 4-digit value indicates a leading-zero stripped during numeric coercion
-	// (defensive — has not been observed in the published file as of 2026-05).
+	// xlsx → CSV conversion may emit numeric ZIPs without leading zeros.
+	// HI ZIPs all begin with 96, so a 4-digit value indicates a leading-zero stripped during
+	// numeric coercion (defensive — has not been observed in the published file as of 2026-05).
 	if (/^\d{4}$/.test(trimmed)) return `0${trimmed}`
 
 	return trimmed
 }
 
-async function* readSchoolRows(inputPath: string): AsyncGenerator<HiSchoolRow> {
+async function* readSchoolRows(source: PathBuilderLike): AsyncGenerator<HiSchoolRow> {
+	// XLSXSpliterator opens a string, URL, or byte source.
+	// A PathBuilder is none of those.
+	const inputPath = source.toString()
+
 	if (inputPath.toLowerCase().endsWith(".xlsx")) {
 		for (const sheet of STATE_HI_SCHOOL_SHEETS) {
 			yield* XLSXSpliterator.fromAsync<HiSchoolRow>(inputPath, {
@@ -83,6 +90,8 @@ export function createStateHiSchoolsAdapter(): CorpusAdapter {
 		id: STATE_HI_SCHOOLS_ADAPTER_ID,
 		defaultLicense: STATE_HI_SCHOOLS_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.HawaiiSchools,
+		surface: SurfaceOrigin.Attested,
 		description: "Hawaii DOE School Directory — ~300 K-12 public + charter schools with venue+address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {

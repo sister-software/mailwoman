@@ -1,15 +1,4 @@
-"""Every fragment renderer agrees with its own text, and keeps agreeing across a split.
-
-Each of these builds `raw` and its char offsets separately — `raw` by joining pieces, the offsets
-by advancing a cursor over the same pieces — so the two can disagree and nothing downstream
-notices: `char_label_array_from_spans` reads the offsets and paints whatever they point at, and a
-row that labels the wrong characters still trains, still exports, and still scores.
-
-So the assertion is the agreement itself: for every span the renderer emits, `raw[start:end]` must
-be the surface that span claims to cover. That holds for any input, which is what makes it a check
-rather than a copy of the implementation. The token and label lists are checked the same way —
-one label per token, `B-` first and `I-` after within a field.
-"""
+"""Every fragment renderer agrees with its own text across a split, because `raw` and its char offsets are built separately and a disagreement still trains, exports, and scores."""
 
 from __future__ import annotations
 
@@ -27,8 +16,8 @@ from mailwoman_train.corpora.fragment import (
     render_unit,
 )
 
-#: One call per renderer, with the surfaces each was written for. Multi-word fields throughout,
-#: because a single-word field makes a `B-`-only label list and hides an `I-` continuation bug.
+#: One call per renderer, with multi-word surfaces throughout, because a single-word field makes a
+#: `B-`-only label list and hides an `I-` continuation bug.
 CASES: dict[str, dict[str, Any]] = {
     "bare_street": render("Vestre Haugen", None),
     "street_number": render("Vestre Haugen", "74"),
@@ -63,12 +52,7 @@ def test_every_span_covers_the_text_it_claims(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_the_spans_reconstruct_the_row_in_order(name: str) -> None:
-    """Concatenating the covered surfaces in span order returns every token, in the same order.
-
-    A cursor that advances by the wrong separator width still produces spans inside `raw`, so the
-    bounds check above passes while each span sits one or two characters off. Reconstructing
-    catches that: the covered text stops matching the tokens it is supposed to hold.
-    """
+    """Concatenating the covered surfaces in span order returns every token in order, catching a cursor that advances by the wrong separator width while still producing spans inside `raw`."""
     row = CASES[name]
     raw = row["raw"]
     covered = [raw[start:end] for start, end in zip(row["span_starts"], row["span_ends"], strict=True)]
@@ -100,8 +84,7 @@ def test_each_field_opens_with_b_and_continues_with_i(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_every_span_tag_has_a_matching_label_run(name: str) -> None:
-    """The span triple and the BIO labels are two descriptions of one row. they must name the same
-    fields in the same order, or the char path and the token path train different things."""
+    """The span triple and the BIO labels must name the same fields in the same order, or the char path and the token path train different things."""
     row = CASES[name]
     from_labels = [label.split("-", 1)[1] for label in row["labels"] if label.startswith("B-")]
     assert from_labels == list(row["span_tags"]), f"{name}: labels say {from_labels}, spans say {row['span_tags']}"

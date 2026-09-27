@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The `mwdev_minimal_pairs` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `../minimal-pairs.ts`.
- */
-
 import { z } from "zod"
 
 import type { EngineConfig } from "#engine/registry"
@@ -26,6 +21,10 @@ const LADDER_SCHEMA = z.object({
 	rungs: RUNGS_SCHEMA,
 })
 
+/**
+ * Builds the `mwdev_minimal_pairs` tool, which runs caller-written ladders of near-identical
+ * inputs through one engine and reports the first rung whose output changes.
+ */
 export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 	name: "mwdev_minimal_pairs",
 	description:
@@ -35,8 +34,8 @@ export const minimalPairsTool = ({ registry }: DevToolDeps): DevTool => ({
 		"configuration fixed, which is the only way to attribute a failure to a token rather than a setting. Use it " +
 		"when a row fails and you do not yet know WHERE: strip the address to its bare admin tail, then add back one " +
 		"element per rung. `07691 Portopetro, Illes Balears, Spain` discards the region that `Portopetro, Illes " +
-		"Balears, Spain` keeps, and adding `15, ` then displaces the locality — two separate stages, no street " +
-		"involved, and neither is visible in a per-country score. RUNGS ARE YOURS TO WRITE: nothing is generated, " +
+		"Balears, Spain` keeps, and adding `15, ` then displaces the locality. Those are two separate stages that " +
+		"involve no street, and neither is visible in a per-country score. RUNGS ARE YOURS TO WRITE: nothing is generated, " +
 		"because generating them asserts a component order that would be silently wrong for some locale. A ladder " +
 		"that does not diverge is a MEASURED negative and says so.",
 	inputSchema: z.object({

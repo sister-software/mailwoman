@@ -16,14 +16,14 @@
  *   and the builder writes `layer_coverage` with basis `designated` for every cell the register
  *   touches. Inside a covered cell an empty answer is evidence of absence: no GB uprn by that number
  *   carries a Code-Point postcode, or no uprn carries that postcode. Two absences the reader cannot
- *   tell from those are recorded in `nsul_meta` as counts rather than as rows — a uprn whose `pcds` is
+ *   tell from those are recorded in `nsul_meta` as counts rather than as rows. A uprn whose `pcds` is
  *   null (its postcode is not in Code-Point Open) and one Open uprn publishes no coordinate for — so a
  *   caller building negative evidence reads the coverage table and those counts rather than this reader
  *   alone. Outside coverage (Northern Ireland, the Isle of Man, the Channel Islands) the answer is
  *   unknown, per the meaning-of-zero rule.
  */
 
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup, type SQLiteLookupOptions } from "@mailwoman/sqlite/lookup"
 
 import { compactPostcode, type NSULDatabase } from "#nsul/schema"
 import { prepareAll, prepareGet } from "#sqlite-utils"
@@ -55,16 +55,13 @@ export interface NSULAssignedPoint {
 	h3Cell: number
 }
 
-export interface NSULLookupOpts {
-	/**
-	 * Path to a `nsul.db` built by `mailwoman`'s gazetteer pipeline. Opened read-only.
-	 */
-	databasePath?: string
-	/**
-	 * Pre-opened handle (tests / shared connections). Mutually exclusive with `databasePath`.
-	 */
-	database?: DatabaseClient<NSULDatabase>
-}
+/**
+ * Where an {@link NSULLookup} reads from.
+ *
+ * The source is a `nsul.db` built by `mailwoman`'s gazetteer pipeline, opened read-only,
+ * or a connection the caller already holds.
+ */
+export type NSULLookupOpts = SQLiteLookupOptions<NSULDatabase>
 
 interface PostcodeRow {
 	pcds: string
@@ -79,43 +76,31 @@ interface PointRow {
 }
 
 /**
- * Node reader over `nsul.db`. `implements Disposable` so callers can `using lookup = new NSULLookup(...)` — the same
- * precedent as `UPRNLookup`.
+ * Node reader over `nsul.db`.
+ *
+ * Disposable, so callers can `using lookup = new NSULLookup(...)`.
  */
-export class NSULLookup implements Disposable {
-	#db: DatabaseClient<NSULDatabase>
-	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
-	 */
-	readonly #resources = new DisposableStack()
-
+export class NSULLookup extends SQLiteLookup<NSULDatabase> {
 	readonly #postcodeProbe: (uprn: number) => PostcodeRow | undefined
 	readonly #pointsProbe: (pcdsCompact: string) => PointRow[]
 
 	constructor(opts: NSULLookupOpts) {
-		if (opts.database) {
-			this.#db = opts.database
-		} else if (opts.databasePath) {
-			this.#db = this.#resources.use(new DatabaseClient<NSULDatabase>(opts.databasePath, { readOnly: true }))
-		} else {
-			throw new Error("NSULLookup needs `databasePath` or `database`")
-		}
+		super(opts)
 
 		this.#postcodeProbe = prepareGet<[number], PostcodeRow, NSULDatabase>(
-			this.#db,
+			this.database,
 			"SELECT pcds, pcds_compact FROM uprn_postcode WHERE uprn = ?"
 		)
 
 		this.#pointsProbe = prepareAll<[string], PointRow, NSULDatabase>(
-			this.#db,
+			this.database,
 			"SELECT uprn, lat, lon, h3_cell FROM uprn_postcode WHERE pcds_compact = ? ORDER BY uprn"
 		)
 	}
 
 	/**
-	 * The unit postcode the register assigns to `uprn`, or `null` when the register holds no row for it (see the module
-	 * docstring for what that `null` claims).
+	 * The unit postcode the register assigns to `uprn`, or `null` when the register holds
+	 * no row for it (see the module docstring for what that `null` claims).
 	 */
 	postcodeForUPRN(uprn: number): NSULPostcode | null {
 		const row = this.#postcodeProbe(uprn)
@@ -124,9 +109,11 @@ export class NSULLookup implements Disposable {
 	}
 
 	/**
-	 * Every uprn the register assigns to one unit postcode, with its published point, in ascending uprn order. The key is
-	 * compacted through {@link compactPostcode} first, so `PO21 1HR` and `PO211HR` answer identically. An empty array is
-	 * the register's answer, scoped as the module docstring says.
+	 * Every uprn the register assigns to one unit postcode, with its published point, in ascending uprn order.
+	 *
+	 * The key is compacted through {@link compactPostcode} first, so `PO21 1HR`
+	 * and `PO211HR` answer identically.
+	 * An empty array is the register's answer, scoped as the module docstring says.
 	 */
 	uprnsForPostcode(postcode: string): NSULAssignedPoint[] {
 		return this.#pointsProbe(compactPostcode(postcode)).map((row) => ({
@@ -135,9 +122,5 @@ export class NSULLookup implements Disposable {
 			longitude: row.lon,
 			h3Cell: row.h3_cell,
 		}))
-	}
-
-	[Symbol.dispose](): void {
-		this.#resources[Symbol.dispose]()
 	}
 }

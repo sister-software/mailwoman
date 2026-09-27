@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
+/**
+ *   Derived from `tokenization/Graph.js` in Pelias Parser, MIT, copyright (c) 2019 Pelias
+ *   Contributors. `THIRD_PARTY_NOTICES.md` in this package carries the MIT notice that covers it.
+ */
+
 import { Sequence } from "#resources/set"
 
 /**

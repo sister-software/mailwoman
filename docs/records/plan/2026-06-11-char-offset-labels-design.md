@@ -41,7 +41,7 @@ What this cost, concretely:
   piece projection happens to align — the augmentation lives at the mercy of an encoding detail
   the format can't express directly.
 - The paired-delimiter future (#518): quoted venues and parenthetical annotations cannot be
-  labeled AROUND — `"Big Company HQ"` needs venue on the inner span and nothing on the quotes;
+  labeled AROUND — `"Big Company HQ"` needs venue on the inner span and no label on the quotes;
   the token format can only label the quote-containing token whole.
 
 ## The proposal

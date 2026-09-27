@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The obligations a license places on the party running mailwoman, summarized from an spdx expression. This is a
- *   debugging summary for `mailwoman doctor`, not legal advice: it names the responsibility class each identifier is
- *   known to carry, and it says `recognized: false` for an identifier it does not know rather than guessing.
+ *   Summarizes the obligations of an SPDX license expression for `mailwoman doctor`. The summary is a debugging
+ *   aid and gives no legal advice.
  */
 
 import { stringifyJSON } from "#json"
@@ -12,13 +11,12 @@ import type { LicenseKeyVerification } from "#license/key/index"
 import type { LicenseKeyPublication } from "#license/publication"
 
 /**
- * The responsibility classes the summary reports.
+ * The obligation classes the summary reports.
  *
- * - `attribution`: credit the source where results derived from it are shown or redistributed.
- * - `share_alike`: a derived work or derived database carries the same license (ODbL's Derived Database. agpl's copyleft
- *   on modifications).
- * - `source_offer`: users who interact with the software over a network must be offered its source, including
- *   modifications (AGPL-3.0 section 13).
+ * - `attribution` requires crediting the source where derived results are shown or redistributed.
+ * - `share_alike` requires a derived work or database to carry the same license, as in ODbL and AGPL.
+ * - `source_offer` requires offering the source, including modifications,
+ *   to network users (AGPL-3.0 section 13).
  */
 export const LicenseObligation = {
 	Attribution: "attribution",
@@ -26,12 +24,17 @@ export const LicenseObligation = {
 	SourceOffer: "source_offer",
 } as const
 
+/**
+ * An obligation class.
+ */
 export type LicenseObligation = (typeof LicenseObligation)[keyof typeof LicenseObligation]
 
 /**
- * What one spdx identifier is known to require. An identifier absent from this table is unrecognized. The summary
- * reports that state. The meaning-of-zero rule says that an empty obligation list is a statement, and an unknown
- * license must not read as one.
+ * The known obligations of each SPDX identifier.
+ *
+ * An empty list means the license has no obligations.
+ * An identifier missing from the table is reported as unrecognized so that an
+ * unknown license never reads as obligation-free.
  */
 const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new Map<
 	string,
@@ -39,22 +42,39 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 >([
 	["AGPL-3.0-only", [LicenseObligation.Attribution, LicenseObligation.ShareAlike, LicenseObligation.SourceOffer]],
 	["AGPL-3.0-or-later", [LicenseObligation.Attribution, LicenseObligation.ShareAlike, LicenseObligation.SourceOffer]],
-	// The commercial agreement's attribution clause (commercial-LICENSE.md, section 4).
+	// Section 4 of commercial-LICENSE.md requires attribution.
 	["LicenseRef-Commercial", [LicenseObligation.Attribution]],
 	["ODbL-1.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	// Open Data Commons publishes an attribution-only license beside ODbL,
+	// and the two are confused because both are ODC.
+	// This one carries no share-alike term.
+	["ODC-By-1.0", [LicenseObligation.Attribution]],
+	// Every identifier `readLicenseRecord` can resolve a share-alike mention to belongs here,
+	// so a stated CC-BY-SA grant reads as carrying share-alike rather than as an unrecognized identifier.
+	["CC-BY-SA-4.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	["CC-BY-SA-3.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	["CC-BY-SA-2.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
 	["OGL-UK-3.0", [LicenseObligation.Attribution]],
 	["CDLA-Permissive-2.0", [LicenseObligation.Attribution]],
 	["CC-BY-4.0", [LicenseObligation.Attribution]],
 	["CC0-1.0", []],
 	["PDDL-1.0", []],
-	// A work of the United States Government (17 U.S.C. § 105): no copyright, so no obligation. spdx has no identifier
-	// for it. the `LicenseRef` is defined in docs/engineering/reference/layer-interface.mdx.
+	// US Government works have no copyright under 17 U.S.C. § 105. SPDX has no identifier for them, so this
+	// `LicenseRef` is defined in docs/engineering/reference/layer-interface.mdx.
 	["LicenseRef-USGov-Public-Domain", []],
-	// Licence Ouverte 2.0 (etalab), BAN's elected license.
+	// BAN publishes under Licence Ouverte 2.0.
 	["etalab-2.0", [LicenseObligation.Attribution]],
-	// 政府資料開放授權條款－第1版, the Taiwanese civil-affairs address registers behind Overture-TW. Attribution is the
-	// condition of the grant itself: the license voids without the 顯名聲明, so the per-agency list travels with the data.
+	// The Taiwanese address registers behind Overture-TW use this license.
+	// The grant is void without the attribution statement, so the per-agency
+	// attribution list ships with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
+	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de
+	// la Información del INEGI", which names no Creative Commons license and carries no version.
+	// The terms permit copying, publishing, adapting, extracting and commercial use,
+	// and require the credit `Fuente: INEGI, <product name>`.
+	// They state no share-alike term.
+	// Retrieved 2026-09-27 and retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html.
+	["LicenseRef-INEGI-Terms", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])
@@ -68,29 +88,34 @@ export interface LicenseSummary {
 	 */
 	expression: string
 	/**
-	 * The identifiers the expression names, in order. `AGPL-3.0-only or LicenseRef-Commercial` names two.
+	 * The expression's identifiers in order.
+	 * `AGPL-3.0-only OR LicenseRef-Commercial` has two.
 	 */
 	identifiers: string[]
 	/**
-	 * The union of the known obligations across every identifier — the conservative reading of an `and`, and for an `or`
-	 * the reading before a party has chosen a branch (see {@link chooseLicenseBranch}).
+	 * The union of the known obligations of every identifier.
+	 *
+	 * For `OR`, this union applies until a branch is chosen with {@link chooseLicenseBranch}.
 	 */
 	obligations: LicenseObligation[]
 	/**
-	 * True when every identifier is in the known table. `noassertion`, a vendor-suffixed identifier such as
-	 * `pddl-1.0-USGov-nrcs`, or a misspelling all read false.
+	 * Whether every identifier is in the known table.
+	 *
+	 * `NOASSERTION`, a vendor-suffixed identifier such as `pddl-1.0-USGov-nrcs`
+	 * and a misspelling are all unrecognized.
 	 */
 	recognized: boolean
 	/**
-	 * The identifiers that were not recognized, so the report can name them.
+	 * The identifiers missing from the known table.
 	 */
 	unrecognized: string[]
 }
 
 /**
- * Split an spdx expression into its identifiers. Handles `and`, `or`, `with` (the exception is kept with its license)
- * and parentheses. anything more exotic still splits on the operators, which is enough for a summary that reports what
- * it did not recognize.
+ * Splits an SPDX expression into its identifiers.
+ *
+ * The function removes parentheses and splits on `AND` and `OR`.
+ * A `WITH` exception stays attached to its license.
  */
 export function licenseIdentifiers(expression: string): string[] {
 	return expression
@@ -101,7 +126,14 @@ export function licenseIdentifiers(expression: string): string[] {
 }
 
 /**
- * Summarize an spdx expression into the obligations it is known to carry.
+ * Returns the license part of an identifier, without any `WITH` exception.
+ */
+function withoutException(identifier: string): string {
+	return identifier.split(/\s+WITH\s+/i)[0]!
+}
+
+/**
+ * Summarizes the known obligations of an SPDX expression.
  */
 export function summarizeLicense(expression: string): LicenseSummary {
 	const identifiers = licenseIdentifiers(expression)
@@ -109,7 +141,7 @@ export function summarizeLicense(expression: string): LicenseSummary {
 	const unrecognized: string[] = []
 
 	for (const identifier of identifiers) {
-		const known = KNOWN_OBLIGATIONS.get(identifier.split(/\s+WITH\s+/i)[0]!)
+		const known = KNOWN_OBLIGATIONS.get(withoutException(identifier))
 
 		if (!known) {
 			unrecognized.push(identifier)
@@ -132,9 +164,12 @@ export function summarizeLicense(expression: string): LicenseSummary {
 }
 
 /**
- * The branch of mailwoman's own expression that applies, from what the configured key reads offline and, when a caller
- * has asked the well-known register, what it said. Only a `valid` key that the register has not retired or dropped
- * selects the commercial branch. The doctor passes both answers. the stamp, offline by design, passes the key alone.
+ * Returns the branch of mailwoman's license expression that applies to this installation.
+ *
+ * The commercial branch applies only when the key is `valid` and the published
+ * key register has not marked it retired or unlisted.
+ * The doctor passes both the key and the register status.
+ * The stamp runs offline and passes only the key.
  */
 export function appliedLicenseBranch(
 	expression: string,
@@ -147,10 +182,11 @@ export function appliedLicenseBranch(
 }
 
 /**
- * Choose the branch of a dual-licensed (`A or B`) expression that applies to this installation. Mailwoman's own
- * expression is `AGPL-3.0-only or LicenseRef-Commercial`: without a commercial agreement the open-source branch
- * applies, and the summary reports its obligations rather than the union. An expression with no `or` is returned
- * whole.
+ * Chooses the applicable branch of an `A OR B` expression.
+ *
+ * The first `LicenseRef-` branch applies when there is a commercial agreement.
+ * Otherwise the first open-source branch applies.
+ * An expression without `OR` is returned unchanged.
  */
 export function chooseLicenseBranch(expression: string, options: { commercialAgreement: boolean }): string {
 	const branches = expression
@@ -172,15 +208,19 @@ export function chooseLicenseBranch(expression: string, options: { commercialAgr
 const LICENSE_REF = /^LicenseRef-[A-Za-z0-9.-]+$/u
 
 /**
- * Whether an spdx expression may be recorded in a layer manifest: every identifier is one the obligations table knows,
- * a `LicenseRef-…` this repository defines, or `noassertion` (the publisher has stated no license. the doctor reports
- * that as degraded, which is the correct reading). Anything else is refused at build time, because a manifest is sealed
- * data and a vendor-suffixed identifier such as `pddl-1.0-USGov-nrcs` would otherwise ship and read as unrecognized on
- * every machine that opens it.
+ * Throws unless every identifier in the expression may be recorded in a layer manifest.
+ *
+ * An admissible identifier is in the obligations table, matches `LicenseRef-…`, or is `NOASSERTION`.
+ * A `WITH` exception is ignored, as it is in {@link summarizeLicense}.
+ * The doctor reports `NOASSERTION` as degraded.
+ *
+ * A manifest is sealed, so an unknown identifier is rejected at build time.
  */
 export function assertAdmissibleLicenseExpression(expression: string, context = "license"): void {
 	for (const identifier of licenseIdentifiers(expression)) {
-		if (identifier === "NOASSERTION" || KNOWN_OBLIGATIONS.has(identifier) || LICENSE_REF.test(identifier)) continue
+		const license = withoutException(identifier)
+
+		if (license === "NOASSERTION" || KNOWN_OBLIGATIONS.has(license) || LICENSE_REF.test(license)) continue
 
 		throw new Error(
 			`${context}: ${stringifyJSON(identifier)} is not an admissible license identifier. Use the SPDX identifier the obligations table knows (packages/core/lib/license/obligations.ts), a LicenseRef- this repository defines, or NOASSERTION.`

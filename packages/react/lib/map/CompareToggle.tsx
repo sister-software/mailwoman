@@ -2,25 +2,24 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<CompareToggle>` — the "Compare" checkbox plus the compare-version `<select>` from the demo's
- *   control panel (`_app.tsx:1281-1339`), as a dumb presentational unit. Turning it on reveals a second
- *   version picker (the primary version filtered out); the actual second parse is a host concern the
- *   composed demo surfaces through `panels.compare`. Props in, two events out.
- *
- *   node-safe: pure React, no maplibre.
+ *   Renders a compare-mode checkbox and a selector for the second model version. The host runs the
+ *   comparison.
  */
 
 import type { ReactNode } from "react"
 
 import type { VersionOption } from "#map/types"
 
+/**
+ * Props for {@link CompareToggle}.
+ */
 export interface CompareToggleProps {
 	/**
-	 * The selectable model bundles (the primary version is filtered out of the compare list).
+	 * The selectable model versions.
 	 */
 	versions: ReadonlyArray<VersionOption>
 	/**
-	 * The primary version, excluded from the compare options.
+	 * The primary version, which the compare list leaves out.
 	 */
 	primaryVersion: string | null
 	/**
@@ -28,29 +27,30 @@ export interface CompareToggleProps {
 	 */
 	compareMode: boolean
 	/**
-	 * Fired when the visitor flips compare mode.
+	 * Called when the visitor toggles compare mode.
 	 */
 	onCompareModeChange: (compareMode: boolean) => void
 	/**
-	 * The version chosen to compare against, or `null` when none is chosen.
+	 * The version to compare against, or `null` when none is chosen.
 	 */
 	compareVersion: string | null
 	/**
-	 * Fired with the chosen compare version (or `null` when the empty option is picked).
+	 * Called with the chosen version, or with `null` when the visitor picks the empty option.
 	 */
 	onCompareVersionChange: (version: string | null) => void
 	/**
-	 * Disable the compare-version select (e.g. while a parse or compare load runs).
+	 * Disables the version select, for example while a parse runs.
 	 */
 	disabled?: boolean
 	/**
-	 * A status line rendered under the select (e.g. the compare backend, or a "Loading…" line).
+	 * A status line shown under the select, such as the compare backend or a loading message.
 	 */
 	status?: ReactNode
 }
 
 /**
- * The compare toggle + (when on) the compare-version selector. Renders `null` with fewer than two versions.
+ * Renders the compare checkbox and, in compare mode, the version selector.
+ * It renders no control when fewer than two versions exist.
  */
 export function CompareToggle({
 	versions,

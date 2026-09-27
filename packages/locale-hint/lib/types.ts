@@ -5,7 +5,9 @@ import type { MachinePreferences } from "@mailwoman/core/pipeline"
 
 export interface DetectLocaleOpts {
 	/**
-	 * Caller's locale hint. When set, returned at confidence 1.0 with source="caller".
+	 * Caller's locale hint.
+	 *
+	 * When set, returned at confidence 1.0 with source="caller".
 	 */
 	hint?: Intl.UnicodeBCP47LocaleIdentifier
 	/**
@@ -17,7 +19,9 @@ export interface DetectLocaleOpts {
 	 */
 	machinePreferences?: MachinePreferences
 	/**
-	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives. Default 0.7.
+	 * Below this confidence, the detector returns the top candidate but also surfaces alternatives.
+	 *
+	 * Default 0.7.
 	 */
 	confidenceFloor?: number
 }

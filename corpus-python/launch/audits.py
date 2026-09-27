@@ -8,7 +8,7 @@
 
 Each is a thin wrapper: the audit itself lives in `mailwoman_train.audits`, where it is unit-tested
 and can run anywhere, and this supplies the volume, the CPU and the committed JSON path. They are
-CPU-only by design — an audit that needed the GPU would be an audit nobody runs before a launch.
+CPU-only by design. An audit that needed the GPU would be an audit nobody runs before a launch.
 
 Pull a receipt with `modal volume get mailwoman-training /audits/<name>.json <local>`.
 """
@@ -146,7 +146,7 @@ def census_comma_segment_number(config_name: str = "v5.6.0-bare-postcode-60k.yam
     """Count what a bare number standing alone between commas teaches.
 
     `301 College Ave, 101, Athens, GA 30601` is the surface #2298 proposes to teach as a unit, and it
-    carries no token that decides the reading — the same surface is already attested as a house
+    carries no token that decides the reading. The same surface is already attested as a house
     number and as a postcode. Leading and later positions are counted apart, because only the later
     one is in competition with the proposed unit.
     """
@@ -228,6 +228,11 @@ def audit_validation_coverage(
 
     The reading it exists to surface: GB held 0 rows in both splits of `v0.32.0-locality-shape`
     while US held 1,839,635 in each, and no number a run prints today says so (#2353).
+
+    A recipe declaring `data.required_validation_coverage` fails this function before a GPU is
+    allocated, the way `required_corpus_receipts` fails `audit_epoch_mixture`. The report is written
+    and committed to the volume first, so a failed floor leaves the numbers behind rather than only
+    the fact that it failed.
     """
     import sys
     from pathlib import Path
@@ -237,13 +242,19 @@ def audit_validation_coverage(
 
     config_path = _config_path(config_name)
 
-    from mailwoman_train.audits.validation_coverage import run
+    from mailwoman_train.audits.validation_coverage import ValidationCoverageError, run
 
     json_path = Path(f"{AUDITS}/validation-coverage-{config_path.stem}.json")
-    run(
-        config_path,
-        json_path=json_path,
-        countries=tuple(code.strip().upper() for code in countries.split(",") if code.strip()),
-    )
+    try:
+        run(
+            config_path,
+            json_path=json_path,
+            countries=tuple(code.strip().upper() for code in countries.split(",") if code.strip()),
+        )
+    except ValidationCoverageError:
+        vol.commit()
+        print(f"\nAudit committed to volume: {json_path}")
+        raise
+
     vol.commit()
     print(f"\nAudit committed to volume: {json_path}")

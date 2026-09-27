@@ -4,17 +4,17 @@
 /**
  *   The per-key base directory, pinned.
  *
- *   Nothing in `release.config.json` marks which base an entry resolves against, and getting it wrong fails
+ *   No entry in `release.config.json` marks which base it resolves against, and getting it wrong fails
  *   silently — every sibling degrades `existsSync → undefined`, so a mis-based path reports the artifact
  *   absent rather than wrong. Both mistakes this file guards were made while writing it: resolving the
  *   lexicons against one base, and reading a `db` key from the pair-index entries that no entry has, which
- *   returned nothing for all eight countries.
+ *   returned no path for all eight countries.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { readWeightsRecipe } from "@mailwoman/release-kit/weights/weights-recipe"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -26,7 +26,7 @@ async function fixture(config: unknown): Promise<{ repoRoot: PathBuilder; dataRo
 	const dataRoot = fixtures.use(await temporaryDirectory("mw-recipe-data-")).path
 
 	await makeDirectories(repoRoot)
-	await writeLocalJSONFile(config, join(repoRoot, "release.config.json"))
+	await writeLocalJSONFile(config, repoRoot("release.config.json"))
 
 	return { repoRoot, dataRoot }
 }
@@ -49,8 +49,8 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
-		expect(recipe.model).toBe(join(dataRoot, "models/quantized/m.onnx"))
-		expect(recipe.tokenizer).toBe(join(dataRoot, "models/tokenizer/t.model"))
+		expect(recipe.model).toBe(dataRoot("models/quantized/m.onnx").toString())
+		expect(recipe.tokenizer).toBe(dataRoot("models/tokenizer/t.model").toString())
 	})
 
 	it("resolves the three COMMITTED lexicons against the REPO root", async () => {
@@ -76,7 +76,7 @@ describe("readWeightsRecipe — the base directory is per key", () => {
 		)
 
 		expect(by.get("locality-surface-lexicon-v7.json")?.sourcePath).toBe(
-			join(dataRoot, "gazetteer/locality-surface-lexicon-v7.json")
+			dataRoot("gazetteer/locality-surface-lexicon-v7.json").toString()
 		)
 	})
 
@@ -97,19 +97,21 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
-		// The config names `postalcode-us.db`; the resolver looks for `postcode-us.bin`. Treating the entry as
-		// linkable would place a database under the binary's name, and every sibling degrades to `undefined`, so
-		// the resolver would then report the artifact absent rather than wrong.
+		// The config names `postalcode-us.db`; the resolver looks for `postcode-us.bin`.
+		// Treating the entry as linkable would place a database under the binary's name,
+		// and every sibling degrades to `undefined`, so the resolver would
+		// then report the artifact absent rather than wrong.
 		expect(recipe.linkableFor("en-us").some((a) => a.shippedName.startsWith("postcode-"))).toBe(false)
 
 		const postcode = recipe.buildableFor("en-us").find((a) => a.shippedName === "postcode-us.bin")
 
-		expect(postcode?.inputPath).toBe(join(dataRoot, "wof", "postalcode-us.db"))
+		expect(postcode?.inputPath).toBe(dataRoot("db", "wof", "postalcode-us.db").toString())
 	})
 
 	it("reports a pair index for every country the config names, whatever the entry's shape", async () => {
-		// `us` carries `boroughDB` and `gb` carries `source`; neither has a `db` key. An earlier draft read `db`
-		// and therefore reported no pair index for any country — silently, since the artifact merely stayed absent.
+		// `us` carries `boroughDB` and `gb` carries `source`; neither has a `db` key.
+		// An earlier draft read `db` and therefore reported no pair index for any country —
+		// silently, since the artifact merely stayed absent.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
@@ -126,8 +128,9 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 
 describe("readWeightsRecipe — the dev-only FSTs", () => {
 	it("names both FSTs even though the release config does not", async () => {
-		// They are dev-only: copy-weights.ts ships neither, so a weights directory has them only because a linker
-		// put them there — and their absence resolves the gazetteer and street-context priors off with no error.
+		// They are dev-only: copy-weights.ts ships neither, so a weights directory has them only
+		// because a linker put them there, and their absence resolves the gazetteer
+		// and street-context priors off with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
 		const names = (await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-gb").map((a) => a.shippedName)
@@ -143,6 +146,6 @@ describe("readWeightsRecipe — overrides", () => {
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot, { model: "/tmp/experiment.onnx" })
 
 		expect(recipe.model).toBe("/tmp/experiment.onnx")
-		expect(recipe.tokenizer).toBe(join(dataRoot, "models/tokenizer/t.model"))
+		expect(recipe.tokenizer).toBe(dataRoot("models/tokenizer/t.model").toString())
 	})
 })

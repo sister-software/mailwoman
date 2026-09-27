@@ -15,7 +15,7 @@
  *   the resolver and it finds the base model beside it rather than shipping its own. Every other file is a symlink
  *   into `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, except the base's `model.onnx`, which points at the candidate.
  *
- *   A declared file with nothing behind it is reported rather than silently skipped and not fatal: the data root legitimately
+ *   A declared file with no artifact behind it is reported rather than silently skipped and not fatal: the data root legitimately
  *   lacks some declared siblings (en-us's calibration pair is not materialized there), and the harness has its own
  *   guard, `assertDeclaredAnchorBins`, for the ones whose absence changes a score. A cache that names what it does not
  *   carry is a measurement. one that stays quiet is the defect this tool was written for.
@@ -28,10 +28,10 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { createSymbolicLink, makeDirectories } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 const { values } = parseArguments({
 	options: {
@@ -54,22 +54,25 @@ if (!(await pathExists(modelPath))) {
 }
 
 /**
- * The base package every overlay reaches through `mailwoman.baseWeights`, and the only one that carries a model.
+ * The base package every overlay reaches through `mailwoman.baseWeights`,
+ * and the only one that carries a model.
  */
 const BASE_LOCALE = "en-us"
 
 /**
- * Locales staged by default: the base plus every overlay the gauntlet's board can route to, which is the set whose
- * absence the harness warns about. `routing.ts` is the authority on which countries route where. this list is the
- * package side of it, so an overlay published but unrouted (fr-fr, en-au) can still be staged by naming it.
+ * Locales staged by default: the base plus every overlay the gauntlet's board can route to,
+ * which is the set whose absence the harness warns about.
+ *
+ * `routing.ts` is the authority on which countries route where.
+ * This list is the package side of it, so an overlay published but unrouted
+ * (fr-fr, en-au) can still be staged by naming it.
  */
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 
 const locales = values.locales
-	? values.locales
-			.split(",")
-			.map((locale) => locale.trim().toLowerCase())
-			.filter((locale) => locale.length)
+	? TextSpliterator.from(values.locales, { delimiter: "," })
+			.map((locale) => locale.toLowerCase())
+			.toArray()
 	: DEFAULT_LOCALES
 
 if (!locales.includes(BASE_LOCALE)) {
@@ -82,20 +85,23 @@ const missingByPackage = new Map<string, string[]>()
 let linked = 0
 
 for (const locale of locales) {
-	const workspace = repoRootPath("packages", `neural-weights-${locale}`)
-	const manifestPath = join(workspace, "package.json")
+	const workspace = workspacePathBuilder(`neural-weights-${locale}`)
+	const manifestPath = workspace("package.json")
 
 	if (!(await pathExists(manifestPath))) {
 		throw new Error(`no workspace for locale ${locale} at ${workspace}`)
 	}
 
 	const manifest = await readPackageJSON(manifestPath)
-	// The npm-prefix layout has one home, and this is a caller of it: the directory does not exist yet, so there is
-	// nothing to resolve, and spelling it out here would put a second copy of the layout beside the first.
+	// The npm-prefix layout has one home, and this is a caller of it: the directory
+	// does not exist yet, so there is no path to resolve, and spelling it out here
+	// would put a second copy of the layout beside the first.
 	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
-	// The manifest's `files` mixes concrete siblings with globs, negations and the source patterns a published tarball
-	// needs. Only the concrete data siblings belong in a cache. a glob has nothing to link.
+	// The manifest's `files` mixes concrete siblings with globs, negations
+	// and the source patterns a published tarball needs.
+	// Only the concrete data siblings belong in a cache.
+	// A glob has no file to link.
 	const declared = (manifest.files ?? []).filter(
 		(entry) => !entry.startsWith("!") && !entry.includes("*") && entry !== "README.md"
 	)
@@ -104,7 +110,7 @@ for (const locale of locales) {
 
 	if (!values["dry-run"]) {
 		await makeDirectories(packageDirectory)
-		await createSymbolicLink(manifestPath, join(packageDirectory, "package.json"))
+		await createSymbolicLink(manifestPath, packageDirectory("package.json"))
 	}
 
 	for (const name of declared) {
@@ -119,7 +125,7 @@ for (const locale of locales) {
 		linked += 1
 
 		if (!values["dry-run"]) {
-			await createSymbolicLink(source, join(packageDirectory, name))
+			await createSymbolicLink(source, packageDirectory(name))
 		}
 	}
 

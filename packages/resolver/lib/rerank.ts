@@ -22,7 +22,7 @@
  *
  *   So the rule is one bit of evidence rather than a score: **drop hypotheses whose resolution is
  *   implausible. otherwise keep the model's own ranking.** The parse scores already share a partition
- *   function and are comparable within an input — the reranker's job is not to re-score them, it is to
+ *   function and are comparable within an input. The reranker's job is not to re-score them, it is to
  *   veto the ones the world says are wrong.
  *
  *   Adding a second signal here requires the same bar the first one cleared: a measured win on the
@@ -39,7 +39,10 @@ import { isImplausibleResolution } from "#plausibility"
  */
 export interface RerankCandidate<T = unknown> {
 	/**
-	 * The parse's own score. Comparable to its siblings from the same input. not across inputs.
+	 * The parse's own score.
+	 *
+	 * Comparable to its siblings from the same input.
+	 * Not across inputs.
 	 */
 	score: number
 	/**
@@ -77,38 +80,48 @@ export interface RerankResult<T = unknown> {
 	 */
 	best: RerankedCandidate<T>
 	/**
-	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed the answer. This is the
-	 * metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it, because a rerank that never fires is a rerank
-	 * that is not earning its resolver calls.
+	 * True when the winner is not the model's rank-1 — i.e. resolution evidence actually changed the answer.
+	 *
+	 * This is the metric the arc is judged on (`rank-2-beats-rank-1 rate`); log it,
+	 * because a rerank that never fires is a rerank that is not earning its resolver calls.
 	 */
 	changed: boolean
 }
 
 /**
- * Resolve a tree. Structural — any `Resolver`-shaped thing satisfies it.
+ * Resolve a tree.
+ *
+ * Structural — any `Resolver`-shaped thing satisfies it.
  */
 export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates (default 5). Each costs a resolver round-trip, so this is the latency knob.
-	 * oracle@5 (0.723) captures nearly all the measured headroom of oracle@10 (0.775), so 5 is the default rather than 10
-	 * — the last 5 candidates cost 2x the resolves for ~5pp of ceiling.
+	 * Resolve at most this many candidates (default 5).
+	 *
+	 * Each costs a resolver round-trip, so this is the latency knob. oracle@5 (0.723) captures
+	 * nearly all the measured headroom of oracle@10 (0.775), so 5 is the default rather than 10.
+	 * The last 5 candidates cost 2x the resolves for ~5pp of ceiling.
 	 */
 	maxResolve?: number
 	/**
-	 * ISO-2 country the resolutions are expected to land in — the parse's own country node, the `--locale` scope, or a
-	 * caller hint. Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's coarse box
-	 * is vetoed, which is the cross-country-jump class guard A structurally cannot see.
+	 * ISO-2 country the resolutions are expected to land in — the parse's own country node,
+	 * the `--locale` scope, or a caller hint.
 	 *
-	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies. That is the shipped default and
-	 * it changes nothing on the served path, because nothing on the served path calls this function: the runtime pipeline
-	 * reranks with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
+	 * Threaded to {@link isImplausibleResolution} as guard B: a coordinate outside that country's
+	 * coarse box is vetoed, which is the cross-country-jump class guard A structurally cannot see.
+	 *
+	 * Omitted → guard B does not run, and only the bare-country-centroid guard applies.
+	 * That is the shipped default and it changes no behavior on the served path,
+	 * because no code on the served path calls this function: the runtime pipeline reranks
+	 * with `rerankByStreetEvidence`, and this one has no in-repo caller outside its own test.
 	 */
 	expectedCountry?: string
 	/**
-	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`). Replaces the built-in table
-	 * wholesale when supplied, so a consumer's artifact and its guard cannot disagree.
+	 * The loaded artifact's own guard-B boxes (`resolver.artifactCoverage?.countryBBoxes`).
+	 *
+	 * Replaces the built-in table wholesale when supplied, so a consumer's artifact
+	 * and its guard cannot disagree.
 	 */
 	countryBBoxes?: ReadonlyMap<string, CountryBBoxFact>
 }
@@ -116,13 +129,14 @@ export interface RerankOpts {
 /**
  * Rerank a k-best parse list on resolution evidence.
  *
- * Resolves up to `maxResolve` candidates IN model order and returns the first whose resolution is plausible. Candidates
- * beyond `maxResolve` are never resolved (and never vetoed — they simply keep their model rank behind the resolved
- * ones).
+ * Resolves up to `maxResolve` candidates IN model order and returns the first whose resolution is plausible.
+ * Candidates beyond `maxResolve` are never resolved
+ * (and never vetoed — they simply keep their model rank behind the resolved ones).
  *
- * **When every resolved candidate is implausible, the model's rank-1 wins.** A reranker that returns nothing is worse
- * than one that defers: "all my evidence says these are all bad" is not grounds to invent a different answer, only
- * grounds to flag low confidence (the Phase-4b ambiguity check).
+ * **When every resolved candidate is implausible, the model's rank-1 wins.**
+ * A reranker that returns no candidate is worse than one that defers: "all my
+ * evidence says these are all bad" is not grounds to invent a different answer,
+ * only grounds to flag low confidence (the Phase-4b ambiguity check).
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,
@@ -148,8 +162,9 @@ export async function rerankByResolution<T>(
 		try {
 			resolved = await resolveTree(candidate.tree)
 		} catch {
-			// A resolver failure is not evidence against the parse — treat it as "no evidence" and let
-			// the model's rank stand, rather than vetoing a possibly-correct hypothesis on an outage.
+			// A resolver failure is not evidence against the parse.
+			// Treat it as "no evidence" and let the model's rank stand, rather than
+			// vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 
 			continue

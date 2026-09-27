@@ -11,8 +11,8 @@
  *   several overlap is Stage 5 reconcile's job (Thread D); this file asserts only that the grouper
  *   surfaces the correct proposals at usable confidence ranges.
  *
- *   See `docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md` § E for the v0.5.0 context. See
- *   `docs/articles/concepts/the-knowledge-ladder.md` for the design rationale.
+ *   See `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx` § E for the v0.5.0 context. See
+ *   `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` for the design rationale.
  */
 
 import type { PhraseKind, PhraseProposal } from "@mailwoman/core/pipeline"
@@ -154,8 +154,10 @@ describe("kryptonite catalogue — 350 5th Ave, New York, NY 10118 (canonical)",
 	})
 
 	it("the STREET_PHRASE EXCLUDES the house number (5th Ave, not 350 5th Ave) — #565", () => {
-		// The house number lives in its own numeric proposal. bundling it into STREET_PHRASE is what let
-		// the reconciler fuse "350 5th Ave" into one node and drop the street (#566). Keep them separate.
+		// The house number lives in its own numeric proposal.
+		// Bundling it into STREET_PHRASE is what let the reconciler fuse "350 5th
+		// Ave" into one node and drop the street (#566).
+		// Keep them separate.
 		const streetPhrases = out.filter((p) => p.kindHypothesis === "STREET_PHRASE")
 		expect(streetPhrases.find((p) => p.span.body === "5th Ave")).toBeDefined()
 		expect(streetPhrases.find((p) => p.span.body === "350 5th Ave")).toBeUndefined()

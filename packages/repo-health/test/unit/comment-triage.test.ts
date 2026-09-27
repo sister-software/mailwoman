@@ -26,7 +26,7 @@ describe("sourceComments", () => {
 	})
 
 	it("reads Python module docstrings and line comments through the tokenizer adapter", async () => {
-		const comments = await pythonSourceComments(repoRootPath(), ["corpus-python/scripts/verify_toolchain.py"])
+		const comments = await pythonSourceComments(repoRootPath(), ["packages/repo-health/test/fixtures/comments.py"])
 
 		expect(comments.some((comment) => comment.kind === "docstring")).toBe(true)
 		expect(comments.some((comment) => comment.kind === "line")).toBe(true)

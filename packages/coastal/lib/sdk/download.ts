@@ -16,6 +16,7 @@
  */
 
 import { downloadZippedGeodatabase } from "@mailwoman/core/utils"
+import type { PathBuilderLike } from "path-ts"
 
 /**
  * The resource name the catalogue entry uses for the file geodatabase.
@@ -29,19 +30,21 @@ export const NCERM_GEODATABASE_DIRECTORY = "National_Coastal_Erosion_Risk_Mappin
 
 export interface DownloadGeodatabaseOptions {
 	/**
-	 * The direct file URL, read from the catalogue entry rather than assembled — the EA's file service keys on an opaque
-	 * id with no relationship to the dataset id.
+	 * The direct file URL, read from the catalogue entry rather than assembled —
+	 * the EA's file service keys on an opaque id with no relationship to the dataset id.
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date. The cache is keyed on it, so a re-run against the same vintage never re-transfers
+	 * The product's ISO revision date.
+	 *
+	 * The cache is keyed on it, so a re-run against the same vintage never re-transfers
 	 * and a new vintage never overwrites the old one in place.
 	 */
 	revisionDate: string
 	/**
 	 * Where vintages are kept.
 	 */
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 

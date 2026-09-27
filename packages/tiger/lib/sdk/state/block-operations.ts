@@ -19,7 +19,7 @@ export interface StateBlockIntersectionCriteria {
 	tractCodes?: FIPSTractCode[]
 }
 
-//#region Row parsing
+// #region Row parsing
 
 /**
  * @internal
@@ -49,7 +49,8 @@ export function parseTIGERBlockFromRow({ serializedGeometry, ...properties }: TI
 }
 
 /**
- * Given a collection of rows from the tiger tabulated block table, parses them into a GeoJSON feature collection.
+ * Given a collection of rows from the tiger tabulated block table,
+ * parses them into a GeoJSON feature collection.
  *
  * @internal
  */
@@ -64,4 +65,4 @@ export function parseTIGERBlockFeatureCollectionFromRows(rows: TIGERBlockRow[]):
 	return featureCollection
 }
 
-//#endregion
+// #endregion

@@ -1,25 +1,15 @@
-"""What a training run does, pinned before the loop is rewritten.
+"""End-to-end tests of `train()` on CPU over a two-row corpus.
 
-`train()` had no end-to-end test: every existing test covers a part it calls, and nothing drove the
-loop itself. So the four concerns woven through it — the progress print, the CSV, the periodic eval
-and the checkpoint writes — could be moved without anything noticing if the order changed, an
-interval stopped firing, or the optimizer trajectory shifted.
+Every interval is small enough to fire twice. The tests pin the CSV layout, the order of log, save
+and eval events, and the final per-parameter weight checksums, which capture the optimizer
+trajectory.
 
-This runs a real supervised train on CPU over a two-row corpus with every interval set small enough
-that each concern fires more than once, and asserts three things a rewrite must preserve:
+The checksums live in `train-loop-reference.json`. Regenerate them with
+`PYTHONPATH=. uv run python tests/mailwoman_train/train/test_train_loop_trace.py`. A changed checksum
+means the model learns something different.
 
-- the CSV's shape and which rows carry val cells,
-- the event order within one step, and which steps produce which events,
-- the final weights, per parameter, which pins the optimizer trajectory itself.
-
-The weight checksums come from `train-loop-reference.json` beside this file. Regenerate it with
-`PYTHONPATH=. uv run python tests/mailwoman_train/train/test_train_loop_trace.py` and read the diff: a change
-there is a change to what the model learns, never a formatting detail.
-
-BOTH ROWS SIT IN ONE PARQUET FILE, AND THEY CARRY DIFFERENT SOURCES. That makes this fixture a multi-source file,
-which the loader has to index under both — `coarse-placer-cn-units` and `overture-jp` — for the train split to see
-two rows. It read one for as long as the source index took a file's first row as the whole file's, and the
-trajectory pinned below was the trajectory of a one-row train over a corpus this docstring calls two-row.
+Both rows sit in one parquet file with different sources, so the loader must index that file under
+both sources for the train split to contain two rows.
 """
 
 from __future__ import annotations
@@ -44,8 +34,8 @@ CONFIGS = paths.CONFIGS
 PROBE_2K = CONFIGS / "v8-cjk-full-2k.yaml"
 REFERENCE = Path(__file__).with_name("train-loop-reference.json")
 
-#: Small enough to run on a CPU in a test, large enough that every interval fires twice and that a
-#: step exists where the log, eval and save intervals coincide (step 4).
+#: These settings make every interval fire twice, and the log, eval and save intervals coincide at
+#: steps 2 and 4.
 MAX_STEPS = 4
 LOG_EVERY = 2
 EVAL_EVERY = 2
@@ -78,7 +68,7 @@ ROWS: list[dict[str, Any]] = [
 
 
 def _probe_config(root: Path) -> Config:
-    """The shipped probe config over a two-row corpus, shrunk to a CPU-sized run."""
+    """Load the shipped probe config and point it at a two-row corpus with a CPU-sized run."""
     corpus = root / "corpus"
     for split in ("train", "val"):
         (corpus / split).mkdir(parents=True)
@@ -88,9 +78,8 @@ def _probe_config(root: Path) -> Config:
     save_char_vocab(vocab, vocab_path)
 
     cfg = load_config(PROBE_2K)
-    # The shipped weights name the full corpus's sources. a two-row stand-in has none of those
-    # rows, and the loader refuses a positive weight with nothing behind it. Sampling the two
-    # rows uniformly is what this test wants anyway.
+    # The loader rejects a positive weight for a source without rows, and the shipped weights list
+    # sources that this corpus lacks. Clearing them samples the two rows uniformly.
     cfg.data.source_weights = None
     cfg.data.corpus_dir = str(corpus)
     cfg.data.char_vocab_path = str(vocab_path)
@@ -107,7 +96,7 @@ def _probe_config(root: Path) -> Config:
 
 
 def _events(output: str) -> list[str]:
-    """The loop's four concerns as an ordered list, with the wall-clock readings left out."""
+    """Parse the training output into an ordered list of log, eval and save events."""
     events: list[str] = []
     for line in output.splitlines():
         if match := re.match(r"step (\d+)/\d+", line):
@@ -119,17 +108,9 @@ def _events(output: str) -> list[str]:
     return events
 
 
-#: How far a rebuilt checksum may sit from the committed one and still count as unmoved.
-#:
-#: Not exact equality, which is what this compared first and why it passed on the machine that wrote
-#: the reference and failed on CI: a fp32 training step lands on a different last digit under a
-#: different CPU's kernels, and seventeen of the fifty tensors here differed only there. Exact
-#: equality pins the HOST alongside the code, and the failure then names the trajectory rather than
-#: the machine.
-#:
-#: Relative to the checksum's own magnitude, floored at 1.0 so a near-zero bias is judged on absolute
-#: terms rather than on a ratio that explodes. A rewrite that actually moves the trajectory — a
-#: reordered update, a changed schedule, a dropped clip — moves these by percent.
+#: The allowed checksum drift, relative to the checksum's magnitude with a floor of 1.0. Different
+#: CPUs round fp32 training steps differently in the last digit, so exact equality would fail across
+#: hosts. The floor keeps near-zero biases from failing on a tiny absolute difference.
 TOLERANCE = 1e-4
 
 
@@ -143,9 +124,8 @@ def test_the_loop_emits_its_events_in_order(tmp_path: Path, capsys: Any) -> None
     train(cfg)
     events = _events(capsys.readouterr().out)
 
-    # The progress line, then the checkpoint, then the eval. The checkpoint and the eval both
-    # observe the same weights at a step where their intervals coincide — the eval takes no
-    # gradient — so their relative order is a property of the log rather than of the run.
+    # Each step logs, then saves, then evaluates. The eval takes no gradient, so the save and the
+    # eval see the same weights in either order.
     assert events == ["log:2", "save:2", "eval", "log:4", "save:4", "eval"], events
     assert Path(cfg.train.output_dir, "step-000004").is_dir()
 
@@ -171,7 +151,7 @@ def test_the_csv_carries_a_log_row_and_an_eval_row_per_interval(tmp_path: Path) 
         *(f"f1.{t}" for t in tags),
     ]
 
-    # A log row leaves the val cells blank. an eval row fills them. Both exist for steps 2 and 4.
+    # A log row leaves the val cells blank and an eval row fills them. Steps 2 and 4 each have both.
     by_kind = [(row[0], "eval" if row[4] else "log") for row in rows]
     assert by_kind == [("2", "log"), ("2", "eval"), ("4", "log"), ("4", "eval")], by_kind
     for row in rows:
@@ -179,12 +159,7 @@ def test_the_csv_carries_a_log_row_and_an_eval_row_per_interval(tmp_path: Path) 
 
 
 def test_the_trajectory_matches_the_pinned_weights(tmp_path: Path) -> None:
-    """Per-parameter checksums of the final checkpoint.
-
-    A rewrite that reorders the loop's concerns must not move these. A summed absolute value per
-    tensor catches a changed update without storing the weights: two different trajectories agreeing
-    on every tensor's absolute sum is not a case worth engineering around.
-    """
+    """Compare the final checkpoint's per-parameter absolute sums with the reference."""
     cfg = _probe_config(tmp_path)
     train(cfg)
 
@@ -201,7 +176,7 @@ def test_the_trajectory_matches_the_pinned_weights(tmp_path: Path) -> None:
 
 
 def write_reference() -> None:
-    """Regenerate `train-loop-reference.json`. Run this module directly."""
+    """Regenerate `train-loop-reference.json` when this module runs as a script."""
     import tempfile
 
     with tempfile.TemporaryDirectory() as scratch:

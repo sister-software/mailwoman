@@ -9,7 +9,7 @@
  *   ADV358 — and they are right to omit these words. Mail is not delivered to a concourse. But the
  *   decoder's job is to pull an address apart with the richest vocabulary available. only the
  *   formatter owes allegiance to a postal system's rendering rules. Those are different jobs, and
- *   the split is structural here: this module feeds `neural/span-proposer-lexicon.ts` and nothing in
+ *   the split is structural here: this module feeds `neural/span-proposer-lexicon.ts` and no module in
  *   `formatter/` reads it, so a decoder that understands "Concourse B" still renders addresses
  *   through Pub 28.
  *
@@ -44,9 +44,9 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
 /**
  * WOF placetypes that name a structure inside a venue rather than a place on the map.
  *
- * Deliberately excludes `venue` itself (the container rather than an interior division) and `address`/`intersection`
- * (grammar anchors, handled by the parser proper). Typed against {@link WhosOnFirstPlacetype} so the compiler enforces
- * that each entry is a genuine WOF term.
+ * Deliberately excludes `venue` itself (the container rather than an interior division)
+ * and `address`/`intersection` (grammar anchors, handled by the parser proper).
+ * Typed against {@link WhosOnFirstPlacetype} so the compiler enforces that each entry is a genuine WOF term.
  */
 const WOF_VENUE_STRUCTURE_PLACETYPES = [
 	"arcade",
@@ -61,18 +61,23 @@ const WOF_VENUE_STRUCTURE_PLACETYPES = [
 /**
  * Sub-venue designators from OpenStreetMap's `aeroway` key, which WOF's placetype vocabulary does not cover.
  *
- * Kept as its own list rather than merged above precisely so the provenance stays legible: these are OSM tag values
- * rather than WOF placetypes, and a reader tracing where "terminal" came from should land on the right standard.
+ * Kept as its own list rather than merged above precisely so the provenance stays legible:
+ * these are OSM tag values rather than WOF placetypes, and a reader tracing
+ * where "terminal" came from should land on the right standard.
  */
 const OSM_AEROWAY_STRUCTURE_DESIGNATORS = ["terminal", "gate"] as const
 
 /**
  * Every venue-interior designator the span proposer recognizes, lowercased.
  *
- * Note the deliberate omission of abbreviations. Pub 28 ships them (`STE`, `bldg`) because mailers write them. these
- * words are written in full on signage and in venue addresses, and a two-or-three letter abbreviation is exactly the
- * false-positive shape the AU/NZ tables already taught this lexicon to avoid ("Ms Smith" for `MS`). Add one only with a
- * measured need.
+ * Note the deliberate omission of abbreviations.
+ * Pub 28 ships them (`STE`, `bldg`) because mailers write them.
+ *
+ * These words are written in full on signage and in venue addresses, and a two-or-three
+ * letter abbreviation is exactly the false-positive shape the AU/NZ tables already
+ * taught this lexicon to avoid ("Ms Smith" for `MS`).
+ *
+ * Add one only with a measured need.
  */
 export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
 	...WOF_VENUE_STRUCTURE_PLACETYPES,
@@ -80,15 +85,19 @@ export const VENUE_STRUCTURE_DESIGNATORS: readonly string[] = [
 ]
 
 /**
- * Positional modifiers that precede a venue-interior designator: "West Wing", "Upper Concourse", "Main Building".
+ * Positional modifiers that precede a venue-interior designator: "West Wing",
+ * "Upper Concourse", "Main Building".
  *
- * A bounded structural category — compass points, vertical position, centrality — not a dictionary of names. The
- * compass terms match the directional vocabulary `@mailwoman/codex` already carries for street parsing
- * (`CA_DIRECTIONALS`); the rest are the positional words that serve the same grammatical role inside a venue.
+ * A bounded structural category — compass points, vertical position, centrality — not a dictionary of names.
+ * The compass terms match the directional vocabulary `@mailwoman/codex` already
+ * carries for street parsing (`CA_DIRECTIONALS`); the rest are the positional words
+ * that serve the same grammatical role inside a venue.
  *
- * Deliberately excludes abbreviations (`N`, `W`, `NE`). Postal directionals abbreviate because mailers write them that
- * way on a street line. a sub-venue name written on signage does not, and a bare capital letter beside a designator is
- * the identifier shape the designator+identifier rule already owns ("Wing B").
+ * Deliberately excludes abbreviations (`N`, `W`, `NE`).
+ * Postal directionals abbreviate because mailers write them that way on a street line.
+ *
+ * A sub-venue name written on signage does not, and a bare capital letter beside a designator
+ * is the identifier shape the designator+identifier rule already owns ("Wing B").
  */
 export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
 	"north",
@@ -108,12 +117,15 @@ export const VENUE_STRUCTURE_MODIFIERS: readonly string[] = [
 /**
  * Venue-interior designators that may be preceded by a {@link VENUE_STRUCTURE_MODIFIERS} term.
  *
- * A subset of {@link VENUE_STRUCTURE_DESIGNATORS}, and the difference is the whole point. `gate` and `building` form
- * ordinary street names in exactly this shape — "East Gate" and "West Gate" are real GB streets, "Building Society
- * Place" is a real street — so admitting them here would turn a correct street parse into a sub-venue one. The
- * designators listed below do not name streets in the modifier+designator shape.
+ * A subset of {@link VENUE_STRUCTURE_DESIGNATORS}, and the difference is the whole point.
+ * `gate` and `building` form ordinary street names in exactly this shape — "East Gate"
+ * and "West Gate" are real GB streets, "Building Society Place" is a real street —
+ * so admitting them here would turn a correct street parse into a sub-venue one.
  *
- * Adding an entry means claiming no street is named "<modifier> <entry>". Check before you do.
+ * The designators listed below do not name streets in the modifier+designator shape.
+ *
+ * Adding an entry means claiming no street is named "<modifier> <entry>".
+ * Check before you do.
  */
 export const MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS: readonly string[] = [
 	"wing",

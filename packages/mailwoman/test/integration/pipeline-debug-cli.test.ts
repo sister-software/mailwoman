@@ -14,17 +14,18 @@
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import { stripAnsi } from "mailwoman/cli-kit"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { describe, expect, test } from "vitest"
 
 const cliBin = await mailwomanCLIPath()
 
 /**
- * Strip ansi escapes + ink spinner frames. isolate the JSON payload.
+ * Strip ansi escapes + ink spinner frames.
+ * Isolate the JSON payload.
  */
 function extractJSON(stdout: string): unknown {
-	const ansi = /\[[0-9;]*[a-zA-Z]/gu
-	const cleaned = stdout.replace(ansi, "").trim()
+	const cleaned = stripAnsi(stdout).trim()
 	// Find the outermost JSON object (debug mode emits an object — non-debug emits an array).
 	const objStart = cleaned.indexOf("{")
 	const objEnd = cleaned.lastIndexOf("}")
@@ -38,8 +39,9 @@ function extractJSON(stdout: string): unknown {
 
 describe("parse --debug (runtime pipeline)", () => {
 	test("US ZIP+4 fast-path emits PipelineResult with path='fast-path' + timing + tree", async () => {
-		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit). Doesn't
-		// require neural weights — the fast-path tree is built from QueryShape.
+		// Bare US ZIP+4 hits the fast-path (postcode_only kind, unambiguous us_zip4 hit).
+		// Doesn't require neural weights.
+		// The fast-path tree is built from QueryShape.
 		const { stdout } = await runFile(process.execPath, [cliBin, "parse", "--debug", "10118-1234"], {
 			env: childEnv({ NODE_NO_WARNINGS: "1" }),
 			maxBuffer: 4 * 1024 * 1024,

@@ -24,21 +24,23 @@
  *   - `--concurrency <n>` — parallel per-country fetches. default `8`
  */
 
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { APIClient, pluckResponseData } from "#api/index"
 import { makeDirectories, writeLocalFile } from "#fs/writers"
-import { corePackagePath } from "#utils"
+import { corePackagePathBuilder } from "#paths"
 
 const BASE_URL = "https://chromium-i18n.appspot.com/ssl-address/data"
 
 /**
  * One host, ~250 small records, fetched `concurrency`-wide.
  *
- * Retry is the point: a throttle or a dropped connection on one country previously counted as a permanent failure for
- * that country, and the run reported `written: 249, failed: 1` — indistinguishable from a country the source does not
- * carry. No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done and the host has not
- * objected, and inventing a rate limit no measurement supports would only make a working tool slower.
+ * Retry is the point: a throttle or a dropped connection on one country previously counted
+ * as a permanent failure for that country, and the run reported `written: 249, failed: 1` —
+ * indistinguishable from a country the source does not carry.
+ * No `minRequestIntervalMs`: the concurrency-wide burst is what this tool has always done
+ * and the host has not objected, and inventing a rate limit no measurement
+ * supports would only make a working tool slower.
  */
 const sslAddressClient = new APIClient({
 	displayName: "ssl-address",
@@ -51,11 +53,15 @@ const sslAddressClient = new APIClient({
  */
 export interface DownloadSSLAddressOptions {
 	/**
-	 * Destination directory. Default: the checked-in `core/data/chromium-i18n/ssl-address`.
+	 * Destination directory.
+	 *
+	 * Default: the checked-in `core/data/chromium-i18n/ssl-address`.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 	/**
-	 * Parallel per-country fetches. Default 8.
+	 * Parallel per-country fetches.
+	 *
+	 * Default 8.
 	 */
 	concurrency?: number
 }
@@ -72,25 +78,26 @@ async function fetchCountryCodes(): Promise<string[]> {
 /**
  * Fetch a single country's metadata record and write its raw JSON body to `<outDir>/<cc>.json`.
  */
-async function fetchCountry(cc: string, outDir: string): Promise<void> {
+async function fetchCountry(cc: string, outDir: PathBuilder): Promise<void> {
 	// `responseType: "text"` keeps the RAW body: these records are written to disk verbatim, and letting
 	// axios parse then re-serialize would rewrite key order and spacing in a checked-in artifact.
 	const body = await sslAddressClient
 		.fetch<string>({ url: `${BASE_URL}/${cc}`, responseType: "text" })
 		.then(pluckResponseData)
 
-	await writeLocalFile(body, join(outDir, `${cc}.json`))
+	await writeLocalFile(body, outDir(`${cc}.json`))
 }
 
 /**
- * Download every country's ssl-address metadata record. Returns the failure count (the command maps `failed > 0` to
- * exit 1).
+ * Download every country's ssl-address metadata record.
+ *
+ * @returns The failure count (the command maps `failed > 0` to exit 1).
  */
 export async function downloadSSLAddress(
 	options: DownloadSSLAddressOptions = {},
 	report?: (line: string) => void
 ): Promise<{ written: number; failed: number }> {
-	const outDir = options.outDir ?? corePackagePath("data", "chromium-i18n", "ssl-address")
+	const outDir = PathBuilder.from(options.outDir ?? corePackagePathBuilder("data", "chromium-i18n", "ssl-address"))
 	const concurrency = options.concurrency ?? 8
 	await makeDirectories(outDir)
 

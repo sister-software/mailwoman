@@ -1,46 +1,20 @@
-# Order-robustness retrain — v0.9.3 (#327, the v0.9.2 follow-up). One variable vs v0.9.2-de-bothorder:
-# the international-order German rows now carry the region in the tail ("City, Region Postcode"), the
-# layout real US/feed renderings (and our eval) use. Everything else held — anchor on, self-cond on,
-# v0.7.2 recipe, seed 42, --intl-fraction 0.4.
+# This recipe is v0.9.2-de-bothorder.yaml with a region added to the tail of the international-order
+# German rows, as in "City, Region Postcode". Real feeds and the German order eval use that layout.
+# Without the region in training, the model absorbed the region into the locality or dropped the
+# locality.
 #
-# why. v0.9.2 (both-order, no region tail) moved the model's intrinsic international parsing
-# (anchor-off intl 35.9 -> 48.4, +12.5pp) but the production anchor-on config stayed flat (intl 44.5).
-# A parse diagnostic showed why: the eval feeds "27 Straußstraße, Berlin, Berlin 12623" (region in the
-# tail), but the v0.9.2 synth dropped the region — so the model never learned to segment a German
-# "City, Region Postcode" tail and mangled it (region absorbed into locality / locality dropped). This
-# run renders that tail. A DeepSeek consult (2026-06-06) signed off region-tail as the single variable.
-# Full analysis: docs/articles/evals/2026-06-06-v0.9.2-eval.md.
+# The v0.4.3-de-regiontail corpus overlays a synth-german source on the v0.4.0 US and FR base.
+# The German recipe in packages/corpus/lib/de/recipes/locale.ts built 200,000 training rows and
+# 4,000 validation rows from OpenAddresses Berlin and Saxony tuples, with 40% in international order.
+# The recipe sets the Bundesland itself because the OpenAddresses region column is empty for DE.
 #
-# single variable: identical to v0.9.2-de-bothorder except the international synth now includes the
-# region tail (synthesize-german.ts. the German recipe, `packages/corpus/lib/de/recipes/locale.ts`, sets the Bundesland per source since OA's
-# region column is empty for DE). Corpus v0.4.3-de-regiontail.
-#
-# PRE-registered check (DeepSeek-signed. stop at 20k):
-#   - anchor-off international >= anchor-off native (both >= ~48%) — the region tail must lift the
-#     intrinsic intl ceiling (else the region rendering is broken. fix alignment + rerun).
-#   - anchor-on international >= anchor-on native - 10pp (gap <= 10pp) — success: keep the anchor.
-#     If the gap stays > 10pp, the anchor's positional harm is hard-coded -> v0.9.4 = dual-injection
-#     anchor (inject at the postcode and the first token. the structural harm is not a posterior
-#     artifact — forcing DE=1.0 posterior on v0.9.2 left intl unchanged at 44.5%).
-#   - native-order DE locality >= 80% (hold 82.1) · US/FR within ~1pp · cross_pollution < 1%.
-# Measure with scripts/eval/de-order-eval.ts (the 2×2 native/intl × anchor on/off + US/FR harness).
-#
-# corpus: v0.4.3-de-regiontail — v0.4.0 (US/FR) base overlaid with a both-order `synth-german` source
-# (200K train + 4K val, real OpenAddresses Berlin/Saxony tuples). Reproduce + deploy to the Modal volume:
-#   built by the German recipe (packages/corpus/lib/de/recipes/locale.ts) with --output /tmp/german-train.jsonl --count 200000 --seed 42 --intl-fraction 0.4
-#   built by the German recipe (packages/corpus/lib/de/recipes/locale.ts) with --output /tmp/german-val.jsonl   --count 4000   --seed 99 --intl-fraction 0.4
-#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-train.jsonl --output /tmp/part-german-train.parquet
-#   python3 scripts/jsonl-to-parquet.py --input /tmp/german-val.jsonl   --output /tmp/part-german-val.parquet
-#   # Assemble the overlay manifest (v0.4.0 parquet files + the 2 German parquet files) — mirror v0.4.1-de via
-#   # scripts/assemble-de-overlay-manifest.py (point it at v0.4.3-de-regiontail), then:
-#   # Not `modal volume put`: a mounted container cannot see what it writes, so a run staged that
-#   # way trains on whatever was already there and reports success. Route it through R2 instead.
+# Stage the corpus through R2 before launch:
 #   mailwoman corpus upload --corpus-version v0.4.3-de-regiontail
-#   cd corpus-python && modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.3-de-regiontail
+#   modal run -m launch.train_remote::sync_assets --corpus-versions v0.4.3-de-regiontail
 #
-# Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.2-de-bothorder.yaml --resume none \
+# Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote \
+#     --config v0.9.3-de-regiontail.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
@@ -66,8 +40,7 @@ data:
     deepseek-kryptonite: 3.0
     synth-po-box: 1.5
     synth-intersection: 0.2
-    # German at ~18% of the mix — same weight as v0.9.1. the only change is the `synth-german` rows now carry both
-    # orders. The key tunable if a check lags: raise for more DE, lower if US/FR slip the 1pp regression check.
+    # This weight puts German at roughly 18% of the mix. Raising it trades US and FR accuracy for DE.
     synth-german: 6.0
   train_rows_per_epoch: 1000000
   val_rows: 4096

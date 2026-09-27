@@ -17,7 +17,7 @@ at 0.604 on the first digit piece and `I-postcode` at 0.587/0.765 on its continu
 legally resolves to postcode, discarding the piece that was right.
 
 That is a real liability. But the flexibility that lets us be wrong is the same flexibility that lets
-us be right, so the question is not "is incoherence bad" — it is **whether the per-piece unit provides
+us be right, so the question is not "is incoherence bad". It is **whether the per-piece unit provides
 more than it costs**. Two arms, one axis:
 
 - **BENEFIT** — rows where the correct answer requires splitting _inside_ a whitespace word. Not in a

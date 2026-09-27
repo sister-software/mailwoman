@@ -155,7 +155,7 @@ an epoch. The extract teaches exactly one lesson: _a bare capitalized name is a 
 
 US `country` +11.0 pp and the collapse of the bare-locality and bare-street classes are the same
 event seen from two sides. The model learned the lesson too well and generalised it over every bare
-toponym. `bare-region-georgia` landing 10,089 km out is the tell — the row the bare-country work was
+toponym. `bare-region-georgia` landing 10,089 km out is the tell. The row the bare-country work was
 supposed to help.
 
 This is the base-consistency lesson (#511) in a new costume: a small extract at high reps per row

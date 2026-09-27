@@ -23,6 +23,7 @@ import {
 } from "@mailwoman/corpus/parquet/schema"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
 import { writeParquetSplits } from "@mailwoman/corpus/parquet/writers"
+import { SurfaceOrigin } from "@mailwoman/corpus/types"
 import type { LabeledRow } from "@mailwoman/corpus/types"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -34,6 +35,8 @@ const labeled = (over: Partial<LabeledRow>): LabeledRow => ({
 	source_id: "t-1",
 	corpus_version: "0.1.0",
 	license: "CC0-1.0",
+	register: "whos-on-first",
+	surface: SurfaceOrigin.Attested,
 	tokens: ["Paris"],
 	labels: ["B-locality"],
 	span_starts: [0],
@@ -67,22 +70,22 @@ describe("rowToParquet", () => {
 	it("flattens synth + locale onto top-level columns", () => {
 		const row = labeled({
 			locale: "fr-FR",
-			synth: { method: "case-upper", base_source_id: "t-1" },
+			recipe: { recipe: "case-upper", base_source_id: "t-1" },
 			source_id: "t-1+case-upper",
 		})
 
 		const pq = rowToParquet(row)
 		expect(pq.locale).toBe("fr-FR")
-		expect(pq.synth_method).toBe("case-upper")
-		expect(pq.synth_base_id).toBe("t-1")
+		expect(pq.recipe).toBe("case-upper")
+		expect(pq.base_source_id).toBe("t-1")
 		expect(pq.source_id).toBe("t-1+case-upper")
 	})
 
 	it("emits null for missing optional fields", () => {
-		const pq = rowToParquet(labeled({ locale: undefined, synth: undefined }))
+		const pq = rowToParquet(labeled({ locale: undefined, recipe: undefined }))
 		expect(pq.locale).toBeNull()
-		expect(pq.synth_method).toBeNull()
-		expect(pq.synth_base_id).toBeNull()
+		expect(pq.recipe).toBeNull()
+		expect(pq.base_source_id).toBeNull()
 	})
 
 	it("preserves tokens + labels array shape", () => {
@@ -129,10 +132,14 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(Object.keys(LABELED_ROW_SCHEMA).toSorted()).toEqual([...PARQUET_COLUMNS].toSorted())
 	})
 
-	it("marks locale / synth_method / synth_base_id optional", () => {
+	it("marks locale / register / recipe / base_source_id optional and surface required", () => {
 		expect(LABELED_ROW_SCHEMA.locale!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_method!.optional).toBe(true)
-		expect(LABELED_ROW_SCHEMA.synth_base_id!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.register!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
+		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
+		// A null register states that the row names no published record, which is an answer.
+		// A null surface would mean nobody said how the text was produced, so every row carries one.
+		expect(LABELED_ROW_SCHEMA.surface!.optional).toBeUndefined()
 	})
 
 	it("marks tokens / labels REPEATED", () => {
@@ -176,9 +183,10 @@ describe("readers", () => {
 	})
 
 	it("readParquetRows raises on a file nobody wrote, where tryReadParquetRows answers null", async () => {
-		// The whole reason the two names exist. A caller that wants "no corpus yet" to read as an empty list must ASK
-		// for that, because `?? []` over the raising one produces the silent zero this package exists to prevent.
-		const absent = scratch.resolve("nothing-here.parquet")
+		// The whole reason the two names exist.
+		// A caller that wants "no corpus yet" to read as an empty list must ASK for that, because
+		// `?? []` over the raising one produces the silent zero this package exists to prevent.
+		const absent = scratch.path("nothing-here.parquet")
 
 		await expect(readParquetRows(absent)).rejects.toThrow(/No parquet file at/)
 		expect(await tryReadParquetRows(absent)).toBeNull()
@@ -193,13 +201,14 @@ describe("readers", () => {
 	})
 
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
-		// `0` from a file nobody wrote and `0` from a file holding no rows are different statements, and a count is a
-		// measurement — so absence raises here rather than returning the number that reads like data.
+		// `0` from a file nobody wrote and `0` from a file holding no rows are different
+		// statements, and a count is a measurement.
+		// So absence raises here rather than returning the number that reads like data.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(
 			2
 		)
 
-		await expect(countParquetRows(scratch.resolve("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
+		await expect(countParquetRows(scratch.path("nothing-here.parquet"))).rejects.toThrow(/No parquet file at/)
 	})
 
 	it("parquetColumnNames answers the file's own schema, in PARQUET_COLUMNS order", async () => {
@@ -241,8 +250,10 @@ describe("writeParquetSplits", () => {
 			"source_id",
 			"corpus_version",
 			"license",
-			"synth_method",
-			"synth_base_id",
+			"register",
+			"surface",
+			"recipe",
+			"base_source_id",
 		])
 	})
 
@@ -291,7 +302,7 @@ describe("writeParquetSplits", () => {
 		expect(valBack[0]!.locale).toBe("fr-FR")
 
 		const manifestOnDisk = await readLocalJSONFile<{ total_rows: number; schema: string[]; row_group_size: number }>(
-			scratch.resolve("corpus-v0.1.0", "MANIFEST.json")
+			scratch.path("corpus-v0.1.0", "MANIFEST.json")
 		)
 
 		expect(manifestOnDisk.total_rows).toBe(4)
@@ -387,13 +398,14 @@ describe("writeParquetSplits", () => {
 	it("two runs over the same rows produce a byte-identical parquet file (deterministic sha256)", async () => {
 		const rows = [labeled({ source_id: "t-1", raw: "A" }), labeled({ source_id: "t-2", raw: "B" })]
 		const a = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
-		await removePathIfPresent(scratch.resolve("corpus-v0.1.0"))
+		await removePathIfPresent(scratch.path("corpus-v0.1.0"))
 		const b = await writeParquetSplits({ train: asyncFrom(rows) }, { outputDir: scratch.path, corpusVersion: "0.1.0" })
 		expect(a.slices[0]!.sha256).toBe(b.slices[0]!.sha256)
 	})
 
 	it("rows with optional null columns round-trip through Parquet", async () => {
-		// One row with locale set, one without. Both should round-trip the relevant value.
+		// One row with locale set, one without.
+		// Both should round-trip the relevant value.
 		const rows = [
 			labeled({ source_id: "t-with", raw: "with locale", locale: "fr-FR" }),
 			labeled({ source_id: "t-without", raw: "no locale" }),
@@ -425,7 +437,8 @@ describe("writeParquetSplits", () => {
 	})
 
 	it("skips splits not present in PerSplitRows (no empty parquet files written)", async () => {
-		// Only train provided. val + test omitted entirely.
+		// Only train provided.
+		// Val + test omitted entirely.
 		const m = await writeParquetSplits(
 			{ train: asyncFrom([labeled({ source_id: "t-1" })]) },
 			{ outputDir: scratch.path, corpusVersion: "0.1.0" }

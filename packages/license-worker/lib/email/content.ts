@@ -36,8 +36,9 @@ export function licenseEmailPreview(message: LicenseEmail): string {
 }
 
 /**
- * The command that installs the key on a machine: with the secret on the first message, so renewals can be fetched from
- * there. the token alone after.
+ * The command that installs the key on a machine: with the secret on the first message,
+ * so renewals can be fetched from there.
+ * The token alone after.
  */
 export function adoptCommand(message: LicenseEmail): string {
 	return message.refreshSecret

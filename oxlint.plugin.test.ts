@@ -1,10 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- * @file Unit tests for Mailwoman's repository-local oxlint rules.
- */
-
 import { expect, test } from "vitest"
 
 import plugin from "./oxlint.plugin.ts"
@@ -160,8 +156,7 @@ test("prefer-home names the git home for a shell-out string in a literal or a te
 })
 
 /**
- * A `for` header, by its three clauses. `from` is the `<base>.length - <n>` initializer, so a test can vary the descent
- * without restating the whole node.
+ * A `for` header whose `from` is the `<base>.length - <n>` initializer.
  */
 function forLoop(options: {
 	from?: number
@@ -202,8 +197,7 @@ function forLoop(options: {
 }
 
 /**
- * `base[index]`. `property` carries its `type` because the rule reads it: a swap of two variable indices is a shuffle,
- * a swap where one index is a literal is heapsort's extraction phase.
+ * `base[index]`, whose `property` carries its `type` because the rule reads it.
  */
 function indexRead(base: string, index: string): TestNode {
 	return {
@@ -215,9 +209,6 @@ function indexRead(base: string, index: string): TestNode {
 	}
 }
 
-/**
- * `base[0]` — a constant index, which is what separates heapsort from a shuffle.
- */
 function constantIndexRead(base: string): TestNode {
 	return {
 		type: "MemberExpression",
@@ -228,9 +219,6 @@ function constantIndexRead(base: string): TestNode {
 	}
 }
 
-/**
- * `[base[i], base[j]] = [base[j], base[i]]` — the destructured swap.
- */
 function destructuredSwap(base: string): TestNode {
 	return {
 		type: "BlockStatement",
@@ -248,9 +236,6 @@ function destructuredSwap(base: string): TestNode {
 	}
 }
 
-/**
- * `tmp = base[i]; base[i] = base[j]; base[j] = tmp` — two index writes to one base.
- */
 function temporarySwap(base: string): TestNode {
 	const write = (index: string): TestNode => ({
 		type: "ExpressionStatement",
@@ -270,15 +255,13 @@ test("prefer-home names shuffleWith for a re-typed Fisher-Yates, destructured or
 
 	expect(destructured).toHaveLength(1)
 	expect(destructured[0]).toContain("`@mailwoman/core/random`")
-	// The home is `shuffleWith`, not `SeededRandom.shuffle`. Three of the four copies could not use the class: each pins
-	// its own stream, and the class seeds mulberry32 internally. Naming it would send a reader to the one home that
-	// cannot serve them.
+	// The home is `shuffleWith`, not `SeededRandom.shuffle`, because the class seeds
+	// mulberry32 internally and three copies pin their own stream.
 	expect(destructured[0]).toContain("shuffleWith")
 	expect(reportsFor("prefer-home", forLoop({ body: temporarySwap("rows") }))).toHaveLength(1)
 })
 
 test("prefer-home stays silent on loops that are not a shuffle", () => {
-	// A backwards scan that swaps nothing.
 	const scan: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],
@@ -286,12 +269,9 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 	}
 
 	expect(reportsFor("prefer-home", forLoop({ body: scan }))).toEqual([])
-	// Ascending, so `sample`'s partial-Fisher-Yates and every forward loop are out of scope.
 	expect(reportsFor("prefer-home", forLoop({ update: "++", body: destructuredSwap("xs") }))).toEqual([])
-	// Runs to 0 rather than 1 — a full reverse walk rather than a shuffle's arithmetic.
 	expect(reportsFor("prefer-home", forLoop({ until: -1, body: destructuredSwap("xs") }))).toEqual([])
 
-	// Two different arrays, so nothing is swapped in place.
 	const across: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],
@@ -309,9 +289,7 @@ test("prefer-home stays silent on loops that are not a shuffle", () => {
 
 	expect(reportsFor("prefer-home", forLoop({ body: across }))).toEqual([])
 
-	// Heapsort's extraction phase: counts down from the last index, stops at 1, swaps two computed indices of one array.
-	// It satisfies every clause except that one index is the literal 0 — a shuffle swaps the loop variable with a drawn
-	// index, and neither is a constant.
+	// Heapsort's extraction phase, which satisfies every clause except that one index is the literal 0.
 	const heapsort: TestNode = {
 		type: "BlockStatement",
 		range: [0, 0],
@@ -335,6 +313,92 @@ test("prefer-home reads `i >= 1` as the same stopping point as `i > 0`", () => {
 
 	expect(messages).toHaveLength(1)
 	expect(messages[0]).toContain("shuffleWith")
+})
+
+function typeReference(name: string, ...parameters: TestNode[]): TestNode {
+	const reference: TestNode = { type: "TSTypeReference", range: [0, 0], typeName: identifier(name) }
+
+	if (parameters.length) {
+		reference.typeArguments = { type: "TSTypeParameterInstantiation", range: [0, 0], params: parameters }
+	}
+
+	return reference
+}
+
+function awaitUsingProgram(initializer: TestNode, ...preamble: TestNode[]): TestNode {
+	return {
+		type: "Program",
+		range: [0, 0],
+		body: [
+			...preamble,
+			{
+				type: "VariableDeclaration",
+				kind: "await using",
+				range: [0, 0],
+				declarations: [{ type: "VariableDeclarator", range: [0, 0], id: identifier("db"), init: initializer }],
+			},
+		],
+	}
+}
+
+function call(callee: TestNode, awaited: boolean): TestNode {
+	const expression: TestNode = { type: "CallExpression", range: [0, 0], callee, arguments: [] }
+
+	return awaited ? { type: "AwaitExpression", range: [0, 0], argument: expression } : expression
+}
+
+test("no-await-using-sync-disposable reports a construction, a static factory and a cross-package one", () => {
+	const construction: TestNode = {
+		type: "NewExpression",
+		range: [0, 0],
+		callee: identifier("DatabaseClient"),
+		arguments: [],
+	}
+
+	const temp = call(
+		{ type: "MemberExpression", range: [0, 0], object: identifier("DatabaseClient"), property: identifier("temp") },
+		false
+	)
+
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(construction))).toHaveLength(1)
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(temp))).toHaveLength(1)
+
+	const messages = reportsFor("no-await-using-sync-disposable", awaitUsingProgram(call(identifier("openDuckDB"), true)))
+
+	expect(messages).toHaveLength(1)
+	expect(messages[0]).toContain("`using`")
+})
+
+test("no-await-using-sync-disposable reads a same-file helper's declared return type", () => {
+	const helper: TestNode = {
+		type: "FunctionDeclaration",
+		range: [0, 0],
+		id: identifier("fixtureDB"),
+		returnType: {
+			type: "TSTypeAnnotation",
+			range: [0, 0],
+			typeAnnotation: typeReference("Promise", typeReference("DatabaseClient", typeReference("WOFDatabase"))),
+		},
+	}
+
+	const program = awaitUsingProgram(call(identifier("fixtureDB"), true), helper)
+
+	expect(reportsFor("no-await-using-sync-disposable", program)).toHaveLength(1)
+})
+
+test("no-await-using-sync-disposable leaves an asynchronously-disposed resource alone", () => {
+	const scratch = awaitUsingProgram(call(identifier("temporaryDirectory"), true))
+
+	expect(reportsFor("no-await-using-sync-disposable", scratch)).toEqual([])
+
+	const stack: TestNode = {
+		type: "NewExpression",
+		range: [0, 0],
+		callee: identifier("AsyncDisposableStack"),
+		arguments: [],
+	}
+
+	expect(reportsFor("no-await-using-sync-disposable", awaitUsingProgram(stack))).toEqual([])
 })
 
 function importNode(type: string, specifier: string): TestNode {

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import type { LatLon } from "@mailwoman/match/blocking"
 import {
 	DEFAULT_DISTANCE_LEVELS,
 	DEFAULT_SPATIAL_LEVELS,
@@ -9,6 +8,7 @@ import {
 	haversineKm,
 	spatialComparison,
 } from "@mailwoman/match/distance"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 describe("haversineKm", () => {
@@ -29,7 +29,7 @@ describe("haversineKm", () => {
 
 describe("distanceComparison", () => {
 	interface R {
-		coord?: LatLon
+		coord?: GeoCoordinate
 	}
 
 	const cmp = distanceComparison<R>({ name: "geo", extract: (r) => r.coord, levels: DEFAULT_DISTANCE_LEVELS })
@@ -51,7 +51,7 @@ describe("distanceComparison", () => {
 describe("spatialComparison (collapsed key + distance, A1)", () => {
 	interface R {
 		key?: string
-		coord?: LatLon
+		coord?: GeoCoordinate
 	}
 
 	const cmp = spatialComparison<R>({
@@ -69,7 +69,7 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 	})
 
 	it("falls through to distance buckets when the keys DIFFER (the geo-first case)", () => {
-		// Different canonical strings, same rooftop → near-agreement rather than exact rather than far.
+		// Different canonical strings, same rooftop → near-agreement, neither exact nor far.
 		expect(cmp.assess(rec("123 main st", 45.5152), rec("123 main street apt 2", 45.5153))).toBe(1) // same-building
 		expect(cmp.assess(rec("a", 0), rec("b", 0.003))).toBe(2) // ~0.33 km → same-block
 		expect(cmp.assess(rec("a", 0), rec("b", 0.018))).toBe(3) // ~2 km → same-area
@@ -82,7 +82,8 @@ describe("spatialComparison (collapsed key + distance, A1)", () => {
 	})
 
 	it("does not double-count: an exact key match banks one vote, not key + distance", () => {
-		// The whole point of the collapse — there is a single spatial contribution, level 0.
+		// The whole point of the collapse.
+		// There is a single spatial contribution, level 0.
 		const index = cmp.assess(rec("100 plaza dr", 29.76), rec("100 plaza dr", 29.76))
 		expect(index).toBe(0)
 		expect(cmp.levels[index]!.label).toBe("same-key")

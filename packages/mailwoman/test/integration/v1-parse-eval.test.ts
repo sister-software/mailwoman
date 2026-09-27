@@ -73,7 +73,6 @@
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
@@ -83,6 +82,7 @@ import { normalize } from "@mailwoman/normalize"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver, finestResolvedCoordinate, isImplausibleResolution } from "@mailwoman/resolver"
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { v0RecordToTree } from "mailwoman/eval-harness/v0-tree-adapter"
 import { resolvePath } from "path-ts"
@@ -100,8 +100,10 @@ const PARITY_RAW_GOLDEN = "packages/mailwoman/lib/test-fixtures/legacy-golden/pa
 type RulesRecord = Partial<Record<string, string[]>>
 
 /**
- * Load the frozen rules baseline: `input → the top solution's classifications`. This replaces the deleted live
- * `createAddressParser().parse(...)` call — the record is a byte-stable snapshot of that exact parser (PR #1092).
+ * Load the frozen rules baseline: `input → the top solution's classifications`.
+ *
+ * This replaces the deleted live `createAddressParser().parse(...)` call.
+ * The record is a byte-stable snapshot of that exact parser (PR #1092).
  */
 async function loadRulesGolden(): Promise<Map<string, RulesRecord>> {
 	const byInput = new Map<string, RulesRecord>()
@@ -135,18 +137,20 @@ const STREET_TAGS = ["street_prefix", "street", "street_prefix_particle", "stree
 /**
  * WOF databases the receipt harness resolved against (`admin-global-priority.db` + `postcode-locality-intl.db`).
  */
-const ADMIN_DB = dataRootPath("wof", "admin-global-priority.db")
-const POSTCODE_DB = dataRootPath("wof", "postcode-locality-intl.db")
+const ADMIN_DB = wofDatabasePath("admin-global-priority.db")
+const POSTCODE_DB = wofDatabasePath("postcode-locality-intl.db")
 
 const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver. This probed `packages/neural-weights-en-us/model.onnx` directly, which is true only
-		// while the dev linker materializes binaries into that package — and a skip-guard that stops matching
-		// does not fail, it skips. Therefore, the suite disappears from the run reporting success. The repo has already
-		// paid for this once: the workspace regroup left this literal behind and both this suite and
-		// `api-engine.test.ts` went quiet until someone counted the skips.
+		// ASK the resolver.
+		// This probed `packages/neural-weights-en-us/model.onnx` directly,
+		// which is true only while the dev linker materializes binaries into that package,
+		// and a skip-guard that stops matching does not fail, it skips.
+		// Therefore, the suite disappears from the run reporting success.
+		// The repo has already paid for this once: the workspace regroup left this literal behind
+		// and both this suite and `api-engine.test.ts` went quiet until someone counted the skips.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
@@ -253,9 +257,10 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				}
 
 				try {
-					// The rules parse is read from the frozen phase-0 capture (PR #1092), not produced live —
-					// the v1 parser is deleted. `v0RecordToTree` rebuilds the flat record into a tree exactly as
-					// the live arm did, so the coordinate comparison is unchanged.
+					// The rules parse is read from the frozen phase-0 capture (PR #1092), not produced live.
+					// The v1 parser is deleted.
+					// `v0RecordToTree` rebuilds the flat record into a tree exactly as the live
+					// arm did, so the coordinate comparison is unchanged.
 					const record = rulesGolden.get(fx.input) ?? {}
 					const tree = v0RecordToTree(fx.input, record).tree
 					rulesCoord = finestResolvedCoordinate(await resolver.resolveTree(tree, opts))
@@ -276,7 +281,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				})
 			}
 
-			// informational: the old parse-tag agreement (non-enforcing. drives Track B)
+			// informational: the old parse-tag agreement (non-enforcing. Drives Track B)
 			const agreement = (label: string) => {
 				const scored = rows.filter((r) => r.agree[label] !== undefined)
 				const hit = scored.filter((r) => r.agree[label]).length
@@ -290,17 +295,20 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				console.error(`[informational] parse-tag ${label}: ${a.hit}/${a.total} = ${a.rate.toFixed(4)} (non-enforcing)`)
 			}
 
-			// P1. Coordinate acceptability
+			// P1.
+			// Coordinate acceptability
 			const both = rows.filter((r) => r.both)
 			const streetPass = both.filter((r) => r.hasStreet && !r.streetFail)
 			const streetPassWithin1km = streetPass.filter((r) => r.delta! <= 1).length
 			const acceptRate = streetPass.length ? streetPassWithin1km / streetPass.length : 1
 
-			// P2. Guard false positives on the coordinate-safe structured set
+			// P2.
+			// Guard false positives on the coordinate-safe structured set
 			const safeStructured = both.filter((r) => r.delta! <= 5 && r.kind === "structured_address")
 			const guardFalsePositives = safeStructured.filter((r) => r.implausible).length
 
-			// P3. Garbage-tail residual after kind-router + plausibility guard
+			// P3.
+			// Garbage-tail residual after kind-router + plausibility guard
 			const tail = both.filter((r) => r.hasStreet && r.streetFail && r.delta! > 25)
 			const tailStructured = tail.filter((r) => r.kind === "structured_address")
 			const residual = tailStructured.filter((r) => !r.implausible).length
@@ -317,15 +325,18 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 				`[check] P3 garbage-tail residual (structured, street-fail, Δ>25km, guard-miss): ${residual}/${rows.length} = ${(100 * residualRate).toFixed(2)}% (bound 2.0%; receipt 0.9% = 3/321)`
 			)
 
-			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct. fresh: 76/80 = 0.950.
+			// P1 — Receipt: 98.6% within 1km when the neural street parse is correct.
+			// Fresh: 76/80 = 0.950.
 			//      Floor 0.90 sits below both with margin. When the model parses the street right, the geocode is safe.
 			expect(
 				acceptRate,
 				"coordinate acceptability: street-PASS neural geocode within 1km of rules"
 			).toBeGreaterThanOrEqual(0.9)
 
-			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard. fresh: 0/78. Zero false fallbacks is
-			//      the guard's whole justification — a non-zero here means it would bounce good geocodes to fallback.
+			// P2 — Receipt: 0/81 coord-safe structured fixtures trip the guard.
+			// Fresh: 0/78.
+			// Zero false fallbacks is
+			//      the guard's whole justification. A non-zero here means it would bounce good geocodes to fallback.
 			expect(guardFalsePositives, "plausibility-guard false fallbacks on coord-safe structured fixtures").toBe(0)
 
 			// P3 — Receipt (guard A+B): 3/321 = 0.9%; fresh (shipped guard A / country-centroid only): 5/321 = 1.56%.

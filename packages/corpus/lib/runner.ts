@@ -2,36 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Adapter runner — drives a `CorpusAdapter` to completion and writes intermediate jsonl + a
- *   per-adapter manifest.
- *
- *   Output layout under `outputDir`:
- *
- *   ```
- *   <outputDir>/<adapter.id>/
- *   canonical.jsonl       # one row per line, in emission order
- *   manifest.json         # adapter id, version, row count, sha256, license, started_at, ended_at
- * ```
- *
- *   The runner is responsible for everything an adapter is **not** responsible for:
- *
- *   - Stamping `corpus_version` on every row (adapters must not set it).
- *   - Stamping the adapter's `addressRole` on every row that omits one, so a single-role source declares its role once
- *       and a multi-role source overrides per row.
- *   - Applying `canonicalDedupKey` and skipping duplicates.
- *   - Streaming sha256 over jsonl bytes so the manifest checksum doesn't require a re-read.
- *   - Honoring backpressure on the output write stream.
- *   - Counting + emitting periodic progress to an optional callback.
- *   - Honoring `signal` (delegates to adapter's iteration boundary).
- *
- *   The runner does not perform alignment, tokenization, synthesis, or the Parquet write. Those
- *   steps run later, consuming the jsonl files this writes.
+ *   Adapter runner — drives a `CorpusAdapter` to completion and writes `canonical.jsonl` plus a
+ *   `MANIFEST.json` per adapter. It does not align, tokenize, synthesize, or write Parquet.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
@@ -40,29 +19,17 @@ import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
  * Snapshot of the runner's state, emitted on every progress tick.
  */
 export interface RunnerProgress {
-	/**
-	 * Adapter being driven.
-	 */
 	adapterID: string
 
 	/**
-	 * Total rows the adapter has yielded (before dedup).
+	 * Total rows the adapter has yielded, before dedup.
 	 */
 	yielded: number
 
-	/**
-	 * Rows actually written to jsonl (after dedup).
-	 */
 	written: number
 
-	/**
-	 * Bytes written to jsonl so far.
-	 */
 	bytes: number
 
-	/**
-	 * Wall-clock milliseconds since the run started.
-	 */
 	elapsed_ms: number
 }
 
@@ -70,41 +37,45 @@ export interface RunnerProgress {
  * Per-invocation options for `runAdapter`.
  */
 export interface RunAdapterOptions {
-	/**
-	 * Adapter to drive.
-	 */
 	adapter: CorpusAdapter
 
-	/**
-	 * Options handed to the adapter (input path, country filter, limit, signal).
-	 */
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory. the runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory.
+	 * The runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
 	/**
-	 * Corpus version stamped onto every row. Locked together with the tokenizer version.
+	 * Corpus version stamped onto every row, locked together with the tokenizer version.
 	 */
 	corpusVersion: string
 
 	/**
-	 * Optional progress callback. Invoked every `progressEvery` rows yielded (default 1000) and once at the end of the
-	 * run. Errors thrown from this callback abort the run.
+	 * The `source` id stamped on every emitted row, when it differs from the adapter's own id.
+	 *
+	 * A source id is a wire identifier keyed by `source_weights`, so re-using a name a built
+	 * corpus already carries makes this run's rows indistinguishable from that corpus's.
+	 * When absent, rows carry `adapter.id`.
+	 */
+	sourceName?: string
+
+	/**
+	 * Invoked every `progressEvery` rows yielded and once at the end.
+	 * A thrown error aborts the run.
 	 */
 	onProgress?: (snapshot: RunnerProgress) => void
 
 	/**
-	 * Yielded-row interval at which `onProgress` fires. Defaults to 1000. The terminal tick is always emitted regardless
-	 * of this value.
+	 * Yielded-row interval at which `onProgress` fires.
+	 * Defaults to 1000, and the terminal tick is always emitted.
 	 */
 	progressEvery?: number
 }
 
 /**
- * Return value of `runAdapter`: the same shape as `manifest.json` on disk.
+ * Return value of `runAdapter`, the same shape as the manifest written to disk.
  */
 export interface AdapterRunManifest {
 	adapter_id: string
@@ -123,21 +94,17 @@ export interface AdapterRunManifest {
 }
 
 /**
- * Drive a single adapter to completion.
- *
- * Returns the manifest describing the run. Writes `canonical.jsonl` + `manifest.json` under `outputDir/<adapter.id>/`.
- * Throws if the output directory cannot be created, if a row arrives with a missing required field, or if the abort
- * signal fires.
+ * Drive a single adapter to completion, writing its jsonl and manifest under `outputDir/<adapter.id>/`.
  */
 export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunManifest> {
 	const { adapter, adapterOptions, outputDir, corpusVersion } = opts
 	const progressEvery = opts.progressEvery ?? 1000
 
-	const adapterDir = join(outputDir, adapter.id)
+	const adapterDir = resolvePathBuilder(outputDir, adapter.id)
 	await makeDirectories(adapterDir)
 
-	const jsonlPath = join(adapterDir, "canonical.jsonl")
-	const manifestPath = join(adapterDir, "MANIFEST.json")
+	const jsonlPath = adapterDir("canonical.jsonl")
+	const manifestPath = adapterDir("MANIFEST.json")
 
 	const startedAt = new Date()
 	const t0 = performance.now()
@@ -173,8 +140,14 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const stamped: CanonicalRow = {
 				...row,
+				// The rename is the runner's, after `assertEmittedRow` has held the adapter to emitting its own id.
+				source: opts.sourceName ?? row.source,
 				corpus_version: corpusVersion,
 				addressRole: row.addressRole ?? adapter.addressRole,
+				// `register` is nullable and null is a statement rather than an absence,
+				// so only an undefined field takes the adapter's declaration.
+				register: row.register === undefined ? adapter.register : row.register,
+				surface: row.surface ?? adapter.surface,
 			}
 
 			const key = canonicalDedupKey(stamped)
@@ -218,6 +191,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		await once(stream, "close")
 	}
 
+	// Every adapter honors `signal` by returning instead, so without this a truncated
+	// `canonical.jsonl` would be recorded as a finished run.
+	adapterOptions.signal?.throwIfAborted()
+
 	const endedAt = new Date()
 	const elapsed_ms = performance.now() - t0
 	emitProgress()
@@ -232,7 +209,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		deduped: yielded - written,
 		bytes,
 		sha256: hasher.digest(),
-		jsonl_path: jsonlPath,
+		jsonl_path: jsonlPath.toString(),
 		started_at: startedAt.toISOString(),
 		ended_at: endedAt.toISOString(),
 		elapsed_ms,
@@ -244,10 +221,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 }
 
 /**
- * Drive every adapter in a registry sequentially. Stops on the first failure (caller can filter the registry before
- * calling if partial-failure is desired).
- *
- * Returns the manifests in registry insertion order.
+ * Drive every adapter in a registry sequentially, stopping on the first failure.
  */
 export async function runAllAdapters(
 	registry: AdapterRegistry,
@@ -270,10 +244,6 @@ export async function runAllAdapters(
 	return out
 }
 
-/**
- * Validate an emitted row. Cheap. runs once per row. Catches adapter bugs early so the jsonl doesn't end up
- * half-malformed.
- */
 function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (row.source !== adapter.id) {
 		throw new Error(`adapter ${adapter.id}: row.source must equal adapter.id (got ${stringifyJSON(row.source)})`)
@@ -291,15 +261,24 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 		throw new Error(`adapter ${adapter.id}: row.country is empty for source_id=${row.source_id}`)
 	}
 
+	// `country_weights` and every country filter key on this value, and the shape
+	// rather than ISO membership because `ZZ` and `XK` are legitimate non-members.
+	if (!isAlpha2CodeShape(row.country)) {
+		throw new Error(
+			`adapter ${adapter.id}: row.country ${stringifyJSON(row.country)} is not two upper-case letters ` +
+				`for source_id=${row.source_id}. ISO 3166-1 alpha-2 is the shape country_weights and every ` +
+				`country filter key on, so a code outside it trains on nothing and matches no filter.`
+		)
+	}
+
 	if (!row.license) {
 		throw new Error(`adapter ${adapter.id}: row.license is empty for source_id=${row.source_id}`)
 	}
 }
 
 /**
- * Promise-ify a single event emission. Used to await `drain` / `close` on the write stream. Exported for `build.ts`,
- * whose stage streams await `close` the same way. unlike a bare two-listener race, the loser listener is detached so a
- * long-lived stream does not accumulate one orphan handler per wait.
+ * Promise-ify a single `drain` or `close` emission, detaching the loser listener
+ * so a long-lived stream does not accumulate an orphan handler per wait.
  */
 export function once(emitter: WriteStream, event: "drain" | "close"): Promise<void> {
 	return new Promise((resolve, reject) => {

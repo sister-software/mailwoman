@@ -2,23 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer census` — build the PCN1 placetype census (hierarchy campaign R4c) from the
- *   shipped WOF admin DB. Counts each locality-class parent's children through the projection table
- *   (`gazetteer-pipeline/placetype-census.ts`), folds parent surfaces with the same `normalizeFSTToken`
- *   the PIX1 pair index uses — so a consumer folds once and probes both artifacts — and writes
- *   `placetype-census-<country>.bin`.
+ *   `mailwoman gazetteer census` — build the PCN1 placetype census from the shipped WOF admin DB: count
+ *   each locality-class parent's children through the projection table, and fold parent surfaces with the
+ *   same `normalizeFSTToken` the PIX1 pair index uses, so a consumer folds once and probes both artifacts.
  *
- *   Fold collisions SUM. Two distinct raw parents that fold together ("St Helens" / "St. Helens") are
- *   one census node whose counts are the union of both. the serializer refuses duplicate parents, so a
- *   merge bug surfaces as a throw rather than a silently halved count.
+ *   Fold collisions sum: two distinct raw parents that fold together are one census node whose counts are
+ *   the union of both, and the serializer refuses duplicate parents so a merge bug surfaces as a throw
+ *   rather than a silently halved count.
  *
- *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: R4c
- *   ships the census as data + loader + offline probe with no decode wiring. A calibrated delta is a
- *   later rung's output. writing one now would put an unmeasured bias into a shipped artifact.
- *
- *   Self-verifying (the sealed-artifact spirit): after writing, the command re-reads its own bytes
- *   through a fresh `PlacetypeCensusResolver` and probes known parents, printing probe OK/miss with the
- *   node's dependent-locality share and lift rather than trusting the write.
+ *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: the
+ *   census ships as data + loader + offline probe with no decode wiring, and writing an unmeasured delta
+ *   now would put a bias into a shipped artifact.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -26,13 +20,15 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import type { PlacetypeCensusHeader, PlacetypeCensusNode } from "@mailwoman/neural/placetype"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Known parents probed after write, PER country. Probing another country's names against a freshly built census prints
- * reassuring-looking misses that verify nothing (the lesson the pair-index command's en-nz first build taught).
+ * Known parents probed after write, per country.
+ *
+ * Probing another country's names against a freshly built census prints
+ * reassuring-looking misses that verify no name.
  */
 const PROBE_PARENTS_BY_COUNTRY: Readonly<Record<string, readonly string[]>> = {
 	gb: ["London", "Manchester", "Birmingham"],
@@ -55,13 +51,14 @@ export const spec = {
 
 const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const { md5File } = await import("@mailwoman/core/utils")
 		const { normalizeFSTToken } = await import("@mailwoman/neural/fst-prior")
 		const { PlacetypeCensusResolver, serializePlacetypeCensus } = await import("@mailwoman/neural/placetype")
 		const { buildPlacetypeCensus, toBaseRates } = await import("#gazetteer-pipeline/placetype-census")
 
 		const country = options.country.toLowerCase()
-		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")
 
 		if (!(await pathExists(sourcePath))) {
 			throw new Error(`census: source WOF admin DB not found: ${sourcePath}`)
@@ -76,7 +73,6 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// Fold, merging collisions by summing counts — the serializer throws on duplicates, so a merge bug is loud.
 		const folded = new Map<string, PlacetypeCensusNode>()
 		let collisions = 0
 
@@ -117,7 +113,7 @@ const GazetteerCensus: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const bytes = serializePlacetypeCensus(header, nodes)
-		const outPath = join(options.out, `placetype-census-${country}.bin`)
+		const outPath = PathBuilder.from(options.out)(`placetype-census-${country}.bin`)
 
 		await writeLocalFile(bytes, outPath)
 

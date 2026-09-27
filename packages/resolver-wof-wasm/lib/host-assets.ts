@@ -48,16 +48,18 @@ export async function syncArtifact(
 }
 
 /**
- * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + wasm) into `destDir`. The demo loads these at
- * runtime by URL — the UMD via a classic <script>, the worker + wasm passed to createDbWorker — so webpack never sees
- * them. That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is exactly
- * what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
+ * Stage sql.js-httpvfs's runtime assets (the UMD bundle + its Worker + wasm) into `destDir`.
+ *
+ * The demo loads these at runtime by URL — the UMD via a classic <script>,
+ * the worker + wasm passed to createDbWorker — so webpack never sees them.
+ * That's deliberate: bundling sql.js-httpvfs (a webpack UMD bundle with dynamic Worker/wasm requires) is
+ * exactly what produces "Critical dependency" build warnings, so we keep it out of the graph entirely.
  *
  * @param destDir - E.g. static/mailwoman/sqljs
  */
 export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolean> {
-	// The runtime files live under the package's `dist/`, so the anchor is the bundle inside it rather than the manifest at
-	// the package root.
+	// The runtime files live under the package's `dist/`, so the anchor is the bundle
+	// inside it rather than the manifest at the package root.
 	const entry = tryResolvePackageSpecifier(import.meta.url, "sql.js-httpvfs", "dist/index.js")
 
 	if (!entry) {
@@ -82,13 +84,14 @@ export async function stageSQLJSAssets(destDir: PathBuilderLike): Promise<boolea
 
 		const dest = resolvePath(destDir, f)
 
-		// Idempotent stage — syncArtifact skips a size-identical copy. This runs in loadContent(), which
-		// the Docusaurus dev server (`yarn start`) re-invokes on reload — and `destDir` lives under the
-		// watched `static/` tree. An unconditional copy rewrites the file (fresh mtime) even when the
-		// bytes are identical, the watcher sees a "change" and reloads, loadContent() re-runs and
-		// re-copies… a reload loop that shows up as the /demo page flickering during `start`. Skipping
-		// the no-op copy breaks the cycle. (Prod `build` runs loadContent once, so the loop is a
-		// dev-server-only hazard.)
+		// Idempotent stage — syncArtifact skips a size-identical copy.
+		// This runs in loadContent(), which the Docusaurus dev server (`yarn start`)
+		// re-invokes on reload, and `destDir` lives under the watched `static/` tree.
+		// An unconditional copy rewrites the file (fresh mtime) even when the bytes are identical,
+		// the watcher sees a "change" and reloads, loadContent() re-runs and re-copies… a
+		// reload loop that shows up as the /demo page flickering during `start`.
+		// Skipping the no-op copy breaks the cycle.
+		// (Prod `build` runs loadContent once, so the loop is a dev-server-only hazard.)
 		if (await syncArtifact(src, dest, `sql.js-httpvfs ${f}`)) {
 			copied++
 		}

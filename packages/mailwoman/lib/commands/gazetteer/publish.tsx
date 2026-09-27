@@ -3,17 +3,15 @@
 
 /**
  *   `mailwoman gazetteer publish [<candidate-db>]` — upload the candidate gazetteer to R2 (the demo's
- *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. Shells out to the proven
- *   `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
- *   defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
+ *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. The version defaults to today's
+ *   date + `a` (e.g. `2026-06-27a`), the immutable convention.
  *
  *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first. This
- *   is an in-repo operator command (it needs the upload script + the demo's resources file).
+ *   is an in-repo operator command because it updates the demo's resources file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, phaseReporter, useCommandTask } from "#cli-kit"
 import { DEFAULT_CANDIDATE_OUT } from "#gazetteer-pipeline/defaults"
@@ -25,7 +23,7 @@ export const spec = {
 	name: "publish",
 	description: "Publish a candidate gazetteer to R2.",
 	positionals: [
-		{ name: "candidate-db", description: `Candidate DB. Default <data-root>/wof/${DEFAULT_CANDIDATE_OUT}` },
+		{ name: "candidate-db", description: `Candidate DB. Default <data-root>/db/wof/${DEFAULT_CANDIDATE_OUT}` },
 	],
 	options: {
 		"gazetteer-version": { type: "string", description: "Immutable gazetteer version" },
@@ -33,21 +31,27 @@ export const spec = {
 		prefix: { type: "string", default: "mailwoman", description: "R2 key prefix" },
 		"dry-run": { type: "boolean", default: false, description: "Show without uploading" },
 		"bump-demo": { type: "boolean", default: true, description: "Bump the demo gazetteer version" },
+		"override-refusals": {
+			type: "boolean",
+			default: false,
+			description:
+				"Publish over every refusal the candidate's own layer_manifest raises, printing each one. " +
+				"Without it a candidate whose tier or license permits no publication stops before a byte moves",
+		},
 	},
 } as const satisfies CommandSpec
 
 const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
-		const { defaultGazetteerVersion, publishGazetteer, wofDir } = await import("#gazetteer-pipeline")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
+		const { defaultGazetteerVersion, publishGazetteer } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const root = mailwomanDataRoot()
-		const candidateDB = args[0] ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-		const uploadScript = String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py"))
 
 		const resourcesFile = options.bumpDemo
-			? String(repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts"))
+			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
 			: undefined
 
 		await using stage = await temporaryDirectory("mailwoman-gazetteer-")
@@ -59,12 +63,12 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 		const r = await publishGazetteer({
 			candidateDB,
 			version,
-			uploadScript,
 			resourcesFile,
 			stageDir: stage.path,
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,
+			overrideRefusals: options.overrideRefusals,
 			onPhase: phaseReporter(),
 		})
 

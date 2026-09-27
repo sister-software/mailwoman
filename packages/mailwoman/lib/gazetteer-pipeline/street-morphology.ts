@@ -20,16 +20,16 @@
  *   rides the artifact trailer via `serializeFST`, readable back with `readFSTProvenance` /
  *   `readFSTProvenanceWeb`.
  *
- *   Output defaults to `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin` — staged beside the
+ *   Output defaults to `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin` — staged beside the
  *   per-locale FST dir (`fst-per-locale/`), never inside it. Sealed-artifact discipline: write to a
  *   staging sibling, rename into place (a previously-sealed 0444 file can't be overwritten
  *   in-place), then seal read-only.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { changeMode, makeDirectories, movePath, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import { serializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { buildStreetMorphologyFST, STREET_MORPHOLOGY_ARTIFACT_FILENAME } from "@mailwoman/resolver-wof-sqlite/street"
 import { dirname, resolvePath } from "path-ts"
 
@@ -43,11 +43,12 @@ export interface BuildStreetMorphologyArtifactOpts {
 	 */
 	locales?: string[]
 	/**
-	 * Minimum post-normalization variant length (default: the builder's 3 — the state-abbreviation collision guard).
+	 * Minimum post-normalization variant length (default: the builder's 3 —
+	 * the state-abbreviation collision guard).
 	 */
 	minVariantLength?: number
 	/**
-	 * Output path (default: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`).
+	 * Output path (default: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`).
 	 */
 	output?: string
 	onProgress?: (line: string) => void
@@ -62,14 +63,16 @@ export interface BuiltStreetMorphologyArtifact {
 }
 
 /**
- * Build + seal the street-morphology FST artifact. Returns the written path and build counts.
+ * Build + seal the street-morphology FST artifact.
+ *
+ * @returns The written path and build counts.
  */
 export async function buildStreetMorphologyArtifact(
 	opts: BuildStreetMorphologyArtifactOpts = {}
 ): Promise<BuiltStreetMorphologyArtifact> {
 	const progress = opts.onProgress ?? (() => {})
 	const dictionariesDir = opts.dictionariesDir ?? resourceDictionaryPath("libpostal")
-	const outPath = resolvePath(opts.output ?? String(dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)))
+	const outPath = resolvePath(opts.output ?? wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME))
 
 	progress(`building street-morphology FST from ${dictionariesDir}`)
 

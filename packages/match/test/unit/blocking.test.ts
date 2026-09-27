@@ -1,12 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { type LatLon, block, conjunction, exactKey, geoCellKey } from "@mailwoman/match/blocking"
+import { block, conjunction, exactKey, geoCellKey } from "@mailwoman/match/blocking"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 interface Rec {
 	id: string
-	coord?: LatLon
+	coord?: GeoCoordinate
 	canonical?: string
 	postcode?: string
 }

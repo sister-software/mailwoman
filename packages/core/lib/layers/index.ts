@@ -3,11 +3,12 @@
 
 /**
  *   The spatial-layer interface: manifest/coverage schema + IO. Every layer database — shipped,
- *   build-local, or private — embeds these tables. Spec:
- *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
+ *   build-local, or private — embeds these tables.
  */
 
+export * from "#layers/build-command"
 export * from "#layers/coverage"
 export * from "#layers/feature-count"
 export * from "#layers/manifest"
+export * from "#layers/publication"
 export * from "#layers/schema"

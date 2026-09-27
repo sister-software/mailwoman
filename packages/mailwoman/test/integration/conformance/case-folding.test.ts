@@ -23,9 +23,9 @@
  *   Cheap enough to belong: measured 6.2 s end to end for 29 rows — two geocodes each plus one engine load.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { auditCaseFoldingSuite, CASE_FOLDING_SUITE_PATH } from "mailwoman/eval-harness/conformance/case-folding"
 import { runConformanceCommand } from "mailwoman/eval-harness/conformance/command"
 import { loadConformanceFixtures } from "mailwoman/eval-harness/conformance/fixture"
@@ -41,8 +41,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 const gazetteerPresent = async (): Promise<boolean> =>
-	(await pathExists(String(dataRootPath("wof", "admin-global-priority.db")))) &&
-	(await pathExists(String(dataRootPath("wof", "postcode-locality-intl.db"))))
+	(await pathExists(wofDatabasePath("admin-global-priority.db"))) &&
+	(await pathExists(wofDatabasePath("postcode-locality-intl.db")))
 
 describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 	"case-folding invariance — live pipeline",

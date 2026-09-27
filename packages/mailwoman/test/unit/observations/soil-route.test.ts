@@ -5,7 +5,7 @@
  *   #1991: the soil-capability route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built soil layer.
  *
- *   the first test is the one that matters. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction.
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -13,7 +13,7 @@
  *   the rest PIN the three readings' journey TO A caller: a rated cell becomes one additive marker naming
  *   the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes
  *   the same marker with no class and the absence shares that say why, and a location outside every built
- *   survey area raises nothing — an advisory there would report a survey nobody ran.
+ *   survey area raises no marker — an advisory there would report a survey nobody ran.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -31,6 +31,7 @@ import {
 } from "@mailwoman/soil/test-kit"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createSoilCapabilityRoute } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -38,14 +39,16 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's own top kind — because a
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
  * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`, so the coordinate the route is handed is the
- * one this test chose.
+ * A minimal always-resolves engine that answers at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one this test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -87,7 +90,7 @@ const INSIDE_MIXED = {
 }
 
 /**
- * Inside the unrated map unit — the survey mapped this ground and rated nothing here.
+ * Inside the unrated map unit — the survey mapped this ground and assigned no rating here.
  */
 const INSIDE_UNRATED = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -100,11 +103,11 @@ const INSIDE_UNRATED = {
 const OUTSIDE_SURVEY = { latitude: FIXTURE_ORIGIN.lat + 5, longitude: FIXTURE_ORIGIN.lon + 5 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-soil-route-")
-	databasePath = scratch.resolve("soil.db")
+	databasePath = scratch.path("soil.db")
 
 	const delineations = fixtureDelineations()
 
@@ -175,8 +178,10 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			const evidence = marker.evidence as Record<string, unknown>
 
 			expect(evidence.topClass).toBe("2")
-			// A 45% plurality. Reporting the class without this number would manufacture certainty nrcs itself declines to
-			// manufacture — its own aggregation ships the share beside the class, with an observed minimum of 2%.
+			// A 45% plurality.
+			// Reporting the class without this number would manufacture certainty nrcs
+			// itself declines to manufacture — its own aggregation ships the share beside
+			// the class, with an observed minimum of 2%.
 			expect(evidence.topClassShare as number).toBeLessThan(0.5)
 			expect(marker.message).toMatch(/not whether the land can be farmed/u)
 			expect(marker.message).toMatch(/% of the cell/u)

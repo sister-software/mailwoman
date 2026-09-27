@@ -6,7 +6,7 @@ Latin script — Poland, Brazil, Mexico — onto a trained Latin country. This m
 obvious fix: feed it real off-map addresses (not synthetic name variants — see #564) as other. The
 mechanism works directly and at zero in-map cost, but it does not generalize past the countries you
 train on, and Overture's addresses theme doesn't currently have the breadth to train on enough of
-them. So this is a directional win with an direct ceiling, recorded — not a promotion._
+them. So this is a directional win with an honest ceiling, recorded — not a promotion._
 
 ## The residual, measured
 

@@ -17,20 +17,27 @@
  *   keep polarity balanced (the v1.9.9 lesson).
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { alignAndWrite, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
- * "1012LG" → "1012 LG". The tuples carry the unspaced OA form. the spaced form is the failing case.
+ * "1012LG" → "1012 LG".
+ *
+ * The tuples carry the unspaced OA form.
+ * The spaced form is the failing case.
  */
 function spacePostcode(pc: string): string {
 	return pc.replace(/^(\d{4})([A-Z]{2})$/, "$1 $2")
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const nlPostcodeRecipe: CorpusRecipe = {
 	name: "nl-postcode",
@@ -43,6 +50,11 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 		let emitted = 0
 		let skipped = 0
 
+		const NL_POSTCODE_PROVENANCE = {
+			register: requireRegister(opts, "nl-postcode"),
+			surface: SurfaceOrigin.Composed,
+		}
+
 		for await (const t of readTuples(opts.input!)) {
 			read++
 			const street = String(t.street ?? "").trim()
@@ -54,19 +66,20 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 				.toUpperCase()
 				.replaceAll(/\s+/g, "")
 
-			if (!street || !city || !number || !/^\d{4}[A-Z]{2}$/.test(rawPostcode)) {
+			if (!street || !city || !number || !isNLPostcodeKey(rawPostcode)) {
 				skipped++
 
 				continue
 			}
 
-			// Spacing rotates so the model sees both the failing spaced form and the unspaced form. the
-			// components.postcode value must match the raw form so alignment tags the right span.
+			// Spacing rotates so the model sees both the failing spaced form and the unspaced form.
+			// The components.postcode value must match the raw form so alignment tags the right span.
 			const spaced = read % 2 === 0
 			const postcode = spaced ? spacePostcode(rawPostcode) : rawPostcode
 
-			// The three orders Dutch addresses use. `street number, postcode city` is canonical. the
-			// pc-first form is where the leading digits most strongly mis-read as a house number.
+			// The three orders Dutch addresses use.
+			// `street number, postcode city` is canonical.
+			// The pc-first form is where the leading digits most strongly mis-read as a house number.
 			const order = read % 3
 			let raw: string
 
@@ -104,7 +117,7 @@ export const nlPostcodeRecipe: CorpusRecipe = {
 					"Synthetic — nl-postcode; (street, number, postcode, city) from OpenAddresses NL (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "nl-postcode")) {
+			if (alignAndWrite(write, canonical, "nl-postcode", NL_POSTCODE_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

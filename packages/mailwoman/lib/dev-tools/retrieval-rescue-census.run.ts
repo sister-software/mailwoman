@@ -1,12 +1,15 @@
 /**
- * Report-only retrieval-rescue census over the committed Gauntlet corpus (#1878). Not a release eval.
+ * Report-only retrieval-rescue census over the committed Gauntlet corpus (#1878).
  *
- * One production-routed board pass with the shipped model. For each row: the delivered answer, the unconditional
- * fork-entity probe (check 1 deliberately ignored — that is the measurement), and the resolver's ranked alternates,
+ * Not a release eval.
+ *
+ * One production-routed board pass with the shipped model.
+ * For each row: the delivered answer, the unconditional fork-entity probe
+ * (check 1 deliberately ignored — that is the measurement), and the resolver's ranked alternates,
  * classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
@@ -22,11 +25,12 @@ const { values } = parseArguments({ options: { "out-json": { type: "string" } } 
 
 const cases = await loadRegressionCases()
 const deps = await buildGauntletDeps()
-const probe = await loadForkEntityDeps({ dataRoot: String(mailwomanDataRoot()), forkEntity: true })
+const probe = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: true })
 
 if (!probe.deps.poiLookup) {
-	// The census's entity half is the point. a run without poi.db would silently degrade every
-	// rescue_available_entity row into no_rescue_on_hand — the partial-reader rule says fail instead.
+	// The census's entity half is the point.
+	// A run without poi.db would silently degrade every rescue_available_entity row into no_rescue_on_hand.
+	// The partial-reader rule says fail instead.
 	throw new Error("retrieval-rescue census requires poi.db (loadForkEntityDeps returned no lookup)")
 }
 
@@ -35,7 +39,8 @@ const reports: RescueRowReport[] = []
 for (const c of cases) {
 	const overlayCountry = routeCountry(c)
 
-	// The board runner's own opts recipe (regression.ts) — the census must ride the production route.
+	// The board runner's own opts recipe (regression.ts).
+	// The census must ride the production route.
 	const result = await deps.geocode(c.input, {
 		...(c.defaultCountry ? { defaultCountry: c.defaultCountry } : {}),
 		...(overlayCountry ? { caseCountry: overlayCountry } : {}),
@@ -44,8 +49,8 @@ for (const c of cases) {
 
 	const markers = result.intent_markers.map((m) => m.code)
 
-	// Unconditional: ask the entity layer whenever the fork marker rode, including when the incumbent
-	// resolved — measuring what check 1 currently silences is the census's purpose.
+	// Unconditional: ask the entity layer whenever the fork marker rode, including when the
+	// incumbent resolved — measuring what check 1 currently silences is the census's purpose.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric
 			? probeForkEntity(c.input, {

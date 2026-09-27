@@ -2,24 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman data status [<bundle...>]` — present/missing/stale per bundle artifact (#task-6), the
- *   read-only sibling of `data pull`. With no bundle names given, reports on every bundle in
- *   `data-bundles.ts`'s registry.
- *
- *   offline BY default: an artifact already on disk (`resolveDatabasePath` for a versioned `us`
- *   per-state database, `existsSync` otherwise) is reported "present" against the surveyed size baked
- *   into the registry (`BundleArtifact.approxBytes`) — a local size-only integrity check (catches a
- *   truncated/corrupt file), not a live version comparison. `--check-remote` upgrades this to a real
- *   head `Content-Length` probe via `APIClient` (one small paced request per artifact that'S already
- *   present — nothing is fetched for an artifact reported missing, so the flag stays cheap even
- *   against the `us` bundle's 103 files).
+ *   Offline by default: an artifact on disk is reported "present" against the registry's surveyed `approxBytes`, a
+ *   size-only integrity check that catches truncation but is not a version comparison, and `--check-remote` upgrades it
+ *   to a live head `Content-Length` probe via `APIClient`.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath } from "@mailwoman/core/fs/readers"
 import { Text } from "ink"
-import { resolvePath } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	type Check,
@@ -29,8 +21,16 @@ import {
 	type CommandComponent,
 	useCommandTask,
 } from "#cli-kit"
-import { artifactURL, BUNDLES, needsDownload, resolveBundleArtifacts, type BundleArtifact } from "#data/bundles"
+import {
+	artifactURL,
+	bundleArtifactPath,
+	BUNDLES,
+	needsDownload,
+	resolveBundleArtifacts,
+	type BundleArtifact,
+} from "#data/bundles"
 import { existingLocalPath, readReleaseManifest } from "#data/release"
+import { headContentLength } from "#data/remote"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -48,15 +48,12 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Live `Content-Length` for one artifact, or `undefined` on any failure (404, timeout, network) — the caller falls back
- * to the recorded {@link BundleArtifact.approxBytes} rather than treating a probe failure as a verdict.
+ * A probe failure yields `undefined` so the caller falls back to the recorded
+ * {@link BundleArtifact.approxBytes} rather than treating it as a verdict.
  */
-async function headContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
+async function liveContentLength(client: APIClient, artifact: BundleArtifact): Promise<number | undefined> {
 	try {
-		const res = await client.fetch({ method: "head", url: artifactURL(artifact) })
-		const len = res.headers["content-length"]
-
-		return len ? Number(len) : undefined
+		return await headContentLength(client, artifactURL(artifact))
 	} catch {
 		return undefined
 	}
@@ -64,7 +61,7 @@ async function headContentLength(client: APIClient, artifact: BundleArtifact): P
 
 async function statusForBundles(
 	bundleNames: string[],
-	dataRoot: string,
+	dataRoot: PathBuilderLike,
 	checkRemote: boolean
 ): Promise<{ ok: boolean; checks: Check[] }> {
 	const manifest = await readReleaseManifest(dataRoot)
@@ -96,7 +93,7 @@ async function statusForBundles(
 
 		for (const artifact of resolveBundleArtifacts(bundle, manifest)) {
 			const label = `${name}: ${artifact.localPath}`
-			const localAbsPath = resolvePath(dataRoot, artifact.localPath)
+			const localAbsPath = bundleArtifactPath(dataRoot, artifact)
 			const existing = await existingLocalPath(dataRoot, manifest, artifact, localAbsPath)
 
 			if (!existing) {
@@ -114,7 +111,7 @@ async function statusForBundles(
 			const sizeBytes = (await statPath(existing)).size
 
 			const expected = checkRemote
-				? ((await headContentLength(client!, artifact)) ?? artifact.approxBytes)
+				? ((await liveContentLength(client!, artifact)) ?? artifact.approxBytes)
 				: artifact.approxBytes
 
 			const stale = needsDownload({ exists: true, sizeBytes }, { contentLength: expected })
@@ -141,9 +138,9 @@ async function statusForBundles(
 const DataStatus: CommandComponent<typeof spec> = ({ options, args }) => {
 	const state = useCommandTask(
 		async () => {
-			const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+			const { dataRootPath } = await import("@mailwoman/core/data-root")
 
-			const dataRoot = options.dataRoot ?? mailwomanDataRoot()
+			const dataRoot = options.dataRoot ?? dataRootPath()
 			const names = args.length ? args : Object.keys(BUNDLES)
 
 			return await statusForBundles(names, dataRoot, options.checkRemote)

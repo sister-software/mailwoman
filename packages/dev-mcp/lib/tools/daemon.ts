@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_daemon` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ * The `mwdev_daemon` tool definition — the description an agent reads, the input schema, and the handler wiring over
+ * the measurement in the package root.
  */
 
 import { z } from "zod"
@@ -12,6 +11,9 @@ import { z } from "zod"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 import { staleEngineMessage } from "#tree-fingerprint"
 
+/**
+ * Build the `mwdev_daemon` tool definition.
+ */
 export const daemonTool = (deps: DevToolDeps): DevTool => {
 	const { registry } = deps
 
@@ -32,10 +34,8 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 			const fingerprint = await registry.fingerprint()
 
 			if (action === "reload") {
-				// The refusal is the whole point. `reload` used to close the sessions, return the current digest and a
-				// note admitting it could not re-import — a success shape carrying its own contradiction, which a
-				// caller reading `engines_closed` and a fresh fingerprint reasonably takes for a completed reload. It
-				// then measures new-tree answers out of old-tree code with nothing left to flag it.
+				// The refusal is the whole point: a success shape carrying `engines_closed` and a fresh
+				// fingerprint reads as a completed reload while the process still runs old-tree code.
 				if (await registry.sourceMoved()) {
 					throw new Error(staleEngineMessage(registry.bootFingerprint, fingerprint))
 				}
@@ -67,8 +67,8 @@ export const daemonTool = (deps: DevToolDeps): DevTool => {
 				uptime_s: Math.round((Date.now() - deps.startedAt) / 1000),
 				repo_root: registry.repoRoot,
 				tree_fingerprint: fingerprint.digest,
-				// The pair, always, so "can this process still answer for the source on disk" is readable without
-				// comparing a digest against one remembered from an earlier call.
+				// The pair, always, so "can this process still answer for the source on disk" is
+				// readable without comparing a digest against one remembered from an earlier call.
 				boot_tree_fingerprint: registry.bootFingerprint.digest,
 				source_moved_since_boot: await registry.sourceMoved(),
 				git_head: fingerprint.gitHead,

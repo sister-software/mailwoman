@@ -19,8 +19,10 @@ import {
 	DEFAULT_DEAD_PLACETYPES,
 	resurrectCurrencyHoles,
 } from "@mailwoman/resolver-wof-sqlite/currency-backfill"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { TextSpliterator } from "spliterator"
 
 const ARMS: ReadonlyArray<{ name: string; deadPlacetypes: readonly string[] }> = [
 	{ name: "shipped", deadPlacetypes: DEFAULT_DEAD_PLACETYPES },
@@ -37,9 +39,13 @@ async function main(): Promise<void> {
 		},
 	})
 
-	const adminPath = values.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
-	const geonamesDir = values.geonames ?? String(dataRootPath("geonames"))
-	const countries = values.countries!.split(",").map((code) => code.trim().toUpperCase())
+	const adminPath = values.admin ?? wofDatabasePath("admin-global-priority.db")
+	const geonamesDir = values.geonames ?? dataRootPath("geonames")
+
+	const countries = TextSpliterator.from(values.countries!, { delimiter: "," })
+		.map((code) => code.toUpperCase())
+		.toArray()
+
 	using src = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })
 	const reports: Array<CurrencyBackfillCountryReport & { arm: string }> = []
 

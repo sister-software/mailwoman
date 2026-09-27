@@ -3,7 +3,7 @@
 
 /**
  *   The browser loader must resolve evidence-lexicon filenames from the model-card's
- *   `requires.<channel>.lexicon` declarations, exactly as the Node resolver does — the sibling
+ *   `requires.<channel>.lexicon` declarations, exactly as the Node resolver does. The sibling
  *   defaults are a legacy fallback for bundles that predate the declarations rather than the interface.
  *
  *   The incident this pins: the en-us bundle moved to `locality-surface-lexicon-v7.json`
@@ -13,7 +13,7 @@
  *   class the #718 soft-feed exists to prevent, with no error anywhere.
  *
  *   Mock strategy mirrors `web-loader.tolerance.test.ts`: ORT + tokenizer + classifier stubbed,
- *   fetch recorded per URL, nothing else mocked.
+ *   fetch recorded per URL, with no other module mocked.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -55,8 +55,10 @@ const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loa
 const BASE = "https://cdn.example/mailwoman/v9.1.0"
 
 /**
- * Fetch stub: 200 with card JSON at the card URL, 200 dummy bytes everywhere else, and every requested URL recorded —
- * the assertion surface is which names were derived rather than what loaded.
+ * Fetch stub: 200 with card JSON at the card URL, 200 dummy bytes everywhere else,
+ * and every requested URL recorded.
+ *
+ * The assertion surface is which names were derived rather than what loaded.
  */
 function makeRecordingFetch(card: object | null, requested: string[]): typeof fetch {
 	return async (input) => {

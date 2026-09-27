@@ -16,7 +16,7 @@ import { NeuralAddressClassifier, type NeuralRunner } from "@mailwoman/neural/cl
 import { packCharFeed } from "@mailwoman/neural/onnx-runner"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readEncoderFromModelCard } from "@mailwoman/neural/weights-channels"
-import { join, resolvePath } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -36,11 +36,11 @@ const LABELS = [
 const VOCAB = { "<pad>": 0, "<unk>": 1, "1": 2, "9": 3, 京: 4, 代: 5, 区: 6, 千: 7, 田: 8, 東: 9, 都: 10 }
 const INTERFACE = { maxUnits: 16, maxUnitWidth: 5, ctxChars: 2 }
 
-async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<string> {
-	const dir = resolvePath(fixtures.use(await temporaryDirectory("char-pkg-")).path)
+async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("char-pkg-")).path
 
-	await writeLocalTextFile("not-a-real-graph", join(dir, "model.onnx"))
-	await writeLocalTextFile(stringifyJSON(VOCAB), join(dir, "char-vocab.json"))
+	await writeLocalTextFile("not-a-real-graph", dir("model.onnx"))
+	await writeLocalTextFile(stringifyJSON(VOCAB), dir("char-vocab.json"))
 
 	await writeLocalTextFile(
 		stringifyJSON({
@@ -52,7 +52,7 @@ async function charPackage(cardExtra: Record<string, unknown> = {}): Promise<str
 			labels: LABELS,
 			...cardExtra,
 		}),
-		join(dir, "model-card.json")
+		dir("model-card.json")
 	)
 
 	return dir
@@ -62,7 +62,7 @@ describe("readEncoderFromModelCard", () => {
 	it("reads a char card's vocabulary sibling and interface, and defaults an absent block to SentencePiece", async () => {
 		const dir = await charPackage()
 
-		expect(await readEncoderFromModelCard(join(dir, "model-card.json"))).toEqual({
+		expect(await readEncoderFromModelCard(dir("model-card.json"))).toEqual({
 			kind: "char",
 			charVocab: "char-vocab.json",
 			maxUnits: 16,
@@ -76,7 +76,7 @@ describe("readEncoderFromModelCard", () => {
 	it("refuses a char card missing part of the interface rather than guessing a window", async () => {
 		const dir = await charPackage({ char_ctx: undefined })
 
-		await expect(readEncoderFromModelCard(join(dir, "model-card.json"))).rejects.toThrow(/char_ctx/)
+		await expect(readEncoderFromModelCard(dir("model-card.json"))).rejects.toThrow(/char_ctx/)
 	})
 })
 
@@ -85,13 +85,13 @@ describe("resolveWeights on a char package", () => {
 		const dir = await charPackage()
 
 		const resolved = await resolveWeights({
-			modelPath: join(dir, "model.onnx"),
-			charVocabPath: join(dir, "char-vocab.json"),
-			modelCardPath: join(dir, "model-card.json"),
+			modelPath: dir("model.onnx"),
+			charVocabPath: dir("char-vocab.json"),
+			modelCardPath: dir("model-card.json"),
 		})
 
 		expect(resolved.encoder.kind).toBe("char")
-		expect(resolved.charVocabPath).toBe(join(dir, "char-vocab.json"))
+		expect(resolved.charVocabPath).toBe(dir("char-vocab.json").toString())
 		expect(resolved.artifacts.map((a) => a.name)).toContain("char-vocab.json")
 		expect(resolved.artifacts.map((a) => a.name)).not.toContain("tokenizer.model")
 	})
@@ -99,13 +99,13 @@ describe("resolveWeights on a char package", () => {
 	it("refuses a char card given only a tokenizerPath", async () => {
 		const dir = await charPackage()
 
-		await writeLocalTextFile("", join(dir, "tokenizer.model"))
+		await writeLocalTextFile("", dir("tokenizer.model"))
 
 		await expect(
 			resolveWeights({
-				modelPath: join(dir, "model.onnx"),
-				tokenizerPath: join(dir, "tokenizer.model"),
-				modelCardPath: join(dir, "model-card.json"),
+				modelPath: dir("model.onnx"),
+				tokenizerPath: dir("tokenizer.model"),
+				modelCardPath: dir("model-card.json"),
 			})
 		).rejects.toThrow(/charVocabPath/)
 	})
@@ -207,11 +207,11 @@ describe("NeuralAddressClassifier on the char path", () => {
 
 describe("script-family fallback", () => {
 	it("resolves ja-JP to the cjk base from the overlay rung when no ja-jp package holds binaries", async () => {
-		const root = resolvePath(fixtures.use(await temporaryDirectory("overlay-root-")).path)
-		const cjk = join(root, "cjk")
+		const root = fixtures.use(await temporaryDirectory("overlay-root-")).path
+		const cjk = root("cjk")
 
-		await writeLocalTextFile("not-a-real-graph", join(cjk, "model.onnx"))
-		await writeLocalTextFile(stringifyJSON(VOCAB), join(cjk, "char-vocab.json"))
+		await writeLocalTextFile("not-a-real-graph", cjk("model.onnx"))
+		await writeLocalTextFile(stringifyJSON(VOCAB), cjk("char-vocab.json"))
 
 		await writeLocalTextFile(
 			stringifyJSON({
@@ -222,13 +222,13 @@ describe("script-family fallback", () => {
 				char_ctx: 3,
 				labels: LABELS,
 			}),
-			join(cjk, "model-card.json")
+			cjk("model-card.json")
 		)
 
 		const resolved = await resolveWeights({ locale: "ja-JP", overlayRoot: root })
 
 		expect(resolved.encoder.kind).toBe("char")
-		expect(resolved.modelPath).toBe(join(cjk, "model.onnx"))
+		expect(resolved.modelPath).toBe(cjk("model.onnx").toString())
 		expect(resolved.source).toContain("script-family base for ja-jp")
 	})
 

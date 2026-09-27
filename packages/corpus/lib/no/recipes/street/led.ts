@@ -18,11 +18,21 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
 
-import { alignAndWrite, foldNOSurface, readTuples, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import {
+	alignAndWrite,
+	foldNOSurface,
+	readTuples,
+	requireRegister,
+	type CorpusRecipe,
+	recipeSourceID,
+} from "#recipes/scaffold"
+import { SurfaceOrigin } from "#types"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const noStreetLedRecipe: CorpusRecipe = {
 	name: "no-street-led",
@@ -39,10 +49,12 @@ export const noStreetLedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
 
-		// the split (ported from fr-fragment, #727 T2). Without it this recipe trains on all 10,697
-		// Norwegian surfaces, 1,952 of which the digit board reserves — so a Norway retrain would grade
-		// memorization of `Hallingrudveien` while claiming to measure the boundary form. There is no
-		// safe default: source-disjoint by street surface is the discipline, so the flag throws.
+		// the split (ported from fr-fragment, #727 T2).
+		// Without it this recipe trains on all 10,697 Norwegian surfaces, 1,952 of
+		// which the digit board reserves.
+		// So a Norway retrain would grade memorization of `Hallingrudveien`
+		// while claiming to measure the boundary form.
+		// There is no safe default: source-disjoint by street surface is the discipline, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {
@@ -56,10 +68,8 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		const excluded = new Set<string>()
 
 		for await (const line of TextSpliterator.fromAsync(excludePath)) {
-			const trimmed = line.trim()
-
-			if (trimmed && !trimmed.startsWith("#")) {
-				excluded.add(trimmed)
+			if (!line.startsWith("#")) {
+				excluded.add(line)
 			}
 		}
 
@@ -69,6 +79,11 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		let emitted = 0
 		let skipped = 0
 		let contaminated = 0
+
+		const NO_STREET_LED_PROVENANCE = {
+			register: requireRegister(opts, "no-street-led"),
+			surface: SurfaceOrigin.Composed,
+		}
 
 		for await (const t of readTuples(opts.input!)) {
 			read++
@@ -122,7 +137,7 @@ export const noStreetLedRecipe: CorpusRecipe = {
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "no-street-led")) {
+			if (alignAndWrite(write, canonical, "no-street-led", NO_STREET_LED_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

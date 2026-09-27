@@ -1,28 +1,19 @@
-# === v4.3.3-suffix-boundary-base-60k — #1569 corrected-feed base trajectory ===
+# v4.3.3-suffix-boundary-base-60k is a 60k-step from-scratch base run with the synth-suffix-boundary source.
 #
-# hypothesis: terminal-only street names must be present while the encoder learns its boundary
-# representation. Three same-vocabulary fine-tunes and an EWC-off plasticity probe barely moved B1;
-# v4.3.2, the first run with fully correct load-time target labels, reached only 10/128 final and
-# 12/128 raw argmax. This run trains the same v4.2.0 geometry from scratch on the corrected feed.
+# The hypothesis is that the encoder learns the street/street_suffix boundary for a street name that
+# ends in its type word, such as "Menlo Park Road", only if those rows are present from the start.
+# Fine-tunes from an existing base barely moved that boundary.
 #
-# effective data delta vs v4.2.0-base-anchor-v2: the v0.18.1 overlay adds one 30k-row
-# synth-suffix-boundary source at weight 12.0 and the idempotent relabel pass preserves its authored
-# street → street_suffix boundaries. The exact 250k selectable-feed audit found 16,143/16,143
-# correct target-stratum carriers and unchanged contrast (5,405/5,505). Two absent positive source
-# weights are omitted because they never affected v4.2.0's sampled stream.
+# The only data change from v4.2.0-base-anchor-v2 is the v0.18.1 overlay. It adds a 30k-row
+# synth-suffix-boundary source at weight 12.0, and the relabel pass keeps its authored boundaries.
+# The schedule matches v4.2.0. It trains without init_from or EWC at LR 5e-4, with 1,000 warmup steps
+# and a 60k-step cosine.
 #
-# training semantics vs v4.2.0: verbatim base schedule — no init_from, no EWC, LR 5e-4, warmup
-# 1,000, 60k cosine, bf16, Fisher capture over the final 2k steps. This is one fresh seed-42 run.
-# Multilingual street-type and mixed-script data remain out of scope.
-#
-# checks (fp32):
-#   B1 terminal-only >=116/128
-#   B2 terminal-contrast >=34/48
-#   B4 locality-token retention >=3/7 (exact locality is an upside watch)
-#   B3 `mailwoman eval promote --spec v9.0.0-base`, zero known tier-1 regression, only after B1/B2/B4
-# Grade 5k/10k/20k/40k/60k. A passing earlier checkpoint may win. the run still completes so the
-# learning curve and Fisher artifact are preserved. If 60k misses B1, stop. No decode patch and no
-# recipe treadmill.
+# The checks run in fp32 at 5k, 10k, 20k, 40k and 60k steps:
+#   B1 requires at least 116 of 128 terminal-only rows correct.
+#   B2 requires at least 34 of 48 terminal-contrast rows correct.
+#   B4 requires at least 3 of 7 rows to keep their locality token.
+#   B3 runs `mailwoman eval promote --spec v9.0.0-base` after B1, B2 and B4 pass, and allows no known tier-1 regression.
 
 data:
   corpus_dir: /data/corpus/versioned/v0.18.1-suffix-boundary/corpus-v0.18.1-suffix-boundary

@@ -1,23 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman corpus tuples` — write the `(postcode, locality, region, country)` tuples the `trailing-region`
- *   recipe reads, one JSON line per tuple.
- *
- *   The extraction lived as a one-off whose output survived and whose code did not; `@mailwoman/corpus/tools`'s
- *   `postcode-triples` restored the code, and this command is its entry point, so a country's tuples can be rebuilt
- *   when the extraction changes. The `parent-join` source follows each `postalcode-intl.db` code's parent into the admin
- *   gazetteer and emits one tuple per region surface in the languages the region's addresses are written in (#1673);
- *   the `geonames` source reads a fetched GeoNames postal export. Both stamp the country's attested postcode placement
- *   and refuse a country whose placement nothing attests.
- *
- *   The `admin-pairs` source answers the pair without a postcode, straight from the admin gazetteer, for a country no
- *   postcode source reaches — the recipe's bare `«locality», «region»[, «country»]` form needs none. It stamps the
- *   `--locale` the caller names, because the gazetteer says which languages a country writes and not which one a given
- *   region surface came from.
- */
-
 import { countryDisplayNames } from "@mailwoman/codex/country"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -28,8 +11,7 @@ import { type CommandSpec, CommandTaskResult, type CommandComponent, splitCountr
 import { suffixTail } from "#dev-tools/coord-panel"
 
 /**
- * The three buckets `--stratify-shape` spends the budget across, from the same {@link suffixTail} the probes over this
- * recipe's output report by — so a share measured in the tuples and a rate measured on a panel speak about one split.
+ * Classifies a locality name as a suffix tail, a multi-word name or a single-word name.
  */
 function localityShape(triple: { locality: string }): string {
 	if (suffixTail(triple.locality)) return "suffix-tail"
@@ -38,7 +20,8 @@ function localityShape(triple: { locality: string }): string {
 }
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `corpus tuples`, which writes postcode, locality, region
+ * and country tuples for the trailing-region recipe.
  */
 export const spec = {
 	name: "tuples",
@@ -51,7 +34,7 @@ export const spec = {
 			default: "parent-join",
 			choices: ["parent-join", "geonames", "admin-pairs"],
 			description:
-				"parent-join (postalcode-intl.db → admin gazetteer), geonames (fetched postal export) or admin-pairs (gazetteer only, no postcode)",
+				"parent-join (postalcode-intl.db → admin gazetteer), geonames (fetched postal export) or admin-pairs (gazetteer only, without postcodes)",
 		},
 		locale: {
 			type: "string",

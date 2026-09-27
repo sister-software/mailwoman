@@ -2,52 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Score the hard-case board (ROAD_TO_V9 §3) across the three FST arms and report whether they
- *   separate. This is the board's own acceptance test: "an unmeasurable change is an unshippable
- *   change" (§2 R3), so the first thing this runner has to establish is that the instrument moves at all.
- *
- *   the arms. All three share one model, one resolver, one board — the only variable is the gazetteer
- *   binary feeding `neural/fst-prior.ts`:
- *
- *   - `none` — `fst: false`, which suppresses both an explicit matcher and the pipeline's auto-load.
- *   - `pop` — `$MAILWOMAN_DATA_ROOT/wof/fst-per-locale/` — the shipped set. Its source DB has no
- *       `place_importance` table, so `fst-builder.ts` took the documented population fallback
- *       (`min(1, log2(1+pop/1000)/14)`). Verified from the artifact's own stamp: `importanceMatches`
- *       743,268 against `admin-global-priority.db`.
- *   - `imp` — `wof/fst-staging-2026-08-05-importance-fanoutfix/` — built from
- *       `admin-global-priority-importance.db`, `importanceMatches` 1,543,753, which is exactly that DB's
- *       `place_importance` row count. So this arm carries the real Wikipedia-joined score.
- *   - `ref` — `wof/fst-staging-2026-08-06-two-score-split/` — the same source database as `imp`, rebuilt
- *       at FST format v5 under the ratified §2 policy: the bias reads the referential score
- *       (population-anchored) and the encyclopedic score rides along in its own slot, unread by the
- *       decoder. `imp` vs `ref` is therefore the policy ablation with the source database held fixed —
- *       the single-variable comparison that says what ranking referentially costs or buys. `pop` vs `ref`
- *       is not single-variable: their source databases differ (2026-08-04 admin vs the 2026-08-05
- *       importance build), so a delta there mixes the policy with a gazetteer generation.
- *
- *   The two binaries are otherwise identical builds — same `stateCount` (160,246), `placeCount`
- *   (236,257), `nameInsertions` (274,245), same exclusion policy. The trie is the same trie. only the
- *   importance floats differ. That is what makes this a single-variable ablation rather than a build diff.
- *
- *   why this runner exists AT all — the FST's reach is narrower than it looks. `eval oa-resolver`
- *   without `--assembled`, and `eval gauntlet` in every mode, grade through `geocode-core.ts`'s
- *   `parseForGeocode`, which calls `classifier.parse` with no `fst` key. The gazetteer prior is
- *   therefore not merely weak on those paths — it is never constructed. `createRuntimePipeline` is the
- *   only entry point that wires `opts.fst`, so this runner drives the pipeline directly. A board scored
- *   through `geocodeAddress` would tie across all three arms no matter what the board contained.
- *
- *   grading. Per row, both halves are reported because they fail differently:
- *
- *   1. `coord` — the resolved most-specific point within the row's declared tolerance. A row with no
- *        coordinate is not graded here and is not counted as a miss. absence is absence.
- *   2. `place` — `expectPlaceID` / `expectPlaceName` when asserted. ROAD_TO_V9 §6 I2 records that the
- *        gauntlet stores these and never checks them. this board checks them, so a right-coordinate /
- *        wrong-place answer (a namesake landing inside a metro tolerance) is visible rather than credited.
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts [--arms none,pop,imp] [--out-json <p>]
+ * Compares FST arms on the hard-case board through the runtime pipeline, holding the model and resolver fixed.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -56,7 +13,10 @@ import { formatPercent } from "@mailwoman/core/stats"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { type HardCase, loadHardCaseBoard } from "#eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
@@ -69,20 +29,20 @@ const { values } = parseArguments({
 		board: { type: "string" },
 		"out-json": { type: "string" },
 		/**
-		 * Per-row outcome dump — the raw material for the flip inventory.
+		 * Writes each row's outcomes as JSON lines to this path.
 		 */
 		"out-rows": { type: "string" },
 	},
 })
 
-const ARM_DIRS: Record<string, string | null> = {
+const ARM_DIRS: Record<string, PathBuilder | null> = {
 	none: null,
-	pop: String(dataRootPath("wof", "fst-per-locale")),
-	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
-	ref: String(dataRootPath("wof", "fst-staging-2026-08-06-two-score-split")),
+	pop: wofDatabasePath("fst-per-locale"),
+	imp: wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix"),
+	ref: wofDatabasePath("fst-staging-2026-08-06-two-score-split"),
 }
 
-const arms = values.arms!.split(",").map((a) => a.trim())
+const arms = TextSpliterator.from(values.arms!, { delimiter: "," }).toArray()
 
 for (const arm of arms) {
 	if (!(arm in ARM_DIRS)) throw new Error(`unknown arm "${arm}" — known: ${Object.keys(ARM_DIRS).join(", ")}`)
@@ -93,7 +53,7 @@ const locales = [...new Set(board.map((c) => c.locale))].toSorted()
 
 console.error(`[board] ${board.length} rows, locales=[${locales.join(", ")}]`)
 
-//#region Resolver + pipelines
+// #region Resolver + pipelines
 
 const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 const wofPaths = await existingWOFDatabasePaths()
@@ -110,9 +70,9 @@ for (const locale of locales) {
 }
 
 /**
- * `arm → locale → pipeline`. The FST is chosen per (arm, locale) because `fst-<locale>.bin` is country-scoped. a locale
- * with no binary in an arm's dir gets `false`, which is the same state as the `none` arm for that locale — recorded
- * rather than papered over, since it is why an out-of-reach row cannot discriminate.
+ * Holds one pipeline per arm and locale.
+ *
+ * When an arm has no FST file for a locale, that pair runs without the FST prior.
  */
 const pipelines = new Map<string, Map<string, ReturnType<typeof createRuntimePipeline>>>()
 
@@ -121,7 +81,7 @@ for (const arm of arms) {
 	const dir = ARM_DIRS[arm]
 
 	for (const locale of locales) {
-		const binPath = dir ? `${dir}/fst-${locale}.bin` : undefined
+		const binPath = dir ? dir(`fst-${locale}.bin`) : undefined
 		const fst = binPath && (await pathExists(binPath)) ? deserializeFST(await readLocalBuffer(binPath)) : false
 
 		if (dir && !fst) {
@@ -141,33 +101,36 @@ for (const arm of arms) {
 	pipelines.set(arm, byLocale)
 }
 
-//#endregion
+// #endregion
 
-//#region Scoring
+// #region Scoring
 
+/**
+ * Holds one row's outcome under one arm.
+ */
 interface Outcome {
 	/**
-	 * Coordinate within the declared tolerance. `null` = the row asserts no coordinate.
+	 * Reports whether the coordinate is within tolerance, or `null` when the row asserts no coordinate.
 	 */
 	coordOK: boolean | null
 	/**
-	 * `expectPlaceID`/`expectPlaceName` matched. `null` = not asserted.
+	 * Reports whether `expectPlaceID` or `expectPlaceName` matched, or `null` when the row asserts neither.
 	 */
 	placeOK: boolean | null
 	/**
-	 * Great-circle error (km), or `null` when nothing resolved / nothing asserted.
+	 * Holds the great-circle error in kilometers, or `null` when no place resolved
+	 * or no coordinate is asserted.
 	 */
 	errKm: number | null
 	resolvedID: number | null
 	resolvedName: string | null
 	/**
-	 * The row's verdict — `coordOK` when asserted, else `placeOK`. Used for the flip inventory.
+	 * Holds the verdict, which is `coordOK` when asserted and `placeOK` otherwise.
 	 */
 	pass: boolean
 }
 
-// nfkd + mark-strip on purpose — not `@mailwoman/normalize`'s `stripCombiningMarks` (NFD, no case fold):
-// this fold also folds compatibility forms, matching the board's frozen grading.
+// This matches the board's place-name grading, which folds case and compatibility forms and strips accents.
 const norm = (s: string): string =>
 	s
 		.toLowerCase()
@@ -188,9 +151,7 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 			? null
 			: errKm !== null && errKm <= c.expectToleranceM / 1000
 
-	// §6 I2: the gauntlet stores these and never checks them. Checked here, against any resolved node —
-	// the expected place may be an ancestor of the most-specific answer (a locality row whose tree also
-	// resolved a region), so requiring it at `best` would fail rows that are in fact correct.
+	// The expected place can be an ancestor of the most specific result, so every resolved node is checked.
 	let placeOK: boolean | null = null
 
 	if (c.expectPlaceID !== undefined) {
@@ -211,10 +172,13 @@ function score(c: HardCase, resolved: Resolved[]): Outcome {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region Run
+// #region Run
 
+/**
+ * Holds one board row and its outcome under each arm.
+ */
 interface RowResult {
 	id: string
 	class: string
@@ -256,9 +220,9 @@ for (const c of board) {
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Report
+// #region Report
 
 function tally(rows: RowResult[], arm: string): { pass: number; total: number } {
 	return { pass: rows.filter((r) => r.byArm[arm]!.pass).length, total: rows.length }
@@ -267,7 +231,6 @@ function tally(rows: RowResult[], arm: string): { pass: number; total: number } 
 console.log(`\n## Hard-case board — three-arm FST comparison\n`)
 console.log(`Board: ${board.length} rows · arms: ${arms.join(" / ")}\n`)
 
-// Overall + per-class.
 const classes = [...new Set(results.map((r) => r.class))].toSorted()
 const header = ["class", "n", ...arms, `Δ ${arms.at(-1)}−${arms[1] ?? arms[0]}`]
 
@@ -307,7 +270,7 @@ emitRow(
 	results.filter((r) => r.fstReach === "out")
 )
 
-// Discrimination verdict — the board's own acceptance test.
+// Two arms tie when their pass/fail vectors over every row are identical.
 console.log(`\n### Discrimination\n`)
 
 const signatures = new Map<string, string>()
@@ -344,7 +307,6 @@ for (let i = 0; i < arms.length; i++) {
 	}
 }
 
-// Flip inventory for the §2 decision — the measured Saint-Denis-class census.
 if (arms.includes("pop") && arms.includes("imp")) {
 	const gained = results.filter((r) => !r.byArm["pop"]!.pass && r.byArm["imp"]!.pass)
 	const lost = results.filter((r) => r.byArm["pop"]!.pass && !r.byArm["imp"]!.pass)
@@ -381,4 +343,4 @@ if (anyTie) {
 	)
 }
 
-//#endregion
+// #endregion

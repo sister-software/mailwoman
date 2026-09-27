@@ -2,23 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Generator for `data/geographic-model.json` — the committed compiled artifact, built from the
- *   authored records under `data/model/`.
+ * Generator for `data/geographic-model.json` — the committed compiled artifact, built from the
+ * authored records under `data/model/`.
  *
- *   The build step is the whole of what this file does: load the authoring directory, compile it,
- *   serialize the result. Every decision inside those three calls belongs to `../load.ts`,
- *   `../compile.ts` and `../artifact.ts`, and none of them is re-made here.
- *
- *   **A committed artifact is these bytes run through `oxfmt`.** The repository formatter also formats
- *   committed JSON, and it inlines short arrays, which `JSON.stringify` cannot reproduce. So the
- *   freshness check in `test/unit/pharmacy-slice.test.ts` compares the parsed artifact against a fresh
- *   compile, and byte equality is asserted between two compiles instead. The same convention holds
- *   `taxonomy.json` in `@mailwoman/poi-taxonomy`; its `data/provenance.md` states it for that table.
- *
- *   Nothing here reaches `@mailwoman/core`: the package's build project declares no reference to it in
- *   either direction, and a generator is not the reason to reverse that. `import.meta.main` is what
- *   `runIfScript` reads anyway, and reading it directly keeps this file inside the package's own
- *   dependency graph.
+ * A committed artifact is these bytes run through `oxfmt`, which inlines short arrays that
+ * `JSON.stringify` cannot reproduce, so the freshness check compares the parsed artifact against a
+ * fresh compile and asserts byte equality between two compiles instead.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -31,8 +20,8 @@ import { compileGeographicModel } from "#compile"
 import { loadGeographicModelDirectory } from "#load"
 
 /**
- * The command that rewrites the committed artifact. Stated once, and quoted by the freshness test's failure message, so
- * a reader who trips it is told what to run rather than left to reconstruct it.
+ * The command that rewrites the committed artifact, quoted by the freshness test's
+ * failure message so a reader who trips it is told what to run.
  */
 export const REGENERATE_ARTIFACT_COMMAND =
 	"node packages/geographic-model/lib/scripts/build-artifact.ts && npx oxfmt packages/geographic-model/data/geographic-model.json"
@@ -40,9 +29,7 @@ export const REGENERATE_ARTIFACT_COMMAND =
 /**
  * The authoring directory and the artifact it compiles to.
  *
- * Two candidates, because this module runs from two places: `scripts/` in the repository, where `data/` is one level
- * up, and `out/scripts/` in a published tarball, where it is two. Probing for the file distinguishes those from a
- * genuinely missing `data/`, which throws with both paths named.
+ * Probes for `model/model.json`, so a genuinely missing `data/` throws naming the path.
  */
 export async function packagedModelPaths(): Promise<{ source: string; artifact: string }> {
 	const candidates = [resolvePackagePath("@mailwoman/geographic-model", "data")]
@@ -62,8 +49,10 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
 }
 
 /**
- * Load the authored records and compile them. Throws with every violation if they do not load, and with every reason if
- * they load but do not compile. nothing partial is returned.
+ * Load the authored records and compile them.
+ * No partial result is returned.
+ *
+ * @throws with every violation if they do not load, and with every reason if they load but do not compile.
  */
 export async function compileAuthoredGeographicModel(): Promise<CompiledGeographicModel> {
 	const { source } = await packagedModelPaths()
@@ -72,14 +61,16 @@ export async function compileAuthoredGeographicModel(): Promise<CompiledGeograph
 }
 
 /**
- * Read the committed artifact. The format version is checked. the records are not re-validated, because they were
- * validated on the way in.
+ * Read the committed artifact.
+ *
+ * The format version is checked, and the records are not re-validated
+ * because they were validated on the way in.
  */
 export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
 	const text = await readLocalTextFile((await packagedModelPaths()).artifact)
 
-	// A corrupt committed artifact is a broken build, and the `SyntaxError` names the offset. The package's parse
-	// wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
+	// A corrupt committed artifact is a broken build and the `SyntaxError` names the offset.
+	// The package's parse wrappers live in `@mailwoman/core`, which this package deliberately does not depend on.
 	// oxlint-disable-next-line no-restricted-properties -- see the note above.
 	return parseCompiledGeographicModel(JSON.parse(text))
 }
@@ -95,8 +86,8 @@ async function main(): Promise<void> {
 	)
 }
 
-// `import.meta.main` is undefined under a Vite/vitest module graph, so importing this module from a test stays
-// side-effect-free and never rewrites the committed artifact.
+// `import.meta.main` is undefined under a Vite/vitest module graph, so importing this
+// module from a test stays side-effect-free and never rewrites the committed artifact.
 if (import.meta.main) {
 	await main()
 }

@@ -20,15 +20,18 @@
  */
 
 import { gunzipChunks } from "@mailwoman/core/fs/compression"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { createReadStream } from "spliterator/node/fs"
 
 /**
- * One BAN address point. Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source.
+ * One BAN address point.
+ *
+ * Every field but `rep`/`postcode`/`city`/`lieuDit` is guaranteed present by the source.
  */
 export interface BANAddrRecord {
 	/**
-	 * `numero` — the house number (numeric in BAN. the `rep` suffix is carried separately).
+	 * `numero` — the house number (numeric in BAN. The `rep` suffix is carried separately).
 	 */
 	numero: string
 	/**
@@ -48,10 +51,13 @@ export interface BANAddrRecord {
 	 */
 	city: string | null
 	/**
-	 * `nom_ld` ("nom du lieu-dit") — the hamlet/place name below the commune, cleaned via {@link cleanLieuDit}. Filled on
-	 * 6.94% of BAN rows nationally. null on the rest and on any row whose raw value is junk/duplicate (see
-	 * {@link cleanLieuDit} for the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section,
-	 * 2026-07-22).
+	 * `nom_ld` ("nom du lieu-dit").
+	 *
+	 * The hamlet/place name below the commune, cleaned via {@link cleanLieuDit}.
+	 *
+	 * Filled on 6.94% of BAN rows nationally.
+	 * Null on the rest and on any row whose raw value is junk/duplicate (see {@link cleanLieuDit} for
+	 * the filter breakdown — survey: `.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22).
 	 */
 	lieuDit: string | null
 	lon: number
@@ -61,8 +67,10 @@ export interface BANAddrRecord {
 	 */
 	codeInsee: string | null
 	/**
-	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not. null when the column is
-	 * blank. Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
+	 * `certification_commune` — 1 when the commune certified the address, 0 when it did not.
+	 * Null when the column is blank.
+	 *
+	 * Carried verbatim so a coverage basis can be computed per commune rather than inferred from a share.
 	 */
 	certified: number | null
 }
@@ -89,27 +97,34 @@ const REQUIRED_COLUMNS = [
 const CSV_READ_HIGH_WATER_MARK = 64 * 1024
 
 /**
- * Literal header-leak: an upstream ingestion bug in the government CSV emits the column name itself as a `nom_ld` value
- * on some rows (survey: 24,305 rows nationally, 1.3% of filled `nom_ld`).
+ * Literal header-leak: an upstream ingestion bug in the government CSV emits the column name
+ * itself as a `nom_ld` value on some rows (survey: 24,305 rows nationally, 1.3% of filled `nom_ld`).
  */
 const LIEU_DIT_HEADER_LEAK = "lieudit_complement_nom"
 
 /**
- * Placeholder sentinel (`_1`, `_23`, …) — not a place name (survey: 1,671 rows, 0.09% of filled).
+ * Placeholder sentinel (`_1`, `_23`, …), not a place name (survey: 1,671 rows, 0.09% of filled).
  */
 const LIEU_DIT_PLACEHOLDER_PATTERN = /^_[0-9]+$/
 
 /**
- * `"ancienne commune : <name>"` — real signal (a merged commune's former name), but the survey explicitly flags it as
- * needing a strip/parse step rather than raw-label use (survey: 3,709 rows, 0.2% of filled). Dropped here rather than
- * mis-emitted as a literal lieu-dit surface. parsing this bucket into its own signal is deferred, unscoped work.
+ * `"ancienne commune : <name>"` — real signal (a merged commune's former name),
+ * but the survey explicitly flags it as needing a strip/parse step rather than
+ * raw-label use (survey: 3,709 rows, 0.2% of filled).
+ *
+ * Dropped here rather than mis-emitted as a literal lieu-dit surface.
+ * Parsing this bucket into its own signal is deferred, unscoped work.
  */
 const LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN = /^ancienne commune\s*:/i
 
 /**
- * Clean a raw `nom_ld` value against the survey's junk/dup breakdown. Of the 6.94% of BAN rows carrying a `nom_ld`
- * value, ~6.6% of those are junk or an exact duplicate of the commune name — this filters them out so only the clean
- * ~93.4% (~1.69M rows nationally) survive to {@link BANAddrRecord.lieuDit}. Exported for testing.
+ * Clean a raw `nom_ld` value against the survey's junk/dup breakdown.
+ *
+ * Of the 6.94% of BAN rows carrying a `nom_ld` value, ~6.6% of those are junk
+ * or an exact duplicate of the commune name.
+ * This filters them out so only the clean ~93.4% (~1.69M rows nationally)
+ * survive to {@link BANAddrRecord.lieuDit}.
+ * Exported for testing.
  */
 export function cleanLieuDit(raw: string | undefined, commune: string | null): string | null {
 	const trimmed = raw?.trim()
@@ -122,15 +137,16 @@ export function cleanLieuDit(raw: string | undefined, commune: string | null): s
 
 	if (LIEU_DIT_ANCIENNE_COMMUNE_PREFIX_PATTERN.test(trimmed)) return null
 
-	// Exact duplicate of the commune name (case-insensitive) — no new signal, would just relabel
-	// locality twice (survey: 89,977 rows, 5.0% of filled).
+	// Exact duplicate of the commune name (case-insensitive).
+	// No new signal, would just relabel locality twice (survey: 89,977 rows, 5.0% of filled).
 	if (commune && trimmed.localeCompare(commune, undefined, { sensitivity: "base" }) === 0) return null
 
 	return trimmed
 }
 
 /**
- * Throw if the dump's header is missing a required column — a rename upstream must not silently skip every row.
+ * Throw if the dump's header is missing a required column.
+ * A rename upstream must not silently skip every row.
  */
 function assertRequiredColumns(row: Record<string, unknown>): void {
 	for (const name of REQUIRED_COLUMNS) {
@@ -143,18 +159,24 @@ function assertRequiredColumns(row: Record<string, unknown>): void {
 /**
  * An asynchronous byte source over `csvPath`, transparently gunzipping a `.csv.gz` input.
  */
-async function openCSV(csvPath: string): Promise<AsyncIterable<Uint8Array | string>> {
-	const raw = await createReadStream(csvPath, CSV_READ_HIGH_WATER_MARK)
+async function openCSV(csvPath: PathBuilderLike): Promise<AsyncIterable<Uint8Array | string>> {
+	// spliterator's `createReadStream` opens only a primitive string.
+	// It reads stdin for any other value, including a PathBuilder.
+	const path = csvPath.toString()
+	const raw = await createReadStream(path, CSV_READ_HIGH_WATER_MARK)
 
-	return csvPath.endsWith(".gz") ? gunzipChunks(raw) : raw
+	return path.endsWith(".gz") ? gunzipChunks(raw) : raw
 }
 
 /**
- * Stream every address point from one BAN département dump, geometry taken straight from the source `lon`/`lat`
- * (WGS84). Rows with a non-finite coordinate or an empty `nom_voie`/`numero` are skipped (yield-side filtering is the
- * caller's job for anything finer). The `rep` suffix is normalised to lower-case or null.
+ * Stream every address point from one BAN département dump, geometry taken
+ * straight from the source `lon`/`lat` (WGS84).
+ *
+ * Rows with a non-finite coordinate or an empty `nom_voie`/`numero` are skipped
+ * (yield-side filtering is the caller's job for anything finer).
+ * The `rep` suffix is normalised to lower-case or null.
  */
-export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BANAddrRecord> {
+export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGenerator<BANAddrRecord> {
 	// CSVSpliterator handles quoted fields and embedded delimiters.
 	// `split(";")` that leaked CSV quotes into lieu-dit street keys (#1044): quoted fields unwrap,
 	// doubled inner quotes fold, and a quoted `;` no longer mis-splits the row.
@@ -168,26 +190,26 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 			checkedHeader = true
 		}
 
-		const numero = row.numero?.trim()
-		const street = row.nom_voie?.trim()
+		const numero = row.numero
+		const street = row.nom_voie
 
 		if (!numero || !street) continue
-		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point —
-		//. Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
-		const lonStr = row.lon?.trim()
-		const latStr = row.lat?.trim()
+		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point — .
+		// Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
+		const lonStr = row.lon
+		const latStr = row.lat
 
 		if (!lonStr || !latStr) continue
 		const lon = Number(lonStr)
 		const lat = Number(latStr)
 
 		if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue
-		const rep = row.rep?.trim()
-		const postcode = row.code_postal?.trim()
-		const city = row.nom_commune?.trim()
+		const rep = row.rep
+		const postcode = row.code_postal
+		const city = row.nom_commune
 		const lieuDit = cleanLieuDit(row.nom_ld, city || null)
 
-		const certification = row.certification_commune?.trim()
+		const certification = row.certification_commune
 
 		yield {
 			numero,
@@ -198,7 +220,7 @@ export async function* extractBANAddrPoints(csvPath: string): AsyncGenerator<BAN
 			lieuDit,
 			lon,
 			lat,
-			codeInsee: row.code_insee?.trim() || null,
+			codeInsee: row.code_insee || null,
 			certified: certification === "1" ? 1 : certification === "0" ? 0 : null,
 		}
 	}

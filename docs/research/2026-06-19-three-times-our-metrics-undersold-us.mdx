@@ -16,7 +16,7 @@ Our evals did, three times this week. One of them nearly talked us out of a mode
 
 We were grading a candidate model against a country-homograph set — addresses where the country name is also a US town, like "Lima, Peru" sitting next to "Lima, Ohio." The candidate scored 80.9 where the shipped model scored 83.3. A 2.4-point country regression, right there in the table. That's the kind of number that holds up a promote.
 
-So we dumped the rows and diffed them, model against model. The entire 2.4 points was _one address_: `Avenida Arequipa, Lima 15046, Peru`. The candidate kept the street, the locality, and the postcode identical — itdropped the trailing "Peru" to nothing. Every other country in the same sentence shape resolved fine; swap "Peru" for Chile, Bolivia, France, Jordan and the candidate gets them all. The set only has twenty-seven rows carrying a gold country, so a single flip is worth 3.7 points.
+So we dumped the rows and diffed them, model against model. The entire 2.4 points was _one address_: `Avenida Arequipa, Lima 15046, Peru`. The candidate kept the street, the locality, and the postcode identical — itdropped the trailing "Peru" entirely. Every other country in the same sentence shape resolved fine; swap "Peru" for Chile, Bolivia, France, Jordan and the candidate gets them all. The set only has twenty-seven rows carrying a gold country, so a single flip is worth 3.7 points.
 
 A metric that one record can swing by three and a half points isn't measuring a property of the model. It's measuring that record. The "regression" was a rumor, and we'd have let it sway a decision that mattered if we hadn't read the row.
 

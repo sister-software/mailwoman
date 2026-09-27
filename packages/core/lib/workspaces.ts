@@ -2,11 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The root manifest's `workspaces` field, expanded to the directories it names. Yarn accepts globs in that field and
- *   the repository writes `packages/*` beside the literal `docs`; every reader that walks the workspaces goes through
- *   here so a glob is expanded once, the same way, and a literal entry that names no manifest is an error rather than
- *   an empty result. Only a single trailing `*` segment is supported: the repository never writes another shape, and
- *   a pattern this reader cannot expand must refuse, because "matched nothing" would read as "no workspaces".
+ *   The root manifest's `workspaces` field, expanded to the directories it names: only a single trailing `*` segment is
+ *   supported, a literal entry that names no manifest is an error rather than an empty result, and a pattern this reader
+ *   cannot expand must refuse rather than report no matches.
  */
 
 import { type PathBuilderLike, resolvePath } from "path-ts"
@@ -24,8 +22,8 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
-	 * Skip a literal entry whose directory carries no manifest instead of failing. A checkout at an older ref may predate
-	 * a workspace the field names. a reader that resolves that ref's own tree wants absence rather than an error.
+	 * Skip a literal entry whose directory carries no manifest instead of failing,
+	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
 	 * @default false
 	 */
@@ -33,8 +31,8 @@ export interface ReadWorkspaceDirectoriesOptions {
 }
 
 /**
- * Repo-relative workspace directories, in the field's order: a literal entry stays where it is, and a `parent/*` entry
- * expands to every child of `parent` that carries a `package.json`, sorted by name.
+ * Repo-relative workspace directories, in the field's order: a literal entry stays where it is, and a
+ * `parent/*` entry expands to every child of `parent` that carries a `package.json`, sorted by name.
  */
 export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
@@ -53,7 +51,7 @@ export async function readWorkspaceDirectories(
 			if (!(await isWorkspaceDirectory(repoRoot, entry))) {
 				if (options.tolerateMissing) continue
 
-				throw new Error(`workspace ${entry} has no package.json under ${String(repoRoot)}`)
+				throw new Error(`workspace ${entry} has no package.json under ${repoRoot}`)
 			}
 
 			directories.push(entry)
@@ -65,7 +63,8 @@ export async function readWorkspaceDirectories(
 
 		if (!parent) throw new Error(`workspace pattern ${stringifyJSON(entry)} is not a single trailing "*" segment`)
 
-		// Only a directory can be a workspace. a file beside them (a readme) is skipped before anything is stat-ed under it.
+		// Only a directory can be a workspace, so a file beside them (a readme) is skipped
+		// before anything is stat-ed under it.
 		const children = (
 			await Globerator.from("*", {
 				cwd: resolvePath(repoRoot, parent),
@@ -101,4 +100,43 @@ export async function readWorkspaceDirectories(
  */
 export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory: string): Promise<boolean> {
 	return (await readWorkspaceDirectories(repoRoot)).includes(directory)
+}
+
+/**
+ * Directories under a `parent/*` pattern that carry no `package.json`, the complement
+ * of {@link readWorkspaceDirectories}: a directory with no manifest is no workspace,
+ * but a retired workspace's compiled `out/` remains.
+ */
+// repo-health-ignore export-name-affix -- answers the complement of the shared reader's filter.
+export async function retiredWorkspaceDirectories(repoRoot: PathBuilderLike): Promise<string[]> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "package.json"))
+	const entries = Array.isArray(manifest.workspaces) ? manifest.workspaces : (manifest.workspaces?.packages ?? [])
+	const retired: string[] = []
+
+	for (const entry of entries) {
+		const parent = TRAILING_STAR.exec(entry)?.groups?.["parent"]
+
+		if (!parent) continue
+
+		const children = (
+			await Globerator.from("*", {
+				cwd: resolvePath(repoRoot, parent),
+				withFileTypes: true,
+				onlyFiles: false,
+			}).toArray()
+		)
+			.filter((dirent) => dirent.isDirectory())
+			.map((dirent) => dirent.name)
+			.toSorted()
+
+		for (const child of children) {
+			const directory = `${parent}/${child}`
+
+			if (!(await isWorkspaceDirectory(repoRoot, directory))) {
+				retired.push(directory)
+			}
+		}
+	}
+
+	return [...new Set(retired)]
 }

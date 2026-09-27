@@ -20,8 +20,8 @@ The resolver falls back to the city centroid and marks the result as approximate
 
 The demo ships two locales today, en-US and fr-FR, each backed by its own weights file.
 
-The trace names the stage that diverged, and the key names the reduction rather than the raw
-column. Both are the plain verb, which published prose is free to use.
+The trace records the stage that diverged, and the key identifies the reduction rather than the
+raw column. Column names and file names stay as written, because `NamesVerb` refuses only the verb.
 
 The higher score wins, and the hand-authored entries take precedence.
 The guard rejects requests with a mismatched port, and the API interface requires `message.id`.

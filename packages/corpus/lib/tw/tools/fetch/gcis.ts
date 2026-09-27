@@ -28,7 +28,6 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -46,8 +45,9 @@ const ATTRIBUTION = "提供機關／經濟部商業發展署 [<dataset title>] �
 const PACE_MS = 300
 
 /**
- * The bulk register files: `<region><register>資料-<industry letter><industry>`. The per-industry API datasets and the
- * monthly new-registration lists share the catalog and are not these.
+ * The bulk register files: `<region><register>資料-<industry letter><industry>`.
+ *
+ * The per-industry API datasets and the monthly new-registration lists share the catalog and are not these.
  */
 const BULK_TITLE = /(公司登記資料|商業登記資料)-[A-Z]/
 
@@ -99,9 +99,9 @@ async function fileURLFor(dataset: Dataset): Promise<string | undefined> {
 }
 
 export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
-	const manifestPath = join(destDir, "MANIFEST.json")
+	const manifestPath = destDir("MANIFEST.json")
 
 	const datasets = await listBulkDatasets()
 	report?.(`=== ${SLUG}: ${datasets.length} bulk register files in the catalog`)
@@ -114,7 +114,7 @@ export async function fetchGCISTW(options: FetchGCISTWOptions, report?: (line: s
 
 	for (const dataset of datasets) {
 		const filename = filenameFor(dataset.title)
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 		const before = previous.get(filename)
 
 		if (before && (await pathExists(dest))) {

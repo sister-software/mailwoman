@@ -14,7 +14,6 @@ import { GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-r
 import { ingestGeonamesPostal, normalizePostcodeName } from "@mailwoman/resolver-wof-sqlite/geonames"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 describe("normalizePostcodeName (the #920 name law)", () => {
@@ -58,8 +57,7 @@ describe("ingestGeonamesPostal", () => {
 		const dir = dirDirectory.path
 
 		// Three members of "110 00": two clustered at ~50.08, one outlier pulling the mean north.
-		// The medoid must be one of the real points (the cluster member nearest the mean), never
-		// the mean itself.
+		// The medoid must be one of the real points (the cluster member nearest the mean), never the mean itself.
 		await writeLocalTextFile(
 			[
 				"CZ\t110 00\tPraha 1\tPraha\t10\t\t\t\t\t50.08\t14.42\t4",
@@ -67,7 +65,7 @@ describe("ingestGeonamesPostal", () => {
 				"CZ\t110 00\tOutlier\tPraha\t10\t\t\t\t\t50.30\t14.60\t4",
 				"CZ\t500 02\tHradec\tKralovehradecky\t\t\t\t\t\t50.21\t15.83\t4",
 			].join("\n"),
-			join(dir, "CZ.txt")
+			dir("CZ.txt")
 		)
 
 		const db = await fixtureDB()
@@ -102,15 +100,16 @@ describe("ingestGeonamesPostal", () => {
 		await using dirDirectory = await temporaryDirectory("gn-postal-degenerate-")
 		const dir = dirDirectory.path
 
-		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either. The medoid has
-		// nothing to choose between, and the result must say so rather than presenting two rows as agreement.
+		// TH 10230 verbatim: two Bangkok districts published at one coordinate ~90 km from either.
+		// The medoid has no basis for choosing between them, and the result must say
+		// so rather than presenting two rows as agreement.
 		await writeLocalTextFile(
 			[
 				"TH\t10230\tLat Phrao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
 				"TH\t10230\tKhanna Yao\tBangkok\t10\t\t\t\t\t14.3333\t99.9167\t1",
 				"TH\t10120\tYan Nawa\tBangkok\t10\t\t\t\t\t13.6969\t100.5407\t4",
 			].join("\n"),
-			join(dir, "TH.txt")
+			dir("TH.txt")
 		)
 
 		const db = await fixtureDB()

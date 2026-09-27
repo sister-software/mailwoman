@@ -125,8 +125,8 @@ def run_pretrain_loop(
 ) -> None:
     """Step the MLM objective to ``cfg.train.max_steps``, logging, evaluating and checkpointing.
 
-    Each epoch re-opens the loader at ``seed + epoch``, which is the supervised loop's convention —
-    the two must draw the same rows in the same order for a pre-trained checkpoint to be a fair
+    Each epoch re-opens the loader at ``seed + epoch``, which is the supervised loop's convention.
+    The two must draw the same rows in the same order for a pre-trained checkpoint to be a fair
     starting point for a fine-tune.
     """
     gen = torch.Generator().manual_seed(cfg.train.seed)

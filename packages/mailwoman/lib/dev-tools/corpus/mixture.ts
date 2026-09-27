@@ -2,66 +2,73 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Locating the parquet files of a built corpus and opening DuckDB over them. Shared by the dev-tools that
- *   measure a training mixture.
+ * @file Locates a built corpus's parquet files and opens DuckDB over them for mixture measurements.
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { connectDuckDB, escapeSQLString } from "@mailwoman/corpus/parquet/duckdb"
+import { type DisposableDuckDB, escapeSQLString, openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import type { ParquetManifest } from "@mailwoman/corpus/parquet/writers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The manifest records the path the builder wrote under, which is the Modal volume mount rather than this checkout's
- * data root. Both spell the same tree below their first segment.
+ * Sets the Modal volume mount that manifest paths start with.
+ *
+ * The tree below it matches the tree below this checkout's data root.
  */
 const MANIFEST_ROOT = "/data/"
 
-function localPath(manifestPath: string): string {
-	return manifestPath.startsWith(MANIFEST_ROOT)
-		? String(join(mailwomanDataRoot(), manifestPath.slice(MANIFEST_ROOT.length)))
-		: manifestPath
+/**
+ * Maps a manifest path under the Modal mount to the same file under the local data root.
+ */
+function localPath(manifestPath: string): PathBuilderLike {
+	return manifestPath.startsWith(MANIFEST_ROOT) ? dataRootPath(manifestPath.slice(MANIFEST_ROOT.length)) : manifestPath
 }
 
 /**
- * A built corpus split, resolved to the files on this host.
+ * Holds one corpus split resolved to files on this host.
  */
 export interface MixtureFiles {
 	manifest: ParquetManifest
 	/**
-	 * Absolute paths, in manifest order, of the files this run reads.
+	 * Lists the paths this run reads, in manifest order.
 	 */
-	files: string[]
+	files: PathBuilderLike[]
 	/**
-	 * Files the manifest holds for this split, which `files` may be a prefix of when the caller capped it.
+	 * Counts the split's files in the manifest.
+	 * `files` is a prefix of them when the caller set a limit.
 	 */
 	available: number
 	/**
-	 * Rows the manifest attributes to `files`.
+	 * Counts the rows the manifest attributes to `files`.
 	 */
 	rows: number
 }
 
 /**
- * Resolve a corpus split's parquet files, raising when the manifest names a file this host does not hold.
+ * Resolves a corpus split's parquet files.
  *
- * A missing file read as an empty result would report a composition for a corpus that is only partly materialized, and
- * nothing downstream can tell that from a real absence.
+ * @throws If the split is absent or a listed file is missing on this host,
+ * so a partly materialized corpus never reports a composition.
  */
-export async function readMixtureFiles(corpusDirectory: string, split: string, limit?: number): Promise<MixtureFiles> {
-	const manifest = await readLocalJSONFile<ParquetManifest>(join(corpusDirectory, "MANIFEST.json"))
+export async function readMixtureFiles(
+	corpusDirectory: PathBuilderLike,
+	split: string,
+	limit?: number
+): Promise<MixtureFiles> {
+	const manifestPath = PathBuilder.from(corpusDirectory)("MANIFEST.json")
+	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
 	const entries = manifest.slices.filter((entry) => entry.split === split)
 
 	if (!entries.length) {
 		throw new Error(
-			`${corpusDirectory}/MANIFEST.json records no ${split} split — it carries ` +
+			`${manifestPath} records no ${split} split — it carries ` +
 				`${[...new Set(manifest.slices.map((entry) => entry.split))].toSorted().join(", ")}.`
 		)
 	}
 
 	const requested = limit ? entries.slice(0, limit) : entries
-	const files: string[] = []
+	const files: PathBuilderLike[] = []
 
 	for (const entry of requested) {
 		const path = localPath(entry.path)
@@ -82,17 +89,22 @@ export async function readMixtureFiles(corpusDirectory: string, split: string, l
 }
 
 /**
- * A DuckDB connection bounded to the memory and threads a caller is willing to spend, plus the file list spelled for
- * `read_parquet`.
+ * Opens a DuckDB connection with the given memory and thread limits.
+ *
+ * It also returns the files as a quoted list for `read_parquet`.
  */
 export async function openMixture(
-	files: readonly string[],
+	files: readonly PathBuilderLike[],
 	options: { memoryLimit: string; threads: number }
-): Promise<{ db: Awaited<ReturnType<typeof connectDuckDB>>; fileList: string }> {
-	const db = await connectDuckDB()
+): Promise<{ db: DisposableDuckDB; fileList: string } & Disposable> {
+	const db = await openDuckDB()
 
 	await db.run(`SET memory_limit='${escapeSQLString(options.memoryLimit)}'`)
 	await db.run(`SET threads=${options.threads}`)
 
-	return { db, fileList: files.map((path) => `'${escapeSQLString(path)}'`).join(", ") }
+	return {
+		db,
+		fileList: files.map((path) => `'${escapeSQLString(path.toString())}'`).join(", "),
+		[Symbol.dispose]: () => db[Symbol.dispose](),
+	}
 }

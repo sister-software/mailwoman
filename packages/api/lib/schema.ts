@@ -2,17 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Zod wire schemas for the native `/v1` surface. Unlike the drop-ins (photon, nominatim,
- *   libpostal), nothing here is a vendor interface — this surface is ours to design, so request
- *   bodies are required and validator-enforced (no legacy tolerance to preserve). A `defaultHook`
- *   on the app maps validation failures through the shared `APIErrorSchema` envelope
- *   (`errorResponse(c, 400, "invalid request body", <zod summary>)`) — the pattern boundary every
- *   surface holds to: where no legacy interface exists, the validator may speak, but only in
- *   our envelope.
- *
- *   `APIErrorSchema` itself is owned by `@mailwoman/api-kit` (plumbing shared by every native
- *   surface) — it's re-exported here so route modules can import every schema they need, request
- *   and error alike, from this one file.
+ *   Zod wire schemas for the native `/v1` surface, which is ours to design rather than a vendor
+ *   interface: request bodies are required and validator-enforced, and validation failures answer
+ *   through `@mailwoman/api-kit`'s `APIErrorSchema` envelope.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -24,9 +16,8 @@ import { MAX_ADDRESS_LENGTH } from "#input-limits"
 export { AddressNodeSchema } from "#address-node-schema"
 
 /**
- * The input register (Decision A / GTM B10): `fragmented` = the map-search register (evidence-bundle channels feed);
- * `formatted` = the validation/record register (channels off). Unset → the engine derives it from the input's shape.
- * `/v1/batch` defaults to `formatted` (batch rows are the record register by nature).
+ * `fragmented` is the map-search register (evidence-bundle channels feed) and `formatted` the
+ * validation/record register (channels off); unset lets the engine derive it from the input's shape.
  */
 export const InputModeSchema = z.enum(["fragmented", "formatted"]).openapi("InputMode")
 
@@ -49,9 +40,7 @@ export const ParseRequestSchema = z
 export const ParseComponentSchema = z.object({ tag: z.string(), value: z.string() }).openapi("ParseComponent")
 
 /**
- * `post /v1/parse` response — mirrors {@linkcode ParseOutcome} (`engine.ts`): the ordered components plus the full
- * decoded tree. `tree` is the same loose-tree idiom {@link ResolveResponseSchema} uses (`api/schema.ts:134-146`) — the
- * decoder's `AddressTree` is the engine's interface rather than this wire schema's.
+ * `post /v1/parse` response, mirroring {@linkcode ParseOutcome} (`engine.ts`) on the wire.
  */
 export const ParseOutcomeSchema = z
 	.object({
@@ -73,9 +62,8 @@ export const GeocodeRequestSchema = z
 	.openapi("GeocodeRequest")
 
 /**
- * One `GeocodeOutcome.hierarchy` entry — locality → country, most specific first. `name` is the resolved gazetteer name
- * (proper-cased canonical); `value` is the raw parsed span. Mirrors `GeocodeResult["hierarchy"]` entries
- * (`mailwoman/geocode-core.ts`), hand-modeled — see {@link GeocodeOutcomeSchema} for the no-import rationale.
+ * One `GeocodeOutcome.hierarchy` entry — locality → country, most specific first; `name` is the
+ * resolved gazetteer name and `value` the raw parsed span, mirroring `GeocodeResult["hierarchy"]`.
  */
 const GeocodeHierarchyEntrySchema = z
 	.object({
@@ -85,15 +73,16 @@ const GeocodeHierarchyEntrySchema = z
 		lat: z.number().optional(),
 		lon: z.number().optional(),
 		placeID: z.string().optional(),
-		// #1731 tri-state lineage provenance: true = the winner's ancestor chain vouches for this entry, false =
-		// resolved independently outside the winner's lineage, absent = unverifiable. Absence is not false.
+		// Tri-state: true = the winner's ancestor chain vouches for this entry, false = resolved
+		// independently outside the winner's lineage, absent = unverifiable (absence is not false).
 		in_winner_lineage: z.boolean().optional(),
 	})
 	.openapi("GeocodeHierarchyEntry")
 
 /**
- * One `GeocodeOutcome.candidates` entry — a ranked alternative place for the query's primary result (the winning place
- * first, then same-query runner-ups). Mirrors `GeocodeResult["candidates"]` entries.
+ * One `GeocodeOutcome.candidates` entry — a ranked alternative place,
+ * the winning place first and then same-query runner-ups.
+ * It mirrors `GeocodeResult["candidates"]` entries.
  */
 const GeocodeCandidateSchema = z
 	.object({
@@ -107,9 +96,8 @@ const GeocodeCandidateSchema = z
 	.openapi("GeocodeCandidate")
 
 /**
- * The `ComponentTag` union at this engine-agnostic boundary, named once so every schema that speaks about a tag speaks
- * about the same list. Two hand-copied enums would agree on the day they were written and diverge on the day a tag is
- * added — the shape of defect `feedback-parity-needs-shared-function-not-shared-constants` describes.
+ * The `ComponentTag` union at this engine-agnostic boundary, named once so every schema
+ * that speaks about a tag speaks about the same list rather than a hand-copied twin.
  */
 const ComponentTagSchema = z.enum([
 	"country",
@@ -141,24 +129,23 @@ const ComponentTagSchema = z.enum([
 ])
 
 /**
- * Canonical parsed-component map carried by `GeocodeResult.components`. Spelled out at this engine-agnostic API
- * boundary for the same reason the result schema is hand-modeled. the compile-time drift test catches any mismatch with
- * the real `ComponentTag`-keyed result type.
+ * Canonical parsed-component map carried by `GeocodeResult.components`,
+ * spelled out at this engine-agnostic boundary.
+ *
+ * The compile-time drift test catches any mismatch with the real type.
  */
 const GeocodeComponentsSchema = z.partialRecord(ComponentTagSchema, z.string())
 
 /**
- * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`.
- *
- * `evidence` is deliberately open (`z.record`): each `code` carries its own measurement — a dominance margin, a pair of
- * interpretations, a taxonomy id — and flattening those into one closed shape would either lose the numbers or invent
- * fields that do not apply. `code` is the discriminator a client branches on.
+ * One `GeocodeOutcome.intent_markers` entry, mirroring `QueryIntentMarker`;
+ * `evidence` is deliberately open because each `code` carries its own measurement,
+ * and `code` is the discriminator a client branches on.
  */
 const QueryIntentMarkerSchema = z
 	.object({
-		// Spelled out rather than `z.string()` so `mailwoman/test/api-schema-drift.test.ts`'s schema-too-wide direction
-		// keeps biting: a new `QueryKind` that never reaches this list is a documented interface that has quietly stopped
-		// describing the real one.
+		// Spelled out rather than `z.string()` so `mailwoman/test/api-schema-drift.test.ts`'s
+		// schema-too-wide direction keeps biting: a new `QueryKind` absent from this list
+		// leaves a documented interface no longer describing the real one.
 		kind: z.enum([
 			"postcode_only",
 			"locality_only",
@@ -189,8 +176,10 @@ const QueryIntentMarkerSchema = z
 	.openapi("QueryIntentMarker")
 
 /**
- * One authoritative-provider match on the wire (#1901) — hoisted so the outcome schema below stays inside the
- * call-nesting bound. Field-for-field mirror of `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
+ * One authoritative-provider match on the wire, hoisted so the outcome schema
+ * below stays inside the call-nesting bound.
+ *
+ * It is a field-for-field mirror of `mailwoman/authoritative.ts`'s `AuthoritativeAssertionMatch`.
  */
 const AuthoritativeMatchSchema = z.object({
 	provider_place_id: z.string(),
@@ -208,8 +197,9 @@ const EpistemicStatusSchema = z.enum(["designated", "observed", "derived", "infe
 const CoverageBasisSchema = z.enum(["designated", "surveyed", "source_present"])
 
 /**
- * `@mailwoman/evidence`'s `Evidence` union, spelled for the wire. The `EvidencePin` below fails to compile the moment
- * either side gains, loses or retypes a field.
+ * `@mailwoman/evidence`'s `Evidence` union, spelled for the wire.
+ *
+ * The `EvidencePin` below fails to compile the moment either side gains, loses or retypes a field.
  */
 const EvidenceSchema = z.discriminatedUnion("kind", [
 	z.object({ kind: z.literal("observation"), source: z.string(), vintage: z.string().nullable(), value: z.unknown() }),
@@ -231,8 +221,8 @@ const EvidenceSchema = z.discriminatedUnion("kind", [
 ])
 
 /**
- * The derivation behind a geocode answer, present only when the engine was asked to trace — `@mailwoman/evidence`'s
- * `DerivationProjection` on the wire.
+ * The derivation behind a geocode answer, present only when the engine was asked to trace;
+ * `@mailwoman/evidence`'s `DerivationProjection` on the wire.
  */
 export const DerivationProjectionSchema = z.object({
 	status: EpistemicStatusSchema,
@@ -240,7 +230,6 @@ export const DerivationProjectionSchema = z.object({
 	uncertaintyM: z.number().nullable(),
 })
 
-// Both directions: the schema's inferred type is exactly the evidence package's, or this does not compile.
 type Mutual<A, B> = [A] extends [B] ? ([B] extends [A] ? true : false) : false
 const evidencePin: Mutual<z.infer<typeof EvidenceSchema>, Evidence> = true
 const derivationPin: Mutual<z.infer<typeof DerivationProjectionSchema>, DerivationProjection> = true
@@ -249,8 +238,8 @@ void evidencePin
 void derivationPin
 
 /**
- * `post /v1/geocode` response schema. The route passes engine output through verbatim. this schema documents the public
- * shape and remains independent of the `mailwoman` package.
+ * `post /v1/geocode` response schema, passed through from the engine verbatim
+ * and kept independent of the `mailwoman` package at the engine-agnostic boundary.
  */
 export const GeocodeOutcomeLikeSchema = z.object({
 	input: z.string(),
@@ -258,14 +247,12 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	lat: z.number().nullable(),
 	lon: z.number().nullable(),
 	resolution_tier: z.enum(["address_point", "interpolated", "street", "admin", "venue", "plus_code"]),
-	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced. see
-	// `@mailwoman/evidence`'s `EpistemicStatus`.
+	// What the evidence permits a consumer to claim about the coordinate, orthogonal to how it was produced.
+	// See `@mailwoman/evidence`'s `EpistemicStatus`.
 	epistemic_status: z.enum(["designated", "observed", "derived", "inferred", "unresolved"]),
-	// The derivation behind the answer, present only when the engine was asked to trace. `DerivationProjectionSchema` is
-	// pinned to `@mailwoman/evidence`'s types below, so the wire interface and the evidence union cannot drift apart.
+	// The derivation behind the answer, present only when the engine was asked to trace.
 	derivation: DerivationProjectionSchema.optional(),
-	// The fork→entity probe's answer (#1585) — present only on the `venue` tier. see geocode-core's
-	// GeocodeResult.entity.
+	// The fork→entity probe's answer, present only on the `venue` tier.
 	entity: z
 		.object({
 			name: z.string(),
@@ -280,51 +267,49 @@ export const GeocodeOutcomeLikeSchema = z.object({
 	postcode: z.string().nullable(),
 	house_number: z.string().nullable(),
 	street: z.string().nullable(),
-	// The parsed venue span (#1041 posture. surfaced 2026-08-01 for the hierarchy-evidence campaign R1).
 	venue: z.string().nullable(),
 	// The parsed dependent-locality span (parse view; `hierarchy` is the resolved view).
 	dependent_locality: z.string().nullable(),
-	// The parsed unit / sub-venue span (parse view) — "Terminal 5", "Suite 300".
+	// The parsed unit / sub-venue span (parse view).
 	unit: z.string().nullable(),
 	countryCode: z.string().nullable(),
 	hierarchy: z.array(GeocodeHierarchyEntrySchema),
 	candidates: z.array(GeocodeCandidateSchema),
-	// The register row's own scope tags when the address_point tier answered and its extract carries
-	// them (normalized locality key + postcode of the rooftop) — see geocode-core's GeocodeResult.rooftop.
+	// The register row's own scope tags when the address_point tier answered and its
+	// extract carries them (normalized locality key + postcode of the rooftop).
 	rooftop: z
 		.object({
 			localityNorm: z.string().optional(),
 			postcode: z.string().optional(),
 		})
 		.optional(),
-	// #42: the country the postcode-country coherence pass scoped the walk to, or null. Non-null only when it
-	// overrode the request's country prior — so a caller who asked for US and got an FR answer can see which
-	// evidence bought the change instead of reading it as a bug.
+	// The country the postcode-country coherence pass scoped the walk to, non-null only
+	// when it overrode the request's country prior.
 	postcode_country_scope: z.string().nullable(),
-	// #1880: the capital promotion's firing receipt — the promoted candidate's country, present only when the
-	// promotion changed some node's leading candidate. Advisory, same posture as postcode_country_scope.
+	// The capital promotion's firing receipt: the promoted candidate's country, present only
+	// when the promotion changed some node's leading candidate.
 	capital_promotion: z.string().optional(),
-	// #1893: the variant-alias exemption's firing receipt — present (true) only when the winning candidate reached
-	// the top because the exemption spared it the cross-country alias penalty. Advisory, same posture again.
+	// The variant-alias exemption's firing receipt, present only when the winning candidate
+	// reached the top because the exemption spared it the cross-country alias penalty.
 	variant_alias_exemption: z.literal(true).optional(),
-	// ROAD_TO_V9 §4: query-intent advisories. Always present. empty means the vocabulary looked and had nothing to
-	// say. Advisory only — no marker changed which answer won, and a client is free to ignore the array entirely.
+	// Query-intent advisories, always present.
+	// Empty means the vocabulary looked and reported no marker, and a client is
+	// free to ignore the array entirely.
 	intent_markers: z.array(QueryIntentMarkerSchema),
-	// #1717 stage 1: flag-only admin-coherence verdicts — did the winning candidate's resolved ancestry confirm,
-	// contradict, or fail to speak to the parsed region/country qualifiers? Nothing ranks or filters on these. present
-	// whenever a winner resolved (both members always populated — `unstated` is the explicit no-qualifier claim),
-	// absent when nothing resolved to check against. See mailwoman's `admin-coherence.ts` for the verdict interface.
+	// Flag-only admin-coherence verdicts: no code ranks or filters on them.
+	// Present whenever a winner resolved (both members always populated; `unstated` is the
+	// explicit no-qualifier claim), absent when no winner resolved to check against.
 	admin_coherence: z
 		.object({
 			region: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 			country: z.enum(["confirmed", "contradicted", "unstated", "unverifiable"]),
 		})
 		.optional(),
-	// #1901: a configured authoritative provider's answer, carried beside the open result — every value inside is
-	// the provider'S assertion, hand-modeled here to match `mailwoman/authoritative.ts`'s wire shape (the
-	// engine-agnosticism boundary forbids importing it). Absent when no provider is configured; `refused` is the
-	// provider declining (distinct from a parse failure or a gazetteer miss); `transport_error` is the provider
-	// being unreachable, reported rather than silently dropped. An `ambiguous` status carries every candidate.
+	// A configured authoritative provider's answer, hand-modeled to match `mailwoman/authoritative.ts`'s
+	// wire shape (the engine-agnosticism boundary forbids importing it).
+	// Absent when no provider is configured; `refused` is the provider declining
+	// (distinct from a parse failure or a gazetteer miss) and `transport_error` is the
+	// provider being unreachable, reported rather than silently dropped.
 	authoritative: z
 		.object({
 			provider: z.string(),
@@ -337,31 +322,27 @@ export const GeocodeOutcomeLikeSchema = z.object({
 			error: z.string().optional(),
 		})
 		.optional(),
-	// #1755: spans the flat `components` map could not represent. `components` holds one value per tag, so a second
-	// `locality` span ceases to exist there — and without this line `region: null` means both "the input named no
-	// region" and "it named one and we deleted it". Absent when nothing was dropped. never an empty array on the wire,
-	// because the common case is nothing dropped and a client should not have to read a field to learn that.
+	// Spans the flat `components` map could not represent: it holds one value per tag, so a second
+	// `locality` span ceases to exist there and a null field cannot be told from a deleted one.
+	// Absent rather than empty when no component was dropped.
 	dropped_components: z
 		.array(
 			z.object({
 				tag: ComponentTagSchema,
 				value: z.string(),
-				// The value that held the slot, so a reader sees which of the two survived without re-deriving it.
 				kept: z.string(),
 			})
 		)
 		.optional(),
-	// #2301: a component the parse kept and the answer did not follow. The value is in `components` and reads as if it
-	// were honoured — `Nawāda, 744301` returns both the locality and the postcode, and nothing else in the result says
-	// they name places 1,914 km apart. Absent when the answer followed everything it parsed.
+	// A component the parse kept and the answer did not follow: its value in `components` reads
+	// as if it were honoured, and no other field says it points at a place far from the rest.
+	// Absent when the answer followed everything it parsed.
 	unfollowed_components: z
 		.array(
 			z.object({
 				tag: ComponentTagSchema,
 				value: z.string(),
-				// Named rather than described, so a consumer branches on it.
 				reason: z.literal("postcode_move_refused"),
-				// How far following the component would have moved the answer.
 				distance_km: z.number(),
 			})
 		)
@@ -382,28 +363,27 @@ export type GeocodeOutcome = z.infer<typeof GeocodeOutcomeSchema>
  */
 export const BatchRequestSchema = z
 	.object({
-		// Per-row rather than just per-request: the row cap (`batchMax`, default 500) bounds how many addresses arrive,
-		// and this bounds how large each may be. Without both, one request is 500 unbounded bodies.
+		// The per-request `batchMax` cap bounds how many rows arrive.
+		// This bounds how large each may be, or one request is 500 unbounded bodies.
 		addresses: z.array(z.string().max(MAX_ADDRESS_LENGTH)),
 		/**
-		 * Register override for every row. default `"formatted"` — batch rows are the record register by nature.
+		 * Register override for every row, defaulting to `"formatted"`:
+		 * batch rows are the record register by nature.
 		 */
 		input_mode: InputModeSchema.optional(),
 	})
 	.openapi("BatchRequest")
 
 /**
- * The failure slot for one batch row. A row that throws does not fail its neighbours.
+ * The failure slot for one batch row.
+ * A row that throws does not fail its neighbours.
  */
 const BatchRowErrorSchema = z.object({ input: z.string(), error: z.string() })
 
-/**
- * One batch row: the geocode outcome, or the failure slot that stands in for it.
- */
 const BatchRowSchema = z.union([GeocodeOutcomeSchema, BatchRowErrorSchema])
 
 /**
- * `post /v1/batch` response — one `GeocodeOutcome`, or an `{ input, error }` slot, per row (per-row isolation).
+ * `post /v1/batch` response — one `GeocodeOutcome`, or an `{ input, error }` slot, per row.
  */
 export const BatchResponseSchema = z
 	.object({
@@ -412,8 +392,8 @@ export const BatchResponseSchema = z
 	.openapi("BatchResponse")
 
 /**
- * `post /v1/resolve` request body — an already-decoded `AddressTree` (the parser's output) to resolve against the
- * gazetteer.
+ * `post /v1/resolve` request body: an already-decoded `AddressTree` (the parser's output)
+ * to resolve against the gazetteer.
  */
 export const ResolveRequestSchema = z
 	.object({
@@ -432,16 +412,15 @@ export const ResolveResponseSchema = z
 	.openapi("ResolveResponse")
 
 /**
- * One component's value. Repeatable tags (a street with two names, say) arrive as an array. the caller joins them
- * before handing the dict to `formatAddress`, which takes single strings only.
+ * One component's value.
+ *
+ * Repeatable tags (a street with two names, say) arrive as an array.
  */
 const ComponentValueSchema = z.union([z.string(), z.array(z.string())])
 
 /**
- * `post /v1/format` request body. `components` accepts `string | string[]` per key on the wire — a handler-side concern
- * rather than this schema's: `@mailwoman/formatter`'s `ComponentDict` (`format.ts`) is `Partial<Record<ComponentTag,
- * string>>`, single-string only, so a route handler must join array values before calling
- * `formatAddress`/`canonicalKey`.
+ * `post /v1/format` request body; `components` accepts `string | string[]` per key,
+ * which a handler must join because `formatAddress`/`canonicalKey` take single strings.
  */
 export const FormatRequestSchema = z
 	.object({
@@ -462,12 +441,10 @@ export const FormatResponseSchema = z
 	.openapi("FormatResponse")
 
 /**
- * `GET /health` response — `status`/`uptime_s` are stamped by the route itself, unconditionally, regardless of engine
- * (`api/routes.ts`'s `healthRoute` handler: `{ status: "ok", uptime_s, ...engine.health?.() }`), so those two are
- * cheap
+ * `GET /health` response — `status` and `uptime_s` are stamped by the route itself,
+ * so those two are accurate to pin.
  *
- * - Accurate to pin. Everything else is `HealthData` (`api/engine.ts`) — an engine-defined block (model card, data-root
- *   inventory for `mailwoman serve`; something else entirely for another engine) — stays loose.
+ * Everything else is the engine's `HealthData` block and stays loose.
  */
 export const HealthResponseSchema = z
 	.object({

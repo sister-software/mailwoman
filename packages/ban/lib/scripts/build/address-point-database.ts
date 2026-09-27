@@ -2,30 +2,16 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the national FR rooftop address-point extract from the BAN `adresses-<dept>.csv` dumps
- *   (adresse.data.gouv.fr), on the shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`)
- *   so the existing `AddressPointSqliteLookup` reads it with zero changes (#1012). BAN is a structured
- *   government register — every row carries `numero`/`nom_voie`/`code_postal`/`nom_commune`/`lon`/`lat`,
- *   so there is no OSM-style association gap: we write the exact source coordinate for every valid row.
+ *   Builds the BAN rooftop address-point database from département CSV files. The output is a
+ *   separate sealed database, and the OSM extract is left unchanged. Street keys use the same
+ *   normalizer as the lookup side.
  *
- *   The `rep` (repetition: bis/ter/…) is folded into the house-number key (`"8 bis"`), so a parsed
- *   `"8 bis Rue X"` matches. plain-number rows are keyed on the bare number, unchanged. Keying uses the
- *   shared FR normalizer (`normalizeStreetForKeyLocale(street, "fr")`) — the identical function the
- *   lookup tier applies at query time, so build-side and probe-side can't drift.
- *
- *   Build discipline (house rules): stream → positional prepared insert (batched) → indexes → analyze →
- *   atomic swap into place → seal 0444 → record md5 + provenance in `ban/attribution.json`. The output
- *   is a new, purely-additive artifact (`ban/address-points-fr.db`); it never touches the OSM extract.
- *
- *   BAN is published under the Licence Ouverte / Etalab 2.0 (attribution, no share-alike), so the built
- *   extract ships under the same terms as the permissive core — no ODbL counsel sign-off. `source = "ban:fr"`.
- *
- *   Usage:
+ *   Examples:
  *     node packages/ban/lib/scripts/build/address-point-database.ts \
  *       --csv-dir $MAILWOMAN_DATA_ROOT/corpus/sources/ban --release 2026-05-18
- *     # validate on a few départements first:
+ *     # Build a few départements as a quick check.
  *     node packages/ban/lib/scripts/build/address-point-database.ts --depts 48,2A,05 --out /tmp/ban-sample.db
- *     # from an installed package, through the `./scripts/*` export:
+ *     # Run the script from an installed package.
  *     node node_modules/@mailwoman/ban/out/scripts/build/address-point-database.js --help
  */
 
@@ -52,6 +38,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { dirname, resolvePath } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
+import { banDatabasePath } from "#paths"
 import { extractBANAddrPoints } from "#sdk/extract"
 import { BAN_ATTRIBUTION, BAN_CSV_BASE, BAN_LICENSE } from "#sdk/fetch"
 import { streetLocaleForBANCountry } from "#sdk/street-locale"
@@ -76,13 +63,13 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// Throws for an unsupported country — fail loud, never key with the wrong normalizer.
+	// Reject unsupported countries rather than selecting an incompatible normalizer.
 	streetLocaleForBANCountry(country)
 	const csvDir = resolvePath(values["csv-dir"] ?? dataRootPath("corpus", "sources", "ban"))
 
 	if (!(await pathExists(csvDir))) throw new Error(`BAN CSV dir not found: ${csvDir}`)
 	const release = values.release ?? "2026-05-18"
-	const output = resolvePath(values.out ?? dataRootPath("ban", `address-points-${country}.db`))
+	const output = resolvePath(values.out ?? banDatabasePath(`address-points-${country}.db`))
 
 	const depts = values.depts ? extractDelimited(values.depts) : null
 
@@ -90,9 +77,9 @@ async function parse(): Promise<BuildArgs> {
 }
 
 /**
- * Enumerate the per-département BAN dumps in `csvDir`, keyed by département code. Excludes the `merged` / `france`
- * aggregates (they duplicate the per-département rows), and prefers an uncompressed `.csv` over a `.csv.gz` when both
- * exist (the same dept, faster read). When `depts` is set, restricts to that list (for a fast validation build).
+ * Return département CSV paths keyed by département code.
+ *
+ * Aggregate files are skipped, and an uncompressed CSV wins over its gzipped copy.
  */
 async function departementFiles(csvDir: string, depts: string[] | null): Promise<Map<string, string>> {
 	const byDept = new Map<string, string>()
@@ -104,7 +91,7 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		if (!m) continue
 		const dept = m[1]!
 
-		// The aggregate dumps double-count the per-département rows — skip them.
+		// Aggregate files duplicate the département rows.
 		if (dept === "merged" || dept === "france") continue
 
 		if (wanted && !wanted.has(dept.toLowerCase())) continue
@@ -112,7 +99,6 @@ async function departementFiles(csvDir: string, depts: string[] | null): Promise
 		const path = `${csvDir}/${name}`
 		const existing = byDept.get(dept)
 
-		// Prefer the uncompressed .csv over a .csv.gz for the same dept.
 		if (!existing || (existing.endsWith(".gz") && !name.endsWith(".gz"))) {
 			byDept.set(dept, path)
 		}
@@ -168,20 +154,17 @@ async function main(): Promise<void> {
 					continue
 				}
 
-				// Fold `rep` into the house-number key: "8" + "bis" → "8 bis" (matches a parsed "8 bis Rue X").
+				// Append the repetition suffix so the key matches parsed numbers such as "8 bis".
 				const number = rec.rep ? `${numTrim} ${rec.rep}` : numTrim
 
-				// Positional, in ADDRESS_POINT_COLUMNS order: street_norm, street_key, number, unit, postcode,
-				// locality_norm, street_raw, lat, lon, source, release.
+				// Values follow ADDRESS_POINT_COLUMNS order.
 				insert.run(
 					streetNorm,
 					canonicalizeRouteKey(streetNorm),
 					number,
 					null,
 					rec.postcode,
-					// Arrondissement communes fold to the base city ("paris 13e arrondissement" → "paris") —
-					// the same both-sides discipline the #1042 street-centroid key uses, so a query's
-					// "Paris" hits directly (fr-chevaleret-bare). No-op for every other commune.
+					// Arrondissement names reduce to their base city.
 					rec.city ? stripArrondissement(normalizeLocalityForKey(rec.city)) : null,
 					rec.street,
 					rec.lat,
@@ -221,10 +204,10 @@ async function main(): Promise<void> {
 	const md5 = await md5File(args.output)
 	const bytes = (await statPath(args.output)).size
 
-	// Provenance manifest — additive, written at creation (house discipline). Only for a full national build
-	// (the fast --depts validation builds are transient and don't rewrite the record).
+	// Only a full build writes the attribution record.
+	// A `--depts` build is a throwaway check.
 	if (!args.depts) {
-		const attributionPath = dataRootPath("ban", "ATTRIBUTION.json")
+		const attributionPath = banDatabasePath("ATTRIBUTION.json")
 
 		await writeLocalTextFile(
 			prettyJSON({

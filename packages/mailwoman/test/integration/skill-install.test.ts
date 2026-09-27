@@ -16,7 +16,7 @@ import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { runFile } from "@mailwoman/core/process"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -27,35 +27,34 @@ const CLI_PATH = await mailwomanCLIPath()
 const hasCLICompiled = await pathExists(CLI_PATH)
 
 /**
- * Wall-clock budget for a CLI spawn — see the note in `geocode.test.ts`. A single spawn costs ~5.6 s, 2.7 s of it node
- * boot alone.
+ * Wall-clock budget for a CLI spawn.
+ * See the note in `geocode.test.ts`.
+ *
+ * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget.
+ *
+ * Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s, which kills the test before the thing being measured can report,
+ * surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
 describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
-	const tempDirs: string[] = []
-
-	async function makeTempDir(prefix: string): Promise<string> {
-		const dir = fixtures.use(await temporaryDirectory(prefix)).path.toString()
-
-		tempDirs.push(dir)
-
-		return dir
+	async function makeTempDir(prefix: string): Promise<PathBuilder> {
+		return fixtures.use(await temporaryDirectory(prefix)).path
 	}
 
 	test("installs into <cwd>/.claude/skills/mailwoman/SKILL.md by default", async () => {
@@ -69,7 +68,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
+		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
 		expect(await pathExists(skillPath)).toBe(true)
 		expect(await readLocalTextFile(skillPath)).toMatch(/^---\nname: mailwoman\n/)
@@ -87,13 +86,14 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 				})
 			)
 
-		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()` — the second run is
-		// the idempotence assertion. An async rejection is invisible to that form, so await both runs: either one
-		// failing rejects this test.
+		// The old sync form ran `spawn()` and then re-ran it inside `expect(spawn).not.toThrow()`.
+		// The second run is the idempotence assertion.
+		// An async rejection is invisible to that form, so await both runs:
+		// either one failing rejects this test.
 		await spawn()
 		await spawn()
 
-		const skillPath = join(cwd, ".claude", "skills", "mailwoman", "SKILL.md")
+		const skillPath = cwd(".claude", "skills", "mailwoman", "SKILL.md")
 
 		expect(await pathExists(skillPath)).toBe(true)
 	})
@@ -110,17 +110,18 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 			})
 		)
 
-		expect(await pathExists(join(dest, ".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
-		expect(await pathExists(join(cwd, ".claude"))).toBe(false)
+		expect(await pathExists(dest(".claude", "skills", "mailwoman", "SKILL.md"))).toBe(true)
+		expect(await pathExists(cwd(".claude"))).toBe(false)
 	})
 
 	test("a stale file left over from an older shipped skill is removed, not merged", async () => {
 		const cwd = await makeTempDir("mw-skill-install-stale-")
-		const skillDir = join(cwd, ".claude", "skills", "mailwoman")
-		const staleFile = join(skillDir, "stale-reference.md")
+		const skillDir = cwd(".claude", "skills", "mailwoman")
+		const staleFile = skillDir("stale-reference.md")
 
-		// Plant a file that a hypothetical older install left behind and the current shipped skill no
-		// longer carries — a merge-only copy (bare cpSync) would leave this in place forever.
+		// Plant a file that a hypothetical older install left behind and the current
+		// shipped skill no longer carries.
+		// A merge-only copy (bare cpSync) would leave this in place forever.
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)
 
@@ -133,6 +134,6 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		)
 
 		expect(await pathExists(staleFile)).toBe(false)
-		expect(await pathExists(join(skillDir, "SKILL.md"))).toBe(true)
+		expect(await pathExists(skillDir("SKILL.md"))).toBe(true)
 	})
 })

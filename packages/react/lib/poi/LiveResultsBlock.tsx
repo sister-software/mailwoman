@@ -14,7 +14,8 @@ import type { LiveSearchState } from "#poi/types"
 
 export interface LiveResultsBlockProps {
 	/**
-	 * Subject label for empty-state copy — a category ("No hospital results near …") or a brand ("No chevron results …").
+	 * Subject label for empty-state copy — a category ("No hospital results near …")
+	 * or a brand ("No chevron results …").
 	 */
 	subjectLabel: string
 	/**

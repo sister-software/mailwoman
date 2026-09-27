@@ -27,8 +27,10 @@ export interface FinalizeVerdictOptions {
 	 */
 	check: string
 	/**
-	 * True when `--weights-cache` named the graded artifact. It the verdict records. Therefore, a reader can tell a
-	 * staged candidate's numbers from the installed package's.
+	 * True when `--weights-cache` named the graded artifact.
+	 *
+	 * It the verdict records.
+	 * Therefore, a reader can tell a staged candidate's numbers from the installed package's.
 	 */
 	gradedFromWeightsCache: boolean
 	/**
@@ -50,13 +52,16 @@ export interface FinalizeVerdictOptions {
 }
 
 /**
- * Return the battery's exit code: 0 only when every floor was met and the mask-regression lock held. Either miss fails
- * the evaluation.
+ * Return the battery's exit code: 0 only when every floor was met and the mask-regression lock held.
  *
- * On a pass, print the ledger-append command with everything pre-filled. It is printed rather than executed: the
- * battery runs on candidates that may never publish, and the ledger records published versions keyed by npm semver, so
- * the release-prep flow runs this line with the real version. Appending used to rely on a person remembering it, and
- * the ledger froze for several versions.
+ * Either miss fails the evaluation.
+ *
+ * On a pass, print the ledger-append command with everything pre-filled.
+ * It is printed rather than executed: the battery runs on candidates that may
+ * never publish, and the ledger records published versions keyed by npm semver,
+ * so the release-prep flow runs this line with the real version.
+ *
+ * Appending used to rely on a person remembering it, and the ledger froze for several versions.
  */
 export async function finalizePromotionVerdict(options: FinalizeVerdictOptions): Promise<number> {
 	let verdictStatus: number

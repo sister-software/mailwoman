@@ -4,7 +4,7 @@ The loop runs the steps and decides when to evaluate. these four write what happ
 `default_callbacks` is the order a reader of the log sees, so it is the order the run's output is
 composed in rather than an implementation detail.
 
-A callback observes and never steers. One that must stop a run raises — there is no return value
+A callback observes and never steers. One that must stop a run raises. There is no return value
 the loop reads.
 """
 

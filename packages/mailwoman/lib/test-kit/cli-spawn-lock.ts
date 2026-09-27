@@ -19,19 +19,19 @@
  *   blocking a thread.
  */
 
-import { tempRootPath } from "@mailwoman/core/data-root"
+import { tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectoryExclusive, removePathIfPresent, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { join } from "path-ts"
 
-const LOCK_DIR = tempRootPath("mailwoman-cli-spawn.lock")
-const PID_FILE = join(LOCK_DIR, "pid")
+const LOCK_DIR = tempRootPathBuilder("mailwoman-cli-spawn.lock")
+const PID_FILE = LOCK_DIR("pid")
 
 /**
- * How long to wait for the lock before giving up and running anyway. Deliberately generous relative to a spawn (~6 s)
- * and deliberately not infinite: a wedged lock must degrade to the old contended behaviour, never to a hang that reads
- * as a mysterious suite timeout.
+ * How long to wait for the lock before giving up and running anyway.
+ *
+ * Deliberately generous relative to a spawn (~6 s) and deliberately not infinite: a wedged lock must
+ * degrade to the old contended behaviour, never to a hang that reads as a mysterious suite timeout.
  */
 const ACQUIRE_TIMEOUT_MS = 120_000
 const POLL_MS = 50
@@ -39,16 +39,21 @@ const POLL_MS = 50
 /**
  * Remove the lock directory, tolerating every failure.
  *
- * Two workers can race here — one reclaiming a stale lock while its holder releases, or two reclaiming at once — and
- * the removal throws enotempty when the pid file is rewritten between its scan and the rmdir. A lock whose bookkeeping
- * can throw is worse than no lock: it turns contention into a test failure in whichever suite happened to be holding
- * it. A failed removal degrades to the next acquirer reclaiming it as stale, which is already the recovery path.
+ * Two workers can race here — one reclaiming a stale lock while its holder releases,
+ * or two reclaiming at once — and the removal throws enotempty when the pid file
+ * is rewritten between its scan and the rmdir.
+ * A lock whose bookkeeping can throw is worse than no lock: it turns contention into
+ * a test failure in whichever suite happened to be holding it.
+ *
+ * A failed removal degrades to the next acquirer reclaiming it as stale,
+ * which is already the recovery path.
  */
 async function releaseQuietly(): Promise<void> {
 	try {
 		await removePathIfPresent(LOCK_DIR)
 	} catch {
-		// Another worker is mid-removal or mid-write. its stale check will reclaim.
+		// Another worker is mid-removal or mid-write.
+		// Its stale check will reclaim.
 	}
 }
 
@@ -62,16 +67,19 @@ async function staleHolder(): Promise<boolean> {
 
 		return false
 	} catch {
-		// Unreadable pid file, or a pid that no longer exists — either way the holder is gone.
+		// Unreadable pid file, or a pid that no longer exists.
+		// Either way the holder is gone.
 		return true
 	}
 }
 
 /**
- * Run `fn` with the CLI-spawn lock held. Always releases, including when `fn` throws.
+ * Run `fn` with the CLI-spawn lock held.
  *
- * Async because every caller now awaits its spawn: acquisition sleeps between probes rather than blocking a thread, and
- * the release is awaited in `finally`.
+ * Always releases, including when `fn` throws.
+ *
+ * Async because every caller now awaits its spawn: acquisition sleeps between probes
+ * rather than blocking a thread, and the release is awaited in `finally`.
  */
 export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T> {
 	const deadline = Date.now() + ACQUIRE_TIMEOUT_MS
@@ -80,7 +88,7 @@ export async function withCLISpawnLockAsync<T>(fn: () => Promise<T>): Promise<T>
 	// The catch path sleeps and retries. only a successful mkdir breaks out. oxlint reads the try/break as
 	// the loop's sole exit and misses the fallthrough, the same false positive packages/release-kit/lib/release/bless-package.ts
 	// suppressed for its OTP retry. The directive must sit immediately above the loop — on a multi-line
-	// note it lands on the next comment line and silently does nothing.
+	// note it lands on the next comment line and silently has no effect.
 	// oxlint-disable-next-line eslint/no-unreachable-loop -- retryable catch falls through to the next timed attempt
 	while (Date.now() < deadline) {
 		try {

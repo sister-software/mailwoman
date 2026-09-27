@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
-import { AddressRole, type CanonicalRow, type CorpusAdapter } from "@mailwoman/corpus/types"
+import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -23,6 +23,8 @@ function makeAdapter(opts: {
 		id,
 		defaultLicense: license,
 		addressRole: opts.addressRole ?? AddressRole.Premise,
+		register: "test-register",
+		surface: SurfaceOrigin.Attested,
 		description: `synthetic adapter ${id}`,
 		async *rows() {
 			let i = 0
@@ -85,13 +87,13 @@ describe("runAdapter", () => {
 		expect(manifest.corpus_version).toBe("0.1.0")
 		expect(manifest.sha256).toMatch(/^[0-9a-f]{64}$/)
 
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines).toHaveLength(2)
 		expect(lines[0]!.corpus_version).toBe("0.1.0")
 		expect(lines[0]!.source).toBe("syn")
 
-		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.resolve("syn", "MANIFEST.json"))
+		const manifestOnDisk = await readLocalJSONFile<{ sha256: string }>(scratch.path("syn", "MANIFEST.json"))
 
 		expect(manifestOnDisk.sha256).toBe(manifest.sha256)
 	})
@@ -113,9 +115,45 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.resolve("syn", "canonical.jsonl")).toArray()
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
 
 		expect(lines.map((line) => line.addressRole)).toEqual(["registered-office", "facility"])
+	})
+
+	it("stamps sourceName over the adapter id, after holding the adapter to emitting its own", async () => {
+		// One adapter reads every Overture country, and a config has to weight
+		// Brazilian rows apart from European ones.
+		// `overture-latam` exists for that and the runner had no way to ask for it.
+		const adapter = makeAdapter({ id: "syn", rows: [baseRow({ source_id: "syn-1", raw: "Paris" })] })
+
+		await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			sourceName: "syn-latam",
+		})
+
+		// The jsonl still lands under the adapter's own directory: the rename is the
+		// row's `source`, not the adapter's identity.
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
+
+		expect(lines.map((line) => line.source)).toEqual(["syn-latam"])
+	})
+
+	it("leaves the adapter id in place when sourceName is absent", async () => {
+		const adapter = makeAdapter({ id: "syn", rows: [baseRow({ source_id: "syn-1", raw: "Paris" })] })
+
+		await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const lines = await JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("syn", "canonical.jsonl")).toArray()
+
+		expect(lines.map((line) => line.source)).toEqual(["syn"])
 	})
 
 	it("dedupes by canonical key (count visible in manifest)", async () => {
@@ -159,8 +197,9 @@ describe("runAdapter", () => {
 			progressEvery: 2,
 		})
 
-		// Periodic at yielded=2,4 plus the final tick. Some implementations may also emit the
-		// final tick coincidentally at a multiple of progressEvery. check the floor instead.
+		// Periodic at yielded=2,4 plus the final tick.
+		// Some implementations may also emit the final tick coincidentally at a multiple of progressEvery.
+		// Check the floor instead.
 		expect(ticks.length).toBeGreaterThanOrEqual(3)
 		const final = ticks.at(-1)!
 		expect(final.yielded).toBe(5)
@@ -174,6 +213,8 @@ describe("runAdapter", () => {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
 			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
 			description: "",
 			async *rows() {
 				yield { ...baseRow({}), source: "different" }
@@ -195,6 +236,8 @@ describe("runAdapter", () => {
 			id: "syn",
 			defaultLicense: "CC0-1.0",
 			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
 			description: "",
 			async *rows() {
 				yield baseRow({ source: "syn", raw: "" })
@@ -209,6 +252,38 @@ describe("runAdapter", () => {
 				corpusVersion: "0.1.0",
 			})
 		).rejects.toThrow(/row\.raw is empty/)
+	})
+
+	it("rejects a country code outside the ISO 3166-1 alpha-2 shape", async () => {
+		// `Nl` is what WOF record 1141959953 publishes, and 431 rows reached `v0.6.0-register-surface`
+		// under it: admitted by no `country_weights` entry, selected by no country filter,
+		// and indistinguishable from an ordinary country in any count of them.
+		const emitting = (country: string): CorpusAdapter => ({
+			id: "syn",
+			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
+			description: "",
+			async *rows() {
+				yield baseRow({ source: "syn", country })
+			},
+		})
+
+		const run = (country: string) =>
+			runAdapter({
+				adapter: emitting(country),
+				adapterOptions: { inputPath: "ignored" },
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+			})
+
+		await expect(run("Nl")).rejects.toThrow(/is not two upper-case letters/)
+		await expect(run("nl")).rejects.toThrow(/is not two upper-case letters/)
+		await expect(run("NLD")).rejects.toThrow(/is not two upper-case letters/)
+
+		// `ZZ` states that the row's country is undetermined, which the fragment recipes rely on.
+		await expect(run("ZZ")).resolves.toBeDefined()
 	})
 
 	it("honors AbortSignal raised mid-run", async () => {
@@ -232,6 +307,45 @@ describe("runAdapter", () => {
 		).rejects.toThrow(/aborted/i)
 	})
 
+	it("refuses to write a manifest when the adapter honored the signal by returning", async () => {
+		// The test above aborts an adapter that ignores `signal` and keeps yielding,
+		// which the in-loop check catches.
+		// Every adapter in the tree returns instead, the way this one does.
+		const ac = new AbortController()
+
+		const honorsSignal: CorpusAdapter = {
+			id: "syn",
+			defaultLicense: "CC0-1.0",
+			addressRole: AddressRole.Premise,
+			register: "test-register",
+			surface: SurfaceOrigin.Attested,
+			description: "",
+			async *rows(options) {
+				for (let i = 0; i < 100; i++) {
+					if (options.signal?.aborted) return
+
+					yield baseRow({ source: "syn", source_id: `syn-${i}`, raw: `r${i}`, components: { locality: `L${i}` } })
+
+					if (i === 2) {
+						ac.abort()
+					}
+				}
+			},
+		}
+
+		await expect(
+			runAdapter({
+				adapter: honorsSignal,
+				adapterOptions: { inputPath: "ignored", signal: ac.signal },
+				outputDir: scratch.path,
+				corpusVersion: "0.1.0",
+			})
+		).rejects.toThrow(/abort/i)
+
+		// And it left no manifest for a resume to find.
+		expect(await pathExists(scratch.path("syn", "MANIFEST.json"))).toBe(false)
+	})
+
 	it("two runs over the same fixture produce byte-identical JSONL", async () => {
 		const make = () =>
 			makeAdapter({
@@ -253,8 +367,8 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const firstJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
-		await removePathIfPresent(scratch.resolve("syn"))
+		const firstJsonl = await readLocalTextFile(scratch.path("syn", "canonical.jsonl"))
+		await removePathIfPresent(scratch.path("syn"))
 
 		const second = await runAdapter({
 			adapter: make(),
@@ -263,7 +377,7 @@ describe("runAdapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		const secondJsonl = await readLocalTextFile(scratch.resolve("syn", "canonical.jsonl"))
+		const secondJsonl = await readLocalTextFile(scratch.path("syn", "canonical.jsonl"))
 
 		expect(firstJsonl).toBe(secondJsonl)
 		expect(first.sha256).toBe(second.sha256)

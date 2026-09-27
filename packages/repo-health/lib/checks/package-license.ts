@@ -11,7 +11,7 @@
  *   A deprecated identifier states less than it appears to. `AGPL-3.0` names neither the `-only` nor the `-or-later`
  *   variant, and `summarizeLicense` in `@mailwoman/core/license` reports it `recognized: false` with an empty
  *   obligation list. A reader who checks the obligations without checking the flag sees a package that requires
- *   nothing.
+ *   no obligations.
  *
  *   A workspace omitting the commercial branch contradicts the public license page, which states that every release
  *   ships under both.
@@ -48,8 +48,8 @@ async function readDeclaredLicense(repoRoot: string, file: string): Promise<stri
 }
 
 /**
- * The admissibility failure for one expression, or `undefined` when every identifier is one the obligations table knows
- * or a `LicenseRef-` this repository defines.
+ * The admissibility failure for one expression, or `undefined` when every identifier is
+ * one the obligations table knows or a `LicenseRef-` this repository defines.
  */
 function admissibilityDiagnostic(expression: string, file: string): Diagnostic | undefined {
 	try {
@@ -66,8 +66,8 @@ function admissibilityDiagnostic(expression: string, file: string): Diagnostic |
 }
 
 /**
- * The `package-license` check: one error per workspace whose manifest declares no license, declares an identifier the
- * obligations table does not know, or declares an expression other than the root's.
+ * The `package-license` check: one error per workspace whose manifest declares no license, declares
+ * an identifier the obligations table does not know, or declares an expression other than the root's.
  */
 export const packageLicenseCheck: RepoCheck = {
 	id: "package-license",
@@ -77,8 +77,8 @@ export const packageLicenseCheck: RepoCheck = {
 		const rootDeclared = await readDeclaredLicense(context.repoRoot, "package.json")
 
 		if (typeof rootDeclared !== "string") {
-			// Without the root's expression there is nothing to compare the workspaces against, and reporting 75 identical
-			// failures would bury the one that has to be fixed first.
+			// Without the root's expression there is no expression to compare the workspaces against,
+			// and reporting 75 identical failures would bury the one that has to be fixed first.
 			return [rootDeclared]
 		}
 

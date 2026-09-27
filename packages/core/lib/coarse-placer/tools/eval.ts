@@ -17,7 +17,8 @@ import { CoarsePlacer, type CoarsePlacerMeta, isOffMapHandled } from "#coarse-pl
 import { defaultDataDir, defaultModelDir } from "#coarse-placer/tools/paths"
 import { errorMessage } from "#errors/schema"
 import { readLocalJSONFile } from "#fs/readers"
-import { formatPercent, repoRootPath } from "#utils"
+import { repoRootPath } from "#paths"
+import { formatPercent } from "#utils"
 
 /**
  * Confusions below this count are individually uninteresting and are summarised instead.
@@ -45,15 +46,21 @@ interface MultiScriptRow {
  */
 export interface EvalCoarsePlacerOptions {
 	/**
-	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Model artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * Abstention threshold. Default 0.5.
+	 * Abstention threshold.
+	 *
+	 * Default 0.5.
 	 */
 	abstain?: number
 	/**
-	 * Dataset dir (`test.jsonl`). Default `<repo>/data/coarse-placer`.
+	 * Dataset dir (`test.jsonl`).
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -74,7 +81,9 @@ export interface EvalCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer in-distribution eval — see the module doc. Emits the report to stdout.
+ * Coarse-placer in-distribution eval — see the module doc.
+ *
+ * Emits the report to stdout.
  */
 export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): Promise<EvalCoarsePlacerResult> {
 	const modelDir = resolvePathBuilder(options.model || defaultModelDir())
@@ -91,7 +100,8 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const confusion: Record<string, Record<string, number>> = {} // true → {pred → n}
 	const buckets = Array.from({ length: 10 }, () => ({ n: 0, ok: 0 }))
 
-	// ECE deciles. The split streams: every figure below is an accumulator, so the rows never all need to be resident.
+	// ECE deciles.
+	// The split streams: every figure below is an accumulator, so the rows never all need to be resident.
 	for await (const r of JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl"))) {
 		testN++
 

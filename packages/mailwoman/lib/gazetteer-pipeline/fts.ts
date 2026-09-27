@@ -12,7 +12,9 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 export interface BuildFTSOptions {
 	/**
-	 * Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run). Default false.
+	 * Drop + rebuild existing FTS/bbox tables (a staging DB from a prior partial run).
+	 *
+	 * Default false.
 	 */
 	drop?: boolean
 	onProgress?: (phase: string, detail?: string) => void
@@ -27,7 +29,7 @@ export interface BuildFTSResult {
  * Build `place_search` + `place_bbox` on an open (unsealed) admin DB.
  */
 export async function buildFTS<DB>(db: DatabaseClient<DB>, opts: BuildFTSOptions = {}): Promise<BuildFTSResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite/fts")
 
 	const result = buildPlaceSearchFTS(db, {

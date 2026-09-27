@@ -19,10 +19,15 @@ import { runFileSync } from "@mailwoman/core/process"
 import { TextSpliterator } from "spliterator"
 
 /**
- * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions. Uppercase `<Component>`
- * is legitimate MDX JSX and lowercase `<word>` is usually real html — flagging them false-positives on valid docs (bit
- * the pipeline-interface page, night-11). Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX expression —
- * `{raw, components}` broke main's SSG with `ReferenceError: raw is not defined`. Same fix menu: backtick it.
+ * The build-breaking class is `<55`-style numeric prose and `{word`-style MDX JSX expressions.
+ *
+ * Uppercase `<Component>` is legitimate MDX JSX and lowercase `<word>` is usually real html —
+ * flagging them false-positives on valid docs (bit the pipeline-interface page, night-11).
+ * Braces joined 2026-06-11: bare `{word` in prose is an MDX JSX expression.
+ *
+ * `{raw, components}` broke main's SSG with `ReferenceError: raw is not defined`.
+ *
+ * Same fix menu: backtick it.
  */
 const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
 
@@ -31,7 +36,9 @@ const RAW_ANGLE = /<[0-9]|\{[a-zA-Z]/
  */
 export interface LintMDXAnglesOptions {
 	/**
-	 * Files to check. Default: staged `docs/**` markdown (the pre-commit mode).
+	 * Files to check.
+	 *
+	 * Default: staged `docs/**` markdown (the pre-commit mode).
 	 */
 	files?: string[]
 }
@@ -60,7 +67,9 @@ export interface LintMDXAnglesSummary {
 function stagedDocsMarkdown(): string[] {
 	const out = runFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
 
-	return [...TextSpliterator.from(out)].map((f) => f.trim()).filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
+	return TextSpliterator.from(out)
+		.filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
+		.toArray()
 }
 
 /**
@@ -69,8 +78,8 @@ function stagedDocsMarkdown(): string[] {
 async function violations(file: string): Promise<string[]> {
 	const hits: string[] = []
 	let fenced = false
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX. the async spliterator would make this function and its caller async for files of a few hundred lines.
-	const lines = (await readLocalTextFile(file)).split("\n")
+	// Raw lines, blanks included: the fence test reads leading backticks and the report cites line numbers.
+	const lines = TextSpliterator.from(await readLocalTextFile(file), { trim: false, skipEmpty: false }).toArray()
 
 	for (const [i, line] of lines.entries()) {
 		if (line.startsWith("```")) {

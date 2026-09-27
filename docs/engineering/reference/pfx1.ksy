@@ -54,7 +54,7 @@
 #
 # 4. `prefix` is stored in the sanitized-query token shape (#920): every non-letter/number stripped,
 #    uppercased for the letter-containing systems. A probe with unsanitized text will miss; the
-#    sanitization is not part of this format, it is a interface with the consumer.
+#    sanitization is not part of this format, it is an interface with the consumer.
 #
 # 5. The ancestor dictionary is the anti-repetition device. A country's prefixes assert a handful of
 #    distinct admin surfaces between them — GB's 2,863 outward codes reference five entries — so

@@ -35,7 +35,7 @@ import { copyFileTo, makeDirectories, writeLocalJSONFile } from "@mailwoman/core
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { createNewlineWriter, JSONSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -75,13 +75,17 @@ export interface PromoteGoldenOptions {
 	 */
 	bumpTo: string
 	/**
-	 * Previous version to forward-copy + dedup against. Default `v0.1.0`.
+	 * Previous version to forward-copy + dedup against.
+	 *
+	 * Default `v0.1.0`.
 	 */
 	prior?: string
 	/**
-	 * Golden dir root. Default `data/eval/golden`.
+	 * Golden dir root.
+	 *
+	 * Default `data/eval/golden`.
 	 */
-	goldenRoot?: string
+	goldenRoot?: PathBuilderLike
 	/**
 	 * Skip the human-typed-likelihood filters (keep everything that passed expand-golden's validator).
 	 */
@@ -95,8 +99,8 @@ export interface PromoteGoldenOptions {
 // ── Filters ───────────────────────────────────────────────────────────────
 
 /**
- * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes) is most likely glued
- * together rather than human-typed.
+ * Heuristic: an address with 5+ components but fewer than 2 separators (commas/newlines/dashes)
+ * is most likely glued together rather than human-typed.
  */
 function isComponentsGlued(entry: GoldenEntry): boolean {
 	const componentCount = Object.keys(entry.components).length
@@ -108,9 +112,11 @@ function isComponentsGlued(entry: GoldenEntry): boolean {
 }
 
 /**
- * Heuristic: in US/UK conventions, postcode goes at the END of the address. If postcode appears in the first third of a
- * multi-component raw and there are 4+ components, the LLM probably over-aggressively reordered. FR is exempt (postcode
- * often precedes locality there).
+ * Heuristic: in US/UK conventions, postcode goes at the END of the address.
+ *
+ * If postcode appears in the first third of a multi-component raw and there are 4+
+ * components, the LLM probably over-aggressively reordered.
+ * FR is exempt (postcode often precedes locality there).
  */
 function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 	if (Object.keys(entry.components).length < MIN_PROMOTABLE_COMPONENTS) return false
@@ -127,8 +133,8 @@ function isPostcodeBadlyLeading(entry: GoldenEntry): boolean {
 }
 
 /**
- * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars, suspicious punctuation that
- * suggests the LLM emitted markup instead of an address.
+ * Heuristic: catch-all for visually-bad outputs — unmatched brackets, control chars,
+ * suspicious punctuation that suggests the LLM emitted markup instead of an address.
  */
 function isSuspicious(entry: GoldenEntry): boolean {
 	const raw = entry.raw
@@ -153,29 +159,30 @@ export async function promoteGolden(
 	report?: (line: string) => void
 ): Promise<PromoteStats> {
 	const prior = options.prior ?? "v0.1.0"
-	const goldenRoot = options.goldenRoot ?? "data/eval/golden"
+	const goldenRoot = PathBuilder.from(options.goldenRoot ?? "data/eval/golden")
 	const applyFilters = !options.noFilters
 	const dryRun = options.dryRun ?? false
 
 	report?.(`reading candidates: ${options.input}`)
 
-	// The candidates file is the required input, so its absence must not read as "zero candidates" —
-	// that promotes the prior version unchanged and reports success. `JSONSpliterator.fromAsync`
-	// reports a missing path as a bare `TypeError` naming its own internals, so name the path here.
+	// The candidates file is the required input, so its absence must not read as "zero candidates".
+	// That promotes the prior version unchanged and reports success.
+	// `JSONSpliterator.fromAsync` reports a missing path as a bare `TypeError`
+	// naming its own internals, so name the path here.
 	if (!(await pathExists(options.input))) {
 		throw new Error(`Candidates file not found: ${options.input}`)
 	}
 
 	// Forward-copy base: existing entries from the prior golden version go forward verbatim,
 	// and we dedupe new candidates against them so v_new = v_old ∪ accepted_candidates.
-	const priorDir = join(goldenRoot, prior)
+	const priorDir = goldenRoot(prior)
 	const priorEntries: { country: string; entries: GoldenEntry[] }[] = []
 	const seenNormalized = new Set<string>()
 
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.files("jsonl", { cwd: priorDir, absolute: false, recursive: false })) {
 			const country = f.replace(".jsonl", "").toUpperCase()
-			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(join(priorDir, f)).toArray()
+			const entries = await JSONSpliterator.fromAsync<GoldenEntry>(priorDir(f)).toArray()
 
 			priorEntries.push({ country, entries })
 
@@ -267,7 +274,7 @@ export async function promoteGolden(
 	}
 
 	// Output
-	const outDir = join(goldenRoot, options.bumpTo)
+	const outDir = goldenRoot(options.bumpTo)
 	report?.(`=== plan ===`)
 	report?.(`output dir: ${outDir}${dryRun ? " (dry-run)" : ""}`)
 
@@ -311,7 +318,7 @@ export async function promoteGolden(
 
 	for (const [key, entries] of buckets) {
 		const filename = `${key.toLowerCase()}.jsonl`
-		const path = join(outDir, filename)
+		const path = outDir(filename)
 
 		{
 			await using out = createNewlineWriter(path)
@@ -328,12 +335,12 @@ export async function promoteGolden(
 	if (await pathExists(priorDir)) {
 		for await (const f of Globerator.from("*", { cwd: priorDir, absolute: false })) {
 			if (f.endsWith(".jsonl")) continue
-			await copyFileTo(join(priorDir, f), join(outDir, f))
+			await copyFileTo(priorDir(f), outDir(f))
 			report?.(`  forward-copied: ${f}`)
 		}
 	}
 
-	await writeLocalJSONFile(manifest, join(outDir, "MANIFEST.json"))
+	await writeLocalJSONFile(manifest, outDir("MANIFEST.json"))
 	report?.(`✓ promoted to ${outDir}`)
 
 	return stats

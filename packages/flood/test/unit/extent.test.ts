@@ -57,14 +57,17 @@ describe("realizeFloodMapExtent", () => {
 		const extent = realize(GEOMETRY)
 
 		expect(extent.coverageCells.size).toBeGreaterThan(0)
-		// The conservative interior test drops the fringe, so the footprint is strictly smaller than a raw polyfill of the
-		// same rectangle would be. A cell wrongly called interior claims a determination nobody made.
+		// The conservative interior test drops the fringe, so the footprint is strictly
+		// smaller than a raw polyfill of the same rectangle would be.
+		// A cell wrongly called interior claims a determination nobody made.
 		expect(extent.bbox).toEqual({ minLat: 52, minLon: -1, maxLat: 53, maxLon: 0 })
 	})
 
 	it("refuses an outline that yields no interior cell rather than building a silent no-op", () => {
-		// Resolution 2 cells are hundreds of thousands of square kilometres, so nothing lies wholly inside this rectangle.
-		// A zero-cell footprint would write no coverage rows and answer "unknown" everywhere while reporting success.
+		// Resolution 2 cells are hundreds of thousands of square kilometres,
+		// so no cell lies wholly inside this rectangle.
+		// A zero-cell footprint would write no coverage rows and answer "unknown"
+		// everywhere while reporting success.
 		expect(() => realize(GEOMETRY, 2)).toThrow(/no interior cell/u)
 	})
 })

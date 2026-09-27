@@ -52,7 +52,7 @@ describe("serialize round-trip", () => {
 		expect(albany.payload).toBeInstanceOf(Uint8Array)
 		expect([...(albany.payload as Uint8Array)]).toEqual([1, 2, 3])
 
-		// An absent payload stays absent — never an empty stand-in.
+		// An absent payload stays absent, never an empty stand-in.
 		expect(trie.getEntry(10)!.payload).toBeUndefined()
 	})
 
@@ -135,8 +135,7 @@ describe("edge cases", () => {
 	})
 
 	it("reads its artifact through a non-zero byteOffset view", () => {
-		// A reader handed a subarray of a larger buffer (a file mmap, a network frame) must not
-		// assume byteOffset 0.
+		// A reader handed a subarray of a larger buffer (a file mmap, a network frame) must not assume byteOffset 0.
 		const bytes = sealFixture()
 		const shifted = new Uint8Array(bytes.length + 6)
 		shifted.set(bytes, 6)

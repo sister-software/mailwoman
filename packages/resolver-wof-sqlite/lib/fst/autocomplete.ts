@@ -40,14 +40,17 @@ export interface AutocompleteSuggestion {
 	name: string
 	placetype: string
 	/**
-	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2). Autocomplete answers "which place does the
-	 * user mean", so it ranks referentially like everything else. encyclopedic importance rides along on
-	 * {@link AutocompleteSuggestion.encyclopedic} for display and never enters the order.
+	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
+	 *
+	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything else.
+	 * Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic}
+	 * for display and never enters the order.
 	 */
 	referential: number
 	/**
-	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place. `undefined` = no article, or
-	 * a pre-v5 binary — never 0.
+	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place.
+	 *
+	 * `undefined` = no article, or a pre-v5 binary — never 0.
 	 */
 	encyclopedic?: number
 	wofID: number
@@ -60,9 +63,11 @@ export interface AutocompleteOpts {
 	maxSuggestions?: number
 	maxExpansionDepth?: number
 	/**
-	 * Collapse same-name suggestions to the single highest-referential one. Off by default (the CLI surfaces distinct
-	 * same-name places — New York the city vs the county); a typeahead wants it on so the dropdown isn't four "New
-	 * London"s. (#587)
+	 * Collapse same-name suggestions to the single highest-referential one.
+	 *
+	 * Off by default (the CLI surfaces distinct same-name places — New York the city vs the county);
+	 * a typeahead wants it on so the dropdown isn't four "New London"s.
+	 * (#587)
 	 */
 	dedupeByName?: boolean
 }
@@ -73,9 +78,11 @@ export interface AutocompleteOpts {
 const PER_BRANCH = 4
 
 /**
- * The top-`k` entries by referential likelihood (descending). Avoids sorting/allocating when `entries` is small — and
- * that shortcut is part of the observable interface: at or under `k` the insertion order is served, which decides
- * suggestion order among referential ties.
+ * The top-`k` entries by referential likelihood (descending).
+ *
+ * Avoids sorting/allocating when `entries` is small, and that shortcut is part
+ * of the observable interface: at or under `k` the insertion order is served,
+ * which decides suggestion order among referential ties.
  */
 function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry[] {
 	if (entries.length <= k) return [...entries]
@@ -84,19 +91,23 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 }
 
 /**
- * {@link FSTMatcher} presented through ancestrie's storage interface. Records carry the {@link PlaceEntry} itself as the
- * payload, so the entry that wins the algorithm's shallowest-depth rule is the entry whose fields the suggestion
- * reports — a side lookup keyed on id could pick a different surface's row (`crossCountryBranches` differs per
- * surface).
+ * {@link FSTMatcher} presented through ancestrie's storage interface.
+ *
+ * Records carry the {@link PlaceEntry} itself as the payload, so the entry that wins the
+ * algorithm's shallowest-depth rule is the entry whose fields the suggestion reports.
+ * A side lookup keyed on id could pick a different surface's row
+ * (`crossCountryBranches` differs per surface).
  */
 class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	readonly #fst: FSTMatcher
 
 	/**
-	 * Parent chains of the entries this reader has served, id-keyed. A place's chain is identical across its surfaces (it
-	 * is place-row data), so last-write-wins is safe. The algorithm asks {@link FSTReader.ancestorsOf} only for ids it
-	 * just received from {@link FSTReader.entriesAt}, so serving from this memo answers every real call without an
-	 * artifact-wide id index.
+	 * Parent chains of the entries this reader has served, id-keyed.
+	 *
+	 * A place's chain is identical across its surfaces (it is place-row data), so last-write-wins is safe.
+	 * The algorithm asks {@link FSTReader.ancestorsOf} only for ids it just received
+	 * from {@link FSTReader.entriesAt}, so serving from this memo answers every
+	 * real call without an artifact-wide id index.
 	 */
 	readonly #chains = new Map<number, number[]>()
 
@@ -139,7 +150,9 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 }
 
 /**
- * Autocomplete from the current prefix. Returns suggestions ranked referential-descending.
+ * Autocomplete from the current prefix.
+ *
+ * @returns Suggestions ranked referential-descending.
  */
 export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteOpts = {}): AutocompleteResult {
 	const normalizedTokens = normalizeTokens(query)
@@ -148,7 +161,9 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
 		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
-		// The dedupe key is the display name rather than the token path: two surfaces of one name must still collapse. (#587)
+		// The dedupe key is the display name rather than the token path:
+		// two surfaces of one name must still collapse.
+		// (#587)
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
 	})
 
@@ -157,7 +172,8 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		normalizedTokens,
 		depth: result.depth,
 		suggestions: result.suggestions.map((s) => {
-			// Every record this adapter serves carries its entry. the assertion documents the invariant.
+			// Every record this adapter serves carries its entry.
+			// The assertion documents the invariant.
 			const entry = s.payload!
 
 			return {

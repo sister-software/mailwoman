@@ -32,10 +32,7 @@ capability closed at **five falsified mechanisms and three stop-rule executions*
 answer is what shipped. Read that history so you don't re-run it: the en-GB postmortem
 (`docs/records/evals/2026-07-22-night-en-gb-postmortem.md`) and
 [the placetype-pair ship-prep scorecard](../../records/evals/2026-07-23-placetype-pair-scorecard.md) (its
-three postscripts are the arc's actual ending). The design records are
-`docs/superpowers/plans/2026-07-24-pair-prior-comma-scope-KIMI_HANDOFF.md` (the geometry problem)
-and its `-BRAINSTORM_RESPONSE.md` (the anchored-mode design); the full battery lives in
-`.superpowers/sdd/task-8-report.md`.
+three postscripts are the arc's actual ending).
 
 The doctrine this sits inside is
 [registry-backed structured prediction](./registry-backed-structured-prediction.mdx): the registry
@@ -72,7 +69,7 @@ Ltd`) — they are BUILT from real place names, so a place-pair index matches fr
   floods false positives. The confound is the mechanism's shadow rather than an edge case.
 - The related **healthy-tag reassignment** hypothesis (re-tagging namesakes) was also FALSIFIED:
   the parse was never wrong there (189/189 region tagging held). A prior that fires where the model
-  is already right adds nothing and risks regressions.
+  is already right adds no benefit and risks regressions.
 
 The dividing line: a pair index biases a span the model _reads as one place_. If the target span is
 routinely embedded inside a longer generative name, you are on the open-vocab side of the wall and
@@ -135,7 +132,7 @@ The builder (`mailwoman/commands/gazetteer/pair-index.tsx`) streams the CSV, fol
   holds a few known `(child, parent)` pairs per country code; after writing, the command re-reads
   the bytes through a fresh `PairIndexResolver` and prints `PROBE OK` / `PROBE MISS`. A country with
   no registered probes gets a **loud throw** rather than a false pass — the `en-nz` first build ran the GB
-  names against the NZ index and printed reassuring `PROBE MISS` lines that verified nothing (caught
+  names against the NZ index and printed reassuring `PROBE MISS` lines that verified no probe pair (caught
   2026-07-24). Add your country's probe pairs before you build. Include the identity pair if the
   register uses the convention (NZ registers `["Mangawhai","Mangawhai"]`).
 - **The PIX1 header carries the provenance.** `country`, `delta`, `transitionBeta?`, `foldVersion`,
@@ -183,7 +180,7 @@ Two structural findings worth internalizing before you design a new country's ge
   pseudo-segment → no pair). The boundary source **must be non-model** (textual anchors). See the
   brainstorm-response Q1 verdict.
 - **The model's weak heads can't be a veto signal.** v385's venue head is itself starved on GB
-  (measured inert, 0/20 candidate positions), so "veto where the model reads venue" adds nothing.
+  (measured inert, 0/20 candidate positions), so "veto where the model reads venue" adds no veto.
   The child-side _street_ veto (fail-open) survives only as a contingency for the residual
   street-verbatim-child class, switched on only by a pre-registered FP>5% trigger.
 
@@ -211,7 +208,7 @@ classifier deficit for the tag is large but uniform (~7.0 logits mean), so a δ 
 the whole board at once — δ=10 saturates recall. NZ replicated the shape (gap mean 7.8 logits, same
 δ=10 works). Treat δ≈10 as the expected landing zone for a fresh country; a wildly different optimum
 is a signal to re-check the deficit-uniformity premise (step-0) rather than to keep sweeping. FP grows
-**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial — the
+**monotonically** with δ (roughly 6–10× from δ=3 to δ=7), so δ is a working recall/FP dial. The
 smallest δ clearing the recall bar is required, and the trade lives entirely in the
 venue-confound floor.
 
@@ -276,7 +273,7 @@ construction — assert it, then measure it anyway.
 ## 6. Package the overlay
 
 The artifact ships as a **data-only** `neural-weights-en-<cc>` workspace that carries no model of
-its own — it resolves the model + tokenizer from the `en-us` base (`baseWeights`) and adds only the
+its own. It resolves the model + tokenizer from the `en-us` base (`baseWeights`) and adds only the
 `pair-index-<cc>.bin` sibling. Clone `neural-weights-fr-fr`'s
 `package.json` / `.npmignore` / `scripts/link-dev-weights.ts` and edit for the locale (this is
 exactly what `git show b764309e` did for `en-gb`). Then wire **every** list below — the arc touched
@@ -378,7 +375,7 @@ Porirua 5026`). Strip a trailing postcode-shaped run from a parent-candidate seg
   postcode, and only for a country with a known codex shape (else byte-stable).
 - **Provenance is loud or it lies.** Per-country self-check probes (#1283), the `serializePairIndex`
   duplicate throw, the header md5s, and the freshness guard all exist because a reassuring-looking
-  `PROBE MISS` / silent skip / stale byte-identical artifact verified nothing. Loud beats silent at
+  `PROBE MISS` / silent skip / stale byte-identical artifact verified no fact about the artifact. Loud beats silent at
   every hand-off.
 
 ## The shipped mechanism (file map)

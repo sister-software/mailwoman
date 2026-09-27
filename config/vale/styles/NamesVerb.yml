@@ -1,0 +1,9 @@
+## Refuse "names" as a vague verb.
+##
+## "The flag names the file" hides what the code does with the file. Say what happens instead:
+## the flag selects, reads, writes, points to, or identifies it.
+extends: existence
+message: "'%s' uses 'names' as a verb. Say what the subject does with the thing it identifies."
+level: error
+tokens:
+  - '\Wnames\s(a|the)'

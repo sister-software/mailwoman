@@ -7,13 +7,13 @@
  *   enrichment: a village answer carries the postcode the gazetteer attests for it.
  *
  *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real
- *   city) gets nothing — emitting one of many would state a precision the evidence doesn't hold.
+ *   city) gets no postcode — emitting one of many would state a precision the evidence doesn't hold.
  *   Tolerate-and-degrade like every optional artifact: a machine without the DBs answers undefined
  *   everywhere and the consumer simply doesn't decorate.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PostcodeLocalityDatabase } from "mailwoman/gazetteer-pipeline/postcode/locality/schema"
 
@@ -28,7 +28,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 	const statements = new Map<string, ReturnType<DatabaseClient["prepare"]>>()
 
 	for (const suffix of POSTCODE_LOCALITY_SUFFIXES) {
-		const path = dataRootPath("wof", `postcode-locality-${suffix}.db`)
+		const path = wofDatabasePath(`postcode-locality-${suffix}.db`)
 
 		if (!(await pathExists(path))) continue
 

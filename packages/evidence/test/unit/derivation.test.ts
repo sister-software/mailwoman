@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The derivation projection names every constraint in order and fabricates nothing.
+ * @file The derivation projection names every constraint in order and fabricates no constraint.
  */
 
 import {

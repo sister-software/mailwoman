@@ -1,7 +1,7 @@
 # Overture addresses fill-rate record — release 2026-05-20.0 (2026-06-10)
 
 Committed reference copy of the #471 probe output (canonical lives beside the data on the
-playpen). This table re-scoped four issues before any burned a session on a dead premise:
+lab volume). This table re-scoped four issues before any burned a session on a dead premise:
 #472 (non-US = 100% OA lineage → US-NAD pivot), #473 (TW/JP postcode 0%), #474 (ES-only),
 #475 (postal_city is US-only — and GO at 61.9%). CA postcode 99.8% = the Canada-locale GO.
 

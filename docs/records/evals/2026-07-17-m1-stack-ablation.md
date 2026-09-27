@@ -35,7 +35,7 @@ consolidation ledger (P2): it prices what each layer warrants at inference time 
 collapses the country tag everywhere (−66.5 us / −60.0 fr / −63.4 parity — country is carried
 almost entirely by the atlas feed), with locality −21.6 and region −16.6 on US riding with it. The
 raw-model rows confirm it: of the ~9-point total stack value on us/fr/parity, nearly all of it is
-this one channel. The audit's "retrieval-augmented" framing is literal — the atlas channel is
+this one channel. The audit's "retrieval-augmented" framing is literal. The atlas channel is
 required; everything else is trim.
 
 **2. The query-shape prior COSTS 2.3 micro on clean US addresses — and this is the clean-arena

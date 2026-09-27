@@ -34,12 +34,15 @@ export interface StubRequestConfig {
 	headers?: Record<string, unknown>
 	timeout?: number
 	/**
-	 * Set by a binary request path (`"arraybuffer"`). Absent on a JSON client's calls.
+	 * Set by a binary request path (`"arraybuffer"`).
+	 *
+	 * Absent on a JSON client's calls.
 	 */
 	responseType?: string
 	/**
-	 * The per-request `axios-cache-interceptor` override — `false` is how a caller turns caching off for one call without
-	 * touching `core/api`.
+	 * The per-request `axios-cache-interceptor` override.
+	 *
+	 * `false` is how a caller turns caching off for one call without touching `core/api`.
 	 */
 	cache?: unknown
 }
@@ -51,22 +54,27 @@ export interface StubOutcome {
 	status?: number
 	statusText?: string
 	/**
-	 * The RAW body, as the transport would hand it to Axios's `transformResponse`. A string here is what an upstream
-	 * serving html under a 200 actually looks like. a `Buffer` is what Axios's Node adapter produces for `responseType:
-	 * "arraybuffer"`. Anything else is JSON-serialized the way a JSON endpoint would.
+	 * The RAW body, as the transport would hand it to Axios's `transformResponse`.
+	 *
+	 * A string here is what an upstream serving html under a 200 actually looks like.
+	 * A `Buffer` is what Axios's Node adapter produces for `responseType: "arraybuffer"`.
+	 *
+	 * Anything else is JSON-serialized the way a JSON endpoint would.
 	 */
 	body?: unknown
 	headers?: Record<string, string>
 	/**
-	 * A transport-level failure — no http response ever arrives. `code` picks the class: `ERR_NETWORK` for a dropped
-	 * socket, `econnaborted` for this attempt's own timeout firing.
+	 * A transport-level failure — no http response ever arrives.
+	 *
+	 * `code` picks the class: `ERR_NETWORK` for a dropped socket, `econnaborted`
+	 * for this attempt's own timeout firing.
 	 */
 	throws?: { message: string; code: string }
 }
 
 /**
- * The Axios overrides an {@linkcode APIClient} accepts, reached through `APIClientConfig` rather than by importing
- * `axios`.
+ * The Axios overrides an {@linkcode APIClient} accepts, reached through `APIClientConfig`
+ * rather than by importing `axios`.
  */
 export type AxiosOverrides = NonNullable<APIClientConfig["axios"]>
 
@@ -84,28 +92,35 @@ export interface StubTransport {
 	 */
 	configs: StubRequestConfig[]
 	/**
-	 * `clock.now()` at each dispatch, when a clock was supplied. The pacing assertions read this.
+	 * `clock.now()` at each dispatch, when a clock was supplied.
+	 *
+	 * The pacing assertions read this.
 	 */
 	dispatchTimes: number[]
 }
 
 export interface StubTransportOptions {
 	/**
-	 * Records a timestamp into {@linkcode StubTransport.dispatchTimes} on every dispatch. Omit when timing is not under
-	 * test.
+	 * Records a timestamp into {@linkcode StubTransport.dispatchTimes} on every dispatch.
+	 *
+	 * Omit when timing is not under test.
 	 */
 	clock?: { now(): number }
 	/**
-	 * The body served when an outcome names none. Defaults to `{ ok: true }`; pass the envelope the client under test
-	 * expects when it validates one (BDC's `{ data: [] }`, say).
+	 * The body served when an outcome names none.
+	 *
+	 * Defaults to `{ ok: true }`; pass the envelope the client under test expects
+	 * when it validates one (BDC's `{ data: [] }`, say).
 	 */
 	defaultBody?: unknown
 }
 
 /**
- * Build an Axios-shaped rejection without importing `axios`. `isAxiosError(payload)` is `isObject(payload) &&
- * payload.isAxiosError === true`, and everything downstream reads `config`, `code`, and `response` — so this is the
- * full interface that matters.
+ * Build an Axios-shaped rejection without importing `axios`.
+ *
+ * `isAxiosError(payload)` is `isObject(payload) && payload.isAxiosError === true`,
+ * and everything downstream reads `config`, `code`, and `response`.
+ * So this is the full interface that matters.
  */
 export function axiosLikeError(message: string, code: string, config: StubRequestConfig, response?: unknown): Error {
 	const error = new Error(message) as Error & Record<string, unknown>
@@ -122,11 +137,13 @@ export function axiosLikeError(message: string, code: string, config: StubReques
 }
 
 /**
- * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted) and records every dispatch.
+ * A stub Axios adapter that replays `outcomes` (holding on the last entry once exhausted)
+ * and records every dispatch.
  *
- * It reproduces what Axios's real adapters do on a failing status — reject with an Axios-shaped error carrying the
- * response — because `validateStatus` is applied by the adapter rather than by the interceptor chain. A test that
- * resolves with a 4xx instead would exercise a path the real transport never takes.
+ * It reproduces what Axios's real adapters do on a failing status — reject with an
+ * Axios-shaped error carrying the response — because `validateStatus` is applied
+ * by the adapter rather than by the interceptor chain.
+ * A test that resolves with a 4xx instead would exercise a path the real transport never takes.
  */
 export function stubTransport(outcomes: StubOutcome[], options: StubTransportOptions = {}): StubTransport {
 	const { clock, defaultBody = { ok: true } } = options
@@ -154,8 +171,8 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 		const status = outcome.status ?? HTTP_OK
 
 		const response = {
-			// Axios's `transformResponse` runs on the RAW body, so hand it exactly what the wire would: a
-			// string passes through untouched (that is how an html error page under a 200 actually arrives),
+			// Axios's `transformResponse` runs on the RAW body, so hand it exactly what the wire would:
+			// a string passes through untouched (that is how an html error page under a 200 actually arrives),
 			// bytes pass through untouched, and anything else is serialized the way a JSON endpoint would.
 			data:
 				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
@@ -177,7 +194,8 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 		)
 	}
 
-	// Structurally an Axios adapter. The precise `AxiosAdapter` signature isn't nameable here without
-	// importing `axios`, which the packages under test deliberately do not depend on.
+	// Structurally an Axios adapter.
+	// The precise `AxiosAdapter` signature isn't nameable here without importing `axios`,
+	// which the packages under test deliberately do not depend on.
 	return { axios: { adapter } as AxiosOverrides, calls, configs, dispatchTimes }
 }

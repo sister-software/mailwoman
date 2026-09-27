@@ -13,7 +13,7 @@
  *
  *   - `evals/scores-by-version.json` — the per-model score ledger (`mailwoman eval ledger-append`
  *       exists but was manual, so it froze).
- *   - `docs/records/site-2026-08/releases.mdx` — the version matrix, stuck showing an old `(current)` row.
+ *   - `docs/engineering/releases.mdx` — the version matrix, stuck showing an old `(current)` row.
  *   - `docs/articles/developers/status.mdx` — the status info box, citing a superseded release.
  *
  *   the model-vs-npm distinction (see the "Two version series" intro of releases.mdx). Two version
@@ -29,7 +29,7 @@
  *   the three checks (keyed off the model-card version V):
  *
  *   1. `evals/scores-by-version.json` has a run whose `model_version === V`.
- *   2. `docs/records/site-2026-08/releases.mdx` has a matrix row for V, and the `(current)` marker sits on V's
+ *   2. `docs/engineering/releases.mdx` has a matrix row for V, and the `(current)` marker sits on V's
  *      row — or on a newer row when every release above V is a "model unchanged" (code-only) row.
  *   3. `docs/articles/developers/status.mdx` cites V in its `:::info[Verified as of …]` box.
  *
@@ -45,7 +45,7 @@
  *     yarn mwops release verify-metadata \
  *       --card packages/neural-weights-en-us/model-card.json \
  *       --ledger evals/scores-by-version.json \
- *       --releases docs/records/site-2026-08/releases.mdx \
+ *       --releases docs/engineering/releases.mdx \
  *       --status docs/articles/developers/status.mdx
  *
  *   The path overrides exist so the surfaces can be pointed at doctored copies when exercising the
@@ -55,7 +55,7 @@
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
-import { resolvePath } from "path-ts"
+import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
@@ -85,9 +85,10 @@ interface MatrixRow {
 }
 
 export interface VerifyReleaseMetadataOptions {
-	repoRoot: string
+	repoRoot: PathBuilderLike
 	/**
-	 * Repo-relative (or absolute) overrides for each surface. the defaults are the real repo files.
+	 * Repo-relative (or absolute) overrides for each surface.
+	 * The defaults are the real repo files.
 	 */
 	card?: string
 	ledger?: string
@@ -97,8 +98,10 @@ export interface VerifyReleaseMetadataOptions {
 }
 
 /**
- * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`). A status page outside it is not the page a
- * reader opens, so citing the shipped model there proves nothing.
+ * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`).
+ *
+ * A status page outside it is not the page a reader opens, so citing the shipped
+ * model there establishes no published fact.
  */
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
 
@@ -110,10 +113,11 @@ const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
 /**
  * Refuse a status path outside the published tree.
  *
- * This check verifies that A file cites the shipped version, and for four releases it verified the archived August copy
- * while the live page said 8.6.0 and model 7.0.0 (#2259). A target that can move out from under a check while still
- * resolving reports success from the wrong place, and absence of failure was read as propagation — so the path is
- * constrained rather than merely defaulted.
+ * This check verifies that A file cites the shipped version, and for four releases it
+ * verified the archived August copy while the live page said 8.6.0 and model 7.0.0 (#2259).
+ * A target that can move out from under a check while still resolving reports success
+ * from the wrong place, and absence of failure was read as propagation.
+ * So the path is constrained rather than merely defaulted.
  */
 function assertPublishedStatusPage(statusPath: string): void {
 	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
@@ -129,15 +133,18 @@ export interface SurfaceResult {
 	surface: string
 	ok: boolean
 	/**
-	 * On OK: a one-line summary. On failure: the actionable remediation (may be multi-line).
+	 * On OK: a one-line summary.
+	 *
+	 * On failure: the actionable remediation (may be multi-line).
 	 */
 	message: string
 }
 
 /**
- * Read the shipped model version — the `version` field of the weights bundle's model card. This is the anchor for every
- * check: not npm / package.json, so a code-only release (which bumps npm but leaves the card untouched) is judged
- * against the model it actually ships.
+ * Read the shipped model version — the `version` field of the weights bundle's model card.
+ *
+ * This is the anchor for every check: not npm / package.json, so a code-only release
+ * (which bumps npm but leaves the card untouched) is judged against the model it actually ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
 	const card = await readLocalJSONFile<{ version?: string }>(cardPath)
@@ -180,20 +187,21 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 }
 
 /**
- * Parse the releases.mdx version matrix into ordered data rows. A data row is a `|`-delimited table line whose first
- * cell carries a version-like token. the header and `---` separator rows are skipped. The "## The matrix" table is the
- * only one whose rows look like this, so a global scan is safe.
+ * Parse the releases.mdx version matrix into ordered data rows.
+ *
+ * A data row is a `|`-delimited table line whose first cell carries a version-like token.
+ * The header and `---` separator rows are skipped.
+ *
+ * The "## The matrix" table is the only one whose rows look like this, so a global scan is safe.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
 	for (const line of TextSpliterator.from(markdown)) {
-		const trimmed = line.trim()
-
-		if (!trimmed.startsWith("|")) continue
+		if (!line.startsWith("|")) continue
 
 		// Split into cells, dropping the leading/trailing empties from the outer pipes.
-		const cells = trimmed
+		const cells = line
 			.split("|")
 			.slice(1, -1)
 			.map((cell) => cell.trim())
@@ -203,7 +211,8 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 		const versionCell = cells[0]!.replaceAll("**", "")
 		const lineageCell = cells[2]!
 
-		// Skip header ("npm") and separator ("---") rows — they carry no version token.
+		// Skip header ("npm") and separator ("---") rows.
+		// They carry no version token.
 		if (!/\d/.test(versionCell)) continue
 
 		rows.push({ versionCell, lineageCell })
@@ -213,8 +222,9 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 }
 
 /**
- * The version on the matrix row carrying the `(current)` marker, or null when no row does. Shared with
- * `check-release-parity.ts`, which compares this surface against npm latest.
+ * The version on the matrix row carrying the `(current)` marker, or null when no row does.
+ *
+ * Shared with `check-release-parity.ts`, which compares this surface against npm latest.
  */
 export function currentMatrixVersion(markdown: string): string | null {
 	const row = parseMatrixRows(markdown).find((candidate) => candidate.versionCell.includes("(current)"))
@@ -223,8 +233,8 @@ export function currentMatrixVersion(markdown: string): string | null {
 }
 
 /**
- * Check 2 — releases.mdx has a matrix row for V, and the `(current)` marker is on V's row (or on a newer row when every
- * release above V is a documented "model unchanged" code-only bump).
+ * Check 2 — releases.mdx has a matrix row for V, and the `(current)` marker is on V's row
+ * (or on a newer row when every release above V is a documented "model unchanged" code-only bump).
  */
 async function checkReleases(version: string, releasesPath: string): Promise<SurfaceResult> {
 	const surface = "releases-matrix"
@@ -236,14 +246,14 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 	const currentIndex = rows.findIndex((row) => row.versionCell.includes("(current)"))
 
 	const rowFix =
-		`      Add a matrix row for ${version} under "## The matrix" in docs/records/site-2026-08/releases.mdx\n` +
+		`      Add a matrix row for ${version} under "## The matrix" in docs/engineering/releases.mdx\n` +
 		`      (newest-first; first column \`**${version}** (current)\`, with date / model lineage / what-it-added / per-tag-truth).`
 
 	if (vIndex === -1) {
 		return {
 			surface,
 			ok: false,
-			message: `docs/records/site-2026-08/releases.mdx has NO matrix row for ${version}.\n` + rowFix,
+			message: `docs/engineering/releases.mdx has NO matrix row for ${version}.\n` + rowFix,
 		}
 	}
 
@@ -252,7 +262,7 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 			surface,
 			ok: false,
 			message:
-				`docs/records/site-2026-08/releases.mdx has no "(current)" marker in the matrix.\n` +
+				`docs/engineering/releases.mdx has no "(current)" marker in the matrix.\n` +
 				`      Mark ${version}'s first column as \`**${version}** (current)\`.`,
 		}
 	}
@@ -263,9 +273,10 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 
 	const { versionCell } = rows[currentIndex]!
 
-	// Rows are newest-first. current above V (smaller index) is fine only if every row strictly newer
-	// than V is a code-only "model unchanged" bump — then V is still the live model and the marker
-	// rightly sits on the newest npm row.
+	// Rows are newest-first.
+	// Current above V (smaller index) is fine only if every row strictly newer than
+	// V is a code-only "model unchanged" bump — then V is still the live model
+	// and the marker rightly sits on the newest npm row.
 	if (currentIndex < vIndex) {
 		const newerRows = rows.slice(currentIndex, vIndex)
 		const nonCodeOnly = newerRows.filter((row) => !/unchanged/i.test(row.lineageCell))
@@ -282,18 +293,19 @@ async function checkReleases(version: string, releasesPath: string): Promise<Sur
 			surface,
 			ok: false,
 			message:
-				`docs/records/site-2026-08/releases.mdx marks "${versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
+				`docs/engineering/releases.mdx marks "${versionCell}" as (current), but a newer row above model ${version} introduces a NEW model:\n` +
 				`        ${nonCodeOnly.map((row) => row.versionCell).join(", ")}\n` +
 				`      Either the model card was not bumped for that model release, or that row is mislabeled. Reconcile the card version with the matrix.`,
 		}
 	}
 
-	// current below V (larger index) — the marker is stuck on an older release than the shipped model.
+	// current below V (larger index).
+	// The marker is stuck on an older release than the shipped model.
 	return {
 		surface,
 		ok: false,
 		message:
-			`docs/records/site-2026-08/releases.mdx marks "${versionCell}" as (current), but the shipped model is ${version}.\n` +
+			`docs/engineering/releases.mdx marks "${versionCell}" as (current), but the shipped model is ${version}.\n` +
 			`      Move the "(current)" marker to ${version}'s row (first column \`**${version}** (current)\`) and drop it from the stale row.`,
 	}
 }
@@ -339,8 +351,10 @@ export interface VerifyReleaseMetadataReport {
 }
 
 /**
- * Check every surface for the shipped model version. Throws when any surface is stale, with each remediation already
- * reported through `log`, so a caller's exit code follows the verdict.
+ * Check every surface for the shipped model version.
+ *
+ * @throws When any surface is stale, with each remediation already reported through `log`,
+ * so a caller's exit code follows the verdict.
  */
 export async function verifyReleaseMetadata(
 	options: VerifyReleaseMetadataOptions
@@ -354,10 +368,7 @@ export async function verifyReleaseMetadata(
 	const paths = {
 		cardPath: resolvePath(repoRoot, options.card ?? "packages/neural-weights-en-us/model-card.json"),
 		ledgerPath: resolvePath(repoRoot, options.ledger ?? "evals/scores-by-version.json"),
-		// Not an archive, despite the directory. `docs/records/site-2026-08/releases.mdx` is the maintained release
-		// matrix — agents.md names it as where a version with no ledger row carries its headline, and it took 10.0.0
-		// in `76c08d950`. It is deliberately unpublished, so there is no live page to move this to.
-		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/records/site-2026-08/releases.mdx"),
+		releasesPath: resolvePath(repoRoot, options.releases ?? "docs/engineering/releases.mdx"),
 		statusPath: resolvePath(repoRoot, statusRelative),
 	}
 

@@ -2,18 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<DebugInfo>` — what a bug report needs and a screenshot cannot carry: which build the page is, which model it
- *   loaded, and which backend actually executed it.
- *
- *   The backend is the one worth naming twice. `web/onnx-runner.ts` asks for `["webgpu", "wasm"]` and falls through
- *   to a wasm-only session inside a bare `catch`, so a page that works is not evidence that WebGPU ran — the two
- *   outcomes look identical from the outside. This row is the difference, which matters because the int8 graph's
- *   mobile-Safari invariant is about the WebGPU execution provider specifically.
- *
- *   It also logs the same record once per change, so a reporter can paste a console line instead of transcribing a
- *   panel, and so a remote session leaves the facts in the log it already collects.
- *
- *   node-safe: pure React, no maplibre.
+ *   Display and log build, model, and runtime details for bug reports.
+ *   Report the actual execution backend because successful loading does not imply WebGPU ran.
  */
 
 import { type ReactNode, useEffect, useMemo } from "react"
@@ -26,12 +16,13 @@ export interface DebugInfoProps {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm` backend that would otherwise be a WebGPU
-	 * failure.
+	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm`
+	 * backend that would otherwise be a WebGPU failure.
 	 */
 	forceWASM?: boolean
 	/**
-	 * The model version the runtime loaded — the training series, which is not the npm version.
+	 * The model version the runtime loaded.
+	 * The training series, which is not the npm version.
 	 */
 	selectedVersion?: string | null
 	/**
@@ -55,8 +46,9 @@ function Row({ label, value }: { label: string; value: string }): ReactNode {
 export function DebugInfo({ activeBackend, forceWASM, selectedVersion, ready }: DebugInfoProps): ReactNode {
 	const build = useBuildInfo()
 
-	// Memoized on the primitives it reads, so the log below fires when a value changes rather than on every render —
-	// a record rebuilt each render would be a new object each time and log continuously.
+	// Memoized on the primitives it reads, so the log below fires when a value changes
+	// rather than on every render.
+	// A record rebuilt each render would be a new object each time and log continuously.
 	const record = useMemo(
 		() => ({
 			app: build?.app ?? "—",

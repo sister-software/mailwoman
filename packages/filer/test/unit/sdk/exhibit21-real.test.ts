@@ -26,10 +26,9 @@
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { htmlToLayoutText } from "@mailwoman/core/html/text"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { parseExhibit21 } from "@mailwoman/filer/sdk/exhibit21"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 interface ExpectedSubsidiary {
@@ -41,29 +40,33 @@ interface ExpectedFixtures {
 	fixtures: Record<string, { subsidiaries: ExpectedSubsidiary[] }>
 }
 
-const FIXTURE_DIRECTORY = resolvePackagePath("@mailwoman/filer", "test-fixtures", "edgar")
+const FIXTURE_DIRECTORY = resolvePackageDirectory("@mailwoman/filer")("test-fixtures", "edgar")
 
-// parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly rather than
-// degrade to a fallback, since it is the interface every assertion below is measured against.
-const expected = await readLocalJSONFile<ExpectedFixtures>(join(FIXTURE_DIRECTORY, "expected.json"))
+// parseJSONStrict rather than tryParsingJSON: a corrupt expected.json must fail the suite loudly
+// rather than degrade to a fallback, since it is the interface every assertion below is measured against.
+const expected = await readLocalJSONFile<ExpectedFixtures>(FIXTURE_DIRECTORY("expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
 
 async function fixture(name: string): Promise<string> {
-	return await readLocalTextFile(join(FIXTURE_DIRECTORY, name))
+	return await readLocalTextFile(FIXTURE_DIRECTORY(name))
 }
 
 /**
- * The document as the parser's own preprocessing leaves it — what the substring invariant is measured against.
+ * The document as the parser's own preprocessing leaves it.
+ * What the substring invariant is measured against.
  */
 function normalized(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
 }
 
 /**
- * `alti-global-2025.htm` separates its entries with nothing but a double space, so no name/jurisdiction boundary exists
- * to be found. Abstaining entirely is the required answer for it — see `expected.json`'s comment. Every other vendored
- * document states a subsidiary list a reader can follow, so zero is a parser failure there rather than an abstention.
+ * `alti-global-2025.htm` separates its entries with only a double space,
+ * so no name/jurisdiction boundary exists to be found.
+ *
+ * Abstaining entirely is the required answer for it — see `expected.json`'s comment.
+ * Every other vendored document states a subsidiary list a reader can follow,
+ * so zero is a parser failure there rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 
@@ -101,9 +104,10 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	/**
-	 * Each of these was emitted as a subsidiary name by the 2026-08-03 run. They are all literal substrings of their
-	 * document, so the substring invariant admits every one of them — which is exactly why this assertion exists
-	 * separately from it.
+	 * Each of these was emitted as a subsidiary name by the 2026-08-03 run.
+	 *
+	 * They are all literal substrings of their document, so the substring invariant admits
+	 * every one of them, which is exactly why this assertion exists separately from it.
 	 */
 	const NEVER_A_SUBSIDIARY_NAME = [
 		/^ex-?21(\.\d+)?$/i,

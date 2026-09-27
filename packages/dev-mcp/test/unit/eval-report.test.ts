@@ -5,22 +5,22 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { missingWeightsCacheArtifacts, readEvalReport, summarizeEvalReport } from "@mailwoman/dev-mcp/eval-report"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-async function outDir(verdict?: unknown, provenance?: string): Promise<string> {
-	const dir = String(fixtures.use(await temporaryDirectory("mwdev-eval-report-")).path)
+async function outDir(verdict?: unknown, provenance?: string): Promise<PathBuilder> {
+	const dir = fixtures.use(await temporaryDirectory("mwdev-eval-report-")).path
 
 	if (verdict !== undefined) {
-		await writeLocalJSONFile(verdict, join(dir, "verdict.json"))
+		await writeLocalJSONFile(verdict, dir("verdict.json"))
 	}
 
 	if (provenance !== undefined) {
-		await writeLocalFile(provenance, join(dir, "provenance.txt"))
+		await writeLocalFile(provenance, dir("provenance.txt"))
 	}
 
 	return dir
@@ -48,8 +48,8 @@ describe("readEvalReport", () => {
 	})
 
 	it("distinguishes an unmeasured floor from one that missed the bar", async () => {
-		// The eval marks an unmeasured floor failing so it cannot pass by default. Reading that as "missed the bar"
-		// sends someone tuning a metric that never ran.
+		// The eval marks an unmeasured floor failing so it cannot pass by default.
+		// Reading that as "missed the bar" sends someone tuning a metric that never ran.
 		const report = await readEvalReport(
 			await outDir({
 				...PASSING,
@@ -110,8 +110,8 @@ describe("readEvalReport", () => {
 
 describe("summarizeEvalReport", () => {
 	it("names the graded artifact before the verdict", async () => {
-		// A verdict diffed without this field attributes a quantization delta to the model — it said "fp32" for a
-		// verifiably int8 cache on 2026-07-16.
+		// A verdict diffed without this field attributes a quantization delta to the model —
+		// it said "fp32" for a verifiably int8 cache on 2026-07-16.
 		const summary = summarizeEvalReport(await readEvalReport(await outDir(PASSING), "", ""))
 
 		expect(summary).toContain("graded the weights-cache artifact")
@@ -161,21 +161,22 @@ describe("missingWeightsCacheArtifacts", () => {
 	})
 
 	it("catches a cache missing what its OWN card declares", async () => {
-		// The #1516 failure has no signal of its own: the channel resolves off, the run scores lower, and the operator
-		// reads a model regression. Measured 2026-08-16 — a hand-staged three-file cache graded to completion and
-		// reported us.country_homograph_f1 at 0.0 against a 64.8 floor.
+		// The #1516 failure has no signal of its own: the channel resolves off,
+		// the run scores lower, and the operator reads a model regression.
+		// Measured 2026-08-16 — a hand-staged three-file cache graded to completion
+		// and reported us.country_homograph_f1 at 0.0 against a 64.8 floor.
 		await using rootDirectory = await temporaryDirectory("mwdev-wc-")
 		const root = rootDirectory.path
 
 		const packageDir = weightsCachePackageDir(root, "en-us")
 
 		await makeDirectories(packageDir)
-		await writeLocalTextFile("x", join(packageDir, "model.onnx"))
-		await writeLocalTextFile("x", join(packageDir, "tokenizer.model"))
+		await writeLocalTextFile("x", packageDir("model.onnx"))
+		await writeLocalTextFile("x", packageDir("tokenizer.model"))
 
 		await writeLocalJSONFile(
 			{ files_md5: { $comment: "ignored", "model.onnx": "a", "street-type-lexicon-v3.json": "b" } },
-			join(packageDir, "model-card.json")
+			packageDir("model-card.json")
 		)
 
 		const missing = await missingWeightsCacheArtifacts(root)
@@ -194,10 +195,10 @@ describe("missingWeightsCacheArtifacts", () => {
 		await makeDirectories(packageDir)
 
 		for (const artifact of ["model.onnx", "tokenizer.model"]) {
-			await writeLocalTextFile("x", join(packageDir, artifact))
+			await writeLocalTextFile("x", packageDir(artifact))
 		}
 
-		await writeLocalJSONFile({ files_md5: { $comment: "docs only" } }, join(packageDir, "model-card.json"))
+		await writeLocalJSONFile({ files_md5: { $comment: "docs only" } }, packageDir("model-card.json"))
 
 		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")
 	})
@@ -211,12 +212,12 @@ describe("missingWeightsCacheArtifacts", () => {
 		await makeDirectories(packageDir)
 
 		for (const artifact of ["model.onnx", "tokenizer.model"]) {
-			await writeLocalTextFile("x", join(packageDir, artifact))
+			await writeLocalTextFile("x", packageDir(artifact))
 		}
 
 		await writeLocalJSONFile(
 			{ files_md5: { "model.onnx": "a", "tokenizer.model": "b" } },
-			join(packageDir, "model-card.json")
+			packageDir("model-card.json")
 		)
 
 		expect((await missingWeightsCacheArtifacts(root)).kind).toBe("ok")

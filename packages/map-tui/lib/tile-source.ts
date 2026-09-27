@@ -4,12 +4,13 @@
 /**
  * PMTiles archive reader for map-tui.
  *
- * TileSource wraps a local `.pmtiles` file (node:fs/promises FileHandle) behind the pmtiles `Source` interface, decodes
- * each requested tile's MVT payload via ./mvt.ts, and keeps a small LRU cache of decoded tiles so repeated draws of the
- * same viewport don't re-decode.
+ * TileSource wraps a local `.pmtiles` file (node:fs/promises FileHandle) behind the pmtiles
+ * `Source` interface, decodes each requested tile's MVT payload via ./mvt.ts, and keeps a
+ * small LRU cache of decoded tiles so repeated draws of the same viewport don't re-decode.
  */
 
 import { type FileHandle, open } from "@mailwoman/core/fs/readers"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { Parser } from "htmlparser2"
 import { PMTiles, type RangeResponse, type Source } from "pmtiles"
 
@@ -20,8 +21,10 @@ export interface DecodedTile {
 }
 
 /**
- * What a renderer needs from a tile archive — the read surface of {@link TileSource}, separated so a renderer can be
- * driven by any provider: a single archive, a stub in tests, or a composite over several archives.
+ * What a renderer needs from a tile archive.
+ *
+ * The read surface of {@link TileSource}, separated so a renderer can be driven by any
+ * provider: a single archive, a stub in tests, or a composite over several archives.
  */
 export interface TileProvider {
 	readonly minZoom: number
@@ -54,7 +57,8 @@ class FilePMTilesSource implements Source {
 const TILE_CACHE_LIMIT = 64
 
 /**
- * Plain-text attribution out of archive metadata (html tags stripped, entities decoded); empty string when absent.
+ * Plain-text attribution out of archive metadata (html tags stripped, entities decoded);
+ * empty string when absent.
  */
 export function readAttribution(metadata: unknown): string {
 	if (
@@ -70,10 +74,12 @@ export function readAttribution(metadata: unknown): string {
 }
 
 /**
- * Plain text out of an html fragment via `htmlparser2`'s event parser — a hand scan misreads `<` inside attribute
- * values and unclosed tags, and the parser's own entity decoding covers the full named set a metadata field can carry.
- * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design, and one attribution
- * string does not price core's shipped data into every consumer.
+ * Plain text out of an html fragment via `htmlparser2`'s event parser — a hand scan
+ * misreads `<` inside attribute values and unclosed tags, and the parser's own entity
+ * decoding covers the full named set a metadata field can carry.
+ *
+ * Local rather than `@mailwoman/core`'s `htmlToText`: this package stays standalone by design,
+ * and one attribution string does not price core's shipped data into every consumer.
  */
 function htmlText(html: string): string {
 	let text = ""
@@ -83,13 +89,15 @@ function htmlText(html: string): string {
 	parser.write(html)
 	parser.end()
 
-	return text.replaceAll(/\s+/gu, " ").trim()
+	return normalizeWhitespace(text)
 }
 
 /**
- * A single LRU cache slot. Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent" (`{
- * tile: null }`) apart from "not yet cached" (no entry in the Map) using plain presence, with no comparison against
- * `undefined` needed.
+ * A single LRU cache slot.
+ *
+ * Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent"
+ * (`{ tile: null }`) apart from "not yet cached" (no entry in the Map) using plain
+ * presence, with no comparison against `undefined` needed.
  */
 interface CacheEntry {
 	tile: DecodedTile | null
@@ -126,8 +134,8 @@ export class TileSource implements TileProvider, AsyncDisposable {
 	}
 
 	/**
-	 * Opens a local `.pmtiles` path, or an `http(s)://` URL read via range requests — a hosted archive needs no tile
-	 * server, only a host honoring `Range` (any static file server or object store does).
+	 * Opens a local `.pmtiles` path, or an `http(s)://` URL read via range requests — a hosted archive
+	 * needs no tile server, only a host honoring `Range` (any static file server or object store does).
 	 */
 	static async open(pathOrURL: string): Promise<TileSource> {
 		if (/^https?:\/\//u.test(pathOrURL)) {
@@ -146,7 +154,8 @@ export class TileSource implements TileProvider, AsyncDisposable {
 	}
 
 	/**
-	 * Decoded tile, LRU-cached (64 entries). null = tile absent from the archive.
+	 * Decoded tile, LRU-cached (64 entries).
+	 * Null = tile absent from the archive.
 	 */
 	async getTile(z: number, x: number, y: number): Promise<DecodedTile | null> {
 		const key = `${z}/${x}/${y}`

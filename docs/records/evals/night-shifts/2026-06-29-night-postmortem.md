@@ -94,7 +94,7 @@ OSM rooftop tier extended to DE + NL with the existing pipeline (no code change 
 import (addr:housenumber nodes with no addr:street); DE-Berlin and NL (BAG) tag streets, so `--recover` is
 an FR-specific change rather than a blanket pass. Measure the gap before reaching for recovery. The extracts are local
 artifacts; public deployment is blocked on B3 (browser tier) + #249 (ODbL legal). NL at 2.3 GB is too big for
-browser httpvfs as-is — a sub-region (Amsterdam) would be the demo extract.
+browser httpvfs as-is. A sub-region (Amsterdam) would be the demo extract.
 
 ## C — Gauntlet Phase-2 hardening
 

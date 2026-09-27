@@ -2,18 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The tool table — the tested interface. `server.ts` only adapts it to the SDK's envelope.
+ * The tool table — the tested interface; `server.ts` only adapts it to the SDK's envelope.
  *
- *   Each tool module owns its MCP metadata and wiring. measurements live beside the package root.
- *
- *   Four tools that spawn the compiled CLI live in `../spawn-tools.ts` and are appended below.
- *
- *   Two rules bind every result:
- *
- *   1. **A number never travels without its denominator.** `n_requested`, `n_evaluated`, `n_errored` are mandatory, and
- *      the confidence bound lives inside `summary` — the sentence an agent relays — rather than in a field it can drop.
- *   2. **Absence is reported as absence.** A stage that produced nothing says so and says why. nothing here fills in a
- *      value the pipeline did not produce.
+ * Two rules bind every result: a number never travels without its denominator, and absence is reported as absence — no
+ * line here fills in a value the pipeline did not produce.
  */
 
 import { buildSpawnTools } from "#spawn-tools"
@@ -26,7 +18,9 @@ import { constraintsTool } from "#tools/constraints"
 import { coverageTool } from "#tools/coverage"
 import { daemonTool } from "#tools/daemon"
 import { diagnoseTool } from "#tools/diagnose"
-import { diffParseTool } from "#tools/diff-parse"
+import { diffGeocodeTool } from "#tools/diff/geocode"
+import { diffParseTool } from "#tools/diff/parse"
+import { githubTools } from "#tools/github"
 import { inputsTool } from "#tools/inputs"
 import { interfaceTool } from "#tools/interface"
 import { lookupTool } from "#tools/lookup"
@@ -43,10 +37,11 @@ import { traceTool } from "#tools/trace"
 import { vocabTool } from "#tools/vocab"
 
 export type { DevTool, DevToolDeps, Provenance } from "#tool-kit"
+export { githubTools, type GitHubToolOverrides } from "#tools/github"
 
 /**
- * Every tool, in the order an agent should meet them: what is running, what can be measured, the measurements
- * themselves, then the surfaces that explain a result.
+ * Every tool, in the order an agent should meet them: what is running, what can be measured,
+ * the measurements themselves, then the surfaces that explain a result.
  */
 const FACTORIES = [
 	daemonTool,
@@ -68,15 +63,20 @@ const FACTORIES = [
 	provenanceTool,
 	coverageTool,
 	diffParseTool,
+	diffGeocodeTool,
 	sourcesTool,
 	symbolTool,
 	vocabTool,
 	runsTool,
 ] as const satisfies ReadonlyArray<(deps: DevToolDeps) => DevTool | Promise<DevTool>>
 
+/**
+ * Build every registered tool, in the order an agent should meet them.
+ */
 export async function buildToolTable(deps: DevToolDeps): Promise<DevTool[]> {
 	return [
 		...(await Promise.all(FACTORIES.map((factory) => factory(deps)))),
+		...githubTools(deps),
 		...(await buildSpawnTools(deps.registry, deps.jobs)),
 	]
 }

@@ -37,8 +37,8 @@ const PTCODES = new Map([
 ])
 
 /**
- * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production threshold is a property of the real key
- * distribution, so a test that reused it would need 50 aliases per place to say anything.
+ * Fixture-scale stand-in for {@link GLOSS_KEY_THRESHOLD}: the production threshold is a property of
+ * the real key distribution, so a test that reused it would need 50 aliases per place to say anything.
  */
 const THRESHOLD = 3
 
@@ -60,8 +60,8 @@ interface NameSpec {
 }
 
 /**
- * Stage each place's primary row plus one non-primary row per alias, then run the detectors over the result and read
- * the stamps back.
+ * Stage each place's primary row plus one non-primary row per alias, then run the
+ * detectors over the result and read the stamps back.
  */
 async function stamp(places: PlaceSpec[], names: NameSpec[] | undefined) {
 	using src = DatabaseClient.temp<WOFDatabase>()
@@ -204,7 +204,8 @@ describe("stampNameRoles: the gloss anomaly detector", () => {
 			[]
 		)
 
-		// Both are in the tail the detector reports on. neither is stamped.
+		// Both are in the tail the detector reports on.
+		// Neither is stamped.
 		expect(keyTailPlaces).toBe(2)
 		expect(roleGloss).toBe(0)
 	})
@@ -309,7 +310,8 @@ describe("stampNameRoles: the key-tail census", () => {
 			[]
 		)
 
-		// Toledo is below the threshold, so it is not in the denominator. New York is, and carries no role.
+		// Toledo is below the threshold, so it is not in the denominator.
+		// New York is, and carries no role.
 		expect(keyTailPlaces).toBe(2)
 		expect(keyTailWithRole).toBe(1)
 	})

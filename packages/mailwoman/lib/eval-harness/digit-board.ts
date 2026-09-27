@@ -2,42 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The no digit-ownership board — which tag owns a digit-containing token (Track B).
- *
- *   The third standing board. Board 1 is the global parity floor (`parity-corpus.ts`, broad, "do no
- *   harm"); board 2 is the FR locale fragment board (`fragment-board.ts`, street polarity); this is
- *   board 3, and it exists because Track B's entire defect was visible only as `postcode 25/249 =
- *   0.100` on the parity precision half — 25 rows, no subclass, no interval. A board that cannot put
- *   a CI on a cell cannot grade a fix.
- *
- *   why norway. `#901` measured a 30% residual on Norwegian street-led forms, diagnosed it as
- *   order-sensitive decode, and built `synth-no-street-led` at source weight 12.0 — the maximum
- *   targeted-fix tier — to close it. The YAML Norway problem (`no:` resolves to the boolean `false`
- *   under YAML 1.1, so `country_weights.get("no")` misses and the loader drops every row) meant that
- *   database never contributed a single row to any run since v1.9.0. The fix is #1145.
- *
- *   That makes the baseline unusually clean: shipped v310 has never seen one Norwegian address, so
- *   this board's v310 arm is a true zero-knowledge reading rather than a weak-prior one. Register it before
- *   the retrain exists.
- *
- *   the negative class is the point — the same lesson as board 2's `bare-locality`. Every positive
- *   class here rewards "call the digit a house_number", so a model can ace all five by never
- *   emitting postcode again. `bare-pc` rows carry `expect_no_house_number` and score whether the
- *   parser still reads a real postcode as a postcode. Without it the board cannot tell a learned
- *   distinction from a flipped default, which is exactly the trade board 2 caught v310 not making
- *   (bare-locality held 0.980 -> 0.980).
- *
- *   Why `bare-street-hn` matters most diagnostically: it carries no postcode at all, so nothing
- *   competes for the digit. If the model still says postcode there, the defect is not a
- *   postcode-vs-house_number competition and the whole framing is wrong.
- *
- *   split: surfaces are reserved in `no-digits.surfaces.txt` and `no-street-led` requires
- *   `--exclude-surfaces` (it throws otherwise). Source-disjoint by normalized street surface, never
- *   by record row — row-disjoint leaks the surface across the boundary and measures memorization.
- *
- *   slash hazard: Norwegian `124/1` is one component (cadastral gnr/bnr); Australian `12/345` is two
- *   (unit 12 + house_number 345). Identical surface shape, opposite correct answers. `slash-hn` pins
- *   the Norwegian reading so a future AU intra-word-split database cannot generalize over it unnoticed.
+ *   Board that checks whether the parser tags digits in Norwegian address fragments as a house number or a postcode.
  */
 
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
@@ -50,13 +15,18 @@ import {
 } from "#eval-harness/span-board"
 
 /**
- * Fixture set backing the digit board — house-number and postcode ambiguity probes.
+ * Repository-relative path of the digit-board fixtures.
  */
 export const DIGIT_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/no-digits.jsonl"
 
+/**
+ * Digit-board fixture.
+ */
 export interface DigitFixture extends SpanBoardFixture {
 	/**
-	 * Present on the negative class: the parser must emit no house_number, and must still emit the postcode.
+	 * Marks a negative row.
+	 *
+	 * The parser must emit the expected postcode and no house number.
 	 */
 	expect_no_house_number?: boolean
 }
@@ -65,6 +35,9 @@ export type DigitBoardOptions = SpanBoardOptions
 
 export type DigitBoardOutcome = SpanBoardOutcome
 
+/**
+ * Joins the values of every node with the given tag in input order.
+ */
 const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, tag: string): string =>
 	nodes
 		.filter((n) => n.tag === tag)
@@ -72,6 +45,9 @@ const tagText = (nodes: Array<{ tag: string; value: string; start: number }>, ta
 		.map((n) => n.value)
 		.join(" ")
 
+/**
+ * Runs the digit board against its fixtures.
+ */
 export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<DigitBoardOutcome> {
 	return runSpanBoard<DigitFixture>(
 		{
@@ -86,8 +62,7 @@ export async function runDigitBoard(options: DigitBoardOptions = {}): Promise<Di
 				const hn = tagText(nodes, "house_number")
 				const pc = tagText(nodes, "postcode")
 
-				// The negative class scores two things at once, because either failure is the same mistake:
-				// the postcode must survive and no house_number may be invented from it.
+				// A negative row passes only when the postcode survives and no house number is invented from it.
 				const ok = fixture.expect_no_house_number
 					? foldCaseWhitespace(hn) === "" &&
 						foldCaseWhitespace(pc) === foldCaseWhitespace((fixture.expect.postcode ?? []).join(" "))

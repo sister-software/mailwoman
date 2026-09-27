@@ -48,15 +48,21 @@ export interface LedgerAppendOptions {
 	 */
 	modelPath?: string
 	/**
-	 * Model card JSON (run-metadata defaults). Default `neural-weights-en-us/model-card.json`.
+	 * Model card JSON (run-metadata defaults).
+	 *
+	 * Default `neural-weights-en-us/model-card.json`.
 	 */
 	card?: string
 	/**
-	 * The ledger file. Default `evals/scores-by-version.json`.
+	 * The ledger file.
+	 *
+	 * Default `evals/scores-by-version.json`.
 	 */
 	ledger?: string
 	/**
-	 * ISO date the model trained. Default: today.
+	 * ISO date the model trained.
+	 *
+	 * Default: today.
 	 */
 	trainedAt?: string
 	/**
@@ -68,10 +74,14 @@ export interface LedgerAppendOptions {
 	 */
 	replace?: boolean
 	/**
-	 * The check-revision escape (mirrors the no-silent-check-drift discipline): a `fail` verdict may be ledgered only
-	 * when every failing check is named here — i.e. the operator adjudicated the exact miss at a fork (e.g. a
-	 * per-artifact int8-delta exception recorded in the eval spec's $revision comment). The excepted checks are stamped
-	 * into the row's notes. any UNnamed failure still refuses. Repeatable.
+	 * The check-revision escape (mirrors the no-silent-check-drift discipline):
+	 * a `fail` verdict may be ledgered only when every failing check is
+	 * named here — i.e. the operator adjudicated the exact miss at a fork
+	 * (e.g. A per-artifact int8-delta exception recorded in the eval spec's $revision comment).
+	 *
+	 * The excepted checks are stamped into the row's notes.
+	 * Any UNnamed failure still refuses.
+	 * Repeatable.
 	 */
 	operatorException?: string[]
 }
@@ -93,8 +103,10 @@ interface Ledger {
 }
 
 /**
- * Append one eval run to the ledger. Returns 0 when appended and 1 when refused. (duplicate without `replace`, or an
- * un-excepted `fail` verdict), 2 = usage error.
+ * Append one eval run to the ledger.
+ *
+ * @returns 0 when appended and 1 when refused.
+ * (duplicate without `replace`, or an un-excepted `fail` verdict), 2 = usage error.
  */
 export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {
 	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"
@@ -187,7 +199,8 @@ export async function ledgerAppend(options: LedgerAppendOptions): Promise<number
 	}
 
 	const modelCard: ModelCard = (await pathExists(card)) ? await readLocalJSONFile<ModelCard>(card) : {}
-	// The practiced corpus_version is the short label. the card's is a long provenance sentence.
+	// The practiced corpus_version is the short label.
+	// The card's is a long provenance sentence.
 	const corpusVersion = (modelCard.training?.corpus_version ?? "unknown").split("=")[0]!.trim()
 
 	const row = {

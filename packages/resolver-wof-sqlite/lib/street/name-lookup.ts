@@ -19,51 +19,62 @@
  */
 
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
-import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import { SQLiteLookup } from "@mailwoman/sqlite/lookup"
+import type { PathBuilderLike } from "path-ts"
 
 import type { WOFDatabase } from "#schema"
 import { hasColumn, hasTable } from "#sqlite-utils"
 
 export interface SQLiteStreetNameLookupOpts {
 	/**
-	 * ISO-2 (upper-case) countries this index answers for. Default `["FR"]` (the BAN street-centroids instance).
+	 * ISO-2 (upper-case) countries this index answers for.
+	 *
+	 * Default `["FR"]` (the BAN street-centroids instance).
 	 */
 	countries?: Iterable<string>
 	/**
-	 * Table name. Default `street_centroid`.
+	 * Table name.
+	 *
+	 * Default `street_centroid`.
 	 */
 	table?: string
 }
 
 /**
- * A {@link StreetLocalityEvidence} backed by a street-name SQLite index. Positive evidence only: any doubt (missing
- * table, read miss) returns `false`, so the rerank fails open to the model's ranking.
+ * A {@link StreetLocalityEvidence} backed by a street-name SQLite index.
+ *
+ * Positive evidence only: any doubt (missing table, read miss) returns `false`,
+ * so the rerank fails open to the model's ranking.
  */
-export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposable {
+export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements StreetLocalityEvidence {
 	readonly countries: ReadonlySet<string>
-	readonly #db: DatabaseClient<WOFDatabase>
 	readonly #byName: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #byNameLocality: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #byNamePostcode: ReturnType<DatabaseClient["prepare"]> | undefined
 
-	constructor(dbPath: string, opts: SQLiteStreetNameLookupOpts = {}) {
+	constructor(dbPath: PathBuilderLike, opts: SQLiteStreetNameLookupOpts = {}) {
+		super({ databasePath: dbPath })
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
-		this.#db = new DatabaseClient<WOFDatabase>(dbPath, { readOnly: true })
 		const table = opts.table ?? "street_centroid"
 
-		// Degrade gracefully on an empty/tableless extract — a no-op miss, never a crash (#568 discipline).
-		if (hasTable(this.#db, table)) {
-			// Prefer the #727 phase-4c `name_key` column (foldStreetSurface, indexed by `idx_sc_name` for a direct seek);
-			// fall back to `street_norm` on a pre-rebuild extract (a skip-scan, but correct). The fold used to build
-			// `name_key` must match `foldStreetSurface` here (the fold-parity interface).
-			const keyCol = hasColumn(this.#db, table, "name_key") ? "name_key" : "street_norm"
-			this.#byName = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
+		// Degrade gracefully on an empty/tableless extract.
+		// A no-op miss, never a crash (#568 discipline).
+		if (hasTable(this.database, table)) {
+			// Prefer the #727 phase-4c `name_key` column
+			// (foldStreetSurface, indexed by `idx_sc_name` for a direct seek); fall back to
+			// `street_norm` on a pre-rebuild extract (a skip-scan, but correct).
+			// The fold used to build `name_key` must match `foldStreetSurface` here (the fold-parity interface).
+			const keyCol = hasColumn(this.database, table, "name_key") ? "name_key" : "street_norm"
+			this.#byName = this.database.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 
-			this.#byNameLocality = this.#db.prepare(
+			this.#byNameLocality = this.database.prepare(
 				`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND locality_base = ? LIMIT 1`
 			)
 
-			this.#byNamePostcode = this.#db.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND postcode = ? LIMIT 1`)
+			this.#byNamePostcode = this.database.prepare(
+				`SELECT 1 FROM ${table} WHERE ${keyCol} = ? AND postcode = ? LIMIT 1`
+			)
 		}
 	}
 
@@ -73,8 +84,9 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 
 		if (!norm) return false
 
-		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode. a scoped miss falls back to the
-		// unscoped probe (index incompleteness in the scope column is not evidence of absence — positive-evidence rule).
+		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode.
+		// A scoped miss falls back to the unscoped probe (index incompleteness in the scope
+		// column is not evidence of absence — positive-evidence rule).
 		if (
 			scope?.locality &&
 			this.#byNameLocality &&
@@ -88,9 +100,5 @@ export class SQLiteStreetNameLookup implements StreetLocalityEvidence, Disposabl
 		}
 
 		return this.#byName.get(norm) !== undefined
-	}
-
-	[Symbol.dispose](): void {
-		this.#db[Symbol.dispose]()
 	}
 }

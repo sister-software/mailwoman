@@ -28,7 +28,7 @@
 #
 # the gauntlet bare-postcode rows are not held OUT, and two of the nine are now memorization checks.
 # Checked each of the nine against the built parquet: `cz/bare-postcode.jsonl`'s `100 00` and `110 00`
-# are real OpenAddresses Czech codes and are IN training — they were never on the 56-string reserve,
+# are real OpenAddresses Czech codes and are IN training. They were never on the 56-string reserve,
 # which is the designed held-out set. Read those two rows as "the source drew", never as the capability.
 # The other seven are clean: `Praha 100 00, Czechia` is an in-context surface this source never emits,
 # GB is absent from the recipe by design (`SW1A 1AA` opens with letters and was never in doubt), US is
@@ -83,7 +83,7 @@
 #   3. The target-family boards v5.4.0 won and v5.5.0 held, which must not give any of it back:
 #      `sg/register.jsonl` 118/240, `us/family-po-box.jsonl` 6/6, `ve/family-locality-postcode.jsonl` 5/5.
 #
-# The new receipt below fails the run if the added source does not actually draw — the check that would
+# The new receipt below fails the run if the added source does not actually draw. The check that would
 # have caught the silent generation drop five model versions earlier.
 
 data:

@@ -18,7 +18,7 @@ running probe (`v1.9.3-slavic-diacritic`). But that recipe was copied from `v1.9
 which predates the #723 anchor-absorption fix. Grading it against v4.15.0 would have confounded the Slavic
 extract with a reverted #723 — and #723 is coordinate-invisible, so the coord check would never have caught it.
 So we forked a clean candidate, **v196-slavic-anchor** = v4.15.0's recipe verbatim + the one new extract, off
-the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: a extract recipe copied from vN-1 silently
+the v4.15.0 corpus so it keeps #723. One variable. (Lesson banked: an extract recipe copied from vN-1 silently
 inherits vN-1's bugs.)
 
 **The mid-train read (40k) said US was untouched and CZ/PL was flat.** US coord p50 diff −0.002km,

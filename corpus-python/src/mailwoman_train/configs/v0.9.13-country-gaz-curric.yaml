@@ -1,48 +1,12 @@
-# === v0.9.13-country-gaz-curric (#464) — v0.9.12 + gazetteer-confidence curriculum. ===========
-# One variable vs v0.9.12: train.gazetteer_curriculum on (ramped per-row zero-out of the clue, same
-# schedule as the postcode anchor). v0.9.12 lifted country 0->83/region+12/locality+15 but cost US
-# postcode -3.7 (the model leaned on the always-on clue). The curriculum forces label competence with
-# and without the clue. Check: hold v0.9.12 country/region/locality gains and recover US postcode to
-# within ~1pp of v4.1.0 (>=97 fp32). Same corpus/lexicon/weights.
-# --- (original v0.9.12 header follows) ---
-# === v0.9.12-country-gaz (#464) — step 2b: the gazetteer anchor (knowledge-ladder rung 3.2). ===
-# One variable vs v0.9.11-country-cw: the gazetteer anchor channel turns on (use_gazetteer_anchor +
-# data.gazetteer_lexicon_path). Same balanced corpus (v0.4.10-country-bal), same class weights
-# (B/I-country 3.5), same recipe/seed. The channel feeds per-token multi-hot candidate-tag-set clues
-# (country/region/po_box/cedex/homograph) painted from the RAW surface by the codex-generated
-# lexicon — identical computation at train + inference (never gold labels. no leak, no skew).
+# This recipe is v0.9.12-country-gaz.yaml with train.gazetteer_curriculum turned on.
+# The curriculum zeroes the gazetteer confidence on a share of rows that ramps up over the run, on
+# the same schedule as the postcode anchor. The model then has to label correctly both with and
+# without the gazetteer clue, which keeps it from leaning on the clue for postcodes.
 #
-# why. v0.9.10 (balanced data) proved country is learnable model-first: P=100, over-fire 0 — but
-# recall 40.7. v0.9.11 (class-weight 3.5) lifted recall to 48.1, still P=100/over-fire 0. The
-# remaining misses are all recognition-limited (Eswatini, Timor-Leste, Bhutan, multi-word, leading
-# position) — the model cannot recognize a surface it saw ~3 times, which is exactly the lexicon's
-# job. The clue informs (the homograph bit says "context is critical here"); the model decides.
-# See docs/engineering/reference/closed-vocab-fields-model-first.mdx + the knowledge ladder.
-#
-# PRE-registered check (stop at 20k) — data/eval/external/country-homograph-real.jsonl (n=54):
-#   - country recall rises above v0.9.11's 48.1 (target: the long-tail/multi-word/leading misses recover;
-#     ≥70 would be decisive) and precision stays ~100 and over-fire stays 0.
-#   - region/locality F1 held (v0.9.11: region 82.2, locality 64.4); homograph rows stay correct
-#     (no "Tbilisi, Georgia"→region regressions — the clue must not bulldoze context).
-#   - No regression (within ~1pp, fp32-to-fp32 vs v0.9.11): US/FR golden spine via per-locale-f1
-#     (with --tokenizer — the misuse check now enforces it). unit retained ≥88. DE native held.
-#   Decision: if recall rises, precision stays ~100, over-fire stays 0 and the spine stays within
-#     ~1pp, the country change is done. promote the candidate (consolidation #466 picks it up). If
-#     the clue over-fires (model echoes the lexicon,
-#     P drops): lower clue exposure — drop gazetteer confidence to 0 on a random ~20% of training
-#     rows (curriculum) — and consult DeepSeek before more knobs.
-# Measure: score-country-homograph.ts + per-locale-f1.ts (US/FR, --tokenizer) + unit-real +
-#   de-order-eval.ts (fp32-to-fp32).
-#
-# corpus: v0.4.10-country-bal (unchanged — single-variable discipline. the lexicon is a side input).
-# lexicon: /data/gazetteer/anchor-lexicon-v1.json (scripts/build-gazetteer-anchor-lexicon.mjs from
-#   @mailwoman/codex). Stage it through R2 before launch — not `modal volume put`, which a mounted
-#   container cannot see:
-#   cd corpus-python && modal run -m launch.train_remote::sync_assets \
-#     --extras gazetteer/anchor-lexicon-v1.json>gazetteer/
-# Launch:
-#   cd corpus-python && modal run -d -m launch.train_remote \
-#     --config v0.9.12-country-gaz.yaml --resume none \
+# Stage /data/gazetteer/anchor-lexicon-v1.json through R2 before launch, as v0.9.12-country-gaz.yaml
+# describes. Launch it from corpus-python with:
+#   modal run -d -m launch.train_remote \
+#     --config v0.9.13-country-gaz-curric.yaml --resume none \
 #     --trackio --trackio-space sister-software/mailwoman-trackio
 
 data:
@@ -69,9 +33,9 @@ data:
     synth-po-box: 1.5
     synth-intersection: 0.2
     synth-german: 6.0
-    # Retained from v4.1.0, so `unit` stays at or above 88% on unit-real-designators.
+    # The synth-unit source keeps the unit training that the v4.1.0 model shipped with.
     synth-unit: 1.5
-    # The balanced country source (homograph contrast + code-as-region negatives + breadth).
+    # The synth-country source is the country-balanced recipe from v0.9.11.
     synth-country: 2.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -79,7 +43,6 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
-  # step 2b: the codex-generated candidate-tag-set lexicon (gazetteer anchor, #464).
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
 
 model:
@@ -98,12 +61,11 @@ model:
   use_locale_conditioning: true
   locale_loss_weight: 0.3
   use_postcode_anchor: true
-  # step 2b: the gazetteer-anchor input channel (must match the lexicon JSON's feature_dim).
+  # gazetteer_feature_dim must equal the feature_dim in the lexicon JSON.
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
   class_weights:
     O: 0.5
-    # step 2a retained: country miss-penalty 3.5 (v0.9.11 — recall 40.7→48.1 at P=100).
     B-country: 3.5
     I-country: 3.5
     B-region: 1.5

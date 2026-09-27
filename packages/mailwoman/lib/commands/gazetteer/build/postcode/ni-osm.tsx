@@ -7,7 +7,7 @@
  *   writes a sealed database to a new dated path.
  *
  *   **build-local tier.** OSM is ODbL 1.0 and share-alike binds a Derived Database, so this artifact is
- *   never published — not to npm rather than to R2 rather than to the demo. It reaches the resolver only because
+ *   never published to npm, to R2 or to the demo. It reaches the resolver only because
  *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
  *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that is the point of
@@ -76,7 +76,7 @@ const GazetteerBuildPostcodeNIOSM: CommandComponent<typeof spec> = ({ options })
 			"a miss on a BT code means NOT ATTESTED IN OSM — not that the postcode does not exist (see meta.coverage_meaning_of_zero)",
 			"licence: ODbL 1.0 — BUILD-LOCAL, never published to npm/R2/demo; attribution in the `meta` table",
 			"sealed 0444",
-			"next: copy to <data-root>/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_DATABASES is existsSync-filtered)",
+			"next: copy to <data-root>/db/wof/postalcode-ni-osm.db to activate it (DEFAULT_POSTCODE_DATABASES is existsSync-filtered)",
 		]
 	})
 

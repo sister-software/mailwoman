@@ -12,6 +12,7 @@
 	"references": [
 		{ "path": "../core" },
 		{ "path": "../release-kit" },
+		{ "path": "../storage-kit" },
 		{ "path": "../repo-health" },
 		{ "path": "../license-worker" }
 	]

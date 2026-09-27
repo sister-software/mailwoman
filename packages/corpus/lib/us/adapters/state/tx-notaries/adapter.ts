@@ -19,17 +19,19 @@ import { formatPersonName } from "@mailwoman/record/name"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const STATE_TX_NOTARIES_ADAPTER_ID = "state-tx-notaries"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_TX_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
@@ -50,6 +52,8 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 		id: STATE_TX_NOTARIES_ADAPTER_ID,
 		defaultLicense: STATE_TX_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
+		register: SourceRegister.TexasNotaries,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Texas Notary Public Commissions — name + mailing address with embedded city/state/zip (public-domain).",
 
@@ -69,13 +73,13 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const rawAddress = (record.Address ?? "").trim()
+				const rawAddress = record.Address ?? ""
 
 				if (!rawAddress) continue
 
-				const firstName = (record["First Name"] ?? "").trim()
-				const lastName = (record["Last Name"] ?? "").trim()
-				const notaryID = (record["Notary ID"] ?? "").trim()
+				const firstName = record["First Name"] ?? ""
+				const lastName = record["Last Name"] ?? ""
+				const notaryID = record["Notary ID"] ?? ""
 
 				// Parse embedded city/state/zip from the trailing portion of the address.
 				// Addresses look like: "1215 mcmillan DR\nCEDAR hill, TX 75104"

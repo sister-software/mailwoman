@@ -2,23 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PIP-containment metric (coordinate-first plan, #273).
- *
- *   Reads the `--out-resolved` dump from oa-resolver-eval.ts (per row: gold OA lat/lon + the
- *   neural-resolved locality's WOF id + the old name-match flag) and tests the NON-gameable truth:
- *   does the gold point lie inside the polygon of the resolved WOF locality? This is
- *   name-surface-independent — it rewards a geographically-correct resolve even when WOF's
- *   canonical name ("Plauen") differs from OA's gold ("Plauen Vogtl"). Compares
- *   containment-accuracy vs the old name-match on the same rows.
- *
- *   Ported faithfully from the retired Python implementation (pure JSON + filesystem geojson, no
- *   numpy).
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/pip-containment.run.ts <resolved.json> [--label
- *   name] [--json OUT]
+ *   Compare name matching with polygon containment for resolved rows. Containment checks whether each gold coordinate
+ *   lies inside the resolved WOF locality, independent of name spelling.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { pyFixed } from "@mailwoman/core/numeric"
@@ -29,17 +17,15 @@ import { geometryContains, type GeometryLiteral } from "@mailwoman/spatial"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * Artifact examples collected before the list is truncated.
+ * Maximum number of artifact examples printed.
  */
 const MAX_LISTED_ARTIFACTS = 12
 
-const WOF_REPOS = dataRootPath("wof", "repos")
-
 async function adminRoots(): Promise<string[]> {
-	const pattern = WOF_REPOS("whosonfirst-data/whosonfirst-data-admin-*/data")
+	const pattern = wofReposPath("whosonfirst-data/whosonfirst-data-admin-*/data")
 	const matched = await Globerator.from(pattern, { absolute: true }).toSorted()
 
-	return [...matched, `${WOF_REPOS}/whosonfirst-data-admin-us/data`]
+	return [...matched, wofReposPath("whosonfirst-data-admin-us/data").toString()]
 }
 
 const ADMIN_ROOTS = await adminRoots()
@@ -68,7 +54,7 @@ function get(c: Counter, k: string): number {
 }
 
 /**
- * Python `f"{x:+.1f}"` — fixed precision with an always-present sign.
+ * Format a signed fixed-precision value like Python's `f"{x:+.1f}"`.
  */
 function pySigned(x: number, d: number): string {
 	const s = pyFixed(x, d)
@@ -85,8 +71,7 @@ function pyStr(v: unknown): string {
 }
 
 function pct(num: number, den: number): string {
-	// Local rather than `formatPercent`: this port renders with `pyFixed` (Python's round-half-even),
-	// and `toFixed` rounds half-away — the bytes must match the retired .py report.
+	// Preserve Python-compatible rounding from the original report.
 	return den ? `${pyFixed((100 * num) / den, 1)}%` : "—"
 }
 
@@ -95,9 +80,7 @@ function line(label: string, c: Counter): string {
 
 	if (!n) return `  ${label}: n=0`
 
-	// PIP-containment is reported two ways: over all rows (strict) and over rows
-	// that have a polygon (coverage-adjusted), since WOF point-geometry localities
-	// can never PIP-contain and would otherwise count as silent failures.
+	// Report containment across all rows and separately across rows with polygon geometry.
 	return (
 		`  ${padL(label, 10)} n=${padL(String(n), 5)} name-match=${padL(pct(get(c, "name"), n), 7)} ` +
 		`PIP-containment=${padL(pct(get(c, "pip"), n), 7)} delta=${pySigned((100 * (get(c, "pip") - get(c, "name"))) / n, 1)}pp  ` +
@@ -119,7 +102,6 @@ interface ResolvedRow {
 async function main(): Promise<number> {
 	const { values, positionals } = parseArguments({
 		options: { label: { type: "string" }, json: { type: "string" } },
-		strict: false,
 		allowPositionals: true,
 	})
 
@@ -155,7 +137,7 @@ async function main(): Promise<number> {
 		const contained = lid ? geometryContains(await geomForID(lid), r.lon, r.lat) : null
 
 		if (contained !== null) {
-			// a polygon existed and was tested (True or False)
+			// A polygon was tested, whether or not it contained the point.
 			inc(overall, "poly")
 			inc(byState[st]!, "poly")
 		} else if (lid) {

@@ -5,7 +5,7 @@
  *   The grading environment's artifact-presence interface (#1516, second half).
  *
  *   The failure being guarded is silent by construction: a weights package missing its `postcode-<cc>.bin`
- *   throws nothing, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
+ *   throws no error, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
  *   model regression. The guard must fire on that, and must stay quiet for the packages that ship no binary on
  *   purpose (en-gb under the #1476 mitigation, en-nz for want of a WOF NZ postcode database), which is why the
  *   expectation is read from each package's own card instead of a list in the harness.
@@ -18,7 +18,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile, makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { assertDeclaredAnchorBins } from "mailwoman/eval-harness/gauntlet/harness"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -26,20 +25,20 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Lay out `<root>/node_modules/@mailwoman/neural-weights-<locale>` with the two binaries `resolveWeights` probes for,
- * the given card, and whichever sibling artifacts the case wants present.
+ * Lay out `<root>/node_modules/@mailwoman/neural-weights-<locale>` with the two binaries
+ * `resolveWeights` probes for, the given card, and whichever sibling artifacts the case wants present.
  */
 async function fixtureWeights(locale: string, card: Record<string, unknown>, siblings: string[] = []): Promise<string> {
 	const root = fixtures.use(await temporaryDirectory("gauntlet-weights-")).path.toString()
 	const dir = weightsCachePackageDir(root, locale)
 
 	await makeDirectories(dir)
-	await writeLocalTextFile("", join(dir, "model.onnx"))
-	await writeLocalTextFile("", join(dir, "tokenizer.model"))
-	await writeLocalJSONFile(card, join(dir, "model-card.json"))
+	await writeLocalTextFile("", dir("model.onnx"))
+	await writeLocalTextFile("", dir("tokenizer.model"))
+	await writeLocalJSONFile(card, dir("model-card.json"))
 
 	for (const sibling of siblings) {
-		await writeLocalTextFile("", join(dir, sibling))
+		await writeLocalTextFile("", dir(sibling))
 	}
 
 	return root
@@ -77,8 +76,9 @@ describe("the anchor-artifact presence assertion", () => {
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
 		// Verbatim shape of the en-gb card: `requires.anchor.required` is true (a fact about the shared encoder)
-		// while `files` carries only a comment where the binary key would be. A guard keyed on `requires` calls
-		// this broken. a guard keyed on `files` calls it what it is.
+		// while `files` carries only a comment where the binary key would be.
+		// A guard keyed on `requires` calls this broken.
+		// A guard keyed on `files` calls it what it is.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },
@@ -93,16 +93,17 @@ describe("the anchor-artifact presence assertion", () => {
 		const dir = weightsCachePackageDir(root, "zz-zz")
 
 		await makeDirectories(dir)
-		await writeLocalTextFile("", join(dir, "model.onnx"))
-		await writeLocalTextFile("", join(dir, "tokenizer.model"))
+		await writeLocalTextFile("", dir("model.onnx"))
+		await writeLocalTextFile("", dir("tokenizer.model"))
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).resolves.toBeUndefined()
 	})
 
 	it("reports EVERY missing package, not just the first", async () => {
-		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights` probes, so
-		// the multi-locale case is posed as two calls against the same root — what matters is that the message
-		// is per-locale and carries the locale tag, which is what makes a six-overlay run diagnosable.
+		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights`
+		// probes, so the multi-locale case is posed as two calls against the same root.
+		// What matters is that the message is per-locale and carries the locale tag,
+		// which is what makes a six-overlay run diagnosable.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)

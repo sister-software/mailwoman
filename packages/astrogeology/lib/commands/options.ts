@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The option readers the four commands share. A plain module, because a command module is TSX and Node loads a
- *   command only compiled. nothing a command imports may be another command.
+ *   The option readers the four commands share. A plain module, because a command module is TSX
+ *   and Node loads a command only compiled. No module a command imports may be another command.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

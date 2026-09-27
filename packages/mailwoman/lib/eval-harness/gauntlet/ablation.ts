@@ -11,7 +11,7 @@
  *
  *   This is a measurement layer rather than a check. It never joins the combined verdict (`run.ts` lists only
  *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
- *   instrument ran — a map of all-zero cells is "not measured", never "nothing broke" (meaning-of-zero).
+ *   instrument ran. A map of all-zero cells is "not measured", never "no check failed" (meaning-of-zero).
  *
  *   Three ancestors, generalized rather than duplicated:
  *
@@ -44,24 +44,24 @@
  *   circular.
  *
  *   Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
- *   justifies, or it abstained where the surviving evidence justifies nothing (bare `Springfield`: 144 distinct places,
+ *   justifies, or it abstained where the surviving evidence justifies no pick (bare `Springfield`: 144 distinct places,
  *   no population winner). Substitution stays a hard fail at every rung — a coordinate cannot redeem a slot refilled by
  *   the wrong token.
  *
  *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are unchanged and still computed
  *   against the anchor: the two gradings sit side by side in every artifact, which is what makes the regrade
  *   comparable. `unresolvedCount` is not split in place; `correctlyAbstainedCount` and `lostCount` are the split, added
- *   alongside it (meaning-of-zero: an abstention asks the operator for nothing, a loss asks for a recall fix).
+ *   alongside it (meaning-of-zero: an abstention asks the operator for no action, a loss asks for a recall fix).
  *
  *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	ABLATION_ABSENT,
@@ -75,8 +75,9 @@ import {
 	PASSING_GRADES,
 } from "#eval-harness/gauntlet/ablation/expectation"
 import { AblationGazetteer } from "#eval-harness/gauntlet/ablation/gazetteer"
-// The renderer and the data shapes moved out when the expectation model pushed this file past the 750-line cap. Both
-// are re-exported below, from their historical home, so every importer and every test keeps its path.
+// The renderer and the data shapes moved out when the expectation model pushed
+// this file past the 750-line cap.
+// Both are re-exported below, from their historical home, so every importer and every test keeps its path.
 import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation/report"
 import { aggregateCells, scoreAblation } from "#eval-harness/gauntlet/ablation/scoring"
 import {
@@ -123,9 +124,13 @@ export {
 } from "#eval-harness/gauntlet/ablation/types"
 
 /**
- * How many substitutions the console summary lists before it truncates. Purely a terminal-legibility cap — the full
- * list is always in the artifact's `rows`, and the summary says how many it withheld. Sized against the S-2 baseline
- * (16 substitutions on the postcode column alone), so a run whose substitution rate is normal prints in full.
+ * How many substitutions the console summary lists before it truncates.
+ *
+ * Purely a terminal-legibility cap.
+ * The full list is always in the artifact's `rows`, and the summary says how many it withheld.
+ *
+ * Sized against the S-2 baseline (16 substitutions on the postcode column alone),
+ * so a run whose substitution rate is normal prints in full.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
 
@@ -138,11 +143,14 @@ function isWordChar(c: string | undefined): boolean {
 /**
  * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets.
  *
- * Boundary-safe means the character on each side is not a letter or digit. This is the guard that keeps a locality
- * `York` from being carved out of a region `New York` — the class of defect that survives review precisely because it
- * needs a corpus row where one asserted span nests inside another, and this corpus has them (`New York` / `NY`,
- * `Brooklyn` / `Park Slope`). A plain `indexOf`, which is what S-2's single-component stripper could afford, silently
- * mutilates the neighbour.
+ * Boundary-safe means the character on each side is not a letter or digit.
+ * This is the guard that keeps a locality `York` from being carved out of a region `New York`.
+ *
+ * The class of defect that survives review precisely because it needs a corpus row where one asserted
+ * span nests inside another, and this corpus has them (`New York` / `NY`, `Brooklyn` / `Park Slope`).
+ *
+ * A plain `indexOf`, which is what S-2's single-component stripper could afford,
+ * silently mutilates the neighbour.
  */
 export function boundedOccurrences(input: string, value: string): number[] {
 	if (!value) return []
@@ -170,9 +178,11 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately literal — the whole
- * reason this runner does not reuse metamorphic's `\b\d{5}\b` stripper is that a pattern deletes house numbers on the
- * 4-digit postal systems (the postcode arc's M-1 finding, in reverse).
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind.
+ *
+ * Deliberately literal — the whole reason this runner does not reuse metamorphic's
+ * `\b\d{5}\b` stripper is that a pattern deletes house numbers on the 4-digit postal
+ * systems (the postcode arc's M-1 finding, in reverse).
  */
 export function deleteSpan(input: string, at: number, length: number): string {
 	return (
@@ -180,8 +190,7 @@ export function deleteSpan(input: string, at: number, length: number): string {
 			.replaceAll(/\s{2,}/g, " ")
 			.replaceAll(/\s+,/g, ",")
 			.replaceAll(/,\s*,/g, ",")
-			// Leading/trailing separator debris: deleting a leading postcode ("75013 Paris") or a trailing country
-			// ("…, France") strips the token and leaves the comma orphaned at the edge.
+			// Leading/trailing separator debris: deleting a leading postcode ("75013 Paris") or a trailing country ("…, France") strips the token and leaves the comma orphaned at the edge.
 			.replace(/^[\s,]+/, "")
 			.replace(/[\s,]+$/, "")
 	)
@@ -192,14 +201,20 @@ export function deleteSpan(input: string, at: number, length: number): string {
  *
  * Four refusals, each one a class the corpus actually contains:
  *
- * 1. `empty` — the asserted value is the empty string. `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot
- *    stays empty. there is nothing to delete, and treating it as a deletion would manufacture support.
- * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the resolved value, e.g. `country:
- *    "United States"` against an input saying `USA`). Deleting it would require guessing which span it came from.
- * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value asserted for a second component. Either way
- *    the deletion is not attributable to one component, which is the only thing this map measures.
- * 4. `nested` — the value is a proper substring of another asserted component's value (`York` inside `New York`). Deleting
- *    it damages the neighbour, so the row would measure a two-component deletion under one component's name.
+ * 1. `empty` — the asserted value is the empty string.
+ *    `us-dc-pennsylvania` asserts `postcode: ""` to pin that the slot stays empty.
+ *    There is no value to delete, and treating it as a deletion would manufacture support.
+ * 2. `not-verbatim` — the asserted value is not in the input (an assertion about the
+ *    resolved value, e.g. `country: "United States"` against an input saying `USA`).
+ *    Deleting it would require guessing which span it came from.
+ * 3. `ambiguous` — more than one boundary-safe occurrence, or the same value
+ *    asserted for a second component.
+ *    Either way the deletion is not attributable to one component,
+ *    which is the only thing this map measures.
+ * 4. `nested` — the value is a proper substring of another asserted component's
+ *    value (`York` inside `New York`).
+ *    Deleting it damages the neighbour, so the row would measure a two-component
+ *    deletion under one component's name.
  */
 export function ablationVariants(
 	input: string,
@@ -272,21 +287,27 @@ export function ablationVariants(
 }
 
 /**
- * Options for {@linkcode runAblationLayer} — the shared layer options (model ladder + resolver pin pins) plus this
- * layer's own three.
+ * Options for {@linkcode runAblationLayer} — the shared layer options
+ * (model ladder + resolver pin pins) plus this layer's own three.
  */
 export interface AblationLayerOptions extends GauntletLayerOptions {
 	/**
-	 * Where the artifacts land. Defaults to `/tmp/ablation-<yyyymmdd-HHmm>` — the `promotion-eval.ts` convention, and
-	 * deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
+	 * Where the artifacts land.
+	 *
+	 * Defaults to `<temp-root>/ablation-<yyyymmdd-HHmm>`, under `$MAILWOMAN_TEMP_ROOT`.
+	 * The promotion eval uses the same convention.
+	 *
+	 * The directory is deliberately not under `$MAILWOMAN_DATA_ROOT`, which this layer only ever reads.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
 	/**
 	 * Restrict the deleted components (default: all of {@linkcode ABLATABLE_COMPONENTS}).
 	 */
 	components?: readonly string[]
 	/**
-	 * Cap the number of cases (not variants). For a smoke run.
+	 * Cap the number of cases (not variants).
+	 *
+	 * For a smoke run.
 	 */
 	limit?: number
 }
@@ -300,7 +321,8 @@ interface CaseRow {
 	expect_components: string | null
 	expect_tolerance_m: number | null
 	/**
-	 * The row's asserted coordinate — rung 0 of its degradation ladder when it has one (see {@linkcode buildCaseLadder}).
+	 * The row's asserted coordinate — rung 0 of its degradation ladder
+	 * when it has one (see {@linkcode buildCaseLadder}).
 	 */
 	expect_lat: number | null
 	expect_lon: number | null
@@ -309,11 +331,14 @@ interface CaseRow {
 /**
  * The per-case `ablation_expect` pins, keyed by case id.
  *
- * Read from the built DB when the column is there, and from the committed seed otherwise. The dual path is not
- * belt-and-braces: `ablation_expect` landed with the expectation model (2026-08-05) and the shared
- * `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db` predates it, so a layer that only read the column would silently ignore
- * every pin until someone rebuilt a database this layer has no business rebuilding. The seed is the authoring surface
- * either way (`cases/<cc>/*.jsonl`), so the two agree by construction once the rebuild happens.
+ * Read from the built DB when the column is there, and from the committed seed otherwise.
+ * The dual path is not belt-and-braces: `ablation_expect` landed with the expectation
+ * model (2026-08-05) and the shared `$MAILWOMAN_DATA_ROOT/gauntlet/regression.db`
+ * predates it, so a layer that only read the column would silently ignore every pin
+ * until someone rebuilt a database this layer has no business rebuilding.
+ *
+ * The seed is the authoring surface either way (`cases/<cc>/*.jsonl`),
+ * so the two agree by construction once the rebuild happens.
  */
 export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): Promise<{
 	byCaseID: Map<string, Record<string, string>>
@@ -351,9 +376,11 @@ export async function ablationOverrides(db: DatabaseClient<GauntletDatabase>): P
 }
 
 /**
- * A stable identity for the board a cell was measured on: the corpus's own content rather than its file mtime. Two runs
- * over the same rows share a `boardID`; a row added or an input edited changes it, so a stale cell can never be
- * silently compared against a fresh one.
+ * A stable identity for the board a cell was measured on: the corpus's own content
+ * rather than its file mtime.
+ *
+ * Two runs over the same rows share a `boardID`; a row added or an input edited changes it,
+ * so a stale cell can never be silently compared against a fresh one.
  */
 export function ablationBoardID(cases: readonly { id: string; input: string }[]): string {
 	const fingerprint = cases
@@ -364,22 +391,26 @@ export function ablationBoardID(cases: readonly { id: string; input: string }[])
 	return `gauntlet-regression@${cases.length}:${sha256Hex(fingerprint).slice(0, 12)}`
 }
 
-function timestampDir(now: Date): string {
+function timestampDir(now: Date): PathBuilder {
 	const iso = now.toISOString()
 
-	return `/tmp/ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`
+	return tempRootPathBuilder(`ablation-${iso.slice(0, 10).replaceAll("-", "")}-${iso.slice(11, 16).replace(":", "")}`)
 }
 
 /**
- * Run the ablation layer over the curated corpus. Returns `pass` — which reports only whether the instrument ran (at
- * least one measured cell). A map is not a check. nothing here can fail a ship.
+ * Run the ablation layer over the curated corpus.
+ *
+ * @returns `pass` — which reports only whether the instrument ran (at least one measured cell).
+ * A map is not a check.
+ * No result here can fail a ship.
  */
 export async function runAblationLayer(
 	options: AblationLayerOptions = {}
 ): Promise<{ pass: boolean; outDir: string; cells: AblationCell[] }> {
 	const kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
-	// Same refusal as the regression layer: this artifact's board id claims to identify a corpus, so a stale DB
-	// would publish an ablation board under a fingerprint the corpus no longer has (corpus-stamp.ts).
+	// Same refusal as the regression layer: this artifact's board id claims to identify
+	// a corpus, so a stale DB would publish an ablation board under a fingerprint
+	// the corpus no longer has (corpus-stamp.ts).
 	await assertCorpusStampFresh(kdb)
 
 	const allCases = (await kdb
@@ -398,14 +429,15 @@ export async function runAblationLayer(
 		.orderBy("id")
 		.execute()) as CaseRow[]
 
-	// Read the pins off the same handle before it closes — see `ablationOverrides` for why the column may not be there.
+	// Read the pins off the same handle before it closes.
+	// See `ablationOverrides` for why the column may not be there.
 	const overrides = await ablationOverrides(kdb)
 
 	await kdb.destroy()
 
 	const boardID = ablationBoardID(allCases)
 	const measuredAt = new Date().toISOString()
-	const outDir = options.outDir ?? timestampDir(new Date())
+	const outDir = PathBuilder.from(options.outDir ?? timestampDir(new Date()))
 	const cases = options.limit ? allCases.slice(0, options.limit) : allCases
 
 	const only = options.components?.length
@@ -425,8 +457,9 @@ export async function runAblationLayer(
 	const deps = await buildGauntletDeps(layerDepsOptions(options))
 	const gazetteer = await AblationGazetteer.create()
 
-	// loud, because a ladder-less run and a run where nothing degraded produce the same all-`held` shape until you
-	// read `ladderGradedCount`. The map still measures the anchor-graded columns without it.
+	// loud, because a ladder-less run and a run where no rung degraded produce the
+	// same all-`held` shape until you read `ladderGradedCount`.
+	// The map still measures the anchor-graded columns without it.
 	console.error(
 		gazetteer.available
 			? `[ablation] expectation model: ladders from admin-global-priority.db + candidate.db (overrides from the ${overrides.source}, ${overrides.byCaseID.size} pinned)`
@@ -452,8 +485,9 @@ export async function runAblationLayer(
 
 			if (!variants.length) continue
 
-			// caseCountry selects the per-locale weights overlay, exactly as the regression layer does. Without it
-			// the GB/DE/IN rows grade base-only and their dependent_locality never fires — the R1 instrument trap.
+			// caseCountry selects the per-locale weights overlay, exactly as the regression layer does.
+			// Without it the GB/DE/IN rows grade base-only and their dependent_locality
+			// never fires — the R1 instrument trap.
 			const geoOpts = {
 				...(c.default_country ? { defaultCountry: c.default_country } : {}),
 				...(c.country ? { caseCountry: c.country } : {}),
@@ -469,15 +503,18 @@ export async function runAblationLayer(
 				? buildCaseLadder(anchor, toleranceKm, gazetteer, { lat: c.expect_lat, lon: c.expect_lon }, c.country)
 				: { ladder: null, reason: gazetteer.unavailableReason ?? "no gazetteer" }
 
-			// A ladder has to be about this address. The check only ever fires on a row that asserts no coordinate (its
-			// rung 0 is the pipeline's own undeleted answer); when that answer is somewhere else, the ladder is drawn
-			// around the wrong town and every deletion on it grades against a place the row never claimed.
+			// A ladder has to be about this address.
+			// The check only ever fires on a row that asserts no coordinate
+			// (its rung 0 is the pipeline's own undeleted answer); when that answer is
+			// somewhere else, the ladder is drawn around the wrong town and every deletion
+			// on it grades against a place the row never claimed.
 			const disagreement = drawn.ladder ? ladderComponentDisagreement(components, drawn.ladder, gazetteer) : null
 
 			const built = disagreement ? { ladder: null, reason: disagreement } : drawn
 
-			// Where the undeleted case already stands on its own ladder — the floor every variant is judged from
-			// (`gradeAgainstLadder`). `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
+			// Where the undeleted case already stands on its own ladder.
+			// The floor every variant is judged from (`gradeAgainstLadder`).
+			// `null` (anchor off its own ladder, or unresolved) makes the whole case ungradable,
 			// which is reported rather than counted as anything.
 			const anchorRungDepth =
 				built.ladder && anchor.lat != null && anchor.lon != null
@@ -556,8 +593,9 @@ export async function runAblationLayer(
 					ladderGaps: built.ladder ? built.ladder.gaps.map((g) => `${g.placetype} ${g.name}: ${g.reason}`) : [],
 				})
 
-				// Two different nulls, and the progress line must not conflate them: `no-anchor` is the row failing to
-				// resolve as written (nothing to measure against), `unresolved` is the deletion costing the answer.
+				// Two different nulls, and the progress line must not conflate them: `no-anchor`
+				// is the row failing to resolve as written (no anchor to measure against),
+				// `unresolved` is the deletion costing the answer.
 				const moved =
 					scored.displacementKm != null
 						? `${scored.displacementKm.toFixed(2)}km`
@@ -593,8 +631,9 @@ export async function runAblationLayer(
 			unavailableReason: gazetteer.unavailableReason,
 			overrideSource: overrides.source,
 			overrideCount: overrides.byCaseID.size,
-			// Cases whose ladder could not be built, and why. The complement of `ladderGradedCount` at the row level,
-			// kept per case so a thin expectation column is attributable to the gazetteer rather than to the parser.
+			// Cases whose ladder could not be built, and why.
+			// The complement of `ladderGradedCount` at the row level, kept per case so a thin
+			// expectation column is attributable to the gazetteer rather than to the parser.
 			ladderProblems,
 		},
 		cells,
@@ -602,7 +641,7 @@ export async function runAblationLayer(
 		skips,
 	}
 
-	await writeLocalJSONFile(artifact, join(outDir, "ablation-map.json"))
+	await writeLocalJSONFile(artifact, outDir("ablation-map.json"))
 
 	await writeLocalFile(
 		renderAblationMarkdown(cells, rows, {
@@ -613,14 +652,14 @@ export async function runAblationLayer(
 			skips,
 			pins: pinLine,
 		}),
-		join(outDir, "ablation-map.md")
+		outDir("ablation-map.md")
 	)
 
-	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir, pinLine, skips })
+	printSummary(cells, rows, { boardID, measuredAt, anchorsRun, outDir: outDir.toString(), pinLine, skips })
 
-	// The instrument rather than a check: a map of zero cells means the run measured nothing, and a "pass" printed
-	// over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
-	return { pass: cells.length > 0, outDir, cells }
+	// The instrument rather than a check: a map of zero cells means the run measured no row, and a "pass"
+	// printed over an empty map is precisely the reading the meaning-of-zero rule exists to forbid.
+	return { pass: cells.length > 0, outDir: outDir.toString(), cells }
 }
 
 function describePins(options: AblationLayerOptions): string {
@@ -686,9 +725,10 @@ function printSummary(
 		)
 	}
 
-	// The headline the operator asked for, in one line each: the old verdict, the new one, and the size of the
-	// difference between them. Printed even at zero, because "0 rows were misgraded" is a measurement here — but
-	// only when the ladder actually graded something, which the `ungraded` count states outright.
+	// The headline the operator asked for, in one line each: the old verdict,
+	// the new one, and the size of the difference between them.
+	// Printed even at zero, because "0 rows were misgraded" is a measurement here, but only
+	// when the ladder actually graded something, which the `ungraded` count states outright.
 	const ungraded = rows.length - ladderGraded.length
 	const trueFail = ladderGraded.filter((r) => !PASSING_GRADES.has(r.grade))
 

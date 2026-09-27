@@ -2,10 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Storybook coverage for `useReleaseRuntime` — a small `<ReleaseRuntimeInspector>` renders the hook's state
- *   over a fake injected loader (no network, no ONNX, no httpvfs). The `Interactive` story lets you
- *   switch versions + toggle wasm and watch the load state machine drive; `SlowLoad` adds artificial
- *   latency so the staged loading state is visible; `AssetError` exercises the failure branch.
+ *   Exercise `useReleaseRuntime` with a fake loader: interactive selection, delayed loading,
+ *   and asset-failure states, without network or runtime dependencies.
  */
 
 import { sleep } from "@mailwoman/core/utils/sleep"
@@ -135,6 +133,7 @@ export const Interactive: Story = { args: { delayMs: 0 } }
 export const SlowLoad: Story = { args: { delayMs: 600 } }
 
 /**
- * The asset-load failure branch — `errorMessage` set, `ready` stays false.
+ * The asset-load failure branch.
+ * `errorMessage` set, `ready` stays false.
  */
 export const AssetError: Story = { args: { delayMs: 200, fail: true } }

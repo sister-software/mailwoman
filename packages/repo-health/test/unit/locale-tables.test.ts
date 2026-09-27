@@ -11,10 +11,9 @@
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { findLocaleTables, localeTablesCheck } from "@mailwoman/repo-health/checks/locale/tables"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -47,7 +46,7 @@ async function plant(options: {
 	weights?: ReadonlyArray<readonly [string, string]>
 	extra?: Record<string, string>
 }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("locale-tables-")).path)
+	const root = fixtures.use(await temporaryDirectory("locale-tables-")).path
 
 	const files: Record<string, string> = {
 		"release.config.json": stringifyJSON(options.config),
@@ -56,11 +55,10 @@ async function plant(options: {
 	}
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot, trackedFiles: Object.keys(files).filter((file) => file.endsWith(".ts")) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files).filter((file) => file.endsWith(".ts")) }
 }
 
 describe("findLocaleTables", () => {
@@ -101,9 +99,10 @@ describe("findLocaleTables", () => {
 
 describe("localeTablesCheck", () => {
 	it("no longer asks completeness of any table, because the one it bound is now derived", async () => {
-		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s two lists, which is why it
-		// could omit `ja-jp` and `zh-cn`. `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from
-		// that config now, and the invariant moved to that derivation's own test.
+		// `WEIGHTS_PACKAGE_BY_COUNTRY` was a hand-written copy of `release.config.json`'s
+		// two lists, which is why it could omit `ja-jp` and `zh-cn`.
+		// `@mailwoman/core/release-config`'s `weightsPackageByCountry` derives it from that
+		// config now, and the invariant moved to that derivation's own test.
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"], charWeights: { cjk: { overlays: ["ja-jp", "zh-cn"] } } },
 			weights: [
@@ -157,8 +156,8 @@ describe("localeTablesCheck", () => {
 		const context = await plant({
 			config: { locales: ["en-us", "fr-fr"] },
 			extra: {
-				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package. the ladder resolves an FST by
-				// path and answers nothing when the file is absent.
+				// `FST_LOCALE_BY_COUNTRY` carries `ko-kr` ahead of the Korean package.
+				// The ladder resolves an FST by path and returns no FST when the file is absent.
 				"packages/mailwoman/lib/eval-harness/autocomplete-ladder.ts": objectTable("FST_LOCALE_BY_COUNTRY", [
 					["US", "en-us"],
 					["KR", "ko-kr"],

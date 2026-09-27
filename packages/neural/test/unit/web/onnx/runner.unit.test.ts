@@ -11,13 +11,13 @@
  *   runner must mirror `@mailwoman/neural`'s node `ONNXRunner`:
  *
  *   - Caller-provided anchor/gazetteer features are fed through.
- *   - When the graph declares the inputs but the caller provides nothing, zero-fill them (the
+ *   - When the graph declares the inputs but the caller provides no values, zero-fill them (the
  *       confidence=0 identity) instead of letting ORT throw `input 'gazetteer_features' is missing
  *       in 'feeds'`. Zero-fill is a structural fallback only — the loader warns loudly about the
  *       quality trap — but the session must not crash.
  *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
  *   - The optional `span_scores` output (#727 stage-2, v3.x+) surfaces as `spanScores`, with the same
- *       (token, length, type) unflattening the node runner does — the two reads are duplicated across
+ *       (token, length, type) unflattening the node runner does. The two reads are duplicated across
  *       hosts, so a cross-runner parity test pins them together.
  */
 
@@ -52,11 +52,11 @@ vi.mock("onnxruntime-web/webgpu", () => {
 })
 
 // Shared-graph guard: the root vitest config runs `isolate: false`, so `./web-onnx-runner.ts` may
-// already sit in the worker's cache — evaluated without this file's ORT mock by an earlier file (a
-// cached module never re-evaluates, and vi.mock factories are only consulted at evaluation). Reset
-// on the way in so the chain re-evaluates against the mock, and on the way out so the next file in
-// this fork (e.g. web-onnx-runner.test.ts, which needs the real runtime) never inherits our mocked
-// ORT from the cache.
+// already sit in the worker's cache — evaluated without this file's ORT mock by an earlier file
+// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork (e.g. Web-onnx-runner.test.ts, which needs the real runtime)
+// never inherits our mocked ORT from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -196,8 +196,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(Object.keys(feeds).toSorted()).toEqual(["attention_mask", "input_ids"])
 	})
 
-	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner
-	// must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
+	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
 	test("country-channel graph (v6.2.0+) + NO country provided → zero-filled structural fallback, not a throw", async () => {
 		const session = mockSession([
 			"input_ids",
@@ -313,6 +312,29 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		await runner.infer([5])
 		expect(runner.inputNames).toContain("gazetteer_features")
 	})
+
+	test("release() during an in-flight load frees the session without publishing it", async () => {
+		let finishLoad!: () => void
+		const session = { inputNames: ["input_ids", "attention_mask"], release: vi.fn(() => Promise.resolve()) }
+
+		sessionCreateMock.mockReturnValue(
+			new Promise((resolve) => {
+				finishLoad = () => resolve(session)
+			})
+		)
+
+		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
+		const inference = runner.infer([5])
+		const released = runner.release()
+
+		finishLoad()
+		await released
+		await inference.catch(() => {})
+
+		expect(session.release).toHaveBeenCalledTimes(1)
+		expect(runner.inputNames).toBeNull()
+		await expect(runner.infer([5])).rejects.toThrow(/released/)
+	})
 })
 
 describe("defaultGazetteerLexiconURL", () => {
@@ -344,10 +366,11 @@ describe("defaultCountryLexiconURL", () => {
 
 describe("cross-runner parity (#727 span read)", () => {
 	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
-		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts and here — two
-		// hosts, one interface. A silent divergence would make the browser decode a transposed tensor
-		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down). This pins them:
-		// the same flat buffer must produce the same nested array on both sides.
+		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts
+		// and here — two hosts, one interface.
+		// A silent divergence would make the browser decode a transposed tensor
+		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down).
+		// This pins them: the same flat buffer must produce the same nested array on both sides.
 		const SEQ_LEN = 2
 		const L = 3
 		const T = 4
@@ -361,8 +384,9 @@ describe("cross-runner parity (#727 span read)", () => {
 		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 		const webResult = await web.infer([5, 6])
 
-		// The node runner's read, replicated from neural/onnx-runner.ts. If that file's loop changes
-		// and this expectation still passes, the two hosts have diverged — which is the point.
+		// The node runner's read, replicated from neural/onnx-runner.ts.
+		// If that file's loop changes and this expectation still passes,
+		// the two hosts have diverged, which is the point.
 		const expected: number[][][] = []
 
 		for (let t = 0; t < SEQ_LEN; t++) {

@@ -11,7 +11,9 @@ import { z } from "zod"
 
 const RuntimeEnvSchema = z.object({
 	/**
-	 * Operator locale override used when a request supplies no locale. Safe to expose in diagnostics.
+	 * Operator locale override used when a request supplies no locale.
+	 *
+	 * Safe to expose in diagnostics.
 	 */
 	MW_LOCALE: z
 		.string()
@@ -24,17 +26,21 @@ const RuntimeEnvSchema = z.object({
 		}),
 	// Geocode server batch row cap (`post /v1/batch`).
 	//
-	// `MAILWOMAN_BATCH_CONCURRENCY` was removed — it was inert. In-process concurrency cannot overlap a geocode:
-	// `onnxruntime-node`'s `session.run()` blocks the JS thread instead of releasing to the libuv pool, and
-	// `node:sqlite` reads are synchronous. Measured 1.00x flat from 1→16 workers on both parse and full geocode. Don't
-	// reintroduce it without re-measuring. worker threads (see `mailwoman/geocode-stream.ts`) are the only change that
-	// moves this in Node. Receipts: `docs/engineering/reference/performance.mdx`.
+	// `MAILWOMAN_BATCH_CONCURRENCY` was removed.
+	// It was inert.
+	// In-process concurrency cannot overlap a geocode: `onnxruntime-node`'s `session.run()` blocks the
+	// JS thread instead of releasing to the libuv pool, and `node:sqlite` reads are synchronous.
+	// Measured 1.00x flat from 1→16 workers on both parse and full geocode.
+	// Don't reintroduce it without re-measuring.
+	// Worker threads (see `mailwoman/geocode-stream.ts`) are the only change that moves this in Node.
+	// Receipts: `docs/engineering/reference/performance.mdx`.
 	MAILWOMAN_BATCH_MAX: blankAsAbsent(z.coerce.number().int().positive().default(1000)).meta({
 		title: "Batch row limit",
 		description: "Maximum rows accepted by `POST /v1/batch` when running `mailwoman serve`.",
 	}),
-	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own. declared here because the
-	// debug view's map pane emits raw SGR and must consult it itself — the schema strips unlisted vars.
+	// The informal-standard color kill switch (no-color.org). chalk/Ink honor it on their own.
+	// Declared here because the debug view's map pane emits raw SGR and must consult
+	// it itself — the schema strips unlisted vars.
 	NO_COLOR: z.string().optional().meta({
 		title: "Disable color",
 		description: "Disables ANSI color output, following the informal NO_COLOR convention.",
@@ -56,6 +62,20 @@ const RuntimeEnvSchema = z.object({
 		title: "Python executable",
 		description: "Python executable override used by the export-verification developer tools.",
 	}),
+	// The customer's standing refusal of an obligation class.
+	// `mailwoman data pull --refuse` reads it as its default, and `mailwoman doctor` reports
+	// whether the layers on disk satisfy it.
+	MAILWOMAN_REFUSE_OBLIGATIONS: z
+		.string()
+		.optional()
+		.meta({
+			title: "Refused obligation classes",
+			description:
+				"Comma-separated classes of license obligation this installation declines: `share-alike`, `unresolved`. " +
+				"`mailwoman data pull` refuses a bundle whose recorded expression carries one, and `mailwoman doctor` " +
+				"reports whether the layers on disk satisfy the preference.",
+			examples: ["share-alike", "share-alike,unresolved"],
+		}),
 })
 
 const EvaluationEnvSchema = z.object({
@@ -94,7 +114,9 @@ export const PublicMailwomanEnvSchema = z.object({
 })
 
 /**
- * Secrets the CLI's publishing and evaluation commands send. Never log their values.
+ * Secrets the CLI's publishing and evaluation commands send.
+ *
+ * Never log their values.
  */
 export const PrivateMailwomanEnvSchema = z.object({
 	// R2/S3 upload credentials for `tiles publish` and `corpus upload` (rclone `:s3:` remote).
@@ -110,10 +132,28 @@ export const PrivateMailwomanEnvSchema = z.object({
 		title: "S3 secret access key",
 		description: "S3-compatible secret access key used by rclone when publishing tile and corpus artifacts.",
 	}),
+	RCLONE_S3_PUBLIC_ENDPOINT: z.string().optional().meta({
+		title: "Public S3 endpoint",
+		description: "S3-compatible endpoint used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_ACCESS_KEY_ID: z.string().optional().meta({
+		title: "Public S3 access key ID",
+		description: "S3-compatible access key ID used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY: z.string().optional().meta({
+		title: "Public S3 secret access key",
+		description: "S3-compatible secret access key used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_REGION: z.string().optional().meta({
+		title: "Public S3 region",
+		description: "S3-compatible region used when publishing public demo assets. Defaults to auto.",
+	}),
 	/**
-	 * Per-run secret salting the published case identifiers of a controlled premise-linkage evaluation (`mailwoman eval
-	 * premise-linkage`). A secret rather than config: two reports salted alike can be joined row for row into a longer
-	 * record of the same premises, which is the linkage the identifier exists to prevent.
+	 * Per-run secret salting the published case identifiers of a controlled premise-linkage
+	 * evaluation (`mailwoman eval premise-linkage`).
+	 *
+	 * A secret rather than config: two reports salted alike can be joined row for row into a
+	 * longer record of the same premises, which is the linkage the identifier exists to prevent.
 	 */
 	MAILWOMAN_PREMISE_LINKAGE_SALT: z.string().optional().meta({
 		title: "Premise-linkage salt",

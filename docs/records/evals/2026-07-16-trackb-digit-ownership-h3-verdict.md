@@ -30,7 +30,7 @@ doesn't.
 | the old single-extract count   |        0.810 |      0.101 |
 | **the real weighted marginal** |   **0.4765** | **0.4453** |
 
-The real aggregate is a coin flip. It is also **meaningless** — the signal is entirely in the shape
+The real aggregate is a coin flip. It is also **meaningless**. The signal is entirely in the shape
 conditional, and averaging over shapes destroys it. (The house rule: [the aggregate is not the
 verdict][verify].)
 
@@ -100,7 +100,7 @@ Two things fall out.
 
 **The model conditions on run length correctly.** On the rows it gets right it reproduces the
 length-conditioned corpus almost exactly (2d: 0.0270 vs 0.0427; 5d: 0.9444 vs 0.8792), monotonically,
-crossing over at 4 digits. That crossover is **deepparse's measured ≥4 boundary** — the thing we were
+crossing over at 4 digits. That crossover is **deepparse's measured ≥4 boundary**. The thing we were
 told it had and we lacked. We have it. It is in the emissions.
 
 **The failing rows sit at the same run length with 19× the postcode rate.** Length cannot be the

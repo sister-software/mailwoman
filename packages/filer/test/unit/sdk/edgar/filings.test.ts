@@ -1,18 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- * @file Tests for `edgar-filings.ts` — CIK resolution + 10-K discovery + Exhibit 21 document discovery.
- *
- *   No live network anywhere here: `fetchCompanyTickers`/`fetchTenKFilings`/`fetchExhibit21Documents` are
- *   exercised against hand-rolled stubs satisfying {@link SECGetClient}/{@link SECDocumentClient} (one method
- *   each), never a real `createSECClient()` or an axios harness. Everything else is a pure function over an
- *   authored fixture or `filer/test-fixtures/edgar/lumen-2025-index-headers.html` — a real, vendored edgar
- *   accession manifest (162 documents per its own `public-document-count` header field. this file's own sgml
- *   `&lt.document&gt.` block count is 161 — four sequence numbers, including 18, have no block of their own in
- *   this manifest, a real-edgar quirk this suite counts rather than papers over).
- */
-
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import {
@@ -77,7 +62,7 @@ describe("parseCompanyTickers", () => {
 	})
 
 	it("throws a descriptive error naming the row key on a malformed entry", () => {
-		const raw = { "0": { cik_str: 320_193, ticker: "AAPL" } } // missing title
+		const raw = { "0": { cik_str: 320_193, ticker: "AAPL" } }
 
 		expect(() => parseCompanyTickers(raw)).toThrow(/malformed row "0"/)
 	})
@@ -99,7 +84,7 @@ describe("fetchCompanyTickers", () => {
 })
 
 describe("parseCIKLookupData", () => {
-	it("parses the real file format — NAME:CIK: per line, no ticker", () => {
+	it("Parses the real file format — NAME:CIK: per line without ticker", () => {
 		const entries = parseCIKLookupData("CELLCO PARTNERSHIP:0001175215:\nWINDSTREAM ALABAMA, LLC:0001377589:\n")
 		expect(entries).toHaveLength(2)
 		expect(entries[0]).toEqual({ cik: toCIK("0001175215"), title: "CELLCO PARTNERSHIP", ticker: "" })
@@ -141,9 +126,6 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("reports ONE candidate for a registrant filed under several share classes", () => {
-		// `company_tickers.json` carries one row per ticker, so a registrant with several share
-		// classes appears several times under one CIK. Measured 2026-08-03: "Liberty Broadband
-		// Corporation" came back as the same CIK four times, each scoring 1.0.
 		const shareClasses: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDB", title: "Liberty Broadband Corp" },
@@ -157,9 +139,6 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	})
 
 	it("does not let share classes manufacture a tie that suppresses `limit`", () => {
-		// The phantom tie is the actual damage: three rows at the top score made the tie rule fire,
-		// so `limit` stopped trimming and a caller asking for one answer got the same CIK back three
-		// times alongside nothing else.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0001611983")!, ticker: "LBRDA", title: "Liberty Broadband Corp" },
 			{ cik: toCIK("0001611983")!, ticker: "LBRDK", title: "Liberty Broadband Corp" },
@@ -219,8 +198,7 @@ describe("resolveCIKCandidates — the no-name-only-match check (required, 3a's 
 	it("`limit` still trims the low-scoring tail when there is no tie at the top", () => {
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: toCIK("0000320193")!, ticker: "AAPL", title: "Apple Inc." },
-			// Shares the "apple" token but is not the same canonical string, so it scores below the exact match
-			// (but still above minScore) — a genuine ranking rather than a tie, so `limit` may safely trim it.
+
 			{ cik: toCIK("0000320194")!, ticker: "AAPQ", title: "Apple Group Holdings Inc" },
 		]
 
@@ -251,7 +229,7 @@ function submissionsPayload(
 describe("parseTenKFilings", () => {
 	const CIK = toCIK(320_193)!
 
-	it("keeps only form === 10-K rows, dropping 10-K/A and everything else", () => {
+	it("Keeps only form === 10-K rows, dropping 10-K/A and everything else", () => {
 		const raw = submissionsPayload(320_193, [
 			{ form: "10-K", accessionNumber: "0000320193-23-000106", filingDate: "2023-11-03", primaryDocument: "a.htm" },
 			{ form: "8-K", accessionNumber: "0000320193-23-000050", filingDate: "2023-08-01", primaryDocument: "b.htm" },
@@ -281,7 +259,7 @@ describe("parseTenKFilings", () => {
 			filings: {
 				recent: {
 					form: ["10-K", "10-K"],
-					accessionNumber: ["0000320193-23-000106"], // one short
+					accessionNumber: ["0000320193-23-000106"],
 					filingDate: ["2023-11-03", "2022-11-01"],
 					primaryDocument: ["a.htm", "b.htm"],
 				},
@@ -343,8 +321,6 @@ describe("Exhibit 21 document discovery", () => {
 	it("reads every document in the manifest, not only the exhibits", () => {
 		const documents = parseFilingDocuments(LUMEN_CIK, "0000018926-26-000014", headerHTML)
 
-		// The fixture's own sgml manifest carries 161 `<document>` blocks — see the module docstring above for
-		// why this differs from the header's `public-document-count: 162`.
 		expect(documents).toHaveLength(161)
 		expect(documents[0]).toMatchObject({ type: "10-K", filename: "lumn-20251231.htm" })
 	})

@@ -75,8 +75,8 @@ def cross_pollution(
     into the postcode span. Overall, plus per-locale when ``row_locale_ids`` is supplied. The
     pre-registered PR3 bar is under 1% per locale by 20k steps.
 
-    Answers an empty dict when the validation sample contains no city or region start tokens at all
-    — no rate is defined over an empty denominator, and 0.0 would read as a clean result.
+    Answers an empty dict when the validation sample contains no city or region start tokens at all.
+    No rate is defined over an empty denominator, and 0.0 would read as a clean result.
     """
     start = torch.zeros_like(labels, dtype=torch.bool)
     for name in ("B-locality", "B-region"):

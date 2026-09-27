@@ -20,33 +20,35 @@ import { TextSpliterator } from "spliterator"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
 
 /**
- * How many `tsc` invocations to keep in flight. Each is single-threaded and mostly CPU-bound.
+ * How many `tsc` invocations to keep in flight.
+ *
+ * Each is single-threaded and mostly CPU-bound.
  */
 const CONCURRENCY = Math.max(2, Math.min(8, cpuCount() - 2))
 
 /**
- * A tracked `tsconfig.test.json` one directory below the root or below `packages/`, which is where every workspace and
- * the `scripts/` project sit.
+ * A tracked `tsconfig.test.json` one directory below the root or below `packages/`,
+ * which is where every workspace and the `scripts/` project sit.
  */
 const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
 
 /**
- * Run `tsc` against one workspace's test project. A non-zero exit carries the diagnostics on stdout, so a rejected
- * promise is the normal path for a workspace with errors.
+ * Run `tsc` against one workspace's test project.
+ *
+ * A non-zero exit carries the diagnostics on stdout, so a rejected promise is
+ * the normal path for a workspace with errors.
  */
-async function typecheck(workspace: string, repoRoot: string): Promise<Diagnostic[]> {
+async function* typecheck(workspace: string, repoRoot: string): AsyncGenerator<Diagnostic, void, unknown> {
 	const config = join(workspace, "tsconfig.test.json")
 
 	try {
 		await runFile("./node_modules/.bin/tsc", ["-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
-
-		return []
 	} catch (error) {
-		const output = String((error as { stdout?: string }).stdout ?? "")
+		const output = (error as { stdout?: string }).stdout ?? ""
 
-		return [...TextSpliterator.from(output)]
-			.filter((line) => line.includes("error TS"))
-			.map((line) => ({ severity: DiagnosticSeverity.Error, message: line, file: workspace }))
+		for (const line of TextSpliterator.from(output).filter((l) => l.includes("error TS"))) {
+			yield { severity: DiagnosticSeverity.Error, message: line, file: workspace }
+		}
 	}
 }
 
@@ -73,7 +75,9 @@ export const typecheckTestsCheck: RepoCheck = {
 		await Promise.all(
 			Array.from({ length: CONCURRENCY }, async () => {
 				for (let next = queue.shift(); next; next = queue.shift()) {
-					diagnostics.push(...(await typecheck(next, context.repoRoot)))
+					for await (const diag of typecheck(next, context.repoRoot)) {
+						diagnostics.push(diag)
+					}
 				}
 			})
 		)

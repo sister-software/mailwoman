@@ -3,7 +3,7 @@
 
 /**
  *   `<PlaceAutocomplete>` — the suggestion listbox with fake suggestions (hover/click to highlight), and
- *   the empty case where it renders nothing. No maplibre. plain DOM.
+ *   the empty case where it renders no listbox. No maplibre. plain DOM.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
@@ -19,7 +19,8 @@ export default meta
 type Story = StoryObj<typeof PlaceAutocomplete>
 
 /**
- * Three fake suggestions. the first is highlighted, hover to move it.
+ * Three fake suggestions.
+ * The first is highlighted, hover to move it.
  */
 export const WithSuggestions: Story = {
 	render: () => {
@@ -39,7 +40,7 @@ export const WithSuggestions: Story = {
 }
 
 /**
- * No suggestions → the listbox renders nothing.
+ * No suggestions → the listbox renders no options.
  */
 export const Empty: Story = {
 	render: () => (

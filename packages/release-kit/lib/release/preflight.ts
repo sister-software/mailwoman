@@ -6,7 +6,7 @@
  *   isolated root, materialize the weights artifacts there, then pack and audit all release
  *   workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with.
  *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes. an interrupted run leaves
- *   every tracked file byte-identical because nothing ever writes into the checkout (see
+ *   every tracked file byte-identical because no code ever writes into the checkout (see
  *   `stage.ts` for why staging rather than try/finally, is the mechanism).
  *
  *   Two sources, one audit. `--source repo` (the default) materializes weights from the machine's data
@@ -25,8 +25,9 @@ import { copyWeights } from "#weights/copy-weights"
 import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
 
 /**
- * Where the staged weights artifacts come from. `repo` reads this machine's data root, `hf` reads the public bucket CI
- * publishes from.
+ * Where the staged weights artifacts come from.
+ *
+ * `repo` reads this machine's data root, `hf` reads the public bucket CI publishes from.
  */
 export const WEIGHTS_SOURCES = ["repo", "hf"] as const
 
@@ -40,7 +41,9 @@ export interface ReleasePreflightOptions {
 	 */
 	version?: string
 	/**
-	 * The caller'S staging directory: written into and never removed. Absent, a scratch directory is made and owned here.
+	 * The caller'S staging directory: written into and never removed.
+	 *
+	 * Absent, a scratch directory is made and owned here.
 	 */
 	staging?: string
 	/**
@@ -62,9 +65,11 @@ export interface ReleasePreflightReport {
 }
 
 /**
- * Stage, materialize, pack and audit every release workspace. Answers the report. the verdict is `fail` when any
- * release workspace does not pack to a tarball honoring its manifest, or when the release list's named-absence identity
- * does not hold.
+ * Stage, materialize, pack and audit every release workspace.
+ *
+ * Answers the report.
+ * The verdict is `fail` when any release workspace does not pack to a tarball honoring
+ * its manifest, or when the release list's named-absence identity does not hold.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {
 	const { repoRoot, source, log } = options
@@ -76,9 +81,10 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// Two ownership rules, and they are separate. A `--staging` root is the caller'S directory: this operation writes
-	// into it and never removes it. The one it makes itself is its own, and `--keep` withholds removal so the staged
-	// tree survives for inspection — registering it is what decides that, rather than a branch at the far end.
+	// Two ownership rules, and they are separate.
+	// A `--staging` root is the caller'S directory: this operation writes into it and never removes it.
+	// The one it makes itself is its own, and `--keep` withholds removal so the staged tree survives
+	// for inspection — registering it is what decides that, rather than a branch at the far end.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {
@@ -88,10 +94,11 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 			resources.use(scratch)
 		}
 
-		stagingRoot = String(scratch.path)
+		stagingRoot = scratch.path.toString()
 	}
 
-	// 1. The named-absence identity — every workspace outside the release list must be sanctioned by name.
+	// 1. The named-absence identity.
+	//    Every workspace outside the release list must be sanctioned by name.
 	const identity = await checkReleaseListIdentity(repoRoot)
 
 	const releaseListProblems = [
@@ -114,8 +121,9 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 
 	log(`release list: ${identity.publishCount} workspaces`)
 
-	// 2. Stage + materialize + audit. Both sources write into the staging tree only, so the two legs differ
-	// in where the bytes come from and in nothing the audit can see.
+	// 2. Stage + materialize + audit.
+	//    Both sources write into the staging tree only, so the two legs differ
+	// in where the bytes come from and in no other way the audit can see.
 	log(`staging tracked tree → ${stagingRoot}`)
 	await stageReleaseTree(repoRoot, stagingRoot)
 

@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import type { LineStringPath } from "@mailwoman/spatial"
 import {
 	geometryContains,
@@ -29,7 +26,7 @@ const SOLID: PolygonLiteral = {
 test("isPolygonLiteral: only a {type:'Polygon', coordinates: []} object qualifies", () => {
 	expect(isPolygonLiteral(SOLID)).toBe(true)
 	expect(isPolygonLiteral({ type: "Point", coordinates: [0, 0] })).toBe(false)
-	expect(isPolygonLiteral({ type: "Polygon" })).toBe(false) // no coordinates
+	expect(isPolygonLiteral({ type: "Polygon" })).toBe(false)
 	expect(isPolygonLiteral(null)).toBe(false)
 	expect(isPolygonLiteral("Polygon")).toBe(false)
 })
@@ -45,7 +42,6 @@ test("isSolidPolygonPath: one ring = solid, more rings = has holes", () => {
 	expect(isSolidPolygonPath(withHole)).toBe(false)
 })
 
-// A unit square ring in [lon, lat], closed.
 const SQUARE: LineStringPath = [
 	[0, 0],
 	[0, 1],
@@ -56,12 +52,12 @@ const SQUARE: LineStringPath = [
 
 test("pointInRing: inside vs outside a simple ring (ray-cast even-odd)", () => {
 	expect(pointInRing(0.5, 0.5, SQUARE)).toBe(true)
-	expect(pointInRing(2, 0.5, SQUARE)).toBe(false) // east of the ring
-	expect(pointInRing(-1, 0.5, SQUARE)).toBe(false) // west of the ring
-	expect(pointInRing(0.5, 2, SQUARE)).toBe(false) // north of the ring
+	expect(pointInRing(2, 0.5, SQUARE)).toBe(false)
+	expect(pointInRing(-1, 0.5, SQUARE)).toBe(false)
+	expect(pointInRing(0.5, 2, SQUARE)).toBe(false)
 })
 
-test("pointInPolygon: a hole punches a void (even-odd handles holes, no orientation rules)", () => {
+test("PointInPolygon: a hole punches a void (even-odd handles holes without orientation rules)", () => {
 	const outer: LineStringPath = [
 		[0, 0],
 		[0, 10],
@@ -78,15 +74,14 @@ test("pointInPolygon: a hole punches a void (even-odd handles holes, no orientat
 		[4, 4],
 	]
 
-	// inside outer rather than in the hole → contained
 	expect(pointInPolygon(1, 1, [outer, hole])).toBe(true)
-	// inside the hole → an odd-count void → not contained
+
 	expect(pointInPolygon(5, 5, [outer, hole])).toBe(false)
-	// outside everything
+
 	expect(pointInPolygon(20, 20, [outer, hole])).toBe(false)
 })
 
-test("geometryContains: Polygon / MultiPolygon test; non-areal and null geometry → null", () => {
+test("GeometryContains: Polygon / MultiPolygon test; non-areal and null geometry → null", () => {
 	const polygon = { type: "Polygon" as const, coordinates: [SQUARE] }
 
 	expect(geometryContains(polygon, 0.5, 0.5)).toBe(true)
@@ -108,11 +103,10 @@ test("geometryContains: Polygon / MultiPolygon test; non-areal and null geometry
 		],
 	}
 
-	expect(geometryContains(multi, 0.5, 0.5)).toBe(true) // in the first polygon
-	expect(geometryContains(multi, 10.5, 10.5)).toBe(true) // in the second polygon
-	expect(geometryContains(multi, 5, 5)).toBe(false) // in neither
+	expect(geometryContains(multi, 0.5, 0.5)).toBe(true)
+	expect(geometryContains(multi, 10.5, 10.5)).toBe(true)
+	expect(geometryContains(multi, 5, 5)).toBe(false)
 
-	// non-areal / missing → null (the "no polygon on record" fallback, never a rejection)
 	expect(geometryContains({ type: "Point", coordinates: [0.5, 0.5] }, 0.5, 0.5)).toBeNull()
 	expect(geometryContains(null, 0.5, 0.5)).toBeNull()
 	expect(geometryContains(undefined, 0.5, 0.5)).toBeNull()

@@ -8,25 +8,36 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
 import { buildToolTable, type MCPToolDeps } from "#tools"
 
 /**
- * The advertised server version — keep in lockstep with `package.json`'s `version` (not read from it dynamically: a
- * static string avoids `resolveJsonModule`/`composite` friction for one cosmetic field, the same tradeoff
- * `nominatim`/`photon`'s OpenAPI `info.version` DON'T make since theirs is a documented public interface. an MCP client
- * only ever logs this).
+ * The advertised server version, read from this package's own manifest at load.
+ *
+ * A JSON import would make `tsc` copy the file into `out/`, where it becomes the package
+ * scope for the compiled tree, so the manifest is read through the module resolver instead.
  */
-const MCP_SERVER_VERSION = "7.1.0"
+const MCP_SERVER_VERSION = await readPackageJSON(import.meta.url, "@mailwoman/mcp").then((manifest) => {
+	if (!manifest.version) {
+		throw new Error("@mailwoman/mcp: package.json carries no version to advertise")
+	}
+
+	return manifest.version
+})
 
 /**
- * Build an `McpServer` with every `tools.ts` tool registered. A handler's returned value is JSON-stringified into a
- * single `text` content block — every tool here answers with structured data (parse trees, geocode results, search
- * hits), so a plain JSON text block is the simplest faithful rendering. none of the tools need images, resource links,
- * or other MCP content kinds. A thrown error becomes an `isError` tool result instead of a protocol-level failure, so a
- * bad address / missing db surfaces to the agent as a normal (if unsuccessful) tool call.
+ * Build an `McpServer` with every `tools.ts` tool registered.
+ *
+ * A handler's returned value is JSON-stringified into a single `text` content block.
+ * Every tool here answers with structured data (parse trees, geocode results, search hits),
+ * so a plain JSON text block is the simplest faithful rendering.
+ *
+ * None of the tools need images, resource links, or other MCP content kinds.
+ * A thrown error becomes an `isError` tool result instead of a protocol-level failure,
+ * so a bad address / missing db surfaces to the agent as a normal (if unsuccessful) tool call.
  */
 export function createMCPServer(deps: MCPToolDeps): McpServer {
 	const server = new McpServer({ name: "mailwoman", version: MCP_SERVER_VERSION })

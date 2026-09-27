@@ -11,32 +11,46 @@
 /// <reference types="node" />
 
 /**
- * Generated trees, excluded from the cruise and never followed into. `out/` is tsc's emit and `dist/` an app's Vite
- * output — bundled chunks whose cycles are the bundler's, not the source graph's. `public/sqljs/` is the sql.js-httpvfs
- * runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`; it is gitignored, and the readers load it by URL.
+ * Generated trees, excluded from the cruise and never followed into.
+ *
+ * `out/` is tsc's emit and `dist/` an app's Vite output — bundled chunks whose
+ * cycles are the bundler's, not the source graph's.
+ * `public/sqljs/` is the sql.js-httpvfs runtime staged by `@mailwoman/site-kit/vite/stage-sqljs`;
+ * it is gitignored, and the readers load it by URL.
+ *
+ * `packages/react/tokens/index.ts` is the TypeScript companion `styleframe build` writes
+ * beside the CSS it compiles, and `.gitignore` carries the reason nothing imports it:
+ * consumers read `tokens/index.css` and `tokens/tokens.json`, and both of those are committed.
+ * The cruise reads the filesystem rather than the index, so on any tree where that build
+ * has run the file is an orphan by construction, and a fresh checkout never has it.
  */
-const GENERATED_TREES = "(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)"
+const GENERATED_TREES =
+	"(?:^|/)(?:out|dist|node_modules|public/sqljs|sentencepiece[.]mjs)(?:/|$)|^packages/react/tokens/index[.]ts$"
 
 /**
- * Modules an external runner, a bundler, or an export condition loads BY path, so no import names them and `no-orphans`
- * cannot see the edge. Each entry states who does the loading.
+ * Modules an external runner, a bundler, or an export condition loads BY path,
+ * so no import names them and `no-orphans` cannot see the edge.
+ *
+ * Each entry states who does the loading.
  */
 const LOADED_WITHOUT_AN_IMPORT = [
-	// Test-runner and build-tool configs. The preset exempts babel and webpack by name; these are the ones this
-	// repository runs. `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
+	// Test-runner and build-tool configs.
+	// The preset exempts babel and webpack by name; these are the ones this repository runs.
+	// `.storybook/main.ts` sits under a dotted directory, which the preset's dotfile pattern
 	// (`(^|/)\.[^/]+\.(js|cjs|mjs|ts|json)$`) matches only as a dotted file.
 	"(^|/)(?:vitest|vitest[.]node|vite|playwright|styleframe)[.]config[.](?:js|cjs|mjs|ts)$",
 	"(^|/)[.]storybook/",
 	// Playwright specs: the runner collects them from disk by glob.
 	"(^|/)test/browser/[^/]+[.]spec[.]ts$",
-	// A worker script must be a real file on disk for the runtime to spawn by path —
+	// A worker script must be a real file on disk for the runtime to spawn by path.
 	// `packages/mailwoman/test/unit/geocode/stream.test.ts` hands this one to a worker, and
 	// `@mailwoman/site-kit/vite/pwa` names `lib/service-worker.ts` as the `injectManifest` entry.
 	"(^|/)lib/test-fixtures/[^/]+-worker[.](?:js|ts)$",
 	"(^|/)lib/service-worker[.]ts$",
-	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere. This cruise
-	// declares `conditionNames: ["node", "import", "default"]`, so the browser half is a real entry point that
-	// nothing in the Node graph can reach — `@mailwoman/neural`'s `./onnx-runner` is the case.
+	// The `browser` condition's target for a subpath whose `node` condition resolves elsewhere.
+	// This cruise declares `conditionNames: ["node", "import", "default"]`, so the browser
+	// half is a real entry point that nothing in the Node graph can reach.
+	// `@mailwoman/neural`'s `./onnx-runner` is the case.
 	"(^|/)lib/onnx/runner/browser[.]ts$",
 ]
 
@@ -70,7 +84,7 @@ const config = {
 				"Those directories shell out to binaries (`spatial/lib/tools/ogr.ts`: 'OGR IS BUILD TOOLING, NEVER A " +
 				"SERVE DEPENDENCY'), open build databases, and fetch multi-gigabyte archives; one `export *` is all it " +
 				"takes for a barrel to drag that into a bundle. " +
-				"SCOPED BY PACKAGE, NOT BY FOLDER NAME, and that is the whole design. The obvious rule — 'nothing outside " +
+				"SCOPED BY PACKAGE, NOT BY FOLDER NAME, and that is the whole design. The obvious rule — 'no code outside " +
 				"tools/ may import tools/' — was written first and produced 38 violations, every one of them correct " +
 				"behaviour: 33 are `mailwoman/lib/commands/*` calling the command's own library half, which is the " +
 				"documented CLI architecture, and 3 are `dev-mcp`, where `tools/` means MCP TOOL DEFINITIONS rather " +
@@ -145,10 +159,11 @@ const config = {
 		preserveSymlinks: false,
 		progress: { type: "none" },
 		tsConfig: { fileName: "tsconfig.json" },
-		// Type-only imports are erased at compile time, so the default (false) hides every edge into a
-		// `types.ts` and reports it as an orphan. It also makes `no-circular`'s `dependencyTypesNot:
-		// ["type-only"]` inert, since no type-only edge exists to exclude. 48 modules / 63 dependencies
-		// -> 76 / 138 across locale-hint, query-shape, normalize and variant-aliases alone.
+		// Type-only imports are erased at compile time, so the default (false) hides
+		// every edge into a `types.ts` and reports it as an orphan.
+		// It also makes `no-circular`'s `dependencyTypesNot: ["type-only"]` inert,
+		// since no type-only edge exists to exclude. 48 modules / 63 dependencies -> 76 /
+		// 138 across locale-hint, query-shape, normalize and variant-aliases alone.
 		tsPreCompilationDeps: true,
 	},
 }

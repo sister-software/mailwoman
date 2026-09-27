@@ -2,26 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The wired {@link MailwomanAPIEngine} for `mailwoman serve` (Phase 4b, the Hono cutover). Ports the
- *   former express `server/`'s handler bodies — `GeocodeRouter.getDeps` + its retired `/api/geocode`,
- *   `/api/batch`, `/api/resolve-tree`, `/api/reload` handlers, `AddressRouter`'s retired `/parse`
- *   handler, and `HealthRouter`'s `/health` data block — onto the engine-agnostic `@mailwoman/api`
- *   interface's live routes (`/v1/parse`, `/v1/geocode`, `/v1/batch`, `/v1/resolve`, `/v1/reload`).
- *   `mailwoman/server/` is deleted — this file is its sole successor, a fresh port rather
- *   than a thin wrapper.
- *
- *   `createServeEngine` builds the shared stack once, at boot, instead of express's lazy
- *   first-request memoized promise — the CLI's `serve` command awaits it before listening, so a
- *   misconfigured deployment fails friendly at boot (the #1009 pattern the drop-ins already use)
- *   instead of a runtime 503 on the first request. `parse` speaks native neural output (`ParseOutcome`
- *   = ordered components + the decoded `AddressTree`, the same language `/v1/resolve` speaks) — it
- *   needs only the model weights, loaded once here and reused by the geocode stack below, so it is
- *   built independently of the WOF-data check: a WOF-less boot still answers `/v1/parse`, while
- *   `geocode`/`batch`/`resolveTree`/`reload` are simply absent (`@mailwoman/api`'s routes answer 503
- *   for those on their own). When the weights themselves are unresolvable (`@mailwoman/neural`
- *   missing, or no weights package installed), `parse` is also absent and the routes answer 501 — no
- *   rules fallback (the legacy-excision's point). `health` always answers, even when everything else
- *   is broken.
+ * `createServeEngine` builds the shared stack once at boot. The CLI's `serve` command awaits it before listening, so a misconfigured deployment fails at boot rather than on the first request. A degraded boot is deliberate: `parse` needs only the model weights and still answers `/v1/parse` without WOF data, while `geocode`/`batch`/`resolveTree`/`reload` are absent and their routes answer 503. When the weights are unresolvable `parse` is absent too and its routes answer 501 with no rules fallback. `health` always answers.
  */
 
 import type {
@@ -34,6 +15,7 @@ import type {
 } from "@mailwoman/api"
 import { recordTimed } from "@mailwoman/api-kit"
 import { decodeAsTuples, decodeAsXML } from "@mailwoman/core"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes, type AddressTree } from "@mailwoman/core/decoder"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -41,7 +23,6 @@ import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { deriveInputMode } from "@mailwoman/core/pipeline"
 import type { Resolver, ResolveOpts } from "@mailwoman/core/resolver"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
-import { mailwomanDataRoot } from "@mailwoman/core/utils"
 import { classifyKindSync } from "@mailwoman/kind-classifier"
 import { computeQueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -50,7 +31,7 @@ import { Globerator } from "spliterator/node/fs"
 import { readReleaseManifest } from "#data/release"
 import { $public } from "#env"
 import { geocodeAddress, type GeocodeClassifier } from "#geocode/core"
-import { regionSlugFromTree, RegionDatabaseProvider } from "#geocode/regions"
+import { regionSlugFromTree, USStateDatabaseProvider } from "#geocode/regions"
 import { INTERP_RADIUS_CALIBRATION, interpCalibrationForRegion } from "#interp-calibration"
 import {
 	buildNoGazetteerMessage,
@@ -58,38 +39,32 @@ import {
 	existingWOFDatabasePaths,
 	resolveCandidateDBPath,
 } from "#resolver-backend"
-/**
- * Default per-state database root + interp calibration — mirrors the express server's defaults (`GeocodeRouter.ts`).
- */
-const DATA_ROOT = mailwomanDataRoot()
 
-/**
- * The classifier/resolver/database bundle `geocode`/`batch`/`resolveTree`/`reload` close over.
- */
+const DATA_ROOT = dataRootPath()
+
 interface GeocodeDepsBundle {
 	classifier: GeocodeClassifier
 	resolver: Resolver
-	databases: RegionDatabaseProvider
+	/**
+	 * The concrete US provider, because the engine's `reload` calls its `reload`.
+	 */
+	databases: USStateDatabaseProvider
 	defaultCountry?: string
 }
 
-/**
- * Same WOF-path resolution as the express `GeocodeRouter`/`HealthRouter` (env override, else the conventional
- * databases).
- */
 async function wofPaths(): Promise<string[]> {
 	const env = $public.MAILWOMAN_WOF_DB
 
-	// The env override is comma-split and probed like the convention set: a listed database that is not on
-	// disk is dropped here rather than handed to the resolver to fail on open.
+	// The env override is comma-split and probed like the convention set: a listed database
+	// that is not on disk is dropped here rather than handed to the resolver to fail on open.
 	const explicit = env ? extractDelimited(env) : undefined
 
 	return await existingWOFDatabasePaths(explicit)
 }
 
 /**
- * #1009-style boot preflight message. Same shape as the drop-ins' (`photon/cli.ts`, `nominatim/cli.ts`) — a stranger's
- * first `mailwoman serve` must say exactly what data is missing and the one command that fixes it.
+ * A boot preflight message that a stranger's first `mailwoman serve` reads:
+ * it says exactly what data is missing and the one command that fixes it.
  */
 function buildPreflightMessage(): string {
 	return buildNoGazetteerMessage({
@@ -98,10 +73,6 @@ function buildPreflightMessage(): string {
 	})
 }
 
-/**
- * Best-effort model-card read: env override → installed weights package → dev-tree fallback. Ported from
- * `HealthRouter`.
- */
 async function readModelCard(): Promise<Record<string, unknown> | null> {
 	const candidates: string[] = []
 
@@ -110,15 +81,14 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 	}
 
 	try {
-		// Native ESM resolution of the weights package's card. `@mailwoman/neural-weights-*` packages carry no `exports`
-		// map, so the subpath resolves as a plain file inside the package, and (unlike `node:module`'s
-		// `findPackageJSON`) `import.meta.resolve` realpaths through the workspace symlink — the same string the CJS
-		// `require.resolve` this replaced returned. It does not throw for a missing file inside a resolvable package,
-		// only for an unresolvable package. the `pathExists` below already checks every candidate, so that is a no-op
-		// here.
+		// `@mailwoman/neural-weights-*` packages carry no `exports` map.
+		// The subpath resolves as a plain file inside the package.
+		// `import.meta.resolve` realpaths through the workspace symlink.
+		// It throws only for an unresolvable package and resolves a missing file inside one.
+		// `pathExists` below therefore checks every candidate.
 		candidates.push(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json"))
 	} catch {
-		/* package not resolvable from here — fall through */
+		// A weights package that does not resolve here simply falls through to the next candidate.
 	}
 
 	candidates.push("packages/neural-weights-en-us/model-card.json")
@@ -131,17 +101,13 @@ async function readModelCard(): Promise<Record<string, unknown> | null> {
 				if (card) return card
 			}
 		} catch {
-			/* unreadable — try the next candidate */
+			// Unreadable — try the next candidate.
 		}
 	}
 
 	return null
 }
 
-/**
- * Count canonical per-state databases (`<prefix>-us-<2-letter>.db`) in a data subdir. 0 if absent. Ported from
- * `HealthRouter`.
- */
 async function countDatabases(subdir: string, prefix: string): Promise<number> {
 	try {
 		const re = new RegExp(`^${prefix}-us-[a-z]{2}\\.db$`)
@@ -155,14 +121,12 @@ async function countDatabases(subdir: string, prefix: string): Promise<number> {
 }
 
 /**
- * The `/health` data block: model card + data-root inventory. Ported from `HealthRouter`'s `healthHandler`. Always
- * available — reads files best-effort and never throws, regardless of preflight status.
+ * The `/health` data block: the model card plus the data-root inventory, best-effort
+ * and never throwing regardless of preflight status.
  */
 async function buildHealthData(): Promise<HealthData> {
 	const card = await readModelCard()
-	// The express HealthRouter existence-filtered here where GeocodeRouter's wofPaths() didn't (for
-	// env-supplied paths); this diagnostic field keeps the health-side behavior (no phantom env paths in
-	// "what's deployed").
+	// This field drops env-supplied paths that are not on disk, so "what's deployed" carries no phantom paths.
 	const wofDBs: string[] = []
 
 	for (const p of await wofPaths()) {
@@ -183,7 +147,7 @@ async function buildHealthData(): Promise<HealthData> {
 			: null,
 		data: {
 			data_root: DATA_ROOT,
-			// Versioned-switchover provenance (#485): the releases.json pin, or null in legacy mode.
+			// Versioned-switchover provenance: the releases.json pin, or null in legacy mode.
 			versions: await readReleaseManifest(DATA_ROOT),
 			wof_dbs: wofDBs,
 			situs_states: await countDatabases("address-points", "address-points"),
@@ -192,9 +156,6 @@ async function buildHealthData(): Promise<HealthData> {
 	}
 }
 
-/**
- * One geocode call over the shared deps. Ported from `GeocodeRouter`'s `oneGeocode`.
- */
 function oneGeocode(
 	deps: GeocodeDepsBundle,
 	address: string,
@@ -210,9 +171,6 @@ function oneGeocode(
 	})
 }
 
-/**
- * Pull the street node's resolution tier (if any) for the metric. Ported verbatim from `GeocodeRouter`.
- */
 function collectStreetTier(
 	node: AddressTree["roots"][number]
 ): Array<"address_point" | "interpolated" | "street" | "admin"> {
@@ -239,18 +197,15 @@ export interface ServeEngine {
 }
 
 /**
- * Build the wired `mailwoman serve` engine. Awaited once at boot (unlike express's lazy per-request `getDeps()`), so a
- * misconfigured deployment reports its preflight failure before the process starts listening — the caller (the `serve`
- * command) decides whether to boot degraded (parse+health only) or exit friendly.
+ * Builds the wired `mailwoman serve` engine, awaited once at boot so a misconfigured
+ * deployment reports its preflight failure before the process starts listening.
  */
 export async function createServeEngine(): Promise<ServeEngine> {
-	// `health` reads files best-effort and never throws — wired unconditionally, matching `HealthRouter`'s "answers even
-	// when broken" interface.
+	// `health` reads files best-effort and never throws, so it is wired unconditionally.
 	const health: MailwomanAPIEngine["health"] = () => buildHealthData()
 
-	// Parse needs only the model weights — not the gazetteer. Load them independently of the WOF-data check below so
-	// `/v1/parse` answers whenever weights resolve, even on a geocode-degraded boot. The classifier instance loaded
-	// here is reused by the geocode stack below — weights load once per boot.
+	// Parse needs only the model weights, loaded here once per boot and reused by the
+	// geocode stack below, so `/v1/parse` answers even on a geocode-degraded boot.
 	let parse: MailwomanAPIEngine["parse"]
 	let neuralMod: typeof import("@mailwoman/neural") | undefined
 	let classifier: GeocodeClassifier | undefined
@@ -262,8 +217,6 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		const parseClassifier = classifier
 
 		parse = async (address, opts) => {
-			// Decision A: explicit wire register wins. unset → the kind classifier decides (same derivation
-			// as the runtime pipeline / geocode-core — /v1/parse is the "plain parse" endpoint class).
 			const shape = computeQueryShape(address)
 
 			const inputMode =
@@ -279,7 +232,6 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			}
 		}
 	} catch {
-		// Weights unresolvable — leave parse undefined. the route answers 501 with its existing guard.
 		console.error("createServeEngine: neural weights not found — /v1/parse disabled (501)")
 	}
 
@@ -300,11 +252,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 	}
 
 	const paths = await wofPaths()
-	// Candidate backend → country-agnostic default (demo's global, population-first behavior); a per-request `country`
-	// still scopes. FTS backend keeps the US default. (#170) A candidate DB alone (no WOF admin database) is a valid boot
-	// configuration — `createResolverBackend` prefers it over `wofPaths` — so the preflight check below checks both,
-	// mirroring the drop-ins' `!candidateDB && wofPaths.length === 0` condition rather than `GeocodeRouter`'s WOF-only check.
-	// This check governs geocode/batch/resolveTree/reload only — `parse` is already wired above and unaffected.
+	// A candidate DB alone (no WOF admin database) is a valid boot configuration.
+	// The preflight therefore checks both.
+	// This check governs geocode/batch/resolveTree/reload only, and `parse` is already wired above.
 	const candidateDB = await resolveCandidateDBPath()
 
 	if (!paths.length && !candidateDB) {
@@ -315,25 +265,16 @@ export async function createServeEngine(): Promise<ServeEngine> {
 
 	const backend = await createResolverBackend(resolverMod, { wofPaths: paths })
 	const resolver = createWOFResolver(backend)
-	const databases = await RegionDatabaseProvider.create(resolverMod, DATA_ROOT)
+	const databases = await USStateDatabaseProvider.create(resolverMod, DATA_ROOT)
 	const deps: GeocodeDepsBundle = { classifier, resolver, databases, defaultCountry: candidateDB ? undefined : "US" }
 
-	// Route records the whole-call metric already (`@mailwoman/api`'s `routes.ts`) — the engine records nothing extra
-	// here. Ported from `GeocodeRouter`'s `singleHandler`. The cast mirrors `@mailwoman/api/routes.ts`'s established
-	// "documented wire shape looser than the domain type" idiom — `GeocodeOutcome` is a deliberately loose passthrough.
+	// The route already records the whole-call metric, so the engine records no extra metric here.
 	const geocode: GeocodeCallback = async (address, opts) => oneGeocode(deps, address, opts?.inputMode)
 
-	// Sequential loop — results land in input order. a thrown row is isolated to its own
-	// `{ input, error }` slot. Rows are trimmed here (the route passes the raw validated array through).
-	//
-	// This was a bounded-concurrency worker pool (`MAILWOMAN_BATCH_CONCURRENCY`, default 8) until
-	// 2026-07-16. The pool was measured at 1.00x — a geocode cannot overlap another in-process, because
-	// `onnxruntime-node`'s `session.run()` blocks the JS thread rather than releasing to the libuv pool,
-	// and `node:sqlite` reads are synchronous. The pool bought nothing but the appearance of tuning, so
-	// it's a plain loop now. To actually parallelize, cross a thread boundary — see
-	// `mailwoman/geocode-stream.ts`. Receipts: `docs/engineering/reference/performance.mdx`.
+	// Sequential because `onnxruntime-node`'s `session.run()` blocks the JS thread
+	// and `node:sqlite` reads are synchronous, so a geocode cannot overlap another in-process.
+	// Results land in input order and a thrown row is isolated to its own `{ input, error }` slot.
 	const batch: MailwomanAPIEngine["batch"] = async (addresses, opts) => {
-		// Decision A endpoint default: batch rows are the record register.
 		const inputMode = opts?.inputMode ?? "formatted"
 		const inputs = addresses.map((a) => a.trim())
 		const results: BatchResultEntry[] = new Array<BatchResultEntry>(inputs.length)
@@ -355,9 +296,8 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		return { results }
 	}
 
-	// Metrics are the engine's own responsibility here — unlike `/v1/geocode`, the route wraps no try/catch around
-	// `resolveTree` (it lets a fault fall through to the app's 500 safety net), so the tier metric and the rethrow both
-	// happen here. Ported from `GeocodeRouter`'s `resolveTreeHandler`.
+	// Unlike `/v1/geocode`, the route wraps no try/catch around `resolveTree`,
+	// so the tier metric and the rethrow both happen here.
 	const resolveTree: MailwomanAPIEngine["resolveTree"] = async (tree, rawOpts) => {
 		const incomingOpts = (rawOpts ?? {}) as ResolveOpts
 		const t0 = performance.now()
@@ -370,10 +310,9 @@ export async function createServeEngine(): Promise<ServeEngine> {
 				...incomingOpts,
 				defaultCountry: incomingOpts.defaultCountry ?? deps.defaultCountry,
 				...(addressPoints ? { addressPoints } : {}),
-				// #374 calibration ladder: explicit incoming factor (instrument override, survives the spread) →
-				// the artifact's own header value (`interpolation.radiusCalibration`, read at database open — the
-				// resolver consumes it directly, nothing passed here) → the in-code per-region table for databases
-				// predating the `interp_calibration` metadata table.
+				// Calibration ladder: an explicit incoming factor wins, then the artifact's own
+				// header value (`interpolation.radiusCalibration`), then the in-code per-region
+				// table for databases predating the `interp_calibration` metadata table.
 				...(interpolation
 					? {
 							interpolation,
@@ -385,7 +324,6 @@ export async function createServeEngine(): Promise<ServeEngine> {
 			}
 
 			const resolved = await deps.resolver.resolveTree(tree, opts)
-			// Best-effort tier metric: read the street node's stamped tier (matches the geocode path).
 			const street = resolved.roots.flatMap((r) => collectStreetTier(r)).find(Boolean)
 			recordTimed(performance.now() - t0, street ?? "admin")
 
@@ -398,7 +336,6 @@ export async function createServeEngine(): Promise<ServeEngine> {
 		}
 	}
 
-	// Ported from `GeocodeRouter`'s `reloadHandler`.
 	const reload: MailwomanAPIEngine["reload"] = async () => {
 		const versions = await deps.databases.reload()
 

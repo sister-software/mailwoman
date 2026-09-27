@@ -11,29 +11,35 @@
  */
 
 import { decodeByteStream, openReadStream } from "@mailwoman/core/fs/streams"
-import { basename, extname, join, type PathBuilderLike } from "path-ts"
+import { basename, extname, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import type { Aligned } from "#kr/adapters/localdata/align"
 
 /**
- * The source label every row of this adapter carries, and the name a config's `source_weights` addresses it by.
+ * The source label every row of this adapter carries, and the name a config's
+ * `source_weights` addresses it by.
  */
 export const SOURCE = "localdata-kr"
 
 /**
- * Every permit in this registry is Korean. the publisher issues no others.
+ * Every permit in this registry is Korean.
+ * The publisher issues no others.
  */
 export const COUNTRY = "KR"
 
 /**
- * The 영업상태명 of a business still trading. A closed one's address records somewhere that was.
+ * The 영업상태명 of a business still trading.
+ *
+ * A closed one's address records somewhere that was.
  */
 export const OPEN_STATUS = "영업/정상"
 
 /**
- * The publisher's encoding. `cp949` rather than `euc-kr` for the reason `decodeByteStream` states.
+ * The publisher's encoding.
+ *
+ * `cp949` rather than `euc-kr` for the reason `decodeByteStream` states.
  */
 const ENCODING = "cp949"
 
@@ -58,9 +64,9 @@ export interface PermitRow {
 /**
  * The first of these column spellings the row carries, trimmed, or the empty string.
  *
- * The publisher's older and newer exports name the same field differently — `도로명주소` against `도로명전체주소`, `좌표정보(X)`
- * against `좌표정보(x)` — and a directory holds both vintages, so each field names every spelling it has been delivered
- * under.
+ * The publisher's older and newer exports name the same field differently — `도로명주소`
+ * against `도로명전체주소`, `좌표정보(X)` against `좌표정보(x)` — and a directory holds both vintages,
+ * so each field names every spelling it has been delivered under.
  */
 function firstColumn(row: Record<string, string | undefined>, ...names: readonly string[]): string {
 	for (const name of names) {
@@ -82,7 +88,9 @@ function toNumber(value: string): number | null {
 
 export interface ReadPermitOptions {
 	/**
-	 * Keep only these 영업상태명 values. Empty admits every status.
+	 * Keep only these 영업상태명 values.
+	 *
+	 * Empty admits every status.
 	 */
 	statuses?: readonly string[]
 }
@@ -95,7 +103,8 @@ export async function* readPermitFile(
 	options: ReadPermitOptions = {}
 ): AsyncGenerator<PermitRow> {
 	const wanted = new Set(options.statuses ?? [OPEN_STATUS])
-	const category = basename(String(path), extname(String(path)))
+	const file = path.toString()
+	const category = basename(file, extname(file))
 	const bytes = openReadStream(path)
 
 	for await (const row of CSVSpliterator.fromAsync<Record<string, string>>(decodeByteStream(bytes, ENCODING))) {
@@ -132,16 +141,17 @@ export async function* readPermitDirectory(
 	const files = await Globerator.files("csv", { cwd: directory, absolute: false, recursive: false }).toSorted()
 
 	for (const name of files) {
-		yield* readPermitFile(join(directory, name), options)
+		yield* readPermitFile(resolvePathBuilder(directory, name), options)
 	}
 }
 
 /**
  * One aligned string as a row in the CJK corpus schema.
  *
- * The token labels are derived from the spans rather than carried beside them: a token is `B-<tag>` when its first
- * character falls inside a span, `O` otherwise. A span covering several tokens therefore labels only the token it
- * starts in, which is what the char-path trainer reads the spans for.
+ * The token labels are derived from the spans rather than carried beside them:
+ * a token is `B-<tag>` when its first character falls inside a span, `O` otherwise.
+ * A span covering several tokens therefore labels only the token it starts in,
+ * which is what the char-path trainer reads the spans for.
  */
 export function alignedToCJKRow(aligned: Aligned): Record<string, unknown> {
 	const raw = aligned.raw

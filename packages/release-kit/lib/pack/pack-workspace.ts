@@ -15,29 +15,34 @@ import { copyFileTo, removePath, writeLocalFile, writeLocalJSONFile } from "@mai
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { spawnProcessSync } from "@mailwoman/core/process"
-import { dirname, resolvePath } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 
 import { assertNoSourceTargets, transformExportsForPublish, transformImportsForPublish } from "#pack/publish/exports"
 
 /**
- * Replace any symlinked `files` entries with real copies of their targets. `yarn pack` stores symlinks AS symlinks in
- * the tarball — the registry rejects those outright (YN0035 / http 415), and npm's local-tarball extraction handles
- * them no better, so a smoke install of a packed weights workspace whose `model.onnx` is a `link-dev-weights` symlink
- * breaks the same way. Single-sourced here (2026-07-23) so both pack callers get it: `publish-workspace.ts` keeps its
- * own pre-pack invocation as the documented safety net (see agents.md "symlinks in the publish tarball"), and
- * `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
+ * Replace any symlinked `files` entries with real copies of their targets.
+ *
+ * `yarn pack` stores symlinks AS symlinks in the tarball.
+ * The registry rejects those outright (YN0035 / http 415), and npm's local-tarball
+ * extraction handles them no better, so a smoke install of a packed weights workspace
+ * whose `model.onnx` is a `link-dev-weights` symlink breaks the same way.
+ *
+ * Single-sourced here (2026-07-23) so both pack callers get it: `publish-workspace.ts` keeps its own
+ * pre-pack invocation as the documented safety net (see agents.md "symlinks in the publish tarball"),
+ * and `smoke-clean-install.ts` inherits it through `packWorkspaceForPublish` below.
  */
-export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promise<void> {
-	const pkg = await readPackageJSON(resolvePath(workspaceDir, "package.json"))
+export async function dereferenceWorkspaceSymlinks(workspaceDir: PathBuilderLike): Promise<void> {
+	const root = PathBuilder.from(workspaceDir)
+	const pkg = await readPackageJSON(root("package.json"))
 
 	for (const entry of pkg.files ?? []) {
 		if (typeof entry !== "string" || /[*?[{]/.test(entry)) continue // skip globs
-		const target = resolvePath(workspaceDir, entry)
+		const target = root(entry)
 		const st = await tryStatLink(target)
 
 		if (!st?.isSymbolicLink()) continue
 		const linkDest = await readLink(target)
-		const resolved = resolvePath(dirname(target), linkDest)
+		const resolved = resolvePath(target.dirname(), linkDest)
 		await removePath(target)
 		await copyFileTo(resolved, target)
 
@@ -46,12 +51,15 @@ export async function dereferenceWorkspaceSymlinks(workspaceDir: string): Promis
 }
 
 /**
- * Pack `workspaceDir` into `outFile` with the derived publish map substituted. Throws on pack failure. The workspace
- * manifest is byte-restored even on failure. Symlinked `files` entries are dereferenced first (see
- * {@link dereferenceWorkspaceSymlinks}).
+ * Pack `workspaceDir` into `outFile` with the derived publish map substituted.
+ *
+ * Throws on pack failure.
+ * The workspace manifest is byte-restored even on failure.
+ *
+ * Symlinked `files` entries are dereferenced first (see {@link dereferenceWorkspaceSymlinks}).
  */
-export async function packWorkspaceForPublish(workspaceDir: string, outFile: string): Promise<void> {
-	const manifestPath = resolvePath(workspaceDir, "package.json")
+export async function packWorkspaceForPublish(workspaceDir: PathBuilderLike, outFile: PathBuilderLike): Promise<void> {
+	const manifestPath = PathBuilder.from(workspaceDir)("package.json")
 	const originalManifest = await readLocalTextFile(manifestPath)
 
 	await dereferenceWorkspaceSymlinks(workspaceDir)

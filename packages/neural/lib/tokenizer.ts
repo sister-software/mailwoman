@@ -85,9 +85,11 @@ export interface EncodeResult {
 }
 
 /**
- * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset. Returned as a plain array indexed by byte
- * offset (holes at non-boundary indexes are filled with the containing character's start so a defensive lookup can
- * never land outside the string) — exact for surrogate-pair (non-BMP) input, the old reconstruction's deferred hazard.
+ * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset.
+ *
+ * Returned as a plain array indexed by byte offset (holes at non-boundary indexes are filled with
+ * the containing character's start so a defensive lookup can never land outside the string) —
+ * exact for surrogate-pair (non-BMP) input, the old reconstruction's deferred hazard.
  */
 function buildByteToUTF16Map(text: string): number[] {
 	// utf8 length ≤ 3 × utf16 length is not a safe bound (4-byte sequences ↔ 2 code units = 2×);
@@ -113,7 +115,8 @@ function buildByteToUTF16Map(text: string): number[] {
 }
 
 /**
- * Matches any JS whitespace char — the same class the old reconstruction skipped when a `▁` piece opened a word.
+ * Matches any JS whitespace char — the same class the old reconstruction skipped
+ * when a `▁` piece opened a word.
  */
 const WHITESPACE_RE = /\s/
 
@@ -140,7 +143,9 @@ export class MailwomanTokenizer {
 	}
 
 	/**
-	 * Load from a base64-encoded `tokenizer.model`. Use for in-memory / test / browser setups.
+	 * Load from a base64-encoded `tokenizer.model`.
+	 *
+	 * Use for in-memory / test / browser setups.
 	 */
 	static async loadFromBase64(b64: string): Promise<MailwomanTokenizer> {
 		const binary = atob(b64)
@@ -154,10 +159,13 @@ export class MailwomanTokenizer {
 	}
 
 	/**
-	 * Load from a path to a `tokenizer.model` file on disk. **Node-only** — the dynamic `node:fs` import keeps this
-	 * method out of the static dependency graph so the rest of the tokenizer bundles cleanly for the browser. Calling it
-	 * in a browser throws at runtime. use `loadFromBase64` (or the URL-fetching loaders in
-	 * `@mailwoman/neural/web-loader`) instead.
+	 * Load from a path to a `tokenizer.model` file on disk. **Node-only**.
+	 *
+	 * The dynamic `node:fs` import keeps this method out of the static dependency graph
+	 * so the rest of the tokenizer bundles cleanly for the browser.
+	 *
+	 * Calling it in a browser throws at runtime.
+	 * Use `loadFromBase64` (or the URL-fetching loaders in `@mailwoman/neural/web-loader`) instead.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")
@@ -169,10 +177,12 @@ export class MailwomanTokenizer {
 	/**
 	 * Tokenize `text` to pieces + ids + native char offsets.
 	 *
-	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]` returns, and `pieces[i].id`
-	 * matches `sp.EncodeAsIDs(text)[i]`. Offsets come from SentencePiece's own `SentencePieceText` proto (byte
-	 * positions), converted to UTF-16 and whitespace-trimmed — see the file header for the two conventions this layer
-	 * owns.
+	 * The returned `pieces[i].piece` matches what the Python `sp.EncodeAsPieces(text)[i]`
+	 * returns, and `pieces[i].id` matches `sp.EncodeAsIDs(text)[i]`.
+	 * Offsets come from SentencePiece's own `SentencePieceText` proto (byte positions),
+	 * converted to UTF-16 and whitespace-trimmed.
+	 *
+	 * See the file header for the two conventions this layer owns.
 	 */
 	encode(text: string): EncodeResult {
 		const raw = this.processor.encodeWithOffsets(text)
@@ -189,8 +199,9 @@ export class MailwomanTokenizer {
 			let start = byteToUTF16[raw.begins[i]!] ?? text.length
 			const end = byteToUTF16[raw.ends[i]!] ?? text.length
 
-			// A ▁ piece's native span includes the consumed whitespace — trim to the word start (the
-			// decoder's interface. see header). Bounded by `end`, so zero-width spans stay put.
+			// A ▁ piece's native span includes the consumed whitespace — trim to the
+			// word start (the decoder's interface. See header).
+			// Bounded by `end`, so zero-width spans stay put.
 			while (start < end && WHITESPACE_RE.test(text[start]!)) {
 				start++
 			}
@@ -202,7 +213,9 @@ export class MailwomanTokenizer {
 	}
 
 	/**
-	 * Decode a list of ids back to a string. Delegates to the underlying processor.
+	 * Decode a list of ids back to a string.
+	 *
+	 * Delegates to the underlying processor.
 	 */
 	decode(ids: number[] | Int32Array): string {
 		const vector = new this.module.IntVector()

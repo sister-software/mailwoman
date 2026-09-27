@@ -68,7 +68,7 @@ teaches bare streets, because **no span head has ever been trained on one**. Tha
 `v3.2.0-fragment-span` (run `ap-jcRsH8TNQny84vVeOWLG8f`), one variable off v310: the head.
 
 Pre-registered kill shot: **`seg@1` must beat v310's `token@1` = 56/63 (0.889)** — the bar the flag
-failed by 12.7pp. If a extract-trained span head cannot beat a extract-trained plain decode on the target
+failed by 12.7pp. If an extract-trained span head cannot beat an extract-trained plain decode on the target
 class, the span head has no case **at any weight**, and the arc closes. No `span_loss_weight` tuning,
 no re-run: that is the treadmill the arc's own guard forbids.
 

@@ -13,12 +13,16 @@
  *   refused here rather than left to a compare.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 /**
- * The admin database a fold output was made from, by name: `<x>-geonames.db` or `<x>-geonames-<stamp>.db` → `<x>.db`.
+ * The admin database a fold output was made from, by name: `<x>-geonames.db`
+ * or `<x>-geonames-<stamp>.db` → `<x>.db`.
+ *
  * Null when the path does not look like a fold output.
  */
-export function foldSourceAdminPath(foldPath: string): string | null {
-	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath)
+export function foldSourceAdminPath(foldPath: PathBuilderLike): string | null {
+	const match = /^(.*)-geonames(?:-[^/]*)?\.db$/u.exec(foldPath.toString())
 
 	return match ? `${match[1]}.db` : null
 }
@@ -31,23 +35,25 @@ export interface FoldStaleness {
 }
 
 /**
- * The staleness verdict for a fold output: the admin database it derives from was modified after the fold was written.
+ * The staleness verdict for a fold output: the admin database it derives from
+ * was modified after the fold was written.
+ *
  * Null when the fold is at least as new as its source, or when `adminModified` is absent (no source found).
  */
 export function foldStaleness(
-	foldPath: string,
-	adminPath: string,
+	foldPath: PathBuilderLike,
+	adminPath: PathBuilderLike,
 	foldModified: Date,
 	adminModified: Date | null
 ): FoldStaleness | null {
 	if (!adminModified || adminModified.getTime() <= foldModified.getTime()) return null
 
-	return { foldPath, adminPath, foldModified, adminModified }
+	return { foldPath: foldPath.toString(), adminPath: adminPath.toString(), foldModified, adminModified }
 }
 
 /**
- * The refusal a build prints for a stale fold: both timestamps and the action, since the fix is a flag on the same
- * command.
+ * The refusal a build prints for a stale fold: both timestamps and the action,
+ * since the fix is a flag on the same command.
  */
 export function foldStalenessMessage(staleness: FoldStaleness): string {
 	return (

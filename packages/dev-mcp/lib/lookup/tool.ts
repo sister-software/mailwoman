@@ -1,21 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mwdev_lookup`'s handler: resolve each source's artifact the way the runtime resolves it, open it read-only, ask
- *   the probe, close it.
- *
- *   Resolution is the part worth reading. Every path here comes from the function the running system uses —
- *   `resolveCandidateDBPath`, `resolveWOFDatabasePaths`, `resolveWeights` — never from a literal assembled here. A probe
- *   that reads a different `candidate.db` than the session does answers a question nobody asked, and the failure is
- *   invisible: it looks exactly like the gazetteer being wrong.
- *
- *   Handles are opened per call rather than held. The probes are B-tree and FTS reads measured in single-digit
- *   milliseconds against a warm page cache, and the artifacts are multi-gigabyte — the engine registry is where this
- *   server spends its resident memory, and it spends it on sessions.
- */
-
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseAnchorLookup } from "@mailwoman/neural/anchor-inference"
@@ -23,11 +9,12 @@ import { PostcodeBinaryResolver } from "@mailwoman/neural/postcode"
 import { resolveWeights } from "@mailwoman/neural/weights"
 import { readRequiredChannels } from "@mailwoman/neural/weights-channels"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { poiDatabaseRoot, wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PlaceImportanceDatabase } from "@mailwoman/resolver-wof-sqlite/place-importance-schema"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { resolveCandidateDBPath, resolveWOFDatabasePaths } from "mailwoman/resolver-backend"
-import { basename, resolvePath } from "path-ts"
+import { basename, type PathBuilderLike, resolvePath } from "path-ts"
 
 import type { EngineConfig, EngineRegistryLike } from "#engine/registry"
 import {
@@ -54,8 +41,7 @@ import {
 import { syntheticIDNote } from "#place-id-provenance"
 
 /**
- * The `candidate` source's two-artifact answer: the primary artifact's rows, the compare artifact's rows for the same
- * queries, and the per-query delta between the returned sets.
+ * A candidate lookup against two artifacts, with the per-query differences.
  */
 export interface CandidateCompareResult extends LookupResult {
 	rows_compare: LookupRow[]
@@ -63,33 +49,36 @@ export interface CandidateCompareResult extends LookupResult {
 }
 
 /**
- * Everything a caller can pass, beyond the source and the queries.
+ * The arguments of {@link runLookup}.
  */
 export interface LookupArgs {
 	source: LookupSource
 	queries: string[]
 	locale?: string
+
 	/**
-	 * Sweep the same queries across several locales' own artifacts. FST sources only.
+	 * Locales whose FST artifacts are probed separately and reported under `by_locale`.
+	 * This applies only to FST sources.
 	 */
 	locales?: string[]
 	country?: string
 	limit?: number
 	config?: EngineConfig
+
 	/**
-	 * `candidate` only — a second candidate.db to run the same queries against, answering both row sets plus a per-query
-	 * delta (rows only one artifact holds. shared rows whose ranking fields moved). The two-artifact probe every staged
-	 * gazetteer diagnosis previously scripted by hand.
+	 * A second candidate database that receives the same queries.
+	 *
+	 * The result then reports row and ranking deltas for each query.
+	 * This applies only to candidate lookups.
 	 */
 	compareCandidateDB?: string
 }
 
 /**
- * Run one source and close whatever it opened.
+ * Runs the queries against one lookup source and closes every artifact it opened.
  *
- * `unavailable_reason` and no rows is the answer for a missing artifact. The alternative — a row per query saying "no"
- * — is the same shape a genuine absence has, and a caller reading it would conclude the gazetteer lacks fifty places
- * when what it lacks is a file.
+ * A source whose artifact is missing returns no rows and an `unavailable_reason`,
+ * so it cannot be mistaken for a miss on every query.
  */
 export async function runLookup(
 	registry: EngineRegistryLike,
@@ -97,7 +86,7 @@ export async function runLookup(
 ): Promise<LookupResult | CandidateCompareResult> {
 	const { source, queries } = args
 	const config = args.config ?? {}
-	const dataRoot = config.data_root ?? String(mailwomanDataRoot())
+	const dataRoot = config.data_root ?? dataRootPath()
 
 	switch (source) {
 		case LookupSource.Normalize: {
@@ -124,9 +113,7 @@ export async function runLookup(
 
 		case LookupSource.Candidate: {
 			return await withArtifact(source, await resolveCandidateDB(config, dataRoot), async (db, path) => {
-				// The score source's split channels ride along whenever the conventional importance DB exists beside the
-				// artifacts — the join every fame-contest diagnosis needs, attached rather than scripted.
-				const importancePath = String(resolvePath(dataRoot, "wof", "admin-global-priority-importance.db"))
+				const importancePath = wofDatabaseRoot(dataRoot)("admin-global-priority-importance.db").toString()
 
 				const importanceDB = (await pathExists(importancePath))
 					? new DatabaseClient<PlaceImportanceDatabase>(importancePath, { readOnly: true })
@@ -218,7 +205,7 @@ export async function runLookup(
 		}
 
 		case LookupSource.POI: {
-			return await withArtifact(source, resolvePath(dataRoot, "poi", "poi.db"), (db, path) => ({
+			return await withArtifact(source, poiDatabaseRoot(dataRoot)("poi.db").toString(), (db, path) => ({
 				source,
 				provenance: { artifact: path },
 				rows: lookupPOI(db, queries, {
@@ -252,27 +239,18 @@ export async function runLookup(
 }
 
 /**
- * The candidate gazetteer, resolved exactly as the session resolves it — with the one thing `resolveCandidateDBPath`
- * cannot say folded back in.
+ * Resolves the candidate database path.
  *
- * That function answers `undefined` for three different situations: nothing was pinned and the convention path is
- * absent, `none` was pinned to force the FTS backend, and a pinned path does not exist. The runtime is right not to
- * distinguish them (all three mean "no candidate backend"), but a probe that reported the third as "no path was
- * resolved" would tell someone who typo'd `--candidate-db` that the gazetteer is missing.
+ * An explicit path that does not resolve is returned as given, so opening it reports why it is unavailable.
  */
-async function resolveCandidateDB(config: EngineConfig, dataRoot: string): Promise<string | undefined> {
+async function resolveCandidateDB(config: EngineConfig, dataRoot: PathBuilderLike): Promise<string | undefined> {
 	const resolved = await resolveCandidateDBPath(config.candidate_db, dataRoot)
 
 	if (resolved || !config.candidate_db || config.candidate_db === "none") return resolved
 
-	// Hand back the path AS pinned so `openSealedArtifact` reports it by name.
 	return config.candidate_db
 }
 
-/**
- * Open one sealed artifact, hand it to `build`, and close it whatever happens. An unopenable path short-circuits to the
- * unavailable envelope with no rows.
- */
 async function withArtifact<T extends LookupResult>(
 	source: LookupSource,
 	path: string | undefined,
@@ -293,19 +271,11 @@ async function withArtifact<T extends LookupResult>(
 	}
 }
 
-/**
- * The one sentence every unavailable source returns, so the reason a result is empty can never be mistaken for the
- * answer.
- */
 const UNAVAILABLE_NOTE =
 	"No row is reported, because a source whose artifact is missing answers 'no' to everything — which would read as " +
 	"absence for every query rather than as an unavailable source."
 
-/**
- * The WOF extracts, opened as a set. Unavailable only when no extract opens. a partial set is reported in the notes,
- * because "three of six extracts" is a different reading of a miss than "all six".
- */
-async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupResult> {
+async function runWOFLookup(args: LookupArgs, dataRoot: PathBuilderLike): Promise<LookupResult> {
 	const paths = resolveWOFDatabasePaths(args.config?.resolve_db, dataRoot)
 	const extracts: WOFExtract<WOFDatabase>[] = []
 	const skipped: string[] = []
@@ -362,12 +332,6 @@ async function runWOFLookup(args: LookupArgs, dataRoot: string): Promise<LookupR
 	}
 }
 
-/**
- * The postcode→anchor artifact for one locale's weights package.
- *
- * The span mode comes from the package's own model card. Defaulting it here instead would describe a configuration the
- * loader never runs — `alnum-run` is the loader's default only when the card declares nothing.
- */
 async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	const locale = args.locale ?? args.config?.locale ?? "en-us"
 	let resolved: Awaited<ReturnType<typeof resolveWeights>>
@@ -388,7 +352,7 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 			source: LookupSource.Postcode,
 			rows: [],
 			unavailable_reason:
-				`${resolved.packageDir ?? resolved.source} ships no postcode anchor artifact (no postcode-<cc>.bin, no ` +
+				`${resolved.packageDir ?? resolved.source} ships no postcode anchor artifact (neither postcode-<cc>.bin nor ` +
 				"anchor-lookup.json). The anchor channel runs OFF for this locale — an absent artifact, not an empty one.",
 			notes: [UNAVAILABLE_NOTE],
 		}
@@ -421,13 +385,6 @@ async function runPostcodeLookup(args: LookupArgs): Promise<LookupResult> {
 	}
 }
 
-/**
- * Read the anchor artifact behind the resolver interface.
- *
- * The binary is probed by binary search, never decoded whole: `postcode-gb.bin` holds 1,749,839 keys and
- * `toAnchorLookup()` builds all of them into a Map in 2,035 ms (against 24 ms to construct the reader), which is the
- * wrong trade for a handful of queries. The JSON form has no search interface, so it is parsed and wrapped.
- */
 async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): Promise<PostcodeAnchorResolver> {
 	if (artifact.binary) {
 		return new PostcodeBinaryResolver(new Uint8Array(await readLocalBuffer(artifact.path)))
@@ -446,14 +403,6 @@ async function loadAnchorArtifact(artifact: { path: string; binary: boolean }): 
 	}
 }
 
-/**
- * The two FST sources, which need a warm session to learn which artifact the decoder would read.
- *
- * `gazetteer_prior: true` is forced. A session resolves the FST paths only when it will actually feed the prior, and it
- * is right to: `artifacts` reports what a session read rather than what it could have. A lookup wants the artifact the
- * decoder would consult, so it asks for an engine that loads one — resolving the path any other way would answer about
- * an FST no runtime configuration reads.
- */
 async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Promise<LookupResult> {
 	const notes =
 		args.source === LookupSource.FST
@@ -467,9 +416,6 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	if (args.locales?.length) {
 		const byLocale: NonNullable<LookupResult["by_locale"]> = {}
 
-		// Sequential, and each locale costs a full session build: `artifacts` reports what a session read, so learning
-		// which artifact a locale's decoder consults means building that locale's decoder. The registry evicts to its
-		// cap as this walks, so a wide sweep rebuilds rather than accumulating.
 		for (const locale of args.locales) {
 			byLocale[locale] = await probeLocaleFST(registry, args, locale)
 		}
@@ -491,12 +437,6 @@ async function runFSTLookup(registry: EngineRegistryLike, args: LookupArgs): Pro
 	}
 }
 
-/**
- * One locale's answer, with a missing artifact reported IN place rather than by omission.
- *
- * Five shipped overlays carry no FST at all, so a sweep that dropped those locales would read as a set of locales that
- * knew nothing about the queries.
- */
 async function probeLocaleFST(
 	registry: EngineRegistryLike,
 	args: LookupArgs,

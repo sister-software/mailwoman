@@ -8,13 +8,15 @@ import { flag } from "#operations/inputs"
 import { prepareReleaseVersion } from "#release/prepare-version"
 
 /**
- * `release.prepare-version` — writes inside the checkout or the data root. Listed in `registry.ts`; the description on
- * the operation is what `mwops` prints.
+ * Defines the `release.prepare-version` operation, which writes the resolved release
+ * version into the checkout's package manifests and release config.
+ *
+ * A dry run behaves like `--check-only`, resolving and validating the version without writing.
  */
 export const prepareVersion = defineOperation({
 	id: "release.prepare-version",
 	description:
-		"Write the target version (patch|minor|major|x.y.z) into the root package.json, every release workspace, and release.config.json. No git, no npm. --check-only resolves and validates without writing.",
+		"Write the target version (patch|minor|major|x.y.z) into the root package.json, every release workspace, and release.config.json without running git or npm. --check-only resolves and validates without writing.",
 	effect: OperationEffect.LocalWrite,
 	inputSchema: z
 		.object({

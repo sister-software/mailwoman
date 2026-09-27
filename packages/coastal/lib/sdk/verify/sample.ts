@@ -7,18 +7,21 @@
 
 import { strideSampleInteriorPoints } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import type { CoastalDatabase } from "#schema"
 
 /**
- * Draw a reproducible sample of points from the artifact — interior points of stored polygons, across scenarios.
+ * Draw a reproducible sample of points from the artifact — interior points of
+ * stored polygons, across scenarios.
  *
- * Spread across scenarios rather than drawn from one, because the twelve scenarios are twelve claims and a sample from
- * one would verify one twelfth of the artifact while reporting on all of it. The stride discipline — keys chosen before
- * any geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
+ * Spread across scenarios rather than drawn from one, because the twelve scenarios are twelve claims
+ * and a sample from one would verify one twelfth of the artifact while reporting on all of it.
+ * The stride discipline — keys chosen before any geometry is read, deterministic
+ * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { count?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number; scenarioKey: string }> {
 	const count = options.count ?? 48

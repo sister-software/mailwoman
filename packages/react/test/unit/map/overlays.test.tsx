@@ -95,7 +95,8 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 	// Component tree — synchronous, independent of WebGL.
 	expect(container.querySelector(".mw-demo-map")).not.toBeNull()
 
-	// GL surface — best-effort. Its absence means no software WebGL here rather than a component fault.
+	// GL surface — best-effort.
+	// Its absence means no software WebGL here rather than a component fault.
 	const mapEl = await settle(() => container.querySelector(".maplibregl-map"))
 
 	if (!mapEl) return
@@ -133,11 +134,11 @@ test("a null spec renders no marker and no result layers", async () => {
 
 	if (!mapEl) return
 
-	// Read the ref lazily: it is assigned in a callback TypeScript cannot see, so reading it directly
-	// here narrows it to `never`.
+	// Read the ref lazily: it is assigned in a callback TypeScript cannot see,
+	// so reading it directly here narrows it to `never`.
 	const getMap = () => mapRef?.getMap()
 
-	// Give the style a beat to settle, then confirm nothing was drawn.
+	// Give the style a beat to settle, then confirm no overlay was drawn.
 	await settle(() => getMap()?.isStyleLoaded() || null, 4000)
 	expect(container.querySelector(".maplibregl-marker")).toBeNull()
 	expect(getMap()?.getLayer("mw-result-fill")).toBeFalsy()

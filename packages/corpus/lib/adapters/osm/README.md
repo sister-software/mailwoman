@@ -7,9 +7,14 @@ seen their formats.
 ## License — read this first
 
 OpenStreetMap is **ODbL-1.0**, share-alike. Every row this adapter emits carries that license string, and
-`SHARE_ALIKE_PATTERN` in `utils/license.ts` matches it. A proprietary-weights build passes
-`--exclude-share-alike` and drops the rows at ingest; the open weights are the only ones that learn from
-them. The adapter has no license option: the value is the interface.
+`@mailwoman/core/license/obligations` records share-alike among ODbL's obligations. A proprietary-weights
+build runs `mailwoman corpus build --license-policy share-alike-free`, which refuses these rows at ingest,
+so the open weights are the only ones that learn from them. The adapter has no license option: the value
+is the interface.
+
+`--license-policy` reads each row's license value through `readLicenseRecord` and refuses it under one of
+three classes, which `utils/license.ts` documents. It replaced an anchored prefix match over the license
+column, which admitted a row whose license was prose naming ODbL rather than the identifier.
 
 ## Input
 
@@ -18,8 +23,8 @@ Geofabrik extract. GDAL and the PBF stay in that package; this one streams the r
 
 ```bash
 node packages/osm/out/scripts/emit-corpus-jsonl.js \
-  --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/pakistan-260819.osm.pbf \
-  --out $MAILWOMAN_DATA_ROOT/osm/corpus/osm-pk.corpus.jsonl
+  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/pakistan-260819.osm.pbf \
+  --out $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-pk.corpus.jsonl
 ```
 
 ```json
@@ -39,7 +44,7 @@ node packages/osm/out/scripts/emit-corpus-jsonl.js \
 
 ```bash
 mailwoman corpus run osm \
-  --input $MAILWOMAN_DATA_ROOT/osm/corpus/osm-vn.corpus.jsonl \
+  --input $MAILWOMAN_DATA_ROOT/db/osm/corpus/osm-vn.corpus.jsonl \
   --country VN --output /data/corpus-staging
 ```
 

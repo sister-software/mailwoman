@@ -7,7 +7,7 @@
  *
  *   This is not a promotion eval. `promotion-eval.ts` asks "is this model good enough to ship";
  *   this asks "is this harness measuring what it thinks it is". An eval spec's floors are one-sided
- *   (higher is better, fail below); a baseline is two-sided — a metric 40% above its registered
+ *   (higher is better, fail below); a baseline is two-sided. A metric 40% above its registered
  *   value is as loud a signal as 40% below, because the usual cause is that the number changed
  *   meaning rather than that the model got better. That two-sidedness is the whole point. a one-sided
  *   check would have passed both incidents below.
@@ -79,14 +79,20 @@ export interface RegisteredBaseline {
 	 */
 	value: number
 	/**
-	 * Allowed relative deviation, either direction. Defaults to the file's `default_tolerance_rel`. Widening this to
-	 * silence a real deviation is the drift failure — re-register instead.
+	 * Allowed relative deviation, either direction.
+	 *
+	 * Defaults to the file's `default_tolerance_rel`.
+	 * Widening this to silence a real deviation is the drift failure — re-register instead.
 	 */
 	tolerance_rel?: number
 	/**
-	 * Absolute tolerance. Takes precedence over `tolerance_rel` when declared — use it for small-count metrics whose
-	 * relative band is meaningless (one fixture out of 63 moves a rate of 1/63 by 100%). Required when `value` is 0,
-	 * where relative deviation is undefined.
+	 * Absolute tolerance.
+	 *
+	 * Takes precedence over `tolerance_rel` when declared.
+	 * Use it for small-count metrics whose relative band is meaningless
+	 * (one fixture out of 63 moves a rate of 1/63 by 100%).
+	 *
+	 * Required when `value` is 0, where relative deviation is undefined.
 	 */
 	tolerance_abs?: number
 	/**
@@ -108,9 +114,10 @@ export interface RegisteredBaseline {
 }
 
 /**
- * Maps a harness's own metric keys to baseline ids. Exists because the mapping isn't derivable: v264 has no span head,
- * so oracle-k's segment decode is the summed-BIO stand-in (`@v264-summed-bio`) while its token decode is the real thing
- * (`@v264`).
+ * Maps a harness's own metric keys to baseline ids.
+ *
+ * Exists because the mapping isn't derivable: v264 has no span head, so oracle-k's segment decode
+ * is the summed-BIO stand-in (`@v264-summed-bio`) while its token decode is the real thing (`@v264`).
  */
 export interface BaselineProfile {
 	description: string
@@ -143,7 +150,8 @@ export interface BaselineViolation {
 	observed: number
 	expected?: number
 	/**
-	 * Signed relative deviation. negative means the observation read low.
+	 * Signed relative deviation.
+	 * Negative means the observation read low.
 	 */
 	deviationRel?: number
 	tolerance?: number
@@ -159,8 +167,8 @@ export interface BaselineVerdict {
 let cachedFile: BaselineFile | undefined
 
 /**
- * Anchored at the package root — tsc does not emit `baselines.json` into `out/`, so the file is named from where the
- * package starts rather than from where this module runs.
+ * Anchored at the package root — tsc does not emit `baselines.json` into `out/`,
+ * so the file is named from where the package starts rather than from where this module runs.
  */
 function resolveBaselineFilePath(): string {
 	return resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")
@@ -190,7 +198,7 @@ export async function listProfiles(): Promise<string[]> {
 }
 
 /**
- * Look up a profile, refusing loudly on a typo rather than silently checking nothing.
+ * Look up a profile, refusing loudly on a typo rather than silently checking no profile.
  */
 export async function resolveProfile(name: string): Promise<BaselineProfile> {
 	const profile = (await loadBaselineFile()).profiles[name]
@@ -206,8 +214,10 @@ export async function resolveProfile(name: string): Promise<BaselineProfile> {
 }
 
 /**
- * Check a harness's readings against a profile. Metric keys the profile doesn't map are ignored — a profile declares
- * what it can vouch for rather than everything a harness happens to compute.
+ * Check a harness's readings against a profile.
+ *
+ * Metric keys the profile doesn't map are ignored.
+ * A profile declares what it can vouch for rather than everything a harness happens to compute.
  */
 export async function assertProfile(name: string, readings: Record<string, number>): Promise<BaselineVerdict> {
 	const profile = await resolveProfile(name)
@@ -224,8 +234,10 @@ export async function assertProfile(name: string, readings: Record<string, numbe
 }
 
 /**
- * Check observations against the registry. An unregistered id is a violation rather than a pass — an unverifiable
- * reading is exactly the state both incidents were in.
+ * Check observations against the registry.
+ *
+ * An unregistered id is a violation rather than a pass.
+ * An unverifiable reading is exactly the state both incidents were in.
  */
 export async function assertBaselines(observations: BaselineObservation[]): Promise<BaselineVerdict> {
 	const file = await loadBaselineFile()
@@ -242,9 +254,11 @@ export async function assertBaselines(observations: BaselineObservation[]): Prom
 
 		const tolerance = baseline.tolerance_rel ?? file.default_tolerance_rel
 
-		// An absolute tolerance wins when declared. Small-count metrics (a street-evidence rate of
-		// 1/63) have a meaningless relative band — one fixture moves it 100% — so those rows opt out
-		// of relative checking entirely. A zero-valued row must declare one. relative is undefined.
+		// An absolute tolerance wins when declared.
+		// Small-count metrics (a street-evidence rate of 1/63) have a meaningless relative band —
+		// one fixture moves it 100% — so those rows opt out of relative checking entirely.
+		// A zero-valued row must declare one.
+		// Relative is undefined.
 		if (baseline.tolerance_abs !== undefined || baseline.value === 0) {
 			const toleranceAbs = baseline.tolerance_abs ?? 0
 			const drift = Math.abs(observation.observed - baseline.value)
@@ -293,7 +307,8 @@ export class BaselineDeviationError extends Error {
 }
 
 /**
- * Render a verdict for a terminal — the message a refusing harness prints instead of a report.
+ * Render a verdict for a terminal.
+ * The message a refusing harness prints instead of a report.
  */
 export function formatVerdict(verdict: BaselineVerdict): string {
 	if (verdict.ok) return `baseline check: ${verdict.checked} observation(s) within tolerance`
@@ -344,7 +359,9 @@ export function formatVerdict(verdict: BaselineVerdict): string {
 }
 
 /**
- * Assert, or throw. The one-liner a harness puts before it prints anything.
+ * Assert, or throw.
+ *
+ * The one-liner a harness puts before it prints anything.
  */
 export async function guardReport(observations: BaselineObservation[]): Promise<void> {
 	const verdict = await assertBaselines(observations)

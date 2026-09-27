@@ -6,7 +6,7 @@
  *
  *   `validateTree` (v0.7 task #37) was written because a parse can match a component and still be incoherent — a
  *   `street_suffix` floating with no `street`, an `intersection_a`/`_b` pair claiming a junction that has no road. For
- *   years nothing consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
+ *   years no caller consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
  *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
  *
  *   the property that makes this worth restricting is that the verdict needs no truth. Every other board assertion compares
@@ -24,10 +24,9 @@
 import { validateTree } from "@mailwoman/core/decoder"
 import { readLocalTextFile, pathExists } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict } from "@mailwoman/core/json"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { CASES_DIR } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { parseForGeocode } from "mailwoman/geocode"
-import { join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { describe, expect, it } from "vitest"
 
@@ -42,8 +41,11 @@ async function weightsPresent(): Promise<boolean> {
 /**
  * Rows whose tree is structurally invalid today, each with the issue that owns it.
  *
- * An entry is a debt with a name. Removing one because it started passing is the good outcome. adding one needs the
- * defect written down first, because a row added here silently is a defect converted into a permanent exemption.
+ * An entry is a debt with a name.
+ * Removing one because it started passing is the good outcome.
+ *
+ * Adding one needs the defect written down first, because a row added here silently
+ * is a defect converted into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =
 	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
@@ -80,23 +82,23 @@ interface Row {
 }
 
 async function boardRows(): Promise<Row[]> {
-	const root = String(repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"))
 	const rows: Row[] = []
 
-	for await (const entry of Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false })) {
+	for await (const entry of Globerator.from("*", { cwd: CASES_DIR, absolute: false, onlyFiles: false })) {
 		let files: string[]
 
 		try {
-			// A country directory carries more than `regression.jsonl` — street-name-boundaries, gloss-keys, others.
+			// A country directory carries more than `regression.jsonl` —
+			// street-name-boundaries, gloss-keys, others.
 			// Reading only the first name silently measured 326 of 854 rows.
-			files = await Globerator.files("jsonl", { cwd: join(root, entry), absolute: false, recursive: false }).toArray()
+			files = await Globerator.files("jsonl", { cwd: CASES_DIR(entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue
 		}
 
 		for (const name of files) {
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- committed board files, read whole and bounded
-			for (const line of (await readLocalTextFile(join(root, entry, name))).split("\n")) {
+			for (const line of (await readLocalTextFile(CASES_DIR(entry, name))).split("\n")) {
 				if (!line.trim()) continue
 
 				const row = parseJSONStrict(line) as Partial<Row>

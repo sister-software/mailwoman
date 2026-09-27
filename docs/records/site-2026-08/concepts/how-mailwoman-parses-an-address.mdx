@@ -51,7 +51,7 @@ One distinction matters more than the segmentation itself: every piece carries c
 
 A hand-written rule encodes context: "a number followed by a street name is a house number." The learned version of that rule is the encoder — a small transformer (six layers, 384 wide, about 29M parameters in the current weights; one model rather than one per locale) in which every piece attends to every other piece. `2119` is scored in view of the `Belmont St` after it and the `97214` at the end; context runs in both directions.
 
-The encoder's output is a table of scores: for each of the 21 pieces, a score for each of 33 possible labels. These per-piece score rows are called emissions. Nothing has been decided yet. The emissions are evidence, and two more things get a say before any label is final.
+The encoder's output is a table of scores: for each of the 21 pieces, a score for each of 33 possible labels. These per-piece score rows are called emissions. No label has been decided yet. The emissions are evidence, and two more things get a say before any label is final.
 
 ## From labels to spans: BIO and the schema
 

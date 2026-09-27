@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Fixtures are built by the production schema builders and populated with rows copied off the shipped artifacts, so
- *   what these tests pin is the real behaviour rather than a restatement of the probe. Two cases exist only because
- *   driving the real artifacts falsified the first implementation: `1012 LG` (route order) and the deprecated-only WOF
- *   name (the FTS index cannot show one, so a second route has to).
+ *   Fixtures use production schemas and rows from shipped artifacts to test real behavior. Two cases caught problems
+ *   in the first implementation: `1012 LG` (lookup order) and a deprecated-only WOF name (not in FTS, so it needs a
+ *   second lookup route).
  */
 
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup/index"
@@ -37,7 +36,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aroundAll, describe, expect, it } from "vitest"
 
 /**
- * Every connection these fixtures open, ended together at the end of the file.
+ * Close all fixture connections after the tests finish.
  */
 let openHandles: DisposableStack
 
@@ -57,12 +56,14 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
 }
 
 /**
- * Rows measured against the shipped `candidate.db` on 2026-08-16 — the operator's three false absences plus the NL PC6
- * pair whose stem hides the unit code.
+ * Rows from the shipped `candidate.db`, measured on 2026-08-16.
+ *
+ * They cover three false absences and an NL PC6 pair whose stem hides the unit code.
  */
 const CANDIDATE_ROWS: Array<Partial<CandidateTable> & Pick<CandidateTable, "name_key" | "spr_id">> = [
-	// Each key is minted from the surface the build folds, never written folded by hand — for an alias row that
-	// surface is the alias rather than the display `name`, which is why "Balearic Islands" keys under `illes balears`.
+	// Each key is minted from the surface the build folds, never written folded by hand,
+	// for an alias row that surface is the alias rather than the display `name`,
+	// which is why "Balearic Islands" keys under `illes balears`.
 	{ name_key: nameKey("Porto Petro"), name: "Porto Petro", placetype_id: 1, country_id: 1, spr_id: 1, population: 0 },
 	{
 		name_key: nameKey("Illes Balears"),
@@ -153,7 +154,8 @@ async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
 			row.name ?? null,
 			row.population ?? 0,
 			row.is_primary ?? 1,
-			// `importance` stays NULL unless the fixture row gives one — the unmeasured case is the point.
+			// `importance` stays NULL unless the fixture row gives one.
+			// The unmeasured case is the point.
 			row.importance ?? null
 		)
 	}
@@ -171,8 +173,8 @@ function rowFor(rows: LookupRow[], query: string): LookupRow {
 
 describe("lookupCandidate", () => {
 	it("finds the three places an exact `name` probe reports as absent", async () => {
-		// The trap this source exists to prevent: `name_key` is the fold, so `where name = 'Porto Petro'` on a
-		// build that stores `porto petro` answers zero rows and reads as a gazetteer gap.
+		// The trap this source exists to prevent: `name_key` is the fold, so `where name = 'Porto Petro'`
+		// on a build that stores `porto petro` answers zero rows and reads as a gazetteer gap.
 		const db = await candidateFixture()
 		const rows = lookupCandidate(db, ["Porto Petro", "Illes Balears"])
 
@@ -209,9 +211,11 @@ describe("lookupCandidate", () => {
 	})
 
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
-		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to `1012`, resolving the NL PC6
-		// unit to its 4-digit stem (and to a DK row) while the unit's own record sits under `1012lg`. The runtime
-		// folds whitespace at the top of findPlace, so this order is the runtime's rather than a preference.
+		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to
+		// `1012`, resolving the NL PC6 unit to its 4-digit stem (and to a DK row)
+		// while the unit's own record sits under `1012lg`.
+		// The runtime folds whitespace at the top of findPlace, so this order is
+		// the runtime's rather than a preference.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 
@@ -219,8 +223,7 @@ describe("lookupCandidate", () => {
 	})
 
 	it("restricts the qualifier-strip retry to primary rows, as the runtime does", async () => {
-		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for
-		// Hyattsville. only the first may answer a stripped probe.
+		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for Hyattsville. Only the first may answer a stripped probe.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["Hart b.Graz"])
 
@@ -247,8 +250,8 @@ describe("lookupCandidate", () => {
 })
 
 /**
- * Rows measured against the shipped `admin-global-priority.db`: one live place, and the GB name whose thirteen records
- * are every one deprecated.
+ * Rows from the shipped `admin-global-priority.db`: one current place
+ * and a GB name with thirteen deprecated records.
  */
 async function wofFixture(): Promise<DatabaseClient<WOFDatabase>> {
 	const db = memoryDatabase<WOFDatabase>()
@@ -282,8 +285,9 @@ describe("lookupWOF", () => {
 	})
 
 	it("reports a deprecated-only name as the THIRD state, not as absence", async () => {
-		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied, so the resolver's index
-		// cannot hold this record at all — the `names` route is the only cheap way to see that it exists.
+		// The FTS content is built with `is_current != 0 and is_deprecated = 0` applied,
+		// so the resolver's index cannot hold this record at all.
+		// The `names` route is the only cheap way to see that it exists.
 		const db = await wofFixture()
 		const [row] = lookupWOF([{ name: "admin.db", db }], ["Birmingham/Wolverhampton/Walsall/Dudley"])
 
@@ -302,7 +306,7 @@ describe("lookupWOF", () => {
 		expect(row!.note).toContain("case- and punctuation-sensitive")
 	})
 
-	it("names a extract it could not query instead of counting it as a miss", async () => {
+	it("names an extract it could not query instead of counting it as a miss", async () => {
 		const broken = memoryDatabase<POIDatabase>()
 		const [row] = lookupWOF([{ name: "broken.db", db: broken }], ["Vaduz"])
 
@@ -394,8 +398,8 @@ describe("lookupCodex", () => {
 
 describe("lookupPostcodeAnchor", () => {
 	/**
-	 * Centroids measured off the shipped binaries and rounded: `10118` carries one, `01477` is one of the 414 keys in
-	 * `postcode-us.bin` that carry none, and `SW1A2AA` is a GB key the US bundle does not hold.
+	 * Rounded values from shipped binaries: `10118` has a centroid, `01477` is one of 414
+	 * US keys without one, and `SW1A2AA` is a GB key missing from the US bundle.
 	 */
 	const resolver = {
 		lookup: (postcode: string) =>
@@ -472,7 +476,7 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 
 	it("joins importance_split by spr_id when an importance DB is given, and reports a missing row as null", async () => {
 		const db = await candidateFixture()
-		await using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
+		using importance = DatabaseClient.temp<PlaceImportanceDatabase>()
 
 		importance.exec(
 			"CREATE TABLE place_importance (id INTEGER PRIMARY KEY, referential REAL NOT NULL, encyclopedic REAL, importance REAL NOT NULL)"

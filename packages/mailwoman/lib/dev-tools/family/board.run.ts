@@ -2,23 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write the target-family board rows (`family-board-rows.ts`) into `gauntlet/cases/<cc>/family-<slug>.jsonl`, one
- *   file per family and country, with the point of every row that names a place read off the admin gazetteer and the
- *   status of every row graded through the gauntlet's grader before it is written.
- *
- *   A name the gazetteer does not hold, or holds twice at the same rank, is refused: a curated row's truth is a record,
- *   and a guessed record is the defect this builder exists to keep out. The chosen record is printed beside each row so
- *   the read can be audited.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/family/board.run.ts [--admin-db <path>] [--skip-grade]
+ * Resolves, grades and writes the target-family board rows to `gauntlet/cases/<cc>/family-<slug>.jsonl`.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 
 import { FAMILY_ROWS, type FamilyRow, type PlaceLookup, type TargetFamily } from "#dev-tools/family/board-rows"
 import { gradeSeedCases, reportGradedGroups, writeSeedCaseFile } from "#dev-tools/grade-seed-cases"
@@ -32,7 +23,7 @@ const { values } = parseArguments({
 	},
 })
 
-const ADMIN_DB = values["admin-db"] ?? String(dataRootPath("wof", "admin-global-priority-importance.db"))
+const ADMIN_DB = values["admin-db"] ?? wofDatabasePath("admin-global-priority-importance.db")
 const SOURCE = `family-board:${isoDate()}`
 const ADDED_AT = isoDate()
 
@@ -51,10 +42,14 @@ const FAMILY_ISSUE: Record<TargetFamily, string> = {
 }
 
 /**
- * The placetypes a district lookup admits, most specific first. the first placetype with a record wins.
+ * Lists the placetypes a lookup tries when it sets none, in order.
+ * The first placetype with a record wins.
  */
 const DISTRICT_PLACETYPES = ["borough", "localadmin", "macrohood", "neighbourhood", "microhood", "locality"] as const
 
+/**
+ * Holds one gazetteer record returned by a place lookup.
+ */
 interface PlaceRecord {
 	id: number
 	placetype: string
@@ -76,7 +71,11 @@ const lookupStatement = db.prepare(`
 `)
 
 /**
- * The one record a lookup names. Refuses zero records and a tie at the winning placetype.
+ * Resolves a lookup to exactly one gazetteer record, preferring the higher population within a placetype.
+ *
+ * The chosen record is printed beside each row so the choice can be audited.
+ *
+ * @throws If no record matches, or if two records tie on population at the first matching placetype.
  */
 function resolvePlace(lookup: PlaceLookup): PlaceRecord {
 	const parent = lookup.parent ?? ""
@@ -146,7 +145,8 @@ const byFile = new Map<string, SeedCase[]>()
 
 for (const row of FAMILY_ROWS) {
 	const seed = cases.find((c) => c.id === row.id)!
-	const path = String(join(CASES_DIR, row.country.toLowerCase(), `family-${FAMILY_SLUG[row.family]}.jsonl`))
+	// The path is converted to a string because it keys `byFile`.
+	const path = CASES_DIR(row.country.toLowerCase(), `family-${FAMILY_SLUG[row.family]}.jsonl`).toString()
 	const list = byFile.get(path) ?? []
 
 	list.push(seed)

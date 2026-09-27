@@ -27,11 +27,15 @@ import { inTXBBOX } from "#tools/shared"
  */
 export interface TXHHSCConvertOptions {
 	/**
-	 * The TX hhsc nursing-facilities TSV. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
+	 * The TX hhsc nursing-facilities TSV.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources/…`.
 	 */
 	src?: PathBuilderLike
 	/**
-	 * Output OaRow jsonl path. Default `/tmp/txhhsc-oarow.jsonl`.
+	 * Output OaRow jsonl path.
+	 *
+	 * Default `/tmp/txhhsc-oarow.jsonl`.
 	 */
 	out?: string
 }
@@ -51,8 +55,8 @@ export async function convertTXHHSC(
 	const records: string[] = []
 	let skipped = 0
 
-	// Column indices, captured from the first non-blank row. `header: false` keeps that row in the stream so the
-	// blank-row guard below applies to it too.
+	// Column indices, captured from the first non-blank row.
+	// `header: false` keeps that row in the stream so the blank-row guard below applies to it too.
 	let cAddr = -1
 	let cCity = -1
 	let cZip = -1
@@ -60,7 +64,7 @@ export async function convertTXHHSC(
 	let sawHeader = false
 
 	for (const f of TSVSpliterator.from(await readLocalTextFile(src), { header: false })) {
-		if (f.every((value) => !value.trim())) continue
+		if (f.every((value) => !value)) continue
 
 		if (!sawHeader) {
 			sawHeader = true
@@ -73,9 +77,9 @@ export async function convertTXHHSC(
 			continue
 		}
 
-		const addr = (f[cAddr] ?? "").trim()
-		const city = (f[cCity] ?? "").trim()
-		const zip = (f[cZip] ?? "").trim()
+		const addr = f[cAddr] ?? ""
+		const city = f[cCity] ?? ""
+		const zip = f[cZip] ?? ""
 		const m = GEO.exec(f[cGeo] ?? "")
 
 		if (!addr || !city || !m) {

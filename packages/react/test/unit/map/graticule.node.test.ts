@@ -3,7 +3,7 @@
 
 /**
  *   `buildGraticule` is pure geometry, so it is tested here rather than in the browser suite. What matters is that the
- *   lines are densified — a meridian drawn as two endpoints is a straight chord through the sphere under a globe
+ *   lines are densified. A meridian drawn as two endpoints is a straight chord through the sphere under a globe
  *   projection, and would pass through the globe instead of curving over it.
  */
 
@@ -20,7 +20,8 @@ describe("buildGraticule", () => {
 	})
 
 	test("draws a meridian every step and a parallel every step", () => {
-		// 360/15 = 24 meridians. parallels run from -70 to +80 inclusive of neither pole = 11.
+		// 360/15 = 24 meridians.
+		// Parallels run from -70 to +80 inclusive of neither pole = 11.
 		const meridians = lines.filter((line) => line.every((point) => point[0] === line[0]![0]))
 		const parallels = lines.filter((line) => line.every((point) => point[1] === line[0]![1]))
 

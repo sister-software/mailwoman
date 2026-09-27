@@ -131,6 +131,16 @@
 			"node": "./lib/license/key/index.ts",
 			"default": "./out/license/key/index.js"
 		},
+		"./license/obligations": {
+			"types": "./out/license/obligations.d.ts",
+			"node": "./lib/license/obligations.ts",
+			"default": "./out/license/obligations.js"
+		},
+		"./license/record": {
+			"types": "./out/license/record.d.ts",
+			"node": "./lib/license/record.ts",
+			"default": "./out/license/record.js"
+		},
 		"./license/register": {
 			"types": "./out/license/register.d.ts",
 			"node": "./lib/license/register.ts",
@@ -626,10 +636,10 @@
 		"iconv-lite": "^0.7.3",
 		"isomorphic-dompurify": "^4.1.0",
 		"kysely": "^0.29.5",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"pino": "^10.3.1",
 		"regenerate": "^1.4.2",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"trusted-types": "^2.0.0",
 		"type-fest": "^5.9.0",
 		"yauzl-promise": "^4.0.0",

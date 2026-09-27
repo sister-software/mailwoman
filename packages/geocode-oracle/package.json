@@ -92,6 +92,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/record": "workspace:*",
@@ -101,7 +102,7 @@
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
-		"path-ts": "^2.4.1"
+		"path-ts": "^2.5.0"
 	},
 	"engines": {
 		"node": ">=24.18.0"

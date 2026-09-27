@@ -1,12 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Fixtures for the ROAD_TO_V9 §4 intent vocabulary. Every kind is exercised in both registers —
- *   as-written and lowercase — because lowercase is the primary user register and a rule that only
- *   works on title case is a rule that only works on our test data.
- */
-
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { QueryKind } from "@mailwoman/core/pipeline"
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
@@ -22,10 +13,6 @@ function shapeOf(text: string): { input: NormalizedInputLite; shape: QueryShapeL
 	return { input: { raw: text, normalized: text }, shape: computeQueryShape(text) }
 }
 
-/**
- * Every kind present in a verdict — top plus alternatives. The two ranked-below-incumbent intent kinds live in
- * `alternatives` by design, so a test that only reads `.kind` cannot see them.
- */
 function kindsOf(text: string): Set<QueryKind> {
 	const { input, shape } = shapeOf(text)
 	const verdict = classifyKindSync(input, shape)
@@ -33,17 +20,11 @@ function kindsOf(text: string): Set<QueryKind> {
 	return new Set<QueryKind>([verdict.kind, ...verdict.alternatives.map((a) => a.kind)])
 }
 
-/**
- * Both registers of one query. Lowercase is not a variant here — it is the register most users type in.
- */
 function registers(text: string): string[] {
 	return text === text.toLowerCase() ? [text] : [text, text.toLowerCase()]
 }
 
-describe("bare_toponym — one place-name, no address grammar", () => {
-	// The hard-case board's `bare_namesake` class (`packages/mailwoman/lib/eval-harness/fixtures/hard-case-board.jsonl`,
-	// scored by `packages/mailwoman/lib/dev-tools/score/hard-case-board.run.ts`), which is the population ROAD_TO_V9 §3
-	// assembled for exactly this register.
+describe("Bare_toponym — one place-name without address grammar", () => {
 	const POSITIVE = [
 		"Fulda",
 		"Jena",
@@ -62,7 +43,7 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBeGreaterThan(0)
@@ -78,14 +59,14 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 		"PO Box 1234",
 		"corner of 5th and Main",
 		"12 rue de Rome Paris",
-		// Admin context present — `locality_only` owns this, and a tail is exactly what makes it not bare.
+
 		"Paris, FR",
 		"Athens, OH",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreBareToponym(input, shape)).toBe(0)
@@ -105,12 +86,12 @@ describe("bare_toponym — one place-name, no address grammar", () => {
 	})
 })
 
-describe("route_pair — two toponyms, no grammar between them", () => {
+describe("Route_pair — two toponyms without grammar between them", () => {
 	const POSITIVE = ["Paris London", "Tokyo Osaka", "Berlin Munich", "Bordeaux Lyon"]
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBeGreaterThan(0)
@@ -120,7 +101,6 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 	}
 
 	const NEGATIVE = [
-		// Toponymic head particles: one place, two tokens. The class this guard exists for.
 		"New York",
 		"San Francisco",
 		"Santa Monica",
@@ -131,19 +111,19 @@ describe("route_pair — two toponyms, no grammar between them", () => {
 		"Port Elizabeth",
 		"Lake Charles",
 		"Saint Denis",
-		// Address grammar of any kind disqualifies.
+
 		"350 5th Ave, New York, NY 10118",
 		"12 rue de Rome Paris",
 		"10118",
 		"Paris London Berlin",
-		// A comma is the admin-context marker. the hard-case board's `comma_control` register.
+
 		"Athens, Georgia",
 		"Portland, ME",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreRoutePair(input, shape)).toBe(0)
@@ -175,7 +155,7 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 
 	for (const query of POSITIVE) {
 		for (const register of registers(query)) {
-			test(`fires on ${stringifyJSON(register)}`, () => {
+			test(`fires for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBeGreaterThan(0)
@@ -185,19 +165,18 @@ describe("near_me — a relation to the asker, with the asker missing", () => {
 	}
 
 	const NEGATIVE = [
-		// An anchor is present — this is answerable without a focus point, so it is not `near_me`.
 		"gas station near Austin",
 		"restaurants near Times Square",
 		"coffee in Paris",
 		"350 5th Ave, New York, NY 10118",
 		"Paris",
-		// The landmark leaders keep their own rule: a relative description of a real anchor.
+
 		"near the Empire State Building",
 	]
 
 	for (const query of NEGATIVE) {
 		for (const register of registers(query)) {
-			test(`silent on ${stringifyJSON(register)}`, () => {
+			test(`does not fire for ${stringifyJSON(register)}`, () => {
 				const { input, shape } = shapeOf(register)
 
 				expect(scoreNearMe(input, shape)).toBe(0)

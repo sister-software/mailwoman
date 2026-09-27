@@ -52,8 +52,9 @@ import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gaunt
 /**
  * Load every named suite into one fixture list, refusing an id that two files both claim.
  *
- * The per-file loader already refuses a duplicate within its own file. ids name rows in failure output, so two suites
- * sharing one would produce a report line a reader cannot trace back to a file.
+ * The per-file loader already refuses a duplicate within its own file.
+ * Ids name rows in failure output, so two suites sharing one would produce a
+ * report line a reader cannot trace back to a file.
  */
 async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {
 	const fixtures: ConformanceFixture[] = []
@@ -89,7 +90,9 @@ function report(findings: readonly ConformanceFinding[]): void {
 
 export interface ConformanceCommandOptions extends GauntletDepsOptions {
 	/**
-	 * Suite jsonl path. Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
+	 * Suite jsonl path.
+	 *
+	 * Absent runs every suite in {@linkcode CONFORMANCE_SUITES}.
 	 */
 	suite?: string
 }
@@ -104,8 +107,10 @@ export interface ConformanceLawMeasurement {
 	tracked: number
 	unmeasured: number
 	/**
-	 * The law's breadth line, when its suite registers one. A hold count answers whether the stated rows held, never how
-	 * much of the population the suite could have stated.
+	 * The law's breadth line, when its suite registers one.
+	 *
+	 * A hold count answers whether the stated rows held, never how much of the
+	 * population the suite could have stated.
 	 */
 	coverage?: string
 }
@@ -113,8 +118,9 @@ export interface ConformanceLawMeasurement {
 /**
  * What one conformance run measured.
  *
- * `measured` is absent exactly when `problems` is non-empty — a refused run has no findings, and reporting it as zero
- * findings would read as a suite that passed nothing rather than a suite that ran nothing.
+ * `measured` is absent exactly when `problems` is non-empty.
+ * A refused run has no findings, and reporting it as zero findings would read as a
+ * suite that passed no case rather than a suite that ran no case.
  */
 export interface ConformanceMeasurement {
 	laws: string[]
@@ -130,9 +136,10 @@ export interface ConformanceMeasurement {
 /**
  * Load, audit and run the law suites, and return the counts without printing a verdict.
  *
- * Extracted so a second consumer — the phase-2 decision ruler (#1967), which reads the laws as an inertness measurement
- * — takes the numbers from the same run this command narrates, rather than re-deriving them from a second orchestration
- * free to load a different suite set or a different observer.
+ * Extracted so a second consumer — the phase-2 decision ruler (#1967), which reads
+ * the laws as an inertness measurement — takes the numbers from the same run this
+ * command narrates, rather than re-deriving them from a second orchestration free
+ * to load a different suite set or a different observer.
  */
 export async function measureConformance(options: ConformanceCommandOptions = {}): Promise<ConformanceMeasurement> {
 	const { suite, ...depsOptions } = options
@@ -158,14 +165,15 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
-	// The corpus is read only when a law in this run registers a coverage reading. It is the population every law
-	// draws from, so a law whose eligibility is a property of the query text measures its own breadth against it —
-	// see `ConformanceSuite.coverage`.
+	// The corpus is read only when a law in this run registers a coverage reading.
+	// It is the population every law draws from, so a law whose eligibility is a property of
+	// the query text measures its own breadth against it — see `ConformanceSuite.coverage`.
 	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
 	const corpusInputs = wantsCoverage ? (await loadRegressionCases()).map((seedCase) => seedCase.input) : []
 
-	// The resolver's trace bookkeeping is opt-in and the four answer-axis laws have no use for it, so the observer is
-	// chosen from the comparators the loaded rows actually name rather than turned on for every run.
+	// The resolver's trace bookkeeping is opt-in and the four answer-axis laws have
+	// no use for it, so the observer is chosen from the comparators the loaded rows
+	// actually name rather than turned on for every run.
 	const wantsTrace = fixtures.some((fixture) => fixture.outcomeComparator === "candidate_admissibility")
 
 	if (wantsTrace) {
@@ -211,7 +219,9 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 }
 
 /**
- * Run the conformance-law suites from CLI-shaped options. Returns the process exit code (0 = pass).
+ * Run the conformance-law suites from CLI-shaped options.
+ *
+ * @returns The process exit code (0 = pass).
  */
 export async function runConformanceCommand(options: ConformanceCommandOptions = {}): Promise<number> {
 	const { problems, measured } = await measureConformance(options)
@@ -233,8 +243,8 @@ export async function runConformanceCommand(options: ConformanceCommandOptions =
 			`${summary.tracked.length} tracked, ${summary.unmeasured.length} unmeasured) ===`
 	)
 
-	// Per law as well as pooled: a run that merges two suites into one verdict says whether something broke and not
-	// which law stopped holding, and the pooled count moves whenever either suite grows.
+	// Per law as well as pooled: a run that merges two suites into one verdict says whether something broke
+	// and not which law stopped holding, and the pooled count moves whenever either suite grows.
 	for (const law of perLaw) {
 		console.log(
 			`  ${law.law}: ${law.holds}/${law.decided} decided hold, ${law.tracked} tracked, ${law.unmeasured} unmeasured`

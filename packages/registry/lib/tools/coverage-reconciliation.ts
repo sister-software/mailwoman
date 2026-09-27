@@ -54,15 +54,21 @@ export interface CoverageReconciliationOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Rows kept per source. Default 2000.
+	 * Rows kept per source.
+	 *
+	 * Default 2000.
 	 */
 	cap?: number
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
@@ -82,7 +88,8 @@ const ELIGIBILITY = new Set(["nppes", "txhhsc-nursing"])
 const FUNDING = new Set(["fcc-rhc"])
 
 /**
- * Coverage reconciliation (#621) — see the module doc. Emits the markdown report to stdout.
+ * Coverage reconciliation (#621) — see the module doc.
+ * Emits the markdown report to stdout.
  */
 export async function coverageReconciliation(
 	options: CoverageReconciliationOptions,
@@ -149,9 +156,10 @@ export async function coverageReconciliation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
-	// learnedScorer:false — reconciliation joins eligibility ↔ funding across datasets (recall-oriented):
-	// the same facility under different operational names is the signal we want, which the dedup-calibrated
-	// GBT default rejects (measured: "enrolled" overlap 22→6). Use the FS baseline for this cross-dataset join.
+	// learnedScorer:false — reconciliation joins eligibility ↔ funding across datasets
+	// (recall-oriented): the same facility under different operational names is the signal we want,
+	// which the dedup-calibrated GBT default rejects (measured: "enrolled" overlap 22→6).
+	// Use the FS baseline for this cross-dataset join.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
 	// Reconcile sources through the shared @mailwoman/registry code path.

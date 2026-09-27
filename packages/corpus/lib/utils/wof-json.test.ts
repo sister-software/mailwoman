@@ -10,8 +10,8 @@ import {
 } from "@mailwoman/corpus/utils/wof-json"
 import { expect, test } from "vitest"
 
-// `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope
-// here. these are the pure object→value / map→map helpers.
+// `walkFeatures` (filesystem stream) and the private `recordFromFeature` it drives are out of scope here.
+// These are the pure object→value / map→map helpers.
 
 test("isCurrentFeature: 1 and -1 are current, 0 is superseded", () => {
 	// WOF + Pelias semantics: -1 ("unknown, treat as active") must count as current.
@@ -120,7 +120,8 @@ test("buildAncestryIndex: parent_id of null / 0 / negative terminates the walk",
 })
 
 test("buildAncestryIndex: a cycle is broken rather than looping forever", () => {
-	// Corrupt fixture: 1 → 2 → 1. The guard halts on re-visit.
+	// Corrupt fixture: 1 → 2 → 1.
+	// The guard halts on re-visit.
 	const byID = new Map<number, WOFRecord>([
 		[1, rec(1, 2)],
 		[2, rec(2, 1)],

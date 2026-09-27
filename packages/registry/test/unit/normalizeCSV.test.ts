@@ -1,17 +1,15 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { normalizeCSV } from "@mailwoman/registry/ingest"
 import type { SourceRecord } from "@mailwoman/registry/types"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const dir = await temporaryDirectory("normalize-csv-")
 afterAll(() => dir[Symbol.asyncDispose]())
 
-async function fixture(name: string, text: string): Promise<string> {
-	const p = dir.resolve(name)
+async function fixture(name: string, text: string): Promise<PathBuilder> {
+	const p = dir.path(name)
 
 	await writeLocalFile(text, p)
 
@@ -31,7 +29,7 @@ async function collect(gen: AsyncIterable<SourceRecord>): Promise<SourceRecord[]
 const MAPPING = { id: "id", name: "name", organization: "org", address: ["addr", "city", "state"] }
 
 describe("normalizeCSV", () => {
-	it("streams normalized records (name parsed, org canonicalized, no geocode)", async () => {
+	it("Streams normalized records (name parsed, org canonicalized without geocode)", async () => {
 		const p = await fixture(
 			"people.csv",
 			"id,name,org,addr,city,state\n" +
@@ -48,9 +46,9 @@ describe("normalizeCSV", () => {
 		expect(row0.id).toBe("c1")
 		expect(row0.name?.family).toBe("Smith")
 		expect(row0.organization).toBeTruthy()
-		expect(row0.address).toBeUndefined() // normalize never geocodes
+		expect(row0.address).toBeUndefined()
 		expect(row0.raw).toMatchObject({ addr: "123 Main St", state: "OR" })
-		expect(row1.organization).toBeUndefined() // empty org column
+		expect(row1.organization).toBeUndefined()
 	})
 
 	it("falls back to the row index for a missing id", async () => {

@@ -2,141 +2,118 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Train / val / test split with **locality holdout** per the Phase 1 plan.
+ * Splits corpus rows into train, val and test by holding out whole places: a random row split leaks by
+ * neighborhood, because the model can memorize a street it saw in train. Rows inside a held-out place
+ * go to val or test 50/50 by a hash of `source_id`; every other row goes to train.
  *
- *   The corpus's val + test sets are not randomly sampled rows — they're entire low-density regions
- *   held out so the model cannot memorize them at training time. Rationale (per the plan's "Common
- *   pitfalls" section): random splits leak by neighborhood — a model fed "13 Main St, Springfield,
- *   IL" in train and "15 Main St, Springfield, IL" in test generalizes via region/locality
- *   memorization rather than by learning the underlying schema.
- *
- *   Phase 1 holdouts (chosen for low data density + administrative isolation):
- *
- *   - **US**: Vermont, Wyoming, North Dakota
- *   - **FR**: Corse, Lozère, Creuse
- *
- *   A holdout names a place. Which component carries that place is a property of the source, so the predicate reads
- *   more than one: the region a US address source emits, the postcode prefix a French one emits, or a locality.
- *   Reading the region alone held out no BAN row at all, and BAN is 96.9% of FR, so FR's validation split carried zero
- *   street rows however many French departments were named (#2353).
- *
- *   A holdout added after a corpus is built is leakage-laundering rather than a holdout, so a change here takes effect
- *   at the next corpus rebuild. Every versioned corpus keeps the `SPLIT_MANIFEST.json` it was built with.
- *
- *   Held-out rows are deterministically split 50/50 between val and test by hashing the row's
- *   `source_id`. Non-held-out rows go to train. The 90/5/5 ratio is approximate — what matters is
- *   the locality boundary rather than the exact split percentages.
- *
- *   The output is a `SplitManifest`: three `string[]` arrays of `source_id`. Manifests live in git
- *   (under `corpus/splits/<version>/`) so reruns are reproducible bit-for-bit.
+ * A holdout change takes effect at the next corpus rebuild, and each versioned corpus keeps the
+ * `SPLIT_MANIFEST.json` it was built with, because adding a holdout to a built corpus would leak rows
+ * the model already trained on.
  */
 
+import { delimitedSource, preferCompressed } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { createHash } from "@mailwoman/core/hash"
 import { spawnProcess } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import type { CanonicalRow, LabeledRow } from "#types"
 
+/**
+ * The name of one corpus split.
+ */
 export type SplitName = "train" | "val" | "test"
 
 /**
- * Which component values name the places one country holds out.
+ * The component values that identify the places one country holds out.
  *
- * A holdout is a place, so the model cannot generalize by memorizing a neighborhood. Which component carries that place
- * differs by source, and that is why more than one matcher exists: `usgov-nad` and `tiger` emit a `region`, so a
- * held-out state reaches US street rows, while BAN emits `house_number|street_prefix|street|postcode|locality` and no
- * `region` at all. A region-only predicate cannot hold out a single BAN row, whichever French departments it names, and
- * BAN is 96.9% of FR (#2353).
- *
- * A row is held out when any declared matcher fires. Declaring none holds out nothing.
+ * Sources carry a place in different components: `usgov-nad` and `tiger` emit `region`,
+ * but BAN emits none, so a French holdout must also match on postcode.
+ * A row is held out when any declared matcher fires.
+ * A policy with no matchers holds out no entry.
  */
 export interface HoldoutPolicy {
-	/**
-	 * Exact values matched against `row.components.region`.
-	 */
 	regions?: readonly string[]
 	/**
-	 * Prefixes matched against `row.components.postcode`. A prefix is only usable where it names a place on its own: a
-	 * French postcode's first two digits are its department, so `20` is Corse and nothing else.
+	 * Prefixes matched against `row.components.postcode`; use one only where it identifies
+	 * a single place by itself, such as the first two digits of a French postcode.
 	 */
 	postcodePrefixes?: readonly string[]
-	/**
-	 * Exact values matched against `row.components.locality`.
-	 */
 	localities?: readonly string[]
 }
 
 /**
- * One country's holdout, as a bare region list or as a {@link HoldoutPolicy}.
- *
- * The bare array keeps meaning "these region values", which is what every committed `SPLIT_MANIFEST.json` echoes and
- * what every existing caller passes.
+ * One country's holdout, as a bare region list or as a {@link HoldoutPolicy}; the bare array means
+ * a list of region values, which is the form older committed `SPLIT_MANIFEST.json` files use.
  */
 export type CountryHoldout = readonly string[] | HoldoutPolicy
 
+/**
+ * Options for {@link splitRows}.
+ */
 export interface SplitOptions {
 	/**
-	 * Holdout policy keyed by ISO 3166-1 alpha-2 country. Override to change the holdout for an experiment. Defaults to
-	 * `defaultHoldouts()`.
+	 * The holdout policy keyed by ISO 3166-1 alpha-2 country code.
 	 */
 	holdouts?: Record<string, CountryHoldout>
 }
 
 /**
- * Output manifest: source_id lists per split.
+ * The `source_id` lists for each split.
  */
 export interface SplitManifest {
 	train: string[]
 	val: string[]
 	test: string[]
-	/**
-	 * Echoes the holdouts used, so the manifest is self-describing. A country declaring regions alone echoes the bare
-	 * array every manifest built before #2353 carries.
-	 */
 	holdouts: Record<string, CountryHoldout>
 	/**
-	 * Corpus version stamped onto the manifest. Read from the first row.
+	 * The corpus version, read from the first row that has one.
 	 */
 	corpus_version: string
-	/**
-	 * Counts for quick sanity checks.
-	 */
 	counts: { train: number; val: number; test: number; total: number }
 }
 
 /**
- * Phase 1 default holdouts (per plan).
- *
- * - US: Vermont, Wyoming, North Dakota (low density, easy to identify in WOF/admin sources).
- * - FR: Corse, Lozère, Creuse (small departments / regions).
- * - DE (added 2026-06-11, night-11): Saarland + Mecklenburg-Vorpommern — small Länder so the training cost is low while
- *   the holdout clears the honest-eval 1000-row trust floor. DE has had no trustable honest-eval holdout since the
- *   harness shipped (flagged 2026-06-08); this takes effect at the next base corpus rebuild — existing versioned
- *   corpora keep their committed SPLIT_MANIFESTs (a holdout added after a corpus is built is leakage-laundering rather
- *   than a holdout).
+ * Returns the default holdouts — small, peripheral places in each country.
+ * A change here takes effect at the next base corpus rebuild.
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
 		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
 		FR: {
 			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
-			// The same three departments, named in the component BAN emits. A French postcode's first two digits are its
-			// department: Corse 20, Creuse 23, Lozère 48. Without these the FR holdout reaches `wof-admin` rows alone.
-			// Those rows carry a region and no street, so FR validates on locality and region rows only (#2353).
+			// BAN street rows carry no region, so these postcode departments hold out the
+			// same three places: Corse 20, Creuse 23 and Lozère 48.
 			postcodePrefixes: ["20", "23", "48"],
 		},
-		DE: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
+		DE: {
+			// Only `wof-admin` carries a DE region, so these Länder hold out admin rows alone.
+			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
+			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
+			// so the regions above match no street row.
+			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout,
+			// and a five-digit German postcode means it cannot collide.
+			postcodePrefixes: ["02"],
+		},
+		GB: {
+			// GB street rows carry no region, so the holdout matches postcode areas —
+			// Truro, Llandudno and Halifax.
+			// Each prefix has two letters and none is a prefix of another
+			// (`L` for Liverpool would also match `LL`).
+			postcodePrefixes: ["TR", "LL", "HX"],
+			// Cornwall matches the admin rows for the same place `TR` covers.
+			regions: ["Cornwall"],
+		},
 	}
 }
 
 /**
- * The declared matchers for one country, with a bare array read as its region list.
+ * Returns the matchers for one country, reading a bare array as a region list.
  */
-function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
+export function holdoutPolicyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
 	if (!holdout) return {}
 
 	return Array.isArray(holdout) ? { regions: holdout } : (holdout as HoldoutPolicy)
@@ -145,15 +122,16 @@ function policyFor(holdout: CountryHoldout | undefined): HoldoutPolicy {
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Pure per-row split decision. Used by both the in-memory `splitRows` and by the streaming `buildCorpus` align loop
- * (`build.ts`) to decide each row's split without retaining the row in heap. Identical hash bucketing semantics to the
- * array-based path so the decision is stable regardless of caller.
+ * Returns the split for one row.
+ *
+ * Both `splitRows` and the streaming `buildCorpus` loop call this, so every
+ * caller assigns a row to the same split.
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
 	holdouts: Record<string, CountryHoldout> = defaultHoldouts()
 ): SplitName {
-	const policy = policyFor(holdouts[row.country])
+	const policy = holdoutPolicyFor(holdouts[row.country])
 	const { region, postcode, locality } = row.components
 
 	const isHeldOut =
@@ -163,17 +141,14 @@ export function splitForRow(
 
 	if (!isHeldOut) return "train"
 
-	// 50/50 deterministic by source_id hash. Same input always lands in the same split.
 	return hashBucket(row.source_id, 2) === 0 ? "val" : "test"
 }
 
 /**
- * Compute a `SplitManifest` from an iterable of labeled (or canonical) rows. Both shapes are accepted — only
- * `source_id`, `country`, `corpus_version`, and `components.region` are consulted.
+ * Builds a `SplitManifest` in memory from labeled or canonical rows.
  *
- * Retained for in-memory callers (tests. small-scale fixture runs). Real-data builds via `buildCorpus` use the
- * streaming path (`splitForRow` + `writeSplitManifestsFromLabeledFiles`) to avoid materializing every aligned row's
- * split membership in heap.
+ * Tests and small fixtures use this, while `buildCorpus` uses `splitForRow`
+ * and `writeSplitManifestsFromLabeledFiles` so it never holds every row's split in memory.
  */
 export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}): SplitManifest {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -211,29 +186,19 @@ export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}
 }
 
 /**
- * Lightweight deterministic 0..(n-1) bucket from a string id.
- */
-/**
- * Deterministic bucket for a stable id.
- *
- * Stays on raw `createHash` rather than `sha256Hex` from `@mailwoman/core/utils`: it needs the digest bytes, and the
- * shared helper returns hex. Re-parsing hex back into bytes to reach the same four octets would cost more than the one
- * line it saves.
+ * Returns a deterministic bucket in `0..n-1` for an id, from the first four bytes
+ * of the SHA-256 digest read as a big-endian uint32.
  */
 export function hashBucket(id: string, n: number): number {
 	const digest = createHash("sha256").update(id).digest()
-	// Read 4 bytes as uint32 to avoid bigint overhead.
 	const u = digest[0]! * 0x01_00_00_00 + digest[1]! * 0x01_00_00 + digest[2]! * 0x01_00 + digest[3]!
 
 	return u % n
 }
 
 /**
- * Write a `SplitManifest` to `<outputDir>/{train,val,test}.json`. The manifests are line-separated source_id lists (one
- * id per line) so they diff cleanly in git. Also writes `<outputDir>/manifest.json` with the full structured manifest
- * including holdouts + counts + corpus version.
- *
- * Reruns produce byte-identical files (the underlying `splitRows` is deterministic).
+ * Writes a `SplitManifest` to `<outputDir>/{train,val,test}.txt` (sorted `source_id` values, one per line)
+ * and `SPLIT_MANIFEST.json` (the corpus version, holdouts and counts).
  */
 export async function writeSplitManifests(manifest: SplitManifest, outputDir: PathBuilderLike): Promise<void> {
 	await makeDirectories(outputDir)
@@ -254,20 +219,18 @@ export async function writeSplitManifests(manifest: SplitManifest, outputDir: Pa
 }
 
 /**
- * Type re-export for callers that want to ingest LabeledRow specifically.
+ * The `LabeledRow` fields that the split functions read.
  */
 export type SplitInputLabeledRow = Pick<LabeledRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Streaming variant of `writeSplitManifests`: derives the per-split source-id .txt manifests + `SPLIT_MANIFEST.json` by
- * streaming three per-split labeled-row jsonl files (one per split). Memory cost is O(1) — `sort(1)` from coreutils
- * handles the deterministic sort with disk spill for files that exceed in-memory thresholds.
- *
- * Used by `buildCorpus` after the align loop has already partitioned labeled rows into `labeled-{train,val,test}.jsonl`
- * via `splitForRow`. Counts are pre-computed by the align loop and passed in (zero re-scan).
+ * Writes the same files as `writeSplitManifests` by streaming one labeled JSONL file
+ * per split; `buildCorpus` calls this after its align loop has partitioned rows
+ * with `splitForRow`, the caller passes the counts so the files are not rescanned,
+ * and `sort(1)` spills to disk so memory stays constant.
  */
 export async function writeSplitManifestsFromLabeledFiles(opts: {
-	labeledPaths: Record<SplitName, string>
+	labeledPaths: Record<SplitName, PathBuilderLike>
 	outputDir: PathBuilderLike
 	corpusVersion: string
 	counts: Record<SplitName, number>
@@ -278,7 +241,7 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 
 	for (const split of ["train", "val", "test"] as const) {
 		const labeledPath = opts.labeledPaths[split]
-		const outPath = join(opts.outputDir, `${split}.txt`)
+		const outPath = resolvePathBuilder(opts.outputDir, `${split}.txt`)
 		await streamSortedSourceIDs(labeledPath, outPath)
 	}
 
@@ -296,10 +259,10 @@ export async function writeSplitManifestsFromLabeledFiles(opts: {
 }
 
 /**
- * Extract `source_id`s from a labeled jsonl file, write them sorted to `outPath`. Empty input → empty output file (not
- * absent). Uses `sort(1)` for disk-spilling external sort so peak memory stays O(1) regardless of labeled-row count.
+ * Writes the sorted `source_id` values from a labeled JSONL file to `outPath`;
+ * an empty input still produces an empty output file.
  */
-async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string): Promise<void> {
+async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath: PathBuilderLike): Promise<void> {
 	const unsortedPath = `${outPath}.unsorted`
 	const out = openWriteStream(unsortedPath, { encoding: "utf8" })
 
@@ -308,11 +271,12 @@ async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string):
 		out.on("error", reject)
 	})
 
-	// JSONSpliterator parses each row (skipEmpty drops blank lines); a malformed row throws
-	// SyntaxError out of the loop, matching the prior `reject(err)` fail-loud behavior. `finally`
-	// always ends the write stream so `sort` reads a complete file even if the read throws.
+	// A malformed row throws out of the loop.
+	// The `finally` block still closes the write stream.
 	try {
-		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(labeledJsonlPath)) {
+		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(
+			delimitedSource(await preferCompressed(labeledJsonlPath))
+		)) {
 			if (typeof obj.source_id === "string") {
 				out.write(`${obj.source_id}\n`)
 			}
@@ -324,7 +288,7 @@ async function streamSortedSourceIDs(labeledJsonlPath: string, outPath: string):
 	await outClosed
 
 	await new Promise<void>((resolve, reject) => {
-		// LC_ALL=C: byte-sort, locale-independent → deterministic across hosts.
+		// `LC_ALL=C` sorts by byte, so the order is the same on every host.
 		const proc = spawnProcess("sort", [unsortedPath, "-o", outPath], { env: childEnv({ LC_ALL: "C" }) })
 		proc.on("error", reject)
 

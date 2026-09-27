@@ -23,7 +23,7 @@
  *   - `pair-index-fr.bin` (hierarchy campaign R6) — built from the raw BAN dump through the shared
  *       `buildPairIndexOverlay`. The FR source is BAN's `nom_ld` (lieu-dit), read through `ban/sdk`'s `cleanLieuDit`
  *       — not WOF (WOF's French neighbourhood records are Paris quartiers, which never appear in a postal address).
- *       BAN is a directory of 101 département files, so the guard md5s nothing (hashing all of them costs more than
+ *       BAN is a directory of 101 département files, so the guard md5s no file (hashing all of them costs more than
  *       it saves. a BAN refresh is a deliberate act — delete the artifact after one) and instead refuses an
  *       implausibly small artifact: the BAN-derived index is ~6 MB, while a pair index built here from the wrong
  *       source (the admin-DB borough recipe) is ~1.9 kB with matching magnitudes. The calibrated magnitudes are the
@@ -32,6 +32,7 @@
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import {
 	committedSoftFeedLinks,
 	materializeDevOverlay,
@@ -41,10 +42,11 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Raw BAN dump the lieu-dit pairs are extracted from — a directory, so it rides `inputs` (existence only), not
- * `sources` (md5).
+ * Raw BAN dump the lieu-dit pairs are extracted from.
+ *
+ * A directory, so it rides `inputs` (existence only), not `sources` (md5).
  */
-const BAN_DIR = String(dataRootPath("corpus", "sources", "ban"))
+const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 
 const softFeed = await committedSoftFeedLinks()
 
@@ -53,7 +55,7 @@ await materializeDevOverlay({
 	model: { kind: "inherit" },
 	softFeed: [softFeed.anchor, softFeed.country],
 	evidenceLexiconsFromCard: true,
-	postcodeBinary: { country: "fr", database: String(dataRootPath("wof", "postalcode-intl.db")) },
+	postcodeBinary: { country: "fr", database: wofDatabasePath("postalcode-intl.db") },
 	pairIndex: {
 		country: "fr",
 		delta: PAIR_INDEX_DELTA,

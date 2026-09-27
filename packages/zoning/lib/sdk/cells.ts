@@ -21,8 +21,8 @@
  *
  *   the zero-cell count is A measurement OF the alternative rather than OF this index. `classifyFeatureCells` takes
  *   overlapping containment and refuses a feature that reaches no cell, so this index's own zero-cell count is
- *   zero by construction. What the column reports is what `polygonToCells` — the centre-in-polygon polyfill a
- *   builder reaches for first — would have returned nothing for, and every one of those would have read
+ *   zero by construction. What the column reports is what `polygonToCells`. The centre-in-polygon polyfill a
+ *   builder reaches for first — would have returned no cell for, and every one of those would have read
  *   downstream as an absence of zoning.
  */
 
@@ -36,11 +36,12 @@ import {
 import { polygonToCells } from "h3-js"
 
 /**
- * Would a centre-IN-polygon polyfill return nothing for this feature?
+ * Would a centre-IN-polygon polyfill return no cell for this feature?
  *
- * The measurement that forced this layer's index to take cell-touches-polygon: at resolution 9 `polygonToCells` returns
- * an empty set for the great majority of Irish zoning polygons, because no cell centre falls inside them. A builder
- * indexing only the polyfill output would drop every one of them silently.
+ * The measurement that forced this layer's index to take cell-touches-polygon:
+ * at resolution 9 `polygonToCells` returns an empty set for the great majority of
+ * Irish zoning polygons, because no cell centre falls inside them.
+ * A builder indexing only the polyfill output would drop every one of them silently.
  */
 export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: number): boolean {
 	for (const rings of polygons) {
@@ -52,7 +53,8 @@ export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: nu
 }
 
 /**
- * What one resolution came out as over the whole set — the numbers the resolution choice is made from.
+ * What one resolution came out as over the whole set.
+ * The numbers the resolution choice is made from.
  */
 export interface CellIndexMeasurement {
 	resolution: number
@@ -70,7 +72,9 @@ export interface CellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`. Reported, and not what the resolution is chosen on — see this file's header.
+	 * `partialCells / touchedCells`.
+	 *
+	 * Reported, and not what the resolution is chosen on — see this file's header.
 	 */
 	partialShare: number
 	/**
@@ -82,8 +86,10 @@ export interface CellIndexMeasurement {
 	 */
 	storedCellRows: number
 	/**
-	 * How many polygons name a cell, over the cells the layer reaches. This is what a probe pays: a cell naming eight
-	 * candidates is eight bounding-box tests and up to eight ray casts.
+	 * How many polygons name a cell, over the cells the layer reaches.
+	 *
+	 * This is what a probe pays: a cell naming eight candidates is eight bounding-box
+	 * tests and up to eight ray casts.
 	 */
 	candidatesPerCell: { mean: number; p90: number; max: number }
 	/**
@@ -92,7 +98,9 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned nothing for — see {@link polyfillFindsNothing}.
+	 * Features a centre-in-polygon polyfill would have returned no cell for —
+	 * see {@link polyfillFindsNothing}.
+	 *
 	 * `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number
@@ -101,8 +109,10 @@ export interface CellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * Features this index returned no cell for. zero BY construction: `classifyFeatureCells` throws rather than returning
-	 * an empty set, so a non-zero value here means the guard was bypassed.
+	 * Features this index returned no cell for.
+	 *
+	 * Zero BY construction: `classifyFeatureCells` throws rather than returning an empty set,
+	 * so a non-zero value here means the guard was bypassed.
 	 */
 	zeroCellFeatures: number
 }
@@ -110,10 +120,11 @@ export interface CellIndexMeasurement {
 /**
  * Accumulate one resolution's cell index over a stream of features.
  *
- * The whole set is held as short-cell strings rather than the integers the tables store, because `compactCells` is an
- * h3-js function over full indexes and round-tripping at every step would cost more than the strings do. The candidate
- * counter is keyed by the 48-bit integer instead: it is the larger of the two at every candidate resolution, and it is
- * never handed back to h3.
+ * The whole set is held as short-cell strings rather than the integers the tables store,
+ * because `compactCells` is an h3-js function over full indexes and round-tripping
+ * at every step would cost more than the strings do.
+ * The candidate counter is keyed by the 48-bit integer instead: it is the larger of the
+ * two at every candidate resolution, and it is never handed back to h3.
  */
 export class ZoningCellIndex {
 	readonly resolution: number
@@ -158,7 +169,7 @@ export class ZoningCellIndex {
 	}
 
 	/**
-	 * Record that a centre-in-polygon polyfill found nothing for one feature.
+	 * Record that a centre-in-polygon polyfill found no cell for one feature.
 	 */
 	addPolyfillProbe(foundNothing: boolean): void {
 		this.#measuredPolyfill = true
@@ -171,10 +182,10 @@ export class ZoningCellIndex {
 	/**
 	 * The measurement.
 	 *
-	 * The compacted count is an approximation of what the build stores and is reported as one: the build compacts each
-	 * feature's whole set, while this compacts the union of them. The union can only compact at least as far, so this is
-	 * a lower bound on the stored row count — the direction a size estimate should err in — and the build's own receipt
-	 * reports the real number.
+	 * The compacted count is an approximation of what the build stores and is reported as one:
+	 * the build compacts each feature's whole set, while this compacts the union of them.
+	 * The union can only compact at least as far, so this is a lower bound on the stored row count. the
+	 * direction a size estimate should err in — and the build's own receipt reports the real number.
 	 */
 	finish(): CellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole).length
@@ -237,11 +248,13 @@ export class ZoningCellIndex {
 }
 
 /**
- * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
+ * The measurement as markdown table rows.
+ *
+ * What a build receipt carries, one line per element so a caller printing them
  * never has to split a joined string back apart.
  *
- * The zero-cell column is first after the counts, because it is the column the resolution is chosen on and the one a
- * reader most needs to see is not zero for the alternative index.
+ * The zero-cell column is first after the counts, because it is the column the resolution is
+ * chosen on and the one a reader most needs to see is not zero for the alternative index.
  */
 export function formatResolutionRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

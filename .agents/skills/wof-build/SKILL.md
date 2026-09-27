@@ -10,8 +10,8 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 
 ## Prerequisites
 
-- WOF GeoJSON repos cloned to `/mnt/playpen/mailwoman-data/wof/repos/` (or `$WOF_REPOS_DIR`)
-- WOF admin SQLite at `/mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
+- WOF GeoJSON repos cloned to `$MAILWOMAN_DATA_ROOT/src/wof-repos/` (or `$WOF_REPOS_DIR`)
+- WOF admin SQLite at `$MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db` (or `$WOF_ADMIN_DB`)
 - Compiled workspace: `yarn compile`
 
 ## Pipeline steps
@@ -21,8 +21,8 @@ that was error-prone in the v0.5.2/v0.5.3 sessions (forgot importance step, stal
 Only needed when GeoJSON repos have been updated. Skip if the existing unified DB is current.
 
 ```bash
-node packages/mailwoman/out/cli/index.js wof prepare /mnt/playpen/mailwoman-data/wof/repos/ \
-  --unified-db /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-unified.db
+node packages/mailwoman/out/cli/index.js wof prepare $MAILWOMAN_DATA_ROOT/src/wof-repos/ \
+  --unified-db $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-unified.db
 ```
 
 ### 2. Build Wikipedia importance scores (~15s)
@@ -30,7 +30,7 @@ node packages/mailwoman/out/cli/index.js wof prepare /mnt/playpen/mailwoman-data
 Downloads wikimedia-importance.csv.gz, joins WOF concordances, writes `place_importance` table.
 
 ```bash
-node packages/mailwoman/out/cli/index.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+node packages/mailwoman/out/cli/index.js gazetteer importance --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 ```
 
 **This step must precede step 3. Check whether it has ever run against the live admin DB:** while
@@ -48,7 +48,7 @@ provenance trailer (see step 5).
 
 ```bash
 node packages/mailwoman/out/cli/index.js gazetteer build fst \
-  --output $MAILWOMAN_DATA_ROOT/wof/fst-staging-$(date -u +%F)
+  --output $MAILWOMAN_DATA_ROOT/db/wof/fst-staging-$(date -u +%F)
 ```
 
 Builds `fst-{en-us,fr-fr,en-gb,de-de}.bin` — the `FST_LOCALES` set. Output goes to a STAGING dir and
@@ -64,8 +64,8 @@ names only artifacts a command can regenerate.
 
 ```bash
 node resolver-wof-sqlite/out/build-slim-cli.js \
-  --in /mnt/playpen/mailwoman-data/wof/whosonfirst-data-admin-us-latest.db \
-  --in /mnt/playpen/mailwoman-data/wof/whosonfirst-data-postalcode-us-latest.db \
+  --in $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-admin-us-latest.db \
+  --in $MAILWOMAN_DATA_ROOT/db/wof/whosonfirst-data-postalcode-us-latest.db \
   --out docs/static/mailwoman/wof-hot.db \
   --top 1000
 ```

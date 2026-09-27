@@ -27,7 +27,7 @@
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 /**
@@ -38,8 +38,8 @@ export type TabularRow = ReadonlyArray<string>
 /**
  * Read one pipe-delimited export file into rows.
  *
- * Quote-aware parsing preserves embedded newlines; `header: false` keeps the first record because these files carry no
- * header.
+ * Quote-aware parsing preserves embedded newlines; `header: false` keeps the first record
+ * because these files carry no header.
  */
 async function readPipeDelimited(path: PathBuilderLike): Promise<TabularRow[]> {
 	const rows: TabularRow[] = []
@@ -71,9 +71,10 @@ export interface TabularDictionary {
 /**
  * Column positions in `mstab.txt` and `mstabcol.txt` themselves.
  *
- * These two are the only positions this module hard-codes, and they cannot be looked up because they are what the
- * lookup is built from. Both files declare themselves in `mstabcol.txt`, so the assertions below check the bootstrap
- * against the archive's own account of it rather than trusting it.
+ * These two are the only positions this module hard-codes, and they cannot be looked up
+ * because they are what the lookup is built from.
+ * Both files declare themselves in `mstabcol.txt`, so the assertions below check the
+ * bootstrap against the archive's own account of it rather than trusting it.
  */
 const MSTAB_TABLE_NAME = 0
 const MSTAB_FILE_NAME = 4
@@ -82,9 +83,10 @@ const MSTABCOL_POSITION = 1
 const MSTABCOL_COLUMN_NAME = 2
 
 /**
- * Declared widths of the two bootstrap files, asserted before either is read as a dictionary. A different width means
- * the metadata format changed, and reading positions out of a changed format is how a builder mis-reads every column at
- * once.
+ * Declared widths of the two bootstrap files, asserted before either is read as a dictionary.
+ *
+ * A different width means the metadata format changed, and reading positions out of
+ * a changed format is how a builder mis-reads every column at once.
  */
 const MSTAB_WIDTH = 5
 const MSTABCOL_WIDTH = 14
@@ -95,8 +97,9 @@ const MSTABCOL_WIDTH = 14
  * @throws {Error} When either bootstrap file is missing or is not the declared width.
  */
 export async function readTabularDictionary(tabularDirectory: PathBuilderLike): Promise<TabularDictionary> {
-	const mstab = await readPipeDelimited(join(tabularDirectory, "mstab.txt"))
-	const mstabcol = await readPipeDelimited(join(tabularDirectory, "mstabcol.txt"))
+	const directory = PathBuilder.from(tabularDirectory)
+	const mstab = await readPipeDelimited(directory("mstab.txt"))
+	const mstabcol = await readPipeDelimited(directory("mstabcol.txt"))
 
 	assertWidth(mstab, MSTAB_WIDTH, "mstab.txt")
 	assertWidth(mstabcol, MSTABCOL_WIDTH, "mstabcol.txt")
@@ -140,8 +143,9 @@ function assertWidth(rows: ReadonlyArray<TabularRow>, width: number, name: strin
 /**
  * A reader over one logical table, projecting the columns a caller names.
  *
- * The projection is by name and a missing name throws, which is the whole point: this is the shape that produced the
- * repository's worst measurement bugs, where a silently dropped column read downstream as an empty world.
+ * The projection is by name and a missing name throws, which is the whole point:
+ * this is the shape that produced the repository's worst measurement bugs,
+ * where a silently dropped column read downstream as an empty world.
  */
 export interface TabularTable {
 	/**
@@ -157,8 +161,8 @@ export interface TabularTable {
 /**
  * Read a logical ssurgo table, projecting `wanted` columns.
  *
- * @throws {Error} When the archive declares no file for the table, when a requested column is not in the shipped
- *   dictionary, or when a record is narrower than the position a requested column sits at.
+ * @throws {Error} When the archive declares no file for the table, when a requested column is not in
+ * the shipped dictionary, or when a record is narrower than the position a requested column sits at.
  */
 export async function readTable(
 	tabularDirectory: PathBuilderLike,
@@ -193,7 +197,7 @@ export async function readTable(
 	}
 
 	const rows: Array<Record<string, string>> = []
-	const raw = await readPipeDelimited(join(tabularDirectory, `${file}.txt`))
+	const raw = await readPipeDelimited(resolvePathBuilder(tabularDirectory, `${file}.txt`))
 
 	for (const [index, row] of raw.entries()) {
 		const record: Record<string, string> = {}
@@ -225,9 +229,12 @@ export interface DomainMember {
 }
 
 /**
- * Column positions in `msdomdet.txt`. Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
- * files above these could be looked up — they are named here because the domain read runs before any dictionary-driven
- * read and the file is five columns wide by its own declaration.
+ * Column positions in `msdomdet.txt`.
+ *
+ * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
+ * files above these could be looked up.
+ * They are named here because the domain read runs before any dictionary-driven read
+ * and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
 
@@ -237,7 +244,7 @@ const MSDOMDET_WIDTH = 5
  * @throws {Error} When the file is not the declared width.
  */
 export async function readDeclaredDomains(tabularDirectory: PathBuilderLike): Promise<DomainMember[]> {
-	const rows = await readPipeDelimited(join(tabularDirectory, "msdomdet.txt"))
+	const rows = await readPipeDelimited(resolvePathBuilder(tabularDirectory, "msdomdet.txt"))
 
 	assertWidth(rows, MSDOMDET_WIDTH, "msdomdet.txt")
 
@@ -267,13 +274,14 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
 /**
  * `M/D/yyyy H:MM:SS` (and the `MM/DD/yyyy HH:MM:SS` the tabular export writes) to an ISO date.
  *
- * The two channels spell the same instant differently — Soil Data Access answers `9/9/2025 1:57:25 PM` and the shipped
- * `sacatlog.txt` writes `09/09/2025 13:57:25` — and the download URL needs `2025-09-09`. Parsing to a date rather than
- * slicing the string is what makes both channels agree.
+ * The two channels spell the same instant differently — Soil Data Access answers
+ * `9/9/2025 1:57:25 PM` and the shipped `sacatlog.txt` writes `09/09/2025 13:57:25` —
+ * and the download URL needs `2025-09-09`.
+ * Parsing to a date rather than slicing the string is what makes both channels agree.
  *
- * @throws {Error} When the value is not one of those shapes. A freshness date guessed wrong asks the download host for
- *   a file that does not exist, and the host answers 400 rather than 404, which reads as a bad request rather than a
- *   bad date.
+ * @throws {Error} When the value is not one of those shapes.
+ * A freshness date guessed wrong asks the download host for a file that does not exist,
+ * and the host answers 400 rather than 404, which reads as a bad request rather than a bad date.
  */
 // repo-health-ignore export-name-affix -- parses the survey's M/D/yyyy form; `isoDate` formats a Date and reads none.
 export function saverestToISODate(value: string): string {

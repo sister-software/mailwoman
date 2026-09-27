@@ -29,8 +29,10 @@ import { percentile } from "@mailwoman/core/stats"
 import { mean } from "@mailwoman/core/utils"
 import { parseWordConsistencyEnv } from "@mailwoman/neural"
 import { stripCombiningMarks } from "@mailwoman/normalize"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
-import { JSONSpliterator } from "spliterator"
+import { PathBuilder } from "path-ts"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { collectResolved, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
@@ -41,7 +43,7 @@ import { collectResolved, type Resolved } from "#eval-harness/oa/resolver/tree-h
  */
 const MAX_REGION_CODE_LENGTH = 4
 
-const { values: rawStringArgs } = parseArguments({
+const { values: args } = parseArguments({
 	options: {
 		"anchor-lookup": { type: "string" },
 		"default-country": { type: "string" },
@@ -53,45 +55,65 @@ const { values: rawStringArgs } = parseArguments({
 		out: { type: "string" },
 		tokenizer: { type: "string" },
 		"wof-db": { type: "string" },
+		// Tri-state pins (#895/#718).
+		// The positive flag pins a behavior on.
+		// The `--no-*`/inverse flag pins it off, which is the historical config.
+		// No flag leaves the current library default.
+		// Pin explicitly in pre-registered legs.
+		// #936: official-language names join the name-exact sub-tier (library default on since 2026-07-03).
+		"official-name-exact": { type: "boolean" },
+		"admin-coherence": { type: "boolean" },
+		"no-admin-coherence": { type: "boolean" },
+		"normalize-case": { type: "boolean" },
+		"raw-case": { type: "boolean" },
+		// #375 night-31: opt-in postcodeConsistency (the #370 change A namesake binder).
+		"postcode-consistency": { type: "boolean" },
+		// #942: postal-compound recovery (library default on since the 2026-07-03 promote).
+		"postal-compound-recovery": { type: "boolean" },
+		"no-postal-compound-recovery": { type: "boolean" },
+		// #965: apply the same production scoping geocode-core does — the coarse-placer anchorPosterior re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
+		"hard-country": { type: "boolean" },
+		// #985: comma-separated country codes to ADD to the default hard-country safelist for this run (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion without touching the production const. The p90 of a cross-border-tail country should collapse if it's added.
+		"hard-country-safelist": { type: "string" },
+		// Convention epoch 2026-07-04: locality-first is the default (production's ladder).
+		// This flag reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
+		"prefer-postcode-coord": { type: "boolean" },
+		// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention.
+		// It is the default now, so it's a no-op.
+		"prefer-locality-coord": { type: "boolean" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 
-// Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
-const stringArgs = rawStringArgs as {
-	"anchor-lookup"?: string
-	"default-country"?: string
-	"dump-rows"?: string
-	golden?: string
-	label?: string
-	model?: string
-	"model-card"?: string
-	out?: string
-	tokenizer?: string
-	"wof-db"?: string
-}
-
 /**
- * Convention epoch 2026-07-04 (#945, operator-promoted): the default scoring coordinate is the one production's
- * result-assembly ladder picks — locality over postcode (geocode-core `adminPriority`). The harness historically scored
- * the postcode point (rank 6 > 5), which measured a non-production preference and hid a 1.5 km-class FR gap for weeks.
- * All dumps before this epoch are postcode-convention: never compare across conventions (the tokenizer-F1 rule,
- * coordinate edition). `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
+ * Convention epoch 2026-07-04 (#945, operator-promoted): the default scoring coordinate is the one
+ * production's result-assembly ladder picks — locality over postcode (geocode-core `adminPriority`).
  *
- * Do not "align" this table to `PLACETYPE_SPECIFICITY`. That scale ranks `postalcode` above `locality`, which is the
- * preference this convention exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
+ * The harness historically scored the postcode point (rank 6 > 5), which measured a
+ * non-production preference and hid a 1.5 km-class FR gap for weeks.
+ * All dumps before this epoch are postcode-convention: never compare across
+ * conventions (the tokenizer-F1 rule, coordinate edition).
  *
- * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s `adminPriority` switches per
- * row, leading with `postcode` only when `isUnitGradePostcodeHit` says the code is street-block-class (a GB unit
- * postcode, an NL PC6) and with `locality` otherwise. This table is the second arm, flattened — right for the FR rows
- * it grades and wrong for a GB unit-postcode row, which it will never see.
+ * `--prefer-postcode-coord` reproduces the old convention for continuity runs only.
  *
- * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume, and this table is the last
- * flat copy left. It differs on one axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the shared
- * scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier. Migrating changes this eval's
- * verdict on any row that resolves a `localadmin` or `borough`, so it needs that count on this eval's own panel first —
- * a promoted convention does not move on an argument.
+ * Do not "align" this table to `PLACETYPE_SPECIFICITY`.
+ * That scale ranks `postalcode` above `locality`, which is the preference this convention
+ * exists to reject, and swapping it in reinstates the measurement that hid the FR gap.
+ *
+ * The deeper mismatch is that production has no single ranking to copy: `geocode-core`'s
+ * `adminPriority` switches per row, leading with `postcode` only when `isUnitGradePostcodeHit`
+ * says the code is street-block-class (a GB unit postcode, an NL PC6) and with `locality` otherwise.
+ * This table is the second arm, flattened — right for the FR rows it grades
+ * and wrong for a GB unit-postcode row, which it will never see.
+ *
+ * `@mailwoman/resolver`'s `resolvedSpecificity` is the conditional both arms now consume,
+ * and this table is the last flat copy left.
+ * It differs on one axis: it ranks `postalcode` (5) above `localadmin`/`borough` (4), where the
+ * shared scale puts an area-grade code below the whole `PLACETYPE_FILTER_GROUPS.locality` tier.
+ *
+ * Migrating changes this eval's verdict on any row that resolves a `localadmin`
+ * or `borough`, so it needs that count on this eval's own panel first.
+ * A promoted convention does not move on an argument.
  */
 const PLACETYPE_RANK: Record<string, number> = {
 	locality: 6,
@@ -109,9 +131,10 @@ const PLACETYPE_RANK: Record<string, number> = {
 const POSTCODE_CONVENTION_RANK: Record<string, number> = { ...PLACETYPE_RANK, postalcode: 6, locality: 5 }
 
 /**
- * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production conditional ladder
- * (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above — see the `PLACETYPE_RANK`
- * docstring for why migrating needs a panel count first.
+ * Deliberately local rather than tree-hits' `mostSpecific`, which delegates to the production conditional
+ * ladder (`mostSpecificResolved`): this eval grades on the flat #945 convention tables above.
+ *
+ * See the `PLACETYPE_RANK` docstring for why migrating needs a panel count first.
  */
 function mostSpecific(rs: Resolved[], rank: Record<string, number> = PLACETYPE_RANK): Resolved | null {
 	let best: Resolved | null = null
@@ -132,11 +155,11 @@ const norm = (s: string | undefined): string =>
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }
 
 async function main() {
-	const goldenPath = stringArgs["golden"] || tempRootPath("reg", "fr-admin-split-golden.jsonl")
-	const label = stringArgs["label"] || "model"
-	// Comma-separated multi-extract support (night-31): postcodeConsistency needs a resolvable postcode
-	// node, which needs a postalcode extract attached alongside the admin DB.
-	const wofDBArg = String(stringArgs["wof-db"] || dataRootPath("wof", "admin-global-priority.db"))
+	const goldenPath = args["golden"] || tempRootPath("reg", "fr-admin-split-golden.jsonl")
+	const label = args["label"] || "model"
+	// Comma-separated multi-extract support (night-31): postcodeConsistency needs a resolvable
+	// postcode node, which needs a postalcode extract attached alongside the admin DB.
+	const wofDBArg = PathBuilder.from(args["wof-db"] || wofDatabasePath("admin-global-priority.db"))
 	const wofDB = wofDBArg.includes(",") ? wofDBArg.split(",") : wofDBArg
 
 	const [{ WOFSQLitePlaceLookup }, { createScorer }, { createWOFResolver }, { loadDefaultPlaceCountry }] =
@@ -147,57 +170,21 @@ async function main() {
 			import("#index"),
 		])
 
-	const anchorPath = stringArgs["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
+	const anchorPath = args["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 
 	const neural = await createScorer({
-		modelPath: stringArgs["model"] || "",
-		tokenizerPath: stringArgs["tokenizer"] || "",
-		modelCardPath: stringArgs["model-card"] || "",
+		modelPath: args["model"] || "",
+		tokenizerPath: args["tokenizer"] || "",
+		modelCardPath: args["model-card"] || "",
 		...(anchorPath ? { anchorLookupPath: anchorPath } : {}),
 		strict: true,
 		tier: "server",
 	})
 
-	// #936 option 3 eval legs: `--official-name-exact` flips the official-name sub-tier promotion on
-	// Boolean pin flags via node:util parseArgs (strict off — the string args ride the stringArgs block above).
-	// #895/#718 discipline: the tri-state pins keep eval legs reproducible against pre-flip baselines —
-	// the positive flag pins the behavior on, the `--no-*`/inverse flag pins it off (the historical config), no flag =
-	// the current library default. Pin explicitly in pre-registered legs.
-	const { values: pins } = parseArguments({
-		options: {
-			// #936: official-language names join the name-exact sub-tier (library default on since 2026-07-03).
-			"official-name-exact": { type: "boolean" },
-			"admin-coherence": { type: "boolean" },
-			"no-admin-coherence": { type: "boolean" },
-			"normalize-case": { type: "boolean" },
-			"raw-case": { type: "boolean" },
-			// #375 night-31: opt-in postcodeConsistency (the #370 change A namesake binder).
-			"postcode-consistency": { type: "boolean" },
-			// #942: postal-compound recovery (library default on since the 2026-07-03 promote).
-			"postal-compound-recovery": { type: "boolean" },
-			"no-postal-compound-recovery": { type: "boolean" },
-			// #965: apply the same production scoping geocode-core does — the coarse-placer anchorPosterior
-			// re-rank + the #743 hard-country filter — on top of the soft `--default-country`. Without it the
-			// harness overstates the wrong-country p90 tail for namesake locales (fi 270 km vs production ~3).
-			"hard-country": { type: "boolean" },
-			// #985: comma-separated country codes to ADD to the default hard-country safelist for this run
-			// (e.g. `--hard-country-safelist HU`). Measures a proposed safelist expansion without touching
-			// the production const — the p90 of a cross-border-tail country should collapse if it's added.
-			"hard-country-safelist": { type: "string" },
-			// Convention epoch 2026-07-04: locality-first is the default (production's ladder). This flag
-			// reproduces the pre-epoch postcode-point convention for continuity against old dumps only.
-			"prefer-postcode-coord": { type: "boolean" },
-			// Pre-epoch spelling — accepted so in-flight scripts don't silently change convention. it is
-			// the default now, so it's a no-op.
-			"prefer-locality-coord": { type: "boolean" },
-		},
-		strict: false,
-	})
+	const tri = (on: keyof typeof args, off: keyof typeof args): boolean | undefined =>
+		args[on] === true ? true : args[off] === true ? false : undefined
 
-	const tri = (on: keyof typeof pins, off: keyof typeof pins): boolean | undefined =>
-		pins[on] === true ? true : pins[off] === true ? false : undefined
-
-	const officialNameExact = pins["official-name-exact"] === true
+	const officialNameExact = args["official-name-exact"] === true
 
 	const resolver = createWOFResolver(
 		new WOFSQLitePlaceLookup({ databasePath: wofDB }, officialNameExact ? { officialNameExact } : undefined)
@@ -205,11 +192,12 @@ async function main() {
 
 	const adminCoherencePin = tri("admin-coherence", "no-admin-coherence")
 	const normalizeCasePin = tri("normalize-case", "raw-case")
-	const postcodeConsistencyPin = pins["postcode-consistency"] === true ? true : undefined
+	const postcodeConsistencyPin = args["postcode-consistency"] === true ? true : undefined
 	const postalCompoundPin = tri("postal-compound-recovery", "no-postal-compound-recovery")
-	// `--default-country none` = truly unscoped resolution (no country prior at all) — the #936
-	// namesake legs need it. an empty string would still be a (falsy, ambiguous) country value.
-	const defaultCountryArg = stringArgs["default-country"] || "FR"
+	// `--default-country none` = truly unscoped resolution (no country prior at all).
+	// The #936 namesake legs need it.
+	// An empty string would still be a (falsy, ambiguous) country value.
+	const defaultCountryArg = args["default-country"] || "FR"
 
 	const resolveOpts: {
 		defaultCountry?: string
@@ -226,20 +214,18 @@ async function main() {
 		...(postalCompoundPin !== undefined ? { postalCompoundRecovery: postalCompoundPin } : {}),
 	}
 
-	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the same scoping
-	// geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter). This
-	// makes the harness's absolute p90s production-equivalent for namesake locales. `hardCountryFor` is
-	// a no-op when defaultCountry is set (the caller's country wins), so the hard filter only bites the
-	// unscoped `--default-country none` legs — exactly matching geocode-core's precedence.
-	const hardCountryPin = pins["hard-country"] === true
+	// #965: when `--hard-country` is set, load the bundled coarse placer and apply the same scoping geocode-core does per row (anchorPosterior + anchorWeight + the #743 hard-country filter). This makes the harness's absolute p90s production-equivalent for namesake locales. `hardCountryFor` is a no-op when defaultCountry is set (the caller's country wins), so the hard filter only bites the unscoped `--default-country none` legs — exactly matching geocode-core's precedence.
+	const hardCountryPin = args["hard-country"] === true
 	const placeCountry = hardCountryPin ? await loadDefaultPlaceCountry() : null
 	const COARSE_PLACER_ANCHOR_WEIGHT = 1
 
-	// keep in sync with geocode-core.ts
-	// #985: default safelist + any `--hard-country-safelist` additions (experiment without editing the const).
-	const extraSafelist = (pins["hard-country-safelist"] as string | undefined)
-		?.split(",")
-		.map((c) => c.trim().toUpperCase())
+	// keep in sync with geocode-core.ts #985: default safelist + any `--hard-country-safelist`
+	// additions (experiment without editing the const).
+	const extraSafelist = args["hard-country-safelist"]
+		? TextSpliterator.from(args["hard-country-safelist"], { delimiter: "," })
+				.map((c) => c.toUpperCase())
+				.toArray()
+		: undefined
 
 	const hardCountrySafelist = extraSafelist?.length
 		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])
@@ -247,8 +233,9 @@ async function main() {
 
 	const errs: number[] = []
 	const resolvedErrs: number[] = [] // coordinate error over RESOLVED rows only (unconfounded by the unresolved penalty)
-	// Per-row records for a paired A/B bootstrap (--dump-rows): index-aligned across model runs on the same
-	// golden, so coord-ab-bootstrap.ts can resample rows and compute a paired p50-diff / resolve-rate CI.
+	// Per-row records for a paired A/B bootstrap (--dump-rows): index-aligned across
+	// model runs on the same golden, so coord-ab-bootstrap.ts can resample rows
+	// and compute a paired p50-diff / resolve-rate CI.
 	const rowRecords: Array<{ i: number; resolved: boolean; err_km: number | null }> = []
 	let rowIdx = -1
 
@@ -296,9 +283,7 @@ async function main() {
 			}
 		}
 
-		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior
-		// re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree
-		// (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
+		// #965: mirror geocode-core's per-row scoping when `--hard-country` — coarse placer → anchorPosterior re-rank (+ hard-country filter on the unscoped legs). The placer abstains on a bare-locality tree (same isBareLocalityTree guard geocode-core uses), and hardCountryFor no-ops when defaultCountry set.
 		let rowResolveOpts = resolveOpts
 
 		if (placeCountry && !isBareLocalityTree(tree)) {
@@ -318,7 +303,7 @@ async function main() {
 
 		const best = mostSpecific(
 			collectResolved(await resolver.resolveTree(tree, rowResolveOpts)),
-			pins["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
+			args["prefer-postcode-coord"] === true ? POSTCODE_CONVENTION_RANK : PLACETYPE_RANK
 		)
 
 		if (best) {
@@ -354,7 +339,7 @@ async function main() {
 
 	console.log(prettyJSON(summary, false))
 
-	const outPath = stringArgs["out"] || ""
+	const outPath = args["out"] || ""
 
 	if (outPath) {
 		await writeLocalJSONFile(summary, outPath)
@@ -362,8 +347,9 @@ async function main() {
 		console.error(`wrote ${outPath}`)
 	}
 
-	// Per-row dump for the paired A/B bootstrap. One JSON line per golden row, index-aligned to the input.
-	const dumpPath = stringArgs["dump-rows"] || ""
+	// Per-row dump for the paired A/B bootstrap.
+	// One JSON line per golden row, index-aligned to the input.
+	const dumpPath = args["dump-rows"] || ""
 
 	if (dumpPath) {
 		await writeLocalJSONLFile(rowRecords, dumpPath)

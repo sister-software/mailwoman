@@ -35,17 +35,21 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const BAN_ADAPTER_ID = "ban"
 
 /**
- * Subset of BAN CSV columns the adapter consults. Everything else is ignored. declaring the shape explicitly catches
- * column-name drift early if BAN evolves its schema.
+ * Subset of BAN CSV columns the adapter consults.
+ *
+ * Everything else is ignored.
+ * Declaring the shape explicitly catches column-name drift early if BAN evolves its schema.
  */
 interface BanRow {
 	id: string
@@ -57,8 +61,10 @@ interface BanRow {
 }
 
 /**
- * Compose `house_number` from `numero` + `rep`. BAN uses `rep` for repetition indices ("bis", "ter", "quater") that
- * follow the house number. Result: `"10 bis"`, `"45"`, etc.
+ * Compose `house_number` from `numero` + `rep`.
+ *
+ * BAN uses `rep` for repetition indices ("bis", "ter", "quater") that follow the house number.
+ * Result: `"10 bis"`, `"45"`, etc.
  */
 function composeHouseNumber(numero: string, rep: string): string {
 	const n = numero.trim()
@@ -74,6 +80,8 @@ export function createBanAdapter(): CorpusAdapter {
 		id: BAN_ADAPTER_ID,
 		defaultLicense: "Licence Ouverte 2.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.BaseAdresseNationale,
+		surface: SurfaceOrigin.Attested,
 		description: "Base Adresse Nationale (FR): house-number-level street addresses (~25M rows).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -94,9 +102,9 @@ export function createBanAdapter(): CorpusAdapter {
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
 				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
-				const street = (record.nom_voie ?? "").trim()
-				const postcode = (record.code_postal ?? "").trim()
-				const locality = (record.nom_commune ?? "").trim()
+				const street = record.nom_voie ?? ""
+				const postcode = record.code_postal ?? ""
+				const locality = record.nom_commune ?? ""
 
 				if (!street || !locality) continue
 
@@ -132,9 +140,7 @@ export function createBanAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const sourceID = record.id?.trim()
-					? `${BAN_ADAPTER_ID}-${record.id.trim()}`
-					: stableSourceID(BAN_ADAPTER_ID, aligned)
+				const sourceID = record.id ? `${BAN_ADAPTER_ID}-${record.id}` : stableSourceID(BAN_ADAPTER_ID, aligned)
 
 				yield {
 					raw,

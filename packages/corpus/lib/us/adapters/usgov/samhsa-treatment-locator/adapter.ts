@@ -31,23 +31,27 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_SAMHSA_ADAPTER_ID = "usgov-samhsa-treatment-locator"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_SAMHSA_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of samhsa Treatment Locator CSV columns consulted by the adapter. Column names match the canonical samhsa Open
- * Data Foundry export header. `name1` is the venue; `name2` is optional and folded into the venue when present.
+ * Subset of samhsa Treatment Locator CSV columns consulted by the adapter.
+ *
+ * Column names match the canonical samhsa Open Data Foundry export header.
+ * `name1` is the venue; `name2` is optional and folded into the venue when present.
  */
 interface SamhsaSiteRow {
 	name1: string
@@ -58,15 +62,19 @@ interface SamhsaSiteRow {
 	state: string
 	zip: string
 	/**
-	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 * Optional.
+	 *
+	 * Falls back to `stableSourceID` derived from components when missing.
 	 */
 	frid?: string
 }
 
 /**
- * Join the samhsa two-line street: primary street + optional secondary line (suite / unit / floor / "behind main
- * building") on `", "`. The combined value is the `street` component surface form. Phase 1 does not break this out into
- * the `unit` component — see the file-level comment.
+ * Join the samhsa two-line street: primary street + optional secondary line
+ * (suite / unit / floor / "behind main building") on `", "`.
+ *
+ * The combined value is the `street` component surface form.
+ * Phase 1 does not break this out into the `unit` component — see the file-level comment.
  */
 function joinTwoLineStreet(street1: string, street2: string | undefined): string {
 	const s1 = street1.trim()
@@ -82,13 +90,14 @@ function joinTwoLineStreet(street1: string, street2: string | undefined): string
 }
 
 /**
- * Combine `name1` + optional `name2` into a single venue surface form. samhsa conventions:
+ * Combine `name1` + optional `name2` into a single venue surface form.
+ * Samhsa conventions:
  *
  * - `name1` is the program / clinic name ("Mountain Plains Counseling Services").
  * - `name2` is the parent organization ("Catholic Charities of Wyoming"), if any.
  *
- * Both render together as `"<name1> - <name2>"` when both are present — geocoder users typically type either form, so
- * the model benefits from the joined surface.
+ * Both render together as `"<name1> - <name2>"` when both are present — geocoder users
+ * typically type either form, so the model benefits from the joined surface.
  */
 function composeVenue(name1: string, name2: string | undefined): string {
 	const n1 = name1.trim()
@@ -108,6 +117,8 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 		id: USGOV_SAMHSA_ADAPTER_ID,
 		defaultLicense: USGOV_SAMHSA_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.SAMHSATreatmentLocator,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"SAMHSA Behavioral Health Treatment Services Locator (public-domain). Adversarial source: venue + two-line address co-occurrence, hand-entered.",
 
@@ -130,9 +141,9 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				const venue = composeVenue(record.name1 ?? "", record.name2)
 				const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
 				const split = splitStreetLine(street)
-				const city = (record.city ?? "").trim()
-				const stateAbbr = (record.state ?? "").trim()
-				const postcode = (record.zip ?? "").trim()
+				const city = record.city ?? ""
+				const stateAbbr = record.state ?? ""
+				const postcode = record.zip ?? ""
 
 				if (!venue || !split || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
@@ -155,7 +166,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const frID = (record.frid ?? "").trim()
+				const frID = record.frid ?? ""
 
 				const sourceID = frID ? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}` : stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
 

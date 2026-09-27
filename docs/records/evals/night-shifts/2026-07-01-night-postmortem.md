@@ -37,7 +37,7 @@ Updated (kept open) **#822** and **#829** with live evidence (below).
 ## What went well
 
 - **The live geocode probe earned its keep.** Before closing #822/#823 I ran the addresses through the actual harness — and caught a real bug: `Vienna, Austria` still resolves to **Vienna, WV**. That would have been a false close. #823 (off-map coverage) in fact resolved; #822 (named-foreign-country routing) did not. Verify-before-verdict, one probe, two correct calls.
-- **Three issues were already done.** #735, #481, and #823's coverage half were closed by investigation rather than by re-doing the work — a stale issue is cheaper to verify than to re-implement.
+- **Three issues were already done.** #735, #481, and #823's coverage half were closed by investigation rather than by re-doing the work. A stale issue is cheaper to verify than to re-implement.
 - **Delegate-then-verify on the bulk triage.** An agent read ~45 issue bodies and cross-referenced the code; I spot-checked every CLOSE recommendation's evidence (the merged PR / commit / file) before acting. Eight confident closes, zero guesses.
 
 ## What could've gone better
@@ -99,8 +99,8 @@ you can make — each with my recommendation:
    explicit-country tail is the gap. **Rec: option B — converge the browser path on the shared `resolveTree`**
    (kills the dual-maintenance permanently) over the quick option-A patch.
 4. **#493 — serializer interfaces.** The lossless primitive shipped (#859); the serializer surfaces
-   (JSON opt-in / XML / tuple shapes) + the demo rendering are the focused session the issue calls for —
-   it explicitly wants "operator eyes for the visual," so I stopped at the decision-free primitive.
+   (JSON opt-in / XML / tuple shapes) + the demo rendering are the focused session the issue calls for.
+   It explicitly wants "operator eyes for the visual," so I stopped at the decision-free primitive.
 5. **#379 — `tar` 7.x.** The lone remaining dependabot alert (medium) needs the 7.x major (no 6.x backport);
    pulled only by cacache/node-gyp install tooling. **Rec: a deliberate test-then-bump pass; low real-world
    exposure rather than an autonomous force.**
@@ -114,7 +114,7 @@ re-shaped it twice before a line of resolver code was written:
   tagged `country` by the model. `Georgia` tags as `region` in _both_ readings (`Tbilisi, Georgia` and
   `Atlanta, Georgia`) — so it self-disambiguates; the `{Georgia,GE}` skip-set the plan hedged on is dead
   code. Fork (i): the bug is resolver-side.
-- **Backend probe (the pivot).** The first read was "coverage gap" — the unscoped `Vienna` lookup returns
+- **Backend probe (the pivot).** The first read was "coverage gap". The unscoped `Vienna` lookup returns
   only US Viennas and there's no `country` row for Austria. Querying the DB directly corrected it: Vienna AT
   **does** exist (an exonym-folded row), just _outranked_ by the populous US namesakes; and well-covered WOF
   countries carry no `country`-placetype row (only the #267 gap countries do), so the re-pick must filter by
@@ -217,8 +217,8 @@ already name the cold bottleneck: **the 29 MB model download** rather than compu
 
 ## Decisions made autonomously (Part 2)
 
-- **Deferred change E (the $20 GPU budget).** #825's check is GO, but no multilocale corpus/config is staged —
-  the retrain needs _new_ PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
+- **Deferred change E (the $20 GPU budget).** #825's check is GO, but no multilocale corpus/config is staged.
+  The retrain needs _new_ PT/PL/AU data (a pipeline session), and weight-only up-weighting likely falsifies
   (the fr.house_number precedent). Burning the $20 on an uninformative probe is worse than preserving it.
   Flagged for operator override.
 - **#822 fix shape:** resolver-side joint-consistency (extend the reconcile) over a forward country pin —
@@ -253,8 +253,8 @@ What's in fact left is **operator-conditional or focused-session** rather than c
 
 ## Found while verifying #822 reaches users → filed #861 (server↔demo resolver parity)
 
-Checked whether the marquee #822 fix shows up in the public demo. It does **not run through** `resolveTree`
-— the demo has a custom `runCascade` (postcode→locality→raw + region-bbox + population-first over the httpvfs
+Checked whether the marquee #822 fix shows up in the public demo. It does **not run through** `resolveTree`.
+The demo has a custom `runCascade` (postcode→locality→raw + region-bbox + population-first over the httpvfs
 `candidate.db`), so **none** of the joint-consistency passes (#822/#263/#267/#832) execute in the browser.
 Verify-before-verdict kept this from being an overclaim: the demo's `candidate.db` ranks `Vienna AT` (1.69M) #1
 over the 45 US Viennas and bbox-constrains `Portland, ME`/`New York, NY`, so the **headline cases already

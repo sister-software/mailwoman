@@ -19,21 +19,24 @@
  *   the base directory is PER KEY, and that is the trap this module exists to hold in one place. The model
  *   and tokenizer resolve against the data root. three of the four lexicons resolve against the repo
  *   (they are generated, committed files); `localitySurfaceLexicon` resolves against the data root because
- *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. Nothing
+ *   it is built rather than committed. and the postcode databases resolve against the data root's `wof/`. No field
  *   in the JSON marks which is which, so a reader that guessed one rule would silently resolve four of
  *   seven artifact classes to paths that do not exist — and every one of them degrades to `undefined`
  *   rather than failing.
  */
 
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory — not its source basename. They differ,
- * and the difference is the interface: `resolveFromPackageDir` finds siblings by fixed name, so an artifact placed
- * under its source name resolves to nothing and reports absence rather than failing.
+ * `shippedName` is the filename the artifact must carry in a weights directory
+ * rather than its source basename.
+ * They differ, and the difference is the interface: `resolveFromPackageDir` finds
+ * siblings by fixed name, so an artifact placed under its source name resolves to no path
+ * and reports absence rather than failing.
  */
 export interface LinkableArtifact {
 	shippedName: string
@@ -41,24 +44,30 @@ export interface LinkableArtifact {
 }
 
 /**
- * An artifact the recipe names that must be built rather than copied — the source entry is a build input.
+ * An artifact the recipe names that must be built rather than copied.
+ * The source entry is a build input.
  *
- * Kept in a separate type on purpose. `softFeed.postcodeDBByCountry[cc]` names a WOF postcode extract
- * (`postalcode-gb.db`) from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
- * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`. A consumer that treated either as linkable
- * would place a database where the resolver expects a binary — and since every sibling degrades `existsSync →
- * undefined`, the resolver would then report the artifact as missing rather than wrong, which is the harder failure to
- * see.
+ * Kept in a separate type on purpose.
+ * `softFeed.postcodeDBByCountry[cc]` names a WOF postcode extract (`postalcode-gb.db`)
+ * from which `mailwoman gazetteer postcode-binary` produces `postcode-gb.bin`;
+ * `pairIndexByCountry[cc]` names a tuples CSV behind `pair-index-<cc>.bin`.
+ *
+ * A consumer that treated either as linkable would place a database where the resolver expects
+ * a binary, and since every sibling degrades `existsSync → undefined`, the resolver would
+ * then report the artifact as missing rather than wrong, which is the harder failure to see.
  */
 export interface BuildableArtifact {
 	shippedName: string
 	/**
-	 * The build's input, resolved — or `""` when the build takes several inputs and per-country tuning rather than one
-	 * path. Empty means "this build is owed", never "the input is missing".
+	 * The build's input, resolved, or `""` when the build takes several inputs
+	 * and per-country tuning rather than one path.
+	 *
+	 * Empty means "this build is owed", never "the input is missing".
 	 */
 	inputPath: string
 	/**
-	 * The CLI verb that produces `shippedName` from `inputPath`, for a consumer that reports what it did not build.
+	 * The CLI verb that produces `shippedName` from `inputPath`, for a consumer
+	 * that reports what it did not build.
 	 */
 	buildCommand: string
 }
@@ -70,13 +79,16 @@ export interface WeightsRecipe {
 	lineage?: string
 	softFeed: SoftFeedRecipe
 	/**
-	 * Files this recipe names for a locale. Absent entries are simply omitted — a release that ships without a channel is
-	 * a supported lean install rather than an error.
+	 * Files this recipe names for a locale.
+	 *
+	 * Absent entries are simply omitted.
+	 * A release that ships without a channel is a supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
-	 * Artifacts this recipe names for a locale that a build step must produce. Reported rather than silently skipped, so
-	 * a consumer can say which channels a directory will lack.
+	 * Artifacts this recipe names for a locale that a build step must produce.
+	 *
+	 * Reported rather than silently skipped, so a consumer can say which channels a directory will lack.
 	 */
 	buildableFor: (locale: string) => BuildableArtifact[]
 }
@@ -84,9 +96,10 @@ export interface WeightsRecipe {
 /**
  * Read and resolve the recipe.
  *
- * `overrides` carries the two publish-time environment escapes (`MAILWOMAN_PUBLISH_MODEL` /
- * `MAILWOMAN_PUBLISH_TOKENIZER`) and their dev twins, so a caller experimenting with a non-default model passes it here
- * rather than each consumer re-reading the environment and disagreeing about precedence.
+ * `overrides` carries the two publish-time environment escapes
+ * (`MAILWOMAN_PUBLISH_MODEL` / `MAILWOMAN_PUBLISH_TOKENIZER`) and their dev twins,
+ * so a caller experimenting with a non-default model passes it here rather than each
+ * consumer re-reading the environment and disagreeing about precedence.
  */
 export async function readWeightsRecipe(
 	repoRoot: PathBuilder,
@@ -99,10 +112,10 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through. matching that here keeps the two readers
-	// from disagreeing about what a leading slash means.
-	const underDataRoot = (rel: string, ...segments: string[]): string =>
-		rel.startsWith("/") ? rel : resolvePath(dataRoot, ...segments, rel)
+	// `copy-weights.ts` lets an absolute config entry pass through.
+	// Matching that here keeps the two readers from disagreeing about what a leading slash means.
+	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
+		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
 	const linkableFor = (locale: string): LinkableArtifact[] => {
 		const out: LinkableArtifact[] = [
@@ -115,8 +128,9 @@ export async function readWeightsRecipe(
 			out.push({ shippedName, sourcePath })
 		}
 
-		// Data-root-relative: built, ~7 MB, never in git. The asymmetry with the three above is the reason this
-		// module exists rather than a `resolve(base, rel)` at each call site.
+		// Data-root-relative: built, ~7 MB, never in git.
+		// The asymmetry with the three above is the reason this module exists
+		// rather than a `resolve(base, rel)` at each call site.
 		if (softFeed.localitySurfaceLexicon) {
 			out.push({
 				shippedName: "locality-surface-lexicon-v7.json",
@@ -124,18 +138,20 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts` does not ship
-		// them, so they exist in a weights directory only because a dev linker put them there. Their absence is
-		// therefore not a lean install — it silently resolves the gazetteer and street-context priors off, which
-		// is a scoring change with no error. Named here so one reader knows the whole dev set.
+		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts` does not
+		// ship them, so they exist in a weights directory only because a dev linker put them there.
+		// Their absence is therefore not a lean install.
+		// It silently resolves the gazetteer and street-context priors off,
+		// which is a scoring change with no error.
+		// Named here so one reader knows the whole dev set.
 		out.push(
 			{
 				shippedName: `fst-${locale}.bin`,
-				sourcePath: dataRoot("wof", "fst-per-locale", `fst-${locale}.bin`),
+				sourcePath: wofDatabaseRoot(dataRoot)("fst-per-locale", `fst-${locale}.bin`),
 			},
 			{
 				shippedName: "fst-street-morphology.bin",
-				sourcePath: dataRoot("wof", "fst-street-morphology.bin"),
+				sourcePath: wofDatabaseRoot(dataRoot)("fst-street-morphology.bin"),
 			}
 		)
 
@@ -153,18 +169,21 @@ export async function readWeightsRecipe(
 		if (postcodeDB) {
 			out.push({
 				shippedName: `postcode-${country}.bin`,
-				inputPath: underDataRoot(postcodeDB, "wof"),
+				inputPath: underDataRoot(postcodeDB, wofDatabaseRoot(dataRoot)),
 				buildCommand: "mailwoman gazetteer postcode-binary",
 			})
 		}
 
-		// presence rather than a path. The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only a
-		// `boroughDB`, and every country carries its own `delta` / `transitionBeta` / `parentDelta` tuning — and the
-		// build that reads them is `buildPairIndexOverlay` in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`,
-		// which each overlay's link script already calls with its own measured parameters. Modelling one input path
-		// here was a guess: an earlier draft read a `db` key that no entry has, so this returned nothing for all eight
-		// countries and the artifact silently never appeared as buildable. Report that a build is owed and leave the
-		// build where it lives.
+		// presence rather than a path.
+		// The pair-index entries are heterogeneous — `gb` names a `source`, `us` names only
+		// a `boroughDB`, and every country carries its own `delta` / `transitionBeta` /
+		// `parentDelta` tuning — and the build that reads them is `buildPairIndexOverlay`
+		// in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`, which each overlay's
+		// link script already calls with its own measured parameters.
+		// Modelling one input path here was a guess: an earlier draft read a `db`
+		// key that no entry has, so this returned no path for all eight countries
+		// and the artifact silently never appeared as buildable.
+		// Report that a build is owed and leave the build where it lives.
 		if (softFeed.pairIndexByCountry?.[country]) {
 			out.push({
 				shippedName: `pair-index-${country}.bin`,

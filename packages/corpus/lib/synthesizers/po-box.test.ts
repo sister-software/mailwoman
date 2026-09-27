@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { makeLcg } from "@mailwoman/core/random"
 import {
 	composePoBoxPhrase,
@@ -14,7 +11,6 @@ import type { CanonicalRow } from "@mailwoman/corpus/types"
 import { alignRow } from "@mailwoman/corpus/utils"
 import { describe, expect, it } from "vitest"
 
-// Deterministic RNG for reproducible tests.
 describe("synthesizePoBoxRow", () => {
 	it("US: replaces street with PO Box leader + number", () => {
 		const row = synthesizePoBoxRow(
@@ -68,7 +64,7 @@ describe("synthesizePoBoxRow", () => {
 		expect(row!.components.po_box!).toMatch(/^(Casilla|Casilla de Correo|CC) 55$/)
 	})
 
-	it("NZ: Private Bag / Private Box leaders, region-less format (#517)", () => {
+	it("NZ: Private Bag / Private Box leaders, region-less format", () => {
 		const row = synthesizePoBoxRow(
 			{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" },
 			{ random: makeLcg(5), pickNumber: () => "12" }
@@ -77,12 +73,11 @@ describe("synthesizePoBoxRow", () => {
 		expect(row).not.toBeNull()
 		expect(row!.locale).toBe("en-NZ")
 		expect(row!.components.po_box!).toMatch(/^(PO Box|P\.O\. Box|Post Office Box|Private Bag|Private Box) 12$/)
-		expect(row!.components.region).toBeUndefined() // NZ: no region token between locality and postcode
+		expect(row!.components.region).toBeUndefined()
 		expect(row!.raw).toBe(`${row!.components.po_box}, Auckland 1010`)
 	})
 
 	it("PMB variant: when locale supports it and street is provided", () => {
-		// pmbRatio=1.0 forces PMB path
 		const row = synthesizePoBoxRow(
 			{
 				locality: "New York",
@@ -124,9 +119,6 @@ describe("synthesizePoBoxRow", () => {
 	})
 
 	it("refuses a country no layout names, rather than writing it in US order", () => {
-		// The box vocabulary still folds an unknown country to en-US, which is what `poBoxTemplateLocale` decides. The order
-		// comes from the country's own layout, and 55 of the 252 shipped country records carry no usable skeleton — so a
-		// row for one of those is absent rather than invented.
 		expect(poBoxTemplateLocale("ZZ")).toBe("en-US")
 
 		const row = synthesizePoBoxRow(
@@ -154,12 +146,11 @@ describe("synthesizePoBoxRow", () => {
 			{ random: () => 0, pickNumber: () => "5" }
 		)
 
-		// po_box component is the whole span ("PO Box 5"), not just "5"
 		expect(row!.components.po_box!.split(/\s+/).length).toBeGreaterThanOrEqual(2)
 	})
 })
 
-describe("synthesizeMilitaryPoBoxRow (#517)", () => {
+describe("SynthesizeMilitaryPoBoxRow", () => {
 	it("generates a unit-line po_box + APO/FPO/DPO locality + AA/AE/AP region + theatre ZIP", () => {
 		const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(7) })
 		expect(row.template).toBe("military-po-box")
@@ -169,14 +160,12 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 		expect(["AA", "AE", "AP"]).toContain(row.components.region)
 		expect(row.components.postcode!).toMatch(/^\d{5}$/)
 
-		// Every component must be a verbatim substring of raw (the BIO aligner needs this).
 		for (const v of [row.components.po_box, row.components.locality, row.components.region, row.components.postcode]) {
 			expect(row.raw).toContain(v!)
 		}
 	})
 
-	it("aligns cleanly through alignRow (po_box + locality + region + postcode, no quarantine)", () => {
-		// Seeds chosen to cover a box-containing (PSC/CMR) and a bare (Unit) line.
+	it("Aligns cleanly through alignRow (po_box + locality + region + postcode without quarantine)", () => {
 		for (const seed of [11, 23, 42, 7, 100]) {
 			const row = synthesizeMilitaryPoBoxRow({ random: makeLcg(seed) })
 
@@ -184,7 +173,7 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 				...row,
 				source: "synth-po-box",
 				source_id: `mil:${seed}`,
-				// CanonicalRow requires a country. the military row carries only the locale it was minted for.
+
 				country: row.locale.split("-")[1] ?? "US",
 				corpus_version: "0.0.0-test",
 				license: "synthetic fixture — not distributed",
@@ -203,12 +192,10 @@ describe("synthesizeMilitaryPoBoxRow (#517)", () => {
 
 describe("maybeNoisifyBoxNumber", () => {
 	it("returns original number when random > 0.1", () => {
-		// random=0.5 means no noise
 		expect(maybeNoisifyBoxNumber("12345", () => 0.5)).toBe("12345")
 	})
 
 	it("applies noise when random <= 0.1", () => {
-		// Force noise application. verify something changes for a non-trivial number
 		let attempts = 0
 
 		const rng = (() => {
@@ -218,7 +205,7 @@ describe("maybeNoisifyBoxNumber", () => {
 		})()
 
 		const result = maybeNoisifyBoxNumber("12345", rng)
-		// Either changed or not — we just want to confirm the path runs without error
+
 		expect(typeof result).toBe("string")
 	})
 })
@@ -241,8 +228,6 @@ describe("poBoxTemplateLocale", () => {
 	})
 
 	it("stays template-scoped: a locale without a PO-box template falls back to en-US", () => {
-		// The shared synthesizers/utils map resolves DE to de-DE, but PO_BOX_LOCALE_TEMPLATES carries no
-		// de-DE entry — the wrapper folds it back to en-US so DE tuples keep the en-US box vocabulary.
 		expect(supportedLocales()).not.toContain("de-DE")
 		expect(poBoxTemplateLocale("DE")).toBe("en-US")
 		expect(poBoxTemplateLocale("Germany")).toBe("en-US")

@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Conversion between `file:` URLs and filesystem paths — what `import.meta.resolve` answers with, and what a dynamic
- *   `import()` of a path wants. `import.meta.dirname` and `import.meta.filename` cover a module's own location, so
- *   these are for a URL that names something else: a resolved specifier, a sibling computed from one.
+ *   Converts between `file:` URLs and filesystem paths.
  */
 
 import { fileURLToPath as nativeFileURLToPath, pathToFileURL as nativePathToFileURL } from "node:url"
@@ -12,7 +10,7 @@ import { fileURLToPath as nativeFileURLToPath, pathToFileURL as nativePathToFile
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * The filesystem path a `file:` URL names.
+ * Converts a `file:` URL to a filesystem path.
  *
  * @throws {TypeError} When the URL is not a `file:` URL.
  */
@@ -21,7 +19,7 @@ export function fileURLToPath(url: string | URL): string {
 }
 
 /**
- * The `file:` URL that names a filesystem path — the form a dynamic `import()` accepts for an absolute path.
+ * Converts a filesystem path to a `file:` URL, which a dynamic `import()` accepts for an absolute path.
  */
 export function pathToFileURL(path: PathBuilderLike): URL {
 	return nativePathToFileURL(path.toString())

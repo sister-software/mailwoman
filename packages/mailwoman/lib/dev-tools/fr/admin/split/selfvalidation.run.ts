@@ -25,16 +25,16 @@
  *   the premise is false and no retrain can fix it.
  *
  *   Run (compiled CLI): node packages/mailwoman/lib/dev-tools/fr/admin/split/selfvalidation.run.ts\
- *   --db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
+ *   --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
  */
 
 import type { ClassificationRecord } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { allRows, mean } from "@mailwoman/core/utils"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -50,24 +50,24 @@ const MIN_COLLISION_REDUCTION = 5
 
 const { values: rawValues } = parseArguments({
 	options: { db: { type: "string" }, n: { type: "string" }, out: { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
 
-// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits` helpers —
-// the home the oa-resolver-eval copies moved to. `mostSpecific` there delegates to the production
-// resolver ladder (`mostSpecificResolved`), replacing the flat `placetypeSpecificity` sort this file
-// carried. Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking (the
-// post-#945 locality-over-postcode convention), which the shared ladder would not preserve on the
-// postcode-vs-locality axis.
+// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits`
+// helpers — the home the oa-resolver-eval copies moved to.
+// `mostSpecific` there delegates to the production resolver ladder (`mostSpecificResolved`),
+// replacing the flat `placetypeSpecificity` sort this file carried.
+// Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking
+// (the post-#945 locality-over-postcode convention), which the shared ladder would
+// not preserve on the postcode-vs-locality axis.
 
 /**
  * --- args ----------------------------------------------------------------------------------------.
  */
-const DB = resolvePath(values["db"] || dataRootPath("wof", "admin-global-priority.db"))
+const DB = resolvePath(values["db"] || wofDatabasePath("admin-global-priority.db"))
 /**
  * Per stratum.
  */
@@ -85,8 +85,8 @@ interface Commune {
 	collisionCount: number
 }
 
-// Communes with their département (placetype 'region' in WOF-FR) + how many distinct départements
-// share the same commune name (the collision degree — the disambiguation pressure).
+// Communes with their département (placetype 'region' in WOF-FR) + how many distinct
+// départements share the same commune name (the collision degree — the disambiguation pressure).
 const rows = allRows<Commune>(
 	db.prepare(
 		`WITH fr_comm AS (
@@ -115,8 +115,10 @@ const resolver = createWOFResolver(backend)
 const resolveOpts = { defaultCountry: "FR" }
 
 /**
- * Unresolved penalty = the coordinate the geocoder actually falls back to when the place isn't found: the country
- * centroid. Makes the three states comparable on one error metric (resolved point if found, else country-centroid)
+ * Unresolved penalty = the coordinate the geocoder actually falls back to
+ * when the place isn't found: the country centroid.
+ *
+ * Makes the three states comparable on one error metric (resolved point if found, else country-centroid)
  * instead of averaging over different resolved subsets.
  */
 const FR_CENTROID = { lat: 46.6, lon: 2.5 }

@@ -21,14 +21,14 @@ import { alignRow } from "@mailwoman/corpus/utils"
 
 The corpus pipeline assembles training data from multiple sources:
 
-| Source             | Description                                                              |
-| ------------------ | ------------------------------------------------------------------------ |
-| **OpenAddresses**  | Real government address point data (US, FR, DE, …)                       |
-| **NAD**            | National Address Database (US-specific)                                  |
-| **libpostal**      | Multilingual street/place name dictionaries                              |
-| **Synthetic rows** | Generated address variations (boundary stress, order variants, all-caps) |
-| **Overture Maps**  | Address theme ingestion (alpha)                                          |
-| **OpenStreetMap**  | Pakistan, Bangladesh, Vietnam — ODbL, dropped by `--exclude-share-alike` |
+| Source             | Description                                                                          |
+| ------------------ | ------------------------------------------------------------------------------------ |
+| **OpenAddresses**  | Real government address point data (US, FR, DE, …)                                   |
+| **NAD**            | National Address Database (US-specific)                                              |
+| **libpostal**      | Multilingual street/place name dictionaries                                          |
+| **Synthetic rows** | Generated address variations (boundary stress, order variants, all-caps)             |
+| **Overture Maps**  | Address theme ingestion (alpha)                                                      |
+| **OpenStreetMap**  | Pakistan, Bangladesh, Vietnam — ODbL, refused by `--license-policy share-alike-free` |
 
 Output format: TSV rows with `raw<TAB>BIO_labels` consumed by the Python
 training pipeline (`corpus-python/`).
@@ -114,10 +114,15 @@ source once. The Korean permit registry (지방행정인허가데이터) is the 
 permit identity, and its address string is what a clerk typed in two address systems with no
 validation.
 
-**No license decision, only a label.** `license` holds a string, and `utils/license.ts` filters on
-its prefix. A dual-licensed source needs a record of which terms the build elects and why — BAN is
-`Licence Ouverte` or ODbL, and this project elects the former, which is why that reasoning sits in
-a docstring rather than in the data. Still open.
+**A label the build reads for obligations.** `license` holds a string, and `utils/license.ts` reads it
+through `readLicenseRecord` in `@mailwoman/core/license/record`, which resolves it to an SPDX expression
+and looks up that expression's recorded obligations. `--license-policy share-alike-free` refuses a row
+whose expression carries share-alike, and separately a row whose text cites a share-alike license while
+stating no grant of its own. Until 2026-09-27 the decision was an anchored prefix match over the column,
+which admitted the second class.
+
+Which terms the build elects for a dual-licensed source still sits in a docstring rather than in the data.
+BAN is `Licence Ouverte` or ODbL, and the `ban` adapter stamps the former. Still open.
 
 Where the ledger overlaps an existing interface, reuse that shape rather than writing a second
 provenance vocabulary. A layer database already embeds `layer_manifest` (`source`,

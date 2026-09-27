@@ -1,4 +1,4 @@
-"""#1677: a reps-per-row target names the exposure. the weight is derived from it, never picked."""
+"""Tests that a reps-per-row target derives the source weight that produces that exposure."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ import pytest
 
 from mailwoman_train.data.source_reps import derive_source_weights, format_derivation, total_samples
 
-# The v4.6.0 run the issue measured: 60,000 steps × batch 128, fixed weights summing to 168.
+# The fixture is a 60,000-step run at batch size 128 with fixed weights that sum to 168.
 SAMPLES = total_samples(60_000, 128)
 FIXED = {"ban": 100.0, "tiger": 56.0, "synth-trailing-region-es-v23": 6.0, "synth-trailing-region-gb-v23": 6.0}
 ROWS = {"synth-bare-country-v23": 277, "synth-trailing-region-es-v23": 53_078, "ban": 2_000_000, "tiger": 1_000_000}
@@ -22,9 +22,8 @@ def test_a_target_of_five_lands_at_five_reps_per_row():
 
     assert merged is not None
     assert _reps(merged, "synth-bare-country-v23") == pytest.approx(5.0)
-    # The issue's table: parity with the ES source is a weight near 0.030 rather than the 1.0 that was picked.
     assert derived[0].weight == pytest.approx(0.0302, abs=0.0005)
-    # The fixed weights are untouched. the reps-targeted draws come out of their share.
+    # The fixed weights stay unchanged, and the targeted source's draws come out of their share.
     assert {k: merged[k] for k in FIXED} == FIXED
 
 
@@ -70,7 +69,7 @@ def test_the_log_line_carries_the_exposure_beside_the_weight():
 
 
 def test_a_fractional_target_is_printed_not_rounded_to_zero():
-    """A probe divides the full run's reps targets by the step ratio, so its exposures are below one."""
+    """Print a target below one rep per row with three decimals, since probe runs scale targets down."""
     _, derived = derive_source_weights(FIXED, {"synth-bare-country-v23": 0.0333}, ROWS, SAMPLES)
 
     assert "0.033 reps/row" in format_derivation(derived)

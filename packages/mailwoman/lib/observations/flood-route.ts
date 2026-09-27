@@ -2,35 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The authority-designation route, observation-only: after the resolver has produced a coordinate, an
- *   authority's own designation for that coordinate is recorded beside the answer — the zone the
- *   authority's map assigns, the product and version it was read from, and the coverage record stating
- *   that the authority made a determination there.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here
- *   is consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
- *   the same geocode plus one advisory, which is a statement about construction rather than about a
- *   measurement.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
- *   finds no file hands in nothing and is byte-identical to one built before this route existed.
- *
- *   what IT reports, and what IT refuses TO. Three readings come out of the layer and only two of them
- *   reach a caller. A `designated` reading carries the authority's zone code. A `designated_absence`
- *   carries the authority's own definition of the absent case — for the EA product that is Flood Zone 1.
- *   The Planning Practice Guidance defines Flood Zone 1 as land outside Zones 2 and 3. An empty answer
- *   inside England is therefore a designation rather than a gap. An `unknown` reading raises nothing: outside the
- *   authority's footprint there is no coverage row, and a marker there would be an advisory about a
- *   determination nobody made.
- *
- *   the observation is about the MAP, never about the property. The EA states that its data is "not
- *   suitable for showing whether an individual property is at risk of flooding". So the wording reports
- *   which zone the authority's map assigns at the location — a fact about the map — and the product's own
- *   exclusions ride on every observation, because a caller cannot see from a zone code that the answer is
- *   silent about surface water, groundwater and defended-area residual risk.
+ *   Attaches an authority's flood designation to a geocode answer as an observation. The route
+ *   never changes answer selection.
  */
 
 import {
@@ -40,6 +13,7 @@ import {
 	type FloodLayerIdentity,
 	type FloodZoneReading,
 } from "@mailwoman/flood"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -52,46 +26,46 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One authority designation, recorded beside an answer.
+ * An authority's flood designation for a coordinate, with its coverage and provenance.
  *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage, the code in that
- * authority's own vocabulary with the authority's own definition of it, how containment was established, and the
- * coverage record — cell, basis, completeness — that licenses an absence reading. A reader holding the code alone
- * cannot tell whether it was earned.
+ * The observation describes the authority's map.
+ * It makes no claim about the risk to an individual property.
  */
 export interface AuthorityDesignationObservation {
 	/**
-	 * `designated` or `designated_absence`. Never `unknown`: that reading produces no observation.
+	 * Either `designated` or `designated_absence`.
+	 * An `unknown` reading produces a refusal instead.
 	 */
 	reading: FloodReadingKind
 	/**
-	 * The authority's code, verbatim. Absent on a designated absence, which the authority represents by publishing
-	 * nothing.
+	 * The authority's code, verbatim.
+	 *
+	 * It is absent on a designated absence, because the authority publishes no code for that case.
 	 */
 	code?: string
 	/**
-	 * The authority's own words for the answered code, and where they are published.
+	 * The authority's definition of the code and the URL where it is published.
 	 */
 	definition?: { code: string; label: string; definition: string; definitionURL: string }
 	/**
-	 * The polygon the ray cast matched, where one did.
+	 * The ID of the polygon that contains the point, when one does.
 	 */
 	areaID?: string
 	containment: FloodContainmentPath
 	/**
-	 * The coverage side of the claim, present whenever the location falls inside the authority's footprint.
+	 * The coverage record for the location inside the authority's footprint.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
-	 * The index cell probed.
+	 * The index cell that was probed.
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statement of what its map covers, and where it is published.
+	 * The authority's statement of what its map covers and the URL where it is published.
 	 */
 	extent: { authority: string; statement: string; statementURL: string }
 	/**
-	 * What the product excludes, in the authority's own words.
+	 * The product's exclusions, in the authority's own words.
 	 */
 	limits: ReadonlyArray<string>
 	layer: ObservationLayerRecord
@@ -100,57 +74,62 @@ export interface AuthorityDesignationObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
- * silence and a silence for the right reason read identically on a receipt.
+ * The reasons a coordinate can produce no flood observation.
  */
 export const DESIGNATION_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode produced no coordinate.
 	 */
 	"no_coordinate",
 	/**
-	 * The layer holds no coverage row for the location. Outside the authority's footprint, which is unknown and never a
-	 * low-hazard reading.
+	 * The layer has no coverage row for the location.
+	 *
+	 * The hazard there is unknown, which must never be reported as low.
 	 */
 	"outside_authority_footprint",
 ] as const
 
+/**
+ * One {@link DESIGNATION_REFUSALS} value.
+ */
 export type DesignationRefusal = (typeof DESIGNATION_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * The observation or refusal for one coordinate.
  */
 export type DesignationDecision =
 	| { fired: true; observation: AuthorityDesignationObservation }
 	| { fired: false; refusal: DesignationRefusal }
 
+/**
+ * Reads flood designations from one sealed layer.
+ */
 export interface AuthorityDesignationRoute extends Disposable {
 	identity: FloodLayerIdentity
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
-	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
-	 * rather than a caller's problem.
+	 * Reads the layer at one coordinate.
+	 * A missing coordinate returns the `no_coordinate` refusal.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => DesignationDecision
 }
 
+/**
+ * Options for {@link createAuthorityDesignationRoute}.
+ */
 export interface AuthorityDesignationRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that guessed one would report a
-	 * designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 * The route has no default layer.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 }
 
 /**
- * Build the route against one sealed layer.
+ * Builds the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, a missing footprint row. Each of those would
- * otherwise present as a route that simply never fires, which on a receipt is indistinguishable from a region the
- * authority genuinely has not mapped.
+ * The reader's constructor throws on a manifest for a different layer,
+ * an empty coverage table or a missing footprint row.
+ * Without that check, such a layer would never fire, and the silence would look like an unmapped region.
  */
 export function createAuthorityDesignationRoute(options: AuthorityDesignationRouteOptions): AuthorityDesignationRoute {
 	const lookup = new FloodZoneLookup({ databasePath: options.databasePath })
@@ -159,12 +138,12 @@ export function createAuthorityDesignationRoute(options: AuthorityDesignationRou
 		read: (latitude, longitude) => lookup.lookup(latitude, longitude),
 		refusalFor: (reading) => (reading.kind === FloodReadingKind.Unknown ? "outside_authority_footprint" : undefined),
 		toObservation: (reading, latitude, longitude) =>
-			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+			toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 	})
 }
 
 /**
- * Build the observation for a reading the refusal check let through.
+ * Builds the observation for a reading that passed the refusal check.
  */
 function toObservation(
 	reading: FloodZoneReading,
@@ -196,7 +175,9 @@ function toObservation(
 }
 
 /**
- * What the authority's map assigns, in one wording — shared by the one-line description and the marker message.
+ * Returns the clause that states what the authority's map assigns.
+ *
+ * The one-line description and the marker message share this wording.
  */
 export function floodZoneAssignmentClause(observation: AuthorityDesignationObservation): string {
 	return observation.code
@@ -205,7 +186,8 @@ export function floodZoneAssignmentClause(observation: AuthorityDesignationObser
 }
 
 /**
- * One line a reader can check the claim from, with the authority and its vintage on it.
+ * Returns a one-line description of the observation, including the authority,
+ * coverage and layer provenance.
  */
 export function describeAuthorityDesignation(observation: AuthorityDesignationObservation): string {
 	return (

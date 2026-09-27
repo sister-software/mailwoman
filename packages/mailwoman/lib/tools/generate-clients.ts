@@ -1,37 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   The client-generation pipeline behind `mailwoman clients generate`: emit all four surfaces'
- *   OpenAPI documents (both flavors), generate a Python package and a Rust crate from them, then
- *   verify both actually build. Everything is one-directional and local — nothing generated here is
- *   committed; `clients-build/` is gitignored. This is the local proof the conditional CI job (Phase 5 Task
- *   4) replays on dispatch.
- *
- *   Salvaged from the superseded `origin/feat/api-clients` branch (unmerged, left in place. see
- *   `docs/articles/api.mdx` "Client libraries"): the package/crate name (`mailwoman-client` on both
- *   PyPI and crates.io), the Python module layout (`mailwoman_client.{photon,nominatim,libpostal}`,
- *   now with a fourth `mailwoman` module for the native `/v1/*` surface), and the Rust crate pattern
- *   (progenitor `generate_api!` per vendored spec + thin `*_local()`/`*_hosted()` constructors in
- *   `src/lib.rs`). What's new here: specs come from the emitters (`mailwoman openapi`,
- *   `mailwoman-{photon,nominatim,libpostal} openapi`) rather than a checked-in `openapi.yaml`; the Rust
- *   vendor step reads the emitter's own `--flavor 3.0` diet instead of the old `downgrade-spec.py`
- *   down-convert (openapiv3, which progenitor depends on, only understands 3.0.x); and the client
- *   version syncs to `mailwoman/package.json` (the salvaged `publishing.md` versioned the clients
- *   independently of the npm workspaces — this pipeline ties them together instead, since all four
- *   `@mailwoman/*` surface packages already release in lockstep at the same version).
- *
- *   Phase order (each step's failure aborts the rest — later phases consume earlier artifacts):
- *   compile-check → emit 8 specs → python generate ×4 → assemble python package → assemble rust
- *   crate → (unless `skipVerify`) `uv build` + wheel import-check → `cargo check --examples`.
- *   `--examples` is deliberately stronger than the bare `cargo check` the task asked for: the
- *   salvaged `examples/basic.rs` had drifted against the current spec (a prior progenitor run
- *   synthesized a `SearchQ` newtype + `NonZeroU64` limit that no longer exist — the current spec's
- *   `q`/`limit` are unconstrained, so progenitor now emits plain `Option<&str>`/`Option<i64>`); folding
- *   `--examples` into the receipted verify step means that class of drift fails the eval instead of
- *   rotting silently in a file nobody compiles.
- */
-
 import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	copyFileTo,
@@ -41,8 +7,8 @@ import {
 	writeLocalTextFile,
 } from "@mailwoman/core/fs/writers"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
-import { workspacePath, repoRootPath } from "@mailwoman/core/paths"
-import { join } from "path-ts"
+import { workspacePath, repoRootPathBuilder } from "@mailwoman/core/paths"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import type { Check } from "#cli-kit"
@@ -50,31 +16,19 @@ import { readMailwomanVersion } from "#cli/kit/metadata"
 import { runProcessOrFail } from "#cli/kit/shared"
 
 /**
- * The four surfaces every emitter + generated client covers. Order matches the salvaged readme's table, mailwoman last
- * (the new fourth module).
+ * The HTTP surfaces that each get an emitted OpenAPI spec and a generated Python and Rust client.
  */
 export const CLIENT_SURFACES = ["photon", "nominatim", "libpostal", "mailwoman"] as const
 
 type ClientSurface = (typeof CLIENT_SURFACES)[number]
 
-/**
- * OpenAPI flavors the emitters print. 3.1 is the published document. 3.0 is progenitor's diet (openapiv3 only
- * understands 3.0.x).
- */
 const FLAVORS = ["3.1", "3.0"] as const
 
 /**
- * Every surface's compiled CLI entry point — the emitters this pipeline shells out to.
+ * Resolves a surface's compiled CLI entry point from its `package.json` `bin`,
+ * which is the OpenAPI emitter this pipeline runs.
  *
- * Read from the workspace's own `bin` rather than assembled from a literal emit path. The literal was `out/cli.js` and
- * went stale twice: once when the 2026-08-14 regroup moved the workspaces, and again when the prefix-directory pass
- * moved `mailwoman`'s `lib/cli.ts` to `lib/cli/index.ts`, so its emit became `out/cli/index.js` while the other three
- * kept the flat name. Both times a clean, successful compile read as a missing emitter, and the second time it failed
- * inside a release run. `bin` is the manifest's declaration of where the entry point is. the emit layout underneath it
- * is free to move.
- *
- * Resolved through `workspacePath`, never by treating the workspace name as a repo-root segment — that was the first
- * failure's shape.
+ * Reading `bin` rather than a literal emit path keeps it correct when a workspace's build layout moves.
  */
 export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
@@ -90,35 +44,19 @@ export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	return workspacePath(surface, entry)
 }
 
-/**
- * The two repo-root license files (verified present: `LICENSE.md` — AGPL-3.0-only + a Commercial-License pointer — and
- * `commercial-LICENSE.md` — the full commercial agreement text) that every generated package's spdx expression
- * (`AGPL-3.0-only or LicenseRef-Commercial`) references. Both artifacts must carry both files verbatim: an agpl
- * conveyance requires the license text to travel with the source, and `LicenseRef-Commercial` is meaningless without
- * the referenced text alongside it.
- */
 const LICENSE_FILENAMES = ["LICENSE.md", "COMMERCIAL-LICENSE.md"] as const
 
-/**
- * Copy the repo-root license files into `destDir` (a package/crate root) — shared by the Python + Rust assembly steps.
- */
-async function copyLicenseFiles(destDir: string): Promise<void> {
+async function copyLicenseFiles(destDir: PathBuilder): Promise<void> {
 	for (const filename of LICENSE_FILENAMES) {
-		await copyFileTo(repoRootPath(filename), join(destDir, filename))
+		await copyFileTo(repoRootPathBuilder(filename), destDir(filename))
 	}
 }
 
-/**
- * Absolute paths to each surface's emitted document, per flavor.
- */
 interface SpecPaths {
 	v31: Record<ClientSurface, string>
 	v30: Record<ClientSurface, string>
 }
 
-/**
- * Everything a completed (or partially completed, on early abort) run produced.
- */
 interface GenerateClientsReceipt {
 	version: string
 	outDir: string
@@ -131,45 +69,41 @@ interface GenerateClientsReceipt {
 	elapsedSeconds: number
 }
 
+/**
+ * Options for {@link generateClients}; `outDir` defaults to `clients-build/` at the
+ * repo root, and `skipVerify` skips the Python and Rust build checks.
+ */
 export interface GenerateClientsOptions {
 	/**
-	 * Output root. Default `<repo>/clients-build` (gitignored).
+	 * The output root, which defaults to the gitignored `clients-build/` at the repo root.
 	 */
-	outDir?: string
+	outDir?: PathBuilderLike
+
 	/**
-	 * Skip `uv build`/import-check + `cargo check --examples` (dev only — an unverified pipeline must never be trusted as
-	 * a release proof).
+	 * Whether to skip the Python and Rust build checks, which makes the output unfit as a release proof.
 	 */
 	skipVerify?: boolean
 	onPhase?: (phase: string, detail?: string) => void
 }
 
+/**
+ * The outcome of {@link generateClients}: one check per pipeline step, stopping at
+ * the first failure, plus a receipt of what was written.
+ */
 export interface GenerateClientsResult {
 	ok: boolean
 	checks: Check[]
 	receipt: GenerateClientsReceipt
 }
 
-/**
- * A guidance-grade failure — caught by the per-step try/catch below, so only its `message` (not the stack) surfaces in
- * the check list.
- */
 function fail(message: string): never {
 	throw new Error(message)
 }
 
-/**
- * Run a child process with inherited stdio (the `publish-hf.ts` convention — the child's own output is the progress
- * log) and throw on nonzero exit or a launch failure (e.g. the binary isn't installed).
- */
-function run(cmd: string, args: string[], options: { cwd?: string } = {}): void {
+function run(cmd: string, args: string[], options: { cwd?: PathBuilderLike } = {}): void {
 	runProcessOrFail(cmd, args, { ...options, echo: true })
 }
 
-/**
- * Verify each emitter's compiled CLI exists — the emitters run compiled (route-table introspection over a stub engine)
- * rather than from source.
- */
 async function checkCompiled(): Promise<void> {
 	const missing: string[] = []
 
@@ -186,10 +120,7 @@ async function checkCompiled(): Promise<void> {
 	}
 }
 
-/**
- * Emit all 8 documents (4 surfaces × 2 flavors) into `<outDir>/specs/`.
- */
-async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
+async function emitSpecs(specsDir: PathBuilder, phase: (p: string, d?: string) => void): Promise<SpecPaths> {
 	await makeDirectories(specsDir)
 
 	const v31 = {} as Record<ClientSurface, string>
@@ -199,7 +130,7 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 		const cli = await emitterCLIPath(surface)
 
 		for (const flavor of FLAVORS) {
-			const out = join(specsDir, `${surface}-${flavor}.json`)
+			const out = specsDir(`${surface}-${flavor}.json`).toString()
 
 			phase("emit-spec", `${surface} ${flavor} → ${out}`)
 
@@ -211,17 +142,12 @@ async function emitSpecs(specsDir: string, phase: (p: string, d?: string) => voi
 	return { v31, v30 }
 }
 
-/**
- * Run `openapi-python-client generate` once per surface, into `mailwoman_client/<surface>/` — the sibling-subpackage
- * layout the salvaged readme documented (fully relative imports, so the four compose under one distributable with no
- * post-processing).
- */
 async function generatePythonModules(
 	specPaths: SpecPaths,
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	const packageDir = join(pythonDir, "mailwoman_client")
+	const packageDir = pythonDir("mailwoman_client")
 	await makeDirectories(packageDir)
 
 	for (const surface of CLIENT_SURFACES) {
@@ -235,17 +161,19 @@ async function generatePythonModules(
 			"--meta",
 			"none",
 			"--output-path",
-			join(packageDir, surface),
+			packageDir(surface).toString(),
 			"--overwrite",
 		])
 	}
 
-	// The generator drops a .ruff_cache under each output dir (salvaged readme precedent) — remove it.
 	for (const surface of CLIENT_SURFACES) {
-		await removePathIfPresent(join(packageDir, surface, ".ruff_cache"))
+		await removePathIfPresent(packageDir(surface, ".ruff_cache"))
 	}
 }
 
+/**
+ * Renders the `pyproject.toml` for the `mailwoman-client` Python package at `version`.
+ */
 export function pythonPyproject(version: string): string {
 	return `[project]
 name = "mailwoman-client"
@@ -329,6 +257,10 @@ docstring-code-format = true
 `
 }
 
+/**
+ * Renders the hand-written `mailwoman_client/__init__.py`, which wraps each generated
+ * subpackage in a client class with a default `base_url`.
+ */
 export function pythonInitPy(): string {
 	return `"""mailwoman-client — typed Python clients for Mailwoman's drop-in geocoding APIs + the native /v1/* surface.
 
@@ -342,7 +274,7 @@ The four subpackages are generated verbatim — do not hand-edit them (they are 
 see \`mailwoman clients generate\`). Everything in this module is the thin, hand-written ergonomics
 layer over that generated code: friendly client classes with a sensible default \`base_url\`.
 
-Quick start (hosted Photon trial endpoint, no local server needed):
+Quick start against the hosted Photon trial endpoint, which needs no local server:
 
     from mailwoman_client import PhotonClient
     from mailwoman_client.photon.api.geocoding import search
@@ -467,8 +399,8 @@ function pythonReadme(): string {
 		"",
 		"## Usage",
 		"",
-		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`, no",
-		"local server needed):",
+		"Forward-geocode against the hosted Photon trial endpoint (`https://photon.mailwoman.ai`), which",
+		"needs no local server:",
 		"",
 		"```python",
 		"from mailwoman_client import PhotonClient",
@@ -507,40 +439,29 @@ function pythonReadme(): string {
 	return lines.join("\n")
 }
 
-/**
- * Write the pyproject.toml + readme.md + `mailwoman_client/__init__.py` + `py.typed` + license texts — the salvaged
- * layout, adapted for the fourth `mailwoman` module. No `examples/` dir: the salvaged `search_berlin.py` example wasn't
- * wired into either `[tool.setuptools.packages.find]` (wheel) or a manifest.in (sdist), so it was silently dropped from
- * both built artifacts. The readme's own "Usage" section already carries the same snippet inline, so it isn't lost —
- * just not duplicated as a file that never shipped.
- */
 async function assemblePythonPackage(
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	version: string,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	phase("python-assemble", pythonDir)
-	await writeLocalFile(pythonPyproject(version), join(pythonDir, "pyproject.toml"))
-	await writeLocalFile(pythonReadme(), join(pythonDir, "README.md"))
-	await writeLocalFile(pythonInitPy(), join(pythonDir, "mailwoman_client", "__init__.py"))
-	await writeLocalTextFile("", join(pythonDir, "mailwoman_client", "py.typed"))
-	// agpl conveyance + the LicenseRef-Commercial target (see license-files above): copied into the package root rather than the mailwoman_client/ subpackage, matching where setuptools looks relative to pyproject.toml.
+	phase("python-assemble", pythonDir.toString())
+	await writeLocalFile(pythonPyproject(version), pythonDir("pyproject.toml"))
+	await writeLocalFile(pythonReadme(), pythonDir("README.md"))
+	await writeLocalFile(pythonInitPy(), pythonDir("mailwoman_client", "__init__.py"))
+	await writeLocalTextFile("", pythonDir("mailwoman_client", "py.typed"))
+
 	await copyLicenseFiles(pythonDir)
 }
 
-/**
- * `uv build` the assembled package, then import-check the built wheel in an ephemeral env (`--no-project` so `uv run`
- * doesn't treat `pythonDir` itself as the active project).
- */
 async function verifyPython(
-	pythonDir: string,
+	pythonDir: PathBuilder,
 	phase: (p: string, d?: string) => void
 ): Promise<{ wheel: string; sdist: string }> {
-	phase("python-build", pythonDir)
-	await removePathIfPresent(join(pythonDir, "dist"))
-	run("uv", ["build"], { cwd: pythonDir })
+	const distDir = pythonDir("dist")
 
-	const distDir = join(pythonDir, "dist")
+	phase("python-build", pythonDir.toString())
+	await removePathIfPresent(distDir)
+	run("uv", ["build"], { cwd: pythonDir })
 
 	const entries = (await pathExists(distDir))
 		? await Globerator.from("*", { cwd: distDir, absolute: false }).toArray()
@@ -557,7 +478,7 @@ async function verifyPython(
 		fail(`uv build did not produce a .tar.gz under ${distDir}`)
 	}
 
-	const wheelPath = join(distDir, wheel)
+	const wheelPath = distDir(wheel).toString()
 
 	phase("python-import-check", wheelPath)
 
@@ -571,9 +492,12 @@ async function verifyPython(
 		"import mailwoman_client as m; assert all([m.PhotonClient, m.NominatimClient, m.LibpostalClient, m.MailwomanClient]); print('mailwoman_client import OK:', m.__all__)",
 	])
 
-	return { wheel: wheelPath, sdist: join(distDir, sdist) }
+	return { wheel: wheelPath, sdist: distDir(sdist).toString() }
 }
 
+/**
+ * Renders the `Cargo.toml` for the `mailwoman-client` Rust crate at `version`.
+ */
 export function rustCargoToml(version: string): string {
 	return `[package]
 name = "mailwoman-client"
@@ -614,6 +538,10 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 `
 }
 
+/**
+ * Renders the crate's `src/lib.rs`, which generates one module per surface from
+ * its vendored OpenAPI 3.0 spec at compile time.
+ */
 export function rustLibRs(): string {
 	const lines = [
 		"//! Typed Rust clients for Mailwoman's four HTTP surfaces — the three drop-in geocoding APIs",
@@ -800,54 +728,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 `
 }
 
-/**
- * Vendor the 3.0 specs + write Cargo.toml/src/lib.rs/readme.md/examples/basic.rs + the license texts — the salvaged
- * crate pattern, adapted for the fourth `mailwoman` module.
- */
 async function assembleRustCrate(
 	specPaths: SpecPaths,
-	rustDir: string,
+	rustDir: PathBuilder,
 	version: string,
 	phase: (p: string, d?: string) => void
 ): Promise<void> {
-	phase("rust-assemble", rustDir)
-	const openapiDir = join(rustDir, "openapi")
+	phase("rust-assemble", rustDir.toString())
+	const openapiDir = rustDir("openapi")
 	await makeDirectories(openapiDir)
-	await makeDirectories(join(rustDir, "src"))
-	await makeDirectories(join(rustDir, "examples"))
+	await makeDirectories(rustDir("src"))
+	await makeDirectories(rustDir("examples"))
 
 	for (const surface of CLIENT_SURFACES) {
-		await copyFileTo(specPaths.v30[surface], join(openapiDir, `${surface}.json`))
+		await copyFileTo(specPaths.v30[surface], openapiDir(`${surface}.json`))
 	}
 
-	await writeLocalFile(rustCargoToml(version), join(rustDir, "Cargo.toml"))
-	await writeLocalFile(rustLibRs(), join(rustDir, "src", "lib.rs"))
-	await writeLocalFile(rustReadme(), join(rustDir, "README.md"))
-	await writeLocalFile(rustExample(), join(rustDir, "examples", "basic.rs"))
-	// agpl conveyance + the LicenseRef-Commercial target (see the Cargo.toml `include` list above).
+	await writeLocalFile(rustCargoToml(version), rustDir("Cargo.toml"))
+	await writeLocalFile(rustLibRs(), rustDir("src", "lib.rs"))
+	await writeLocalFile(rustReadme(), rustDir("README.md"))
+	await writeLocalFile(rustExample(), rustDir("examples", "basic.rs"))
+
 	await copyLicenseFiles(rustDir)
 }
 
-/**
- * `cargo check --examples` — stronger than a bare `cargo check` (which skips example targets by default) so
- * `examples/basic.rs` is verified against the current vendored spec on every run. See the module docstring for why this
- * matters: the salvaged example had already drifted once.
- */
-function verifyRust(rustDir: string, phase: (p: string, d?: string) => void): void {
-	phase("cargo-check", rustDir)
+function verifyRust(rustDir: PathBuilder, phase: (p: string, d?: string) => void): void {
+	phase("cargo-check", rustDir.toString())
 	run("cargo", ["check", "--examples"], { cwd: rustDir })
 }
 
 /**
- * Run the full pipeline. See the module docstring for the phase order and the `--examples` verify note.
+ * Emits every surface's OpenAPI specs, generates and assembles the Python package
+ * and Rust crate, then build-checks both unless `skipVerify` is set.
  */
 export async function generateClients(opts: GenerateClientsOptions = {}): Promise<GenerateClientsResult> {
 	const t0 = performance.now()
 	const phase = opts.onPhase ?? (() => {})
-	const outDir = opts.outDir ?? repoRootPath("clients-build")
-	const specsDir = join(outDir, "specs")
-	const pythonDir = join(outDir, "python")
-	const rustDir = join(outDir, "rust")
+	const outDir = PathBuilder.from(opts.outDir ?? repoRootPathBuilder("clients-build"))
+	const specsDir = outDir("specs")
+	const pythonDir = outDir("python")
+	const rustDir = outDir("rust")
 	const version = await readMailwomanVersion()
 
 	let specPaths: SpecPaths | null = null
@@ -864,12 +784,11 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 		{
 			check: "emit 8 specs (4 surfaces × 3.1 + 3.0) → clients-build/specs/",
 			run: async () => {
-				// A stale artifact from a prior version must never linger under a fresh run.
 				await removePathIfPresent(outDir)
 				await makeDirectories(outDir)
 				specPaths = await emitSpecs(specsDir, phase)
 
-				return specsDir
+				return specsDir.toString()
 			},
 		},
 		{
@@ -883,7 +802,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			run: async () => {
 				await assemblePythonPackage(pythonDir, version, phase)
 
-				return pythonDir
+				return pythonDir.toString()
 			},
 		},
 		{
@@ -891,7 +810,7 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 			run: async () => {
 				await assembleRustCrate(specPaths!, rustDir, version, phase)
 
-				return rustDir
+				return rustDir.toString()
 			},
 		},
 	]
@@ -936,10 +855,10 @@ export async function generateClients(opts: GenerateClientsOptions = {}): Promis
 
 	const receipt: GenerateClientsReceipt = {
 		version,
-		outDir,
-		specsDir,
-		pythonDir,
-		rustDir,
+		outDir: outDir.toString(),
+		specsDir: specsDir.toString(),
+		pythonDir: pythonDir.toString(),
+		rustDir: rustDir.toString(),
 		specs: specPaths,
 		pythonWheel,
 		pythonSdist,

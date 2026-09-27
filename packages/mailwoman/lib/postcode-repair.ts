@@ -23,13 +23,16 @@ import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder
 import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
- * Postcode formats whose surface is structurally distinguishable from anything else an address writes — letters mixed
- * into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`). Membership is earned by that structural argument, never by
- * coverage ambition. Two exclusions, both measured rather than reasoned:
+ * Postcode formats whose surface is structurally distinguishable from anything else an
+ * address writes — letters mixed into the digit groups (GB `KT2 6AB`, CA `M5H 2N2`).
+ *
+ * Membership is earned by that structural argument, never by coverage ambition.
+ * Two exclusions, both measured rather than reasoned:
  *
  * - Five-digit families (us_zip / fr / de): `12345` in `12345 Main St` is a house number.
- * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** — a US house number plus a
- *   directional. The session-trace invariance test caught the first draft of this set eating exactly that span.
+ * - `nl_postcode` (`\d{4} [A-Z]{2}`): **"3215 SE" in "3215 SE Clinton St" matches it** —
+ *   a US house number plus a directional.
+ *   The session-trace invariance test caught the first draft of this set eating exactly that span.
  */
 const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode", "ca_postcode"])
 
@@ -39,8 +42,10 @@ const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode",
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces. A node with any other tag overlapping the format span vetoes the repair — the rung
- * replaces a wrong reading, never a plausible one.
+ * The tags the misread produces.
+ *
+ * A node with any other tag overlapping the format span vetoes the repair.
+ * The rung replaces a wrong reading, never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street",
@@ -48,8 +53,9 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_suffix",
 	"street_prefix",
 	"unit",
-	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box. A real PO Box surface ("PO Box
-	// 123") can never match a letter-digit postcode format span, so the format check keeps this safe.
+	// "PO33 4DE" — the Portsmouth/Isle of Wight area reads as a PO Box.
+	// A real PO Box surface ("PO Box 123") can never match a letter-digit postcode
+	// format span, so the format check keeps this safe.
 	"po_box",
 ])
 
@@ -62,10 +68,12 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repair the tree IN place when a high-confidence letter-digit postcode span carries no postcode node and every node
- * inside it is a street/house-number-family misread. Returns `true` when a repair was applied. Idempotent: a tree that
- * already carries a postcode node over the span never repairs, so the alternate-register retry path cannot
- * double-fire.
+ * Repair the tree IN place when a high-confidence letter-digit postcode span carries no
+ * postcode node and every node inside it is a street/house-number-family misread.
+ *
+ * @returns `true` when a repair was applied.
+ * Idempotent: a tree that already carries a postcode node over the span never repairs,
+ * so the alternate-register retry path cannot double-fire.
  */
 export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape): boolean {
 	let repaired = false
@@ -75,11 +83,12 @@ export function repairPostcodeContradiction(tree: AddressTree, shape: QueryShape
 
 		const { start, end, body } = hit.span
 
-		// Condition 1: the span already resolved to a postcode node somewhere — nothing to repair.
+		// Condition 1: the span already resolved to a postcode node somewhere, so it needs no repair.
 		if (anyNode(tree, (n) => n.tag === "postcode" && overlaps(n, start, end))) continue
 
-		// Condition 2: every value-containing node touching the span is a misread-family node sitting wholly
-		// inside it. A node of any other tag, or one extending beyond the span, vetoes the repair.
+		// Condition 2: every value-containing node touching the span is a misread-family
+		// node sitting wholly inside it.
+		// A node of any other tag, or one extending beyond the span, vetoes the repair.
 		const touching = collectNodes(tree.roots, (n) => overlaps(n, start, end))
 
 		if (!touching.length) continue

@@ -41,7 +41,7 @@ def test_check_fails_loud_on_unaccepted_overlap(tmp_path: Path, samples: dict[st
     report_path = tmp_path / "report.json"
     with pytest.raises(AssertionError, match=r"\bfr\b"):
         check_codepoint_overlap(["▁Lozère", "è"], samples, report_path)
-    # The report is still written before the raise — the artifact is the point.
+    # The report is still written before the raise. The artifact is the point.
     assert json.loads(report_path.read_text(encoding="utf-8"))["per_locale_overlap"]["fr"] == ["è"]
 
 

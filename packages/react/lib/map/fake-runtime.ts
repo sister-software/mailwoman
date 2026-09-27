@@ -1,12 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   A fake geocoder runtime: canned parse + resolve, an offline stub map style, canned autocomplete, a version list.
- *   No network, no ONNX, no maplibre at run time — everything is data. It is what the stories and component tests
- *   mount, and what a host mounts to show the UI without the model.
- */
-
 import type { ParseResult } from "@mailwoman/core/pipeline/client-result"
 
 import type { ResolvedMapPlace } from "#map/place-render"
@@ -16,7 +10,8 @@ import type { PipelineRuntime } from "#pipeline/types"
 import type { MapCanvasStyle } from "./MapCanvas.tsx"
 
 /**
- * An offline stub map style — one solid `background` layer, zero sources, zero network. Safe for headless Storybook.
+ * Defines an offline map style with a single background layer and no sources,
+ * so it renders in headless Storybook without network access.
  */
 export const STUB_MAP_STYLE: MapCanvasStyle = {
 	version: 8,
@@ -35,11 +30,10 @@ export const FAKE_SUGGESTIONS: Suggestion[] = [
 ]
 
 /**
- * A fake demo runtime — the map analogue of {@link makePipelineRuntime}. It composes the pipeline fake (canned
- * parse+resolve) with the map surface: the offline stub style, a version list, a backend, an injected autocomplete, and
- * a `resolveMapPlace` that hands the selected candidate a bbox so the declarative overlays draw a marker + outline. No
- * network, no ONNX, no maplibre-at-runtime — everything is data. `runParseWithBias` delegates to the base parse (the
- * bias is ignored by the fake but present so the parameter is exercised).
+ * Creates an offline {@link GeocoderRuntime} that extends {@link makePipelineRuntime}
+ * with the stub style, canned suggestions and versions, and a `resolveMapPlace`
+ * that gives the candidate a bounding box so overlays draw.
+ * The fake ignores the bias passed to `runParseWithBias`.
  */
 export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}): GeocoderRuntime {
 	const base = makePipelineRuntime()
@@ -63,7 +57,7 @@ export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}
 		activeBackend: "webgpu (28 MB int8)",
 		forceWASM: false,
 		setForceWASM: () => {},
-		// Enrich the selected candidate with a bbox so an outline renders (case 4: bbox → approximate circle + fit).
+
 		resolveMapPlace: (candidate): ResolvedMapPlace => ({
 			...candidate,
 			bbox: {
@@ -78,7 +72,8 @@ export function makeFakeGeocoderRuntime(overrides: Partial<GeocoderRuntime> = {}
 }
 
 /**
- * A fixed, fully-populated parse+resolve result — the shared fixture behind the pipeline runtime + the result panel.
+ * Creates a fixed, fully populated parse-and-resolve result for the given input,
+ * shared by the fake pipeline runtime and result-panel fixtures.
  */
 export function makeFakeParseResult(input = "350 5th Ave, New York, NY 10118"): ParseResult {
 	return {

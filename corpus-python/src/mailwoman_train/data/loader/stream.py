@@ -157,6 +157,22 @@ def iter_rows(
             buf.append(next(upstream))
     except StopIteration:
         pass
+    # An exclusion naming a source the corpus does not hold leaves every row of the corpus augmented,
+    # and the run still reports a clean pass: a `frozenset` answers a membership test the same way
+    # whether its members exist or not. `_apply_source_weights` has already refused any source in the
+    # corpus that `source_weights` does not name, so a name absent from those keys is a name no row
+    # carries.
+    if policy.source_weights is not None:
+        unmatched = sorted(set(augment_exclude_sources) - set(policy.source_weights))
+        if unmatched:
+            raise ValueError(
+                f"augment_exclude_sources names {len(unmatched)} source(s) that no row carries: "
+                f"{', '.join(unmatched)}. Each one leaves its intended rows augmented while the run "
+                "reports a clean pass. Check for a retired spelling: "
+                "`packages/corpus/lib/recipes/sources.ts` maps the retired `synth-` names to their "
+                "current ones."
+            )
+
     # The augmentation and relabel policies live in `emit.py` so this loader and every audit apply the
     # identical step. They did not once: the epoch audit reimplemented it without the per-source
     # exclusion and reported an excluded source with the count it would have had if augmented (#2243).

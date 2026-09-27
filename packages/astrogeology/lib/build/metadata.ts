@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. The block is validated before
- *   it is written and again after `pmtiles edit` has written it, so an archive that leaves the build carries the block
- *   the schema describes and nothing else the tool may have dropped.
+ *   The `mailwoman:*` block, written into an archive's PMTiles metadata and read back. It is
+ *   validated before writing and again after `pmtiles edit`, so an archive leaves the build
+ *   carrying the block the schema describes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -26,7 +26,8 @@ export async function readPMTilesMetadata(archivePath: string): Promise<Record<s
 }
 
 /**
- * The block an archive carries, validated. throws when the archive carries none or a malformed one.
+ * The block an archive carries, validated.
+ * Throws when it carries none or a malformed one.
  */
 export async function readMailwomanMetadata(archivePath: string): Promise<PMTilesMetadata> {
 	const metadata = await readPMTilesMetadata(archivePath)
@@ -37,8 +38,7 @@ export async function readMailwomanMetadata(archivePath: string): Promise<PMTile
 }
 
 /**
- * Merge the validated block over the archive's current metadata and write it back, then read it back and refuse unless
- * every key round-tripped.
+ * Merges the validated block over the archive's metadata and refuses unless every key round-trips.
  */
 export async function applyPMTilesMetadata(archivePath: string, block: PMTilesMetadata): Promise<void> {
 	const validated = PMTilesMetadataSchema.parse(block)
@@ -48,14 +48,14 @@ export async function applyPMTilesMetadata(archivePath: string, block: PMTilesMe
 	const file = resolvePath(scratch.path, "metadata.json")
 
 	await writeLocalJSONFile(merged, file)
-	await runFile("pmtiles", ["edit", archivePath, `--metadata=${String(file)}`])
+	await runFile("pmtiles", ["edit", archivePath, `--metadata=${file}`])
 
 	const written = await readMailwomanMetadata(archivePath)
 
 	for (const [key, value] of Object.entries(validated)) {
 		if (written[key as keyof PMTilesMetadata] !== value) {
 			throw new Error(
-				`${archivePath}: metadata ${key} did not round-trip: wrote ${String(value)}, read ${String(written[key as keyof PMTilesMetadata])}`
+				`${archivePath}: metadata ${key} did not round-trip: wrote ${value}, read ${String(written[key as keyof PMTilesMetadata])}`
 			)
 		}
 	}
@@ -77,7 +77,7 @@ export function nomenclatureMetadata(body: BuildableBodyID, buildVersion: string
 }
 
 /**
- * The block for a body's hillshade archive. `sourceProduct` names the DEM the shading came from.
+ * The block for a body's hillshade archive; `sourceProduct` names the DEM the shading came from.
  */
 export function hillshadeMetadata(body: BuildableBodyID, buildVersion: string, sourceProduct: string): PMTilesMetadata {
 	return {

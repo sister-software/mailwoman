@@ -1,20 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman gazetteer build gnaf-rooftop` — the AU rooftop address-point database from Geoscape
- *   G-NAF (CC-BY-4.0, attribution Geoscape Australia), emitted into the `OSMRegionDatabaseProvider` home so
- *   the situs tier serves AU with zero runtime changes. Sealed 0444. The pipeline module is
- *   lazy-imported so `--help` never faults without the optional `@mailwoman/osm` /
- *   `@mailwoman/resolver-wof-sqlite` peers.
- */
-
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer build gnaf-rooftop`, which builds the Australian
+ * rooftop address-point database from Geoscape G-NAF (CC-BY-4.0).
+ *
+ * The command imports the pipeline lazily so that `--help` works without the optional
+ * `@mailwoman/osm` and `@mailwoman/resolver-wof-sqlite` peers.
  */
 export const spec = {
 	name: "gnaf-rooftop",
@@ -24,7 +20,7 @@ export const spec = {
 			type: "string",
 			description: "Extracted G-NAF Standard/ PSV directory. Default <data-root>/gnaf/may26/extracted/…/Standard",
 		},
-		out: { type: "string", description: "Output database. Default <data-root>/osm/address-points-au-au.db" },
+		out: { type: "string", description: "Output database. Default <data-root>/db/osm/address-points-au-au.db" },
 		states: {
 			type: "string",
 			description: "Comma-separated state prefixes (e.g. ACT,NSW) — the smoke rung. Default all",

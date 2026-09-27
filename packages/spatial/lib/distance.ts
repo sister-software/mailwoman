@@ -38,8 +38,12 @@ const RADII = {
 export type PlanetaryBodyID = "earth" | "moon" | "mars"
 
 /**
- * Mean radii in kilometres. Earth's is the value `radii` scales to its units. the Moon's and Mars's are the IAU mean
- * radii the usgs planetary products reference (the Moon as a sphere. Mars's mean radius, its DEM being on the areoid).
+ * Mean radii in kilometres.
+ *
+ * Earth's is the value `radii` scales to its units.
+ * The Moon's and Mars's are the IAU mean radii the usgs planetary products reference
+ * (the Moon as a sphere. Mars's mean radius, its DEM being on the areoid).
+ *
  * A distance on a body other than Earth is meaningless without one of these.
  */
 export const BODY_RADII_KM = {
@@ -57,7 +61,9 @@ export interface GreatCircleOptions {
 }
 
 /**
- * Shared great-circle math with no sentinel handling. `unit` selects the Earth radius.
+ * Shared great-circle math with no sentinel handling.
+ *
+ * `unit` selects the Earth radius.
  */
 function greatCircle(lat1: number, lon1: number, lat2: number, lon2: number, unit: EarthRadiusUnit): number {
 	const dLat = (lat2 - lat1) * ConversionFactor.DegreesToRadians
@@ -92,8 +98,10 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 }
 
 /**
- * Great-circle distance on the named body. {@link haversine} is this function on Earth. a caller with a body passes it
- * here. The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.
+ * Great-circle distance on the named body. {@link haversine} is this function on Earth.
+ * A caller with a body passes it here.
+ *
+ * The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.
  *
  * @category Position
  */
@@ -110,12 +118,15 @@ export function greatCircleDistance(
 }
 
 /**
- * Great-circle distance in kilometres between two lat/lon pairs given as raw scalars. The formula's one true home —
- * every resolver + eval consumer of the `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
+ * Returns the great-circle distance in kilometres between two coordinates on Earth.
  *
- * Unlike {@link haversine}, this is pure math with no Null-Island sentinel: `(0, 0)` is the Gulf of Guinea — a real
- * point rather than "missing coordinate". That sentinel convention belongs to the `GeoPointInput` object form (where a
- * 0/0 input means "no coordinate"), not to a raw scalar distance.
+ * The formula's one true home — every resolver + eval consumer of the
+ * `(aLat, aLon, bLat, bLon)` shape imports this instead of re-declaring it.
+ *
+ * Unlike {@link haversine}, this is pure math with no Null-Island sentinel:
+ * `(0, 0)` is the Gulf of Guinea — a real point rather than "missing coordinate".
+ * That sentinel convention belongs to the `GeoPointInput` object form
+ * (where a 0/0 input means "no coordinate"), not to a raw scalar distance.
  *
  * @category Position
  */
@@ -124,26 +135,36 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 }
 
 /**
- * Metres per degree of latitude — the scale {@link segmentDistanceMetres} reports in, and the constant the bounding-box
- * estimates in `#h3/polygon-cells` are built on.
+ * Metres per degree of latitude.
+ *
+ * The scale {@link segmentDistanceMetres} reports in, and the constant the
+ * bounding-box estimates in `#h3/polygon-cells` are built on.
  */
 export const METRES_PER_DEGREE = 111_320
 
 /**
- * Square metres in a square kilometre — the conversion every polygon layer's area receipt reports through.
+ * Square metres in a square kilometre.
+ *
+ * The conversion every polygon layer's area receipt reports through.
  */
 export const M2_PER_KM2 = 1_000_000
 
 /**
- * Metres from a point to a line segment, with longitude scaled for the latitude so the two axes are comparable.
+ * Metres from a point to a line segment, with longitude scaled for the latitude
+ * so the two axes are comparable.
  *
- * Measure TO the edge rather than TO the nearest vertex. A point a centimetre from a long edge can be metres from every
- * vertex of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
- * near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. That is the difference
- * between "two channels rendered the same edge slightly differently" and "the conversion is wrong".
+ * Measure TO the edge rather than TO the nearest vertex.
+ * A point a centimetre from a long edge can be metres from every vertex of it,
+ * so a vertex distance overstates the gap without bound.
  *
- * The longitude scaling matters at the same scale: comparing raw degrees treats a degree of longitude as a degree of
- * latitude, which at 54°N overstates east-west distance by 70%.
+ * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
+ * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
+ *
+ * That is the difference between "two channels rendered the same edge slightly
+ * differently" and "the conversion is wrong".
+ *
+ * The longitude scaling matters at the same scale: comparing raw degrees treats a degree of
+ * longitude as a degree of latitude, which at 54°N overstates east-west distance by 70%.
  *
  * @category Position
  */
@@ -160,20 +181,24 @@ export function segmentDistanceMetres(
 	const vy = to[1]! - from[1]!
 	const lengthSquared = vx * vx + vy * vy
 
-	// A zero-length segment is a repeated vertex. the distance to it is the distance to the point.
+	// A zero-length segment is a repeated vertex.
+	// The distance to it is the distance to the point.
 	const t = lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, (px * vx + py * vy) / lengthSquared))
 
 	return Math.hypot(px - t * vx, py - t * vy) * METRES_PER_DEGREE
 }
 
 /**
- * Metres from a point to the nearest ring edge of an areal geometry — `Infinity` when the geometry bounds no area or
- * carries no segment.
+ * Metres from a point to the nearest ring edge of an areal geometry.
  *
- * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can be metres from every vertex
- * of it, so a vertex distance overstates the gap without bound — measured on the flood layer's verification, one
- * near-miss read 1.58 m to vertices and 0.009 m to edges, a 9 mm difference overstated 175-fold. Every polygon layer's
- * two-path verification measures its boundary tolerance with this.
+ * `Infinity` when the geometry bounds no area or carries no segment.
+ *
+ * To the edge rather than to the nearest vertex: a point a centimetre from a long edge can
+ * be metres from every vertex of it, so a vertex distance overstates the gap without bound.
+ * Measured on the flood layer's verification, one near-miss read 1.58 m to vertices
+ * and 0.009 m to edges, a 9 mm difference overstated 175-fold.
+ *
+ * Every polygon layer's two-path verification measures its boundary tolerance with this.
  *
  * @category Position
  */

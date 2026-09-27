@@ -35,15 +35,21 @@ interface OffMapRow {
  */
 export interface EvalLatinOffmapOptions {
 	/**
-	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * Model artifact dir.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * Abstention threshold. Default 0.5.
+	 * Abstention threshold.
+	 *
+	 * Default 0.5.
 	 */
 	abstain?: number
 	/**
-	 * Dataset dir holding the Latin off-map test sets. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir holding the Latin off-map test sets.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -57,7 +63,9 @@ export interface EvalLatinOffmapResult {
 }
 
 /**
- * Coarse-placer Latin off-map handling eval — see the module doc. Emits the report to stdout.
+ * Coarse-placer Latin off-map handling eval — see the module doc.
+ *
+ * Emits the report to stdout.
  */
 export async function evalLatinOffmap(options: EvalLatinOffmapOptions = {}): Promise<EvalLatinOffmapResult> {
 	const modelDir = resolvePathBuilder(options.model || defaultModelDir())

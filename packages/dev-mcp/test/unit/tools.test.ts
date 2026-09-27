@@ -12,7 +12,8 @@ import { describe, expect, it } from "vitest"
 import { stubEngine as buildEngine, stubEngineRegistry } from "../stub-registry.ts"
 
 /**
- * A session whose answer is a pure function of the input, so a test can make two arms agree or disagree at will.
+ * A session whose answer is a pure function of the input, so a test can make
+ * two arms agree or disagree at will.
  */
 function stubEngine(id: string, effective: Record<string, unknown>, answer: (input: string) => unknown) {
 	return buildEngine({
@@ -70,7 +71,8 @@ const LITERAL = {
 
 describe("mwdev_job", () => {
 	/**
-	 * A child that prints a gauntlet-shaped log and exits 1 — what a completed run grading `fail` looks like.
+	 * A child that prints a gauntlet-shaped log and exits 1.
+	 * What a completed run grading `fail` looks like.
 	 */
 	const FAIL_SCRIPT =
 		'console.log("=== Gauntlet · regression (350/354 counted cases pass, 203 tracked) ===");' +
@@ -102,8 +104,10 @@ describe("mwdev_job", () => {
 	}
 
 	it("distinguishes a graded FAIL from a crash", async () => {
-		// The gauntlet exits 1 on a `fail` verdict, so `state: "failed"` is what a healthy failing run looks like. Those
-		// need different responses from a reader, so the difference is stated rather than inferred from an exit code.
+		// The gauntlet exits 1 on a `fail` verdict, so `state: "failed"` is what
+		// a healthy failing run looks like.
+		// Those need different responses from a reader, so the difference is stated
+		// rather than inferred from an exit code.
 		const result = await runToCompletion(FAIL_SCRIPT, 1)
 
 		expect(result["state"]).toBe("failed")
@@ -164,9 +168,9 @@ describe("mwdev_compare", () => {
 	})
 
 	it("caveats a zero-difference result, because that is also what an unfired pin looks like", async () => {
-		// Learned on 2026-08-16: this tool's first real run reported "0 of 558 differed — tight enough to read as a
-		// real absence" for a pin that never reached a decode. The number could not tell the two apart, so the
-		// result must not be relayed as though it could.
+		// Learned on 2026-08-16: this tool's first real run reported "0 of 558 differed —
+		// tight enough to read as a real absence" for a pin that never reached a decode.
+		// The number could not tell the two apart, so the result must not be relayed as though it could.
 		const same = (input: string) => input
 		const tools = await tableWith([stubEngine("a", { x: 1 }, same), stubEngine("b", { x: 2 }, same)])
 

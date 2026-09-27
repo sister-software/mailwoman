@@ -7,7 +7,7 @@
  *   replacement for the demo's imperative marker/bbox/camera redraw effect — a consumer computes the spec
  *   with `useMapPlaceRender(place)` and drops `<ResolvedPlaceLayers spec={spec} />` inside `<MapCanvas>`.
  *
- *   `spec = null` (no result / no candidate) renders nothing, which also unmounts the previous marker +
+ *   `spec = null` (no result / no candidate) renders no layers, which also unmounts the previous marker +
  *   outline — the teardown the old effect did by hand (`markerRef.remove()`, `clearBbox`) is now just
  *   React unmounting. node-import safety: pulls the map components — `@mailwoman/react/map` only.
  */
@@ -22,16 +22,20 @@ import { ResultOverlay } from "./ResultOverlay.tsx"
 
 export interface ResolvedPlaceLayersProps {
 	/**
-	 * The render spec (from {@link useMapPlaceRender}); `null` renders nothing.
+	 * The render spec (from {@link useMapPlaceRender}); `null` renders no layers.
 	 */
 	spec: MapPlaceRenderSpec | null
 	/**
-	 * Apply the computed camera target via {@link ResultCamera}. @default true. Set false when the consumer drives the
-	 * camera itself (e.g. a controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
+	 * Apply the computed camera target via {@link ResultCamera}. @default true.
+	 *
+	 * Set false when the consumer drives the camera itself
+	 * (e.g. A controlled `<MapCanvas viewState>` fed by {@link cameraToViewState}).
 	 */
 	applyCamera?: boolean
 	/**
-	 * Animate the camera move. Forwarded to {@link ResultCamera}. @default true
+	 * Animate the camera move.
+	 *
+	 * Forwarded to {@link ResultCamera}. @default true
 	 */
 	animateCamera?: boolean
 	/**

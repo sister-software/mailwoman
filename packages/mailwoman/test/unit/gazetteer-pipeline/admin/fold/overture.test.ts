@@ -6,7 +6,7 @@
  *
  *   The failure this pins is silent and cross-artifact. Ids were `idBase + rowIndex` over a threaded DuckDB scan, so
  *   the same division took a different id in each build: `8000001092006` is _Dolok Merawan, Indonesia_ in one shipped
- *   artifact and _Skałówki, Poland_ in another. Nothing errors — a stored id simply starts naming a different place,
+ *   artifact and _Skałówki, Poland_ in another. No error is raised — a stored id simply starts naming a different place,
  *   which is how an eval row scored a miss against two backends that had both answered correctly.
  */
 
@@ -18,8 +18,10 @@ import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/g
 import { describe, expect, test } from "vitest"
 
 /**
- * Gers-shaped ids. Real ones are opaque 32-char hex strings. the shape matters only in that the hash sees the whole
- * string.
+ * Gers-shaped ids.
+ *
+ * Real ones are opaque 32-char hex strings.
+ * The shape matters only in that the hash sees the whole string.
  */
 const GERS = [
 	"08f2ab12c4d5e6f708192a3b4c5d6e7f",
@@ -44,8 +46,9 @@ describe("assignSyntheticIDs", () => {
 	})
 
 	test("a place's id does not move when OTHER places join or leave the build", () => {
-		// The cross-release case — an Overture release that adds divisions must not renumber the ones
-		// already shipped. Only a collision can move an existing id, and then only its immediate neighbours.
+		// The cross-release case — an Overture release that adds divisions must not
+		// renumber the ones already shipped.
+		// Only a collision can move an existing id, and then only its immediate neighbours.
 		const before = assignSyntheticIDs(GERS)
 		const after = assignSyntheticIDs([...GERS, "08f6ef56a8b9cadb3c4d5e6f7a819203", "08f70f67b9cadbec4d5e6f7a81920314"])
 
@@ -62,8 +65,8 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns everything from 9e12 up. overlapping it would make one source's
-			// rows silently readable as the other's.
+			// The GeoNames alias fold owns everything from 9e12 up.
+			// Overlapping it would make one source's rows silently readable as the other's.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}
 	})
@@ -75,8 +78,8 @@ describe("assignSyntheticIDs", () => {
 	})
 
 	test("colliding ids are resolved without either place losing its row", () => {
-		// Forced by construction rather than found: probe the span at width 1 so every id collides, and
-		// assert the assignment still hands out distinct slots deterministically.
+		// Forced by construction rather than found: probe the span at width 1 so every id collides,
+		// and assert the assignment still hands out distinct slots deterministically.
 		const many = Array.from({ length: 50 }, (_, i) => `gers-${i}`)
 		const idmap = assignSyntheticIDs(many)
 
@@ -87,10 +90,11 @@ describe("assignSyntheticIDs", () => {
 })
 
 describe("the bulk-write statements bind against the real unified schema", () => {
-	// The column tuples are checked against the `WOFDatabase` interface at compile time. The tables are
-	// created by `createUnifiedSchema`'s DDL, which is a separate artifact — a column renamed in one and
-	// not the other type-checks perfectly and then fails partway through a multi-hour build. Binding a
-	// row against the real schema is the only thing that catches that.
+	// The column tuples are checked against the `WOFDatabase` interface at compile time.
+	// The tables are created by `createUnifiedSchema`'s DDL, which is a separate artifact.
+	// A column renamed in one and not the other type-checks perfectly and
+	// then fails partway through a multi-hour build.
+	// Binding a row against the real schema is the only thing that catches that.
 	async function openUnified(): Promise<DatabaseClient<WOFDatabase>> {
 		const db = DatabaseClient.temp<WOFDatabase>()
 
@@ -100,7 +104,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 	}
 
 	test("every prepared insert accepts a row", async () => {
-		await using db = await openUnified()
+		using db = await openUnified()
 		const { spr, names, population, concordances } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 1
 
@@ -118,9 +122,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
 
-		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the
-		// `gazetteer importance` join reads (`where c.other_source = 'wd:id'`) — the predicate is the
-		// interface, so it is asserted literally.
+		// #1884: the Wikidata concordance rides the same `wd:id` source the WOF ingest writes and the `gazetteer importance` join reads (`where c.other_source = 'wd:id'`). The predicate is the interface, so it is asserted literally.
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
 			other_id: "Q140147",
 		})
@@ -128,7 +130,7 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 	test("spr uses OR REPLACE so a re-ingest updates the row rather than throwing on its primary key", async () => {
 		// Content-derived ids make a re-ingest recompute the same id, so this is the path a second run takes.
-		await using db = await openUnified()
+		using db = await openUnified()
 		const { spr } = prepareInserts(db)
 		const id = OVERTURE_ID_BASE + 2
 
@@ -142,16 +144,17 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 describe("foldedPlacetype", () => {
 	test("Singapore's planning areas become boroughs, which a locality query already reaches", () => {
-		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never to `county`, so every one
-		// of the 55 planning areas was unreachable by any admin tag a parse produces.
+		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never to `county`,
+		// so every one of the 55 planning areas was unreachable by any admin tag a parse produces.
 		expect(foldedPlacetype("county", "SG")).toBe("borough")
 		expect(foldedPlacetype("county", "sg")).toBe("borough")
 	})
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
-		// KW 137 county places against 13 localities and QA 79 against 46 both clear the count test and fail the name
-		// test: Kuwait's county names are underscore-joined ascii while its Arabic names sit on `locality`, and Qatar's
-		// are Doha's zone numbers. Admitting either would attest surfaces nobody writes.
+		// KW 137 county places against 13 localities and QA 79 against 46 both clear the count
+		// test and fail the name test: Kuwait's county names are underscore-joined ascii
+		// while its Arabic names sit on `locality`, and Qatar's are Doha's zone numbers.
+		// Admitting either would attest surfaces nobody writes.
 		expect(foldedPlacetype("county", "KW")).toBe("county")
 		expect(foldedPlacetype("county", "QA")).toBe("county")
 		expect(foldedPlacetype("county", "US")).toBe("county")

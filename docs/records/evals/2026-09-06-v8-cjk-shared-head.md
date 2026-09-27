@@ -110,7 +110,7 @@ refuses a `regionScopeMiss` answer, and those rows fall to the prefecture centro
 15–19 km rows are municipality-centroid distances (`新潟市秋葉区`, `かすみがうら市`), the board tolerance's edge.
 
 **The postcode the walk cannot reach yet.** 637 of the 2,000 rows carry a `〒` code, every one keyed in
-`$MAILWOMAN_DATA_ROOT/wof/postalcode-jp.db` (142,604 WOF rows; 48,216 unlocated at 0,0), and the candidate table folds
+`$MAILWOMAN_DATA_ROOT/db/wof/postalcode-jp.db` (142,604 WOF rows; 48,216 unlocated at 0,0), and the candidate table folds
 no JP postcode extract, so the probe returns nothing. Simulated on the same rows: the located code's centroid is 0.52 km
 (p50) / 2.31 km (p90) from the entrance point; 586 of 637 pass on it, 36 of them rows the municipality centroid fails,
 and the 51 unlocated codes fall through to today's answer because the fold skips 0,0 rows. `postalcode-jp.db` is now in

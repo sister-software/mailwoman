@@ -8,7 +8,7 @@
  *   The reported failure was `Maracaibo 4001, Zulia, Venezuela` answering with no country at all. The
  *   parse mis-tagged `Zulia` — a Venezuelan region — as a locality. Venezuela has no locality Zulia and
  *   Colombia does, so the locality claim was satisfiable only in CO. the walk inferred CO and probed
- *   `Venezuela` inside it, finding nothing.
+ *   `Venezuela` inside it, finding no match.
  *
  *   **The live input stopped reproducing it before the guard existed**, because the parse moved — today
  *   the same string reads `street: Maracaibo` + `house_number: 4001`, which never reaches the vulnerable
@@ -31,8 +31,8 @@ const VENEZUELA = 8_040_579_053_981
 const ZULIA_LOCALITY_CO = 8_084_693_553_936
 
 /**
- * The controlled contest, and the whole point of it: `Zulia` exists as a region in Venezuela and as a locality in
- * Colombia, so a walk that trusts the mis-tag can satisfy it only by moving country.
+ * The controlled contest, and the whole point of it: `Zulia` exists as a region in Venezuela and as a
+ * locality in Colombia, so a walk that trusts the mis-tag can satisfy it only by moving country.
  */
 const PLACES: ResolvedPlace[] = [
 	{ id: VENEZUELA, name: "Venezuela", placetype: "country", country: "VE", lat: 8, lon: -66, score: 7.4 },
@@ -75,9 +75,11 @@ const node = (
 ): AddressNode => ({ tag, value, start, end, confidence: 0.9, children })
 
 /**
- * The malformed parse, nested the way the decoder nests — country at the root, admin depth downward, which is the shape
- * `Maracaibo, Zulia, Venezuela` produces today (`country > region > locality`). Here `Zulia` occupies the locality slot
- * and `Maracaibo` sits outside the winner's lineage, which is what the report's trace shows.
+ * The malformed parse, nested the way the decoder nests — country at the root, admin depth downward,
+ * which is the shape `Maracaibo, Zulia, Venezuela` produces today (`country > region > locality`).
+ *
+ * Here `Zulia` occupies the locality slot and `Maracaibo` sits outside the winner's
+ * lineage, which is what the report's trace shows.
  */
 const MALFORMED_PARSE: AddressTree = {
 	raw: "Maracaibo 4001, Zulia, Venezuela",
@@ -110,7 +112,8 @@ describe("#2248 — an inferred country must never overrule one the input named"
 		const backend = new RecordingBackend()
 		const result = await createWOFResolver(backend).resolveTree(MALFORMED_PARSE)
 
-		// Leaving `Zulia` unresolved is the correct degradation here. its correct tagging belongs to #1748.
+		// Leaving `Zulia` unresolved is the correct degradation here.
+		// Its correct tagging belongs to #1748.
 		const zulia = result.roots[0]?.children.find((child) => child.value === "Zulia")
 
 		expect(zulia?.placeID).not.toBe(`wof:${ZULIA_LOCALITY_CO}`)

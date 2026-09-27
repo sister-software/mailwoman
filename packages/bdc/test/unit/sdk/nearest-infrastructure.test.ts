@@ -60,6 +60,7 @@ import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng, gridRingUnsafe, latLngToCell } from "h3-js"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501 }
@@ -71,13 +72,14 @@ const SPRINGFIELD_CENTER = {
 	coordinates: [SPRINGFIELD.longitude, SPRINGFIELD.latitude] as [number, number],
 }
 
-// A remote center, ~280 km from Springfield — far outside even this module's 32-ring (~11 km) default,
-// and with no fixture rows anywhere nearby. The sparse-result acceptance case.
+// A remote center, ~280 km from Springfield — far outside even this module's 32-ring
+// (~11 km) default, and with no fixture rows anywhere nearby.
+// The sparse-result acceptance case.
 const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
-// Exactly gridDistance 20 from the Springfield origin cell — inside the 32-ring default (covers ≤ 31),
-// outside POILookup's own internal default of 16 rings (covers ≤ 15). Derived from h3-js, never
-// hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
+// Exactly gridDistance 20 from the Springfield origin cell — inside the 32-ring default
+// (covers ≤ 31), outside POILookup's own internal default of 16 rings (covers ≤ 15).
+// Derived from h3-js, never hardcoded, matching poi-lookup.test.ts's TRAIL_SPARSE discipline.
 const MID_RING_GRID_DISTANCE = 20
 const [MID_RING_LAT, MID_RING_LNG] = cellToLatLng(gridRingUnsafe(SPRINGFIELD_ORIGIN, MID_RING_GRID_DISTANCE)[0]!)
 
@@ -136,18 +138,18 @@ function cellFor(latitude: number, longitude: number): number {
 }
 
 /**
- * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom) — not
- * `buildPOIDatabase`, see this file's header docstring for why.
+ * Builds a minimal poi.db fixture straight against `poi-schema.ts` (the `poi-lookup.test.ts` idiom),
+ * not `buildPOIDatabase`, see this file's header docstring for why.
  */
-async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promise<void> {
+async function buildPOIFixture(path: PathBuilder, rows: readonly FixtureRow[]): Promise<void> {
 	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
-	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes dictionary
-	// lives alongside it and there's no standalone builder for just that table.
+	// `createPOIStagingTables` also creates `poi_stage` (unused here) — the category-codes
+	// dictionary lives alongside it and there's no standalone builder for just that table.
 	await createPOIStagingTables(kdb)
-	// POILookup's constructor unconditionally prepares a statement against `poi_search` — the FTS5 table
-	// must exist even though these tests never search by name.
+	// POILookup's constructor unconditionally prepares a statement against `poi_search`.
+	// The FTS5 table must exist even though these tests never search by name.
 	createPOISearchFTS(kdb)
 
 	for (const [category, id] of Object.entries(CATEGORY_IDS)) {
@@ -185,8 +187,10 @@ async function buildPOIFixture(path: string, rows: readonly FixtureRow[]): Promi
 }
 
 /**
- * A minimal `layerschemadatabase`-only fixture — not poi.db's own coverage table. Proves the coverage join runs against
- * whatever database the caller passes, independent of poi.db's own coverage.
+ * A minimal `layerschemadatabase`-only fixture rather than poi.db's own coverage table.
+ *
+ * Proves the coverage join runs against whatever database the caller passes,
+ * independent of poi.db's own coverage.
  */
 async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>> {
 	const kdb = DatabaseClient.temp<layerschemadatabase>()
@@ -213,11 +217,11 @@ async function openemptyschemadb(): Promise<DatabaseClient<layerschemadatabase>>
 }
 
 let scratch: TemporaryDirectory
-let poiDBPath: string
+let poiDBPath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("bdc-nearest-infrastructure-")
-	poiDBPath = scratch.resolve("poi.db")
+	poiDBPath = scratch.path("poi.db")
 
 	await buildPOIFixture(poiDBPath, ALL_ROWS)
 })
@@ -272,8 +276,8 @@ describe("nearestInfrastructure", () => {
 		using schemadb = await openemptyschemadb()
 
 		// Discover which res-6 cells the hits land in (via the same reconstruction nearestInfrastructure
-		// itself uses), then write coverage for exactly those cells — robust regardless of whether the
-		// fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
+		// itself uses), then write coverage for exactly those cells — robust regardless of
+		// whether the fixture's near/mid rows happen to share one res-6 parent or straddle a boundary.
 		const uncoveredHits = await nearestInfrastructure(poiLookup, schemadb, {
 			center: SPRINGFIELD_CENTER,
 			categoryIDs: TELECOM_CATEGORY_IDS,
@@ -299,8 +303,8 @@ describe("nearestInfrastructure", () => {
 			expect(hit.coverage).toEqual({
 				h3Cell: res9ShortCellToRes6Parent(hit.h3Cell),
 				completeness: 0.75,
-				// The fixture writes no basis, so it reads back as the weakest one — which is also the
-				// reason a 0.75 here cannot license an exclusion on its own.
+				// The fixture writes no basis, so it reads back as the weakest one, which is
+				// also the reason a 0.75 here cannot license an exclusion on its own.
 				basis: CoverageBasis.SourcePresent,
 				observedRows: 42,
 			})

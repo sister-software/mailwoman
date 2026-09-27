@@ -19,9 +19,10 @@ const FAIL_PATTERNS: RegExp[] = [
 	/uncaught.*onnxruntime/i,
 	// Workspace-alias regression: webpack failing to find one of our packages.
 	/cannot find module '@mailwoman\//i,
-	// Asset 404 on first-party content. Both boundaries are required so this matches an HTTP status rather than a
-	// digit run inside a longer token: the demo's debug banner prints the build's commit SHA, and one hex SHA in
-	// every 4,096 begins `404`.
+	// Asset 404 on first-party content.
+	// Both boundaries are required so this matches an HTTP status rather than a digit
+	// run inside a longer token: the demo's debug banner prints the build's commit SHA,
+	// and one hex SHA in every 4,096 begins `404`.
 	/\b404\b/i,
 	/net::err_/i,
 ]
@@ -30,9 +31,10 @@ const FAIL_PATTERNS: RegExp[] = [
  * Noise — never causes a failure, never appears in the captured event list.
  */
 const IGNORE_PATTERNS: RegExp[] = [
-	// The data origin resets a long download now and then and the runtime retries it once. the browser logs the first
-	// attempt regardless. A reset the retry does not recover from surfaces as a loader error or a missing result, which
-	// the readiness wait and the result assertions catch.
+	// The data origin resets a long download now and then and the runtime retries it once.
+	// The browser logs the first attempt regardless.
+	// A reset the retry does not recover from surfaces as a loader error or a missing result,
+	// which the readiness wait and the result assertions catch.
 	/net::ERR_CONNECTION_RESET/,
 	/Removing initializer 'val_/, // onnxruntime cleanup
 	/WebGL.*GPU stall/i,

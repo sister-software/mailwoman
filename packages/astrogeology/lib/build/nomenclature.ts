@@ -49,19 +49,21 @@ export async function* readNomenclatureRows(
 		"EPSG:4326",
 		"-t_srs",
 		"EPSG:4326",
-		String(seq),
+		seq,
 		`/vsizip/${archivePath}`,
 		layer,
 	])
 
-	for await (const feature of JSONSpliterator.fromAsync<{ properties: NomenclatureSourceRow }>(String(seq))) {
+	for await (const feature of JSONSpliterator.fromAsync<{ properties: NomenclatureSourceRow }>(seq)) {
 		yield feature.properties
 	}
 }
 
 /**
- * The declutter table: the smallest diameter, in kilometres, that appears at each zoom, largest first. A feature
- * smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}. Cartographic decluttering rather than ranking.
+ * The declutter table: the smallest diameter, in kilometres, that appears at each zoom, largest first.
+ *
+ * A feature smaller than every row appears at {@link SMALLEST_FEATURE_ZOOM}.
+ * Cartographic decluttering rather than ranking.
  */
 const DECLUTTER_STEPS: ReadonlyArray<readonly [minDiameterKm: number, zoom: number]> = [
 	[300, 0],
@@ -137,7 +139,9 @@ export interface NomenclatureBuildOptions {
 }
 
 /**
- * The tippecanoe run. `-r1` turns off density-based point dropping, so the per-feature `minzoom` is the only declutter.
+ * The tippecanoe run.
+ *
+ * `-r1` turns off density-based point dropping, so the per-feature `minzoom` is the only declutter.
  */
 export async function buildNomenclaturePMTiles(options: NomenclatureBuildOptions): Promise<{ command: string[] }> {
 	const args = [

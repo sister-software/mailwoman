@@ -79,9 +79,10 @@ describe("taxonomy integrity", () => {
 
 	it("every osmTag present is well-formed, and every mailwoman-infra category carries one", () => {
 		for (const category of getAllCategories()) {
-			// The full Overture snapshot ships ~2k categories with no osmTag (the CSV has no OSM mapping); osmTag is a
-			// curated field. Assert it's well-formed when present, and required on the infra classes the Overpass
-			// emitter must be able to render.
+			// The full Overture snapshot ships ~2k categories with no osmTag
+			// (the CSV has no OSM mapping); osmTag is a curated field.
+			// Assert it's well-formed when present, and required on the infra classes
+			// the Overpass emitter must be able to render.
 			if (category.osmTag !== undefined) {
 				expect(category.osmTag, `malformed osmTag on ${category.id}`).toMatch(/^[a-z_]+=[a-z_]+$/)
 			}
@@ -110,7 +111,8 @@ describe("resolveOvertureCategories", () => {
 	it("fans a mismatched seed id out over its Overture leaves", () => {
 		const supermarket = resolveOvertureCategories("supermarket")
 		expect(supermarket).toContain("grocery_store")
-		// The curated seed id itself is not a stored Overture leaf — it must not leak into the probe list.
+		// The curated seed id itself is not a stored Overture leaf.
+		// It must not leak into the probe list.
 		expect(supermarket).not.toContain("supermarket")
 
 		const trail = resolveOvertureCategories("trail")
@@ -158,7 +160,8 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("carries brand-new Overture identity categories that the seed taxonomy never had", () => {
-		// `acupuncture` is a real Overture leaf with no curated overlay — it must resolve identity-style (#1206 fallback).
+		// `acupuncture` is a real Overture leaf with no curated overlay.
+		// It must resolve identity-style (#1206 fallback).
 		const acupuncture = getPOICategory("acupuncture")
 		expect(acupuncture?.source).toBe("overture")
 		expect(acupuncture?.hierarchy.at(-1)).toBe("acupuncture")
@@ -166,13 +169,15 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("curated records WIN id collisions and keep owning their synonym phrases (board depends on it)", () => {
-		// `supermarket`/`cafe`/`trail`/`bank`/`school` all exist as Overture codes too, but the curated record wins:
-		// its curated `overtureCategories` rollup survives rather than a bare identity mapping.
+		// `supermarket`/`cafe`/`trail`/`bank`/`school` all exist as Overture codes too,
+		// but the curated record wins: its curated `overtureCategories` rollup survives
+		// rather than a bare identity mapping.
 		expect(getPOICategory("supermarket")?.overtureCategories).toContain("grocery_store")
 		expect(resolveOvertureCategories("cafe")).toEqual(["cafe", "coffee_shop"])
 
-		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`) are not
-		// emitted as standalone categories — otherwise their id-phrase would shadow the curated synonym in the index.
+		// The Overture leaves those curated records absorb (`coffee_shop`, `grocery_store`, `hiking_trail`)
+		// are not emitted as standalone categories.
+		// Otherwise their id-phrase would shadow the curated synonym in the index.
 		expect(getPOICategory("coffee_shop")).toBeUndefined()
 		expect(getPOICategory("grocery_store")).toBeUndefined()
 		expect(getPOICategory("hiking_trail")).toBeUndefined()
@@ -185,9 +190,10 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("recovers absorbed-leaf phrases via curated synonyms (#1209 review)", () => {
-		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`, `mountain_bike_trail`,
-		// `greengrocer`), so their leaf id-phrases are no longer emitted standalone. Curated synonyms keep the direct
-		// phrases resolving to the canonical curated id.
+		// The curated overlay absorbs these Overture leaves
+		// (`high_school`, `bank_credit_union`, `mountain_bike_trail`, `greengrocer`),
+		// so their leaf id-phrases are no longer emitted standalone.
+		// Curated synonyms keep the direct phrases resolving to the canonical curated id.
 		expect(lookupPOICategory("high school").map((m) => m.category.id)).toEqual(["school"])
 		expect(lookupPOICategory("middle school").map((m) => m.category.id)).toEqual(["school"])
 		expect(lookupPOICategory("elementary school").map((m) => m.category.id)).toEqual(["school"])
@@ -195,23 +201,26 @@ describe("full Overture snapshot + curated overlay", () => {
 		expect(lookupPOICategory("mountain bike trail").map((m) => m.category.id)).toEqual(["trail"])
 		expect(lookupPOICategory("greengrocer").map((m) => m.category.id)).toEqual(["supermarket"])
 
-		// `credit union` is special: Overture keeps a standalone `credit_union` category (its own id-phrase), and the
-		// curated `bank` record absorbs the separate `bank_credit_union` leaf. The added synonym maps the phrase onto
-		// bank too, so it yields both — the curated redirect first (#1933 precedence), then the standalone category.
+		// `credit union` is special: Overture keeps a standalone `credit_union` category
+		// (its own id-phrase), and the curated `bank` record absorbs the separate `bank_credit_union` leaf.
+		// The added synonym maps the phrase onto bank too, so it yields both — the curated
+		// redirect first (#1933 precedence), then the standalone category.
 		expect(lookupPOICategory("credit union").map((m) => m.category.id)).toEqual(["bank", "credit_union"])
 	})
 
-	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label. Four of those redirect
-	// somewhere else, and before the tie-break none of the four could reach a caller: the identity phrase was inserted
-	// first, the sort was stable, and `matchPOISubject` reads `hits[0]`. The other four collide with their own label and
-	// are unaffected either way.
+	// Eight of the 55 curated synonyms spell a phrase that is also some category's id or label.
+	// Four of those redirect somewhere else, and before the tie-break none of the four
+	// could reach a caller: the identity phrase was inserted first, the sort was stable,
+	// and `matchPOISubject` reads `hits[0]`.
+	// The other four collide with their own label and are unaffected either way.
 	it("lets a curated synonym outrank a category whose id spells the same phrase (#1933)", () => {
 		expect(lookupPOICategory("drugstore", "en-US").map((m) => [m.category.id, m.phraseSource])).toEqual([
 			["pharmacy", "synonym"],
 			["drugstore", "identity"],
 		])
 
-		// The `drugstore → pharmacy` row is scoped to en-US. elsewhere the phrase means the category it names.
+		// The `drugstore → pharmacy` row is scoped to en-US.
+		// Elsewhere the phrase means the category it names.
 		expect(lookupPOICategory("drugstore", "en-GB")[0]?.category.id).toBe("drugstore")
 		expect(lookupPOICategory("drugstore")[0]?.category.id).toBe("drugstore")
 
@@ -229,9 +238,10 @@ describe("full Overture snapshot + curated overlay", () => {
 		const once = prettyJSON(await generateTaxonomyTable())
 		expect(prettyJSON(await generateTaxonomyTable())).toBe(once)
 
-		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON is
-		// oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte). So the committed
-		// file is compared by parsed content rather than raw bytes: same data, formatting aside.
+		// The committed taxonomy.json is the generator's output run through oxfmt (repo law: committed JSON
+		// is oxfmt-clean — short arrays inline — which `JSON.stringify` can't reproduce byte-for-byte).
+		// So the committed file is compared by parsed content rather than raw bytes:
+		// same data, formatting aside.
 		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())

@@ -2,18 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it.
- *
- *   the meaning-OF-zero inversion is the point OF this file, and it is checked in three ways rather than
- *   asserted once. Every coverage row must fail `supportsExclusion`; a builder handing a stronger basis to
- *   the coverage writer must be refused. and an artifact carrying one must be refused at open time. The
- *   sibling flood layer reports a point inside its footprint and outside every polygon as the authority's
- *   Zone 1 designation. This layer must report the same geometry as `unknown` with no designation, because
- *   ncerm publishes no coverage statement and an absent polygon may simply be inland.
- *
- *   the twelve scenarios staying separable is the second thing pinned here. The fixture puts two scenarios
- *   over the same ground with different distances, so a build that pooled them would answer one point with
- *   two contradictory numbers under one name.
+ *   The fixture rung: build a real sealed artifact from hand-built geometry, then read it. NCERM publishes no
+ *   coverage statement, so a point inside the footprint but outside every polygon is `unknown` with no
+ *   designation rather than the authority's Zone 1.
  */
 
 import { CoastalContainmentPath, CoastalErosionLookup, CoastalReadingKind } from "@mailwoman/coastal"
@@ -39,6 +30,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { CoverageBasis, supportsExclusion } from "@mailwoman/evidence"
 import { rectangleRing } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const INDEX_RESOLUTION = 10
@@ -48,12 +40,12 @@ const NFI = FIXTURE_SCENARIOS.noIntervention.key
 const SMP = FIXTURE_SCENARIOS.withPlan.key
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 let result: BuildCoastalResult
 let lookup: CoastalErosionLookup
 
 /**
- * A point inside the first fixture band — where both scenarios have a polygon.
+ * A point inside the first fixture band, where both scenarios have a polygon.
  */
 const INSIDE_BAND_A = {
 	latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE / 2,
@@ -74,8 +66,8 @@ const OUTSIDE_EVERY_BAND = {
 async function build(
 	features: CoastalSourceFeature[] = fixtureFeatures(),
 	out = "coastal-england.db"
-): Promise<{ path: string; result: BuildCoastalResult }> {
-	const path = scratch.resolve(out)
+): Promise<{ path: PathBuilder; result: BuildCoastalResult }> {
+	const path = scratch.path(out)
 
 	const built = await buildCoastalDatabase({
 		source: fixtureSource(features),
@@ -135,8 +127,9 @@ describe("the sealed artifact", () => {
 			frontage_id: number
 		}>
 
-		// Every fixture feature carries frontage 1000 — the real product repeats a frontage id within one layer, and a
-		// build keyed on it would have collapsed five rows into one.
+		// Every fixture feature carries frontage 1000.
+		// The real product repeats a frontage id within one layer, and a build keyed
+		// on it would have collapsed five rows into one.
 		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
 		expect(rows).toHaveLength(5)
 		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
@@ -150,8 +143,9 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns nothing for a 5 m square, and a feature indexed to nothing reads
-		// downstream as an absence — the failure the per-part zero-cell guard exists to make impossible.
+		// A polyfill keyed on cell centres returns no cells for a 5 m square,
+		// and a feature indexed to no cell reads downstream as an absence.
+		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})
 })
@@ -219,9 +213,6 @@ describe("the meaning-of-zero inversion", () => {
 		expect(rows.length).toBeGreaterThan(0)
 		expect(result.coverageBasis).toBe(CoverageBasis.SourcePresent)
 
-		// the failing test the issue asks FOR: not one assertion on one row, but the whole table read back and every row
-		// checked through the interface's own predicate. A code path that read `supportsExclusion` as true for this layer
-		// would have to make one of these rows carry a stronger basis, and this fails the moment it does.
 		for (const row of rows) {
 			expect(row.basis).toBe(CoverageBasis.SourcePresent)
 			expect(supportsExclusion({ basis: row.basis as CoverageBasis })).toBe(false)
@@ -244,10 +235,8 @@ describe("the meaning-of-zero inversion", () => {
 	})
 
 	it("refuses to OPEN an artifact whose coverage would license a negative claim", () => {
-		const path = scratch.resolve("tampered.db")
+		const path = scratch.path("tampered.db")
 
-		// The sealed artifact is copied and one coverage row is promoted to `designated`, which is exactly what a builder
-		// generalizing the flood layer's rule would have produced. The reader must refuse rather than answer confidently.
 		using source = new DatabaseClient<CoastalDatabase>(databasePath, { readOnly: true })
 
 		source.exec(`VACUUM INTO '${path}'`)
@@ -349,7 +338,8 @@ describe("the declared domains", () => {
 			published_year: number
 		}
 
-		// A single space rather than an empty string — a reader testing `=== ""` finds nothing and reports these as ordinary.
+		// A single space rather than an empty string.
+		// A reader testing `=== ""` finds no empty string and reports these as ordinary.
 		expect(row.mt_policy).toBe(" ")
 		expect(row.published_year).toBe(0)
 	})
@@ -371,7 +361,8 @@ describe("the area cross-check", () => {
 			9,
 			FIXTURE_SCENARIOS.noIntervention,
 			[[rectangleRing(lon, lat, lon + FIXTURE_SIDE, lat + FIXTURE_SIDE)]],
-			// Twice the area the rings actually cover — the shape a hole read as an exterior ring produces.
+			// Twice the area the rings actually cover.
+			// The shape a hole read as an exterior ring produces.
 			{ sourceAreaM2: 2 * 1_200_000 }
 		)
 

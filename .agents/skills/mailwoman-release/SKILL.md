@@ -24,7 +24,7 @@ operational checklist + the landmines that have bitten real releases (v4.13.0 hi
 
 1. **Always via CI** — `.github/workflows/publish.yml`, dispatched with `gh workflow run`. npm
    Trusted Publishing (OIDC) means no npm token lives anywhere; CI publishes the weights packages
-   too. Local `yarn release` is not the path (local `npm whoami` is E401 by design; the `/mnt/playpen`
+   too. Local `yarn release` is not the path (local `npm whoami` is E401 by design; the `$MAILWOMAN_DATA_ROOT`
    weight source also doesn't exist on the runner). The operator's rule: "We never do it locally."
 2. **Full-sync versioning** — every workspace in `.release-it.json` + `neural-weights-*/model-card.json#version`
    - `release.config.json#version` + the demo `releases.json` share one number per release. The
@@ -59,7 +59,7 @@ For a **model release**, on a branch off current `main`:
 
 1. **Stage the int8 BESIDE the canonical** (new filename, never overwrite):
    ```bash
-   cp out/v<run>/model.onnx /mnt/playpen/mailwoman-data/models/quantized/model-v<run>-step-40000-int8.onnx
+   cp out/v<run>/model.onnx $MAILWOMAN_DATA_ROOT/models/quantized/model-v<run>-step-40000-int8.onnx
    md5sum out/v<run>/model.onnx   # record this — you'll verify it in the published tarball
    ```
 2. **`release.config.json`**: `weights.model` → the new filename, `version` → target, `weights.lineage`

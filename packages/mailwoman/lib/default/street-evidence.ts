@@ -5,7 +5,7 @@
  *   The default street-name evidence index (#727 phase-4c) for the user-facing parse surfaces. When a
  *   v3+ span-head model is loaded, `createRuntimePipeline` reranks the street on this bundled FR index
  *   (BAN `street-centroids-fr.db`) unless the caller passes their own `streetEvidence` or opts out with
- *   `streetEvidence: false`. The rerank is positive-evidence-only — it can add an atlas-confirmed street,
+ *   `streetEvidence: false`. The rerank is positive-evidence-only. It can add an atlas-confirmed street,
  *   never remove a model call (golden-safe: 0.000 golden regression, +16.9pp FR fragment street).
  *
  *   Loaded lazily + cached once per process. `@mailwoman/resolver-wof-sqlite` is an optional peer dep, so
@@ -21,16 +21,18 @@ import { resolvePath } from "path-ts"
 let cached: Promise<StreetLocalityEvidence | null> | null = null
 
 /**
- * Lazy-load + cache the bundled FR street-name index. Returns `null` when `@mailwoman/resolver-wof-sqlite` or the
- * `street-centroids-fr.db` database can't be resolved — the pipeline then reranks nothing (byte-stable). Cached for the
- * process lifetime (one handle, reused).
+ * Lazy-load + cache the bundled FR street-name index.
+ *
+ * @returns `null` when `@mailwoman/resolver-wof-sqlite` or the `street-centroids-fr.db`
+ * database can't be resolved — the pipeline then performs no rerank (byte-stable).
+ * Cached for the process lifetime (one handle, reused).
  */
 export function loadDefaultStreetEvidence(): Promise<StreetLocalityEvidence | null> {
 	if (!cached) {
 		cached = (async (): Promise<StreetLocalityEvidence | null> => {
 			try {
-				const { dataRootPath } = await import("@mailwoman/core/utils")
-				const dbPath = dataRootPath("ban", "street-centroids-fr.db")
+				const { banDatabasePath } = await import("@mailwoman/ban/paths")
+				const dbPath = banDatabasePath("street-centroids-fr.db")
 
 				if (!(await pathExists(dbPath))) return null
 				const { SQLiteStreetNameLookup } = await import("@mailwoman/resolver-wof-sqlite")

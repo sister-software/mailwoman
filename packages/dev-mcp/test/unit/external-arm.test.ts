@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The external client against a scripted wire — the real parsing, the real refusals, no network.
- *
- *   The bodies below are shortened captures of what the three engines actually answer rather than shapes invented from their
- *   documentation. A parser tested against its author's idea of the format is a parser tested against nothing.
+ *   Tests external geocoder parsing and refusals against scripted responses, with no network access.
  */
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
@@ -85,8 +82,7 @@ describe("ExternalGeocoderClient.search", () => {
 	})
 
 	it("refuses a transposed position instead of scoring the distance to it", async () => {
-		// A latitude past ±90 is what a lat/lon swap looks like on the wire. Accepting it would produce a finite
-		// haversine distance and an ordinary-looking miss, which is indistinguishable from a real answer that is wrong.
+		// After the swap the latitude is -120.4, which is out of range.
 		const swapped = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [37.3, -120.4] }, properties: {} }],
 		}
@@ -128,8 +124,7 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 	})
 
 	it("refuses an endpoint that will not say what it is, because a drop-in answers identically", async () => {
-		// Photon's search path has no version anywhere in it, so a 404 on /status leaves nothing to identify the arm
-		// by. Scoring it anyway is how a benchmark ends up comparing mailwoman against mailwoman.
+		// Photon reports no version on its search path, so the endpoint cannot identify itself without `/status`.
 		const search = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [2.35, 48.85] }, properties: {} }],
 		}
@@ -157,15 +152,13 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 		const dead = { throws: { message: "connect ECONNREFUSED 127.0.0.1:4000", code: "ERR_NETWORK" } }
 		const { client: pelias } = client(ExternalEngine.Pelias, [dead])
 
-		await expect(pelias.probeIdentity()).rejects.toThrow(/does not start or stop external services/)
+		await expect(pelias.probeIdentity()).rejects.toThrow(/does not start external services/)
 	})
 })
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// Asserted rather than assumed: `requestsPerMinute` alone does not deliver N requests per minute (agents.md
-		// records 100/min measured against a budget of 10), so the claim that this client is paced rests entirely on
-		// the interval limit being the one configured.
+		// The test measures dispatch times, because a configured rate alone makes no statement about pacing.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

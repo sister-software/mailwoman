@@ -4,7 +4,7 @@
 /**
  *   The placetype-pair prior's two registered decode-order test classes: (1) a window
  *   the prior biases stays a united BIO span through the `enforceWordConsistency` heal, and (2) a word
- *   the encoder is confident about (a large contrary logit) is not overridden by the prior — the
+ *   the encoder is confident about (a large contrary logit) is not overridden by the prior. The
  *   encoder's veto stays intact at a realistic magnitude. Both exercise `#decode` end-to-end via
  *   `traceParse` + a canned `NeuralRunner` — the same harness `trace-parse.test.ts` uses.
  *
@@ -60,8 +60,8 @@ function fixedPairIndex(
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
-		// No `parentDelta`: these are decode-order tests for the child-side bias, and adding a parent write
-		// would move spans they assert on for reasons unrelated to what they measure.
+		// No `parentDelta`: these are decode-order tests for the child-side bias, and adding a
+		// parent write would move spans they assert on for reasons unrelated to what they measure.
 		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
 	}
 }
@@ -73,16 +73,16 @@ async function loadTokenizer(): Promise<MailwomanTokenizer> {
 describe("placetype-pair prior — decode-order integration", () => {
 	it("a biased multi-piece word stays UNITED through enforceWordConsistency", async () => {
 		const tokenizer = await loadTokenizer()
-		// Fixture tokenizer split: "Shoreditch London" -> ['▁Shore','d','itch','▁London'] — "shoreditch"
-		// is pieces 0-2 (one word, three pieces), "london" is piece 3.
+		// Fixture tokenizer split: "Shoreditch London" -> ['▁Shore','d','itch','▁London'] —
+		// "shoreditch" is pieces 0-2 (one word, three pieces), "london" is piece 3.
 		const text = "Shoreditch London"
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces.map((p) => p.piece)).toEqual(["▁Shore", "d", "itch", "▁London"])
 
-		// weak, internally-fragmented baseline for "shoreditch": B-street / O / B-locality across its 3
-		// pieces (magnitude 1) — a legal-but-inconsistent BIO sequence, the exact fragmentation class
-		// `enforceWordConsistency` exists to heal. "London" decides decisively on its own (magnitude 5,
-		// irrelevant to what's under test).
+		// weak, internally-fragmented baseline for "shoreditch": B-street / O / B-locality
+		// across its 3 pieces (magnitude 1) — a legal-but-inconsistent BIO sequence,
+		// the exact fragmentation class `enforceWordConsistency` exists to heal.
+		// "London" decides decisively on its own (magnitude 5, irrelevant to what's under test).
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 1
 		logits[1]![col("O")] = 1
@@ -95,14 +95,16 @@ describe("placetype-pair prior — decode-order integration", () => {
 			enforceWordConsistency: true,
 		})
 
-		// Baseline sanity — without the placetypePair prior, this exact weak/fragmented logit set really
-		// does trigger a wordConsistency heal. This shows that fragmentation changes the decode.
+		// Baseline sanity — without the placetypePair prior, this exact weak/fragmented
+		// logit set really does trigger a wordConsistency heal.
+		// This shows that fragmentation changes the decode.
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
-		// With the bias: the placetypePair prior's own B-first/I-rest write (delta 6.0, dominating the
-		// weak magnitude-1 baseline) already makes "shoreditch"'s three pieces unanimous before
-		// enforceWordConsistency runs — there is nothing left for the heal to do.
+		// With the bias: the placetypePair prior's own B-first/I-rest write
+		// (delta 6.0, dominating the weak magnitude-1 baseline) already makes "shoreditch"'s
+		// three pieces unanimous before enforceWordConsistency runs.
+		// The heal has no remaining work.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const biased = await classifier.traceParse(text, {
@@ -130,11 +132,11 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces).toHaveLength(4)
 
-		// strong, already-consistent baseline for "shoreditch": B-street / I-street / I-street at
-		// magnitude 20 — a realistic "the encoder is sure" margin (softmax-saturating relative to the
-		// prior's 6.0 delta. documented here since the brief calls for the exact magnitudes used). The
-		// placetypePair prior below would bias the same window toward `dependent_locality` at its real
-		// artifact's calibrated delta (6.0) — 20 > 6, so the encoder's reading must win.
+		// strong, already-consistent baseline for "shoreditch": B-street / I-street / I-street at magnitude 20.
+		// A realistic "the encoder is sure" margin (softmax-saturating relative to the prior's
+		// 6.0 delta. Documented here since the brief calls for the exact magnitudes used).
+		// The placetypePair prior below would bias the same window toward `dependent_locality` at
+		// its real artifact's calibrated delta (6.0) — 20 > 6, so the encoder's reading must win.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 20
 		logits[1]![col("I-street")] = 20
@@ -168,12 +170,16 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
-	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer: the emission-side δ (6.0) wins nothing —
-	 * "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18)
-	 * by 4, more than the per-piece emission gap but less than β=5. So a beta-less decode keeps the fused path (the
-	 * measured current-main behavior on the 17 comma-free GB rows), and the transitionBeta artifact flips it — the
-	 * probe's recovery mechanism, end-to-end through `#decode` → viterbi. Comma-free input, `probeMode` omitted: the auto
-	 * chain's anchored leg is the one that fires, matching the production population.
+	 * The task-8 path-fusion lattice, reconstructed on the fixture tokenizer:
+	 * the emission-side δ (6.0) does not win — "shoreditch"'s fused street run
+	 * (8 + 7 + 7 = 22) outscores the biased dependent_locality reading (6 + 6 + 6 = 18) by 4,
+	 * more than the per-piece emission gap but less than β=5.
+	 *
+	 * So a beta-less decode keeps the fused path (the measured current-main behavior
+	 * on the 17 comma-free GB rows), and the transitionBeta artifact flips it —
+	 * the probe's recovery mechanism, end-to-end through `#decode` → viterbi.
+	 * Comma-free input, `probeMode` omitted: the auto chain's anchored leg is the
+	 * one that fires, matching the production population.
 	 */
 	function fusedLogits(): number[][] {
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
@@ -197,8 +203,9 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			placetypePair: { index },
 		})
 
-		// The prior fired (anchored leg, emission bias composed) yet the global path stays fused — the exact
-		// emission-only miss the task-8 probe measured, and the exact decode a pre-transition-beta build produces.
+		// The prior fired (anchored leg, emission bias composed) yet the global path stays fused.
+		// The exact emission-only miss the task-8 probe measured, and the exact
+		// decode a pre-transition-beta build produces.
 		expect(trace.priors.find((p) => p.kind === "placetypePair")).toEqual({
 			kind: "placetypePair",
 			applied: true,
@@ -230,8 +237,8 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			col("B-locality"),
 		])
 
-		// The beta is a decoder term: the post-prior emission matrices are byte-identical across the two runs —
-		// only the transition side moved.
+		// The beta is a decoder term: the post-prior emission matrices are byte-identical
+		// across the two runs — only the transition side moved.
 		expect(withBeta.emissions).toEqual(betaLess.emissions)
 
 		// And the flip lands in the tree the user sees.

@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import {
 	buildFSTFromWOF,
@@ -10,6 +9,7 @@ import {
 	deserializeFST,
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { beforeAll, describe, expect, it } from "vitest"
 
 // Synthetic-trie cases exercise the binary format without external artifacts.
@@ -127,7 +127,7 @@ describe("FST binary serialization — unit (synthetic)", () => {
 
 // Real-WOF cases exercise the format against production-scale source data.
 
-const WOF_DB = dataRootPath("wof", "whosonfirst-data-admin-us-latest.db")
+const WOF_DB = wofDatabasePath("whosonfirst-data-admin-us-latest.db")
 const HAS_WOF = await pathExists(WOF_DB)
 
 describe.skipIf(!HAS_WOF)("FST binary serialization — integration (WOF)", () => {
@@ -259,10 +259,7 @@ describe("surface-ambiguity classes (survey #4) — header flags bit0 + the form
 	it("mixed presence still flags the header and defaults absent entries to 0 in-band", () => {
 		const m = ambiguousMatcher()
 
-		// an entry without the field alongside one with it — the writer records 0 for it, and since the
-		// header flag is set the reader reports 0 (a build that opted in but had no count for a surface)
-		// Reaching past `private` to seed a fixture the public surface cannot express.
-		;(m as unknown as { nodes: Array<{ places: unknown[] }> }).nodes[1]!.places.push({
+		m.toNodes()[1]!.places.push({
 			wofID: 102,
 			placetype: "locality",
 			name: "Pierre Part",

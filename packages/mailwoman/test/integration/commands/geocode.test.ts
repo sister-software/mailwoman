@@ -10,7 +10,7 @@
  *
  *   Integration suite paths:
  *
- *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db
+ *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
  *   - Address-point database: --address-points-db flag (explicit, skips state-selection)
  *   - Interpolation database: --interpolation-db flag (explicit, skips state-selection)
  *
@@ -18,12 +18,16 @@
  *   database overrides, expecting a street-level coordinate near 30.5, -97.6.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { runFile } from "@mailwoman/core/process"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import {
+	addressPointDatabasePath,
+	interpolationDatabasePath,
+	wofDatabasePath,
+} from "@mailwoman/resolver-wof-sqlite/paths"
 import { mailwomanCLIPath } from "mailwoman/cli-kit/metadata"
 import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
@@ -33,36 +37,42 @@ import { describe, expect, test, vi } from "vitest"
 
 const CLI_PATH = await mailwomanCLIPath()
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
 // Per-state TX databases (the demo address is Round Rock, TX).
-const TX_ADDRESS_POINTS_DB = dataRootPath("address-points", "address-points-us-tx.db")
-const TX_INTERPOLATION_DB = dataRootPath("interpolation", "interpolation-us-tx.db")
+const TX_ADDRESS_POINTS_DB = addressPointDatabasePath("address-points-us-tx.db")
+const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
 
 /**
  * Wall-clock budget for a CLI spawn.
  *
- * The old 10 s was set against an imagined fast path. Measured 2026-08-03 on an idle 16-core box, one `mailwoman
- * geocode` takes 5.62 s end to end — 2.73 s of it node boot plus this CLI's import graph, before any model is touched —
- * so the margin was 1.8x. Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in
- * parallel. That is why these "flaked": not randomness, a deterministic threshold sitting just under a floor nobody had
- * measured. A generous budget costs nothing on a passing test.
+ * The old 10 s was set against an imagined fast path.
+ * Measured 2026-08-03 on an idle 16-core box, one `mailwoman geocode` takes 5.62 s end to end — 2.73 s
+ * of it node boot plus this CLI's import graph, before any model is touched — so the margin was 1.8x.
+ *
+ * Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in parallel.
+ * That is why these "flaked": not randomness, a deterministic threshold sitting
+ * just under a floor nobody had measured.
+ * A generous budget adds no time to a passing test.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget. Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget.
+ *
+ * Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s, which kills the test before the thing being measured can report,
+ * surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -170,10 +180,10 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
-					// Unset the env var and point the data root at an empty dir: since the proximity-bias
-					// pass, geocode auto-attaches the wofExtractPaths default set when the env is absent —
-					// on a standard data root that now succeeds (the new interface). The error interface
-					// only survives when no default database exists either.
+					// Unset the env var and point the data root at an empty dir: since the proximity-bias pass,
+					// geocode auto-attaches the wofExtractPaths default set when the env is absent —
+					// on a standard data root that now succeeds (the new interface).
+					// The error interface only survives when no default database exists either.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
@@ -196,8 +206,9 @@ describe("geocode argument validation", () => {
 const hasTxDatabases = hasTxAddressPoints && hasTxInterpolation
 
 /**
- * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides. Expects a
- * street-level coordinate near 30.5, -97.6 (Round Rock area).
+ * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides.
+ *
+ * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 	`geocode integration — ${wofPath} + TX databases`,
@@ -271,10 +282,10 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", async () => {
-			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON
-			// string. Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped
-			// output at 80 cols, inserting real newlines inside the JSON string and breaking
-			// JSON.parse. This test fails against the unfixed CLI.
+			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON string.
+			// Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped output
+			// at 80 cols, inserting real newlines inside the JSON string and breaking JSON.parse.
+			// This test fails against the unfixed CLI.
 			const { stdout } = await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
 					encoding: "utf8",
@@ -347,7 +358,8 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 )
 
 /**
- * Admin-only degradation: when no database is provided, geocode still returns a coordinate from the WOF admin centroid.
+ * Admin-only degradation: when no database is provided, geocode still returns
+ * a coordinate from the WOF admin centroid.
  */
 describe.skipIf(!hasCLICompiled || !hasWOFDB)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no databases provided", async () => {

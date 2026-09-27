@@ -10,13 +10,13 @@
  *   them are smaller than a res-9 cell, 75.1% smaller than a res-10 cell and 34.5% smaller than a res-11 one.
  *   So the `partial` share sits near 100% at every candidate and cannot choose between them.
  *
- *   two numbers can. candidates PER cell is what a probe pays — a cell naming eight polygons is eight
+ *   two numbers can. candidates PER cell is what a probe pays. A cell naming eight polygons is eight
  *   bounding-box tests and up to eight ray casts — and the polyfill-only zero-cell count is how many features
  *   the obvious index would have dropped, each of which would read downstream as an absence of zoning. Both
  *   are reported per resolution and the `partial` share rides beside them.
  *
- *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys
- *   nothing — the classification is per feature, so every candidate index folds the same feature in turn. The
+ *   one stream, every resolution. Re-reading the export per candidate costs a full pass each and buys no further
+ *   information. The classification is per feature, so every candidate index folds the same feature in turn. The
  *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller that
  *   runs out of headroom runs the candidates in separate invocations.
  */
@@ -29,9 +29,11 @@ import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions 
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Also run a centre-in-polygon polyfill per feature per resolution, to report what a polyfill-only index would have
-	 * dropped. On by default: it is the column the resolution is chosen on, and its cost is one extra h3 call per
-	 * feature.
+	 * Also run a centre-in-polygon polyfill per feature per resolution, to report
+	 * what a polyfill-only index would have dropped.
+	 *
+	 * On by default: it is the column the resolution is chosen on, and its cost
+	 * is one extra h3 call per feature.
 	 */
 	measurePolyfill?: boolean
 }
@@ -39,7 +41,9 @@ export interface MeasureResolutionsOptions extends ZoningIngestOptions, Resoluti
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count the source declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]
@@ -50,8 +54,9 @@ const DEFAULT_PROGRESS_EVERY = 5000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares. A short read produces a
- *   well-formed table describing a smaller country, which is the partial result that must throw.
+ * @throws {Error} When the streamed feature count does not match the count the source declares.
+ * A short read produces a well-formed table describing a smaller country,
+ * which is the partial result that must throw.
  */
 export async function measureZoningCellResolutions(
 	options: MeasureResolutionsOptions
@@ -79,8 +84,9 @@ export async function measureZoningCellResolutions(
 		}
 	}
 
-	// A range or an authority selector narrows the population on purpose, so the declared total is only a check on a whole
-	// pass. Narrowed runs report what they read and assert nothing about it.
+	// A range or an authority selector narrows the population on purpose,
+	// so the declared total is only a check on a whole pass.
+	// Narrowed runs report what they read and make no assertion about it.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 

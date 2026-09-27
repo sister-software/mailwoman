@@ -20,7 +20,7 @@ console.log("data-line")
 describe("diagnostics stream", () => {
 	it("writes every level to stderr and leaves stdout to the data", () => {
 		const result = spawnProcessSync("node", ["--input-type=module", "-e", SCRIPT], {
-			cwd: String(resolvePackagePath("@mailwoman/core")),
+			cwd: resolvePackagePath("@mailwoman/core"),
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "pipe"],
 		})

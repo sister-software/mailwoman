@@ -41,7 +41,7 @@ import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/addres
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { countRows, indexExists } from "@mailwoman/sqlite/introspection"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -71,9 +71,12 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe). NH + HI carry zero Overture address coverage in
- * this release, so they're absent — interpolation-only states. VI (territory) included for completeness. harmless if
- * the parser's region→slug map skips it.
+ * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe).
+ *
+ * NH + HI carry zero Overture address coverage in this release, so they're absent —
+ * interpolation-only states.
+ * VI (territory) included for completeness.
+ * Harmless if the parser's region→slug map skips it.
  */
 const STATES_BY_COVERAGE = [
 	"CA",
@@ -147,9 +150,9 @@ interface StateManifestEntry {
 const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { scriptEntryPath } = await import("@mailwoman/core/scripting/utils")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const outDir = options.outDir ?? dataRootPath("address-points")
+		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)
 
 		const states = options.states ? splitUSStateCodes(options.states) : [...STATES_BY_COVERAGE]
 
@@ -158,22 +161,23 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		const concurrency = Math.max(1, options.concurrency || 4)
 		const cores = availableParallelism()
 		const threads = Math.max(1, options.threads || Math.floor(cores / concurrency))
-		// The per-state address-point builder is now the sibling `situs address-points` command (the
-		// old `scripts/build-address-point-database.ts` was migrated into the CLI). Re-invoke the same CLI
-		// entry this process was started from, so dev + published installs both resolve correctly.
+		// The per-state address-point builder is now the sibling `situs address-points` command
+		// (the old `scripts/build-address-point-database.ts` was migrated into the CLI).
+		// Re-invoke the same CLI entry this process was started from, so dev +
+		// published installs both resolve correctly.
 		const cliEntry = scriptEntryPath()
 
 		console.error(
 			`national situs build — ${states.length} states, concurrency=${concurrency}, ${threads} DuckDB threads/state (of ${cores} cores)`
 		)
 
-		// spliterator is a heavy bounded-concurrency primitive — imported lazily so merely loading the
-		// command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
+		// spliterator is a heavy bounded-concurrency primitive — imported lazily so merely
+		// loading the command tree (e.g. `mailwoman --help`) doesn't pull it at module-eval.
 		const { parallelMap } = await import("spliterator")
 
-		// A database is complete iff its address_point table has rows and the streetkey index exists — the
-		// index is the last build step, so its presence means insert + index + vacuum all finished.
-		const isComplete = async (dbPath: string): Promise<boolean> => {
+		// A database is complete iff its address_point table has rows and the streetkey index exists.
+		// The index is the last build step, so its presence means insert + index + vacuum all finished.
+		const isComplete = async (dbPath: PathBuilder): Promise<boolean> => {
 			if (!(await pathExists(dbPath))) return false
 
 			try {
@@ -186,7 +190,7 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		const buildOneState = async (stateCode: string): Promise<StateResult> => {
-			const dbPath = join(outDir, `address-points-us-${stateCode.toLowerCase()}.db`)
+			const dbPath = outDir(`address-points-us-${stateCode.toLowerCase()}.db`)
 
 			if (!options.force && (await isComplete(dbPath))) return { state: stateCode, skipped: true }
 
@@ -245,11 +249,10 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			failed = 0,
 			totalRows = 0
 
-		const attributionPath = join(outDir, "ATTRIBUTION.json")
+		const attributionPath = outDir("ATTRIBUTION.json")
 
-		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in
-		// flight. Each result includes its own state, so out-of-order is fine for the state-keyed
-		// manifest.
+		// parallelMap yields results AS they complete (out of order), capped at `concurrency` in flight.
+		// Each result includes its own state, so out-of-order is fine for the state-keyed manifest.
 		for await (const r of parallelMap(states, buildOneState, { concurrency })) {
 			if (r.skipped) {
 				console.error(`[skip] ${r.state} — complete (use --force to rebuild)`)
@@ -269,9 +272,9 @@ const SitusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				continue
 			}
 
-			// The child's parse-relevant facts span its Ink summary (stdout) + plain progress (stderr) —
-			// combine + strip ansi, then match without line anchors so the summary's "✓ "/"  " render
-			// prefixes don't defeat the regex.
+			// The child's parse-relevant facts span its Ink summary (stdout) + plain
+			// progress (stderr) — combine + strip ansi, then match without line anchors
+			// so the summary's "✓ "/" " render prefixes don't defeat the regex.
 			const text = stripAnsi(`${r.out ?? ""}\n${r.err ?? ""}`)
 			const pts = Number(text.match(/(\d+) points →/)?.[1] ?? 0)
 			const datasets: Record<string, number> = {}

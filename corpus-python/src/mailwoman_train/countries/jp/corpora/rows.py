@@ -1,13 +1,8 @@
-"""Rendering one Japanese address in one register, and verifying what came out.
+"""Renders one Japanese address row in one register and verifies the record.
 
-A register is a way of writing the same address: the source's own surface, the chōme in Arabic
-numerals, the chōme folded into the number, the long designator form, or the municipality as its
-kana reading. The corpus carries all of them because a user types all of them, and three of the
-five appear in zero source rows — synthesis is the only way they reach the model.
-
-Spans are emitted BY CONSTRUCTION through `RowRenderer`: the raw string is concatenated from
-labeled field values and each span is recorded as it lands, so there is no search-based
-re-alignment to drift.
+A register is one way of writing the same address. Most registers never occur in the source data,
+so synthesis is their only route into the corpus. `RowRenderer` records each span as it appends the
+field text, so the spans need no search-based alignment.
 """
 
 from __future__ import annotations
@@ -23,29 +18,24 @@ from ....text.kana import int_to_kanji
 
 LABEL_SET_NAME = "stage3-jp"
 
-# Same source string as the probe corpus. An unlisted source is dropped by ``source_weights``, so a
-# new name would silently empty the feed of any config that names the probe's — the corpus_dir
-# already distinguishes the two corpora.
+# This matches the probe corpus's source string. `source_weights` drops an unlisted source, so a new
+# name would empty the feed of any config that weights "overture-jp".
 SOURCE = "overture-jp"
 
 _COMPACT = re.compile(r"^[0-9]+(?:-[0-9]+)*$")
 
-# The registers. Weights are renormalized over whatever is available for a row (a street with no
-# chōme cannot render `arabic_chome` or `compact_folded`), and the build report prints the counts
-# that actually landed rather than the intent.
+# The sampler renormalizes these weights over the registers a row can render.
 REGISTER_WEIGHTS: dict[str, float] = {
-    # The source's own surface: kanji chōme + compact banchi-go. The postal-official register.
+    # The source's own surface: kanji chōme and a compact banchi-go number.
     "native": 0.40,
-    # 二丁目 → 2丁目. Ubiquitous in typed input and absent from the source (0 of 3,139,164).
+    # The chōme in Arabic numerals (二丁目 becomes 2丁目). The source never writes it this way.
     "arabic_chome": 0.25,
-    # Chōme folded into the number: 八島町2-3-16. This is D4's named compact form, and the 3-part
-    # compact number appears in zero source rows — only synthesis puts it in front of the model.
+    # The chōme folded into the house number (八島町2-3-16).
     "compact_folded": 0.20,
-    # 3番16号 — designators in the surface, so the JP-seven number tags fire (D4's two-surface rule).
+    # The number written with designators (3番16号), which emits the sub_block and building_number tags.
     "designator": 0.15,
-    # あつぎ市 — the municipality as its kana reading plus the kanji generic (#2165): the shape of the official kana
-    # names (かすみがうら市) that two from-scratch runs failed to close at the 市. Native rendering otherwise.
-    # Available only where the admin DB reads the municipality (jp_kana.py).
+    # The municipality as its kana reading plus the kanji generic (あつぎ市). It is available only when
+    # `countries/jp/kana.py` finds a reading in the admin DB.
     "kana_municipality": 0.05,
 }
 
@@ -64,11 +54,10 @@ def render_row(
     hyphen: str = "-",
     municipality_kana: str | None = None,
 ) -> dict[str, Any]:
-    """Render one JP row in one register, returning the #519 span-triple corpus record.
+    """Render one JP row in one register and return its span-triple corpus record.
 
-    Order is native large-to-small and space-free by default (``spaced`` inserts single ASCII spaces
-    between the admin components, which real typed input does carry). The 〒 mark stays outside the
-    postcode span — the span is the digits, mirroring the Latin convention.
+    Components run from largest to smallest. ``spaced`` puts one ASCII space between the admin
+    components. The 〒 mark sits outside the postcode span, which covers only the digits.
     """
     renderer = RowRenderer()
     sep = " " if spaced else ""
@@ -93,7 +82,7 @@ def render_row(
     parts = number.split("-") if number else []
 
     if register == "compact_folded":
-        # The chōme becomes the leading part of one whole-span house_number (D4).
+        # The chōme becomes the first part of a single house_number span.
         renderer.put("district", district)
         renderer.put("house_number", hyphen.join([str(chome), *parts]))
     elif register == "designator":
@@ -116,8 +105,8 @@ def render_row(
             renderer.put("house_number", hyphen.join(parts) if parts else number)
 
     raw = renderer.raw
-    # Legacy token columns (the char path ignores them. the corpus schema requires them): whitespace
-    # tokens labeled by the span covering their first character — honest at the token grain.
+    # The corpus schema requires the legacy token columns, although the char path ignores them. Each
+    # whitespace token takes the tag of the span that covers its first character.
     tokens: list[str] = []
     labels: list[str] = []
     cursor = 0
@@ -146,12 +135,11 @@ def render_row(
 
 
 def available_registers(chome: int | None, number: str, kana: bool = False) -> tuple[str, ...]:
-    """Which registers a row can honestly render.
+    """Return the registers this row can render.
 
-    A row with no chōme has no chōme register to convert. a number that is not a clean part list
-    (``362B-2``, ``761乙号-2`` — 103,299 rows) cannot be re-rendered as designators at all, so it
-    stays whole-span in its native surface. ``kana`` says whether the municipality has a kana
-    reading to render (#2165); without one the kana register is not on offer.
+    A number with non-digit parts (``362B-2``) renders only in the native register. A row without a
+    chōme also allows the designator register. ``kana`` is true when the municipality has a kana
+    reading, which enables the kana_municipality register.
     """
     clean = bool(_COMPACT.match(number)) if number else False
     kana_extra = ("kana_municipality",) if kana else ()
@@ -163,6 +151,7 @@ def available_registers(chome: int | None, number: str, kana: bool = False) -> t
 
 
 def choose_register(rng: random.Random, options: Sequence[str]) -> str:
+    """Pick one of ``options`` at random, weighted by ``REGISTER_WEIGHTS``."""
     if len(options) == 1:
         return options[0]
     weights = [REGISTER_WEIGHTS[name] for name in options]
@@ -170,5 +159,5 @@ def choose_register(rng: random.Random, options: Sequence[str]) -> str:
 
 
 def verify_record(record: dict[str, Any], tag_set: frozenset[str]) -> None:
-    """The shared verifier bound to this corpus's label set."""
+    """Verify a record against the shared corpus rules and this corpus's label set."""
     _verify_record(record, tag_set, label_set_name=LABEL_SET_NAME)

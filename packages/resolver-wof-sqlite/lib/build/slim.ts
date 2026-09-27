@@ -21,16 +21,16 @@
  *   repos; `scripts/build-unified-wof.ts` extracts `wof:population` straight into
  *   `place_population` (and the bbox into `spr`) at ingest and never persists a `geojson` table. So
  *   the source admin DB carries population in `place_population`, and this builder consumes it
- *   directly — there is nothing to extract from, and nothing to drop.
+ *   directly. There is no `geojson` table to extract from, and no table to drop.
  *
  *   The output DB has the resolver-facing schema: `spr`, `names`, `place_population`, plus the
  *   `place_search` FTS5 / `place_bbox` R*Tree virtual tables rebuilt against the trimmed row set
  *   (both derive purely from `spr` + `names` — see `fts.ts`). That means `WOFSQLitePlaceLookup`
- *   opens the slim DB without any code change — it sees a smaller universe, nothing more.
+ *   opens the slim DB without any code change — it sees a smaller universe and no more.
  *
  *   Multi-extract inputs (e.g. admin + postcode) are processed in sequence. selected rows accumulate
  *   into the single output DB. The postcode extract contributes only postcodes. admin contributes
- *   everything else. Empty / missing input paths are skipped (callers pass `""` when a extract, such
+ *   everything else. Empty / missing input paths are skipped (callers pass `""` when an extract, such
  *   as a custom postcode DB, isn't built yet).
  */
 
@@ -43,21 +43,28 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { sql } from "kysely"
 import type { Kysely } from "kysely"
+import type { PathBuilderLike } from "path-ts"
 
 import { buildPlaceSearchFTS, PLACE_BBOX_TABLE, PLACE_POPULATION_TABLE, PLACE_SEARCH_TABLE } from "#fts/index"
 import type { NamesTable, SprTable, WOFDatabase } from "#schema"
 
 export interface BuildSlimOptions {
 	/**
-	 * Input WOF SQLite distributions. Each should already have spr / names / place_population tables.
+	 * Input WOF SQLite distributions.
+	 *
+	 * Each should already have spr / names / place_population tables.
 	 */
-	inputs: string[]
+	inputs: readonly PathBuilderLike[]
 	/**
-	 * Output path for the slim DB. Will be overwritten if it exists.
+	 * Output path for the slim DB.
+	 *
+	 * Will be overwritten if it exists.
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
-	 * Country codes to keep (ISO 2-letter). Defaults to `["US"]`.
+	 * Country codes to keep (ISO 2-letter).
+	 *
+	 * Defaults to `["US"]`.
 	 */
 	countries?: string[]
 	/**
@@ -65,11 +72,17 @@ export interface BuildSlimOptions {
 	 */
 	topLocalitiesPerCountry?: number
 	/**
-	 * Drop the `names` table after the FTS index is built (default false). `place_search` is a self-contained FTS5 (no
-	 * external `content=`), so once it's built `names` is only the build-time source — the resolver queries
-	 * `place_search` + `spr` + `place_population` + `coincident_roles` and never reads `names` at runtime. Dropping it is
-	 * the single biggest size win (~2/3 of the file for a multi-locale build. see #359). A future consumer that needs raw
-	 * alt-names at runtime should ship a separate extract rather than re-bloat the hot DB.
+	 * Drop the `names` table after the FTS index is built (default false).
+	 *
+	 * `place_search` is a self-contained FTS5 (no external `content=`),
+	 * so once it's built `names` is only the build-time source.
+	 * The resolver queries `place_search` + `spr` + `place_population` + `coincident_roles`
+	 * and never reads `names` at runtime.
+	 *
+	 * Dropping it is the single biggest size win (~2/3 of the file for a multi-locale build. See #359).
+	 *
+	 * A future consumer that needs raw alt-names at runtime should ship a separate extract
+	 * rather than re-bloat the hot DB.
 	 */
 	dropNames?: boolean
 	/**
@@ -112,7 +125,9 @@ export interface BuildSlimResult {
 const ANCESTOR_PLACETYPES = ["country", "region", "county", "borough", "macroregion"] as const
 
 /**
- * Tables copied verbatim (schema + filtered rows) from each source DB. Anything else is dropped.
+ * Tables copied verbatim (schema + filtered rows) from each source DB.
+ *
+ * Anything else is dropped.
  */
 const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
 
@@ -122,7 +137,7 @@ const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
 const PLACE_POPULATION_DDL = `CREATE TABLE ${PLACE_POPULATION_TABLE} (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)`
 
 /**
- * Minimal row shape for the population aux table — id + population, nothing else.
+ * Minimal row shape for the population aux table — id + population, and no other columns.
  */
 interface PlacePopulationTable {
 	id: number
@@ -130,10 +145,12 @@ interface PlacePopulationTable {
 }
 
 /**
- * Kysely schema for the build phase. Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the
- * row-copying queries can name the source schema in `selectFrom` without falling back to raw SQL. attach itself is
- * still raw — Kysely doesn't model it — but everything downstream (the select-insert step that does the actual
- * filtering work) goes through the builder.
+ * Kysely schema for the build phase.
+ *
+ * Mirrors the resolver-facing tables, plus the ATTACHed `src.*` tables so the row-copying
+ * queries can name the source schema in `selectFrom` without falling back to raw SQL.
+ * Attach itself is still raw — Kysely doesn't model it — but everything downstream
+ * (the select-insert step that does the actual filtering work) goes through the builder.
  */
 interface BuildSchema {
 	spr: SprTable
@@ -149,9 +166,11 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})
 
-	// Callers pass `""` for extracts that don't exist yet (e.g. a not-yet-built custom postcode DB).
-	// Skip empties up front. require every remaining path to exist.
-	const inputs = opts.inputs.filter((p) => p.length)
+	// Callers pass `""` for extracts that don't exist yet (e.g. A not-yet-built custom postcode DB).
+	// Skip empties up front.
+	// Require every remaining path to exist.
+	// Compared as strings, because the empty string is the marker for an input not built yet.
+	const inputs = opts.inputs.map((input) => input.toString()).filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
 
@@ -165,10 +184,11 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		await removePath(opts.output)
 	}
 
-	// Open the output DB and create the empty schema. We discover the schema from the first input
-	// (raw sqlite_master read — Kysely doesn't model that) so the output mirrors source column
-	// ordering / types. `create table AS select` flattens types to dynamic, which would break
-	// callers that rely on column-affinity behavior.
+	// Open the output DB and create the empty schema.
+	// We discover the schema from the first input (raw sqlite_master read — Kysely doesn't model that)
+	// so the output mirrors source column ordering / types.
+	// `create table AS select` flattens types to dynamic, which would break callers
+	// that rely on column-affinity behavior.
 	const out = new DatabaseClient<BuildSchema>(opts.output)
 	let result: BuildSlimResult
 
@@ -183,20 +203,23 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 				.get(table) as { sql?: string } | undefined
 
 			if (createSQL?.sql) {
-				// Raw DDL by design (introspect-and-replay): we exec the source DB's own create table
-				// string read from sqlite_master, so a static Kysely builder can't express it. See agents.md.
+				// Raw DDL by design (introspect-and-replay): we exec the source DB's own create
+				// table string read from sqlite_master, so a static Kysely builder can't express it.
+				// See agents.md.
 				out.exec(createSQL.sql)
 			} else if (table === PLACE_POPULATION_TABLE) {
-				// Older source builds may predate the aux table — create it empty so the per-source
-				// copy + ranking have somewhere to land. Sparse-by-design. missing rows are fine.
+				// Older source builds may predate the aux table — create it empty
+				// so the per-source copy + ranking have somewhere to land.
+				// Sparse-by-design.
+				// Missing rows are fine.
 				out.exec(PLACE_POPULATION_DDL)
 			} else {
 				throw new Error(`source DB ${inputs[0]} is missing required table '${table}'`)
 			}
 		}
 
-		// primary KEY on spr.id + place_population.id come from the schemas we copied. an explicit
-		// index on names.id helps the per-id insert select later.
+		// primary KEY on spr.id + place_population.id come from the schemas we copied.
+		// An explicit index on names.id helps the per-id insert select later.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
 		// Pull rows from each input.
@@ -204,9 +227,10 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			await copyFromSource(out, out, inputPath, countries, topLocalities, progress)
 		}
 
-		// Build the resolver virtual tables on the trimmed row set. Both place_search (FTS5) and
-		// place_bbox (R*Tree) derive purely from spr + names — no geojson needed (see fts.ts). The
-		// population aux table is not rebuilt here: it was copied verbatim above, and fts.ts only
+		// Build the resolver virtual tables on the trimmed row set.
+		// Both place_search (FTS5) and place_bbox (R*Tree) derive purely from spr + names —
+		// no geojson needed (see fts.ts).
+		// The population aux table is not rebuilt here: it was copied verbatim above, and fts.ts only
 		// (re)builds it when a `geojson` table is present, which the slim DB intentionally has not.
 		progress("fts", "building place_search / place_bbox on slim DB")
 
@@ -215,15 +239,17 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})
 
-		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)` table before
-		// `names` is (optionally) dropped. The full DB lets the resolver tier an exact-abbrev match by
-		// querying `names` (`#exactMatchIDs`), but the slim DB drops `names` for size — so the
-		// browser resolver gets its own tiny lookup (~hundreds of rows) to do the same data-driven
-		// exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region) instead of the
-		// demo's hardcoded region-abbreviation map (since deleted). Sourced from the `language='abbr'` rows
-		// `add-region-abbrevs.ts` wrote, already filtered to surviving spr ids via the names copy. The
-		// table is always created (empty when the source predates the abbrev enrichment) so the
-		// resolver can query it unconditionally.
+		// Materialize region/state abbreviations into a standalone `place_abbr (id, abbr)`
+		// table before `names` is (optionally) dropped.
+		// The full DB lets the resolver tier an exact-abbrev match by querying `names`
+		// (`#exactMatchIDs`), but the slim DB drops `names` for size.
+		// So the browser resolver gets its own tiny lookup (~hundreds of rows) to do the same
+		// data-driven exact-abbrev tiering ("VT" → Vermont rather than a token-matching foreign region)
+		// instead of the demo's hardcoded region-abbreviation map (since deleted).
+		// Sourced from the `language='abbr'` rows `add-region-abbrevs.ts` wrote,
+		// already filtered to surviving spr ids via the names copy.
+		// The table is always created (empty when the source predates the abbrev enrichment)
+		// so the resolver can query it unconditionally.
 		progress("place_abbr", "materializing region abbreviations")
 		out.exec(`CREATE TABLE IF NOT EXISTS place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)`)
 		out.exec(`INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'`)
@@ -233,16 +259,16 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		// Capture the names count before any drop so the build report stays informative.
 		const namesRows = countRows(out, "names")
 
-		// Optionally drop `names` (+ its index) now that the self-contained FTS5 index no longer needs
-		// it. The resolver never reads `names` at query time, so this is pure size reduction.
+		// Optionally drop `names` (+ its index) now that the self-contained FTS5 index no longer needs it.
+		// The resolver never reads `names` at query time, so this is pure size reduction.
 		if (opts.dropNames) {
 			progress("vacuum", `dropping names table (${namesRows} rows; FTS5 is self-contained)`)
 			out.exec(`DROP INDEX IF EXISTS names_id_idx;`)
 			out.exec(`DROP TABLE IF EXISTS names;`)
 		}
 
-		// vacuum the output so the on-disk file reflects just the trimmed row count. Without it the
-		// file size stays inflated from the in-flight insert churn.
+		// vacuum the output so the on-disk file reflects just the trimmed row count.
+		// Without it the file size stays inflated from the in-flight insert churn.
 		progress("vacuum", "VACUUM (final size reduction)")
 		out.exec("VACUUM;")
 
@@ -257,7 +283,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		progress("done", stringifyJSON(rowCounts))
 
 		result = {
-			outputPath: opts.output,
+			outputPath: opts.output.toString(),
 			outputBytes: (await statPath(opts.output)).size,
 			rowCounts,
 		}
@@ -279,30 +305,33 @@ async function copyFromSource(
 	topLocalities: number,
 	progress: NonNullable<BuildSlimOptions["onProgress"]>
 ): Promise<void> {
-	// attach avoids any "load source into memory" step — SQLite walks both files in place. We need
-	// a fresh temp copy because some WOF distributions ship as read-only filesystem mounts and
-	// attach will still want a writable journal on the side. copying to /tmp dodges that without
-	// mutating the canonical files in /mnt/playpen/mailwoman-data/wof/. attach / detach stay raw
-	// — Kysely doesn't model them.
+	// attach avoids any "load source into memory" step — SQLite walks both files in place.
+	// We need a fresh temp copy because some WOF distributions ship as read-only filesystem
+	// mounts and attach will still want a writable journal on the side.
+	// A scratch copy dodges that without mutating the canonical files in $MAILWOMAN_DATA_ROOT/db/wof/.
+	// Attach / detach stay raw — Kysely doesn't model them.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
-	const scratchPath = tmpScratch.resolve("src.db")
+	const scratchPath = tmpScratch.path("src.db")
 
 	await copyFileTo(inputPath, scratchPath)
 
-	out.exec(`ATTACH DATABASE '${scratchPath.replaceAll("'", "''")}' AS src;`)
+	out.exec(`ATTACH DATABASE '${scratchPath.toString().replaceAll("'", "''")}' AS src;`)
 
 	try {
-		// Does this extract carry the pre-built population aux table? The admin source does. a bare
-		// postcode extract might not. The locality ranking + population copy below adapt accordingly.
+		// Does this extract carry the pre-built population aux table?
+		// The admin source does.
+		// A bare postcode extract might not.
+		// The locality ranking + population copy below adapt accordingly.
 		const srcHasPopulation = Boolean(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// The select-insert queries below go through Kysely. The cross-schema `from` clause is the only
-		// "interesting" bit: by declaring `src.spr` / `src.names` / `src.place_population` in
-		// `BuildSchema`, Kysely lets us write `selectFrom("src.spr")` with the same column-type
-		// checking as the regular schema. SQLite parses the dotted identifier as a schema-name
-		// qualifier, so this works directly without any aliasing trick.
+		// The select-insert queries below go through Kysely.
+		// The cross-schema `from` clause is the only "interesting" bit: by declaring `src.spr`
+		// / `src.names` / `src.place_population` in `BuildSchema`, Kysely lets us write
+		// `selectFrom("src.spr")` with the same column-type checking as the regular schema.
+		// SQLite parses the dotted identifier as a schema-name qualifier,
+		// so this works directly without any aliasing trick.
 
 		// 1. Ancestor placetypes (country / region / county / etc.) — always-kept.
 		progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
@@ -321,9 +350,10 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-		// 2. Top-K localities by population. Population lives in the pre-built `place_population`
-		// aux table — left-join it so localities without a population row still qualify (sorted
-		// last). If the extract has no population table, fall back to a deterministic id ordering.
+		// 2. Top-K localities by population.
+		//    Population lives in the pre-built `place_population`
+		// aux table — left-join it so localities without a population row still qualify (sorted last).
+		// If the extract has no population table, fall back to a deterministic id ordering.
 		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
 
 		await kysely
@@ -383,9 +413,12 @@ async function copyFromSource(
 		}
 
 		// 6. Carry the coincident_roles relation (#402) when this source has it (the admin DB), so the
-		// slim/demo DB supports dual-role hierarchy completion (on by default). Filtered to surviving
-		// spr ids → no orphans. Tiny (~hundreds of rows). `ancestors` is intentionally not copied (huge
-		// + build-only), so we copy the derived table rather than rebuild it. Raw SQL — conditional +
+		// slim/demo DB supports dual-role hierarchy completion (on by default).
+		// Filtered to surviving spr ids → no orphans.
+		// Tiny (~hundreds of rows).
+		// `ancestors` is intentionally not copied (huge
+		// + build-only), so we copy the derived table rather than rebuild it.
+		//   Raw SQL — conditional +
 		// not in the Kysely build schema.
 		const relationSchema = out
 			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)

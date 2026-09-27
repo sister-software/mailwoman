@@ -118,7 +118,7 @@ Execution order — all but the final step run against v0.4.0 weights or existin
 A few principles worth carrying forward beyond this specific sprint:
 
 - **A go/no-go decision rule must exist before the experiment runs.** A 10-metric report with no decision criterion is not an experiment; it's a data-collection exercise. The Codex review's eval-matrix list is correct but operationally incomplete without DeepSeek's threshold matrix.
-- **Agreement across reviewers ≠ correctness.** Both Codex and DeepSeek converged on similar conclusions, but converging reviewers can share blind spots — the three named above are evidence that pushing past consensus is sometimes the only way to find what's missing.
+- **Agreement across reviewers ≠ correctness.** Both Codex and DeepSeek converged on similar conclusions, but converging reviewers can share blind spots. The three named above are evidence that pushing past consensus is sometimes the only way to find what's missing.
 - **Cheap diagnostics first.** A 5-minute gradient-norm probe answers more about the v0.5.0 divergence than a 25-hour retrain. Always exhaust the zero-GPU diagnostic ladder before any retrain.
 - **The integration test is the architectural test.** v0.5.0's thesis is that joint decoding beats argmax on kryptonite. That thesis can be measured today, against v0.4.0 weights, with zero GPU time. There is no good reason to defer it behind any training experiment.
 

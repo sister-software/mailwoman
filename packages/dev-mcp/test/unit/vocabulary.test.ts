@@ -5,7 +5,7 @@
  *   Tests for the vocabulary coverage measurement, driven by a stub tokenizer.
  *
  *   Stubbed on purpose: loading the real 9 MB SentencePiece model to assert that a `<0x..>` piece is counted as a
- *   fallback would test SentencePiece rather than this. What is worth pinning is the arithmetic a reader will quote — the
+ *   fallback would test SentencePiece rather than this. What is worth pinning is the arithmetic a reader will quote. The
  *   share's denominator is pieces and not characters, and the per-character verdict is taken from the character alone
  *   rather than from its behaviour inside a word.
  */
@@ -16,8 +16,8 @@ import { describe, expect, it } from "vitest"
 const { characterCoverage, measureLine, total } = __testing
 
 /**
- * Encodes each character as itself, except those in `absent`, which become one `<0xNN>` piece per UTF-8 byte — the
- * shape SentencePiece produces for a codepoint outside the vocabulary.
+ * Encodes each character as itself, except those in `absent`, which become one `<0xNN>` piece
+ * per UTF-8 byte — the shape SentencePiece produces for a codepoint outside the vocabulary.
  */
 const stub = (absent: string) => ({
 	encode: (text: string) => ({
@@ -31,7 +31,8 @@ const stub = (absent: string) => ({
 
 describe("measureLine", () => {
 	it("counts a fallback per BYTE, which is why a shattered word costs more pieces than characters", () => {
-		// "ư" is 2 UTF-8 bytes. Therefore, one absent character becomes two pieces.
+		// "ư" is 2 UTF-8 bytes.
+		// Therefore, one absent character becomes two pieces.
 		const line = measureLine(stub("ư"), "Đư", false)
 
 		expect(line.characters).toBe(2)

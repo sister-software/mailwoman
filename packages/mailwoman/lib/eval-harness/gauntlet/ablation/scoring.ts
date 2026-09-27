@@ -5,6 +5,7 @@
  * @file Gauntlet ablation scoring and aggregation.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -18,20 +19,21 @@ import {
 } from "#eval-harness/gauntlet/ablation/types"
 import { componentOf } from "#eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "#eval-harness/gauntlet/harness"
-import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
- * Fold to the comparison form used for slot classification: lowercase, alphanumerics only. `BT3 9QQ` and `bt39qq` are
- * the same postcode; `1600` and `BT3 9QQ` are not.
+ * Fold to the comparison form used for slot classification: lowercase, alphanumerics only.
+ *
+ * `BT3 9QQ` and `bt39qq` are the same postcode; `1600` and `BT3 9QQ` are not.
  */
 function foldValue(value: string | null): string {
 	return (value ?? "").toLowerCase().replaceAll(/[^\p{L}\p{N}]/gu, "")
 }
 
 /**
- * What the ablated arm did with the deleted component's slot. `substituted` is the S-2 finding-3 class and the one a
- * completion nudge has to fear: the slot reads as filled, so a naive layer abstains — or confirms a house number as a
- * postcode.
+ * What the ablated arm did with the deleted component's slot.
+ *
+ * `substituted` is the S-2 finding-3 class and the one a completion nudge has to fear:
+ * the slot reads as filled, so a naive layer abstains, or confirms a house number as a postcode.
  */
 export function classifySlot(deleted: string, emitted: string | null): SlotOutcome {
 	const got = foldValue(emitted)
@@ -42,13 +44,14 @@ export function classifySlot(deleted: string, emitted: string | null): SlotOutco
 }
 
 /**
- * Coarseness rank: higher is more precise. The tier ladder is `address_point → interpolated → street → admin`, and a
- * deletion that walks down it has cost the user precision even when the coordinate barely moved.
+ * Coarseness rank: higher is more precise.
+ *
+ * The tier ladder is `address_point → interpolated → street → admin`, and a deletion that
+ * walks down it has cost the user precision even when the coordinate barely moved.
  */
 export function tierRank(tier: ResolutionTier): number {
 	switch (tier) {
-		// A resolved entity is house-grade — the poi row is the venue's own point, peer of a situs hit.
-		// A decoded plus code is the user's own house-grade claim, peer of both.
+		// A resolved entity is house-grade. The poi row is the venue's own point, peer of a situs hit. A decoded plus code is the user's own house-grade claim, peer of both.
 		case "venue":
 		case "address_point":
 		case "plus_code":
@@ -67,8 +70,10 @@ export function isTierDrop(anchor: ResolutionTier, ablated: ResolutionTier): boo
 }
 
 /**
- * Score one deletion against its own anchor. Pure: the two {@linkcode GauntletResult}s are the only inputs, so the
- * scoring rule is testable without the ~9 GB database set.
+ * Score one deletion against its own anchor.
+ *
+ * Pure: the two {@linkcode GauntletResult}s are the only inputs, so the scoring
+ * rule is testable without the ~9 GB database set.
  */
 export function scoreAblation(
 	anchor: GauntletResult,
@@ -87,8 +92,9 @@ export function scoreAblation(
 
 	return {
 		displacementKm,
-		// A row whose own anchor never resolved is not gradable — reporting it as held would be the meaning-of-zero
-		// trap one level down. A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
+		// A row whose own anchor never resolved is not gradable — reporting it as held
+		// would be the meaning-of-zero trap one level down.
+		// A resolved anchor with an unresolved ablated arm is broken: the answer is gone.
 		broken: !anchorResolved ? null : !ablatedResolved ? true : displacementKm! > toleranceKm,
 		tierDrop: isTierDrop(anchor.tier, ablated.tier),
 		unresolved: !ablatedResolved,
@@ -98,8 +104,9 @@ export function scoreAblation(
 }
 
 /**
- * Fold per-row outcomes into the (component, locale) map. A pair with no rows produces no cell — see
- * {@linkcode AblationCell.support}.
+ * Fold per-row outcomes into the (component, locale) map.
+ *
+ * A pair with no rows produces no cell — see {@linkcode AblationCell.support}.
  */
 export function aggregateCells(
 	rows: readonly AblationRowOutcome[],
@@ -137,9 +144,11 @@ export function aggregateCells(
 			locale: first.locale,
 			support: bucket.length,
 			brokenCount: bucket.filter((r) => r.broken === true).length,
-			// `percentile` returns null on an empty sample. a cell whose anchors all failed has no displacement
-			// distribution, and -1 would be a number the reader could average. Encode it as NaN-free absence via
-			// gradedCount === 0 — the consumer's rule is "skip a cell you cannot read", same as support 0.
+			// `percentile` returns null on an empty sample.
+			// A cell whose anchors all failed has no displacement distribution,
+			// and -1 would be a number the reader could average.
+			// Encode it as NaN-free absence via gradedCount === 0.
+			// The consumer's rule is "skip a cell you cannot read", same as support 0.
 			displacementKmP50: percentile(graded, 50) ?? 0,
 			displacementKmP90: percentile(graded, 90) ?? 0,
 			tierDropCount: bucket.filter((r) => r.tierDrop).length,

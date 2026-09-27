@@ -27,10 +27,10 @@
  *   --out /tmp/v092-eval
  */
 
-import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
+import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
@@ -38,9 +38,12 @@ import { oaResolverEval } from "#eval-harness/oa/resolver/eval"
 /**
  * The six runs, in the order they execute and by the name each writes its `.md`/`.log` under.
  *
- * `de-native-on` is the only one a promotion floor reads — the `native DE` anchor-on cell of the 2x2 is
- * `de.native_locality`. It is also in the fp32↔int8 delta cap. Therefore, that run executes on both arms. The other
- * five are recorded rather than floored.
+ * `de-native-on` is the only one a promotion floor reads.
+ * The `native DE` anchor-on cell of the 2x2 is `de.native_locality`.
+ * It is also in the fp32↔int8 delta cap.
+ *
+ * Therefore, that run executes on both arms.
+ * The other five are recorded rather than floored.
  */
 export const DE_ORDER_RUNS = ["de-native-on", "de-native-off", "de-intl-on", "de-intl-off", "us-on", "fr-on"] as const
 
@@ -49,7 +52,8 @@ export type DeOrderRunName = (typeof DE_ORDER_RUNS)[number]
 interface DeOrderRun {
 	name: DeOrderRunName
 	/**
-	 * The heading this run prints, byte-identical to what the check has always written into `<tag>-deorder.md`.
+	 * The heading this run prints, byte-identical to what the check has always
+	 * written into `<tag>-deorder.md`.
 	 */
 	heading: string
 	evalJSONL: string
@@ -92,58 +96,78 @@ const RUN_PLAN: readonly DeOrderRun[] = [
  */
 export interface DeOrderEvalOptions {
 	/**
-	 * Candidate ONNX. Required.
+	 * Candidate ONNX.
+	 *
+	 * Required.
 	 */
 	model?: string
 	/**
-	 * Candidate model-card. Required.
+	 * Candidate model-card.
+	 *
+	 * Required.
 	 */
 	card?: string
 	/**
-	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * SentencePiece tokenizer.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
-	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * Anchor lookup JSON.
+	 *
+	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
-	 * Where the six per-run `.md`/`.log` pairs land. Default `/tmp/order-eval`.
+	 * Where the six per-run `.md`/`.log` pairs land.
+	 *
+	 * Default `<temp-root>/order-eval`.
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
 	 * Row cap applied to each of the six runs (0/omitted = all rows).
 	 *
-	 * Profiling only. The six corpora are 3,000 rows each except the US no-regression run at 10,000, and a capped run
-	 * reads the first N rows in file order — which is not a stratified sample. A capped run's locality percentages are
-	 * therefore not comparable with a floor reading, and `promotion-eval.ts` never passes this.
+	 * Profiling only.
+	 * The six corpora are 3,000 rows each except the US no-regression run at 10,000,
+	 * and a capped run reads the first N rows in file order, which is not a stratified sample.
+	 *
+	 * A capped run's locality percentages are therefore not comparable with a floor reading,
+	 * and `promotion-eval.ts` never passes this.
 	 */
 	limit?: number
 	/**
-	 * Answer a repeated `findPlace` query from a per-run memo (see `OAResolverEvalOptions.lookupMemo`). Each of the six
-	 * runs keeps its own memo, because each builds its own rig.
+	 * Answer a repeated `findPlace` query from a per-run memo (see `OAResolverEvalOptions.lookupMemo`).
+	 *
+	 * Each of the six runs keeps its own memo, because each builds its own rig.
 	 */
 	lookupMemo?: boolean
 	/**
-	 * Which of {@linkcode DE_ORDER_RUNS} to execute. Omitted runs all six.
+	 * Which of {@linkcode DE_ORDER_RUNS} to execute.
 	 *
-	 * A run not selected prints its heading with `skipped` and its 2x2 cell reads `—`, so a cell nobody measured cannot
-	 * be read as a cell that measured nothing. Selecting a subset that omits `de-native-on` produces no
-	 * `de.native_locality` and fails the promotion verdict, which is the correct outcome rather than a silent absence.
+	 * Omitted runs all six.
+	 *
+	 * A run not selected prints its heading with `skipped` and its 2x2 cell reads `—`,
+	 * so a cell nobody measured cannot be read as a cell that measured no row.
+	 * Selecting a subset that omits `de-native-on` produces no `de.native_locality`
+	 * and fails the promotion verdict, which is the correct outcome rather than a silent absence.
 	 */
 	runs?: readonly DeOrderRunName[]
 	/**
 	 * Write one `<run-name>.json` wall-time attribution file per run into this directory.
 	 *
-	 * Profiling only, and it must name somewhere outside the promotion output directory: the receipt comparator reads
-	 * every file under that directory byte-for-byte, and a timing number differs between two runs of the same artifact.
+	 * Profiling only, and it must name somewhere outside the promotion output directory:
+	 * the receipt comparator reads every file under that directory byte-for-byte,
+	 * and a timing number differs between two runs of the same artifact.
 	 */
-	profileDirectory?: string
+	profileDirectory?: PathBuilderLike
 }
 
 /**
- * What {@linkcode deOrderEval} returns. `ok` is false only for the usage refusal the script signalled with exit 1
- * (missing model/card) — the check tolerated that exit code, and tolerates this the same way.
+ * What {@linkcode deOrderEval} returns.
+ *
+ * `ok` is false only for the usage refusal the script signalled with exit 1 (missing model/card) —
+ * the check tolerated that exit code, and tolerates this the same way.
  */
 export interface DeOrderEvalResult {
 	ok: boolean
@@ -151,8 +175,10 @@ export interface DeOrderEvalResult {
 }
 
 /**
- * Run the both-order robustness battery. Every report line goes through `report` (stdout parity) and the usage refusal
- * through `reportError`, matching the `${stdout}${stderr}` capture the runner writes into `<tag>-deorder.md`.
+ * Run the both-order robustness battery.
+ *
+ * Every report line goes through `report` (stdout parity) and the usage refusal through `reportError`,
+ * matching the `${stdout}${stderr}` capture the runner writes into `<tag>-deorder.md`.
  */
 export async function deOrderEval(
 	options: DeOrderEvalOptions = {},
@@ -161,17 +187,17 @@ export async function deOrderEval(
 ): Promise<DeOrderEvalResult> {
 	const model = options.model ?? ""
 	const card = options.card ?? ""
-	const tok = options.tokenizer ?? String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
-	const lookup = options.anchorLookup ?? String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
-	const out = options.out ?? tempRootPath("order-eval")
+	const tok = PathBuilder.from(options.tokenizer ?? dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const lookup = PathBuilder.from(options.anchorLookup ?? dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const out = PathBuilder.from(options.out ?? tempRootPathBuilder("order-eval"))
 
 	if (!model || !card) {
 		reportError("need --model and --card")
 
-		return { ok: false, out }
+		return { ok: false, out: out.toString() }
 	}
 
-	const profileDirectory = options.profileDirectory ?? ""
+	const profileDirectory = options.profileDirectory ? PathBuilder.from(options.profileDirectory) : undefined
 
 	await makeDirectories(out)
 
@@ -182,16 +208,18 @@ export async function deOrderEval(
 	const selected = new Set<DeOrderRunName>(options.runs ?? DE_ORDER_RUNS)
 
 	const run = async ({ name: outName, evalJSONL, anchorOn, country }: DeOrderRun): Promise<void> => {
-		// Anchor off = oa-resolver-eval's `anchorOff` (overrides.anchor=false — the sanctioned, declared
-		// ablation; #887). The old idiom (an empty-anchor.json fed as the anchor lookup) is refused by the
+		// Anchor off = oa-resolver-eval's `anchorOff`
+		// (overrides.anchor=false — the sanctioned, declared ablation; #887).
+		// The old idiom (an empty-anchor.json fed as the anchor lookup) is refused by the
 		// #718 fail-closed check: a lookup parsing to size 0 → UnfedChannelError.
 		const anchorOptions = anchorOn ? { modelAnchorLookup: lookup } : { anchorOff: true }
 
 		// The try/catch is the in-process spelling of the `nothrow:` this call used to carry.
-		// oa-resolver-eval signals its own internal regression by exiting non-zero even when it wrote a
-		// valid report. this is a measurement harness (loc() reads the .md), so a thrown failure must not
-		// abort before the 2x2 summary prints (it false-failed de.native_locality). The two sinks stay
-		// separate because the child's stdout and stderr went to two different files.
+		// Oa-resolver-eval signals its own internal regression by exiting non-zero even
+		// when it wrote a valid report.
+		// This is a measurement harness (loc() reads the .md), so a thrown failure must not abort
+		// before the 2x2 summary prints (it false-failed de.native_locality).
+		// The two sinks stay separate because the child's stdout and stderr went to two different files.
 		const outLines: string[] = []
 		const errLines: string[] = []
 
@@ -206,7 +234,7 @@ export async function deOrderEval(
 					defaultCountry: country,
 					...(options.limit ? { limit: options.limit } : {}),
 					...(options.lookupMemo ? { lookupMemo: true } : {}),
-					...(profileDirectory ? { profileJSON: String(join(profileDirectory, `${outName}.json`)) } : {}),
+					...(profileDirectory ? { profileJSON: profileDirectory(`${outName}.json`).toString() } : {}),
 				},
 				(line) => outLines.push(line),
 				(line) => errLines.push(line)
@@ -215,20 +243,21 @@ export async function deOrderEval(
 			errLines.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 		}
 
-		await writeLocalTextFile(outLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.md`))
-		await writeLocalTextFile(errLines.map((line) => `${line}\n`).join(""), join(out, `${outName}.log`))
+		await writeLocalTextFile(outLines.map((line) => `${line}\n`).join(""), out(`${outName}.md`))
+		await writeLocalTextFile(errLines.map((line) => `${line}\n`).join(""), out(`${outName}.log`))
 	}
 
 	// Pull the neural locality-match % out of a result .md (the "| **neural** | XX.X% |" row).
 	const loc = async (name: DeOrderRunName): Promise<string> => {
-		// A run nobody asked for reads `—`, not empty. An empty cell is what a selected run leaves when it wrote no
-		// locality row, and the two readings are different facts.
+		// A run nobody asked for reads `—`, not empty.
+		// An empty cell is what a selected run leaves when it wrote no locality row,
+		// and the two readings are different facts.
 		if (!selected.has(name)) return "—"
 
 		let md: string
 
 		try {
-			md = await readLocalTextFile(join(out, `${name}.md`))
+			md = await readLocalTextFile(out(`${name}.md`))
 		} catch {
 			return ""
 		}
@@ -264,5 +293,5 @@ export async function deOrderEval(
 	report("")
 	report(`no-regression: US ${await loc("us-on")} · FR ${await loc("fr-on")}`)
 
-	return { ok: true, out }
+	return { ok: true, out: out.toString() }
 }

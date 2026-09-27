@@ -13,35 +13,35 @@
  *   any rule catches is scored. {@link conjunction} builds the and-style key Geo-ER uses
  *   (`name-cell and geo-cell`) when a single rule is too loose.
  *
- *   Recall is the priority — a pair the blocker never proposes can never match, the most dangerous
+ *   Recall is the priority. A pair the blocker never proposes can never match, the most dangerous
  *   silent failure in record linkage. So the spatial grid is generous and neighbour-expanded by
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
+import type { GeoCoordinate } from "@mailwoman/spatial"
+
 /**
- * Maps a record to zero or more block keys. Two records sharing any key become a candidate pair.
+ * Maps a record to zero or more block keys.
+ *
+ * Two records sharing any key become a candidate pair.
  */
 export type BlockingKey<R> = (record: R) => string[]
 
 /**
- * A geographic coordinate (WGS84 decimal degrees).
- */
-export interface LatLon {
-	latitude: number
-	longitude: number
-}
-
-/**
- * A spatial-cell block key: a configurable lat/lon grid. `precisionDegrees` sets the cell size (default 0.05° ≈ 5.5 km
- * of latitude — deliberately generous, per the literature, so same-place records reliably co-block). With `neighbors`
- * (default `true`) a record also keys its 8 adjacent cells, so a pair straddling a cell boundary still meets.
+ * A spatial-cell block key: a configurable lat/lon grid.
  *
- * Note: an equal-_degree_ grid (longitude cells shrink toward the poles) and neighbour expansion inflates block sizes
- * ~9×; an equal-area H3/geohash index with a single-cell + neighbour-query is the refinement. Behaviour — proximity
- * co-blocking — is the same.
+ * `precisionDegrees` sets the cell size (default 0.05° ≈ 5.5 km of latitude —
+ * deliberately generous, per the literature, so same-place records reliably co-block).
+ * With `neighbors` (default `true`) a record also keys its 8 adjacent cells,
+ * so a pair straddling a cell boundary still meets.
+ *
+ * Note: an equal-_degree_ grid (longitude cells shrink toward the poles)
+ * and neighbour expansion inflates block sizes ~9×; an equal-area H3/geohash index
+ * with a single-cell + neighbour-query is the refinement.
+ * Behaviour — proximity co-blocking — is the same.
  */
 export function geoCellKey<R>(
-	extract: (record: R) => LatLon | null | undefined,
+	extract: (record: R) => GeoCoordinate | null | undefined,
 	opts: { precisionDegrees?: number; neighbors?: boolean } = {}
 ): BlockingKey<R> {
 	const step = opts.precisionDegrees ?? 0.05
@@ -70,9 +70,10 @@ export function geoCellKey<R>(
 }
 
 /**
- * An exact-value block key (the canonical address key, a postcode, an email domain…), normalized and optionally
- * truncated to a leading `prefix` of characters (a cheaper, higher-recall rule). A missing or empty value produces no
- * key.
+ * An exact-value block key (the canonical address key, a postcode, an email domain…), normalized
+ * and optionally truncated to a leading `prefix` of characters (a cheaper, higher-recall rule).
+ *
+ * A missing or empty value produces no key.
  */
 export function exactKey<R>(
 	extract: (record: R) => string | null | undefined,
@@ -93,9 +94,12 @@ export function exactKey<R>(
 }
 
 /**
- * A conjunctive block key — the cross-product of its sub-keys, joined (Geo-ER's "name and distance"). A record is keyed
- * by every combination of one sub-key from each input, so two records co-block only when they agree on _all_ inputs.
- * Tighter blocks, lower recall — use when a single rule is too loose.
+ * A conjunctive block key — the cross-product of its sub-keys, joined (Geo-ER's "name and distance").
+ *
+ * A record is keyed by every combination of one sub-key from each input,
+ * so two records co-block only when they agree on _all_ inputs.
+ * Tighter blocks, lower recall.
+ * Use when a single rule is too loose.
  */
 export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
 	return (record) => {
@@ -117,7 +121,7 @@ export function conjunction<R>(...keys: BlockingKey<R>[]): BlockingKey<R> {
  */
 export interface BlockResult<R> {
 	/**
-	 * Deduplicated candidate pairs (no self-pairs. a pair caught by multiple keys appears once).
+	 * Deduplicated candidate pairs (no self-pairs. A pair caught by multiple keys appears once).
 	 */
 	pairs: Array<[R, R]>
 	/**
@@ -127,10 +131,11 @@ export interface BlockResult<R> {
 }
 
 /**
- * Generate candidate pairs from `records` via one or more blocking keys (their union). Builds an inverted index (key →
- * records) and emits the unique within-block pairs. A block larger than `maxBlockSize` is skipped and reported in
- * `droppedBlocks` rather than blowing up into a quadratic scan — an explicit, visible coverage limit rather than a
- * silent drop.
+ * Generate candidate pairs from `records` via one or more blocking keys (their union).
+ *
+ * Builds an inverted index (key → records) and emits the unique within-block pairs.
+ * A block larger than `maxBlockSize` is skipped and reported in `droppedBlocks` rather than blowing
+ * up into a quadratic scan — an explicit, visible coverage limit rather than a silent drop.
  */
 export function block<R>(
 	records: readonly R[],

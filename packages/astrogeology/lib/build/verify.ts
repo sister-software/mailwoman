@@ -17,11 +17,14 @@ import { readMailwomanMetadata } from "#build/metadata"
 import { PlanetaryBuildManifestSchema } from "#schema/manifest"
 
 /**
- * Verify one body's build. Answers one line per output. throws naming the first difference.
+ * Verify one body's build.
+ *
+ * Answers one line per output.
+ * Throws naming the first difference.
  */
 export async function verifyBody(body: BuildableBodyID, out: string | undefined): Promise<string[]> {
 	const directory = buildDirectory(body, out)
-	const manifestPath = String(resolvePath(directory, buildOutputs(body).manifest))
+	const manifestPath = resolvePath(directory, buildOutputs(body).manifest)
 	const manifest = PlanetaryBuildManifestSchema.parse(await readLocalJSONFile(manifestPath))
 
 	if (manifest.body !== body) throw new CommandError(`${manifestPath} describes ${manifest.body}, not ${body}`)

@@ -12,35 +12,32 @@ import {
 	selectReportable,
 	type DeclarationSite,
 } from "@mailwoman/dev-mcp/symbol/index"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-/**
- * A miniature repository: one exported home, one deliberate local copy, one nested decoy.
- */
-async function seedFixture(): Promise<string> {
-	const root = String(fixtures.use(await temporaryDirectory("mw-symbol-index-")).path)
+async function seedFixture(): Promise<PathBuilder> {
+	const root = fixtures.use(await temporaryDirectory("mw-symbol-index-")).path
 
-	await makeDirectories(join(root, "packages", "core", "utils"))
-	await makeDirectories(join(root, "packages", "api-kit"))
+	await makeDirectories(root("packages", "core", "utils"))
+	await makeDirectories(root("packages", "api-kit"))
 
 	await writeLocalTextFile(
 		"/** `p` in [0, 100]. */\nexport function percentile(xs: readonly number[], p: number): number | null {\n\treturn null\n}\n",
-		join(root, "packages", "core", "utils", "stats.ts")
+		root("packages", "core", "utils", "stats.ts")
 	)
 
 	await writeLocalTextFile(
 		"/** Deliberately NOT core's. */\nfunction percentile(sorted: number[], p: number): number {\n\tfunction unreachable() {}\n\treturn 0\n}\n",
-		join(root, "packages", "api-kit", "metrics.ts")
+		root("packages", "api-kit", "metrics.ts")
 	)
 
 	await writeLocalTextFile(
 		"export function percentile(sortedAsc: readonly number[], p: number): number {\n\treturn 0\n}\n",
-		join(root, "packages", "api-kit", "panel.tsx")
+		root("packages", "api-kit", "panel.tsx")
 	)
 
 	return root
@@ -64,8 +61,8 @@ describe("extractDeclaredSymbols", () => {
 	})
 
 	it("ignores a constant that is not a function", () => {
-		// A duplicated table or literal is a different problem with a different answer. reporting them would bury the
-		// duplicated logic this exists to surface.
+		// A duplicated table or literal is a different problem, and reporting them would
+		// bury the duplicated logic this exists to surface.
 		expect(extractDeclaredSymbols('const MAX_SAMPLES = 1024\nconst NAME = "x"')).toEqual([])
 	})
 })
@@ -82,7 +79,7 @@ describe("findDeclarations", () => {
 	})
 
 	it("does not report a nested declaration", () => {
-		// `unreachable` sits inside api-kit's `percentile`. Nobody can import it, so nobody can duplicate it.
+		// Nobody can import a nested declaration, so nobody can duplicate it.
 		expect(findDeclarations(["unreachable"], { cwd: FIXTURE_ROOT }).get("unreachable")).toBeUndefined()
 	})
 
@@ -132,8 +129,8 @@ describe("readWriteIntent", () => {
 	})
 
 	it("reads only the replacement text from an Edit", () => {
-		// The surrounding file is not the author's current intent, and scanning it would report every declaration the
-		// file already has against itself.
+		// The surrounding file is not the author's current intent, and scanning it would
+		// report every declaration the file already has against itself.
 		const intent = readWriteIntent({
 			tool_name: "Edit",
 			tool_input: { file_path: "/repo/a.ts", old_string: "x", new_string: "function percentile() {}" },
@@ -178,13 +175,12 @@ describe("formatFindings", () => {
 		expect(text).toContain("packages/core/utils/stats.ts:12")
 		expect(text).toContain("packages/api-kit/metrics.ts:60")
 		expect(text).toContain("p: number): number | null")
-		// The export status is the difference between "you could import this" and "someone already decided not to".
 		expect(text).toContain("exported")
 	})
 
 	it("says the existing implementation may be the wrong one to reuse", () => {
-		// api-kit's `percentile` takes a fraction where core's takes [0, 100]. A hint phrased as an instruction would
-		// have an author collapse those two and silently change a unit.
+		// api-kit's `percentile` takes a fraction where core's takes [0, 100], so a hint
+		// phrased as an instruction would have an author silently change a unit.
 		const text = formatFindings([
 			{ name: "percentile", sites: [declarationSite("packages/core/utils/stats.ts", true, 12)] },
 		])
@@ -216,8 +212,7 @@ describe("selectReportable", () => {
 	})
 
 	it("suppresses a name that is declared everywhere and exported nowhere", () => {
-		// `main` had 34 declaration sites at the time this rule was chosen and not one of them is importable. A stoplist
-		// would have to name it. this rule derives it, which is the difference that keeps the rule from going stale.
+		// This rule derives the suppression from export status, so it keeps working where a stoplist would go stale.
 		const found = new Map([["main", [declarationSite("scripts/a.ts", false), declarationSite("scripts/b.ts", false)]]])
 
 		expect(selectReportable(found, { writingFile: "scripts/c.ts" })).toEqual([])
@@ -245,8 +240,8 @@ describe("selectReportable", () => {
 
 describe("a missing ripgrep", () => {
 	it("says the search could not run rather than answering zero", () => {
-		// Meaning-of-zero: an empty result must mean "searched and found nothing". If the searcher never ran, the
-		// caller has to hear that, because a silent zero here reads as "this symbol has no home".
+		// An empty result must mean "searched and found no match", so a searcher that never
+		// ran must throw rather than read as "this symbol has no home".
 		expect(() => findDeclarations(["percentile"], { cwd: FIXTURE_ROOT, binary: "rg-does-not-exist" })).toThrow(
 			/ripgrep/i
 		)

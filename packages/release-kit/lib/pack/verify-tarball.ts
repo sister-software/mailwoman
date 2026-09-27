@@ -1,42 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The pre-publish tarball audit: prove a packed workspace actually contains what its manifest
- *   promises, before the bytes leave this machine. Two independent guards, one entry point, shared
- *   by every publish path (`publish-workspace.ts` for releases, `bless-package.ts` for the
- *   first-publish bootstrap).
- *
- *   The gap this closes: `yarn pack` treats every `files` entry as a glob, and a glob matching
- *   nothing contributes nothing, silently. A workspace whose derived binaries were never built
- *   therefore packs to a tarball of metadata describing artifacts that are not in it, and npm
- *   accepts it. Published versions are immutable, so between packing and publishing is
- *   the only place the mistake is still recoverable.
- *
- *   A literal (non-glob) `files` entry is the author stating a file exists. Treat its absence as a
- *   defect rather than an empty match.
- *
- *   what is checked:
- *
- *   1. Every literal `files` entry resolves inside the tarball. Globs are skipped — they are
- *        legitimately allowed to match nothing (`**\/*.ts` in a data-only package) — as are the
- *        `!`-negations. A directory entry is satisfied by any member beneath it.
- *   2. Every concrete `exports` target resolves inside the tarball (the pre-existing guard, moved
- *        here from `publish-workspace.ts` so both publish paths inherit it). It would have caught
- *        the v7.2.0 ship-break: exports pointing at files the `files` globs excluded.
- */
-
 import { parseJSONStrict } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { spawnProcessSync } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { collectExportTargets } from "#pack/publish/exports"
 
-/**
- * Glob metacharacters. An entry carrying any of these is a pattern, and a pattern matching nothing is legal — only
- * literal paths are promises we can hold the author to.
- */
 const GLOB_PATTERN = /[*?[\]{}]/
 
 interface TarballContents {
@@ -47,15 +19,10 @@ interface TarballContents {
 		imports?: unknown
 		bin?: unknown
 	}
-	/**
-	 * Every path in the tarball, `./`-relative to the package root (tar's `package/` prefix stripped).
-	 */
+
 	shipped: Set<string>
 }
 
-/**
- * Normalize a `files` entry or tarball member to one comparable form: `./`-prefixed, no trailing slash.
- */
 function normalizeEntry(entry: string): string {
 	const trimmed = entry.replace(/\/+$/, "")
 
@@ -64,10 +31,6 @@ function normalizeEntry(entry: string): string {
 	return `./${trimmed.replace(/^\/+/, "")}`
 }
 
-/**
- * True when `entry` names something present in the tarball — either the exact path, or a directory with at least one
- * member beneath it (`out/` is satisfied by `./out/index.js`; tar may or may not list the directory itself).
- */
 function isShipped(entry: string, shipped: Set<string>): boolean {
 	if (shipped.has(entry)) return true
 
@@ -81,13 +44,10 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * A manifest's literal `files` entries — the ones whose author is stating a file exists, with the globs and the
- * `!`-negations dropped.
+ * Returns a manifest's literal `files` entries, dropping globs and `!` negations.
  *
- * Shared with `fetch-hf-weights.ts`, which materializes exactly the entries this audit later refuses a publish over.
- * Sharing the predicate rather than restating it is what keeps the two from disagreeing about what counts as a promise:
- * a materializer with a looser rule stages files nothing checks, and one with a stricter rule leaves a declared
- * artifact for the audit to find at publish time.
+ * The Hugging Face weights fetch plan shares this predicate so that it materializes
+ * exactly the entries this audit later requires.
  */
 export function literalFilesEntries(files: unknown): string[] {
 	if (!Array.isArray(files)) return []
@@ -98,14 +58,14 @@ export function literalFilesEntries(files: unknown): string[] {
 }
 
 /**
- * Which literal `files` entries the tarball does not contain. Exported for tests.
+ * Returns the literal `files` entries that the tarball does not contain.
  */
 export function collectMissingFileEntries(files: unknown, shipped: Set<string>): string[] {
 	return literalFilesEntries(files).filter((entry) => !isShipped(normalizeEntry(entry), shipped))
 }
 
 /**
- * Which concrete `exports` targets the tarball does not contain. Exported for tests.
+ * Returns the concrete `exports` targets that the tarball does not contain.
  */
 export function collectMissingExportTargets(exports: unknown, shipped: Set<string>): string[] {
 	return collectExportTargets(exports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
@@ -118,9 +78,6 @@ export function collectMissingImportTargets(imports: unknown, shipped: Set<strin
 	return collectExportTargets(imports ?? {}).filter((target) => !isShipped(normalizeEntry(target), shipped))
 }
 
-/**
- * Every path a `bin` field promises — npm accepts both the string form (`"bin": "./out/cli.js"`) and the map form.
- */
 function collectBinTargets(bin: unknown): string[] {
 	if (typeof bin === "string") return [bin]
 
@@ -130,22 +87,16 @@ function collectBinTargets(bin: unknown): string[] {
 }
 
 /**
- * Which `bin` targets the tarball does not contain. Exported for tests.
+ * Returns the `bin` targets that the tarball does not contain.
  *
- * The same promise an `exports` target makes, and the same silent failure when it is broken: `files` globs decide what
- * is packed, `bin` decides what npm symlinks onto the user's path, and nothing reconciles the two. A workspace whose
- * `out/` was never built packs fine, publishes fine, and then `npx <pkg>` dies with enoent on a path the manifest
- * itself named.
+ * No other check reconciles `bin` with `files`, so an unbuilt target would publish
+ * cleanly and fail only when a user runs it.
  */
 export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {
 	return collectBinTargets(bin).filter((target) => !isShipped(normalizeEntry(target), shipped))
 }
 
-/**
- * Read a packed tarball's member list and its `package.json`. Throws with the tar exit status rather than a parse error
- * on a truncated or non-tarball input, so a pack failure upstream reads as a pack failure here.
- */
-function readTarball(tarballPath: string): TarballContents {
+function readTarball(tarballPath: PathBuilderLike): TarballContents {
 	const listing = spawnProcessSync("tar", ["-tzf", tarballPath], { encoding: "utf8" })
 
 	if (listing.status !== 0) {
@@ -162,40 +113,45 @@ function readTarball(tarballPath: string): TarballContents {
 		)
 	}
 
-	const shipped = new Set(
-		[...TextSpliterator.from(listing.stdout)]
-			.filter(isPresent)
-			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
-	)
+	const shipped = TextSpliterator.from(listing.stdout)
+		.filter(isPresent)
+		.map((line) => normalizeEntry(line.replace(/^package\//, "")))
+		.toSet()
 
 	return { manifest: parseJSONStrict<TarballContents["manifest"]>(manifestRead.stdout), shipped }
 }
 
+/**
+ * Counts the manifest promises that {@link verifyTarball} checked in a tarball that passed.
+ */
 export interface TarballAudit {
 	name: string
+
 	/**
-	 * Literal (non-glob, non-negated) `files` entries verified present.
+	 * The number of `files` entries checked, excluding globs and `!` negations.
 	 */
 	literalFiles: number
+
 	/**
-	 * Concrete `exports` targets verified present.
+	 * The number of `exports` targets checked, excluding wildcard patterns.
 	 */
 	exportTargets: number
+
 	/**
-	 * `bin` targets verified present.
+	 * The number of `bin` targets checked.
 	 */
 	binTargets: number
 }
 
 /**
- * Audit a packed tarball. throw with every violation listed if it does not contain what it promises.
+ * Audits a packed tarball against its manifest's `files`, `exports`, `imports`
+ * and `bin` entries, throwing with every missing path listed.
  *
- * Callers publish only when this returns. It is deliberately a throw rather than a boolean: there is no partial pass,
- * and a published version cannot be taken back.
+ * Callers publish only when this returns, because a published version cannot be withdrawn.
  */
-export function verifyTarball(tarballPath: string): TarballAudit {
+export function verifyTarball(tarballPath: PathBuilderLike): TarballAudit {
 	const { manifest, shipped } = readTarball(tarballPath)
-	const name = manifest.name ?? tarballPath
+	const name = manifest.name ?? tarballPath.toString()
 	const missingFiles = collectMissingFileEntries(manifest.files, shipped)
 	const missingExports = collectMissingExportTargets(manifest.exports, shipped)
 	const missingImports = collectMissingImportTargets(manifest.imports, shipped)
@@ -232,7 +188,7 @@ export function verifyTarball(tarballPath: string): TarballAudit {
 }
 
 /**
- * The audit receipt line every publish path prints — one spelling, so the three receipts read alike.
+ * Formats the audit summary line that every publish path prints.
  */
 export function formatTarballAudit(audit: Pick<TarballAudit, "literalFiles" | "exportTargets" | "binTargets">): string {
 	return `${audit.literalFiles} literal files, ${audit.exportTargets} export targets, ${audit.binTargets} bin targets`

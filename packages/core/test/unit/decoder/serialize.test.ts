@@ -99,9 +99,9 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		// @raw is untouched by the decoder — full input must escape.
 		expect(xml).toContain(`raw="&lt;dangerous &amp; &quot;quoted&quot;&gt;"`)
 		expect(xml).not.toContain(`raw="<dangerous`)
-		// node.value is trimmed past the leading `<` and trailing `>` (boundary-trim in
-		// buildAddressTree), so the locality body is `dangerous & "quoted` — still contains `&` and
-		// `"`, exercising the in-body escaping path.
+		// node.value is trimmed past the leading `<` and trailing `>`
+		// (boundary-trim in buildAddressTree), so the locality body is `dangerous & "quoted` —
+		// still contains `&` and `"`, exercising the in-body escaping path.
 		expect(xml).toContain(`>dangerous &amp; &quot;quoted<`)
 	})
 
@@ -132,7 +132,8 @@ describe("decodeAsXML (nested mixed-content)", () => {
 		const xml = decodeAsXML(tree)
 		const openers = [...xml.matchAll(/<([a-z_]+)(?:\s[^>]*)?>/g)].map((m) => m[1])
 		const closers = [...xml.matchAll(/<\/([a-z_]+)>/g)].map((m) => m[1])
-		// Self-closing tags would shorten the closer list. we don't emit any, so they should match.
+		// Self-closing tags would shorten the closer list.
+		// We don't emit any, so they should match.
 		expect(openers.toSorted()).toEqual(closers.toSorted())
 	})
 

@@ -2,29 +2,17 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus upload` — push a corpus version, the tokenizer, or the training code to R2.
- *
- *   R2 is the only WAY IN. `modal volume put` writes to the training volume are visible to
- *   `modal volume ls/get` and not to containers — `train_remote.py` documents that in its own source,
- *   and it is why every remote artifact travels local → R2 → container-side rclone. A corpus that never
- *   reaches R2 cannot reach a GPU.
- *
- *   version-general BY argument. This command used to carry a hardcoded five-step script — "sync corpus
- *   v0.3.0", "sync corpus v0.4.0", tokenizer, code — so a new corpus version could not be uploaded
- *   without editing it. Worse, the hardcoded versions had stopped existing locally, so the very first
- *   step failed on a checkout where they were absent and buried the reason under rclone's harmless
- *   missing-config notice. That failure reads as "R2 is not configured" and is not.
- *
- *   Credentials come from `RCLONE_S3_*` in the typed private env, consumed through rclone's `:s3:`
- *   connection-string form. **No `rclone.conf` is involved**, so the notice about one being absent is
- *   expected output rather than a fault — it is suppressed here so it stops being read as an error.
+ *   A corpus that never reaches R2 cannot reach a GPU: `modal volume put` writes are visible to `modal volume ls/get`
+ *   and not to containers, which is why every remote artifact travels local → R2 → container-side rclone.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
 import { Box, Text } from "ink"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
@@ -49,8 +37,84 @@ export const spec = {
 		tokenizer: { type: "boolean", default: false, description: "Also sync the tokenizer" },
 		code: { type: "boolean", default: false, description: "Also sync corpus-python (the training code)" },
 		"dry-run": { type: "boolean", default: false, description: "Report the plan and transfer nothing" },
+		"allow-share-alike": {
+			type: "boolean",
+			default: false,
+			description:
+				"Upload a corpus version whose license set carries or mentions share-alike. " +
+				"Without it the upload refuses and reports the values and row counts it read",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The fields this command reads from a built corpus version's top-level `MANIFEST.json`.
+ *
+ * Taken from `BuildCorpusManifest` so the field names cannot drift from what the build writes.
+ * Both are optional because a manifest written before the build recorded them still parses,
+ * and an absent `license_policy` then reads as unstated rather than as a policy that ran.
+ */
+type UploadedCorpusManifest = Partial<Pick<BuildCorpusManifest, "licenses" | "license_policy">>
+
+/**
+ * Throws when a corpus version's own license set carries or mentions share-alike.
+ *
+ * The decision reads the obligations recorded for each license value the corpus stores,
+ * through `shareAlikeFindings`.
+ * It does not read source ids, adapter names or license-string prefixes,
+ * because a row's obligation is a property of its license value and a share-alike
+ * register can reach a corpus through a source whose id says otherwise.
+ *
+ * An unreadable or absent `MANIFEST.json` throws as well.
+ * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
+ */
+async function refuseShareAlike(version: string, manifestPath: PathBuilderLike, allow: boolean): Promise<void> {
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
+
+	let manifest: UploadedCorpusManifest
+
+	try {
+		manifest = await readLocalJSONFile<UploadedCorpusManifest>(manifestPath)
+	} catch (error) {
+		throw new Error(
+			`corpus ${version}: ${manifestPath} could not be read (${(error as Error).message}), so its license ` +
+				`set is unknown. Build the version through \`mw corpus build\`, which writes it, or pass ` +
+				`--allow-share-alike to upload without the check.`
+		)
+	}
+
+	if (!manifest.licenses) {
+		throw new Error(
+			`corpus ${version}: ${manifestPath} records no \`licenses\` map, so its license set is unknown. ` +
+				`Pass --allow-share-alike to upload without the check.`
+		)
+	}
+
+	const findings = shareAlikeFindings(manifest.licenses)
+
+	if (!findings.length) return
+
+	const rows = findings.reduce((total, finding) => total + finding.rows, 0)
+	const lines = findings.map((finding) => `  ${finding.kind}  ${finding.rows} rows  ${finding.license}`)
+
+	if (allow) {
+		process.stderr.write(
+			`corpus ${version}: uploading ${rows} rows under --allow-share-alike across ` +
+				`${findings.length} license value(s):\n${lines.join("\n")}\n`
+		)
+
+		return
+	}
+
+	throw new Error(
+		`corpus ${version}: its license set holds ${findings.length} value(s) carrying or mentioning ` +
+			`share-alike over ${rows} rows, and the build ran under license policy ` +
+			`${manifest.license_policy ?? "unstated"}:\n${lines.join("\n")}\n` +
+			`Rebuild with \`mw corpus build --license-policy share-alike-free\`, or pass --allow-share-alike ` +
+			`to upload this set deliberately.`
+	)
+}
 
 interface Step {
 	label: string
@@ -72,9 +136,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { $ } = await import("zx")
 
-		const { join } = await import("path-ts")
-
-		const corpusRoot = options.corpusDir ?? String(dataRootPath("corpus", "versioned"))
+		const corpusRoot = PathBuilder.from(options.corpusDir ?? dataRootPath("corpus", "versioned"))
 
 		const versions = extractDelimited(options.corpusVersion)
 
@@ -89,8 +151,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// rclone reads `:s3:` credentials from the environment. Point RCLONE_CONFIG at nothing so the
-		// "config file not found" notice stops appearing in output that people read as a failure.
+		// rclone reads `:s3:` credentials from the environment.
+		// Pointing RCLONE_CONFIG at an empty path keeps its absent-config notice from being read as a failure.
 		const env = childEnv({
 			RCLONE_CONFIG: "",
 			RCLONE_S3_PROVIDER: "Cloudflare",
@@ -111,7 +173,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		interface Job {
 			label: string
-			source: string
+			source: PathBuilderLike
 			dest: string
 			extra: string[]
 		}
@@ -120,8 +182,10 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 
 		for (const version of versions) {
 			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
-			const nested = join(corpusRoot, version, `corpus-${version}`)
-			const source = (await pathExists(nested)) ? nested : join(corpusRoot, version)
+			const nested = corpusRoot(version, `corpus-${version}`)
+			const source = (await pathExists(nested)) ? nested : corpusRoot(version)
+
+			await refuseShareAlike(version, corpusRoot(version, "MANIFEST.json"), options.allowShareAlike)
 
 			jobs.push({
 				label: `corpus ${version}`,
@@ -134,7 +198,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		if (options.tokenizer) {
 			jobs.push({
 				label: "tokenizer",
-				source: String(dataRootPath("models", "tokenizer")),
+				source: dataRootPath("models", "tokenizer"),
 				dest: `${base}/models/tokenizer/`,
 				extra: ["--transfers", "4"],
 			})
@@ -155,9 +219,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			setSteps((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)))
 
 		for (const [index, job] of jobs.entries()) {
-			// check the source first. rclone's own error for an absent directory arrives buried under the
-			// config notice, which is exactly how "this version does not exist here" got read as "R2 is
-			// broken". Say which path was missing instead.
+			// An absent source is reported here because rclone's own error arrives buried under
+			// the config notice, where "this version does not exist here" reads as a broken R2.
 			if (!(await pathExists(job.source))) {
 				update(index, { status: "error", detail: `not found locally: ${job.source}` })
 
@@ -167,7 +230,7 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			update(index, { status: "running" })
 
 			try {
-				await $({ env })`rclone sync ${job.source} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
+				await $({ env })`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
 				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
 			} catch (error: unknown) {
 				const e = error as Record<string, unknown>
@@ -177,8 +240,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		}
 	})
 
-	// A thrown selection/credential error is the whole message here — rendering only the step list would
-	// print a bare header and look like a no-op.
+	// A thrown selection or credential error is the whole message.
+	// Rendering only the step list would print a bare header, which reads as a completed upload of zero files.
 	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (

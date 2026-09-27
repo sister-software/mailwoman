@@ -18,7 +18,7 @@ from .passes import audit_mixture
 from .receipts import CorpusReceiptError, corpus_receipt_binding
 
 #: A source whose per-row exposure exceeds this multiple of the median is almost certainly a mistake.
-#: 8x is deliberately loose — the #1677 case was 33x the sources weighted six times higher, so a guard
+#: 8x is deliberately loose. The #1677 case was 33x the sources weighted six times higher, so a guard
 #: that only catches that is a guard for one incident rather than for the foot-gun.
 REPS_OUTLIER_MULTIPLE = 8.0
 

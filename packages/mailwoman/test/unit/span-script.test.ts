@@ -18,7 +18,8 @@ import { stampSpanScripts } from "mailwoman/span-script"
 import { describe, expect, it } from "vitest"
 
 /**
- * A tree whose spans are given as `[tag, start, end]` into `raw`, so a case reads as the offsets it asserts about.
+ * A tree whose spans are given as `[tag, start, end]` into `raw`, so a case
+ * reads as the offsets it asserts about.
  */
 function treeOf(raw: string, spans: ReadonlyArray<[string, number, number]>): AddressTree {
 	return {
@@ -102,8 +103,9 @@ describe("stampSpanScripts — the script each span is written in", () => {
 	})
 
 	it("answers the script that writes MOST of a mixed span, not the first codepoint's", () => {
-		// 丸の内 is two Han and one Hiragana, so the span is Hani. Reading the leading codepoint would agree here by
-		// accident and disagree on の丸内, which is why the fold is weighted.
+		// 丸の内 is two Han and one Hiragana, so the span is Hani.
+		// Reading the leading codepoint would agree here by accident and disagree on の丸内,
+		// which is why the fold is weighted.
 		const raw = "東京都千代田区丸の内1-9-1"
 
 		const tree = treeOf(raw, [

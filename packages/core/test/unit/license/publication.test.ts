@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The well-known register check over the scripted transport. The two non-verdicts are the point: a site that answers
- *   without a register and a site that does not answer call for different actions, and one word for both hid a
- *   deployment that dropped the file behind "no route to mailwoman.ai".
+ *   The well-known register check over the scripted transport, whose point is the two non-verdicts: a site that answers without a register and a site that does not answer call for different actions.
  */
 
 import { stubTransport } from "@mailwoman/core/api/test-transport"
@@ -40,7 +38,7 @@ describe("the well-known register check", () => {
 
 		expect(await confirmLicenseKeyPublished("v9-active00", { axios: notFound.axios })).toBe("unpublished")
 
-		// A soft 404: the page a static host serves with a 200 when the path has nothing behind it.
+		// A soft 404: the page a static host serves with a 200 when the path has no resource behind it.
 		const softNotFound = stubTransport([{ body: "<!doctype html><title>Page not found</title>" }])
 
 		expect(await confirmLicenseKeyPublished("v9-active00", { axios: softNotFound.axios })).toBe("unpublished")

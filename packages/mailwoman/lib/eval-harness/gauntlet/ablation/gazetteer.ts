@@ -3,7 +3,7 @@
 
 /**
  *   The {@linkcode AblationGazetteerProbe} implementation: the two databases the ablation layer's expectation model
- *   reads, and nothing else.
+ *   reads, and no other database.
  *
  *   - `wof/admin-global-priority.db` — `spr` + `ancestors`. The ladder comes from here: a resolved place id → its
  *       containment chain, with each ancestor's centroid and bbox. The walk is `ancestorLineage`'s (shared with the
@@ -15,15 +15,15 @@
  *
  *   Both are opened read-only and both are optional: a machine without them gets `available: false` and the layer falls
  *   back to anchor-only grading, loudly. A silently ladder-less run would report every variant as ungraded and look
- *   identical to a run where nothing degraded.
+ *   identical to a run where no rung degraded.
  *
  *   The queries stay raw `.prepare()` (the resolver-reader convention, agents.md): they are synchronous point probes on
  *   a read-only artifact, called once per rung and once per component per variant.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { allRows, getRow } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
 import { haversineKm } from "@mailwoman/spatial"
@@ -67,9 +67,10 @@ interface CandidateRow {
 }
 
 /**
- * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max` — the meaning-of-zero trap
- * this model must not fall into. Fold that to `null` at the reader, once, so nothing downstream can mistake it for an
- * extent of zero.
+ * `spr`'s bbox columns are `not NULL default 0`, so an unset extent reads as `min == max`.
+ * The meaning-of-zero trap this model must not fall into.
+ *
+ * Fold that to `null` at the reader, once, so no consumer downstream can mistake it for an extent of zero.
  */
 function bboxOf(
 	minLat: number | null,
@@ -85,8 +86,11 @@ function bboxOf(
 }
 
 /**
- * Parse the resolver's `placeID` URI (`wof:85974801`) back to a WOF id. `null` for anything else — the scheme is
- * deliberately simple (`resolver/resolve.ts`), and a future non-WOF backend must not be silently read as one.
+ * Parse the resolver's `placeID` URI (`wof:85974801`) back to a WOF id.
+ *
+ * `null` for anything else.
+ * The scheme is deliberately simple (`resolver/resolve.ts`), and a future non-WOF
+ * backend must not be silently read as one.
  */
 export function wofIDFromPlaceID(placeID: string | undefined): number | null {
 	if (!placeID) return null
@@ -97,9 +101,11 @@ export function wofIDFromPlaceID(placeID: string | undefined): number | null {
 }
 
 /**
- * Collapse a population-ordered candidate list to distinct places: anything within {@linkcode COINCIDENT_PLACE_KM} of
- * an already-kept, higher-ranked entry is the same physical place (WOF stores a big city as both a `locality` and a
- * `localadmin`, same population). Exported because it is the step that makes a namesake count mean "namesakes".
+ * Collapse a population-ordered candidate list to distinct places: anything within
+ * {@linkcode COINCIDENT_PLACE_KM} of an already-kept, higher-ranked entry is the same physical
+ * place (WOF stores a big city as both a `locality` and a `localadmin`, same population).
+ *
+ * Exported because it is the step that makes a namesake count mean "namesakes".
  */
 export function collapseCoincident(places: readonly AblationPlace[]): AblationPlace[] {
 	const kept: AblationPlace[] = []
@@ -114,16 +120,23 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 }
 
 /**
- * How many candidate rows one name probe reads before collapsing. The probe is a contiguous scan of one `name_key` on
- * the clustered B-tree, so the cost is bounded by the namesake cluster itself. the cap only guards the pathological
- * keys (`San José` carries 886 rows worldwide). Sized well above the corpus's worst (886) so no corpus name is
- * truncated — a truncated list would understate ambiguity, which is the direction that turns an abstain into a false
- * expectation.
+ * How many candidate rows one name probe reads before collapsing.
+ *
+ * The probe is a contiguous scan of one `name_key` on the clustered B-tree,
+ * so the cost is bounded by the namesake cluster itself.
+ * The cap only guards the pathological keys (`San José` carries 886 rows worldwide).
+ *
+ * Sized well above the corpus's worst (886) so no corpus name is truncated.
+ * A truncated list would understate ambiguity, which is the direction that turns
+ * an abstain into a false expectation.
  */
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe. Construct once per run. disposal releases both handles.
+ * The two-database probe.
+ *
+ * Construct once per run.
+ * Disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -148,19 +161,22 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	 * Build the probe with its reverse geocoder attached.
 	 *
 	 * The dynamic import keeps this optional dependency off ordinary evaluation paths, and
-	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for. The reverse geocoder
-	 * shares this object's already-open admin handle (`adminDatabase`), so it opens nothing and disposal stays the single
-	 * owner. No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment is the approximate
-	 * (nearest-centroid descent) mode — good enough to name a chain, and the chain is all this model wants from it.
+	 * `@mailwoman/resolver-wof-sqlite`'s index is not something a `mailwoman --help` should pay for.
+	 * The reverse geocoder shares this object's already-open admin handle (`adminDatabase`),
+	 * so it opens no handle and disposal stays the single owner.
 	 *
-	 * The availability check lives here rather than in the constructor: it reads the filesystem, and a constructor cannot
-	 * await.
+	 * No polygon sidecar is passed: there is no global `wof-polygons.db`, so containment
+	 * is the approximate (nearest-centroid descent) mode — good enough to name a chain,
+	 * and the chain is all this model wants from it.
+	 *
+	 * The availability check lives here rather than in the constructor:
+	 * it reads the filesystem, and a constructor cannot await.
 	 */
 	static async create(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike } = {}
 	): Promise<AblationGazetteer> {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? wofDatabasePath("admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? wofDatabasePath("candidate.db")
 		const missing: string[] = []
 
 		if (!(await pathExists(ancestryPath))) {
@@ -183,15 +199,17 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	}
 
 	/**
-	 * Construct the probe. The existence check a constructor cannot perform is the caller's: `missingPaths` is the answer
-	 * {@linkcode AblationGazetteer.create} computed with `pathExists`, and the constructor opens nothing while any path is
-	 * named there.
+	 * Construct the probe.
+	 *
+	 * The existence check a constructor cannot perform is the caller's: `missingPaths`
+	 * is the answer {@linkcode AblationGazetteer.create} computed with `pathExists`,
+	 * and the constructor opens no handle while any path is named there.
 	 */
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}
 	) {
-		const ancestryPath = opts.ancestryPath ?? dataRootPath("wof", "admin-global-priority.db")
-		const candidatePath = opts.candidatePath ?? dataRootPath("wof", "candidate.db")
+		const ancestryPath = opts.ancestryPath ?? wofDatabasePath("admin-global-priority.db")
+		const candidatePath = opts.candidatePath ?? wofDatabasePath("candidate.db")
 		const missing = opts.missingPaths ?? []
 
 		if (missing.length) {
@@ -210,8 +228,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 			 FROM spr WHERE id = ?`
 		)
 
-		// The `ancestorLineage` walk (resolver-wof-sqlite/ancestry.ts) plus the bbox columns — same join, same
-		// `ancestors_by_id` index. ordering is done in JS below, deepest first.
+		// The `ancestorLineage` walk (resolver-wof-sqlite/ancestry.ts) plus the bbox columns —
+		// same join, same `ancestors_by_id` index.
+		// Ordering is done in JS below, deepest first.
 		this.#lineageStatement = this.#ancestry.prepare(
 			`SELECT s.id AS id, a.ancestor_placetype AS placetype, s.name AS name, s.country AS country,
 				s.latitude AS latitude, s.longitude AS longitude,
@@ -263,8 +282,9 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lat: row.latitude,
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					// `spr` carries no population column. the ranking margin is only ever taken over
-					// candidate-table rows, so a lineage place's rank is never read.
+					// `spr` carries no population column.
+					// The ranking margin is only ever taken over candidate-table rows,
+					// so a lineage place's rank is never read.
 					negRank: 0,
 					population: null,
 				}
@@ -307,8 +327,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	containingChain(lat: number, lon: number): AblationPlace[] {
 		if (!this.#reverse) return []
 
-		// The reverse hierarchy is already deepest-first. re-read each id off `spr` so every rung carries the bbox
-		// (the reverse candidate shape does not).
+		// The reverse hierarchy is already deepest-first.
+		// Re-read each id off `spr` so every rung carries the bbox (the reverse candidate shape does not).
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)
 			.hierarchy.map((h) => this.place(h.id))

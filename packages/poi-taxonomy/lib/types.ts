@@ -12,12 +12,16 @@
 declare const POICategoryIDBrand: unique symbol
 
 /**
- * A category id, e.g. `hospital`, `gas_station`, `fire_hydrant`. Branded — cast via {@link toPOICategoryID}.
+ * A category id, e.g. `hospital`, `gas_station`, `fire_hydrant`.
+ *
+ * Branded — cast via {@link toPOICategoryID}.
  */
 export type POICategoryID = string & { readonly [POICategoryIDBrand]: true }
 
 /**
- * Brand a raw string as a {@link POICategoryID}. Purely a compile-time assertion.
+ * Brand a raw string as a {@link POICategoryID}.
+ *
+ * Purely a compile-time assertion.
  */
 export function toPOICategoryID(id: string): POICategoryID {
 	return id as POICategoryID
@@ -57,24 +61,34 @@ export interface CategoryRecord {
 	 */
 	basicLabel: string | null
 	/**
-	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) — consumed by the OverpassQL export
-	 * emitter. Curated alongside the category. not an Overture field.
+	 * The OSM tag this category maps to, `key=value` form (e.g. `amenity=hospital`) —
+	 * consumed by the OverpassQL export emitter.
+	 *
+	 * Curated alongside the category.
+	 * Not an Overture field.
 	 */
 	osmTag?: string
 	source: CategorySource
 	/**
-	 * Overture `taxonomy.primary` leaf ids that roll up into this canonical category — i.e. the values a built `poi.db`
-	 * actually stores. The seed taxonomy keys categories by curated ids (`supermarket`, `trail`), but the db stores
-	 * Overture leaves (`grocery_store`, `hiking_trail`, …); this is the one-to-many translation layer between the two
-	 * namespaces. Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that, e.g. `hospital` =
-	 * Overture `hospital`). `mailwoman-infra` categories carry no Overture leaf and abstain build-local, so they leave
-	 * this omitted too.
+	 * Overture `taxonomy.primary` leaf ids that roll up into this canonical category —
+	 * i.e. the values a built `poi.db` actually stores.
+	 *
+	 * The seed taxonomy keys categories by curated ids (`supermarket`, `trail`),
+	 * but the db stores Overture leaves (`grocery_store`, `hiking_trail`, …);
+	 * this is the one-to-many translation layer between the two namespaces.
+	 * Omitted/empty ⇒ the id is its own probe id (identity — 21 of 23 seeds rely on that,
+	 * e.g. `hospital` = Overture `hospital`).
+	 *
+	 * `mailwoman-infra` categories carry no Overture leaf and abstain build-local,
+	 * so they leave this omitted too.
 	 */
 	overtureCategories?: POICategoryID[]
 	/**
-	 * Keep the mapped Overture leaves as standalone categories as well. Used by umbrella query categories whose leaves
-	 * remain independently meaningful (`place_of_worship` maps several faith-specific categories). Absent preserves the
-	 * canonicalization behavior for aliases such as `supermarket` → `grocery_store`.
+	 * Keep the mapped Overture leaves as standalone categories as well.
+	 *
+	 * Used by umbrella query categories whose leaves remain independently meaningful
+	 * (`place_of_worship` maps several faith-specific categories).
+	 * Absent leaves aliases such as `supermarket` → `grocery_store` canonicalized as before.
 	 */
 	retainOvertureLeaves?: boolean
 }
@@ -89,8 +103,8 @@ export interface SynonymEntry {
 	phrase: string
 	categoryID: POICategoryID
 	/**
-	 * BCP-47 locale filter, same semantics as `@mailwoman/variant-aliases`: omitted = unrestricted (matches any locale at
-	 * confidence 1.0); present = 1.0 on exact locale, 0.5 on language-only.
+	 * BCP-47 locale filter, same semantics as `@mailwoman/variant-aliases`: omitted = unrestricted
+	 * (matches any locale at confidence 1.0); present = 1.0 on exact locale, 0.5 on language-only.
 	 */
 	locales?: string[]
 }
@@ -101,7 +115,8 @@ export interface SynonymEntry {
 export interface POITaxonomyTable {
 	version: string
 	/**
-	 * Overture release the category snapshot was taken from. null until Plan 3 lands the full snapshot.
+	 * Overture release the category snapshot was taken from.
+	 * Null until Plan 3 lands the full snapshot.
 	 */
 	overtureRelease: string | null
 	categories: CategoryRecord[]
@@ -111,20 +126,24 @@ export interface POITaxonomyTable {
 declare const POIBrandWikidataIDBrand: unique symbol
 
 /**
- * A brand's Wikidata QID, e.g. `Q38076` (McDonald's). Branded — cast via {@link toPOIBrandWikidataID}.
+ * A brand's Wikidata QID, e.g. `Q38076` (McDonald's).
+ *
+ * Branded — cast via {@link toPOIBrandWikidataID}.
  */
 export type POIBrandWikidataID = string & { readonly [POIBrandWikidataIDBrand]: true }
 
 /**
- * Brand a raw string as a {@link POIBrandWikidataID}. Purely a compile-time assertion.
+ * Brand a raw string as a {@link POIBrandWikidataID}.
+ *
+ * Purely a compile-time assertion.
  */
 export function toPOIBrandWikidataID(id: string): POIBrandWikidataID {
 	return id as POIBrandWikidataID
 }
 
 /**
- * One brand, aggregated from a built `poi.db`'s `(brand_wikidata, name)` pairs (see
- * `mailwoman/gazetteer-pipeline/poi/build-brands.ts`).
+ * One brand, aggregated from a built `poi.db`'s `(brand_wikidata, name)` pairs
+ * (see `mailwoman/gazetteer-pipeline/poi/build-brands.ts`).
  */
 export interface BrandRecord {
 	wikidata: POIBrandWikidataID

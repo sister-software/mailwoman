@@ -2,42 +2,40 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Mailwoman's repo-local oxlint JS plugin (ESLint v9-compatible API), loaded alongside the
- *   bundled Sister Software plugin via `jsPlugins` in `oxlint.config.ts`. Rules encoding
- *   mailwoman-specific guidance live here. anything general enough for other repos graduates to
- *   `@sister.software/oxlint-config`.
- *
- *   `no-sync-fs-in-async`: a synchronous `node:fs` call standing inside an `async` function blocks the event loop
- *   where an `await` is already legal on the same line. The rule fires only in that position — a sync call inside a
- *   sync function is a cascade rather than a defect, and the rule stays silent there.
- *
- *   `no-relative-dynamic-import`: `import("./x.ts")` names a module by the importer's location. the package's
- *   `imports` map names it once.
- *
- *   `no-private-import-in-test`: a test file reaches the package under test through its public exports, never the
- *   `#` map — the map is the package's private naming, and a test that uses it never exercises the surface a consumer
- *   gets.
- *
- *   `no-import-meta-dirname-walk`: `resolvePath(import.meta.dirname, "../..")` counts directories. a package's own
- *   file is `resolvePackagePath`, a repository file is `repoRootPath`.
- *
- *   `no-import-meta-resolve`: `fileURLToPath(import.meta.resolve(…))` has a typed home in
- *   `@mailwoman/core/module/resolvers`.
- *
- *   `prefer-home`: the table is `oxlint.helper-homes.ts` and this file matches its signatures. A row matches a token,
- *   a control shape or an interpolation order: the shuffle writes no constant of its own and a hand-written address
- *   order writes nothing but a comma, so a table that only knew literals could report neither.
- *
- *   `prefer-spliterator`: `text.split("\n")` (or `"\t"`) materializes every segment into one array
- *   before the first is read — the whole-buffer parse the spliterator library exists to avoid (the
- *   quadratic-CSV episode in agents.md started exactly there). The rule warns on those two literal
- *   delimiters only. splitting on anything else is not a streaming shape and stays silent.
+ * @file Repository-specific oxlint rules, loaded through `jsPlugins` in `oxlint.config.ts`.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { AstNode } from "@sister.software/oxlint-config/plugin-types"
 
+import { reflowRule } from "./config/oxlint/comment-reflow/rule.ts"
 import { HELPER_HOMES, type HelperHome } from "./oxlint.helper-homes.ts"
+
+/**
+ * Additional ESTree fields used by local rules but not declared on the shared `AstNode` type.
+ */
+interface ESTreeNode extends AstNode {
+	/**
+	 * A `ForStatement` update expression.
+	 */
+	update?: AstNode
+	/**
+	 * Elements of an array pattern or expression.
+	 */
+	elements?: AstNode[]
+	/**
+	 * Template of a tagged-template expression.
+	 */
+	quasi?: AstNode
+	/**
+	 * A function's declared return type.
+	 */
+	returnType?: AstNode
+	/**
+	 * The members of a union or intersection type.
+	 */
+	types?: AstNode[]
+}
 
 interface RuleContext {
 	options: unknown[]
@@ -67,7 +65,7 @@ interface Plugin {
 }
 
 /**
- * The delimiters the rule understands, each mapped to the spliterator entry point that streams it.
+ * Supported delimiters and suggested streaming readers.
  */
 const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 	[
@@ -78,7 +76,7 @@ const DELIMITER_HINTS = new Map<string, { rendered: string; hints: string[] }>([
 ])
 
 /**
- * The delimiter string when the argument is a plain string literal or an expressionless template literal, else null.
+ * Read a string delimiter from a literal or expression-free template.
  */
 function literalDelimiter(argument: AstNode | undefined): string | null {
 	if (!argument) return null
@@ -130,7 +128,7 @@ const preferSpliteratorRule: Rule = {
 }
 
 /**
- * Kysely calls whose arguments are checked against the database schema.
+ * Kysely methods that accept schema-bound table or column names.
  */
 const DATABASE_BOUNDARY_METHODS = new Set([
 	"deleteFrom",
@@ -143,7 +141,7 @@ const DATABASE_BOUNDARY_METHODS = new Set([
 ])
 
 /**
- * Whether an expression contains a cast through `never`, including a nested `as unknown as never`.
+ * Check whether an expression contains a `never` cast.
  */
 function containsNeverCast(node: AstNode | undefined): boolean {
 	if (!node) return false
@@ -158,7 +156,7 @@ function containsNeverCast(node: AstNode | undefined): boolean {
 }
 
 /**
- * The identifier name of a non-computed member call, if this is one.
+ * Get a called member's name when it is not computed.
  */
 function calledMethod(node: AstNode): string | null {
 	const callee = node.callee
@@ -169,12 +167,12 @@ function calledMethod(node: AstNode): string | null {
 }
 
 /**
- * Type names whose whole purpose is to carry a database schema.
+ * Database handle types parameterized by schema.
  */
 const DATABASE_HANDLE_TYPES = new Set(["DatabaseClient", "Kysely", "Transaction"])
 
 /**
- * The type name of a cast's target, when the target is a plain (possibly generic) type reference.
+ * Get the name of a simple type-reference cast target.
  */
 function castTargetName(node: AstNode): string | null {
 	const annotation = node.typeAnnotation
@@ -302,13 +300,14 @@ const requireDisableReasonRule: Rule = {
 }
 
 /**
- * Each synchronous `node:fs` name, mapped to the asynchronous helper that replaces it. The three removal helpers and
- * the two stat helpers differ in what they treat as an error, so the suggestion names the builtin's own interface
- * rather than the nearest-looking helper.
+ * Replacement hint for `readdirSync`.
  */
 const GLOBERATOR_DIRECTORY_HINT =
 	'`Globerator.from("*", { cwd: path, absolute: false })`, adding `withFileTypes: true, onlyFiles: false` when entry types are needed (spliterator/node/fs)'
 
+/**
+ * Map from each synchronous `node:fs` function to the async helper that replaces it.
+ */
 const ASYNC_FILESYSTEM_HELPERS = new Map<string, string>([
 	["appendFileSync", "`appendLocalTextFile(content, path)` (@mailwoman/core/fs/writers)"],
 	["chmodSync", "`changeMode(path, mode)` (@mailwoman/core/fs/writers)"],
@@ -349,8 +348,7 @@ const FUNCTION_NODE_TYPES = new Set([
 ])
 
 /**
- * Node types that end an `async` scope without being a function: whatever they contain runs synchronously however the
- * surrounding function was declared.
+ * AST nodes whose contents execute synchronously and reset async scope.
  */
 const SYNC_SCOPE_NODE_TYPES = new Set(["ClassStaticBlock", "StaticBlock", "MethodDefinition", "PropertyDefinition"])
 
@@ -364,8 +362,7 @@ const noSyncFSInAsyncRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * Walked here rather than tracked with `:exit` visitors, so the rule owns the traversal and the enclosing-function
-		 * state cannot desynchronize from it.
+		 * Traverse the AST while tracking whether each node is inside an async function.
 		 */
 		function walk(node: AstNode, insideAsync: boolean): void {
 			let asyncHere = insideAsync
@@ -413,10 +410,7 @@ const noSyncFSInAsyncRule: Rule = {
 }
 
 /**
- * A dynamic `import("./x.ts")` names a file by where the importer sits, so it breaks the moment either side moves and
- * says nothing about which package boundary it crosses. The package's `imports` map (`#eval-harness/promotion-eval`)
- * names the module once, resolves `.ts` under `node` and `out/*.js` everywhere else, and is what a static import of the
- * same module already uses.
+ * Prefer package import aliases over relative dynamic imports.
  */
 const noRelativeDynamicImportRule: Rule = {
 	meta: {
@@ -435,7 +429,7 @@ const noRelativeDynamicImportRule: Rule = {
 					node,
 					message:
 						`import(${stringifyJSON(specifier)}) names a module by the importer's location. Use the package's ` +
-						"`imports` map instead (`#<path-from-package-root>`, no extension) — it resolves `.ts` under `node` and " +
+						"`imports` map instead (`#<path-from-package-root>`, without an extension) — it resolves `.ts` under `node` and " +
 						"`out/*.js` everywhere else, and moves with the file.",
 				})
 			},
@@ -444,10 +438,7 @@ const noRelativeDynamicImportRule: Rule = {
 }
 
 /**
- * A test file reaches the package under test the way a consumer does — through its public `exports`
- * (`@mailwoman/<pkg>/<subpath>`, `mailwoman/<subpath>`) — and a test helper or an unexported module by relative path,
- * which makes the private dependency visible at the import. `#` specifiers are the package's own `imports` map: legal
- * in `lib/`, where the module names its siblings, and a bypass of the public surface everywhere a test uses one.
+ * Prevent tests from importing package-private `#` aliases.
  */
 const noPrivateImportInTestRule: Rule = {
 	meta: {
@@ -487,7 +478,7 @@ const noPrivateImportInTestRule: Rule = {
 				}
 			},
 			CallExpression(node: AstNode) {
-				// `vi.mock("#x")`, `vi.doMock`, `vi.importActual`, `vi.importMock`: the specifier is the first argument.
+				// Vitest mock helpers take the module specifier as the first argument.
 				const callee = node.callee
 
 				if (callee?.type !== "MemberExpression" || callee.object?.name !== "vi") return
@@ -509,9 +500,7 @@ const noPrivateImportInTestRule: Rule = {
 }
 
 /**
- * `fileURLToPath(import.meta.resolve(…))` is string plumbing around a question with a typed answer.
- * `@mailwoman/core/module/resolvers` owns it: `resolveModulePath` for a file a specifier names,
- * `resolvePackageDirectory` for a package's root. a module's own neighbours are `resolvePath(import.meta.dirname, …)`.
+ * Prefer typed module-resolution helpers over `import.meta.resolve`.
  */
 const noImportMetaResolveRule: Rule = {
 	meta: {
@@ -547,10 +536,7 @@ const noImportMetaResolveRule: Rule = {
 }
 
 /**
- * `resolvePath(import.meta.dirname, "../../x")` names a file by counting directories up from wherever this module sits
- * — a count that changes when the module moves and differs between the source tree and `out/`. A package's own file is
- * `resolvePackagePath("<package>", …)`; a repository file is `repoRootPath(…)`. Descending from the module's own
- * directory (`"fixtures/x.json"`) is not the problem and stays.
+ * Prefer package and repository path helpers over walking up from `import.meta.dirname`.
  */
 const noImportMetaDirnameWalkRule: Rule = {
 	meta: {
@@ -584,8 +570,7 @@ const noImportMetaDirnameWalkRule: Rule = {
 }
 
 /**
- * The method names a call stands on, innermost first: `a.b().c().d()` is `["b", "c", "d"]`. A non-call object (an
- * identifier, a `new` expression, a member read) ends the chain.
+ * Get called method names from inner to outer.
  */
 function methodChain(node: AstNode): string[] {
 	const names: string[] = []
@@ -609,8 +594,7 @@ function numericLiteralValue(node: AstNode): number | null {
 }
 
 /**
- * The base object's name in a computed index read or write — `rows` in `rows[i]`. Null for anything else, including a
- * dotted property (`a.b`), which is not an index.
+ * Get the base identifier of computed index access, such as `rows` in `rows[i]`.
  */
 function indexedBaseName(node: AstNode | undefined): string | null {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return null
@@ -619,11 +603,7 @@ function indexedBaseName(node: AstNode | undefined): string | null {
 }
 
 /**
- * Whether a computed index is a variable rather than a constant — `xs[i]`, not `xs[0]`.
- *
- * Heapsort's extraction phase counts down from the last index, stops at 1, and swaps two computed indices of one array,
- * so it satisfies every other clause of the shuffle shape. What separates it is that one of its indices is the literal
- * 0: a shuffle swaps the loop variable with a drawn index, and neither is a constant.
+ * Check whether a computed index uses a variable rather than a constant.
  */
 function isVariableIndex(node: AstNode | undefined): boolean {
 	if (node?.type !== "MemberExpression" || node.computed !== true) return false
@@ -632,15 +612,7 @@ function isVariableIndex(node: AstNode | undefined): boolean {
 }
 
 /**
- * Whether a `for` header counts down from a length to 1: `for (let i = xs.length - 1. i > 0. i--)`, or the same written
- * `i >= 1`.
- *
- * All three clauses are required, and they are not sufficient on their own — heapsort's extraction phase satisfies
- * every one of them. What the body check adds is that both swapped indices are variables. see {@link isVariableIndex}.
- *
- * Known miss: a loop whose bound is hoisted (`const n = xs.length. for (let i = n - 1. …)`) reads as a plain descent
- * and is not reported. Widening the init clause to any identifier would report every backwards loop in the repository,
- * which is a worse trade for a suggestion rule.
+ * Match a descending loop from `xs.length - 1` to zero or one.
  */
 function isDescendingFromLength(node: AstNode): boolean {
 	const declaration = node.init?.declarations?.[0]?.init
@@ -652,25 +624,18 @@ function isDescendingFromLength(node: AstNode): boolean {
 		declaration.left?.type === "MemberExpression" &&
 		declaration.left.property?.name === "length"
 
-	// `i > 0` and `i >= 1` are the same stopping point, and both are written.
+	// These two conditions have the same lower bound.
 	const bound = node.test?.type === "BinaryExpression" ? numericLiteralValue(node.test.right as AstNode) : null
 
 	const toOne = (node.test?.operator === ">" && bound === 0) || (node.test?.operator === ">=" && bound === 1)
 
-	return (
-		Boolean(fromLength) && Boolean(toOne) && node.update?.type === "UpdateExpression" && node.update.operator === "--"
-	)
+	const update = (node as ESTreeNode).update
+
+	return Boolean(fromLength) && Boolean(toOne) && update?.type === "UpdateExpression" && update.operator === "--"
 }
 
 /**
- * Whether a loop body swaps two computed indices of one array.
- *
- * Two forms, because both are written here: the destructured `[xs[i], xs[j]] = [xs[j], xs[i]]`, and the temporary `tmp
- * = xs[i]; xs[i] = xs[j]; xs[j] = tmp`, which shows up as two index writes to the same base.
- *
- * Reads the body's own statements rather than walking the subtree. A generic walk over an oxlint node's values follows
- * its back-references and never terminates, and depth adds nothing here: a shuffle writes its swap at the top of the
- * loop, so a swap nested inside a branch is a different algorithm.
+ * Check whether the body swaps two computed indices of the same array.
  */
 function swapsTwoIndices(body: AstNode): boolean {
 	const statements: AstNode[] = body.type === "BlockStatement" ? ((body.body as AstNode[]) ?? []) : [body]
@@ -684,7 +649,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 
 		if (left?.type !== "ArrayPattern" && left?.type !== "ArrayExpression") continue
 
-		const elements = (left.elements as AstNode[]) ?? []
+		const elements = (left as ESTreeNode).elements ?? []
 		const bases = elements.map((element) => indexedBaseName(element))
 
 		if (bases.length === 2 && bases[0] !== null && bases[0] === bases[1] && elements.every(isVariableIndex)) {
@@ -701,8 +666,7 @@ function swapsTwoIndices(body: AstNode): boolean {
 }
 
 /**
- * The name a template expression interpolates: the property for `place.locality` and `row["locality"]`, the identifier
- * for a bare `locality`. Anything else answers null. It cannot match a row. Therefore, it cannot report one.
+ * Get an identifier or property name, or return `null`.
  */
 function interpolatedName(node: AstNode): string | null {
 	if (node.type === "Identifier") return node.name ?? null
@@ -715,9 +679,7 @@ function interpolatedName(node: AstNode): string | null {
 }
 
 /**
- * Whether `names` carries every entry of `wanted` in that order, other entries allowed between them. A template that
- * writes a house number before the locality is the same order with an extra component, and the order is what the row
- * names.
+ * Check whether `names` contains `wanted` as an ordered subsequence.
  */
 function containsInOrder(names: readonly (string | null)[], wanted: readonly string[]): boolean {
 	let next = 0
@@ -766,16 +728,16 @@ const preferHomeRule: Rule = {
 	},
 	create(context: RuleContext) {
 		/**
-		 * The quasis of tagged templates seen so far. A tagged template is a DSL rather than a string built by hand —
-		 * `addr\`${locality} ${region} ${postcode}`` in codex's layout table is the order this rule points people at — and
-		 * the walk visits the tag before its quasi, so recording it here is enough to skip it below.
+		 * Track tagged templates so plain-template checks can ignore them.
 		 */
 		const tagged = new WeakSet<object>()
 
 		return {
 			TaggedTemplateExpression(node: AstNode) {
-				if (node.quasi) {
-					tagged.add(node.quasi as object)
+				const quasi = (node as ESTreeNode).quasi
+
+				if (quasi) {
+					tagged.add(quasi)
 				}
 			},
 			CallExpression(node: AstNode) {
@@ -836,7 +798,10 @@ const preferHomeRule: Rule = {
 				}
 			},
 			ForStatement(node: AstNode) {
-				if (!isDescendingFromLength(node) || !node.body || !swapsTwoIndices(node.body)) return
+				// The AST types `body` loosely, so this guard rules out a statement array.
+				const body = Array.isArray(node.body) ? undefined : node.body
+
+				if (!isDescendingFromLength(node) || !body || !swapsTwoIndices(body)) return
 
 				for (const home of HELPER_HOMES) {
 					if (home.signature.kind !== "descending-swap-loop") continue
@@ -850,12 +815,7 @@ const preferHomeRule: Rule = {
 }
 
 /**
- * A package re-exporting another workspace package's names (`export { X } from "@mailwoman/core"`, `export * from
- * "@mailwoman/core/resolver"`) gives one declaration two public homes, and a reader can no longer tell from an import
- * which package owns a type. The declaring package is the only public home: a consumer imports `Resolver` from
- * `@mailwoman/core/resolver`, never through `@mailwoman/resolver`. `node:*` and third-party re-exports are not in scope
- * — `@mailwoman/core/fs` re-exporting `node:stream` is the funnel that keeps the builtin out of every other package —
- * and a package's own `#` map is the module naming its siblings rather than a foreign name.
+ * Keep declarations public only through their owning workspace package.
  */
 const noCrossPackageReexportRule: Rule = {
 	meta: {
@@ -890,9 +850,197 @@ const noCrossPackageReexportRule: Rule = {
 	},
 }
 
+/**
+ * Types whose whole teardown runs inside `[Symbol.dispose]`.
+ *
+ * `DatabaseClient` closes the `node:sqlite` handle, `DisposableDuckDB` calls `closeSync()` on the
+ * connection and on the instance behind it, and a `RegionDatabaseProvider` closes its cached handles.
+ * `USStateDatabaseProvider` is the concrete class whose static `create` answers one.
+ */
+const SYNC_DISPOSABLE_TYPES = new Set([
+	"DatabaseClient",
+	"DisposableDuckDB",
+	"RegionDatabaseProvider",
+	"USStateDatabaseProvider",
+])
+
+/**
+ * Cross-package functions that answer one of {@link SYNC_DISPOSABLE_TYPES}.
+ *
+ * For a same-file helper the rule reads the declared return type instead.
+ */
+const SYNC_DISPOSABLE_FACTORIES = new Set([
+	"openBDCDatabaseIfPresent",
+	"openBuiltClient",
+	"openDuckDB",
+	"openFilerDatabaseIfPresent",
+])
+
+/**
+ * The identifier a type reference names, or null for a dotted or computed one.
+ */
+function typeReferenceName(node: AstNode): string | null {
+	if (node.type !== "TSTypeReference") return null
+
+	return node.typeName?.type === "Identifier" ? (node.typeName.name ?? null) : null
+}
+
+/**
+ * Whether `node` resolves to a {@link SYNC_DISPOSABLE_TYPES} member, past `Promise` and a union.
+ */
+function namesSyncDisposable(node: AstNode | undefined): boolean {
+	if (!node) return false
+
+	if (node.type === "TSUnionType") return ((node as ESTreeNode).types ?? []).some(namesSyncDisposable)
+
+	const name = typeReferenceName(node)
+
+	if (!name) return false
+
+	if (SYNC_DISPOSABLE_TYPES.has(name)) return true
+
+	if (name !== "Promise") return false
+
+	return (node.typeArguments?.params ?? []).some(namesSyncDisposable)
+}
+
+/**
+ * The initialized expression past `await`, a cast, and a non-null assertion.
+ */
+function initializedExpression(node: AstNode | null | undefined): AstNode | null {
+	let current = node ?? null
+
+	while (
+		current &&
+		(current.type === "AwaitExpression" || current.type === "TSAsExpression" || current.type === "TSNonNullExpression")
+	) {
+		current = current.argument ?? current.expression ?? null
+	}
+
+	return current
+}
+
+/**
+ * The synchronously-disposed name an initializer resolves to, or null for any other expression.
+ *
+ * `locals` holds the same-file helpers whose return type named one.
+ */
+function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): string | null {
+	if (node.type === "NewExpression") {
+		const name = node.callee?.type === "Identifier" ? (node.callee.name ?? "") : ""
+
+		return SYNC_DISPOSABLE_TYPES.has(name) ? name : null
+	}
+
+	if (node.type !== "CallExpression") return null
+
+	const callee = node.callee
+
+	if (callee?.type === "Identifier") {
+		const name = callee.name ?? ""
+
+		return SYNC_DISPOSABLE_FACTORIES.has(name) || locals.has(name) ? name : null
+	}
+
+	// `DatabaseClient.temp()`, `RegionDatabaseProvider.create()`.
+	if (callee?.type === "MemberExpression" && callee.object?.type === "Identifier") {
+		const owner = callee.object.name ?? ""
+
+		return SYNC_DISPOSABLE_TYPES.has(owner) ? owner : null
+	}
+
+	return null
+}
+
+/**
+ * Walk `node` and its children, calling `visit` on each.
+ */
+function walkTree(node: AstNode, visit: (node: AstNode) => void): void {
+	visit(node)
+
+	for (const [key, value] of Object.entries(node)) {
+		if (key === "parent" || key === "range" || key === "loc") continue
+
+		const children = Array.isArray(value) ? value : [value]
+
+		for (const child of children) {
+			if (child && typeof child === "object" && typeof (child as AstNode).type === "string") {
+				walkTree(child as AstNode, visit)
+			}
+		}
+	}
+}
+
+/**
+ * Take a synchronously-disposed resource with `using`.
+ */
+const noAwaitUsingSyncDisposableRule: Rule = {
+	meta: {
+		name: "no-await-using-sync-disposable",
+		type: "problem",
+		schema: [],
+	},
+	create(context: RuleContext) {
+		return {
+			Program(program: AstNode) {
+				const locals = new Set<string>()
+
+				walkTree(program, (node) => {
+					if (node.type === "FunctionDeclaration" && node.id?.type === "Identifier") {
+						if (namesSyncDisposable((node as ESTreeNode).returnType?.typeAnnotation)) {
+							locals.add(node.id.name ?? "")
+						}
+
+						return
+					}
+
+					if (node.type !== "VariableDeclarator" || node.id?.type !== "Identifier") return
+
+					const initializer = node.init
+
+					if (initializer?.type !== "ArrowFunctionExpression" && initializer?.type !== "FunctionExpression") return
+
+					if (namesSyncDisposable((initializer as ESTreeNode).returnType?.typeAnnotation)) {
+						locals.add(node.id.name ?? "")
+					}
+				})
+
+				walkTree(program, (node) => {
+					if (node.type !== "VariableDeclaration" || node.kind !== "await using") return
+
+					for (const declarator of node.declarations ?? []) {
+						const initializer = initializedExpression(declarator.init)
+
+						if (!initializer) continue
+
+						const source = syncDisposableSource(initializer, locals)
+
+						if (!source) continue
+
+						context.report({
+							node: declarator,
+							message:
+								`\`${source}\` completes its teardown inside \`[Symbol.dispose]\`, so \`using\` already closes it ` +
+								"at scope exit. Declare it with `using` and keep the factory's own await, as in " +
+								"`using db = await openBuiltClient(path)`. `await using` states that disposal itself awaits, " +
+								"which is the shape a `TemporaryDirectory` removing its directory needs.",
+						})
+					}
+				})
+			},
+		}
+	},
+}
+
+/**
+ * The `mailwoman` oxlint plugin with every repo-local rule.
+ */
 const mailwomanPlugin: Plugin = {
 	meta: { name: "mailwoman" },
 	rules: {
+		// Adapt the fix-capable shared rule to this plugin's local rule type.
+		"comment-reflow": reflowRule as unknown as Rule,
+		"no-await-using-sync-disposable": noAwaitUsingSyncDisposableRule,
 		"no-database-boundary-cast": noDatabaseBoundaryCastRule,
 		"no-cross-package-reexport": noCrossPackageReexportRule,
 		"no-database-handle-cast": noDatabaseHandleCastRule,

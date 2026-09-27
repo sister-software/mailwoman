@@ -1,5 +1,5 @@
 # Symlinks created by `scripts/link-dev-weights.sh` for local testing.
-# At publish time these get replaced with real files copied from /mnt/playpen/
+# At publish time these get replaced with real files copied from $MAILWOMAN_DATA_ROOT/
 # (per the `files` array in package.json).
 /model.onnx
 /tokenizer.model
@@ -10,7 +10,7 @@
 /anchor-lexicon-v1.json
 
 # Per-locale FST gazetteer (FST-distribution arc, 2026-07-25) — dev symlink from
-# $MAILWOMAN_DATA_ROOT/wof/fst-per-locale/, real binary staged at publish time.
+# $MAILWOMAN_DATA_ROOT/db/wof/fst-per-locale/, real binary staged at publish time.
 /fst-*.bin
 
 # Evidence-bundle lexicons (Option-A, 6.7.0-bundle): materialized at dev-link/publish time from

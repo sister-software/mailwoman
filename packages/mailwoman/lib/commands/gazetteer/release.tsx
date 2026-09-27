@@ -1,18 +1,9 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman gazetteer release` — the whole gazetteer pipeline, turnkey: durable GeoNames fold →
- *   candidate build (FTS baked in) → promote the convention path → publish to R2 + bump the demo.
- *   The codified 2026-06-27 rebuild, no questions. `--no-publish` stops after promote (build local
- *   only); `--dry-run` previews the R2 upload. Creds: `RCLONE_S3_PUBLIC_*` in the env (source
- *   `.env`) for the publish step.
- */
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -25,14 +16,17 @@ import {
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer release`, which folds GeoNames, builds the
+ * candidate database, promotes it and publishes it to R2.
+ *
+ * The publish step reads R2 credentials from the `RCLONE_S3_PUBLIC_*` environment variables.
  */
 export const spec = {
 	name: "release",
 	description: "Build, promote, and publish a gazetteer release",
 	options: {
-		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
-		out: { type: "string", description: "Candidate-DB output. Default <data-root>/wof/candidate-global.db" },
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate-DB output. Default <data-root>/db/wof/candidate-global.db" },
 		countries: {
 			type: "string",
 			description: `Fold countries (comma-separated). Default: the ${DEFAULT_FOLD_COUNTRIES.length}-country recipe`,
@@ -42,12 +36,25 @@ export const spec = {
 		publish: { type: "boolean", default: true, description: "Publish to R2 and bump the demo after promoting" },
 		"gazetteer-version": { type: "string", description: "Gazetteer version. Default today's date + 'a'" },
 		"dry-run": { type: "boolean", default: false, description: "Preview the R2 upload; don't push or bump the demo" },
+		"include-build-local": {
+			type: "boolean",
+			default: false,
+			description:
+				"Fold a database whose own layer_manifest records tier build-local. The publish step then refuses " +
+				"the result unless --override-refusals is passed as well",
+		},
+		"override-refusals": {
+			type: "boolean",
+			default: false,
+			description: "Publish over every refusal the candidate's own layer_manifest raises, printing each one",
+		},
 	},
 } as const satisfies CommandSpec
 
 const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot, repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
 		const {
 			buildCandidate,
@@ -58,12 +65,13 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			promoteCandidate,
 			publishGazetteer,
 			resolvePostcodeDatabases,
-			wofDir,
 		} = await import("#gazetteer-pipeline")
 
-		const root = mailwomanDataRoot()
-		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
-		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
+		const root = dataRootPath()
+		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
@@ -96,6 +104,7 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			adminDB,
 			out,
 			postcodeDatabases: databases,
+			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 
@@ -115,11 +124,11 @@ const GazetteerRelease: CommandComponent<typeof spec> = ({ options }) => {
 			const p = await publishGazetteer({
 				candidateDB: out,
 				version,
-				uploadScript: String(repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")),
-				resourcesFile: String(repoRootPathBuilder("docs", "src", "shared", "resources.tsx")),
+				resourcesFile: repoRootPathBuilder("docs", "src", "shared", "resources.tsx"),
 				stageDir: stage.path,
 				prefix: "mailwoman",
 				dryRun: options.dryRun,
+				overrideRefusals: options.overrideRefusals,
 				onPhase: phaseReporter(),
 			})
 

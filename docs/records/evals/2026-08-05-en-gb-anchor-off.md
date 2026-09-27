@@ -63,7 +63,7 @@ to uppercase with whitespace stripped.
 | the same, comma-STRIPPED                | 207 |            201/207 |              198/207 |
 
 Per register, anchor off: postcode 106/106 · 106/106 · 106/106; `dependent_locality` 69/69 · 69/69 ·
-69/69. The outcome is uniform across registers — it is not a casing artifact.
+69/69. The outcome is uniform across registers. It is not a casing artifact.
 
 **The comma-stripped row is the cost, and it is one row.** `Goulbourne Road St Georges Telford TF2 9LE`
 loses `St Georges` to a clipped `St`, in all three registers; the other two misses (`Sonning Common`,
@@ -160,6 +160,6 @@ rather than documentation:
 - `release.config.json`'s `softFeed.postcodeDBByCountry` has no `gb` key, so `copy-weights.ts` skips it
   at release time; the publish workflow no longer fetches `postcode-gb.bin` from the bucket.
 
-The artifact stays buildable. `$MAILWOMAN_DATA_ROOT/wof/postalcode-gb.db` is untouched and
+The artifact stays buildable. `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-gb.db` is untouched and
 `mailwoman gazetteer postcode-binary --out neural-weights-en-gb --locale GB:<extract>` still produces the
-binary in seconds — the retrain needs it.
+binary in seconds. The retrain needs it.

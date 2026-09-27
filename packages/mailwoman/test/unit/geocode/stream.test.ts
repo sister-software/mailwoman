@@ -9,15 +9,18 @@ import { describe, expect, it } from "vitest"
 const fakeWorker = workspacePath("mailwoman", "lib", "test-fixtures", "fake-geocode-worker.js")
 
 /**
- * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode: the config locale it was handed
- * and the number of mapped address columns. Reading it back is how the wiring becomes observable without a model.
+ * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode:
+ * the config locale it was handed and the number of mapped address columns.
+ *
+ * Reading it back is how the wiring becomes observable without a model.
  */
 interface WiringEcho {
 	tag: string
 	cols: number
 }
 
-// The fake worker smuggles the echo through the `address` slot, so the value genuinely is not a `PostalAddress`.
+// The fake worker smuggles the echo through the `address` slot, so the value
+// genuinely is not a `PostalAddress`.
 // Read the slot as what it is on this wire — unknown JSON — and assert once from there.
 const echoOf = (record: SourceRecord): WiringEcho => (record as { address?: unknown }).address as WiringEcho
 
@@ -42,7 +45,8 @@ describe("geocodeStream (wiring, fake worker)", () => {
 		}
 
 		expect(out).toHaveLength(50)
-		// Every record geocoded. config (locale) + mapping (address col count) reached the worker.
+		// Every record geocoded.
+		// Config (locale) + mapping (address col count) reached the worker.
 		expect(out.every((r) => echoOf(r).tag === "en-US")).toBe(true)
 		expect(echoOf(out[0]!).cols).toBe(2)
 

@@ -78,7 +78,8 @@ pass saying it did not determine the field per source.
 
 The build reads the columns and refuses to carry a placeholder, because
 `ingestEligibilityProblems` reports "no address role is resolved" and "no coverage has been
-measured" as two of the three blockers that apply to every source in the register. Writing `varies`
+measured" as two of the four blockers that apply to every source in the register. The other two are
+the unreviewed license decision and the absent personal-data review. Writing `varies`
 into `addressRole` would stop both from firing while resolving nothing. A value outside the declared
 placeholder set is carried through, and an `address_role` that is neither a placeholder nor an
 `AddressRole` fails the build rather than being dropped.
@@ -165,6 +166,19 @@ what `elected` records: the terms, the retrieved copy, the version, and why that
 another. `electedLicenseLabel()` is what the mechanical prefix filter in `utils/license.ts` reads,
 and it answers `undefined` for anything not elected.
 
+## `licenses/` — the retrieved texts a decision would be read from
+
+Seven grants as retrieved, each with the URL and the retrieval date at its head, plus the failures a
+fetch returned. Written by hand from a fetch rather than by a build, and never edited after
+retrieval — a correction is a new retrieval.
+
+The directory carries its own `PROVENANCE.md`, which lists what is there, what could not be
+retrieved, and the two readings a retrieval moved. It is named here so a reader of this file knows
+the directory is accounted for rather than overlooked.
+
+`ElectedLicense.retrievedCopy` in the source register names a file there, which is how a decision
+recorded in `license-decisions.json` points at the text it was made from.
+
 ## `license-decisions.json` — licence decisions somebody made by reading terms (#2351)
 
 Hand-written, and the only file in this directory that is. `address-source-register.json` is
@@ -220,7 +234,7 @@ postcode-to-place join unchanged.
 
 The vocabulary a corpus recipe (and eventually the span proposer) reads to recognize `Terminal 5`,
 `North Terminal`, `Concourse B`, `第1ターミナル` as venue-interior structure. Generated, **not
-hand-edited**. See `docs/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
+hand-edited**. See `docs/records/engineering/sub-venue-corpus-task.mdx` for why this exists — the short
 version is that the `unit` tag was never taught the modifier+designator shape, so closing the class by
 decode weight would take a bias scale near 11 nats where the stronger designator+identifier evidence
 needed 6.
@@ -242,7 +256,7 @@ mailwoman corpus sub-venue-extract \
 mailwoman corpus sub-venue-lexicon \
   --wikidata-dir $MAILWOMAN_DATA_ROOT/sub-venue/sources/wikidata-subvenue \
   --extracts "GB=$E/great-britain.jsonl,DE=$E/germany.jsonl,FR=$E/france.jsonl,ES=$E/spain.jsonl,JP=$E/japan.jsonl" \
-  --overture-db $MAILWOMAN_DATA_ROOT/poi/poi.db \
+  --overture-db $MAILWOMAN_DATA_ROOT/db/poi/poi.db \
   --out corpus/data/sub-venue-lexicon.json
 npx oxfmt corpus/data/sub-venue-lexicon.json
 ```

@@ -13,6 +13,7 @@ import {
 	booleanValue,
 	CLIUsageError,
 	type CommandSpec,
+	isLocaleTag,
 	numberValue,
 	renderCommandHelp,
 	renderInkCommand,
@@ -23,11 +24,11 @@ import {
 import type { GeocodeCommandOptions } from "#geocode/command-options"
 import type { GeocodeResult } from "#geocode/result"
 
-const localePattern = /^[a-z]{2}(-[A-Z]{2})?$/u
 const debugSizePattern = /^\d+x\d+$/u
 
 /**
- * Native geocode CLI interface. detailed help and parsing are both derived from this value.
+ * Native geocode CLI interface.
+ * Detailed help and parsing are both derived from this value.
  */
 export const spec = {
 	name: "geocode",
@@ -42,7 +43,7 @@ export const spec = {
 			default: "en-US",
 			hint: "locale",
 			description: "Locale tag matching a weights package, such as en-US or fr-FR.",
-			validate: (value) => localePattern.test(value),
+			validate: isLocaleTag,
 			validationMessage: "--locale expects a BCP-47 tag like en-US or fr-FR.",
 		},
 		bias: {
@@ -178,7 +179,7 @@ type Format = "json" | "text" | "jsonld"
 type GeocodeOptions = GeocodeCommandOptions
 
 async function optionsOf(values: Record<string, unknown>): Promise<GeocodeOptions> {
-	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/utils")).mailwomanDataRoot()
+	const dataRoot = stringValue(values, "data-root") ?? (await import("@mailwoman/core/data-root")).dataRootPath()
 	const capitalTier = triStateValue(values, "capital-tier")
 	const variantAliasExemption = triStateValue(values, "variant-alias-exemption")
 

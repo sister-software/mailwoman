@@ -57,9 +57,11 @@ interface BuildOpts {
 }
 
 /**
- * Builds a minimal valid FST binary buffer in the v1/v2 layout. Mirrors fst-serialize.ts closely enough to round-trip
- * through the web deserializer, but kept hand-rolled so the test asserts the format the reader actually expects (not
- * whatever the Node serializer happens to emit at v4).
+ * Builds a minimal valid FST binary buffer in the v1/v2 layout.
+ *
+ * Mirrors fst-serialize.ts closely enough to round-trip through the web deserializer,
+ * but kept hand-rolled so the test asserts the format the reader actually expects
+ * (not whatever the Node serializer happens to emit at v4).
  */
 function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array {
 	const version = opts.version ?? 2
@@ -188,7 +190,8 @@ function buildFSTBuffer(nodes: FixtureNode[], opts: BuildOpts = {}): Uint8Array 
 			view.setUint16(pp + 6, 0, true) // pad
 			view.setUint32(pp + 8, intern(place.name), true)
 
-			// referential: float32 for v2. for v1 the field is interpreted as a raw population u32.
+			// referential: float32 for v2.
+			// For v1 the field is interpreted as a raw population u32.
 			if (version >= 2) {
 				view.setFloat32(pp + 12, place.referential, true)
 			} else {
@@ -233,7 +236,7 @@ const PARIS_FIXTURE: FixtureNode[] = [
 	},
 ]
 
-//#region deserializeFSTWeb — happy path
+// #region deserializeFSTWeb — happy path
 
 describe("deserializeFSTWeb", () => {
 	test("round-trips a 2-state FST: node + place counts", () => {
@@ -298,13 +301,14 @@ describe("deserializeFSTWeb", () => {
 	})
 })
 
-//#endregion
+// #endregion
 
-//#region deserializeFSTWeb — v1 importance derivation
+// #region deserializeFSTWeb — v1 importance derivation
 
 test("deserializeFSTWeb: v1 derives importance from a population u32 via the log2 curve", () => {
-	// v1 stores population (u32) in the importance slot. the reader maps it through
-	// min(1, log2(1 + pop/1000) / 14). For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
+	// v1 stores population (u32) in the importance slot.
+	// The reader maps it through min(1, log2(1 + pop/1000) / 14).
+	// For pop = 1000: log2(2)/14 = 1/14 ≈ 0.0714.
 	const nodes: FixtureNode[] = [
 		{ edges: [["t", 1]], places: [] },
 		{ edges: [], places: [{ wofID: 1, placetype: "locality", name: "T", referential: 1000, lat: 0, lon: 0 }] },
@@ -316,9 +320,9 @@ test("deserializeFSTWeb: v1 derives importance from a population u32 via the log
 	expect(place.referential).toBeCloseTo(1 / 14, 4)
 })
 
-//#endregion
+// #endregion
 
-//#region deserializeFSTWeb — error paths
+// #region deserializeFSTWeb — error paths
 
 test("deserializeFSTWeb: a buffer shorter than the header throws", () => {
 	expect(() => deserializeFSTWeb(new Uint8Array(HEADER_SIZE - 1))).toThrow(/too small/i)
@@ -337,17 +341,17 @@ test("deserializeFSTWeb: version 0 is rejected", () => {
 })
 
 test("deserializeFSTWeb: a version above MAX_VERSION (now 5) is rejected", () => {
-	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is
-	// rejected. This assertion is why the check stops drifting — it fails the moment the serializer
-	// bumps and the reader's check does not.
+	// MAX_VERSION tracks the serializer's version (5, the two-score split): v3/v4/v5 parse, v6+ is rejected.
+	// This assertion is why the check stops drifting.
+	// It fails the moment the serializer bumps and the reader's check does not.
 	const bytes = buildFSTBuffer(PARIS_FIXTURE)
 	new DataView(bytes.buffer).setUint16(4, 6, true)
 	expect(() => deserializeFSTWeb(bytes)).toThrow(/version 6 unsupported/i)
 })
 
-//#endregion
+// #endregion
 
-//#region readFSTProvenanceWeb
+// #region readFSTProvenanceWeb
 
 const PROVENANCE = {
 	builtAt: "2026-06-25T00:00:00Z",
@@ -389,9 +393,9 @@ test("readFSTProvenanceWeb: a corrupt trailer (bad JSON) is swallowed to undefin
 	expect(readFSTProvenanceWeb(bytes)).toBeUndefined()
 })
 
-//#endregion
+// #endregion
 
-//#region surface-ambiguity classes
+// #region surface-ambiguity classes
 
 test("web reader roundtrips crossCountryBranches under header flags bit0, undefined without it", async () => {
 	const { serializeFST } = await import("@mailwoman/resolver-wof-sqlite/fst")
@@ -431,4 +435,4 @@ test("web reader roundtrips crossCountryBranches under header flags bit0, undefi
 	expect(m2.accepting(hit2.stateID)[0]!.crossCountryBranches).toBeUndefined()
 })
 
-//#endregion
+// #endregion

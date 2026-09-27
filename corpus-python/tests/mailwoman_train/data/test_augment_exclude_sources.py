@@ -1,14 +1,3 @@
-"""Augmentation-pool exclusion (2026-08-10 recipe review, change 12).
-
-Augmented copies fill 25.5% of the emitted row budget (full-epoch mixture audit), and copies
-of an OVERSAMPLED synthetic source are near-duplicates that compound its reps per row while
-adding none of the diversity that moves OOD boards (Hernandez 2022 × Chen 2024). Interface:
-``augment_exclude_sources`` lists sources whose rows pass through the augmentation stage
-untouched — original emitted exactly once, no copies — while every other source keeps the
-configured augmentation policy. The affix relabel still applies to excluded sources (label
-policy and augmentation policy are independent).
-"""
-
 from __future__ import annotations
 
 import random
@@ -77,7 +66,7 @@ def test_excluded_source_rows_are_never_augmented(tmp_path: Path) -> None:
     assert all(r["raw"] == r["raw"].lower() for r in excluded_rows), (
         "an upper-cased copy leaked from the excluded source"
     )
-    # The non-excluded source keeps the policy: at prob 1.0 every draw yields an upper twin.
+
     assert any(r["raw"] != r["raw"].lower() for r in other_rows)
 
 

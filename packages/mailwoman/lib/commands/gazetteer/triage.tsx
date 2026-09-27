@@ -2,21 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer triage` — the WOF currency-hole ledger (`gazetteer-pipeline/wof-triage.ts`).
- *
- *   report only. Nothing this command emits changes a resolve. the ledger exists so an upstream coverage hole is
- *   reviewable instead of invisible, and so a decision to supplement one is recorded rather than inferred. The
- *   motivating case is in the module docstring (`Rochester, Kent`, deprecated in a January 2019 batch with no
- *   successor, resolving 474 km away until the currency backfill).
- *
- *   Run it after every WOF pull. The summary alone answers "did upstream just delete a country's worth of places",
- *   which no build step asks today.
+ *   Reports WOF currency holes as a reviewable ledger. No output from this command changes a resolve.
  */
 
 import { makeDirectories, writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { Box, Text } from "ink"
-import { dirname } from "path-ts"
+import { PathBuilder, dirname } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import type { TriageRow, TriageSummary } from "#gazetteer-pipeline/wof/triage"
@@ -28,26 +20,31 @@ export const spec = {
 	name: "triage",
 	description: "Report WOF currency holes (deprecated / not-current records) as a reviewable ledger",
 	options: {
-		admin: { type: "string", description: "WOF admin DB. Default <data-root>/wof/admin-global-priority.db" },
+		admin: { type: "string", description: "WOF admin DB. Default <data-root>/db/wof/admin-global-priority.db" },
 		geonames: { type: "string", description: "GeoNames dump dir for attestation. Default <data-root>/geonames" },
 		countries: { type: "string", description: "Comma-separated ISO codes. Default: every country in the artifact" },
-		out: { type: "string", description: "JSONL ledger output. Default <data-root>/wof/triage/currency-<date>.jsonl" },
+		out: {
+			type: "string",
+			description: "JSONL ledger output. Default <data-root>/db/wof/triage/currency-<date>.jsonl",
+		},
 		uncoveredOnly: { type: "boolean", default: false, description: "Write only rows no live record covers" },
 	},
 } as const satisfies CommandSpec
 
 const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, isoDate } = await import("@mailwoman/core/utils")
+		const { isoDate } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { CoverageVerdict, triageWOFCurrency } = await import("#gazetteer-pipeline/wof/triage")
 
-		const adminDB = options.admin ?? String(dataRootPath("wof", "admin-global-priority.db"))
-		const geonamesDir = options.geonames ?? String(dataRootPath("geonames"))
+		const adminDB = options.admin ?? wofDatabasePath("admin-global-priority.db")
+		const geonamesDir = options.geonames ?? dataRootPath("geonames")
 
 		const countries = extractDelimited(options.countries)
 
 		const stamp = isoDate()
-		const outPath = options.out ?? String(dataRootPath("wof", "triage", `currency-${stamp}.jsonl`))
+		const outPath = PathBuilder.from(options.out ?? wofDatabasePath("triage", `currency-${stamp}.jsonl`))
 
 		const { rows, summary } = await triageWOFCurrency({
 			adminDB,
@@ -61,8 +58,6 @@ const GazetteerTriage: CommandComponent<typeof spec> = ({ options }) => {
 		await makeDirectories(dirname(outPath))
 		await writeLocalJSONLFile(emitted, outPath)
 
-		// The review queue's head: uncovered and independently attested, most populous first — the rows most likely to
-		// be an upstream mistake rather than a real cessation.
 		const queue = rows
 			.filter((r) => r.coverage === CoverageVerdict.Uncovered && r.attestation.state === "attested")
 			.toSorted((a, b) => (b.attestation.population ?? 0) - (a.attestation.population ?? 0))

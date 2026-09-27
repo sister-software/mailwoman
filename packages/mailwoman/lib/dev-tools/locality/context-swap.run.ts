@@ -39,10 +39,11 @@ import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 const { values } = parseArguments({
 	options: {
 		"weights-cache": { type: "string" },
-		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
+		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
 		mode: { type: "string", default: "swap", choices: ["swap", "grid"] },
 		/**
-		 * Regions whose localities are the subjects — the ones whose behaviour is in question.
+		 * Regions whose localities are the subjects.
+		 * The ones whose behaviour is in question.
 		 */
 		home: { type: "string", default: "AR,TN,MO,TX" },
 		/**
@@ -61,7 +62,8 @@ const subjectCount = Number(values.subjects)
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
 
 /**
- * One real postcode per region, so a crossed row carries a code that exists even though its pairing does not.
+ * One real postcode per region, so a crossed row carries a code that exists even
+ * though its pairing does not.
  */
 const postcodeOf = new Map<string, string>()
 
@@ -76,9 +78,9 @@ const regionsPresent = new Set(localities.map((place) => place.region))
 /**
  * The panel's rows for one region, raising when the panel holds none.
  *
- * An absent region yields an empty arm, which reports 0% and is indistinguishable from a measured zero. The default
- * coordinate panel's 2,000 rows carry 7 of the 50 states and DC (CA, DC, IL, SD, MT, IA, VT), so most regions hit this
- * path.
+ * An absent region yields an empty arm, which reports 0% and is indistinguishable from a measured zero.
+ * The default coordinate panel's 2,000 rows carry 7 of the 50 states and DC
+ * (CA, DC, IL, SD, MT, IA, VT), so most regions hit this path.
  */
 function byRegion(region: string): typeof localities {
 	if (!regionsPresent.has(region)) {
@@ -142,7 +144,10 @@ console.log(`| arm | rows | locality recovered |`)
 console.log(`| --- | --: | --: |`)
 
 /**
- * How many recovered rows to print under the table. The list shows what the arms render. the table carries the rate.
+ * How many recovered rows to print under the table.
+ *
+ * The list shows what the arms render.
+ * The table carries the rate.
  */
 const RESCUED_EXAMPLES = 8
 

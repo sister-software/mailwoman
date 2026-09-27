@@ -30,7 +30,7 @@ is two unrelated companies wrongly fused.
 
 And the programmatic entity-truth (subpart-flag + authorized-official) is itself **too conservative**:
 **44 of 120 (37%)** are the same org with a _different_ authorized official, which the heuristic reads
-as "distinct." A real entity-truth must collapse by **org-name + address**, notthe flag.
+as "distinct." A real entity-truth must collapse by **org-name + address**, not just the flag.
 
 ## What this means for #625
 

@@ -14,16 +14,21 @@
  *   `osm/readme.md` for the licensing boundary + the counsel sign-off required before any extract ships.
  *
  *   Usage:
- *     node osm/scripts/build-rooftop-extract.ts \
+ *     node packages/osm/lib/scripts/build-rooftop-database.ts \
  *       --country fr --slug idf --release 260627 \
  *       --created-at 2026-06-27T00:00:00.000Z --build-sha $(git rev-parse head) \
- *       --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
+ *       --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { removePath, makeDirectories } from "@mailwoman/core/fs/writers"
-import { LayerFreshnessPolicy, LayerTier, writeLayerManifest } from "@mailwoman/core/layers"
+import {
+	assertTierMatchesLicense,
+	LayerFreshnessPolicy,
+	LayerTier,
+	scriptBuildCommand,
+	writeLayerManifest,
+} from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createAddressPointIndexes } from "@mailwoman/resolver-wof-sqlite/address"
 import {
@@ -38,6 +43,7 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import { latLngToCell } from "h3-js"
 import { dirname, resolvePath } from "path-ts"
 
+import { osmDatabasePath } from "#paths"
 import {
 	createOSMAddressPointIndexes,
 	createOSMAddressPointTables,
@@ -102,7 +108,7 @@ async function parse(): Promise<BuildArgs> {
 	}
 
 	if (!buildSHA) throw new Error("required: --build-sha <git-sha>")
-	const output = resolvePath(values.out || dataRootPath("osm", `address-points-${country}-${slug}.db`))
+	const output = resolvePath(values.out || osmDatabasePath(`address-points-${country}-${slug}.db`))
 	const recover = Boolean(values.recover)
 	const recoverRadiusKm = Number(values["recover-radius-m"] ?? "30") / 1000
 
@@ -180,8 +186,9 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-surface locale routing (the Québec finishing move): a French-lead surface folds under the fr
-			// rules whatever the country default. the probe side routes with the same shared function.
+			// Per-surface locale routing (the Québec finishing move): a French-lead surface
+			// folds under the fr rules whatever the country default.
+			// The probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 
@@ -232,20 +239,19 @@ async function main(): Promise<void> {
 		await createAddressPointIndexes(kdb)
 		await createOSMAddressPointIndexes(kdb)
 
+		const distribution = { tier: LayerTier.BuildLocal, license: "ODbL-1.0" }
+
+		assertTierMatchesLicense(distribution, "osm build")
+
 		await writeLayerManifest(kdb, {
 			name: `osm-address-points-${args.country}-${args.slug}`,
 			version: args.release,
 			schemaVersion: 1,
-			tier: LayerTier.BuildLocal,
-			license: "ODbL-1.0",
+			...distribution,
 			attribution: "© OpenStreetMap contributors",
 			source,
 			sourceVintage: args.release,
-			// The path this recorded — `osm/out/scripts/build-rooftop-extract.js` — moved under `packages/` in the
-			// workspace regroup, and the literal survived inside every extract built before then, where no lint can
-			// reach it. `mailwoman data inventory` is what surfaced it, on three shipped artifacts that pass every
-			// "has a manifest" check and cannot be rebuilt from what they say.
-			buildCmd: "node packages/osm/out/scripts/build-rooftop-extract.js",
+			buildCmd: scriptBuildCommand(import.meta.url),
 			buildSHA: args.buildSHA,
 			freshnessPolicy: LayerFreshnessPolicy.Sealed,
 			spineKeys: { h3: { column: "h3_cell", resolution: OSM_ADDRESS_H3_RESOLUTION } },

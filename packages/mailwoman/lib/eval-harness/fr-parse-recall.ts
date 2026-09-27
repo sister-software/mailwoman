@@ -1,25 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Diagnose the FR street parse-recall gap (#148): the en-US model fragments a French street when no
- *   postcode anchors it ("Rue du Chevaleret, Paris" → street="Rue du", locality="Chevaleret"). Sample
- *   real FR addresses from the OSM database, parse each bare ("<n> <street>, <city>") and anchored
- *   ("<n> <street>, <pc> <city>"), assemble the street key (FR locale) and check it matches the database's
- *   street_norm. The bare-vs-anchored match-rate delta is the gap, and isolates whether the model only
- *   learned FR structure in the postcode-anchored context.
- *
- *   check-required (#949). This is a promotion-eval battery leg — the `fr.bare_street_intact`
- *   floor — not a one-off probe, which is why it lives here and not in `scripts/diagnostic/`. It sat
- *   in that drawer until the de-shell migration. the drawer is `.gitignore`d wholesale
- *   (`scripts/diagnostic/`), so the file survived only because it had been force-added to the index,
- *   and any sibling helper swept in beside it would have vanished. See `demo-cascade-rows.ts` for
- *   what that looks like when it goes wrong.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts
- */
-
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists, readLocalBuffer, readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -33,14 +15,11 @@ import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
 import type { OSMAddressPointDatabase } from "@mailwoman/osm/sdk/address-point-schema"
 import { normalizeStreetForKeyLocale } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const STREET_TAGS = new Set(["street", "street_prefix", "street_suffix"])
 
-/**
- * The frozen 40-row OSM sample the bare-street floor is graded on. A package sibling, so the same file is named from
- * the source tree and from `out/`.
- */
 const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 	"mailwoman",
 	"lib",
@@ -49,32 +28,17 @@ const FR_BARE_STREET_FIXTURE_PATH = resolvePackagePath(
 	"fr-bare-street-40.jsonl"
 )
 
-/**
- * How many bare-street failures the report lists before it stops. The fixture is 40 rows, so a dozen is enough to see
- * the failure shape without burying the rates underneath it.
- */
 const MAX_REPORTED_FAILURES = 12
 
 /**
- * Locate a weights sibling artifact — `postcode-us.bin`, `anchor-lexicon-v1.json` — the way the runtime does.
- *
- * These were read from `packages/neural-weights-en-us/` directly, which is empty on a dev checkout: the linkers write
- * into the data-root overlay. Therefore, the tracked workspace stays bare. So this leg threw enoent, and the check
- * rendered the throw as `fr.bare_street_intact fail (floor 75%)` — a crash reported as a measurement, and one
- * indistinguishable from the French regression this floor exists to catch.
- *
- * Order matters. A candidate's own siblings come first, so grading a candidate never silently mixes in the shipped
- * lexicon. the data-root overlay is the dev-checkout answer. the tracked workspace is last and is only non-empty on a
- * release checkout where `copy-weights.ts` has run.
- *
- * Throws with every path it tried rather than returning a default. A missing anchor lexicon changes the parse, so a
- * silent fallback here would produce a well-formed wrong floor reading.
+ * Returns the first existing copy of a weights file from the candidate cache,
+ * the data root, or the workspace.
  */
-async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<string> {
+async function resolveWeightsSibling(fileName: string, weightsCache?: string): Promise<PathBuilderLike> {
 	const candidates = [
 		...(weightsCache ? [`${weightsCache}/node_modules/@mailwoman/neural-weights-en-us/${fileName}`] : []),
-		String(dataRootPath("weights", "en-us", fileName)),
-		`${String(workspacePath("neural-weights-en-us"))}/${fileName}`,
+		dataRootPath("weights", "en-us", fileName),
+		workspacePath("neural-weights-en-us", fileName),
 	]
 
 	const existing = await Promise.all(candidates.map(async (path) => ({ path, exists: await pathExists(path) })))
@@ -92,55 +56,63 @@ async function resolveWeightsSibling(fileName: string, weightsCache?: string): P
 }
 
 /**
- * Options for {@linkcode frParseRecall} — one field per flag the check used to serialize into argv.
+ * Options for {@linkcode frParseRecall}.
  */
 export interface FRParseRecallOptions {
 	/**
-	 * Candidate-pair override (the v2.2.0 salvage read). Omitting {@linkcode FRParseRecallOptions.model} /
-	 * {@linkcode FRParseRecallOptions.tokenizer} uses the installed weights package via `loadFromWeights`, unchanged. When
-	 * a pair is given, the classifier is built manually with the ship-config channels fed from the installed package's
-	 * model-independent artifacts (postcode bins + gazetteer lexicon) — the explicit-path `resolveWeights` drops the
-	 * soft-feed siblings, and an unfed arm vs a fed arm is not a comparison.
+	 * Candidate ONNX model path.
+	 *
+	 * It takes effect only when `tokenizer` is also set.
+	 * Otherwise the installed en-US weights load.
+	 *
+	 * A candidate run also loads the postcode anchor and gazetteer lexicon from the weights directory.
 	 */
 	model?: string
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
+
 	/**
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * Model card that supplies the candidate's labels.
+	 *
+	 * It defaults to `packages/neural-weights-en-us/model-card.json`.
 	 */
 	modelCard?: string
+
 	/**
-	 * Printed as a `[pair]` provenance line when set. Default `""` (no line).
+	 * Label for the `[pair]` provenance line.
+	 * An empty label omits the line.
 	 */
 	label?: string
+
 	/**
-	 * Eval-leg mode (#949): the frozen 40-row sample, so the bare-street floor is reproducible anywhere (incl. CI, which
-	 * has no database). Default `lib/eval-harness/fixtures/fr-bare-street-40.jsonl` in this package.
+	 * JSONL fixture of French bare-street rows.
+	 * It defaults to the bundled `fr-bare-street-40.jsonl`.
 	 */
 	fixture?: string
+
 	/**
-	 * Re-derive from the live OSM database instead of the fixture — the only way the fixture should ever change, and it
-	 * must be committed deliberately (the "pin the golden" discipline. a moving sample is a flaky floor).
+	 * Whether to read rows from the local French OSM address-point database instead of the fixture.
 	 */
 	fromDB?: boolean
+
 	/**
-	 * Emit machine-readable rates to this path for `promotion-eval.ts`.
+	 * Path where the intact counts and rates are written as JSON.
 	 */
 	json?: string
+
 	/**
-	 * Package-shaped candidate weights root. When set, the anchor + lexicon siblings are taken from the candidate rather
-	 * than from the shipped overlay — grading a candidate against the shipped lexicon measures neither.
+	 * Candidate weights root that is searched first for the anchor and lexicon files.
 	 */
 	weightsCache?: string
+
 	/**
-	 * The enforced floor, in percent. When set, {@linkcode FRParseRecallResult.pass} is false if the bare-intact rate
-	 * falls below it — which is how the leg's old `process.exit(1)` reaches the runner now.
+	 * Minimum bare-street intact rate in percent, given as a numeric string.
 	 */
 	floor?: string
 }
 
 /**
- * What {@linkcode frParseRecall} returns. `pass` carries the floor verdict the script used to signal with its exit code:
- * true when no floor was given, otherwise `bareRate >= floor`.
+ * Parse-recall counts, rates in percent, and the floor verdict.
+ * The verdict `pass` is true when no floor is set.
  */
 export interface FRParseRecallResult {
 	bareIntact: number
@@ -166,6 +138,9 @@ interface StreetKeyNode {
 	children: readonly StreetKeyNode[]
 }
 
+/**
+ * Joins the street nodes of a parse in input order and normalizes the result as a French street key.
+ */
 function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 	const parts: Array<{ value: string; start: number }> = []
 
@@ -181,12 +156,12 @@ function streetKeyOf(tree: { roots: readonly StreetKeyNode[] }): string {
 }
 
 /**
- * Measure the FR bare-vs-anchored street parse-recall delta and enforce the `fr.bare_street_intact` floor.
+ * Measures how often French street names survive parsing with and without a postcode.
  *
- * The report lines go to `report` and the `fail` line to `reportError`, mirroring the stdout/stderr split the check
- * captured — it wrote `${stdout}${stderr}` into `fr-bare-street.md`, so the two sinks stay separate and are
- * concatenated in that order. The floor verdict comes back as {@linkcode FRParseRecallResult.pass} instead of the old
- * `process.exit(1)`.
+ * When `options.floor` is set, it also checks the bare rate against that floor.
+ *
+ * The verdict is returned in {@linkcode FRParseRecallResult.pass}.
+ * Only the failure line goes to `reportError`.
  */
 export async function frParseRecall(
 	options: FRParseRecallOptions = {},
@@ -206,12 +181,10 @@ export async function frParseRecall(
 
 	const rows: FRRow[] = args.fromDB
 		? (() => {
-				const db = new DatabaseClient<OSMAddressPointDatabase>(`${mailwomanDataRoot()}/osm/address-points-fr-fr.db`, {
+				const db = new DatabaseClient<OSMAddressPointDatabase>(`${dataRootPath()}/osm/address-points-fr-fr.db`, {
 					readOnly: true,
 				})
 
-				// Distinct streets with a city + postcode, sampled across the table (not one street repeated).
-				// deterministic (group BY + order BY, no random) — the same database yields the same 40 rows.
 				return allRows<FRRow>(
 					db.prepare(
 						`SELECT street_raw, number, locality_norm, postcode FROM address_point
@@ -220,9 +193,9 @@ export async function frParseRecall(
 					)
 				)
 			})()
-		: [...TextSpliterator.from(await readLocalTextFile(args.fixture))]
-				.filter((l) => l.trim())
+		: TextSpliterator.from(await readLocalTextFile(args.fixture))
 				.map((l) => parseJSONStrict<FRRow>(l))
+				.toArray()
 
 	const classifier = await (async (): Promise<NeuralAddressClassifier> => {
 		if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
@@ -302,8 +275,6 @@ export async function frParseRecall(
 	const source = args.fromDB ? "live-database" : args.fixture
 
 	if (args.json) {
-		// snake_case wire keys, 2-space indent, trailing newline — the sidecar shape is a interface with
-		// whatever reads it next. the migration keeps it byte-for-byte.
 		await writeLocalTextFile(
 			prettyJSON({
 				bare_intact: bareOk,

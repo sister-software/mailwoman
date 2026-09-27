@@ -141,7 +141,7 @@ circumvented).
 **Process catch (cost one CI round-trip):** `yarn start` (dev) does not enforce `onBrokenLinks` and
 `docusaurus build` (prod) _excludes_ `draft: true` pages — so a non-draft eval doc linking to a draft
 concept doc passed the dev-server check but failed the prod build. Fixed by dropping the link; the lesson
-is to run a full `cd docs && yarn build` before pushing any docs link change, notthe run-docs driver.
+is to run a full `cd docs && yarn build` before pushing any docs link change, not just the run-docs driver.
 
 ## Backlog triage + verification (the shift's tail, after the 6 PRs)
 

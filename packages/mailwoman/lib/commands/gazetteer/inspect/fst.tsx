@@ -7,8 +7,6 @@
  *   optional continuations).
  */
 
-import { join } from "path-ts"
-
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
@@ -27,9 +25,9 @@ export const spec = {
 
 const GazetteerInspectFST: CommandComponent<typeof spec> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		const { wofDir } = await import("#gazetteer-pipeline")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const dbPath = options.db ?? join(wofDir(), "admin-global-priority.db")
+		const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db")
 		const maxResults = options.max
 		const { buildFSTFromWOF } = await import("@mailwoman/resolver-wof-sqlite/fst")
 
@@ -61,7 +59,8 @@ const GazetteerInspectFST: CommandComponent<typeof spec> = ({ args, options }) =
 
 				for (const p of sorted.slice(0, maxResults)) {
 					const ref = p.referential > 0 ? ` ref ${p.referential.toFixed(4)}` : ""
-					// Printed only when the artifact carries one — an absent article must not read as 0.00.
+					// Printed only when the artifact carries one.
+					// An absent article must not read as 0.00.
 					const enc = p.encyclopedic === undefined ? "" : ` enc ${p.encyclopedic.toFixed(4)}`
 					const chain = p.parentChain.length ? ` chain=[${p.parentChain.join("→")}]` : ""
 

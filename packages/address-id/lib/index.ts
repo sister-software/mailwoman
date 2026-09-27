@@ -20,7 +20,7 @@
  *       localize and partition it.
  *
  *   Lineage: the earlier-draft `createPostalAddressID` / `parsePostalAddressID`. `@mailwoman/normalize`
- *   is the descendant of that era's `sanitize`, re-scoped to parser-input prep — this layer is the
+ *   is the descendant of that era's `sanitize`, re-scoped to parser-input prep. This layer is the
  *   keying purpose, kept separate by design. (Self-contained on `h3-js`, not `@mailwoman/spatial`,
  *   which isn't published.)
  */
@@ -28,26 +28,26 @@
 import { us } from "@mailwoman/codex"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { normalize } from "@mailwoman/normalize"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 /**
- * A geographic coordinate (the geocoder/resolver shape).
- */
-export interface LatLng {
-	latitude: number
-	longitude: number
-}
-
-/**
- * H3 resolution for the locality cell — coarse on purpose (~edge 174 m). The same place geocoded a few metres apart
- * (situs vs interpolation, geocode jitter) lands in the same cell, so the key is stable. the address hash carries the
- * precise identity. Self-contained here (not via `@mailwoman/spatial`. It isn't a published package). Therefore, this
- * stays cleanly publishable.
+ * H3 resolution for the locality cell — coarse on purpose (~edge 174 m).
+ *
+ * The same place geocoded a few metres apart (situs vs interpolation, geocode jitter)
+ * lands in the same cell, so the key is stable.
+ * The address hash carries the precise identity.
+ *
+ * Self-contained here (not via `@mailwoman/spatial`. It isn't a published package).
+ *
+ * Therefore, this stays cleanly publishable.
  */
 export const ADDRESS_H3_RESOLUTION = 9
 
 /**
- * A stable address primary key, `<state>.<H3-cell>.<hash>`. Branded so it can't be confused with an arbitrary string.
+ * A stable address primary key, `<state>.<H3-cell>.<hash>`.
+ *
+ * Branded so it can't be confused with an arbitrary string.
  */
 export type PostalAddressID = string & { readonly __postalAddressID: unique symbol }
 
@@ -68,17 +68,24 @@ export interface CreatePostalAddressIDInput {
 	/**
 	 * The resolved coordinate (the geocoder's output) — drives the locality cell.
 	 */
-	coordinate: LatLng
+	coordinate: GeoCoordinate
 	/**
-	 * The address string to content-hash. Canonicalized via {@link normalize} before hashing.
+	 * The address string to content-hash.
+	 *
+	 * Canonicalized via {@link normalize} before hashing.
 	 */
 	address: string
 	/**
-	 * 2-letter region/state for the prefix. When omitted, plucked from the address's ZIP. else `xx`.
+	 * 2-letter region/state for the prefix.
+	 *
+	 * When omitted, plucked from the address's ZIP.
+	 * Else `xx`.
 	 */
 	state?: string
 	/**
-	 * H3 resolution for the cell. Default {@link ADDRESS_H3_RESOLUTION} (jitter-stable).
+	 * H3 resolution for the cell.
+	 *
+	 * Default {@link ADDRESS_H3_RESOLUTION} (jitter-stable).
 	 */
 	resolution?: number
 }
@@ -93,17 +100,20 @@ export interface ParsedPostalAddressID {
 }
 
 /**
- * Canonicalize an address for content-hashing: {@link normalize} (NFC + whitespace + punctuation + abbreviation
- * expansion) then uppercase, so casing/abbreviation/spacing variants key identically.
+ * Canonicalize an address for content-hashing: {@link normalize}
+ * (NFC + whitespace + punctuation + abbreviation expansion) then uppercase,
+ * so casing/abbreviation/spacing variants key identically.
  */
 function canonicalizeForHash(address: string): string {
 	return normalize(address).normalized.toUpperCase().trim()
 }
 
 /**
- * Best-effort 2-letter US state from a full address: scan for `ST ZIP` occurrences (codex's `pluckStateZIPCode` anchors
- * to a bare snippet, so it can't read a full address) and take the last valid one — addresses end with the state + ZIP.
- * Returns the uppercase abbreviation or null.
+ * Best-effort 2-letter US state from a full address: scan for `ST ZIP` occurrences
+ * (codex's `pluckStateZIPCode` anchors to a bare snippet, so it can't read a full address)
+ * and take the last valid one — addresses end with the state + ZIP.
+ *
+ * @returns the uppercase abbreviation or null.
  */
 function deriveState(address: string): string | null {
 	const candidates = [...address.matchAll(/\b([A-Za-z]{2})[ ,]+\d{5}(?:-\d{4})?\b/g)]
@@ -118,11 +128,14 @@ function deriveState(address: string): string | null {
 }
 
 /**
- * Build a stable {@link PostalAddressID} from a geocoded, canonicalizable address. Deterministic: the same
- * (coordinate-cell, canonical address, state) always yields the same key. Two records that resolve to the same place
- * and share a canonical address get the same id — a join/dedup key that needs no matcher. (Distinct canonical address
- * strings → distinct keys. semantic equivalence that isn't string-identical is the fuzzy matcher's job rather than this
- * one's.)
+ * Build a stable {@link PostalAddressID} from a geocoded, canonicalizable address.
+ *
+ * Deterministic: the same (coordinate-cell, canonical address, state) always yields the same key.
+ * Two records that resolve to the same place and share a canonical address get the same id.
+ * A join/dedup key that needs no matcher.
+ *
+ * (Distinct canonical address strings → distinct keys. Semantic equivalence that isn't
+ * string-identical is the fuzzy matcher's job rather than this one's.)
  */
 export function createPostalAddressID(input: CreatePostalAddressIDInput): PostalAddressID {
 	const cell = latLngToCell(

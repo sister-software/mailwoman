@@ -9,18 +9,23 @@
 import { type PathBuilder, type PathBuilderLike, resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { dataRootPath } from "#data-root"
+import { delimitedSource } from "#fs/delimited"
 import { pathExists } from "#fs/readers"
-import { corePackagePathBuilder, dataRootPath, repoRootPathBuilder } from "#utils"
+import { corePackagePathBuilder, repoRootPathBuilder } from "#paths"
 
 /**
- * The Latin off-map test sets, one per outlier builder. Each builder writes its own file so neither replaces the
- * other's rows. readers take the union through {@linkcode readLatinOffmapRows}.
+ * The Latin off-map test sets, one per outlier builder.
+ *
+ * Each builder writes its own file so neither replaces the other's rows.
+ * Readers take the union through {@linkcode readLatinOffmapRows}.
  */
 const LATIN_OFFMAP_TEST_FILES = ["test-latin-offmap-overture.jsonl", "test-latin-offmap-oa.jsonl"] as const
 
 /**
- * Read every Latin off-map test set present in `dataDir`, tagging each row with the file it came from. Refuses an empty
- * union: a missing test set would otherwise read as a perfect off-map score.
+ * Read every Latin off-map test set present in `dataDir`, tagging each row with the file it came from.
+ *
+ * Refuses an empty union: a missing test set would otherwise read as a perfect off-map score.
  */
 export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<Array<T & { sourceFile: string }>> {
 	const rows: Array<T & { sourceFile: string }> = []
@@ -33,14 +38,14 @@ export async function readLatinOffmapRows<T>(dataDir: PathBuilderLike): Promise<
 
 		present.push(file)
 
-		for await (const row of JSONSpliterator.fromAsync<T>(path)) {
+		for await (const row of JSONSpliterator.fromAsync<T>(delimitedSource(path))) {
 			rows.push({ ...row, sourceFile: file })
 		}
 	}
 
 	if (!present.length) {
 		throw new Error(
-			`No Latin off-map test set in ${String(dataDir)}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
+			`No Latin off-map test set in ${dataDir}: expected ${LATIN_OFFMAP_TEST_FILES.join(" or ")}. Run build-outlier-latin or build-outlier-oa first.`
 		)
 	}
 
@@ -69,8 +74,8 @@ export function defaultInt8Dir(): PathBuilder {
 }
 
 /**
- * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`), not the `$MAILWOMAN_DATA_ROOT` training
- * output — for probes that must match the runtime.
+ * The deployed placer bundled in `@mailwoman/core` (`core/data/coarse-placer`),
+ * not the `$MAILWOMAN_DATA_ROOT` training output, for probes that must match the runtime.
  */
 export function shippedModelDir(): PathBuilder {
 	return corePackagePathBuilder("data", "coarse-placer")

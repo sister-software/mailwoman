@@ -2,14 +2,14 @@
 
 Operator design note, 2026-08-08. Captured from a conversation immediately after the first-pass
 Pelias benchmark; the failure-mode analysis in `FIRST_PASS.md` is the evidence that motivates it.
-This is a design record rather than a plan of record — nothing here is scheduled.
+This is a design record rather than a plan of record. No work here is scheduled.
 
 ## The idea in one paragraph
 
 When a parsed component does not resolve, the miss still carries information. Today we discard it:
 an unmatched street falls back to the locality centroid and the reason is gone. The proposal is to
 treat every unresolved component as a **constraint** rather than a null — narrowing where the thing
-can be, even when nothing can say where it is — and to report the resulting answer with its
+can be, even when no evidence states where it is — and to report the resulting answer with its
 **derivation** attached, so a retrieved coordinate and an inferred region are never confused for
 one another.
 
@@ -113,7 +113,7 @@ Christaller's central place theory gives _threshold_ (minimum population sustain
 _range_ (maximum distance travelled for it). The prediction: a settlement of a given size supports
 approximately N of a facility class, spatially distributed across its service area. So a query for
 a grocery store in a suburb where we hold no POI row is not unanswerable — density and settlement
-size say roughly how several exist and roughly where they concentrate (arterial roads, commercial
+size give a rough count of them and roughly where they concentrate (arterial roads, commercial
 zoning), which is a bounded region with a stated basis.
 
 The theory is 1933 and its assumptions (isotropic plain, rational consumers) do not survive contact
@@ -134,7 +134,7 @@ supplies the fit; the fit's error on held-out regions is the confidence attached
 
 ## Precompute
 
-The relationships should be mined ahead of time rather than derived per query — the resolver ladder is
+The relationships should be mined ahead of time rather than derived per query. The resolver ladder is
 synchronous and per-keystroke. Naming families, per-locality street-set completeness, terrain
 exclusion masks and fitted CPT parameters are all build-time artifacts keyed to the existing H3/WOF
 spine. This is the same pattern as the candidate table and the postcode bins, and it belongs to
@@ -168,7 +168,7 @@ idea; it is the same idea already in production on a different claim type.
 Its central thesis: carriers submit availability claims they frequently cannot substantiate, and
 **physical plant determines what is possible**. A fiber claim at a location implies a fiber hut
 within reach, poles or conduit along the route, and a serving terminal. Absent that plant, the
-claim is not merely unverified — it is physically implausible, and the implausibility is
+claim is not merely unverified. It is physically implausible, and the implausibility is
 measurable. That is constraint-based verification of a claim against the built world.
 
 The geocoding case is the same shape with the claim swapped:
@@ -179,7 +179,7 @@ The geocoding case is the same shape with the claim swapped:
 | Geocode | "this address is at this coordinate" | development, road class, terrain, utilities | implausible if no built context |
 
 One mechanism, two applications. Which means the implementation is not speculative in the way the rest
-of this record is — a version of it is already ingested, provenanced and `asOf`-scoped.
+of this record is. A version of it is already ingested, provenanced and `asOf`-scoped.
 
 **Constraint sources this opens**, beyond the four above:
 
@@ -246,7 +246,7 @@ replication sequence, source URL/hash, builder version, region, timestamps and O
 Current state and history are separate products. Deletes and redactions are events rather than missing
 rows silently forgotten by a rebuild.
 
-Coverage is a first-class output distinct from row count. A extract may assert `observed_no_match` in
+Coverage is a first-class output distinct from row count. An extract may assert `observed_no_match` in
 a processed cell, `unsurveyed` outside its extract, or `layer_missing` when the artifact was not
 loaded; only a separately justified completeness claim can power hard negative evidence. OSM's
 crowdsourced absence almost never supplies that completeness by itself.
@@ -296,7 +296,7 @@ tables and the sealed artifact manifest rather than widening every lookup row.
 ## Falsifiers to run before building anything
 
 1. **Does negative evidence change any answer?** Take the benchmark's missed rows, apply "not any
-   street we hold in this locality", and count how several candidate sets shrink usefully. If few, the
+   street we hold in this locality", and count the candidate sets that shrink usefully. If few, the
    coverage register is not complete enough for this to bite yet.
 2. **Do naming families exist at measurable rates?** Sample localities from the situs data and test
    for schemes (presidents, trees, states, numbered grids). A low hit rate kills source 3.

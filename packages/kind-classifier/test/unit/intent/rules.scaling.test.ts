@@ -41,14 +41,16 @@ import {
 import { expect, test } from "vitest"
 
 /**
- * Timing samples per measurement. Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
+ * Timing samples per measurement.
+ *
+ * Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
  * ever adds time, so the minimum is the sample least polluted by the neighbours.
  */
 const TIMING_SAMPLES = 5
 
 /**
- * Capitalized run — every token is candidate place-name content, which is the shape that makes `bareNameWords`'s word
- * split and per-word Set probes work hardest before the length check can reject.
+ * Capitalized run — every token is candidate place-name content, which is the shape that makes
+ * `bareNameWords`'s word split and per-word Set probes work hardest before the length check can reject.
  */
 const CAPS_RUN_UNIT = "Aa "
 
@@ -70,11 +72,16 @@ function bestOf(run: () => void): number {
 }
 
 /**
- * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair. Measuring all small trials then
- * all large trials (even as best-of-N) leaves the ratio exposed to a load burst that arrives between the two blocks —
- * on a host that also runs the CI fleet, that is the common case, and it fired the 3x bar three times in one night at
- * 3.19–3.25x with both arms individually healthy. Pairing puts any burst into both arms of the affected pair, and the
- * median sheds the corrupted pairs in either direction. a genuinely quadratic run still shows ~4x in every clean pair.
+ * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair.
+ *
+ * Measuring all small trials then all large trials (even as best-of-N) leaves the
+ * ratio exposed to a load burst that arrives between the two blocks — on a host that
+ * also runs the CI fleet, that is the common case, and it fired the 3x bar three times
+ * in one night at 3.19–3.25x with both arms individually healthy.
+ * Pairing puts any burst into both arms of the affected pair, and the median
+ * sheds the corrupted pairs in either direction.
+ *
+ * A genuinely quadratic run still shows ~4x in every clean pair.
  */
 function medianPairedRatio(small: () => void, large: () => void): { ratio: number; smallMs: number; largeMs: number } {
 	small()
@@ -118,10 +125,12 @@ test("the intent rules stay linear in input length", () => {
 		}
 	}
 
-	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement lands under 0.3 ms,
-	// where scheduler noise on a parallel test runner is larger than the signal and the ratio flakes (measured: 3.25x on
-	// a run where both arms were sub-millisecond). The work being timed is a `trim` + `toLowerCase` + two anchored
-	// regexes over the full string, which is linear. the length check rejects everything else at 30 characters.
+	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement
+	// lands under 0.3 ms, where scheduler noise on a parallel test runner is larger than the signal
+	// and the ratio flakes (measured: 3.25x on a run where both arms were sub-millisecond).
+	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes
+	// over the full string, which is linear.
+	// The length check rejects everything else at 30 characters.
 	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
 	expect(
@@ -132,8 +141,10 @@ test("the intent rules stay linear in input length", () => {
 })
 
 /**
- * The pre-§4 scorer list, replayed. Same construction as `mailwoman/test/kind-intent-invariance.test.ts` and for the
- * same reason — a snapshot would drift the first time an incumbent rule was tuned.
+ * The pre-§4 scorer list, replayed.
+ *
+ * Same construction as `mailwoman/test/kind-intent-invariance.test.ts` and for the same reason.
+ * A snapshot would drift the first time an incumbent rule was tuned.
  */
 function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): void {
 	Math.max(
@@ -149,8 +160,10 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): v
 }
 
 /**
- * A realistic query mix: full addresses (the population that must not pay), bare toponyms, fragments, the intent shapes
- * themselves. Shapes are precomputed — Stage 2.2 is not what is being measured.
+ * A realistic query mix: full addresses (the population that must not pay),
+ * bare toponyms, fragments, the intent shapes themselves.
+ *
+ * Shapes are precomputed — Stage 2.2 is not what is being measured.
  */
 const QUERY_MIX = [
 	"350 5th Ave, New York, NY 10118",
@@ -210,16 +223,20 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 			`over ${prepared.length} queries x ${PASSES} passes`
 	)
 
-	// The BAR is absolute, and the ratio above is reported rather than asserted, because the ratio's denominator is the
-	// unstable half of the pair: the baseline arm is a bare score-and-max with no allocation, which V8 optimizes
-	// aggressively and inconsistently — measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of
-	// this file, moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query). Asserting
-	// on the ratio measures the JIT's mood. asserting on the absolute measures Stage 2.5.
+	// The BAR is absolute, and the ratio above is reported rather than asserted, because
+	// the ratio's denominator is the unstable half of the pair: the baseline arm is a bare
+	// score-and-max with no allocation, which V8 optimizes aggressively and inconsistently —
+	// measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of this file,
+	// moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query).
+	// Asserting on the ratio measures the JIT's mood.
+	// Asserting on the absolute measures Stage 2.5.
 	//
-	// 10 us is ~8x the measured cost. It is set to catch an order-OF-magnitude regression (someone adding a lexicon
-	// load, a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond, and it sits far
-	// enough above the measurement to survive a loaded CI runner. For scale: the classifier's own neighbour on this path
-	// is a ~3 ms ONNX inference, so Stage 2.5 in full is ~0.04% of a parse.
+	// 10 us is ~8x the measured cost.
+	// It is set to catch an order-OF-magnitude regression (someone adding a lexicon load,
+	// a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond,
+	// and it sits far enough above the measurement to survive a loaded CI runner.
+	// For scale: the classifier's own neighbour on this path is a ~3 ms ONNX inference,
+	// so Stage 2.5 in full is ~0.04% of a parse.
 	expect(
 		perQueryIntentUs,
 		`Stage 2.5 cost ${perQueryIntentUs.toFixed(3)} us/query (baseline ${perQueryBaselineUs.toFixed(3)}, ` +

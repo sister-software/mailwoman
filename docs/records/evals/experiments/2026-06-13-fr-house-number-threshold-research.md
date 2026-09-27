@@ -82,7 +82,7 @@ literature and the independent DeepSeek consult judged the 91% floor mis-calibra
 respectable for this stratum; DeepSeek's phrasing: *"87.4% on the single hardest subfield in the hardest
 order permutation is not a miss — it's plausibly state-of-the-art for this specific slice."\_
 
-This **does not** mean re-baseline silently — that would violate the no-silent-check-drift discipline.
+This **does not** mean re-baseline silently. That would violate the no-silent-check-drift discipline.
 It means: if we lower the floor, do it as a _stated, reasoned_ decision anchored to this literature
 (a defensible bar is ~85–90% for the postcode-first stratum), recorded in the check config and the ledger.
 
@@ -125,7 +125,7 @@ The research shifts my earlier "hold" lean. The direct reading:
 
 - libpostal — 99.45% full-parse (whole-sequence rather than per-component); OSM + format-template ordering.
   https://github.com/openvenues/libpostal
-- Yassine, Beauchemin, et al., "Changeaging Subword Embeddings for Multinational Address Parsing"
+- Yassine, Beauchemin, et al., "Leveraging Subword Embeddings for Multinational Address Parsing"
   (deepparse), 2020. Reorder-collapse + inverse-order zero-shot. https://arxiv.org/abs/2006.16152 ·
   library: https://arxiv.org/abs/2311.11846 · https://deepparse.org/
 - Yin, Li, Goldberg, "Is ChatGPT a game changer for geocoding", SIGSPATIAL workshop 2023. Per-component

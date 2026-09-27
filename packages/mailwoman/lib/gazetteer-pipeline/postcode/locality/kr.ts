@@ -27,8 +27,8 @@
  *
  *   Usage: node scripts/build-postcode-locality-kr.ts\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/KR.txt\
- *   --admin-db $MAILWOMAN_DATA_ROOT/wof/dbs-per-country/admin-kr.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-kr.db
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
  *   port note (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
  *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)
@@ -148,14 +148,16 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	}
 
 	/**
-	 * All localities within MATCH_RADIUS_KM, sorted nearest-first. Korean place names repeat heavily across the country
-	 * (homonymous villages), so a Hangul name-match must be constrained to nearby candidates — matching globally then
-	 * taking the nearest homonym lands hundreds of km away.
+	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
+	 *
+	 * Korean place names repeat heavily across the country (homonymous villages),
+	 * so a Hangul name-match must be constrained to nearby candidates — matching globally
+	 * then taking the nearest homonym lands hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))
 
-	// GeoNames postal KR: group by postcode (first row wins. multi-row postcodes cluster tightly).
+	// GeoNames postal KR: group by postcode (first row wins. Multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
 	// Streamed — `args.geonames` is a caller-supplied national dump.
@@ -194,8 +196,9 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is also nearby (two signals agreeing —
-			// the same proximity-constrained match the JP builder uses). is_containing=1 marks the precise tier.
+			// Hangul name confirmation: a name-matched locality that is also nearby
+			// (two signals agreeing — the same proximity-constrained match the JP builder uses).
+			// is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))
 

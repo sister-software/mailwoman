@@ -68,12 +68,14 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop below is all-or-nothing: it walks offsets until a page comes back empty, and one
- * throttled page in the middle aborted the whole build. The tmp-then-rename tail means a partial run is discarded
- * rather than published, so the cost of a transient failure was the entire download rather than a corrupt artifact.
+ * Retry is on because the page loop below is all-or-none: it walks offsets until a page
+ * comes back empty, and one throttled page in the middle aborted the whole build.
  *
- * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows, so the loop already
- * paces itself at whatever the API takes to assemble 10,000 records.
+ * The tmp-then-rename tail means a partial run is discarded rather than published,
+ * so the cost of a transient failure was the entire download rather than a corrupt artifact.
+ *
+ * No `minRequestIntervalMs`: requests are strictly sequential and each returns {@link page} rows,
+ * so the loop already paces itself at whatever the API takes to assemble 10,000 records.
  */
 const fdicClient = new APIClient({ displayName: "fdic", retry: true })
 
@@ -89,7 +91,7 @@ async function fetchPage(offset: number): Promise<Loc[]> {
  * Fetch the fdic BankFind branch pool and swap it into the staging path (build-on-copy).
  */
 export async function buildFDICHoldout(): Promise<void> {
-	const OUT = String(dataRootPath("corpus", "staging", "fdic-us.csv"))
+	const OUT = dataRootPath("corpus", "staging", "fdic-us.csv")
 	const tmp = `${OUT}.tmp-${process.pid}`
 
 	if (await pathExists(tmp)) {
@@ -123,7 +125,8 @@ export async function buildFDICHoldout(): Promise<void> {
 				continue
 			}
 
-			// Semicolons can't appear in a US street address/city. no escaping needed.
+			// Semicolons can't appear in a US street address/city.
+			// No escaping needed.
 			sink.write(`${address};${city};${state};${zip};${lat};${lon}\n`)
 
 			written++

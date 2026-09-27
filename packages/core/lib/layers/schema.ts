@@ -5,8 +5,7 @@
  *   Typed schema for the spatial-layer interface — the two tables every layer database embeds,
  *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
  *   `layer_coverage` (per-H3-cell survey completeness). The interface is what lets shipped,
- *   build-local, and private layers share one query surface. Spec:
- *   docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md §2.1.
+ *   build-local, and private layers share one query surface.
  *
  *   Coverage defines the meaning-of-zero rule: a missing coverage row means "unmapped/unknown",
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.
@@ -16,7 +15,9 @@ import type { CoverageBasis } from "@mailwoman/evidence"
 import { sql, type Kysely } from "kysely"
 
 /**
- * Distribution tier of a layer. Shipped = permissive-license, published by us.
+ * Distribution tier of a layer.
+ *
+ * Shipped = permissive-license, published by us.
  */
 export const LayerTier = {
 	Shipped: "shipped",
@@ -37,11 +38,12 @@ export type LayerTier = (typeof LayerTier)[keyof typeof LayerTier]
  */
 export const LayerFreshnessPolicy = {
 	/**
-	 * Immutable artifact. updates are full rebuilds (the gazetteer discipline).
+	 * Immutable artifact.
+	 * Updates are full rebuilds (the gazetteer discipline).
 	 */
 	Sealed: "sealed",
 	/**
-	 * Periodically re-issued under the same name (e.g. registries of people/programs).
+	 * Periodically re-issued under the same name (e.g. Registries of people/programs).
 	 */
 	VersionedRefresh: "versioned-refresh",
 } as const
@@ -49,7 +51,9 @@ export const LayerFreshnessPolicy = {
 export type LayerFreshnessPolicy = (typeof LayerFreshnessPolicy)[keyof typeof LayerFreshnessPolicy]
 
 /**
- * The single-row layer identity record. See {@link LayerManifest} for the parsed form.
+ * The single-row layer identity record.
+ *
+ * See {@link LayerManifest} for the parsed form.
  */
 export interface LayerManifestTable {
 	name: string
@@ -82,8 +86,9 @@ export interface LayerManifestTable {
 	created_at: string
 }
 
-// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function rather than on matching copies
-// of the same three strings. The layer_coverage schema and its IO stay here.
+// Owned by @mailwoman/evidence so bdc, resolver and filer can check on the same function
+// rather than on matching copies of the same three strings.
+// The layer_coverage schema and its IO stay here.
 
 export interface LayerCoverageTable {
 	/**
@@ -97,10 +102,12 @@ export interface LayerCoverageTable {
 	 */
 	completeness: number
 	/**
-	 * What the `completeness` value rests on. One of {@link CoverageBasis}.
+	 * What the `completeness` value rests on.
 	 *
-	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent} — the weakest
-	 * reading, because that is what every layer built before the column was writing.
+	 * One of {@link CoverageBasis}.
+	 *
+	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent}.
+	 * The weakest reading, because that is what every layer built before the column was writing.
 	 */
 	basis: CoverageBasis | null
 	/**
@@ -110,7 +117,9 @@ export interface LayerCoverageTable {
 }
 
 /**
- * Pass to `new DatabaseClient<layerschemadatabase>(...)` (or intersect into a layer's own schema).
+ * Pass to `new DatabaseClient<layerschemadatabase>(...)`
+ *
+ * (or intersect into a layer's own schema).
  */
 export interface layerschemadatabase {
 	layer_manifest: LayerManifestTable
@@ -118,18 +127,23 @@ export interface layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the interface helpers touch — the parameter type every one of them takes.
+ * The subset of a Kysely handle the interface helpers touch.
+ * The parameter type every one of them takes.
  *
- * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable to
- * `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`. The incompatibility is in
- * `transaction()` and `with()`, which the interface never calls. Naming only the members it does call lets a layer pass
- * its own handle directly. The alternative — a cast at every call site — does not merely skip one check: it disarms
- * every column-level guarantee these two tables carry, including any added later.
+ * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable
+ * to `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`.
+ * The incompatibility is in `transaction()` and `with()`, which the interface never calls.
+ *
+ * Naming only the members it does call lets a layer pass its own handle directly.
+ * The alternative — a cast at every call site — does not merely skip one check:
+ * it disarms every column-level guarantee these two tables carry, including any added later.
  */
 export type layerschemahandle = Pick<Kysely<layerschemadatabase>, "insertInto" | "schema" | "selectFrom">
 
 /**
- * Create `layer_manifest`. Single row enforced by `name` PK + the writer's insert-once discipline.
+ * Create `layer_manifest`.
+ *
+ * Single row enforced by `name` PK + the writer's insert-once discipline.
  */
 export async function createLayerManifestTable(db: layerschemahandle): Promise<void> {
 	await db.schema
@@ -158,11 +172,10 @@ export async function createLayerCoverageTable(db: layerschemahandle): Promise<v
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
 		.addColumn("completeness", "real", (c) => c.notNull())
-		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which
-		// `readLayerCoverage` resolves to `source_present` — what they were in fact recording.
+		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which `readLayerCoverage` resolves to `source_present`. What they were in fact recording.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }

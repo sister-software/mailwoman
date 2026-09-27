@@ -9,20 +9,21 @@ import {
 	GEONAMES_POSTAL_DEFAULT_LICENSE,
 } from "@mailwoman/corpus/adapters/geonames/postal/adapter"
 import type { CanonicalRow } from "@mailwoman/corpus/types"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeEach, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-let scratch: PathBuilderLike
+let scratch: PathBuilder
 
 beforeEach(async () => {
 	scratch = fixtures.use(await temporaryDirectory("mailwoman-gnpostal-")).path
 })
 
-// 12-column GeoNames postal row: country, postcode, place, admin1_name, admin1_code, admin2_*, admin3_*, lat, lon, accuracy.
+// 12-column GeoNames postal row: country, postcode, place, admin1_name, admin1_code,
+// admin2_*, admin3_*, lat, lon, accuracy.
 function row(country: string, postcode: string, place: string, admin1: string): string {
 	const cols = Array.from({ length: 12 }).fill("")
 	cols[0] = country
@@ -36,14 +37,14 @@ function row(country: string, postcode: string, place: string, admin1: string): 
 	return cols.join("\t")
 }
 
-async function writeFixture(...rows: string[]): Promise<string> {
-	const p = join(scratch, "XX.txt")
+async function writeFixture(...rows: string[]): Promise<PathBuilder> {
+	const p = scratch("XX.txt")
 	await writeLocalTextFile(rows, p)
 
 	return p
 }
 
-async function collect(p: string, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
+async function collect(p: PathBuilder, extra?: Record<string, unknown>): Promise<CanonicalRow[]> {
 	const out: CanonicalRow[] = []
 
 	for await (const r of createGeonamesPostalAdapter().rows({ inputPath: p, ...extra })) {

@@ -5,7 +5,7 @@ gazetteer bottoms out — node counts per containment rung, and for the sub-loca
 parent-coverage share (the fraction of the country's locality-class nodes carrying at least one
 child projecting onto that rung).
 
-- **Source:** `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db` (md5 `515beab21eaaea13f77defc6afd9374d`)
+- **Source:** `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db` (md5 `515beab21eaaea13f77defc6afd9374d`)
 - **Built:** 2026-08-02T07:19:40.101Z
 - **Parent-coverage floor:** 5.0% — a sub-locality rung counts as reached only above this.
 - **Countries measured:** 244
@@ -26,7 +26,7 @@ appears in exactly the countries whose repo is ingested, and that correspondence
 property of the data.
 
 The column is read off the **artifact** (synthetic id ranges) rather than the recipe. `rebuild pending`
-means the recipe now names a country the shipped gazetteer has not been rebuilt for — its rows are
+means the recipe now names a country the shipped gazetteer has not been rebuilt for. Its rows are
 still Overture or GeoNames, and its rungs say nothing about WOF yet.
 
 ## What this report does not tell you

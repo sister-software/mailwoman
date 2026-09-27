@@ -3,28 +3,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PostToolUse hook: mirror the session's todo list into the linked GitHub issue's task list.
- *
- *   The plan an agent keeps in its head — or in a session todo list — dies with the session, and the operator's
- *   window into an autonomous session is GitHub rather than the transcript. The `task-intake` skill creates an issue whose
- *   `## Task list` section carries a marker-delimited block. this hook rewrites that block on every `TodoWrite`, so
- *   the issue stays a live mirror of the working plan without the agent spending a turn on bookkeeping.
- *
- *   It never blocks, on the same reasoning as `symbol-precheck.ts`: every failure path is silence, and the sync work
- *   itself runs in a detached worker so the hook adds no latency to the turn. Three conditions check the worker, each
- *   making a no-op explicit rather than accidental:
- *
- *   - `.claude/state/linked-issue` must exist (the skill writes it. no link, no sync — most sessions have none).
- *   - The tool must be `TodoWrite`, whose payload carries the whole list. `TaskCreate`/`TaskUpdate` carry deltas a
- *     stateless hook cannot fold into a list, so those sessions keep the issue current by hand at milestones.
- *   - The issue body must already carry both markers. The hook never invents structure in an issue it did not shape.
- *     absent markers mean the issue was not created by the skill, and rewriting it would clobber someone's prose.
- *
- *   Concurrency: rapid TodoWrite bursts atomically replace one payload file (last write wins). A worker holds a lock
- *   directory while it syncs and re-reads the payload after each pass. A worker that finds the lock waits for its turn,
- *   so a payload written during the lock holder's final pass still gets published.
- *
- *   Register in `.claude/settings.json` under `hooks.PostToolUse` with a `TodoWrite` matcher.
+ *   Mirror `TodoWrite` payloads into the marker-delimited task list of the linked GitHub issue, asynchronously:
+ *   no write happens unless the checkout has a linked issue, the tool is `TodoWrite`, and the issue contains both
+ *   markers. A lock and a replaceable payload file serialize concurrent updates.
  */
 
 import { pathExists, readLocalTextFile, readStandardInputJSON } from "@mailwoman/core/fs/readers"
@@ -38,18 +19,13 @@ import {
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { runFileSync, spawnProcess } from "@mailwoman/core/process"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { join, resolvePath as resolve } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePath as resolve } from "path-ts"
 
-/**
- * How many stabilization passes the worker makes before giving up. Each pass costs two `gh` round trips (~2s), so five
- * bounds one worker's `gh` calls at ~10s of background work. A waiting worker then reads the latest payload.
- */
+import { replaceTaskBlock } from "#github/index"
+
 const MAX_SYNC_PASSES = 5
 const LOCK_RETRY_MS = 100
 const MAX_LOCK_ATTEMPTS = 300
-
-const SYNC_BEGIN = "<!-- todo-sync:begin -->"
-const SYNC_END = "<!-- todo-sync:end -->"
 
 export interface TodoItem {
 	content: string
@@ -57,12 +33,12 @@ export interface TodoItem {
 	activeForm?: string
 }
 
-function stateDir(cwd: string): string {
-	return join(cwd, ".claude", "state")
+function stateDir(cwd: PathBuilderLike): PathBuilder {
+	return PathBuilder.from(cwd, ".claude", "state")
 }
 
-async function linkedIssue(cwd: string): Promise<number | null> {
-	const path = join(stateDir(cwd), "linked-issue")
+async function linkedIssue(cwd: PathBuilderLike): Promise<number | null> {
+	const path = stateDir(cwd)("linked-issue")
 
 	if (!(await pathExists(path))) return null
 
@@ -89,7 +65,6 @@ export function renderTaskList(todos: TodoItem[]): string {
  * Hook mode: stash the payload and hand off to a detached worker, so the turn never waits on `gh`.
  */
 async function hookMain(): Promise<void> {
-	// A malformed payload is a hook that does nothing rather than a hook that throws into the turn.
 	const payload = await readStandardInputJSON<Record<string, unknown>>().catch(() => null)
 
 	if (payload?.tool_name !== "TodoWrite") return
@@ -103,11 +78,11 @@ async function hookMain(): Promise<void> {
 
 	if (!Array.isArray(todos)) return
 
-	const dir = join(stateDir(cwd), "todo-sync")
+	const dir = stateDir(cwd)("todo-sync")
 
 	await makeDirectories(dir)
-	const payloadPath = join(dir, "payload.json")
-	const pendingPath = join(dir, `payload.${process.pid}.json`)
+	const payloadPath = dir("payload.json")
+	const pendingPath = dir(`payload.${process.pid}.json`)
 
 	await writeLocalJSONFile({ issue, todos }, pendingPath)
 	await movePath(pendingPath, payloadPath)
@@ -132,7 +107,7 @@ const delay: Delay = (milliseconds) =>
 		setTimeout(done, milliseconds)
 	})
 
-async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
+async function acquireLock(lock: PathBuilder, wait: Delay): Promise<boolean> {
 	for (let attempt = 0; attempt < MAX_LOCK_ATTEMPTS; attempt++) {
 		try {
 			await makeDirectoryExclusive(lock)
@@ -147,25 +122,23 @@ async function acquireLock(lock: string, wait: Delay): Promise<boolean> {
 }
 
 export async function workerMain(
-	cwd: string,
+	cwd: PathBuilderLike,
 	dryRun: boolean,
 	sync: SyncIssue = syncIssue,
 	wait: Delay = delay
 ): Promise<void> {
-	const dir = join(stateDir(cwd), "todo-sync")
-	const lock = join(dir, "lock")
+	const dir = stateDir(cwd)("todo-sync")
+	const lock = dir("lock")
 
-	// A worker that loses the lock must wait for its own turn. Its payload can arrive after the lock holder's final read.
-	// exiting here would leave that payload unpublished until another TodoWrite happened.
+	// Wait for the lock so this worker's payload is not left unsynced.
 	if (!(await acquireLock(lock, wait))) return
 
 	try {
 		let previous = ""
 
-		// Re-read until stable: a burst of TodoWrites overwrites payload.json, and publishing anything
-		// but the final state would show the operator a stale list with a fresh timestamp.
+		// Re-read after each sync to publish the latest update in a burst.
 		for (let pass = 0; pass < MAX_SYNC_PASSES; pass++) {
-			const raw = await readLocalTextFile(join(dir, "payload.json"))
+			const raw = await readLocalTextFile(dir("payload.json"))
 
 			if (raw === previous) break
 
@@ -188,13 +161,14 @@ function syncIssue(issue: number, todos: TodoItem[], dryRun: boolean): void {
 		timeout: 30_000,
 	})
 
-	const begin = body.indexOf(SYNC_BEGIN)
-	const end = body.indexOf(SYNC_END)
+	let next: string
 
-	// No markers, no write: this issue was not shaped by task-intake, and its body is someone's prose.
-	if (begin === -1 || end === -1 || end < begin) return
-
-	const next = body.slice(0, begin + SYNC_BEGIN.length) + "\n" + renderTaskList(todos) + "\n" + body.slice(end)
+	try {
+		next = replaceTaskBlock(body, renderTaskList(todos))
+	} catch {
+		// Leave issues without task-intake markers untouched.
+		return
+	}
 
 	if (next === body) return
 
@@ -222,7 +196,7 @@ async function main(): Promise<void> {
 	try {
 		await (values.worker ? workerMain(values.cwd ?? process.cwd(), values["dry-run"] ?? false) : hookMain())
 	} catch {
-		// Silence on every failure path: a sync hook that can break a turn is a hook that gets switched off.
+		// Hook failures must not interrupt the caller's turn.
 	}
 }
 

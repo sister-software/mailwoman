@@ -22,8 +22,8 @@ test("pick: applies the transform callback to each picked value", () => {
 })
 
 test("pick: a falsy input returns an empty object", () => {
-	// The implementation guards on `!input` and returns `{}`; the non-null assertion states that the runtime value
-	// really is null while the call still typechecks.
+	// The implementation guards on `!input` and returns `{}`; the non-null assertion states
+	// that the runtime value really is null while the call still typechecks.
 	const absent: { a: number } | null = null
 
 	expect(pick(absent!, ["a"])).toEqual({})
@@ -106,7 +106,7 @@ test("flattenObject: a flat object is returned with single-segment keys", () => 
 })
 
 test("flattenObject: a null leaf is preserved at its dotted path", () => {
-	// "null is also an object" — but a null *value* recurses to the else branch and is kept as a leaf.
+	// "null is also an object", but a null *value* recurses to the else branch and is kept as a leaf.
 	expect(flattenObject({ a: { b: null } })).toEqual({ "a.b": null })
 })
 

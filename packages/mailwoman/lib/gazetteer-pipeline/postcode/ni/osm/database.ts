@@ -9,10 +9,10 @@
  *
  *   `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE` researched the `BT` gap and found three
  *   options: (a) licence LPS Pointer for ~£9,224, (b) take OSM `addr:postcode` under ODbL, (c) ship
- *   nothing. Every free, complete, permissively-licensed source was checked and ruled out — onspd and
+ *   no postcode data. Every free, complete, permissively-licensed source was checked and ruled out — onspd and
  *   nspl carve NI out of their OGL grant in ONS's own words, the LPS End User Licence is personal and
  *   non-sublicensable, and LPS's 77-dataset osni Open Data catalogue contains no postcode centroids at
- *   all. So the choice is (a), (b) or nothing, and this is (b).
+ *   all. So the choice is (a), (b) or no postcode data, and this is (b).
  *
  *   OSM attests 4,757 of the 50,032 live NI postcodes — **9.5 %**. That is not a defect to be improved
  *   away. it is what volunteer mapping has recorded, and the number is baked into the artifact's `meta`
@@ -45,12 +45,15 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 import {
 	applyStagingPragmas,
@@ -79,54 +82,70 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#gazetteer-pipeline/postcode/ni/osm/index"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row. Northern Ireland is part of the United Kingdom, so `spr.country` is `GB` —
- * the same value the Code-Point Open database writes. The NI-vs-GB distinction lives in the postcode area itself
- * (`BT`), not in the country column, and the database routing (`pickExtractForPlacetype`) keys on country, so writing
+ * ISO-3166-1 alpha-2 stamped on every row.
+ *
+ * Northern Ireland is part of the United Kingdom, so `spr.country` is `GB`.
+ * The same value the Code-Point Open database writes.
+ *
+ * The NI-vs-GB distinction lives in the postcode area itself (`BT`), not in the country column,
+ * and the database routing (`pickExtractForPlacetype`) keys on country, so writing
  * anything else here would take this database out of GB postcode routing entirely.
  */
 const COUNTRY = "GB"
 
 /**
- * Live NI postcodes per onspd Feb 2025 — the denominator the coverage fraction is stated against. Sourced in
- * `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE`.
+ * Live NI postcodes per onspd Feb 2025.
+ * The denominator the coverage fraction is stated against.
+ *
+ * Sourced in `../codepoint/fetch.ts`'s `NORTHERN_IRELAND_OPTIONS_NOTE`.
  */
 export const NI_LIVE_POSTCODES = 50_032
 
 /**
- * Total NI postcode sectors — an outward code plus one inward digit (`BT3 9`). The coarser denominator: a database can
- * cover a sector without covering many of its units, so this number and {@link NI_LIVE_POSTCODES} answer different
- * questions and both are reported.
+ * Total NI postcode sectors — an outward code plus one inward digit (`BT3 9`).
+ *
+ * The coarser denominator: a database can cover a sector without covering many of its units,
+ * so this number and {@link NI_LIVE_POSTCODES} answer different questions and both are reported.
  */
 export const NI_TOTAL_SECTORS = 886
 
 /**
- * Total NI postcode districts — the outward code alone (`BT3`), i.e. `BT1`–`BT94` with the gaps removed. The coarsest
- * denominator, and the one the OSM database saturates: 80 of 80.
+ * Total NI postcode districts — the outward code alone (`BT3`), i.e. `BT1`–`BT94` with the gaps removed.
+ *
+ * The coarsest denominator, and the one the OSM database saturates: 80 of 80.
  */
 export const NI_TOTAL_DISTRICTS = 80
 
 export interface BuildPostcodeNIOSMOptions {
 	/**
-	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`. Default
-	 * `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
+	 * Acquisition directory holding (or to hold) `response.json` + `acquisition.json`.
+	 *
+	 * Default `<data-root>/osm-ni-postcodes/<yyyy-MM-DD>` — a new dated directory per acquisition.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/db/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
 	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Skip the network entirely and use whatever is already in `sourceDir`. Fails if `response.json` is not there. This
-	 * is the normal mode for a rebuild: the saved response is the reproducibility artifact, and re-querying a volunteer
-	 * endpoint to rebuild the same database is what the dated directory exists to avoid.
+	 * Skip the network entirely and use whatever is already in `sourceDir`.
+	 *
+	 * Fails if `response.json` is not there.
+	 * This is the normal mode for a rebuild: the saved response is the reproducibility
+	 * artifact, and re-querying a volunteer endpoint to rebuild the same database
+	 * is what the dated directory exists to avoid.
 	 */
 	offline?: boolean
 	/**
-	 * Build clock — stamped into `meta.built_at` and the default paths. Passed in so the module never reads the clock
-	 * implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock — stamped into `meta.built_at` and the default paths.
+	 *
+	 * Passed in so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -154,13 +173,13 @@ export interface BuildPostcodeNIOSMResult {
 	 */
 	queryMD5: string
 	/**
-	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) — the real provenance date, as against the
-	 * wall-clock retrieval time.
+	 * The OSM data extract the response reflects (`osm3s.timestamp_osm_base`) —
+	 * the real provenance date, as against the wall-clock retrieval time.
 	 */
 	osmTimestamp: string
 	/**
-	 * Anything that failed to reconcile: a drop the counters cannot account for, or a district/sector count above the
-	 * national total (which would mean the validator is admitting non-NI codes).
+	 * Anything that failed to reconcile: a drop the counters cannot account for, or a district/sector
+	 * count above the national total (which would mean the validator is admitting non-NI codes).
 	 */
 	reconciliationFailures: string[]
 	ancestorRows: number
@@ -176,11 +195,12 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const phase = options.onPhase ?? (() => {})
 	const now = options.now ?? new Date()
 	const stamp = isoDate(now)
-	const sourceDir = (options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp)).toString()
-	const out = (options.out ?? dataRootPath("wof", `postalcode-ni-osm-${stamp}.db`)).toString()
-	const responsePath = join(sourceDir, "response.json")
+	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("osm-ni-postcodes", stamp))
+	const out = (options.out ?? wofDatabasePath(`postalcode-ni-osm-${stamp}.db`)).toString()
+	const responsePath = sourceDir("response.json")
 
-	// Acquire the source. offline operation is the normal path described by the option.
+	// Acquire the source.
+	// Offline operation is the normal path described by the option.
 	if (!options.offline) {
 		await acquireNIPostcodes({ destDir: sourceDir, now, onPhase: phase })
 	}
@@ -195,9 +215,10 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const responseMD5 = await md5File(responsePath)
 	const sidecar = await readAcquisitionSidecar<NIAcquisitionSidecar>(sourceDir)
 
-	// The saved query is authoritative over the module constant: the database must record the query that
-	// produced its bytes rather than the query the code would issue today. They diverge the moment the constant
-	// is edited, and the whole point of the sidecar is to survive that edit.
+	// The saved query is authoritative over the module constant: the database must record
+	// the query that produced its bytes rather than the query the code would issue today.
+	// They diverge the moment the constant is edited, and the whole point of the
+	// sidecar is to survive that edit.
 	const queryText = sidecar?.query ?? NI_POSTCODE_OVERPASS_QUERY
 	const queryMD5 = sidecar?.queryMD5 ?? niPostcodeQueryMD5()
 	const retrievedAt = sidecar?.retrievedAt ?? UNKNOWN_PROVENANCE
@@ -228,7 +249,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	const sectors = new Set(records.map((r) => r.sector))
 	const reconciliationFailures = reconcile(stats, records, districts.size, sectors.size)
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema, createUnifiedIndexes, populateAncestors } =
 		await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
@@ -287,10 +308,11 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 		db.exec("COMMIT")
 
-		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy), so this writes the self row
-		// per place and nothing else. Not decorative: the resolver's parent-constraint scopes a lookup with
-		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place absent from `ancestors` can
-		// never satisfy it.
+		// Every row's parent_id is -1 (OSM address points carry no WOF hierarchy),
+		// so this writes the self row per place and no other row.
+		// Not decorative: the resolver's parent-constraint scopes a lookup with
+		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place
+		// absent from `ancestors` can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 
@@ -327,12 +349,35 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
+	// The layer interface's manifest, beside the `meta` record and stating the same tier.
+	// The candidate build reads this field before folding the database, and a publish
+	// reads it through the candidate's own manifest.
+	phase("layer-manifest")
+
+	await stampLayerManifest(
+		out,
+		foldLayerManifest({
+			name: "postalcode-ni-osm",
+			version: stamp,
+			// ODbL 1.0 is share-alike on a Derived Database, as the module docstring and `meta.tier` state.
+			tier: LayerTier.BuildLocal,
+			license: OSM_LICENSE,
+			attribution: OSM_ATTRIBUTION,
+			source: "OpenStreetMap via the Overpass API",
+			sourceVintage: osmTimestamp,
+			buildCmd: "mailwoman gazetteer build postcode-ni-osm",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
+	)
+
 	phase("seal")
 	await sealDatabase(out)
 
 	return {
 		out,
-		sourceDir,
+		sourceDir: sourceDir.toString(),
 		inserted,
 		stats,
 		districts: districts.size,
@@ -351,16 +396,20 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 /**
  * Check the identities that no single counter implies.
  *
- * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements exist" — so unlike the
- * Code-Point Open build there is no external oracle to condition on. What can be checked is internal consistency plus
- * two bounds that a broken validator would blow through, and those are worth more than they look: the
- * `codepoint-database.ts` check learned the hard way that a tolerance derived from the failure it is meant to catch
- * catches nothing, so every check here is against a fixed number.
+ * There is no upstream manifest here — OSM does not publish "this many BT-tagged elements
+ * exist" — so unlike the Code-Point Open build there is no external oracle to condition on.
+ * What can be checked is internal consistency plus two bounds that a broken validator
+ * would blow through, and those are worth more than they look: the `codepoint-database.ts`
+ * check learned the hard way that a tolerance derived from the failure it is meant to
+ * catch catches no failure, so every check here is against a fixed number.
  *
- * 1. Every tagged element is either a point or an accounted drop. A parser that silently skips a shape fails here.
- * 2. Districts ≤ 80 and sectors ≤ 886, the national totals. Exceeding either means the validator is admitting codes that
- *    are not NI — the failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
- * 3. Every record has at least one attestation, so a zero can only mean "not in OSM", never "in OSM with no evidence".
+ * 1. Every tagged element is either a point or an accounted drop.
+ *    A parser that silently skips a shape fails here.
+ * 2. Districts ≤ 80 and sectors ≤ 886, the national totals.
+ *    Exceeding either means the validator is admitting codes that are not NI.
+ *    The failure mode of loosening {@link NI_UNIT_POSTCODE} to make more rows pass.
+ * 3. Every record has at least one attestation, so a zero can only mean "not in OSM",
+ *    never "in OSM with no evidence".
  */
 function reconcile(
 	stats: NIOSMParseStats,
@@ -441,7 +490,8 @@ async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 		["source_query_md5", input.queryMD5],
 		["source_response_md5", input.responseMD5],
 		["source_retrieved_at", input.retrievedAt],
-		// The data extract, which is the date that matters — `source_retrieved_at` only says when we asked.
+		// The data extract, which is the date that matters.
+		// `source_retrieved_at` only says when we asked.
 		["source_osm_timestamp", input.osmTimestamp],
 		["license", OSM_LICENSE],
 		["license_url", OSM_LICENSE_URL],

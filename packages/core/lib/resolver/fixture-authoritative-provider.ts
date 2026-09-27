@@ -2,16 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   In-memory fixture implementation of the authoritative-provider interface (#1901) — synthetic
- *   addresses, synthetic identifiers, zero network. Ships beside the interface the way
- *   `@mailwoman/core/api/test-clocks` ships beside `APIClient`, and for the same reason: every
- *   consumer package exercises the boundary against the same reference implementation instead of five
- *   hand-rolled mocks that drift.
+ *   In-memory fixture implementation of the authoritative-provider interface — synthetic addresses, synthetic
+ *   identifiers, zero network — shipped beside the interface the way `@mailwoman/core/api/test-clocks` ships
+ *   beside `APIClient`, so every consumer package exercises the boundary against the same reference
+ *   implementation instead of hand-rolled mocks that drift.
  *
- *   The fixture matches on the query's normalized form or a declared component value — deliberately
- *   simple string keys, because the fixture tests the threading of provider answers through result
- *   surfaces, never provider matching quality. No fixture row may carry licensed data. synthetic
- *   uprn-shaped identifiers use the reserved 0-prefix range no real uprn occupies.
+ *   The fixture matches on the query's normalized form or a declared component value, deliberately simple
+ *   string keys because it tests the threading of provider answers through result surfaces rather than
+ *   matching quality. No fixture row may carry licensed data, and synthetic uprn-shaped identifiers use the
+ *   reserved 0-prefix range no real uprn occupies.
  */
 
 import {
@@ -23,8 +22,8 @@ import {
 } from "#resolver/authoritative-provider"
 
 /**
- * One fixture rule: when `matchOn` is found in the query's normalized form (case-insensitive substring), answer with
- * `response`.
+ * One fixture rule: when `matchOn` is found in the query's normalized form as a
+ * case-insensitive substring, answer with `response`.
  */
 export interface FixtureAuthoritativeRule {
 	matchOn: string
@@ -33,13 +32,15 @@ export interface FixtureAuthoritativeRule {
 
 export interface FixtureAuthoritativeProviderOptions {
 	/**
-	 * Rules checked in order. the first hit answers. No hit → a `refused` response, because a fixture that silently
-	 * "matches nothing" is indistinguishable from a fixture that was never consulted.
+	 * Rules checked in order with the first hit answering.
+	 *
+	 * No hit is a `refused` response, because a fixture that silently "matches no rule"
+	 * is indistinguishable from one that was never consulted.
 	 */
 	rules: ReadonlyArray<FixtureAuthoritativeRule>
 	/**
-	 * Records every query the fixture receives, so a test can assert the provider was (or was not) consulted and with
-	 * what evidence.
+	 * Records every query the fixture receives, so a test can assert the provider was
+	 * or was not consulted and with what evidence.
 	 */
 	log?: AuthoritativeQuery[]
 }
@@ -47,8 +48,9 @@ export interface FixtureAuthoritativeProviderOptions {
 const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any licensed source"
 
 /**
- * Build a fixture provider from rules. The returned provider is pure and synchronous under the hood. the async
- * signature is the interface's.
+ * Build a fixture provider from rules.
+ *
+ * The returned provider is pure and synchronous under the hood, and the async signature is the interface's.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions
@@ -73,8 +75,8 @@ export function createFixtureAuthoritativeProvider(
 }
 
 /**
- * A ready-made exact match for one synthetic premise, for the common one-rule test. The uprn-shaped identifier sits in
- * a 0-prefixed range no real uprn occupies.
+ * A ready-made exact match for one synthetic premise, for the common one-rule test,
+ * with the uprn-shaped identifier in a 0-prefixed range no real uprn occupies.
  */
 export function fixtureExactMatch(overrides: Partial<AuthoritativeMatch> = {}): AuthoritativeResponse {
 	return {

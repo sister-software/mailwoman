@@ -60,7 +60,6 @@ const { values: rawValues } = parseArguments({
 		set: { type: "string" },
 		tokenizer: { type: "string" },
 	},
-	strict: false,
 	allowPositionals: true,
 })
 
@@ -96,15 +95,17 @@ const STREET_FAMILY = new Set(["street", "street_prefix", "street_suffix"])
 const OA_GRADABLE = new Set(["locality", "region", "postcode"])
 
 /**
- * Collapse the street decomposition into one matching class. everything else maps to itself.
+ * Collapse the street decomposition into one matching class.
+ * Everything else maps to itself.
  */
 function tagClass(tag: string): string {
 	return STREET_FAMILY.has(tag) ? "street" : tag
 }
 
 /**
- * Grade one predicted span against a row's gold. Returns `null` when the span is unlabelable (OA can't see this tag),
- * else `true`/`false`.
+ * Grade one predicted span against a row's gold.
+ *
+ * @returns `null` when the span is unlabelable (OA can't see this tag), else `true`/`false`.
  */
 function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean | null {
 	if (row.partial) {
@@ -146,8 +147,8 @@ async function main(): Promise<void> {
 		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
-	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed — anchor +
-	// gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
+	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed —
+	// anchor + gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
@@ -176,9 +177,12 @@ async function main(): Promise<void> {
 			console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
 		}
 
-		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims it
-		// (~380-parse sigkill on the lab box). Periodic forced GC reclaims it. run with `node
-		// --expose-gc` for full calibration sets (8000 rows). No-op without the flag. (#787 pattern.)
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS
+		// GC reclaims it (~380-parse sigkill on the lab box).
+		// Periodic forced GC reclaims it.
+		// Run with `node --expose-gc` for full calibration sets (8000 rows).
+		// No-op without the flag.
+		// (#787 pattern.)
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}

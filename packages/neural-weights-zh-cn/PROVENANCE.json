@@ -44,13 +44,15 @@
 	"artifacts": [
 		{
 			"path": "fst-zh-cn.bin",
+			"role": "gazetteer-fst",
 			"md5": null,
 			"digest": "unrecorded"
 		}
 	],
 	"training_attribution": {
 		"status": "none-recorded-in-this-package",
-		"entries": []
+		"entries": [],
+		"by_use": {}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
@@ -58,6 +60,6 @@
 	"unresolved": [
 		"No digest is recorded for 1 of 1 declared artifacts: fst-zh-cn.bin. An unrecorded digest is not a verified one.",
 		"This package's model card records no training attribution of its own. It ships 1 artifacts and no model graph, so its own inputs are unattributed here while the 6 entries under inherited_lineage describe @mailwoman/neural-weights-cjk's graph.",
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

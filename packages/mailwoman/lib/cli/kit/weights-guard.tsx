@@ -34,7 +34,9 @@ import React, { useEffect, useState } from "react"
 export type WeightsOutcome = "neural" | "declined" | "unavailable"
 
 /**
- * Probe whether weights resolve for a locale without loading the model. Cheap (fs checks only).
+ * Probe whether weights resolve for a locale without loading the model.
+ *
+ * Cheap (fs checks only).
  */
 export async function probeWeights(
 	locale?: string,
@@ -50,7 +52,9 @@ export async function probeWeights(
 }
 
 /**
- * The npm invocation that populates the weights cache. Pure — unit-tested; `spec` defaults to `latest`.
+ * The npm invocation that populates the weights cache.
+ *
+ * Pure — unit-tested; `spec` defaults to `latest`.
  */
 export function buildWeightsInstallArgs(
 	locale: string | undefined,
@@ -75,9 +79,12 @@ export interface DownloadWeightsOpts {
 }
 
 /**
- * Install the weights package into the cache prefix via the user's own npm (spawned as our own child. no pattern kills
- * anywhere near this). Success = npm exits 0 and the post-install probe resolves — a metadata-only tarball (code-only
- * release) installs "successfully" but carries no binaries, and must report as a failure with an actionable message.
+ * Install the weights package into the cache prefix via the user's own npm
+ * (spawned as our own child. No pattern kills anywhere near this).
+ *
+ * Success = npm exits 0 and the post-install probe resolves.
+ * A metadata-only tarball (code-only release) installs "successfully" but carries no
+ * binaries, and must report as a failure with an actionable message.
  */
 export function downloadWeights(
 	opts: DownloadWeightsOpts,
@@ -112,8 +119,8 @@ export function downloadWeights(
 				return
 			}
 
-			// probeWeights never rejects (it catches internally), so this chained probe cannot produce an
-			// unhandled rejection.
+			// probeWeights never rejects (it catches internally), so this chained probe
+			// cannot produce an unhandled rejection.
 			void probeWeights(opts.locale, cacheRoot).then((probe) => {
 				if (!probe.ok) {
 					resolvePromise({
@@ -163,8 +170,11 @@ type GuardPhase =
 	| { phase: "settled"; outcome: WeightsOutcome }
 
 /**
- * Interactive guard around model-requiring commands. See the module docstring for the outcome interface. The prompt
- * renders only on a raw-mode-capable stdin. everything else settles immediately without painting UI.
+ * Interactive guard around model-requiring commands.
+ *
+ * See the module docstring for the outcome interface.
+ * The prompt renders only on a raw-mode-capable stdin.
+ * Everything else settles immediately without painting UI.
  */
 export function WeightsGuard({
 	locale,
@@ -262,7 +272,7 @@ export function WeightsGuard({
 					</Text>
 					<Text>
 						Download <Text bold>{weightsPackageName(locale)}</Text> to{" "}
-						<Text dimColor>{String(cacheRoot ?? weightsCacheDir())}</Text>? <Text bold>[Y/n]</Text>
+						<Text dimColor>{(cacheRoot ?? weightsCacheDir()).toString()}</Text>? <Text bold>[Y/n]</Text>
 					</Text>
 				</Box>
 			)

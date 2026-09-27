@@ -2,18 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Span-level parse dump for a named row set under one weights arm, so two arms can be diffed line for
- *   line. Built for the v4.2.0-base-anchor-v2 (Run B) regression triage: the gauntlet reports a coord or a
- *   single-tag miss, which cannot distinguish "the parse moved" from "the resolver ranked differently".
- *   This dumps the parse alone (classifier-only pipeline, no resolver, exactly the gauntlet's parse half).
- *
- *   Registers are the invariance suite's own transforms, so a row can be read across the register axis the
- *   #690 case-normalization work made required: `asis` / `lower` / `upper` / `comma-drop`.
- *
- *   Usage:
- *     node packages/mailwoman/lib/dev-tools/diff-territory-spans.run.ts --rows <file.txt> --cache-root <dir> --label cand-on
- *
- *   `--rows` is a plain text file of `id<TAB>input` lines (blank lines and `#` comments skipped).
+ * Prints one line of classifier spans per row and text register so two model arms can be diffed.
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -30,16 +19,17 @@ type Register = (typeof REGISTERS)[number]
 
 const { values } = parseArguments({
 	options: {
+		/**
+		 * Reads `id<TAB>input` lines from this file.
+		 * Blank lines and lines starting with `#` are skipped.
+		 */
 		rows: { type: "string" },
 		"cache-root": { type: "string" },
 		label: { type: "string", default: "arm" },
 		locale: { type: "string", default: "en-US" },
 		registers: { type: "string", default: "asis,lower,upper,comma-drop" },
 		/**
-		 * Parse through the RAW classifier (`classifier.parse`) instead of `createRuntimePipeline`. This is what
-		 * `mailwoman/eval-harness/invariance/runner.ts`'s `buildParseFn` does, and the two instruments do not agree: the
-		 * raw path skips `@mailwoman/normalize` entirely, so #690 case normalization never runs and the register legs see
-		 * genuinely different text.
+		 * Calls `classifier.parse` directly instead of the normalization pipeline.
 		 */
 		raw: { type: "boolean", default: false },
 	},
@@ -50,7 +40,7 @@ const selected = new Set(values.registers!.split(",")) as Set<Register>
 
 function applyRegister(text: string, reg: Register): string {
 	if (reg === "comma-drop") {
-		// Verbatim `mailwoman/eval-harness/invariance/transforms.ts::commaDrop` — the whitespace collapse matters.
+		// This matches the invariance suite's comma-drop transform, including the whitespace collapse.
 		return text.replaceAll(",", "").replaceAll(/\s+/gu, " ").trim()
 	}
 
@@ -58,8 +48,7 @@ function applyRegister(text: string, reg: Register): string {
 }
 
 const rows = await TextSpliterator.fromAsync(values.rows!)
-	.map((line) => line.trim())
-	.filter((line) => line.length && !line.startsWith("#"))
+	.filter((line) => !line.startsWith("#"))
 	.map((line) => {
 		const tab = line.indexOf("\t")
 

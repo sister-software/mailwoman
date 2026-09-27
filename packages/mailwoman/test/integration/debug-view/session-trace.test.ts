@@ -10,14 +10,14 @@
  *   same reasons, so the two suites run and skip together.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { $public } from "mailwoman/env"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
@@ -46,8 +46,9 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				const withTrace = await traced.geocode(ADDRESS)
 				const without = await plain.geocode(ADDRESS)
 
-				// The answer is the answer, traced or not. The one field a trace adds is the derivation projected from the
-				// records the sink received. it is absent rather than empty, on the untraced path.
+				// The answer is the answer, traced or not.
+				// The one field a trace adds is the derivation projected from the records the sink received.
+				// It is absent rather than empty, on the untraced path.
 				const { derivation, ...tracedResult } = withTrace.result
 
 				expect(derivation).toBeDefined()
@@ -67,8 +68,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(trace.parse.pieces.length).toBeGreaterThan(0)
 				expect(trace.parse.tokens).toHaveLength(trace.parse.pieces.length)
 
-				// And the decode it recorded is the decode behind the tree: every component the tree carries at the
-				// top level appears as a label the trace's tokens actually produced.
+				// And the decode it recorded is the decode behind the tree: every component the tree
+				// carries at the top level appears as a label the trace's tokens actually produced.
 				const decoded = new Set(trace.parse.tokens.map((token) => token.label.replace(/^[BI]-/u, "")))
 
 				for (const root of withTrace.tree.roots) {

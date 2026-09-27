@@ -3,7 +3,7 @@
 
 /**
  *   Tests for the rig registry and its result normalization. The lifecycle itself (podman, a warm-up wait) is not
- *   simulated — a mocked container runtime would assert that the mock works. What is pinned is the part a reader
+ *   simulated. A mocked container runtime would assert that the mock works. What is pinned is the part a reader
  *   depends on and cannot check by eye: that each engine's identity lands in `sourceID`, because the whole reason to
  *   ask a rig anything is to learn which dataset answered.
  */

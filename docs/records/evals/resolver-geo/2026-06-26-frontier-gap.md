@@ -15,7 +15,7 @@
 > `Sydney`, `Warsaw`, `Toronto` resolve to their US namesakes _even with a candidate DB loaded_, because
 > the population-first ranking can't break the tie without a country prior. That's #822. And the
 > **default drop-in's non-US recall is poor** without a candidate DB. A separate exonym-sizing pass
-> (try-the-alternatenames) was withdrawn — it was both cap-buggy and confounded by this same config gap.
+> (try-the-alternatenames) was withdrawn. It was both cap-buggy and confounded by this same config gap.
 
 _geonames cities15000, top 3/country by population (≥ 50000). "Resolved" = within
 50 km of the city's true coordinate. **Bare** = no country constraint (what the drop-in sends
@@ -80,7 +80,7 @@ The hint returns nothing: the English query name matches no place in the country
 exists under a LOCAL name (`Warsaw` vs `Warszawa` — proven end-to-end), indexing alt-name surface forms
 onto the candidate table fixes it cheaply (#823, no model change). Where the country has no candidate
 records at all, it's coverage. European exonyms dominate; the per-country split needs a local-name probe.
-`hint→∅` = of the hint-unresolved cities, how several returned no result (vs a wrong place).
+`hint→∅` = of the hint-unresolved cities, how many returned no result (vs a wrong place).
 
 | Country                                    | ISO2 | Bare | +hint | hint→∅ |
 | ------------------------------------------ | ---- | ---: | ----: | -----: |

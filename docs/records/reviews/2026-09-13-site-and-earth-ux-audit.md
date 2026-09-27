@@ -9,10 +9,10 @@ Every claim states the file:line or the live observation it came from.
 ## Verification, 2026-09-13
 
 Everything below was checked against the Docusaurus build output and a `docusaurus serve` of it. The
-docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`
-— it passing means every link added here resolves.
+docs build is the check that matters, because `onBrokenLinks` and `onBrokenAnchors` are both `"throw"`.
+It passing means every link added here resolves.
 
-Why half of this was hard to check at all is its own record: `.yarnrc.yml` declared
+Half of this was hard to check for a separate reason: `.yarnrc.yml` declared
 `supportedArchitectures` for `cpu` and `os` but not `libc`, so a macOS install silently dropped every
 `libc=glibc` package and left a tree no Linux machine could build from. Fixed in a0eac6ce3.
 
@@ -57,7 +57,7 @@ auto-run fires.
 One new flake vector worth knowing about if one ever appears: when the auto-run finishes before the
 fixture presses Enter, `submit()`'s wait for "Parsed components" is satisfied by the first run's panel
 while the second is still in flight. Both runs carry the same query and render the same DOM, so there
-is nothing observable to differ — but that is why a re-run is happening at all.
+is no observable difference. That same timing is the reason a second run happens at all.
 
 ---
 
@@ -77,13 +77,13 @@ Three leaks, fixed in 86e85929f:
 
 1. `WebONNXRunner` held `modelBytes` for its whole life. `InferenceSession.create` copies the graph into
    the runtime's own heap, so that was a second full copy of a 38 MB model, kept for the page's life,
-   for nothing. Dropped as soon as a session owns it.
+   to no purpose. Dropped as soon as a session owns it.
 2. `WebONNXRunner.release()` did not exist. It does now, and is what hands the session's memory back.
    Safe to call twice, and safe mid-load — an in-flight session is awaited and then released, so an
    aborted load cannot leak the session it was half-way through building.
 3. `useReleaseRuntime` now takes `disposeAssets` and calls it in the three places a bundle stopped being
    anybody's: the outgoing bundle when a reload begins (before the replacement is built, so two models
-   are never resident at once — the peak is what kills a tab), a bundle whose load was aborted after it
+   are never resident at once, because the peak is what kills a tab), a bundle whose load was aborted after it
    had already resolved, and the last bundle on unmount.
 
 This is separate from the main-thread stall below, and does not fix it. It does reduce what the page
@@ -96,29 +96,30 @@ holds while that work runs, and it is the more likely explanation of a tab being
 ### 1. A `?q=` permalink never runs
 
 `packages/earth/lib/App.tsx:78` passed the URL's query as `defaultAddress`, which only pre-fills the
-field. Nothing submitted it. A shared link therefore landed on the world view with the address sitting
+field. No code submitted it. A shared link therefore landed on the world view with the address sitting
 in the search box, unrun, and the visitor had to press Enter themselves — so "Copy link" produced a
 link that did not reproduce the result it was copied from. Reproduced on
-`?q=350+5th+Ave+New+York+NY+10118`: field populated, no result sheet, no marker, 48 s after load.
+`?q=350+5th+Ave+New+York+NY+10118`: 48 s after load, the field was populated but neither a result sheet
+nor a marker had appeared.
 
-fixed — `Geocoder` takes an `initialQuery` prop, distinct from `defaultAddress`, and runs it once as
+Fixed: `Geocoder` takes an `initialQuery` prop, distinct from `defaultAddress`, and runs it once as
 soon as `runtime.ready` flips. Only the URL's query goes through it, so a cold visit still pre-fills
 the demo address without spending the visitor's first seconds on a parse they did not ask for.
 
-### 1b. The map is black for ~20 s the result — NOT a camera bug
+### 1b. The map is black for ~20 s after a result appears — NOT a camera bug
 
 An earlier draft of this record called this a fly-to that overshot the basemap's maxzoom. That was
-wrong, and it is recorded here because it is the kind of wrong that gets a camera "fixed" into a
+wrong. It is recorded here because acting on that diagnosis would have "fixed" the camera into a
 second bug.
 
 What is settled is that the camera is correct. `computeMapPlaceRenderSpec`
 (`packages/react/lib/map/place-render.ts:126`) flies an interpolated hit to z15, well inside the
 Protomaps source's `maxzoom: 15`, and the marker lands on the right building. The viewport is
 nevertheless black for tens of seconds and then fills in on its own with no interaction. Why it does
-that is the open question below — an earlier answer to it has also been withdrawn.
+that is the open question below. An earlier answer to it has also been withdrawn.
 
-The cause is not established. The 2026-09-14 entry that claimed it was has been withdrawn — this is the
-second confident wrong answer about this one symptom, and the pattern is worth naming in place.
+The cause is not established. The 2026-09-14 entry that claimed to establish it has been withdrawn. This
+is the second confident wrong answer about this one symptom, and this record notes the pattern here.
 
 **Fact, from source.** Inference runs on the page's main thread.
 `packages/neural/lib/web/onnx-runner.ts:140` creates the session with
@@ -143,20 +144,20 @@ whole page life. That measurement cannot state the claim:
 - And the tiles come from the host that was counted:
   `packages/tile-worker/lib/protomaps/index.ts:72` builds the template as
   `https://tiles.mailwoman.ai/{tilesetName}/{z}/{x}/{y}.{ext}`. Detailed tiles demonstrably rendered, so
-  requests to that host were made and went unrecorded. The two observations cannot both stand,
-  and the measurement is the one that gives.
+  requests to that host were made and went unrecorded. The two observations cannot both be true,
+  and the measurement is the one that is wrong.
 
-**2026-09-14, measured at last — and the repro does not survive it.** Instrumented the live page with
-a longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
+**2026-09-14: the measurement does not reproduce the bug.** The live page was instrumented with a
+longtask `PerformanceObserver` and a `requestAnimationFrame` sampler:
 
-- **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated. That kills the
-  main-thread theory outright.
+- **1 long task in 66 seconds, 174 ms total.** The main thread is idle rather than saturated, which rules
+  out the main-thread theory.
 - **11 animation frames in 66 seconds, with a 52.9-second gap between two of them.**
 - `document.visibilityState === "hidden"` for the whole session.
 
 Chrome zeroes `requestAnimationFrame` for a hidden tab, and MapLibre both renders and decides which
-tiles to request inside that loop. No rAF, no render, no tile requests, black canvas — every symptom,
-with no bug required. And `totalResources` was 66, well under the 250-entry cap, so `tileReqs: 0` was a
+tiles to request inside that loop. Without rAF, MapLibre neither renders nor requests tiles, and the
+canvas stays black. That explains every symptom without any bug. And `totalResources` was 66, well under the 250-entry cap, so `tileReqs: 0` was a
 true count this time rather than a buffer artifact: the tab in fact never asked for a tile because it
 never rendered a frame.
 
@@ -164,36 +165,36 @@ Every observation of this symptom in this record came from a tab driven by brows
 runs the page hidden. So the black map is, on the evidence available, **an artifact of how it was
 observed**. It has never been reproduced in a browser tab a human was looking at.
 
-That does not prove the app is fine — a visible tab might still stall for its own reasons, and the
-original report deserves a look. It does mean there is currently no evidence of a bug here, and the
-next step is not a fix but a five-minute check in a visible tab:
+That does not prove the app is fine. A visible tab might still stall for its own reasons, and the
+original report deserves a look. It does mean there is currently no evidence of a bug here. The next
+step is a five-minute check in a visible tab rather than a fix:
 `yarn workspace @mailwoman/earth preview`, open `http://localhost:7770`, run a query, watch.
 
 **How to measure it properly**, for whoever picks this up: a Performance-panel recording across the
 resolve, which shows long tasks and main-thread occupancy directly — or
 `performance.setResourceTimingBufferSize(5000)` before the query if request counts are what is wanted.
 The question to answer first is whether the main thread is occupied or idle during those twenty
-seconds. Everything else follows from that, and nothing should be changed until it is known.
+seconds. Everything else follows from that, and no change should be made until it is known.
 
-NOT FIXED, and not to be fixed from here. The candidate actions — inference in a worker, yielding
-between pipeline stages — are architecture changes whose whole value is what they do to frame timing,
-which is the one thing a workspace that cannot open a browser must not be trusted to judge. The memory
-work above (86e85929f) was a separate and established bug; it is not a fix for this.
+Not fixed, and it should not be fixed from this workspace. The candidate actions (inference in a
+worker, yielding between pipeline stages) are architecture changes whose whole value is their effect
+on frame timing. A workspace that cannot open a browser cannot judge frame timing. The memory work
+above (86e85929f) fixed a separate, established bug and does not fix this one.
 
 ### 2. Nine silent failure paths in Earth
 
 `packages/react/lib/map/GeocoderControls.tsx:329` is the only user-visible error sink in the app, and it
 prints a raw `Error.message` in monospace with no `role="alert"` / `aria-live`. Everything below fails
-with nothing on screen:
+with no result on screen:
 
 | Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again does nothing, forever.                                                                                      |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again performs no work, forever.                                                                                  |
 | IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
 | Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
 | Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
 | Crisp polygon unavailable         | `geocoder-runtime.ts:509` — `console.error(...)`                                        | Console only.                                                                                                                                      |
-| Decode-path trace fails           | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64`              | Tick "Trace the decode path", drawer never opens, no reason given.                                                                                 |
+| Decode-path trace fails           | `geocoder-runtime.ts:534` → `packages/earth/lib/panels/DebugDrawer.tsx:64`              | Tick "Trace the decode path" and the drawer never opens. No reason is given.                                                                       |
 | `loadManifest` resolves `null`    | `packages/react/lib/runtime/useReleaseRuntime.ts:227`                                   | `ready` never true, `errorMessage` stays null, footer pinned to "Loading releases…" permanently.                                                   |
 | Any load error                    | `useReleaseRuntime.ts:283` sets the message but leaves `assets` null                    | `bundleLoading` stays true → the progress bar sweeps _forever underneath the error_, footer stuck on "Loading…".                                   |
 | Any of the above                  | —                                                                                       | No retry control anywhere, and `GeocoderControls.tsx:194` `disabled={!runtime.ready}` leaves the search box permanently dead.                      |
@@ -220,11 +221,11 @@ Either hold it behind the Resources door until it has real data, or drop the foo
 The two halves of the money path never reference each other:
 
 - `/docs/pricing` (`docs/articles/pricing.mdx`) states the prices and ends in a **mailto**. It has no link
-  to `/license` and no provide CTA at all.
+  to `/license` and no purchase CTA at all.
 - `/license` (`docs/src/pages/license.mdx`) holds the actual Stripe checkout (`BuyLicense`), and its two
   plan cards carry **no price** — only "Renews every month; the key follows the paid period plus 14 days."
   A buyer has to hold the $250 figure in their head from another page.
-- Nothing in the navbar or the footer links to `/license`. Its only inbound links are from
+- No link in the navbar or the footer points to `/license`. Its only inbound links are from
   `IssuedLicense.tsx:176` and the terms page — both of which you reach _after_ buying.
 - `docs/src/components/PricingTiers/` — the tier cards with price + CTA — is dead code. Its own docblock
   says so: `index.tsx:11` "UNMOUNTED as of the docs-reorg Task 5 skeleton cutover."
@@ -242,9 +243,9 @@ column. Then decide whether `PricingTiers` gets mounted on `/docs/pricing` or de
 ### 5. The `/license` tree sits outside the docs IA
 
 `/license`, `/license/terms/commercial-2026-10` and `/license/issued` are `src/pages` routes, so they get
-no sub-header band, no breadcrumb, no sidebar. `DocsSubHeader` only mounts for pages whose sidebar is one
+no sub-header band, breadcrumb, or sidebar. `DocsSubHeader` only mounts for pages whose sidebar is one
 of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). Moving from `/docs/pricing` to
-`/license` drops the band and **shifts the whole page up by its height** — that jump is a large part of
+`/license` drops the band and **shifts the whole page up by its height**. That jump is a large part of
 what reads as disjointed.
 
 ### 6. Two nav rows disagree about where you are
@@ -255,7 +256,7 @@ either give pricing its own door, or drop the navbar shortcut and let About own 
 
 ### 7. `/license/issued` visited cold is a bare sentence
 
-No layout, no branding, a single line of copy in the top-left of an otherwise empty viewport. It is only
+The page has no layout or branding. It shows a single line of copy in the top-left of an otherwise empty viewport. It is only
 ever reached as a Stripe return URL, but that is exactly the moment a customer is most anxious. It needs
 a real "what happens next" state.
 
@@ -263,14 +264,14 @@ a real "what happens next" state.
 
 Stock Docusaurus copy: _"Please contact the owner of the site that linked you to the original URL and let
 them know their link is broken."_ On `/pricing` — a URL your own navbar label invites people to guess —
-that reads as a bug report addressed to the wrong person. No home link, no search, no suggestions.
+that reads as a bug report addressed to the wrong person. The page offers no home link, search, or suggestions.
 
 ### 9. Two internal review docs are published to `/docs/reviews/…`
 
 `docs/articles/reviews/2026-08-02-mailfail-robustness.md` and
 `docs/articles/reviews/2026-08-04-resolver-score-abstention.md` publish live (`routeBasePath: "docs"`
-with no exclusion), with **no frontmatter at all** — no title, no description — no sidebar entry and no
-inbound link. The second one's second paragraph reads _"This is a characterization only. No scoring code
+with no exclusion). They have **no frontmatter at all**, so they lack a title and description, and they
+have no sidebar entry or inbound link. The second one's second paragraph reads _"This is a characterization only. No scoring code
 was changed, and none of the designs at the end were implemented."_ Move them to `docs/records/reviews/`
 where the rest of this genre already lives.
 
@@ -286,7 +287,7 @@ HTML → `styles.*.css` → parse → discover `@font-face` → cross-origin fet
 
 The reflow is the worse half: the fallback stack is
 `"Iosevka Custom Web", "Iosevka", system-ui, …` (`docs/src/css/theme-light.css:57`). `system-ui` is
-substantially wider than Iosevka Custom, so the swap re-wraps every line on the page. Nothing declares
+substantially wider than Iosevka Custom, so the swap re-wraps every line on the page. No rule declares
 `size-adjust` / `ascent-override` / `descent-override` for a metric-matched fallback.
 
 Four fixes, in order of payoff:
@@ -315,9 +316,9 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   address produces `1600 Pennsylvania Ave NW, W<your text>ashington, DC 20500`, which is exactly what
   happened on the first run of this audit. Select-on-focus, or ship the field empty with the address as
   placeholder only.
-- The same string is also the placeholder (`packages/react/lib/map/Geocoder.tsx:185`), which is. Therefore,
-  dead code — it can only appear after the user clears the field, at which point it re-suggests the text
-  they had deleted.
+- The same string is also the placeholder (`packages/react/lib/map/Geocoder.tsx:185`), which is
+  effectively dead code. It can only appear after the user clears the field, and at that point it
+  re-suggests the text they had deleted.
 - The field is `disabled` for the entire 38 MB download, so the pre-filled text sits there uneditable for
   the whole wait.
 
@@ -327,7 +328,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   reaches `aria-valuenow` (`packages/react/lib/map/MapProgressBar.tsx:50`) — so a screen reader gets a
   percentage that no sighted user can see.
 - Visually it is a **3px hairline at the top of the viewport** (`packages/react/styles.css:2100`), with no
-  numerals, plus a truncated caption in a 1.9rem footer strip. No "12 MB of 38 MB", no ETA, nothing in the
+  numerals, plus a truncated caption in a 1.9rem footer strip. No "12 MB of 38 MB", no ETA, and no indicator in the
   center of the screen where a first-time visitor is looking.
 - `packages/react/lib/map/GeocoderControls.tsx:167` — the `* 1` is a leftover no-op, and the whole 38 MB
   transfer is compressed into the first `1/steps` (≈ the first third) of the bar.
@@ -336,8 +337,8 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 
 - 12 chips (`packages/mailwoman/lib/browser-runtime/classify.ts:63-89`) inside a `max-width: 34rem`
   container (`packages/react/styles.css:1389`) — roughly 3–4× the available width. The only affordance is
-  a 2rem mask fade (`styles.css:1802`); scrollbars are hidden on both engines (`:1814`), there are no
-  arrows, no snap points, no wheel shim. Without a trackpad the row is unreachable past chip 3. The
+  a 2rem mask fade (`styles.css:1802`). Scrollbars are hidden on both engines (`:1814`), and the row has
+  no arrows, snap points, or wheel shim. Without a trackpad the row is unreachable past chip 3. The
   mobile rule _shrinks_ the fade to 1.25rem (`:1654`).
 - Chip labels leak internal vocabulary at demo visitors: `Berlin city-state (int'l order)`,
   `Paris (street fall-through)`, `Macclesfield (GB dependent_locality)`,
@@ -356,8 +357,8 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   placetype; the raw value stays on the button's `title`.
 - Vocabulary disagrees with itself in one panel: the parse tags `postcode`, the candidate says
   `postalcode`; `placetype: interpolated` and `precision: ≈ interpolated · ±64 m` say the same word twice.
-- `packages/react/lib/map/GeocoderControls.tsx:326` — the result sheet has **no close button, no Escape
-  handler, no `role`**. It covers 52vh and can only be removed by running another query. Its header
+- `packages/react/lib/map/GeocoderControls.tsx:326` — the result sheet has **no close button, Escape
+  handler, or `role`**. It covers 52vh and can only be removed by running another query. Its header
   (title + Copy JSON) scrolls away with the content instead of sticking.
 - While a new query resolves, the previous result stays pinned on the map undimmed — during the
   "Resolving in gazetteer…" step the map still showed the _last_ address.
@@ -373,10 +374,10 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 - `packages/earth/lib/panels/ResultExtras.tsx:67,85` — `demoStyles.xml` and `demoStyles.hierarchy` are
   **not defined** in `panels.module.css`, so both render `className="undefined"`. The XML dump and the
   hierarchy block are unstyled. Conversely `.examples` / `.examplesLabel` are defined and referenced by
-  nothing.
+  no code.
 - `packages/earth/lib/panels/Controls.tsx:37` — a **139-character `title=`** is the only explanation of
   what "Use my location" does. Invisible on touch, and the button already has a text name so it adds
-  nothing for screen readers either.
+  no information for screen readers either.
 - Map attribution: `packages/earth/lib/styles/app.css:62` hides MapLibre's control with `display: none`,
   and the replacement (`packages/earth/lib/panels/EarthFooter.tsx:22`) is three **plain unlinked strings**
   behind a "Sources" toggle. OSM/ODbL attribution behind a click with no link to
@@ -390,11 +391,11 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 
 **Responsive / tokens**
 
-- Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). Nothing
+- Six `@media` rules total across both packages, at three unshared breakpoints (600 / 640 / 768). No breakpoint
   between 601px and desktop; no tablet or landscape case.
 - ~~601–615px: the rail covers the right end of the search pill.~~ FIXED, and not by moving the
   breakpoint: `.mw-map-chrome--top` reserves the rail's width at every viewport. Above ~620px
-  `max-width` decides the box and the inset is never reached, so it costs nothing and cannot drift out
+  `max-width` decides the box and the inset is never reached, so it costs no extra work and cannot drift out
   of tune when a control changes size.
 - `packages/earth/lib/panels/VersionCompare/styles.module.css` — 9 hardcoded state colours (`#d8504a`,
   `#1aa84d` and their rgba washes at `:129-169`) where `--color-state-danger` / `-success` / `-warning`
@@ -418,7 +419,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
   `GuidedTour`), plus `src/contexts/RuntimeEmbed.tsx` — those four were its only consumers —
   `CalibrationShowcase`, `F1ScoreTable`, `POIExplorer`, `DashboardMap`, `SplashScreen` and the stray
   `TrainingChart.tsx`. `PricingTiers` stays: its docblock records a decision to keep it for the Product
-  door, which has since landed. Therefore, that is now a choice rather than a wait. Verified by `docusaurus
+  door. That door has since landed, so keeping it is now a choice rather than a wait. Verified by `docusaurus
 build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 - `docs/src/pages/index.module.css` — 25 colour literals, 2 media queries, **zero `[data-theme]`
   overrides**; `:119-153` adds eight `rgba(255,255,255,…)` values that assume a dark hero.
@@ -427,7 +428,7 @@ build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 - ~~`docs/src/components/TrainingCharts/styles.module.css:176` — `min-width: 600px` forces horizontal
   overflow on a phone.~~ WITHDRAWN: its parent `.chartWrapper` already carries `overflow-x: auto`, so the
   600px scrolls the chart in its own container rather than the document. The rule is correct as written.
-- Homepage cards clip their mono example lines mid-string with a hard truncation — no ellipsis, no fade:
+- Homepage cards clip their mono example lines mid-string with a hard truncation, without an ellipsis or fade:
   `"apt 4b 350 5th ave new york ny 10118" → unit=house-street·` and
   `type an address → components, coordinate, and the source it`.
 - `docs/src/pages/index.tsx:154,194` — `alt` strings of 205 and 196 characters, both inside a `<Link>`, so
@@ -442,13 +443,13 @@ build` completing with `onBrokenLinks` and `onBrokenAnchors` both `"throw"`.
 Five faults reported against the floating-pill-plus-bottom-sheet arrangement, all of them the same fault
 seen from different widths: two surfaces over one map, neither of which owned the search.
 
-| Reported                                      | Resolution                                                                                                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held nothing. Its height is now its contents. |
-| Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                    |
-| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                        |
-| Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                        |
-| Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                           |
+| Reported                                      | Resolution                                                                                                                                                 |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held no content. Its height is now its contents. |
+| Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                       |
+| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
+| Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                           |
+| Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                              |
 
 Three layout faults found while fixing those, all at the panel's top edge, all worth writing down because
 each looked correct in the stylesheet:
@@ -484,7 +485,7 @@ Dead rules removed: `.mw-map-sheet--bottom` (×2), `.mw-map-sheet__grip`, `.mw-m
 **The finding worth remembering.** `CHROME_SELECTORS` in `packages/site-kit/lib/playwright/chrome-interface.ts`
 still listed `.mw-map-chrome--top` and `.mw-map-sheet--bottom`, and `visibleBoxes` SKIPS a selector whose
 `count() !== 1` — so the overlap interface had stopped testing the surface the restructure was about, and
-said nothing. A interface that skips what it cannot find reports green for a deleted subject. Two unit and
+made no assertion. An interface check that skips what it cannot find reports green for a deleted subject. Two unit and
 browser assertions were stale the same way and had not been run since.
 
 Left alone deliberately:
@@ -555,7 +556,7 @@ existed to hold identity fixed across exactly that change, which is the one time
 **The rest.** A test reaching into `#map/graticule`, the package's private imports map, instead of a public
 export (`./map/graticule` added, and the test now imports it the way the geometry test does); two missing
 hook dependencies; two unnamed thresholds in the drawer gestures (`3` for a press that has travelled far
-enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one — the
+enough to be a drag, `8` for a pull at the top of the scroll that has travelled far enough to be one, and the
 second is larger on purpose, because that gesture starts on content that could still turn out to be
 scrolling); `180` written out where `MAX_LONGITUDE` belonged beside the `MAX_LATITUDE` already there; and
 `beforeId`, which title-cases an acronym the house style capitalizes whole.

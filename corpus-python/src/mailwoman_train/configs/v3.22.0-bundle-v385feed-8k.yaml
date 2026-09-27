@@ -1,50 +1,14 @@
-# === v3.22.0-bundle-v385feed-8k — production bundle candidate, increment 4 (Option-A Phase 3). ===
-# (Claude-owned. operator go 2026-07-28 "alright let's continue", after the Decision-B analysis.)
+# This 8k run keeps the v3.21.0 model and training settings but replaces the data section with the v385 recipe.
+# The data section matches v3.8.5-latam-8k plus the two bundle lexicon paths.
+# With the v385 data, the evidence-off column should reproduce the v385 golden scores.
 #
-# what the decision-B analysis showed (record: .superpowers/sdd/progress.md 2026-07-28): the two
-# ablated-column golden deficits are feed-passenger damage rather than bundle damage — (1) the po-box
-# regression is Canadian alphanumeric-postcode rows (box number stolen as postcode. 93-vs-9
-# asymmetric), diluted by +22u of probe-era source mass; (2) us.street losses are all
-# trailing-directional reduces ("74TH ST SE"→"74TH ST") — the GB boundary habit from synth-gb 10.0,
-# a source weighted for the falsified dep-loc resurrection arc. Punct-drop was tested and
-# exonerated (control fails comma-intact rows too). The deploc feed was probe tooling inherited
-# for comparability. production owes it nothing.
-#
-# one named delta vs v3.21.0:
-#   data: = the shipped v385 recipe's data section verbatim (v3.8.5-latam-8k: corpus
-#   v0.13.0-latam, its source_weights, its augment probs incl. punct_drop 0.3) + the two bundle
-#   lexicon paths. construction goal: the ablated column reproduces v385's golden profile because
-#   it eats v385's food — Decision B dissolves. The deploc additions (gb/nz/es-pedania/fr-lieudit
-#   + punct_drop 0.6) return later one at a time, each with its own promotion case.
-#
-# PRE-registered checks — reshaped by the operator's Decision A (inputMode fragmented|formatted;
-# formatted runs channels-off, so the ship columns are:)
-#   G1 fragment bars (fed, P0 grid --lexicon v5 --street-lexicon v2, every save): homonym on−off
-#      ≥ +0.050 asis and ≥ +0.25 lower+heal. house-number classes ≥ −0.020 asis raw. lowercase-heal
-#      all ≥ +0.015. named risk: bare-locality classes lose the es-pedania/fr-lieudit feeders —
-#      if a bare-locality bar alone misses, add back just those two sources as one named delta.
-#   G2 ablation: channels-off column vs the v385 same-grader reference only (the feed control is
-#      deploc-specific and retires with the feed).
-#   G3 invariance (int8, --baseline v385): zero new classes.
-#   G4 gauntlet ×3 (fed weights-cache).
-#   G5 golden ablated (the formatted-mode ship column): all v6.0.0-shipped-baseline floors — no
-#      named-watch exemptions this time. v385's food means v385's floors, full stop.
-#   G5b golden FED (recorded rather than ship-blocking under Decision A): the fragment-mode-on-formatted
-#      read. feeds the future misroute-cost check (misroute rate × this harm).
-#   G6 canary: recorded under both modes. zero-flip required only in the formatted/ablated mode
-#      (Decision A routes these full-address rows there in production).
-#   verdict: G1-G5 + G6-formatted ⇒ the promotion battery + the inputMode implementation arc.
-#   Ablated-column golden failure ⇒ the feed-passenger diagnosis is falsified — bundle training
-#   itself erodes base competence. stop, architecture question (from-scratch vs shelve) to the
-#   operator. No knob iteration inside the run.
-#
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.22.0-bundle-v385feed-8k.yaml --resume none
-#
+# Launch the run from corpus-python:
+#   modal run -d -m launch.train_remote --config v3.22.0-bundle-v385feed-8k.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -68,10 +32,11 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
-    MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    CA: 1.0
+    MX: 1.0
+  source_weights:
+    # The overture-latam source keeps the CA and MX Overture rows apart from the EU overture source.
+    overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -97,17 +62,12 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The weight is zero because the on-disk part predates --exclude-surfaces and overlaps the eval board.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
     synth-fr-fragment: 12.0
-    # Track B — the Norwegian house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -115,27 +75,23 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
-  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  # The punctuation drop teaches the model to split street and locality without relying on the comma.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-  # Option-A bundle channels (v3.22): the same lexicons the runtime resolves (v2/v5 — the
-  # collision-curated pair). Training and inference share one painting.
+  # These lexicons must match the ones the runtime loads so that training and inference paint the same features.
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v2.json
   locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v5.json
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
-  use_deploc_head: false # P-A: the deploc head is off — orthogonal to P-B's head experiment. don't confound the street-type read.
+  use_deploc_head: false
   span_boundary_loss_weight: 0.5
   num_hidden_layers: 6
   num_attention_heads: 6
@@ -153,24 +109,16 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # Each *_feature_dim below must equal the feature_dim of the matching lexicon.
   use_country_anchor: true
   country_feature_dim: 2
-  # P-A street-type channel on — a dedicated 1-dim street_type soft feed with its own projection +
-  # confidence (must equal the lexicon's feature_dim=1). Separate from the gazetteer, so init_from v385
-  # loads clean (v385 lacks street_type_* → strict=False leaves only those fresh).
   use_street_type_anchor: true
   street_type_feature_dim: 1
-  # v3.16.0 — the locality-surface channel is on (the bundle).
   use_locality_surface_anchor: true
   locality_surface_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # The model scales the country_ambiguous feature by this factor before the country projection.
+  # The scale is baked into the exported ONNX graph.
+  # A full-strength guard of 1.0 suppressed country names that are also other place names, such as Georgia.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -180,8 +128,8 @@ model: # Verbatim from v2.4.1.
     I-region: 1.5
     B-locality: 2.0
     I-locality: 2.0
-    B-dependent_locality: 1.0 # DELTA (0.3 -> 1.0) — the third suppressor: re-init + hot LR are useless under a 0.3 downweight.
-    I-dependent_locality: 1.0 # DELTA (0.3 -> 1.0) — see B-dependent_locality above.
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
     B-postcode: 1.5
     I-postcode: 1.5
     B-subregion: 0.3
@@ -209,11 +157,12 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only).
-  output_dir: /data/output-v3220-bundle-v385feed-8k-s42/checkpoints # v3.22.0 production candidate.
+# With --resume none and a fresh output_dir, init_from loads only the weights and the optimizer starts fresh.
+train:
+  output_dir: /data/output-v3220-bundle-v385feed-8k-s42/checkpoints
   seed: 42
-  init_from: /data/output-v384-latam-probe-s42/checkpoints/step-008000 # DELTA — the verified v385 (6.6.0) checkpoint. See header for the volume-verification evidence.
+  # The v385 checkpoint lives under the output-v384 directory name.
+  init_from: /data/output-v384-latam-probe-s42/checkpoints/step-008000
   batch_size: 128
   eval_batch_size: 128
   grad_accum_steps: 1
@@ -221,7 +170,7 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   weight_decay: 0.01
   warmup_steps: 500
   grad_clip_norm: 1.0
-  max_steps: 8000 # Production duration (the v385 precedent). Checkpoints every 2k, each graded (the over-trust watch).
+  max_steps: 8000
   eval_every_steps: 2000
   save_every_steps: 2000
   log_every_steps: 50
@@ -230,9 +179,12 @@ train: # Same-vocab init_from fine-tune off the shipped v385 (fresh optimizer; -
   csv_log_path: "{output_dir}/../train_log.csv"
   lr_schedule: constant
   gazetteer_curriculum: false
-  evidence_curriculum: true # v3.16.0 — the anti-over-trust leg (ramped zero-out on both bundle channels).
-  evidence_noise_prob: 0.15 # v3.21 DELTA (the one variable): FALSE-evidence curriculum — see train.perturb_evidence_noise. 0.15/row/channel, anchor-curriculum schedule (25%→50% ramp).
-  classifier_learning_rate: 1.0e-3 # P-A: hot LR for the FRESH street_type channel (the carveout covers street_type_projection/cue) + the classifier. Single phase, 3k window.
+  # The evidence curriculum zeroes the bundle channels on a ramp so the model learns not to over-trust them.
+  evidence_curriculum: true
+  # This probability applies per row and per channel, and it injects false evidence (see train.perturb_evidence_noise).
+  evidence_noise_prob: 0.15
+  # The classifier and both fresh bundle channels train at this higher rate.
+  classifier_learning_rate: 1.0e-3
   trackio_project: mailwoman
   trackio_run_name: v3.19.0-bundle-8k-s42
 

@@ -12,7 +12,7 @@ import { describe, expect, it } from "vitest"
 
 describe("walkWorkspaceClosure", () => {
 	it("reaches every workspace the get-started seeds pull in, and nothing outside the root workspaces array", async () => {
-		const root = String(repoRootPath())
+		const root = repoRootPath()
 		const closure = await walkWorkspaceClosure(root, GET_STARTED_SEEDS)
 		const all = await workspaceDirectories(root)
 
@@ -31,7 +31,7 @@ describe("walkWorkspaceClosure", () => {
 	})
 
 	it("refuses a seed that names no workspace, rather than packing a shorter closure", async () => {
-		await expect(walkWorkspaceClosure(String(repoRootPath()), ["@mailwoman/does-not-exist"])).rejects.toThrow(
+		await expect(walkWorkspaceClosure(repoRootPath(), ["@mailwoman/does-not-exist"])).rejects.toThrow(
 			/names no workspace/u
 		)
 	})

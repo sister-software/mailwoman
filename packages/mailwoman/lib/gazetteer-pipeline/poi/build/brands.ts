@@ -24,13 +24,13 @@
  *        (`POISourceRow`) and `chooseCategoryColumn`'s pure-function-over-decoded-rows pattern.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON } from "@mailwoman/core/json"
 import { readLayerManifest, type layerschemadatabase } from "@mailwoman/core/layers"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { allRows } from "@mailwoman/core/utils"
 import type { BrandRecord, POIBrandSourceLayer, POIBrandTable } from "@mailwoman/poi-taxonomy"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { dirname, type PathBuilder, type PathBuilderLike } from "path-ts"
@@ -40,31 +40,38 @@ import { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/def
 export { DEFAULT_DOMINANCE, DEFAULT_MIN_ROWS } from "#gazetteer-pipeline/poi/defaults"
 
 /**
- * The brand table's own schema/data version — bump when the shape or matching semantics change. Independent of
- * {@link POIBrandSourceLayer.version}, which tracks the source `poi.db`'s own layer-manifest version.
+ * The brand table's own schema/data version — bump when the shape or matching semantics change.
+ *
+ * Independent of {@link POIBrandSourceLayer.version}, which tracks the source
+ * `poi.db`'s own layer-manifest version.
  */
 export const BRAND_TABLE_VERSION = "0.2.0"
 
 /**
- * Default `poi.db` read location — same default `build/poi.tsx`'s command uses for its `--out`.
+ * Default `poi.db` read location.
+ *
+ * Same default `build/poi.tsx`'s command uses for its `--out`.
  */
 export function defaultPOIDatabasePath(): PathBuilder {
-	return dataRootPath("poi", "poi.db")
+	return poiDatabasePath("poi.db")
 }
 
 /**
- * Default commit location: `poi-taxonomy/data/brands.json`. Resolved via `repoRootPath` (source-vs-compiled-tree-aware
- * — see `core/utils/repo.ts`) rather than a hand-rolled relative path off `import.meta.dirname`: this module's
- * directory depth relative to the repo root differs between source (`mailwoman/gazetteer-pipeline/poi/`) and compiled
- * (`mailwoman/out/gazetteer-pipeline/poi/`) trees, so a fixed `../../../` would resolve to the wrong package under
- * `yarn compile`'s output.
+ * Default commit location: `poi-taxonomy/data/brands.json`.
+ *
+ * Resolved via `repoRootPath` (source-vs-compiled-tree-aware — see `core/utils/repo.ts`)
+ * rather than a hand-rolled relative path off `import.meta.dirname`: this module's directory
+ * depth relative to the repo root differs between source (`mailwoman/gazetteer-pipeline/poi/`)
+ * and compiled (`mailwoman/out/gazetteer-pipeline/poi/`) trees, so a fixed `../../../`
+ * would resolve to the wrong package under `yarn compile`'s output.
  */
 export function defaultBrandTableOutPath(): PathBuilder {
 	return workspacePathBuilder("poi-taxonomy", "data", "brands.json")
 }
 
 /**
- * One `(brand_wikidata, name)` group from `poi` — the injected-iterator injection point (mirrors `POISourceRow`).
+ * One `(brand_wikidata, name)` group from `poi` — the injected-iterator injection
+ * point (mirrors `POISourceRow`).
  */
 export interface BrandNameCount {
 	wikidata: string
@@ -73,9 +80,11 @@ export interface BrandNameCount {
 }
 
 /**
- * Reads the exact aggregate the design calls for: `select brand_wikidata, name, count(*) n from poi where
- * brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`. Opens `dbPath` read-only — this
- * builder only ever reads a sealed `poi.db`, never writes one.
+ * Reads the exact aggregate the design calls for:
+ * `select brand_wikidata, name, count(*) n from poi where brand_wikidata is not NULL and name is not NULL group BY brand_wikidata, name`.
+ *
+ * Opens `dbPath` read-only.
+ * This builder only ever reads a sealed `poi.db`, never writes one.
  */
 export function readBrandNameCounts(dbPath: PathBuilderLike): BrandNameCount[] {
 	using db = new DatabaseClient<POIDatabase>(dbPath, { readOnly: true })
@@ -102,8 +111,8 @@ export async function readSourceLayer(dbPath: PathBuilderLike): Promise<POIBrand
 }
 
 /**
- * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`, cast to `BrandRecord["wikidata"]` by the
- * caller.
+ * {@link aggregateBrands}'s pre-branded output — a plain-string `wikidata`,
+ * cast to `BrandRecord["wikidata"]` by the caller.
  */
 interface RawBrandAggregate {
 	wikidata: string
@@ -113,17 +122,24 @@ interface RawBrandAggregate {
 }
 
 /**
- * Pure aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture. Per QID: `rows`
- * is the sum of every observed `(wikidata, name)` count; `name` is the modal (highest-count) variant, ties broken
- * alphabetically; `aliases` are every other variant clearing the noise floor `max(3, 1% of rows)` (guards against
- * typo/OCR-noise variants swelling the alias list), sorted alphabetically. QIDs whose total falls under `minRows` are
- * dropped entirely. QIDs whose modal name covers less than `dominance` of the total (default {@link DEFAULT_DOMINANCE}
- * = 0.5) are also dropped entirely — a modal share under the floor means the QID is systematically mistagged across
- * many unrelated names rather than one real chain with noisy spelling variants, so no single name/alias split is
- * trustworthy. The final list is sorted by `rows` descending, ties broken by QID.
+ * Pure aggregation core — no sqlite in this function, so it's unit-testable directly against a fixture.
  *
- * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties) are what make a rebuild
- * against the same db byte-identical — determinism never depends on SQL row order or `Map` iteration order here.
+ * Per QID: `rows` is the sum of every observed `(wikidata, name)` count;
+ * `name` is the modal (highest-count) variant, ties broken alphabetically;
+ * `aliases` are every other variant clearing the noise floor `max(3, 1% of rows)`
+ * (guards against typo/OCR-noise variants swelling the alias list), sorted alphabetically.
+ * QIDs whose total falls under `minRows` are dropped entirely.
+ *
+ * QIDs whose modal name covers less than `dominance` of the total
+ * (default {@link DEFAULT_DOMINANCE} = 0.5) are also dropped entirely.
+ * A modal share under the floor means the QID is systematically mistagged across many unrelated names
+ * rather than one real chain with noisy spelling variants, so no single name/alias split is trustworthy.
+ *
+ * The final list is sorted by `rows` descending, ties broken by QID.
+ *
+ * The two explicit tie-breaks (alphabetical for name/alias ties, QID for brand-total ties)
+ * are what make a rebuild against the same db byte-identical — determinism never
+ * depends on SQL row order or `Map` iteration order here.
  */
 export function aggregateBrands(
 	rows: Iterable<BrandNameCount>,
@@ -177,33 +193,43 @@ export function aggregateBrands(
 
 export interface BuildBrandTableOptions {
 	/**
-	 * A built `poi.db` to read. Ignored when `rows` is given. Required (along with `sourceLayer`, or it's read from here
-	 * too) unless `rows` is given.
+	 * A built `poi.db` to read.
+	 *
+	 * Ignored when `rows` is given.
+	 * Required (along with `sourceLayer`, or it's read from here too) unless `rows` is given.
 	 */
 	dbPath?: PathBuilderLike
 	/**
-	 * Injected row source — the injection point. When given, `node:sqlite` is never touched.
+	 * Injected row source — the injection point.
+	 *
+	 * When given, `node:sqlite` is never touched.
 	 */
 	rows?: Iterable<BrandNameCount>
 	/**
-	 * Injected source-layer identity — bypasses reading `dbPath`'s layer manifest. Required when `rows` is given without
-	 * `dbPath`.
+	 * Injected source-layer identity — bypasses reading `dbPath`'s layer manifest.
+	 *
+	 * Required when `rows` is given without `dbPath`.
 	 */
 	sourceLayer?: POIBrandSourceLayer
 	minRows?: number
 	/**
-	 * Dominance floor — see {@link aggregateBrands}. Defaults to {@link DEFAULT_DOMINANCE}.
+	 * Dominance floor — see {@link aggregateBrands}.
+	 *
+	 * Defaults to {@link DEFAULT_DOMINANCE}.
 	 */
 	dominance?: number
 	/**
-	 * The brand table's own `version` field. Defaults to {@link BRAND_TABLE_VERSION}.
+	 * The brand table's own `version` field.
+	 *
+	 * Defaults to {@link BRAND_TABLE_VERSION}.
 	 */
 	version?: string
 }
 
 /**
- * Builds a {@link POIBrandTable} in memory: read (or take injected) rows → {@link aggregateBrands} → wrap with the source
- * layer's manifest identity. Does not write anything — see {@link writeBrandTable}.
+ * Builds a {@link POIBrandTable} in memory: read (or take injected) rows →
+ * {@link aggregateBrands} → wrap with the source layer's manifest identity.
+ * Does not write anything — see {@link writeBrandTable}.
  */
 export async function buildBrandTable(opts: BuildBrandTableOptions = {}): Promise<POIBrandTable> {
 	if (!opts.rows && !opts.dbPath) {

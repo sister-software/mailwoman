@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file #1791 — a extract that cannot serve a lookup should say so at construction rather than by going quiet.
+ * @file #1791 — an extract that cannot serve a lookup should say so at construction rather than by going quiet.
  *
  *   Both ways it failed before were hard to read. An unroutable name returned zero hits, which is indistinguishable
- *   from "this country has no places": a extract reaches routing only through the name `deriveSchemaName` derives from
- *   its filename. Therefore, a file spelled one letter off the placetype it serves answers with nothing while holding every
+ *   from "this country has no places": an extract reaches routing only through the name `deriveSchemaName` derives from
+ *   its filename. Therefore, a file spelled one letter off the placetype it serves answers no rows while holding every
  *   row that was asked for. A routable name threw from deep inside a select instead.
  *
  *   The two `spr`-only fixtures below differ only in that prefix — `postalcode-x.db` routes, `postcode-x.db` does
@@ -22,6 +22,7 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { WOFSQLitePlaceLookup } from "@mailwoman/resolver-wof-sqlite"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 let dir: TemporaryDirectory
@@ -29,7 +30,7 @@ let dir: TemporaryDirectory
 /**
  * A main extract complete enough to construct against.
  */
-const writeMain = (path: string): void => {
+const writeMain = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -45,9 +46,9 @@ const writeMain = (path: string): void => {
 }
 
 /**
- * A extract that claims to be a place extract — it carries `spr` — and cannot serve one.
+ * An extract that claims to be a place extract — it carries `spr` — and cannot serve one.
  */
-const writeSprOnly = (path: string): void => {
+const writeSprOnly = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
@@ -56,16 +57,19 @@ const writeSprOnly = (path: string): void => {
 }
 
 /**
- * A extract with nothing in it, under a name that routes. A truncated or zero-byte file reads exactly like this.
+ * An extract with no data in it, under a name that routes.
+ *
+ * A truncated or zero-byte file reads exactly like this.
  */
-const writeEmpty = (path: string): void => {
+const writeEmpty = (path: PathBuilderLike): void => {
 	new DatabaseClient<WOFDatabase>(path).destroy()
 }
 
 /**
- * A relation-table extract, which never claims to be a place extract and is part of the documented default set.
+ * A relation-table extract, which never claims to be a place extract
+ * and is part of the documented default set.
  */
-const writeRelationOnly = (path: string): void => {
+const writeRelationOnly = (path: PathBuilderLike): void => {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(
@@ -76,26 +80,27 @@ const writeRelationOnly = (path: string): void => {
 beforeAll(async () => {
 	dir = await temporaryDirectory("extract-guard-")
 
-	writeMain(dir.resolve("admin.db"))
+	writeMain(dir.path("admin.db"))
 	// Routes by name (`postalcode_x` starts with `postalcode_`), so the old failure was a mid-query throw.
-	writeSprOnly(dir.resolve("postalcode-x.db"))
+	writeSprOnly(dir.path("postalcode-x.db"))
 	// Routes nowhere — spelled `postcode` where the placetype is `postalcode`.
-	writeSprOnly(dir.resolve("postcode-x.db"))
-	writeRelationOnly(dir.resolve("postcode-locality-intl.db"))
-	// Routes by name and carries nothing at all — the shape `postalcode-fr.db` had on disk.
-	writeEmpty(dir.resolve("postalcode-empty.db"))
+	writeSprOnly(dir.path("postcode-x.db"))
+	writeRelationOnly(dir.path("postcode-locality-intl.db"))
+	// Routes by name and carries no data at all.
+	// The shape `postalcode-fr.db` had on disk.
+	writeEmpty(dir.path("postalcode-empty.db"))
 })
 
 afterAll(() => dir[Symbol.asyncDispose]())
 
 describe("extract capability guard", () => {
 	it("constructs against a complete extract set", () => {
-		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db")] })).not.toThrow()
+		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db")] })).not.toThrow()
 	})
 
-	it("refuses a extract that carries spr and no place_search", () => {
+	it("refuses an extract that carries spr and no place_search", () => {
 		expect(
-			() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postalcode-x.db")] })
+			() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postalcode-x.db")] })
 		).toThrow(/carries "spr" but no "place_search"/)
 	})
 
@@ -103,7 +108,7 @@ describe("extract capability guard", () => {
 		let message = ""
 
 		try {
-			new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postcode-x.db")] })
+			new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postcode-x.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -114,11 +119,11 @@ describe("extract capability guard", () => {
 		expect(message).toContain("postcode_x")
 	})
 
-	it("says nothing about a extract that routes, when it only lacks the table", () => {
+	it("says nothing about an extract that routes, when it only lacks the table", () => {
 		let message = ""
 
 		try {
-			new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postalcode-x.db")] })
+			new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postalcode-x.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
@@ -127,28 +132,28 @@ describe("extract capability guard", () => {
 	})
 
 	it("EXEMPTS a relation-table extract, which is in the documented default set", () => {
-		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract. Guarding on the filename
-		// rather than on the table would have broken the shipped default.
+		// `postcode-locality-<cc>.db` has no `spr`, so it never claims to be a place extract.
+		// Guarding on the filename rather than on the table would have broken the shipped default.
 		expect(
-			() =>
-				new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postcode-locality-intl.db")] })
+			() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postcode-locality-intl.db")] })
 		).not.toThrow()
 	})
 
 	it("does not examine the MAIN extract for routing — it is the fallback by definition", () => {
-		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db")] })).not.toThrow()
+		expect(() => new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db")] })).not.toThrow()
 	})
 
 	it("refuses an EMPTY extract whose name routes — no spr to claim with, and it would still be queried", () => {
 		let message = ""
 
 		try {
-			new WOFSQLitePlaceLookup({ databasePath: [dir.resolve("admin.db"), dir.resolve("postalcode-empty.db")] })
+			new WOFSQLitePlaceLookup({ databasePath: [dir.path("admin.db"), dir.path("postalcode-empty.db")] })
 		} catch (error) {
 			message = (error as Error).message
 		}
 
-		// The message must not assert a table the file does not have. That claim was false for this shape.
+		// The message must not assert a table the file does not have.
+		// That claim was false for this shape.
 		expect(message).not.toMatch(/carries "spr"/)
 		expect(message).toMatch(/named for a routed placetype/)
 		expect(message).toMatch(/die mid-SELECT/)

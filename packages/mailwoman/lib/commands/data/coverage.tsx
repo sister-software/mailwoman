@@ -1,24 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman data coverage` — what mailwoman can do PER country, parse and geocode kept apart.
- *
- *   Sibling of `data inventory`, which asks what artifacts are on disk and whether they can say how they were built.
- *   This asks the question a reader actually has: for a given country, can we parse an address there, and can we place
- *   it — and those two have wildly different answers.
- *
- *   It exists because the answer is held in five registers that do not agree, and reading any one of them alone
- *   produces a confident wrong answer. A published locale package is not training (only `en-us` ships a model. the
- *   rest are data-only overlays). Corpus rows are not training (`country_weights` is a hard admission filter — a
- *   country absent from it trains on nothing, which is how Norway trained on zero rows across 44 configs). Training is
- *   not verification (a board row that is not `status: pass` tracks rather than checks). And the geocoder's coverage is
- *   a different, much wider set than the parser's.
- *
- *   `--json` emits the full report. The checklist form shows the mismatches first, because those are the rows nobody
- *   is looking at.
- */
-
 import {
 	type CommandSpec,
 	CommandTaskResult,
@@ -27,10 +9,10 @@ import {
 	useCommandTask,
 	writeRawStdout,
 } from "#cli-kit"
-import { trains, type CoverageReport } from "#coverage/census"
+import { trains, type CoverageReport, type GeocodeTier } from "#coverage/census"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `data coverage`, which reports parse and geocode coverage for each country.
  */
 export const spec = {
 	name: "coverage",
@@ -47,6 +29,11 @@ export const spec = {
 			default: false,
 			description: "Recount the corpus instead of reading the cache (costs minutes)",
 		},
+		manifest: {
+			type: "string",
+			description:
+				"Corpus MANIFEST.json to count with --refresh. Defaults to the newest manifest under the data root's corpus/versioned/.",
+		},
 		json: { type: "boolean", default: false, description: "Emit the full report as JSON" },
 	},
 } as const satisfies CommandSpec
@@ -54,16 +41,15 @@ export const spec = {
 const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { censusCoverage, newestManifest, resolveTrainingConfig } = await import("#coverage/census")
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { readScopeConfig } = await import("@mailwoman/core/scope-config")
 
-		const repoRoot = String(repoRootPath())
+		const repoRoot = repoRootPath()
 
-		// The config is named by `scope.config.json` rather than discovered. Both discovery orders are wrong here: the
-		// mtime sort sorts a total tie after a checkout, and the version scheme sorts neither lexically nor numerically.
-		// The report names the config it read either way.
+		// The default config comes from `scope.config.json` because neither file mtimes
+		// nor version names order the configs reliably.
 		const config = resolveTrainingConfig(await readScopeConfig(), { requested: options.config })
-		const manifestPath = await newestManifest()
+		const manifestPath = options.manifest ?? (await newestManifest())
 
 		const report = await censusCoverage({
 			configPath: config.path,
@@ -93,17 +79,13 @@ const CoverageCommand: CommandComponent<typeof spec> = ({ options }) => {
 export default CoverageCommand
 
 /**
- * The checklist form. Mismatches first — they are the rows nobody is looking at, and each one is a defect class that
- * has shipped at least once.
- */
-/**
- * How many empty-but-admitted codes to name before eliding.
- *
- * There are ~100 of them by design — the config declares intent for every board country — so the full list buries the
- * three lines above it that a reader must act on.
+ * The number of admitted-but-empty country codes listed before the rest are elided.
  */
 const EMPTY_CODES_SHOWN = 24
 
+/**
+ * Renders the coverage checklist with mismatches listed before the per-country table.
+ */
 function render(report: CoverageReport, wanted?: string[]): string {
 	const shown = wanted
 		? report.countries.filter((c) => wanted.includes(c.country))
@@ -114,12 +96,18 @@ function render(report: CoverageReport, wanted?: string[]): string {
 	const withStreet = trained.filter((c) => c.corpusStreetRows > 0)
 	const geocodable = report.countries.filter((c) => c.gazetteerPlaces > 0)
 
+	const rooftopSummary = (tier: GeocodeTier, label: string) => {
+		const codes = report.countries.filter((c) => c.geocodeTier === tier).map((c) => c.country)
+
+		return `${codes.length} ${label}${codes.length ? ` (${codes.join(", ")})` : ""}`
+	}
+
 	lines.push(
 		`corpus ${report.corpusVersion} — ${report.corpusRowsTotal.toLocaleString()} rows` +
 			(report.corpusCensusTakenAt ? ` (counts cached ${report.corpusCensusTakenAt})` : " (recounted)"),
 		`config ${report.configPath}`,
 		"",
-		`${trained.length} countries TRAIN · ${withStreet.length} with street-level rows · ${geocodable.length} geocodable · 2 rooftop (US, FR)`,
+		`${trained.length} countries TRAIN · ${withStreet.length} with street-level rows · ${geocodable.length} geocodable · ${rooftopSummary("rooftop-published", "rooftop")} · ${rooftopSummary("rooftop-build-local", "rooftop build-local")}`,
 		""
 	)
 
@@ -151,15 +139,17 @@ function render(report: CoverageReport, wanted?: string[]): string {
 				? `DROPPED (${c.corpusRows.toLocaleString()})`
 				: "—"
 			: c.corpusRows === 0
-				? "admitted, no rows"
+				? "admitted without rows"
 				: `${c.corpusRows.toLocaleString()}${c.corpusStreetRows ? ` (${c.corpusStreetRows.toLocaleString()} street)` : ", NO STREET"}`
 
 		const geo =
 			c.geocodeTier === "rooftop-published"
 				? "rooftop"
-				: c.gazetteerPlaces
-					? `locality ${c.gazetteerPlaces.toLocaleString()}`
-					: "—"
+				: c.geocodeTier === "rooftop-build-local"
+					? "rooftop (build-local)"
+					: c.gazetteerPlaces
+						? `locality ${c.gazetteerPlaces.toLocaleString()}`
+						: "—"
 
 		lines.push(
 			`${c.country} | ${parse} | ${geo} | ${c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"}`

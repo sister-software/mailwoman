@@ -4,7 +4,7 @@
 /**
  *   Unit tests for the decision-6 layer-absent guards. The guards live in their own module rather than
  *   in `cli.ts` precisely because these three functions are pure, transport-independent
- *   logic: nothing in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
+ *   logic: no code in them needs the stdio connection `cli.ts` opens at import time (the actual reason `cli.ts`
  *   itself can't be imported by vitest). Each guard gets its three branches exercised directly: path `undefined`,
  *   path set but the file missing, path set and the file present.
  */
@@ -24,6 +24,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory | undefined
@@ -34,13 +35,14 @@ afterEach(() => {
 })
 
 /**
- * A valid, empty sqlite file on disk (read-write open + immediate close). `openBDCDatabaseIfPresent` and
- * `assertBDCDatabaseExists` only ever re-open read-only and never query anything in these tests, so a schema-less empty
- * db is a faithful "file present" fixture for both.
+ * A valid, empty sqlite file on disk (read-write open + immediate close).
+ *
+ * `openBDCDatabaseIfPresent` and `assertBDCDatabaseExists` only ever re-open read-only and never query
+ * anything in these tests, so a schema-less empty db is a faithful "file present" fixture for both.
  */
-async function emptySqliteFile(name: string): Promise<string> {
+async function emptySqliteFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
-	const path = scratch.resolve(name)
+	const path = scratch.path(name)
 
 	new DatabaseClient<POIDatabase>(path).destroy()
 
@@ -49,14 +51,15 @@ async function emptySqliteFile(name: string): Promise<string> {
 
 /**
  * A minimal real poi.db — same fixture idiom as `bdc/sdk/nearest-infrastructure.test.ts`'s `buildPOIFixture`.
- * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search` and queries `poi_category_codes`
- * (see `poi-lookup.ts`), so an arbitrary empty file won't do — `openPlausibilityPOIDeps`'s "file present" branch needs
- * these tables to actually exist.
+ *
+ * `POILookup`'s constructor eagerly prepares statements against `poi`/`poi_search`
+ * and queries `poi_category_codes` (see `poi-lookup.ts`), so an arbitrary empty file won't do.
+ * `openPlausibilityPOIDeps`'s "file present" branch needs these tables to actually exist.
  */
-async function poiFixtureFile(name: string): Promise<string> {
+async function poiFixtureFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")
-	const path = scratch.resolve(name)
-	await using kdb = new DatabaseClient<POIDatabase>(path)
+	const path = scratch.path(name)
+	using kdb = new DatabaseClient<POIDatabase>(path)
 
 	await createPOITable(kdb)
 	// Also creates `poi_category_codes`, per `poi-schema.ts`'s naming.
@@ -77,7 +80,7 @@ describe("openBDCDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("bdc.db")
-		await using db = await openBDCDatabaseIfPresent(path)
+		using db = await openBDCDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
 	})
@@ -129,7 +132,7 @@ describe("openFilerDatabaseIfPresent", () => {
 
 	it("opens the database when the file is present", async () => {
 		const path = await emptySqliteFile("filer.db")
-		await using db = await openFilerDatabaseIfPresent(path)
+		using db = await openFilerDatabaseIfPresent(path)
 
 		expect(db).toBeDefined()
 	})

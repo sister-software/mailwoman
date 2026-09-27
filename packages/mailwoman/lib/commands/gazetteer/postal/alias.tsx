@@ -45,16 +45,17 @@ export const spec = {
 			validate: (value: number) => Number.isInteger(value) && value > 0,
 			description: "Minimum aggregate observation count",
 		},
-		out: { type: "string", description: "Output DB path. Default <data-root>/wof/postal-city-alias-us.db" },
+		out: { type: "string", description: "Output DB path. Default <data-root>/db/wof/postal-city-alias-us.db" },
 	},
 } as const satisfies CommandSpec
 
 const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { DatabaseClient } = await import("@mailwoman/sqlite/client")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const out = options.out ?? dataRootPath("wof", "postal-city-alias-us.db")
+		const out = options.out ?? wofDatabasePath("postal-city-alias-us.db")
 		const parquet = dataRootPath("overture", options.release, "addresses-us.parquet")
 		const minCount = options.minCount
 
@@ -62,8 +63,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		await removePathIfPresent(out)
 
 		// @duckdb/node-api is an optional peer dep — import it dynamically so merely loading this
-		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when
-		// the peer isn't installed.
+		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when the peer isn't installed.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
 		console.error(`▸ aggregating ${parquet} (min-count ${minCount})`)
@@ -94,11 +94,12 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ writing ${rows.length.toLocaleString()} rows → ${out}`)
 
-		await using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
+		using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
 		kdb.exec("PRAGMA journal_mode = WAL;")
-		// DDL via the shared createPostalCityAliasTable builder — the exact table the reader + tests
-		// use, so this producer can't drift from postal-city-alias-schema.ts. DuckDB above is the raw
-		// parquet reader. the hot insert below stays on the raw `db` handle.
+		// DDL via the shared createPostalCityAliasTable builder.
+		// The exact table the reader + tests use, so this producer can't drift from postal-city-alias-schema.ts.
+		// DuckDB above is the raw parquet reader.
+		// The hot insert below stays on the raw `db` handle.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
 
 		await createPostalCityAliasTable(kdb)
@@ -114,19 +115,12 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 			const isDivergent = r.postal_city !== r.geo_locality ? 1 : 0
 			divergent += isDivergent
 
-			insert.run(
-				r.postcode,
-				r.postal_city,
-				r.geo_locality,
-				Number(r.n),
-				isDivergent,
-				"overture:US",
-				String(options.release)
-			)
+			insert.run(r.postcode, r.postal_city, r.geo_locality, Number(r.n), isDivergent, "overture:US", options.release)
 		}
 
 		kdb.exec("COMMIT")
-		// Indexes were created by createPostalCityAliasTable above. just checkpoint + compact.
+		// Indexes were created by createPostalCityAliasTable above.
+		// Just checkpoint + compact.
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
 		return [

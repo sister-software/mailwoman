@@ -2,37 +2,20 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Component-level comparison for the invariance mini-suite — pure, no model, no I/O. Compares two
- *   decoded component maps (order-insensitive: a plain key→value record has no order) and classifies the
- *   pair invariant / degraded / lost.
- *
- *   `house_number` / `street` / `postcode` are treated as critical: they're the required tags a
- *   downstream geocoder needs to resolve a rooftop (the same three the #251/#1101 DIR-test failures broke
- *   on). A value change on a critical tag that's present in the original — including one token bleeding
- *   from a neighboring tag, e.g. a stripped comma pulling a directional suffix into the locality — is `lost`
- *   even when the transformed parse is non-empty, because the address is no longer resolvable to the same
- *   place. A drift confined to non-critical tags (locality, region, dependent_locality, unit, …) is
- *   degraded: recoverable, worth flagging rather than ship-blocking on its own.
- *
- *   A critical tag that's absent in the original parse but present in the transformed one — a hallucination
- *   — is also `lost`, not `degraded` and not ignored. A missing
- *   critical tag degrades gracefully to a coarser admin-tier fallback. a hallucinated one can resolve to a
- *   specific wrong rooftop with high apparent confidence — worse than falling back, because nothing
- *   downstream knows to distrust it.
+ *   Compare decoded component maps without loading a model or data.
+ *   Critical-tag changes or hallucinations are `LOST`; other component drift is `DEGRADED`.
+ *   Equal maps are `INVARIANT`. Map order does not affect the result.
  */
 
 /**
- * Tags whose change under a transform counts as a real failure. A shifted venue, unit or locality is tolerable. a
- * shifted house number, street or postcode is not.
+ * Tags whose changes produce a `LOST` verdict.
  */
 export const CRITICAL_TAGS = ["house_number", "street", "postcode"] as const
 
 export type Verdict = "INVARIANT" | "DEGRADED" | "LOST"
 
 /**
- * Ordinal severity — invariant < degraded < lost. Used by the runner's `--baseline` regression check to decide whether
- * a candidate's verdict on a (row, transform) pair is "at least as bad as" the baseline's rather than merely "also
- * non-invariant" (see runner.ts's `preExisting` computation).
+ * Severity order used to compare candidate and baseline verdicts.
  */
 export const VERDICT_SEVERITY: Record<Verdict, number> = { INVARIANT: 0, DEGRADED: 1, LOST: 2 }
 
@@ -45,7 +28,9 @@ export interface CompareResult {
 }
 
 /**
- * Normalize a component value for comparison: trim, lowercase, collapse internal whitespace. Non-string/empty → "".
+ * Normalize a component value for comparison: trim, lowercase, collapse internal whitespace.
+ *
+ * Non-string/empty → "".
  */
 function normVal(v: unknown): string {
 	if (typeof v !== "string") return ""
@@ -54,8 +39,10 @@ function normVal(v: unknown): string {
 }
 
 /**
- * Compare a baseline (`original`) component map against a perturbed (`transformed`) one. Order-insensitive by
- * construction — both are plain key→value records.
+ * Compare a baseline (`original`) component map against a perturbed (`transformed`) one.
+ *
+ * Order-insensitive by construction.
+ * Both are plain key→value records.
  */
 export function compareComponents(
 	original: Record<string, string>,
@@ -64,9 +51,10 @@ export function compareComponents(
 	const originalKeys = Object.keys(original).filter((k) => normVal(original[k]))
 	const transformedKeys = Object.keys(transformed).filter((k) => normVal(transformed[k]))
 
-	// The `lost` verdict: the transformed parse is empty (or all-blank) while the original had components at all.
-	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a resolver falling back
-	// to an admin-only tier with no coordinate.
+	// The `lost` verdict: the transformed parse is empty (or all-blank)
+	// while the original had components at all.
+	// "unresolvable-shaped": a fully collapsed decode, the parse-level analog of a
+	// resolver falling back to an admin-only tier with no coordinate.
 	if (!transformedKeys.length && originalKeys.length) {
 		return { verdict: "LOST", diff: ["transformed parse is empty"] }
 	}
@@ -79,8 +67,9 @@ export function compareComponents(
 		const t = normVal(transformed[tag])
 
 		if (!o) {
-			// Not present in the original. A hallucinated value on the transformed side still yields the `lost`
-			// verdict — see the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
+			// Not present in the original.
+			// A hallucinated value on the transformed side still yields the `lost` verdict.
+			// See the header doc comment (a wrong-but-confident rooftop is worse than a graceful fallback).
 			if (t) {
 				criticalBroken = true
 				diff.push(`${tag}: ∅ → "${transformed[tag]}" (hallucinated)`)

@@ -2,53 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file FCC cores entity-registration lookup — FRN → registered legal name, brand, address.
- *
- *   cores (the Commission Registration System) is where an FRN's authoritative registration record lives:
- *   the legal name the entity registered under, the organization its contact works for (in practice the
- *   brand), a full postal address, an entity type, and registration/update timestamps.
- *
- *   **Why this is worth a client at all.** Form 499 gives one name per filer, free-text and inconsistently
- *   cased. cores gives a second, independently-maintained name and address for the same FRN. Record
- *   linkage across FCC data failed historically because there was one name surface and it was dirty. two
- *   surfaces keyed on the same identifier is corroboration. FRN `0001753557` is the worked example that
- *   makes the case: it registers as `"Knology Total Communications, Inc."`, its contact organization is
- *   `"WOW! Internet, Cable and Phone"`, and the operator knows it as WideOpenWest. No name-only join
- *   connects those three. the FRN does, and cores is what supplies the other two spellings.
- *
- *   **Two endpoints, and this is the one that answers.** `data.fcc.gov/api/frn/getInfo` is the documented
- *   JSON "FRN Conversions" API and it returns 403 at the Akamai edge from the lab host (retested
- *   2026-08-07. a descriptive User-Agent does not change it, so the block is host/IP-based). The 3a plan's
- *   Task 9 stopped at a check on exactly that. `apps.fcc.gov/cores/searchDetail.do` — the html detail page —
- *   answers 200 from the same host with an ordinary descriptive User-Agent, no browser spoofing and no
- *   credentials. That is what this client uses.
- *
- *   **What it does not give, correcting the 3a plan.** That plan justified cores as a family-edge source
- *   because the JSON API returns parent and subsidiary names. This html page carries no parent,
- *   subsidiary, related or affiliate field of any kind. cores is a corroboration source here — a second
- *   name, a brand, an address — not a source of ownership edges. Do not write a family edge from it.
- *
- *   **No html-parser dependency**, matching `exhibit21.ts`: this workspace has none, and the registration
- *   page is a single flat `<th>`/`<td>` table. Cell text is `@mailwoman/core/html/text`'s prose reading rather
- *   than a second normalizer grown in this workspace.
- *
- *   **Implemented from the earlier draft's `sync/fcc/CORESClient.ts`** (the author's own earlier draft), restructured onto
- *   {@linkcode APIClient} and deliberately narrowed in three places:
- *
- *   1. The earlier draft caught http 500 and html-parse failure and returned a fabricated `Organization`
- *      with `registeredAt: new Date(0)` and a catch-all classification. An abstention that reads as a
- *      record is the failure class this repo has spent real effort removing; {@linkcode parseCORESRegistration}
- *      returns `null` and the caller decides.
- *   2. The earlier draft classified entities by substring-sniffing the name — `includes("city")` → municipal,
- *      `includes("rural")` → rural, any US state name → municipal. "Kansas City Telephone" is not a
- *      municipality. No classification happens here. the raw `entityType` cores states is carried through
- *      verbatim and interpretation belongs to a caller that can corroborate it.
- *   3. The earlier draft ran the whole document through Prettier before parsing it, to normalize the markup. That is a
- *      formatter in a fetch path. the scan below tolerates the source markup as served.
- *
- *   The one the earlier draft idea kept wholesale is `normalizeDataCell`'s re-casing of uniformly-cased text — see
- *   {@linkcode recaseUniform}. FCC data is littered with `windstream services LLC` beside
- *   `Lumen Technologies Inc.`, and the uniformly-cased guard is what stops it mangling `WOW!` or `IDT`.
+ * @file Fetches FCC CORES registration details by FRN to corroborate names and addresses.
+ *   The client reads the HTML detail page on `apps.fcc.gov` because the documented JSON API on `data.fcc.gov`
+ *   returns 403 to our host. The page lists registration details only, so it cannot support ownership edges.
  */
 
 import {
@@ -63,47 +19,33 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 
 import { $private } from "#env"
 
-// Re-exported so a caller branching on this client's failures needs exactly one import.
-
 /**
- * Requests/second this client paces at by default.
+ * Default request rate.
  *
- * **cores publishes no rate limit**, which is a reason for restraint rather than licence. SEC states 10/s and this
- * client sits far below that on an endpoint whose operator has said nothing: a full enrichment pass over the ~18.6k
- * FRNs in the Form 499 filer database takes about 78 minutes at this rate, and it is a once-per-vintage job whose
- * results are cached on disk. Raise it only with a reason better than impatience.
+ * CORES publishes no rate limit, so the default is conservative.
  */
 export const CORES_DEFAULT_REQUESTS_PER_SECOND = 4
 
 /**
- * Hard ceiling regardless of what a caller asks for. Not derived from a published policy — there isn't one — so it is
- * set where a sustained crawl still looks like a well-behaved client to an operator reading their access log.
+ * Upper bound on the request rate.
+ * Higher requested rates are clamped to it.
  */
 export const CORES_MAX_REQUESTS_PER_SECOND = 8
 
 const MS_PER_SECOND = 1000
 
 /**
- * How long a cached registration stays fresh. A cores record changes when an entity updates its contact details — the
- * two records sampled on 2026-08-07 carried `Last Updated` timestamps from April and May 2026 — so this is a
- * slow-moving but genuinely mutable resource. Seven days keeps a multi-day build from re-fetching while still noticing
- * a change within a release cycle.
+ * Cache lifetime for registration pages, one week.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
 
-/**
- * The only host this client will send a request to. Matching is exact (a `Set` lookup on the hostname), never a suffix
- * check — `apps.fcc.gov.attacker.example` must not match, and an `.endsWith(".fcc.gov")` test would admit it. Mirrors
- * `sec-client.ts`'s allowlist rationale.
- */
 const CORES_ALLOWED_HOSTS = new Set(["apps.fcc.gov"])
 
 /**
- * Reject a URL this client must not send. Throws a {@linkcode ResourceError} whose URN kind is `request` — never
- * transient, since re-issuing the identical URL fails identically.
+ * Throws a non-retryable `request` error for a URL outside the CORES host allowlist.
  */
 function assertCORESHost(url: URL): void {
 	assertAllowedHost(url, {
@@ -125,20 +67,19 @@ export { coresDetailURL, fetchCORESRegistration, type CORESDocumentClient } from
  */
 export interface CreateCORESClientOptions {
 	/**
-	 * Descriptive User-Agent. cores does not require one — unlike SEC. It 403s without it. Therefore, this never throws
-	 * when unset. It is sent anyway because identifying a crawler to the operator of an unmetered public endpoint is the
-	 * courtesy that keeps it unmetered. Defaults to `$private.FCC_CORES_USER_AGENT`, then `$private.SEC_EDGAR_USER_AGENT`
-	 * (same contact address, already configured), then a package-identifying fallback.
+	 * User-Agent header.
+	 *
+	 * It falls back to `FCC_CORES_USER_AGENT`, then `SEC_EDGAR_USER_AGENT`, then a package default.
 	 */
 	userAgent?: string
 	/**
-	 * Desired requests/second, clamped to `[1, CORES_MAX_REQUESTS_PER_SECOND]`. Defaults to
-	 * {@linkcode CORES_DEFAULT_REQUESTS_PER_SECOND}.
+	 * Requested rate, clamped to `[1, CORES_MAX_REQUESTS_PER_SECOND]`.
 	 */
 	requestsPerSecond?: number
 	clock?: ClockLike
 	/**
-	 * On-disk cache root. Defaults to `dataRootPath("fcc", "cores", "cache")`.
+	 * Disk cache directory.
+	 * The default is `fcc/cores/cache` under the data root.
 	 */
 	cacheDir?: string
 	cacheTTLMs?: number
@@ -146,20 +87,22 @@ export interface CreateCORESClientOptions {
 	baseRetryDelayMs?: number
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's defaults. The test injection point — every test passes an `adapter` here
-	 * so no test performs a live request. Overriding `headers` wholesale drops the User-Agent, so don't.
+	 * Axios overrides.
+	 * Passing `headers` replaces the default User-Agent header.
 	 */
 	axios?: APIClientConfig["axios"]
 }
 
+/**
+ * Configuration for {@linkcode CORESClient}.
+ */
 export interface CORESClientConfig extends APIClientConfig {
 	userAgent: string
 }
 
 /**
- * Only a non-empty string body is worth persisting: every cores response is an html document, so an empty body is a
- * truncated fetch rather than a legitimately empty record. There is no Axios-level parse step on a text response to
- * lean on, which makes this the only check between a truncated page and a cache entry.
+ * Returns whether a response body is a non-empty string.
+ * An empty body may be a truncated response.
  */
 function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data
@@ -168,15 +111,11 @@ function isCacheableCORESBody(value: { data?: { data?: unknown } }): boolean {
 }
 
 /**
- * An FCC cores client. See the file header for why this reads the html detail page rather than the documented JSON API.
+ * FCC CORES HTTP client.
  */
 export class CORESClient extends APIClient<CORESClientConfig> {
 	/**
-	 * Issue a `GET` against a full absolute cores URL (https, on the allowed host only) and return the RAW response body
-	 * as text, subject to the on-disk cache, the request pacer, and bounded retry.
-	 *
-	 * Text rather than JSON because the endpoint serves html; `responseType: "text"` tells Axios to hand the body back
-	 * as-is rather than attempt to parse it.
+	 * Fetches a URL on the allowed host and returns the raw HTML body.
 	 */
 	public async getDocument(input: string | URL): Promise<string> {
 		const url = input instanceof URL ? input : new URL(input)
@@ -190,7 +129,7 @@ export class CORESClient extends APIClient<CORESClientConfig> {
 }
 
 /**
- * Create an FCC cores client. Never throws for a missing User-Agent — cores does not require one.
+ * Creates an FCC CORES client with rate limiting, retries and a disk cache.
  */
 export function createCORESClient(options: CreateCORESClientOptions = {}): CORESClient {
 	const userAgent =
@@ -207,8 +146,7 @@ export function createCORESClient(options: CreateCORESClientOptions = {}): CORES
 	return new CORESClient({
 		displayName: "FCC CORES",
 		userAgent,
-		// Ceil for the same reason sec-client.ts ceils: a fractional interval puts the Nth grant at exactly
-		// the window boundary, and sub-millisecond jitter tips it inside.
+		// Rounding up keeps the actual rate at or below the requested rate.
 		minRequestIntervalMs: Math.ceil(MS_PER_SECOND / requestsPerSecond),
 		retry: {
 			maxAttempts: options.maxAttempts ?? API_CLIENT_DEFAULTS.maxAttempts,

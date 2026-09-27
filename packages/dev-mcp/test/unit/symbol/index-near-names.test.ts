@@ -2,9 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file The near-name half of the symbol index: which shorter names a new name is read as a longer spelling of, and
- *   that the precheck reports one from the tree. Exact-name matching is covered by `symbol-precheck.test.ts`; this
- *   file exists because the near-name rule shipped once with no test at all.
+ * @file Tests the contained-name search of the symbol index and the precheck's report of a contained name.
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
@@ -15,7 +13,7 @@ import { describe, expect, it } from "vitest"
 import { runHook } from "../../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "symbol-precheck.ts")
-const REPO_ROOT = String(repoRootPath())
+const REPO_ROOT = repoRootPath()
 
 describe("containedNameCandidates", () => {
 	it("yields the shorter name an affix was added to", () => {

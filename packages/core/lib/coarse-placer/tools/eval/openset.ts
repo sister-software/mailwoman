@@ -2,35 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   #244 M2 Phase 1 — post-hoc open-set scoring on the existing (shipped) coarse-placer, no retrain.
- *   The OA-breadth verdict found the 12-way softmax's own max-prob detector tops out at ~88/88 on
- *   the leave-one-family-out probe (in-map accuracy vs off-map heldout-family caught). This asks:
- *   does a different open-set score, read off the same frozen weights, clear the 90/90 the softmax
- *   can't?
- *
- *   The 11-way routing (argmax over the in-map classes) is fixed — the model is unchanged. The only
- *   thing each score changes is the reject decision (keep the in-map route vs. abstain → other). We
- *   sweep each score's threshold and trace its (in-map accuracy, heldout-caught) Pareto.
- *
- *   Scores compared (all functions of the frozen 12 logits / 11 in-map logits `z`):
- *
- *   - Maxprob : softmax max over the 11 in-map classes (the verdict's baseline detector)
- *   - P_inmap : 1 - P(other) (trust the model's own `other` head)
- *   - Energy : logsumexp(z) (free-energy. higher = more in-map)
- *   - Maxlogit : max(z)
- *   - Maha : -min_c (z-μ_c)ᵀ Σ⁻¹ (z-μ_c), class-conditional Gaussians (tied Σ) fit on in-map train
- *       logits (Lee et al. 2018, in the 11-dim in-map-logit space — the linear model's only dense
- *       representation). Higher = closer to the in-map manifold.
- *
- *   In-map accuracy = of the 11-country test rows, fraction not rejected and argmax-in-map == truth.
- *   heldout caught = of the never-trained off-map families (baltic/oceania/middle-east), fraction
- *   rejected. Both move with the threshold. the Pareto is the whole story.
- *
- *   Run: `mailwoman placer eval openset [--model <dir>] [--out-md <path>]`
+ *   Compares post-hoc rejection scores on a frozen coarse-placer model. Routing stays fixed, thresholds are
+ *   selected on a development half, and results are reported on the other half.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no code a reader wants folded. */
 
 import { basename, type PathBuilderLike, resolvePath, resolvePathBuilder } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -42,14 +19,7 @@ import { defaultDataDir, defaultModelDir, readLatinOffmapRows } from "#coarse-pl
 import { readLocalJSONFile } from "#fs/readers"
 import { writeLocalFile } from "#fs/writers"
 
-/**
- * Steps in the threshold sweep. finer than the reporting precision so the knee is not missed.
- */
 const QUANTILE_SWEEP_STEPS = 200
-
-/**
- * Percentage both held-out catch and in-map accuracy must clear for an operating point to qualify.
- */
 const TARGET_PERCENT = 90
 
 type ScoreKey = "maxprob" | "p_inmap" | "energy" | "maxlogit" | "maha"
@@ -78,29 +48,26 @@ interface ParetoPoint {
  */
 export interface EvalOpenSetOptions {
 	/**
-	 * Model artifact dir. Default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
+	 * The model artifact directory, default `$MAILWOMAN_DATA_ROOT/coarse-placer/model`.
 	 */
 	model?: PathBuilderLike
 	/**
-	 * Dataset dir. Default `<repo>/data/coarse-placer`.
+	 * The dataset directory, default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 	/**
-	 * Mahalanobis fit rows per class. Default 2000.
+	 * Training rows per class used to fit the Mahalanobis score.
 	 */
 	fitPerClass?: number
-	/**
-	 * Also write the markdown report here.
-	 */
 	outMd?: string
 }
 
 /**
- * Result of {@linkcode evalOpenSet}.
+ * The result of {@linkcode evalOpenSet}.
  */
 export interface EvalOpenSetResult {
 	/**
-	 * Best score by the honest dev→test balanced min.
+	 * The score with the highest test-half minimum of in-map accuracy and held-out catch rate.
 	 */
 	winner: ScoreKey
 	honestMin: number
@@ -109,7 +76,7 @@ export interface EvalOpenSetResult {
 }
 
 /**
- * Invert a symmetric positive-definite matrix via Gauss-Jordan.
+ * Inverts a matrix with Gauss-Jordan elimination and partial pivoting.
  */
 function inverse(M: Float64Array[]): number[][] {
 	const n = M.length
@@ -155,7 +122,7 @@ function inverse(M: Float64Array[]): number[][] {
 }
 
 /**
- * Coarse-placer post-hoc open-set score comparison — see the module doc. Emits the markdown report to stdout.
+ * Compares open-set rejection scores and returns a Markdown report.
  */
 export async function evalOpenSet(
 	options: EvalOpenSetOptions = {},
@@ -172,13 +139,13 @@ export async function evalOpenSet(
 	const C = meta.classes.length
 	const D = meta.featureDim
 	const OTHER = meta.classes.indexOf("OTHER")
-	const IN = meta.classes.map((_, i) => i).filter((i) => i !== OTHER) // in-map class indices
+	const IN = meta.classes.map((_, i) => i).filter((i) => i !== OTHER)
 	const nIn = IN.length
 
 	if (W.length !== C * D) throw new Error(`weights ${W.length} ≠ ${C}×${D}`)
 
 	/**
-	 * Raw logits (PRE-temperature) for the 12 classes. OOD scores use the geometry rather than calibration.
+	 * Returns the logits of every class before temperature scaling.
 	 */
 	function logits(raw: string): Float64Array {
 		const feats = featurize(raw)
@@ -199,7 +166,7 @@ export async function evalOpenSet(
 	}
 
 	/**
-	 * In-map logit sub-vector (length nIn), in IN order.
+	 * Returns the in-map logits in class order.
 	 */
 	const inVec = (z: Float64Array): number[] => IN.map((c) => z[c]!)
 
@@ -207,8 +174,7 @@ export async function evalOpenSet(
 		return JSONSpliterator.fromAsync<DataRow>(resolvePath(dataDir, file))
 	}
 
-	// Fit the Mahalanobis params on IN-MAP train logits (no test leak): per-class
-	// mean in the nIn-dim in-map-logit space + a tied (shared) covariance.
+	// The Mahalanobis score uses class means and a shared covariance fitted on in-map training logits.
 	report?.("fitting Mahalanobis on in-map train logits…")
 	const trainRows = load("train.jsonl")
 	const byClass = new Map<string, string[]>(COARSE_CLASSES.map((c): [string, string[]] => [c, []]))
@@ -222,10 +188,9 @@ export async function evalOpenSet(
 		}
 	}
 
-	const means = new Map<string, Float64Array>() // country -> Float64Array(nIn)
+	const means = new Map<string, Float64Array>()
 	const counts = new Map<string, number>()
 
-	// Accumulate per-class means.
 	for (const [country, raws] of byClass) {
 		if (!raws.length) continue
 		const mu = new Float64Array(nIn)
@@ -246,7 +211,7 @@ export async function evalOpenSet(
 		counts.set(country, raws.length)
 	}
 
-	// Tied covariance over centered in-map train logits.
+	// The shared covariance is computed from class-centered logits.
 	const Sigma = Array.from({ length: nIn }, () => new Float64Array(nIn))
 	let nTot = 0
 
@@ -279,7 +244,7 @@ export async function evalOpenSet(
 		}
 	}
 
-	// Ridge for invertibility.
+	// A small diagonal term keeps the covariance invertible.
 	for (let a = 0; a < nIn; a++) {
 		Sigma[a]![a] = Sigma[a]![a]! + 1e-3
 	}
@@ -287,7 +252,7 @@ export async function evalOpenSet(
 	const SigmaInv = inverse(Sigma)
 
 	/**
-	 * -min_c Mahalanobis² to any in-map class mean (higher = closer to the in-map manifold).
+	 * Returns the negated squared Mahalanobis distance to the nearest class mean.
 	 */
 	function mahaScore(z: Float64Array): number {
 		const v = inVec(z)
@@ -320,13 +285,11 @@ export async function evalOpenSet(
 		return -best
 	}
 
-	// MARK: Score both splits
-
 	report?.("scoring in-map test + off-map heldout…")
 	const SCORES: ScoreKey[] = ["maxprob", "p_inmap", "energy", "maxlogit", "maha"]
 
 	/**
-	 * All open-set scores for one raw string + whether argmax-in-map routes to `trueCountry`.
+	 * Computes every score for one address and checks its in-map route against the label.
 	 */
 	function scoreRow(raw: string, trueCountry: string | undefined): ScoredRow {
 		const z = logits(raw)
@@ -335,7 +298,7 @@ export async function evalOpenSet(
 		softmaxInto(z, probs)
 		const zin = inVec(z)
 
-		// argmax over in-map classes (the fixed routing).
+		// Every score shares the same route, which is the top in-map logit.
 		let amIdx = 0,
 			am = -Infinity
 
@@ -360,7 +323,6 @@ export async function evalOpenSet(
 		}
 	}
 
-	// the 11 countries only
 	const inmapScored = await load("test.jsonl")
 		.filter((r) => r.country !== "OTHER")
 		.map((r) => scoreRow(r.raw, r.country))
@@ -370,16 +332,16 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Honest threshold protocol: split each probe 50/50 (deterministic by index parity) into DEV + test.
-	// The operating threshold is picked on DEV (maximizing balanced min); the reported point is frozen on
-	// test — so the number is a generalization estimate rather than a threshold fit to the set it's scored on.
+	// Even-indexed rows form the development half, and odd-indexed rows form the test half.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)
 	const heldTest = heldoutScored.filter((_, i) => i % 2 === 1)
 
 	/**
-	 * (inMapAcc, heldCaught) at threshold t over a given in-map/heldout split.
+	 * Measures in-map accuracy and held-out catch rate at threshold `t`.
+	 *
+	 * A row is kept when its score is at or above `t` and rejected otherwise.
 	 */
 	function pointAt(scoreKey: ScoreKey, t: number, inSplit: ScoredRow[], heldSplit: ScoredRow[]): ParetoPoint {
 		let keepCorrect = 0
@@ -399,10 +361,11 @@ export async function evalOpenSet(
 		return { t, inMapAcc: (100 * keepCorrect) / inSplit.length, heldCaught: (100 * caught) / heldSplit.length }
 	}
 
-	// For each score: keep (route in-map) iff score >= threshold. else reject (→ other).
-	// in-map accuracy = keep & correctRoute. heldout caught = rejected.
+	/**
+	 * Sweeps thresholds for one score and returns its trade-off points.
+	 */
 	function paretoFor(scoreKey: ScoreKey) {
-		// Candidate thresholds: quantiles of the union of scores.
+		// Candidate thresholds are quantiles of the pooled in-map and held-out scores.
 		const all = [...inmapScored, ...heldoutScored].map((o) => o.s[scoreKey]).toSorted((a, b) => a - b)
 		const ts: number[] = []
 
@@ -413,12 +376,13 @@ export async function evalOpenSet(
 		const uniq = [...new Set(ts)]
 		const pts: ParetoPoint[] = uniq.map((t) => pointAt(scoreKey, t, inmapScored, heldoutScored))
 
-		// Summaries.
-		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null } // max of min(inMapAcc, heldCaught) on the full probe
-		let atHeld90: ParetoPoint | null = null // highest inMapAcc with heldCaught >= 90
+		// The balanced point maximizes the smaller of the two rates.
+		let balanced: { val: number; pt: ParetoPoint | null } = { val: -1, pt: null }
+		// This point has the best in-map accuracy among points that meet the held-out target.
+		let atHeld90: ParetoPoint | null = null
+		// This point has the best held-out catch rate among points that meet the in-map target.
 		let atIn90: ParetoPoint | null = null
 
-		// highest heldCaught with inMapAcc >= 90
 		for (const p of pts) {
 			const m = Math.min(p.inMapAcc, p.heldCaught)
 
@@ -435,7 +399,7 @@ export async function evalOpenSet(
 			}
 		}
 
-		// honest point: pick t* on DEV (max balanced min), freeze + report on test.
+		// The balanced threshold is chosen on the development half and measured on the test half.
 		let devBest: { val: number; t: number | null } = { val: -1, t: null }
 
 		for (const p of pts) {
@@ -454,8 +418,6 @@ export async function evalOpenSet(
 
 	type Pareto = ReturnType<typeof paretoFor>
 	const results = Object.fromEntries(SCORES.map((k) => [k, paretoFor(k)])) as Record<ScoreKey, Pareto>
-
-	// MARK: Report.
 
 	const f = (x: number | null | undefined): string => (x == null ? "—" : x.toFixed(1))
 
@@ -507,7 +469,7 @@ export async function evalOpenSet(
 
 	lines.push("")
 
-	// Winner by the honest dev→test balanced min (not the full-probe number).
+	// Scores are ranked by their test-half minimum.
 	const ranked = SCORES.map((k) => ({
 		k,
 		honestMin: Math.min(results[k].honest.inMapAcc, results[k].honest.heldCaught),

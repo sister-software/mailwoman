@@ -1,5 +1,3 @@
-"""Tests for training-time augmentation."""
-
 import random
 
 import pytest
@@ -29,7 +27,7 @@ def test_expand_token_single_word():
 def test_expand_token_multi_word_b_label():
     tokens = ["Washington", ",", "DC"]
     labels = ["B-region", "O", "B-region"]
-    # Expand "DC" → "District of Columbia"
+
     new_tokens, new_labels = _expand_token(tokens, labels, 2, "District of Columbia")
     assert new_tokens == ["Washington", ",", "District", "of", "Columbia"]
     assert new_labels == ["B-region", "O", "B-region", "I-region", "I-region"]
@@ -38,7 +36,7 @@ def test_expand_token_multi_word_b_label():
 def test_expand_token_multi_word_i_label():
     tokens = ["New", "York", ",", "NY"]
     labels = ["B-locality", "I-locality", "O", "B-region"]
-    # Expand "NY" → "New York" (B-region stays B-region, second word gets I-region)
+
     new_tokens, new_labels = _expand_token(tokens, labels, 3, "New York")
     assert new_tokens == ["New", "York", ",", "New", "York"]
     assert new_labels == ["B-locality", "I-locality", "O", "B-region", "I-region"]
@@ -85,7 +83,7 @@ def test_augment_row_region_fires():
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
     augmented = results[1]
-    # "NY" should be expanded to "New" "York" with B-region I-region
+
     assert "B-region" in augmented["labels"]
     assert "I-region" in augmented["labels"]
 
@@ -99,7 +97,7 @@ def test_augment_row_no_match_no_extra():
         "source": "tiger",
     }
     rng = random.Random(42)
-    # Even with prob=1.0, no directionals or region abbreviations → no augmented copy
+
     results = list(augment_row(row, rng, directional_prob=1.0, region_prob=1.0))
     assert len(results) == 1
 
@@ -116,14 +114,9 @@ def test_augment_row_region_only_expands_region_labeled():
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
     augmented = results[1]
-    # PA (labeled B-street) should not be expanded — only DC (B-region) should
+
     assert augmented["tokens"][0] == "PA"
     assert "District" in augmented["tokens"]
-
-
-# endregion
-
-# region Region+postcode glue (#513)
 
 
 def _glue_row() -> dict:
@@ -144,7 +137,7 @@ def test_glue_fuses_raw_only():
     assert results[0] is row
     fused = results[1]
     assert fused["raw"] == "123 Main St Buffalo NY14201"
-    # Tokens + labels stay split — the whole point of the augmentation.
+
     assert fused["tokens"] == row["tokens"]
     assert fused["labels"] == row["labels"]
 
@@ -158,7 +151,7 @@ def test_glue_preserves_original_punctuation():
         "source": "tiger",
     }
     fused = glue_region_postcode(row, 2)
-    # Splices the original raw (comma spacing intact), not a re-join of tokens.
+
     assert fused["raw"] == "Buffalo, NY14201"
 
 
@@ -177,8 +170,7 @@ def test_glue_fuses_last_token_of_multi_token_region():
 
 
 def test_glue_requires_digit_leading_postcode():
-    # GB-style letter-leading postcode: fusing would create a letter→letter boundary
-    # SentencePiece may not split — must not fire.
+
     row = {
         "raw": "London England SW1A 1AA",
         "tokens": ["London", "England", "SW1A", "1AA"],
@@ -205,8 +197,7 @@ def test_glue_requires_adjacency():
 
 
 def test_glue_default_off_preserves_rng_stream():
-    # glue_prob=0 must not consume an rng draw — existing recipes stay bit-identical.
-    # (directional + region each always draw once. glue must not add a third.)
+
     ref = random.Random(7)
     ref.random(), ref.random()
     expected = ref.random()
@@ -216,10 +207,6 @@ def test_glue_default_off_preserves_rng_stream():
 
 
 def test_glued_raw_projects_split_labels_onto_pieces():
-    """The critical property (#513): the fused surface with SPLIT tokens/labels projects
-    B-region onto the letter pieces and B/I-postcode onto the digit pieces via char offsets.
-    Mock pieces mirror the v0.6.0-a0 tokenizer's letter/digit split (verified empirically:
-    1020 fused state+ZIP rows, zero pieces straddling the letter→digit boundary)."""
     row = {
         "raw": "Buffalo NY 14201",
         "tokens": ["Buffalo", "NY", "14201"],
@@ -241,16 +228,7 @@ def test_glued_raw_projects_split_labels_onto_pieces():
     assert bio == ["B-locality", "B-region", "B-postcode", "I-postcode"]
 
 
-# endregion
-
-# region Char-offset span re-target (#519)
-
-# Every augmented copy must carry spans consistent with its raw — the mutation-upstream hazard
-# this section exists to close.
-
-
 def _span_texts(row: dict) -> list[tuple[str, str]]:
-    """(tag, span text) pairs for a row's span triple."""
     return [
         (t, row["raw"][s:e]) for s, e, t in zip(row["span_starts"], row["span_ends"], row["span_tags"], strict=True)
     ]
@@ -270,7 +248,6 @@ def _spanned_directional_row() -> dict:
 
 
 def _assert_span_invariants(row: dict) -> None:
-    """The #519 triple invariants: in-bounds, sorted ascending by start, non-overlapping."""
     prev_end = 0
     for s, e in zip(row["span_starts"], row["span_ends"], strict=True):
         assert 0 <= s < e <= len(row["raw"])
@@ -297,7 +274,6 @@ def test_expansion_leaves_the_original_rows_spans_alone():
 
 
 def test_expanded_spans_project_identically_to_expanded_tokens():
-    """Check: on the augmented copy, the spans-based piece stream equals the token-based one."""
     rng = random.Random(42)
     augmented = list(augment_row(_spanned_directional_row(), rng, directional_prob=1.0, region_prob=0.0))[1]
     pieces = []
@@ -329,7 +305,7 @@ def test_glue_shifts_spans_with_the_splice():
         ("region", "NY"),
         ("postcode", "14201"),
     ]
-    # The source row's spans are untouched (fresh lists on the copy).
+
     assert row["span_starts"] == [0, 4, 12, 20, 23]
 
 
@@ -348,13 +324,7 @@ def test_row_span_triple_nonparallel_raises():
         row_span_triple({"raw": "x", "span_starts": [0], "span_ends": [1, 2], "span_tags": ["street"]})
 
 
-# endregion
-
-# region Punct-drop augmentation (#1101, delimiter-free / whitespace-only)
-
-
 def _punct_row() -> dict:
-    """`123 Main St, Portland, OR 97214` — two SEPARATOR commas (chars 11, 21), both in gaps."""
     return {
         "raw": "123 Main St, Portland, OR 97214",
         "tokens": ["123", "Main", "St,", "Portland,", "OR", "97214"],
@@ -371,7 +341,7 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
     dropped = drop_separator_punct(_punct_row())
     assert dropped is not None
     assert dropped["raw"] == "123 Main St Portland OR 97214"
-    # The critical property: every span still covers its original entity text in the mutated raw.
+
     assert _span_texts(dropped) == [
         ("house_number", "123"),
         ("street", "Main St"),
@@ -380,14 +350,13 @@ def test_punct_drop_removes_separator_commas_and_retargets_spans():
         ("postcode", "97214"),
     ]
     _assert_span_invariants(dropped)
-    # Tokens carry no commas and stay relocatable in the mutated raw (whitespace_spans must not raise).
+
     assert dropped["tokens"] == ["123", "Main", "St", "Portland", "OR", "97214"]
     assert dropped["labels"] == _punct_row()["labels"]
     whitespace_spans(dropped["raw"], dropped["tokens"])
 
 
 def test_punct_drop_preserves_interior_apostrophe():
-    """A gap comma is dropped. an apostrophe inside the venue span is kept (drop is gap-only)."""
     row = {
         "raw": "Ben & Jerry's, Burlington",
         "tokens": ["Ben", "&", "Jerry's,", "Burlington"],
@@ -404,7 +373,6 @@ def test_punct_drop_preserves_interior_apostrophe():
 
 
 def test_punct_drop_removes_standalone_punct_token():
-    """A comma that is its own whitespace token is dropped from tokens/labels rather than left empty."""
     row = {
         "raw": "Portland , OR",
         "tokens": ["Portland", ",", "OR"],
@@ -415,7 +383,7 @@ def test_punct_drop_removes_standalone_punct_token():
     }
     dropped = drop_separator_punct(row)
     assert dropped is not None
-    assert dropped["raw"] == "Portland  OR"  # the comma char removed. its surrounding spaces remain
+    assert dropped["raw"] == "Portland  OR"
     assert dropped["tokens"] == ["Portland", "OR"]
     assert dropped["labels"] == ["B-locality", "B-region"]
     assert _span_texts(dropped) == [("locality", "Portland"), ("region", "OR")]
@@ -438,7 +406,6 @@ def test_punct_drop_strips_wrapping_quotes():
 
 
 def test_punct_drop_without_spans_returns_none():
-    """Legacy (span-less) row: can't tell a separator comma from an interior one → skip, don't guess."""
     assert (
         drop_separator_punct(
             {"raw": "Portland, OR", "tokens": ["Portland,", "OR"], "labels": ["B-locality", "B-region"]}
@@ -459,7 +426,6 @@ def test_punct_drop_leaves_original_row_untouched():
 
 
 def test_punct_drop_default_off_preserves_rng_stream():
-    """With the knob at 0 the rng stream is bit-identical to a no-punct-drop config (guarded fire)."""
     a = random.Random(7)
     b = random.Random(7)
     list(augment_row(_punct_row(), a, directional_prob=0.0, region_prob=0.0))
@@ -471,26 +437,12 @@ def test_punct_drop_fires_via_augment_row():
     results = list(
         augment_row(_punct_row(), random.Random(1), directional_prob=0.0, region_prob=0.0, punct_drop_prob=1.0)
     )
-    assert results[0]["raw"] == "123 Main St, Portland, OR 97214"  # original first, unchanged
+    assert results[0]["raw"] == "123 Main St, Portland, OR 97214"
     assert any(r["raw"] == "123 Main St Portland OR 97214" for r in results[1:])
 
 
-# endregion
-
-# region Raw splicing for expansions (PR #534 open question 3)
-
-# The expansions must never rebuild raw via " ".join(tokens): the join destroys whitespace
-# geometry (newlines, double spaces) and re-quantizing spans to token boundaries absorbs
-# punctuation the v0.5.0 spans deliberately exclude. The canonical probe is a dotted P.O. Box
-# beside a comma-containing token.
-
-
 def _dotted_po_box_row() -> dict:
-    # raw:  P.O. Box 123, Buffalo NY 14201
-    #       0         1         2
-    #       0123456789012345678901234567890
-    # The po_box span [0, 12) excludes the trailing comma. the comma rides inside the "123,"
-    # whitespace token. A token-label re-derive would absorb it into the span.
+
     return {
         "raw": "P.O. Box 123, Buffalo NY 14201",
         "tokens": ["P.O.", "Box", "123,", "Buffalo", "NY", "14201"],
@@ -504,8 +456,6 @@ def _dotted_po_box_row() -> dict:
 
 
 def test_expansion_preserves_intra_span_punctuation():
-    """The dotted P.O. Box survives the region expansion verbatim — dots inside the span,
-    trailing comma still outside it — and every offset addresses the new raw exactly."""
     rng = random.Random(42)
     results = list(augment_row(_dotted_po_box_row(), rng, directional_prob=0.0, region_prob=1.0))
     assert len(results) == 2
@@ -518,13 +468,11 @@ def test_expansion_preserves_intra_span_punctuation():
         ("postcode", "14201"),
     ]
     _assert_span_invariants(augmented)
-    # The comma after the po_box stays in raw, outside the span.
+
     assert augmented["raw"][12] == ","
 
 
 def test_expansion_preserves_whitespace_geometry():
-    """Newlines + double spaces in raw survive the splice — the exact information a
-    " ".join(tokens) rebuild destroys."""
     row = {
         "raw": "350 5th  Ave NW\nBuffalo",
         "tokens": ["350", "5th", "Ave", "NW", "Buffalo"],
@@ -547,8 +495,6 @@ def test_expansion_preserves_whitespace_geometry():
 
 
 def test_expansion_legacy_row_keeps_punctuation_too():
-    """Token-only (pre-v0.5.0) rows ride the same splice: the raw keeps its punctuation even
-    though no spans need re-targeting."""
     row = {k: v for k, v in _dotted_po_box_row().items() if not k.startswith("span_")}
     rng = random.Random(42)
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=1.0))
@@ -566,13 +512,10 @@ def test_splice_expansion_leaves_the_source_row_alone():
 
 
 def test_splice_expansion_boundary_inside_edited_token_raises():
-    """A span boundary strictly inside the expanded token addresses a surface the splice
-    destroys — impossible to re-target, so it raises rather than guesses."""
     row = {
         "raw": "Buffalo NY 14201",
         "tokens": ["Buffalo", "NY", "14201"],
         "labels": ["B-locality", "B-region", "B-postcode"],
-        # Corrupt on purpose: the region span covers only the first char of "NY".
         "span_starts": [0, 8, 11],
         "span_ends": [7, 9, 16],
         "span_tags": ["locality", "region", "postcode"],
@@ -582,8 +525,6 @@ def test_splice_expansion_boundary_inside_edited_token_raises():
 
 
 def test_expansion_then_glue_compose_still_verifies():
-    """Composing the two splices (directional expansion, then region+postcode glue) keeps every
-    offset addressing the final raw."""
     row = {
         "raw": "350 5th Ave NW Buffalo, NY 14201",
         "tokens": ["350", "5th", "Ave", "NW", "Buffalo,", "NY", "14201"],
@@ -609,7 +550,7 @@ def test_expansion_then_glue_compose_still_verifies():
 
 
 def test_lowercase_row_preserves_labels_and_spans():
-    # Lowercasing is length-preserving, so labels + char-offset spans pass through unchanged.
+
     row = {
         "raw": "350 5th Ave NW",
         "tokens": ["350", "5th", "Ave", "NW"],
@@ -631,7 +572,7 @@ def test_lowercase_row_preserves_labels_and_spans():
 
 
 def test_lowercase_row_skips_non_length_preserving():
-    # Turkish dotted capital İ → 'i̇' (2 chars) would desync char-offset spans, so skip the row.
+
     row = {"raw": "İSTANBUL", "tokens": ["İSTANBUL"], "labels": ["B-locality"]}
     assert lowercase_row(row) is None
 
@@ -646,12 +587,12 @@ def test_augment_row_case_prob_yields_lowercased_copy():
     }
     rng = random.Random(42)
     results = list(augment_row(row, rng, directional_prob=0.0, region_prob=0.0, case_prob=1.0))
-    assert results[0] is row  # original first, unchanged
+    assert results[0] is row
     assert any(r["raw"] == "350 5th ave nw" for r in results)
 
 
 def test_augment_row_case_prob_zero_is_bit_identical():
-    # case_prob=0 must not consume the rng stream (the guard), so it's a no-op vs no case knob.
+
     row = {
         "raw": "350 5th Ave NW",
         "tokens": ["350", "5th", "Ave", "NW"],
@@ -665,7 +606,7 @@ def test_augment_row_case_prob_zero_is_bit_identical():
 
 
 def test_upper_case_row_preserves_labels_and_spans():
-    # Upper-casing is length-preserving (guarded), so labels + char-offset spans pass through unchanged.
+
     row = {
         "raw": "350 5th Ave nw",
         "tokens": ["350", "5th", "Ave", "nw"],
@@ -686,7 +627,7 @@ def test_upper_case_row_preserves_labels_and_spans():
 
 
 def test_upper_case_row_skips_non_length_preserving():
-    # German eszett 'ß' upper-cases to "SS" (2 chars) — would desync spans, so skip the row.
+
     row = {
         "raw": "Große Straße 1",
         "tokens": ["Große", "Straße", "1"],
@@ -715,8 +656,6 @@ def test_augment_row_upper_case_prob_yields_uppercased_copy():
 
 
 class TestOrdinalStreetSwap:
-    """The 8.2.0 metamorphic catch: "5th" ↔ "Fifth" equivalence, street-family labels only."""
-
     def _row(self):
         return {
             "raw": "350 Fifth Ave, New York, NY",

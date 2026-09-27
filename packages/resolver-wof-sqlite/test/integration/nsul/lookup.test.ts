@@ -29,7 +29,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/nsul"
 import { uprnH3Cell } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -37,8 +37,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough to exercise the one-to-many
- * probe, its ordering, and the compact/spaced key equivalence.
+ * Two Wokingham UPRNs sharing `RG40 4HR` and one Bognor Regis uprn on `PO21 1HR` — enough
+ * to exercise the one-to-many probe, its ordering, and the compact/spaced key equivalence.
  */
 const ROWS = [
 	{ uprn: 14_000_005, pcds: "RG40 4HR", lat: 51.37416, lon: -0.86823 },
@@ -46,13 +46,13 @@ const ROWS = [
 	{ uprn: 100_062_353_961, pcds: "PO21 1HR", lat: 50.7876, lon: -0.6717 },
 ]
 
-let databasePath: string
+let databasePath: PathBuilder
 let lookup: NSULLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("nsul-lookup-")).path
 
-	databasePath = join(dir, "nsul.db")
+	databasePath = dir("nsul.db")
 
 	using kdb = new DatabaseClient<NSULDatabase>(databasePath)
 

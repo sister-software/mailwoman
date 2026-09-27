@@ -20,7 +20,7 @@
  *   - `regime`    — the same pass under an impossible default (`ZZ`), which forces step 1 to fail and reports what the
  *       alternative countries alone decide. A row whose regime probe returns the panel country was coherent under its
  *       own default and would have taken the cheap exit in the domestic leg. everything else fell through and had every
- *       candidate country actually tried. Without that column a zero false-positive count means nothing — it reads the
+ *       candidate country actually tried. Without that column a zero false-positive count carries no information. It reads the
  *       same whether the mechanism refused to cross a border or never ran.
  *
  *   The regime probe over-counts fall-through: a pair coherent in two countries returns null under `ZZ` (the tie rule)
@@ -35,7 +35,7 @@
  *     backend  fts | candidate
  *
  *   Emits a markdown row per leg on stdout plus the per-case false-positive list, which is the number the D-rule cares
- *   about — every FP is printed with its pair. Therefore, a finding is never a bare count.
+ *   about. Every FP is printed with its pair. Therefore, a finding is never a bare count.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -57,9 +57,11 @@ interface Pair {
 }
 
 /**
- * The panels, keyed by the country whose addresses they hold. `misScope` is the wrong default the rescue leg pins —
- * `US` for the non-US panels (the en-US locale default that causes the bug in the first place) and `FR` for the US
- * panel, so both mis-scope directions are covered rather than only the convenient one.
+ * The panels, keyed by the country whose addresses they hold.
+ *
+ * `misScope` is the wrong default the rescue leg pins.
+ * `US` for the non-US panels (the en-US locale default that causes the bug in the first place) and
+ * `FR` for the US panel, so both mis-scope directions are covered rather than only the convenient one.
  */
 const PANELS: Record<string, { path: string; country: string; misScope: string; read: (row: never) => Pair | null }> = {
 	us: {
@@ -92,8 +94,10 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 }
 
 /**
- * The impossible default the regime probe pins. Not an ISO-3166 assignment, so no codex address system can claim it and
- * step 1 always fails — which is the point: it isolates what the alternative countries decide.
+ * The impossible default the regime probe pins.
+ *
+ * Not an ISO-3166 assignment, so no codex address system can claim it and step 1 always fails,
+ * which is the point: it isolates what the alternative countries decide.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
@@ -112,8 +116,11 @@ if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 const limit = limitArg ? Number(limitArg) : Infinity
 
 /**
- * The two roots the pass reads. The real tree carries a street too. it is never consulted here (the pass keys on the
- * postcode string the caller passes plus the first locality node), so the minimal pair is faithful.
+ * The two roots the pass reads.
+ *
+ * The real tree carries a street too.
+ * It is never consulted here (the pass keys on the postcode string the caller passes
+ * plus the first locality node), so the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {
 	return [
@@ -133,8 +140,9 @@ async function makeBackend(): Promise<ResolverBackend> {
 		return new WOFCandidateTableLookup({ databasePath: path })
 	}
 
-	// The production database set, exactly as `wofExtractPaths()` orders it — the point of the FTS leg is to measure what a
-	// default-on mechanism would see in production rather than what a hand-picked database list can be made to show.
+	// The production database set, exactly as `wofExtractPaths()` orders it.
+	// The point of the FTS leg is to measure what a default-on mechanism would see in production
+	// rather than what a hand-picked database list can be made to show.
 	const paths = await existingWOFDatabasePaths()
 
 	console.error(`[probe] FTS backend over ${paths.length} databases: ${paths.join(", ")}`)

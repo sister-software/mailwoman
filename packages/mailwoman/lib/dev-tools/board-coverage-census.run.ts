@@ -2,17 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Board rows per country that can fail, beside the country's gazetteer share.
+ *   `pass` checks a run and `improvement_target` only tracks, so a raw row count conflates a country that can
+ *   go red with one that cannot. The gazetteer share is the denominator.
  *
- *   A row's `status` decides whether it checks or tracks. `pass` fails the run when its answer moves;
- *   `improvement_target` records a known-wrong answer and fails nothing. A single row count conflates them, so a
- *   country whose board is entirely trackers reports the same coverage as one that can go red.
- *
- *   The gazetteer share is the denominator: two checking rows is a different claim for India's 1,113,550 places
- *   than for a country holding a few thousand.
- *
- *   The loader walks two-letter directories only, so `generalization/` — parked passes — is outside every number
- *   here, which is the scope a gauntlet run sees.
+ *   The loader walks two-letter directories only, so `generalization/` is outside every number here.
  *
  *   Usage:
  *     node packages/mailwoman/lib/dev-tools/board-coverage-census.run.ts
@@ -21,12 +14,12 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { renderMarkdownTable } from "@mailwoman/core/strings/markdown-table"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import { PathBuilder } from "path-ts"
 
 import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 
@@ -36,12 +29,11 @@ const { values: args } = parseArguments({
 		floor: { type: "string" },
 		json: { type: "string" },
 	},
-	strict: false,
 })
 
 /**
- * Checking rows a country is expected to hold. Not a threshold this census enforces — it prints which countries sit
- * under it so a floor can be argued from the list rather than asserted at one.
+ * Checking rows a country is expected to hold.
+ * This census only reports the shortfall against it.
  */
 const FLOOR = Number(args.floor ?? 6)
 
@@ -78,11 +70,11 @@ for (const c of cases) {
 }
 
 /**
- * `spr` rows per country, or null everywhere when no gazetteer is readable. A missing artifact leaves the column
- * unmeasured rather than zero — a zero would read as "this country has no places", which is a finding and not what a
- * missing file says.
+ * `spr` rows per country, or null everywhere when no gazetteer is readable.
+ *
+ * A missing artifact leaves the column unmeasured rather than zero.
  */
-const gazetteerPath = String(args.gazetteer ?? dataRootPath("wof", "admin-global-priority.db"))
+const gazetteerPath = PathBuilder.from(args.gazetteer ?? dataRootPath("db", "wof", "admin-global-priority.db"))
 
 if (await pathExists(gazetteerPath)) {
 	using db = new DatabaseClient<WOFDatabase>(gazetteerPath, { readOnly: true })
@@ -159,7 +151,7 @@ console.log(
 )
 
 if (args.json) {
-	await writeLocalTextFile(prettyJSON({ totals, floor: FLOOR, countries: all }), String(args.json))
+	await writeLocalJSONFile({ totals, floor: FLOOR, countries: all }, args.json)
 
 	console.log(`\njson → ${args.json}`)
 }

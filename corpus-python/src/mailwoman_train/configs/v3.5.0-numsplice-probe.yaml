@@ -1,36 +1,22 @@
-# === v3.5.0-numsplice-probe — B4c: the number-piece vocab splice. 2k probe. ===
+# v3.5.0-numsplice-probe is a 2k-step probe of the v0.11.0-numsplice tokenizer.
 #
-# the one variable vs v310: the tokenizer. v0.11.0-numsplice adds word-start number pieces 10-9999
-# to v0.9.0-multisplice, so `178` -> `▁178` (one piece, zero postcode-leaning continuations) instead
-# of `[▁1,7,8]` (two continuations). Attacks the root of the cross-lingual length-conditioned digit
-# defect: the model faithfully reproduced its corpus's P(I-postcode|continuation) prior (0.043@2d ->
-# 0.879@5d, docs/.../digit-incoherence-is-cross-lingual.md) because digits tokenized per-character.
-# Single-piece numbers remove the continuations the postcode mass lived on.
+# The tokenizer is the only change from v310. It adds word-start number pieces for 10 to 9999, so `178`
+# becomes the single piece `▁178` instead of `▁1 7 8`. Per-character digits let the model tie postcode
+# probability to number length through the continuation pieces. Single-piece numbers remove those pieces.
 #
-# init_from /data/models/numsplice-expanded (v310's step-008000 with token_embeddings FVT mean-init'd
-# to 83,131 — each number row = mean of its digit constituents. encoder/heads byte-identical). English
-# letters tokenize byte-identically. only numeric spans change (verified, scratchpad/build-number-splice.py).
+# The init_from checkpoint is v310's step-008000 with the embedding table expanded to 83,131 rows.
+# Each new number row is the mean of its digit rows. Non-numeric text tokenizes as before.
 #
-# PRE-registered read:
-#   primary — the digit defect: `aleja Wojska Polskiego 178` -> house_number (not postcode); board 3
-#     bare-street-hn (0.693) and slash-hn (0.650) rise. This is the mechanism test.
-#   guard (the 5-digit risk) — a 5-digit US ZIP now tokenizes `▁9021,0` (4-digit piece + 1), fewer
-#     continuations than before, so postcode recognition could regress. The 6 demo presets (20500,
-#     10118, 94133, 60613, 98109, 90210) and board 3 bare-pc (Norwegian 4-digit postcodes, the
-#     negative class) must not drop. If US 5-digit postcode drops, the splice range needs 5-digit pieces
-#     or a different reduce.
-#   do-no-harm — FR fragment board + global parity hold.
-#   negative — if the digit rows do not improve after single-piece-ing the numbers, the vocab is not
-#     the mechanism and B4c is refuted (a big finding — it would point back to the head/decoder).
+# The target is board 3 bare-street-hn, where a bare street followed by a number should tag the number
+# as house_number. A 5-digit US postcode now splits as `▁9021 0`, so postcode recall is the main guard.
 #
-# Not a ship. A pass justifies an 8k + the 5-digit range decision. Promotion is the operator's act.
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.5.0-numsplice-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.10.9-fr-fragment/corpus-v0.10.9-fr-fragment
   tokenizer_dir: /data/models/tokenizer/v0.11.0-numsplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -54,7 +40,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # Verbatim from v2.4.1 + the one new assay source.
+  source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -83,11 +69,10 @@ data:
     synth-no-street-led: 12.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # This source holds partial and autocomplete-style inputs.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # This source holds French streets without a house number and bare-locality counterexamples.
+    # Its weight matches the other targeted-fix sources at 12.0.
     synth-fr-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -97,14 +82,14 @@ data:
   augment_glue_prob: 0.25
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  # The country lexicon feeds the country channel. Its feature_dim must equal model.country_feature_dim.
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -124,16 +109,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # The country channel is a 2-dim [country_surface, country_ambiguous] soft feed with its own projection.
+  # The country_feature_dim value must equal the country lexicon's feature_dim.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # This value scales the country_ambiguous dim before country_projection and is baked into the exported ONNX.
+  # A scale of 1.0 over-suppressed countries whose names are also common words, such as Georgia and Jordan.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -172,9 +153,9 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# The init_from checkpoint loads weights only, so the optimizer starts fresh.
+# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+train:
   output_dir: /data/output-v350-numsplice-probe-s42/checkpoints
   seed: 42
   init_from: /data/models/numsplice-expanded

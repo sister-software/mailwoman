@@ -124,7 +124,7 @@ label deltas exceed the 2pp check, and both are coordinate-invisible:** us.local
 is given the country, so it doesn't reach the coordinate). No silent drift — both are stated here and
 on #728; the promote is the operator's call with the full picture.
 
-Per the merge wall this is **not auto-promoted** — the artifact is staged beside the canonical
+Per the merge wall this is **not auto-promoted**. The artifact is staged beside the canonical
 (int8 `model-v180-step-40000-int8.onnx`, md5 `d163396ce30869e117bf29ffb939177b`, on the volume +
 `./out/v180/`) and flagged for operator GO. The 2pp label check technically fired, but the coordinate
 (the canonical metric) is flat-to-better, so this is the "regression is coordinate-invisible — state
@@ -177,7 +177,7 @@ a subword) and wants a separate decode/tokenizer look rather than more extract d
   GO: the standard release flow (releases.json + HF/R2 publish; the int8 is
   `/data/models/quantized/model-v180-step-40000-int8.onnx` + `./out/v180/model.onnx`).
 - **#727 diacritic follow-up** — tokenizer/decode-level (the accent strands a subword as its own
-  span); not a extract-data fix. A decode-side span-merge or a tokenizer look.
+  span); not an extract-data fix. A decode-side span-merge or a tokenizer look.
 - **AU iteration is blocked** until the resolver DB (`admin-global-priority.db`) gains AU rows — scope
   an AU WOF ingest if AU coverage is wanted (then the AU admin-split extract is a fast follow on the FR
   template).

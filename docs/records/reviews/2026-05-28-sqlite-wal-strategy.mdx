@@ -31,10 +31,10 @@ The output is a static asset. Treat it like a search index: expensive to build, 
 
 ### Why `node:sqlite` instead of `better-sqlite3`?
 
-- Zero native deps. No `node-gyp`, no prebuilds, no Electron/Bun headaches downstream.
+- `node:sqlite` has zero native dependencies. It needs neither `node-gyp` nor prebuilds, and it avoids Electron/Bun build problems downstream.
 - Mailwoman already uses `node:sqlite` in resolver code and build scripts.
-- Current status: added in Node 22.5.0; unflagged in Node 22.13.0+ but still experimental there; release-candidate status starts in newer Node 25/26 lines. Confirm runtime with `node --version` and expect warnings on some Node versions.
-- API is intentionally close to `better-sqlite3`: synchronous `prepare()` / `run()` / `get()` / `all()`, `exec()` for batches. Not identical; see §6.
+- Current status: it was added in Node 22.5.0 and unflagged in Node 22.13.0+, where it is still experimental. Release-candidate status starts in the newer Node 25/26 lines. Confirm the runtime with `node --version` and expect warnings on some Node versions.
+- The API is intentionally close to `better-sqlite3`: synchronous `prepare()` / `run()` / `get()` / `all()`, and `exec()` for batches. The two APIs differ in places (see §6).
 
 ### Why Piscina?
 
@@ -95,7 +95,7 @@ PHASE 3: FREEZE
     verify final opens read-only
 ```
 
-The split between phases matters. Don't interleave them.
+Keep the phases separate. Do not interleave them.
 
 - **Don't invent a `geojson`-only schema.** Existing resolver code expects WOF-style tables.
 - **Don't create secondary indexes before bulk insert.** Every row insert updates every index. Defer.
@@ -349,7 +349,7 @@ WAL + `NORMAL` remains consistent and safe from database corruption, but can los
 
 ### `DatabaseSync` is synchronous
 
-Every query blocks the event loop of whichever thread called it. Fine in workers. On the main thread, keep setup/freeze explicit and bounded.
+Every query blocks the event loop of whichever thread called it. That is acceptable in workers. On the main thread, keep setup and freeze explicit and bounded.
 
 ### One `DatabaseSync` per worker task
 
@@ -375,9 +375,9 @@ Reviewed with DeepSeek, grounded in existing codebase behavior and downstream co
 
 ### 1. Table interface
 
-**Ship: `spr`, `names`, `concordances`, `place_population`, `ancestors`. `geojson` ephemeral only. No `geometries`.**
+**Ship `spr`, `names`, `concordances`, `place_population`, and `ancestors`. Keep `geojson` only during the build. Omit `geometries`.**
 
-`ancestors` is required — the FST builder's parent-chain resolution (`fst-builder.ts:88`) falls back to the ancestors table when `spr.parent_id` is a sentinel (-1, -4). The `geojson` table (raw `body TEXT`) is needed during build for `wof:population` extraction via `json_extract()`, but is dropped before VACUUM — it accounts for ~95% of DB size and is never read at query time. A separate `geometries` table adds no resolver value since bounding boxes and centroids already live in `spr`.
+`ancestors` is required because the FST builder's parent-chain resolution (`fst-builder.ts:88`) falls back to the ancestors table when `spr.parent_id` is a sentinel (-1, -4). The build needs the `geojson` table (raw `body TEXT`) for `wof:population` extraction via `json_extract()`. It is dropped before VACUUM because it accounts for ~95% of DB size and is never read at query time. A separate `geometries` table adds no resolver value, since bounding boxes and centroids already live in `spr`.
 
 ### 2. Body storage
 
@@ -387,7 +387,7 @@ The `geojson.body` column is the only way to extract `wof:population` (used by `
 
 ### 3. Extracting
 
-**Both — per-country extracts as canonical, monolith as convenience.**
+**Build both. Per-country extracts are canonical, and the monolith is a convenience.**
 
 The resolver already supports multi-extract ATTACH (`extract routing.ts`, `multi-extract.test.ts`). Per-country extracts give clean separation, independent update cadences, and smaller downloads. The monolith is a rollup (ATTACH + INSERT SELECT + VACUUM) for consumers that don't want to manage multiple files. Build per-country in parallel, merge on demand.
 
@@ -395,19 +395,19 @@ The resolver already supports multi-extract ATTACH (`extract routing.ts`, `multi
 
 **Skip.**
 
-The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID — useful for cartography but irrelevant for address parsing. Including them would add duplicate rows or clobber the primary lat/lon/bbox via INSERT OR REPLACE.
+The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID. They are useful for cartography but irrelevant for address parsing. Including them would add duplicate rows or clobber the primary lat/lon/bbox via INSERT OR REPLACE.
 
 ### 5. Resumability
 
 **Manifest-based for GeoJSON ingestion; rebuild-from-scratch for aux tables.**
 
-For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, status}`) lets resumed builds skip already-processed files. The manifest maps to the existing spliterator batching pipeline — glob emits candidates, manifest filters completed ones. Aux tables (FTS5, R\*Tree, population) are always rebuilt from scratch since they depend on final `spr` state.
+For ~1M global files, a lightweight manifest (JSONL: `{path, wof_id, mtime, status}`) lets resumed builds skip already-processed files. The manifest fits the existing spliterator batching pipeline: the glob emits candidates, and the manifest filters out completed ones. Aux tables (FTS5, R\*Tree, population) are always rebuilt from scratch since they depend on final `spr` state.
 
 ### 6. Worker responsibility
 
 **Workers return parsed data to a single main-thread writer.**
 
-This is the fix for the database lock bug that blocked the current `wof/prepare` command. Workers read files + parse JSON in parallel, return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize — lean into that constraint. The bottleneck is file I/O rather than SQLite writes.
+This design fixes the database lock bug that blocked the current `wof/prepare` command. Workers read files and parse JSON in parallel, then return `ParsedFeature` structs to the main thread. The main thread runs INSERTs in batched transactions (~500 rows). WAL mode allows concurrent readers during writes, but concurrent writers still serialize, so the design uses a single writer. The bottleneck is file I/O rather than SQLite writes.
 
 ---
 

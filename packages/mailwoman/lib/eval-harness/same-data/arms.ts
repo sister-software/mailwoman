@@ -39,8 +39,10 @@ import {
 export const WRONG_AREA_KM = 25
 
 /**
- * The ablation arm's pinned options — the six library defaults it turns off. Read from the frozen definition at run
- * time. this constant exists so a unit test can assert the two agree.
+ * The ablation arm's pinned options — the six library defaults it turns off.
+ *
+ * Read from the frozen definition at run time.
+ * This constant exists so a unit test can assert the two agree.
  */
 export const ABLATION_RESOLVE_OPTS: ResolveOpts = {
 	adminCoherence: false,
@@ -60,27 +62,33 @@ export interface ArmRowResult {
 	 */
 	selection: string | null
 	/**
-	 * True when the selection equals the row's gold place id. Always false for an abstention, including in the
-	 * withheld-gold stratum — abstention is scored there through the abstention metrics rather than by calling it a
-	 * selection.
+	 * True when the selection equals the row's gold place id.
+	 *
+	 * Always false for an abstention, including in the withheld-gold stratum — abstention
+	 * is scored there through the abstention metrics rather than by calling it a selection.
 	 */
 	correct: boolean
 	/**
-	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate. Null when the arm abstained
-	 * or the selected candidate carries no coordinate — absence of a distance is not a distance of zero.
+	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate.
+	 *
+	 * Null when the arm abstained or the selected candidate carries no coordinate —
+	 * absence of a distance is not a distance of zero.
 	 */
 	wrongArea: boolean | null
 	distanceKm: number | null
 	confidence: number
 	/**
-	 * The deciding check or refusal condition, in the arm's own vocabulary. Null when the arm produced none, which the
-	 * mechanism-coverage metric counts.
+	 * The deciding check or refusal condition, in the arm's own vocabulary.
+	 *
+	 * Null when the arm produced none, which the mechanism-coverage metric counts.
 	 */
 	mechanism: string | null
 	evidence: ArmEvidenceObservation
 	/**
-	 * Set when the arm raised. A row carrying an error is a harness failure and is excluded from every metric with its
-	 * count reported, never folded into abstention.
+	 * Set when the arm raised.
+	 *
+	 * A row carrying an error is a harness failure and is excluded from every metric
+	 * with its count reported, never folded into abstention.
 	 */
 	error?: string
 }
@@ -115,8 +123,10 @@ function placeIDValue(placeID: string): string {
 }
 
 /**
- * The winner's normalized margin over the runner-up in one trace, in [0, 1]. One when the lookup considered a single
- * candidate. zero when the top two tied.
+ * The winner's normalized margin over the runner-up in one trace, in [0, 1].
+ *
+ * One when the lookup considered a single candidate.
+ * Zero when the top two tied.
  */
 function traceMargin(trace: ResolveNodeTrace): number {
 	const scores = trace.candidates.map((candidate) => candidate.score).toSorted((left, right) => right - left)
@@ -141,8 +151,8 @@ function tracesFor(traces: readonly ResolveNodeTrace[], selection: string): Reso
 }
 
 /**
- * The mechanism string for a resolver arm: the pick's source and the checks that ran, or the checks of the last lookup
- * when the arm abstained.
+ * The mechanism string for a resolver arm: the pick's source and the checks that ran,
+ * or the checks of the last lookup when the arm abstained.
  */
 function resolverMechanism(traces: readonly ResolveNodeTrace[], picked: ResolveNodeTrace | null): string | null {
 	if (picked) {
@@ -198,8 +208,9 @@ export async function runResolverArm(
 			traceSink: (record) => traces.push(record),
 		})
 
-		// Read before the result is built. `resolveTree` catches a backend throw by design, so a replay miss reaches this
-		// point looking exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
+		// Read before the result is built.
+		// `resolveTree` catches a backend throw by design, so a replay miss reaches this point looking
+		// exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
 		if (misses.length) {
 			return {
 				arm,

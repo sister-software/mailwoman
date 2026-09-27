@@ -33,6 +33,11 @@
 			"node": "./lib/tools/index.ts",
 			"default": "./out/tools/index.js"
 		},
+		"./github": {
+			"types": "./out/github/index.d.ts",
+			"node": "./lib/github/index.ts",
+			"default": "./out/github/index.js"
+		},
 		"./hooks/*": {
 			"types": "./out/hooks/*.d.ts",
 			"node": "./lib/hooks/*.ts",
@@ -56,8 +61,8 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@modelcontextprotocol/sdk": "^1.30.0",
 		"mailwoman": "workspace:*",
-		"path-ts": "^2.4.1",
-		"spliterator": "^7.11.0",
+		"path-ts": "^2.5.0",
+		"spliterator": "^8.1.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2",
 		"zod": "^4.5.4"
 	},

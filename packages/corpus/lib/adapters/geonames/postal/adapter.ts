@@ -2,51 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `geonames-postal`: GeoNames postal-code dump consumer (https://www.geonames.org/, CC-BY-4.0).
- *
- *   The GeoNames postal export (`https://download.geonames.org/export/zip/<CC>.zip`) is a clean,
- *   per-country `postcode → place → admin1` table with the place + region names inline (no aux-file
- *   join needed). It broadens the corpus's postcode→locality→region coverage to ~80 countries, well
- *   beyond `wof-postalcode`/the coordinate-first table — forward coverage for the multi-locale
- *   goal.
- *
- *   Input: a per-country postal dump (`<CC>.txt`, 12 tab-separated columns, no header): country,
- *   postcode, place, admin1_name, admin1_code, admin2__, admin3__, lat, lon, accuracy.
- *
- *   Output: per row, postcode-first (international) variants — the common order for the non-US
- *   locales this fills (US postcodes are already covered by tiger/WOF, which use postcode-last):
- *
- *   1. `{ postcode, locality }` → "AD100 Canillo"
- *   2. `{ postcode, locality, region }` → "AD100 Canillo, Canillo" Prefer configuring this adapter for
- *        non-US countries. for US, the postcode-last sources are the right order. License:
- *        `"CC-BY-4.0"` per row (attribute "GeoNames").
+ *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row carries its place and
+ *   region names inline.
  */
 
 import { componentsPresentIn } from "@mailwoman/codex/address-format"
 import { readUnquotedTSV } from "@mailwoman/core/fs/delimited"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * The source ID on rows from this adapter.
  */
 export const GEONAMES_POSTAL_ADAPTER_ID = "geonames-postal"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * The license on rows from this adapter.
  */
 export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * GeoNames postal-dump columns (0-based): country, postcode, place, admin1_name, admin1_code, admin2_name, ….
+ * Zero-based column indices in a GeoNames postal dump.
  *
- * Shared with `tools/postcode-triples.ts`, which additionally reads `admin2Name` — the city for the IN/MX/PT-shaped
- * exports whose `place` column is a street or colonia.
- *
- * `latitude`/`longitude` are the postcode's coordinate rather than the locality's. A consumer grading distance to a
- * place needs a gazetteer centroid instead.
+ * The coordinates locate the postcode, which may differ from the locality's position.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,
@@ -58,17 +37,20 @@ export const GEONAMES_POSTAL_COLUMNS = {
 	longitude: 10,
 } as const
 
+/**
+ * Creates the GeoNames postal adapter.
+ */
 export function createGeonamesPostalAdapter(): CorpusAdapter {
 	return {
 		id: GEONAMES_POSTAL_ADAPTER_ID,
 		defaultLicense: GEONAMES_POSTAL_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.GeoNamesPostal,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"GeoNames postcodes (CC-BY-4.0) — multi-locale postcode→locality→region, names inline; international postcode-first order.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
-			// `header: false` — the GeoNames postal dump is headerless, and the spliterator would
-			// otherwise consume row 1 as column names and lose its first postcode.
 			const rows = readUnquotedTSV(opts.inputPath)
 
 			let emitted = 0
@@ -90,8 +72,7 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 				if (!postcode || !locality) continue
 				const region = (rec[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
 
-				// Postcode-first (international) variants. Skip the region variant when admin1 just
-				// repeats the place (common for city-states / micro-admin) to avoid "X X" noise.
+				// The region row is skipped when the region name equals the locality name.
 				const variants: Array<{ slot: string; comp: CanonicalRow["components"]; raw: string }> = [
 					{ slot: "pl", comp: { postcode, locality }, raw: `${postcode} ${locality}` },
 				]
@@ -128,6 +109,6 @@ export function createGeonamesPostalAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * The adapter instance registered with the corpus builder.
  */
 export const geonamesPostalAdapter = createGeonamesPostalAdapter()

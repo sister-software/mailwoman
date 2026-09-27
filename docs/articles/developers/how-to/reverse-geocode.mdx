@@ -87,7 +87,7 @@ chain.
 The mechanism: the geocoder pulls every place whose bounding box contains the point from the
 `place_bbox` R\*Tree, smallest-area-first, then ray-casts each one's real boundary against the polygon
 sidecar. The first polygon that contains the point wins, and that is `polygon`. A candidate whose
-polygon exists but rejects the point is dropped as a bounding-box false positive. If nothing is
+polygon exists but rejects the point is dropped as a bounding-box false positive. If no candidate is
 polygon-confirmed, the nearest centroid among the polygon-less candidates wins, and that is
 `approximate`.
 

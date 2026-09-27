@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The regression test for the neural-weights-en-in@8.6.0 incident: a `files` array naming a
- *   binary the tarball did not contain, published without complaint. The first case below is that
- *   package's exact manifest and exact tarball listing.
+ *   Tests the tarball audit that compares a manifest's `files`, `exports`, `imports` and `bin` against the
+ *   packed file list.
  */
 
 import {
@@ -16,7 +15,7 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * What `@mailwoman/neural-weights-en-in@8.6.0` actually shipped — read back off the registry.
+ * The file list of a published `@mailwoman/neural-weights-en-in` tarball that lacked its declared binary.
  */
 const EN_IN_SHIPPED = new Set(["./README.md", "./model-card.json", "./package.json", "./scripts/link-dev-weights.ts"])
 
@@ -42,7 +41,7 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("skips globs — a pattern matching nothing is legal", () => {
-		// A data-only package carries no .ts of its own; `**\/*.ts` matching nothing must not fail it.
+		// A data-only package has no `.ts` files, so a glob that matches no file must pass.
 		expect(collectMissingFileEntries(["*.ts", "**/*.tsx", "data/*.json"], new Set(["./package.json"]))).toEqual([])
 	})
 
@@ -51,8 +50,7 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("accepts a directory entry satisfied by a member beneath it", () => {
-		// `out/` is how cartographer/spatial/tiger declare their build output. tar may not list the
-		// directory node itself, only its contents.
+		// Tar may list only a directory's contents, so a file beneath `out/` satisfies the entry.
 		expect(collectMissingFileEntries(["out/"], new Set(["./out/index.js"]))).toEqual([])
 		expect(collectMissingFileEntries(["out"], new Set(["./out/index.js"]))).toEqual([])
 		expect(collectMissingFileEntries(["out/"], new Set(["./index.js"]))).toEqual(["out/"])
@@ -69,7 +67,6 @@ describe("collectMissingFileEntries", () => {
 	})
 
 	it("does not confuse a prefix that is not a path boundary", () => {
-		// `./out-of-band.js` must not satisfy an `out` directory entry.
 		expect(collectMissingFileEntries(["out"], new Set(["./out-of-band.js"]))).toEqual(["out"])
 	})
 })
@@ -108,9 +105,8 @@ describe("collectMissingImportTargets", () => {
 
 describe("collectMissingBinTargets", () => {
 	it("flags a bin whose file the tarball lacks — the map-tui class", () => {
-		// `@mailwoman/map-tui` declares `bin: { "map-tui": "./out/cli.js" }` and packs `out/` as a glob, so an
-		// unbuilt tree packs clean and npm path-links a file that isn't there. Nothing else in the manifest
-		// mentions `out/cli.js`, which is why neither the files nor the exports guard sees it.
+		// A package that packs `out/` as a glob still packs cleanly when unbuilt.
+		// Only the bin audit sees a missing bin file that `files` and `exports` do not list.
 		const bin = { "map-tui": "./out/cli.js" }
 
 		expect(collectMissingBinTargets(bin, new Set(["./package.json", "./out/frame.js"]))).toEqual(["./out/cli.js"])
@@ -118,7 +114,8 @@ describe("collectMissingBinTargets", () => {
 	})
 
 	it("reads both spellings npm accepts", () => {
-		// The string form names the package itself. the map form names each command.
+		// The string form uses the package name as the command.
+		// The map form lists each command.
 		expect(collectMissingBinTargets("./out/cli.js", new Set())).toEqual(["./out/cli.js"])
 
 		expect(collectMissingBinTargets({ mailwoman: "./out/cli.js", mw: "./out/cli.js" }, new Set())).toEqual([

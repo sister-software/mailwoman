@@ -10,14 +10,15 @@
  *   read-only from the moment it exists.
  */
 
+import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePath } from "@mailwoman/core/fs/writers"
 import { resolveWOFRepo, wofRepoName } from "@mailwoman/core/resources/whosonfirst"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join, type PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { ingestWOF, type IngestWOFResult } from "#gazetteer-pipeline/admin/ingest-wof"
 import { buildFTS } from "#gazetteer-pipeline/fts"
@@ -35,25 +36,35 @@ export interface BuildPostcodeDatabaseOptions {
 	 */
 	country: string
 	/**
-	 * WOF repos root. Default `<data-root>/wof/repos`.
+	 * WOF repos root.
+	 *
+	 * Default `<data-root>/src/wof-repos`.
 	 */
-	reposDir?: string
+	reposDir?: PathBuilderLike
 	/**
-	 * Output artifact. Default `<data-root>/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
+	 * Output artifact.
+	 *
+	 * Default `<data-root>/db/wof/postalcode-<cc>.rebuild.db` (staging — swap deliberately).
 	 */
-	out?: string
+	out?: PathBuilderLike
 	/**
-	 * Census zcta Gazetteer file (US pass 1). Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
+	 * Census zcta Gazetteer file (US pass 1).
+	 *
+	 * Default `<data-root>/census/2024_Gaz_zcta_national.txt`.
 	 */
 	zctaPath?: PathBuilderLike
 	/**
-	 * GeoNames postal dump dir. Default `<data-root>/geonames-postal`.
+	 * GeoNames postal dump dir.
+	 *
+	 * Default `<data-root>/geonames-postal`.
 	 */
 	geonamesPostalDir?: PathBuilderLike
 	/**
-	 * Admin gazetteer for the parent/ancestor borrows. Default the live `admin-global-priority.db`.
+	 * Admin gazetteer for the parent/ancestor borrows.
+	 *
+	 * Default the live `admin-global-priority.db`.
 	 */
-	adminPath?: string
+	adminPath?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -67,16 +78,17 @@ export interface BuildPostcodeDatabaseResult {
 }
 
 /**
- * Build one country's sealed postcode database. See the module docstring for the fill ladder.
+ * Build one country's sealed postcode database.
+ *
+ * See the module docstring for the fill ladder.
  */
 export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions): Promise<BuildPostcodeDatabaseResult> {
 	const phase = opts.onPhase ?? (() => {})
 	const cc = opts.country.toLowerCase()
-	const wofDir = dataRootPath("wof")
-	const reposDir = opts.reposDir ?? join(wofDir, "repos")
+	const reposDir = opts.reposDir ?? wofReposPath
 	const repoName = wofRepoName("postalcode", cc)
 	const repoDir = await resolveWOFRepo(reposDir, repoName)
-	const out = opts.out ?? join(wofDir, `postalcode-${cc}.REBUILD.db`)
+	const out = PathBuilder.from(opts.out ?? wofDatabasePath(`postalcode-${cc}.REBUILD.db`))
 
 	if (!repoDir) {
 		throw new Error(
@@ -85,7 +97,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		)
 	}
 
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 
 	const ingestPath = out + ".ingest"
@@ -131,7 +143,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 
 		phase("ingest", `${ingest.placesIngested.toLocaleString()} postcodes`)
 
-		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. see zcta-centroids.ts).
+		// US pass 1: Census zcta + GeoNames US (provenance-stamped in centroid_source. See zcta-centroids.ts).
 
 		if (cc === "us") {
 			const zctaPath = opts.zctaPath ?? dataRootPath("census", "2024_Gaz_zcta_national.txt")
@@ -143,10 +155,10 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 				phase("fill-zcta", `SKIPPED (${zctaPath} not present)`)
 			}
 
-			const usPostal = join(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
+			const usPostal = resolvePathBuilder(opts.geonamesPostalDir ?? dataRootPath("geonames-postal"), "US.txt")
 
 			if (await pathExists(usPostal)) {
-				phase("fill-geonames-us", usPostal)
+				phase("fill-geonames-us", usPostal.toString())
 				geonamesUSFilled = fillGeonamesPlaceholders(db, parseGeonamesCentroids(await readLocalTextFile(usPostal)))
 			}
 		}
@@ -154,7 +166,7 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		// The general ladder (GeoNames postal → parent-borrow → ancestor fallback).
 		fills = await fillPostcodeCentroids(db, {
 			geonamesDir: opts.geonamesPostalDir ?? dataRootPath("geonames-postal"),
-			adminPath: opts.adminPath ?? join(wofDir, "admin-global-priority.db"),
+			adminPath: opts.adminPath ?? wofDatabasePath("admin-global-priority.db"),
 			reposDir,
 			onPhase: phase,
 		})
@@ -169,13 +181,13 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 		db.exec("PRAGMA journal_mode = DELETE")
 		db.exec("ANALYZE")
 
-		phase("vacuum", out)
+		phase("vacuum", out.toString())
 
 		if (await pathExists(out)) {
 			await removePath(out)
 		}
 
-		db.prepare("VACUUM INTO ?").run(out)
+		db.prepare("VACUUM INTO ?").run(out.toString())
 	}
 
 	await removePath(ingestPath)
@@ -196,7 +208,14 @@ export async function buildPostcodeDatabase(opts: BuildPostcodeDatabaseOptions):
 	phase("seal")
 	await sealDatabase(out)
 
-	return { out, postcodesIngested: ingest.placesIngested, zctaFilled, geonamesUSFilled, fills, sealed: true }
+	return {
+		out: out.toString(),
+		postcodesIngested: ingest.placesIngested,
+		zctaFilled,
+		geonamesUSFilled,
+		fills,
+		sealed: true,
+	}
 }
 
 export * from "#gazetteer-pipeline/postcode/binary"

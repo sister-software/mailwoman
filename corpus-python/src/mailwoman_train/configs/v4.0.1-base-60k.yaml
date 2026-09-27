@@ -1,35 +1,19 @@
-# === v4.0.1-base-60k — RUN 2 OF the envelope (the venue contingency. ROAD_TO §10 item 1). ===
-# one named delta vs v4.0.0-base-60k: the `synth-house-venue` source folded into the feed —
-# corpus v0.15.0-venue (v0.13.0-latam + 116,244 house-venue rows, FR-order aware: the FR tail
-# "venue, 20 Rue de la Huchette, 75005 Paris" is the v4.0.0 gauntlet's exact failure family) +
-# source_weights synth-house-venue: 2.0. Everything else byte-identical to v4.0.0 incl.
-# fisher_capture (the run-2 artifact supersedes run-1's).
+# v4.0.1-base-60k is a 60k-step from-scratch base run that adds the synth-house-venue source.
 #
-# Why (the run-1 verdict): gauntlet regression layer failed 3 fixtures, all one family — FR
-# venue-led full addresses dropping to admin/street tier. Mechanism proven register-invariant
-# (not evidence painting); root cause = the feed never admitted a venue source (source_weights
-# drops unlisted sources. synth-house-venue existed as a recipe but was in no corpus) — the
-# shipped model's venue competence was lineage inheritance, which from-scratch X-rayed away.
+# The only change from v4.0.0-base-60k is the v0.15.0-venue corpus and the synth-house-venue weight.
+# The corpus adds 116,244 venue-led rows to v0.13.0-latam, including the FR order
+# "venue, 20 Rue de la Huchette, 75005 Paris". A from-scratch base learns venues only from a venue source.
 #
-# PRE-registered checks: the v4.0.0 sheet verbatim (G1-G8 + Fisher sanity as written there), plus:
-#   - The 3 venue fixtures (mr-mrs-crab / jjan-chatelet / american-bar-le-marais) must clear.
-#   - The 2 now-pass tracked cases (chat-qui-peche, venue-delta) must stay passing (promote their
-#     status in the same reduce).
-#   - us.street_prefix graded against the support-aware recut floor (the recorded disposition:
-#     the 96.0 floor used the 2.0pp fallback margin on an n=25 metric. the spec-rule floor ≈ 86).
-#   - No other class may drop below its run-1 reading by more than noise (the delta is one source
-#     at ~1.4% mass. a wider movement means the delta did more than its name).
-#   stop rule: this is the envelope's last run. Any miss => operator conversation, no third launch.
+# Before launch, sync the v0.15.0-venue overlay from R2 to /data/corpus/versioned/v0.15.0-venue/.
+# Its base parquet files resolve into v0.13.0-latam, which must also be on the volume.
 #
-# Launch checklist: the v0.15.0-venue overlay synced (R2 corpus/v0.15.0-venue/ -> /data/corpus/
-# versioned/v0.15.0-venue/; base parquet files resolve into v0.13.0-latam which persists on the volume).
-#   cd corpus-python && modal run -d -m launch.train_remote --config v4.0.1-base-60k.yaml --resume none
-#
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v4.0.1-base-60k.yaml --resume none
+
 data:
-  corpus_dir: /data/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue # RUN-2 DELTA: the venue overlay.
+  corpus_dir: /data/corpus/versioned/v0.15.0-venue/corpus-v0.15.0-venue
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -53,10 +37,11 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # Overture — live locality.
-    MX: 1.0 # Overture — BR stays out (0% OA-lineage + SN-garbage numbers).
-  source_weights: # Verbatim from v3.24 except synth-po-box-cedex (the D2 revert).
-    synth-house-venue: 2.0 # RUN-2 DELTA (the one variable): the FR-order-aware venue source.
+    CA: 1.0
+    # This run leaves out BR because its Overture rows lacked usable house numbers.
+    MX: 1.0
+  source_weights:
+    synth-house-venue: 2.0
     overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
@@ -75,7 +60,8 @@ data:
     synth-fr-order: 3.0
     synth-fr-admin-split: 6.0
     synth-unit: 1.5
-    synth-po-box-cedex: 1.5 # D2 REVERT (3.0 -> 1.5, the v385 share): the boost was fine-tune replay medicine. the base learns the class natively.
+    # A from-scratch base learns PO box and CEDEX natively, so it does not need the 3.0 fine-tune boost.
+    synth-po-box-cedex: 1.5
     synth-affix: 2.0
     synth-country: 2.0
     overture: 3.0
@@ -83,6 +69,7 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains Norway board surfaces.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
@@ -95,7 +82,7 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  augment_ordinal_prob: 0.3 # The num-ordinal invariant, native from step 0 (v3.24's proven value).
+  augment_ordinal_prob: 0.3
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
@@ -105,8 +92,8 @@ data:
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
   street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
-  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json # D2: the DE fold (#1355).
-model: # Verbatim from v3.24 (v2.4.1 geometry + the shipped channel set).
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+model:
   hidden_size: 384
   use_span_boundary_head: true
   use_deploc_head: false
@@ -171,7 +158,8 @@ model: # Verbatim from v3.24 (v2.4.1 geometry + the shipped channel set).
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group.
+# This run trains from scratch without init_from, on a full-length cosine schedule.
+train:
   output_dir: /data/output-v401-base-60k-s42/checkpoints
   seed: 42
   batch_size: 128
@@ -183,16 +171,19 @@ train: # FROM SCRATCH (D1): no init_from, full-length cosine, one param group.
   grad_clip_norm: 1.0
   max_steps: 60000
   eval_every_steps: 2000
-  save_every_steps: 5000 # D1: every 5k. the over-trust watch grades every save from 40k on.
+  save_every_steps: 5000
   log_every_steps: 100
   precision: bf16
   num_workers: 0
   csv_log_path: "{output_dir}/../train_log.csv"
   lr_schedule: cosine
-  gazetteer_curriculum: true # Fresh channel — absence-robustness from step 0 (see header note 5).
+  # The curricula zero out channel confidence on a ramped share of rows, so the model keeps
+  # label competence when a gazetteer or evidence channel is absent.
+  gazetteer_curriculum: true
   evidence_curriculum: true
   evidence_noise_prob: 0.15
-  fisher_capture: true # D4/#1354 — the B11 consolidation artifact, captured at the only cheap point.
+  # The run captures the Fisher information over its last 2k steps for later EWC fine-tunes.
+  fisher_capture: true
   fisher_capture_last_n_steps: 2000
   trackio_project: mailwoman
   trackio_run_name: v4.0.1-base-60k-s42

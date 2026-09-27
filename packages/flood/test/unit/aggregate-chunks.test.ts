@@ -8,7 +8,7 @@
  *   A range OF feature IDS is not A region, so a coverage cell is reached by several chunks and their
  *   counts must ADD. Taking the last chunk's value instead would report a busy floodplain as holding
  *   only the polygons whose ids happened to fall in the final range — a well-formed artifact that
- *   under-reports what the authority mapped, with nothing anywhere to say so.
+ *   under-reports what the authority mapped, with no field anywhere to say so.
  */
 
 import { aggregateChunks } from "@mailwoman/flood/sdk/build-flood"
@@ -60,7 +60,8 @@ describe("aggregateChunks", () => {
 	})
 
 	it("computes the area gap over the SUMMED totals, not per chunk", () => {
-		// Each chunk is 1% out on its own and they cancel. the whole-file reading is what the tolerance is about.
+		// Each chunk is 1% out on its own and they cancel.
+		// The whole-file reading is what the tolerance is about.
 		const result = aggregateChunks([
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 1_010_000, allExteriorM2: 1_100_000 } }),
 			chunk({ area: { sourceM2: 1_000_000, nestedM2: 990_000, allExteriorM2: 1_100_000 } }),

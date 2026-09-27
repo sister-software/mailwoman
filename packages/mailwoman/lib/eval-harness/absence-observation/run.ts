@@ -6,7 +6,7 @@
  *   the same pipeline construction the POI board uses, ask the negative-evidence route what it makes of
  *   each answer, and emit a receipt.
  *
- *   this module decides nothing IT did not read. Every row and its registered outcome come from
+ *   this module decides no fact it did not read. Every row and its registered outcome come from
  *   `probe-definition.json`, which {@linkcode loadAbsenceProbeDefinition} refuses to hand over if its
  *   content hash has moved. The runner adds the measurements and the artifact identity.
  *
@@ -23,10 +23,11 @@
  *   read it says so in place rather than omitting the field.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { repoRootPath } from "@mailwoman/core/paths"
 import type { PipelineOpts, PipelineResult } from "@mailwoman/core/pipeline"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
+import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	type AbsenceCounts,
@@ -88,18 +89,22 @@ export interface AbsenceProbeReceipt {
 
 export interface AbsenceProbeOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration — for a test that wants a synthetic definition. A run with no override reads
-	 * the committed one.
+	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
+	 *
+	 * A run with no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
 	/**
-	 * The sealed coverage layer whose cells qualify the absence. Absent resolves the definition's own `coverageLayerFile`
-	 * under `$MAILWOMAN_DATA_ROOT/poi/`.
+	 * The sealed coverage layer whose cells qualify the absence.
+	 *
+	 * Absent resolves the definition's own `coverageLayerFile` under `$MAILWOMAN_DATA_ROOT/db/poi/`.
 	 */
-	coverageDatabasePath?: string
+	coverageDatabasePath?: PathBuilderLike
 	/**
-	 * Commit sha recorded in the receipt. Defaults to the checkout's own short head.
+	 * Commit sha recorded in the receipt.
+	 *
+	 * Defaults to the checkout's own short head.
 	 */
 	gitCommit?: string
 }
@@ -107,14 +112,15 @@ export interface AbsenceProbeOptions extends POIBoardOptions {
 /**
  * Run the probe.
  *
- * The POI database the executor queries defaults to the coverage layer itself, and that default is required: an absence
- * qualified by one layer's coverage while the answer came out of a different layer is a claim about two artifacts that
- * were never compared. Pass `db` explicitly only to measure that mismatch on purpose.
+ * The POI database the executor queries defaults to the coverage layer itself, and that
+ * default is required: an absence qualified by one layer's coverage while the answer came
+ * out of a different layer is a claim about two artifacts that were never compared.
+ * Pass `db` explicitly only to measure that mismatch on purpose.
  */
 export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = {}): Promise<AbsenceProbeReceipt> {
 	const definition = await loadAbsenceProbeDefinition(options.definitionPath, options.freezePath)
 
-	const coverageDatabasePath = options.coverageDatabasePath ?? String(dataRootPath("poi", definition.coverageLayerFile))
+	const coverageDatabasePath = options.coverageDatabasePath ?? poiDatabasePath(definition.coverageLayerFile)
 
 	const needsSemanticRoute = definition.rows.some((row) => row.requiresSemanticRoute)
 	const semanticRoute = needsSemanticRoute ? await createSemanticObservationRoute() : undefined
@@ -122,8 +128,9 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 
 	using pipelineHandle = await createPOIBoardPipeline({
 		...options,
-		// After the spread, never before: `...options` carries an explicit `db: undefined` when the caller passed
-		// none, which would overwrite the default and send the executor to the data root's general poi.db.
+		// After the spread, never before: `...options` carries an explicit `db: undefined`
+		// when the caller passed none, which would overwrite the default and send the
+		// executor to the data root's general poi.db.
 		db: options.db ?? coverageDatabasePath,
 		...(semanticRoute ? { poiSemanticLookup: semanticRoute.lookup } : {}),
 	})
@@ -152,7 +159,7 @@ export async function runAbsenceObservationProbe(options: AbsenceProbeOptions = 
 		definitionVersion: definition.version,
 		definitionSHA256: absenceProbeDefinitionHash(definition),
 		generatedAt: new Date().toISOString(),
-		gitCommit: options.gitCommit ?? buildSHA(String(repoRootPath())),
+		gitCommit: options.gitCommit ?? buildSHA(repoRootPath()),
 		artifact: await readArtifactIdentity(db, backend, options),
 		absenceRoute: absenceRoute.identity,
 		semanticRouteInjected: Boolean(semanticRoute),
@@ -172,9 +179,10 @@ async function gradeRow(
 	const runOpts: PipelineOpts = row.locale ? { locale: row.locale } : {}
 	const result = await pipeline(row.query, runOpts)
 
-	// The semantic route records a firing per probe of its lexicon rung. draining keeps one row's firings from being
-	// attributed to the next. This probe does not report them — #1928's receipt owns that — but leaving them to
-	// accumulate would grow unbounded across a run.
+	// The semantic route records a firing per probe of its lexicon rung.
+	// Draining keeps one row's firings from being attributed to the next.
+	// This probe does not report them — #1928's receipt owns that — but leaving them
+	// to accumulate would grow unbounded across a run.
 	semanticRoute?.takeObservations()
 
 	const decision = await absenceRoute.observe(result.poiIntent)
@@ -182,8 +190,9 @@ async function gradeRow(
 
 	const poiOutcome = !result.poiIntent ? "none" : result.poiIntent.type === "abstain" ? "abstain" : "intent"
 
-	// The set the branch searched, after the anchor's country bound it (#1999). Compared as sets: the lookup's
-	// enumeration order states no preference, so the registration is code-point ordered and so is this.
+	// The set the branch searched, after the anchor's country bound it (#1999).
+	// Compared as sets: the lookup's enumeration order states no preference,
+	// so the registration is code-point ordered and so is this.
 	const searchedCategories =
 		result.poiIntent?.type === "intent" && result.poiIntent.intent.subject.kind === "category"
 			? [...result.poiIntent.intent.subject.categoryIDs].toSorted(compareByCodePoint)
@@ -226,8 +235,10 @@ async function gradeRow(
 }
 
 /**
- * The human-readable report. Prints each row's registered outcome beside the observed one, so a reader never has to
- * open the definition to know what the row was asserting.
+ * The human-readable report.
+ *
+ * Prints each row's registered outcome beside the observed one, so a reader never
+ * has to open the definition to know what the row was asserting.
  */
 export function printAbsenceProbeReceipt(receipt: AbsenceProbeReceipt): void {
 	const route = receipt.absenceRoute

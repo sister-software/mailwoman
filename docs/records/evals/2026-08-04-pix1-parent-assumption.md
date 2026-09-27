@@ -65,7 +65,7 @@ right pins it there:
 | `350 5th Ave, Manhattan, New York, NY 10118`              | dep_loc=Manhattan, locality=New York         | trailing `NY 10118`       |
 | `123 Main St, Park Slope, Brooklyn, NY 11215`             | dep_loc=Park Slope, locality=Brooklyn        | `Brooklyn` is unambiguous |
 
-The GB population is the same shape — the parent sits in the post-town position, left of a postcode.
+The GB population is the same shape. The parent sits in the post-town position, left of a postcode.
 `brooklyn, new york, ny` is the tail case: a bare three-segment query, no postcode, and a parent whose
 surface is a state name. The trailing `ny` pushes the parent AWAY from locality at the exact moment
 the pair prior assumes it landed there.

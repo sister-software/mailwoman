@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
  *   OverpassQL export emitter over a POI intent (spec §1: "we print the query. we never run it").
@@ -20,8 +21,10 @@ import { stringifyJSON } from "@mailwoman/core/json"
  */
 
 /**
- * Minimal structural shape the emitter reads off a POI intent. `@mailwoman/core/pipeline`'s `POIIntent` satisfies this
- * — no cast needed at call sites — but this package doesn't depend on core to define it.
+ * Minimal structural shape the emitter reads off a POI intent.
+ *
+ * `@mailwoman/core/pipeline`'s `POIIntent` satisfies this — no cast needed at call sites —
+ * but this package doesn't depend on core to define it.
  */
 export interface OverpassIntentLike {
 	subject:
@@ -51,17 +54,21 @@ function escapeQL(value: string): string {
 }
 
 /**
- * Escape regex metacharacters — the `~` operator's value is a regex rather than a literal.
+ * Escape regex metacharacters.
+ * The `~` operator's value is a regex rather than a literal.
  */
 function escapeQLRegex(value: string): string {
-	return escapeQL(value.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+	return escapeQL(escapeRegExp(value))
 }
 
 export interface EmitOverpassOpts {
 	/**
-	 * One `key=value` OSM tag per category the subject reaches (from `CategoryRecord.osmTag`), in the subject's own
-	 * order. A subject reaching several categories emits an OverpassQL union over them — Overpass answers the same set
-	 * the POI branch searches, and the emitter states no preference between the members.
+	 * One `key=value` OSM tag per category the subject reaches (from `CategoryRecord.osmTag`),
+	 * in the subject's own order.
+	 *
+	 * A subject reaching several categories emits an OverpassQL union over them.
+	 * Overpass answers the same set the POI branch searches, and the emitter
+	 * states no preference between the members.
 	 */
 	osmTags?: string[]
 	/**
@@ -71,13 +78,17 @@ export interface EmitOverpassOpts {
 }
 
 /**
- * Render an OverpassQL query for the intent. Category subjects need `opts.osmTags`; name/brand subjects render a
- * case-insensitive name regex. A resolved anchor locality becomes an area scope. otherwise the query is global
- * (Overpass-turbo users add their own bbox).
+ * Render an OverpassQL query for the intent.
  *
- * Several filters become an OverpassQL union block — `( … ; … ; );` — which is the language's own way of saying "the
- * rows under either tag", and is what a category subject reaching several categories asks for. One filter renders
- * exactly as it always has, with no block around it.
+ * Category subjects need `opts.osmTags`; name/brand subjects render a case-insensitive name regex.
+ * A resolved anchor locality becomes an area scope.
+ *
+ * Otherwise the query is global (Overpass-turbo users add their own bbox).
+ *
+ * Several filters become an OverpassQL union block — `( … ; … ; );` —
+ * which is the language's own way of saying "the rows under either tag",
+ * and is what a category subject reaching several categories asks for.
+ * One filter renders exactly as it always has, with no block around it.
  */
 export function emitOverpassQL(intent: OverpassIntentLike, opts: EmitOverpassOpts = {}): string {
 	let filters: string[]

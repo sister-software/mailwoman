@@ -1,9 +1,10 @@
 /**
- * Report-only C6 census over the committed Gauntlet corpus. This command is not a release eval.
+ * Report-only C6 census over the committed Gauntlet corpus.
+ *
+ * This command is not a release eval.
  */
 
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { prettyJSON } from "@mailwoman/core/json"
+import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows } from "@mailwoman/core/utils"
 import { findFSTAcceptedMatches } from "@mailwoman/neural/fst-prior"
@@ -59,8 +60,9 @@ const candidateLocalities = candidateDB
 function sourceGazetteerReceipt(input: string): C6RowReport["sourceGazetteer"] {
 	if (!candidateDBPath || !candidateLocalities) return undefined
 	const key = normalizeLocalityForKey(input)
-	// Hyphen is a possible decoded boundary (`Tel Aviv-Yafo`). Generate surface subspans, then pass every one through the
-	// candidate table's shared fold. do not infer keys by editing the folded complete key.
+	// Hyphen is a possible decoded boundary (`Tel Aviv-Yafo`).
+	// Generate surface subspans, then pass every one through the candidate table's shared fold.
+	// Do not infer keys by editing the folded complete key.
 	const surfaceWords = input.split(/[\s-]+/u).filter((word) => word.length)
 	const nestedKeys = new Set<string>()
 
@@ -172,5 +174,5 @@ for (const id of TARGET_IDS) {
 }
 
 if (values["out-json"]) {
-	await writeLocalTextFile(prettyJSON({ summary, requiredIDs: TARGET_IDS, rows: reports }), values["out-json"])
+	await writeLocalJSONFile({ summary, requiredIDs: TARGET_IDS, rows: reports }, values["out-json"])
 }

@@ -2,17 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman gazetteer build nsul` — the GB uprn → unit-postcode register (`nsul.db`): the ONS
- *   National Statistics uprn Lookup joined to OS Open uprn's coordinates, under the layer interface.
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/nsul/<yyyy-MM>/` directory
- *   (there is no download step — the portal item is fetched by hand beside its `.md5` sidecar and
- *   `item.json`), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
- *   Nothing on the parse/resolve path reads it yet. the runtime surface is a separate proposal
- *   (#1975, F4).
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory (there is no download
+ *   step), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland postcode data is outside ONS's open
- *   terms, and the layer's own coverage rows say so. See `gazetteer-pipeline/nsul-layer.ts` for the
- *   checks (md5, exact header per region, the eleven-region set, accounting identity, row floor).
+ *   Coverage is England, Scotland, and Wales. Northern Ireland postcode data is outside ONS's open terms, and the
+ *   layer's own coverage rows say so.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.
@@ -32,19 +26,20 @@ export const spec = {
 	options: {
 		"source-dir": {
 			type: "string",
-			description: "Acquisition dir holding NSUL_E<epoch>_<MON>_<YYYY>.zip. Default: newest <data-root>/nsul/<YYYY-MM>",
+			description:
+				"Acquisition dir holding NSUL_E<epoch>_<MON>_<YYYY>.zip. Default: newest <data-root>/db/nsul/<YYYY-MM>",
 		},
-		out: { type: "string", description: "Output path. Default <data-root>/nsul/nsul.db" },
+		out: { type: "string", description: "Output path. Default <data-root>/db/nsul/nsul.db" },
 		"uprn-db": {
 			type: "string",
-			description: "The uprn.db to take coordinates from. Default <data-root>/uprn/uprn.db",
+			description: "The uprn.db to take coordinates from. Default <data-root>/db/uprn/uprn.db",
 		},
 	},
 } as const satisfies CommandSpec
 
 const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { repoRootPath } = await import("@mailwoman/core/utils")
+		const { repoRootPath } = await import("@mailwoman/core/paths")
 		const { buildSHA } = await import("#gazetteer/stamp-manifest")
 		const { buildNSULLayer, NSUL_COVERAGE_NOTE, nsulVintageLabel } = await import("#gazetteer/nsul-layer")
 
@@ -52,7 +47,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 			sourceDir: options.sourceDir,
 			out: options.out,
 			uprnDatabasePath: options.uprnDB,
-			buildSHA: buildSHA(String(repoRootPath())),
+			buildSHA: buildSHA(repoRootPath()),
 			onPhase: phaseReporter(),
 		})
 
@@ -90,7 +85,7 @@ const GazetteerBuildNSUL: CommandComponent<typeof spec> = ({ options }) => {
 		)
 	}
 
-	return null // progress streams to stderr until the summary lands
+	return null
 }
 
 export default GazetteerBuildNSUL

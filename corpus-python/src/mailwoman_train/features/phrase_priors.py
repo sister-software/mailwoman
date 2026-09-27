@@ -9,7 +9,7 @@ This module defines:
 
 - ``PHRASE_KINDS``: the 7-kind taxonomy mirrored from the TS interface
   (``core/pipeline/types.ts``'s ``PhraseKind`` union). The Python-side enum is a tuple
-  in declaration order. the order must match the TS union — the i-th kind in this tuple
+  in declaration order. the order must match the TS union. The i-th kind in this tuple
   is the same kind as the i-th branch of ``PhraseKind`` in TS, because that's the same
   index used to one-hot encode per-token features.
 

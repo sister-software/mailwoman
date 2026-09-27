@@ -35,18 +35,19 @@ const LIVE = {
 
 describe("the shipped recipe", () => {
 	it("has no UNRECORDED multi-source country", () => {
-		// The regression this guards: a country cloned as a WOF repo, or moved between lists, without being
-		// removed from the one that served it. `verifyAdmin` tests floors, so the duplication moves every check
-		// number in the passing direction and the build ships.
+		// The regression this guards: a country cloned as a WOF repo, or moved between lists,
+		// without being removed from the one that served it.
+		// `verifyAdmin` tests floors, so the duplication moves every check number in
+		// the passing direction and the build ships.
 		const conflicts = sourceConflicts(countrySourceMap(LIVE))
 
 		expect(conflicts.map((c) => `${c.country}: ${c.sources.join("+")}`)).toEqual([])
 	})
 
 	it("still matches the measured baseline exactly", () => {
-		// Measured 2026-08-17 against both the lists and admin-global-priority.db: 14 two-source countries, all
-		// Overture + GeoNames. If this drifts, the baseline is stale and the number in the docstring is a
-		// claim nobody re-measured.
+		// Measured 2026-08-17 against both the lists and admin-global-priority.db:
+		// 14 two-source countries, all Overture + GeoNames.
+		// If this drifts, the baseline is stale and the number in the docstring is a claim nobody re-measured.
 		const multi = countrySourceMap(LIVE).filter((e) => e.sources.length > 1)
 
 		expect(multi.map((e) => e.country).toSorted()).toEqual([...ACCEPTED_TWO_SOURCE_COUNTRIES].toSorted())
@@ -72,8 +73,9 @@ describe("sourceConflicts", () => {
 	})
 
 	it("accepts a baseline country, because that trade was measured", () => {
-		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture. Duplication, and deliberate — FI in
-		// the same set gains ~12,000 names Overture lacks, so dropping the fold is a coverage decision.
+		// CZ: 9,800 of its 11,904 GeoNames names are already in Overture.
+		// Duplication, and deliberate.
+		// FI in the same set gains ~12,000 names Overture lacks, so dropping the fold is a coverage decision.
 		expect(
 			sourceConflicts(countrySourceMap({ wofCountries: [], overtureCountries: ["CZ"], geonamesCountries: ["CZ"] }))
 		).toEqual([])
@@ -144,8 +146,10 @@ describe("planCountryMove", () => {
 	const census = (over: number, geo: number, wof = 0) => ({ country: "TR", wof, overture: over, geonames: geo })
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
-		// The half nothing enforced. Adding a country by cloning is half the job. the other half is removing
-		// it from whichever list serves it today, and the build ships either way because verifyAdmin tests floors.
+		// The half no check enforced.
+		// Adding a country by cloning is half the job.
+		// The other half is removing it from whichever list serves it today,
+		// and the build ships either way because verifyAdmin tests floors.
 		const plan = planCountryMove({
 			country: "tr",
 			target: AdminSource.WOF,
@@ -176,8 +180,9 @@ describe("planCountryMove", () => {
 	})
 
 	it("multiplies the packed size out to the checkout cost", () => {
-		// GitHub reports packed size. Quoting it is how 65 GB arrived unannounced. a --countries tr sync
-		// reported 83.4 MB and wrote 633 MB.
+		// GitHub reports packed size.
+		// Quoting it is how 65 GB arrived unannounced.
+		// A --countries tr sync reported 83.4 MB and wrote 633 MB.
 		const plan = planCountryMove({
 			country: "TR",
 			target: AdminSource.WOF,
@@ -221,8 +226,9 @@ describe("planCountryMove", () => {
 
 describe("planCountryMove — a move that is already done", () => {
 	it("plans nothing for a country the target already serves", () => {
-		// US is WOF-served with 259,485 rows. An "add DEFAULT_WOF_PRIORITY_COUNTRIES" here would have a reader
-		// edit a list the country is already on, so the plan would be describing work that is done.
+		// US is WOF-served with 259,485 rows.
+		// An "add DEFAULT_WOF_PRIORITY_COUNTRIES" here would have a reader edit a list the
+		// country is already on, so the plan would be describing work that is done.
 		const plan = planCountryMove({
 			country: "US",
 			target: AdminSource.WOF,

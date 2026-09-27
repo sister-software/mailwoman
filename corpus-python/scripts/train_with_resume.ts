@@ -1,7 +1,9 @@
 /**
- * Train Stage 1 with auto-resume on GPU hang. gfx1103 (Radeon 780M) firmware has observed HW Exception ("GPU Hang")
- * under sustained load roughly every 1-2h. This wrapper restarts the training process when it exits non-zero, resuming
- * from the latest step-* checkpoint.
+ * Train Stage 1 with auto-resume on GPU hang. gfx1103 (Radeon 780M) firmware has observed
+ * HW Exception ("GPU Hang") under sustained load roughly every 1-2h.
+ *
+ * This wrapper restarts the training process when it exits non-zero,
+ * resuming from the latest step-* checkpoint.
  *
  * Run from the `corpus-python/` directory so the relative `$config` path resolves against cwd:
  *
@@ -34,15 +36,17 @@ const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
 const LOG = $public.LOG ?? tempRootPath("stage1-train.log")
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
 /**
- * Verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot collect undeclared flags, and
- * reconstructing them from tokens would be lossy.
+ * Verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot collect
+ * undeclared flags, and reconstructing them from tokens would be lossy.
  */
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 
-// Open the log once in append mode. every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
+// Open the log once in append mode.
+// Every attempt appends to the same file (bash did `>>"$LOG" 2>&1` per invocation).
 const logFd = await open(LOG, "a")
 
-// zx prints the command to stderr by default. the bash wrapper kept python output in $LOG only, so stay quiet.
+// zx prints the command to stderr by default.
+// The bash wrapper kept python output in $LOG only, so stay quiet.
 $.verbose = false
 
 // Match the bash trap: on sigint/sigterm, log a line and exit 130.
@@ -56,8 +60,8 @@ process.on("SIGINT", onSignal)
 process.on("SIGTERM", onSignal)
 
 /**
- * Spawn the python trainer, routing its stdout+stderr to $LOG (matching bash `>>"$LOG" 2>&1`) and returning the exit
- * code without throwing on non-zero.
+ * Spawn the python trainer, routing its stdout+stderr to $LOG (matching bash `>>"$LOG" 2>&1`)
+ * and returning the exit code without throwing on non-zero.
  *
  * @param resume - Whether to pass `--resume auto` (the resume loop) or start fresh.
  */

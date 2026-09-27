@@ -51,7 +51,7 @@ function tableInfo(db: DatabaseClient<PostcodeLocalityDatabase>, table: string):
 
 describe("createPostcodeLocalityTable", () => {
 	it("declares the shipped column shape", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(
 			tableInfo(db, "postcode_locality").map((c) => ({
@@ -65,7 +65,8 @@ describe("createPostcodeLocalityTable", () => {
 			{ cid: 1, name: "country", type: "TEXT", notnull: 1 },
 			{ cid: 2, name: "locality_id", type: "INTEGER", notnull: 1 },
 			{ cid: 3, name: "locality_name", type: "TEXT", notnull: 1 },
-			// The only nullable column — a `|`-joined alt-name list the CJK builds may have nothing for.
+			// The only nullable column.
+			// A `|`-joined alt-name list the CJK builds may have no aliases for.
 			{ cid: 4, name: "aliases", type: "TEXT", notnull: 0 },
 			{ cid: 5, name: "distance_km", type: "REAL", notnull: 1 },
 			{ cid: 6, name: "is_containing", type: "INTEGER", notnull: 1 },
@@ -73,7 +74,7 @@ describe("createPostcodeLocalityTable", () => {
 	})
 
 	it("declares the meta key/value shape with `key` as the primary key", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(tableInfo(db, "meta").map((c) => ({ name: c.name, type: c.type.toUpperCase(), pk: c.pk }))).toEqual([
 			{ name: "key", type: "TEXT", pk: 1 },
@@ -82,7 +83,7 @@ describe("createPostcodeLocalityTable", () => {
 	})
 
 	it("is re-runnable under `ifNotExists` — the accumulative build fills one database country by country", async () => {
-		await using kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
+		using kdb = DatabaseClient.temp<PostcodeLocalityDatabase>()
 
 		await createPostcodeLocalityTable(kdb, { ifNotExists: true })
 		await createPostcodeLocalityIndex(kdb, { ifNotExists: true })
@@ -92,14 +93,15 @@ describe("createPostcodeLocalityTable", () => {
 		await expect(createPostcodeLocalityIndex(kdb, { ifNotExists: true })).resolves.toBeUndefined()
 		await expect(createPostcodeLocalityMetaTable(kdb, { ifNotExists: true })).resolves.toBeUndefined()
 
-		// Without the flag the same statement is an error — that is what makes a rebuild build a rebuild.
+		// Without the flag the same statement is an error.
+		// That is what makes a rebuild build a rebuild.
 		await expect(createPostcodeLocalityTable(kdb, { ifNotExists: false })).rejects.toThrow(/already exists/)
 	})
 })
 
 describe("createPostcodeLocalityIndex", () => {
 	it("creates the non-unique (postcode, country) probe index", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		expect(db.prepare("PRAGMA index_list(postcode_locality)").all()).toEqual([
 			expect.objectContaining({ name: "postcode_locality_by_pc", unique: 0, partial: 0 }),
@@ -119,7 +121,7 @@ describe("createPostcodeLocalityIndex", () => {
 
 describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	it("binds in the DDL's column order", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 		const declared = tableInfo(db, "postcode_locality").map((c) => c.name)
 
 		expect([...POSTCODE_LOCALITY_COLUMNS]).toEqual(declared)
@@ -132,7 +134,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	})
 
 	it("lands each positional value in its own column", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		const values: PostcodeLocalityInsertValues = ["10115", "DE", 101_752_063, "Berlin", "Berlin|Berlino", 0, 1]
 
@@ -150,7 +152,7 @@ describe("POSTCODE_LOCALITY_INSERT_SQL", () => {
 	})
 
 	it("accepts a null alias list", async () => {
-		await using db = await buildDatabase(false)
+		using db = await buildDatabase(false)
 
 		db.prepare(POSTCODE_LOCALITY_INSERT_SQL).run("10115", "DE", 101_752_063, "Berlin", null, 1.5, 0)
 

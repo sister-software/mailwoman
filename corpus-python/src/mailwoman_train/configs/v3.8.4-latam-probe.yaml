@@ -1,47 +1,18 @@
-# === v3.8.1-punct-fix-full — #1101 comma-free FIX + digit-ownership: no-fragment tweak + punct-drop. 8k ship. ===
-# The 8k escalation of the v372 2k probe, which broke the v371 plateau (bare-street-hn 0.733->0.775) with
-# a clean golden check. This run answers whether the 2k->8k trajectory clears the strict bar (~>=0.78).
+# v3.8.4-latam-probe is a 2k-step probe that adds Canada and Mexico as trained countries.
 #
-# PRE-registered read (written before the numbers exist. graded on the Norway digit board, board 3,
-# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered shipped-v310 baselines).
+# The run starts from v381 and reads the v0.13.0-latam corpus. The new overture-latam source holds the
+# CA and MX Overture rows apart from the existing overture source, so its weight does not change the
+# exposure of the countries already trained. The dependent_locality class weights are back at 0.3.
 #
-# the variable vs v3.7.0 (knob 3): --long-number-boost 4->6 and --long-number-min-digits 3->1, so every
-# street+number length is oversampled rather than just >=3-digit. Why these values: v371's miss breakdown by
-# number length (scratchpad/v371-miss-by-digits.run.ts) showed the 8k residual is not just long numbers —
-# 1-digit misses are absorption (21, unboosted at >=3), 2-digit are digit->postcode (28, unboosted), and
-# 3-digit is still 0.661-fail even at 4x boost (37, the length prior winning uphill). Boosting all lengths
-# at 6x gives every miss mode the boundary signal. Composition: street-hn 85% of 33,203 rows (measured,
-# scratchpad/build-no-fragment-b4b3tweak.run.ts).
+# The guards are the golden set, the US comma-free board, the FR fragment board and the Norway digit board.
 #
-# confound, stated: the 6x-all boost triples the recipe output's volume (11,609 -> 33,203 rows) at the same weight
-# 12.0, so this changes signal volume and composition. The FR guard is the detector — if FR re-drifts like
-# knob 1, the volume over-diluted and the weight needs dropping. if FR holds, volume was fine. Reading FR
-# is therefore required this run rather than just do-no-harm.
-#
-# the measured problem (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
-#     bare-street-hn   "Leppdalsvegen 1285"   0.693 [0.646, 0.736]   <- target (no postcode competing)
-#
-# move  : bare-street-hn crosses the plateau — v371 (knob 3 8k) topped out at 0.733. this must beat that
-#         materially, ideally lower CI above v310's 0.736 (~>=0.78). Falsifier: if boosting all lengths at
-#         6x also plateaus ~0.73, the corpus change is exhausted (every knob tried) and digit-ownership is
-#         fully explored — ship v371 as the clean additive net-positive or hold. This is the last knob.
-# guard : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
-# guard : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
-# guard : the FR fragment board (board 2) does not re-drift below FR overall ~0.725 (v310 0.733).
-# guard : golden (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
-#
-# Ship candidate. On a pass: export int8, run board 3 + FR fragment + the golden check, then operator promotes.
-#
-# init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 8000 steps, warmup 500.
-#
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.7.0-no-fragment-b4b3.yaml --resume none
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.4-latam-probe.yaml --resume none
 
 data:
   corpus_dir: /data/corpus/versioned/v0.13.0-latam/corpus-v0.13.0-latam
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -65,10 +36,13 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    CA: 1.0 # New (Overture) — live locality, sidesteps NZ's dead dependent_locality
-    MX: 1.0 # New (Overture) — BR dropped (0% OA-lineage + SN-garbage numbers)
-  source_weights: # v3.1.0 weights + overture-latam (CA/MX/BR, dedicated source so it doesn't dilute the trained EU overture rows) + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
-    overture-latam: 6.0 # New — the CA/MX/BR Overture rows. 6.0/~142 ≈ 4.2%, within Fable's ≤5-8% new-mass band. Distinct from  (EU) so EU exposure is untouched.
+    CA: 1.0
+    # This probe leaves out BR because its Overture rows lacked usable house numbers.
+    MX: 1.0
+  source_weights:
+    # This weight is about 4% of the total source weight. A new source above 5-8% risks forgetting
+    # in the other trained countries.
+    overture-latam: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -94,17 +68,17 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains board 3 surfaces.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # This source holds partial and autocomplete-style inputs.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # This source holds French streets without a house number and bare-locality counterexamples.
+    # Its weight matches the other targeted-fix sources at 12.0.
     synth-fr-fragment: 12.0
-    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
+    # This source holds Norwegian bare streets and street-plus-number rows without a postcode,
+    # plus counterexamples. Its weight matches the other targeted-fix sources at 12.0.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -112,20 +86,19 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
-  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  # With this probability, a row also yields a copy with separator commas and quotes removed.
+  # The copy teaches the model to segment street and locality without relying on the comma.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  # The country lexicon feeds the country channel. Its feature_dim must equal model.country_feature_dim.
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -145,16 +118,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # The country channel is a 2-dim [country_surface, country_ambiguous] soft feed with its own projection.
+  # The country_feature_dim value must equal the country lexicon's feature_dim.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # This value scales the country_ambiguous dim before country_projection and is baked into the exported ONNX.
+  # A scale of 1.0 over-suppressed countries whose names are also common words, such as Georgia and Jordan.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -193,9 +162,9 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# The init_from checkpoint loads weights only, so the optimizer starts fresh.
+# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+train:
   output_dir: /data/output-v384-latam-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

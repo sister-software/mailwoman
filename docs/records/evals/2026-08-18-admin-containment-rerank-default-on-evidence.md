@@ -12,7 +12,7 @@ out.
 
 The deciding-site measurement (the #1729 method, applied before designing): `Weimar, Thüringen`
 under the default en-US locale probes the locality table with a hard `country = US` filter, so
-Weimar DE **is not in the candidate list** — no reorder of the returned rows can reach it. The
+Weimar DE **is not in the candidate list**. No reorder of the returned rows can reach it. The
 change therefore injects contained same-key candidates (additive, never a filter — recall only
 widens) and partitions contained-first via one shared function at both deciding sites (backend
 pre-window and the walk's post-importance re-rank). It stands down entirely under an explicit

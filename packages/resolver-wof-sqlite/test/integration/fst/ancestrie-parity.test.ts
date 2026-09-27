@@ -8,7 +8,7 @@
  *   fields, on the same artifacts.
  *
  *   the frozen copy is the point. `legacyAutocomplete` below is the pre-migration implementation,
- *   verbatim. It exists only here, as the reference the adapter is measured against — the shipped
+ *   verbatim. It exists only here, as the reference the adapter is measured against. The shipped
  *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
  *   `autocomplete`, this suite fails and the change must be RE-ratified by updating the frozen copy
  *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the
@@ -27,7 +27,6 @@
  *       stale-format file.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type {
@@ -45,6 +44,7 @@ import {
 	deserializeFST,
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
 
 // MARK: The frozen pre-migration implementation, verbatim
@@ -220,7 +220,8 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		...extra,
 	})
 
-	// Root: new, san, chic, chicago, springfield. Behavior matrix in the states:
+	// Root: new, san, chic, chicago, springfield.
+	// Behavior matrix in the states:
 	//  - "new london": referential TIE between city and county (tie order = insertion order).
 	//  - "springfield": SIX entries at one state — denser than PER_BRANCH, forcing the top-4 limit.
 	//  - "new york": encyclopedic present + crossCountryBranches + a deep parent chain.
@@ -303,8 +304,9 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 })
 
 /**
- * Round the synthetic trie through the real serializer so parity is measured on entries as the bytes deliver them (f32
- * referential, flag-restricted encyclopedic and ambiguity reads) — not on the hand-built object graph.
+ * Round the synthetic trie through the real serializer so parity is measured on entries as
+ * the bytes deliver them (f32 referential, flag-restricted encyclopedic and ambiguity reads),
+ * not on the hand-built object graph.
  */
 function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>[0]): FSTMatcher {
 	return deserializeFST(serializeFST(new FSTMatcher(nodes)))
@@ -313,8 +315,8 @@ function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>
 // MARK: Shipped-artifact leg — skips when the data root lacks them
 
 /**
- * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals, the multi-token and partial
- * shapes, and (es) the Portopetro pair from the promotion battery.
+ * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals,
+ * the multi-token and partial shapes, and (es) the Portopetro pair from the promotion battery.
  */
 const CURATED_QUERIES: Record<string, readonly string[]> = {
 	"en-gb": ["london", "birming", "st margarets hope", "manchester", "newcastle upon", "isle of"],
@@ -323,21 +325,20 @@ const CURATED_QUERIES: Record<string, readonly string[]> = {
 }
 
 for (const locale of ["en-gb", "es-es", "it-it"]) {
-	const artifactPath = String(dataRootPath("wof", "fst-per-locale", `fst-${locale}.bin`))
+	const artifactPath = wofDatabasePath("fst-per-locale", `fst-${locale}.bin`)
 	const present = await pathExists(artifactPath)
 
 	describe.skipIf(!present)(`fst-autocomplete ↔ ancestrie parity — shipped ${locale}`, () => {
 		it("answers identically across the derived + curated battery", async () => {
 			const stamp = await peekFSTStampFields(artifactPath)
 
-			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production
-			// no longer ships — fail loudly instead.
+			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production no longer ships — fail loudly instead.
 			expect(stamp?.formatVersion).toBe(5)
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 
-			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as a
-			// bare query, a two-token walk through its own first continuation, and a partial prefix.
+			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as
+			// a bare query, a two-token walk through its own first continuation, and a partial prefix.
 			const rootTokens = matcher
 				.continuations(0)
 				.map((c) => c.token)

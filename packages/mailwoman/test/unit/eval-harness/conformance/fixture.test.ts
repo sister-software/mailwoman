@@ -7,7 +7,7 @@
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
  *   between them they are the whole reason the comparator set is closed, and both messages must carry the
- *   fixture's own id — a refusal that does not name the row sends the reader to a file with no line to open.
+ *   fixture's own id. A refusal that does not name the row sends the reader to a file with no line to open.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -21,7 +21,7 @@ import {
 	parseConformanceFixture,
 	RELATIONS_BY_COMPARATOR,
 } from "mailwoman/eval-harness/conformance/fixture"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 /**
@@ -31,8 +31,13 @@ const scratchDirectories = new AsyncDisposableStack()
 
 afterAll(() => scratchDirectories.disposeAsync())
 
-const EXAMPLE_SUITE = String(
-	repoRootPath("packages", "mailwoman", "lib", "test-fixtures", "conformance", "interface-example.jsonl")
+const EXAMPLE_SUITE = repoRootPath(
+	"packages",
+	"mailwoman",
+	"lib",
+	"test-fixtures",
+	"conformance",
+	"interface-example.jsonl"
 )
 
 function record(over: Record<string, unknown> = {}): Record<string, unknown> {
@@ -47,9 +52,9 @@ function record(over: Record<string, unknown> = {}): Record<string, unknown> {
 	}
 }
 
-async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise<string> {
+async function writeSuite(rows: ReadonlyArray<Record<string, unknown>>): Promise<PathBuilder> {
 	const dir = scratchDirectories.use(await temporaryDirectory("mw-conformance-")).path
-	const path = join(dir, "suite.jsonl")
+	const path = dir("suite.jsonl")
 
 	await writeLocalJSONLFile(rows, path)
 

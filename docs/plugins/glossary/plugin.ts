@@ -38,9 +38,10 @@ import { resolvePath } from "path-ts"
 import { isSuppressedSurface } from "./remark.ts"
 
 /**
- * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads. Passed to both this plugin
- * and the remark plugin from docusaurus.config.ts, from one shared constant, so the linker and the backlink scan cannot
- * disagree about which surfaces link.
+ * Upstream's options plus the `noAutoLink` surface list this wrapper's homonym guard reads.
+ *
+ * Passed to both this plugin and the remark plugin from docusaurus.config.ts, from one shared
+ * constant, so the linker and the backlink scan cannot disagree about which surfaces link.
  */
 export type MailwomanGlossaryPluginOptions = BaseGlossaryPluginOptions & {
 	noAutoLink?: readonly string[]
@@ -108,13 +109,16 @@ interface DocsPluginContent {
 }
 
 /**
- * Backlinks shown per term card. the rest is summarized as "+N more".
+ * Backlinks shown per term card.
+ * The rest is summarized as "+N more".
  */
 const MAX_BACKLINKS_PER_TERM = 8
 
 /**
- * Does `needle` occur in `text` as a whole word (with the upstream matcher's plural allowance), outside a capitalized
- * multi-word phrase and not on the `noAutoLink` list? Mirrors remark.ts's two guards on raw text.
+ * Does `needle` occur in `text` as a whole word (with the upstream matcher's plural allowance),
+ * outside a capitalized multi-word phrase and not on the `noAutoLink` list?
+ *
+ * Mirrors remark.ts's two guards on raw text.
  */
 function referencesPhrase(
 	text: string,
@@ -150,8 +154,8 @@ function referencesPhrase(
 		}
 
 		if (commonNoun && /^[A-Z]/.test(text.slice(index, end))) {
-			// Proper-noun guard: capitalized match with a capitalized neighboring word doesn't count
-			// ("New York City", "United States of America").
+			// Proper-noun guard: capitalized match with a capitalized neighboring word
+			// doesn't count ("New York City", "United States of America").
 			const beforeText = text.slice(Math.max(0, index - 40), index)
 			const afterText = text.slice(end, end + 40)
 
@@ -242,19 +246,21 @@ export default function mailwomanGlossaryPlugin(context: LoadContext, options: M
 					count: counts.get(key) ?? 0,
 				}))
 
-			// Upstream also writes this file. preserved in case a future package version reads it back.
+			// Upstream also writes this file.
+			// Preserved in case a future package version reads it back.
 			await createData("remark-glossary-data.json", stringifyJSON({ terms: glossary.terms ?? [], routePath }))
 
-			// Same shape upstream publishes — the tooltip theme component reads it via usePluginData.
+			// Same shape upstream publishes.
+			// The tooltip theme component reads it via usePluginData.
 			setGlobalData({ terms: glossary.terms ?? [], routePath })
 		},
 
 		async allContentLoaded({ allContent, actions }) {
 			const { createData, addRoute } = actions
 
-			// Backlinks: scan every published docs page for term/alias references. Docs only — the
-			// remark auto-linker is wired to the docs preset, so these are the pages that render
-			// tooltips back to the glossary.
+			// Backlinks: scan every published docs page for term/alias references.
+			// Docs only — the remark auto-linker is wired to the docs preset, so these are
+			// the pages that render tooltips back to the glossary.
 			const docsContent = allContent["docusaurus-plugin-content-docs"]?.default as DocsPluginContent | undefined
 
 			const docs = (docsContent?.loadedVersions ?? [])

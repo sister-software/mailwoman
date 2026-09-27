@@ -2,10 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman filer edgar-ingest`'s library half — the edgar chain against a live SEC client, with the
- *   full registrant index. No argv, no `process.exit`: the command owns argument parsing, rendering, and
- *   exit codes. Every field on the result is a number the command can render without importing another
- *   module.
+ *   Runs the EDGAR ingest against the SEC and writes subsidiary rows.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,30 +15,35 @@ import { createSECClient } from "#sdk/sec-client"
 
 export type { EdgarIngestReport, EdgarSkipReason } from "#sdk/edgar/ingest"
 
+/**
+ * Options for {@link filerEdgarIngest}.
+ */
 export interface FilerEdgarIngestOptions {
 	/**
-	 * Company names to resolve — one per line in a file, or passed as an array. Every name is tried. a blank line is
-	 * skipped rather than producing an outcome.
+	 * Company names to resolve.
 	 */
 	queries: string[]
 	/**
-	 * Output directory for the subsidiary rows as jsonl.
+	 * Output directory for subsidiary JSONL rows.
 	 */
 	outDir: string
 	/**
-	 * Optional CIK lookup-data file path (`cik-lookup-data.txt`, one `name:CIK:` per line).
+	 * CIK lookup file with one `name:CIK:` entry per line.
 	 */
 	cikLookupPath?: string
 	/**
-	 * CIKs pinned as corroborated regardless of SIC.
+	 * CIKs treated as corroborated regardless of SIC.
 	 */
 	pinnedCIKs?: string[]
 	/**
-	 * Called once per registrant as it completes.
+	 * Called when each registrant finishes.
 	 */
 	onOutcome?: (outcome: { query: string; ok: boolean; subsidiaries: number; detail: string }) => void
 }
 
+/**
+ * Result of {@link filerEdgarIngest}.
+ */
 export interface FilerEdgarIngestResult {
 	report: EdgarIngestReport
 	jsonlPath: string
@@ -49,10 +51,7 @@ export interface FilerEdgarIngestResult {
 }
 
 /**
- * Run the edgar ingest chain against a live SEC client and write the subsidiary rows to `outDir` as jsonl.
- *
- * The ticker index is read from `cikLookupPath` when given. it is parsed to `CompanyTickerEntry[]` once and reused
- * across every query.
+ * Runs the EDGAR ingest and writes `edgar-subsidiaries.jsonl` to `outDir`.
  */
 export async function filerEdgarIngest(options: FilerEdgarIngestOptions): Promise<FilerEdgarIngestResult> {
 	const client = createSECClient()

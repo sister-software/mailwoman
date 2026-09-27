@@ -16,7 +16,7 @@ named playbook (PropCo/OpCo separation, with Windstream/Uniti as its canonical f
 checkable open question (whether common upstream ownership now spans two nominally competing
 providers in the same markets).
 
-Every input was public. None of it was assembled from a durable substrate — it was web fetches plus
+Every input was public. None of it was assembled from a durable substrate. It was web fetches plus
 arithmetic plus recall, which is unreproducible, unsourced, and unauditable. **The product is that
 assembly made systematic.** Not the conclusion: the conclusion stays the customer's, per doctrine.
 What the customer provides is not having to spend a day in EDGAR, FCC dockets, and trade press to reach
@@ -64,7 +64,7 @@ direct ranking of second verticals by data quality rather than by market attract
 
 The abstraction, stated directly: **mailwoman is a geocoded entity-resolution substrate for
 regulated-monopoly public record.** The address parser is the joining primitive because these
-datasets key on addresses and coordinates and nothing joins directly without one. That framing
+datasets key on addresses and coordinates and no join happens directly without one. That framing
 explains why the geocoder is the foundation rather than the product — and it is a framing rather than a
 pivot.
 
@@ -73,7 +73,7 @@ pivot.
 This note is a thesis with one actionable extraction. To keep it from becoming a roadmap:
 
 - **Actionable now:** the transaction layer (§2) folds into Phase 3b, because it makes an already-
-  ratified requirement (temporal validity) implementable. Nothing else here changes any phase.
+  ratified requirement (temporal validity) implementable. No other item here changes any phase.
 - **Not actionable:** the second vertical. Electric/gas is not started, scoped, or promised until the
   telecom vertical has a paying customer or a published artifact proving the thesis. One vertical
   proven beats two half-built, and the discipline that got 2a and 2b shipped was narrow phases with

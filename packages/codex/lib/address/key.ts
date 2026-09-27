@@ -2,28 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The canonical match key — a normalized, deterministic string derived from address components,
- *   distinct from the human-readable formatted string.
+ *   The canonical match key — a normalized, deterministic string derived from address components, distinct
+ *   from the human-readable formatted string.
  *
- *   Where `format.ts` produces something for a person to read, this produces something for a
- *   _machine_ to collide on: lowercased, diacritic-stripped, punctuation-flattened, whitespace-
- *   collapsed, fields in a fixed canonical order. Two records for the same address that differ only
- *   in spelling, case, or punctuation produce the same key — which is exactly what the matcher's
- *   blocking stage wants as one cheap, high-precision candidate signal (alongside geographic
- *   proximity, which carries the real weight — see the geocode-first record-matching concept doc).
- *
- *   Deliberately not done yet (follow-ups, all conditioned on `@mailwoman/codex`): expanding street
- *   suffixes (`Ave` → `avenue`) and directionals (`N` → `north`) to a canonical form, and
- *   USPS-style standardization. This first version is pure normalization with no dictionary expansion,
- *   so the key is stable and explainable. expansion is an additive refinement rather than a rewrite.
+ *   Lowercased, diacritic-stripped, punctuation-flattened, whitespace-collapsed, fields in a fixed canonical
+ *   order, so two records for the same address that differ only in spelling, case or punctuation produce the
+ *   same key. This version is pure normalization with no dictionary expansion, so the key is stable and
+ *   explainable.
  */
 
 import type { ComponentDict } from "#address/format"
 import type { ComponentTag } from "#component"
 
 /**
- * The address-identifying components, in canonical key order. Venue / attention are intentionally excluded — those
- * carry organization identity, which the record layer keys separately.
+ * The address-identifying components, in canonical key order.
+ *
+ * Venue / attention are intentionally excluded.
+ * Those carry organization identity, which the record layer keys separately.
  */
 const KEY_FIELD_ORDER = [
 	"po_box",
@@ -48,40 +43,47 @@ const KEY_FIELD_ORDER = [
  */
 export interface CanonicalKeyOptions {
 	/**
-	 * Field separator in the emitted key. Default `"|"` — preserves field boundaries for blocking.
+	 * Field separator in the emitted key.
+	 *
+	 * Default `"|"` — preserves field boundaries for blocking.
 	 */
 	separator?: string
 }
 
 /**
- * Options for {@linkcode foldForKey} — the two points where the formatter's address-token fold and the record package's
- * fragment fold legitimately differ.
+ * Options for {@linkcode foldForKey} — the two points where the formatter's address-token fold
+ * and the record package's fragment fold legitimately differ.
  */
 export interface FoldForKeyOptions {
 	/**
-	 * How connective punctuation folds. `"space"` turns `&`, `+`, and `/` into word boundaries (`"A&B"` → `"a b"`);
-	 * `"and"` spells `&` and `+` out as the word `and` (`"AT&T"` → `"at and t"`), leaving `/` to the punctuation
-	 * catch-all (still a word boundary).
+	 * How connective punctuation folds.
+	 *
+	 * `"space"` turns `&`, `+`, and `/` into word boundaries (`"A&B"` → `"a b"`);
+	 * `"and"` spells `&` and `+` out as the word `and` (`"AT&T"` → `"at and t"`),
+	 * leaving `/` to the punctuation catch-all (still a word boundary).
 	 */
 	ampersand: "space" | "and"
 	/**
-	 * Intra-token deletion set. When true, periods join the apostrophes as intra-token noise and are deleted (`"S.A."` →
-	 * `"sa"`), while a backtick falls to the punctuation catch-all. When false or omitted, backticks are deleted
-	 * alongside the apostrophes and periods become word boundaries (`"S.A."` → `"s a"`).
+	 * Intra-token deletion set.
+	 *
+	 * When true, periods join the apostrophes as intra-token noise and are deleted
+	 * (`"S.A."` → `"sa"`), while a backtick falls to the punctuation catch-all.
+	 * When false or omitted, backticks are deleted alongside the apostrophes
+	 * and periods become word boundaries (`"S.A."` → `"s a"`).
 	 */
 	dropPeriods?: boolean
 }
 
 /**
- * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`), lowercase, delete
- * intra-token punctuation, expand or flatten connective punctuation per {@linkcode FoldForKeyOptions}, space every
- * remaining non-alphanumeric, and collapse whitespace. Deterministic — the same input and options always yield the same
- * output.
+ * The shared fold behind every match key: nfkd-decompose and strip combining marks (so `é` → `e`),
+ * lowercase, delete intra-token punctuation, expand or flatten connective punctuation per
+ * {@linkcode FoldForKeyOptions}, space every remaining non-alphanumeric, and collapse whitespace.
+ *
+ * Deterministic — the same input and options always yield the same output.
  */
 export function foldForKey(input: string, options: FoldForKeyOptions): string {
 	const folded = input
 		.normalize("NFKD")
-		// strip combining marks (U+0300–U+036F) left by nfkd decomposition, so "é" → "e"
 		.replaceAll(/[\u0300-\u036F]/g, "")
 		.toLowerCase()
 		// apostrophes are intra-word (possessives, "O'Brien") — delete so the token stays whole
@@ -102,17 +104,18 @@ export function foldForKey(input: string, options: FoldForKeyOptions): string {
 }
 
 /**
- * Normalize a single token for matching: {@linkcode foldForKey} with connective punctuation flattened to spaces (so
- * `"A&B"` → `"a b"`, not `"ab"`). Deterministic and reversible-free — the same input always yields the same output.
+ * Normalize a single token for matching: {@linkcode foldForKey} with connective
+ * punctuation flattened to spaces (so `"A&B"` → `"a b"`, not `"ab"`).
  */
 export function normalizeAddressToken(input: string): string {
 	return foldForKey(input, { ampersand: "space" })
 }
 
 /**
- * Derive the canonical match key from an address component dict: each present, address-identifying field normalized via
- * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator. Empty / whitespace-only fields are
- * skipped. Returns an empty string if nothing identifying remains.
+ * Derive the canonical match key: each present, address-identifying field normalized via
+ * {@linkcode normalizeAddressToken}, in fixed order, joined by the separator.
+ *
+ * Empty fields are skipped and an empty string is returned if none remains.
  */
 export function canonicalKey(components: ComponentDict, opts: CanonicalKeyOptions = {}): string {
 	const separator = opts.separator ?? "|"

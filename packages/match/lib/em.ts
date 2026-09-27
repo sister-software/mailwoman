@@ -40,15 +40,21 @@ export function agreementPattern<R>(comparisons: Comparison<R>[], a: R, b: R): n
  */
 export interface EmOptions {
 	/**
-	 * Hard iteration cap. Default 100.
+	 * Hard iteration cap.
+	 *
+	 * Default 100.
 	 */
 	maxIterations?: number
 	/**
-	 * Convergence tolerance on the largest parameter change between iterations. Default 1e-6.
+	 * Convergence tolerance on the largest parameter change between iterations.
+	 *
+	 * Default 1e-6.
 	 */
 	tolerance?: number
 	/**
-	 * Starting prior match rate. Defaults to the model's `lambda`.
+	 * Starting prior match rate.
+	 *
+	 * Defaults to the model's `lambda`.
 	 */
 	initialLambda?: number
 }
@@ -70,9 +76,11 @@ export interface EmResult<R> {
 }
 
 /**
- * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM. The patterns are per-comparison level
- * indices (as produced by {@link agreementPattern}); a `-1` (missing) field contributes no evidence to either class. The
- * model's existing level `m`/`u` seed the iteration.
+ * Estimate `m`/`u` and the prior `λ` from unlabeled agreement patterns via EM.
+ *
+ * The patterns are per-comparison level indices (as produced by {@link agreementPattern});
+ * a `-1` (missing) field contributes no evidence to either class.
+ * The model's existing level `m`/`u` seed the iteration.
  */
 export function estimateParameters<R>(
 	model: FellegiSunterModel<R>,

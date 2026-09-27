@@ -5,12 +5,12 @@
  *   Reading a place out of a cloned Who's On First data repo.
  *
  *   WOF stores each record at a path derived from its own id: the decimal id split into three-character directories,
- *   then `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The rule is not written down in the data —
+ *   then `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The rule is not written down in the data.
  *   it is layout knowledge every reader has to carry — so it lives here once, next to the {@link WOFFeature} type the
  *   parsed record has.
  */
 
-import { resolvePath, type PathBuilderLike } from "path-ts"
+import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
 import { isDirectory, pathExists, readLocalJSONFile } from "#fs/readers"
 import type { WOFFeature } from "#resources/whosonfirst/placetypes/admin"
@@ -23,8 +23,8 @@ export const WOF_DATA_OWNER = "whosonfirst-data"
 /**
  * The repository name for a country's data of one theme — `whosonfirst-data-admin-tr`.
  *
- * Four call sites used to build this string themselves, each with its own `toLowerCase()`, which is how a country code
- * arriving uppercase became a directory that silently does not exist.
+ * Four call sites used to build this string themselves, each with its own `toLowerCase()`,
+ * which is how a country code arriving uppercase became a directory that silently does not exist.
  */
 export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: string): string {
 	return `${WOF_DATA_OWNER}-${theme}-${country.toLowerCase()}`
@@ -33,10 +33,14 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
 /**
  * Find a cloned repository under a repositories root, in either layout.
  *
- * Two are in use and both are legitimate. `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
- * admin ingest's depth-agnostic GeoJSON glob reads. The shipped postcode extracts were built from repositories cloned
- * by hand as `<root>/<name>`. A reader that knows one layout reports a repository that is present as missing, and every
- * reader here treats missing as "no evidence" and continues — so the wrong layout is silent rather than loud.
+ * Two are in use and both are legitimate.
+ * `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
+ * admin ingest's depth-agnostic GeoJSON glob reads.
+ *
+ * The shipped postcode extracts were built from repositories cloned by hand as `<root>/<name>`.
+ * A reader that knows one layout reports a repository that is present as missing,
+ * and every reader here treats missing as "no evidence" and continues.
+ * So the wrong layout is silent rather than loud.
  */
 export async function resolveWOFRepo(
 	reposRoot: PathBuilderLike,
@@ -64,20 +68,22 @@ export async function resolveWOFDataDir(
 ): Promise<string | null> {
 	const repo = await resolveWOFRepo(reposRoot, wofRepoName(theme, country))
 
-	return repo && resolvePath(repo, "data").toString()
+	return repo && resolvePath(repo, "data")
 }
 
 /**
- * Characters per directory level. A trailing group shorter than this is its own directory — `85977539` ends in `39`,
- * not `390`.
+ * Characters per directory level.
+ *
+ * A trailing group shorter than this is its own directory — `85977539` ends in `39`, not `390`.
  */
 const ID_CHUNK = 3
 
 /**
  * A WOF id → its repo-relative path segments, ending in `<id>.geojson`.
  *
- * Segments rather than a joined string so a caller can append them to whatever root it already holds — the repos layout
- * puts a `data` directory under each `whosonfirst-data-*` clone, and callers reach it differently.
+ * Segments rather than a joined string so a caller can append them to whatever
+ * root it already holds — the repos layout puts a `data` directory under each
+ * `whosonfirst-data-*` clone, and callers reach it differently.
  */
 export function wofIDPathSegments(id: number): string[] {
 	const digits = String(id)
@@ -93,21 +99,23 @@ export function wofIDPathSegments(id: number): string[] {
 }
 
 /**
- * Read a place's GeoJSON from the first `root` that holds it, or `null` when no root does or the file will not parse.
+ * Read a place's GeoJSON from the first `root` that holds it, or `null`
+ * when no root does or the file will not parse.
  *
- * `null` conflates "absent" with "unparseable" on purpose: every caller so far treats both as "no evidence for this
- * place" and continues. A caller that needs to tell them apart should read the file itself.
+ * `null` conflates "absent" with "unparseable" on purpose: every caller
+ * so far treats both as "no evidence for this place" and continues.
+ * A caller that needs to tell them apart should read the file itself.
  */
-export async function readWOFFeature(id: number, roots: readonly string[]): Promise<WOFFeature | null> {
+export async function readWOFFeature(id: number, roots: readonly PathBuilderLike[]): Promise<WOFFeature | null> {
 	const segments = wofIDPathSegments(id)
 
 	for (const root of roots) {
-		const path = resolvePath(root, ...segments)
+		const path = resolvePathBuilder(root, ...segments)
 
 		if (!(await pathExists(path))) continue
 
-		// Unreadable or unparseable — the file vanished between the probe and the read, or is not JSON — is the same
-		// "no evidence" verdict as absent.
+		// Unreadable or unparseable — the file vanished between the probe and the read,
+		// or is not JSON — is the same "no evidence" verdict as absent.
 		return readLocalJSONFile<WOFFeature>(path).catch(() => null)
 	}
 

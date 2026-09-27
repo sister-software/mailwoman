@@ -3,7 +3,7 @@
 
 /**
  *   Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate into
- *   the coverage cells a layer writes — the only path in this pipeline that reaches
+ *   the coverage cells a layer writes. The only path in this pipeline that reaches
  *   {@link CoverageBasis.Surveyed}.
  *
  *   Pure. The IO (ogr2ogr for the outline and the OSM rows, SQLite for the reference inventory) belongs to
@@ -17,7 +17,7 @@
  *      exclusion-grade coverage exists. A cell left OUT of the table means unknown, and the two must never
  *      collapse into each other.
  *   2. **Cells outside the region are never written.** Not at completeness 0 rather than at all: the region is
- *      what was measured, and the measurement says nothing about its outside.
+ *      what was measured, and the measurement makes no statement about its outside.
  *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
  *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator.
  *      measured against the pilot's own départements the pooled and stratified populations agreed to within
@@ -51,12 +51,15 @@ export interface ExclusionCoverageInput {
 	 */
 	geometry: ParsedGeometry
 	/**
-	 * Resolution of the coverage cells. Match the layer being written, or a reader keyed to the other resolution finds
-	 * nothing and reads that as unsurveyed.
+	 * Resolution of the coverage cells.
+	 *
+	 * Match the layer being written, or a reader keyed to the other resolution
+	 * finds no cell and reads that as unsurveyed.
 	 */
 	resolution: number
 	/**
-	 * The inventory the layer being built is made of — the one whose completeness is recorded.
+	 * The inventory the layer being built is made of.
+	 * The one whose completeness is recorded.
 	 */
 	subject: readonly CaptureRow[]
 	/**
@@ -69,7 +72,8 @@ export interface ExclusionCoverageInput {
 export interface ExclusionCoverageResult {
 	cells: ExclusionCoverageCell[]
 	/**
-	 * Interior cells holding no subject row — the exclusion payload, and the count worth reading first.
+	 * Interior cells holding no subject row.
+	 * The exclusion payload, and the count worth reading first.
 	 */
 	emptyCells: number
 	/**
@@ -83,10 +87,11 @@ export interface ExclusionCoverageResult {
 /**
  * The coverage cell a row belongs to.
  *
- * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the coverage resolution, matching
- * `bboxCoverageCells` and every reader. H3's hierarchy is not geometrically exact, so the two derivations disagree for
- * a real fraction of points, and a row landing on a neighbouring cell here would move an observed count off the cell it
- * was observed in.
+ * Derived as `cellToParent(res-9 cell)` rather than by a direct `latLngToCell` at the
+ * coverage resolution, matching `bboxCoverageCells` and every reader.
+ * H3's hierarchy is not geometrically exact, so the two derivations disagree for
+ * a real fraction of points, and a row landing on a neighbouring cell here would
+ * move an observed count off the cell it was observed in.
  */
 function coverageCellOf(row: CaptureRow, resolution: number): number {
 	const rowCell = latLngToCell(row.latitude, row.longitude, POI_H3_RESOLUTION) as H3Cell
@@ -95,7 +100,8 @@ function coverageCellOf(row: CaptureRow, resolution: number): number {
 }
 
 /**
- * Split an inventory into the part inside `interior` (keyed by coverage cell) and the count that fell outside.
+ * Split an inventory into the part inside `interior` (keyed by coverage cell)
+ * and the count that fell outside.
  */
 function clipToRegion(
 	rows: readonly CaptureRow[],
@@ -129,8 +135,8 @@ function clipToRegion(
 }
 
 /**
- * Measure the subject inventory's completeness against the reference, and emit one surveyed coverage cell per interior
- * cell of the region.
+ * Measure the subject inventory's completeness against the reference, and emit one
+ * surveyed coverage cell per interior cell of the region.
  */
 export function buildExclusionCoverage(input: ExclusionCoverageInput): ExclusionCoverageResult {
 	const interiorCells = interiorCoverageCells(input.geometry, input.resolution)

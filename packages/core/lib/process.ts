@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Child processes, typed over {@linkcode PathBuilderLike} and answering text. This is the one place `node:child_process`
- *   is reached: {@linkcode runFile} for a command whose output is the result, {@linkcode spawnProcess} for one whose
- *   streams or lifetime the caller owns, and their synchronous twins for a slot whose caller is synchronous and not
- *   yours to change — a `.filter()` predicate, a constructor, a config file read at load.
- *
- *   `chunk-process.ts` sits above this for the fan-out case: one script per chunk, a JSON result line back.
+ *   Child processes, typed over {@linkcode PathBuilderLike} and answering text: this is the one place `node:child_process`
+ *   is reached, with synchronous twins for a slot whose caller is synchronous and not yours to change.
  */
 
 import {
@@ -65,8 +61,8 @@ export interface ProcessOutput {
 }
 
 /**
- * The rejection {@linkcode runFile} answers for a command that started but did not exit 0: the builtin's error, which
- * carries the streams and the exit code (or the signal that ended it).
+ * The rejection {@linkcode runFile} answers for a command that started but did not exit 0:
+ * the builtin's error, which carries the streams and the exit code (or the signal that ended it).
  */
 export interface ProcessError extends Error, ProcessOutput {
 	code?: number | string
@@ -74,67 +70,75 @@ export interface ProcessError extends Error, ProcessOutput {
 }
 
 /**
- * Whether an error is a {@linkcode ProcessError} — a command that ran and failed, as opposed to one that never started.
+ * Whether an error is a {@linkcode ProcessError}: a command that ran and failed,
+ * as opposed to one that never started.
  */
 export function isProcessError(error: unknown): error is ProcessError {
 	return error instanceof Error && "stdout" in error && "stderr" in error
 }
 
 /**
- * Options for {@linkcode runFile}: the builtin's. Output is always decoded as UTF-8. an `encoding` here is accepted for
- * the callers that spell it and changes nothing.
+ * Options for {@linkcode runFile}, whose output is always decoded as UTF-8 and
+ * where an `encoding` is accepted for the callers that spell it but has no effect.
  */
-export type RunFileOptions = ExecFileOptions & { cwd?: PathBuilderLike }
+export type RunFileOptions = Omit<ExecFileOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
- * Run a command to completion and answer what it wrote.
- *
- * Rejects with a {@linkcode ProcessError} on a non-zero exit — the shape every caller of `promisify(execFile)` already
- * handled — and with the plain spawn error when the command could not start (enoent, eacces).
+ * Run a command to completion and answer what it wrote: rejects with a {@linkcode ProcessError} on a
+ * non-zero exit but with the plain spawn error when the command could not start (enoent, eacces).
  */
 export async function runFile(
 	file: PathBuilderLike,
 	args: readonly PathBuilderLike[] = [],
 	options: RunFileOptions = {}
 ): Promise<ProcessOutput> {
-	const { stdout, stderr } = await execFileAsync(file.toString(), args.map(String), {
-		...options,
-		cwd: options.cwd?.toString(),
-		encoding: "utf8",
-	})
+	const { stdout, stderr } = await execFileAsync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{
+			...options,
+			cwd: options.cwd?.toString(),
+			encoding: "utf8",
+		}
+	)
 
 	return { stdout, stderr }
 }
 
 /**
- * Options for {@linkcode runFileSync}: the builtin's. Output is always decoded as UTF-8.
+ * Options for {@linkcode runFileSync}, whose output is always decoded as UTF-8.
  */
 export interface RunFileSyncOptions extends Omit<ExecFileSyncOptions, "cwd"> {
 	cwd?: PathBuilderLike
 }
 
 /**
- * {@linkcode runFile} for a synchronous slot. Answers stdout. throws on a non-zero exit, with the builtin's error.
- *
- * When `stdio` inherits the parent's streams there is nothing to capture and the answer is the empty string.
+ * {@linkcode runFile} for a synchronous slot: answers stdout, throws the builtin's error on
+ * a non-zero exit, and answers the empty string when `stdio` inherits the parent's streams.
  */
 export function runFileSync(
 	file: PathBuilderLike,
 	args: readonly PathBuilderLike[] = [],
 	options: RunFileSyncOptions = {}
 ): string {
-	const output = execFileSync(file.toString(), args.map(String), {
-		...options,
-		cwd: options.cwd?.toString(),
-		encoding: "utf8",
-	})
+	const output = execFileSync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{
+			...options,
+			cwd: options.cwd?.toString(),
+			encoding: "utf8",
+		}
+	)
 
 	return output ?? ""
 }
 
 /**
- * Run a shell command line synchronously and answer stdout. Reach for {@linkcode runFileSync} unless the command needs
- * the shell — an argument list does not get re-parsed, quoted or expanded.
+ * Run a shell command line synchronously and answer stdout.
+ *
+ * Reach for {@linkcode runFileSync} unless the command needs the shell, because an
+ * argument list does not get re-parsed, quoted or expanded.
  */
 export function runShellSync(command: string, options: ExecSyncOptions & { cwd?: PathBuilderLike } = {}): string {
 	return execSync(command, { ...options, cwd: options.cwd?.toString(), encoding: "utf8" }) ?? ""
@@ -143,19 +147,18 @@ export function runShellSync(command: string, options: ExecSyncOptions & { cwd?:
 /**
  * Options for {@linkcode spawnProcess}.
  */
-export type SpawnProcessOptions = SpawnOptions & { cwd?: PathBuilderLike }
+export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
- * Start a command and hand its {@linkcode ChildProcess} to the caller, who owns the streams, the exit event and the
- * kill. For a command whose output is the whole result, {@linkcode runFile} is the shorter path.
+ * Start a command and hand its {@linkcode ChildProcess} to the caller,
+ * who owns the streams, the exit event and the kill.
  *
- * Without a `stdio` option every stream is a pipe, and the answer says so in its type — the same narrowing the builtin
- * makes.
+ * Without a `stdio` option every stream is a pipe and the return type says so.
  */
 export function spawnProcess(
 	file: PathBuilderLike,
 	args?: readonly PathBuilderLike[],
-	options?: SpawnOptionsWithoutStdio & { cwd?: PathBuilderLike }
+	options?: Omit<SpawnOptionsWithoutStdio, "cwd"> & { cwd?: PathBuilderLike }
 ): ChildProcessWithoutNullStreams
 
 export function spawnProcess<
@@ -165,7 +168,7 @@ export function spawnProcess<
 >(
 	file: PathBuilderLike,
 	args: readonly PathBuilderLike[],
-	options: SpawnOptionsWithStdioTuple<Stdin, Stdout, Stderr> & { cwd?: PathBuilderLike }
+	options: Omit<SpawnOptionsWithStdioTuple<Stdin, Stdout, Stderr>, "cwd"> & { cwd?: PathBuilderLike }
 ): ChildProcessByStdio<
 	Stdin extends StdioPipe ? Writable : null,
 	Stdout extends StdioPipe ? Readable : null,
@@ -183,30 +186,39 @@ export function spawnProcess(
 	args: readonly PathBuilderLike[] = [],
 	options: SpawnProcessOptions = {}
 ): ChildProcess {
-	return spawn(file.toString(), args.map(String), { ...options, cwd: options.cwd?.toString() })
+	return spawn(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString() }
+	)
 }
 
 /**
- * Options for {@linkcode spawnProcessSync}: the builtin's. Streams are always decoded as UTF-8.
+ * Options for {@linkcode spawnProcessSync}, whose streams are always decoded as UTF-8.
  */
-export type SpawnProcessSyncOptions = SpawnSyncOptions & { cwd?: PathBuilderLike }
+export type SpawnProcessSyncOptions = Omit<SpawnSyncOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
- * {@linkcode spawnProcess} run to completion in a synchronous slot. Unlike {@linkcode runFileSync} a non-zero exit does
- * not throw — the status, the signal and both streams come back in the result, for a caller that reads them.
+ * {@linkcode spawnProcess} run to completion in a synchronous slot where,
+ * unlike {@linkcode runFileSync}, a non-zero exit does not throw but comes back in
+ * the result with the status, signal and both streams.
  */
 export function spawnProcessSync(
 	file: PathBuilderLike,
 	args: readonly PathBuilderLike[] = [],
 	options: SpawnProcessSyncOptions = {}
 ): SpawnSyncReturns<string> {
-	return spawnSync(file.toString(), args.map(String), { ...options, cwd: options.cwd?.toString(), encoding: "utf8" })
+	return spawnSync(
+		file.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString(), encoding: "utf8" }
+	)
 }
 
 /**
  * Options for {@linkcode forkProcess}.
  */
-export type ForkProcessOptions = ForkOptions & { cwd?: PathBuilderLike }
+export type ForkProcessOptions = Omit<ForkOptions, "cwd"> & { cwd?: PathBuilderLike }
 
 /**
  * Start a Node module as a child with an IPC channel — the worker-host shape.
@@ -216,5 +228,9 @@ export function forkProcess(
 	args: readonly PathBuilderLike[] = [],
 	options: ForkProcessOptions = {}
 ): ChildProcess {
-	return fork(modulePath.toString(), args.map(String), { ...options, cwd: options.cwd?.toString() })
+	return fork(
+		modulePath.toString(),
+		args.map((arg) => arg.toString()),
+		{ ...options, cwd: options.cwd?.toString() }
+	)
 }

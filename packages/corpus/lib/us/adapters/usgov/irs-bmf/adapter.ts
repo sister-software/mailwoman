@@ -22,21 +22,25 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_IRS_BMF_ADAPTER_ID = "usgov-irs-bmf"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_IRS_BMF_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * PO box in its many written forms: "PO BOX 12", "P.O. BOX 12", "P O BOX 12", "POB 12", "BOX 12".
+ * PO box in its many written forms: "PO BOX 12", "P.O.
+ *
+ * BOX 12", "P O BOX 12", "POB 12", "BOX 12".
  */
 const PO_BOX = /^\s*(?:P\.?\s?O\.?\s*BOX|POB|BOX)\s+\w/i
 
@@ -52,9 +56,10 @@ interface IRSBMFRow {
 /**
  * Classify the street line into a `po_box` or a `{house_number?, street}` split.
  *
- * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes have to be claimed before the
- * shared house-number split runs — otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street, which
- * is correct for every other US adapter and wrong here.
+ * BMF mixes street addresses and PO boxes in one `street` column, so the PO-box shapes
+ * have to be claimed before the shared house-number split runs.
+ * Otherwise `splitStreetLine` would hand back `"PO Box 1234"` as a plain street,
+ * which is correct for every other US adapter and wrong here.
  */
 function splitStreetLineOrPOBox(street: string): { po_box: string } | { house_number?: string; street: string } | null {
 	const trimmed = street.trim()
@@ -69,6 +74,8 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 		id: USGOV_IRS_BMF_ADAPTER_ID,
 		defaultLicense: USGOV_IRS_BMF_DEFAULT_LICENSE,
 		addressRole: AddressRole.Mailing,
+		register: SourceRegister.IRSBusinessMasterFile,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"IRS Exempt Organizations Business Master File — US non-profit venue+address (public-domain), with strong PO-box coverage.",
 
@@ -88,12 +95,12 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const ein = (record.EIN ?? "").trim()
-				const venue = (record.NAME ?? "").trim() || undefined
-				const street = (record.STREET ?? "").trim()
-				const city = (record.CITY ?? "").trim()
-				const state = (record.STATE ?? "").trim()
-				const zipRaw = (record.ZIP ?? "").trim()
+				const ein = record.EIN ?? ""
+				const venue = (record.NAME ?? "") || undefined
+				const street = record.STREET ?? ""
+				const city = record.CITY ?? ""
+				const state = record.STATE ?? ""
+				const zipRaw = record.ZIP ?? ""
 
 				if (!city || !zipRaw) continue
 				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit. drop the optional +4

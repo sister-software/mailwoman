@@ -57,8 +57,9 @@ export interface EvalGeocoderInit {
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 
 /**
- * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface) for `nppes-dedup-benchmark
- * --parallel-geocode`. Yields enriched records in completion order.
+ * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface)
+ * for `nppes-dedup-benchmark --parallel-geocode`.
+ * Yields enriched records in completion order.
  */
 export type EvalGeocodeStream = (
 	records: SourceRecord[],

@@ -5,7 +5,7 @@
  *   `mailwoman gazetteer inspect sync` — clone or pull the Who's On First country repositories that the gazetteer
  *   builds read.
  *
- *   The destination defaults to `<data-root>/wof/repos`, matching every consumer of these repositories
+ *   The destination defaults to `<data-root>/src/wof-repos`, matching every consumer of these repositories
  *   (`gazetteer build admin`, `gazetteer build`, `build postcode-database`, `gazetteer polygons` all document that same
  *   default). Which repositories to sync is decided in `sync-plan.ts` before any network work, so a mistake is a
  *   message rather than a directory full of clones.
@@ -18,7 +18,7 @@
 
 import { ProgressBar } from "@inkjs/ui"
 import type { RepositorySource, SynchronizeAction } from "@mailwoman/core"
-import { dataRootPath } from "@mailwoman/core/data-root"
+import { wofReposPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { formatQuantity } from "@mailwoman/core/resources/locale"
 import { CommandError } from "@mailwoman/core/scripting/command"
@@ -44,14 +44,16 @@ import {
 /**
  * Concurrency for the clone fan-out.
  *
- * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of megabytes, so the ceiling is
- * bandwidth and GitHub's patience rather than cores. A 128-core host opening 128 clones serves nobody.
+ * Fixed rather than `availableParallelism()`: these are network transfers of hundreds of
+ * megabytes, so the ceiling is bandwidth and GitHub's patience rather than cores.
+ * A 128-core host opening 128 clones serves nobody.
  */
 const CONCURRENCY = 8
 
 /**
- * Above this many repositories the final list is summarized instead of printed in full. The `▸` lines above it are
- * complete either way — this bounds the closing frame rather than the record.
+ * Above this many repositories the final list is summarized instead of printed in full.
+ *
+ * The `▸` lines above it are complete either way — this bounds the closing frame rather than the record.
  */
 const MAX_LISTED_CHECKS = 25
 
@@ -64,7 +66,7 @@ export const spec = {
 	positionals: [
 		{
 			name: "local-repo-directory",
-			description: "Repository root. Default <data-root>/wof/repos",
+			description: "Repository root. Default <data-root>/src/wof-repos",
 		},
 	],
 	options: {
@@ -84,8 +86,8 @@ interface SyncPlan {
 /**
  * Ask GitHub what the organization holds.
  *
- * `gh` is a hard requirement and its absence is reported as such: without this the failure surfaces as an opaque spawn
- * error from deep inside the task.
+ * `gh` is a hard requirement and its absence is reported as such: without this the
+ * failure surfaces as an opaque spawn error from deep inside the task.
  */
 async function discoverRepos(): Promise<DiscoveredRepo[]> {
 	const { $ } = await import("zx")
@@ -115,7 +117,7 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				assertDestinationNotARepoName(requested)
 			}
 
-			const destination = PathBuilder.from(requested ?? dataRootPath("wof", "repos"))
+			const destination = PathBuilder.from(requested ?? wofReposPath())
 
 			const { Placetype, PLACETYPES_REPO_SOURCE, synchronizeRepo } = await import("@mailwoman/core")
 			const { parallelMap } = await import("spliterator")
@@ -126,11 +128,13 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 				all: options.all,
 			})
 
-			// where each repo comes from is resolved per repo rather than assumed to be upstream. `gh repo list` enumerates the
-			// upstream org, so the discovered `url` always names upstream — cloning from it would pull upstream data over
-			// the corrections our fork carries (the January 2019 GB deprecation batch is the first, #1742). Existing
-			// clones are not re-pointed here: `synchronizeRepo` pulls in place and never rewrites a remote, so this fixes
-			// new clones only. `gazetteer repos-sync` reports and re-points the existing ones.
+			// where each repo comes from is resolved per repo rather than assumed to be upstream.
+			// `gh repo list` enumerates the upstream org, so the discovered `url` always names
+			// upstream — cloning from it would pull upstream data over the corrections our
+			// fork carries (the January 2019 GB deprecation batch is the first, #1742).
+			// Existing clones are not re-pointed here: `synchronizeRepo` pulls in place
+			// and never rewrites a remote, so this fixes new clones only.
+			// `gazetteer repos-sync` reports and re-points the existing ones.
 			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof/repo-origin")
 
 			const resolved = await Promise.all(
@@ -143,17 +147,18 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 						console.error(`▸ ${name}: ${origin.reason}`)
 					}
 
-					// `owner` is the directory, and it stays upstream even when the bytes come from our fork. The
-					// destination is `<root>/<owner>/<name>`, so keying it on the resolved org would give one repo two
-					// homes — and `ingestWOF` globs the whole root, so the build would read both and resolve the conflict
-					// by FastGlob enumeration order (`repos-audit.ts` documents that hazard). One repo, one directory,
-					// whichever remote filled it.
+					// `owner` is the directory, and it stays upstream even when the bytes come from our fork.
+					// The destination is `<root>/<owner>/<name>`, so keying it on the resolved
+					// org would give one repo two homes, and `ingestWOF` globs the whole root,
+					// so the build would read both and resolve the conflict by FastGlob enumeration
+					// order (`repos-audit.ts` documents that hazard).
+					// One repo, one directory, whichever remote filled it.
 					return { name, url: origin.url, owner: WOF_REPO_OWNER }
 				})
 			)
 
-			// The placetypes codex is not optional: `Placetype.prepare` below reads it, and every consumer of a
-			// synchronized tree resolves placetypes through it.
+			// The placetypes codex is not optional: `Placetype.prepare` below reads it,
+			// and every consumer of a synchronized tree resolves placetypes through it.
 			const sources: RepositorySource[] = [...resolved, PLACETYPES_REPO_SOURCE]
 
 			setPlan({ destination: destination.toString(), selection, sourceCount: sources.length })

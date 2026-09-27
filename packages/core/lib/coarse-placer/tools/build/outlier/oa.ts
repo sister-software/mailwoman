@@ -34,9 +34,9 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
 import { COUNTRIES } from "#coarse-placer/tools/country-sets"
 import { assembleOutlierRow, collectOutlierRows, otherRowsJSONL } from "#coarse-placer/tools/outlier-rows"
 import { defaultDataDir } from "#coarse-placer/tools/paths"
+import { dataRootPath } from "#data-root"
 import { errorMessage } from "#errors/schema"
 import { appendLocalTextFile, writeLocalJSONLFile } from "#fs/writers"
-import { dataRootPath } from "#utils"
 
 interface OaTestRow {
 	raw: string
@@ -51,15 +51,21 @@ interface OaTestRow {
  */
 export interface BuildOutlierOAOptions {
 	/**
-	 * Extracted OpenAddresses root. Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
+	 * Extracted OpenAddresses root.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/openaddresses/extracted`.
 	 */
 	oaDir?: PathBuilderLike
 	/**
-	 * Row cap per off-map country. Default 6000.
+	 * Row cap per off-map country.
+	 *
+	 * Default 6000.
 	 */
 	perCountry?: number
 	/**
-	 * Dataset dir the `other` rows append to. Default `<repo>/data/coarse-placer`.
+	 * Dataset dir the `other` rows append to.
+	 *
+	 * Default `<repo>/data/coarse-placer`.
 	 */
 	data?: PathBuilderLike
 }
@@ -76,16 +82,19 @@ export interface BuildOutlierOAResult {
 }
 
 /**
- * The in-map countries the coarse-placer routes to — never appear in `other`.
+ * The in-map countries the coarse-placer routes to, never appear in `other`.
  */
 const IN_MAP = new Set<string>(COUNTRIES)
 
 /**
- * Language/region families for the leave-one-family-out split. Off-map countries OA's europe+asia zips plausibly carry.
- * the actual train/heldout set is intersected with what's on disk at runtime. heldout families are the generalization
- * probe (the model never sees a single row from them). Off-map families, intersected at runtime with what OA's
- * europe+asia zips actually carry (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro
- * sa se sg si sk).
+ * Language/region families for the leave-one-family-out split.
+ *
+ * Off-map countries OA's europe+asia zips plausibly carry.
+ * The actual train/heldout set is intersected with what's on disk at runtime.
+ *
+ * Heldout families are the generalization probe (the model never sees a single row from them).
+ * Off-map families, intersected at runtime with what OA's europe+asia zips actually carry
+ * (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
  */
 const FAMILIES: Record<string, string[]> = {
 	slavic_latin: ["PL", "CZ", "SK", "SI"],
@@ -101,8 +110,8 @@ const FAMILIES: Record<string, string[]> = {
 }
 
 /**
- * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row from — Baltic
- * (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+ * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row
+ * from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
@@ -131,15 +140,17 @@ export async function buildOutlierOA(
 	 */
 	async function rowsFor(cc: string): Promise<string[]> {
 		const lc = cc.toLowerCase()
-		// OA collected layout: `<cc>/[<region>/]<source>.csv` (country at root; `summary/` excluded by
-		// rooting the glob at <cc>). `**` matches zero-or-more dirs → handles both flat + region-nested.
+		// OA collected layout: `<cc>/[<region>/]<source>.csv`
+		// (country at root; `summary/` excluded by rooting the glob at <cc>).
+		// `**` matches zero-or-more dirs → handles both flat + region-nested.
 		const glob = resolvePath(oaDir, lc, "**", "*.csv")
 		let res
 
 		try {
 			res = await duck.runAndReadAll(
-				// union_by_name aligns the differing per-source schemas. lower the header access so number /
-				// number both resolve. Pull a generous superset, dedup+cap in JS.
+				// union_by_name aligns the differing per-source schemas.
+				// Lower the header access so number / number both resolve.
+				// Pull a generous superset, dedup+cap in JS.
 				`SELECT COLUMNS('(?i)^(number|street|city|postcode)$') FROM read_csv_auto('${glob}', union_by_name=true, ignore_errors=true, sample_size=-1) LIMIT ${PER * 8}`
 			)
 		} catch (error) {
@@ -151,7 +162,8 @@ export async function buildOutlierOA(
 
 		const out = collectOutlierRows(
 			res.getRowObjects().map((r) => {
-				// columns() preserves source-case keys. normalize to lowercase access.
+				// columns() preserves source-case keys.
+				// Normalize to lowercase access.
 				const row: Record<string, unknown> = {}
 
 				for (const [k, v] of Object.entries(r)) {

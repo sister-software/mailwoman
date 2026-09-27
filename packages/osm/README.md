@@ -46,17 +46,17 @@ aren't lost.
 ```bash
 # 1. Pull a Geofabrik extract (per-country, or a sub-region to smoke a build):
 #    https://download.geofabrik.de/europe/france/ile-de-france-latest.osm.pbf
-#    → $MAILWOMAN_DATA_ROOT/osm/geofabrik/
+#    → $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/
 
-# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/osm/address-points-fr-idf.db):
-node osm/out/scripts/build-rooftop-extract.js \
+# 2. Build the extract (writes $MAILWOMAN_DATA_ROOT/db/osm/address-points-fr-idf.db):
+node packages/osm/out/scripts/build-rooftop-database.js \
   --country fr --slug idf --release 260627 \
   --created-at 2026-06-27T00:00:00.000Z \
   --build-sha "$(git rev-parse HEAD)" \
-  --pbf $MAILWOMAN_DATA_ROOT/osm/geofabrik/ile-de-france-260627.osm.pbf
+  --pbf $MAILWOMAN_DATA_ROOT/db/osm/geofabrik/ile-de-france-260627.osm.pbf
 ```
 
-The build reports an **association gap** — the share of `addr:housenumber` points it had to skip because
+The build reports an **association gap**: the share of `addr:housenumber` points it had to skip because
 they carry no `addr:street`. A point with no street is unqueryable, so we count it rather than guess. When
 that gap is large for a country, the fix is a street-association recovery pass (`associatedStreet` relations
 → enclosing-polygon `addr:street` → point-in-polygon), sized to the measured gap — not built blind.

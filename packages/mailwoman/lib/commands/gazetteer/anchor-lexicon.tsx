@@ -59,10 +59,12 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py and the TS matcher — documented in
- * `rules.word_norm` below): per whitespace-word, strip leading/trailing characters that are not Unicode letters or
- * digits (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced. Entry keys and scanned tokens both
- * pass through it, so "U.S.A." ≡ "u.s.a".
+ * The shared word-normalization rule (mirrored verbatim in gazetteer_anchor.py
+ * and the TS matcher — documented in `rules.word_norm` below): per whitespace-word,
+ * strip leading/trailing characters that are not Unicode letters or digits
+ * (keep internal ones: "timor-leste", "u.s.a"), then rejoin single-spaced.
+ *
+ * Entry keys and scanned tokens both pass through it, so "U.S.A." ≡ "u.s.a".
  */
 /**
  * Normalize a surface for the case-insensitive map.
@@ -84,9 +86,9 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 		const { US_PO_BOX_DESIGNATORS, US_STATE_ABBREVIATIONS, US_STATE_BY_ABBREVIATION } =
 			await import("@mailwoman/codex/us")
 
-		const { repoRootPathBuilder } = await import("@mailwoman/core/utils")
+		const { repoRootPathBuilder } = await import("@mailwoman/core/paths")
 
-		const output = options.out ?? String(repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json"))
+		const output = options.out ?? repoRootPathBuilder("data", "gazetteer", "anchor-lexicon-v1.json")
 
 		// surface → bits, split across the two match-rule maps.
 		const entries = new Map<string, number>() // lowercase key

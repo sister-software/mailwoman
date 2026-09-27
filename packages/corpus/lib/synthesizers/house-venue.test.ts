@@ -110,9 +110,11 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("VE renders locality-then-postcode and KEEPS the region after it (#1821)", () => {
-		// `…, Barcelona 6001, Anzoátegui, Venezuela` — the four `ve_city_postcode_trailing_state` board rows, which the
-		// shipped model reads as `«street» «house_number»` and lands 573 km from. Neither GB's tail (which drops the
-		// region) nor the default (which puts the region before the code) is this shape.
+		// `…, Barcelona 6001, Anzoátegui, Venezuela`.
+		// The four `ve_city_postcode_trailing_state` board rows, which the shipped model
+		// reads as `«street» «house_number»` and lands 573 km from.
+		// Neither GB's tail (which drops the region) nor the default
+		// (which puts the region before the code) is this shape.
 		const veTuple: HouseVenueBaseTuple = {
 			locality: "Barcelona",
 			region: "Anzoátegui",
@@ -139,8 +141,9 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-restricted, and the shipped `house-venue` recipe output is FR + US only (116,244 rows, zero VE), so
-		// this addition cannot move an existing row. Pinned rather than asserted.
+		// The branch is country-restricted, and the shipped `house-venue` recipe output is
+		// FR + US only (116,244 rows, zero VE), so this addition cannot move an existing row.
+		// Pinned rather than asserted.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],
 			["FR", /75005 Paris/],

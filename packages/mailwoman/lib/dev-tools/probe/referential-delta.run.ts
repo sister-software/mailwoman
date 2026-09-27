@@ -31,12 +31,12 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/referential-delta.run.ts [--board <path>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { compareReferential, REFERENTIAL_SATURATION_POPULATION } from "@mailwoman/core/resolver"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { allRows, getRow } from "@mailwoman/core/utils"
 import type { PlaceCandidate } from "@mailwoman/resolver-wof-sqlite"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
@@ -45,9 +45,9 @@ import { existingWOFDatabasePaths } from "#resolver-backend"
 
 const { values } = parseArguments({ options: { board: { type: "string" } } })
 
-//#region 1 — Gazetteer census of the saturated tail
+// #region 1 — Gazetteer census of the saturated tail
 
-const adminPath = String(dataRootPath("wof", "admin-global-priority.db"))
+const adminPath = wofDatabasePath("admin-global-priority.db")
 
 console.log(`## Referential/population ordering — D-rule measurement\n`)
 console.log(`Saturation population: ${REFERENTIAL_SATURATION_POPULATION.toLocaleString()}\n`)
@@ -64,8 +64,9 @@ if (!(await pathExists(adminPath))) {
 		REFERENTIAL_SATURATION_POPULATION
 	)!.c
 
-	// The configuration where the tiebreak is required: two current places sharing a name, both
-	// clamped to referential 1.0. Anything less than this cannot produce a differing order.
+	// The configuration where the tiebreak is required: two current places sharing a name,
+	// both clamped to referential 1.0.
+	// Anything less than this cannot produce a differing order.
 	// Same one-row guarantee: the group BY is inside the subquery, the outer count(*) has none.
 	const collidingPairs = getRow<{ c: number }>(
 		db.prepare(
@@ -97,13 +98,15 @@ if (!(await pathExists(adminPath))) {
 	console.log("")
 }
 
-//#endregion
+// #endregion
 
-//#region 2 — Live query replay
+// #region 2 — Live query replay
 
 /**
- * The pre-split within-tier key, verbatim from `lookup.ts` before the split: raw population desc, weighted score as the
- * tiebreak. Kept here so the comparison is against the code that shipped rather than against a paraphrase of it.
+ * The pre-split within-tier key, verbatim from `lookup.ts` before the split:
+ * raw population desc, weighted score as the tiebreak.
+ *
+ * Kept here so the comparison is against the code that shipped rather than against a paraphrase of it.
  */
 const preSplitKey = (a: PlaceCandidate, b: PlaceCandidate): number =>
 	(b.population ?? 0) - (a.population ?? 0) || b.score - a.score
@@ -124,8 +127,9 @@ if (!wofPaths.length) {
 	using lookup = new WOFSQLitePlaceLookup({ databasePath: wofPaths })
 	const board = await loadHardCaseBoard(values.board)
 
-	// Board inputs and their probe surfaces: the input is what a user types, the surface is the token
-	// whose namesakes are actually in contention. Both go through the ranking.
+	// Board inputs and their probe surfaces: the input is what a user types,
+	// the surface is the token whose namesakes are actually in contention.
+	// Both go through the ranking.
 	const queries = [...new Set([...board.map((c) => c.input), ...board.map((c) => c.probeSurface)])].toSorted()
 
 	let differing = 0
@@ -164,4 +168,4 @@ if (!wofPaths.length) {
 	console.log(`- result sets whose ORDER differs pre-split vs post-split: **${differing}**\n`)
 }
 
-//#endregion
+// #endregion

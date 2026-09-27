@@ -1,6 +1,6 @@
 """Building the output heads, and the weight initialization that follows them.
 
-Construction order is a interface: `_init_weights` walks `self.parameters()`, which yields in
+Construction order is an interface: `_init_weights` walks `self.parameters()`, which yields in
 registration order and draws from the global RNG for each. Therefore, moving a head's construction changes
 the initial weights of everything registered after it.
 """

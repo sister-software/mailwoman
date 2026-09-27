@@ -38,12 +38,13 @@ export class Placetype implements Disposable {
 		this.children.clear()
 	}
 
-	//#region Static Caches
+	// #region Static Caches
 
 	/**
 	 * A map of placetypes indexed by their Brooklyn Integers ID.
 	 *
-	 * Note that these IDs are not in any specific order. Avoid using them for sorting.
+	 * Note that these IDs are not in any specific order.
+	 * Avoid using them for sorting.
 	 */
 	static #byID = new Map<number, Placetype>()
 
@@ -62,9 +63,9 @@ export class Placetype implements Disposable {
 	 */
 	static #childNamesOfParentName = new Map<string, Set<string>>()
 
-	//#endregion
+	// #endregion
 
-	//#region Static Methods
+	// #region Static Methods
 
 	static async prepare({ batchSize, localRepoDirectory }: PlacetypeServiceInit) {
 		const { repoDirectory, exists } = await prepareRepositoryDirectories(PLACETYPES_REPO_SOURCE, localRepoDirectory)
@@ -90,7 +91,8 @@ export class Placetype implements Disposable {
 		)
 
 		for await (const _definition of batchIterator) {
-			// `parallelMap` performs registration above. its yielded definitions have no further consumer.
+			// `parallelMap` performs registration above.
+			// Its yielded definitions have no further consumer.
 		}
 	}
 
@@ -121,9 +123,10 @@ export class Placetype implements Disposable {
 	}
 
 	/**
-	 * Compare two placetypes, sorting less specific (i.e. bigger or higher) placetypes first.
+	 * Compare two placetypes, sorting less specific (i.e. Bigger or higher) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential, only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they
+	 * are not sequential, only unique.
 	 */
 	static comparatorAsc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -138,9 +141,10 @@ export class Placetype implements Disposable {
 	}
 
 	/**
-	 * Compare two placetypes, sorting more specific (i.e. smaller or lower) placetypes first.
+	 * Compare two placetypes, sorting more specific (i.e. Smaller or lower) placetypes first.
 	 *
-	 * Note that the two placetype IDs have no affect on the comparison as they are not sequential, only unique.
+	 * Note that the two placetype IDs have no affect on the comparison as they
+	 * are not sequential, only unique.
 	 */
 	static comparatorDesc(a: Placetype, b: Placetype): number {
 		if (a.siblings.has(b)) {
@@ -154,19 +158,20 @@ export class Placetype implements Disposable {
 		return 0
 	}
 
-	//#endregion
+	// #endregion
 
 	/**
 	 * The source definition of this placetype.
 	 */
 	readonly #definition: PlacetypeDefinition
 
-	//#region Properties
+	// #region Properties
 
 	/**
 	 * The Brooklyn Integers ID of this placetype.
 	 *
-	 * This is effectively a unique identifier for the placetype, but any pattern of sequential integers is coincidental.
+	 * This is effectively a unique identifier for the placetype, but any pattern
+	 * of sequential integers is coincidental.
 	 */
 	public get id(): number {
 		return this.#definition.id
@@ -213,9 +218,9 @@ export class Placetype implements Disposable {
 	 */
 	public children: Set<Placetype>
 
-	//#endregion
+	// #endregion
 
-	//#region Predicates
+	// #region Predicates
 
 	/**
 	 * Check if this placetype has a child matching the given name, ID, or Placetype instance.
@@ -234,9 +239,9 @@ export class Placetype implements Disposable {
 		return children.has(child)
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Lineage Methods
+	// #region Lineage Methods
 
 	/**
 	 * Find the ancestors of this placetype, optionally filtered by role.
@@ -339,9 +344,9 @@ export class Placetype implements Disposable {
 		}
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Constructors
+	// #region Constructors
 
 	/**
 	 * Register a placetype specification, creating a new Placetype instance and indexing it by id.
@@ -428,9 +433,9 @@ export class Placetype implements Disposable {
 		}
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Methods
+	// #region Methods
 
 	public toString() {
 		const { name, id, role } = this.#definition

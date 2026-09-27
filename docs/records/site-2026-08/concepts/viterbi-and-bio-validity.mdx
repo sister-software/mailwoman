@@ -172,11 +172,11 @@ A learned transition layer would add soft transition preferences on
 top of the hard structural mask. For example:
 
 - `B-house_number` is almost always followed by `B-street` or `O,
-B-street` — a learned matrix could encode that preference.
+B-street`. A learned matrix could encode that preference.
 - `B-postcode` rarely precedes anything (it's typically the last
   component) — `B-postcode → O` could get a boost.
 - `B-street_prefix → B-street` is common; `B-street_prefix →
-B-locality` is rare — a learned matrix could rank these apart.
+B-locality` is rare. A learned matrix could rank these apart.
 
 It would not provide:
 

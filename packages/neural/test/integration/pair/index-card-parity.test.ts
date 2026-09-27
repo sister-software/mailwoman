@@ -5,7 +5,7 @@
  *   Every shipped `pair-index-<country>.bin` must agree with the model card that describes it.
  *
  *   A model card is what a consumer, the release preflight and a future maintainer all read to learn
- *   what an artifact is. Nothing else compares the two, and a card can drift across several
+ *   what an artifact is. No other check compares the two, and a card can drift across several
  *   increments without any check noticing — leaving it not merely absent but confidently wrong. The
  *   artifact is the arbiter here. the card is graded against it.
  *
@@ -17,7 +17,7 @@
  *   staged for a release. the release-side check in `packages/release-kit/lib/release/verify-metadata.ts` is where
  *   staged bytes get checked.
  *
- *   Skips per-package when the binary is absent — these are derived artifacts, gitignored and built
+ *   Skips per-package when the binary is absent. These are derived artifacts, gitignored and built
  *   by each package's `link-dev-weights.ts`, so a lean checkout legitimately has none.
  */
 
@@ -29,10 +29,12 @@ import { describe, expect, test } from "vitest"
 /**
  * Which weights package ships which country's index, and where that package's card describes it.
  *
- * The card key is spelled out per package rather than discovered, because the naming is genuinely inconsistent across
- * the four (`us_artifacts` / `fr_artifacts` / `gb_artifacts` / `nz_artifacts`, each with its own `pair_index_<cc>_bin`
- * child). A guard that guessed the key would silently pass on a card whose block had been renamed or dropped — the
- * exact failure it exists to catch — so the mapping is explicit and a missing block is a failure rather than a skip.
+ * The card key is spelled out per package rather than discovered, because the naming is
+ * genuinely inconsistent across the four (`us_artifacts` / `fr_artifacts` / `gb_artifacts`
+ * / `nz_artifacts`, each with its own `pair_index_<cc>_bin` child).
+ * A guard that guessed the key would silently pass on a card whose block had been renamed
+ * or dropped — the exact failure it exists to catch — so the mapping is explicit
+ * and a missing block is a failure rather than a skip.
  */
 const PACKAGES = [
 	{ pkg: "neural-weights-en-us", country: "us", cardKeys: ["us_artifacts", "pair_index_us_bin"] },
@@ -48,7 +50,7 @@ const PACKAGES = [
 const BIN_EXISTS = new Map<string, boolean>()
 
 for (const { pkg, country } of PACKAGES) {
-	BIN_EXISTS.set(pkg, await pathExists(String(repoRootPath(pkg, `pair-index-${country}.bin`))))
+	BIN_EXISTS.set(pkg, await pathExists(repoRootPath(pkg, `pair-index-${country}.bin`)))
 }
 
 interface PairIndexFacts {
@@ -60,8 +62,10 @@ interface PairIndexFacts {
 }
 
 /**
- * Read a PIX1 binary's header and entry count without constructing a resolver — this test cares about what the file
- * says, so it deliberately does not route through the reader that a bug could also affect.
+ * Read a PIX1 binary's header and entry count without constructing a resolver.
+ *
+ * This test cares about what the file says, so it deliberately does not route
+ * through the reader that a bug could also affect.
  */
 async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
 	const bytes = await readLocalBuffer(path)
@@ -90,8 +94,8 @@ async function readPairIndexFacts(path: string): Promise<PairIndexFacts> {
 
 describe("pair-index ↔ model-card parity", () => {
 	for (const { pkg, country, cardKeys } of PACKAGES) {
-		const binPath = String(repoRootPath(pkg, `pair-index-${country}.bin`))
-		const cardPath = String(repoRootPath(pkg, "model-card.json"))
+		const binPath = repoRootPath(pkg, `pair-index-${country}.bin`)
+		const cardPath = repoRootPath(pkg, "model-card.json")
 
 		test.skipIf(!BIN_EXISTS.get(pkg))(`${pkg}: the card describes the artifact on disk`, async () => {
 			const card = await readLocalJSONFile<Record<string, unknown>>(cardPath)
@@ -111,8 +115,9 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// The calibrated magnitudes ride the header. a card claiming a delta the binary does not carry would
-			// misdescribe the shipped behaviour rather than just the shipped size.
+			// The calibrated magnitudes ride the header.
+			// A card claiming a delta the binary does not carry would misdescribe the
+			// shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 
 			expect(cardDelta, `${pkg}: card delta_calibration does not mention the artifact's δ=${facts.delta}`).toContain(
@@ -126,12 +131,14 @@ describe("pair-index ↔ model-card parity", () => {
 				).toContain(String(facts.transitionBeta))
 			}
 
-			// The whole-edge parent bias (#46) is default-on for the locales that have a board, and off (no
-			// header key) for the ones that don't. Both directions are graded: a card that omits a shipped
-			// parentDelta misdescribes the behaviour, and a card that claims one the artifact lacks is worse —
-			// it reads as though the D-rule's per-locale check had been cleared when it hasn't. The assertion
-			// spells out `parentDelta=<n>` rather than the bare number because δ and β are both 5 today, so a
-			// substring match on "5" would pass on a card that never mentioned the parent at all.
+			// The whole-edge parent bias (#46) is default-on for the locales that have a board,
+			// and off (no header key) for the ones that don't.
+			// Both directions are graded: a card that omits a shipped parentDelta misdescribes
+			// the behaviour, and a card that claims one the artifact lacks is worse.
+			// It reads as though the D-rule's per-locale check had been cleared when it hasn't.
+			// The assertion spells out `parentDelta=<n>` rather than the bare number
+			// because δ and β are both 5 today, so a substring match on "5" would pass
+			// on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`
 
 			if (facts.parentDelta === undefined) {

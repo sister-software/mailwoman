@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import {
 	assertDestinationNotARepoName,
 	countryRepoNames,
@@ -20,8 +17,6 @@ const DISCOVERED: readonly DiscoveredRepo[] = [
 
 describe("assertDestinationNotARepoName", () => {
 	it("refuses a repository name in the destination slot", () => {
-		// The trap that cost 65 GB: the name lands on the positional. It is the destination directory. Therefore, no
-		// `--repos` filter is applied and the whole org syncs into a directory named after one repo.
 		expect(() => assertDestinationNotARepoName("whosonfirst-data-admin-tr")).toThrow(/--repos/)
 	})
 
@@ -32,7 +27,7 @@ describe("assertDestinationNotARepoName", () => {
 	})
 
 	it("accepts a real destination", () => {
-		for (const destination of ["/mnt/playpen/mailwoman-data/wof/repos", "./repos", "../wof/repos"]) {
+		for (const destination of ["/srv/mailwoman-data/wof/repos", "./repos", "../wof/repos"]) {
 			expect(() => assertDestinationNotARepoName(destination), destination).not.toThrow()
 		}
 	})
@@ -44,8 +39,6 @@ describe("countryRepoNames", () => {
 	})
 
 	it("accepts a comma list in either case, trimming blanks", () => {
-		// `--countries` is the house spelling for a comma list (build candidate, release, postcode-intl); singular
-		// `--country` means exactly one code elsewhere in the CLI.
 		expect(countryRepoNames(" TR , fr ,")).toEqual([
 			"whosonfirst-data-admin-tr",
 			"whosonfirst-data-postalcode-tr",
@@ -67,15 +60,12 @@ describe("selectRepos", () => {
 	})
 
 	it("refuses a name that matched nothing, and suggests the near miss", () => {
-		// Today an unmatched filter syncs only the placetypes repo and reports "1 of 1" — a typo reads as success.
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(
 			/whosonfirst-data-admin-tr/
 		)
 	})
 
 	it("points a country name at the country flag, which a near miss cannot", () => {
-		// `-turkey` is nearer to a real `-tu` repository than to `-tr` by string distance. Therefore, the hint has to be stated
-		// rather than inferred.
 		expect(() => selectRepos(DISCOVERED, { repos: "whosonfirst-data-admin-turkey" })).toThrow(/--countries/)
 	})
 
@@ -93,7 +83,6 @@ describe("selectRepos", () => {
 	it("expands --countries to that country's admin and postalcode repositories", () => {
 		const selection = selectRepos(DISCOVERED, { countries: "tr" })
 
-		// Venue is not included: no country in the data root has a venue clone, and it doubles the transfer.
 		expect(selection.selected.map((entry) => entry.name)).toEqual([
 			"whosonfirst-data-admin-tr",
 			"whosonfirst-data-postalcode-tr",

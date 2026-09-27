@@ -4,7 +4,7 @@
 
 **Goal:** One private workspace, `packages/planetary`, built twice by `PLANETARY_BODY`, serving `moon.mailwoman.ai` and `mars.mailwoman.ai`: a MapLibre globe over the published nomenclature and hillshade archives, labels decluttered by scale, a click-to-inspect feature panel, search over the pipeline's ancestrie artifact, stable `/feature/<id>` links, and visible attribution from the pipeline manifest.
 
-**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build through the package's own `lib/env.ts` and Vite `define`; the production host is checked against it at startup. Feature identity is the pipeline's stable id, carried in tile properties and the search payload, so a deep link needs no tile query.
+**Architecture:** The app copies the Earth shell's shape and imports the shared pieces from `@mailwoman/site-kit`. `@mailwoman/cartographer` gains a `planetary` module whose `createPlanetaryStyle` composes a body's sources and layers over `StyleSpecificationComposer`, which learns to take its base layers, hillshade source and sprite as inputs instead of assuming Earth's. Sources are TileJSON URLs on `tiles.mailwoman.ai`, which MapLibre resolves itself. The body is fixed at build time through the package's own `lib/env.ts` and Vite `define`, and the app checks the production host against it at startup. A feature is identified by the pipeline's stable id. The tile properties and the search payload both carry that id, so a deep link needs no tile query.
 
 **Tech Stack:** React 19, Vite 8, `react-map-gl` 8 over MapLibre 6 (`projection: "globe"`), `@mailwoman/ancestrie` reader, `vite-plugin-pwa`, wrangler 4, Playwright, vitest.
 
@@ -12,13 +12,13 @@
 
 ## Global Constraints
 
-- Lands after the Earth shell plan (`site-kit`, the fake-runtime subpath) and the astrogeology plan (the archives, the search artifact, the manifest). Rebase onto both.
-- `packages/planetary`, `@mailwoman/planetary`, `private: true`; registers: root `workspaces` (after `packages/photon`, before `packages/poi-taxonomy`), both root `tsconfig.json` entries, `SANCTIONED_RELEASE_ABSENCES` ("private planetary map app — Cloudflare infrastructure, never publishes"), the dependency-cruiser browser list.
-- `PLANETARY_BODY` is read once, at build, through `packages/planetary/lib/env.ts` (a `liveEnv` view over `@mailwoman/core/env`), never `process.env`; the client sees it through Vite `define` as `__PLANETARY_BODY__`.
-- No Earth basemap layer, no sprite, no Worker script, no query-parameter body switch.
-- Every distance or area claim goes through `@mailwoman/spatial` with the body; v1 makes none.
+- This plan lands after the Earth shell plan (`site-kit`, the fake-runtime subpath) and the astrogeology plan (the archives, the search artifact, the manifest). Rebase onto both.
+- The workspace is `packages/planetary`, named `@mailwoman/planetary`, with `private: true`. Register it in the root `workspaces` (after `packages/photon`, before `packages/poi-taxonomy`), in both root `tsconfig.json` entries, in `SANCTIONED_RELEASE_ABSENCES` ("private planetary map app — Cloudflare infrastructure, never publishes"), and in the dependency-cruiser browser list.
+- `PLANETARY_BODY` is read once, at build time, through `packages/planetary/lib/env.ts` (a `liveEnv` view over `@mailwoman/core/env`). Code never reads it from `process.env`. The client sees it through Vite `define` as `__PLANETARY_BODY__`.
+- The app omits the Earth basemap layer, the sprite, and a Worker script. It also has no query parameter that switches the body.
+- Every distance or area claim goes through `@mailwoman/spatial` with the body. v1 makes no such claims.
 - Dependency ranges match existing declarations (`sherif`).
-- The component and hook names are the ones the second Earth runtime plan leaves in `@mailwoman/react/map` (`MapCanvas`); if that plan has not landed, `DemoMap` is the same component under its old name, and the rename touches this app's two import lines when it lands.
+- The component and hook names are the ones the second Earth runtime plan leaves in `@mailwoman/react/map` (`MapCanvas`). If that plan has not landed, `DemoMap` is the same component under its old name, and the rename changes this app's two import lines when it lands.
 - Branch: `git fetch origin main && git checkout -b feat/planetary origin/main`.
 
 ## File Structure
@@ -180,7 +180,7 @@ test.each(["moon", "mars"] as const)(
 )
 ```
 
-`validateStyleMin` is the style-spec package's validator; the package is already a dependency of cartographer (`grep -n maplibre-gl-style-spec packages/cartographer/package.json`).
+`validateStyleMin` is the style-spec package's validator, and the package is already a dependency of cartographer (`grep -n maplibre-gl-style-spec packages/cartographer/package.json`).
 
 - [ ] **Step 2: Sources, layers, style**
 
@@ -299,7 +299,7 @@ export function createPlanetaryStyle(options: PlanetaryStyleOptions): StyleSpeci
 }
 ```
 
-The test's expected layer list assumes a hillshade URL; adjust the test to pass one, as written.
+The test's expected layer list assumes a hillshade URL, so adjust the test to pass one.
 
 - [ ] **Step 3: Run, commit**
 
@@ -415,7 +415,7 @@ export const MOON: PlanetaryMapConfig = {
 }
 ```
 
-The `<version>` is the pipeline's build version string from its manifest (`astrogeology publish` prints it and the two URLs); it is a pin the same way Earth's resource versions are, and it changes by a commit here when the pipeline republishes. `lib/routes.ts` follows the Earth shell's `routes.ts` with the `/feature/<id>` pattern `^/feature/([0-9]+)$`.
+The `<version>` is the pipeline's build version string from its manifest, and `astrogeology publish` prints it along with the two URLs. It is pinned in the same way as Earth's resource versions, and a commit here updates it when the pipeline republishes. `lib/routes.ts` follows the Earth shell's `routes.ts` with the `/feature/<id>` pattern `^/feature/([0-9]+)$`.
 
 - [ ] **Step 3: The manifest and Vite config**
 
@@ -443,7 +443,7 @@ export default defineConfig({
 })
 ```
 
-`publicDir` selects the body's icon set; each `public/icons/<body>/` holds the three icons rendered from that body's SVG the way the Earth shell's are. The Vite config runs under Node, where `$public` reads the process environment; a missing `PLANETARY_BODY` fails the build with the schema's message, which is what "refuses an unknown value" means.
+`publicDir` selects the body's icon set. Each `public/icons/<body>/` holds the three icons rendered from that body's SVG, in the same way as the Earth shell's icons. The Vite config runs under Node, where `$public` reads the process environment. A missing `PLANETARY_BODY` fails the build with the schema's message, which is how the build refuses an unknown value.
 
 - [ ] **Step 4: Run, register, commit**
 
@@ -526,11 +526,11 @@ export function PlanetaryMap({ config, selected, onSelect }: PlanetaryMapProps) 
 }
 ```
 
-Read `MapCameraTarget` in `packages/react/lib/map/place-render.ts` for the exact target shape before writing the `ResultCamera` line; `zoomForDiameter` is the inverse of the pipeline's declutter rule (≥300 km → 3, ≥100 → 5, ≥30 → 7, else 9). `prefersReducedMotion()` is `matchMedia("(prefers-reduced-motion: reduce)").matches`. `featureFromTileProperties` validates the tile's properties with the pipeline's `PlanetaryNomenclatureFeatureSchema.pick(...)` (import from `@mailwoman/astrogeology/schema/nomenclature`; a private sibling is importable by a private app).
+Read `MapCameraTarget` in `packages/react/lib/map/place-render.ts` for the exact target shape before writing the `ResultCamera` line. `zoomForDiameter` is the inverse of the pipeline's declutter rule (≥300 km → 3, ≥100 → 5, ≥30 → 7, else 9). `prefersReducedMotion()` is `matchMedia("(prefers-reduced-motion: reduce)").matches`. `featureFromTileProperties` validates the tile's properties with the pipeline's `PlanetaryNomenclatureFeatureSchema.pick(...)` (import it from `@mailwoman/astrogeology/schema/nomenclature`, which works because both packages are private).
 
 - [ ] **Step 2: App, panel, HTML, wrangler**
 
-`App.tsx` reads `currentBody()`, calls `assertHostMatchesBody(location.hostname, body)` (rendering an error page on throw), resolves the route, and composes `<SearchBox>`, `<PlanetaryMap>`, `<FeaturePanel>` and `<Attribution>`. A `/feature/<id>` route with no selection yet looks the id up in the search artifact (Task 5) to get its center and name, so the deep link restores the panel and camera without a tile query. `FeaturePanel` is semantic HTML: `<article aria-labelledby>` with a `<dl>` of name, type, coordinates (formatted to four decimals, east-positive, with the latitude type from the body), diameter, origin, approval status and date, and a "Source: USGS / IAU" line; a close button returns to `/` through `history.pushState`. `index.html`, `main.tsx`, `wrangler.toml` (`name = "mailwoman-planetary"` — the dashboard project name per body overrides it) follow the Earth shell's.
+`App.tsx` reads `currentBody()`, calls `assertHostMatchesBody(location.hostname, body)` (rendering an error page on throw), resolves the route, and composes `<SearchBox>`, `<PlanetaryMap>`, `<FeaturePanel>` and `<Attribution>`. A `/feature/<id>` route with no selection yet looks the id up in the search artifact (Task 5) to get its center and name, so the deep link restores the panel and camera without a tile query. `FeaturePanel` is semantic HTML: `<article aria-labelledby>` with a `<dl>` of name, type, coordinates (formatted to four decimals, east-positive, with the latitude type from the body), diameter, origin, approval status and date, and a "Source: USGS / IAU" line. A close button returns to `/` through `history.pushState`. `index.html`, `main.tsx`, and `wrangler.toml` follow the Earth shell's. `wrangler.toml` sets `name = "mailwoman-planetary"`, and each body's dashboard project name overrides it.
 
 - [ ] **Step 3: Build both, look, commit**
 
@@ -559,7 +559,7 @@ git commit -m "feat(planetary): the globe over the body's archives, click-to-sel
 
 - [ ] **Step 1: The fixture and test**
 
-The fixture is built by the astrogeology package's `buildSearchIndex` over its five Moon fixture features; run that function once from a Node one-liner and commit the bytes (`ls -la` under 10 KB). `test/unit/search.test.ts`:
+The fixture is built by the astrogeology package's `buildSearchIndex` over its five Moon fixture features. Run that function once from a Node one-liner and commit the bytes (`ls -la` under 10 KB). `test/unit/search.test.ts`:
 
 ```ts
 test("prefix search finds Tycho and ranks the larger feature first at a shared prefix", async () => {
@@ -579,7 +579,7 @@ Add Mare Tranquillitatis with its alias to the astrogeology Moon fixture if it i
 
 - [ ] **Step 2: The box**
 
-`SearchBox` renders an `<input role="combobox">` with a listbox of hits, keyboard navigable (arrow keys, Enter, Escape), and calls `onSelect(hit)`; `@mailwoman/react/map`'s `PlaceAutocomplete` already renders a keyboard-navigable listbox over `Suggestion[]` (`suggestions`, `activeIndex`, `onPick`, `onHover`, `listboxID`, `optionID`), so the box composes it and maps `SearchHit` to `Suggestion { value: name, placetype: featureType }` rather than writing a second listbox.
+`SearchBox` renders an `<input role="combobox">` with a listbox of hits, keyboard navigable (arrow keys, Enter, Escape), and calls `onSelect(hit)`. `@mailwoman/react/map`'s `PlaceAutocomplete` already renders a keyboard-navigable listbox over `Suggestion[]` (`suggestions`, `activeIndex`, `onPick`, `onHover`, `listboxID`, `optionID`), so the box composes it and maps `SearchHit` to `Suggestion { value: name, placetype: featureType }` rather than writing a second listbox.
 
 - [ ] **Step 3: Run, commit**
 
@@ -600,7 +600,7 @@ git commit -m "feat(planetary): search over the pipeline's ancestrie artifact, t
 
 - [ ] **Step 1: Attribution from the manifest**
 
-`Attribution` fetches `config.artifacts.manifestURL`, validates it with `PlanetaryBuildManifestSchema` from `@mailwoman/astrogeology/schema/manifest`, and renders one line per source (`USGS Astrogeology / IAU WGPSN — nomenclature, snapshot <date>`, `NASA LRO LOLA — terrain` or `NASA MGS MOLA — terrain`) plus `MapLibre`. Always visible, bottom-left, small.
+`Attribution` fetches `config.artifacts.manifestURL`, validates it with `PlanetaryBuildManifestSchema` from `@mailwoman/astrogeology/schema/manifest`, and renders one line per source (`USGS Astrogeology / IAU WGPSN — nomenclature, snapshot <date>`, `NASA LRO LOLA — terrain` or `NASA MGS MOLA — terrain`) plus `MapLibre`. The attribution is always visible, small, in the bottom-left corner.
 
 - [ ] **Step 2: The smoke**
 
@@ -630,7 +630,7 @@ test("the globe loads for the built body, search finds a known feature, selectio
 })
 ```
 
-The preview serves the real archives from `tiles.mailwoman.ai` and the search artifact from `public.mailwoman.ai`; this smoke needs the network, as the Earth production smoke does.
+The preview serves the real archives from `tiles.mailwoman.ai` and the search artifact from `public.mailwoman.ai`, so this smoke needs the network, as the Earth production smoke does.
 
 - [ ] **Step 3: CI and README**
 

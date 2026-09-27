@@ -2,12 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The two config vocabularies must stay in step, and nothing else can check it.
- *
- *   `EngineConfig` is the CLI's snake_case; `GeocodeSessionOptions` is camelCase. `resolveConfig` translates, and
- *   `EFFECTIVE_KEY_FOR` names the same translation for `confound.ts`. A change added to one and not the other compiles
- *   and passes every other test — and silently makes every correctly-declared comparison grade itself ambiguous, which
- *   is a defect in a verdict rather than in a number. Therefore, no measurement fails either.
+ *   Tests that CLI configuration keys map to the session option names that confound checks read.
  */
 
 import { EFFECTIVE_KEY_FOR, effectiveKeyFor, resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
@@ -16,8 +11,7 @@ import { describe, expect, it } from "vitest"
 
 describe("EFFECTIVE_KEY_FOR", () => {
 	it("covers every key the tool schema accepts", () => {
-		// The schema is what a caller can actually type, so it is the population that matters — not the TS interface,
-		// which a `satisfies` clause already checks at compile time.
+		// The tool schema is what callers validate against, so the check reads it directly.
 		const schemaKeys = Object.keys(ENGINE_CONFIG_SCHEMA.shape).toSorted()
 		const mapped = Object.keys(EFFECTIVE_KEY_FOR)
 
@@ -25,7 +19,7 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("maps onto keys resolveConfig actually produces", () => {
-		// Every change set to a NON-default value, so nothing lands on the conditional-spread branches and drops out.
+		// Every key gets a non-default value, so `resolveConfig` emits its conditional fields too.
 		const resolved = resolveConfig({
 			locale: "en-GB",
 			country_scope: "none",
@@ -58,16 +52,13 @@ describe("EFFECTIVE_KEY_FOR", () => {
 	})
 
 	it("keeps `diagnose_unreachable` OUT of the tool schema on purpose", () => {
-		// It is a session option rather than a change: the answer is byte-identical whether it is on, so declaring it as the
-		// variable of a comparison would declare a variable that cannot move an outcome. The tools that read misses
-		// force it on themselves. If someone "fixes" the asymmetry by adding it to the schema, this is the alarm.
+		// This diagnostic never changes answers, so it stays out of the comparison pins.
 		expect(Object.keys(ENGINE_CONFIG_SCHEMA.shape)).not.toContain("diagnose_unreachable")
 		expect(Object.keys(EFFECTIVE_KEY_FOR)).toContain("diagnose_unreachable")
 	})
 
 	it("passes through a declaration that is not a config key at all", () => {
-		// `["engine"]` is the correct declaration for a cross-engine comparison, where no config key can express the
-		// variable. Rejecting it would refuse the one honest declaration for that case.
+		// A cross-engine comparison declares `engine`, which has no `EngineConfig` mapping.
 		expect(effectiveKeyFor("engine")).toBe("engine")
 		expect(effectiveKeyFor("tree_fingerprint")).toBe("tree_fingerprint")
 	})

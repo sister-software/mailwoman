@@ -236,6 +236,6 @@ The migrated suite was driven to a fully-dispositioned state against the live de
 | Modal spend                | $0 of $30                                                                                          |
 | NaN incidents              | 0                                                                                                  |
 | CI failures on own changes | 3 (1 load flake rerun; 2 real catches — the reach-around guard, the man-page rootDir — both fixed) |
-| Dark workflows healed      | version-parity (2 stacked breaks, 5 days dark); demo-smoke unblocked to an direct red              |
+| Dark workflows healed      | version-parity (2 stacked breaks, 5 days dark); demo-smoke unblocked to an honest red              |
 | Demo regressions           | 0 introduced; 2 latent defects found + fixed (#1586, #1588)                                        |
 | Production state           | demo on v9.1.0 (R2+HF), all md5-verified; npm untouched                                            |

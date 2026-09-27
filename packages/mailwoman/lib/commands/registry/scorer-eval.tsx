@@ -143,8 +143,8 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			return "cross-state: report emitted"
 		}
 		case "dedup-ceiling": {
-			// The same tool as `registry dedup-ceiling` (geocode-free) — kept in this enum so the whole
-			// record-matcher eval suite is reachable from one command.
+			// The same tool as `registry dedup-ceiling` (geocode-free).
+			// Kept in this enum so the whole record-matcher eval suite is reachable from one command.
 			const res = await dedupCeiling(
 				{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
 				reportToStderr
@@ -153,18 +153,19 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			return `dedup-ceiling: ${res.collide} collisions over ${res.pairs} co-located pairs`
 		}
 		case "nppes-benchmark": {
-			// The threaded-geocode surface is injected lazily — the worker pool only loads when requested.
+			// The threaded-geocode surface is injected lazily.
+			// The worker pool only loads when requested.
 			const geocodeStream: EvalGeocodeStream = (records, opts) =>
 				(async function* () {
 					const { geocodeStream: stream } = await import("#geocode/stream")
-					const { dataRootPath } = await import("@mailwoman/core/utils")
-					const { mailwomanDataRoot } = await import("@mailwoman/core/data-root")
+					const { dataRootPath } = await import("@mailwoman/core/data-root")
+					const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
 					yield* stream(records, {
 						mapping: opts.mapping,
 						geocode: {
-							wofDBPath: options.wof || String(dataRootPath("wof", "admin-global-priority.db")),
-							dataRoot: options.dataRoot || mailwomanDataRoot(),
+							wofDBPath: options.wof || wofDatabasePath("admin-global-priority.db").toString(),
+							dataRoot: options.dataRoot || dataRootPath().toString(),
 							locale: "en-US",
 							country: "US",
 						},

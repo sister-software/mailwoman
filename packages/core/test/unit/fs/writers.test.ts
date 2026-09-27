@@ -11,7 +11,7 @@ test("writeLocalTextFile streams async lines with one terminating newline per li
 		yield "second"
 	}
 
-	const output = scratch.resolve("lines.txt")
+	const output = scratch.path("lines.txt")
 	await writeLocalTextFile(lines(), output)
 
 	expect(await readLocalTextFile(output)).toBe("first\nsecond\n")

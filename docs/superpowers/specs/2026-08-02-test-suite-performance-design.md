@@ -78,7 +78,7 @@ branch, same day:
 | 30757682542 | 16:54 | 61.0s (MISS) |          ~83s |
 
 The 16:54 run's Setup Node log says `yarn cache is not found` outright. That is a ~59s coin-flip on
-each of three hosted legs. Nothing about the yarn configuration is wrong — there is no room.
+each of three hosted legs. No part of the yarn configuration is wrong. There is no room.
 
 Note the Link step is a flat **20.7–22.7s regardless** of cache state: yarn writing 74,244 files and
 10,444 directories.
@@ -90,7 +90,7 @@ symlinks). Restoring it takes 48–54s on the two `mailwoman-data` legs ≈ **1.
 documented-degraded path to GitHub's cache service.
 
 Meanwhile `release.config.json` points the source model at
-`/mnt/playpen/mailwoman-data/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
+`$MAILWOMAN_DATA_ROOT/models/quantized/model-v3230-guard-step-004000-int8.onnx` — local disk,
 on the same host the leg runs on. Only the derived `postcode-*.bin` / `pair-index-*.bin` need
 building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That
 is the "~5 min" the cache exists to avoid rather than the copy.
@@ -344,7 +344,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 - The full-scale locality-surface build still runs, and still asserts `entries > 10_000`, in at least
   the nightly and release layers. A run that skips it says so in its step summary.
 - `evidence-lexicons.test.ts` on the PR path is invariant to gazetteer size — re-running it after a
-  gazetteer rebuild changes nothing.
+  gazetteer rebuild produces no change.
 - No net loss of assertions. Every law currently asserted is still asserted somewhere that runs on
   every PR.
 
@@ -369,7 +369,7 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
   and the pair-index↔card parity guard failed with `expected 47878 to be 49033`). The derived-store
   key must include the generating CLI modules, and the parity guard stays as the backstop.
 - **(c) fixture drift.** A fixture that stops representing the real data is a check that passes while
-  meaning nothing. The nightly full build is the control for exactly this; if it is disabled, the
+  asserting no fact. The nightly full build is the control for exactly this; if it is disabled, the
   fixture layer alone is not sufficient.
 - **(a) pruning something live.** The prune skips caches accessed within the last hour, and deletes
-  nothing whose key prefix is unrecognized.
+  no entry whose key prefix is unrecognized.

@@ -1,68 +1,33 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Read a survey area's published shapefiles as a stream of WGS84 delineations, through ogr2ogr.
- *
- *   OGR is build tooling, never A serve dependency (scope invariant 6). It converts the authority's geometry
- *   into the structure the runtime probes, and nothing downstream of this module knows gdal exists.
- *
- *   the source is already IN WGS84, and checking IT is still the check. Each `.prj` is an esri WKT reading
- *   `geogcs["GCS_WGS_1984",…]`, which gdal resolves to epsg:4326 . Therefore, no reprojection is needed before H3.
- *   The authority code is asserted anyway before a single feature is read, and the reprojected stream is
- *   asserted against the layer's own declared extent, which is the check that catches a coordinate-order
- *   mistake the projection check cannot see.
- *
- *   the datum guard runs even though the answer is the identity, and that is the point. proj substitutes a
- *   ballpark datum shift silently when the accurate grid is missing — measured on the flood layer at 3.4 m
- *   over an entire country, visible only as eight disagreements out of 59 against the authority's own
- *   service. For an epsg:4326 source `projinfo` answers `Null geographic offset from WGS 84 to WGS 84, 0 m,
- *   World.` and the guard passes in one process. Skipping it on the reasoning that this source needs no
- *   shift is how the guard comes to be missing on the day a source arrives that does.
- *
- *   the ID is the shapefile'S own FID, and IT has TO be, because ssurgo publishes no per-delineation key:
- *   `mukey` names the MAP unit and one map unit has many delineations — `IA153` holds 17,966 delineations
- *   across 152 map units. So `area_id` is `<areasymbol>:<fid>`, which is stable across runs and is what makes
- *   a bounded chunk name the same features every time.
- */
-
 import { declaredFeatureCount } from "@mailwoman/core/layers"
 import { assertRingsInsideExtent, requireArealPolygons, type MultiPolygonRings } from "@mailwoman/spatial"
 import { readOGRLayerIdentity } from "@mailwoman/spatial/tools/ogr"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 
 import { SSURGO_SOURCE_EPSG } from "#vocabulary"
 
-/**
- * Coordinate decimals ogr2ogr writes into the stream. Nine is well past the source's own precision — the metadata
- * states compilation to base maps meeting National Map Accuracy Standards at 1 inch = 1,000 feet — and is chosen so the
- * round trip contributes nothing measurable to the area cross-check.
- */
 const COORDINATE_PRECISION = 9
 
-/**
- * How far outside the layer's declared extent a vertex may fall before the ingest refuses.
- *
- * A tenth of a degree is about 11 km — small enough that an unprojected or axis-swapped read, which lands whole
- * hemispheres away, still fails, and loose enough that a rounded declared extent is not brittle.
- */
 const BBOX_MARGIN_DEGREES = 0.1
 
 /**
- * The shapefile holding a survey area's map-unit polygons — the delineations this layer stores.
+ * Returns the path of the shapefile that holds a survey area's map-unit polygons.
  */
-export function mapUnitShapefile(spatialDirectory: string, areaSymbol: string): string {
-	return join(spatialDirectory, `soilmu_a_${areaSymbol.toLowerCase()}.shp`)
+export function mapUnitShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): string {
+	return PathBuilder.from(spatialDirectory)(`soilmu_a_${areaSymbol.toLowerCase()}.shp`).toString()
 }
 
 /**
- * The shapefile holding a survey area's own outline. The footprint comes from here and never from the union of the
- * rated polygons — `notcom` and access-denied map units are inside the footprint and carry no rating, so a footprint
- * derived from the rated set would report them as unmapped when the authority has declared exactly what they are.
+ * Returns the path of the shapefile holding a survey area's outline.
+ *
+ * The build takes the footprint from this outline because unrated map units such as `notcom` lie inside it.
+ * A union of rated polygons would leave them out.
  */
-export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string): string {
-	return join(spatialDirectory, `soilsa_a_${areaSymbol.toLowerCase()}.shp`)
+export function surveyAreaShapefile(spatialDirectory: PathBuilderLike, areaSymbol: string): PathBuilder {
+	return PathBuilder.from(spatialDirectory)(`soilsa_a_${areaSymbol.toLowerCase()}.shp`)
 }
 
 /**
@@ -70,7 +35,7 @@ export function surveyAreaShapefile(spatialDirectory: string, areaSymbol: string
  */
 export interface SoilDelineation {
 	/**
-	 * `<areasymbol>:<fid>`.
+	 * The delineation's identifier, formed as `<areasymbol>:<fid>`.
 	 */
 	areaID: string
 	mukey: string
@@ -79,44 +44,55 @@ export interface SoilDelineation {
 }
 
 /**
- * What a shapefile says about itself, read before any feature is.
+ * The metadata that a shapefile declares, read before any feature.
  */
 export interface SoilSourceIdentity {
 	epsg: number
 	featureCount: number
 	layer: string
+
 	/**
-	 * The layer's own declared extent, `[minLon, minLat, maxLon, maxLat]`.
+	 * The layer's declared extent as `[minLon, minLat, maxLon, maxLat]`.
 	 */
 	bbox: readonly [number, number, number, number]
 }
 
+/**
+ * Options for reading one SSURGO map-unit shapefile.
+ */
 export interface SoilIngestOptions {
 	shapefilePath: string
+
 	/**
-	 * Layer inside it. Defaults to the shapefile's base name, which is what the esri driver reports.
+	 * The layer inside the shapefile.
+	 *
+	 * The default is the file's base name, which the ESRI driver reports.
 	 */
 	layer?: string
+
 	/**
-	 * The epsg code the source must declare.
+	 * The EPSG code that the source must declare.
+	 * The default is the SSURGO source projection.
 	 */
 	expectEPSG?: number
+
 	/**
-	 * Read only the shapefile's own FIDs in `[fidFrom, fidTo]`, inclusive — what makes a bounded chunk possible.
+	 * The inclusive range of shapefile FIDs to read, which lets a build read one chunk.
 	 */
 	fidFrom?: number
 	fidTo?: number
+
 	/**
-	 * Stop after this many features. The fixture and smoke rungs use it. a full build does not set it.
+	 * The maximum number of features to read.
+	 * Fixture and smoke runs use it.
 	 */
 	limit?: number
 }
 
 /**
- * Read what the shapefile declares about itself, and refuse a projection this ingest was not written for.
+ * Reads the projection, feature count, layer name and extent that a shapefile declares.
  *
- * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than `expectEPSG`, or
- *   reports no feature count.
+ * It throws when the shapefile declares a projection other than `expectEPSG`.
  */
 export async function readSoilSourceIdentity(options: SoilIngestOptions): Promise<SoilSourceIdentity> {
 	const identity = await readOGRLayerIdentity({
@@ -135,9 +111,6 @@ export async function readSoilSourceIdentity(options: SoilIngestOptions): Promis
 	return { epsg: identity.epsg, featureCount: identity.featureCount, layer: identity.layer, bbox: identity.extent! }
 }
 
-/**
- * The ingest's `select`, with the FID range applied when one is asked for.
- */
 function delineationSelectSQL(layer: string, options: SoilIngestOptions): string {
 	const select = `SELECT FID AS fid, MUKEY AS mukey, AREASYMBOL AS areasymbol FROM "${layer}"`
 	const bounds: string[] = []
@@ -159,13 +132,10 @@ interface RawFeature {
 }
 
 /**
- * Stream the map-unit delineations as WGS84 features.
+ * Streams a shapefile's map-unit delineations reprojected to WGS84.
  *
- * Every feature is checked against the declared extent as it passes. A swapped coordinate order survives a projection
- * check — both axes are still numbers in a plausible range — and shows up here immediately.
- *
- * @throws {Error} When ogr2ogr fails, when a feature carries no geometry or no `mukey`, or when a vertex falls outside
- *   the declared extent.
+ * It throws on a feature that has no geometry or `mukey`, or that has a vertex outside the declared extent.
+ * The extent check catches swapped coordinate axes, which the projection check misses.
  */
 export async function* readSoilDelineations(
 	options: SoilIngestOptions & { bbox: readonly [number, number, number, number] }
@@ -177,8 +147,7 @@ export async function* readSoilDelineations(
 		"-f",
 		"GeoJSONSeq",
 		"/vsistdout/",
-		// The output projection. `expectEPSG` is the assertion `readSoilSourceIdentity` makes about the source and is not
-		// the same thing: the consumer reads WGS84, whatever the shapefile declares.
+
 		"-t_srs",
 		"EPSG:4326",
 		"-lco",
@@ -194,9 +163,6 @@ export async function* readSoilDelineations(
 	}
 }
 
-/**
- * Validate one raw GeoJSON feature and narrow it. Split out so the generator body stays a loop.
- */
 function toDelineation(
 	raw: RawFeature,
 	extent: { minLon: number; minLat: number; maxLon: number; maxLat: number }
@@ -230,30 +196,34 @@ function toDelineation(
 }
 
 /**
- * Where a build's delineations come from, and what the source declares about itself.
+ * Supplies a soil build with its delineations and the source's declared identity.
  *
- * The builder takes one of these rather than a path, which is what makes the fixture rung possible: hand-built geometry
- * with no network and no gdal still exercises the whole database half — the domain check, the cell classification, the
- * reduction, the coverage rows, the manifest and the seal.
+ * The builder takes this instead of a path so that fixtures can run the database
+ * build without network access or GDAL.
  */
 export interface SoilFeatureSource {
 	areaSymbol: string
+
 	/**
-	 * What the source says it holds. The build compares its own streamed total against this, so a short read throws
-	 * instead of building a smaller county.
+	 * The feature count that the source declares.
+	 *
+	 * The build throws when its streamed total differs from this count.
 	 */
 	declaredFeatureCount: number
 	layer: string
 	epsg: number
+
 	/**
-	 * A description of where these delineations came from, for the receipt.
+	 * A description of where the delineations came from, such as the shapefile path.
 	 */
 	origin: string
 	delineations: () => AsyncIterable<SoilDelineation>
 }
 
 /**
- * One survey area's map-unit shapefile as a feature source — identity read up front, features streamed on demand.
+ * Creates a {@link SoilFeatureSource} for one survey area's shapefile.
+ *
+ * It reads the shapefile's identity immediately and streams features when asked.
  */
 export async function createShapefileFeatureSource(
 	options: SoilIngestOptions & { areaSymbol: string; declaredFeatureCount?: number }
@@ -262,8 +232,7 @@ export async function createShapefileFeatureSource(
 
 	return {
 		areaSymbol: options.areaSymbol,
-		// A range's own count is supplied by the caller, because `ogrinfo` reports the layer's total and nothing narrower.
-		// The whole-file total is still checked: the builder sums what its chunks streamed and compares that.
+
 		declaredFeatureCount: declaredFeatureCount({
 			declared: options.declaredFeatureCount,
 			limit: options.limit,

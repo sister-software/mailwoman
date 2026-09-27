@@ -22,7 +22,7 @@ import {
 	SANCTIONED_RELEASE_ABSENCES,
 } from "@mailwoman/release-kit/release/stage"
 import { planWeightsMaterialization } from "@mailwoman/release-kit/weights/fetch-hf-weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { afterAll, describe, expect, it } from "vitest"
 import { $ } from "zx"
@@ -33,41 +33,39 @@ afterAll(() => fixtures.disposeAsync())
 
 describe("checkReleaseListIdentity", () => {
 	it("holds on the current tree: 60 published, every absence sanctioned by name", async () => {
-		const identity = await checkReleaseListIdentity(String(repoRootPath()))
+		const identity = await checkReleaseListIdentity(repoRootPath())
 
 		expect(identity.publishCount).toBe(60)
 		expect(identity.unexpectedAbsences).toEqual([])
 		expect(identity.staleSanctions).toEqual([])
 		expect(identity.danglingReleaseEntries).toEqual([])
-		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(15)
+		expect(Object.keys(SANCTIONED_RELEASE_ABSENCES)).toHaveLength(16)
 	})
 
 	it("names an unsanctioned absence instead of reporting a count mismatch", async () => {
 		await using rootDirectory = await temporaryDirectory("mw-release-identity-")
 		const root = rootDirectory.path
 
-		await writeLocalJSONFile(
-			{ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] },
-			join(root, "package.json")
-		)
+		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
-		// A workspace the field names must carry a manifest. the reader refuses a literal that does not.
+		// A workspace the field names must carry a manifest.
+		// The reader refuses a literal that does not.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
-			await makeDirectories(join(root, workspace))
-			await writeLocalJSONFile({ name: workspace }, join(root, workspace, "package.json"))
+			await makeDirectories(root(workspace))
+			await writeLocalJSONFile({ name: workspace }, root(workspace, "package.json"))
 		}
 
 		await writeLocalJSONFile(
 			{
 				plugins: { "@release-it-plugins/workspaces": { workspaces: ["packages/a", "packages/b"] } },
 			},
-			join(root, ".release-it.json")
+			root(".release-it.json")
 		)
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// The en-au class: a workspace outside the release list with no stated reason is frozen, and the
-		// failure must carry its name rather than "expected 3, found 2".
+		// The en-au class: a workspace outside the release list with no stated reason is frozen,
+		// and the failure must carry its name rather than "expected 3, found 2".
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
 	})
@@ -79,9 +77,9 @@ describe("assertWorkspacePublishable", () => {
 	})
 
 	it("refuses the release-it workspace path shape, which carries a leading ./", () => {
-		// `@release-it-plugins/workspaces` passes `./<workspace>` through
-		// RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE. Matching the record's keys literally would admit that spelling while
-		// refusing the bare one.
+		// `@release-it-plugins/workspaces` passes `./<workspace>`
+		// through RELEASE_IT_WORKSPACES_PATH_TO_WORKSPACE.
+		// Matching the record's keys literally would admit that spelling while refusing the bare one.
 		expect(() => assertWorkspacePublishable("./packages/osm")).toThrow(/ODbL counsel sign-off pending/)
 		expect(() => assertWorkspacePublishable("./packages/osm/")).toThrow(/ODbL counsel sign-off pending/)
 	})
@@ -98,22 +96,24 @@ describe("assertWorkspacePublishable", () => {
 
 describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", () => {
 	/**
-	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships. No yarn project needed —
-	 * the audit reads the archive, and these fixtures pin its refusals without packing a real workspace.
+	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships.
+	 *
+	 * No yarn project needed — the audit reads the archive, and these fixtures pin
+	 * its refusals without packing a real workspace.
 	 */
-	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<string> {
+	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<PathBuilder> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path
-		const pkgDir = join(dir, "package")
+		const pkgDir = dir("package")
 
 		await makeDirectories(pkgDir)
-		await writeLocalJSONFile(manifest, join(pkgDir, "package.json"))
+		await writeLocalJSONFile(manifest, pkgDir("package.json"))
 
 		for (const file of payloadFiles) {
-			await makeDirectories(join(pkgDir, ...file.split("/").slice(0, -1)))
-			await writeLocalTextFile("payload", join(pkgDir, file))
+			await makeDirectories(pkgDir(...file.split("/").slice(0, -1)))
+			await writeLocalTextFile("payload", pkgDir(file))
 		}
 
-		const tarball = join(dir, "fixture.tgz")
+		const tarball = dir("fixture.tgz")
 
 		const packed = $.sync({ nothrow: true })`tar czf ${tarball} -C ${dir} package`
 
@@ -170,13 +170,13 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 })
 
 describe("the Hugging Face materialization plan", () => {
-	const repoRoot = String(repoRootPath())
+	const repoRoot = repoRootPath()
 
 	/**
 	 * The release's weights workspaces, read the way the recipe reads them.
 	 */
 	async function weightsWorkspaces(): Promise<string[]> {
-		const config = await readLocalJSONFile<{ locales: string[] }>(join(repoRoot, "release.config.json"))
+		const config = await readLocalJSONFile<{ locales: string[] }>(repoRootPath("release.config.json"))
 
 		return config.locales.map((locale) => `packages/neural-weights-${locale}`)
 	}
@@ -184,12 +184,13 @@ describe("the Hugging Face materialization plan", () => {
 	function trackedPaths(): Set<string> {
 		const listing = $.sync({ cwd: repoRoot })`git ls-files -- packages`
 
-		return new Set([...TextSpliterator.from(listing.stdout)].filter(isPresent))
+		return TextSpliterator.from(listing.stdout).filter(isPresent).toSet()
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"` after every workspace
-		// moved under `packages/`. Destinations are now derived from one prefix in one function, and this pins it.
+		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"`
+		// after every workspace moved under `packages/`.
+		// Destinations are now derived from one prefix in one function, and this pins it.
 		const plans = await planWeightsMaterialization(repoRoot)
 
 		expect(plans.length).toBeGreaterThan(0)
@@ -197,11 +198,9 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
-		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned.
-		// That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
+		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned. That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
 		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
-		// published. The manifests and the git listing are read here independently of the recipe, so a planner
-		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
+		// published. The manifests and the git listing are read here independently of the recipe, so a planner rewritten around a hand-kept list fails this the first time a manifest gains an entry.
 		const tracked = trackedPaths()
 
 		const planned = new Set(
@@ -211,7 +210,7 @@ describe("the Hugging Face materialization plan", () => {
 		const unaccounted: string[] = []
 
 		for (const workspace of await weightsWorkspaces()) {
-			const manifest = await readPackageJSON(join(repoRoot, workspace, "package.json"))
+			const manifest = await readPackageJSON(repoRootPath(workspace, "package.json"))
 
 			for (const entry of literalFilesEntries(manifest.files)) {
 				const path = `${workspace}/${entry}`
@@ -226,8 +225,9 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("never plans over a file git already tracks", async () => {
-		// The other direction: a recipe that materialized `model-card.json` or `calibration.json` would overwrite
-		// committed content in the checkout on the publish path, where the destination root is the checkout.
+		// The other direction: a recipe that materialized `model-card.json`
+		// or `calibration.json` would overwrite committed content in the checkout on the
+		// publish path, where the destination root is the checkout.
 		const tracked = trackedPaths()
 
 		const clobbered = (await planWeightsMaterialization(repoRoot))
@@ -240,12 +240,14 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 release's second dispatch died because publish.yml named the parity test's pre-regroup path and
-		// Vitest matched zero files. The workflow now calls a package script whose filter is the test's name, and
-		// this asserts the filter is not empty-handed — the same answer a dispatch would return several minutes in.
-		const repoRoot = String(repoRootPath())
+		// The v9.2.0 release's second dispatch died because publish.yml named the parity
+		// test's pre-regroup path and Vitest matched zero files.
+		// The workflow now calls a package script whose filter is the test's name,
+		// and this asserts the filter is not empty-handed.
+		// The same answer a dispatch would return several minutes in.
+		const repoRoot = repoRootPath()
 
-		const manifest = await readPackageJSON(join(repoRoot, "package.json"))
+		const manifest = await readPackageJSON(repoRootPath("package.json"))
 
 		const script = manifest.scripts?.["ci:test:pair-index-parity"]
 
@@ -254,9 +256,10 @@ describe("the pair-index parity selector", () => {
 		const filter = script!.split(/\s+/).at(-1)!
 		const listing = $.sync({ cwd: repoRoot })`git ls-files`
 
-		const matches = [...TextSpliterator.from(listing.stdout)]
+		const matches = TextSpliterator.from(listing.stdout)
 			.filter(isPresent)
 			.filter((path) => path.endsWith(".test.ts") && path.includes(filter))
+			.toArray()
 
 		expect(matches.length).toBeGreaterThan(0)
 	})

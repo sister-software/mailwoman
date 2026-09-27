@@ -23,7 +23,6 @@
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
 
 import type {
 	BaseFetchOptions,
@@ -69,7 +68,9 @@ interface ListResponse {
 
 export interface FetchJusoKROptions extends BaseFetchOptions {
 	/**
-	 * The month to fetch as `yyyymm`. Defaults to the latest month the portal lists as present.
+	 * The month to fetch as `yyyymm`.
+	 *
+	 * Defaults to the latest month the portal lists as present.
 	 */
 	month?: string
 }
@@ -111,7 +112,7 @@ function downloadURL(file: ListedFile, regYmd: string): string {
 }
 
 export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: string) => void): Promise<FetchSummary> {
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 
 	const now = new Date()
@@ -130,13 +131,13 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 		}
 
 		const url = downloadURL(file, String(now.getFullYear()))
-		const dest = join(destDir, file.tmprFileNm)
+		const dest = destDir(file.tmprFileNm)
 		report?.(`=== ${SLUG} / ${product.name} ${file.crtrYm} → ${file.tmprFileNm}`)
 		let bytes: number
 
 		try {
-			// The portal drops a connection every few megabytes and answers Range with 206, so the transfer resumes
-			// from what landed rather than starting the 181 MB over.
+			// The portal drops a connection every few megabytes and answers Range with 206,
+			// so the transfer resumes from what landed rather than starting the 181 MB over.
 			bytes = await resumableDownload({ url, dest, headers: BROWSER_HEADERS, report })
 		} catch (error) {
 			report?.(`  ✗ ${(error as Error).message}`)
@@ -167,7 +168,7 @@ export async function fetchJusoKR(options: FetchJusoKROptions, report?: (line: s
 		files,
 	}
 
-	await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+	await writeManifest(destDir("MANIFEST.json"), manifest)
 
 	return { fetched: files.length, skipped: 0, failed: failedCodes.length, failedCodes }
 }

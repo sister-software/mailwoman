@@ -12,7 +12,7 @@
  *   1. The glossary term is a common noun (starts lowercase) — acronym/name terms (FST, BAN, WOF)
  *      are exempt so "admin FST" keeps its tooltip.
  *   2. The matched display text is capitalized — lowercase usage ("the city of…") keeps its tooltip.
- *   3. An adjacent word is also capitalized — the match is the interior/tail of a multi-word proper
+ *   3. An adjacent word is also capitalized. The match is the interior/tail of a multi-word proper
  *      noun ("New York City", "United States of America", "State Street"). A capitalized match at a
  *      plain sentence start has no capitalized neighbor and keeps its tooltip.
  *
@@ -58,9 +58,11 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
 /**
  * Every surface an entry can be matched as, given the upstream matcher's "s"/"es" plural allowance.
  *
- * Generated forward from the entry rather than un-inflected from the surface, which is the same direction the matcher
- * runs. An inverse ("strip a trailing es, else strip a trailing s") is not the inverse: it takes "states" to "stat",
- * and the first build with one shipped a guard that suppressed `state` on every page while leaving `states` linking on 26.
+ * Generated forward from the entry rather than un-inflected from the surface,
+ * which is the same direction the matcher runs.
+ * An inverse ("strip a trailing es, else strip a trailing s") is not the inverse:
+ * it takes "states" to "stat", and the first build with one shipped a guard that
+ * suppressed `state` on every page while leaving `states` linking on 26.
  */
 function matchableForms(entry: string): string[] {
 	const lower = entry.trim().toLowerCase()
@@ -69,8 +71,10 @@ function matchableForms(entry: string): string[] {
 }
 
 /**
- * Is this matched surface suppressed by the homonym guard? Exported so the backlink scan in plugin.ts applies the same
- * rule against raw text — the two must agree or the glossary page lists pages that render no tooltip.
+ * Is this matched surface suppressed by the homonym guard?
+ *
+ * Exported so the backlink scan in plugin.ts applies the same rule against raw text.
+ * The two must agree or the glossary page lists pages that render no tooltip.
  */
 export function isSuppressedSurface(display: string, noAutoLink: readonly string[]): boolean {
 	if (!noAutoLink.length) return false
@@ -101,8 +105,8 @@ function applyGuards(tree: Node, noAutoLink: readonly string[]): void {
 		const display = displayChild?.type === "text" ? displayChild.value : ""
 		const term = attributeValue(node, "term")
 
-		// Guard 2 runs first: it keys on the surface alone, so neither the term's casing nor the
-		// neighboring words matter to it.
+		// Guard 2 runs first: it keys on the surface alone, so neither the term's casing
+		// nor the neighboring words matter to it.
 		if (isSuppressedSurface(display, noAutoLink)) {
 			const replacement: TextNode = { type: "text", value: display }
 
@@ -135,14 +139,16 @@ function applyGuards(tree: Node, noAutoLink: readonly string[]): void {
  */
 export interface GlossaryRemarkExtraOptions {
 	/**
-	 * Matched surfaces the auto-linker must never link, whatever term they belong to. See guard 2 above.
+	 * Matched surfaces the auto-linker must never link, whatever term they belong to.
+	 *
+	 * See guard 2 above.
 	 */
 	noAutoLink?: readonly string[]
 }
 
 /**
- * Drop-in replacement for docusaurus-plugin-glossary's `remarkPlugin`: same options, same transform, followed by the
- * proper-noun and homonym guards.
+ * Drop-in replacement for docusaurus-plugin-glossary's `remarkPlugin`: same options,
+ * same transform, followed by the proper-noun and homonym guards.
  */
 export default function glossaryRemarkPlugin(
 	options: Parameters<typeof baseRemarkPlugin>[0] & GlossaryRemarkExtraOptions

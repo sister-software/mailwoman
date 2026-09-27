@@ -1,10 +1,5 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { createLightSpec, createSkySpec, StyleSpecificationComposer } from "@mailwoman/cartographer/base/composition"
 import { expect, test } from "vitest"
-
-//#region createLightSpec
 
 test("createLightSpec: returns the house defaults when called bare", () => {
 	expect(createLightSpec()).toEqual({
@@ -19,7 +14,7 @@ test("createLightSpec: an override shadows the matching default key", () => {
 	const spec = createLightSpec({ intensity: 0.5 })
 
 	expect(spec.intensity).toBe(0.5)
-	// non-overridden defaults survive
+
 	expect(spec.color).toBe("white")
 	expect(spec.anchor).toBe("viewport")
 })
@@ -27,10 +22,6 @@ test("createLightSpec: an override shadows the matching default key", () => {
 test("createLightSpec: overriding position replaces the whole tuple", () => {
 	expect(createLightSpec({ position: [1, 2, 3] }).position).toEqual([1, 2, 3])
 })
-
-//#endregion
-
-//#region createSkySpec
 
 test("createSkySpec: returns the house atmospheric defaults when called bare", () => {
 	expect(createSkySpec()).toEqual({
@@ -47,12 +38,8 @@ test("createSkySpec: an override shadows only the named key", () => {
 	const spec = createSkySpec({ "sky-color": "#123456" })
 
 	expect(spec["sky-color"]).toBe("#123456")
-	expect(spec["fog-ground-blend"]).toBe(0.1) // untouched default
+	expect(spec["fog-ground-blend"]).toBe(0.1)
 })
-
-//#endregion
-
-//#region StyleSpecificationComposer — construction
 
 test("Composer: light/sky default to the house specs when unset", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -69,43 +56,11 @@ test("Composer: partial light/sky options merge over the defaults", () => {
 	})
 
 	expect(composer.light.intensity).toBe(0.3)
-	expect(composer.light.color).toBe("white") // default preserved
+	expect(composer.light.color).toBe("white")
 	expect(composer.sky["sky-color"]).toBe("#abcdef")
 })
 
-// Terrain + DEM-source tests parked (mobile performance): the `terrain` getter and the terrain DEM
-// source are commented out in `composition.ts`. Re-enable the code and these tests together when DEM
-// is reconsidered. (The hillshade DEM source is still injected.)
 /* oxlint-disable vitest/no-commented-out-tests -- parked deliberately. see the note above */
-/*
-test("Composer: terrain source defaults to the terrain tileset id", () => {
-	const composer = new StyleSpecificationComposer({ sources: {} })
-
-	expect(composer.terrain.source).toBe("terrain")
-})
-
-test("Composer: a terrain override merges over the default source", () => {
-	const composer = new StyleSpecificationComposer({ sources: {}, terrain: { exaggeration: 1.5 } })
-
-	expect(composer.terrain.source).toBe("terrain") // default kept
-	expect(composer.terrain.exaggeration).toBe(1.5)
-})
-
-test("Composer: injects DEM sources for terrain + hillshade alongside the caller's sources", () => {
-	const userSource = { type: "vector", url: "https://example.test/tiles.json" } as const
-	const composer = new StyleSpecificationComposer({ sources: { mine: userSource } })
-
-	// the caller's source + the runtime-injected DEM sources aren't all in the static source-record type.
-	const sources = composer.sources as Record<string, unknown>
-	expect(sources.mine).toEqual(userSource)
-	expect(sources.terrain).toMatchObject({ type: "raster-dem", encoding: "terrarium" })
-	expect(sources.hillshade).toMatchObject({ type: "raster-dem", encoding: "terrarium" })
-})
-*/
-
-//#endregion
-
-//#region StyleSpecificationComposer — layers
 
 test("Composer.layers: exposes the base layer list as an array", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
@@ -116,7 +71,7 @@ test("Composer.layers: exposes the base layer list as an array", () => {
 
 test("Composer.layers: an inserted layer is present in the composed list", () => {
 	const composer = new StyleSpecificationComposer({ sources: {} })
-	// `insert` requires an anchor (`beforeID`/`afterID`) — anchor against an existing base layer.
+
 	const anchorID = composer.layers[0]!.id
 
 	const withCustom = new StyleSpecificationComposer({
@@ -151,10 +106,6 @@ test("Composer.layers: an inserted layer sits immediately after its anchor", () 
 	expect(ids[anchorIdx + 1]).toBe("mw-anchored-layer")
 })
 
-//#endregion
-
-//#region StyleSpecificationComposer — serialization
-
 test("Composer.toJSON: emits a v8 style with the self-host glyph + sprite endpoints", () => {
 	const style = new StyleSpecificationComposer({ sources: {} }).toJSON()
 
@@ -169,7 +120,7 @@ test("Composer.toJSON: carries the composed light, sky, terrain, sources and lay
 
 	expect(style.light).toEqual(createLightSpec(composer.light))
 	expect(style.sky).toEqual(createSkySpec(composer.sky))
-	// `terrain` is parked with the tests below — the getter is commented out in composition.ts.
+
 	expect(style.sources).toBe(composer.sources)
 	expect(style.layers).toEqual(composer.layers)
 })
@@ -188,7 +139,7 @@ test("Composer: a composition with no overrides is the Earth style: base layers,
 	expect(style.layers.length).toBeGreaterThan(5)
 })
 
-test("Composer: a composition can bring its own base layers, no hillshade source and no sprite", () => {
+test("Composer: a composition can bring its own base layers without hillshade source and no sprite", () => {
 	const style = new StyleSpecificationComposer({
 		sources: { moon: { type: "vector", url: "https://tiles.mailwoman.ai/moon.json" } },
 		baseLayers: [{ id: "space", type: "background", paint: { "background-color": "#000" } }],
@@ -203,13 +154,9 @@ test("Composer: a composition can bring its own base layers, no hillshade source
 })
 
 test("Composer: two instances from the shared BaseLayers have independent layer lists", () => {
-	// Regression for the shared-mutable-link bug: LayerSpecificationList now copies its input, so
-	// constructing a second composer no longer rewrites the first's kNext/kPrev links in place.
 	const a = new StyleSpecificationComposer({ sources: {} })
 	const baseCount = a.layers.length
 	const b = new StyleSpecificationComposer({ sources: {} })
-	expect(b.layers).toHaveLength(baseCount) // b built a full list rather than a corrupted remnant
-	expect(a.layers).toHaveLength(baseCount) // a's list wasn't mutated by b's construction
+	expect(b.layers).toHaveLength(baseCount)
+	expect(a.layers).toHaveLength(baseCount)
 })
-
-//#endregion

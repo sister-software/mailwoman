@@ -43,22 +43,29 @@ import { whitespaceTokenizer, type TokenSpan, type Tokenizer } from "#utils/toke
  */
 export interface AlignOptions {
 	/**
-	 * Tokenizer to use. Defaults to `whitespaceTokenizer()`.
+	 * Tokenizer to use.
+	 *
+	 * Defaults to `whitespaceTokenizer()`.
 	 */
 	tokenizer?: Tokenizer
 
 	/**
-	 * Max Levenshtein edit distance to accept when a verbatim substring match fails. Set `0` to require verbatim matches
-	 * only. Default `2`.
+	 * Max Levenshtein edit distance to accept when a verbatim substring match fails.
 	 *
-	 * Distance is computed against same-length windows in `raw`, so the threshold scales naturally with the component
-	 * value length.
+	 * Set `0` to require verbatim matches only.
+	 * Default `2`.
+	 *
+	 * Distance is computed against same-length windows in `raw`, so the threshold
+	 * scales naturally with the component value length.
 	 */
 	maxEditDistance?: number
 
 	/**
-	 * Case-insensitive comparison for substring search. Default `true`. The retained span in `raw` is the original case.
-	 * only matching is case-insensitive.
+	 * Case-insensitive comparison for substring search.
+	 *
+	 * Default `true`.
+	 * The retained span in `raw` is the original case.
+	 * Only matching is case-insensitive.
 	 */
 	caseInsensitive?: boolean
 }
@@ -69,8 +76,7 @@ export interface AlignOptions {
 export type AlignmentResult = { kind: "labeled"; row: LabeledRow } | { kind: "quarantined"; row: QuarantinedRow }
 
 /**
- * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind
- * the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
+ * One located char-offset label span over a row's `raw` ([start, end) in UTF-16 code units). The element type behind the parallel `span_starts[]`/`span_ends[]`/`span_tags[]` triple on `LabeledRow` (#519).
  */
 export interface ComponentSpan {
 	tag: ComponentTag
@@ -90,10 +96,7 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		return { kind: "quarantined", row: { row, reason: "raw-empty" } }
 	}
 
-	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated):
-	// one non-NFC row (e.g. a non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour
-	// build. Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and
-	// store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
+	// #519 NFC handling — relaxed from a hard throw to normalization (2026-06-12, DeepSeek-validated): one non-NFC row (e.g. A non-Latin name variant like "দক্ষিণ কোরিয়া") must not crash a multi-hour build. Normalize `raw` and every component value to NFC, compute spans over the NFC raw, and store the NFC raw — preserving the #519 single-normalization-form principle while keeping the row.
 	const raw = row.raw.normalize("NFC")
 	const components = { ...row.components }
 
@@ -110,10 +113,10 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 
 	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
-	// Longest value first: a short component must not claim a word that a longer, more specific
-	// component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing the street's first
-	// word quarantined the street. pilot2's residual class). Emit order is unaffected — spans are
-	// re-sorted by start below.
+	// Longest value first: a short component must not claim a word that a longer,
+	// more specific component owns ("Alaska Regional Dr, Alaska" — region "Alaska" stealing
+	// the street's first word quarantined the street. pilot2's residual class).
+	// Emit order is unaffected — spans are re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
@@ -131,12 +134,13 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 			}
 		}
 
-		// Defensive bounds quarantine (2026-06-12): locateSpan's fuzzy/boundary logic can over-run the
-		// raw by a code unit on some non-Latin / combining-mark strings (e.g. Bengali name variants),
-		// yielding a span past the end. An out-of-bounds offset can never be a valid char span —
-		// quarantine the row rather than crash assertSpanInvariants and take down a multi-hour build.
-		// (If this class proves large in the quarantine report, locateSpan's boundary logic needs a
-		// combining-mark fix to keep these non-Latin rows.)
+		// Defensive bounds quarantine (2026-06-12): locateSpan's fuzzy/boundary logic
+		// can over-run the raw by a code unit on some non-Latin / combining-mark strings
+		// (e.g. Bengali name variants), yielding a span past the end.
+		// An out-of-bounds offset can never be a valid char span — quarantine the row
+		// rather than crash assertSpanInvariants and take down a multi-hour build.
+		// (If this class proves large in the quarantine report, locateSpan's boundary
+		// logic needs a combining-mark fix to keep these non-Latin rows.)
 		if (span.start < 0 || span.end > raw.length || span.start >= span.end) {
 			return {
 				kind: "quarantined",
@@ -159,8 +163,9 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 		components,
 		tokens: tokens.map((t) => t.text),
 		labels,
-		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim. The token
-		// quantization above is what the rebuild deletes. both ride during the transition.
+		// The v0.5.0 char-offset triple (#519): the located spans, emitted verbatim.
+		// The token quantization above is what the rebuild deletes.
+		// Both ride during the transition.
 		span_starts: componentSpans.map((s) => s.start),
 		span_ends: componentSpans.map((s) => s.end),
 		span_tags: componentSpans.map((s) => s.tag),
@@ -172,11 +177,12 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 /**
  * Enforce the #519 span-triple invariants — in-bounds, sorted ascending by start, non-overlapping — loudly.
  *
- * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible and the caller sorts, so
- * a violation here is a bug in this file rather than bad source data: throw (naming the row) rather than quarantine, so
- * the corruption can't ride into a corpus. Exported for every other span producer (`composeAdversarialRow`'s offset
- * arithmetic, future synthesis paths) — any code that emits the triple without going through `alignRow` must pass its
- * output through this.
+ * For `alignRow`: `claimed`-span bookkeeping in `locateSpan` already makes overlap impossible
+ * and the caller sorts, so a violation here is a bug in this file rather than bad source data:
+ * throw (naming the row) rather than quarantine, so the corruption can't ride into a corpus.
+ * Exported for every other span producer (`composeAdversarialRow`'s offset arithmetic, future synthesis paths).
+ *
+ * Any code that emits the triple without going through `alignRow` must pass its output through this.
  */
 export function assertSpanInvariants(
 	spans: readonly ComponentSpan[],
@@ -212,11 +218,13 @@ export function assertSpanInvariants(
 }
 
 /**
- * Locate `needle` in `haystack` (both already normalized for case if requested), preferring verbatim substring match.
- * Falls back to a fuzzy window scan when verbatim fails and `maxEditDistance > 0`. Already-claimed spans are skipped so
- * two components don't grab overlapping ranges.
+ * Locate `needle` in `haystack` (both already normalized for case if requested),
+ * preferring verbatim substring match.
  *
- * Returns the span in the original `raw` (not the lower-cased `haystack`).
+ * Falls back to a fuzzy window scan when verbatim fails and `maxEditDistance > 0`.
+ * Already-claimed spans are skipped so two components don't grab overlapping ranges.
+ *
+ * @returns The span in the original `raw` (not the lower-cased `haystack`).
  */
 function locateSpan(args: {
 	haystack: string
@@ -229,12 +237,13 @@ function locateSpan(args: {
 
 	if (!needle.length) return undefined
 
-	// Pass 1: verbatim substring. Word-boundary-aligned matches are preferred over intra-word ones
-	// — leftmost-substring alone let a short value claim the inside of an earlier word (region "AK"
-	// matched inside "Umak"/"Lake", scrambling every later span. caught by the v0.5.0 pilot build).
+	// Pass 1: verbatim substring.
+	// Word-boundary-aligned matches are preferred over intra-word ones — leftmost-substring
+	// alone let a short value claim the inside of an earlier word (region "AK" matched inside
+	// "Umak"/"Lake", scrambling every later span. Caught by the v0.5.0 pilot build).
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
-	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence —
-	// sub-word spans are the point of the char-offset format).
+	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned
+	// occurrence — sub-word spans are the point of the char-offset format).
 	let intraWord: { start: number; end: number } | undefined
 	let from = 0
 
@@ -256,8 +265,9 @@ function locateSpan(args: {
 
 	if (maxEditDistance <= 0) return undefined
 
-	// Pass 2: fuzzy sliding-window. Walk over candidate windows of length `needle.length`
-	// across haystack, compute Levenshtein, pick the leftmost window under the threshold.
+	// Pass 2: fuzzy sliding-window.
+	// Walk over candidate windows of length `needle.length` across haystack,
+	// compute Levenshtein, pick the leftmost window under the threshold.
 	const len = needle.length
 
 	for (let i = 0; i + len <= haystack.length; i++) {
@@ -294,9 +304,12 @@ function overlapsClaimed(start: number, end: number, claimed: Array<[number, num
 }
 
 /**
- * Assign BIO labels to tokens given the component spans. Components must be sorted by start offset. For each token,
- * find the first component span that contains the token's start offset. if the token is the first one inside that span
- * emit `B-<tag>`, else `I-<tag>`.
+ * Assign BIO labels to tokens given the component spans.
+ *
+ * Components must be sorted by start offset.
+ * For each token, find the first component span that contains the token's start offset.
+ *
+ * If the token is the first one inside that span emit `B-<tag>`, else `I-<tag>`.
  */
 function labelTokens(tokens: readonly TokenSpan[], spans: readonly ComponentSpan[]): readonly BIOLabel[] {
 	const out: BIOLabel[] = []

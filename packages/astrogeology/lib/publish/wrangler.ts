@@ -2,11 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The upload transport this pipeline hands `publishTiles` and `uploadToBucket`: `wrangler r2 object put` under the
- *   account's API token (`CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` in the inherited environment), which is
- *   the credential the tile worker deploys with. Wrangler refuses an object over 300 MiB, so this transport checks
- *   the size first and names the cap. every artifact this pipeline builds at zoom 6 is well under it, and a deeper
- *   zoom that crosses it goes through rclone instead.
+ *   Upload transport that runs `wrangler r2 object put`. Wrangler reads `CLOUDFLARE_API_TOKEN` and
+ *   `CLOUDFLARE_ACCOUNT_ID` from the environment.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -17,6 +14,7 @@ import { resolvePath } from "path-ts"
 
 /**
  * The largest object `wrangler r2 object put` accepts.
+ * Larger files must go through rclone.
  */
 const WRANGLER_OBJECT_CAP_BYTES = 300 * 1024 * 1024
 
@@ -32,7 +30,7 @@ export const uploadWithWrangler: UploadTransport = async ({ file, bucket, key })
 		)
 	}
 
-	const bin = String(resolvePath(resolvePackageDirectory("wrangler"), "bin", "wrangler.js"))
+	const bin = resolvePath(resolvePackageDirectory("wrangler"), "bin", "wrangler.js")
 
 	await runFile("node", [bin, "r2", "object", "put", `${bucket}/${key}`, "--file", file, "--remote"])
 }

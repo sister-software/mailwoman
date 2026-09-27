@@ -37,7 +37,9 @@ export interface PlacetypeRecord {
 	 */
 	parent_id: number
 	/**
-	 * The name of the record. This is the name of the record typically in English.
+	 * The name of the record.
+	 *
+	 * This is the name of the record typically in English.
 	 */
 	name: string
 	/**
@@ -96,8 +98,10 @@ function placetypeRecordFromRow(row: Record<string, SQLInputValue>): PlacetypeRe
  * A data source for WhosOnFirst placetype records.
  */
 /**
- * The one table {@link PlacetypeDataSource} creates and reads. Declared here beside the DDL that builds it, so a column
- * added to one is a compile error against the other.
+ * The one table {@link PlacetypeDataSource} creates and reads.
+ *
+ * Declared here beside the DDL that builds it, so a column added to one is a
+ * compile error against the other.
  */
 export interface PlacetypeRecordDatabase {
 	records: {
@@ -129,8 +133,10 @@ export class PlacetypeDataSource implements Disposable {
 	}
 
 	public prepareTables(): void {
-		// Raw DDL by design: this runs in a synchronous construction path. Kysely's schema-builder is
-		// async, so migrating would force an async-factory refactor across every consumer. See agents.md.
+		// Raw DDL by design: this runs in a synchronous construction path.
+		// Kysely's schema-builder is async, so migrating would force an async-factory
+		// refactor across every consumer.
+		// See agents.md.
 		this.#db.exec(/* sql */ `
 
 			CREATE TABLE IF NOT EXISTS records (
@@ -168,13 +174,14 @@ export class PlacetypeDataSource implements Disposable {
 			? new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString(), dbOptions)
 			: new DatabaseClient<PlacetypeRecordDatabase>(databasePath.toString())
 
-		// node:sqlite has no .pragma() helper. pragmas are executed as plain SQL.
+		// node:sqlite has no .pragma() helper.
+		// Pragmas are executed as plain SQL.
 		this.#db.exec("PRAGMA busy_timeout = 10000")
 		this.#db.exec("PRAGMA journal_mode = WAL")
 		this.#db.exec("PRAGMA synchronous = OFF")
 
 		this.prepareTables()
-		//this.prepareIndexes()
+		// this.prepareIndexes()
 	}
 
 	public [Symbol.dispose]() {
@@ -194,8 +201,8 @@ export class PlacetypeDataSource implements Disposable {
 				.join(" OR ")}
 		`)
 
-		// node:sqlite's StatementSync.iterate() accepts named params via an object whose keys match
-		// the `@name` / `:name` / `$name` placeholders in the SQL.
+		// node:sqlite's StatementSync.iterate() accepts named params via an object whose
+		// keys match the `@name` / `:name` / `$name` placeholders in the SQL.
 		return Iterator.from(statement.iterate(sqlParameters(criteria))).map(placetypeRecordFromRow)
 	}
 

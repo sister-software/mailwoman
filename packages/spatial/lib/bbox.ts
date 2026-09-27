@@ -16,7 +16,9 @@ import { CoordinateProjection } from "#projection/index"
 const KM_PER_DEGREE_LATITUDE = 111
 
 /**
- * Floor for cos(latitude) so a polar bbox stays finite. See {@linkcode bboxAround}.
+ * Floor for cos(latitude) so a polar bbox stays finite.
+ *
+ * See {@linkcode bboxAround}.
  */
 const MIN_COS_LATITUDE = 1e-6
 
@@ -30,7 +32,7 @@ const BBOX_2D_LENGTH = 4
  */
 const BBOX_3D_LENGTH = 6
 
-//#region Bounding Box Literals
+// #region Bounding Box Literals
 
 /**
  * A 2-dimensional rectangular area that can be determined by two longitudes and two latitudes.
@@ -74,7 +76,8 @@ export type BBox2DLiteral = [
 ]
 
 /**
- * A 3-dimensional rectangular area that can be determined by two longitudes, two latitudes, and two altitudes.
+ * A 3-dimensional rectangular area that can be determined by two longitudes,
+ * two latitudes, and two altitudes.
  *
  * @category GeoJSON
  * @category Bounding Box
@@ -123,9 +126,9 @@ export type BBox3DLiteral = [
 	maxAltitude: number,
 ]
 
-//#endregion
+// #endregion
 
-//#region Type Predicates
+// #region Type Predicates
 
 /**
  * Type-predicate for 2-dimensional bounding boxes (`[west, south, east, north]`).
@@ -164,8 +167,8 @@ export function isBBox(input: unknown): input is BBox2DLiteral | BBox3DLiteral {
 /**
  * Type-predicate to determine if the given input is a GeoBoundingBox instance.
  *
- * Note that this function only checks if the input is an instance of the GeoBoundingBox class. `instanceof` checks are
- * not reliable in JavaScript, so this function should be used with caution.
+ * Note that this function only checks if the input is an instance of the GeoBoundingBox class.
+ * `instanceof` checks are not reliable in JavaScript, so this function should be used with caution.
  *
  * @category GeoJSON
  */
@@ -173,7 +176,7 @@ export function isGeoBoundingBox(input: unknown): input is GeoBoundingBox {
 	return input instanceof GeoBoundingBox
 }
 
-//#endregion
+// #endregion
 
 /**
  * Input for creating a GeoBoundingBox instance.
@@ -185,11 +188,11 @@ export type GeoBoundingBoxInput = BBox2DLiteral | BBox3DLiteral | GeoBoundingBox
 /**
  * A bounding box to represent the coordinate range of a GeoJSON object.
  *
- * This is useful when defining the extent of a GeoJSON object, such as the minimum and maximum coordinates of the
- * object's Geometries, Features, or Feature Collections.
+ * This is useful when defining the extent of a GeoJSON object, such as the minimum
+ * and maximum coordinates of the object's Geometries, Features, or Feature Collections.
  */
 export class GeoBoundingBox {
-	//#region Properties
+	// #region Properties
 
 	public projection: CoordinateProjection
 
@@ -232,9 +235,9 @@ export class GeoBoundingBox {
 	 */
 	#maxAltitude: number
 
-	//#endregion
+	// #endregion
 
-	//#region Accessors
+	// #region Accessors
 
 	public get minLongitude() {
 		return this.#minLongitude
@@ -331,9 +334,9 @@ export class GeoBoundingBox {
 		return this.toJSON()[Symbol.iterator]()
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Constructors
+	// #region Constructors
 
 	/**
 	 * Creates a blank GeoBoundingBox instance.
@@ -380,9 +383,9 @@ export class GeoBoundingBox {
 		this.projection = projection ?? CoordinateProjection.WGS84
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Predicates
+	// #region Predicates
 
 	public is3D() {
 		return this.#minAltitude !== 0 || this.#maxAltitude !== 0
@@ -392,9 +395,9 @@ export class GeoBoundingBox {
 		return !this.is3D()
 	}
 
-	//#endregion
+	// #endregion
 
-	//#region Conversion
+	// #region Conversion
 
 	/**
 	 * Converts the 2D GeoBoundingBox to an array literal.
@@ -460,16 +463,13 @@ export class GeoBoundingBox {
 		return `SRID=${this.projection};POLYGON((${minLongitude} ${minLatitude}, ${maxLongitude} ${minLatitude}, ${maxLongitude} ${maxLatitude}, ${minLongitude} ${maxLatitude}, ${minLongitude} ${minLatitude}))`
 	}
 
-	//#endregion
+	// #endregion
 }
 
-//#region Equirectangular bbox around a point
+// #region Equirectangular bbox around a point
 
 /**
- * A flat latitude/longitude range, as a query filter rather than a model.
- *
- * Distinct from {@linkcode GeoBoundingBox} on purpose: that is a class carrying a projection and private state, which an
- * SQL row cannot be. This is the plain shape a spatial-index query is built from — four numbers, no behaviour.
+ * Plain latitude and longitude bounds in decimal degrees.
  */
 export interface LatLonBounds {
 	minLat: number
@@ -481,15 +481,20 @@ export interface LatLonBounds {
 /**
  * Approximate bounds `radiusKM` in each direction around a point.
  *
- * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally, 1° longitude ≈ 111 km × cos(lat).
- * It is a filter rather than an answer — it over-selects near the poles and along a long east-west span, and a caller
- * is expected to re-check survivors with an exact haversine distance. That is what makes the approximation safe: it may
- * admit a point it should not, and never excludes one it should keep.
+ * The spherical-Earth equirectangular approximation: 1° latitude ≈ 111 km globally,
+ * 1° longitude ≈ 111 km × cos(lat).
+ * It is a filter rather than an answer.
+ *
+ * It over-selects near the poles and along a long east-west span, and a caller is
+ * expected to re-check survivors with an exact haversine distance.
+ *
+ * That is what makes the approximation safe: it may admit a point it should not,
+ * and never excludes one it should keep.
  */
 export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {
 	const latDelta = radiusKM / KM_PER_DEGREE_LATITUDE
-	// cos(±90°) is 0, which would divide the longitude delta to Infinity and select the whole globe. Clamp so a polar
-	// query stays a wide band rather than becoming unbounded.
+	// cos(±90°) is 0, which would divide the longitude delta to Infinity and select the whole globe.
+	// Clamp so a polar query stays a wide band rather than becoming unbounded.
 	const cosLat = Math.max(Math.cos(toRad(lat)), MIN_COS_LATITUDE)
 	const lonDelta = radiusKM / (KM_PER_DEGREE_LATITUDE * cosLat)
 
@@ -501,4 +506,4 @@ export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBo
 	}
 }
 
-//#endregion
+// #endregion

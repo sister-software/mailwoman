@@ -18,7 +18,8 @@
  *   draws one from the capital's grid. Every other value is the row's own. The components are the `osm` adapter's
  *   mapping (`componentsForOSMRow`), so the two surfaces cannot disagree about what a field means.
  *
- *   ⚠ ODbL: the rows inherit OpenStreetMap's share-alike license, and `--exclude-share-alike` drops them.
+ *   ⚠ ODbL: the rows inherit OpenStreetMap's share-alike license, and a corpus build run under
+ *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
  *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */
@@ -28,18 +29,20 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
 import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
-import type { CanonicalRow } from "#types"
+import { SourceRegister } from "#registers"
+import { type CanonicalRow, SurfaceOrigin } from "#types"
 
 /**
- * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the Capital Development Authority has
- * developed, and the four sub-sectors each splits into.
+ * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the
+ * Capital Development Authority has developed, and the four sub-sectors each splits into.
  */
 const ISLAMABAD_SECTOR_ROWS = ["E", "F", "G", "I"] as const
 const ISLAMABAD_SECTOR_COLUMNS = [6, 7, 8, 9, 10, 11] as const
 const ISLAMABAD_SUB_SECTORS = [1, 2, 3, 4] as const
 
 /**
- * Share of rows rendered in the house register. the rest take the plain line.
+ * Share of rows rendered in the house register.
+ * The rest take the plain line.
  */
 const P_HOUSE = 0.55
 
@@ -68,8 +71,9 @@ export function drawIslamabadSector(random: () => number): string {
 }
 
 /**
- * Render one register line from the adapter's components. Returns null when the row has no house number or no locality:
- * both registers need the two.
+ * Render one register line from the adapter's components.
+ *
+ * @returns Null when the row has no house number or no locality: both registers need the two.
  */
 export function renderSouthAsiaRegister(
 	components: CanonicalRow["components"],
@@ -171,7 +175,11 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 						corpus_version: "0.1.0",
 						license: OSM_LICENSE,
 					},
-					`${name}:${rendering.register}`
+					`${name}:${rendering.register}`,
+					// The components come from the OpenStreetMap corpus jsonl the `osm` adapter wrote.
+					// This recipe re-orders them into the typed forms, so the address is real
+					// and the line is the recipe's.
+					{ register: SourceRegister.OpenStreetMap, surface: SurfaceOrigin.Composed }
 				)
 
 				if (ok) {

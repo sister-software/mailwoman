@@ -93,7 +93,7 @@ auth). `SEC_EDGAR_USER_AGENT` must be set to a descriptive
 ## The filer.db artifact (built 2026-08-08)
 
 The EDGAR rows and the Form 499 workbook were fed to `buildFilerDatabase` together.
-The artifact is at `/mnt/playpen/mailwoman-data/filer/filer.db`.
+The artifact is at `$MAILWOMAN_DATA_ROOT/filer/filer.db`.
 
 |                     |         |
 | ------------------- | ------: |

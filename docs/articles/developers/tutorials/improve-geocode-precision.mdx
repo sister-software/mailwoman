@@ -9,12 +9,12 @@ verified-with: mailwoman 8.7.0
 
 Every geocode you have run so far answered `resolution_tier: "admin"` — a coordinate for the city rather than
 for the building. By the end of this page you'll have moved one address 1,521 m, from a city centroid to
-its rooftop, with a 127 MB download; you'll know what the four tiers are and which download reaches
+its rooftop, with a 127 MB download; you'll know what the six tiers are and which download reaches
 which; and you'll know what `uncertainty_m` is measuring in each one. About twenty minutes.
 
 ## Prerequisites
 
-- **`candidate.db` on disk**, at `<data root>/wof/candidate.db`.
+- **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) covers the download.
 - **About 127 MB of free disk** for the street databases this page pulls, and `$MAILWOMAN_DATA_ROOT`
   pointing where you want them. The full US street tier is 103 files and about 41.3 GB, so this page
@@ -28,7 +28,7 @@ which; and you'll know what `uncertainty_m` is measuring in each one. About twen
 
 One paragraph of recap, because everything below depends on it. The candidate-table gazetteer ranks
 same-named places population-first, is the backend the hosted demo uses, and since `8.7.0` is the
-default: a `candidate.db` at `<data root>/wof/candidate.db` is picked up with nothing configured. The
+default: a `candidate.db` at `<data root>/db/wof/candidate.db` is picked up with no configuration. The
 alternative is a full-text-search path over a WOF admin distribution, which ranks by relevance instead
 and answers some queries differently. You reach it by pinning `--candidate-db none`, and it is not a
 comparison you can run here anyway, because `data pull` publishes no bundle for that database and it
@@ -53,13 +53,13 @@ hierarchy:
   region               DC [wof:85688741] (38.9048, -77.0163)
 ```
 
-The house number was parsed — it's in the input line — and then nothing was consulted that knows where
-house numbers are. The coordinate is Washington's, identical to the one every other Washington address
+The house number was parsed, and it is in the input line, yet no source that knows where house numbers
+are was consulted. The coordinate is Washington's, identical to the one every other Washington address
 returns. No `uncertainty_m` line, because the admin tier does not report one.
 
 ## 2. Check what the download costs before you start it
 
-`--dry-run` touches the network only to plan, writes nothing, and prints the exact bytes and
+`--dry-run` touches the network only to plan, writes no file, and prints the exact bytes and
 destinations.
 
 ```bash
@@ -85,7 +85,7 @@ out of the 103. Drop it and you get the whole 41.3 GB tier.
 
 A small download is not a cheap state, and the plan is where you can tell the two apart. New Hampshire's
 rooftop register downloads, verifies and installs at 20,480 bytes — and holds 0 rows. The file exists;
-the tier it should serve does not, and nothing reports an error, because a database with no matching row
+the tier it should serve does not, and no error is reported, because a database with no matching row
 and a database with no rows at all look identical from the lookup. NH addresses fall through to its
 interpolation database, which is a real 57.6 MB. Read the sizes in the dry-run as a coverage signal before
 you plan around a state.
@@ -110,7 +110,7 @@ PASS (2/2 checks)
 
 21 seconds on this connection. The `[DEBUG]` lines are the download client asking the remote how big the
 file is before it starts; `content-length verified` is that same number checked against what landed.
-There is no checksum in that check, because the bucket publishes no checksum sidecar — a truncated
+There is no checksum in that check, because the bucket publishes no checksum sidecar. A truncated
 transfer is caught, a corrupted one of the right length is not.
 
 No configuration follows. The databases are found by filename under the data root, keyed to the region the
@@ -118,7 +118,7 @@ parse resolved.
 
 ## 4. See the tier you have now
 
-Same command, same shell, nothing else changed:
+Same command and same shell, with no other setting changed:
 
 ```bash
 npx mailwoman geocode "1275 Pennsylvania Ave NW, Washington, DC 20004" --format text
@@ -163,17 +163,20 @@ hierarchy:
 `interpolated`, and a radius you can act on. The second database found the H St NE segment whose
 house-number range contains 620 and placed the point proportionally along it.
 
-## 5. Read the four tiers
+## 5. Read the six tiers
 
-`resolution_tier` takes one of four values, best first. Check it on every result; it is how a coordinate
+`resolution_tier` takes one of six values. The four in the ladder below are ordered best first; the
+last two come from a different route. Check it on every result; it is how a coordinate
 tells you what kind of coordinate it is.
 
-| Tier            | Source                                    | `uncertainty_m`                          |
-| --------------- | ----------------------------------------- | ---------------------------------------- |
-| `address_point` | the state's rooftop register (`situs.db`) | `1` — a floor rather than a measurement  |
-| `interpolated`  | the TIGER street network (`interp.db`)    | the calibrated bracket, `141` above      |
-| `street`        | a national register's street centroids    | half the street's bounding-box diagonal  |
-| `admin`         | the gazetteer, `candidate.db`             | `null` — no sub-locality estimate exists |
+| Tier            | Source                                        | `uncertainty_m`                          |
+| --------------- | --------------------------------------------- | ---------------------------------------- |
+| `address_point` | the state's rooftop register (`situs.db`)     | `1` — a floor rather than a measurement  |
+| `interpolated`  | the TIGER street network (`interp.db`)        | the calibrated bracket, `141` above      |
+| `street`        | a national register's street centroids        | half the street's bounding-box diagonal  |
+| `admin`         | the gazetteer, `candidate.db`                 | `null` — no sub-locality estimate exists |
+| `venue`         | a matched named place in the POI layer        | the venue match's own radius             |
+| `plus_code`     | a plus code in the input, decoded to its cell | half the cell's diagonal, at least `1`   |
 
 Three notes on that table.
 
@@ -200,7 +203,7 @@ in a fixed order — locality, then dependent locality, then postcode, then regi
 takes the first with a coordinate. Which is why the DC address in step 1 returned Washington's centroid
 and not its ZIP Code's, even though both resolved.
 
-That ordering matters when the locality is missing. A bare postcode has nothing above it:
+That ordering matters when the locality is missing. A bare postcode has no locality above it:
 
 ```bash
 npx mailwoman geocode "20004" --format text
@@ -214,10 +217,10 @@ postcode:         20004
 ```
 
 That is in Germany. `20004` is a valid postcode in at least Germany, Spain, the United States and
-Poland — this gazetteer holds a row for each — and a bare five-digit string carries nothing that says
+Poland. This gazetteer holds a row for each — and a bare five-digit string carries no signal saying
 which. `--locale en-US` does not rescue it: with the candidate backend active the locale stops implying
 a country filter, which is the same design that lets a French address resolve in France while the locale
-still reads `en-US`. Nothing scoped this query, so the global ranking decided it.
+still reads `en-US`. No filter scoped this query, so the global ranking decided it.
 
 A bare postcode is ambiguous across countries and the result will not warn you — so scope it, either
 with `--default-country` or by sending the city along with it:
@@ -277,7 +280,7 @@ The `hierarchy` block survives the tier change here exactly as it did in DC: Par
 centroid, underneath a rooftop coordinate 1,257 m away from it.
 
 One gap to plan around, and it is structural rather than temporary. France ships a rooftop register and
-no interpolation database, so a house number BAN does not carry falls straight to `admin` — there is no
+no interpolation database, so a house number BAN does not carry falls straight to `admin`. There is no
 middle tier to catch it, the way `620 H St NE` was caught in DC. Rue de Rivoli runs to number 258 in
 BAN, so 500 is off the end of it:
 
@@ -295,7 +298,7 @@ hierarchy:
   locality             Paris [wof:1159322569] (48.8566, 2.3428)
 ```
 
-An FR result is therefore rooftop or city, with nothing between — so branch on `resolution_tier` rather
+An FR result is therefore rooftop or city, with no intermediate tier, so branch on `resolution_tier` rather
 than on `uncertainty_m` being small, and treat an `admin` answer in France as a miss to re-check rather
 than as a coarse hit. Parsing French addresses well is a separate download,
 `@mailwoman/neural-weights-fr-fr`; [What ships today](../status.mdx) has the per-locale picture.
@@ -303,7 +306,7 @@ than as a coarse hit. Parsing French addresses well is a separate download,
 ## What you have now
 
 A data root that answers rooftop coordinates for one jurisdiction and city centroids everywhere else,
-which is the shape every deployment has — the question is only which jurisdictions you downloaded. Pull
+which is the shape every deployment has. The question is only which jurisdictions you downloaded. Pull
 the states your customers are in with `--only`, check `resolution_tier` on every result, and read
 `uncertainty_m` as a bound rather than as an error bar.
 

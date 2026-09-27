@@ -98,9 +98,10 @@ const BASE_DATA = {
 }
 
 /**
- * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row). The string being
- * split is one already-rendered terminal frame — small, bounded, and never re-split or grown — so a spliterator adds
- * nothing.
+ * Ink's raw write ends with a trailing "\n" (an empty final split element rather than an extra row).
+ *
+ * The string being split is one already-rendered terminal frame — small, bounded,
+ * and never re-split or grown — so a spliterator offers no benefit.
  */
 function frameLines(text: string): string[] {
 	// oxlint-disable-next-line mailwoman/prefer-spliterator -- one small fixed-size rendered frame rather than a stream
@@ -132,8 +133,7 @@ describe("DebugFrame", () => {
 	it("the ribbon losslessly reconstructs the input, connector text included", () => {
 		const segments = ribbonSegments(TREE)
 
-		// #493 round trip: concatenating every segment's value reproduces the raw input exactly — the ", " between
-		// the street and the locality must survive as an `unknown` segment rather than vanish.
+		// #493 round trip: concatenating every segment's value reproduces the raw input exactly. The ", " between the street and the locality must survive as an `unknown` segment rather than vanish.
 		expect(segments.map((segment) => segment.value).join("")).toBe(TREE.raw)
 		expect(segments.some((segment) => segment.tag == null && segment.value.includes(","))).toBe(true)
 	})
@@ -149,7 +149,7 @@ describe("DebugFrame", () => {
 			expect(text).toContain(label)
 		}
 
-		// ...and each row's value, so a label with nothing behind it fails.
+		// ...and each row's value, so a label with no value behind it fails.
 		expect(text).toContain("us (auto)")
 		expect(text).toContain("mode formatted")
 		expect(text).toContain("US 0.95")
@@ -164,8 +164,8 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// The rows keep their place (the input area's height is fixed) and each says it has nothing — never a
-		// fabricated system, an empty token list, or a zeroed channel.
+		// The rows keep their place (the input area's height is fixed) and each says it has
+		// no evidence, never a fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")
@@ -173,8 +173,8 @@ describe("DebugFrame", () => {
 	})
 
 	it("renders the demo's result sections in the output pane", async () => {
-		// 40 rows so the whole list is inside the scroll window — at 30 the candidates section is legitimately
-		// below the fold, which the scroll test covers.
+		// 40 rows so the whole list is inside the scroll window — at 30 the candidates
+		// section is legitimately below the fold, which the scroll test covers.
 		const text = await renderInkToString(
 			<DebugFrame
 				columns={140}
@@ -247,10 +247,10 @@ describe("DebugFrame", () => {
 		const rows = 30
 		const cellSize = mapPaneCellSize(columns, rows)
 		const cellCount = cellSize.columns * cellSize.rows
-		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly (a naive
-		// total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't grow a Box past its
-		// declared `height` when children overflow it. it drops rows to fit, which keeps the outer line count
-		// unchanged and would pass a line-count-only assertion).
+		// Every cell inked with a distinctive marker char, so a dropped frame row is visible directly
+		// (a naive total-line-count check can't tell "rendered" from "silently clipped" — Ink doesn't
+		// grow a Box past its declared `height` when children overflow it. It drops rows to fit,
+		// which keeps the outer line count unchanged and would pass a line-count-only assertion).
 		const MARKER_CODEPOINT = "#".codePointAt(0)!
 
 		const frame = {
@@ -275,8 +275,8 @@ describe("DebugFrame", () => {
 		const lines = frameLines(text)
 		const markedLineCount = lines.filter((line) => line.includes("#")).length
 
-		// Every requested frame row actually rendered — an undercounted chrome budget clips rows (and/or the title)
-		// to fit MapPane's declared box height instead of growing past it.
+		// Every requested frame row actually rendered — an undercounted chrome budget clips rows
+		// (and/or the title) to fit MapPane's declared box height instead of growing past it.
 		expect(markedLineCount).toBe(cellSize.rows)
 		expect(text).toContain("map")
 		expect(text).toContain("test attribution")
@@ -284,9 +284,10 @@ describe("DebugFrame", () => {
 	})
 
 	it("keeps the pane budgets in step with the frame's fixed chrome", async () => {
-		// The two exported budgets are the same arithmetic seen from two panes: input area (9) + footer (1) is what
-		// both subtract before their own chrome. Asserting the pair here is what catches a row added to the input
-		// area without the map viewport or the scroll window being told.
+		// The two exported budgets are the same arithmetic seen from two panes:
+		// input area (9) + footer (1) is what both subtract before their own chrome.
+		// Asserting the pair here is what catches a row added to the input area without
+		// the map viewport or the scroll window being told.
 		expect(mapPaneCellSize(100, 30)).toEqual({ columns: 48, rows: 16 })
 		expect(outputPaneCapacity(30)).toBe(17)
 

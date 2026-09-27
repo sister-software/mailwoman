@@ -19,6 +19,11 @@ dependencies = [
 	# directory for the same platform, or a tool written in one language cannot find what the other
 	# wrote. See `mailwoman_train/env.py`.
 	"platformdirs>=4.3",
+	# Corpus part files are stored zstd-compressed at rest (20-25x on this data). The stdlib
+	# gained `compression.zstd` in 3.14; this project is on 3.12, so it is a hard dependency
+	# rather than a fallback. The TypeScript side uses `node:zlib`, which has had zstd since
+	# Node 22.15 — `DecompressionStream` still does not accept it.
+	"zstandard>=0.23",
 ]
 
 # Heavy ML deps live under [train] so plain tokenizer-training and corpus utilities

@@ -19,9 +19,9 @@
  *   dump).
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
- *   --admin-repo $MAILWOMAN_DATA_ROOT/wof/repos/whosonfirst-data/whosonfirst-data-admin-de\
- *   --postcode-db $MAILWOMAN_DATA_ROOT/wof/postalcode-intl.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-de.db\
+ *   --admin-repo $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data/whosonfirst-data-admin-de\
+ *   --postcode-db $MAILWOMAN_DATA_ROOT/db/wof/postalcode-intl.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4
  *
  *   port note (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon
@@ -36,12 +36,14 @@
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
+import { LayerTier } from "@mailwoman/core/layers"
 import { pyRound } from "@mailwoman/core/numeric"
-import { isoSecondsUTC } from "@mailwoman/core/utils"
+import { repoRootPath } from "@mailwoman/core/paths"
+import { isoDate, isoSecondsUTC } from "@mailwoman/core/utils"
 import { geometryContains, haversineKm, type ParsedGeometry } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { finalizeSealedBuild } from "#gazetteer-pipeline/database-lifecycle"
@@ -53,6 +55,12 @@ import {
 	POSTCODE_LOCALITY_INSERT_SQL,
 	type PostcodeLocalityDatabase,
 } from "#gazetteer-pipeline/postcode/locality/schema"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
+/**
+ * The grant the finalized table records, as the `meta` table has stated it since the first build.
+ */
+const POSTCODE_LOCALITY_LICENSE = "CC-BY 4.0 (Who's On First) — attribution required on redistribution"
 
 /**
  * Plus name:* / label:* props, gathered below.
@@ -97,12 +105,13 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 }
 
 /**
- * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block around a query
- * coordinate, filtered by great-circle radius, and answered nearest-first under a caller-owned tie-break.
+ * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from
+ * the 3×3 block around a query coordinate, filtered by great-circle radius,
+ * and answered nearest-first under a caller-owned tie-break.
  *
- * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`, ×10 (0.1°) vs ×2 (0.5°) — so
- * it is a constructor parameter rather than a convention, and a builder's keying must not be "fixed" to match a
- * sibling's.
+ * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`,
+ * ×10 (0.1°) vs ×2 (0.5°) — so it is a constructor parameter rather than a convention,
+ * and a builder's keying must not be "fixed" to match a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()
@@ -179,63 +188,97 @@ export interface PostcodeLocalityBaseOptions {
 }
 
 /**
- * Freeze the accumulated table into a self-contained, read-only, distributable sqlite asset (the same shape as our
- * other WOF tables): a provenance/license `meta` table, query-planner stats, an integrity check, a rollback (non-WAL)
- * journal mode so there's no sidecar, and a vacuum to compact.
+ * Freeze the accumulated table into a self-contained, read-only, distributable sqlite
+ * asset (the same shape as our other WOF tables): a provenance/license `meta` table,
+ * query-planner stats, an integrity check, a rollback (non-WAL) journal mode
+ * so there's no sidecar, and a vacuum to compact.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
-	using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-
-	const counts = db
-		.prepare(
-			"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
-		)
-		.all() as Array<{ country: string; n: number; con: number | null }>
+	const now = new Date()
 
 	// Ordered (SQL order BY country) summary of {rows, containing}.
 	const summary = new Map<string, { rows: number; containing: number }>()
 
-	for (const c of counts) {
-		summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+	let countriesJson: string
+
+	{
+		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
+
+		const counts = db
+			.prepare(
+				"SELECT country AS country, COUNT(*) AS n, SUM(is_containing) AS con FROM postcode_locality GROUP BY country ORDER BY country"
+			)
+			.all() as Array<{ country: string; n: number; con: number | null }>
+
+		for (const c of counts) {
+			summary.set(c.country, { rows: Number(c.n), containing: Number(c.con || 0) })
+		}
+
+		// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys,
+		// inner keys alphabetical (containing < rows), separators ", " / ": ".
+		countriesJson =
+			"{" +
+			[...summary.keys()]
+				.toSorted()
+				.map((c) => {
+					const s = summary.get(c)!
+
+					return `${stringifyJSON(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
+				})
+				.join(", ") +
+			"}"
+
+		await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
+
+		const meta: Array<[string, string]> = [
+			["name", "mailwoman-postcode-locality"],
+			["description", "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)"],
+			["schema_version", "1"],
+			["built_at", isoSecondsUTC(now)],
+			[
+				"source",
+				"Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",
+			],
+			["license", POSTCODE_LOCALITY_LICENSE],
+			["attribution", "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0"],
+			[
+				"method",
+				"point-in-polygon of each postcode centroid against WOF locality polygons (+ a ~10km nearby candidate set with alt-name aliases)",
+			],
+			["countries", countriesJson],
+		]
+
+		writeMetaRows(db, meta)
+
+		// The table accumulates across country runs, so a later finalize replaces the manifest
+		// an earlier one stamped rather than failing on the table it left behind.
+		db.exec("DROP TABLE IF EXISTS layer_manifest")
 	}
 
-	// `countries` meta value: Python `json.dumps(summary, sort_keys=True)` → sorted keys, inner keys
-	// alphabetical (containing < rows), separators ", " / ": ".
-	const countriesJson =
-		"{" +
-		[...summary.keys()]
-			.toSorted()
-			.map((c) => {
-				const s = summary.get(c)!
+	// The layer interface's manifest, beside the `meta` record and stating the same terms.
+	await stampLayerManifest(
+		output,
+		foldLayerManifest({
+			name: "postcode-locality",
+			version: isoDate(now),
+			// The recorded grant carries attribution and no share-alike term, so the artifact is published.
+			tier: LayerTier.Shipped,
+			license: POSTCODE_LOCALITY_LICENSE,
+			attribution: "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0",
+			source: "Who's On First admin locality polygons and postalcode centroids",
+			sourceVintage: countriesJson,
+			buildCmd: "mailwoman gazetteer build postcode locality --recipe base --finalize",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "locality_id" },
+		})
+	)
 
-				return `${stringifyJSON(c)}: {"containing": ${s.containing}, "rows": ${s.rows}}`
-			})
-			.join(", ") +
-		"}"
+	{
+		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
 
-	await createPostcodeLocalityMetaTable(db, { ifNotExists: true })
-
-	const meta: Array<[string, string]> = [
-		["name", "mailwoman-postcode-locality"],
-		["description", "postcode → containing + nearby WOF locality candidates (coordinate-first resolution)"],
-		["schema_version", "1"],
-		["built_at", isoSecondsUTC()],
-		[
-			"source",
-			"Who's On First (whosonfirst.org) — admin locality polygons + postalcode centroids; built from source GeoJSON, not a prebuilt dump",
-		],
-		["license", "CC-BY 4.0 (Who's On First) — attribution required on redistribution"],
-		["attribution", "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0"],
-		[
-			"method",
-			"point-in-polygon of each postcode centroid against WOF locality polygons (+ a ~10km nearby candidate set with alt-name aliases)",
-		],
-		["countries", countriesJson],
-	]
-
-	writeMetaRows(db, meta)
-
-	finalizeSealedBuild(db, output)
+		finalizeSealedBuild(db, output)
+	}
 
 	// Python prints the dict repr (insertion order rows→containing, single quotes).
 	const summaryRepr =
@@ -249,8 +292,10 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 /**
  * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
  */
-async function geojsonFiles(dir: string): Promise<string[]> {
-	if (!(await pathExists(dir))) return []
+async function geojsonFiles(dir: PathBuilderLike): Promise<string[]> {
+	if (!(await pathExists(dir))) {
+		throw new Error(`buildPostcodeLocalityBase: the admin repository has no data directory at ${dir}`)
+	}
 
 	return Globerator.files("geojson", { cwd: dir, absolute: true }).toArray()
 }
@@ -261,8 +306,9 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 	console.log(`loading ${country} locality polygons from source GeoJSON…`)
 
 	const locs: Locality[] = []
+	let unreadable = 0
 
-	for (const fp of await geojsonFiles(join(adminRepo!, "data"))) {
+	for (const fp of await geojsonFiles(PathBuilder.from(adminRepo!)("data"))) {
 		try {
 			const g = tryParsingJSON<{ properties?: Record<string, unknown>; geometry?: ParsedGeometry }>(
 				await readLocalTextFile(fp)
@@ -307,17 +353,19 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				geom,
 			})
 		} catch {
-			// ignore unreadable / malformed files (Python's bare except: pass)
+			// A malformed file is skipped and counted in the summary line below.
+			unreadable++
 		}
 	}
 
-	console.log(`  ${locs.length} localities`)
+	console.log(`  ${locs.length} localities; ${unreadable} unreadable files skipped`)
 
-	// Two 0.1°-cell (~11km) grid indexes. `grid` (by centroid) drives the radius candidate set; `bgrid`
-	// (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps) drives
-	// the containing-PIP, so it checks only the localities whose bbox could cover the point instead of a
-	// linear scan over all of them. At GB scale (2.7M postcodes × 11.7K localities) that's the
-	// difference between minutes and ~an hour.
+	// Two 0.1°-cell (~11km) grid indexes.
+	// `grid` (by centroid) drives the radius candidate set; `bgrid`
+	// (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps)
+	// drives the containing-PIP, so it checks only the localities whose bbox could
+	// cover the point instead of a linear scan over all of them.
+	// At GB scale (2.7M postcodes × 11.7K localities) that's the difference between minutes and ~an hour.
 	const grid = new ProximityGrid<number>({
 		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
 		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],
@@ -351,9 +399,10 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	{
 		using db = new DatabaseClient<PostcodeLocalityDatabase>(output)
-		// Accumulate per country into one shared DB (the resolver attaches a single postcode_locality database
-		// and country-filters at query time). create-if-not-exists + delete-this-country makes each --country
-		// run idempotent, so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
+		// Accumulate per country into one shared DB (the resolver attaches a single
+		// postcode_locality database and country-filters at query time).
+		// Create-if-not-exists + delete-this-country makes each --country run idempotent,
+		// so `--output postcode-locality-intl.db` can be filled DE, FR, … in turn.
 
 		await createPostcodeLocalityTable(db, { ifNotExists: true })
 

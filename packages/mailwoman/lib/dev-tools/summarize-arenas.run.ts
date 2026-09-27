@@ -2,17 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Summarize-arenas.ts — per-arena pass-rate table from external-arenas.ts output.
- *
- *   Reads the per-arena `*.results.json` sidecars written by harness-neural. For the
- *   postal-standards arena it also joins back to the source jsonl (on `input`) to break the rates
- *   down by edge_class — the dimension the harness sidecar drops.
- *
- *   Ported faithfully from the retired Python implementation (pure JSON, no numpy); the v0 buckets
- *   went with the rules parser (v7 excision #1151 — harness-v0-neural was deleted with it).
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/summarize-arenas.run.ts <out-dir>
- *   <postal-cases.jsonl>
+ * Prints per-arena pass rates from result sidecars, with the postal arena also grouped by edge class.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -21,8 +11,11 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { JSONSpliterator } from "spliterator"
 
-const { positionals } = parseArguments({ allowPositionals: true, strict: false })
+const { positionals } = parseArguments({ allowPositionals: true })
 
+/**
+ * Describes the fields read from one arena result.
+ */
 interface Result {
 	neural_pass: boolean
 	neural_tree_valid?: boolean
@@ -30,8 +23,7 @@ interface Result {
 }
 
 function pct(x: number, n: number): string {
-	// Local rather than `formatPercent`: this port renders with `pyFixed` (Python's round-half-even),
-	// and `toFixed` rounds half-away — the bytes must match the retired .py report.
+	// `pyFixed` rounds like Python so the output matches the earlier Python report.
 	return n ? `${pyFixed((100 * x) / n, 0)}%` : "—"
 }
 
@@ -48,8 +40,8 @@ async function main(): Promise<void> {
 		let res: Result[]
 
 		try {
-			// Strict: the catch below re-throws anything that is not a missing file, so a corrupt
-			// sidecar must surface rather than read as an empty arena.
+			// A missing sidecar is skipped.
+			// Any other read error is rethrown.
 			res = await readLocalJSONFile<Result[]>(`${outDir}/${a}.results.json`)
 		} catch (error) {
 			if ((error as NodeJS.ErrnoException).code === "ENOENT") {
@@ -69,7 +61,7 @@ async function main(): Promise<void> {
 		console.log(`| ${a} | ${n} | ${pct(ne, n)} | ${pct(n - ne, n)} | ${pct(treeOk, n)} |`)
 	}
 
-	// postal edge-class breakdown (join on input)
+	// Postal results join to their source cases by input text.
 	if ("postal" in loaded) {
 		const ec: Record<string, string> = {}
 

@@ -2,38 +2,131 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Write a `layer_manifest` into a freshly built database — the one place every builder does it.
- *
- *   Phase 3 of the lab-reproducibility sequence rolls the layer interface out across the builders
- *   `mailwoman data inventory` reported as unprovenanced. Four of them would otherwise repeat the same
- *   twenty-five lines of open/create/write/destroy, which is the shape agents.md names a defect generator:
- *   the code gets copied correctly and the reasoning does not travel with it.
- *
- *   the ordering is the whole interface. This must run before `sealDatabase`, because a sealed artifact is
- *   `0444` and a manifest written afterwards needs the database reopened read-write — the one thing
- *   `openBuiltClient` exists to refuse. Calling it after the seal does not fail quietly. it fails
- *   loudly, which is the correct half. What it would cost is the build, at its very end.
+ *   Writes a `layer_manifest` into a freshly built database. Call it before `sealDatabase`, because a
+ *   sealed database is read-only.
  */
 
+import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerManifestTable,
+	LayerFreshnessPolicy,
 	type layerschemadatabase,
 	type LayerManifest,
+	type LayerTier,
+	type SpineKeys,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
+import { LicenseResolution, readLicenseRecord } from "@mailwoman/core/license/record"
 import { runFileSync } from "@mailwoman/core/process"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 /**
- * Open `path`, write `manifest`, and close.
+ * What a postcode or locality builder states about the database it seals.
  *
- * Opens its own connection rather than taking the builder's: every caller reaches this point after its own handle is
- * closed and before the seal, and threading a live handle through would make the ordering above depend on each
- * builder's cleanup rather than on this function.
- *
- * @throws When the database is already sealed, which is the ordering mistake this function exists to make loud.
+ * The candidate build folds these databases, and `candidateLayerManifest` composes its
+ * own terms from what each one records, so every field here is a claim the builder
+ * makes about its own artifact rather than a value copied from a runbook.
  */
-export async function stampLayerManifest(path: string, manifest: LayerManifest): Promise<void> {
+export interface FoldLayerManifestInput {
+	/**
+	 * The artifact's filename without its extension, which is how `DEFAULT_POSTCODE_DATABASES` names it.
+	 */
+	name: string
+	/**
+	 * The build date or the source release the artifact reproduces.
+	 */
+	version: string
+	/**
+	 * The tier the builder states.
+	 *
+	 * `assertTierMatchesLicense` refuses a tier the license expression contradicts.
+	 */
+	tier: LayerTier
+	/**
+	 * The grant as the builder records it, as an SPDX expression or as the prose its `meta` table carries.
+	 *
+	 * Prose resolves through `readLicenseRecord`.
+	 * An expression naming a `LicenseRef-` this repository defines is admissible while unresolved,
+	 * which is the form a build-local artifact uses for an input nobody has declared terms for.
+	 *
+	 * A value that is neither stops the build rather than reaching the manifest.
+	 */
+	license: string
+	attribution?: string
+	source: string
+	sourceVintage: string
+	buildCmd: string
+	buildSHA: string
+	createdAt: string
+	spineKeys: SpineKeys
+}
+
+/**
+ * The expression a manifest records for what a builder wrote.
+ *
+ * A resolved reading wins.
+ * An admissible expression that stays unresolved, one naming a `LicenseRef-`, is recorded as
+ * written, because `assertTierMatchesLicense` is what decides whether a tier may rest on it.
+ *
+ * @throws When the value is prose that resolves to no expression and is not an admissible one.
+ */
+function manifestLicenseExpression(name: string, license: string): string {
+	const record = readLicenseRecord(license)
+
+	if (record.resolution === LicenseResolution.Resolved && record.expression) return record.expression
+
+	try {
+		assertAdmissibleLicenseExpression(license, `${name} manifest`)
+	} catch {
+		throw new Error(
+			`${name} manifest: license ${stringifyJSON(license)} resolves to no SPDX expression whose ` +
+				`obligations are recorded. Record the grant as an identifier, or add the measured prose to ` +
+				`EXPRESSION_ALIASES in @mailwoman/core/license/record.`
+		)
+	}
+
+	return license
+}
+
+/**
+ * Compose the manifest a postcode or locality builder stamps before sealing.
+ *
+ * @throws When the license resolves to no recorded expression, or when the stated tier contradicts it.
+ */
+export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest {
+	const license = manifestLicenseExpression(input.name, input.license)
+
+	assertTierMatchesLicense({ tier: input.tier, license }, `${input.name} manifest`)
+
+	return {
+		name: input.name,
+		version: input.version,
+		schemaVersion: 1,
+		tier: input.tier,
+		license,
+		...(input.attribution === undefined ? {} : { attribution: input.attribution }),
+		source: input.source,
+		sourceVintage: input.sourceVintage,
+		buildCmd: input.buildCmd,
+		buildSHA: input.buildSHA,
+		freshnessPolicy: LayerFreshnessPolicy.Sealed,
+		spineKeys: input.spineKeys,
+		createdAt: input.createdAt,
+	}
+}
+
+/**
+ * Opens `path`, writes `manifest` into it, and closes the connection.
+ *
+ * The function opens its own connection.
+ * Callers reach it after closing their build handle and before sealing the database.
+ *
+ * @throws When the database is already sealed.
+ */
+export async function stampLayerManifest(path: PathBuilderLike, manifest: LayerManifest): Promise<void> {
 	using kdb = new DatabaseClient<layerschemadatabase>(path)
 
 	await createLayerManifestTable(kdb)
@@ -41,13 +134,11 @@ export async function stampLayerManifest(path: string, manifest: LayerManifest):
 }
 
 /**
- * The git sha of the tree that ran a build, for `layer_manifest.build_sha`.
+ * Returns the short git SHA of `repoRoot` for `layer_manifest.build_sha`.
  *
- * Degrades to `unknown` rather than throwing. A build run outside a checkout — a container, an unpacked tarball — is a
- * legitimate build, and refusing to stamp a manifest over a missing git binary would leave the artifact with no
- * provenance at all, which is the state this phase exists to reduce.
+ * It returns `unknown` when git fails, so a build outside a checkout still gets a manifest.
  */
-export function buildSHA(repoRoot: string): string {
+export function buildSHA(repoRoot: PathBuilderLike): string {
 	try {
 		return runFileSync("git", ["rev-parse", "--short", "HEAD"], {
 			cwd: repoRoot,

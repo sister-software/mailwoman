@@ -46,7 +46,7 @@ The rates undersell it. The parses:
 ```
 
 **The designator is swallowed into the locality.** `Rue` is the most deterministic street signal in
-French — it can only mean street — and without a house number it is absorbed into a locality span. The
+French. It can only mean street — and without a house number it is absorbed into a locality span. The
 arc's §2 framing ("the prior on bare toponyms is wrong") is confirmed and is understated: the model is
 not mislabelling an ambiguous toponym, it is mislabelling `Rue`.
 
@@ -112,7 +112,7 @@ claiming generalization to unseen streets.
 
 BAN's attached DBs retain only `locality_norm` / `locality_base`, so the negative class is
 accent-stripped (`Amelie-les-Bains-Palalda`). French title-casing is reconstructed; the accents cannot
-be. This makes `bare-locality` mildly out-of-distribution and may inflate its absolute difficulty — it
+be. This makes `bare-locality` mildly out-of-distribution and may inflate its absolute difficulty. It
 does not affect the comparison the board exists for, since every model sees the identical input. Source
 commune surfaces from a register that keeps them if the absolute number ever matters.
 

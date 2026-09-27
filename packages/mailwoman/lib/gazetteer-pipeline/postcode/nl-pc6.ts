@@ -21,40 +21,46 @@
  *   Run: node scripts/build-postalcode-nl-pc6.ts [--csv <pc6-centroids.csv>] [--out <postalcode-nl-pc6.db>]
  */
 
+import { isNLPostcodeKey } from "@mailwoman/codex/nl"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { NL_PC6_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 export interface BuildNLPC6Options {
 	/**
-	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring). Default
-	 * `<data-root>/cbs/pc6-centroids.csv`.
+	 * CBS PC6 centroid CSV (see the ogr2ogr extraction in the module docstring).
+	 *
+	 * Default `<data-root>/cbs/pc6-centroids.csv`.
 	 */
 	csvPath?: PathBuilderLike
 	/**
-	 * Output database. Default `<data-root>/wof/postalcode-nl-pc6.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/db/wof/postalcode-nl-pc6.db`.
 	 */
 	out?: PathBuilderLike
 }
 
 /**
- * Build the sealed NL PC6 database (#977 tier 2). Not re-exported from the postcode barrel — the command lazy-imports
- * it (optional-peer discipline).
+ * Build the sealed NL PC6 database (#977 tier 2).
+ *
+ * Not re-exported from the postcode barrel — the command lazy-imports it (optional-peer discipline).
  */
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
 ): Promise<{ out: string; inserted: number; skipped: number }> {
-	// resolver-wof-sqlite is an optional peer — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
 	const { normalizePostcodeName } = await import("@mailwoman/resolver-wof-sqlite/geonames")
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
-	const csvPath = (opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("wof", "postalcode-nl-pc6.db")).toString()
+	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("cbs", "pc6-centroids.csv"))
+	const outPath = (opts.out ?? wofDatabasePath("postalcode-nl-pc6.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
 	await removePathIfPresent(tmpPath)
@@ -78,8 +84,9 @@ export async function buildNLPC6Database(
 
 		db.exec("BEGIN")
 
-		// `header: false` so the header row arrives as data and can be checked — the CBS export has
-		// reordered its columns before, and a silent lon/lat swap puts every Dutch postcode in Somalia.
+		// `header: false` so the header row arrives as data and can be checked.
+		// The CBS export has reordered its columns before, and a silent lon/lat swap
+		// puts every Dutch postcode in Somalia.
 		let headerSeen = false
 
 		for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {
@@ -92,12 +99,12 @@ export async function buildNLPC6Database(
 				continue
 			}
 
-			const pc6 = (pc6Raw ?? "").trim().toUpperCase()
+			const pc6 = (pc6Raw ?? "").toUpperCase()
 			const lon = Number(lonS)
 			const lat = Number(latS)
 
-			// A valid PC6 is 4 digits + 2 letters. the CBS file is already normalized (no space).
-			if (!/^\d{4}[A-Z]{2}$/.test(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
+			// The CBS file writes the key form already, without the space.
+			if (!isNLPostcodeKey(pc6) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
 				skipped++
 
 				continue
@@ -125,7 +132,8 @@ export async function buildNLPC6Database(
 		db.exec("ANALYZE")
 	}
 
-	// Build-on-copy: the previous version moves aside. the new artifact swaps in atomically.
+	// Build-on-copy: the previous version moves aside.
+	// The new artifact swaps in atomically.
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	// The sealed-artifact invariant: a built DB is a read-only asset from the moment it exists.
 	await sealDatabase(outPath)

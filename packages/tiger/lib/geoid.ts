@@ -5,13 +5,13 @@ import type { Tagged } from "type-fest"
 
 import type { AdminLevel1Code, FIPSStateCode } from "#state"
 
-//#region Tagged FIPS types
+// #region Tagged FIPS types
 
 /**
  * A 4-digit number assigned by the Census to uniquely identify a block.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               482012231001050
  *                 ┗╋┛      ┗┻┻┻━(Block Code)
  *            (County Code)
@@ -33,7 +33,7 @@ export type FIPSBlockCode = Tagged<string, "FIPSBlockCode">
  * A 15-digit number assigned by the Census to uniquely identify a block.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               482012231001050
  *                 ┗╋┛      ┗┻┻┻━(Block Code)
  *            (County Code)
@@ -54,7 +54,7 @@ export type FIPSBlockGeoID = Tagged<string, "FIPSBlockGeoID">
  * A 1-digit number assigned by the Census to uniquely identify a block group.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               060133740002###
  *                 ┗╋┛      ┗━(Block Group Code)
  *            (County Code)
@@ -76,7 +76,7 @@ export type FIPSBlockGroupCode = Tagged<string, "FIPSBlockGroupCode">
  * A 6-digit number assigned by the Census to uniquely identify a tract.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               06013374000####
  *                 ┗╋┛
  *            (County Code)
@@ -98,7 +98,7 @@ export type FIPSTractCode = Tagged<string, "FIPSTractCode">
  * An 11-digit number assigned by the Census to uniquely identify a tract.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳┳━━(Tract Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳┳━━(Tract Code)
  *               06013374000####
  *                 ┗╋┛
  *            (County Code)
@@ -119,7 +119,7 @@ export type FIPSTractGeoID = Tagged<string, "FIPSTractGeoID">
  * A 5-digit number assigned by the Census to uniquely identify a county sub-division.
  *
  * ```txt
- * (State Code)━━┳┓   ┏┳┳┳┳━━(County Sub-Division Code)
+ * (State Code)━━┳┓ ┏┳┳┳┳━━(County Sub-Division Code)
  *               0601337400#####
  *                 ┗╋┛
  *            (County Code)
@@ -198,9 +198,9 @@ export type FIPSPlaceCode = Tagged<string, "FIPSPlaceCode">
  */
 export type FIPSCongressionalDistrictCode = Tagged<string, "FIPSConressionalDistrictCode">
 
-//#endregion
+// #endregion
 
-//#region GeoID Parsing Setup
+// #region GeoID Parsing Setup
 
 /**
  * A part of a GeoID to it's respective name.
@@ -235,15 +235,21 @@ export const GeoIDPart = {
 	 */
 	Place: "place_code",
 	/**
-	 * The tract code part of a GeoID. The third most granular part.
+	 * The tract code part of a GeoID.
+	 *
+	 * The third most granular part.
 	 */
 	Tract: "tract_code",
 	/**
-	 * The block group code part of a GeoID. The second most granular part.
+	 * The block group code part of a GeoID.
+	 *
+	 * The second most granular part.
 	 */
 	BlockGroup: "block_group_code",
 	/**
-	 * The block code part of a GeoID. The most granular part.
+	 * The block code part of a GeoID.
+	 *
+	 * The most granular part.
 	 */
 	Block: "block_code",
 } as const
@@ -285,7 +291,9 @@ export const GeoIDPartLength = {
 } as const satisfies Record<GeoIDPart, number>
 
 /**
- * A GeoID parsed to the block level. The most granular level.
+ * A GeoID parsed to the block level.
+ *
+ * The most granular level.
  *
  * @title Parsed GeoID Block Level
  * @public
@@ -302,7 +310,9 @@ export interface ParsedGeoIDBlockLevel {
 }
 
 /**
- * A GeoID parsed to the block group level. The second most granular level.
+ * A GeoID parsed to the block group level.
+ *
+ * The second most granular level.
  *
  * @internal
  */
@@ -316,7 +326,9 @@ export interface ParsedGeoIDBlockGroupLevel {
 }
 
 /**
- * A GeoID parsed to the tract level. The third most granular level.
+ * A GeoID parsed to the tract level.
+ *
+ * The third most granular level.
  *
  * @internal
  */
@@ -337,7 +349,9 @@ export interface ParsedGeoIDTractLevel {
 export type ParsedGeoIDPartial = Partial<Record<GeoIDPart, string>>
 
 /**
- * A GeoID parsed to the county-subdivision level. The fourth most granular level.
+ * A GeoID parsed to the county-subdivision level.
+ *
+ * The fourth most granular level.
  *
  * @internal
  */
@@ -351,7 +365,9 @@ export interface ParsedGeoIDCountySubDivisionLevel {
 }
 
 /**
- * A GeoID parsed to the county level. The fifth most granular level.
+ * A GeoID parsed to the county level.
+ *
+ * The fifth most granular level.
  *
  * @internal
  */
@@ -365,7 +381,9 @@ export interface ParsedGeoIDCountyLevel {
 }
 
 /**
- * A GeoID parsed to the state level. The least granular level.
+ * A GeoID parsed to the state level.
+ *
+ * The least granular level.
  *
  * @internal
  */
@@ -398,9 +416,9 @@ export class GeoIDParsingError extends Error {
 	}
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Input Matchers
+// #region GeoID Input Matchers
 
 export class GeoIDInputMatcher<T extends GeoIDPart[] = GeoIDPart[]> {
 	public pattern: RegExp
@@ -523,9 +541,9 @@ export function isGeoIDComponent<T extends GeoIDPart>(component: T, input: unkno
 	return matcher.test(input)
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Parsing
+// #region GeoID Parsing
 
 /**
  * GeoID input matchers sorted by length in descending order, such that the most specific matchers are first.
@@ -622,9 +640,9 @@ export function parseGeoID(input: unknown): ParsedGeoID | null {
 	return null
 }
 
-//#endregion
+// #endregion
 
-//#region GeoID Formatting
+// #region GeoID Formatting
 
 /**
  * Format a parsed block GeoID back into a string.
@@ -679,4 +697,4 @@ export function formatGeoID(input: unknown): string | null {
 	return null
 }
 
-//#endregion
+// #endregion

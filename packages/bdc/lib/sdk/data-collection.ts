@@ -11,9 +11,8 @@ import type { BroadbandServicableLocationID } from "#sdk/location"
 /**
  * Snake_case identifier for a US State or Territory.
  *
- * Loosely typed as `string` for now. The earlier draft derived this from `StateName` (via `@earlier-draft/tiger`); this
- * port drops that dependency since nothing here consumes the literal union. Tighten it against `@mailwoman/tiger`'s
- * `StateName` if a downstream dictionary ever needs it.
+ * Loosely typed as `string`; tighten it against `@mailwoman/tiger`'s `StateName`
+ * if a downstream dictionary ever needs the literal union.
  *
  * @category FCC
  * @title FCC State Identifier
@@ -88,8 +87,9 @@ export type BSLFlag = (typeof BSLFlag)[keyof typeof BSLFlag]
  */
 export interface NTIARecord {
 	/**
-	 * Unique ID for the Fabric location. Remains persistent across versions, even if the location's position or building
-	 * changes.
+	 * Unique ID for the Fabric location.
+	 *
+	 * Remains persistent across versions, even if the location's position or building changes.
 	 *
 	 * @title Location ID
 	 * @pattern ^\d{10}$
@@ -107,7 +107,9 @@ export interface NTIARecord {
 	address_primary: string
 
 	/**
-	 * City name from the postal address. Also known as the locality.
+	 * City name from the postal address.
+	 *
+	 * Also known as the locality.
 	 *
 	 * @example
 	 * 	San Francisco
@@ -119,8 +121,7 @@ export interface NTIARecord {
 	/**
 	 * 2-character state abbreviation from the postal address.
 	 *
-	 * Loosely typed as `string` — see {@linkcode FCCStateID} for why the tiger-backed literal union is deferred to task
-	 * 2c.
+	 * Loosely typed as `string`; see {@linkcode FCCStateID}.
 	 *
 	 * @example
 	 * 	CA
@@ -150,7 +151,9 @@ export interface NTIARecord {
 	zip_suffix?: string
 
 	/**
-	 * Estimate of the number of units at the location. Includes both residential and non-residential units.
+	 * Estimate of the number of units at the location.
+	 *
+	 * Includes both residential and non-residential units.
 	 *
 	 * @example
 	 * 	10
@@ -160,7 +163,7 @@ export interface NTIARecord {
 	unit_count: number
 
 	/**
-	 * Flag indicating if the location is a broadband serviceable location. 1 for serviceable, 0 for not.
+	 * Flag indicating if the location is a broadband serviceable location.
 	 *
 	 * @example
 	 * 	1
@@ -170,8 +173,10 @@ export interface NTIARecord {
 	bsl_flag: BSLFlag
 
 	/**
-	 * Code indicating the type of building at the location. Can be residential (R), non-residential (B), mixed (X), group
-	 * quarters (G), CAI (C), enterprise (E), or other (O).
+	 * Code indicating the type of building at the location.
+	 *
+	 * Can be residential (R), non-residential (B), mixed (X), group quarters (G),
+	 * CAI (C), enterprise (E), or other (O).
 	 *
 	 * @example
 	 * 	R
@@ -181,8 +186,9 @@ export interface NTIARecord {
 	building_type_code: BuildingTypeCode
 
 	/**
-	 * Modeled land use designation from county assessor information. Possible values range from 0 (Other) to 15
-	 * (Wireless).
+	 * Modeled land use designation from county assessor information.
+	 *
+	 * Possible values range from 0 (Other) to 15 (Wireless).
 	 *
 	 * @example
 	 * 	1
@@ -192,8 +198,8 @@ export interface NTIARecord {
 	land_use_code: LandUseCode | null
 
 	/**
-	 * Code indicating confidence in the association between the textual address and the location. 1 = High, 2 = Medium, 3
-	 * = Low, 4 = successful address challenge.
+	 * Code indicating confidence in the association between the textual address
+	 * and the location. 1 = High, 2 = Medium, 3 = Low, 4 = successful address challenge.
 	 *
 	 * @example
 	 * 	1
@@ -233,7 +239,9 @@ export interface NTIARecord {
 	h3_9: string
 
 	/**
-	 * Latitude coordinate of the location in decimal degrees. Uses WGS84 format with 5-digit precision.
+	 * Latitude coordinate of the location in decimal degrees.
+	 *
+	 * Uses WGS84 format with 5-digit precision.
 	 *
 	 * @example
 	 * 	37.774929
@@ -245,7 +253,9 @@ export interface NTIARecord {
 	latitude: number
 
 	/**
-	 * Longitude coordinate of the location in decimal degrees. Uses WGS84 format with 5-digit precision.
+	 * Longitude coordinate of the location in decimal degrees.
+	 *
+	 * Uses WGS84 format with 5-digit precision.
 	 *
 	 * @example
 	 * 	e.g. -122.419416

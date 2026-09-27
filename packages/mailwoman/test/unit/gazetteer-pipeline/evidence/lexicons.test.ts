@@ -38,7 +38,8 @@ describe("three-law selectivity — pure units", () => {
 	})
 
 	it("law 3: metros clear the person-name tier, given names do not", () => {
-		// paris/lyon/nancy are IN the name lists — the tiered floor keeps them at metro prominence.
+		// paris/lyon/nancy are IN the name lists.
+		// The tiered floor keeps them at metro prominence.
 		expect(clearsProminenceFloor("paris", 0.85, personNames)).toBe(true)
 		expect(clearsProminenceFloor("lyon", 0.6, personNames)).toBe(true)
 		// A given-name homograph at ordinary-town prominence is refused…
@@ -82,8 +83,8 @@ describe("three-law selectivity — pure units", () => {
 	it("law-1 directional closure (v5): the census flip surfaces are in the directional set", async () => {
 		const directionals = await loadDirectionalSurfaces()
 
-		// The v3.19 flip census: US neighbourhoods literally named these painted evidence onto street
-		// directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
+		// The v3.19 flip census: US neighbourhoods literally named these painted evidence onto
+		// street directionals ("3rd Ave East" → street "3rd", "Fargo" → locality "North").
 		for (const s of ["east", "west", "north", "south", "northeast", "northwest", "southeast", "southwest"]) {
 			expect(directionals.has(s), s).toBe(true)
 		}
@@ -109,8 +110,8 @@ describe("three-law selectivity — pure units", () => {
 	it("law 4 (v7): DE region vocabulary excludes the territorial Länder but keeps the city-states", () => {
 		const region = loadDERegionVocabulary()
 
-		// The 13 territorial-state names — native, exonym, and the everyday aliases — are region
-		// vocabulary ("bayern" as locality evidence teaches the v3.19 rotation class).
+		// The 13 territorial-state names — native, exonym, and the everyday aliases —
+		// are region vocabulary ("bayern" as locality evidence teaches the v3.19 rotation class).
 		for (const s of [
 			"bayern",
 			"bavaria",
@@ -124,8 +125,8 @@ describe("three-law selectivity — pure units", () => {
 			expect(region.has(s), s).toBe(true)
 		}
 
-		// The city-states stay OUT of the exclusion: Land and Stadt are one coextensive place and
-		// the locality reading dominates user text ("10115 berlin").
+		// The city-states stay OUT of the exclusion: Land and Stadt are one coextensive place
+		// and the locality reading dominates user text ("10115 berlin").
 		for (const s of ["berlin", "hamburg", "bremen"]) {
 			expect(region.has(s), s).toBe(false)
 		}
@@ -181,12 +182,13 @@ describe("street-type lexicon build", () => {
 		expect(built.skippedRegionVocabulary).toBeGreaterThanOrEqual(4)
 		const j = await readLocalJSONFile<StreetTypeLexicon>(tmp)
 
-		// "mountain WAY WY 82601" / "susie CT WY 83101" — the state token must carry no street evidence.
+		// "mountain WAY WY 82601" / "susie CT WY 83101".
+		// The state token must carry no street evidence.
 		for (const code of ["WY", "CT", "KY", "MT", "PR"]) {
 			expect(j.code_entries[code], code).toBeUndefined()
 		}
 
-		// Directional codes stay (single-letter CA forms. none collide with a state).
+		// Directional codes stay (single-letter CA forms. None collide with a state).
 		expect(j.code_entries.N).toBe(1)
 		expect(j.code_entries.W).toBe(1)
 		// The canonical words behind the dropped codes are untouched.

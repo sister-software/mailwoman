@@ -65,7 +65,7 @@ def golden_to_bio_labels(
 ) -> tuple[list[int], list[int], list[int]]:
     """Encode ``entry.raw`` and assign ACTIVE BIO labels via substring search.
 
-    Components whose values can't be located in ``raw`` are silently skipped — they are golden
+    Components whose values can't be located in ``raw`` are silently skipped. They are golden
     set rot the JS-side validator should have caught. We could log them, but eval should be
     resilient to a few stray entries.
 

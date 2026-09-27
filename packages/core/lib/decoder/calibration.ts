@@ -5,7 +5,7 @@
  *   Opt-in confidence calibration for decoded spans.
  *
  *   The decoder emits a per-span `confidence` that is the mean of the span's per-token softmax
- *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated — a CE-trained model
+ *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated. A CE-trained model
  *   is systematically over/under-confident in bands. Task #59 fits an isotonic-regression
  *   calibrator on a held-out OpenAddresses + corpus set
  *   (`corpus-python/scripts/fit-isotonic-calibration.py`) and ships the result as a 20-bin lookup table
@@ -50,9 +50,11 @@ export interface CalibrationTable {
 export type Calibrator = (rawConfidence: number) => number
 
 /**
- * Build a calibrator from an isotonic lookup table. The mapping is piecewise-linear between bin centers and clamped to
- * the table's range outside it (the table is monotone non-decreasing by construction, so the interpolation is monotone
- * too). Accepts either the full `CalibrationTable` or a bare `CalibrationBin[]`.
+ * Build a calibrator from an isotonic lookup table.
+ *
+ * The mapping is piecewise-linear between bin centers and clamped to the table's range outside it
+ * (the table is monotone non-decreasing by construction, so the interpolation is monotone too).
+ * Accepts either the full `CalibrationTable` or a bare `CalibrationBin[]`.
  */
 export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Calibrator {
 	const bins = Array.isArray(table) ? table : table.table
@@ -101,9 +103,9 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 /**
  * Clamp a confidence into `[0, 1]`, mapping NaN to 0.
  *
- * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose: a confidence that cannot be
- * computed is no confidence, while an interpolation fraction that cannot be computed must stay detectable rather than
- * silently snapping to a segment's start.
+ * Distinct from `clampFraction` (`@mailwoman/spatial`), which lets NaN through on purpose:
+ * a confidence that cannot be computed is no confidence, while an interpolation fraction that
+ * cannot be computed must stay detectable rather than silently snapping to a segment's start.
  */
 export function clampConfidence(v: number): number {
 	if (Number.isNaN(v)) return 0

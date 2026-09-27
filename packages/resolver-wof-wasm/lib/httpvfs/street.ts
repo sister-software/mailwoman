@@ -49,12 +49,15 @@ export interface StreetPointHit {
 }
 
 /**
- * Exact situs point — async twin of `AddressPointSqliteLookup`. Postcode scope first, locality fallback.
+ * Exact situs point — async twin of `AddressPointSqliteLookup`.
+ *
+ * Postcode scope first, locality fallback.
  */
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `address_point` (graceful on a tableless extract, #568).
+	 * One memoized round trip to confirm the extract carries `address_point`
+	 * (graceful on a tableless extract, #568).
 	 */
 	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
@@ -98,8 +101,8 @@ export class HTTPVFSAddressPointLookup {
 		}
 
 		if (!rows.length && query.locality) {
-			// FR extracts fold arrondissement communes to the base city on both sides (the node class +
-			// BAN builder discipline) — mirror it here so the twins stay in lockstep.
+			// FR extracts fold arrondissement communes to the base city on both sides
+			// (the node class + BAN builder discipline) — mirror it here so the twins stay in lockstep.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
@@ -130,7 +133,10 @@ export interface StreetInterpHit {
 }
 
 /**
- * Tiger-range interpolation — async twin of `StreetInterpolator`. Postcode-scoped. abstains on cross-ZIP ambiguity.
+ * Tiger-range interpolation — async twin of `StreetInterpolator`.
+ *
+ * Postcode-scoped.
+ * Abstains on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -174,7 +180,8 @@ export class HTTPVFSInterpolator {
 
 		if (!rows.length) return null
 
-		// Parity preference: exact side → 'mixed' → opposite side (flagged). Mirrors StreetInterpolator.
+		// Parity preference: exact side → 'mixed' → opposite side (flagged).
+		// Mirrors StreetInterpolator.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
 		const mixed = rows.filter((r) => r.parity === "mixed")
@@ -210,7 +217,7 @@ export class HTTPVFSInterpolator {
 	}
 }
 
-//#region Street-level resolution
+// #region Street-level resolution
 
 /**
  * A street-level coordinate + which tier produced it + an honest radius.
@@ -220,7 +227,7 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor. interp = uncertaintyM × the region factor).
+	 * Calibrated uncertainty radius in meters (10 m situs floor. Interp = uncertaintyM × the region factor).
 	 */
 	uncertaintyM: number
 }
@@ -246,11 +253,14 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius), else null so
- * the caller falls back to the admin cascade ({@link runCascade}). Mirrors the node `geocode-core` tier order
- * (address_point > interpolated > admin) — but async, on the main thread, over the demo's httpvfs handles.
- * `interpRadiusCalibration` is the per-region conformal factor (#374 / data/calibration/interp-radius-conformal.json);
- * default 1.95 (the conservative national default — under-coverage is the harmful error).
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius),
+ * else null so the caller falls back to the admin cascade ({@link runCascade}).
+ *
+ * Mirrors the node `geocode-core` tier order (address_point > interpolated > admin),
+ * but async, on the main thread, over the demo's httpvfs handles.
+ * `interpRadiusCalibration` is the per-region conformal factor
+ * (#374 / data/calibration/interp-radius-conformal.json); default 1.95
+ * (the conservative national default — under-coverage is the harmful error).
  */
 export async function resolveStreet(
 	street: string | undefined,

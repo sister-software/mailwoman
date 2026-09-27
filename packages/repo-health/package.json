@@ -83,12 +83,14 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/corpus": "workspace:*",
 		"@mailwoman/neural": "workspace:*",
 		"@mailwoman/release-kit": "workspace:*",
 		"@mailwoman/sqlite": "workspace:*",
 		"esbuild": "0.28.2",
-		"path-ts": "^2.4.1",
-		"spliterator": "^7.11.0",
+		"mailwoman": "workspace:*",
+		"path-ts": "^2.5.0",
+		"spliterator": "^8.1.0",
 		"typescript": "npm:@typescript/typescript6@^6.0.2"
 	},
 	"devDependencies": {

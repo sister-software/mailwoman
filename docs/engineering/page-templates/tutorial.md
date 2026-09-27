@@ -20,12 +20,12 @@ sidebar_position: 3
 
 ## Section order
 
-1. `# Title` — a task rather than a noun phrase.
+1. `# Title`: a task rather than a noun phrase.
 2. **Lead.** What the reader will hold at the end, plus the reading time.
 3. **Prerequisites.** Versions, downloads, and every hard constraint that would break a step below.
-4. **Steps.** Numbered `##` sections. One command or one edit each. Real output pasted under each.
+4. **Steps.** Numbered `##` sections, each with one command or one edit and the real output pasted under it.
 5. **What you have now.** The finished artifact, described in two sentences.
-6. **Next.** One or two links, no more.
+6. **Next.** At most two links.
 
 ## Opening move
 
@@ -39,8 +39,8 @@ straight to prerequisites.
 > one point per clinic, ready to open in QGIS. `@mailwoman/registry` does it in three calls: `ingestRows`
 > applies your column mapping and, if you hand it a geocode function, resolves each address as it goes;
 > `resolveEntities` runs the block, score and cluster passes over the result and returns `entities` alongside
-> its pair counts; and `toGeoJSON` writes the FeatureCollection. About twenty minutes, most of it inside the
-> first call waiting on geocodes.
+> its pair counts; and `toGeoJSON` writes the FeatureCollection. The tutorial takes about twenty minutes,
+> most of it spent in the first call waiting on geocodes.
 
 <!-- illustrative -->
 
@@ -65,5 +65,5 @@ await writeFile("clinics.geojson", JSON.stringify(toGeoJSON(entities)))
 - Every command in the page was executed, and the pasted output is what it printed.
 - Every constraint that can stop a reader is stated before the step it stops.
 - Each caveat gives a ceiling and a next action in the same sentence pair.
-- Every superlative is cashed out by a checkable action in the same breath, or it is removed.
+- Every superlative is backed by a checkable action in the same sentence, or it is removed.
 - The audit checklist in [`../writing-system.md`](../writing-system.md) has been run over the draft.

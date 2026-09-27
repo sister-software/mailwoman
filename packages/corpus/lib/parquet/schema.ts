@@ -21,9 +21,19 @@ import type { LabeledRow } from "#types"
 export const ROW_GROUP_SIZE = 50_000
 
 /**
+ * Rows per parquet file when a writer's caller names no limit.
+ *
+ * A file is closed here rather than grown, because `writeParquetFile` materializes
+ * one Arrow table and Arrow's list builder raises before a whole source fits:
+ * 4,228,212 rows raised where 1,603,143 wrote.
+ * The manifest records the value in force as `rows_per_slice`.
+ */
+export const ROWS_PER_FILE = 1_000_000
+
+/**
  * Snappy is the codec selected for corpus parquet files.
  */
-export const PARQUET_COMPRESSION = "SNAPPY" as const
+export const PARQUET_COMPRESSION = "SNAPPY"
 
 export interface ParquetFieldDefinition {
 	// oxlint-disable-next-line unicorn/text-encoding-identifier-case -- Parquet logical type name.
@@ -36,7 +46,9 @@ export interface ParquetFieldDefinition {
 export type ParquetSchemaDefinition<T> = Record<Extract<keyof T, string>, ParquetFieldDefinition>
 
 /**
- * A single Parquet row shape. The index signature allows callers to carry source fields before projection.
+ * A single Parquet row shape.
+ *
+ * The index signature allows callers to carry source fields before projection.
  *
  * Optional fields are represented as null in the Arrow table and read back as null.
  */
@@ -53,13 +65,17 @@ export interface ParquetRow {
 	source_id: string
 	corpus_version: string
 	license: string
-	synth_method?: string | null
-	synth_base_id?: string | null
+	register?: string | null
+	surface: string
+	recipe?: string | null
+	base_source_id?: string | null
 	[key: string]: unknown
 }
 
 /**
- * Column names emitted into every parquet file. Matches `ParquetRow`.
+ * Column names emitted into every parquet file.
+ *
+ * Matches `ParquetRow`.
  */
 export const PARQUET_COLUMNS = [
 	"raw",
@@ -74,13 +90,17 @@ export const PARQUET_COLUMNS = [
 	"source_id",
 	"corpus_version",
 	"license",
-	"synth_method",
-	"synth_base_id",
+	"register",
+	"surface",
+	"recipe",
+	"base_source_id",
 ] as const
 
 /**
- * The DuckDB type each column is read and written as. Paired with {@linkcode PARQUET_COLUMNS} so a `read_json` column
- * map and a `copy` select list are built from one list rather than two that can disagree.
+ * The DuckDB type each column is read and written as.
+ *
+ * Paired with {@linkcode PARQUET_COLUMNS} so a `read_json` column map and a `copy`
+ * select list are built from one list rather than two that can disagree.
  */
 export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], string> = {
 	raw: "VARCHAR",
@@ -95,24 +115,26 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	source_id: "VARCHAR",
 	corpus_version: "VARCHAR",
 	license: "VARCHAR",
-	synth_method: "VARCHAR",
-	synth_base_id: "VARCHAR",
+	register: "VARCHAR",
+	surface: "VARCHAR",
+	recipe: "VARCHAR",
+	base_source_id: "VARCHAR",
 }
 
 /* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition,
    and the rule has no way to tell the two apart. */
 
 /**
- * Parquet schema for `LabeledRow` per #18 §4. Optional fields use `optional: true`; repeated UTF8 columns capture
- * tokens/labels arrays. Compression is per-column snappy.
+ * Parquet schema for `LabeledRow` per #18 §4.
+ *
+ * Optional fields use `optional: true`; repeated UTF8 columns capture tokens/labels arrays.
+ * Compression is per-column snappy.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	tokens: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
 	labels: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
-	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units,
-	// [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string,
-	// and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
+	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units, [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string, and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
 	span_starts: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_ends: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_tags: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
@@ -122,8 +144,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	source_id: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	corpus_version: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	license: { type: "UTF8", compression: PARQUET_COMPRESSION },
-	synth_method: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
-	synth_base_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	register: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	surface: { type: "UTF8", compression: PARQUET_COMPRESSION },
+	recipe: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
+	base_source_id: { type: "UTF8", compression: PARQUET_COMPRESSION, optional: true },
 }
 
 /* oxlint-enable unicorn/text-encoding-identifier-case */
@@ -131,9 +155,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row arriving without it came
- * from a producer that hasn't migrated — writing it would silently drop the v0.5.0 labels from the file (the "builders
- * before parquet = silent loss" hazard). Loud failure, naming the row, instead.
+ * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row
+ * arriving without it came from a producer that hasn't migrated — writing it would silently
+ * drop the v0.5.0 labels from the file (the "builders before parquet = silent loss" hazard).
+ * Loud failure, naming the row, instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row
@@ -156,6 +181,18 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		)
 	}
 
+	// The runner stamps the adapter's `surface` on every row that omits one, so an absent
+	// value here means the row reached parquet by a path that bypassed it.
+	// Writing a default would record every such row as the publisher's own string.
+	if (!row.surface) {
+		throw new Error(
+			`rowToParquet: row carries no surface ` +
+				`(source=${row.source}, source_id=${row.source_id}). ` +
+				`An adapter declares CorpusAdapter.surface and the runner stamps it; ` +
+				`a recipe writing rows directly sets the field itself.`
+		)
+	}
+
 	return {
 		raw: row.raw,
 		tokens: row.tokens,
@@ -169,7 +206,9 @@ export function rowToParquet(row: LabeledRow): ParquetRow {
 		source_id: row.source_id,
 		corpus_version: row.corpus_version,
 		license: row.license,
-		synth_method: row.synth?.method ?? null,
-		synth_base_id: row.synth?.base_source_id ?? null,
+		register: row.register ?? null,
+		surface: row.surface,
+		recipe: row.recipe?.recipe ?? null,
+		base_source_id: row.recipe?.base_source_id ?? null,
 	}
 }

@@ -27,6 +27,7 @@ import {
 	MEASURED_COUNTRY_BBOXES,
 	MEASURED_COUNTRY_COVERAGE,
 } from "mailwoman/gazetteer-pipeline/coverage-manifest"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 let scratch: TemporaryDirectory
@@ -42,7 +43,7 @@ afterEach(async () => {
 /**
  * A minimal admin WOF with the tables `buildCandidateTable` reads (mirrors `build-candidate.test.ts`).
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -64,9 +65,9 @@ function buildFixtureAdmin(path: string): void {
 /**
  * Build a real (unsealed) candidate database in the scratch directory and return its path.
  */
-async function buildFixtureCandidate(): Promise<string> {
-	const input = scratch.resolve("admin.db")
-	const output = scratch.resolve("candidate.db")
+async function buildFixtureCandidate(): Promise<PathBuilderLike> {
+	const input = scratch.path("admin.db")
+	const output = scratch.path("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output })
 
@@ -146,7 +147,8 @@ describe("emit → read round-trip through a real candidate build", () => {
 		expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
 		expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
 
-		// NZ: never measured — absent rather than "failed". The two states must be distinguishable.
+		// NZ: never measured — absent rather than "failed".
+		// The two states must be distinguishable.
 		expect(manifest.countryCoverage.has("NZ")).toBe(false)
 		expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))
 	})

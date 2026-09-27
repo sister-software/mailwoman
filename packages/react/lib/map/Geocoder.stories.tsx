@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The milestone story: the whole `<Geocoder>` runs here end-to-end over a fake runtime —
- *   offline stub map style (one background layer, no tiles), a canned geocode (no ONNX, no gazetteer), a
- *   synchronous autocomplete, a fake version list + backend. Open Storybook, type a query, hit
- *   "Parse + resolve", and the geocoder responds: the result panel fills in and the map drops a marker +
- *   outline and flies to it — with zero network. `FullGeocoder` is the bare composition; `WithPanels` slots in
- *   host panels (about / release / compare / debug drawer / permalink) to exercise the injection point.
+ *   Exercise the composed geocoder in Storybook with a fake, offline runtime.
+ *   `WithPanels` also demonstrates the host-injected panel slots.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
@@ -72,7 +68,8 @@ type Story = StoryObj<typeof StatefulGeocoder>
 export const FullGeocoder: Story = {}
 
 /**
- * The same geocoder with host-injected panels wired into the DI bag (about / release / compare / debug / permalink).
+ * The same geocoder with host-injected panels wired into the DI bag
+ * (about / release / compare / debug / permalink).
  */
 export const WithPanels: Story = {
 	args: {

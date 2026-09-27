@@ -7,19 +7,21 @@
  */
 
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { repoRootPath } from "@mailwoman/core/paths"
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import { orientationListing } from "@mailwoman/dev-mcp/hooks/session-orientation"
 import { beforeAll, describe, expect, it } from "vitest"
 
 import { runHook } from "../hook-harness.ts"
 
 const HOOK = resolvePackagePath("@mailwoman/dev-mcp", "lib", "hooks", "session-orientation.ts")
-const REPO_ROOT = String(repoRootPath())
+const REPO_ROOT = repoRootPathBuilder()
 
 /**
- * Roughly 2,500 tokens at four bytes each. The signature digest this replaces measured near 88,000 tokens for the same
- * tree, and would not survive a compaction. if the listing grows past this, drop the per-workspace subpath limit rather
- * than the budget.
+ * Roughly 2,500 tokens at four bytes each.
+ *
+ * The signature digest this replaces measured near 88,000 tokens for the same tree,
+ * and would not survive a compaction.
+ * If the listing grows past this, drop the per-workspace subpath limit rather than the budget.
  */
 const BYTE_BUDGET = 10_000
 
@@ -45,8 +47,8 @@ describe("orientationListing", () => {
 	})
 
 	it("counts the remainder rather than listing a large package in full", () => {
-		// `@mailwoman/core` exports around a hundred subpaths. the listing is an index of where to look, and the rest of
-		// them are what `mwdev_symbol` answers.
+		// `@mailwoman/core` exports around a hundred subpaths.
+		// The listing is an index of where to look, and the rest of them are what `mwdev_symbol` answers.
 		expect(listing).toMatch(/@mailwoman\/core: \. .* \+\d+ more/u)
 	})
 

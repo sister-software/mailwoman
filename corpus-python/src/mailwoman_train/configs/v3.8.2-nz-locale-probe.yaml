@@ -1,27 +1,14 @@
-# === v3.8.2-nz-locale-probe — first Deepparse-parity locale add: New Zealand. 2k probe. ===
-# init_from the shipped v381 (v7.0.0/6.5.0 weights), fresh optimizer, LR 1e-5 constant, warmup 500, 2000
-# steps. The one new variable: the synth-nz linz locale source (v0.12.0-nz overlay) + NZ:1.0 in
-# country_weights (the allowlist key that admits it) + synth-nz:6.0 (4.2% of the source multinomial).
+# v3.8.2-nz-locale-probe is a 2k-step probe that adds New Zealand as a trained country.
 #
-# Why (task #58, Deepparse parity #1): NZ was untrained (country_weights allowlist dropped it). The
-# postmortem's "8,967 rows, just declare it" premise was falsified — the in-corpus 2,990 NZ rows are all
-# synth PO-box (no streets). Real data: openaddresses/extracted/nz/countrywide.csv = 2.12M linz-derived
-# street rows. NZ column quirk (surface-audited): OA city=suburb, district=city, postcode 0% — the recipe
-# maps district->locality, city->dependent_locality (districtAsLocality). Eval holds out ~12% of NZ
-# localities (source-disjoint coord board).
+# The run starts from v381 and adds the synth-nz source from the v0.12.0-nz corpus. That source holds
+# LINZ-derived OpenAddresses street rows. In those rows the city column holds the suburb and the district
+# column holds the city, so the recipe maps district to locality and city to dependent_locality.
 #
-# PRE-registered read (written before the numbers. Fable design 2026-07-18):
-#   target (the point): NZ coordinate-acceptability emerges on the held-out NZ coord board (from ~0, the
-#     shipped model can't parse NZ suburb/city order). Bar set once the board is built (report the rate).
-#   guard (must not regress the 23): golden 2pp check — no shipped tag >2pp below v381. The battery must
-#     include the US #1101 comma-free board + the FR fragment board (the two hard-won results a new-locale
-#     gradient most plausibly erodes) + the Norway digit board (bare-street-hn 0.733, bare-pc 1.000).
-#   guard: the gauntlet passes. metamorphic INV[comma-drop] holds.
-#   forgetting: source_weights is the knob (exact multinomial); synth-nz 4.2% is inside the ≤5-8% safe band.
-#   silent-drop check: confirm the loader's `Source index` log line shows synth-nz with nonzero pulls in the first steps
-#     (a country/source-key mismatch drops every NZ row and the run "passes" having trained on nothing new).
+# The loader drops rows from any country missing from country_weights, and a key mismatch fails silently.
+# Confirm that the loader's `Source index` log line shows nonzero synth-nz pulls in the first steps.
 #
-# escalation: clean 2k -> 8k -> full promote battery -> ship as v7.1.0 (first post-v7 model). Promote = operator.
+# The target is the held-out NZ board. The guards are the golden set, the US comma-free board, the FR
+# fragment board and the Norway digit board.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.8.2-nz-locale-probe.yaml --resume none
 
@@ -29,7 +16,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.12.0-nz/corpus-v0.12.0-nz
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1, plus NZ (the one new country — first Deepparse-parity locale).
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -53,9 +40,12 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-    NZ: 1.0 # New — the 24th trained country. Allowlist key (data_loader.py:249): absent → dropped, so this is what admits the synth-nz source.
-  source_weights: # v3.1.0 weights + synth-no-fragment; + synth-nz (the one new source this run — NZ locale, 4.2% multinomial share, ≈ synth-german's).
-    synth-nz: 6.0 # NZ LINZ locale source (v0.12.0-nz overlay). 6.0/136.5 ≈ 4.2% of the source multinomial — within the ≤5-8% new-mass band that guards the 23 trained countries (Fable design 2026-07-18).
+    # The loader drops rows from countries missing here, so this key admits the synth-nz rows.
+    NZ: 1.0
+  source_weights:
+    # This weight is about 4% of the total source weight. A new source above 5-8% risks forgetting
+    # in the other trained countries.
+    synth-nz: 6.0
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -81,17 +71,17 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains board 3 surfaces.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # This source holds partial and autocomplete-style inputs.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # This source holds French streets without a house number and bare-locality counterexamples.
+    # Its weight matches the other targeted-fix sources at 12.0.
     synth-fr-fragment: 12.0
-    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
+    # This source holds Norwegian bare streets and street-plus-number rows without a postcode,
+    # plus counterexamples. Its weight matches the other targeted-fix sources at 12.0.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -99,20 +89,19 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
-  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  # With this probability, a row also yields a copy with separator commas and quotes removed.
+  # The copy teaches the model to segment street and locality without relying on the comma.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  # The country lexicon feeds the country channel. Its feature_dim must equal model.country_feature_dim.
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -132,16 +121,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # The country channel is a 2-dim [country_surface, country_ambiguous] soft feed with its own projection.
+  # The country_feature_dim value must equal the country lexicon's feature_dim.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # This value scales the country_ambiguous dim before country_projection and is baked into the exported ONNX.
+  # A scale of 1.0 over-suppressed countries whose names are also common words, such as Georgia and Jordan.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -180,9 +165,9 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # NZ locale probe — init_from the shipped v381 (v7.0.0/6.5.0 weights), fresh optimizer, fresh
-  # output_dir (--resume none honors init_from, weights only). The one new variable is the synth-nz
-  # source + NZ:1.0. the encoder keeps v381's grammar and fine-tunes NZ in at constant LR 1e-5. 2k probe.
+# The init_from checkpoint loads weights only, so the optimizer starts fresh.
+# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+train:
   output_dir: /data/output-v382-nz-probe-s42/checkpoints
   seed: 42
   init_from: /data/output-v381-punct-fix-full-s42/checkpoints/step-008000

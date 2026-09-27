@@ -17,8 +17,7 @@
  *   (`@mailwoman/corpus` `LABELED_ROW_SCHEMA`), which already writes the base files this overlay
  *   rides alongside.
  *
- *   Schema: raw, tokens, labels, span_starts, span_ends, span_tags, country, locale, source,
- *   source_id, corpus_version, license, synth_method, synth_base_id.
+ *   Schema: `PARQUET_COLUMNS` from `#parquet/schema`, which is the same list the native writer uses.
  *
  *   The span triple (#519, v0.5.0 char-offset labels) is required on every row: `alignRow` emits it
  *   on every labeled row, so a row arriving without it came from a producer that hasn't migrated —
@@ -29,57 +28,35 @@
  *   /tmp/part-po-box.parquet
  */
 
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { openWriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
-import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
-
-const REQUIRED_COLUMNS = [
-	"raw",
-	"tokens",
-	"labels",
-	"span_starts",
-	"span_ends",
-	"span_tags",
-	"country",
-	"locale",
-	"source",
-	"source_id",
-	"corpus_version",
-	"license",
-	"synth_method",
-	"synth_base_id",
-] as const
-
-const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 
 /**
- * The v0.5.0 DuckDB type for each column, in {@link REQUIRED_COLUMNS} order.
+ * The columns this converter writes, and the DuckDB type each is written as.
  *
- * Mirrors the PyArrow schema the Python original declared: `pa.string()` → `varchar`, `pa.list_(pa.string())` →
- * `varchar[]`, `pa.list_(pa.int32())` → `integer[]`. The span offsets are INT32 (#519): parallel arrays over `raw`
- * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping); `raw` is a short address string, so INT32
- * round-trips as a plain integer where INT64 would surface as bigint.
+ * Both come from `#parquet/schema`, which is the one definition the native writer,
+ * the reader and the manifest already share.
+ * This file restated them, and the restatement went stale the moment `synth_method` became
+ * `recipe`, `register` and `surface`: an overlay converted here would have been written
+ * without the three columns the base files carry, and the loader reads by column name
+ * rather than by position, so the rows would have arrived declaring no surface at all.
+ *
+ * The span offsets are INT32 (#519): parallel arrays over `raw`
+ * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping).
+ * `raw` is a short address string, so INT32 round-trips as a plain integer
+ * where INT64 would surface as bigint.
  */
-const COLUMN_TYPES: Record<(typeof REQUIRED_COLUMNS)[number], string> = {
-	raw: "VARCHAR",
-	tokens: "VARCHAR[]",
-	labels: "VARCHAR[]",
-	span_starts: "INTEGER[]",
-	span_ends: "INTEGER[]",
-	span_tags: "VARCHAR[]",
-	country: "VARCHAR",
-	locale: "VARCHAR",
-	source: "VARCHAR",
-	source_id: "VARCHAR",
-	corpus_version: "VARCHAR",
-	license: "VARCHAR",
-	synth_method: "VARCHAR",
-	synth_base_id: "VARCHAR",
-}
+const REQUIRED_COLUMNS = PARQUET_COLUMNS
+const COLUMN_TYPES = PARQUET_COLUMN_TYPES
+
+const SPAN_COLUMNS = ["span_starts", "span_ends", "span_tags"] as const
 
 /**
  * Options for {@linkcode jsonlToParquet}.
@@ -88,13 +65,15 @@ export interface JSONLToParquetOptions {
 	/**
 	 * The labeled-row jsonl to convert.
 	 */
-	input: string
+	input: PathBuilderLike
 	/**
 	 * The parquet file to write.
 	 */
-	output: string
+	output: PathBuilderLike
 	/**
-	 * Parquet row-group size. Default 50000.
+	 * Parquet row-group size.
+	 *
+	 * Default 50000.
 	 */
 	rowGroupSize?: number
 }
@@ -111,7 +90,7 @@ export interface JSONLToParquetSummary {
 /**
  * Enforce the #519 span interface per row: all three present, parallel lengths.
  *
- * A row with span_starts but no span_tags is a corrupt row — never a silent fallback.
+ * A row with span_starts but no span_tags is a corrupt row, never a silent fallback.
  */
 function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	const present = SPAN_COLUMNS.filter((c) => row[c] != null)
@@ -149,30 +128,31 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them. Streaming keeps
-	// memory O(1) on the Node side (the Python original buffered every column into memory first). The
-	// staging directory owns the write stream, so it is closed before the directory is removed — and a
-	// mid-stream span-triple failure leaves no orphan.
+	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
+	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column into memory first).
+	// The staging directory owns the write stream, so it is closed before the directory
+	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
-	const stagePath = join(staging.path, "rows.ndjson")
+	const stagePath = staging.path("rows.ndjson")
 	const stage = staging.use(openWriteStream(stagePath, { encoding: "utf8" }))
 
 	let rows = 0
 	let lineNo = 0
 
-	// TextSpliterator rather than JSONSpliterator: the staging write below streams the RAW line bytes to
-	// DuckDB verbatim (the parse here only validates), so a re-serialized JSONSpliterator row would
-	// defeat the point. crlf is handled by the existing `rawLine.trim()` (strips a trailing \r),
-	// same as readline's crlfDelay:Infinity did.
-	for await (const rawLine of TextSpliterator.fromAsync(options.input)) {
+	// TextSpliterator rather than JSONSpliterator: the staging write below streams
+	// the RAW line bytes to DuckDB verbatim (the parse here only validates),
+	// so a re-serialized JSONSpliterator row would defeat the point.
+	// The reader trims each line (a trailing \r included); `skipEmpty: false` keeps
+	// blank lines so `lineNo` matches the file.
+	for await (const line of TextSpliterator.fromAsync(delimitedSource(options.input), { skipEmpty: false })) {
 		lineNo++
-		const line = rawLine.trim()
 
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)
 		assertSpanTriple(row, lineNo)
-		// Write the validated line verbatim. DuckDB's `read_json` projects to the explicit `columns`
-		// map below (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
+		// Write the validated line verbatim.
+		// DuckDB's `read_json` projects to the explicit `columns` map below
+		// (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 		stage.write(line + "\n")
 
 		rows++
@@ -187,20 +167,22 @@ export async function jsonlToParquet(
 	const columnsLiteral = "{" + REQUIRED_COLUMNS.map((c) => `'${c}': '${COLUMN_TYPES[c]}'`).join(", ") + "}"
 	const selectList = REQUIRED_COLUMNS.join(", ")
 
-	const db = await connectDuckDB()
-	// Row order is required: the overlay-manifest assembler records first/last source_id from
-	// file order. `preserve_insertion_order` (DuckDB default) keeps output order = input order.
+	const output = options.output.toString()
+	using db = await openDuckDB()
+
+	// Row order is required: the overlay-manifest assembler records first/last source_id from file order.
+	// `preserve_insertion_order` (DuckDB default) keeps output order = input order.
 	await db.run("SET preserve_insertion_order=true")
 
 	await db.run(
-		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath)}', ` +
+		`COPY (SELECT ${selectList} FROM read_json('${escapeSQLString(stagePath.toString())}', ` +
 			`columns = ${columnsLiteral}, format = 'newline_delimited')) ` +
-			`TO '${escapeSQLString(options.output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
+			`TO '${escapeSQLString(output)}' (FORMAT PARQUET, COMPRESSION SNAPPY, ROW_GROUP_SIZE ${rowGroupSize})`
 	)
 
-	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(options.output)}')`)
+	const counted = await db.runAndReadAll(`SELECT count(*) AS n FROM read_parquet('${escapeSQLString(output)}')`)
 	const written = Number(counted.getRowObjects()[0]!.n)
-	report?.(`Wrote ${written} rows to ${options.output}`)
+	report?.(`Wrote ${written} rows to ${output}`)
 
-	return { read: rows, written, outPath: options.output }
+	return { read: rows, written, outPath: output }
 }

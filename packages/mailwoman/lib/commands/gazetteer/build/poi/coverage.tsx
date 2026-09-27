@@ -3,24 +3,19 @@
 
 /**
  *   `mailwoman gazetteer build poi-coverage` — build a POI layer whose `layer_coverage` rows carry an
- *   exclusion-grade basis: one class, one named administrative region, completeness measured rather than
- *   asserted (#1964).
+ *   exclusion-grade basis: one class in one named administrative region, completeness measured rather
+ *   than asserted.
  *
- *   Everything else in this pipeline writes `basis: source_present`, which supports presence and nothing
- *   else. This command is the one path to `basis: surveyed`, and what it costs to take it is a second,
- *   independent inventory of the same class in the same region: it extracts the class from a Geofabrik
- *   `.osm.pbf`, reads the same class out of an already-sealed reference layer, matches the two under a
- *   pre-registered protocol grid, and records the weakest completeness the grid supports.
+ *   This is the one path to `basis: surveyed`, and taking it costs a second, independent inventory of the
+ *   same class in the same region — the class is extracted from a Geofabrik `.osm.pbf`, read out of an
+ *   already-sealed reference layer, and matched under a pre-registered protocol grid. The command is
+ *   parameterized so the claim can be re-run and audited. Running it in more places leaves coverage
+ *   where it was: a completeness estimate from two sources bounds sampling error only and cannot see the
+ *   dependence between them, which is the direction that turns a data gap into confident negative
+ *   evidence.
  *
- *   It is a measuring instrument, and parameterized so the claim it makes can be re-run and audited — not
- *   so coverage can be widened by running it more places. A completeness estimate from two sources bounds
- *   sampling error only. it cannot see the dependence between the two sources, which pushes completeness up
- *   and is the direction that turns a data gap into confident negative evidence. Breadth waits on a basis
- *   that survives review, per `docs/superpowers/specs/2026-08-27-exclusion-grade-coverage-pilot.md`.
- *
- *   Tier is `build-local`, always: the subject inventory is OSM, so the built artifact is a Derived Database
- *   under ODbL and we ship the builder rather than the bytes — the same posture as `--source osm` on
- *   `gazetteer build poi`.
+ *   Tier is `build-local`, always: the subject inventory is OSM, so the built artifact is a Derived
+ *   Database under ODbL and we ship the builder rather than the bytes.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -35,19 +30,19 @@ import type { POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * Coverage resolution. Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to poi.db's
- * coverage cells finds these ones without knowing which build produced them.
+ * Res 6 matches what the rest of the POI pipeline writes, so a reader already keyed to
+ * poi.db's coverage cells finds these ones without knowing which build produced them.
  */
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * The pilot class. Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories are selected by
- * the same declaration rather than by two hand-written predicates.
+ * Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories
+ * select from the same declaration rather than two hand-written predicates.
  */
 const DEFAULT_CATEGORY = "pharmacy"
 
 /**
- * `admin_level` of a French région or a German Land. The level a bounded region is usually named at.
+ * `admin_level` of a French région or a German Land.
  */
 const DEFAULT_ADMIN_LEVEL = "4"
 
@@ -64,15 +59,12 @@ export const spec = {
 		category: { type: "string", default: DEFAULT_CATEGORY, description: "POI taxonomy category id" },
 		country: { type: "string", description: "ISO country code stamped onto OSM rows" },
 		release: { type: "string", description: "OSM extract vintage, e.g. 260627" },
-		reference: { type: "string", description: "Sealed reference layer. Default $MAILWOMAN_DATA_ROOT/poi/poi.db" },
+		reference: { type: "string", description: "Sealed reference layer. Default $MAILWOMAN_DATA_ROOT/db/poi/poi.db" },
 		resolution: { type: "string", default: DEFAULT_COVERAGE_RESOLUTION, description: "Coverage H3 resolution" },
 		out: { type: "string", description: "Output layer database" },
 	},
 } as const satisfies CommandSpec
 
-/**
- * Filesystem-safe form of a region name, for the default output path.
- */
 function slugify(value: string): string {
 	return stripCombiningMarks(value)
 		.toLowerCase()
@@ -92,7 +84,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		}
 
 		const { LayerTier } = await import("@mailwoman/core/layers")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { poiDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy/lookup")
 
 		const { buildPOIDatabase } = await import("#gazetteer-pipeline/poi/build/poi")
@@ -116,13 +108,12 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 			throw new Error(`--resolution must be an H3 resolution in [0, 15], got ${stringifyJSON(options.resolution)}`)
 		}
 
-		const referencePath = options.reference ?? dataRootPath("poi", "poi.db")
-		const out = options.out ?? dataRootPath("poi", `poi-coverage-${options.category}-${slugify(region)}.db`)
-		const buildSHA = resolveBuildSHA(String(repoRootPath()))
+		const referencePath = options.reference ?? poiDatabasePath("poi.db")
+		const out = options.out ?? poiDatabasePath(`poi-coverage-${options.category}-${slugify(region)}.db`)
+		const buildSHA = resolveBuildSHA(repoRootPath())
 
-		// dynamic import, required: @mailwoman/osm is unpublished (ODbL counsel sign-off pending —
-		// see osm/readme.md), so a top-level import breaks the published CLI on a clean install. Same
-		// reasoning as the `--source osm` branch of `gazetteer build poi`.
+		// Dynamic import is required: @mailwoman/osm is unpublished, so a top-level
+		// import breaks the published CLI on a clean install.
 		const { extractOSMBoundary, extractOSMPOIs, tagRuleFromOSMTag } = await import("@mailwoman/osm/sdk")
 
 		console.error(`▸ boundary: ${region} (admin_level=${options.adminLevel}) from ${pbf}`)
@@ -135,7 +126,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const rows: POISourceRow[] = []
 
 		for await (const row of extractOSMPOIs(pbf, [tagRuleFromOSMTag(options.category, category.osmTag)])) {
-			// extractOSMPOIs yields `country: ""` — a bare OSM feature carries no country property.
+			// A bare OSM feature carries no country property.
 			rows.push({ ...row, country })
 		}
 

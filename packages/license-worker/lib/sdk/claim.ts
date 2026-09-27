@@ -30,8 +30,9 @@ export type ClaimEvent =
 	| { kind: "error"; now: number }
 
 /**
- * The pause between polls: Stripe's webhook lands within seconds of the redirect, so three is short enough to feel live
- * and long enough to stay under the worker's per-address claim limit for the whole deadline.
+ * The pause between polls: Stripe's webhook lands within seconds of the redirect,
+ * so three is short enough to feel live and long enough to stay under the worker's
+ * per-address claim limit for the whole deadline.
  */
 export const CLAIM_INTERVAL_MS = 3000
 
@@ -47,8 +48,8 @@ export function claimURL(sessionID: string): string {
 }
 
 /**
- * Polling, with no start time yet: the deadline counts from the first event, so a render is pure and the clock is the
- * events'.
+ * Polling, with no start time yet: the deadline counts from the first event,
+ * so a render is pure and the clock is the events'.
  */
 export function initialClaimState(): ClaimState {
 	return { phase: "polling", attempts: 0 }
@@ -92,7 +93,9 @@ export function nextClaimState(state: ClaimState, event: ClaimEvent): ClaimState
 }
 
 /**
- * One poll. Never throws: every outcome is an event the reducer knows.
+ * One poll.
+ *
+ * Never throws: every outcome is an event the reducer knows.
  */
 export async function fetchClaim(sessionID: string, signal?: AbortSignal): Promise<ClaimEvent> {
 	const now = Date.now()

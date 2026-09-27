@@ -168,7 +168,7 @@ Three inputs, run in order against one loaded classifier:
 
 The indentation is containment rather than reading order: the region contains the locality, the locality
 contains the street and the postcode, and the street carries its own number, prefix and suffix. That
-is why the second input has no `region` level at all — a British address has no state to nest under —
+is why the second input has no `region` level at all. A British address has no state to nest under —
 and the structure is what makes a resolver's job tractable later.
 [Read everything a parse returns](./understand-a-parse.mdx) walks the same tree with its spans and
 confidences. Everything that page shows is available here; the runner underneath is the only
@@ -178,7 +178,7 @@ All three inputs are lowercase, because that is the register a person types in.
 
 Per-parse cost above is 20–30 ms on the WASM backend, on a warm session. The first parse after load
 is not in that range, which is why the loader runs a warm-up inference before handing the classifier
-back — that cost is inside step 2's number rather than step 3's.
+back. That cost is inside step 2's number rather than step 3's.
 
 ## What the load costs
 
@@ -227,7 +227,7 @@ entirely, which is what you want in a test environment where the failure path on
 
 Two constraints ride on that:
 
-- **The parse runs on the thread that called it.** Nothing here moves inference to a worker. Session
+- **The parse runs on the thread that called it.** No code here moves inference to a worker. Session
   creation reads a 39.4 MB model and each parse is tens of milliseconds; put both in a worker of your
   own if your page has an animation to keep smooth.
 - **WebGPU availability is a browser and hardware property rather than a configuration one.** The fallback
@@ -236,7 +236,7 @@ Two constraints ride on that:
 
 ## Resolving in the browser
 
-Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 1.65 GB gazetteer
+Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
 build notes put at about a dozen range requests per session. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
@@ -248,7 +248,7 @@ reason.
 
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its
 loader fetches a whole database and opens it in memory — workable for a slim, purpose-built
-distribution rather than for the 1.65 GB worldwide one. `buildSlimWOFDatabase` from
+distribution rather than for the 2.88 GB worldwide one. `buildSlimWOFDatabase` from
 `@mailwoman/resolver-wof-sqlite/build-slim` is what produces such a distribution: give it a source
 gazetteer, a country set and a locality cap, and it writes a resolver-schema database sized for a
 static deploy.

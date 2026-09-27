@@ -2,40 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The coastal-erosion route, observation-only: after the resolver has produced a coordinate, the
- *   Environment Agency's own erosion designation for that coordinate is recorded beside the answer — under a
- *   named scenario, with the cumulative distance as published, the shoreline-management policy where the
- *   scenario carries one, and the coverage record stating what the product does and does not license.
- *
- *   the route reads. IT never answers. It takes a finished coordinate and returns a record. Nothing here is
- *   consulted while an answer is being chosen, no candidate is read, no result is added, removed or
- *   re-ordered, and no abstain is reached or avoided because of it. A geocode with the route configured is
- *   the same geocode plus one advisory, which is a statement about construction rather than about a
- *   measurement.
- *
- *   presence is the switch, and IT is A layer path. There is no boolean: a boolean would make the caller's
- *   factory construct the reader itself and put a sealed layer open on the default construction path. A
- *   session resolves the layer path, opens it if the file is there, and hands the route in. a session that
- *   finds no file hands in nothing and is byte-identical to one built before this route existed.
- *
- *   every observation names its scenario, and the route'S default is never hidden. ncerm publishes twelve
- *   erosion-zone layers because the answer depends on which management scenario, which horizon and which
- *   sea-level-rise allowance the reader means. The route answers under one of them and says which. a reading
- *   that named no scenario would let a 2105 projection be taken for a present-day designation.
- *
- *   only A designation reaches A caller, and the silence is the inversion OF the flood route. That route
- *   raises a marker for a designated absence, because inside England a location with no flood polygon is
- *   Flood Zone 1 by the Planning Practice Guidance's own definition. ncerm publishes no coverage statement at
- *   all, so a location with no erosion polygon is either inland or on the coast outside the mapped risk area
- *   and the product cannot tell those apart. There is therefore no absence observation to raise — an
- *   advisory there would be a determination nobody made — and the named refusal is what a receipt carries
- *   instead.
- *
- *   the observation is about the MAP, never about the property. The Environment Agency states that its data
- *   "cannot provide details for individual properties". So the wording reports what the authority's mapping
- *   assigns at the location under a named scenario — a fact about the map — and the product's own exclusions
- *   ride on every observation, because a caller cannot see from an erosion distance that the answer is silent
- *   about flooding and about foreshore features.
+ *   Add an advisory coastal-erosion observation after geocoding.
+ *   The route never changes the selected answer and records only designated locations.
+ *   Every observation names its scenario, layer provenance, coverage limits, and exclusions.
+ *   No designation is not evidence of safety: the source cannot distinguish inland from unmapped coast.
  */
 
 import {
@@ -47,6 +17,7 @@ import {
 	type CoastalErosionReading,
 	type CoastalLayerIdentity,
 } from "@mailwoman/coastal"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	createDesignationRoute,
@@ -59,16 +30,13 @@ import {
 } from "#observations/layer-record"
 
 /**
- * One coastal-erosion designation, recorded beside an answer.
- *
- * Everything a reader needs to check the claim is here: which authority, which product and vintage, which scenario, the
- * polygons the authority's mapping places the location inside with the distance each publishes, how containment was
- * established, and the coverage record with the sentence saying what it does not license. A reader holding the distance
- * alone cannot tell whether it was earned or which of twelve questions it answers.
+ * Coastal-erosion designation and provenance recorded beside an answer.
  */
 export interface CoastalErosionObservation {
 	/**
-	 * Always `designated`. `unknown` produces no observation — see this file's header.
+	 * Always `designated`.
+	 *
+	 * `unknown` produces no observation — see this file's header.
 	 */
 	reading: CoastalReadingKind
 	/**
@@ -76,13 +44,17 @@ export interface CoastalErosionObservation {
 	 */
 	scenario: { key: string; management: string; horizon: number; climateAllowance: string; label: string }
 	/**
-	 * Every polygon of that scenario containing the point. Usually one. several where the authority's own frontages
-	 * overlap.
+	 * Every polygon of that scenario containing the point.
+	 *
+	 * Usually one.
+	 * Several where the authority's own frontages overlap.
 	 */
 	designations: CoastalDesignation[]
 	containment: CoastalContainmentPath
 	/**
-	 * The coverage side of the claim. Its basis is `source_present`, which supports presence and nothing else.
+	 * The coverage side of the claim.
+	 *
+	 * Its basis is `source_present`, which supports presence and no other claim.
 	 */
 	coverage?: ObservationCoverageRecord
 	/**
@@ -103,18 +75,18 @@ export interface CoastalErosionObservation {
 }
 
 /**
- * Why a coordinate produced no observation. Every one of these is a silence the route owes an account of — an unnamed
- * silence and a silence for the right reason read identically on a receipt.
+ * Named reasons a coordinate produced no observation.
  */
 export const COASTAL_REFUSALS = [
 	/**
-	 * The geocode reached no coordinate, so there is nothing to ask the layer about.
+	 * The geocode reached no coordinate, so there is no coordinate to ask the layer about.
 	 */
 	"no_coordinate",
 	/**
-	 * The authority's mapping assigns no erosion zone here under the scenario asked about. Not an absence claim: the
-	 * location may be inland, or on the coast outside the mapped risk area, and ncerm publishes nothing that tells those
-	 * apart.
+	 * The authority's mapping assigns no erosion zone here under the scenario asked about.
+	 *
+	 * Not an absence claim: the location may be inland, or on the coast outside the
+	 * mapped risk area, and ncerm publishes no data that tells those apart.
 	 */
 	"no_designation_here",
 ] as const
@@ -122,7 +94,7 @@ export const COASTAL_REFUSALS = [
 export type CoastalRefusal = (typeof COASTAL_REFUSALS)[number]
 
 /**
- * What the route decided about one coordinate: an observation, or a named silence.
+ * Observation or named refusal for one coordinate.
  */
 export type CoastalDecision =
 	| { fired: true; observation: CoastalErosionObservation }
@@ -135,23 +107,23 @@ export interface CoastalErosionRoute extends Disposable {
 	 */
 	scenarioKey: string
 	/**
-	 * Decide one resolved coordinate. Pure with respect to the pipeline: it reads the layer and returns a record.
-	 *
-	 * `null` and `undefined` are both accepted because a geocode result has nullable `lat`/`lon` — a caller that had to
-	 * narrow them first would be narrowing on this route's behalf, and a coordinate-less answer is a named refusal here
-	 * rather than a caller's problem.
+	 * Read the layer for one coordinate, or return a named refusal for missing coordinates.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
 }
 
 export interface CoastalErosionRouteOptions {
 	/**
-	 * The sealed layer to read. Required: there is no default layer, and a route that guessed one would report a
-	 * designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required: there is no default layer, and a route that guessed one would report
+	 * a designation from an authority nobody asked about.
 	 */
-	databasePath: string
+	databasePath: PathBuilderLike
 	/**
-	 * The scenario to answer under. Defaults to the least projected of the twelve — see `DEFAULT_NCERM_SCENARIO`.
+	 * The scenario to answer under.
+	 *
+	 * Defaults to the least projected of the twelve — see `DEFAULT_NCERM_SCENARIO`.
 	 */
 	scenarioKey?: string
 }
@@ -159,10 +131,13 @@ export interface CoastalErosionRouteOptions {
 /**
  * Build the route against one sealed layer.
  *
- * Everything that would make the route answer a well-formed wrong thing is refused by the reader's own constructor — a
- * manifest naming a different layer, a coverage table with no rows, and above all a coverage row whose basis would
- * support an exclusion. That last one would otherwise present as a route reporting the whole of inland England as
- * designated free of coastal erosion.
+ * Everything that would make the route answer a well-formed wrong thing is
+ * refused by the reader's own constructor.
+ * A manifest naming a different layer, a coverage table with no rows, and above all
+ * a coverage row whose basis would support an exclusion.
+ *
+ * That last one would otherwise present as a route reporting the whole of inland
+ * England as designated free of coastal erosion.
  */
 export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): CoastalErosionRoute {
 	const lookup = new CoastalErosionLookup({ databasePath: options.databasePath })
@@ -173,7 +148,7 @@ export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): 
 			read: (latitude, longitude) => lookup.lookup(latitude, longitude, scenarioKey),
 			refusalFor: (reading) => (reading.kind !== CoastalReadingKind.Designated ? "no_designation_here" : undefined),
 			toObservation: (reading, latitude, longitude) =>
-				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath),
+				toObservation(reading, lookup.identity, latitude, longitude, options.databasePath.toString()),
 		}),
 		scenarioKey,
 	}
@@ -213,7 +188,8 @@ function toObservation(
 }
 
 /**
- * What the authority's mapping assigns, in one wording — shared by the one-line description and the marker message.
+ * What the authority's mapping assigns, in one wording — shared by the one-line
+ * description and the marker message.
  */
 export function coastalErosionAssignmentClause(observation: CoastalErosionObservation): string {
 	const first = observation.designations[0]

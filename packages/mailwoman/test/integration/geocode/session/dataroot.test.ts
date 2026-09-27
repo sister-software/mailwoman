@@ -14,14 +14,14 @@
  *   Before the fix this test's expectation fails: weights resolve from the env root and the session comes up.
  */
 
-import { dataRootPath, mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { createGeocodeCommandOptions, createGeocodeSession } from "mailwoman/geocode"
-import { join } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
-const REAL_CANDIDATE_DB = String(dataRootPath("wof", "candidate.db"))
+const REAL_CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts = await pathExists(REAL_CANDIDATE_DB)
 
 const BOGUS_ROOT = await temporaryDirectory("mw-bogus-root-")
@@ -30,21 +30,25 @@ afterAll(() => BOGUS_ROOT[Symbol.asyncDispose]())
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
 	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
-		// Weights resolution is a ladder, and only its overlay rung is governed by `dataRoot` — a checkout whose
-		// workspace packages or weights cache carry binaries (CI links them into its checkout) resolves the FST from
-		// those rungs, while a checkout without them rejects outright. Both are in-interface, so this pin asserts the
-		// defect's own words instead: the #1732 bug was weights "silently reading the env root", so whatever the
-		// ladder answers, it must never be a path inside the process ENV data root's weights overlay when the
-		// session was given a different root. Pre-fix, `artifacts.fstPath` pointed exactly there.
+		// Weights resolution is a ladder, and only its overlay rung is governed by `dataRoot`.
+		// A checkout whose workspace packages or weights cache carry binaries
+		// (CI links them into its checkout) resolves the FST from those rungs,
+		// while a checkout without them rejects outright.
+		// Both are in-interface, so this pin asserts the defect's own words instead:
+		// the #1732 bug was weights "silently reading the env root", so whatever the ladder
+		// answers, it must never be a path inside the process ENV data root's weights overlay
+		// when the session was given a different root.
+		// Pre-fix, `artifacts.fstPath` pointed exactly there.
 		const outcome = await createGeocodeSession(
-			// The production defaults factory rather than a hand-built literal — the same lockstep factory the dev-mcp
-			// registry derives from, so this pin cannot drift from the shipped configuration.
+			// The production defaults factory rather than a hand-built literal — the same lockstep factory
+			// the dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",
 				dataRoot: BOGUS_ROOT.path.toString(),
-				// A real candidate.db keeps the gazetteer check (resolved first, by interface) from masking the weights
-				// step — the whole point is to reach weights resolution with the bogus root still in force.
-				candidateDB: REAL_CANDIDATE_DB,
+				// A real candidate.db keeps the gazetteer check (resolved first, by interface)
+				// from masking the weights step.
+				// The whole point is to reach weights resolution with the bogus root still in force.
+				candidateDB: REAL_CANDIDATE_DB.toString(),
 			})
 		).then(
 			(session) => ({ session }),
@@ -61,9 +65,9 @@ describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weigh
 			const fstPath = outcome.session.artifacts.fstPath
 
 			if (fstPath !== undefined) {
-				const envOverlay = join(String(mailwomanDataRoot()), "weights")
+				const envOverlay = dataRootPath("weights")
 
-				expect(fstPath.startsWith(envOverlay)).toBe(false)
+				expect(fstPath.startsWith(envOverlay.toString())).toBe(false)
 			}
 		} finally {
 			outcome.session[Symbol.dispose]()

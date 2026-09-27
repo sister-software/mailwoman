@@ -33,7 +33,8 @@ import { allRows, getRow } from "@mailwoman/core/utils"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 
 /**
  * Ancestry hops walked upward from a WOF record before giving up — deeper than any real JP admin chain.
@@ -41,8 +42,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 const MAX_ANCESTRY_DEPTH = 6
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const WOF_ADMIN_JP_ADAPTER_ID = "wof-admin-jp"
 
@@ -57,10 +59,10 @@ interface PlaceRow {
 /**
  * Walk parent chain up to 6 levels, over a place table already resident in memory.
  *
- * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country); it is a point
- * query, so keeping the common case out of it is the whole point. The GeoJSON adapters' in-memory analogue is
- * `buildAncestryIndex` (`#utils`); the two stay separate because this one's rows come from SQLite and a chain can leave
- * the preloaded country set.
+ * `resolve` is the override for a parent outside the preloaded set (a chain that leaves the country);
+ * it is a point query, so keeping the common case out of it is the whole point.
+ * The GeoJSON adapters' in-memory analogue is `buildAncestryIndex` (`#utils`); the two stay separate
+ * because this one's rows come from SQLite and a chain can leave the preloaded country set.
  */
 function chainOf(
 	byID: Map<number, PlaceRow>,
@@ -129,14 +131,18 @@ export function synthesizeJpAddress(
 }
 
 /**
- * Build the JP adapter. Reads from the unified global WOF SQLite, walks admin chains starting from neighbourhoods, and
- * yields canonical rows.
+ * Build the JP adapter.
+ *
+ * Reads from the unified global WOF SQLite, walks admin chains starting from
+ * neighbourhoods, and yields canonical rows.
  */
 export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_JP_ADAPTER_ID,
 		defaultLicense: "CC-BY-4.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.WhosOnFirst,
+		surface: SurfaceOrigin.Attested,
 		description: "Japanese admin hierarchy from WOF (synthesized addresses without house numbers).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -155,8 +161,8 @@ export function createWOFAdminJpAdapter(): CorpusAdapter {
 				}
 			}
 
-			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per
-			// seed. there are tens of thousands of neighbourhood seeds.
+			// One read of the JP place table instead of a fresh `prepare` + up to six point queries per seed.
+			// There are tens of thousands of neighbourhood seeds.
 			const byID = new Map<number, PlaceRow>()
 
 			for (const row of allRows<PlaceRow>(

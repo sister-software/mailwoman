@@ -40,7 +40,7 @@
 #    last-write-win — a duplicate is an extract-build bug, not a merge decision.
 #
 # 4. child and parent are stored already folded (see foldVersion). A probe with unfolded text will
-#    miss; the fold is not part of this format, it is a interface with the consumer.
+#    miss; the fold is not part of this format, it is an interface with the consumer.
 #
 # 5. A record asserts both ends of the edge. tag_idx names what the child span resolves to and
 #    parent_tag_idx what the parent span does. The two are independent: a producer must read the

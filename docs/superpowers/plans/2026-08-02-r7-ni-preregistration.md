@@ -1,13 +1,13 @@
 # R7 — the Northern Ireland increment
 
 Hierarchy campaign R7, opened 2026-08-02. NI has been the GB side's open gap since R3, deferred
-then because "the pair parent needs post towns — an outcode→post-town table is the missing piece."
+then because "the pair parent needs post towns. An outcode→post-town table is the missing piece."
 
 ## The blocker dissolved, and it is worth saying why
 
 The post-town framing came from the GB source: PPD's parent column is the post town, so an NI
 extension seemed to require the same field for NI, which Royal Mail licenses rather than publishes.
-But R5 established that the parent side does not have to come from a postal register at all — the US
+But R5 established that the parent side does not have to come from a postal register at all. The US
 instance takes WOF localities as parents and passes every bar. Applying that here: WOF's NI
 neighborhoods hang off **Belfast, Newtownabbey, Londonderry, Lisburn** — localities that are the
 post towns for those addresses. No licensed table needed; the deferral was reasoning from GB's
@@ -40,13 +40,13 @@ Newtownabbey 4, Londonderry/Derry 3, Lisburn 2). Fold-collision audit against th
 - **B-R7.3 (positive side).** The fresh pairs extract as `dependent_locality` in a real NI address
   shape (`<house> <street>, <neighbourhood>, Belfast, BT<n> <n><aa>`). Bar: **≥70% tag-correct** on
   a sampled positive board.
-- **D-R7.4 (disclosure).** Report how several of the 84 survive the fold as distinct entries, and name
+- **D-R7.4 (disclosure).** Report the count of the 84 that survive the fold as distinct entries, and name
   any that collapse — an artifact whose count silently differs from its source's is how a fold bug
   hides.
 
 ## Ireland stays open, and the reason is not data
 
-The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it — the pair index
+The Republic needs a **carrier package** (`en-IE`) before any artifact can reach it. The pair index
 is hard-blocked on the resolved locale's country, so an IE artifact inside en-GB would never fire.
 That is a packaging decision plus the still-open license survey (Tailte Éireann / logainm) rather than a
 rung that can be executed off the shelf like this one.
@@ -61,7 +61,7 @@ rung that can be executed off the shelf like this one.
   opening a venue name under its true parent: **0/30 dependent-locality false positives**.
 - **B-R7.3 PASS.** 40-row positive board: **40/40 emit, 40/40 tag-correct (100%)**.
 - **D-R7.4.** All **87/87** pairs survive the fold as distinct entries — the index total moved
-  exactly 20,039 → 20,126, so nothing collapsed silently.
+  exactly 20,039 → 20,126, so no entry collapsed silently.
 
 **The freshness guard fixed in R5 earned itself on its first real exercise.** Adding
 `ni-pairs-v1.jsonl` as a fourth source made the guard report `header source md5s [3 entries] !=

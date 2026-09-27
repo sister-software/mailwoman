@@ -2,25 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   PO box / PMB / Apartado / Boîte Postale synthesizer.
- *
- *   Generates BIO-labeled corpus rows where the delivery line is a PO box (mutually exclusive with
- *   street + house_number per USPS Pub 28 / DMM 508). Locale-aware: emits idiomatic forms for
- *   en-US, en-CA, en-GB, en-AU, fr-FR, fr-CA, es-ES, es-MX, es-AR.
- *
- *   Per-DeepSeek design:
- *
- *   - PMB ("Private Mailbox" — at CMRAs like UPS Store) shares the `po_box` tag with USPS PO Box.
- *       Disambiguation is a downstream heuristic (presence of a street line).
- *   - Whole-phrase span ("PO Box 123") not number-only ("123"). Matches existing golden eval.
- *   - 10% of outputs receive number-format noise (commas, dashes, embedded spaces) to harden against
- *       real-world OCR/transcription input.
- *   - PO boxes drop street/house_number/unit/street_prefix/street_suffix from input components.
- *
- *   References:
- *
- *   - USPS Pub 28 §28C2.040 — Private Mailbox formatting
- *   - USPS DMM 508 §4.1.4 / §4.5.4 — PO Box and street-addressed PO Box
+ *   Generates localized PO-box and private-mailbox rows in which the designator and number form one `po_box` span.
  */
 
 import { type ComponentDict, formatAddressRow } from "@mailwoman/codex/address-format"
@@ -30,14 +12,8 @@ import { sample } from "@mailwoman/core/random"
 import { countryToLocale as baseCountryToLocale, tieredNumber } from "#synthesizers/utils"
 import type { CanonicalRow } from "#types"
 
-/**
- * Digits a box number needs before a thousands comma is plausible (`1,234`).
- */
 const MIN_DIGITS_FOR_COMMA_GROUPING = 4
 
-/**
- * Digits a box number needs before a hyphen group is plausible (`12-34`).
- */
 const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
@@ -46,6 +22,9 @@ const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
    would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
    extracted as named constants above. */
 
+/**
+ * The address tail for one PO-box row.
+ */
 export interface PoBoxBaseTuple {
 	locality: string
 	region: string
@@ -53,18 +32,22 @@ export interface PoBoxBaseTuple {
 	country: string
 }
 
+/**
+ * One locale's PO-box designators.
+ */
 export interface LocaleTemplate {
 	locale: string
 	leaders: ReadonlyArray<string>
-	// Use 'pmb' to render as "street, PMB N, city ..." instead of replacing the street line.
+	/**
+	 * Private-mailbox designators, which render beside the street instead of replacing it.
+	 */
 	pmb?: ReadonlyArray<string>
 }
 
 /**
- * The per-locale PO-box designator vocabulary (DeepSeek-signed list, see the header). Exported so recipes (the
- * `po-box-cedex` recipe, `recipes/po/box/cedex/recipe.ts`) can reuse this list as the single source of truth for non-US
- * leaders instead of re-deriving it — the US recipe additionally has `@mailwoman/codex/us`
- * `US_PO_BOX_DESIGNATORS`/`isPOBox` as its matcher-side truth.
+ * The PO-box designator vocabulary for each supported locale.
+ *
+ * Other recipes, such as the CEDEX recipe, reuse this list.
  */
 export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 	{
@@ -114,18 +97,16 @@ export const PO_BOX_LOCALE_TEMPLATES: ReadonlyArray<LocaleTemplate> = [
 const LEADERS_BY_LOCALE = new Map<string, LocaleTemplate>(PO_BOX_LOCALE_TEMPLATES.map((t) => [t.locale, t]))
 
 /**
- * Inject number-format noise into a box number string. Returns the noisy variant or the original (10% probability of
- * noise per the design).
+ * Returns the box number unchanged 90% of the time.
+ *
+ * Otherwise, the function adds a thousands comma, an inner hyphen, or spaces between the digits.
  */
 export function maybeNoisifyBoxNumber(num: string, random: () => number): string {
 	if (random() > 0.1) return num
 
 	const variants: Array<(s: string) => string> = [
-		// Thousand-separator comma (real input: "Box 1,234")
 		(s) => (s.length >= MIN_DIGITS_FOR_COMMA_GROUPING ? `${s.slice(0, -3)},${s.slice(-3)}` : s),
-		// Embedded dash (real input: "PMB-200")
 		(s) => (s.length >= MIN_DIGITS_FOR_HYPHEN_GROUPING ? `${s.slice(0, -2)}-${s.slice(-2)}` : s),
-		// Embedded spaces (real input from OCR: "1 2 3 4")
 		(s) => s.split("").join(" "),
 	]
 
@@ -135,14 +116,15 @@ export function maybeNoisifyBoxNumber(num: string, random: () => number): string
 }
 
 /**
- * Compose a PO box phrase like "PO Box 123" or "PMB 200".
- *
- * Returns both the phrase and the canonical leader+number so the BIO aligner can mark the entire span as `po_box`.
+ * Joins a designator and a number into one `po_box` phrase.
  */
 export function composePoBoxPhrase(leader: string, number: string): string {
 	return `${leader} ${number}`
 }
 
+/**
+ * One synthesized row with its template.
+ */
 export interface SynthesizedPoBoxRow {
 	raw: string
 	components: CanonicalRow["components"]
@@ -150,24 +132,26 @@ export interface SynthesizedPoBoxRow {
 	template: "po-box" | "pmb-with-street" | "military-po-box"
 }
 
+/**
+ * Options for the PO-box synthesizers.
+ */
 export interface PoBoxSynthesisOpts {
 	/**
-	 * Random function — pass deterministic seed for tests. Default Math.random.
+	 * The random source, which defaults to `Math.random`.
 	 */
 	random?: () => number
 	/**
-	 * Number generator. Default uniform over 1..99999.
+	 * The box-number generator, which defaults to a range from 1 to 99,999 weighted toward short numbers.
 	 */
 	pickNumber?: (random: () => number) => string
 	/**
-	 * PMB probability when locale supports it (and a street is provided in the base tuple).
+	 * The probability of a private-mailbox row when the locale and tuple allow one.
+	 * The default is 0.
 	 */
 	pmbRatio?: number
 }
 
 function defaultPickNumber(random: () => number): string {
-	// 70% of real PO boxes are 1-5 digits. long ones exist (USPS allows up to ~6 digits).
-	// Bands: 1-99, 100-999, 1000-9999, 10000-99999 (span 90_000 — the street generator's 89_999 is its own).
 	return tieredNumber(random, [
 		{ cutoff: 0.3, base: 1, span: 99 },
 		{ cutoff: 0.7, base: 100, span: 900 },
@@ -177,8 +161,10 @@ function defaultPickNumber(random: () => number): string {
 }
 
 /**
- * Generate one PO box row for a base (locality, region, postcode, country) tuple. Picks a locale-appropriate leader and
- * number. Optionally generates a PMB variant when the base tuple includes a street.
+ * Generates a localized PO-box row, or a private-mailbox row when the tuple
+ * has a street and the locale allows it.
+ *
+ * The function returns `null` when the country lacks a template locale, an ISO code or a layout.
  */
 export function synthesizePoBoxRow(
 	base: PoBoxBaseTuple & { street?: string; houseNumber?: string },
@@ -197,19 +183,13 @@ export function synthesizePoBoxRow(
 	const leader = sample(tpl.leaders, random)
 	const poBoxPhrase = composePoBoxPhrase(leader, number)
 
-	// PMB variant: requires both a street and a PMB-supporting locale.
 	const wantPmb = base.street && tpl.pmb && random() < pmbRatio
 
-	// A tuple's `country` is whatever its source wrote — `ES`, `ESP` or `Spain` — and a layout is keyed by the alpha-2
-	// code. Resolving here rather than requiring the code of every caller keeps the same breadth `poBoxTemplateLocale`
-	// already accepts for the box vocabulary.
 	const iso2 = countryCodeForTable(base.country)
 
 	if (!iso2) return null
 
-	// The country's own layout writes the order and the separators, and reports which components it printed — France
-	// absorbs the region into its postcode line, so a row that emitted `region` regardless would carry a label whose
-	// text is not in `raw`.
+	// The country's layout decides the order and which components appear.
 	const adminTail: ComponentDict = { locality: base.locality, postcode: base.postcode }
 
 	if (base.region?.trim()) {
@@ -237,7 +217,6 @@ export function synthesizePoBoxRow(
 		}
 	}
 
-	// A PO box replaces the street line entirely.
 	const rendered = formatAddressRow({ ...adminTail, po_box: poBoxPhrase }, iso2, { singleLine: true })
 
 	if (!rendered) return null
@@ -250,13 +229,6 @@ export function synthesizePoBoxRow(
 	}
 }
 
-/**
- * The US military/diplomatic PO-box class (#517). A distinct shape the leader-based locale templates can't express: a
- * unit line (`PSC <id> Box <box>`, `CMR <id> Box <box>`, `Unit <id> [Box <box>]`) tagged `po_box`, then the post-office
- * code (APO/FPO/DPO) as the locality and the armed-forces region (AA/AE/AP) as the region, with a theatre-specific ZIP.
- * Authoritative reference + citations: `@mailwoman/codex` `codex/us/military-address.ts`; the small constants are
- * inlined here so the generator is self-contained.
- */
 const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 	{ code: "PSC", boxRequired: true },
 	{ code: "CMR", boxRequired: true },
@@ -265,9 +237,7 @@ const MIL_UNITS: ReadonlyArray<{ code: string; boxRequired: boolean }> = [
 
 const MIL_PO_CODES = ["APO", "FPO", "DPO"] as const
 
-/**
- * Region → plausible ZIP prefix (AE Europe 09xxx, AP Pacific 962-966xx, AA Americas 340xx).
- */
+// Each armed-forces region has its own ZIP range.
 const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => string }> = [
 	{ region: "AE", zip: (r) => `09${String(Math.floor(r() * 1000)).padStart(3, "0")}` },
 	{ region: "AP", zip: (r) => `96${String(200 + Math.floor(r() * 100)).padStart(3, "0")}` },
@@ -275,7 +245,9 @@ const MIL_REGION_ZIP: ReadonlyArray<{ region: string; zip: (r: () => number) => 
 ]
 
 /**
- * Generate one US military/diplomatic PO-box row (#517). Self-contained — draws no base tuple.
+ * Generates a US military or diplomatic address without a base tuple.
+ *
+ * The unit line is the `po_box`, APO, FPO or DPO is the locality, and the armed-forces code is the region.
  */
 export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): SynthesizedPoBoxRow {
 	const random = opts.random ?? Math.random
@@ -305,12 +277,10 @@ export function synthesizeMilitaryPoBoxRow(opts: PoBoxSynthesisOpts = {}): Synth
 const PO_BOX_TEMPLATE_LOCALES: ReadonlySet<string> = new Set(PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale))
 
 /**
- * The locale whose PO-BOX vocabulary a country's rows are written in — which is a narrower question than
- * `countryToLocale`'s, and the reason this carries its own name rather than shadowing it.
+ * Returns the locale whose PO-box vocabulary a country uses.
  *
- * A locale the shared map resolves but {@link PO_BOX_LOCALE_TEMPLATES} does not carry falls back to `en-US`, so `DE`
- * (shared: `de-DE`, no PO-box template) renders the en-US box vocabulary. The order is a separate axis and comes from
- * the country's own codex layout, so such a row is German-ordered with American box words.
+ * Countries without their own template use `en-US` designators.
+ * Their address order still comes from the country's layout.
  */
 export function poBoxTemplateLocale(country: string): string {
 	const locale = baseCountryToLocale(country)
@@ -319,16 +289,13 @@ export function poBoxTemplateLocale(country: string): string {
 }
 
 /**
- * All locales we synthesize for. Exposed for tests and for source-weight tuning.
+ * Returns the locales that have PO-box templates.
  */
 export function supportedLocales(): ReadonlyArray<string> {
 	return PO_BOX_LOCALE_TEMPLATES.map((t) => t.locale)
 }
 
 /**
- * Locales whose standard PO-box delivery line carries no region token — the address reads `<po_box>, <locality>
- * <postcode>` with nothing between locality and postcode (#517). NZ is the canonical case (`Private Bag 12, Auckland
- * 1010`). Consumers (e.g. the synth-po-box adapter) use this to avoid discarding region-less input tuples for these
- * locales as "missing region".
+ * Locales whose standard PO-box layout omits the region.
  */
 export const REGION_OPTIONAL_LOCALES: ReadonlySet<string> = new Set(["en-NZ"])

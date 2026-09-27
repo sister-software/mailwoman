@@ -2,14 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/libpostal` — a libpostal-compatible parse/expand http API over Mailwoman's neural
- *   address parser. The lowest-dependency drop-in: `/parse` is a serializer over the BIO tagger's
- *   labeled spans, no gazetteer or resolver needed.
+ *   Serves a libpostal-compatible parse and expand HTTP API over Mailwoman's parser.
  *
- *   Engine-agnostic, like the nominatim/photon packages: {@link createLibpostalApp} takes a
- *   {@link LibpostalEngine}; the CLI wires the real parser. The classification → libpostal-label
- *   mapping lives in engine.ts (it is libpostal-specific knowledge), so the engine yields raw
- *   Mailwoman matches.
+ *   The `/parse` endpoint returns labeled spans without gazetteer or resolver lookups. The mapping to
+ *   libpostal labels lives in `engine.ts`.
  */
 
 export * from "#app"

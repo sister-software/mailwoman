@@ -2,39 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   What a two-letter uppercase token teaches: a region, a country, a street suffix, or something else (#2311).
- *
- *   `Marble Falls, AR 72648` answers no locality while `Beacon Falls, CT 06403` answers one, and a 2x2 over the same
- *   60 Arkansas names shows the region code carrying about half the recovery. The mixture's region mass does not
- *   explain which regions it favours — Arkansas holds 2.59% of US exposure and reads 2.3%, Vermont 0.05% and 100.0%.
- *   What is left is the surface: a code that opens a `country` span as often as a `region` one teaches both readings,
- *   and the decode has to pick.
- *
- *   No code list is typed. Every two-letter uppercase token that covers a whole span is counted with the tag it
- *   carries, and the contested set falls out of the data — `CT` is Connecticut and Court, `NL` is Newfoundland and the
- *   Netherlands, `AR` is Arkansas and Argentina. A typed list can only confirm a collision someone already suspected.
- *
- *   This counts the corpus pool. `census_region_code_token` in `mailwoman_train.audits` counts the emitted mixture,
- *   which is the pool after `source_weights` and after `augment_region_prob` writes region surfaces onto rows that
- *   carried none. The two answer different questions and the emitted one is the one an exposure decision is set
- *   against. this one needs no GPU, no Modal volume and no config.
- *
- *   Run:
- *
- *       node packages/mailwoman/lib/dev-tools/corpus/two-letter-token-census.run.ts
- *       node packages/mailwoman/lib/dev-tools/corpus/two-letter-token-census.run.ts --codes AR,VT,CT,NL --by-country
+ * Counts uppercase two-letter corpus spans by tag to find tokens labeled as more than one component.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
+import { TextSpliterator } from "spliterator"
 
 import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
-const DEFAULT_CORPUS = String(
-	dataRootPath("corpus", "versioned", "v0.31.0-region-code-and-unit", "corpus-v0.31.0-region-code-and-unit")
-)
+const DEFAULT_CORPUS = dataRootPath(
+	"corpus",
+	"versioned",
+	"v0.31.0-region-code-and-unit",
+	"corpus-v0.31.0-region-code-and-unit"
+).toString()
 
 const { values } = parseArguments({
 	options: {
@@ -42,12 +26,11 @@ const { values } = parseArguments({
 		split: { type: "string", default: "train" },
 		"out-json": { type: "string" },
 		/**
-		 * Print these codes in full regardless of rank. Everything else is ranked by total occurrences.
+		 * Prints these comma-separated codes instead of the most frequent tokens.
 		 */
 		codes: { type: "string" },
 		/**
-		 * Rows are also grouped by the row's `country`, so a code's two readings can be attributed to the countries that
-		 * write them.
+		 * Also groups the counts by country.
 		 */
 		"by-country": { type: "boolean", default: false },
 		detail: { type: "string", default: "30" },
@@ -59,20 +42,20 @@ const { values } = parseArguments({
 
 const mixture = await readMixtureFiles(values.corpus!, values.split!, values.files ? Number(values.files) : undefined)
 
-const { db, fileList } = await openMixture(mixture.files, {
+using mix = await openMixture(mixture.files, {
 	memoryLimit: values["memory-limit"]!,
 	threads: Number(values.threads),
 })
 
 /**
- * Unnesting three parallel lists in one select zips them positionally, so each row of `spans` is one span with its own
- * offsets and tag. `regexp_full_match` keeps only a span whose entire text is two uppercase letters, which is the
- * surface an address line writes a region code as.
+ * Unnests the aligned span arrays and counts spans of exactly two uppercase letters.
+ *
+ * These are raw corpus counts before training applies source weights and augmentation.
  */
 const sql = `
 WITH spans AS (
 	SELECT country, raw, unnest(span_starts) AS st, unnest(span_ends) AS en, unnest(span_tags) AS tg
-	FROM read_parquet([${fileList}])
+	FROM read_parquet([${mix.fileList}])
 )
 SELECT
 	substring(raw, st + 1, en - st) AS text,
@@ -84,9 +67,7 @@ WHERE regexp_full_match(substring(raw, st + 1, en - st), '[A-Z]{2}')
 GROUP BY 1, 2, 3`
 
 const started = Date.now()
-const reader = await db.runAndReadAll(sql)
-
-db.closeSync()
+const reader = await mix.db.runAndReadAll(sql)
 
 console.log(
 	`${mixture.manifest.corpus_version} ${values.split}: ${mixture.files.length} of ${mixture.available} file(s), ` +
@@ -94,7 +75,7 @@ console.log(
 )
 
 /**
- * One two-letter token: how often it opens each tag, and which countries write it that way.
+ * Holds one token's span counts by tag and by country.
  */
 interface TokenCensus {
 	text: string
@@ -129,8 +110,7 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * The share of a token's occurrences held by its commonest tag. A token that teaches one reading is 1.0. one the decode
- * has to disambiguate is lower, and how much lower is the size of the contest.
+ * Returns the fraction of a token's spans that carry its most common tag.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total
@@ -148,19 +128,21 @@ function tagBreakdown(entry: TokenCensus): string {
 }
 
 /**
- * A token whose commonest tag holds less than this share teaches more than one reading at a rate the decode has to
- * resolve. Set where a rounding artifact stops and a real second reading starts rather than against a measured
- * separation.
+ * Sets the commonest-tag share below which a token counts as contested.
  */
 const CONTESTED_DOMINANCE = 0.95
 
 /**
- * Tokens below this many spans are dropped from the contested table. A handful of occurrences splitting two ways is a
- * ratio over noise.
+ * Sets the fewest spans a token needs to appear in the contested-token report.
  */
 const CONTESTED_FLOOR = 1000
 
-const asked = values.codes?.split(",").map((code) => code.trim().toUpperCase())
+const asked = values.codes
+	? TextSpliterator.from(values.codes, { delimiter: "," })
+			.map((code) => code.toUpperCase())
+			.toArray()
+	: undefined
+
 const ranked = [...census.values()].toSorted((a, b) => b.total - a.total)
 const detail = Number(values.detail)
 

@@ -1,42 +1,36 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The structural verify step for admin-gazetteer builds — run before sealing/promoting, refuse the
- *   swap on any failure. Row/count checks alone are provably insufficient: the 2026-07-07 #1015 rebuild
- *   passed a rows+countries check while ~95 countries lost their country/region nodes (#1023/#1026 —
- *   Tbilisi orphaned, "City, Country" scoping broken). Each check here catches a failure class we
- *   actually shipped once:
- *
- *   - `node-census` (#1026): per-country required placetypes vs the committed baseline.
- *   - `coverage-floor`: gross truncation.
- *   - `region-abbrevs` + `place-abbr` (#440 / the #1015 missed post-build steps): VT→Vermont resolves.
- *   - `fts-bbox`: place_search + place_bbox exist and cover spr (a build that skipped the FTS step).
- *   - `bbox-extents` (#1015): Overture-backfilled regions carry real extents rather than label points.
- *
- *   The reverse panel (`verifyReversePanel`) is the end-to-end leg: EU capitals + border cities must
- *   land in the right country — border towns are the hard class by construction.
- */
-
 import { tableExists } from "@mailwoman/sqlite"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_VERIFY_BASELINE } from "#gazetteer-pipeline/verify/baseline"
 
+/**
+ * Records the outcome of one named gazetteer verification check.
+ */
 export interface VerifyCheckResult {
 	check: string
 	ok: boolean
 	detail: string
 }
 
+/**
+ * Collects the checks of one verification run; `ok` is true only when every check passed.
+ */
 export interface VerifyResult {
 	ok: boolean
 	checks: VerifyCheckResult[]
 }
 
+/**
+ * Describes the committed expectations an admin database must meet: the country
+ * and region nodes each country requires, plus row and country floors.
+ */
 export interface VerifyBaseline {
 	/**
-	 * ISO2 → required node placetypes. A listed country must have ≥1 current spr row of each placetype.
+	 * Maps each ISO2 country to the placetypes it must have, each needing at least one current `spr` row.
 	 */
 	requiredNodes: Record<string, ReadonlyArray<"country" | "region">>
 	minRows: number
@@ -50,21 +44,15 @@ export function loadDefaultBaseline(): VerifyBaseline {
 	return DEFAULT_VERIFY_BASELINE
 }
 
-/**
- * The #1015 Overture-extent spot-check set — checked only when the country has region rows at all.
- */
 const EXTENT_SPOT_COUNTRIES = ["BE", "AT", "CH", "LU"] as const
 
 /**
- * Run the structural checks against an (open) admin DB. Pure SQL — no network, no model.
+ * Runs the structural checks against an open admin database using SQL alone.
  */
 export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline): VerifyResult {
 	const checks: VerifyCheckResult[] = []
 
-	// 1. node-census (#1026): every required (country, placetype) node exists.
 	{
-		// One grouped read rather than one probe per (country, placetype): the baseline names ~200 countries,
-		// most with two placetypes.
 		const present = new Set<string>()
 
 		for (const row of db
@@ -94,7 +82,6 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 2. coverage-floor: gross truncation guard.
 	{
 		const c = db
 			.prepare("SELECT COUNT(*) rows, COUNT(DISTINCT country) countries FROM spr WHERE is_current != 0")
@@ -109,7 +96,6 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 3. region-abbrevs: the #440 class — abbr names present and the VT→Vermont join resolves.
 	{
 		const abbrCount = (db.prepare("SELECT COUNT(*) n FROM names WHERE language = 'abbr'").get() as { n: number }).n
 
@@ -128,7 +114,6 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 4. place-abbr: the join table itself (missed entirely in the first #1015 swap).
 	{
 		const rows = tableExists(db, "place_abbr")
 			? (db.prepare("SELECT COUNT(*) n FROM place_abbr").get() as { n: number }).n
@@ -137,7 +122,6 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		checks.push({ check: "place-abbr", ok: rows > 0, detail: `${rows} rows` })
 	}
 
-	// 5. fts-bbox: place_search + place_bbox exist and the R*Tree covers spr (≥90% of current rows).
 	{
 		const sprCount = (db.prepare("SELECT COUNT(*) n FROM spr WHERE is_current != 0").get() as { n: number }).n
 
@@ -154,8 +138,6 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 		})
 	}
 
-	// 6. bbox-extents (#1015): spot countries with region rows must have at least one real extent
-	//    (dLat > 0.05°) — a degenerate label-point bbox is invisible to reverse bbox-containment.
 	{
 		const placeholders = EXTENT_SPOT_COUNTRIES.map(() => "?").join(",")
 
@@ -179,8 +161,8 @@ export function verifyAdmin<DB>(db: DatabaseClient<DB>, baseline: VerifyBaseline
 }
 
 /**
- * `[label, lat, lon, expectedISO2]` — EU capitals (no regression) + border cities (the adversarial class) + the
- * reported #1015 Belgian failures. Absorbed from `scripts/reverse-eu-panel.ts`.
+ * Lists the reverse-geocoding panel as `[label, lat, lon, expectedISO2]`,
+ * covering EU capitals and cities near national borders.
  */
 export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number, string]> = [
 	["Brussels", 50.8503, 4.3517, "BE"],
@@ -201,10 +183,12 @@ export const REVERSE_PANEL_CASES: ReadonlyArray<readonly [string, number, number
 ]
 
 /**
- * The end-to-end reverse leg: every panel case must land in the expected country. Opens the DB read-only. lazy-imports
- * the resolver (an optional peer).
+ * Reverse-geocodes every panel case against the admin database and checks that
+ * each lands in its expected country.
+ *
+ * The resolver is imported lazily because it is an optional peer.
  */
-export async function verifyReversePanel(adminDBPath: string): Promise<VerifyResult> {
+export async function verifyReversePanel(adminDBPath: PathBuilderLike): Promise<VerifyResult> {
 	const { WOFReverseGeocoder } = await import("@mailwoman/resolver-wof-sqlite")
 	using rg = new WOFReverseGeocoder({ adminDBPath })
 	const checks: VerifyCheckResult[] = []
@@ -225,8 +209,9 @@ export async function verifyReversePanel(adminDBPath: string): Promise<VerifyRes
 }
 
 /**
- * Generate a baseline from an existing DB — the deliberate-update path (review the diff of `verify-baseline.ts` like
- * code). Requires `country` for every country that has one. adds `region` where regions exist.
+ * Derives a baseline from an existing admin database, for deliberate updates to the committed `baseline.ts`.
+ *
+ * It requires every country and region node present now and sets the row floor at 98% of the current count.
  */
 export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 	const requiredNodes: Record<string, Array<"country" | "region">> = {}
@@ -245,7 +230,7 @@ export function generateBaseline<DB>(db: DatabaseClient<DB>): VerifyBaseline {
 
 	return {
 		requiredNodes,
-		// 2% slack under the observed values — the floor catches truncation rather than churn.
+
 		minRows: Math.floor(c.rows * 0.98),
 		minCountries: c.countries,
 	}

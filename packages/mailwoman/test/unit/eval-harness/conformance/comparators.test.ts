@@ -5,10 +5,10 @@
  *   The six outcome comparators, one axis at a time.
  *
  *   Two cases carry the design and the rest are coverage. `resolution_identity` must report `diverges` for two
- *   different places 90 metres apart — an identity law that could see a coordinate would call that pair
+ *   different places 90 metres apart. An identity law that could see a coordinate would call that pair
  *   equivalent, which is the whole failure the closed comparator set exists to prevent. And every comparator
  *   whose axis is absent on both sides must report `undecidable`, never `equivalent`: two runs that resolved
- *   nothing agree about nothing, and a suite that scored that as a pass would report the same total as one
+ *   no coordinate agree about no field, and a suite that scored that as a pass would report the same total as one
  *   whose laws genuinely held.
  */
 
@@ -56,8 +56,10 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 /**
- * Force a name onto the closed comparator union. Only a fixture built by hand — skipping the loader, which refuses an
- * unknown name — can reach a comparator with one, and that is the path under test below.
+ * Force a name onto the closed comparator union.
+ *
+ * Only a fixture built by hand — skipping the loader, which refuses an unknown name —
+ * can reach a comparator with one, and that is the path under test below.
  */
 function comparatorName(value: string): ConformanceFixture["outcomeComparator"] {
 	return value as ConformanceFixture["outcomeComparator"]
@@ -330,9 +332,10 @@ describe("candidate_admissibility", () => {
 		expect(reading.differences[0]).toContain("tracing being off")
 	})
 
-	// The distinction the mechanism-shape comparator keeps for its own axis: an empty walk is a reading, an
-	// absent trace is not. Two runs that performed no lookup share no pool, so they are undecidable — not the
-	// absence of a trace, and not agreement.
+	// The distinction the mechanism-shape comparator keeps for its own axis:
+	// an empty walk is a reading, an absent trace is not.
+	// Two runs that performed no lookup share no pool, so they are undecidable
+	// rather than an absent trace or an agreement.
 	it("keeps an empty walk apart from an absent trace", () => {
 		const reading = compareOutcomes(REFINEMENT, traced([]), traced([]))
 

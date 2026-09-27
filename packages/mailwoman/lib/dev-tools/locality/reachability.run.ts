@@ -6,12 +6,12 @@
  *
  *   A locality miss has two causes that a rate cannot tell apart. ranking: the right place is in the candidate set and
  *   something else outranked it. reachability: the right place carries no row under that key, so no ranking could have
- *   reached it at any position. The fixes are opposite — one is a weight, the other is data — and every board rate in
+ *   reached it at any position. The fixes are opposite. One is a weight, the other is data — and every board rate in
  *   this repository pools them.
  *
  *   `La Grange, IL 60525` is the reachability case. The decode labels `La` a street and asks the backend for `Grange`;
  *   WOF `85940805` (population 15,667) carries 19 `name_key` rows and none of them is bare `grange`, so the three rows
- *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes nothing there.
+ *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes no pick there.
  *
  *   So this asks, per panel row: the key the resolver was sent (`ResolveNodeTrace.value`, not the input and not the
  *   parse), and whether the gold place carries that key. The gold place is identified by its own name and the panel's
@@ -20,9 +20,9 @@
  *
  *   The question is not American, so neither is the rendering. A row is written through
  *   `formatAddress(components, country, { singleLine: true })` — the per-country layouts in `@mailwoman/codex` — rather
- *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and nothing else:
+ *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and no other order:
  *   it prints Japan's admin run backwards, drops the country's own separator convention, and puts a postcode after a
- *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders nothing and
+ *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders no line and
  *   the row is reported as unrenderable, which is a measured absence rather than an invented order.
  *
  *   Usage:
@@ -38,6 +38,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { type NameKey, normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street/normalize"
 import { haversineKm } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -49,10 +50,11 @@ const { values } = parseArguments({
 	options: {
 		"out-json": { type: "string" },
 		"weights-cache": { type: "string" },
-		"candidate-db": { type: "string", default: String(dataRootPath("wof", "candidate.db")) },
-		eval: { type: "string", default: String(dataRootPath("eval", "coord", "us.jsonl")) },
-		// The country a panel row belongs to, when the panel does not carry one per row. It selects the codex layout
-		// the row is written through, so it is a rendering decision before it is a scope one.
+		"candidate-db": { type: "string", default: wofDatabasePath("candidate.db").toString() },
+		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
+		// The country a panel row belongs to, when the panel does not carry one per row.
+		// It selects the codex layout the row is written through, so it is a rendering
+		// decision before it is a scope one.
 		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},
@@ -61,8 +63,8 @@ const { values } = parseArguments({
 /**
  * How a row's locality lookup ended, in the two-cause vocabulary this probe exists to separate.
  *
- * `not_asked` is its own class rather than a miss: the decode emitted no locality span, so the backend was never given
- * a chance to answer and neither cause applies.
+ * `not_asked` is its own class rather than a miss: the decode emitted no locality span,
+ * so the backend was never given a chance to answer and neither cause applies.
  */
 type Verdict = "matched" | "reachable_not_picked" | "unreachable" | "not_asked" | "gold_not_found"
 
@@ -76,10 +78,12 @@ using db = new DatabaseClient<CandidateDatabase>(values["candidate-db"]!)
 /**
  * How far a candidate row may sit from the panel's own coordinate and still be that row's gold place.
  *
- * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough to refuse a namesake one region over
- * — 21 US localities are named Ramsey, and the panel coordinate is the only thing that says which one a row means. A
- * place the panel cannot identify within it is reported as `gold_not_found` rather than folded into a miss, because "we
- * could not name the right answer" and "the run named the wrong one" are different findings.
+ * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough
+ * to refuse a namesake one region over — 21 US localities are named Ramsey,
+ * and the panel coordinate is the only thing that says which one a row means.
+ * A place the panel cannot identify within it is reported as `gold_not_found`
+ * rather than folded into a miss, because "we could not name the right answer"
+ * and "the run named the wrong one" are different findings.
  */
 const GOLD_MAX_KM = 25
 
@@ -89,11 +93,11 @@ const GOLD_MAX_KM = 25
 const LOCALITY_PLACETYPE_ID = 3
 
 /**
- * The gold place for one panel row: the locality whose key is the row's own name and whose coordinate is nearest the
- * panel's.
+ * The gold place for one panel row: the locality whose key is the row's own name
+ * and whose coordinate is nearest the panel's.
  *
- * Nearest-by-coordinate rather than highest-population, because the panel row is the disambiguation — 21 US localities
- * are named Ramsey, and the one this row means is the one at its coordinate.
+ * Nearest-by-coordinate rather than highest-population, because the panel row is the disambiguation —
+ * 21 US localities are named Ramsey, and the one this row means is the one at its coordinate.
  */
 async function goldPlace(place: PanelLocality): Promise<number | null> {
 	const key = normalizeLocalityForKey(place.locality)
@@ -123,7 +127,8 @@ async function goldPlace(place: PanelLocality): Promise<number | null> {
 }
 
 /**
- * Whether `sprID` carries a row under `key` — the reachability question, asked of the artifact the run probed.
+ * Whether `sprID` carries a row under `key` — the reachability question,
+ * asked of the artifact the run probed.
  */
 async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 	const row = await db
@@ -139,8 +144,10 @@ async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 
 /**
- * Rows whose country has no layout able to write them. Counted and reported rather than dropped: a panel that shrank
- * silently would move every rate below it without saying why.
+ * Rows whose country has no layout able to write them.
+ *
+ * Counted and reported rather than dropped: a panel that shrank silently would
+ * move every rate below it without saying why.
  */
 let unrenderable = 0
 
@@ -161,8 +168,8 @@ const outcomes: Array<{
 for (const place of panel) {
 	const input = renderAdmin(place)
 
-	// A country whose layout writes nothing answers "" rather than an invented order. A row nobody can write is
-	// reported as its own class, never graded as a miss.
+	// A country whose layout writes no line answers "" rather than an invented order.
+	// A row nobody can write is reported as its own class, never graded as a miss.
 	if (!input) {
 		unrenderable++
 
@@ -228,8 +235,8 @@ console.log(`| --- | --: | --: |`)
 for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_asked", "gold_not_found"] as const) {
 	const n = tally.get(verdict) ?? 0
 
-	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked and counting it would move
-	// every share below by an amount the table does not explain.
+	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked
+	// and counting it would move every share below by an amount the table does not explain.
 	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
 }
 
@@ -260,8 +267,8 @@ for (const [name, bucket] of shapes) {
 }
 
 /**
- * Rows below this are not reported per word: a rate over fewer places than this reads the draw rather than the word,
- * and the 581-row panel this replaced had 24 of its 34 tail words at one or two rows.
+ * Rows below this are not reported per word: a rate over fewer places than this reads the draw rather
+ * than the word, and the 581-row panel this replaced had 24 of its 34 tail words at one or two rows.
  */
 const MIN_ROWS_PER_WORD = 10
 

@@ -1,9 +1,9 @@
 # @mailwoman/record
 
-**Record schema and per-field normalizers** for the geocode-first entity
-resolution matcher. Address-first design: the canonical `PostalAddress` record
-composes parsed address components, the formatter's match key, and a resolved
-geocode. Organization and contact records build on the same canonical record.
+This package provides the **record schema and per-field normalizers** for the
+geocode-first entity resolution matcher. The design starts from the address. The
+canonical `PostalAddress` record combines parsed address components, the
+formatter's match key, and a resolved geocode. Organization and contact records build on the same canonical record.
 
 ```ts
 import { PostalAddress, parsePersonName, canonicalizeOrganizationName } from "@mailwoman/record";
@@ -50,22 +50,22 @@ import { canonicalizeOrganizationName, type CanonicalizeOrgOpts } from "@mailwom
 
 ## Design
 
-- **Plain data, no classes.** Records are plain TypeScript objects with
+- **Plain data without classes.** Records are plain TypeScript objects with
   branded types where needed.
-- **Address-first.** The `PostalAddress` is the canonical record — the geocode-first
-  matcher resolves places rather than strings.
+- **Address-first.** `PostalAddress` is the canonical record, because the
+  geocode-first matcher resolves places and not strings.
 - **Domain-scoped.** Organization canonicalization supports jurisdiction and
   domain context (e.g., `{jurisdiction: "ID"}` for Indonesian legal designations,
-  `{domain: "healthcare"}` to guard PT/SCA from collision with medical
+  `{domain: "healthcare"}` to keep PT/SCA from colliding with medical
   abbreviations).
-- **Lean dependencies.** Only depends on `@mailwoman/formatter` for the
-  canonical key.
+- **Lean dependencies.** The package depends only on `@mailwoman/formatter`, for
+  the canonical key.
 
 ## Related
 
-- [`@mailwoman/match`](../match) — the fuzzy matcher that consumes these records
-- [`@mailwoman/formatter`](../formatter) — `canonicalKey` used by `PostalAddress`
-- [`@mailwoman/registry`](../registry) — high-level `resolveEntities` that uses records
+- [`@mailwoman/match`](../match): the fuzzy matcher that consumes these records.
+- [`@mailwoman/formatter`](../formatter): provides the `canonicalKey` that `PostalAddress` uses.
+- [`@mailwoman/registry`](../registry): the high-level `resolveEntities` that uses records.
 - [Geocode-First Record Matching](https://mailwoman.ai/articles/concepts/geocode-first-record-matching/)
 
 ## License

@@ -8,7 +8,7 @@
  *   http clients through `@mailwoman/core/api`'s `APIClient`, and the rule draws its line at what that class
  *   is for: pacing, bounded retry, response caching and error mapping over small bodies and repeated calls.
  *   None of it applies here. Caching a 247 MB body through a JSON-validating disk cache would write a second,
- *   unreadable copy of a file already on disk. there is nothing to pace, because this runs once per product
+ *   unreadable copy of a file already on disk. there is no call to pace, because this runs once per product
  *   vintage. and axios buffers any non-stream response type in memory. `packages/osm/lib/sdk/fetch.ts`,
  *   `packages/tiger/lib/sdk/download.ts`, `packages/flood/lib/sdk/download.ts` and `packages/coastal/lib/sdk/download.ts`
  *   are the existing transfers that say the same thing in the same place. The job that produces this URL, and
@@ -16,7 +16,7 @@
  *
  *   the result URL redirects and the fetch must follow IT. The Hub download job answers
  *   `{"status":"Completed","resultUrl":…}`; the result URL itself 302s to the generated file. Node's `fetch`
- *   follows redirects by default, and the option is passed explicitly anyway — a transfer that stopped at the
+ *   follows redirects by default, and the option is passed explicitly anyway. A transfer that stopped at the
  *   redirect would write a short body to disk and report a successful download.
  *
  *   freshness is the item'S own modified date, never A length probe. The cache is keyed on the vintage the
@@ -27,7 +27,7 @@
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { streamToDisk } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * The file name one vintage's export is kept under.
@@ -36,27 +36,31 @@ export const GZT_EXPORT_FILE = "gzt-current-plan.geojson"
 
 export interface DownloadZoningExportOptions {
 	/**
-	 * The Hub job's `resultUrl`, read rather than assembled — it carries a generated file id with no relationship to the
-	 * item id, so a hard-coded URL survives a republish by pointing at a file that is no longer the product.
+	 * The Hub job's `resultUrl`, read rather than assembled.
+	 *
+	 * It carries a generated file id with no relationship to the item id, so a hard-coded
+	 * URL survives a republish by pointing at a file that is no longer the product.
 	 */
 	url: string
 	/**
 	 * The product vintage the cache is keyed on.
 	 */
 	vintage: string
-	cacheRoot: string
+	cacheRoot: PathBuilderLike
 	onProgress?: (message: string) => void
 }
 
 /**
  * Download the bulk export for one product vintage, returning the path of the GeoJSON file.
  *
- * Downloads to a `.part` file and renames only on a clean finish, so an interrupted transfer never presents as a
- * complete export — the same discipline the database build uses, for the same reason.
+ * Downloads to a `.part` file and renames only on a clean finish, so an interrupted
+ * transfer never presents as a complete export.
+ * The same discipline the database build uses, for the same reason.
  */
 export async function downloadZoningExport(options: DownloadZoningExportOptions): Promise<string> {
-	const vintageDir = join(options.cacheRoot, options.vintage)
-	const exportPath = join(vintageDir, GZT_EXPORT_FILE)
+	const vintageDir = PathBuilder.from(options.cacheRoot)(options.vintage)
+	// A string, because the build records the export path it read.
+	const exportPath = vintageDir(GZT_EXPORT_FILE).toString()
 
 	if (await tryStat(exportPath)) {
 		options.onProgress?.(`export for ${options.vintage} already downloaded`)

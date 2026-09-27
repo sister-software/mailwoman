@@ -52,8 +52,9 @@ const PUBLIC_ORIGIN = "https://public.mailwoman.ai"
 const VERSION_HASH_LENGTH = 8
 
 /**
- * The version a build publishes under: its date compacted plus a digest over every output's checksum, so a build that
- * changes any one artifact (a re-tiled hillshade over an unchanged nomenclature) gets its own prefix.
+ * The version a build publishes under: its date compacted plus a digest
+ * over every output's checksum, so a build that changes any one artifact
+ * (a re-tiled hillshade over an unchanged nomenclature) gets its own prefix.
  */
 export function publishVersion(manifest: PlanetaryBuildManifest): string {
 	if (!manifest.outputs.some((output) => output.tileset === manifest.body)) {
@@ -96,7 +97,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 		lines.push(
 			await publishTiles({
-				file: String(resolvePath(directory, file)),
+				file: resolvePath(directory, file),
 				tileset,
 				bucket: TILES_BUCKET,
 				prefix: TILES_PREFIX,
@@ -110,7 +111,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 	lines.push(
 		await uploadToBucket({
-			file: String(resolvePath(directory, names.search)),
+			file: resolvePath(directory, names.search),
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/search.ancestrie`,
 			dryRun,
@@ -120,7 +121,7 @@ async function publishBody(body: BuildableBodyID, out: string | undefined, dryRu
 
 	lines.push(
 		await uploadToBucket({
-			file: String(resolvePath(directory, names.manifest)),
+			file: resolvePath(directory, names.manifest),
 			bucket: PUBLIC_BUCKET,
 			key: `${prefix}/manifest.json`,
 			dryRun,

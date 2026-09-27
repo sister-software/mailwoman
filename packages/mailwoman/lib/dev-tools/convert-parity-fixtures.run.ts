@@ -24,7 +24,9 @@ import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parit
 const IN_PATH = "packages/mailwoman/lib/test-fixtures/legacy-golden/parity-inputs.jsonl"
 
 /**
- * Parity test file basename token → ISO-3166 alpha-2. Files without a country token score as ZZ.
+ * Parity test file basename token → ISO-3166 alpha-2.
+ *
+ * Files without a country token score as ZZ.
  */
 const FILE_COUNTRY: Record<string, string> = {
 	aus: "AU",
@@ -89,6 +91,7 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 
 	const expect: Record<string, string[]> = {}
 	const unmapped: string[] = []
+	const nonString: string[] = []
 
 	for (const [legacyTag, values] of Object.entries(gold as Record<string, unknown>)) {
 		const componentTag = legacyClassificationToComponentTag(legacyTag as Classification)
@@ -100,12 +103,25 @@ for await (const parityCase of JSONSpliterator.fromAsync<ParityCase>(IN_PATH)) {
 			continue
 		}
 
-		expect[componentTag] = Array.isArray(values) ? values.map(String) : [String(values)]
+		if (!Array.isArray(values) || !values.every((value) => typeof value === "string")) {
+			nonString.push(legacyTag)
+
+			continue
+		}
+
+		expect[componentTag] = values
 	}
 
-	// A case whose gold is entirely unmappable tombstones. a partially-mappable one keeps its
-	// mapped gold (dropping e.g. `unit_designator` must not discard the case's house_number/street
-	// expectations — the AU unit patterns are campaign targets).
+	// A literal the extractor read as a number or boolean would change type if coerced to a string.
+	if (nonString.length) {
+		fixtures.push({ ...fixture, dropped: `non-string-array gold for: ${nonString.join(", ")}` })
+
+		continue
+	}
+
+	// A case whose gold is entirely unmappable tombstones.
+	// A partially-mappable one keeps its mapped gold (dropping e.g. `unit_designator` must not discard
+	// the case's house_number/street expectations. The AU unit patterns are campaign targets).
 	if (!Object.keys(expect).length) {
 		fixtures.push({ ...fixture, dropped: `unmapped legacy tags: ${unmapped.join(", ")}` })
 

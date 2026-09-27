@@ -12,7 +12,7 @@ tags:
 A useful intuition guides Mailwoman's corpus-coverage work: as we add training
 signal for the address components we've been _missing_ (`unit`, the street
 affixes, and more), the model gets better at the components we already handle —
-notthe new ones. The reason is that a sequence labeller learns a tag by its
+as well as the new ones. The reason is that a sequence labeller learns a tag by its
 **boundaries**, so teaching it what a token _isn't_ is how it learns what the
 neighbours _are_. (One caveat that the campaign earned the hard way: this logic
 applies to tags the model must learn from context rather than to every starved tag —
@@ -83,7 +83,7 @@ the authority for both**; the difference is only what kind of help it needs.
   surface set in a predictable slot. The tempting shortcut is a deterministic
   lookup, and an early pass took it. That was wrong, for an instructive reason.
 
-A first attempt trained `country` on a extract that was almost entirely
+A first attempt trained `country` on an extract that was almost entirely
 _trailing-country_ rows, so the model over-learned the cheap correlation "trailing
 token ⇒ country" and started promoting cities and regions to nationhood (49 F1, 23%
 precision). A flat lookup scored 100 — but **only on an eval with no homographs**.

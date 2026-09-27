@@ -2,17 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `FailureDiagnostic` — what to say when nothing resolved. It reads the parsed components and names the missing
- *   piece a person can add (a city, a state), so the answer is a next step rather than "no hit".
+ *   Explains a query that resolved to no place and suggests which component, such as a city or a
+ *   state, the visitor could add.
  */
 
 import type { ParsedComponent } from "@mailwoman/core/pipeline/client-result"
 import type { ReactNode } from "react"
 
+/**
+ * Props for {@link FailureDiagnostic}.
+ */
 export interface FailureDiagnosticProps {
 	nodes: ParsedComponent[]
 }
 
+/**
+ * Renders hints based on which components the parser found.
+ */
 export function FailureDiagnostic({ nodes }: FailureDiagnosticProps): ReactNode {
 	const hasLocality = nodes.some((n) => n.tag === "locality")
 	const hasPostcode = nodes.some((n) => n.tag === "postcode")

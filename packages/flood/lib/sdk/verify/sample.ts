@@ -8,20 +8,24 @@
 import { expandH3Cell, strideSampleInteriorPoints, type H3CellShort } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToLatLng } from "h3-js"
+import type { PathBuilderLike } from "path-ts"
 
 import type { FloodDatabase } from "#schema"
 
 /**
- * Draw a reproducible sample of points from the artifact: some inside polygons, some inside the footprint and outside
- * every polygon.
+ * Draw a reproducible sample of points from the artifact: some inside polygons,
+ * some inside the footprint and outside every polygon.
  *
- * Both kinds are required. A sample drawn only from inside polygons never exercises the designated-absence reading,
- * which is the reading this product's Zone-1-as-absence design turns on — and an artifact that answered `unknown`
- * everywhere except inside a polygon would pass a polygon-only sample. The stride discipline — keys chosen before any
- * geometry is read, deterministic rather than random — is `strideSampleInteriorPoints`'s.
+ * Both kinds are required.
+ * A sample drawn only from inside polygons never exercises the designated-absence reading,
+ * which is the reading this product's Zone-1-as-absence design turns on, and an artifact that
+ * answered `unknown` everywhere except inside a polygon would pass a polygon-only sample.
+ *
+ * The stride discipline — keys chosen before any geometry is read, deterministic
+ * rather than random — is `strideSampleInteriorPoints`'s.
  */
 export function sampleAgreementPoints(
-	databasePath: string,
+	databasePath: PathBuilderLike,
 	options: { insideCount?: number; absenceCount?: number } = {}
 ): Array<{ label: string; latitude: number; longitude: number }> {
 	const insideCount = options.insideCount ?? 40
@@ -57,8 +61,8 @@ export function sampleAgreementPoints(
 		}
 	)
 
-	// A designated absence is a coverage cell the authority determined and no polygon reaches — exactly the cells whose
-	// `observed_rows` is zero, which is the storable form of a Zone 1 designation.
+	// A designated absence is a coverage cell the authority determined and no polygon reaches —
+	// exactly the cells whose `observed_rows` is zero, which is the storable form of a Zone 1 designation.
 	const emptyCount = (
 		database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
 	).n

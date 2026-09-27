@@ -12,6 +12,8 @@
  *   notices a stale deployment.
  */
 
+import type { PathBuilderLike } from "path-ts"
+
 import { walkWorkspaceClosure, workspaceDirectories } from "#release/workspace-closure"
 
 export type DeployTargetID = "tiles" | "license" | "earth" | "moon" | "mars"
@@ -32,7 +34,8 @@ export interface DeployTarget {
 	 */
 	build: string
 	/**
-	 * `PLANETARY_BODY` for the two planetary builds. empty for every other target.
+	 * `PLANETARY_BODY` for the two planetary builds.
+	 * Empty for every other target.
 	 */
 	body: string
 	/**
@@ -40,7 +43,8 @@ export interface DeployTarget {
 	 */
 	deployArgs: string
 	/**
-	 * Fetched after the deploy. a non-2xx answer fails the job.
+	 * Fetched after the deploy.
+	 * A non-2xx answer fails the job.
 	 */
 	receipt: string
 }
@@ -109,7 +113,9 @@ export const DEPLOY_TARGETS: readonly DeployTarget[] = [
 export const DEPLOY_TARGET_IDS: readonly DeployTargetID[] = DEPLOY_TARGETS.map((target) => target.id)
 
 /**
- * Root files every target's build reads. A change to one deploys everything, because no workspace closure names it.
+ * Root files every target's build reads.
+ *
+ * A change to one deploys everything, because no workspace closure names it.
  */
 export const ROOT_BUILD_PATHS: readonly string[] = [
 	"package.json",
@@ -121,8 +127,8 @@ export const ROOT_BUILD_PATHS: readonly string[] = [
 ]
 
 /**
- * The workspace a repo-relative path belongs to, by the longest workspace directory that prefixes it, or null for a
- * path outside every workspace.
+ * The workspace a repo-relative path belongs to, by the longest workspace directory
+ * that prefixes it, or null for a path outside every workspace.
  */
 export function workspaceOfPath(dirsByName: ReadonlyMap<string, string>, path: string): string | null {
 	let best: { name: string; length: number } | null = null
@@ -145,8 +151,9 @@ export interface DeploySelection {
 }
 
 /**
- * The targets a set of changed paths reaches, given each target's closure as workspace names. Pure, so the rule is
- * testable without a checkout.
+ * The targets a set of changed paths reaches, given each target's closure as workspace names.
+ *
+ * Pure, so the rule is testable without a checkout.
  */
 export function selectDeployTargets(
 	changed: readonly string[],
@@ -186,7 +193,10 @@ export function allDeployTargets(): DeploySelection[] {
 /**
  * The targets the changed paths reach in this checkout, each target's closure walked from its manifest.
  */
-export async function affectedDeployTargets(repoRoot: string, changed: readonly string[]): Promise<DeploySelection[]> {
+export async function affectedDeployTargets(
+	repoRoot: PathBuilderLike,
+	changed: readonly string[]
+): Promise<DeploySelection[]> {
 	const dirsByName = await workspaceDirectories(repoRoot)
 	const closures = new Map<DeployTargetID, ReadonlySet<string>>()
 

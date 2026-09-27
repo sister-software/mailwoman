@@ -2,37 +2,21 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Assemble a corpus overlay manifest — generalized from assemble-fr-admin-split-overlay-manifest.
- *   Adds parquet files to a base corpus, keeping every base file verbatim (pure overlay add), and
- *   re-roots base paths to /data (the Modal volume). Parameterized by --parquet + --source, one
- *   label per parquet, so it works for any overlay (the fr-admin-split one is the original; #148's
- *   overture-multilocale is the second user. v0.29.0's eight target-family recipe outputs are why it
- *   takes a set rather than one — chaining eight single-file overlays would leave seven dead
- *   directories and an eight-deep base chain for what is one version).
- *
- *   Ported faithfully from scripts/assemble-overlay-manifest.py. The new file's source_id column is
- *   read through DuckDB (`@duckdb/node-api`) instead of PyArrow. everything else is pure JSON.
- *
- *   Pipeline (the recipe rides the result): `mailwoman corpus slice <recipe> --out <canonical>`, then
- *   `mailwoman corpus align-slice --input <canonical> --out <labeled> --corpus-version 0.5.0`, then
- *   `mailwoman dev jsonl-to-parquet --input <labeled> --output <new>/train/<parquet>`, then
- *   `mailwoman corpus overlay-manifest --base <base>/manifest.json --new-dir <new>\
- *   --modal-root /data/corpus/versioned/<ver>/<dir> --version <ver>\
- *   --parquet <parquet> --source <source> --note "..."`
- *
- *   # then push the overlay to R2 + sync + `modal run -d ... --config <recipe>.yaml --resume none`.
+ *   Assembles a corpus manifest that keeps every file of a base corpus and adds new parquet files.
  */
 
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { basename, dirname, join } from "path-ts"
+import { basename, dirname, PathBuilder, type PathBuilderLike } from "path-ts"
 
-import { connectDuckDB, escapeSQLString } from "#parquet/duckdb"
+import { escapeSQLString, openDuckDB } from "#parquet/duckdb"
+import type { SplitName } from "#utils/split"
 
 interface ParquetFileDescriptor {
-	split: string
+	split: SplitName
 	path: string
 	format: "parquet"
 	compression: string
@@ -47,10 +31,11 @@ interface ParquetFileDescriptor {
 type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 
 /**
- * The two keys a manifest written before the 2026-09-01 vocabulary rename uses for its file list and its size. Every
- * corpus built before that date carries them, here and on the Modal volume, and a built corpus is an immutable artifact
- * — so a reader accepts either spelling and a writer emits only the current one. Spelled by concatenation because the
- * word is banned in this tree and the ratchet's baseline is zero.
+ * The legacy manifest keys for the file list and the rows per file.
+ *
+ * Existing corpora are immutable and still use these keys, so readers accept both
+ * spellings and writers emit only the current ones.
+ * The keys are built by concatenation because a repository check bans the legacy word.
  */
 const PRE_RENAME_FILES_KEY = `sh${"ards"}` as const
 const PRE_RENAME_ROWS_PER_FILE_KEY = `rows_per_sh${"ard"}` as const
@@ -63,55 +48,106 @@ interface BaseManifest {
 	slices?: ManifestFile[]
 	counts: { train: number; val: number; test: number }
 	total_rows: number
-	/**
-	 * The pre-rename spellings, present on every corpus built before 2026-09-01.
-	 */
 	[PRE_RENAME_FILES_KEY]?: ManifestFile[]
 	[PRE_RENAME_ROWS_PER_FILE_KEY]?: unknown
 }
 
 /**
- * A base manifest's file list under either key. `slices` is the current wire key, the one the Python loader's
- * `manifest_files` reads first.
+ * Returns a manifest's file list from `slices` or from the legacy key.
  *
- * The rename moved this reader and the trainer's to the new key without migrating the manifests, and the trainer
- * measured the cost on 2026-09-09: `v0.28.0-reviewed-postcode-tail` declares 706 train files under the old key and the
- * loader resolved one. An overlay assembled from a base read as empty would carry no base files at all.
+ * A non-empty `slices` wins, then a legacy list, then an empty `slices`.
+ * An empty list is a valid answer, but a manifest with neither key throws, because an
+ * empty result would misreport a missing list as a corpus without files.
  */
-export function baseManifestFiles(base: BaseManifest): ManifestFile[] {
-	const files = base.slices?.length ? base.slices : base[PRE_RENAME_FILES_KEY]
+export function baseManifestFiles(manifest: { slices?: unknown; [PRE_RENAME_FILES_KEY]?: unknown }): ManifestFile[] {
+	const slices = manifest.slices
+	const preRename = manifest[PRE_RENAME_FILES_KEY]
 
-	if (files?.length) return files
+	if (Array.isArray(slices) && slices.length) return slices as ManifestFile[]
+
+	if (Array.isArray(preRename)) return preRename as ManifestFile[]
+
+	if (Array.isArray(slices)) return slices as ManifestFile[]
 
 	throw new Error(
-		`base manifest lists no files under "slices" or the pre-rename key — refusing to assemble an overlay whose base would be empty`
+		`manifest names no file list: neither "slices" nor the pre-rename key holds an array. An empty list here ` +
+			`would read as a corpus of no files, which is a measurement this manifest does not support.`
 	)
 }
 
 /**
- * The base's rows-per-file under either key, carried through to the new manifest verbatim.
+ * Returns the base's rows-per-file value under either key.
  */
 function baseRowsPerFile(base: BaseManifest): unknown {
 	return base.rows_per_slice ?? base[PRE_RENAME_ROWS_PER_FILE_KEY]
 }
 
 /**
- * One parquet to add, with the source label its rows carry.
+ * One parquet file to add, with the source label that its rows carry.
  */
 export interface OverlayFile {
 	parquet: string
 	source: string
+	/**
+	 * The split that the file's rows belong to.
+	 * The default is `train`.
+	 *
+	 * `val` and `test` are allowed only for files that `splitOverlaySlice` named,
+	 * so that the holdout policy chooses held-out rows.
+	 */
+	split?: SplitName
 }
 
+/**
+ * Returns the split encoded in a `<stem>.<split>.parquet` filename, or `null` for any other name.
+ *
+ * Only `splitOverlaySlice` writes names with this suffix.
+ */
+export function splitFromFilename(parquet: string): SplitName | null {
+	const match = /\.(train|val|test)\.parquet$/.exec(parquet)
+
+	return match ? (match[1] as SplitName) : null
+}
+
+/**
+ * Reads one overlay parquet and describes it for the manifest.
+ *
+ * The `source` argument is what the caller believes the file holds, and the file itself
+ * is what the loader reads: `file_source_counts` groups the rows, never the manifest.
+ * So a caller passing a stale label writes a manifest that disagrees with its own rows, the run
+ * trains on the rows, and the next plan derived from that manifest carries the stale label forward.
+ *
+ * This reads the column and refuses the mismatch rather than recording the claim.
+ *
+ * `source_id` is materialized rather than aggregated because `first_source_id`
+ * and `last_source_id` mean the first and last row of the file.
+ * DuckDB's `first` and `last` aggregates read whichever row a parallel scan
+ * reaches first, which is not the same thing.
+ */
 async function descriptor(
 	localPath: string,
 	modalPath: string,
-	split: string,
+	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
-	const db = await connectDuckDB()
-	const result = await db.runAndReadAll(`SELECT source_id FROM read_parquet('${escapeSQLString(localPath)}')`)
-	const sids = result.getRowObjects().map((r) => r.source_id as string)
+	// One per file, and `assembleOverlayManifest` calls this once per file.
+	using db = await openDuckDB()
+
+	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
+
+	const rows = result.getRowObjects()
+	const sids = rows.map((r) => r.source_id as string)
+	const stored = new Set(rows.map((r) => r.source as string))
+
+	if (stored.size !== 1 || !stored.has(source)) {
+		const found = [...stored].toSorted().join(", ")
+
+		throw new Error(
+			`${localPath} holds source ${stored.size === 1 ? `"${found}"` : `${stored.size} values (${found})`}, ` +
+				`and the manifest was asked to record "${source}". The loader groups rows by the column, so a ` +
+				`manifest that disagrees with it is a label nothing reads and a plan derived from it carries forward.`
+		)
+	}
 
 	return {
 		split,
@@ -127,20 +163,23 @@ async function descriptor(
 	}
 }
 
+/**
+ * Options for {@link assembleOverlayManifest}.
+ */
 export interface OverlayManifestOptions {
 	base: string
-	newDir: string
+	newDir: PathBuilderLike
 	modalRoot: string
 	version: string
 	/**
-	 * The parquets this overlay adds, in the order they should appear after the base's own.
+	 * The parquet files to add, in the order in which they follow the base files.
 	 */
 	files: readonly OverlayFile[]
 	note: string
 }
 
 /**
- * Resolve a base manifest's file path to the mounted corpus tree used by Modal.
+ * Rewrites a base manifest's file path to its location in the corpus tree mounted on Modal at `/data`.
  */
 export function rerootBaseFilePath(path: string, baseManifestPath: string): string {
 	const versionedIndex = path.indexOf("/corpus/versioned/")
@@ -157,11 +196,36 @@ export function rerootBaseFilePath(path: string, baseManifestPath: string): stri
 	return path
 }
 
+/**
+ * Maps a Modal path under `/data/` to the same file under the local data root
+ * and returns any other path unchanged.
+ */
+export function localManifestFilePath(path: string): string {
+	return path.startsWith("/data/") ? dataRootPath(path.slice("/data/".length)).toString() : path
+}
+
+/**
+ * Writes a corpus manifest that keeps every file of `args.base` and appends `args.files`.
+ *
+ * A `val` or `test` file must have the `.<split>.parquet` name that `splitOverlaySlice`
+ * writes, which shows that the holdout policy chose its rows.
+ * A `train` file has no naming requirement.
+ *
+ * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
+ */
 export async function assembleOverlayManifest(args: OverlayManifestOptions): Promise<void> {
 	if (!args.files.length) throw new Error("an overlay must add at least one parquet file")
 
 	const base = await readLocalJSONFile<BaseManifest>(args.base)
 	const baseFiles = baseManifestFiles(base)
+
+	// An overlay on a base without files would contain only the added files.
+	if (!baseFiles.length) {
+		throw new Error(
+			`${args.base} lists no files, so an overlay on it would carry only the ${args.files.length} file(s) added ` +
+				`here while naming itself an extension of that base.`
+		)
+	}
 
 	for (const file of args.files) {
 		if (baseFiles.some((s) => s.source === file.source)) {
@@ -169,21 +233,51 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
+	// Held-out rows must come from the holdout policy, which encodes the split in the filename.
+	// A caller that picks held-out rows by hand can leak them into train.
+	for (const file of args.files) {
+		if (!file.split || file.split === "train") continue
+
+		const named = splitFromFilename(file.parquet)
+
+		if (named === file.split) continue
+
+		throw new Error(
+			named
+				? `${file.parquet} names split '${named}' and the caller asked for '${file.split}'. The filename is ` +
+						`what splitOverlaySlice wrote, so it decides; pass the split the name carries or route the file again.`
+				: `${file.parquet} was asked for split '${file.split}' and carries no '.${file.split}.parquet' suffix, ` +
+						`so it did not come from 'mailwoman corpus split-slice' and its held-out rows were chosen by the ` +
+						`caller rather than by the holdout policy. Route it through split-slice and add the per-split ` +
+						`outputs it writes. A file appended to 'train' needs none of this.`
+		)
+	}
+
 	const kept = baseFiles.map((s) => ({ ...s, path: rerootBaseFilePath(s.path, args.base) }))
 	const added: ParquetFileDescriptor[] = []
 
+	const newDir = PathBuilder.from(args.newDir)
+
 	for (const file of args.files) {
+		const split = file.split ?? "train"
+
 		added.push(
 			await descriptor(
-				join(args.newDir, "train", file.parquet),
-				`${args.modalRoot}/train/${file.parquet}`,
-				"train",
+				// DuckDB reads the path inside SQL text, so it must be a string.
+				newDir(split, file.parquet).toString(),
+				`${args.modalRoot}/${split}/${file.parquet}`,
+				split,
 				file.source
 			)
 		)
 	}
 
-	const addedRows = added.reduce((total, file) => total + file.rows, 0)
+	const addedRows: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+
+	for (const file of added) {
+		addedRows[file.split] += file.rows
+	}
+
 	const sources = args.files.map((file) => file.source).join(", ")
 
 	const manifest = {
@@ -195,14 +289,14 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		row_group_size: base.row_group_size,
 		slices: [...kept, ...added],
 		counts: {
-			train: base.counts.train + addedRows,
-			val: base.counts.val,
-			test: base.counts.test,
+			train: base.counts.train + addedRows.train,
+			val: base.counts.val + addedRows.val,
+			test: base.counts.test + addedRows.test,
 		},
-		total_rows: base.total_rows + addedRows,
+		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
 	}
 
-	const out = join(args.newDir, "MANIFEST.json")
+	const out = newDir("MANIFEST.json")
 	await writeLocalJSONFile(manifest, out)
 
 	console.log(`wrote ${out}`)
@@ -210,6 +304,6 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
 	for (const file of added) {
-		console.log(`  ${file.source} train: ${file.rows} rows (${file.bytes} bytes)`)
+		console.log(`  ${file.source} ${file.split}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }

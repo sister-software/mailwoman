@@ -18,8 +18,8 @@ constructed examples.
 ## The analog
 
 A postal sorting machine reads what it can and passes the rest to a person. The machine's designers
-did not consider that a defect, because the machine's job was never to be right about everything —
-it was to be right about most things, fast, and clear about which envelopes it was handing over.
+did not consider that a defect, because the machine's job was never to be right about everything.
+It was to be right about most things, fast, and clear about which envelopes it was handing over.
 
 The parser has no equivalent hand-off, and that is the single most important thing to know about it.
 There is no envelope it declines. Everything below follows from that.
@@ -41,12 +41,12 @@ string of product SKUs will parse. So will a sentence.
 If your input can contain things that are not addresses, that classification is yours to make
 upstream, and the parse result is not the place to make it.
 
-## It says nothing about existence or delivery
+## It makes no statement about existence or delivery
 
 [What Mailwoman is](../../get-started/what-mailwoman-is.mdx) states the boundary and it is worth
 restating with the mechanism: a parse tells you a string reads like an address and where the
 components sit. It does not consult a register of real delivery points, because it does not have
-one — those are licensed products from postal authorities, and open data does not substitute for
+one. Those are licensed products from postal authorities, and open data does not substitute for
 them.
 
 The failure mode is specific. A completely invented address parses with high scores on every
@@ -91,8 +91,8 @@ no evidence for either:
 Both readings of that pair are defensible. `Pennsylvania` is a state, and a four-digit leading number
 is a postcode shape in several countries. Add the one token that decides it — `1600 Pennsylvania Ave`
 — and the reading changes, because the evidence arrived. This is the general shape of the hardest
-class: the number's owner is determined by the tokens around it, and when they are absent nothing
-recovers it.
+class: the number's owner is determined by the tokens around it, and when those tokens are absent
+the owner cannot be recovered.
 
 **A name doing a job other than naming its own place.** A venue called after a city, a street named
 after a state. [Why addresses are hard](../geocoding/why-addresses-are-hard.mdx) is the full treatment
@@ -141,7 +141,7 @@ montreal qc     →  locality = "Montreal",   region = "QC"
 montréal qc     →  locality = "montréal"
 ```
 
-One accent, and the region is gone — the restoration did not run, so `qc` reached the model in a form
+One accent, and the region is gone. The restoration did not run, so `qc` reached the model in a form
 it has little training signal for, and there was no comma to supply the structure instead. Add the
 comma back and `montréal, qc` recovers the region, in the lowercase form it arrived in.
 
@@ -151,9 +151,9 @@ most.
 
 ## Long input is truncated in silence
 
-The model reads a fixed window of 128 pieces. Beyond that, the input is truncated, and nothing in the
+The model reads a fixed window of 128 pieces. Beyond that, the input is truncated, and no field in the
 result records that it happened. A 408-character input with a mail-stop preamble in front of the
-address produced 128 pieces covering the first 328 characters, and the parse contained nothing from
+address produced 128 pieces covering the first 328 characters, and the parse contained no component from
 the address at the end:
 
 ```json
@@ -180,7 +180,7 @@ contexts — `Georgia` as a state and as a country is the canonical case — and
 about both without a hand-written guard. Where the collision does not exist, the lookup wins.
 
 **Format validation.** Whether a string is a well-formed United Kingdom postcode is a question about a
-grammar, answerable exactly by a pattern. The model has no notion of validity — it labels a span
+grammar, answerable exactly by a pattern. The model has no notion of validity. It labels a span
 `postcode` because that is where a postcode goes, and `00000` scores as well as a real one.
 
 **Rendering.** Turning components back into a correctly ordered address string for a country is

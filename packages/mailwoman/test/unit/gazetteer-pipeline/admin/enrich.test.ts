@@ -8,7 +8,7 @@ import { enrichAdmin } from "mailwoman/gazetteer-pipeline/admin/enrich"
 import { expect, test } from "vitest"
 
 test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	db.prepare(
@@ -36,7 +36,7 @@ test("enrichAdmin adds region abbreviations (VT→Vermont) and builds place_abbr
 })
 
 test("enrichAdmin is idempotent — a re-run doesn't duplicate abbr rows", async () => {
-	await using db = DatabaseClient.temp<WOFDatabase>()
+	using db = DatabaseClient.temp<WOFDatabase>()
 	await createUnifiedSchema(db)
 
 	db.prepare(

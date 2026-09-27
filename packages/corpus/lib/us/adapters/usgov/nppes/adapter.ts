@@ -2,41 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `usgov-nppes`: CMS National Plan and Provider Enumeration System (NPI registry) CSV consumer.
- *
- *   NPPES is the authoritative US healthcare provider registry, published monthly by CMS. Each row
- *   carries a provider's business practice location address together with their legal business name
- *   or individual name. At ~7M rows it is the single largest venue+address signal source
- *   available.
- *
- *   The adapter consumes the monthly full-replacement CSV (operator pre-downloads via
- *   `fetch-nppes.ts`). Column names match the canonical NPPES "Full Replacement Monthly NPI File"
- *   header published at `https://download.cms.gov/nppes/NPI_Files.html`.
- *
- *   Output: one row per CSV record where the practice location address is populated. Organization
- *   rows carry `venue` from the legal business name. individual rows compose `attention` from
- *   last+first name. Address quad goes on `(house_number, street, locality, region, postcode)`.
- *
- *   License: stamped `"Public Domain"` per CMS's federal government distribution terms.
+ *   Reads provider practice-location addresses from the monthly CMS NPPES full-replacement CSV.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
+import { stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
 import { formatPersonName } from "@mailwoman/record/name"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * The adapter id stamped on every emitted row.
  */
 export const USGOV_NPPES_ADAPTER_ID = "usgov-nppes"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * The license label on every emitted row, because CMS distributes NPPES as a federal public-domain work.
  */
 export const USGOV_NPPES_DEFAULT_LICENSE = "Public Domain"
 
@@ -50,14 +36,56 @@ interface NPPESRow {
 	"Provider Second Line Business Practice Location Address": string
 	"Provider Business Practice Location Address City Name": string
 	"Provider Business Practice Location Address State Name": string
-	"Provider Business Practice Location Address Postcode": string
+	// This is the publisher's exact column name, so it must keep the words "Postal Code".
+	"Provider Business Practice Location Address Postal Code": string
 }
 
+/**
+ * The columns that every emitted row needs, in the publisher's spelling.
+ *
+ * A missing column reads as `undefined` on every record, and the row filter would
+ * then drop every row without an error.
+ */
+const REQUIRED_COLUMNS = [
+	"Provider First Line Business Practice Location Address",
+	"Provider Business Practice Location Address City Name",
+	"Provider Business Practice Location Address State Name",
+	"Provider Business Practice Location Address Postal Code",
+] as const
+
+/**
+ * Throws when the first parsed record lacks a required practice-location column.
+ *
+ * The check reads the parsed record's keys, so it sees the column names exactly
+ * as the CSV reader produced them.
+ */
+function assertPracticeLocationColumns(record: NPPESRow, inputPath: PathBuilderLike): void {
+	const present = new Set(Object.keys(record))
+	const missing = REQUIRED_COLUMNS.filter((column) => !present.has(column))
+
+	if (!missing.length) return
+
+	throw new Error(
+		`usgov-nppes adapter: ${inputPath} carries none of ${missing.map((column) => stringifyJSON(column)).join(", ")}. ` +
+			`Every row would be dropped and the run would report zero rows read from a file it read in full. ` +
+			`Check the publisher's own spelling against this adapter's column names.`
+	)
+}
+
+/**
+ * Creates the NPPES adapter.
+ *
+ * Each row's `venue` is the organization's legal name or, for an individual provider,
+ * the formatted person name.
+ * The adapter skips records without a city, a postcode, a known state or a parseable street line.
+ */
 export function createUsgovNPPESAdapter(): CorpusAdapter {
 	return {
 		id: USGOV_NPPES_ADAPTER_ID,
 		defaultLicense: USGOV_NPPES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Practice,
+		register: SourceRegister.NPPES,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"CMS National Plan and Provider Enumeration System — 7M provider practice locations (public-domain). Venue+address co-occurrence at scale.",
 
@@ -71,22 +99,29 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 			})
 
 			let emitted = 0
+			let checkedHeader = false
 
 			for await (const record of rows as AsyncIterable<NPPESRow>) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const npi = (record.NPI ?? "").trim()
-				const orgName = (record["Provider Organization Name (Legal Business Name)"] ?? "").trim()
-				const lastName = (record["Provider Last Name (Legal Name)"] ?? "").trim()
-				const firstName = (record["Provider First Name"] ?? "").trim()
+				const npi = record.NPI ?? ""
+				const orgName = record["Provider Organization Name (Legal Business Name)"] ?? ""
+				const lastName = record["Provider Last Name (Legal Name)"] ?? ""
+				const firstName = record["Provider First Name"] ?? ""
 
-				const address1 = (record["Provider First Line Business Practice Location Address"] ?? "").trim()
-				const address2 = (record["Provider Second Line Business Practice Location Address"] ?? "").trim()
-				const city = (record["Provider Business Practice Location Address City Name"] ?? "").trim()
-				const stateRaw = (record["Provider Business Practice Location Address State Name"] ?? "").trim()
-				const postcode = (record["Provider Business Practice Location Address Postcode"] ?? "").trim()
+				const address1 = record["Provider First Line Business Practice Location Address"] ?? ""
+				const address2 = record["Provider Second Line Business Practice Location Address"] ?? ""
+				const city = record["Provider Business Practice Location Address City Name"] ?? ""
+				const stateRaw = record["Provider Business Practice Location Address State Name"] ?? ""
+				const postcode = record["Provider Business Practice Location Address Postal Code"] ?? ""
+
+				// The first record's keys reveal a renamed column before the filters below drop every row.
+				if (!checkedHeader) {
+					checkedHeader = true
+					assertPracticeLocationColumns(record, opts.inputPath)
+				}
 
 				if (!city || !postcode) continue
 
@@ -138,6 +173,6 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 }
 
 /**
- * The configured adapter instance registered with the corpus builder.
+ * The NPPES adapter instance that the corpus builder registers.
  */
 export const usgovNPPESAdapter = createUsgovNPPESAdapter()

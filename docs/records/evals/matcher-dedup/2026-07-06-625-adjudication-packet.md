@@ -90,7 +90,7 @@ Adjudicate each: **[same]** one real-world entity (yardstick error — the truth
   - npi=1326042805 · name="CHRISTUS COAST" · org="christus health gulf coast" · addr="701 S FRY RD, KATY, TX, 774502255" · auth="BUDDY WHIDDON" · taxonomy="282N00000X"
   - npi=1326042805 · name="CHRISTUS Catherine Hospital" · org="christus st catherine hospital" · addr="701 S FRY RD, KATY, TX, 774502255" · auth="BUDDY WHIDDON" · taxonomy="282N00000X"
 
-## Cluster 8 — 15 records, 13 org-name entities → verdict: **[same]** — One corporate back office (1413 East I-30, one official) with 13 per-facility NPIs registered under near-identical corporate name variants (Management/Consultants/Services + typos). The distinct FACILITIES are not expressed in these records at all — the corporate identity shown is one group. Yardstick artifact of NPI granularity.
+## Cluster 8 — 15 records, 13 org-name entities → verdict: **[same]** — One corporate back office (1413 East I-30, one official) with 13 per-facility NPIs registered under near-identical corporate name variants (Management/Consultants/Services + typos). The distinct FACILITIES are not expressed in these records at all. The corporate identity shown is one group. Yardstick artifact of NPI granularity.
 
 - **entity 1902808058**
   - npi=1902808058 · name="SENIOR MANAGEMENT" · org="senior care management" · addr="1413 EAST I 30, GARLAND, TX, 750434598" · auth="SHANE LEWIS" · taxonomy="314000000X"
@@ -278,7 +278,7 @@ noted inline.
 **Findings:**
 
 1. **Two-thirds of the residual "over-merge" is the yardstick rather than the model.** With 14 of 21
-   clusters adjudicated same-entity, the actual over-merged-cluster count drops 21 → 7 — the
+   clusters adjudicated same-entity, the actual over-merged-cluster count drops 21 → 7. The
    matcher's true org-grain quality is materially above the measured 68.8% F1 (consistent with the
    ~1.6% irreducible-ceiling estimate).
 2. **The actual over-merge class has one signature: the management-company roll-up.** All 7

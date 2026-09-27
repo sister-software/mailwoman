@@ -2,16 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/locale-hint` — Stage 2 of the runtime pipeline.
- *
- *   Rule-based locale detection from `QueryShape`'s script + known-format hits. Returns a
- *   `LocaleHint` with the top candidate + alternatives, surfacing detector disagreement when the
- *   caller's `--locale` hint differs from what the input shape implies.
- *
- *   Bitter-lesson-safe: only universal structural cues (script, postcode patterns), no place-name
- *   dictionaries. Trained character-level model is a v0.6.0 follow-on.
- *
- *   See `docs/engineering/reference/stages.md` § Stage 2 for the interface.
+ *   Stage 2 locale detection using QueryShape scripts and known-format hits. Return the top candidate and alternatives
+ *   from structural cues, without place-name dictionaries.
  */
 
 export { detectLocale } from "#detect"

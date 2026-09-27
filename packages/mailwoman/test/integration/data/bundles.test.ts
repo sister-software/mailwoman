@@ -1,16 +1,10 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Unit tests for the pure `mailwoman data` bundle logic (#task-6): bundle resolution against a
- *   `releases.json`-shaped manifest, the artifact filter, and the present/missing/stale download
- *   decision. No filesystem, no network — every fact is passed in.
- */
-
 import { stringifyJSON } from "@mailwoman/core/json"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
 import {
 	artifactURL,
+	type ArtifactTermsObservation,
 	BUNDLES,
+	describeArtifactTerms,
 	describeBundleRights,
 	filterArtifacts,
 	needsDownload,
@@ -95,9 +89,6 @@ describe("artifactURL", () => {
 })
 
 describe("every bundle states its terms before it is pulled", () => {
-	// A bundle is downloaded rather than installed with the package, so its terms reach an operator through nothing the
-	// npm tarball carries. These are printed by `data pull` before the transfer, which is the moment an operator can
-	// still decline.
 	it.each(Object.values(BUNDLES))("$name names publishers, terms and conditions", (bundle) => {
 		expect(bundle.rights.publishers.length).toBeGreaterThan(0)
 		expect(bundle.rights.terms.length).toBeGreaterThan(0)
@@ -105,22 +96,70 @@ describe("every bundle states its terms before it is pulled", () => {
 	})
 
 	it("prints what stays unresolved beside what is required", () => {
-		// A bundle whose conditions are listed and whose gaps are not reads as fully established. Every bundle here
-		// draws on sources whose per-row terms nobody has traced, and the lines say so.
 		const lines = describeBundleRights(BUNDLES["candidate"]!)
 
 		expect(lines.some((line) => line.startsWith("published by"))).toBe(true)
 		expect(lines.some((line) => line.startsWith("you must:"))).toBe(true)
 		expect(lines.some((line) => line.startsWith("unresolved:"))).toBe(true)
 	})
+
+	it.each(Object.values(BUNDLES))("$name records an admissible expression a pull can decide on", (bundle) => {
+		expect(() => assertAdmissibleLicenseExpression(bundle.rights.expression, bundle.name)).not.toThrow()
+	})
+
+	it("prints what the recorded expression implies, beside the prose", () => {
+		// The candidate's expression carries ODbL-1.0, which is what `--refuse share-alike` declines on.
+		const lines = describeBundleRights(BUNDLES["candidate"]!)
+		const recorded = lines.find((line) => line.startsWith("recorded expression:"))
+
+		expect(recorded).toContain("ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0")
+		expect(recorded).toContain("share_alike")
+	})
+
+	it("prints what the artifact on disk records, and flags a disagreement with the registry", () => {
+		const bundle = BUNDLES["candidate"]!
+
+		const agreeing: ArtifactTermsObservation = {
+			path: "/data/db/wof/candidate.db",
+			state: "recorded",
+			tier: "build-local",
+			license: bundle.rights.expression,
+		}
+
+		expect(describeArtifactTerms(bundle, [agreeing])).toEqual([
+			"on disk: /data/db/wof/candidate.db records tier build-local, license ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0 — obligations: attribution, share_alike",
+		])
+
+		const differing = describeArtifactTerms(bundle, [{ ...agreeing, license: "CC-BY-4.0" }])
+
+		expect(differing[1]).toContain("disagreement: the artifact records CC-BY-4.0 while this registry records")
+	})
+
+	it("groups artifacts that say the same thing, so a hundred files print one line", () => {
+		const absent = (slug: string): ArtifactTermsObservation => ({ path: `/data/db/${slug}.db`, state: "absent" })
+		const lines = describeArtifactTerms(BUNDLES["us"]!, [absent("ca"), absent("ny"), absent("tx")])
+
+		expect(lines).toHaveLength(1)
+		expect(lines[0]).toContain("not on disk: 3 artifacts, such as /data/db/ca.db")
+	})
+
+	it("says where each bundle's rows name their publisher, or that they do not", () => {
+		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
+			table: "address_point",
+			column: "source",
+			shape: "per-row",
+			family: "address-points",
+		})
+
+		expect(BUNDLES["us"]?.artifacts.some((artifact) => artifact.family === "interpolation")).toBe(true)
+
+		expect(BUNDLES["poi"]?.sourceCensus?.shape).toBe("manifest")
+		expect(BUNDLES["candidate"]?.sourceCensus).toBeUndefined()
+	})
 })
 
 describe("resolveBundleArtifacts — maps versioned names", () => {
-	/**
-	 * A bundle must declare its terms to compile, so these fixtures carry an empty declaration. Empty is a fixture that
-	 * states nothing rather than a bundle with no obligations, and `describeBundleRights` has its own tests.
-	 */
-	const noRights = { publishers: [], terms: [], conditions: [], unresolved: [] }
+	const noRights = { publishers: [], expression: "NOASSERTION", terms: [], conditions: [], unresolved: [] }
 
 	const bundle: DataBundle = {
 		name: "us",
@@ -153,11 +192,11 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 		expect(resolved[1]!.localPath).toBe("interpolation/interpolation-us-ca.db")
 	})
 
-	it("substitutes the manifest-pinned version into the localPath for a matching family", () => {
+	it("Substitutes the manifest-pinned version into the localPath for a matching family", () => {
 		const resolved = resolveBundleArtifacts(bundle, { "address-points": "2026-08-01" })
 
 		expect(resolved[0]!.localPath).toBe("address-points/address-points-us-ca-2026-08-01.db")
-		// interpolation has no manifest entry — stays at the legacy path.
+
 		expect(resolved[1]!.localPath).toBe("interpolation/interpolation-us-ca.db")
 	})
 
@@ -165,7 +204,7 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 		const candidate: DataBundle = {
 			name: "candidate",
 			description: "test",
-			rights: { publishers: [], terms: [], conditions: [], unresolved: [] },
+			rights: { publishers: [], expression: "NOASSERTION", terms: [], conditions: [], unresolved: [] },
 			artifacts: [
 				{
 					remotePath: "gazetteer/2026-07-07a/candidate.db",
@@ -233,34 +272,33 @@ describe("filterArtifacts — the --only substring filter", () => {
 })
 
 describe("needsDownload — the present/missing/stale decision", () => {
-	it("absent locally → yes", () => {
+	it("Absent locally → yes", () => {
 		expect(needsDownload({ exists: false }, { contentLength: 100 })).toBe(true)
 	})
 
-	it("present, md5 matches → no", () => {
+	it("Present, md5 matches → no", () => {
 		expect(needsDownload({ exists: true, md5: "abc123" }, { md5: "abc123" })).toBe(false)
 	})
 
-	it("present, md5 mismatch → yes", () => {
+	it("Present, md5 mismatch → yes", () => {
 		expect(needsDownload({ exists: true, md5: "abc123" }, { md5: "def456" })).toBe(true)
 	})
 
 	it("md5 is checked before content-length when both are present", () => {
-		// Same size, different md5 — a same-size corruption/edit must still be caught.
 		expect(needsDownload({ exists: true, sizeBytes: 100, md5: "abc123" }, { contentLength: 100, md5: "def456" })).toBe(
 			true
 		)
 	})
 
-	it("no md5 on either side, content-length matches → no", () => {
+	it("No md5 on either side, content-length matches → no", () => {
 		expect(needsDownload({ exists: true, sizeBytes: 100 }, { contentLength: 100 })).toBe(false)
 	})
 
-	it("no md5 on either side, content-length mismatch → yes", () => {
+	it("No md5 on either side, content-length mismatch → yes", () => {
 		expect(needsDownload({ exists: true, sizeBytes: 99 }, { contentLength: 100 })).toBe(true)
 	})
 
-	it("no verifiable signal at all → not forced (caller surfaces a warning instead)", () => {
+	it("No verifiable signal at all → not forced (caller surfaces a warning instead)", () => {
 		expect(needsDownload({ exists: true }, {})).toBe(false)
 	})
 })

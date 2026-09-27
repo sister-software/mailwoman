@@ -22,7 +22,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 
 - **9 GB of free disk for Vermont.** The parts, in decimal GB as your disk vendor counts them: a 6.93 GB
   national Overture parquet you need even for one state (the ingest has no per-state mode), 215 MB of
-  Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 1.65 GB gazetteer.
+  Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 2.88 GB gazetteer.
   That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
 - **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
@@ -115,7 +115,7 @@ npx mailwoman gazetteer overture-ingest --countries US --release 2026-06-17.0
 21 minutes and 6.93 GB on the machine this page was verified on, for 126,672,517 rows. Most of the clock
 is the scan rather than the write: Overture's addresses theme is partitioned by type and not by country, so a
 one-country ingest reads the planet's address parquet and filters. Liechtenstein, the smallest country in
-the theme, takes 132 s for 12,950 rows on the same connection — the floor is the scan.
+the theme, takes 132 s for 12,950 rows on the same connection. The floor is the scan.
 
 The run writes a fill-rate report beside the parquet, and it is worth opening before you build anything on
 top of it:
@@ -210,7 +210,7 @@ Building VT…
 ```
 
 17 s end to end — 14 county archives downloaded and unpacked to 215 MB, then 6.0 s of build — for a
-58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is nothing
+58.5 MB database holding 137,256 segment-sides. The command downloads its own TIGER data, so there is no data
 to fetch first.
 
 Three lines in that output are worth knowing. **Parity** splits the segment-sides into odd and even runs,
@@ -246,7 +246,7 @@ the ones you owe credit to when you redistribute a database.
 
 ## 6. Add the gazetteer
 
-The two databases you built hold streets and house numbers, and nothing in either resolves the word
+The two databases you built hold streets and house numbers, and no entry in either resolves the word
 "Burlington". That comes from the candidate gazetteer, which mailwoman publishes as a download rather than
 asking you to build it — the build needs the Who's On First data repositories cloned first, and the
 database it produces is over 5 GB before the query-time one is derived from it.
@@ -264,7 +264,8 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-us-build/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-4 minutes and 7 seconds for 1.65 GB here. `content-length verified` is the check the pull does: it HEADs
+4 minutes and 7 seconds for the 1.65 GB `2026-07-07a` build shown in this transcript; the current
+`2026-08-25b` build is 2.88 GB, so your download will be larger. `content-length verified` is the check the pull does: it HEADs
 the object and compares the byte count it downloaded against what the server declared. The bucket publishes
 no checksum sidecar for any artifact, so content-length is the strongest integrity signal available.
 
@@ -288,7 +289,7 @@ PASS — core checks ok (weights + runtime); parse is ready
 
 The POI layer is a separate artifact and geocoding does not need it, which is why `doctor` marks it
 optional and passes anyway. `(convention path)` on the gazetteer line means it was found at
-`<data root>/wof/candidate.db` with nothing configured — which is why step 6 was one command and no
+`<data root>/db/wof/candidate.db` with no configuration — which is why step 6 was one command and no
 `export`, and why the `export` line the pull printed can be ignored.
 
 Now run the other check, and read its verdict carefully:
@@ -376,7 +377,7 @@ the three apart in code without guessing from the coordinate.
 
 ## 9. Scale to fifty states
 
-Nothing above changes shape at national scale — the two build commands take lists instead of one state,
+No step above changes shape at national scale — the two build commands take lists instead of one state,
 and the parquet you already have is the input for all of them.
 
 ```bash
@@ -387,7 +388,7 @@ npx mailwoman situs build --release 2026-06-17.0 --concurrency 4
 npx mailwoman situs interpolation
 ```
 
-Those two are the only commands on this page that were not run to produce it — a national build is days of
+Those two are the only commands on this page that were not run to produce it. A national build is days of
 wall clock rather than an afternoon. So the numbers below are the published national tier's, which was built by
 these same two commands, read off the bundle registry the CLI ships:
 
@@ -411,7 +412,7 @@ coverage:
   OpenAddresses instead, with `situs address-points --state HI --oa-csv <conformed.csv>`, and holds 348,377
   points.
 - **New Hampshire is absent from both, and its published database holds zero rows.** The file exists — 20,480
-  bytes, the schema and no data — so a lookup against it opens, succeeds, and returns nothing. An empty
+  bytes, the schema and no data — so a lookup against it opens, succeeds, and returns no row. An empty
   database and an absent one read the same way at the call site and mean different things, so if you serve
   New Hampshire, treat the rooftop tier there as unbuilt. Its interpolation database is unaffected: 57.6 MB
   and 156,620 segment-sides, built from TIGER like every other state's.

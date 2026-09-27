@@ -5,7 +5,7 @@
  *   The GeoNames alias fold for the admin gazetteer: the bilingual/alt-name tail (#743/#193 — the
  *   Karjaa↔Karis class, ids @ 9e12). Thin composition over the canonical
  *   `@mailwoman/resolver-wof-sqlite` ingest functions. directory defaults go through `dataRootPath` —
- *   the previous script hardcoded the lab playpen path for the dump dir, which the data-root rule
+ *   the previous script hardcoded an absolute lab path for the dump dir, which the data-root rule
  *   forbids in shipped code.
  *
  *   Not the postal fold. This file carried `postalCountries`/`postalDir` passthroughs to
@@ -20,6 +20,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 export interface FoldGeonamesOptions {
 	/**
@@ -27,16 +28,23 @@ export interface FoldGeonamesOptions {
 	 */
 	countries: readonly string[]
 	/**
-	 * GeoNames per-country dump dir (download.geonames.org/export/dump). Default `<data-root>/geonames`.
+	 * GeoNames per-country dump dir (download.geonames.org/export/dump).
+	 *
+	 * Default `<data-root>/geonames`.
 	 */
-	geonamesDir?: string
+	geonamesDir?: PathBuilderLike
 	/**
-	 * AlternateNamesV2 dir (…/export/dump/alternatenames). Default `<data-root>/geonames-alternate`.
+	 * AlternateNamesV2 dir (…/export/dump/alternatenames).
+	 *
+	 * Default `<data-root>/geonames-alternate`.
 	 */
-	alternateDir?: string
+	alternateDir?: PathBuilderLike
 	/**
 	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
-	 * locality ancestry. Pass only zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
+	 * locality ancestry.
+	 *
+	 * Pass only zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
+	 *
 	 * Omitting this is what flattened 95 countries' nodes (#1026).
 	 */
 	adminForCountries?: ReadonlySet<string>
@@ -53,10 +61,10 @@ export async function foldGeonames(
 	db: DatabaseClient<WOFDatabase>,
 	opts: FoldGeonamesOptions
 ): Promise<FoldGeonamesResult> {
-	// resolver-wof-sqlite is an optional peer of mailwoman — lazy import (the gazetteer-pipeline convention).
+	// Imported here so loading this module does not evaluate resolver-wof-sqlite (the gazetteer-pipeline convention).
 	const { ingestGeonamesAliases } = await import("@mailwoman/resolver-wof-sqlite/geonames")
-	const geonamesDir = opts.geonamesDir ?? String(dataRootPath("geonames"))
-	const alternateDir = opts.alternateDir ?? String(dataRootPath("geonames-alternate"))
+	const geonamesDir = opts.geonamesDir ?? dataRootPath("geonames")
+	const alternateDir = opts.alternateDir ?? dataRootPath("geonames-alternate")
 
 	const placesIngested = opts.countries.length
 		? await ingestGeonamesAliases(db, [...opts.countries], geonamesDir, undefined, {

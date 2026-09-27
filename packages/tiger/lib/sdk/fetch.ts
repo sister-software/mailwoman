@@ -1,46 +1,25 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Pull tiger geometry/attributes into a `node:sqlite` database via the Kysely
- *   {@link DatabaseClient}.
- *
- *   Replaces the ad-hoc wget and the retired corpus tiger build script. Pared down from the earlier draft's
- *   `generate-tiger-tiles.ts` (its per-level column mapping is the spec) into the playpen
- *   `repo-tools` idiom: an async generator of progress events, idempotent, no SpatiaLite.
- *
- *   Three levels:
- *
- *   - `tabblock20` (per state) — tabulation blocks → `tabblock20`, geometry as GeoJSON text.
- *   - `place` (per state) — incorporated/census places → `tiger_places` (attribute-only).
- *   - `addrfeat` (per county) — named street segments + ZIPs → `tiger_streets` (attribute-only).
- *
- *   `tiger_streets` + `tiger_places` match the schema the corpus `tiger` adapter reads, so this is a
- *   drop-in replacement for the retired corpus tiger build script.
- *
- *   Flow per source unit: download (skips a valid cached zip) → unzip → stream `ogr2ogr -f
- *   GeoJSONSeq` (mapping shapefile columns to the schema, WGS84 for geometry levels) → batched
- *   inserts. Re-running a state replaces its rows.
- */
-
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries } from "@mailwoman/core/fs/zip"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { ogr2ogrGeoJSONSeq } from "@mailwoman/spatial/tools/ogr-stream"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { dirname, join } from "path-ts"
+import { PathBuilder } from "path-ts"
 
 import { downloadIfNeeded } from "#sdk/download"
 import type { TIGERBlockTable, TIGERDatabase, TIGERPlaceTable, TIGERStreetTable } from "#sdk/schema"
 import { initializeTIGERSchema, TIGER_PRAGMAS } from "#sdk/schema"
 
 const CENSUS_HOST = "https://www2.census.gov"
-const DEFAULT_DATA_ROOT = mailwomanDataRoot()
+const DEFAULT_DATA_ROOT = dataRootPath()
 
 /**
- * Supported tiger levels. `tabblock20` is per state + carries geometry; `place`/`addrfeat` are attribute-only.
+ * A TIGER/Line product that {@link fetchTIGER} can load.
+ * Only the `tabblock20` level keeps geometry.
  */
 export type TIGERFetchLevel = "tabblock20" | "place" | "addrfeat"
 
@@ -56,51 +35,72 @@ const LEVEL_TABLE: Record<TIGERFetchLevel, keyof TIGERDatabase> = {
 	addrfeat: "tiger_streets",
 }
 
+/**
+ * Options for {@link fetchTIGER}.
+ */
 export interface FetchTIGEROptions {
 	/**
-	 * Two-digit state FIPS, e.g. `"06"`.
+	 * The two-digit state FIPS code, such as `"06"`.
 	 */
 	stateFIPS: string
+
 	/**
-	 * Tiger level. Default `tabblock20`.
+	 * The TIGER level to fetch.
+	 * The default is `tabblock20`.
 	 */
 	level?: TIGERFetchLevel
+
 	/**
-	 * Vintage. Default 2020 for blocks (matches the 2020 P.L.), 2024 for place/addrfeat (current).
+	 * The TIGER vintage year.
+	 *
+	 * The default is 2020 for blocks, which matches the 2020 redistricting data, and 2024 for other levels.
 	 */
 	vintage?: number
+
 	/**
-	 * Output SQLite path. Default `<dataRoot>/tiger/tiger.db` (the name the corpus `tiger` adapter reads).
+	 * The output SQLite path.
+	 *
+	 * The default is `<dataRoot>/tiger/tiger.db`, which the corpus `tiger` adapter reads.
 	 */
 	outPath?: string
+
 	/**
-	 * Download cache + default output root.
+	 * The root of the download cache and the default output.
+	 * The default is the Mailwoman data root.
 	 */
 	dataRoot?: string
+
 	/**
-	 * Optional three-digit county FIPS filter (blocks only — addrfeat is already per-county).
+	 * A three-digit county FIPS filter that applies only to the `tabblock20` level.
 	 */
 	county?: string
+
 	/**
-	 * Rows per insert. Default 1000.
+	 * The number of rows per insert batch.
+	 * The default is 1000.
 	 */
 	batchSize?: number
 }
 
+/**
+ * A progress event from {@link fetchTIGER}.
+ *
+ * Each event reports a file downloaded or found in the cache, a shapefile extracted, or rows inserted.
+ */
 export type FetchTIGEREvent =
 	| { phase: "download"; file: string; cached: boolean }
 	| { phase: "extract"; file: string }
 	| { phase: "load"; inserted: number; total: number }
 
+/**
+ * The database path, table name and inserted row count that {@link fetchTIGER} returns.
+ */
 export interface FetchTIGERResult {
 	outPath: string
 	table: string
 	inserted: number
 }
 
-/**
- * The earlier-draft column map for `tabblock20`. Geometry rides along implicitly.
- */
 function blockSelectSQL(layer: string, county?: string): string {
 	const where = county ? ` WHERE COUNTYFP20 = '${county}'` : ""
 
@@ -121,7 +121,6 @@ function selectSQL(level: TIGERFetchLevel, layer: string, county?: string): stri
 		case "place":
 			return `SELECT GEOID AS geoid, NAME AS name, STATEFP AS statefp, LSAD AS lsad, NAMELSAD AS namelsad, CLASSFP AS classfp FROM "${layer}"`
 		case "addrfeat":
-			// addrfeat has no statefp column — injected per-row from the state we're fetching.
 			return `SELECT LINEARID AS linearid, FULLNAME AS fullname, ZIPL AS zipl, ZIPR AS zipr FROM "${layer}" WHERE FULLNAME IS NOT NULL AND FULLNAME != ''`
 	}
 }
@@ -166,11 +165,7 @@ function buildRow(level: TIGERFetchLevel, p: Record<string, unknown>, geometry: 
 	}
 }
 
-/**
- * Scrape the addrfeat directory listing for a state's county FIPS codes.
- */
 async function discoverCounties(state: string, vintage: number): Promise<string[]> {
-	// The listing only — a small html index. The per-county archives below stay on raw `fetch`, streaming to disk.
 	const html = await new APIClient({ displayName: "tiger-listing", retry: true })
 		.fetch<string>({ url: `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/ADDRFEAT/`, responseType: "text" })
 		.then(pluckResponseData)
@@ -186,26 +181,25 @@ async function discoverCounties(state: string, vintage: number): Promise<string[
 }
 
 /**
- * Fetch one state's tiger data at `level` into a SQLite DB. Yields progress. returns the final tally.
+ * Downloads one state's TIGER/Line files at `level`, loads them into a SQLite database
+ * and yields progress events.
+ *
+ * It first deletes the state's existing rows from the target table so that a rerun replaces them.
  */
 export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<FetchTIGEREvent, FetchTIGERResult> {
 	const level = options.level ?? "tabblock20"
 	const vintage = options.vintage ?? (level === "tabblock20" ? 2020 : 2024)
-	const dataRoot = options.dataRoot ?? DEFAULT_DATA_ROOT
+	const dataRoot = PathBuilder.from(options.dataRoot ?? DEFAULT_DATA_ROOT)
 	const batchSize = options.batchSize ?? 1000
 	const state = options.stateFIPS
 	const table = LEVEL_TABLE[level]
 
-	const cacheDir = join(dataRoot, "tiger", String(vintage), state)
-	// Default to a stable, vintage-agnostic `tiger.db` — the filename the corpus `tiger` adapter reads
-	// (run-corpus-build → `${root}/tiger/tiger.db`). The vintage is a content detail rather than a path one.
-	// the per-table idempotent delete keeps a re-fetch (newer vintage) clean. The download cache stays
-	// vintage-partitioned below so zips don't collide across vintages.
-	const outPath = options.outPath ?? join(dataRoot, "tiger", "tiger.db")
-	await makeDirectories(cacheDir)
-	await makeDirectories(dirname(outPath))
+	const cacheDir = dataRoot("tiger", String(vintage), state)
 
-	// Source units: one (per-state) for block/place. one per county for addrfeat.
+	const outPath = PathBuilder.from(options.outPath ?? dataRoot("tiger", "tiger.db"))
+	await makeDirectories(cacheDir)
+	await makeDirectories(outPath.dirname())
+
 	const geoCodes = level === "addrfeat" ? await discoverCounties(state, vintage) : [""]
 
 	if (level === "addrfeat" && !geoCodes.length) {
@@ -216,11 +210,6 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	kdb.exec(TIGER_PRAGMAS)
 	await initializeTIGERSchema(kdb)
 
-	/**
-	 * `level` picks the table and the row shape, but nothing ties them at the type level: {@link buildRow} returns the
-	 * union and Kysely needs the arm's concrete row. The narrowings below are sound only because `buildRow` switches on
-	 * the same `level` — keep the two switches in step, or a row shape reaches the wrong table.
-	 */
 	const insertBatch = async (rows: Row[]): Promise<void> => {
 		if (level === "tabblock20") {
 			await kdb
@@ -241,7 +230,6 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 	}
 
 	try {
-		// Idempotent re-run: drop this state's rows first (state_code for blocks, statefp otherwise).
 		if (level === "tabblock20") {
 			await kdb.deleteFrom("tabblock20").where("state_code", "=", state).execute()
 		} else if (level === "place") {
@@ -264,7 +252,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 		for (const geo of geoCodes) {
 			const unit = level === "addrfeat" ? state + geo : state
 			const zipName = `tl_${vintage}_${unit}_${level}.zip`
-			const zipPath = join(cacheDir, zipName)
+			const zipPath = cacheDir(zipName)
 			const url = `${CENSUS_HOST}/geo/tiger/TIGER${vintage}/${LEVEL_DIR[level]}/${zipName}`
 
 			const cached = await downloadIfNeeded(url, zipPath)
@@ -272,7 +260,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 			await extractZipEntries(zipPath, cacheDir)
 			const layer = `tl_${vintage}_${unit}_${level}`
-			const shpPath = join(cacheDir, layer + ".shp")
+			const shpPath = cacheDir(layer + ".shp")
 			yield { phase: "extract", file: layer + ".shp" }
 
 			const args = [
@@ -307,7 +295,7 @@ export async function* fetchTIGER(options: FetchTIGEROptions): AsyncGenerator<Fe
 
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE);")
 
-		return { outPath, table, inserted }
+		return { outPath: outPath.toString(), table, inserted }
 	} finally {
 		await kdb.destroy()
 	}

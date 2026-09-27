@@ -16,7 +16,7 @@ import {
 import { sha256File } from "@mailwoman/core/hash"
 import { parseJSONStrict, tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { isPresent } from "@mailwoman/core/objects"
-import { basename, join } from "path-ts"
+import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -56,15 +56,22 @@ export interface RelabelGoldenOptions {
 	 */
 	input: string
 	/**
-	 * Output golden version dir. Created. never overwritten in place.
+	 * Output golden version dir.
+	 *
+	 * Created.
+	 * Never overwritten in place.
 	 */
 	output: string
 	/**
-	 * Review-deck jsonl path. Default `<output>/review-deck.jsonl`.
+	 * Review-deck jsonl path.
+	 *
+	 * Default `<output>/review-deck.jsonl`.
 	 */
 	deck?: string
 	/**
-	 * Parent version label recorded in the manifest. Default: the input dir's basename.
+	 * Parent version label recorded in the manifest.
+	 *
+	 * Default: the input dir's basename.
 	 */
 	parentLabel?: string
 	/**
@@ -72,7 +79,9 @@ export interface RelabelGoldenOptions {
 	 */
 	commit?: string
 	/**
-	 * Passed through to {@linkcode relabelGoldenStreetRow}. Default true.
+	 * Passed through to {@linkcode relabelGoldenStreetRow}.
+	 *
+	 * Default true.
 	 */
 	splitPrefix?: boolean
 }
@@ -106,8 +115,8 @@ const EMPTY_COUNTS = (): GoldenRelabelCounts => ({
 })
 
 /**
- * Classes that are left folded but still belong in the deck, because the operator asked to see them by name: a street
- * that is entirely one suffix word, and a bare post-directional tail.
+ * Classes that are left folded but still belong in the deck, because the operator asked to see
+ * them by name: a street that is entirely one suffix word, and a bare post-directional tail.
  */
 const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 	"suffix-only-street",
@@ -116,27 +125,31 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 ])
 
 /**
- * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck and a manifest that
- * records the convention, the parent, and the counts. Non-jsonl siblings (readme, split manifests) are copied forward
- * so the new version is self-contained. nested split dirs (`dev/`, `test/`) are relabelled recursively.
+ * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck
+ * and a manifest that records the convention, the parent, and the counts.
+ *
+ * Non-jsonl siblings (readme, split manifests) are copied forward so the new version is self-contained.
+ * Nested split dirs (`dev/`, `test/`) are relabelled recursively.
  */
 export async function relabelGoldenDirectory(
 	options: RelabelGoldenOptions,
 	report: (line: string) => void = console.log
 ): Promise<RelabelGoldenReport> {
 	const { input, output } = options
-	const deckPath = options.deck ?? join(output, "REVIEW-DECK.jsonl")
-	await makeDirectories(output)
+	const outputDir = PathBuilder.from(output)
+	// A string, because the report records it and its markdown sibling is named by suffix replacement.
+	const deckPath = options.deck ?? outputDir("REVIEW-DECK.jsonl").toString()
+	await makeDirectories(outputDir)
 
 	const deck: GoldenRelabelDeckEntry[] = []
 	const files: RelabelGoldenReport["files"] = {}
 
-	const walk = async (dirIn: string, dirOut: string, prefix: string): Promise<void> => {
+	const walk = async (dirIn: PathBuilder, dirOut: PathBuilder, prefix: string): Promise<void> => {
 		await makeDirectories(dirOut)
 
 		for await (const name of Globerator.from("*", { cwd: dirIn, withFileTypes: true, onlyFiles: false })) {
-			const from = join(dirIn, name.name)
-			const to = join(dirOut, name.name)
+			const from = dirIn(name.name)
+			const to = dirOut(name.name)
 
 			if (name.isDirectory()) {
 				await walk(from, to, `${prefix}${name.name}/`)
@@ -145,7 +158,8 @@ export async function relabelGoldenDirectory(
 			}
 
 			if (!name.name.endsWith(".jsonl")) {
-				// manifest is rewritten below. everything else (readme, split-manifest) rides forward.
+				// manifest is rewritten below.
+				// Everything else (readme, split-manifest) rides forward.
 				if (name.name !== "MANIFEST.json") {
 					await writeLocalFile(await readLocalBuffer(from), to)
 				}
@@ -161,11 +175,9 @@ export async function relabelGoldenDirectory(
 			let lineNumber = 0
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(from))) {
-				if (!line.trim()) continue
-
 				lineNumber++
-				// A corrupt answer-key line must stop the relabel rather than silently drop a row — a golden file
-				// short by one row is a floor threshold against a different denominator.
+				// A corrupt answer-key line must stop the relabel rather than silently drop a row.
+				// A golden file short by one row is a floor threshold against a different denominator.
 				const row = parseJSONStrict<GoldenStreetRow>(line)
 				const result = relabelGoldenStreetRow(row, { splitPrefix: options.splitPrefix ?? true })
 
@@ -208,7 +220,7 @@ export async function relabelGoldenDirectory(
 	}
 
 	report(`relabel ${input} → ${output}`)
-	await walk(input, output, "")
+	await walk(PathBuilder.from(input), outputDir, "")
 
 	await writeLocalJSONLFile(deck, deckPath)
 	await writeLocalFile(renderDeckMarkdown(deck, basename(input), basename(output)), deckPath.replace(/\.jsonl$/, ".md"))
@@ -221,7 +233,7 @@ export async function relabelGoldenDirectory(
 	for (const [name, stats] of Object.entries(files)) {
 		manifestFiles[name] = {
 			entries: stats.entries,
-			sha256: await sha256File(join(output, name)),
+			sha256: await sha256File(outputDir(name)),
 			changed: stats.changed,
 			flagged: stats.flagged,
 			prefix_split: stats.prefixSplit,
@@ -263,16 +275,19 @@ export async function relabelGoldenDirectory(
 		review_deck: basename(deckPath),
 	}
 
-	await writeLocalJSONFile(manifest, join(output, "MANIFEST.json"))
+	await writeLocalJSONFile(manifest, outputDir("MANIFEST.json"))
 	report(`✓ ${totalChanged} rows split, ${totalFlagged} flagged — deck at ${deckPath}`)
 
 	return { files, deckPath, outputDir: output, totalChanged, totalFlagged }
 }
 
 /**
- * Render the operator-facing half of the review deck: the flagged rows first (those are the ones asking for a ruling),
- * then the classes the tool left folded by name, then a sample of the ordinary corrections. The jsonl sibling carries
- * every row. this file is the one a human reads.
+ * Render the operator-facing half of the review deck: the flagged rows first
+ * (those are the ones asking for a ruling), then the classes the tool left folded by name,
+ * then a sample of the ordinary corrections.
+ *
+ * The jsonl sibling carries every row.
+ * This file is the one a human reads.
  */
 function renderDeckMarkdown(deck: GoldenRelabelDeckEntry[], parent: string, version: string): string {
 	const span = (components: Record<string, string>): string =>
@@ -329,10 +344,13 @@ export function isLeftFolded(rowClass: GoldenRelabelClass): boolean {
 }
 
 /**
- * True when a golden dir declares the US-split convention — i.e. it is safe to grade it with an unfolded scorer.
+ * True when a golden dir declares the US-split convention — i.e. it is safe
+ * to grade it with an unfolded scorer.
  */
-export async function goldenDeclaresSplitStreets(dir: string): Promise<boolean> {
-	for (const candidate of [join(dir, "MANIFEST.json"), join(dir, "..", "MANIFEST.json")]) {
+export async function goldenDeclaresSplitStreets(dir: PathBuilderLike): Promise<boolean> {
+	const root = PathBuilder.from(dir)
+
+	for (const candidate of [root("MANIFEST.json"), root.dirname()("MANIFEST.json")]) {
 		if (!(await pathExists(candidate))) continue
 
 		const manifest = tryParsingJSON<{ convention?: { street_convention?: Record<string, string> } }>(

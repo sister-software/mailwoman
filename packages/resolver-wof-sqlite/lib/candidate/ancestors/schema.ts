@@ -40,7 +40,7 @@
  *   whole, which is exactly the regime where that cost is void.
  *
  *   the DAG caveat, and the recorded choice: WOF places can carry more than one parent (multiple
- *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent — the closure rows
+ *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent. The closure rows
  *   are the complete containment record. A single interval pair can only encode a tree, so the
  *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
  *   containment tier, lowest ancestor id — the same MIN-stability convention the candidate table's
@@ -55,27 +55,29 @@
 
 import { sql, type Kysely } from "kysely"
 
-// Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase): Kysely's
-// DB parameter is invariant, so the DDL functions must take the full database type their caller
-// holds. Erased at runtime.
+// Type-only and circular on purpose (candidate-schema extends CandidateAncestorsDatabase): Kysely's DB
+// parameter is invariant, so the DDL functions must take the full database type their caller holds.
+// Erased at runtime.
 import type { CandidateDatabase } from "#candidate/schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * The deepest chain the sidecar stores per place. WOF containment within the resolvable placetypes (country …
- * microhood) never legitimately exceeds this. anything past it is source noise the build drops (and counts) rather than
- * stores.
+ * The deepest chain the sidecar stores per place.
+ *
+ * WOF containment within the resolvable placetypes (country … microhood) never legitimately exceeds this.
+ * Anything past it is source noise the build drops (and counts) rather than stores.
  */
 export const MAX_ANCESTOR_DEPTH = 8
 
 /**
- * The closure-row table's name — probed with `hasTable` by the reader, so an artifact predating the sidecar degrades to
- * "no ancestors capability" rather than `no such table`.
+ * The closure-row table's name — probed with `hasTable` by the reader, so an artifact
+ * predating the sidecar degrades to "no ancestors capability" rather than `no such table`.
  */
 export const CANDIDATE_ANCESTOR_TABLE = "candidate_ancestor"
 
 /**
- * The interval-label table's name — the closure table's seal-time sibling. existence-restricted the same way.
+ * The interval-label table's name — the closure table's seal-time sibling.
+ * Existence-restricted the same way.
  */
 export const CANDIDATE_INTERVAL_TABLE = "candidate_interval"
 
@@ -101,19 +103,24 @@ export interface CandidateAncestorTable {
 	 */
 	parent_placetype_id: number
 	/**
-	 * The ancestor's canonical display name — what {@link Ancestor.name} serves, matching the FTS backend's register.
+	 * The ancestor's canonical display name.
+	 *
+	 * What {@link Ancestor.name} serves, matching the FTS backend's register.
 	 */
 	parent_name: string
 	/**
-	 * The shared {@link normalizeLocalityForKey} fold of `parent_name` — comparable against `candidate.name_key` and
-	 * against a query-side fold under one normalizer, by construction.
+	 * The shared {@link normalizeLocalityForKey} fold of `parent_name` — comparable against
+	 * `candidate.name_key` and against a query-side fold under one normalizer, by construction.
 	 */
 	parent_name_key: NameKey
 }
 
 /**
- * Pre/post-order labels over the canonical-parent forest — one row per place with recorded ancestry (see the module
- * docstring for absence semantics). `pre < post` always. labels are unique across the artifact.
+ * Pre/post-order labels over the canonical-parent forest — one row per place with
+ * recorded ancestry (see the module docstring for absence semantics).
+ *
+ * `pre < post` always.
+ * Labels are unique across the artifact.
  */
 export interface CandidateIntervalTable {
 	spr_id: number
@@ -122,8 +129,10 @@ export interface CandidateIntervalTable {
 }
 
 /**
- * The sidecar tables, for a `Kysely` view over the candidate DB. `CandidateDatabase` (candidate-schema.ts) extends
- * this, so the builder's one typed client sees both families.
+ * The sidecar tables, for a `Kysely` view over the candidate DB.
+ *
+ * `CandidateDatabase` (candidate-schema.ts) extends this, so the builder's
+ * one typed client sees both families.
  */
 export interface CandidateAncestorsDatabase {
 	candidate_ancestor: CandidateAncestorTable
@@ -131,8 +140,11 @@ export interface CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate_ancestor` columns in clustered-key order — the first two are the primary key, and the builder's
- * positional `insert` binds by this order. Keep in sync with {@link CandidateAncestorTable}.
+ * The `candidate_ancestor` columns in clustered-key order.
+ *
+ * The first two are the primary key, and the builder's positional `insert` binds by this order.
+ *
+ * Keep in sync with {@link CandidateAncestorTable}.
  */
 export const CANDIDATE_ANCESTOR_COLUMNS = [
 	"spr_id",
@@ -144,8 +156,10 @@ export const CANDIDATE_ANCESTOR_COLUMNS = [
 ] as const
 
 /**
- * Create the clustered closure table. The builder inserts in `(spr_id, depth)` order so the B-tree leaves are
- * contiguous per place — the byte-range read discipline.
+ * Create the clustered closure table.
+ *
+ * The builder inserts in `(spr_id, depth)` order so the B-tree leaves are contiguous
+ * per place — the byte-range read discipline.
  */
 export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -157,13 +171,15 @@ export async function createCandidateAncestorTable(db: Kysely<CandidateDatabase>
 		.addColumn("parent_name", "text", (c) => c.notNull())
 		.addColumn("parent_name_key", "text", (c) => c.notNull())
 		.addPrimaryKeyConstraint("candidate_ancestor_pk", ["spr_id", "depth"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
 
 /**
- * Create the interval-label table. Small rows probed by primary key — the `without rowid` win case.
+ * Create the interval-label table.
+ *
+ * Small rows probed by primary key — the `without rowid` win case.
  */
 export async function createCandidateIntervalTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -176,7 +192,8 @@ export async function createCandidateIntervalTable(db: Kysely<CandidateDatabase>
 }
 
 /**
- * One place's interval label — the shape both sides of a containment comparison read.
+ * One place's interval label.
+ * The shape both sides of a containment comparison read.
  */
 export interface IntervalLabel {
 	pre: number
@@ -184,10 +201,12 @@ export interface IntervalLabel {
 }
 
 /**
- * Does `outer` contain `inner` along the canonical hierarchy? Reflexive: a place contains itself (containment
- * degenerates to identity, the same reading the admin-coherence check gives a self-match). The shared function for
- * every consumer of the labels — a re-derived comparison risks disagreeing at exactly the strict/inclusive boundary
- * this line settles.
+ * Does `outer` contain `inner` along the canonical hierarchy?
+ *
+ * Reflexive: a place contains itself (containment degenerates to identity,
+ * the same reading the admin-coherence check gives a self-match).
+ * The shared function for every consumer of the labels — a re-derived comparison risks
+ * disagreeing at exactly the strict/inclusive boundary this line settles.
  */
 export function intervalContains(outer: IntervalLabel, inner: IntervalLabel): boolean {
 	return outer.pre <= inner.pre && inner.post <= outer.post

@@ -26,8 +26,9 @@ describe("evidence constructors", () => {
 		expect(e).not.toHaveProperty("vintage")
 	})
 
-	// filer.db enforces this in SQL (`filer_family_match_score_inferred_only`). The same rule has to hold here or the
-	// two disagree the moment a caller builds a Relation outside the database.
+	// filer.db enforces this in SQL (`filer_family_match_score_inferred_only`).
+	// The same rule has to hold here or the two disagree the moment a caller
+	// builds a Relation outside the database.
 	it("an authoritative relation refuses a score", () => {
 		expect(() =>
 			relation({

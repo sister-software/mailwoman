@@ -1001,19 +1001,19 @@ describe("resolveTilesPath", () => {
 ```ts
 import { existsSync } from "node:fs"
 import { $public } from "@mailwoman/core/env"
-import { dataRootPath } from "@mailwoman/core/utils"
+import { dataRootPath } from "@mailwoman/core/data-root"
 
 export function resolveTilesPath(flagValue?: string): string | null {
 	if (flagValue) return flagValue
 	if ($public.MAILWOMAN_TILES) return $public.MAILWOMAN_TILES
 
-	const fallback = String(dataRootPath("tiles", "planet.pmtiles"))
+	const fallback = dataRootPath("tiles", "planet.pmtiles")
 
 	return existsSync(fallback) ? fallback : null
 }
 ```
 
-- [ ] **Step 3: Lab convenience (manual rather than in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s /mnt/playpen/protomaps/20260521.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
+- [ ] **Step 3: Lab convenience (manual rather than in code):** `mkdir -p $MAILWOMAN_DATA_ROOT/tiles && ln -s <protomaps-planet-dump>.pmtiles $MAILWOMAN_DATA_ROOT/tiles/planet.pmtiles` — record the command in the PR description, do not script it.
 
 - [ ] **Step 4: Commit.** `geocode: tiles path resolution for the debug map pane`
 

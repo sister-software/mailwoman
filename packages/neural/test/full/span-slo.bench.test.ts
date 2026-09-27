@@ -17,17 +17,18 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { WebONNXRunner } from "@mailwoman/neural/web-onnx-runner"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
- * `weightsCachePackageDir` owns the `node_modules/<package>` segment — the layout belongs to the weights package, and a
- * hand-assembled path into it reads a missing artifact as "absent" rather than "looked in the wrong place".
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment.
+ * The layout belongs to the weights package, and a hand-assembled path into it reads
+ * a missing artifact as "absent" rather than "looked in the wrong place".
  */
-function stagedModel(cacheName: string): string {
-	return join(weightsCachePackageDir(String(tempRootPath(cacheName)), "en-us"), "model.onnx")
+function stagedModel(cacheName: string): PathBuilder {
+	return weightsCachePackageDir(tempRootPath(cacheName), "en-us")("model.onnx")
 }
 
 const V264 = stagedModel("v264-cache")
@@ -38,7 +39,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 	it("reports the browser-runtime cost of the span graph", async () => {
 		const ids = Array.from({ length: 24 }, (_, i) => 100 + i)
 
-		const bench = async (path: string): Promise<{ ms: number; spans: boolean }> => {
+		const bench = async (path: PathBuilder): Promise<{ ms: number; spans: boolean }> => {
 			const runner = await WebONNXRunner.fromBytes(new Uint8Array(await readLocalBuffer(path)), { useWebGPU: false })
 
 			for (let i = 0; i < 8; i++) {
@@ -64,9 +65,9 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		console.log(`  delta           : ${(b.ms - a.ms).toFixed(2)} ms (${((100 * (b.ms - a.ms)) / a.ms).toFixed(1)}%)`)
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
 
-		// Timing is reported rather than asserted, being machine-dependent. What the comparison is
-		// actually for — that v264 emits no span scores and v301 does — is an invariant, and was
-		// going unchecked.
+		// Timing is reported rather than asserted, being machine-dependent.
+		// What the comparison is actually for — that v264 emits no span scores
+		// and v301 does — is an invariant, and was going unchecked.
 		expect(a.spans).toBe(false)
 		expect(b.spans).toBe(true)
 	}, 300_000)

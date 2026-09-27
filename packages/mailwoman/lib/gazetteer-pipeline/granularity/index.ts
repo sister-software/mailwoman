@@ -2,31 +2,14 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The gazetteer depth ladder — per-country measurement of where the admin gazetteer bottoms out,
- *   worldwide. Built 2026-08-02 after a probe found the shipped `admin-global-priority.db` stocks 9
- *   of WOF's 34 placetypes and carries a `dependent_locality` tier in 11 of 244 countries. the venue
- *   tier is empty. "Is WOF granular enough" had never been measured, and this module is the
- *   instrument.
- *
- *   Rung membership derives from `PLACETYPE_PROJECTION` so the scorecard and the placetype census
- *   can never disagree about what projects where. rung order is explicit here, because "bottoms out
- *   at" needs an ordering the projection map does not carry.
- *
- *   Two different presence rules, deliberately. Rungs at or above `locality` are measured by node
- *   presence — a country either has region rows or it does not. Rungs below it are measured by
- *   parent-coverage share: the fraction of the country's locality-class nodes carrying at least one
- *   child projecting onto that rung. That statistic is not invented here — the placetype-census
- *   probe measured GB's dependent-locality share at 33.2% of 16,987 locality-class surfaces and
- *   found it to be real conditional evidence, while within-node share carried none (WOF rarely
- *   parents a locality under a locality, so covered nodes read ~100% across the board).
- *
- *   Read-only against the admin DB: no network, no model, no writes.
+ *   Measures how deep each country's admin-gazetteer coverage reaches on the containment ladder.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { GEONAMES_ID_BASE, OVERTURE_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
@@ -34,9 +17,8 @@ import { PLACETYPE_PROJECTION } from "#gazetteer-pipeline/placetype-census"
 export { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * The containment rungs, shallowest first. `postcode` is deliberately absent: it is an orthogonal channel (the
- * postcode-anchor path already ships, and `postalcode` has its own build), and folding it into a depth ladder would
- * make "bottoms out at" incoherent.
+ * The containment rungs from broadest to deepest.
+ * Postcode is not a rung.
  */
 export const LADDER: readonly ComponentTag[] = [
 	"country",
@@ -49,8 +31,9 @@ export const LADDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Rungs measured by parent-coverage share rather than node presence — everything below the locality backbone, which is
- * the denominator those shares are taken against.
+ * The rungs below locality.
+ *
+ * They count as reached by parent coverage instead of node presence.
  */
 export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"dependent_locality",
@@ -59,14 +42,12 @@ export const SUB_LOCALITY_RUNGS: ReadonlySet<ComponentTag> = new Set<ComponentTa
 ])
 
 /**
- * The locality-class placetypes that host address-containing children — the parent set and the parent-coverage
- * denominator. Matches `PARENT_PLACETYPES` in `placetype-census.ts` by construction.
+ * The locality-class placetypes that serve as parents in coverage calculations.
  */
 export const PARENT_PLACETYPES: readonly string[] = ["locality", "localadmin"]
 
 /**
- * WOF placetypes projecting onto a rung, sorted. Derived from {@link PLACETYPE_PROJECTION} rather than hand-listed, so
- * adding a placetype to the projection table automatically widens the rung it belongs to.
+ * Returns the sorted WOF placetypes that `PLACETYPE_PROJECTION` maps to a rung.
  */
 export function placetypesForRung(rung: ComponentTag): string[] {
 	return Object.entries(PLACETYPE_PROJECTION)
@@ -76,53 +57,48 @@ export function placetypesForRung(rung: ComponentTag): string[] {
 }
 
 /**
- * One rung's measurement for one country. A rung the builder looked AT and found empty is a present row of zeroes. a
- * rung with no measurable source is absent from {@link CountryGranularity.rungs} entirely. Collapsing those two would
- * violate the meaning-of-zero requirement inside the artifact.
+ * One country's measurement at one rung.
  */
 export interface RungMeasurement {
 	/**
-	 * Current, non-deprecated nodes at this rung, both sources combined.
+	 * Current, non-deprecated nodes at this rung from all sources.
 	 */
 	nodes: number
 	/**
-	 * How many of {@link nodes} are Overture-backfilled (`OVERTURE_ID_BASE <= id < GEONAMES_ID_BASE`) rather than real
-	 * WOF. For the Overture backfill set the locality rung and above are Overture, so a report that hid this would
-	 * present self-comparison as corroboration.
+	 * How many of {@link nodes} come from the Overture backfill, with IDs from
+	 * `OVERTURE_ID_BASE` up to `GEONAMES_ID_BASE`.
 	 */
 	overtureBackfilled: number
 	/**
-	 * How many of {@link nodes} come from the GeoNames alias fold (`id >= GEONAMES_ID_BASE`). Split out from
-	 * {@link overtureBackfilled} because a single `id >= OVERTURE_ID_BASE` test sweeps these in and mislabels every
-	 * GeoNames-only country's rows as Overture.
+	 * How many of {@link nodes} come from the GeoNames fold, with IDs at or above `GEONAMES_ID_BASE`.
 	 */
 	geonamesBackfilled: number
 	/**
-	 * Distinct locality-class parents carrying at least one child projecting onto this rung.
+	 * Distinct locality-class parents with at least one descendant at this rung.
 	 */
 	parentsCovered: number
 	/**
-	 * {@link parentsCovered} over the country's locality-class node count. Zero when the country has no locality parents.
+	 * {@link parentsCovered} divided by the country's locality-class node count,
+	 * or zero when the country has none.
 	 */
 	parentCoverage: number
 }
 
 /**
- * One country's ladder.
+ * One country's measurements at every rung.
  */
 export interface CountryGranularity {
 	country: string
 	/**
-	 * The parent-coverage denominator: current, non-deprecated `locality`/`localadmin` nodes.
+	 * The number of current, non-deprecated `locality` and `localadmin` nodes.
+	 * It is the parent-coverage denominator.
 	 */
 	localityParents: number
 	rungs: Partial<Record<ComponentTag, RungMeasurement>>
 }
 
 /**
- * Build a `case` expression projecting a placetype column onto a rung name, generated from the projection table so it
- * cannot drift from it. Placetypes projecting onto nothing in {@link ladder} fall through to NULL and are filtered by
- * the caller's `where`.
+ * Builds a SQL `CASE` expression that maps a placetype column to its rung.
  */
 function rungCaseExpression(column: string): string {
 	const whens = LADDER.flatMap((rung) =>
@@ -133,21 +109,16 @@ function rungCaseExpression(column: string): string {
 }
 
 /**
- * Every placetype that lands on a ladder rung — the `IN` list bounding both queries.
+ * Returns every placetype that maps to a ladder rung.
  */
 function ladderPlacetypes(): string[] {
 	return LADDER.flatMap((rung) => placetypesForRung(rung))
 }
 
 /**
- * Measure the depth ladder for every country in the admin DB.
- *
- * Read-only. Three grouped queries: node counts per (country, rung) with the source split, distinct covered parents per
- * (country, rung) through `ancestors`, and the locality-class denominator. The projection runs in SQL because a parent
- * with both a borough child and a neighbourhood child must count once toward `dependent_locality` — counting distinct
- * parents per placetype and summing in JS would double it.
+ * Measures every country's ladder from a read-only admin database.
  */
-export function buildGranularityLadder(adminDBPath: string): CountryGranularity[] {
+export function buildGranularityLadder(adminDBPath: PathBuilderLike): CountryGranularity[] {
 	using db = new DatabaseClient<WOFDatabase>(adminDBPath, { readOnly: true })
 
 	const placetypeList = ladderPlacetypes()
@@ -155,7 +126,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 		.join(", ")
 
 	const parentList = PARENT_PLACETYPES.map((placetype) => `'${placetype}'`).join(", ")
-	// Alias-qualified: the parent query joins `spr` to itself, so an unqualified `is_deprecated` is ambiguous.
+	// The columns are qualified because the parent query joins `spr` to itself.
 	const live = (alias: string): string => `${alias}.is_current != 0 AND ${alias}.is_deprecated = 0`
 
 	const nodeRows = db
@@ -211,8 +182,7 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 
 		if (existing) return existing
 
-		// Seed every rung at zero: the country was measured, so an empty rung is a present zero. A rung with no
-		// measurable source at all is dropped by the caller rather than left implicit here.
+		// Every rung starts at zero, because a measured country with no nodes at a rung has a real zero.
 		const rungs: Partial<Record<ComponentTag, RungMeasurement>> = {}
 
 		for (const rung of LADDER) {
@@ -260,11 +230,11 @@ export function buildGranularityLadder(adminDBPath: string): CountryGranularity[
 }
 
 /**
- * The deepest rung a country actually reaches, or `null` when it has nothing live at any rung.
+ * Returns the deepest rung a country reaches, or `null` when it reaches none.
  *
- * Two presence rules, because parent-coverage is only meaningful below the locality backbone — the backbone is its
- * denominator. At or above `locality`, a rung counts as reached when it has any nodes. Below it, when parent-coverage
- * clears `floor`.
+ * A rung at or above `locality` is reached when it has any nodes.
+ * A rung below `locality` is reached when its parent coverage is at least `floor`,
+ * because locality nodes are the coverage denominator.
  */
 export function bottomsOutAt(country: CountryGranularity, floor: number = DEFAULT_COVERAGE_FLOOR): ComponentTag | null {
 	for (const rung of [...LADDER].toReversed()) {

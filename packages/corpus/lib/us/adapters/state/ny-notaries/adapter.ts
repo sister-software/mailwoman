@@ -18,17 +18,19 @@ import { isPresent } from "@mailwoman/core/objects"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const STATE_NY_NOTARIES_ADAPTER_ID = "state-ny-notaries"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const STATE_NY_NOTARIES_DEFAULT_LICENSE = "Public Domain"
 
@@ -37,6 +39,8 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 		id: STATE_NY_NOTARIES_ADAPTER_ID,
 		defaultLicense: STATE_NY_NOTARIES_DEFAULT_LICENSE,
 		addressRole: AddressRole.Practice,
+		register: SourceRegister.NewYorkNotaries,
+		surface: SurfaceOrigin.Attested,
 		description: "New York Commissioned Notaries — name + optional business address (public-domain).",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -50,26 +54,19 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			for await (const rawRecord of rows as AsyncIterable<Record<string, string>>) {
+			for await (const record of rows as AsyncIterable<Record<string, string>>) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				// NY CSV has columns with leading spaces, so we normalize by trimming keys.
-				const record: Record<string, string> = {}
-
-				for (const key of Object.keys(rawRecord)) {
-					record[key.trim()] = rawRecord[key] ?? ""
-				}
-
-				const holderName = (record["Commission Holder Name"] ?? "").trim()
-				const businessName = (record["Business Name (if available)"] ?? "").trim()
-				const address1 = (record["Business Address 1 (if available)"] ?? "").trim()
-				const address2 = (record["Business Address 2 (if available)"] ?? "").trim()
-				const city = (record["Business City (if available)"] ?? "").trim()
-				const stateAbbr = (record["Business State (if available)"] ?? "").trim()
-				const zip = (record["Business Zip (if available)"] ?? "").trim()
-				const county = (record["Commissioned County"] ?? "").trim()
+				const holderName = record["Commission Holder Name"] ?? ""
+				const businessName = record["Business Name (if available)"] ?? ""
+				const address1 = record["Business Address 1 (if available)"] ?? ""
+				const address2 = record["Business Address 2 (if available)"] ?? ""
+				const city = record["Business City (if available)"] ?? ""
+				const stateAbbr = record["Business State (if available)"] ?? ""
+				const zip = record["Business Zip (if available)"] ?? ""
+				const county = record["Commissioned County"] ?? ""
 
 				if (!city || !stateAbbr || !zip) continue
 
@@ -104,7 +101,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const commNum = (record["Commission Number (UID)"] ?? "").trim()
+				const commNum = record["Commission Number (UID)"] ?? ""
 
 				const sourceID = commNum
 					? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`

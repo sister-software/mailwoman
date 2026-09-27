@@ -13,7 +13,7 @@
  *   negative half, and IT matters more here than IT did FOR the flood layer. Inland English points and Welsh
  *   and Scottish coastal points must come back `unknown` with no designation. Wales publishes ncerm on the
  *   previous generation's vocabulary (three periods from a 2005 base, percentile bands) and Scotland's Dynamic
- *   Coast carries an explicit prohibition on property-level assessment — neither is interchangeable with
+ *   Coast carries an explicit prohibition on property-level assessment. Neither is interchangeable with
  *   England's — and an inland English point is the case this layer's whole coverage posture exists for. A
  *   positive-only check would pass on an artifact that reported the entire country as designated.
  *
@@ -30,6 +30,7 @@
  */
 
 import { geometryContains, nearestRingEdgeMetres } from "@mailwoman/spatial"
+import type { PathBuilderLike } from "path-ts"
 
 import { CoastalErosionLookup, CoastalReadingKind, type CoastalErosionReading } from "#index"
 import type { ServiceFeatureReader } from "#sdk/verify/service"
@@ -38,7 +39,8 @@ export { createEAServiceReader, type ServiceFeature, type ServiceFeatureReader }
 export { sampleAgreementPoints } from "#sdk/verify/sample"
 
 /**
- * How close to a service-polygon edge a disagreement is attributed to the channels' differing coordinate precision.
+ * How close to a service-polygon edge a disagreement is attributed to the
+ * channels' differing coordinate precision.
  */
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
@@ -62,9 +64,10 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what separates a real defect from the two
-	 * channels rendering the same edge differently — and a receipt that omits it forces a re-run. `undefined` means the
-	 * service returned no polygon at all near the point.
+	 * Carried on every row rather than only the tolerated ones, because it is what
+	 * separates a real defect from the two channels rendering the same edge differently,
+	 * and a receipt that omits it forces a re-run.
+	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -79,7 +82,8 @@ export interface OutsideRow {
 	kind: string
 	designations: number
 	/**
-	 * True when the artifact answered `unknown` with no designation — the only acceptable reading here.
+	 * True when the artifact answered `unknown` with no designation.
+	 * The only acceptable reading here.
 	 */
 	passed: boolean
 }
@@ -94,13 +98,19 @@ export interface VerifyCoastalResult {
 }
 
 /**
- * Points this product's mapping does not reach, named. Each is a place rather than a bare pair of numbers: a coordinate
- * a reader cannot name is a coordinate nobody can check.
+ * Points this product's mapping does not reach, named.
  *
- * Two populations, and both are required. The inland English points are the case this layer's coverage posture exists
- * for — a builder that generalized the flood rule would answer them confidently. The Welsh and Scottish coastal points
- * are the case the flood layer's negative half exists for, and they are on the coast here rather than inland, so they
- * also confirm the artifact is clipped to the English product rather than to "the island".
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader
+ * cannot name is a coordinate nobody can check.
+ *
+ * Two populations, and both are required.
+ * The inland English points are the case this layer's coverage posture exists for.
+ *
+ * A builder that generalized the flood rule would answer them confidently.
+ *
+ * The Welsh and Scottish coastal points are the case the flood layer's negative half
+ * exists for, and they are on the coast here rather than inland, so they also confirm
+ * the artifact is clipped to the English product rather than to "the island".
  */
 export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Birmingham city centre, inland England", latitude: 52.4796, longitude: -1.9026 },
@@ -114,16 +124,21 @@ export const OUTSIDE_MAPPING_POINTS: ReadonlyArray<{ label: string; latitude: nu
 ]
 
 export interface VerifyCoastalOptions {
-	databasePath: string
+	databasePath: PathBuilderLike
 	readServiceFeatures: ServiceFeatureReader
 	/**
-	 * Points to re-ask the service about. A caller samples them from the artifact — see {@link sampleAgreementPoints}.
+	 * Points to re-ask the service about.
+	 *
+	 * A caller samples them from the artifact — see {@link sampleAgreementPoints}.
 	 */
 	points: ReadonlyArray<{ label: string; latitude: number; longitude: number; scenarioKey: string }>
 	outsidePoints?: ReadonlyArray<{ label: string; latitude: number; longitude: number }>
 	/**
-	 * The scenario the negative half is asked under. Every scenario must answer `unknown` at these points. one is checked
-	 * because the negative half is about the artifact's extent rather than about a scenario's semantics.
+	 * The scenario the negative half is asked under.
+	 *
+	 * Every scenario must answer `unknown` at these points.
+	 * One is checked because the negative half is about the artifact's extent
+	 * rather than about a scenario's semantics.
 	 */
 	outsideScenarioKey: string
 	onProgress?: (message: string) => void
@@ -190,8 +205,9 @@ export async function verifyCoastalDatabase(options: VerifyCoastalOptions): Prom
 }
 
 /**
- * Whether the service's own geometry contains the point, decided here with the same even-odd rule the artifact's reader
- * uses — so what is compared is a verdict against a verdict.
+ * Whether the service's own geometry contains the point, decided here with the
+ * same even-odd rule the artifact's reader uses.
+ * So what is compared is a verdict against a verdict.
  */
 async function readServiceContainment(
 	readServiceFeatures: ServiceFeatureReader,

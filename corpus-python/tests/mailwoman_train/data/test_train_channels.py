@@ -9,7 +9,7 @@ surface channel trained on zeros from v3.16.0 through the shipped v3.24.0 bundle
 shipped model's ``locality_surface_token_embedding`` is still exactly zeros-init.
 
 The invariant enforced here: with every optional channel populated, ``_to_tensor_batch`` must emit
-exactly the keys ``collate`` produced. Equality (not subset) is deliberate — an extra key would
+exactly the keys ``collate`` produced. Equality (not subset) is deliberate. An extra key would
 crash ``model(**tb)`` loudly, a dropped key is the silent failure this test exists to catch. Adding
 a channel to ``EncodedExample``/``collate`` without the tensor conversion now fails here instead of
 shipping a frozen-at-init projection.

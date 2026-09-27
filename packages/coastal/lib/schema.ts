@@ -28,8 +28,8 @@
  *   the whole-cell SET is compacted PER feature, SO IT is mixed-resolution. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
  *   present. `layer_coverage` is not compacted and stays single-resolution, because
- *   `recoverCoverageResolution` recovers one resolution from the stored cells and throws on a table that
- *   mixes them.
+ *   `recoverShortCellResolution` from `@mailwoman/spatial` recovers one resolution from the stored cells
+ *   and throws on a table that mixes them.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -41,11 +41,16 @@ import { sql, type Kysely } from "kysely"
  */
 export const CoastalCellContainment = {
 	/**
-	 * Every point in the cell is inside the zone. Answered from the index alone, with no geometry read.
+	 * Every point in the cell is inside the zone.
+	 *
+	 * Answered from the index alone, with no geometry read.
 	 */
 	Whole: "whole",
 	/**
-	 * The zone boundary crosses the cell. The index has narrowed the candidate polygons. the point test decides.
+	 * The zone boundary crosses the cell.
+	 *
+	 * The index has narrowed the candidate polygons.
+	 * The point test decides.
 	 */
 	Partial: "partial",
 } as const
@@ -53,16 +58,21 @@ export const CoastalCellContainment = {
 export type CoastalCellContainment = (typeof CoastalCellContainment)[keyof typeof CoastalCellContainment]
 
 /**
- * One authority erosion polygon, verbatim. A plain rowid table: it holds a geometry blob, which is the one shape
- * `without rowid` hurts.
+ * One authority erosion polygon, verbatim.
+ *
+ * A plain rowid table: it holds a geometry blob, which is the one shape `without rowid` hurts.
  */
 export interface CoastalZoneAreaTable {
 	/**
-	 * `<scenario key>:<objectid>` — see this file's header for why the frontage id cannot serve.
+	 * `<scenario key>:<objectid>`.
+	 *
+	 * See this file's header for why the frontage id cannot serve.
 	 */
 	area_id: string
 	/**
-	 * One of `NCERM_SCENARIOS`' keys. Carried as its own column rather than only inside `area_id`, because every probe is
+	 * One of `NCERM_SCENARIOS`' keys.
+	 *
+	 * Carried as its own column rather than only inside `area_id`, because every probe is
 	 * scenario-scoped and a probe that had to parse a key would be parsing a key.
 	 */
 	scenario_key: string
@@ -79,19 +89,24 @@ export interface CoastalZoneAreaTable {
 	 */
 	climate_allowance: string
 	/**
-	 * The authority's `frontageid`. Not unique — see the header.
+	 * The authority's `frontageid`.
+	 *
+	 * Not unique — see the header.
 	 */
 	frontage_id: number
 	/**
-	 * Cumulative erosion distance in metres, from the scenario's own distance column. Measured range 0–386 m on
-	 * NFI/2055/0CC and 0–1,053 m on SMP/2105/95CC, with no nulls in either.
+	 * Cumulative erosion distance in metres, from the scenario's own distance column.
+	 *
+	 * Measured range 0–386 m on NFI/2055/0CC and 0–1,053 m on SMP/2105/95CC, with no nulls in either.
 	 */
 	distance_m: number
 	smp_no: number | null
 	smp_name: string | null
 	smp_pu: string | null
 	/**
-	 * `mt_smp`, verbatim. NULL on NFI rows, where the source publishes no policy because no intervention is assumed.
+	 * `mt_smp`, verbatim.
+	 *
+	 * NULL on NFI rows, where the source publishes no policy because no intervention is assumed.
 	 */
 	mt_policy: string | null
 	/**
@@ -101,16 +116,21 @@ export interface CoastalZoneAreaTable {
 	lt_policy: string | null
 	lt_policy_interp: string | null
 	/**
-	 * `def_type`, verbatim. Compared case-folded, never stored folded.
+	 * `def_type`, verbatim.
+	 *
+	 * Compared case-folded, never stored folded.
 	 */
 	defence_type: string | null
 	/**
-	 * 2024, or 0 on the 87 anomalous rows. Carried, never coerced: the Environment Agency documents no meaning for them.
+	 * 2024, or 0 on the 87 anomalous rows.
+	 *
+	 * Carried, never coerced: the Environment Agency documents no meaning for them.
 	 */
 	published_year: number | null
 	/**
-	 * The source's own `maxoverlap`, in metres. Non-zero on 3,727 of 7,492 rows on one measured layer, which is why a
-	 * reading can name several polygons.
+	 * The source's own `maxoverlap`, in metres.
+	 *
+	 * Non-zero on 3,727 of 7,492 rows on one measured layer, which is why a reading can name several polygons.
 	 */
 	max_overlap: number | null
 	min_lat: number
@@ -118,7 +138,10 @@ export interface CoastalZoneAreaTable {
 	max_lat: number
 	max_lon: number
 	/**
-	 * The authority's ring coordinates, unsimplified — see `rings.ts` for the layout and the point test.
+	 * The authority's ring coordinates, unsimplified.
+	 *
+	 * `@mailwoman/spatial`'s ring-blob encoding defines the layout.
+	 * `pointInEncodedRings` is the point test.
 	 */
 	rings: Uint8Array
 }
@@ -126,19 +149,24 @@ export interface CoastalZoneAreaTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than on a class, because an erosion answer is the polygon — its distance, its policy and
- * its defence are per feature. `scenario_key` is a column so a scenario-scoped probe reads one cell's rows and keeps
- * the scenario it asked for, without ever seeing another scenario's answer.
+ * Keyed on the polygon rather than on a class, because an erosion answer is the polygon.
+ * Its distance, its policy and its defence are per feature.
+ *
+ * `scenario_key` is a column so a scenario-scoped probe reads one cell's rows
+ * and keeps the scenario it asked for, without ever seeing another scenario's answer.
  */
 export interface CoastalZoneCellTable {
 	/**
-	 * 48-bit short H3 cell. Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay at the
-	 * resolution the feature was indexed at.
+	 * 48-bit short H3 cell.
+	 *
+	 * Mixed-resolution: `whole` rows are compacted parent-ward, `partial` rows stay
+	 * at the resolution the feature was indexed at.
 	 */
 	h3_cell: number
 	/**
-	 * The resolution this row's cell was captured at. A short cell does not name its own resolution, and a table that
-	 * mixes them cannot be probed without it.
+	 * The resolution this row's cell was captured at.
+	 *
+	 * A short cell does not name its own resolution, and a table that mixes them cannot be probed without it.
 	 */
 	resolution: number
 	scenario_key: string
@@ -150,12 +178,14 @@ export interface CoastalZoneCellTable {
 }
 
 /**
- * Ncerm's two ground-instability layers — a different hazard, kept apart so a reader cannot answer an erosion question
- * from a landslide polygon.
+ * Ncerm's two ground-instability layers.
  *
- * 160 rows in total (80 per layer, sharing feature ids and attributes and differing in geometry), which is why they
- * carry no cell index: a bounding-box scan over 160 rows costs less than the index would, and the absence of an index
- * is itself the structure that keeps this hazard off the erosion probe.
+ * A different hazard, kept apart so a reader cannot answer an erosion question from a landslide polygon.
+ *
+ * 160 rows in total (80 per layer, sharing feature ids and attributes and differing in geometry),
+ * which is why they carry no cell index: a bounding-box scan over 160 rows costs
+ * less than the index would, and the absence of an index is itself the structure
+ * that keeps this hazard off the erosion probe.
  */
 export interface CoastalGroundInstabilityTable {
 	/**
@@ -175,7 +205,9 @@ export interface CoastalGroundInstabilityTable {
 	 */
 	smp_policy_units: string | null
 	/**
-	 * `rearscarpr`, verbatim. Published as a string carrying 0, 10, 50 or 100.
+	 * `rearscarpr`, verbatim.
+	 *
+	 * Published as a string carrying 0, 10, 50 or 100.
 	 */
 	rear_scarp_probability: string | null
 	min_lat: number
@@ -186,16 +218,21 @@ export interface CoastalGroundInstabilityTable {
 }
 
 /**
- * The authority's mapped footprint — one row per statement, never derived from the hazard polygons.
+ * The authority's mapped footprint.
  *
- * Empty IN this edition, and its emptiness is the claim. The Environment Agency publishes no coverage statement for
- * ncerm, so there is no footprint to record and `layer_coverage` carries `basis = source_present`. The table exists
- * because the day a footprint source is settled — the Shoreline Management Plan Mapping record, or the frontage
- * geometry behind `frontageid`; see the workspace readme — is the day this layer may write a stronger basis, and the
- * row that licenses it belongs beside the coverage rather than in a code change nobody can audit.
+ * One row per statement, never derived from the hazard polygons.
  *
- * Deriving a footprint from the union of the erosion polygons is forbidden: the union of "at risk" areas is not the
- * mapped area, and the difference is the whole content of a negative answer.
+ * Empty IN this edition, and its emptiness is the claim.
+ * The Environment Agency publishes no coverage statement for ncerm, so there is no
+ * footprint to record and `layer_coverage` carries `basis = source_present`.
+ *
+ * The table exists because the day a footprint source is settled — the Shoreline Management
+ * Plan Mapping record, or the frontage geometry behind `frontageid`; see the workspace
+ * readme — is the day this layer may write a stronger basis, and the row that licenses
+ * it belongs beside the coverage rather than in a code change nobody can audit.
+ *
+ * Deriving a footprint from the union of the erosion polygons is forbidden: the union of "at risk"
+ * areas is not the mapped area, and the difference is the whole content of a negative answer.
  */
 export interface CoastalMappedExtentTable {
 	extent_id: string
@@ -216,8 +253,8 @@ export interface CoastalMappedExtentTable {
 }
 
 /**
- * The authority's declared scenario and policy domains, as shipped, so a reader can refuse a value the layer was never
- * built to hold and quote the authority's own words for one it holds.
+ * The authority's declared scenario and policy domains, as shipped, so a reader can refuse a
+ * value the layer was never built to hold and quote the authority's own words for one it holds.
  */
 export interface CoastalScenarioVocabularyTable {
 	/**
@@ -242,14 +279,18 @@ export interface CoastalDatabase extends layerschemadatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches. Same reasoning as `layerschemahandle`: Kysely is invariant in its
- * schema parameter, so naming only the members these functions call lets a caller pass its own wider handle.
+ * The subset of a Kysely handle the DDL touches.
+ *
+ * Same reasoning as `layerschemahandle`: Kysely is invariant in its schema parameter,
+ * so naming only the members these functions call lets a caller pass its own wider handle.
  */
 export type CoastalSchemaHandle = Pick<Kysely<CoastalDatabase>, "schema">
 
 /**
- * Create `coastal_zone_area`. A plain rowid table on purpose — the `rings` blob is exactly the payload `without rowid`
- * penalizes.
+ * Create `coastal_zone_area`.
+ *
+ * A plain rowid table on purpose.
+ * The `rings` blob is exactly the payload `without rowid` penalizes.
  */
 export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema
@@ -276,15 +317,16 @@ export async function createCoastalZoneAreaTable(db: CoastalSchemaHandle): Promi
 }
 
 /**
- * Create `coastal_zone_cell` — the summary tier. Small fixed-width rows probed by their exact primary key, which is the
- * `without rowid` shape.
+ * Create `coastal_zone_cell` — the summary tier.
+ *
+ * Small fixed-width rows probed by their exact primary key, which is the `without rowid` shape.
  */
 export async function createCoastalZoneCellTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("coastal_zone_cell")
 
 	await addCellIndexColumns(table, ["scenario_key", "area_id"])
 		.addPrimaryKeyConstraint("coastal_zone_cell_pk", ["h3_cell", "area_id"])
-		// `without rowid` has no first-class builder. the raw modifier is the idiomatic fallback.
+		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.
 		.modifyEnd(sql`without rowid`)
 		.execute()
 }
@@ -308,8 +350,10 @@ export async function createCoastalGroundInstabilityTable(db: CoastalSchemaHandl
 }
 
 /**
- * Create `coastal_mapped_extent`. Created empty, and the reader refuses a stronger coverage basis while it stays that
- * way — see the interface's docstring.
+ * Create `coastal_mapped_extent`.
+ *
+ * Created empty, and the reader refuses a stronger coverage basis while it stays
+ * that way — see the interface's docstring.
  */
 export async function createCoastalMappedExtentTable(db: CoastalSchemaHandle): Promise<void> {
 	const table = db.schema

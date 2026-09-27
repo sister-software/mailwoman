@@ -26,7 +26,7 @@ const decorated = await resolver.resolveTree(tree)
 
 ## Backend-agnostic on purpose
 
-`createWOFResolver` takes a `ResolverBackend` — a structural interface rather than a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. Nothing here imports any of them.
+`createWOFResolver` takes a `ResolverBackend` — a structural interface rather than a class. `@mailwoman/resolver-wof-sqlite` implements it over `node:sqlite`, `@mailwoman/resolver-wof-wasm` over `@sqlite.org/sqlite-wasm` in a browser, and `RemoteResolver` over HTTP. This package imports none of them.
 
 Backends differ in what they can answer, and that is visible rather than silent: `describeCapabilityGaps(backend)` reports which optional methods are missing, so a default-on feature that no-ops without logging on your backend says so instead of looking like a bad result.
 
@@ -36,7 +36,7 @@ Two rules run through this package, and both exist because their opposites shipp
 
 **A coordinate the gazetteer cannot supply is absent, never `0,0`.** `0,0` is the unlocated sentinel in every WOF-lineage database, and those databases carry a great deal of it — 48,216 of 142,604 Japanese postcodes, 86,377 GB, 414 US. `decorateNode` leaves `lat`/`lon` unset for such a row, so the place still resolves and identifies itself while stating that it cannot say where it is. A consumer's `lat != null` check then means what it looks like it means.
 
-**A missing answer is not a wrong answer.** An unresolvable span is returned as parsed. Nothing here invents a centroid to fill a hole.
+**A missing answer is not a wrong answer.** An unresolvable span is returned as parsed. The resolver invents no centroid to fill a hole.
 
 ## Which resolved place answers the query
 

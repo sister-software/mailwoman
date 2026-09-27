@@ -2,60 +2,48 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Canonical row schemas for the corpus pipeline (per #6 / Phase 1 plan).
- *
- *   The corpus pipeline produces two row shapes:
- *
- *   1. `CanonicalRow`: an adapter's raw output. Carries a free-form `raw` string, a per-component
- *        ground-truth dict, provenance, and an optional augmentation marker. Adapters emit these.
- *   2. `LabeledRow`: alignment's output. Adds a SentencePiece token list and a parallel BIO label list,
- *        suitable for direct ingestion by the neural training loop.
- *
- *   `CorpusAdapter` is the interface every data source implements; `AdapterOptions` is the
- *   per-invocation knob set (input path, optional country filter, row cap, abort signal).
+ *   Row, adapter and provenance types for the corpus pipeline.
  */
 
 import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
+import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 /**
- * What an address is the address OF — the role it plays for the thing the source is describing.
+ * The role that an address plays for the entity that the source describes.
+ * The values are wire values.
  *
- * Two strings with the same components can be different addresses. A company's registered office is the address it
- * files with a registrar, its premise is where the building stands, and its mailing address may be a box at a post
- * office it never visits. Each carries its own grammar, and a corpus that mixes them teaches the premise parser the
- * grammar of the others: a register whose addresses are half post-office boxes shifts the prior on a leading designator
- * for every row the model later reads.
- *
- * The constants are the wire values.
+ * Roles have different grammars.
+ * For example, mailing addresses often use post-office boxes, so mixing roles in
+ * a corpus shifts what the premise parser learns.
  */
 export const AddressRole = {
 	/**
-	 * Where the addressable object is. A national address register, an address point, a street-level extract.
+	 * The location of the addressable object, as in a national address register.
 	 */
 	Premise: "premise",
 	/**
-	 * The address an entity files with a registrar as its seat. A company register's 公司地址, 国内所在地, siège social.
+	 * The seat that an entity files with a registrar, such as a siège social.
 	 */
 	RegisteredOffice: "registered-office",
 	/**
-	 * Where post is delivered, which need not be where anything stands. Post-office boxes concentrate here.
+	 * The place where post is delivered, which is often a post-office box.
 	 */
 	Mailing: "mailing",
 	/**
-	 * Where a licensed person or organization practices. A provider's practice location, a notary's place of business.
+	 * The place where a licensed person or organization practices.
 	 */
 	Practice: "practice",
 	/**
-	 * A site an entity operates — a clinic, a school, a library outlet, a plant.
+	 * A site that an entity operates, such as a clinic, a school or a plant.
 	 */
 	Facility: "facility",
 	/**
-	 * The address of a property's owner, recorded against the property rather than about it.
+	 * The address of a property's owner, recorded against the property.
 	 */
 	Owner: "owner",
 	/**
-	 * Where a service is delivered or an obligation is discharged, which a project record names without the place being
-	 * anybody's seat.
+	 * The place where a service is delivered or an obligation is discharged.
 	 */
 	Service: "service",
 	/**
@@ -63,154 +51,208 @@ export const AddressRole = {
 	 */
 	LegalNotice: "legal-notice",
 	/**
-	 * A role the source names and this vocabulary does not cover. Add a constant rather than letting a second role
-	 * accumulate here.
+	 * A role that this vocabulary does not cover.
+	 *
+	 * Add a new constant when a second uncovered role appears.
 	 */
 	Other: "other",
 } as const
 
+/**
+ * One of the {@link AddressRole} values.
+ */
 export type AddressRole = (typeof AddressRole)[keyof typeof AddressRole]
 
 /**
- * The role a row carries when it does not say. Frozen corpora written before the field existed read as premise, which
- * is what the sources that produced them emit. An adapter written after it declares its own role and never relies on
- * this.
+ * The role of a row without an `addressRole` field.
+ *
+ * Corpora written before the field existed came from premise sources.
  */
 export const DEFAULT_ADDRESS_ROLE: AddressRole = AddressRole.Premise
 
 /**
- * The role a row asserts, reading an absent field as {@link DEFAULT_ADDRESS_ROLE}. Use this rather than spelling the
- * default at each call site, so the one place that decides what an absent field means stays one place.
+ * Returns the row's address role, or {@link DEFAULT_ADDRESS_ROLE} when the field is absent.
  */
 export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRole {
 	return row.addressRole ?? DEFAULT_ADDRESS_ROLE
 }
 
 /**
- * Provenance + augmentation metadata that travels with every corpus row.
+ * How a row's `raw` text was produced.
+ * The values are wire values.
  *
- * `synth` is `undefined` for natural (un-augmented) rows. present only when a row was produced by the synthesis
- * pipeline (see `synthesize.ts`).
+ * This is separate from {@link CanonicalRow.register}, which records where the underlying record came from.
+ * A template rendering of a real register record is `Composed`, and it is still a real address.
+ */
+export const SurfaceOrigin = {
+	/**
+	 * The publisher's own string, carried through unchanged.
+	 */
+	Attested: "attested",
+	/**
+	 * A template assembled the text from the published fields of one real record.
+	 *
+	 * The recipe chooses the order, punctuation and casing.
+	 */
+	Composed: "composed",
+	/**
+	 * A synthetic row, such as a post-office box or an intersection, that corresponds to no published record.
+	 */
+	Invented: "invented",
+} as const
+
+/**
+ * One of the {@link SurfaceOrigin} values.
+ */
+export type SurfaceOrigin = (typeof SurfaceOrigin)[keyof typeof SurfaceOrigin]
+
+const SURFACE_ORIGINS = new Set<string>(Object.values(SurfaceOrigin))
+
+/**
+ * Returns the `surface` that a JSONL row declares.
+ *
+ * @throws When the row lacks a valid `surface`.
+ * Older files must be regenerated instead of read with a default.
+ */
+export function requireSurface(raw: Record<string, unknown>, producer: string): SurfaceOrigin {
+	const value = raw["surface"]
+
+	if (typeof value === "string" && SURFACE_ORIGINS.has(value)) return value as SurfaceOrigin
+
+	throw new Error(
+		`${producer}: row ${stringifyJSON(raw["source_id"])} declares no surface. ` +
+			`Every row carries one of ${[...SURFACE_ORIGINS].join(", ")}. ` +
+			`A jsonl written before the field existed has to be regenerated rather than read with a default.`
+	)
+}
+
+/**
+ * Provenance fields that every corpus row carries.
  */
 export interface SourceProvenance {
 	/**
-	 * Adapter id that emitted this row, e.g. `"wof-admin"`, `"ban"`, `"openaddresses"`.
+	 * The id of the adapter or recipe that emitted the row, such as `"ban"` or `"openaddresses"`.
 	 */
 	source: string
 
 	/**
-	 * Stable id within the adapter's source. For SQLite-backed adapters this is the row's primary key. for CSV/GeoJSON, a
-	 * hash of the canonical components. Must be stable across reruns so that dedup and holdout manifests are
-	 * reproducible.
+	 * An id that is unique within the source and stable across reruns,
+	 * so that deduplication and holdouts reproduce.
+	 *
+	 * SQLite-backed adapters use the primary key, and file-backed adapters usually hash the components.
 	 */
 	source_id: string
 
 	/**
-	 * Corpus version string. Stamped by the runner rather than the adapter. Locked together with the tokenizer version:
-	 * `corpus-v0.1.0` ships with `tokenizer-v0.1.0`.
+	 * The corpus version, which the runner stamps.
 	 */
 	corpus_version: string
 
 	/**
-	 * Short license label or spdx id for _this_ row. Defaults to the adapter's `defaultLicense`, but per-row sources
-	 * (OpenAddresses) override.
+	 * The license label or SPDX id for this row.
+	 *
+	 * It defaults to the adapter's `defaultLicense`, and sources with per-record terms override it.
 	 */
 	license: string
 }
 
 /**
- * Marker placed on rows produced by `synthesize.ts`. Allows downstream code to weight, stratify, or exclude
- * augmentations.
+ * The recipe that produced a row and the row it was derived from.
  */
-export interface SynthMarker {
+export interface RecipeMarker {
 	/**
-	 * Pipeline id describing what augmentation produced this row. Free-form but stable — e.g. `"case-perturb"`,
-	 * `"accent-strip"`, `"abbrev-swap"`, `"compose:case-perturb+typo"`.
+	 * A stable recipe id, such as `"german"` or `"compose:case-perturb+typo"`.
 	 */
-	method: string
+	recipe: string
 
 	/**
-	 * `source_id` of the un-augmented row this was derived from. Allows tracing every synthetic row back to its natural
-	 * ancestor.
+	 * The `source_id` of the row that this row was derived from.
 	 */
 	base_source_id: string
 }
 
 /**
- * One address row, before tokenization + BIO labeling.
+ * One address row before tokenization and labeling.
  *
- * `raw` is what a parser would see in the wild — possibly multi-line, with arbitrary whitespace. `components` is the
- * ground-truth tagging: every `ComponentTag` present in the source data, mapped to its surface form _as it appears in
- * `raw`_. Alignment uses this to assign BIO labels.
- *
- * Country is ISO 3166-1 alpha-2 (`"US"`, `"FR"`). Locale is BCP-47 (`"en-US"`, `"fr-FR"`) and is optional. adapters
- * that can't be sure leave it empty and let the runner default by country.
+ * Each value in `components` must appear in `raw`, within the alignment edit-distance
+ * threshold, or alignment quarantines the row.
  */
 export interface CanonicalRow extends SourceProvenance {
 	/**
-	 * Address string as it might appear in source data.
+	 * The address text as it might appear in source data, possibly spanning lines.
 	 */
 	raw: string
 
 	/**
-	 * Component-by-tag ground truth. Surface forms must occur in `raw` (within the alignment edit distance threshold) or
-	 * the row will land in the quarantine pile.
+	 * The ground-truth text of each component, as it appears in `raw`.
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
 	/**
-	 * ISO 3166-1 alpha-2 country code.
+	 * The ISO 3166-1 alpha-2 country code.
 	 */
 	country: string
 
 	/**
-	 * Optional BCP-47 locale. Defaulted by country if absent.
+	 * The BCP-47 locale, which the runner derives from the country when absent.
 	 */
 	locale?: string
 
 	/**
-	 * What this address is the address of. The runner stamps the adapter's `addressRole` on every row that omits it, so
-	 * an adapter sets this per row only when one source carries more than one role — Taiwan's company register holds the
-	 * registered address and the tax office's business address in separate columns of the same row.
+	 * The role of this address.
 	 *
-	 * Absent means {@link DEFAULT_ADDRESS_ROLE}; read it with {@link addressRoleOf} rather than by hand.
+	 * The runner stamps the adapter's `addressRole` on rows that omit it.
+	 * An adapter sets it per row only when one source carries several roles.
+	 * Read it with {@link addressRoleOf}.
 	 */
 	addressRole?: AddressRole
 
 	/**
-	 * Present only on synthetic rows.
+	 * The stable id of the publication that the row's record came from, such as `"us-census-tiger"`.
+	 *
+	 * `null` means that the row corresponds to no published record.
+	 * The runner stamps {@link CorpusAdapter.register} on rows that leave it unset.
+	 * Rights records and supply counts read this field.
 	 */
-	synth?: SynthMarker
+	register?: string | null
+
+	/**
+	 * How the row's `raw` text was produced.
+	 *
+	 * The runner stamps {@link CorpusAdapter.surface} on rows that omit it.
+	 */
+	surface?: SurfaceOrigin
+
+	/**
+	 * The recipe that produced the row, when a recipe did.
+	 */
+	recipe?: RecipeMarker
 }
 
 /**
- * Output of `align.ts`. Carries everything `CanonicalRow` does, plus parallel `tokens` and `labels` arrays of identical
- * length (`labels[i]` is the BIO tag for `tokens[i]`) and — as of the v0.5.0 char-offset migration (#519) — parallel
- * char-span arrays addressing `raw` directly.
+ * A row after alignment, with tokens, BIO labels and character spans.
  *
- * The span triple is the v0.5.0 source of truth; `tokens`/`labels` remain emitted during the transition (and stay
- * derivable afterwards: whitespace split + span lookup). The reverse derivation — today's token labels — is the lossy
- * direction (punctuation-mute).
+ * The span arrays are the source of truth, and token labels can be derived from them.
  */
 export interface LabeledRow extends CanonicalRow {
 	/**
-	 * SentencePiece subword tokens for `raw`.
+	 * Subword tokens for `raw`.
 	 */
 	tokens: readonly string[]
 
 	/**
-	 * BIO labels, one per token. Same length as `tokens`.
+	 * BIO labels, one per token.
 	 */
 	labels: readonly BIOLabel[]
 
 	/**
-	 * Char-offset label spans over `raw` (parallel arrays, per the #519 ruling): `span_starts[i]` is the inclusive start
-	 * offset (UTF-16 code units) of span `i`, `span_ends[i]` its exclusive end, `span_tags[i]` its component tag.
-	 * Invariants — enforced loudly by `alignRow`, documented for every other producer: sorted ascending by start,
-	 * non-overlapping. `raw` must be NFC-normalized or the offsets are ambiguous (also enforced by `alignRow`).
+	 * Inclusive start offsets of the label spans over `raw`, in UTF-16 code units.
 	 *
-	 * Optional during the v0.4.x → v0.5.0 transition only: alignment always emits the triple. frozen historical corpora
-	 * and not-yet-migrated synthesis paths may lack it. Required once v0.5.0 lands and the token path is deleted.
+	 * The three span arrays are parallel.
+	 * Spans are sorted by start and never overlap.
+	 *
+	 * `raw` must be NFC-normalized, and `alignRow` enforces both rules.
+	 * Older corpora and some synthesis paths omit the spans.
 	 */
 	span_starts?: readonly number[]
 
@@ -226,11 +268,7 @@ export interface LabeledRow extends CanonicalRow {
 }
 
 /**
- * A row that alignment refused to label. Lands in `/data/corpus/quarantine/` for human review.
- *
- * The `reason` is human-readable. common values are `"component-not-found:<tag>"`, `"edit-distance-exceeded:<tag>"`,
- * `"raw-empty"`. Re-running alignment after a fix should re-emit the quarantined rows. the runner keys them by
- * `source_id`.
+ * A row that alignment refused to label, with a reason such as `"component-not-found:<tag>"`.
  */
 export interface QuarantinedRow {
 	row: CanonicalRow
@@ -238,98 +276,102 @@ export interface QuarantinedRow {
 }
 
 /**
- * Per-invocation knobs handed to an adapter by the runner.
- *
- * `inputPath` is interpreted by the adapter — it might be a single file path, a directory of files, or even an https
- * URL. Each adapter documents its own expected shape in its readme.
- *
- * `country` filters to a single ISO 3166-1 alpha-2 country _at the adapter level_. Adapters that hold multi-country
- * data (OSM PBF, OpenAddresses) must honor this. single-country adapters (BAN) may ignore it but should reject
- * mismatches.
- *
- * `limit` is a soft cap on rows emitted. useful for fixture-driven tests and smoke runs.
- *
- * `signal` allows the runner to cancel a long-running scan cleanly.
+ * Per-run options that the runner passes to an adapter.
  */
 export interface AdapterOptions {
 	/**
-	 * Path to the adapter's input data (file, directory, or URL — adapter-specific).
+	 * The adapter's input, which each adapter interprets as a file, a directory or a URL.
 	 */
-	inputPath: string
+	inputPath: PathBuilderLike
 
 	/**
-	 * Optional output directory, available to adapters that maintain side state (rare).
+	 * An output directory for adapters that keep side state.
 	 */
 	outputDir?: string
 
 	/**
-	 * ISO 3166-1 alpha-2 country filter.
+	 * An ISO 3166-1 alpha-2 country filter.
+	 *
+	 * Multi-country adapters must apply it, and single-country adapters should reject a mismatch.
 	 */
 	country?: string
 
 	/**
-	 * Soft row cap. Adapters should stop iterating once this is reached.
+	 * A soft cap on emitted rows.
 	 */
 	limit?: number
 
 	/**
-	 * Cancellation hook. Adapters should respect this on every iteration boundary.
+	 * The fraction of rows that carry an explicit `country` component.
+	 *
+	 * A source without country tokens teaches the model that country tokens are rare,
+	 * which lowers `country` recall.
+	 * A value of `0` or no value adds no country and consumes no random draw,
+	 * so existing outputs stay identical.
+	 */
+	countryFraction?: number
+
+	/**
+	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw, which has a fixed default.
+	 */
+	seed?: number
+
+	/**
+	 * A cancellation signal that adapters should check at each iteration.
 	 */
 	signal?: AbortSignal
 }
 
 /**
- * The interface every data source implements.
+ * The interface that every data source implements.
  *
- * Adapters are async generators: they yield `CanonicalRow`s one at a time, the runner consumes them (writing jsonl +
- * maintaining checksums + driving alignment). Streaming is mandatory — many sources are tens of millions of rows and
- * cannot be buffered.
- *
- * `defaultLicense` is stamped onto every emitted row's `license` field unless the adapter sets `license` explicitly
- * (e.g. OpenAddresses, which carries per-source licenses).
+ * Adapters stream rows, because many sources hold tens of millions of rows.
  */
 export interface CorpusAdapter {
 	/**
-	 * Stable, machine-friendly id used in paths and CLI args. E.g. `"wof-admin"`.
+	 * A stable id used in paths and CLI arguments, such as `"wof-admin"`.
 	 */
 	readonly id: string
 
 	/**
-	 * Default spdx-ish license label for rows from this adapter. Per-row overrides allowed.
+	 * The license label stamped on rows that do not set their own.
 	 */
 	readonly defaultLicense: string
 
 	/**
-	 * What the addresses from this source are addresses of. Required, and with no default, because the answer is a
-	 * property of the source that only the adapter's author has read: a health-provider registry carries practice
-	 * locations, a tax-exempt-organization file carries mailing addresses, and a national address register carries
-	 * premises. A field that defaulted would record premise for all three.
+	 * The dominant role of the source's addresses.
 	 *
-	 * The runner stamps this onto every row the adapter leaves unset. An adapter over a source with more than one address
-	 * column sets the row field per row and declares the dominant role here.
+	 * The field has no default because only the adapter's author knows the source.
+	 * The runner stamps it on rows that leave `addressRole` unset.
 	 */
 	readonly addressRole: AddressRole
 
 	/**
-	 * One-sentence description shown by `npx mailwoman corpus list`.
+	 * The publication that this adapter reads, or `null` for an adapter that invents rows.
+	 *
+	 * The field has no default because only the adapter's author knows the source.
+	 * The runner stamps it on rows that leave `register` unset.
+	 */
+	readonly register: string | null
+
+	/**
+	 * The dominant way the adapter produces `raw` text.
+	 *
+	 * The runner stamps it on rows that leave `surface` unset.
+	 */
+	readonly surface: SurfaceOrigin
+
+	/**
+	 * The one-sentence description that `mailwoman corpus list` shows.
 	 */
 	readonly description: string
 
 	/**
-	 * Async iterable of canonical rows.
+	 * Streams canonical rows.
 	 *
-	 * Implementations must:
-	 *
-	 * - Honor `opts.country` (filter or reject mismatches).
-	 * - Honor `opts.limit` (stop after N rows).
-	 * - Respect `opts.signal` on every iteration.
-	 * - Set `source` to `this.id` on every emitted row.
-	 * - Set `license` to `this.defaultLicense` unless overriding per-row.
-	 *
-	 * Implementations must not:
-	 *
-	 * - Set `corpus_version` (the runner stamps it).
-	 * - Mutate previously-yielded rows.
+	 * Implementations must apply `opts.country` and `opts.limit`, check `opts.signal` at each
+	 * iteration, set `source` to `this.id`, and set `license` unless a row overrides it.
+	 * They must not set `corpus_version`, which the runner stamps, or mutate rows already yielded.
 	 */
 	rows(opts: AdapterOptions): AsyncIterable<CanonicalRow>
 }

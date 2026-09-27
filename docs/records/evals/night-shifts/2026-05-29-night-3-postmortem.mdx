@@ -175,7 +175,7 @@ release metric is coverage-bound rather than calibration-bound.
 - **Eval tooling (PR #194):** `eval-error-analysis.ts` + `harness-v0-neural.ts`
   gained `--model/--tokenizer/--model-card` + `--postcode-repair` so the check
   can measure the calibration checkpoint on the held-out TEST.
-- **#33 locale pre-classifier — measured rather than built (PR #194):** rather than
+- **#33 locale pre-classifier — measured, not built (PR #194):** rather than
   build an MLP blind, measured the existing rule-based `@mailwoman/locale-hint`
   (4600 samples). Postcode-shape baseline: **65.9%** — GB/CA/JP detected, but
   **FR/DE/NL collapse to US** (shared `\d{5}`). Adding lexical features

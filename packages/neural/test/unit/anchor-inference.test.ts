@@ -46,7 +46,7 @@ describe("anchorFeatureVector — pinned to Python anchor_feature_vector", () =>
 })
 
 describe("buildAnchorFeatures — alignment onto SP pieces", () => {
-	// "Strasse 12 10115 Berlin" — the postcode "10115" is chars [11, 16).
+	// "Strasse 12 10115 Berlin". The postcode "10115" is chars [11, 16).
 	const TEXT = "Strasse 12 10115 Berlin"
 
 	const piece = (p: string, start: number, end: number): TokenizedPiece => ({ piece: p, id: 0, start, end })
@@ -79,16 +79,20 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 })
 
 /**
- * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Two obligations:
+ * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`).
  *
- * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim copy of it rather than against a
- *    hash, so the oracle is readable.
- * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars` does
- *    (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
+ * Two obligations:
+ *
+ * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim
+ *    copy of it rather than against a hash, so the oracle is readable.
+ * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
+ *    does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
-	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim. The oracle for obligation 1.
+	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim.
+	 *
+	 * The oracle for obligation 1.
 	 */
 	function legacyBuildAnchorFeatures(
 		text: string,
@@ -128,8 +132,9 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered by more than one piece — the
-	 * geometry that makes a wrong paint extent visible.
+	 * Split `text` into non-whitespace runs, each halved, so every anchor span
+	 * is covered by more than one piece.
+	 * The geometry that makes a wrong paint extent visible.
 	 */
 	function piecesFor(text: string): TokenizedPiece[] {
 		const out: TokenizedPiece[] = []
@@ -150,7 +155,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing
+	 * ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
@@ -213,7 +219,8 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted — the outward-only paint the default produces is 2 pieces rather than 4.
+		// Both halves of the unit are painted.
+		// The outward-only paint the default produces is 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 
@@ -230,7 +237,9 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2. its outward SW1A is. NI codes behave the same way — Code-Point Open has none.
+		// SW1A 1AA is not in V2.
+		// Its outward SW1A is.
+		// NI codes behave the same way — Code-Point Open has none.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)
@@ -259,11 +268,13 @@ describe("buildAnchorFeatures — span modes", () => {
 /**
  * #1512 — the shaped keyer and the lowercase register.
  *
- * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds nothing in raw lowercase and the
- * shaped keyer fired 0/120 on the gb-golden board when case normalization was off. The default parse path never saw it
- * because `normalizeInputCase` restores GB postcode casing first (every GB letter run is ≤2 characters, which
- * `restoreLowerInput` uppercases) — but lowercase is the user register, and a `normalizeCase: false` parse lost the
- * entire GB/NL anchor channel in silence.
+ * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds no match in raw
+ * lowercase and the shaped keyer fired 0/120 on the gb-golden board when case normalization was off.
+ *
+ * The default parse path never saw it because `normalizeInputCase` restores GB postcode
+ * casing first (every GB letter run is ≤2 characters, which `restoreLowerInput` uppercases),
+ * but lowercase is the user register, and a `normalizeCase: false` parse lost
+ * the entire GB/NL anchor channel in silence.
  */
 describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
@@ -308,8 +319,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 	})
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
-		// `"ß".toUpperCase()` is "SS" — a naive uppercase here would slide every later offset by one and
-		// paint the wrong pieces. ascii-only folding cannot.
+		// `"ß".toUpperCase()` is "SS".
+		// A naive uppercase here would slide every later offset by one and paint the wrong pieces.
+		// Ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
@@ -334,9 +346,10 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * A2 of ROAD_TO_V9 §1 — the ship obligation check. A lookup carrying keys only the shaped keyer can reach, next to a
- * card that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it
- * exists for.
+ * A2 of ROAD_TO_V9 §1 — the ship obligation check.
+ *
+ * A lookup carrying keys only the shaped keyer can reach, next to a card that does not declare
+ * `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

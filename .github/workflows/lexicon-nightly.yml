@@ -79,5 +79,5 @@ jobs:
             echo "- If the gazetteer was rebuilt, the lexicon's expectations may need re-measuring."
             echo "- If it was not, \`evidence-lexicons.fixture.test.ts\` may have drifted from reality."
             echo ""
-            echo "The every-PR fixture layer is still green either way — that is exactly why this job exists."
+            echo "The every-PR fixture layer is still green either way. That is exactly why this job exists."
           } >> "$GITHUB_STEP_SUMMARY"

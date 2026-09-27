@@ -2,18 +2,10 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The commercial license key: a signed, self-describing token verified offline.
+ *   Encodes and verifies offline commercial-license tokens of the form `mwl1.<payload>.<signature>`.
  *
- *   Format: `mwl1.<payload>.<signature>`, both parts base64url. The payload is JSON ({@link LicenseKeyPayload}); the
- *   signature is Ed25519 over the UTF-8 bytes of `mwl1.<payload>` — the prefix is inside the signed bytes so a token
- *   cannot be replayed under another format version. Verification needs only the public keys the register ships, so it
- *   works with no network. the well-known file on mailwoman.ai is a freshness check on top rather than the anchor.
- *
- *   Why a signature and not an hmac: an hmac is verified with the same secret that mints it, so shipping a verifier would
- *   ship the minting key, and the alternative is a license server. Ed25519 keeps the private key with the issuer.
- *
- *   Signing and verification run on WebCrypto and the codec on the web platform's primitives, so this module has no
- *   `node:` import and runs where a Cloudflare Worker and a browser run as well as under Node.
+ *   Ed25519 signs the payload, and verification checks it against trusted public keys. The module uses WebCrypto,
+ *   so it runs in Node, browsers and Workers.
  */
 
 import { z } from "zod"
@@ -25,73 +17,80 @@ import { errorMessage } from "#errors/schema"
 import { parseJSONStrict, stringifyJSON } from "#json"
 
 /**
- * The format prefix, bumped only when the payload schema or signing scheme changes incompatibly.
+ * The token format's version prefix.
  */
 export const LICENSE_KEY_PREFIX = "mwl1"
 
 /**
- * A token is prefix, payload and signature — three dot-separated parts, no more and no fewer.
+ * The number of dot-separated parts in a token.
  */
 const LICENSE_KEY_PARTS = 3
 
 /**
- * A calendar date as `yyyy-MM-DD`. Dates rather than instants: a license runs to the end of its last day in UTC.
+ * A calendar date in `YYYY-MM-DD` format.
  */
 const CalendarDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u, "expected YYYY-MM-DD")
 
 /**
- * What a license key asserts.
+ * The schema of a license-key payload.
  */
 export const LicenseKeyPayloadSchema = z.object({
 	/**
-	 * Payload schema version.
+	 * The payload format version.
 	 */
 	v: z.literal(1),
 	/**
-	 * The signing key's id ({@link licenseKeyID}); the verifier looks the public key up by it.
+	 * The signing key ID, which selects the trusted public key.
 	 */
 	kid: z.string().min(1),
 	/**
-	 * Who holds the license, as it should read in the doctor.
+	 * The license holder's name, which `doctor` displays.
 	 */
 	licensee: z.string().min(1),
 	issued: CalendarDate,
 	/**
-	 * The last day the key is valid, inclusive, or absent for a key with no expiry.
+	 * The last valid date, inclusive.
+	 * A key without it does not expire.
 	 */
 	expires: CalendarDate.optional(),
 	/**
-	 * `all`, or the package names the agreement covers.
+	 * Either `all` or the list of packages covered by the agreement.
 	 */
 	scope: z.union([z.literal("all"), z.array(z.string().min(1)).min(1)]),
 	/**
-	 * The spdx branch the key selects. One value today. the field exists so a different agreement can be named later.
+	 * The license terms that the key grants.
 	 */
 	terms: z.literal("LicenseRef-Commercial"),
 	/**
-	 * An opaque per-license serial a self-service issuer sets, stable for the subscription's life. Online status is keyed
-	 * by it, and it names nothing about the customer.
+	 * An opaque serial for checking the license status online.
 	 */
 	lid: z.string().min(1).optional(),
 	/**
-	 * The version of the clickwrap terms the licensee accepted, set by a self-service issuer.
+	 * The version of the terms that the licensee accepted.
 	 */
 	agreement: z.string().min(1).optional(),
 })
 
+/**
+ * A validated license-key payload.
+ */
 export type LicenseKeyPayload = z.infer<typeof LicenseKeyPayloadSchema>
 
 /**
- * A payload a self-service issuer produced: both fields present. A hand-issued payload has neither.
+ * A payload that has both the serial and the accepted-agreement version.
  */
 export type SelfServiceLicenseKeyPayload = LicenseKeyPayload & { lid: string; agreement: string }
 
+/**
+ * Returns whether a payload has both `lid` and `agreement`.
+ */
 export function isSelfServicePayload(payload: LicenseKeyPayload): payload is SelfServiceLicenseKeyPayload {
 	return typeof payload.lid === "string" && typeof payload.agreement === "string"
 }
 
 /**
- * The outcome of verifying a token. Every failure names its reason. a caller that only wants a yes reads `status`.
+ * The result of verifying a token.
+ * Every failure status includes a reason.
  */
 export type LicenseKeyVerification =
 	| { status: "valid"; kid: string; payload: LicenseKeyPayload }
@@ -100,21 +99,22 @@ export type LicenseKeyVerification =
 	| { status: "invalid"; reason: string }
 
 /**
- * A freshly generated Ed25519 signing pair, both halves PEM-encoded.
+ * An Ed25519 signing key pair with both keys PEM-encoded.
  */
 export interface LicenseSigningKeyPair {
 	privateKeyPEM: string
 	publicKeyPEM: string
 }
 
+/**
+ * Generates a new Ed25519 signing key pair.
+ */
 export function generateLicenseSigningKeyPair(): Promise<LicenseSigningKeyPair> {
 	return generateEd25519KeyPair()
 }
 
 /**
- * The id a public key is registered under: the mailwoman major version it was minted for, then the first eight hex
- * digits of the SHA-256 of the key's DER encoding — `v9-3f2a9c1d`. The version prefix is what lets a well-known file on
- * mailwoman.ai be read per major version. the digest is what makes two keys distinguishable without a registry.
+ * Builds a key ID from the product major version and the first eight hex digits of the DER key's SHA-256.
  */
 export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): Promise<string> {
 	const digest = hexOf(await sha256Bytes(publicKeyDER(publicKeyPEM))).slice(0, 8)
@@ -123,7 +123,7 @@ export async function licenseKeyID(publicKeyPEM: string, majorVersion: number): 
 }
 
 /**
- * Sign a payload into a token. The issuer's private key never leaves the machine that calls this.
+ * Validates a payload and signs it with the issuer's private key.
  */
 export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM: string): Promise<string> {
 	const checked = LicenseKeyPayloadSchema.parse(payload)
@@ -134,15 +134,15 @@ export async function encodeLicenseKey(payload: LicenseKeyPayload, privateKeyPEM
 }
 
 /**
- * The last instant a key with this expiry is valid: the end of that day in UTC.
+ * Returns the last UTC millisecond of the expiration date.
  */
 function expiryInstant(expires: string): Date {
 	return new Date(`${expires}T23:59:59.999Z`)
 }
 
 /**
- * The payload a token carries, AS written and unverified: for reporting what a token this build cannot verify claims
- * (its key id, its license id), never for a decision. `undefined` for anything that is not a well-formed token.
+ * Decodes a token's payload without verifying its signature.
+ * Use the result only for display.
  */
 export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | undefined {
 	const parts = token.trim().split(".")
@@ -157,7 +157,9 @@ export function decodeLicenseKeyPayload(token: string): LicenseKeyPayload | unde
 }
 
 /**
- * Verify a token against the trusted public keys, keyed by kid. Offline; `now` is injectable for tests.
+ * Verifies a token offline against trusted public keys keyed by key ID.
+ *
+ * Tests pass `now` to get a fixed clock.
  */
 export async function verifyLicenseKey(
 	token: string,

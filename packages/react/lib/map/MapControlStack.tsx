@@ -2,13 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<MapControlStack>` — the column of map controls down one edge, and `<MapControlButton>`, the control inside it.
- *
- *   Controls sit in groups: a group is one glass capsule with hairlines between its buttons, and separate groups are
- *   separate capsules with a gap. That grouping is the whole layout idea — related controls read as one object, and
- *   an unrelated one (a compass that comes and goes) does not join a capsule it would resize.
- *
- *   node-safe: pure React, no maplibre.
+ *   Provide accessible map-control buttons arranged in grouped capsules.
  */
 
 import type { ReactNode } from "react"
@@ -21,7 +15,9 @@ export interface MapControlButtonProps {
 	 */
 	children: ReactNode
 	/**
-	 * The control's accessible name. Required: the visible content is a mark rather than a word.
+	 * The control's accessible name.
+	 *
+	 * Required: the visible content is a mark rather than a word.
 	 */
 	label: string
 	onPress: () => void
@@ -62,7 +58,10 @@ export interface MapControlGroupProps {
 }
 
 /**
- * One capsule. Put related controls in the same group. give an unrelated one its own.
+ * One capsule.
+ *
+ * Put related controls in the same group.
+ * Give an unrelated one its own.
  */
 export function MapControlGroup({ children, className }: MapControlGroupProps): ReactNode {
 	return <div className={cx("mw-map-control-group", className)}>{children}</div>

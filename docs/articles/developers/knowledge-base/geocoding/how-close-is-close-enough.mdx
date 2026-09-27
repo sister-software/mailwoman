@@ -32,7 +32,7 @@ Take one resolved address and hand it to three systems.
 
 **A jurisdiction check** wants to know which city, county or regulatory area this facility falls in.
 It needs the point to land inside the correct polygon, and a couple of kilometers of slop inside a
-polygon that spans tens of kilometers changes nothing. A town centroid is a complete answer.
+polygon that spans tens of kilometers does not change the jurisdiction. A town centroid is a complete answer.
 
 **A record matcher** wants to know whether two records describe the same _building_. Its tolerance is
 tens of meters, because a town centroid fuses every facility in town into one entity. A coordinate
@@ -50,10 +50,11 @@ distribution, and each consumer needs a fact about _this result_.
 The first half of a per-result answer is which method produced the coordinate. A geocoder does not
 have one way of placing a point; it has a ladder, and the rung it reached is the grain of the answer.
 
-Mailwoman reports the rung in `resolution_tier`, with four values. A registered address point, an
+Mailwoman reports the rung in `resolution_tier`, with six values. Four form the ladder: a registered address point, an
 estimate interpolated along a street segment, a street centroid, and an administrative centroid — the
-last of which always exists, because it is what the gazetteer knows. [Improve geocode
-precision](../../tutorials/improve-geocode-precision.mdx) walks all four with real output and shows a
+last of which always exists, because it is what the gazetteer knows. Two sit beside it: a matched
+venue from the POI layer, and a plus code decoded from the input. [Improve geocode
+precision](../../tutorials/improve-geocode-precision.mdx) walks the ladder with real output and shows a
 result moving from the bottom rung to the top one after a per-state download.
 
 The practical rule is that a consumer with a building-grain tolerance should treat an
@@ -91,7 +92,7 @@ registered address point is a surveyed position; the 1 is there to say "this is 
 system's units get" rather than to claim millimetre knowledge.
 
 At the administrative tier it reports `uncertainty_m: null`, and that is not zero uncertainty. It is
-the absence of an estimate: no finer method fired, so there is nothing to price. A consumer that reads
+the absence of an estimate: no finer method fired, so there is no number to price. A consumer that reads
 a missing radius as a small radius has inverted the meaning of the field. Branch on the tier, then read
 the radius — not the other way round.
 

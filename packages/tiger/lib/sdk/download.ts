@@ -8,7 +8,7 @@
  *   `APIClient`, and that rule is about API requests — small bodies, repeated calls, rate-limited
  *   hosts, where its pacing, bounded retry, response caching and `ResourceError` mapping all earn
  *   their keep. This is a multi-gigabyte file transfer streamed straight to disk. Response caching
- *   would be nonsense at that size, pacing has nothing to pace (one request), and axios buffers a
+ *   would be nonsense at that size, pacing has no repeated calls to pace (one request), and axios buffers a
  *   non-stream response type in memory. The primitive that fits a body this large is the one that
  *   never holds it: a web stream piped to a write stream.
  */
@@ -17,16 +17,20 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"
 import { movePath } from "@mailwoman/core/fs/writers"
 import { verifyZipIntegrity } from "@mailwoman/core/fs/zip"
+import type { PathBuilderLike } from "path-ts"
 
 /**
- * Download `url` to `dest` unless a valid copy is already there. Returns `true` when the cache was reused, `false` when
- * a download happened.
+ * Download `url` to `dest` unless a valid copy is already there.
  *
- * "Valid" means every member's CRC-32 checks out — an existence check alone is not enough, because an interrupted
- * download leaves a plausible-looking file that fails only much later, inside ogr2ogr. Writes to a `.tmp` sibling and
- * renames, so `dest` is never a partial archive.
+ * Returns `true` when the cache was reused, `false` when a download happened.
+ *
+ * "Valid" means every member's CRC-32 checks out.
+ * An existence check alone is not enough, because an interrupted download leaves a
+ * plausible-looking file that fails only much later, inside ogr2ogr.
+ *
+ * Writes to a `.tmp` sibling and renames, so `dest` is never a partial archive.
  */
-export async function downloadIfNeeded(url: string, dest: string): Promise<boolean> {
+export async function downloadIfNeeded(url: string, dest: PathBuilderLike): Promise<boolean> {
 	if (await pathExists(dest)) {
 		try {
 			await verifyZipIntegrity(dest)

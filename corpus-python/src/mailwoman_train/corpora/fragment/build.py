@@ -357,7 +357,14 @@ def main() -> None:
     rng = random.Random(SEED)
     rows: list[dict[str, Any]] = []
 
-    def push(base: dict[str, Any], country: str, locale: str, license_note: str) -> None:
+    def push(
+        base: dict[str, Any],
+        country: str,
+        locale: str,
+        license_note: str,
+        register: str | None,
+        surface: str,
+    ) -> None:
         rows.append(
             {
                 **base,
@@ -367,12 +374,31 @@ def main() -> None:
                 "source_id": f"synth-fragment-{country}-{len(rows)}",
                 "corpus_version": "0.10.2",
                 "license": license_note,
-                "synth_method": "fragment-assay",
-                "synth_base_id": None,
+                "recipe": "fragment-assay",
+                "register": register,
+                "surface": surface,
+                "base_source_id": None,
             }
         )
 
-    push_oa_locale_rows(args, push)
-    admin_pairs, corpus_localities = push_corpus_harvest_rows(args, push)
-    push_country_counterweight_rows(args, push, admin_pairs, corpus_localities)
+    # Each of the three row groups reads a different upstream, so each binds its own register and
+    # surface rather than one value standing for all of them.
+    #
+    # The locale rows are OpenAddresses streets and localities written short. The harvest rows are
+    # localities read back out of the built corpus, whose register varies per row and is unknown at
+    # this point. The counterweight rows are country names from this repository's codex table.
+    push_oa_locale_rows(
+        args,
+        lambda base, country, locale, note: push(base, country, locale, note, "openaddresses", "composed"),
+    )
+    admin_pairs, corpus_localities = push_corpus_harvest_rows(
+        args,
+        lambda base, country, locale, note: push(base, country, locale, note, None, "composed"),
+    )
+    push_country_counterweight_rows(
+        args,
+        lambda base, country, locale, note: push(base, country, locale, note, "mailwoman-codex", "attested"),
+        admin_pairs,
+        corpus_localities,
+    )
     write_output(args, rows, rng)

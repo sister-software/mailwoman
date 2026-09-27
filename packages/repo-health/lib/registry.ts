@@ -13,6 +13,7 @@ import { cliFlagPropertiesCheck } from "#checks/cli-flag-properties"
 import { dataProvenanceCheck } from "#checks/data-provenance"
 import { debtCheck } from "#checks/debt"
 import { docLinkTargetsCheck } from "#checks/doc-link-targets"
+import { duplicateExportedShapeCheck } from "#checks/duplicate-exported-shape"
 import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
@@ -26,27 +27,31 @@ import { nodeModulesReacharoundCheck } from "#checks/node-modules-reacharound"
 import { packageLicenseCheck } from "#checks/package-license"
 import { prefixDirectoriesCheck } from "#checks/prefix-directories"
 import { privateNameShadowsCheck } from "#checks/private-name-shadows"
+import { publishedBundlesCheck } from "#checks/published-bundles"
 import { pythonPrefixDirectoriesCheck } from "#checks/python-prefix-directories"
 import { rightsChainCheck } from "#checks/rights-chain"
 import { runtimeFlagsCheck } from "#checks/runtime-flags"
 import { stalePathLiteralsCheck } from "#checks/stale-path-literals"
 import { stylesheetCheck } from "#checks/stylesheet-check"
 import { testLayoutCheck } from "#checks/test-layout"
+import { thirdPartyNoticesCheck } from "#checks/third-party-notices"
 import { typecheckTestsCheck } from "#checks/typecheck-tests"
 import { versionSyncCheck } from "#checks/version-sync"
 import { vocabCensusCheck } from "#checks/vocab-census"
 import { weightsFamilyCheck } from "#checks/weights/family"
 import { weightsReconciliationCheck } from "#checks/weights/reconciliation"
 import { weightsRightsCheck } from "#checks/weights/rights"
+import { wireIdentifiersCheck } from "#checks/wire-identifiers"
 
 /**
- * Every health check, in the order `mwops health all` runs them: the ones that only read files first, then the ones
- * that bundle with esbuild or spawn Vale, knip and tsc.
+ * Every health check, in the order `mwops health all` runs them: the ones that only read
+ * files first, then the ones that bundle with esbuild or spawn Vale, knip and tsc.
  */
 export const checks: ReadonlyArray<RepoCheck> = [
 	versionSyncCheck,
 	packageLicenseCheck,
 	rightsChainCheck,
+	thirdPartyNoticesCheck,
 	licenseRegisterCheck,
 	localeTablesCheck,
 	localeScopeCheck,
@@ -54,6 +59,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	weightsRightsCheck,
 	weightsReconciliationCheck,
 	dataProvenanceCheck,
+	publishedBundlesCheck,
 	testLayoutCheck,
 	nodeModulesReacharoundCheck,
 	noRootScriptsCheck,
@@ -66,8 +72,10 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
+	duplicateExportedShapeCheck,
 	stylesheetCheck,
 	runtimeFlagsCheck,
+	wireIdentifiersCheck,
 	stalePathLiteralsCheck,
 	debtCheck,
 	bundleGraphCheck,

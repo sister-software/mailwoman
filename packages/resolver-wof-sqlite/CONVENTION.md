@@ -37,7 +37,7 @@ address_convention(
 meta(key TEXT, value TEXT)         -- name/description/schema_version/source/rows/strategies_known
 ```
 
-The resolver attaches the asset as a extract and auto-detects it (the same mechanism as the
+The resolver attaches the asset as an extract and auto-detects it (the same mechanism as the
 `postcode_locality` table — adding `conventions.db` to `databasePath` enables it). Conventions can also
 be injected directly via `new WofSqlitePlaceLookup({ conventions })` (a ready `ConventionSource` or a
 `{ wofId: Convention }` seed map) for tests and embedding.
@@ -65,7 +65,7 @@ authored entries. The `.db` is the compiled, queryable form.
 # build from source (validates strategy names; rejects unknown ones loudly)
 node scripts/build-conventions.ts \
   --src data/conventions/conventions.json \
-  --output /mnt/playpen/mailwoman-data/wof/conventions.db
+  --output $MAILWOMAN_DATA_ROOT/db/wof/conventions.db
 ```
 
 `scripts/build-conventions.ts` validates each entry (numeric unique `wof_id`, non-empty `source`,

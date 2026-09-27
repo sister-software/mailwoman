@@ -36,7 +36,7 @@ modal volume ls mailwoman-training | head -10
 # Note any apps already running from a prior session; ensure their volume artifacts aren't stale.
 
 # 4. Local disk + workspace state
-df -h /home /mnt/playpen | tail -3
+df -h /home "$MAILWOMAN_DATA_ROOT" | tail -3
 git status --short
 # Surface untracked plan files or in-flight work the operator left.
 

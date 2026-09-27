@@ -2,15 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Project a flat list of `ClassificationProposal`s into a flat `AddressTree` (every proposal
- *   becomes a root node, no containment nesting). Useful for surfacing policy-filtered output
- *   through the existing JSON/tuple/XML decoder projections without rebuilding the original
- *   containment hierarchy — which is intentionally lossy: once proposals are individually
- *   accept/rejected by policy, the containment relationships from the source tree may no longer be
- *   meaningful.
- *
- *   For consumers that need containment back, re-tokenize the input and run the full decoder
- *   pipeline.
+ *   Converts between classification proposals and address trees.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -19,6 +11,11 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 import type { Span } from "#tokenization/index"
 import type { ClassificationProposal, ClassificationProposalSource } from "#types/index"
 
+/**
+ * Builds a flat address tree with one root per proposal, sorted by start offset.
+ *
+ * The function does not rebuild containment, so every node has no children.
+ */
 export function proposalsToTree(raw: string, proposals: readonly ClassificationProposal[]): AddressTree {
 	const roots: AddressNode[] = proposals.map((p) => ({
 		tag: p.component as ComponentTag,
@@ -37,19 +34,15 @@ export function proposalsToTree(raw: string, proposals: readonly ClassificationP
 }
 
 /**
- * The inverse of {@link proposalsToTree}: walk an `AddressTree` into a flat list of `ClassificationProposal`s (one per
- * node, depth-first), tagged with the given `source` (#478 increment 3). Used to bring the whole-text neural parse into
- * the arbitration layer's proposal currency so it can be unioned with rule proposals and filtered by the policy
- * registry.
+ * Converts each tree node to a proposal in depth-first order.
  *
- * The spans are structural (`{ start, end, body }`) — we intentionally avoid `Span.from(...)` (which forces the
- * tokenization module's filesystem-bound init); downstream proposal consumers read only `start` / `end` / `body`. Same
- * convention as the neural proposal-classifier adapter.
+ * Each span is a plain object with `start`, `end` and `body`, so the tokenization module is not loaded.
  *
- * @param tree The parsed tree (e.g. the neural argmax tree).
- * @param source Provenance stamped on every emitted proposal (`"neural"` here).
- * @param opts.sourceID Optional stable id surfaced as `source_id`.
- * @param opts.emits Optional tag allow-list. when set, only nodes with these tags are emitted.
+ * @param tree The parsed address tree.
+ * @param source The source recorded on each proposal.
+ * @param opts.sourceID A source ID that overrides each node's own ID.
+ * @param opts.emits The component tags to convert.
+ * All tags are converted when it is absent.
  */
 export function treeToProposals(
 	tree: AddressTree,

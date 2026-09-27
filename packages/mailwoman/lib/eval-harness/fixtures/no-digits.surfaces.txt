@@ -20,7 +20,7 @@ andeveien
 anholttoppen
 ankerveien
 anleggshammaren
-anna mogaards check
+anna mogaards gate
 annabekken
 annebakken
 apalvika
@@ -28,7 +28,7 @@ apold
 arbeidergata
 arbeidersmauet
 arbulii
-arctanders check
+arctanders gate
 arihamrane
 arnestadgutua
 arnevikveien
@@ -53,7 +53,7 @@ austre maursetlia
 austredalen
 austrudsmonen
 avdemsvegen
-axel paulsens check
+axel paulsens gate
 bagerens vei
 bakkane
 bakkehagan
@@ -62,7 +62,7 @@ bakkenesvegen
 bakkenveien
 bakkevegen
 baklibekken
-balders check
+balders gate
 ballestad øvre
 balsfjordgata
 balsnes
@@ -109,7 +109,7 @@ bergtunveien
 berhusveien
 berild
 berjåsen
-bernhoffs check
+bernhoffs gate
 besso
 betholmveien
 betnneset
@@ -178,7 +178,7 @@ brestet
 brinken
 briskeveien
 brodshaug
-bronns check
+bronns gate
 bruaset
 brubakken
 brudalsvegen
@@ -211,7 +211,7 @@ bøneset
 børtevegen
 bøstølen
 cappelens vei
-cecilie tvedts check
+cecilie tvedts gate
 chr. michelsens veg
 dags vei
 dalandsåsen
@@ -229,8 +229,8 @@ digerudholtet
 djupevikmyra
 djupsjøveien
 djupsundvegen
-doktor krafts check
-doktor lassens check
+doktor krafts gate
+doktor lassens gate
 dolpa
 donavall
 dortledhaugen
@@ -238,7 +238,7 @@ drangedalsveien
 dreggjavikveien
 drivdalsvegen
 drognesvegen
-dronning åstas check
+dronning åstas gate
 drotteveien
 drøbaks vei
 duevegen
@@ -254,7 +254,7 @@ dælidvegen
 døliveien
 dønskiveien
 edholmen
-edvard bulls check
+edvard bulls gate
 eggervegen
 egnehjemveien
 eideveien
@@ -311,7 +311,7 @@ fagerdalen
 fagerlandvegen
 fagerlia
 fagerliveien
-falck ytters check
+falck ytters gate
 falkgårdselva
 faråsen
 fensjøvegen
@@ -429,7 +429,7 @@ geilevegen
 geilin
 geitheia
 general dahls vei
-georg stangs check
+georg stangs gate
 gil
 gjeddeveien
 gjervalen
@@ -488,14 +488,14 @@ guddal
 gudrun kolderups veg
 gullsmedvegen
 gullvik
-gunhilds check
+gunhilds gate
 gunhilds vei
 gunnhilds vei
 gursli
 guttersrudveien
 gutulivollen
 gversetlie
-gyldenløves check
+gyldenløves gate
 gyteskjær
 gåselia
 gåserudveien
@@ -522,7 +522,7 @@ hanssveavegen
 haraholveien
 harelie
 harestien
-harlows check
+harlows gate
 harnesmyrvegen
 harstad
 hartvågen
@@ -564,7 +564,7 @@ helsøya
 hemlihøgda
 hemmelsjøen
 hen
-henrik wergelands check
+henrik wergelands gate
 herheim
 herlaugsbakkane
 herreveien
@@ -737,7 +737,7 @@ indre sandstøl
 indreholmen
 industriparken
 industrivegen
-ingeborgs check
+ingeborgs gate
 ingeborgs veg
 ingedalveien
 ingelsfjord
@@ -745,7 +745,7 @@ ingolf hellands vei
 ingolf ruuds vei
 ingvaldsåsen
 innlegda
-j.n.jacobsens check
+j.n.jacobsens gate
 jakobsbakkveien
 jakobsvegen
 jamesluobbal
@@ -760,7 +760,7 @@ jensplassvegen
 jervvegen
 jervveien
 jevanolvegen
-johan hirsch check
+johan hirsch gate
 johan hirschs vei
 johan nygaardsvolds veg
 johmsvegen
@@ -770,7 +770,7 @@ jonsrudveien
 jordbærveien
 jordet
 jordmorvegen
-josef mindes check
+josef mindes gate
 josefines vei
 jossiasvegen
 jotagata
@@ -782,7 +782,7 @@ jåmestøyl
 jåsundveien
 jærveien
 jøkelfjordveien
-jørgen moes check
+jørgen moes gate
 jørmeland
 jørnsebakken
 jørundsvegen
@@ -796,7 +796,7 @@ kalvåg
 kammen
 kantarellveien
 kapellveien
-karl pettersens check
+karl pettersens gate
 karlslystvegen
 karlsøyveien
 karolinerveien
@@ -844,7 +844,7 @@ knausen
 kneika
 knettvegen
 knipemyrveien
-knud baades check
+knud baades gate
 knutevegen
 kobbenesvegen
 kokelvveien
@@ -932,7 +932,7 @@ langtangen
 langvann nord
 langvatnet
 langøy
-laurits andersens check
+laurits andersens gate
 lauvbodalen
 lauvhaug
 lauvhaugveien
@@ -1020,7 +1020,7 @@ martin linges vei
 masterudvegen
 masterødveien
 mathias skeibroks vei
-mauritz hansens check
+mauritz hansens gate
 maurstad
 maurveien
 medåsvegen
@@ -1181,15 +1181,15 @@ odvar solbergs vei
 oftebro
 okjen
 oksumvegen
-olav kyrres check
+olav kyrres gate
 olav nygards veg
-olavs check
+olavs gate
 olavsgate
 olderveien
 oldervikveien
 oldret
 ole
-ole bulls check
+ole bulls gate
 olsengberget
 omasvarrivannet
 onnerveien
@@ -1198,8 +1198,8 @@ ordfører juul-olsens vei
 ormøy
 orrelia
 osahaugen
-oscar omdals check
-oscars check
+oscar omdals gate
+oscars gate
 osdalen
 oshaugveien
 osloveien
@@ -1235,7 +1235,7 @@ presteveien
 prestvannvegen
 prestvatn
 prikleveien
-professor daaes check
+professor daaes gate
 pukkverkskleiva
 pumpevegen
 pålsbuktveien
@@ -1260,7 +1260,7 @@ reitvegen
 rekevika
 rekkehus f
 rekstadvegen
-rektor nygaards check
+rektor nygaards gate
 remevegen
 renslostigen
 renåskarven
@@ -1270,7 +1270,7 @@ resvegen
 revesaksa
 revhaugveien
 revheimsveien
-rikard nordraaks check
+rikard nordraaks gate
 riksfjord
 ringbergveien
 ringdalveien
@@ -1290,11 +1290,11 @@ rogneveien
 roknesmyra
 romsveien
 rophusvegen
-rosenkrantz check
+rosenkrantz gate
 rostadgutua
 roten
 rotenes
-roveruds check
+roveruds gate
 rudsberget
 rudsåsveien
 rudsøgardsveien
@@ -1321,7 +1321,7 @@ rørhomvegen
 rørvik
 rørvikneset
 røsdal
-røskvas check
+røskvas gate
 røsslyngveien
 røstadtrøveien
 røstvangveien
@@ -1341,7 +1341,7 @@ sanderødveien
 sandgata
 sandholmen
 sandnesvegen
-sandsdalens check
+sandsdalens gate
 sandselvveien
 sandsetveien
 sandstrand
@@ -1357,8 +1357,8 @@ sappirjoenjärvi
 sarabyåsen
 sarbuvollveien
 scheens vei
-schmidts check
-schultz' check
+schmidts gate
+schultz' gate
 seines
 selbergveien
 selheimsvegen
@@ -1502,7 +1502,7 @@ solbergliveien
 solbergveien
 solhaug
 solhaugen
-solhavns check
+solhavns gate
 solhøgda
 solliden ørnekuppa
 sollidvegen
@@ -1540,7 +1540,7 @@ springvannskleiva
 st. halvards plass
 stalheimsvegen
 stallgata
-stangs check
+stangs gate
 starumsvegen
 statsrådtunet
 staulveien
@@ -1551,8 +1551,8 @@ stavkirkevegen
 stavnes
 stavsengvegen
 stavvatnet
-steenbergs check
-steens check
+steenbergs gate
+steens gate
 stegen
 steinbakken
 steinfjordveien
@@ -1639,7 +1639,7 @@ svenningsbrona
 svenseidvegen
 svenskveien
 svenstujordet
-sverdrups check
+sverdrups gate
 sverigedalsveien
 sverre granlunds vei
 sverrebakkan
@@ -1682,12 +1682,12 @@ terneveien
 terrasseveien
 tervatunet
 texnesstubben
-thereses check
-thomas heftyes check
+thereses gate
+thomas heftyes gate
 thomas olsens vei
 thommessens vei
 thorstein stenbeks vei
-thorvald meyers check
+thorvald meyers gate
 tingstadbuveien
 tinnebakken
 tiurvegen
@@ -1709,7 +1709,7 @@ tomasvassvegen
 tomsetra
 toppen
 toraneshøgda
-tordenskjolds check
+tordenskjolds gate
 torget
 torpebergveien
 torpveien
@@ -1862,8 +1862,8 @@ vågavegen
 vågsbygd ringvei
 vårstubben
 vårvegen
-welhavens check
-wessels check
+welhavens gate
+wessels gate
 wimpelmannsgata
 ystebø
 ysterivegen

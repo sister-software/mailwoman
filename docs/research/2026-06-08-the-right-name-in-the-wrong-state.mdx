@@ -39,7 +39,7 @@ Region-match: zero. Not low. Zero. The resolver was getting the state right esse
 
 The model wasn't the problem. Hand it `226 Bridge Rd, North Hero, VT 05474` and it directly tags `region="VT"`, `locality="North Hero"`, the street, the number, the postcode. The parse is right. The resolver throws the region away.
 
-It throws it away because it can't read it. Who's On First stores Vermont as "Vermont"; our search index carried no abbreviations, so `findPlace("VT")` matched nothing. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country — and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. The 326 kilometers was the distance between the right name and the famous one.
+It throws it away because it can't read it. Who's On First stores Vermont as "Vermont"; our search index carried no abbreviations, so `findPlace("VT")` matched no entry. With no resolved region, the resolver had no parent to constrain the locality search, so it searched the whole country — and when ten Sheldons compete with no geographic filter, the one with the largest population wins. Vermont's Sheldon (population 932) loses to Iowa's (population 5,455) every single time. The 326 kilometers was the distance between the right name and the famous one.
 
 The fix already existed in the repo. A build step that pulls state abbreviations from a reference dataset we already ship had fallen out of the build manifest, so the gazetteer went out without it. We put it back, rebuilt the index, and re-ran the same held-out set:
 

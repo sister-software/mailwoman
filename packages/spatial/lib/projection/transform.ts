@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { runFile } from "@mailwoman/core/process"
+import { TextSpliterator } from "spliterator"
 
 /**
  *   Ask proj which datum transformation it would choose, and refuse a ballpark one.
@@ -34,7 +35,9 @@ import { runFile } from "@mailwoman/core/process"
  */
 export interface DatumTransformationVerdict {
 	/**
-	 * The candidate operation line proj named, verbatim. Absent when it named none.
+	 * The candidate operation line proj named, verbatim.
+	 *
+	 * Absent when it named none.
 	 */
 	best?: string
 	usable: boolean
@@ -45,18 +48,12 @@ export interface DatumTransformationVerdict {
  * Read `projinfo --summary` output: which operation proj would choose, and whether it can actually run.
  */
 export function assessDatumTransformation(summary: string): DatumTransformationVerdict {
-	// The first line naming a candidate operation is the one proj will choose. Everything before it is a header, and the
-	// `Note:` line about `--spatial-test` is not a candidate.
-	//
-	// `projinfo --summary` prints a header plus one line per candidate operation: two to nine lines, bounded by proj's own
-	// candidate enumeration rather than by input size. Reaching for a streaming reader would put a `spliterator` dependency
-	// on this package for a fixed handful of lines.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded output, see above
-	const lines = summary.split("\n")
-
-	const best = lines
-		.map((line) => line.trim())
-		.find((line) => line.includes(", ") && !line.startsWith("Note:") && !line.startsWith("Candidate operations"))
+	// The first line naming a candidate operation is the one proj will choose.
+	// Everything before it is a header, and the `Note:` line about `--spatial-test` is not a candidate.
+	// The reader trims each line.
+	const best = TextSpliterator.from(summary).find(
+		(line) => line.includes(", ") && !line.startsWith("Note:") && !line.startsWith("Candidate operations")
+	)
 
 	if (!best) return { usable: false, reason: "projinfo named no candidate operation" }
 
@@ -68,7 +65,8 @@ export function assessDatumTransformation(summary: string): DatumTransformationV
 }
 
 /**
- * The target every layer ingest reprojects to — H3 takes WGS84 latitude and longitude.
+ * The target every layer ingest reprojects to.
+ * H3 takes WGS84 latitude and longitude.
  */
 export const WGS84_EPSG = 4326
 
@@ -87,8 +85,8 @@ export interface AssertDatumTransformationOptions {
 /**
  * Refuse an ingest whose best available datum transformation is a ballpark one, or is missing its grid.
  *
- * @throws {Error} When proj names no candidate, would use a ballpark offset, or would use an operation whose grid is
- *   not installed.
+ * @throws {Error} When proj names no candidate, would use a ballpark offset,
+ * or would use an operation whose grid is not installed.
  */
 export async function assertDatumTransformationAvailable(
 	sourceEPSG: number,

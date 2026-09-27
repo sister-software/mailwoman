@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `GET /health`: the issuance switch, the environment's Stripe mode, the signing self-test's last result, whether the
- *   ledger answers a query, and whether any token's email has stayed `failed` for over an hour. 503 when the ledger
- *   does not answer, so a monitor sees a worker that cannot mint or answer a claim. a failing email is a 200 with
- *   `email: failing`, since the worker itself is well and the action is at the provider. One route, so one external
- *   check covers both alerts. No customer data, no key material.
+ *   Serves `GET /health`, which reports issuance, Stripe mode, signing, ledger reachability and
+ *   long-running email failures without exposing customer or key data.
+ *
+ *   The route returns 503 only when the ledger is unreachable. Email failures still return 200 with
+ *   `email: "failing"`.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -16,6 +16,9 @@ import type { LicenseWorkerEnv } from "#env"
 import type { Ledger } from "#ledger/client"
 import { countFailedEmailsBefore } from "#ledger/licenses"
 
+/**
+ * The result of the most recent signing self-test.
+ */
 export type SigningStatusReport = "ok" | "mismatch" | "unchecked"
 
 const HealthSchema = z.object({
@@ -43,7 +46,7 @@ const healthRoute = createRoute({
 })
 
 /**
- * How long a failed email may stand before the report says so: past the mint's own attempt, short of the next resend.
+ * How long an email must stay failed before the report shows `email: "failing"`.
  */
 const EMAIL_FAILURE_GRACE_MS = 60 * 60 * 1000
 
@@ -63,6 +66,9 @@ async function emailReport(ledger: Ledger, now: () => number): Promise<"ok" | "f
 	return (await countFailedEmailsBefore(ledger, cutoff)) > 0 ? "failing" : "ok"
 }
 
+/**
+ * Registers `GET /health` on the app.
+ */
 export function registerHealthRoute(
 	app: OpenAPIHono,
 	env: LicenseWorkerEnv,

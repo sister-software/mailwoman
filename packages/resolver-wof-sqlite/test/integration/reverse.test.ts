@@ -10,7 +10,7 @@
  *   without them — same pattern as `resolver-wof-wasm/hot-db.test.ts`):
  *
  *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree, e.g.
- *       `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+ *       `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
  *   - `MAILWOMAN_WOF_POLYGONS_DB` — the polygon sidecar, e.g.
  *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
  */
@@ -67,9 +67,10 @@ describe("point-in-polygon primitives", () => {
 /**
  * Fixture gazetteer — a miniature Vermont-like geography around (44.0, -72.0):
  *
- * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B (6, bbox overlaps A but polygon rejects — the
- * bbox-false-positive case) ⊃ localadmin town (4, point geometry, centroid near the query point) ⊃ locality village (5,
- * point geometry, degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
+ * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B
+ * (6, bbox overlaps A but polygon rejects — the bbox-false-positive case) ⊃ localadmin town
+ * (4, point geometry, centroid near the query point) ⊃ locality village (5, point geometry,
+ * degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
  */
 function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
 	const admin = DatabaseClient.temp<WOFDatabase>()
@@ -149,7 +150,8 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
-		// Restrict to the polygon-containing tiers — the deepest is then county A, PIP-confirmed.
+		// Restrict to the polygon-containing tiers.
+		// The deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44, -72, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
@@ -160,8 +162,9 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44, -72)
 		expect(result.containment).toBe("approximate")
-		// Bbox false positives can't be vetoed without polygons. the smallest containing bbox
-		// (a county) still anchors the walk and the descent still reaches the village.
+		// Bbox false positives can't be vetoed without polygons.
+		// The smallest containing bbox (a county) still anchors the walk
+		// and the descent still reaches the village.
 		expect(result.hierarchy[0]?.name).toBe("Middlewich Village")
 	})
 
@@ -198,8 +201,9 @@ const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
 describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",
 	() => {
-		// Construct in beforeAll rather than the describe body — the body runs at collection time even when
-		// the suite is skipped, and would try to open the (absent) DBs.
+		// Construct in beforeAll rather than the describe body.
+		// The body runs at collection time even when the suite is skipped,
+		// and would try to open the (absent) DBs.
 		let rg: WOFReverseGeocoder
 
 		beforeAll(() => {
@@ -214,8 +218,8 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			expect(names).toContain("Chicago")
 			expect(names).toContain("Illinois")
 			expect(names).toContain("United States")
-			// The deepest node is a point-geometry neighbourhood (Hyde Park) → approximate by honest
-			// convention, even though the Chicago locality above it is polygon-confirmed.
+			// The deepest node is a point-geometry neighbourhood (Hyde Park) → approximate by
+			// honest convention, even though the Chicago locality above it is polygon-confirmed.
 			expect(result.hierarchy[0]?.placetype).toBe("neighbourhood")
 			expect(result.containment).toBe("approximate")
 		})

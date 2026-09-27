@@ -9,7 +9,7 @@
  *   repository grants and what the commercial branch does not reach. `PROVENANCE.json` records, per artifact, what the
  *   model card holds about its inputs and which questions it leaves open.
  *
- *   Both are derived, so both go stale in a way nothing else reports. A model card edit that adds an attribution entry
+ *   Both are derived, so both go stale in a way no check reports. A model card edit that adds an attribution entry
  *   or a digest changes what the package owes and what it can show, and the compiler never reads either file. Holding
  *   the committed bytes equal to `mwops release write-rights-files`'s output makes that edit either regenerate them or
  *   fail here.
@@ -34,8 +34,8 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 const REGENERATE = "run `yarn mwops release write-rights-files`"
 
 /**
- * The `weights-rights` check: one error per published weights package whose generated rights files are missing, stale,
- * or undeclared in the manifest's `files` array.
+ * The `weights-rights` check: one error per published weights package whose generated
+ * rights files are missing, stale, or undeclared in the manifest's `files` array.
  */
 export const weightsRightsCheck: RepoCheck = {
 	id: "weights-rights",
@@ -83,7 +83,7 @@ export const weightsRightsCheck: RepoCheck = {
 				})
 			}
 
-			const manifest = await readPackageJSON(String(resolvePath(context.repoRoot, record.workspace, "package.json")))
+			const manifest = await readPackageJSON(resolvePath(context.repoRoot, record.workspace, "package.json"))
 			const declared = new Set(Array.isArray(manifest.files) ? manifest.files : [])
 
 			for (const generated of [LICENSE_FILE, PROVENANCE_FILE]) {

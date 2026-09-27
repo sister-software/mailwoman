@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { workspacePath } from "@mailwoman/core/paths"
 import {
@@ -11,7 +8,6 @@ import {
 } from "@mailwoman/corpus/adapters/wof/admin/json/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("wof-admin-json")
@@ -51,8 +47,6 @@ describe("variantsFor (pure)", () => {
 	})
 
 	it("country uses the OpenCage-canonical name for the default slot value", () => {
-		// Caller is expected to pass COUNTRY_DISPLAY_NAME's value for the default slot. we just
-		// verify the variant uses whatever selfName was passed.
 		const v = variantsFor(rec({ name: "United States", placetype: "country" }), [], "United States of America")
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ country: "United States of America" })
@@ -70,7 +64,7 @@ describe("variantsFor (pure)", () => {
 
 		expect(v[0]!.components.locality).toBe("St. Petersburg")
 		expect(v[1]!.components.locality).toBe("St. Petersburg")
-		expect(v[1]!.components.region).toBe("Florida") // ancestors stay canonical
+		expect(v[1]!.components.region).toBe("Florida")
 	})
 
 	it("subregion (county) yields self only", () => {
@@ -94,7 +88,7 @@ describe("nameSlotsFor", () => {
 			placetype: "locality",
 			country: "US",
 			nameVariants: new Map([
-				["name:eng_x_preferred", "Saint Petersburg"], // exact dup of default → dropped
+				["name:eng_x_preferred", "Saint Petersburg"],
 				["name:eng_x_colloquial", "St. Petersburg"],
 				["name:rus_x_preferred", "Санкт-Петербург"],
 			]),
@@ -129,21 +123,17 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 
-		// Phase 1.5.1 invariant: both the canonical and the colloquial name produce training rows
-		// for the same WOF id. This was the failure mode the SQLite path could not address even with
-		// the is_current predicate loosened — the `names` table was empty in the WOF SQLite distro.
 		const stPete = rows.filter((r) => r.source_id.startsWith("wof-admin-1021-"))
 		const stPeteRaws = stPete.map((r) => r.raw)
 		expect(stPeteRaws.some((r) => r.includes("Saint Petersburg"))).toBe(true)
 		expect(stPeteRaws.some((r) => r.includes("St. Petersburg"))).toBe(true)
 
-		// And source_id encodes which name-slot produced each row.
 		const slotKeys = new Set(stPete.map((r) => r.source_id.match(/^wof-admin-1021-(.+)-(?:self|with-[a-z-]+)$/)?.[1]))
 		expect(slotKeys.has("default")).toBe(true)
 		expect(slotKeys.has("name-eng-x-colloquial")).toBe(true)
 	})
 
-	it("emits per-hierarchy variants for a vanilla locality (Portland, no localized variants)", async () => {
+	it("Emits per-hierarchy variants for a vanilla locality (Portland without localized variants)", async () => {
 		await runAdapter({
 			adapter: createWOFAdminAdapter(),
 			adapterOptions: { inputPath: fixtureRoot, country: "US" },
@@ -153,12 +143,7 @@ describe("wof-admin-json adapter against fixture", () => {
 
 		const rows = await loadRows()
 		const portland = rows.filter((r) => r.source_id.startsWith("wof-admin-1012-default-"))
-		// Self variant is the bare "Portland". Surface form for the with-region / with-region-country
-		// variants depends on the US OpenCage template's pruning rules (state abbreviation, dropped
-		// counties); they may render differently or fold via reconcileComponents. We assert only
-		// that the self variant exists, the canonical-only path produced exactly one name slot's
-		// worth of rows (no spurious slot from name:eng_x_preferred = "Portland" since it matches
-		// the canonical), and that at least one variant carries an ancestor component.
+
 		expect(portland.map((r) => r.raw)).toContain("Portland")
 
 		const withAncestor = portland.find(
@@ -182,9 +167,24 @@ describe("wof-admin-json adapter against fixture", () => {
 		expect(rows.every((r) => r.locale === "fr-FR")).toBe(true)
 		expect(rows.every((r) => r.source === WOF_ADMIN_ADAPTER_ID)).toBe(true)
 		expect(rows.every((r) => r.license === "CC0-1.0")).toBe(true)
-		// At least the basic FR hierarchy variants land.
+
 		expect(rows.map((r) => r.raw)).toContain("Paris")
 		expect(rows.map((r) => r.raw)).toContain("Paris, Île-de-France")
+	})
+
+	it("upper-cases a country code the publisher spelled in mixed case, and the filter still selects it", async () => {
+		await runAdapter({
+			adapter: createWOFAdminAdapter(),
+			adapterOptions: { inputPath: fixtureRoot, country: "NL" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		const rows = await loadRows()
+
+		expect(rows.length).toBeGreaterThan(0)
+		expect(rows.every((r) => r.country === "NL")).toBe(true)
+		expect(rows.map((r) => r.raw)).toContain("Friesland")
 	})
 
 	it("treats mz:is_current=-1 as live (Pelias convention) and mz:is_current=0 as superseded", async () => {
@@ -196,9 +196,9 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// The country US record carries mz:is_current = -1 in the fixture. it must still be emitted.
+
 		expect(rows.some((r) => r.source_id.startsWith("wof-admin-1001-"))).toBe(true)
-		// The deprecated "Old Place" (mz:is_current = 0) must be absent.
+
 		expect(rows.some((r) => r.raw.includes("Old Place"))).toBe(false)
 	})
 
@@ -211,8 +211,7 @@ describe("wof-admin-json adapter against fixture", () => {
 		})
 
 		const rows = await loadRows()
-		// The alt-geometry file for Portland carries a deliberately-different name. If the adapter
-		// had walked it, we'd see "(alt-geometry, should be ignored)" leaking into a row.
+
 		expect(rows.some((r) => r.raw.includes("alt-geometry"))).toBe(false)
 	})
 
@@ -236,7 +235,7 @@ describe("wof-admin-json adapter against fixture", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, WOF_ADMIN_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(WOF_ADMIN_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createWOFAdminAdapter(),
@@ -260,7 +259,6 @@ describe("wof-admin-json adapter against fixture", () => {
 		const usDefault = rows.find((r) => r.source_id === "wof-admin-1001-default-self")
 		expect(usDefault?.raw).toContain("United States of America")
 
-		// And the colloquial slot emits "USA" or "America" verbatim from name:eng_x_colloquial.
 		const colloquialRaws = rows
 			.filter((r) => r.source_id.startsWith("wof-admin-1001-name-eng-x-colloquial-"))
 			.map((r) => r.raw)

@@ -40,7 +40,7 @@ import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
@@ -52,7 +52,9 @@ const FEATURE_SERVICE_URL =
 
 export interface FetchNADOptions extends BaseFetchOptions {
 	/**
-	 * Fetch strategy. Default `featureserver`.
+	 * Fetch strategy.
+	 *
+	 * Default `featureserver`.
 	 */
 	mode?: "featureserver" | "bulk"
 	/**
@@ -60,23 +62,33 @@ export interface FetchNADOptions extends BaseFetchOptions {
 	 */
 	nadURL?: string
 	/**
-	 * Records per output file. Default `100000`.
+	 * Records per output file.
+	 *
+	 * Default `100000`.
 	 */
 	chunkSize?: number
 	/**
-	 * Records per http request. Default `5000`.
+	 * Records per http request.
+	 *
+	 * Default `5000`.
 	 */
 	pageSize?: number
 	/**
-	 * Parallel page fetches within a chunk. Default `4`.
+	 * Parallel page fetches within a chunk.
+	 *
+	 * Default `4`.
 	 */
 	concurrency?: number
 	/**
-	 * Start objectid. Default `1`.
+	 * Start objectid.
+	 *
+	 * Default `1`.
 	 */
 	startOID?: number
 	/**
-	 * Stop before this OID. Default = total count.
+	 * Stop before this OID.
+	 *
+	 * Default = total count.
 	 */
 	endOID?: number
 }
@@ -94,9 +106,11 @@ interface ChunkManifest {
 }
 
 /**
- * ArcGIS paged reads. Retry is on: the loop walks objectid ranges to completion, so one throttled page previously ended
- * a multi-hour national download. No rate budget — pages are requested one at a time and each assembles thousands of
- * records server-side.
+ * ArcGIS paged reads.
+ *
+ * Retry is on: the loop walks objectid ranges to completion, so one throttled page
+ * previously ended a multi-hour national download.
+ * No rate budget — pages are requested one at a time and each assembles thousands of records server-side.
  */
 const nadClient = new APIClient({
 	displayName: "nad",
@@ -139,13 +153,16 @@ async function discoverTotalCount(): Promise<number> {
 }
 
 /**
- * Fetch a single chunk by paging through its OID range with bounded concurrency. Returns the count of records written
- * and the count of pages that errored. The caller decides whether to mark the chunk complete based on errors === 0.
+ * Fetch a single chunk by paging through its OID range with bounded concurrency.
  *
- * Note(phase1): this is a JSON API pager rather than a file download — the shared `downloadToFile` doesn't apply here.
+ * Returns the count of records written and the count of pages that errored.
+ * The caller decides whether to mark the chunk complete based on errors === 0.
+ *
+ * Note(phase1): this is a JSON API pager rather than a file download —
+ * the shared `downloadToFile` doesn't apply here.
  */
 async function fetchChunk(
-	chunkPath: string,
+	chunkPath: PathBuilderLike,
 	chunkStart: number,
 	chunkEnd: number,
 	pageSize: number,
@@ -158,7 +175,8 @@ async function fetchChunk(
 		pageRanges.push([cursor, Math.min(cursor + pageSize - 1, chunkEnd)])
 	}
 
-	// Run bounded-concurrency page fetches. Results indexed by page slot for in-order write.
+	// Run bounded-concurrency page fetches.
+	// Results indexed by page slot for in-order write.
 	const pageResults: Array<{ rows: unknown[]; error: Error | null }> = pageRanges.map(() => ({
 		rows: [],
 		error: null,
@@ -211,7 +229,7 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	const concurrency = options.concurrency ?? 4
 	const startOID = options.startOID ?? 1
 
-	const chunkDir = join(options.outRoot, SLUG, "featureserver")
+	const chunkDir = options.outRoot(SLUG, "featureserver")
 	await makeDirectories(chunkDir)
 
 	report?.(`=== ${SLUG} / featureserver`)
@@ -231,11 +249,11 @@ async function featureserverMode(options: FetchNADOptions, report?: (line: strin
 	for (let cursor = startOID; cursor <= endOID; cursor += chunkSize) {
 		const chunkEnd = Math.min(cursor + chunkSize - 1, endOID)
 		const chunkName = `oids_${cursor}-${chunkEnd}`
-		const chunkPath = join(chunkDir, `${chunkName}.ndjson`)
-		const manifestPath = join(chunkDir, `${chunkName}.manifest.json`)
+		const chunkPath = chunkDir(`${chunkName}.ndjson`)
+		const manifestPath = chunkDir(`${chunkName}.manifest.json`)
 
 		// Idempotency: skip a chunk only if it's marked complete (the bash version's bug was
-		// marking complete on partial-failure runs. we now only set complete after a clean fetch).
+		// marking complete on partial-failure runs. We now only set complete after a clean fetch).
 		if (await pathExists(chunkPath)) {
 			const recorded = await readManifest<ChunkManifest>(manifestPath)
 
@@ -301,10 +319,10 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 		)
 	}
 
-	const destDir = join(options.outRoot, SLUG)
+	const destDir = options.outRoot(SLUG)
 	await makeDirectories(destDir)
 	const filename = new URL(options.nadURL).pathname.split("/").pop() ?? "NAD.zip"
-	const destPath = join(destDir, filename)
+	const destPath = destDir(filename)
 
 	report?.(`=== ${SLUG} / ${filename}`)
 	report?.(`  URL: ${options.nadURL.slice(0, 100)}${options.nadURL.length > 100 ? "…" : ""}`)
@@ -313,7 +331,7 @@ async function bulkMode(options: FetchNADOptions, report?: (line: string) => voi
 
 	const sha = await sha256File(destPath)
 
-	await writeManifest(join(destDir, "MANIFEST.json"), {
+	await writeManifest(destDir("MANIFEST.json"), {
 		source_url: options.nadURL,
 		downloaded_at: new Date().toISOString(),
 		filename,

@@ -24,7 +24,7 @@
  *     both. Vale's markdown parser skips inline code and fences natively, which is the whole reason
  *     those two en-GB-looking identifiers can stay on the swap list.
  *   - `promotion-eval.ts`, `packages/corpus/lib/recipes/` and `mailwoman eval promote` are
- *     backticked, so `AmbiguousShorthand` must stay quiet on all three — that is how a
+ *     backticked, so `AmbiguousShorthand` must stay quiet on all three. That is how a
  *     interface-tied name survives the vocabulary ban without being renamed.
  *
  *   The code leg exists because that last mechanism does not reach a source comment. Vale's
@@ -51,7 +51,9 @@ import { valeCommand } from "@mailwoman/core/vale"
 import { $ } from "zx"
 
 /**
- * One Vale alert, as emitted by `--output=JSON`. Only the fields this check reads are typed.
+ * One Vale alert, as emitted by `--output=JSON`.
+ *
+ * Only the fields this check reads are typed.
  */
 interface ValeAlert {
 	Check: string
@@ -61,7 +63,9 @@ interface ValeAlert {
 }
 
 /**
- * Vale's `--output=JSON` document: file path -> alerts. An entirely clean run emits `{}`.
+ * Vale's `--output=JSON` document: file path -> alerts.
+ *
+ * An entirely clean run emits `{}`.
  */
 type ValeReport = Record<string, ValeAlert[]>
 
@@ -86,8 +90,10 @@ interface StyleLeg {
 	 */
 	cleanFixture: string
 	/**
-	 * The error-severity count the dirty fixture produces today (measured rather than estimated). It is a `>=` bar, so
-	 * adding a rule plus its fixture line passes without a bump. Only a rule that stops firing fails.
+	 * The error-severity count the dirty fixture produces today (measured rather than estimated).
+	 *
+	 * It is a `>=` bar, so adding a rule plus its fixture line passes without a bump.
+	 * Only a rule that stops firing fails.
 	 */
 	minDirtyErrors: number
 	/**
@@ -95,8 +101,9 @@ interface StyleLeg {
 	 */
 	ruleChecks: string[]
 	/**
-	 * Read the clean fixture's verdict from the JSON rather than the exit code when the style carries warning-severity
-	 * rules: Vale's exit code only reflects errors, so a plain run would pass a clean file that trips a warning.
+	 * Read the clean fixture's verdict from the JSON rather than the exit code
+	 * when the style carries warning-severity rules: Vale's exit code only reflects errors,
+	 * so a plain run would pass a clean file that trips a warning.
 	 */
 	cleanCountsEverySeverity: boolean
 }
@@ -122,10 +129,13 @@ const LEGS: StyleLeg[] = [
 			"styles.Weasel",
 			"styles.MedicalMetaphor",
 			"styles.Negation",
+			"styles.Nothing",
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
 			"styles.Grammar.RelativeClauseChains",
+			"styles.CommaNo",
+			"styles.NamesVerb",
 		],
 		cleanCountsEverySeverity: false,
 	},
@@ -134,21 +144,24 @@ const LEGS: StyleLeg[] = [
 		config: ".vale-code.ini",
 		dirtyFixture: "fixtures/dirty.ts",
 		cleanFixture: "fixtures/clean.ts",
-		minDirtyErrors: 7,
+		minDirtyErrors: 8,
 		ruleChecks: [
 			"styles.AmbiguousShorthandCode",
 			"styles.EmphasisCapitals",
 			"styles.ShellNoun",
 			"styles.MedicalMetaphor",
 			"styles.CommentSemicolons",
+			"styles.CommentDashJoint",
 			"styles.Negation",
+			"styles.Nothing",
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
 			"styles.Grammar.RelativeClauseChains",
+			"styles.CommaNo",
+			"styles.NamesVerb",
 		],
-		// Both rules this config runs are error-severity, so the exit code carries the whole
-		// verdict.
+		// Both rules this config runs are error-severity, so the exit code carries the whole verdict.
 		cleanCountsEverySeverity: false,
 	},
 	{
@@ -179,10 +192,13 @@ const LEGS: StyleLeg[] = [
 			"styles.WindDown",
 			"styles.MedicalMetaphor",
 			"styles.Negation",
+			"styles.Nothing",
 			"styles.Grammar.SentenceFragments",
 			"styles.Grammar.EllipticalCoordination",
 			"styles.Grammar.SloganAssertions",
 			"styles.Grammar.RelativeClauseChains",
+			"styles.CommaNo",
+			"styles.NamesVerb",
 		],
 		cleanCountsEverySeverity: true,
 	},
@@ -197,9 +213,10 @@ const $vale = $({ cwd: VALE_DIR, nothrow: true })
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 
-	// Vale writes a config or rule-file error to stderr and leaves stdout empty. Parsing that empty string raises
-	// `Expected JSON input, got` and names neither the rule file nor the reason, so a malformed token in a style reads as
-	// a defect in this script — `did not find expected node content` is the message that was being thrown away.
+	// Vale writes a config or rule-file error to stderr and leaves stdout empty.
+	// Parsing that empty string raises `Expected JSON input, got` and names neither the rule file
+	// nor the reason, so a malformed token in a style reads as a defect in this script.
+	// `did not find expected node content` is the message that was being thrown away.
 	if (!result.stdout.trim()) {
 		const detail = result.stderr.trim() || `exit ${result.exitCode ?? 0} with no output`
 

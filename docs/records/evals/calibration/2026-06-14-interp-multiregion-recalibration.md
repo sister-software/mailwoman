@@ -65,13 +65,13 @@ twelve; the full 50 is a turn-key follow-up (mind the heat ceiling on a sustaine
 A single nationwide 1.70× is wrong in both directions, and one direction is dangerous:
 
 - **Rural states are overconfident.** MT needs 2.85× for 90%; at 1.70× the radius claims a precision it
-  doesn't have — a user is told "90% within R" and gets materially less. Overconfidence is the failure
+  doesn't have. A user is told "90% within R" and gets materially less. Overconfidence is the failure
   mode direct confidence exists to prevent.
 - **Dense cities are over-conservative.** NY needs only 1.53×; at 1.70× the radius is wider than it
   needs to be — direct, but it throws away precision the data supports.
 
 Texas (1.70) sits in the middle, which is exactly why a single-region calibration looked fine and
-shipped — the artifact is the regional mean masquerading as a constant.
+shipped. The artifact is the regional mean masquerading as a constant.
 
 ## Decision and recommendation
 
@@ -83,7 +83,7 @@ shipped — the artifact is the regional mean masquerading as a constant.
    `geocode-core` would load the factor by parsed region instead of the hardcoded 1.70. Cheap; the full
    50-state table is a turn-key follow-up (the tooling is committed — ~2 min/state).
 2. **Per-segment-length bucket (the principled refinement).** The real driver is segment length /
-   local density rather than the state line — a state like CA holds both dense LA and rural North State. A Q̂
+   local density rather than the state line. A state like CA holds both dense LA and rural North State. A Q̂
    indexed on the claimed radius (segment-length bucket) would generalize within a state and to
    unmeasured states. More work; the better long-term answer. Recommended as the follow-up to the seed
    table.

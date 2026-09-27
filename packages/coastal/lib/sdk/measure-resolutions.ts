@@ -2,23 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The index resolution is a measurement this layer takes rather than a number argued to.
+ *   The index resolution is a measurement this layer takes rather than a number argued to: the share of cells
+ *   that come out `partial` decides whether the index answers most probes on its own, and this module streams
+ *   the real source at each candidate resolution and reports the table the choice is made from.
  *
- *   The share of cells that come out `partial` decides whether the index answers most probes on its own or
- *   whether the ray cast is the common path, and it is a property of England's coastal-frontage geometry that
- *   no reasoning about cell areas produces. This module streams the real source at each candidate resolution
- *   and reports the table the choice is made from; `build-coastal.ts` then builds at the chosen one.
+ *   The table is per scenario, because a pooled `partial` share averages a present-day designation together
+ *   with a 2105 projection and describes neither.
  *
- *   the table is PER scenario and the pooled row is FOR size only. Twelve layers cover the same frontages
- *   with different extents. a pooled `partial` share averages a present-day designation together with a 2105
- *   projection and describes neither. What a scenario-scoped probe reads is one scenario's share, so that is
- *   the number the resolution is chosen on. The pooled total answers a different question — how many rows the
- *   artifact holds — and is reported separately rather than folded in.
- *
- *   one stream, every resolution. Re-reading the geodatabase per candidate costs a full pass each and buys
- *   nothing — the classification is per feature, so every candidate index folds the same feature in turn. The
- *   cost is memory: each resolution holds its own cell sets, and the finest candidate dominates. A caller
- *   that runs out of headroom runs the candidates in separate invocations.
+ *   One stream covers every resolution. Memory is the cost, and a caller that runs out of headroom runs the
+ *   candidates in separate invocations.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -31,7 +23,9 @@ import { NCERM_SCENARIOS_BY_KEY } from "#vocabulary"
 
 export interface MeasureResolutionsOptions extends CoastalIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Which scenarios to measure. Defaults to all twelve.
+	 * Which scenarios to measure.
+	 *
+	 * Defaults to all twelve.
 	 */
 	scenarioKeys?: ReadonlyArray<string>
 }
@@ -39,7 +33,9 @@ export interface MeasureResolutionsOptions extends CoastalIngestOptions, Resolut
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count each measured layer declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count each measured layer declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCounts: Record<string, number>
 	measurements: CellIndexMeasurement[]
@@ -50,8 +46,9 @@ const DEFAULT_PROGRESS_EVERY = 2000
 /**
  * Measure every candidate resolution over the real source, keeping the scenarios apart.
  *
- * @throws {Error} When a layer's streamed feature count does not match the count it declares. A short read produces a
- *   well-formed table describing a shorter coastline, which is the partial result that must throw.
+ * @throws {Error} When a layer's streamed feature count does not match the count it declares.
+ * A short read produces a well-formed table describing a shorter coastline,
+ * which is the partial result that must throw.
  */
 export async function measureCoastalCellResolutions(
 	options: MeasureResolutionsOptions

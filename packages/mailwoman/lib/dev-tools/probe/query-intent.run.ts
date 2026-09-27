@@ -51,7 +51,7 @@
  *   geocode path with a single candidate. No alternatives means no margin to measure, so the marker
  *   could not fire for exactly the class it exists for. **Closed by #1537**, and the cause was upstream
  *   of the intent vocabulary as suspected: the model reads those names as a `street`, so the admin walk
- *   resolves nothing and the #370 span-rescore tier is what recovers them — and it decorated the
+ *   resolves no place and the #370 span-rescore tier is what recovers them — and it decorated the
  *   injected node with an empty runner-up list, discarding the namesakes its own lookup had returned.
  *   Re-measured 2026-08-07, same backend, every coordinate byte-identical:
  *
@@ -69,7 +69,7 @@
  *   gazetteer name in a non-Latin script folds to the empty string and could never match — Москва was
  *   not in that candidate list to be ranked, and Moscow, Idaho won by default among the Latin-named
  *   bearers. Athens survived the same trap only because it reaches the admin walk instead (`Αθήνα`
- *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped — the
+ *   wins there on prominence). **Closed by #1546**: the primary-name re-check was dropped. The
  *   backend's `exactMatch` is the name-or-alias surface equality (names table / alt_names bag), so a
  *   query matches a place when any stored name equals it, Москва's "Moscow" alias included — and
  *   population-first ranking then picks Москва RU. The postcode-consistency check still applies to
@@ -94,9 +94,9 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
 
 /**
- * The default board: the hard-case board's `bare_namesake` + `fst_out_of_reach` surfaces (the populations ROAD_TO_V9 §3
- * assembled for exactly this register), plus the three controls a reader needs to trust the rest — a full address, a
- * lowercase full address, and a route pair.
+ * The default board: the hard-case board's `bare_namesake` + `fst_out_of_reach` surfaces
+ * (the populations ROAD_TO_V9 §3 assembled for exactly this register), plus the three controls a
+ * reader needs to trust the rest — a full address, a lowercase full address, and a route pair.
  */
 const DEFAULT_BOARD = [
 	"Springfield",

@@ -15,44 +15,48 @@
  *   Saint-Denis pair is about — is invisible to the decoder. only the max is not. Printing anything else
  *   would overstate what an importance swap can do here.
  *
- *   `miss` means the FST does not accept the surface at all: the gazetteer has nothing to say, which is
+ *   `miss` means the FST does not accept the surface at all: the gazetteer has no entry, which is
  *   absence and not a zero bias. A printed `0` means the FST does know the surface and scores it zero.
  *   The two are different facts and the output keeps them apart.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/fst-bias.run.ts [--locale en-us] [--raw] <surface>...
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilder } from "path-ts"
 
 const { values, positionals } = parseArguments({
 	allowPositionals: true,
 	options: {
 		locale: { type: "string", default: "en-us" },
 		/**
-		 * Print every accepting entry at full precision instead of the per-tag max — how you tell "the arms agree" from
-		 * "the arms agree to four decimal places".
+		 * Print every accepting entry at full precision instead of the per-tag max —
+		 * how you tell "the arms agree" from "the arms agree to four decimal places".
 		 */
 		raw: { type: "boolean", default: false },
 	},
 })
 
 /**
- * The arms, by the artifact each one is. `pop` fell back to population because its source DB has no `place_importance`
- * table; `imp` carries the real Wikipedia join. Both stamps are readable in the binaries' provenance tails.
+ * The arms, by the artifact each one is.
+ *
+ * `pop` fell back to population because its source DB has no `place_importance` table;
+ * `imp` carries the real Wikipedia join.
+ * Both stamps are readable in the binaries' provenance tails.
  */
-const ARMS: Record<string, string> = {
-	pop: String(dataRootPath("wof", "fst-per-locale")),
-	imp: String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix")),
+const ARMS: Record<string, PathBuilder> = {
+	pop: wofDatabasePath("fst-per-locale"),
+	imp: wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix"),
 }
 
 const matchers = new Map<string, unknown>()
 
 for (const [arm, dir] of Object.entries(ARMS)) {
-	const path = `${dir}/fst-${values.locale}.bin`
+	const path = dir(`fst-${values.locale}.bin`)
 
 	if (!(await pathExists(path))) {
 		console.error(`[${arm}] no fst-${values.locale}.bin in ${dir} — skipping this arm`)

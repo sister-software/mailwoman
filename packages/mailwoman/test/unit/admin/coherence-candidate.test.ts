@@ -19,6 +19,7 @@ import { buildCandidateTable } from "@mailwoman/resolver-wof-sqlite/build-candid
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { adminCoherenceField, type AdminCoherenceSourceNode } from "mailwoman/admin-coherence"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
 const GERMANY = 100
@@ -29,10 +30,10 @@ const TEXAS = 201
 const WEIMAR_US = 202
 
 /**
- * The Weimar defect in miniature: the DE original and a more-populous US namesake, each chained to its own region +
- * country, so a bare population-first "Weimar" answers Texas.
+ * The Weimar defect in miniature: the DE original and a more-populous US namesake,
+ * each chained to its own region + country, so a bare population-first "Weimar" answers Texas.
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -94,8 +95,8 @@ function flatten(roots: readonly AddressNode[]): AddressNode[] {
 
 beforeEach(async () => {
 	scratch = await temporaryDirectory("mailwoman-coherence-candidate-")
-	const input = scratch.resolve("admin.db")
-	const candidatePath = scratch.resolve("candidate.db")
+	const input = scratch.path("admin.db")
+	const candidatePath = scratch.path("candidate.db")
 	buildFixtureAdmin(input)
 	await buildCandidateTable({ input, output: candidatePath })
 	lookup = new WOFCandidateTableLookup({ databasePath: candidatePath })
@@ -107,9 +108,11 @@ afterEach(async () => {
 })
 
 /**
- * Resolve the Weimar tree and read the verdicts the way the geocode assembly does. `adminCoherence: false` pins the
- * #263 re-pick out of the way — this test is about the stamp and the verdict rather than about any mechanism that might
- * one day fix the pick.
+ * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
+ *
+ * `adminCoherence: false` pins the #263 re-pick out of the way.
+ * This test is about the stamp and the verdict rather than about any mechanism
+ * that might one day fix the pick.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)
@@ -129,8 +132,9 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 	test("the qualifier the ranking ignored becomes a DECIDED contradiction — the flip from unverifiable", async () => {
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
-		// The ranking is untouched: population-first still answers Weimar, Texas — with the
-		// disambiguator in the input. That is the #1717 defect, faithfully reproduced.
+		// The ranking is untouched: population-first still answers Weimar, Texas,
+		// with the disambiguator in the input.
+		// That is the #1717 defect, faithfully reproduced.
 		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)

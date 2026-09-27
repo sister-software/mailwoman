@@ -1,23 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `<Geocoder>` — the whole geocoder, composed. It is the map analogue of `PipelineExplorer`
- *   and takes the same DI shape: an injected {@link GeocoderRuntime} (the host owns ONNX / httpvfs / R2 /
- *   the composed map style) plus a {@link GeocoderPanels} bag (the host's ModelVisualizer / VersionCompare /
- *   About / Permalink). Everything here is composition + a `ClientOnly` boundary:
- *
- *     - the floating {@link GeocoderControls} panel (version / compare / backend / query+autocomplete / result),
- *     - the declarative {@link MapCanvas} with the phase-2 overlays ({@link OverlayLayers}) and the
- *       resolved-place marker/outline/camera ({@link ResolvedPlaceLayers}) driven by the parse state,
- *     - the hooks that wire them: {@link useGeocode} (parse + viewport bias + map place),
- *       {@link usePlaceAutocomplete}, {@link useCompareState}.
- *
- *   Because it pulls {@link MapCanvas} (→ `react-map-gl` → `maplibre-gl`, WebGL + DOM at import), it lives on
- *   the `@mailwoman/react/map` subpath only — never the package root. The whole thing renders in Storybook
- *   over a fake runtime (offline stub style + canned geocode) with no network, no ONNX, no gazetteer.
- */
-
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react"
 import type { MapRef } from "react-map-gl/maplibre"
 
@@ -35,51 +18,62 @@ import { MapCanvas } from "./MapCanvas.tsx"
 import { OverlayLayers } from "./OverlayLayers.tsx"
 import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
 
+/**
+ * Props for {@linkcode Geocoder}.
+ */
 export interface GeocoderProps {
 	/**
-	 * The injected geocoder runtime (map style + overlays + parse + version/backend).
+	 * The geocoder runtime, which supplies the map style, overlays, parser, and version and backend controls.
 	 */
 	runtime: GeocoderRuntime
 	/**
-	 * Host-injected panels (about, release blurb, compare, permalink, debug drawer, map controls, …).
+	 * Panels supplied by the host.
 	 */
 	panels?: GeocoderPanels
 	/**
-	 * Address to pre-fill.
+	 * The address that pre-fills the search field.
+	 * It is not run automatically.
 	 */
 	defaultAddress?: string
 	/**
-	 * A query that arrived with the page — a permalink's `?q=`, say — to run once as soon as the runtime is ready.
+	 * A query to run once when the runtime is ready, such as a permalink's `?q=` value.
 	 *
-	 * Distinct from {@link GeocoderProps.defaultAddress}, and deliberately so: a cold visit pre-fills the demo address but
-	 * must not spend a visitor's first seconds resolving an address they did not ask for, while a link someone was sent
-	 * has to answer on arrival. Without this, a permalink pre-filled the field and then sat on a world view with the
-	 * address never run, which made "Copy link" produce a link that did not reproduce the result.
+	 * Unlike {@link GeocoderProps.defaultAddress}, this query is submitted,
+	 * so a shared link reproduces its result.
 	 */
 	initialQuery?: string | null
 	/**
-	 * Example chips. @default the empty set (host supplies its own).
+	 * The example chips.
+	 *
+	 * @default []
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
-	 * Open the developer disclosure on mount — the model version, the backend readout and compare. Collapsed by default
-	 * so the address field is the first thing a visitor meets. @default false
+	 * Whether the developer panel starts open.
+	 *
+	 * @default false
 	 */
 	developer?: boolean
 	/**
-	 * Fired with the query each time one is submitted. The host writes it into its own URL — this package never touches
-	 * `location`, because which parameter carries a query is the app's decision.
+	 * Called with each user-submitted query.
+	 *
+	 * The host decides how to write the query to its URL.
+	 * This package never touches `location`.
 	 */
 	onSubmitQuery?: (query: string) => void
 	/**
-	 * Only hint the viewport bias once the visitor has zoomed past the global view — a whole-globe center is noise.
-	 * Matches the `map.getZoom() >= 4` threshold. @default 4
+	 * The minimum map zoom at which the viewport is sent as a location bias.
+	 *
+	 * @default 4
 	 */
 	minBiasZoom?: number
 	/**
-	 * Fly/fit the map to the resolved place on each result (via {@link ResolvedPlaceLayers}). @default true. Set false
-	 * for a host that drives the camera itself (a controlled `<MapCanvas viewState>`), or to keep a headless test
-	 * deterministic — the marker + outline still render, only the animated camera move is skipped.
+	 * Whether the map moves to each resolved place.
+	 *
+	 * Set it to false when the host controls the camera or a test needs a fixed view.
+	 * The marker and outline render either way.
+	 *
+	 * @default true
 	 */
 	applyResultCamera?: boolean
 }
@@ -105,24 +99,15 @@ function GeocoderInner({
 	onSubmitQuery,
 }: GeocoderInnerProps): ReactNode {
 	const mapRef = useRef<MapRef>(null)
-	// The chrome sits outside `<MapCanvas>`, so it cannot take the handle from `useMap()`. A ref alone does not
-	// re-render the compass or the layer control when the map arrives, so the same poll that publishes the test
-	// handle also puts it in state — one poll, two consumers.
+	// The controls render outside `<MapCanvas>` and cannot call `useMap()`.
+	// The map is kept in state so they re-render when it loads.
 	const [map, setMap] = useState<ReturnType<MapRef["getMap"]> | null>(null)
 
-	// The map announces itself. nothing polls for it. `onLoad` carries the instance, so the compass and the layer
-	// control render on the frame the map is ready rather than up to an interval later.
-	//
-	// Test injection point: the e2e viewport-bias suite drives the real map (pan + zoom past the bias threshold)
-	// before submitting, and a browser test cannot reach a React ref — so the same handle is republished on
-	// `globalThis.__mailwomanMapCanvas`, and cleared on unmount so a torn-down geocoder leaves no stale handle.
-	// The id of the lowest basemap layer that draws data — where the graticule is inserted, so the grid sits under the
-	// map rather than over it. Read from the loaded style rather than hardcoded: the basemap is a published artifact
-	// and its first layer is its business rather than ours. `background` is skipped because inserting before it would put the
-	// grid behind an opaque fill and show nothing at all.
+	// The graticule is inserted before the first non-background layer, so it draws under the data layers.
 	const [baseLayerID, setBaseLayerID] = useState<string | undefined>(undefined)
 
 	const onMapLoad = useCallback((event: { target: ReturnType<MapRef["getMap"]> }) => {
+		// Browser tests read the map from this global.
 		;(globalThis as { __mailwomanMapCanvas?: ReturnType<MapRef["getMap"]> }).__mailwomanMapCanvas = event.target
 		setMap(event.target)
 
@@ -139,8 +124,6 @@ function GeocoderInner({
 		[]
 	)
 
-	// Read the viewport bias at submit time — through the map handle, never a threaded state value, so granting/zooming
-	// mid-session doesn't re-create the parse callback. Below the min-bias zoom, a whole-globe center is noise → null.
 	const getBias = useCallback((): MapBias | null => {
 		const live = mapRef.current?.getMap()
 
@@ -186,8 +169,7 @@ function GeocoderInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
-					// One compact attribution pill (the map's own default is a wide, always-open "MapLibre | © …" bar), no
-					// maplibre wordmark logo.
+					// The attribution is compact, and the MapLibre logo is hidden.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<GraticuleLayer beforeID={baseLayerID} />
@@ -212,20 +194,20 @@ function GeocoderInner({
 				onForceWASMChange={onForceWASMChange}
 				developer={developer}
 			/>
-
 			{panels.debugDrawer ? panels.debugDrawer({ result: geocode.result }) : null}
 		</div>
 	)
 }
 
-/**
- * Stable empty defaults — a fresh `{}`/`[]` per render would churn every downstream memo dep.
- */
+// These defaults are module constants so each render sees the same reference and memo dependencies stay stable.
 const NO_PANELS: GeocoderPanels = {}
 const NO_PRESETS: ReadonlyArray<Preset> = []
 
 /**
- * The composed geocoder, behind a `ClientOnly` SSR boundary (the map is intrinsically a client component).
+ * Renders the map, search controls, and host panels as one geocoder.
+ *
+ * It renders only on the client because MapLibre needs browser APIs.
+ * Import it from `@mailwoman/react/map`.
  */
 export function Geocoder({
 	runtime,

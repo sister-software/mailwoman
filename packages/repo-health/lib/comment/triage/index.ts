@@ -83,8 +83,8 @@ const LONG_COMMENT_MINIMUM_SENTENCES = 8
 /**
  * How many sentences a comment's prose carries, splitting on terminal punctuation.
  *
- * The split leaves an empty segment wherever two terminators meet and one at the end when the prose closes on a
- * terminator, so only segments carrying a non-space character count.
+ * The split leaves an empty segment wherever two terminators meet and one at the end
+ * when the prose closes on a terminator, so only segments carrying a non-space character count.
  */
 function countSentences(prose: string): number {
 	return prose.split(/[.!?](?:\s|$)/).filter((segment) => segment.trim().length).length

@@ -20,7 +20,7 @@
  *   was trained against — anchor + gazetteer + conventions, per the model-card's `requires` block.
  *   The prior `--model` path built a raw `new NeuralAddressClassifier` with no anchor/gazetteer, so
  *   a freshly-trained STAGE3 checkpoint was graded anchor-off (admin tags collapse) while the
- *   no-`--model` default (loadFromWeights) was anchor-on — the candidate was scored OOD against an
+ *   no-`--model` default (loadFromWeights) was anchor-on. The candidate was scored OOD against an
  *   in-distribution baseline, the #566/#685 trap this very check exists to prevent. `--no-strict`
  *   warns-and-continues for ad-hoc/legacy (pre-anchor) models instead of failing closed.
  *
@@ -58,7 +58,9 @@ export interface ErrorAnalysisOptions {
 	 */
 	golden?: string
 	/**
-	 * Candidate ONNX (requires `tokenizer` + `modelCard`). Omit for the shipped dev weights.
+	 * Candidate ONNX (requires `tokenizer` + `modelCard`).
+	 *
+	 * Omit for the shipped dev weights.
 	 */
 	model?: string
 	/**
@@ -74,12 +76,16 @@ export interface ErrorAnalysisOptions {
 	 */
 	postcodeRepair?: boolean
 	/**
-	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15). Off by default so
-	 * pre-flip baselines stay reproducible. pass it to grade the shipped pipeline configuration.
+	 * Parse with the production word-consistency heal (`WORD_CONSISTENCY_SHIP_DEFAULT`, 2026-07-15).
+	 *
+	 * Off by default so pre-flip baselines stay reproducible.
+	 * Pass it to grade the shipped pipeline configuration.
 	 */
 	wordConsistency?: boolean
 	/**
-	 * Strict ship-config feed (#718): fail closed if a model-card-declared channel can't be fed. Default true.
+	 * Strict ship-config feed (#718): fail closed if a model-card-declared channel can't be fed.
+	 *
+	 * Default true.
 	 */
 	strict?: boolean
 }
@@ -103,8 +109,10 @@ async function loadGolden(dir: string): Promise<GoldenEntry[]> {
 }
 
 /**
- * Run the categorized error analysis. Markdown report on stdout, progress on stderr. Returns a process exit code: 0 =
- * report emitted, 1 = usage error.
+ * Run the categorized error analysis.
+ *
+ * Markdown report on stdout, progress on stderr.
+ * Returns a process exit code: 0 = report emitted, 1 = usage error.
  */
 export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<number> {
 	const postcodeRepair = options.postcodeRepair ?? false
@@ -141,10 +149,11 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
 
-	// Full ship-config via the canonical ProductionScorer (#718) — feed the anchor + gazetteer +
-	// conventions channels the model was trained against (per the model-card `requires` block) so a
-	// `--model` candidate is graded in-distribution, the same as the dev-weights default. createScorer
-	// fails closed in strict mode if a declared channel can't actually be fed; `--no-strict` opts out.
+	// Full ship-config via the canonical ProductionScorer (#718) — feed the
+	// anchor + gazetteer + conventions channels the model was trained against
+	// (per the model-card `requires` block) so a `--model` candidate is graded in-distribution,
+	// the same as the dev-weights default. createScorer fails closed in strict mode if
+	// a declared channel can't actually be fed; `--no-strict` opts out.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
 		: await resolveWeights({ locale: "en-us" })

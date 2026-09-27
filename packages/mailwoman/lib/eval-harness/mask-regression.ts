@@ -48,6 +48,7 @@ import type { SystemCode } from "@mailwoman/codex"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	loadPerTagEvalRows,
@@ -62,29 +63,43 @@ import {
  */
 export interface MaskRegressionOptions {
 	/**
-	 * ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 * ONNX artifact.
+	 *
+	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	model?: string
 	/**
-	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * SentencePiece tokenizer.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	tokenizer?: string
+	tokenizer?: PathBuilderLike
 	/**
-	 * Model card JSON. Default `neural-weights-en-us/model-card.json`.
+	 * Model card JSON.
+	 *
+	 * Default `neural-weights-en-us/model-card.json`.
 	 */
 	modelCard?: string
 	/**
-	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * Anchor lookup JSON.
+	 *
+	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
-	anchorLookup?: string
+	anchorLookup?: PathBuilderLike
 	/**
-	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * Gazetteer lexicon JSON.
+	 *
+	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * The regression threshold (pp, as a fraction). Per the DeepSeek consult, 2pp — a finer net than the load-time delta
-	 * check's 5pp, so subtler interaction harms surface at release. A tag whose mask-on F1 is within this band of its
-	 * mask-off F1 is considered unharmed by the mask. Default 0.02.
+	 * The regression threshold (pp, as a fraction).
+	 *
+	 * Per the DeepSeek consult, 2pp — a finer net than the load-time delta check's 5pp,
+	 * so subtler interaction harms surface at release.
+	 * A tag whose mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
+	 *
+	 * Default 0.02.
 	 */
 	threshold?: number
 	/**
@@ -93,17 +108,18 @@ export interface MaskRegressionOptions {
 	json?: string
 }
 
-//#region Locale matrix (mirrors capability-manifest.ts)
+// #region Locale matrix (mirrors capability-manifest.ts)
 
 /**
- * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts). Every
- * tag here gets a mask-off↔mask-on delta computed.
+ * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts).
+ *
+ * Every tag here gets a mask-off↔mask-on delta computed.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
-//#endregion
+// #endregion
 
-//#region The check
+// #region The check
 
 interface Delta {
 	locale: SystemCode
@@ -111,7 +127,9 @@ interface Delta {
 	maskOff: number
 	maskOn: number
 	/**
-	 * MaskOff − maskOn, in pp. Positive = the mask hurt the tag.
+	 * MaskOff − maskOn, in pp.
+	 *
+	 * Positive = the mask hurt the tag.
 	 */
 	delta: number
 	/**
@@ -121,16 +139,18 @@ interface Delta {
 }
 
 /**
- * Run the mask-off vs mask-on per-tag battery. Returns `pass` (no tag regresses beyond the threshold).
+ * Run the mask-off vs mask-on per-tag battery.
+ *
+ * @returns `pass` (no tag regresses beyond the threshold).
  */
 export async function maskRegressionCheck(
 	options: MaskRegressionOptions = {},
 	report: (line: string) => void = console.error
 ): Promise<{ pass: boolean; violations: Delta[] }> {
-	const MODEL = options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"))
-	const TOKENIZER = options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"))
+	const MODEL = options.model || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")
+	const TOKENIZER = options.tokenizer || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 	const MODEL_CARD = options.modelCard || "packages/neural-weights-en-us/model-card.json"
-	const ANCHOR_LOOKUP = options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json"))
+	const ANCHOR_LOOKUP = options.anchorLookup || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const GAZETTEER_LEXICON = options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json"
 	const JSON_OUT = options.json || ""
 	const THRESHOLD = options.threshold ?? 0.02
@@ -150,10 +170,11 @@ export async function maskRegressionCheck(
 		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048). The rows are
-		// formatted postal addresses, and on those the production pipeline derives `formatted` and runs the
-		// evidence-bundle channels off as a declared ablation. grading them in the bare-library default measured a
-		// path production never takes on these inputs. The per-tag numbers before this change grade `fragmented`.
+		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048).
+		// The rows are formatted postal addresses, and on those the production pipeline derives
+		// `formatted` and runs the evidence-bundle channels off as a declared ablation.
+		// Grading them in the bare-library default measured a path production never takes on these inputs.
+		// The per-tag numbers before this change grade `fragmented`.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,
 			TAGS,
@@ -244,4 +265,4 @@ export async function maskRegressionCheck(
 	return { pass: true, violations }
 }
 
-//#endregion
+// #endregion

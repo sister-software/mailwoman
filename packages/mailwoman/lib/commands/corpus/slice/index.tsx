@@ -1,16 +1,8 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman corpus slice <recipe>` — run a registered corpus recipe and write its output, the
- *   durable replacement for the sixteen one-off build scripts that preceded the recipe registry.
- *   `--list` prints the registry. Recipes are `tuples` (read `--input` jsonl of
- *   (locality,region,postcode,country) tuples) or `generate` (self-generate `--count` rows). Output
- *   is aligned LabeledRow jsonl ready for the parquet step (`mailwoman corpus build`). The registry
- *   lives in `packages/corpus/lib/recipes/`.
- */
-
 import { openWriteStream } from "@mailwoman/core/fs/streams"
+import { movePath, removePathIfPresent, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { RecipeOptions } from "@mailwoman/corpus"
 import { createRecipeLineWriter } from "@mailwoman/corpus/recipes/scaffold"
@@ -25,7 +17,7 @@ import {
 	useCommandTask,
 } from "#cli-kit"
 /**
- * Bare `mailwoman corpus slice` stays the recipe runner now that this directory hosts subcommands.
+ * Bare `mailwoman corpus slice` stays the recipe runner despite the subcommands in this directory.
  */
 export const isDefault = true
 
@@ -45,6 +37,7 @@ export const spec = {
 		seed: stringOption("PRNG seed"),
 		golden: { type: "boolean", default: false, description: "Emit golden variant" },
 		"source-name": stringOption("Source tag"),
+		register: stringOption("The published register the --input tuples were extracted from"),
 		"house-number-prob": stringOption("street house-number probability"),
 		"pmb-ratio": stringOption("private-mailbox ratio"),
 		"military-ratio": stringOption("military row ratio"),
@@ -110,6 +103,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 			count: num(options.count),
 			golden: options.golden,
 			sourceName: options.sourceName,
+			register: options.register,
 			houseNumberProb: num(options.houseNumberProb),
 			pmbRatio: num(options.pmbRatio),
 			militaryRatio: num(options.militaryRatio),
@@ -137,16 +131,46 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		console.error(`▸ recipe "${name}" [${recipe.mode}] seed=${seed} → ${options.out}`)
 
-		const stream = openWriteStream(options.out, { encoding: "utf8" })
+		// `openWriteStream` truncates on open and a recipe validates its inputs inside `run`,
+		// so writing directly would leave the target at zero bytes when a run refuses.
+		const stagedPath = `${options.out}.partial`
+		const stream = openWriteStream(stagedPath, { encoding: "utf8" })
 
 		const write = createRecipeLineWriter(stream)
 
-		const stats = await recipe.run(opts, write)
+		let stats: Awaited<ReturnType<typeof recipe.run>>
+
+		try {
+			stats = await recipe.run(opts, write)
+		} catch (error) {
+			stream.destroy()
+			await removePathIfPresent(stagedPath)
+
+			throw error
+		}
+
 		stream.end()
 
 		await new Promise<void>((res) => {
 			stream.on("finish", () => res())
 		})
+
+		await movePath(stagedPath, options.out)
+
+		// A recipe output records what a recipe emitted rather than what it was asked for,
+		// so the invocation is written beside it after the rows, marking only a finished run.
+		await writeLocalJSONFile(
+			{
+				recipe: name,
+				mode: recipe.mode,
+				emitted: stats.emitted,
+				skipped: stats.skipped,
+				read: stats.read ?? null,
+				ranAt: new Date().toISOString(),
+				options: Object.fromEntries(Object.entries(opts).filter(([, value]) => value !== undefined)),
+			},
+			`${options.out}.invocation.json`
+		)
 
 		return [
 			`recipe: ${name}`,

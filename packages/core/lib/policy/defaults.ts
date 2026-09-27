@@ -2,9 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Default policy table: every component is `rule_only` until per-tag golden-set metrics justify a
- *   migration. This file is the canonical place to record such migrations. each Phase 2+ rollout
- *   edits one entry here with a commit-message rationale.
+ *   Default policy table: every component starts at `neural_only`, and a per-component change is
+ *   recorded here with its rationale in the commit message.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
@@ -12,14 +11,15 @@ import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"
 import type { ClassifierPolicy, PolicyMode } from "#policy/policy"
 
 /**
- * Build a fresh array of policies — one per `ComponentTag`, all in `mode`. Returns a new array on each call. callers
- * may mutate it freely.
+ * Build a fresh array of policies, one per `ComponentTag`, all in `mode`.
  *
- * `mode` defaults to `rule_only` (the historical default — every component rule-sourced until a per-tag migration). The
- * input-shape router (#478 increment 2) passes a shape-derived default (e.g. `neural_preferred` for OOD-script input)
- * so the whole table starts from the routed prior before per-tag config overlays.
+ * Returns a new array on each call.
+ * Callers may mutate it freely.
+ *
+ * `mode` defaults to `neural_only`.
+ * The input-shape router passes a shape-derived default, so the table starts from the routed prior.
  */
-export function buildDefaultPolicies(mode: PolicyMode = "rule_only"): ClassifierPolicy[] {
+export function buildDefaultPolicies(mode: PolicyMode = "neural_only"): ClassifierPolicy[] {
 	return COMPONENT_TAGS.map<ClassifierPolicy>((component) => ({
 		component,
 		mode,
@@ -27,8 +27,10 @@ export function buildDefaultPolicies(mode: PolicyMode = "rule_only"): Classifier
 }
 
 /**
- * Convenience accessor for a single-component default. `mode` defaults to `rule_only`.
+ * Convenience accessor for a single-component default.
+ *
+ * `mode` defaults to `neural_only`.
  */
-export function defaultPolicyFor(component: ComponentTag, mode: PolicyMode = "rule_only"): ClassifierPolicy {
+export function defaultPolicyFor(component: ComponentTag, mode: PolicyMode = "neural_only"): ClassifierPolicy {
 	return { component, mode }
 }

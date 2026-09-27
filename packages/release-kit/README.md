@@ -4,7 +4,7 @@ Private. The release pipeline as a registry of operations — preflight, prepare
 materialization, SBOM — each with an id, a declared effect (`read`, `local-write`, `external-write`), typed input and
 output, and a `run`.
 
-Nothing here is executed as a file. The private `mwops` CLI (`@mailwoman/ops-cli`) and the release MCP server are
+No file here is executed directly. The private `mwops` CLI (`@mailwoman/ops-cli`) and the release MCP server are
 views over `lib/registry.ts`; CI calls `mwops release <operation>`. Publishing is plan → execute: `release.plan`
 returns a digest over HEAD, version, packages, artifacts and destinations, and `release.publish` recomputes it and
 refuses a dirty or moved HEAD or a changed plan.

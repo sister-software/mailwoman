@@ -1,3 +1,18 @@
+import {
+	constants,
+	createZstdCompress,
+	createZstdDecompress,
+	zstdCompressSync,
+	zstdDecompressSync,
+	type ZstdCompress,
+} from "node:zlib"
+
+/**
+ * The shape a `node:zlib` zstd transform presents: a duplex that is async-iterable
+ * over bytes, which is what a spliterator accepts as a source.
+ */
+type ZlibTransform = ZstdCompress
+
 /**
  * Byte input accepted by the platform compression helpers.
  */
@@ -17,10 +32,10 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 	readable: ReadableStream<Uint8Array>
 	writable: WritableStream<Uint8Array>
 } {
-	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array` and its writable side is
-	// `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`. Wrapping the writer bridges both.
-	// Keep the `new Uint8Array(chunk)` copy — `Uint8Array<ArrayBufferLike>` may sit on a SharedArrayBuffer, which
-	// `BufferSource` excludes. The copy produces a non-shared buffer.
+	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array`
+	// and its writable side is `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`.
+	// Keep the `new Uint8Array(chunk)` copy, because `Uint8Array<ArrayBufferLike>` may
+	// sit on a SharedArrayBuffer, and the copy produces a non-shared buffer.
 	const writer = stream.writable.getWriter()
 
 	return {
@@ -59,7 +74,46 @@ export function gunzipChunks(source: AsyncIterable<Uint8Array | string>): Readab
 }
 
 /**
- * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer already in memory and for a response
- * body compressed inside a request handler. Everything streamed goes through {@linkcode gunzipChunks}.
+ * The CRC-32 and synchronous gzip `node:zlib` offers, for a checksum over a buffer
+ * already in memory and for a response body compressed inside a request handler.
+ * Everything streamed goes through {@linkcode gunzipChunks}.
  */
 export { crc32, gzipSync } from "node:zlib"
+
+/**
+ * Compresses one bounded input with zstd.
+ *
+ * `node:zlib` rather than a `CompressionStream`, because the web streams take a fixed enum
+ * of formats and zstd is not among them — `new CompressionStream("zstd")` throws on Node 26.
+ */
+export function zstd(input: CompressionInput, level = 6): Uint8Array {
+	return new Uint8Array(zstdCompressSync(inputBytes(input), { params: { [constants.ZSTD_c_compressionLevel]: level } }))
+}
+
+/**
+ * Decompresses one bounded zstd input.
+ */
+export function unzstd(input: CompressionInput): Uint8Array {
+	return new Uint8Array(zstdDecompressSync(inputBytes(input)))
+}
+
+/**
+ * A zstd decompressor as a byte stream, for handing to a spliterator.
+ *
+ * Returned as a `node:stream` duplex rather than a `ReadableStream` because that is
+ * what `AsyncDataResource` already accepts — its `AsyncChunkIterator` arm names "a Node
+ * `Readable` (child-process stdout, a gunzip pipe)" explicitly — so a file can be piped in
+ * and passed straight to `JSONSpliterator.fromAsync`.
+ *
+ * It materializes no whole file: a corpus part file is tens of gigabytes decompressed.
+ */
+export function zstdDecompressor(): ZlibTransform {
+	return createZstdDecompress()
+}
+
+/**
+ * A zstd compressor as a byte stream, the counterpart of {@linkcode zstdDecompressor}.
+ */
+export function zstdCompressor(level = 6): ZlibTransform {
+	return createZstdCompress({ params: { [constants.ZSTD_c_compressionLevel]: level } })
+}

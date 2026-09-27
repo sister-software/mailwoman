@@ -21,14 +21,18 @@ import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 
 /**
- * Pass 3b — the ancestors sidecar: closure rows + interval labels (candidate-ancestors-schema.ts owns the encoding
- * decision and the DAG/absence semantics). Reads the same source `ancestors` table the region stamp reads,
- * denormalizing each edge with the parent's name/key from `attrs`, streamed `order BY id` so the clustered `(spr_id,
- * depth)` insert is sorted — the contiguous-leaves discipline of the candidate table itself.
+ * Pass 3b — the ancestors sidecar: closure rows + interval labels
+ * (candidate-ancestors-schema.ts owns the encoding decision and the DAG/absence semantics).
  *
- * Excluded by policy: self rows, and placetypes outside the containment ladder (continent, empire, …: `placetypeDepth` 0)
- * — they discriminate nothing a consumer of this sidecar checks. An edge to a parent with no current `spr` row has no
- * name to denormalize. it is dropped and counted rather than stored blind.
+ * Reads the same source `ancestors` table the region stamp reads, denormalizing
+ * each edge with the parent's name/key from `attrs`, streamed `order BY id`
+ * so the clustered `(spr_id, depth)` insert is sorted.
+ * The contiguous-leaves discipline of the candidate table itself.
+ *
+ * Excluded by policy: self rows, and placetypes outside the containment ladder
+ * (continent, empire, …: `placetypeDepth` 0) — they make no distinction a consumer of this sidecar checks.
+ * An edge to a parent with no current `spr` row has no name to denormalize.
+ * It is dropped and counted rather than stored blind.
  */
 export async function buildAncestorsSidecar(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -47,9 +51,11 @@ export async function buildAncestorsSidecar(ctx: {
 		`INSERT INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`
 	)
 
-	// The canonical-parent forest the interval labels are computed over. One parent per place — the
-	// depth-1 edge (finest containment tier, lowest ancestor id. the `regionOf` MIN-stability
-	// convention). All parents stay in the closure rows. only the interval tree canonicalizes.
+	// The canonical-parent forest the interval labels are computed over.
+	// One parent per place — the depth-1 edge (finest containment tier, lowest
+	// ancestor id. The `regionOf` MIN-stability convention).
+	// All parents stay in the closure rows.
+	// Only the interval tree canonicalizes.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()
@@ -58,7 +64,8 @@ export async function buildAncestorsSidecar(ctx: {
 	let ancestorPlaces = 0
 	let droppedParents = 0
 
-	// Per-child edge buffer. the stream below is grouped by child id, so each flush owns one place.
+	// Per-child edge buffer.
+	// The stream below is grouped by child id, so each flush owns one place.
 	let childID = -1
 	let edges: Array<{ aid: number; apt: string }> = []
 
@@ -132,8 +139,8 @@ export async function buildAncestorsSidecar(ctx: {
 	flush()
 	out.exec("COMMIT")
 
-	// Interval labels: pre/post-order DFS over the canonical-parent forest. Root order and child
-	// order are id-ascending so the labels are stable across rebuilds of the same source.
+	// Interval labels: pre/post-order DFS over the canonical-parent forest.
+	// Root order and child order are id-ascending so the labels are stable across rebuilds of the same source.
 	const preOf = new Map<number, number>()
 	const postOf = new Map<number, number>()
 
@@ -160,8 +167,8 @@ export async function buildAncestorsSidecar(ctx: {
 			if (kids && top.next < kids.length) {
 				const kid = kids[top.next++]!
 
-				// Each child holds exactly one canonical parent, so a labeled node here means the
-				// grouping upstream broke — skip rather than corrupt the numbering.
+				// Each child holds exactly one canonical parent, so a labeled node here means
+				// the grouping upstream broke — skip rather than corrupt the numbering.
 				if (preOf.has(kid)) continue
 
 				preOf.set(kid, counter++)
@@ -173,9 +180,10 @@ export async function buildAncestorsSidecar(ctx: {
 		}
 	}
 
-	// A canonical-parent cycle (corrupt source ancestry) leaves its members unreachable from any
-	// root: they simply receive no label, and containment against them reads unverifiable — the
-	// absence semantics the schema module states. Counted so a jump is visible across rebuilds.
+	// A canonical-parent cycle (corrupt source ancestry) leaves its members unreachable
+	// from any root: they simply receive no label, and containment against them reads
+	// unverifiable — the absence semantics the schema module states.
+	// Counted so a jump is visible across rebuilds.
 	const cycleSkipped = forest.size - preOf.size
 
 	const insInterval = out.prepare(`INSERT INTO ${CANDIDATE_INTERVAL_TABLE} VALUES (?, ?, ?)`)

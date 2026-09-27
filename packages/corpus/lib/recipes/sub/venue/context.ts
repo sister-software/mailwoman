@@ -11,18 +11,21 @@ import type { PathBuilderLike } from "path-ts"
 
 import { readTuples as readLocaleTuples, type LocalePart } from "#international/recipes/locale"
 import { readTuples as readRecipeTuples } from "#recipes/scaffold"
-import type { LocaleBaseTuple } from "#synthesizers/locale"
+import type { LocaleBaseTuple } from "#surfaces/locale"
 
-//#region Address context
+// #region Address context
 
 /**
- * DE + ES address context. Both read through {@link readLocaleTuples}, the `locale` recipe's own streaming + reservoir
- * reader, so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback) has exactly
- * one implementation.
+ * DE + ES address context.
  *
- * DE reads `europe.zip`'s two members rather than `oa-cache/de__*.zip`: the cached per-state zips the `locale` recipe
- * names are not materialized on this host, and the archive members are byte-identical to OA's current run (verified in
- * `corpus/agents.md`'s "a file's mtime is not its data's vintage" note).
+ * Both read through {@link readLocaleTuples}, the `locale` recipe's own streaming + reservoir reader,
+ * so the CSV handling (quoted fields, crlf, city-noise cleaning, the DE per-part region fallback)
+ * has exactly one implementation.
+ *
+ * DE reads `europe.zip`'s two members rather than `oa-cache/de__*.zip`:
+ * the cached per-state zips the `locale` recipe names are not materialized on
+ * this host, and the archive members are byte-identical to OA's current run
+ * (verified in `corpus/agents.md`'s "a file's mtime is not its data's vintage" note).
  */
 const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 	DE: [
@@ -33,9 +36,9 @@ const CONTEXT_PARTS: Readonly<Record<string, readonly LocalePart[]>> = {
 }
 
 /**
- * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples (the same 176,519 real
- * rows the `synth-house-venue` recipe output is built from, so the two recipes' address halves are drawn from one
- * pool), DE and ES streamed out of OpenAddresses.
+ * Load the address skeletons every leg renders onto: GB / US / FR from the house-venue v3 tuples
+ * (the same 176,519 real rows the `synth-house-venue` recipe output is built from, so the two
+ * recipes' address halves are drawn from one pool), DE and ES streamed out of OpenAddresses.
  */
 export async function loadContextTuples(
 	tuplesPath: PathBuilderLike,
@@ -70,8 +73,8 @@ export async function loadContextTuples(
 		const pooled: LocaleBaseTuple[] = []
 
 		for (const [index, part] of parts.entries()) {
-			// A dedicated stream prng, seeded per part, so the input sample is reproducible without
-			// perturbing the emit loop's draws (the `locale` recipe's rule, kept).
+			// A dedicated stream prng, seeded per part, so the input sample is reproducible
+			// without perturbing the emit loop's draws (the `locale` recipe's rule, kept).
 			const streamRandom = makeMulberry32(seed + index)
 
 			for (const tuple of await readLocaleTuples(part, streamRandom)) {
@@ -88,10 +91,11 @@ export async function loadContextTuples(
 /**
  * The street-side confound classes, mined from the leg's own address tuples.
  *
- * Real streets rather than invented ones. The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate`
- * streets, 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>` population in both GB and
- * US — small absolute numbers, but every one of them a street somebody lives on, which is the property an invented list
- * cannot have.
+ * Real streets rather than invented ones.
+ * The 176,519-row context pool carries 195 GB `hall` streets, 114 GB `gate` streets,
+ * 134 distinct GB `-gate` single tokens and a two-figure `<modifier> <designator>`
+ * population in both GB and US — small absolute numbers, but every one of them a street
+ * somebody lives on, which is the property an invented list cannot have.
  */
 export interface StreetNegatives {
 	designator: LocaleBaseTuple[]
@@ -100,8 +104,8 @@ export interface StreetNegatives {
 }
 
 /**
- * Shortest token that can carry a `-gate` street suffix and still be a name rather than the bare word: `gate` itself is
- * four characters, so the class starts at five (`Highgate`, `Moorgate`, `Stonegate`).
+ * Shortest token that can carry a `-gate` street suffix and still be a name rather than the bare word:
+ * `gate` itself is four characters, so the class starts at five (`Highgate`, `Moorgate`, `Stonegate`).
  */
 const MIN_GATE_SUFFIX_TOKEN_LENGTH = 5
 
@@ -146,4 +150,4 @@ export function buildStreetNegatives(
 	return { designator, modifierDesignator, gateSuffix }
 }
 
-//#endregion
+// #endregion

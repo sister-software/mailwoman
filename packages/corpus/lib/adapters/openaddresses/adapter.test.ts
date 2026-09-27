@@ -11,7 +11,6 @@ import {
 } from "@mailwoman/corpus/adapters/openaddresses/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("oa")
@@ -29,8 +28,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is kept — exclusion is a deliberate
-		// build-level act now (`--exclude-share-alike`), not a silent adapter default (#26) → 6 rows.
+		// The adapter admits the CC-BY-SA-4.0 row by default, so the fixture yields 6.
+		// Refusing a share-alike row is a deliberate build-level act under
+		// `--license-policy share-alike-free` rather than a silent adapter default (#26).
 		expect(manifest.yielded).toBe(6)
 		const rows = await loadRows()
 		expect(rows).toHaveLength(6)
@@ -135,7 +135,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 	it("source_id prefers `hash`; falls back to `id`; then to a content hash", async () => {
 		// Build a tiny fixture with one of each shape inline.
-		const inline = join(scratch.path, "edge.geojsonl")
+		const inline = scratch.path("edge.geojsonl")
 
 		const lines = [
 			stringifyJSON({
@@ -188,12 +188,13 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(rows).toHaveLength(3)
 		expect(rows[0]!.source_id).toBe("openaddresses-deadbeefcafef00d")
 		expect(rows[1]!.source_id).toBe("openaddresses-us-fallback-id")
-		// Content-hashed fallback: 12-hex prefix of sha256 from stableSourceID. Stable across runs.
+		// Content-hashed fallback: 12-hex prefix of sha256 from stableSourceID.
+		// Stable across runs.
 		expect(rows[2]!.source_id).toMatch(/^openaddresses-[0-9a-f]{12}$/)
 	})
 
 	it("skips blank lines, comments, and non-Feature objects without crashing", async () => {
-		const messy = join(scratch.path, "messy.geojsonl")
+		const messy = scratch.path("messy.geojsonl")
 
 		const lines = [
 			"",
@@ -237,7 +238,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, OPENADDRESSES_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(OPENADDRESSES_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createOpenaddressesAdapter(),
@@ -249,9 +250,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(a.sha256).toBe(b.sha256)
 	})
 
-	it("INCLUDES share-alike by default; drops only on explicit allowShareAlike:false (#26 exclusion is deliberate)", async () => {
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is present — no silent drop.
-		// Exclusion is now a deliberate build-level act (`--exclude-share-alike`), not an adapter default.
+	it("admits share-alike by default and drops it only on an explicit allowShareAlike: false (#26)", async () => {
+		// The CC-BY-SA-4.0 row (e5f6…) is present under the default, which drops no row silently.
+		// Refusing one is a deliberate build-level act under `--license-policy share-alike-free`.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
@@ -261,7 +262,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 
 		expect((await loadRows()).find((r) => r.source_id === "openaddresses-e5f6071829304152")).toBeDefined()
 
-		// The explicit adapter-scoped drop still works (vestigial fallback. build-level is the norm).
+		// The explicit adapter-scoped drop still works (vestigial fallback. Build-level is the norm).
 		await runAdapter({
 			adapter: createOpenaddressesAdapter({ allowShareAlike: false }),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },
@@ -291,7 +292,7 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 	})
 
 	it("accepts UPPERCASE property names (legacy OA dumps)", async () => {
-		const upper = join(scratch.path, "upper.geojsonl")
+		const upper = scratch.path("upper.geojsonl")
 
 		const line = stringifyJSON({
 			type: "Feature",

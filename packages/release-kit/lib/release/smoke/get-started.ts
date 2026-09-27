@@ -12,7 +12,7 @@
  *
  *   Two legs, split on whether the step needs network beyond npm's own registry fetch. Always on: the
  *   install-and-first-parse script, `mailwoman doctor` cold against an absent data root, and the shell parse. Behind
- *   `full`: a real `mailwoman data pull candidate` (~1.65 GB) and the two `mailwoman geocode` calls of the ten-minute
+ *   `full`: a real `mailwoman data pull candidate` (~2.88 GB) and the two `mailwoman geocode` calls of the ten-minute
  *   trial's step 5, against a data root the caller may supply so the pull is not repeated.
  *
  *   Pages this proves: `docs/articles/developers/get-started/install-and-first-parse.mdx`,
@@ -24,17 +24,23 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
-import { join } from "path-ts"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
+import type { PathBuilderLike } from "path-ts"
 
+import { installedMailwomanBin } from "#release/smoke/installed-bin"
 import { packWorkspaces, walkWorkspaceClosure } from "#release/workspace-closure"
 
 /**
- * The packages the get-started pages tell a reader to install. Their closure is computed, never listed.
+ * The packages the get-started pages tell a reader to install.
+ *
+ * Their closure is computed, never listed.
  */
 export const GET_STARTED_SEEDS = ["mailwoman", "@mailwoman/neural", "@mailwoman/neural-weights-en-us"] as const
 
 /**
- * Install-and-first-parse.mdx's script, verbatim. The page and this string must say the same thing.
+ * Install-and-first-parse.mdx's script, verbatim.
+ *
+ * The page and this string must say the same thing.
  */
 const FIRST_PARSE_SCRIPT = `import { createRuntimePipeline } from "mailwoman"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
@@ -87,7 +93,9 @@ export interface SmokeGetStartedOptions {
 	 */
 	full?: boolean
 	/**
-	 * A persistent data root for the heavy leg, so the ~1.65 GB pull is not repeated. Default: a scratch directory.
+	 * A persistent data root for the heavy leg, so the ~2.88 GB pull is not repeated.
+	 *
+	 * Default: a scratch directory.
 	 */
 	dataRoot?: string
 }
@@ -97,7 +105,7 @@ export interface SmokeGetStartedReport {
 	legs: string[]
 }
 
-function run(cmd: string, args: string[], cwd: string, env: Record<string, string> = {}): string {
+function run(cmd: string, args: PathBuilderLike[], cwd: PathBuilderLike, env: Record<string, string> = {}): string {
 	return runFileSync(cmd, args, {
 		cwd,
 		stdio: ["ignore", "pipe", "pipe"],
@@ -118,18 +126,19 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 }
 
 /**
- * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts. Throws on the first
- * claim that no longer holds, naming the page.
+ * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts.
+ *
+ * @throws On the first claim that no longer holds, naming the page.
  */
 export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<SmokeGetStartedReport> {
 	const { repoRoot, log } = options
 	const legs: string[] = []
 
 	await using tmp = await temporaryDirectory("mw-get-started-")
-	const tarDir = String(tmp.resolve("tarballs"))
-	const project = String(tmp.resolve("project"))
+	const tarDir = tmp.path("tarballs")
+	const project = tmp.path("project")
 	// doctor's own "data root does not exist" branch needs the directory to be missing rather than empty.
-	const doctorRoot = String(tmp.resolve("doctor-root-absent"))
+	const doctorRoot = tmp.path("doctor-root-absent").toString()
 
 	await makeDirectories(tarDir, project)
 
@@ -141,16 +150,16 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 
 	await writeLocalJSONFile(
 		{ name: "mw-get-started-trial", private: true, type: "module", dependencies },
-		join(project, "package.json")
+		project("package.json")
 	)
 
 	log("[get-started] npm install (tarballs only — no hoisting)…")
 	run("npm", ["install", "--no-audit", "--no-fund", "--no-package-lock"], project)
 
-	const cli = join(project, "node_modules", "mailwoman", "out", "cli.js")
+	const cli = await installedMailwomanBin(project)
 
 	log("[get-started] install-and-first-parse.mdx: the parse script…")
-	await writeLocalTextFile(FIRST_PARSE_SCRIPT, join(project, "parse.mjs"))
+	await writeLocalTextFile(FIRST_PARSE_SCRIPT, project("parse.mjs"))
 	assertNeedles(run("node", ["parse.mjs"], project), FIRST_PARSE_NEEDLES, "install-and-first-parse.mdx")
 	legs.push("first-parse")
 
@@ -161,7 +170,8 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	try {
 		doctor = run("node", [cli, "doctor"], project, { MAILWOMAN_DATA_ROOT: doctorRoot })
 	} catch (error) {
-		// doctor exits non-zero when a check fails, which is the cold state the page shows. the transcript is what counts.
+		// doctor exits non-zero when a check fails, which is the cold state the page shows.
+		// The transcript is what counts.
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}
 
@@ -191,16 +201,17 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 		return { packed: closure.size, legs }
 	}
 
-	const dataRoot = options.dataRoot ?? String(tmp.resolve("data-root"))
+	// A string, because the child processes receive it as an environment variable.
+	const dataRoot = (options.dataRoot ?? tmp.path("data-root")).toString()
 
 	await makeDirectories(dataRoot)
 
-	const candidateDB = join(dataRoot, "wof", "candidate.db")
+	const candidateDB = wofDatabaseRoot(dataRoot)("candidate.db")
 
 	if (await pathExists(candidateDB)) {
 		log(`[get-started] candidate.db already at ${candidateDB} — skipping the pull`)
 	} else {
-		log("[get-started] mailwoman data pull candidate (~1.65 GB — the heavy leg)…")
+		log("[get-started] mailwoman data pull candidate (~2.88 GB — the heavy leg)…")
 
 		const pull = run("node", [cli, "data", "pull", "candidate"], project, { MAILWOMAN_DATA_ROOT: dataRoot })
 

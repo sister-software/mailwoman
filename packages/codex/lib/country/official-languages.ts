@@ -391,7 +391,9 @@ export const OFFICIAL_LANGUAGES: Record<string, OfficialLanguageEntry> = {
 }
 
 /**
- * Is `language` (any ISO-639 spelling: "sv", "swe", …) an official language of `country` (ISO 3166-1 alpha-2)?
+ * Is `language` (any ISO-639 spelling: "sv", "swe", …) an official language
+ * of `country` (ISO 3166-1 alpha-2)?
+ *
  * Regional-official languages count only with `includeRegional`.
  */
 export function isOfficialLanguage(country: string, language: string, includeRegional = false): boolean {

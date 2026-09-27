@@ -5,7 +5,7 @@ _Reproduce: `node scripts/eval/competitive-benchmark.ts --n 150 --locales it,pt,
 
 ## Method (and why it's built this way)
 
-Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/locale. The systems return structurally different things — mailwoman resolves to a gazetteer **centroid**; Nominatim returns the matched **OSM object** (rooftop when it matches, nothing when it doesn't); Pelias is ES over OSM+OA+WOF — so a raw median-error race flatters whoever returns rooftops on the addresses they match and hides who returns nothing. So we score **resolve-rate @ a coarse km threshold** (within Xkm of truth; **"no result" = a miss**) as the direct denominator, plus conditional accuracy. Coarse thresholds (5/25 km = "right locality area") because mailwoman returns centroids — a km-to-rooftop metric would unfairly reward rooftop-when-it-matches.
+Three systems, identical real held-out OpenAddresses rows (truth lat/lon), 150/locale. The systems return structurally different things — mailwoman resolves to a gazetteer **centroid**; Nominatim returns the matched **OSM object** (rooftop when it matches, nothing when it doesn't); Pelias is ES over OSM+OA+WOF — so a raw median-error race flatters whoever returns rooftops on the addresses they match and hides who returns nothing. So we score **resolve-rate @ a coarse km threshold** (within Xkm of truth; **"no result" = a miss**) as the direct denominator, plus conditional accuracy. Coarse thresholds (5/25 km = "right locality area") because mailwoman returns centroids. A km-to-rooftop metric would unfairly reward rooftop-when-it-matches.
 
 ## Headline — resolve-rate @ 25 km (clean inputs)
 
@@ -73,7 +73,7 @@ The picture is nuanced — and good, once you stop grading on the lenient metric
 | **US**         |   **99%** |       84% | _(rate-locked)_ |
 | **EU (clean)** |       59% |       79% |            81%¹ |
 
-1. ¹ EU is OpenAddresses, a Pelias-indexed source — its 81% is partly recall-of-its-own-data.
+1. ¹ EU is OpenAddresses, a Pelias-indexed source. Its 81% is partly recall-of-its-own-data.
 
 **Where we win:** US accuracy + coverage (the high-value market) — 99 vs 84, zero misses. Plus two capabilities the competitors structurally lack: **calibrated confidence** (knows when it's wrong) and **deployability** (30 MB, in-browser/offline, no Elasticsearch, no PostgreSQL+OSM-planet).
 

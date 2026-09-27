@@ -6,7 +6,7 @@
  *   `.osm.pbf` and write the rows as jsonl, the input `mailwoman corpus sub-venue-lexicon` reads.
  *
  *   Wave 1 did this with an ad-hoc script because it ran once. Wave 2 runs it per locale, and the
- *   country stamp is an argument nobody can infer from the file — a Geofabrik extract's country is a
+ *   country stamp is an argument nobody can infer from the file. A Geofabrik extract's country is a
  *   property of the invocation rather than of a feature — so it belongs behind a flag rather than in shell
  *   history.
  *
@@ -40,9 +40,8 @@ export const spec = {
 
 const CorpusSubVenueExtract: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		// @mailwoman/osm is a devDependency only — it is unpublished (ODbL counsel sign-off pending,
-		// see osm/readme.md), so a static import here breaks every clean install of the published
-		// CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
+		// @mailwoman/osm is a devDependency only. It is unpublished (ODbL counsel sign-off pending,
+		// see osm/readme.md), so a static import here breaks every clean install of the published CLI (the 2026-08-05 smoke failure). Lazy-load it and fail with provenance when absent.
 		const { writeSubVenueJSONL } = await import("@mailwoman/osm/sdk").catch(() => {
 			throw new Error(
 				"corpus sub-venue-extract requires @mailwoman/osm, which is not yet published — " +

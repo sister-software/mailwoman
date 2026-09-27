@@ -2,29 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 import { runFileSync } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 /**
- *   Does this symbol already have a home in the monorepo?
+ *   Finds existing declarations of a function name across the monorepo.
  */
 
 /**
- * Both patterns anchor to column zero: indentation means a nested scope, and a symbol nobody outside the enclosing
- * function can reach is not a symbol anyone can reuse.
+ * Matches a top-level function declaration.
+ *
+ * The pattern anchors to column zero because an indented declaration sits in a
+ * nested scope no other consumer can reuse.
  */
 const FUNCTION_PATTERN = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)/gm
 
 /**
- * A constant whose value is a function. The optional `(?::.*?)?` absorbs a type annotation, and it must be lazy so a
- * `const f: (a: number) => number = …` annotation surrenders the `=>` inside it and lets the real assignment match.
+ * Matches a top-level constant whose value is a function.
  *
- * Requiring the right-hand side to open with `function`, `(` or a type parameter is what keeps a duplicated lookup
- * table out of the results: a table is a different problem with a different answer, and reporting one buries the
- * duplicated logic this exists to surface.
+ * The lazy type annotation keeps an `=>` inside an annotation from ending the match, and the
+ * right-hand side must start with `function`, `(` or a type parameter to exclude lookup tables.
  */
 const FUNCTION_CONSTANT_PATTERN =
 	/^(?:export\s+)?const\s+(\w+)\s*(?::.*?)?=\s*(?:async\s+)?(?:function\b|\(|<[A-Za-z])/gm
 
 /**
- * Every top-level symbol a source blob declares that could carry reusable logic.
+ * Returns the top-level function names that a source text declares.
  */
 export function extractDeclaredSymbols(source: string): string[] {
 	const names = new Set<string>()
@@ -41,91 +42,80 @@ export function extractDeclaredSymbols(source: string): string[] {
 }
 
 /**
- * Where a name is already declared.
+ * One place where a name is declared.
  */
 export interface DeclarationSite {
 	/**
-	 * Repo-relative, so a result reads the same from any working directory.
+	 * The repository-relative file path.
 	 */
 	file: string
 	line: number
 	/**
-	 * Only an exported declaration has a home a caller elsewhere could import.
+	 * True when the declaration is exported, so other modules can import it.
 	 */
 	exported: boolean
 	/**
-	 * The declaration line itself — the signature is what decides whether the existing one fits.
+	 * The declaration line, which shows the signature.
 	 */
 	text: string
 }
 
+/**
+ * Options for the declaration searches.
+ */
 export interface FindDeclarationsOptions {
-	cwd: string
+	cwd: PathBuilderLike
 	/**
-	 * The ripgrep executable. Injectable so the missing-binary path is testable. nothing in production overrides it.
+	 * The ripgrep executable.
+	 * Tests override it to exercise the missing-binary path.
 	 */
 	binary?: string
 	/**
-	 * Trees to sweep. Defaults to the whole tree, which ripgrep already narrows by `.gitignore` and by TS file type.
+	 * The paths to search.
+	 *
+	 * The default is the whole tree, which ripgrep filters by `.gitignore`.
 	 */
 	searchPaths?: readonly string[]
 }
 
 /**
- * `rg` exits 1 to mean "searched fine, matched nothing" — the common case here rather than a failure.
+ * The exit code `rg` uses when the search ran and found no match.
  */
 const RIPGREP_NO_MATCH = 1
 
 /**
- * `path:line:text`, ripgrep's default line-oriented output.
+ * Matches ripgrep's `path:line:text` output lines.
  */
 const OUTPUT_LINE_PATTERN = /^([^\n:]+):(\d+):(.*)$/gm
 
 /**
- * A name that is not a bare identifier cannot be a declaration name, so dropping it costs nothing — and it means the
- * alternation below is built only from `\w+`, which needs no regex escaping.
+ * Returns true for a bare identifier.
+ *
+ * Search patterns are built only from identifiers, so they need no regex escaping.
  */
 function isIdentifier(name: string): boolean {
 	return /^\w+$/.test(name)
 }
 
 /**
- * Split an identifier into its camelCase components: `readPackageJSONFile` → `read`, `Package`, `JSON`, `File`. A run
- * of capitals is one component, so an acronym stays whole rather than becoming one component per letter, and digits
- * attach to the capitals they follow, so `getH3Cell` yields `get`, `H3`, `Cell` rather than a lone `3`.
- *
- * `change-case` exports a `split` that does nearly this, and `@mailwoman/core/strings/case` already depends on that
- * package. It is not reached for here because this workspace does not otherwise depend on `change-case`, and because
- * the digit rule above is this module's own: a component that begins with a digit can never head a candidate name.
+ * Splits an identifier into its camelCase components, keeping an acronym as one component
+ * and attaching digits to the capitals before them, so `Coordinates2D` yields `Coordinates`, `2D`.
  */
 function nameComponents(name: string): string[] {
 	return name.match(/[A-Z]+\d*(?![a-z])|[A-Z]?[a-z0-9]+|[A-Z]/gu) ?? []
 }
 
 /**
- * The number of camelCase components a contained run must carry to be worth reporting.
+ * The minimum number of components in a contained name.
  *
- * One-component runs are the vocabulary of the tree — `read`, `build`, `file`, `parse` — so a floor of one reports
- * nearly every name against nearly every other. Of the 2,950 exported function names under `packages/`, the count that
- * are a longer spelling of another exported name is 417 at a floor of one, 130 at two, and 45 at three. across
- * different files, 348, 67 and 20. Two keeps the motivating case (`readWorkspaceDirectories` over
- * `workspaceDirectories`) while dropping the vocabulary, and it is why this constant takes an argument: the floor is
- * measurable rather than asserted.
+ * The floor is two because single components such as `read` match almost every name.
  */
 const COMPONENT_FLOOR = 2
 
 /**
- * The names a new name would be a longer spelling of: every contiguous run of at least {@link COMPONENT_FLOOR} of its
- * components, shorter than the whole.
- *
- * Why this exists. Exact-name matching finds a duplicate only for an author who already guessed the existing name,
- * which is the one thing a duplicating author does not know. A duplicate arrives as an existing name plus an affix —
- * `readWorkspaceDirectories` over `workspaceDirectories`, `readPackageJSONFile` over `readPackageJSON` — and the exact
- * rule is silent for every one of them. A contiguous run is what an affix leaves behind, so searching for the runs
- * finds the shorter home from the longer name.
- *
- * The relation is one-directional. It answers "is there a shorter name inside this one", never the reverse, so writing
- * the shorter name while the longer already exists still reports nothing.
+ * Returns the shorter names contained in a name — every contiguous run of at least `floor`
+ * components, excluding the whole name, because a duplicate often adds an affix to an existing
+ * name. the search runs one way only, so writing a shorter name does not report a longer one.
  */
 export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): string[] {
 	const components = nameComponents(name)
@@ -137,8 +127,8 @@ export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): 
 
 			const [head = "", ...rest] = components.slice(start, end)
 
-			// A candidate is read as a name, so its head takes the case a name would: an acronym goes fully lowercase
-			// (`JSON` → `json`), and a component opening with a digit cannot head one at all.
+			// The first component is lowercased as a name would be, since a component
+			// starting with a digit cannot start a name.
 			if (/^\d/u.test(head)) continue
 
 			const leading = /^[A-Z]+\d*$/u.test(head) ? head.toLowerCase() : head.charAt(0).toLowerCase() + head.slice(1)
@@ -151,10 +141,8 @@ export function containedNameCandidates(name: string, floor = COMPONENT_FLOOR): 
 }
 
 /**
- * Every top-level declaration of each name, across the tree.
- *
- * Names absent from the tree are absent from the map rather than present with an empty array: a caller iterating the
- * result should see only real findings, and `size` should read as the number of names that actually landed.
+ * Returns every top-level declaration of each name and of the shorter names each one contains.
+ * A name with no declaration has no key in the map.
  */
 export function findDeclarations(
 	names: readonly string[],
@@ -165,8 +153,6 @@ export function findDeclarations(
 
 	if (!searchable.length) return found
 
-	// The names themselves, plus the shorter names each one would be a longer spelling of. A duplicate is written by an
-	// author who does not know the existing name, so searching only for what they typed cannot find it.
 	const wanted = new Set(searchable)
 
 	for (const name of searchable) {
@@ -179,7 +165,7 @@ export function findDeclarations(
 
 	const alternation = [...wanted].join("|")
 
-	// A contained run starts mid-name, so its first component arrives capitalized in the container.
+	// The search ignores case because a candidate's first component was capitalized in the longer name.
 	const output = runRipgrep(declarationPatterns(`(?:${alternation})`), cwd, searchPaths, { binary, ignoreCase: true })
 
 	const lowered = new Set([...wanted].map((name) => name.toLowerCase()))
@@ -188,8 +174,8 @@ export function findDeclarations(
 }
 
 /**
- * The two declaration shapes, with `nameExpression` spliced in as the name to match. Callers supply either an
- * alternation of exact names or a substring expression. both are built from `\w`, which needs no regex escaping.
+ * Returns the two declaration patterns with `nameExpression` in the name position.
+ * callers build it from `\w` and identifiers, so it needs no escaping.
  */
 function declarationPatterns(nameExpression: string): string[] {
 	return [
@@ -199,10 +185,8 @@ function declarationPatterns(nameExpression: string): string[] {
 }
 
 /**
- * Group ripgrep's matching lines into sites, keeping only the names `accept` recognizes.
- *
- * Re-deriving the name from the matched line rather than from a capture group keeps one definition of what a
- * declaration is: whatever `extractDeclaredSymbols` reads, this reads.
+ * Groups ripgrep's output lines into sites by name, keeping only names `accept` allows and taking
+ * the name from `extractDeclaredSymbols` so both functions share one definition of a declaration.
  */
 function collectSites(output: string, accept: (name: string) => boolean): Map<string, DeclarationSite[]> {
 	const found = new Map<string, DeclarationSite[]>()
@@ -216,7 +200,7 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 		const sites = found.get(name) ?? []
 
 		sites.push({
-			// Ripgrep echoes the search path it was given, so a `.` root prefixes every hit.
+			// Ripgrep prefixes each path with the search root, which is usually `./`.
 			file: file.replace(/^\.\//, ""),
 			line: Number(lineNumber),
 			exported: text.startsWith("export "),
@@ -237,10 +221,8 @@ function collectSites(output: string, accept: (name: string) => boolean): Map<st
 }
 
 /**
- * Every declared symbol whose name contains `query`, case-insensitively.
- *
- * The query must be a bare identifier fragment. A fragment carrying regex metacharacters is refused rather than
- * escaped, which keeps every pattern in this module built from `\w` alone.
+ * Returns every declared function whose name contains `query`, ignoring case. a query
+ * that is not a bare identifier fragment returns no results.
  */
 export function searchDeclarations(
 	query: string,
@@ -257,7 +239,7 @@ export function searchDeclarations(
 
 function runRipgrep(
 	patterns: readonly string[],
-	cwd: string,
+	cwd: PathBuilderLike,
 	searchPaths: readonly string[],
 	{ ignoreCase = false, binary = "rg" }: { ignoreCase?: boolean; binary?: string } = {}
 ): string {
@@ -266,8 +248,8 @@ function runRipgrep(
 		"--no-heading",
 		"--color",
 		"never",
-		// Not `--type ts`: ripgrep's `ts` type covers `*.tsx` as well, and a React component is a different reuse
-		// question with a different answer. Inclusion first, exclusions after — a later glob wins.
+		// The `*.ts` glob excludes `.tsx` files, which ripgrep's `ts` type would include.
+		// the exclusion globs come after it because a later glob wins.
 		"--glob",
 		"*.ts",
 		"--glob",
@@ -286,8 +268,7 @@ function runRipgrep(
 	} catch (error) {
 		if ((error as { status?: number }).status === RIPGREP_NO_MATCH) return ""
 
-		// An unrunnable searcher must never be reported as an empty result: a caller reads "no sites" as "this symbol
-		// has no home", and acts on it.
+		// A missing ripgrep must throw, because an empty result would claim the symbol has no declaration.
 		if ((error as { code?: string }).code === "ENOENT") {
 			throw new Error(`ripgrep (${binary}) is not on PATH, so the declaration search did not run.`)
 		}
@@ -297,32 +278,29 @@ function runRipgrep(
 }
 
 /**
- * A name worth telling the author about, with the sites that justify saying so.
+ * A name to report, with its declaration sites.
  */
 export interface SymbolFinding {
 	name: string
 	sites: DeclarationSite[]
 }
 
+/**
+ * Options for {@link selectReportable}.
+ */
 export interface SelectReportableOptions {
 	/**
-	 * Repo-relative path of the file being written, so its own declarations cannot report themselves.
+	 * The repository-relative path of the file being written.
+	 * Its own declarations are ignored.
 	 */
 	writingFile: string
 }
 
 /**
- * Narrow raw declaration sites to the ones worth interrupting an author over.
+ * Keeps only the names exported from some other file.
  *
- * The rule is that a name must already be exported somewhere else. It is structural rather than a curated stoplist, and
- * that is the whole point: a stoplist has to be maintained, and the curated list of shared homes in `agents.md` covers
- * a few dozen of several thousand exported names, which is how duplicates get written in the first place. Deriving the
- * rule from export status instead means the generic names — `main`, `run`, `visit`, `load` — fall out on their own,
- * because none of them is importable, while a name with a real home always survives.
- *
- * A name with no exported declaration is not necessarily fine. It may be a utility that deserves a home and does not
- * have one yet. Reporting those belongs to a census rather than to a write-time hint, because there is nothing here for
- * the author to import.
+ * Generic local names such as `main` or `run` are rarely exported,
+ * so this rule filters them without a stoplist.
  */
 export function selectReportable(
 	found: Map<string, DeclarationSite[]>,
@@ -342,7 +320,7 @@ export function selectReportable(
 }
 
 /**
- * The text an author is about to add, and where it is going.
+ * The text a tool call is about to add and the file it targets.
  */
 export interface WriteIntent {
 	filePath: string
@@ -356,13 +334,9 @@ function readStringField(input: Record<string, unknown>, key: string): string | 
 }
 
 /**
- * The source text a tool call is about to introduce, or `null` when it introduces none.
- *
- * An `Edit` contributes only its replacement text. Scanning the whole file instead would report every declaration the
- * file already contains against itself, which is both wrong and the fastest way to make a hint worth ignoring.
- *
- * Every unrecognized shape answers `null` rather than throwing: this runs in front of the author's editor, and a hook
- * that throws on a payload it did not anticipate is a broken editor rather than a missing hint.
+ * Returns the text a Write or Edit call is about to add, or `null` when there is none —
+ * an Edit contributes only its replacement text, and an unrecognized payload returns `null`
+ * rather than throwing because this runs in a hook.
  */
 export function readWriteIntent(payload: unknown): WriteIntent | null {
 	if (!payload || typeof payload !== "object") return null
@@ -384,13 +358,9 @@ export function readWriteIntent(payload: unknown): WriteIntent | null {
 }
 
 /**
- * Render findings as the note an author reads before writing.
- *
- * It reports and does not prescribe, and the reason is on the page in `packages/api-kit/lib/metrics.ts`: that file's
- * `percentile` takes a fraction where `@mailwoman/core/stats` takes [0, 100], and its docstring explains that the
- * divergence is deliberate. Phrased as an instruction ("use the existing one"), this note would talk an author into
- * adding a workspace dependency and silently changing a unit. The signature and the export status are what settle the
- * question, so both travel with every site.
+ * Renders findings as a note for the author, with each site's signature and export status,
+ * reporting matches without telling the author to reuse them because two functions
+ * with the same name can differ in units or dependencies.
  */
 export function formatFindings(findings: readonly SymbolFinding[], declaredNames: readonly string[] = []): string {
 	if (!findings.length) return ""

@@ -1,13 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `POIExplorer` — the composed POI-intent tester. Detects a POI subject in free text, shows the
- *   category + OverpassQL export, and (when a live-search probe is injected) searches the published
- *   poi.db layer. The intent path is self-contained — no weights, no network. All runtime concerns are
- *   in {@link usePOISearch}; this file is composition + a `ClientOnly` SSR boundary.
- */
-
 import { type ReactNode, useState } from "react"
 
 import { POI_DEFAULT_TEXT, POI_PRESETS } from "#poi/runtime"
@@ -23,27 +16,35 @@ import { OverpassBlock } from "./OverpassBlock.tsx"
 import { QueryInput } from "./QueryInput.tsx"
 import { SubjectPanel } from "./SubjectPanel.tsx"
 
+/**
+ * Props for {@linkcode POIExplorer}.
+ */
 export interface POIExplorerProps {
 	/**
-	 * Query to pre-fill in the input.
+	 * The query that pre-fills the input.
 	 */
 	defaultText?: string
 	/**
-	 * Example chips. @default the built-in POI presets
+	 * The example chips.
+	 *
+	 * @default POI_PRESETS
 	 */
 	presets?: ReadonlyArray<Preset>
 	/**
-	 * Override the taxonomy-runtime loader (stories/tests inject a mock).
+	 * A replacement loader for the taxonomy runtime, such as a mock in stories and tests.
 	 */
 	loadRuntime?: LoadPOIRuntime
 	/**
-	 * Live poi.db probe. Absent ⇒ intent-only (no live-results affordance).
+	 * The live poi.db search.
+	 * Without it, the explorer shows only the detected intent.
 	 */
 	runLiveSearch?: POILiveSearch
 	/**
-	 * Whether {@link runLiveSearch} can serve brand subjects (fetch by QID). Default false: a brand subject shows the
-	 * intent + QID chip but no live block. The docs' httpvfs probe leaves this off (brand-wide byte-range hydration is
-	 * pathological — measured); a server-side backend can enable it.
+	 * Whether {@link runLiveSearch} can search brand subjects by Wikidata QID.
+	 *
+	 * When it is false, a brand subject shows its intent and QID chip without a live block.
+	 * A byte-range probe over httpvfs should leave it off because a brand-wide
+	 * lookup reads too much of the database.
 	 */
 	brandLiveSearch?: boolean
 }
@@ -71,9 +72,8 @@ function POIExplorerInner({
 
 	const subject = result?.subject
 
-	// The live block appears whenever the subject could be live-searched with an anchor — i.e. capable minus the
-	// anchor-present requirement (`canSearchLive` also requires an anchor. the block itself renders the "add an anchor"
-	// hint, so it must show one step earlier). Category: not build-local. Brand: brand-capable probe + a QID.
+	// A category is searchable unless it is build-local.
+	// A brand needs a QID and a brand-capable probe.
 	const showLiveBlock = Boolean(
 		runLiveSearch &&
 		subject &&
@@ -114,6 +114,13 @@ function POIExplorerInner({
 	)
 }
 
+/**
+ * Renders a POI-intent tester that detects a POI subject in free text.
+ *
+ * It shows the matched category or brand and, for categories, an OverpassQL export.
+ * When `runLiveSearch` is set, it can also search the published poi.db.
+ * It renders only on the client.
+ */
 export function POIExplorer({
 	defaultText = POI_DEFAULT_TEXT,
 	presets = POI_PRESETS,

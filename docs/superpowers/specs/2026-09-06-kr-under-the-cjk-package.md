@@ -35,7 +35,7 @@ derivatives and redistribution permitted. A fresh pull from `business.juso.go.kr
 so the on-disk delivery is the source of record until someone with that access refreshes it; counsel confirms the
 exact KOGL rider before the card ships (the 2026-07-18 acquisition note flags the newer "Type AI" rider).
 
-## 3. Labels: nothing new on the head
+## 3. Labels: no new label on the head
 
 | juso field | ComponentTag         | WOF placetype the candidate gazetteer keys it under                                                                                                                  |
 | ---------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

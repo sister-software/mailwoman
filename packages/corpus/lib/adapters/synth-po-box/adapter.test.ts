@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { tempRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONLFile } from "@mailwoman/core/fs/writers"
 import { createSynthPoBoxAdapter, SYNTH_PO_BOX_ADAPTER_ID } from "@mailwoman/corpus/adapters/synth-po-box/adapter"
@@ -56,9 +53,9 @@ describe("synth-po-box adapter", () => {
 
 	it("skips rows missing required fields", async () => {
 		const path = await writeFixture([
-			{ locality: "OK", region: "VT", postcode: "05401", country: "US" }, // valid
-			{ locality: "Missing postcode", region: "VT", country: "US" }, // invalid
-			{ region: "VT", postcode: "05401", country: "US" }, // invalid (no locality)
+			{ locality: "OK", region: "VT", postcode: "05401", country: "US" },
+			{ locality: "Missing postcode", region: "VT", country: "US" },
+			{ region: "VT", postcode: "05401", country: "US" },
 		])
 
 		const rows = await collect(path)
@@ -94,7 +91,7 @@ describe("synth-po-box adapter", () => {
 		}
 
 		expect(rows).toHaveLength(5)
-		// At least 2 unique raw strings out of 5 (with seed=42, leader selection varies)
+
 		const unique = new Set(rows.map((r) => r.raw))
 		expect(unique.size).toBeGreaterThanOrEqual(2)
 	})
@@ -150,11 +147,11 @@ describe("synth-po-box adapter", () => {
 		expect([...ids].every((id) => id.startsWith(SYNTH_PO_BOX_ADAPTER_ID + "-"))).toBe(true)
 	})
 
-	it("militaryRatio emits a US military/diplomatic PO-box row per input (#517)", async () => {
+	it("MilitaryRatio emits a US military/diplomatic PO-box row per input", async () => {
 		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const adapter = createSynthPoBoxAdapter({ seed: 42, militaryRatio: 1 })
 		const rows = await collect(path, adapter)
-		// One standard po_box row + one self-contained military row.
+
 		expect(rows).toHaveLength(2)
 		const mil = rows.find((r) => /^(PSC|CMR|Unit) /.test(String(r.components.po_box)))
 		expect(mil).toBeDefined()
@@ -164,14 +161,14 @@ describe("synth-po-box adapter", () => {
 		expect(mil!.locale).toBe("en-US")
 	})
 
-	it("militaryRatio defaults off — byte-stable (one row per input, no military)", async () => {
+	it("MilitaryRatio defaults off — byte-stable (one row per input without military)", async () => {
 		const path = await writeFixture([{ locality: "Burlington", region: "VT", postcode: "05401", country: "US" }])
 		const rows = await collect(path)
 		expect(rows).toHaveLength(1)
 		expect(/^(PSC|CMR|Unit) /.test(String(rows[0]!.components.po_box))).toBe(false)
 	})
 
-	it("emits region-less NZ tuples — Private Bag / Box, no region token (#517)", async () => {
+	it("Emits region-less NZ tuples — Private Bag / Box without region token", async () => {
 		const path = await writeFixture([{ locality: "Auckland", region: "", postcode: "1010", country: "NZ" }])
 		const rows = await collect(path)
 		expect(rows).toHaveLength(1)

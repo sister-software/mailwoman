@@ -2,7 +2,7 @@
 
 All notable changes are recorded here at a high level. For the full,
 authoritative mapping of **which npm version shipped which model and which
-capabilities**, see [`docs/records/site-2026-08/releases.mdx`](./docs/records/site-2026-08/releases.mdx).
+capabilities**, see [`docs/engineering/releases.mdx`](./docs/engineering/releases.mdx).
 That matrix is a maintainer record rather than a page on the site: `docusaurus.config.ts` serves `articles/`
 and `research/`, and the August reorg left `records/` unpublished, so read it in the repository.
 Per-release detail lives in the [GitHub releases](https://github.com/sister-software/mailwoman/releases)
@@ -364,7 +364,7 @@ credentials in `mailwoman/env` (which extends the resolver's view); the ONNX thr
 `liveEnv` validates one field at a time and caches each until its raw value changes, so an invalid unrelated variable
 no longer blocks a valid read. Removed, having no reader: `NODE_ENV`, `CI`, `MAILWOMAN_LOG_ROOT`, `MAILWOMAN_DEMO_URL`,
 `HF_TOKEN`, `HF_BUCKET_URI`, `HF_ORG_NAME`, `HF_BUCKET_NAME`, `CF_AUTH_TOKEN`, `GEOCODE_EARTH_API_KEY`, `UK_EPC_TOKEN`,
-`USAC_API_KEY_ID`, `USAC_API_SECRET_KEY`, and the twenty training-script and playpen variables. A consumer that read a
+`USAC_API_KEY_ID`, `USAC_API_SECRET_KEY`, and the twenty training-script and lab-container variables. A consumer that read a
 moved key from `@mailwoman/core/env` imports the owning package's `./env` instead.
 
 ### Added — the shop as data, and `mwops shop`

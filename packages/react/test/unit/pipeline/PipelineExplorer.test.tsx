@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Composed test: drives the whole pipeline explorer (ClientOnly boundary → useParsePipeline →
- *   presentational units) against a mock runtime — no model, no gazetteer.
- */
-
 import { makePipelineRuntime } from "@mailwoman/react/map/fake-runtime"
 import { PipelineExplorer } from "@mailwoman/react/pipeline/PipelineExplorer"
 import { expect, test, vi } from "vitest"
@@ -18,7 +13,7 @@ test("parses on submit and renders components + resolved place", async () => {
 		<PipelineExplorer runtime={makePipelineRuntime()} defaultAddress="350 5th Ave" />
 	)
 
-	// ClientOnly mounts asynchronously. wait for the form.
+	// `ClientOnly` mounts its children asynchronously.
 	await vi.waitFor(() => expect(container.querySelector("#mw-pipeline-input")).toBeTruthy())
 
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
@@ -38,7 +33,7 @@ test("selecting an alternate candidate updates the resolved panel", async () => 
 	await userEvent.click(container.querySelector('button[type="submit"]') as HTMLButtonElement)
 	await vi.waitFor(() => expect(container.querySelectorAll(".mw-candidates__btn")).toHaveLength(2))
 
-	// Pick the second candidate (the region) — the resolved panel should now show "region".
+	// The second fake candidate is a region.
 	await userEvent.click(container.querySelectorAll(".mw-candidates__btn")[1] as HTMLElement)
 	await vi.waitFor(() => expect(container.querySelector(".mw-resolved")?.textContent).toContain("region"))
 })

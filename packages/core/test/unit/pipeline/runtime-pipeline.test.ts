@@ -1,11 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Unit tests for `runPipeline` — every stage stubbed with a fake so the test exercises the
- *   coordinator's composition + branching logic without depending on neural / resolver concretes.
- */
-
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
 import {
 	HARD_PLACE_COUNTRY_SAFELIST,
@@ -37,7 +29,7 @@ function fakeResolver(decorator: (tree: AddressTree) => AddressTree): Resolver {
 	return { resolveTree: vi.fn(async (tree: AddressTree) => decorator(tree)) }
 }
 
-describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", () => {
+describe("HardCountryFor — coverage-guarded hard country filter", () => {
 	const ON = true
 
 	it("returns the country when confident AND safelisted (the pure-win case)", () => {
@@ -70,10 +62,7 @@ describe("hardCountryFor — #743/#194 coverage-guarded hard country filter", ()
 	})
 })
 
-describe("runPipeline — artifact-manifest safelist precedence (survey candidate #2)", () => {
-	/**
-	 * A resolver whose loaded gazetteer artifact declares its own coverage manifest.
-	 */
+describe("RunPipeline — artifact-manifest safelist precedence (survey candidate)", () => {
 	const artifactWith = (safelist: string[]): GazetteerArtifactCoverage => ({
 		countryCoverage: new Map(),
 		countryBBoxes: new Map(),
@@ -118,7 +107,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 		expect(await run({ placed: "ES", artifact: artifactWith(["FI"]) })).toBeUndefined()
 	})
 
-	it("no artifact → the code-constant fallback, byte-identical (ES hard, FI soft)", async () => {
+	it("No artifact → the code-constant fallback, byte-identical (ES hard, FI soft)", async () => {
 		expect(await run({ placed: "ES" })).toBe("ES")
 		expect(await run({ placed: "FI" })).toBeUndefined()
 	})
@@ -129,7 +118,7 @@ describe("runPipeline — artifact-manifest safelist precedence (survey candidat
 	})
 })
 
-describe("isBareLocalityTree — #912 change 1 (placer abstention shape)", () => {
+describe("IsBareLocalityTree — change 1 (placer abstention shape)", () => {
 	const node = (tag: string, value: string, children: AddressNode[] = []): AddressNode =>
 		({ tag, value, children }) as AddressNode
 
@@ -144,7 +133,7 @@ describe("isBareLocalityTree — #912 change 1 (placer abstention shape)", () =>
 		expect(isBareLocalityTree(tree([node("street", "Rue du Chevaleret"), node("locality", "Paris")]))).toBe(false)
 	})
 
-	it("nested children count — a locality wrapping a house number is address-shaped", () => {
+	it("Nested children count — a locality wrapping a house number is address-shaped", () => {
 		const localityWithHouseNumber = node("locality", "Paris", [node("house_number", "8")])
 
 		expect(isBareLocalityTree(tree([localityWithHouseNumber]))).toBe(false)
@@ -157,7 +146,7 @@ describe("isBareLocalityTree — #912 change 1 (placer abstention shape)", () =>
 })
 
 describe("runPipeline — defaults", () => {
-	it("runs with all stages absent — empty result, no throw", async () => {
+	it("Runs with all stages absent — empty result without throwing", async () => {
 		const result = await runPipeline("hello", {})
 		expect(result.input).toBe("hello")
 		expect(result.normalized.normalized).toBe("hello")
@@ -185,7 +174,7 @@ describe("runPipeline — defaults", () => {
 })
 
 describe("runPipeline — stage composition", () => {
-	it("calls each stage in order: normalize → queryShape → detectLocale → classifyKind → classify → resolve", async () => {
+	it("Calls each stage in order: normalize → queryShape → detectLocale → classifyKind → classify → resolve", async () => {
 		const order: string[] = []
 
 		const stages: RuntimePipelineStages = {
@@ -245,9 +234,7 @@ describe("runPipeline — stage composition", () => {
 			queryShape: shape,
 			postcodeRepair: true,
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
-			// Decision A: the pipeline passes an explicit register on every parse. The default kind
-			// classifier (no fast-path) reads structured_address → formatted. an explicit
-			// PipelineOpts.inputMode overrides (see the dedicated inputMode tests).
+
 			inputMode: "formatted",
 		})
 	})
@@ -258,7 +245,7 @@ describe("runPipeline — stage composition", () => {
 		expect(classifier.parse).toHaveBeenCalledWith("belleville", expect.objectContaining({ inputMode: "fragmented" }))
 	})
 
-	it("threads PipelineOpts.normalizeCase to classifier.parse (#690)", async () => {
+	it("Threads PipelineOpts.normalizeCase to classifier.parse", async () => {
 		const classifier: AddressClassifier = { parse: vi.fn(async () => fakeTree("214 JONES RD")) }
 		await runPipeline("214 JONES RD", { classifier }, { normalizeCase: true })
 		expect(classifier.parse).toHaveBeenCalledWith("214 JONES RD", expect.objectContaining({ normalizeCase: true }))
@@ -307,7 +294,7 @@ describe("runPipeline — fast-path routing", () => {
 		expect(result.path).toBe("fast-path")
 		expect(classifier.parse).not.toHaveBeenCalled()
 		expect(resolver.resolveTree).toHaveBeenCalled()
-		// Fast-path tree is built from the QueryShape format hit.
+
 		expect(result.tree.roots[0]?.tag).toBe("postcode")
 		expect(result.tree.roots[0]?.value).toBe("10118")
 	})
@@ -389,9 +376,6 @@ describe("runPipeline — fast-path routing", () => {
 	})
 
 	it("fast-paths even when resolver is absent (fast-path tree is built from QueryShape alone)", async () => {
-		// Previously the coordinator required a resolver for fast-path to fire. As of the kind-
-		// classifier ship, the fast-path tree from QueryShape is useful standalone — a consumer who
-		// just wants the parsed structure for "10118" shouldn't be forced to pay for the classifier.
 		const classifier = fakeClassifier(fakeTree("10118"))
 
 		const stages: RuntimePipelineStages = {
@@ -407,7 +391,7 @@ describe("runPipeline — fast-path routing", () => {
 	})
 })
 
-describe("runPipeline — graceful degradation", () => {
+describe("RunPipeline — graceful degradation", () => {
 	it("classifier throwing returns an empty tree but pipeline continues", async () => {
 		const classifier: AddressClassifier = {
 			parse: vi.fn(async () => {
@@ -453,7 +437,6 @@ describe("runPipeline — abort signal", () => {
 		const computeQueryShape = vi.fn(() => ({ knownFormats: [] }))
 
 		const normalize = vi.fn((raw: string) => {
-			// Abort during normalize — coordinator catches it on the next checkpoint (before queryShape).
 			controller.abort()
 
 			return { raw, normalized: raw }
@@ -593,12 +576,7 @@ describe("runPipeline — timing budget shape", () => {
 	})
 })
 
-describe("runPipeline — non-graceful stage failures", () => {
-	// Interface: classifier + resolver are wrapped in safe* helpers (graceful). The pre-classifier
-	// stages — detectLocale, classifyKind — are not wrapped because their failure modes indicate a
-	// genuine interface violation (locale detector returning null, kind classifier crashing on its
-	// own rules), not external-data noise. These tests pin the asymmetry as a interface.
-
+describe("RunPipeline — non-graceful stage failures", () => {
 	it("detectLocale throwing propagates (not swallowed)", async () => {
 		const detectLocale = vi.fn(async () => {
 			throw new Error("locale detector exploded")
@@ -631,9 +609,7 @@ describe("runPipeline — non-graceful stage failures", () => {
 		await expect(runPipeline("hello", { computeQueryShape })).rejects.toThrow("queryShape exploded")
 	})
 
-	it("resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
-		// Fast-path uses safeResolve, so a resolver failure does not propagate. The fast-path tree
-		// built from QueryShape is the fallback.
+	it("Resolver throwing on fast-path returns the fast-path tree unchanged (graceful)", async () => {
 		const postcodeShape: QueryShapeLite = {
 			knownFormats: [{ format: "us_zip", span: { start: 0, end: 5 }, confidence: 0.95 }],
 			totalLength: 5,
@@ -680,7 +656,7 @@ describe("runPipeline — locale + opts threading", () => {
 	})
 })
 
-describe("runPipeline — coarse-placer soft prior (#244)", () => {
+describe("RunPipeline — coarse-placer soft prior", () => {
 	function captureResolveOpts() {
 		const seen: Array<unknown> = []
 
@@ -698,7 +674,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	it("byte-stable when no placeCountry stage is wired (resolveOpts passed through verbatim)", async () => {
 		const { resolver, seen } = captureResolveOpts()
 		await runPipeline("hello", { resolver }, { resolveOpts: { maxLookups: 3 } })
-		// No coarse-placer ⇒ effectiveOpts === opts ⇒ resolver sees exactly the caller's resolveOpts.
+
 		expect(seen[0]).toEqual({ maxLookups: 3 })
 	})
 
@@ -716,8 +692,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 
 	it("uses the placer's full posterior distribution when supplied (vs the one-hot argmax)", async () => {
 		const { resolver, seen } = captureResolveOpts()
-		// A country-ambiguous in-map guess: argmax FR, but GB nearly as likely. The distribution lets the
-		// resolver break the tie with its own evidence instead of committing to FR.
+
 		const placeCountry = vi.fn(() => ({ country: "FR", confidence: 0.45, posterior: { FR: 0.45, GB: 0.4 } }))
 		await runPipeline("Birmingham", { resolver, placeCountry })
 		expect(seen[0]).toMatchObject({ anchorPosterior: { FR: 0.45, GB: 0.4 }, anchorWeight: 1 })
@@ -754,7 +729,6 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 			{ resolveOpts: { anchorPosterior: { GB: 1 }, anchorWeight: 2 } }
 		)
 
-		// Caller's posterior wins. the coarse-placer is a no-op here.
 		expect(seen[0]).toEqual({ anchorPosterior: { GB: 1 }, anchorWeight: 2 })
 	})
 
@@ -795,15 +769,7 @@ describe("runPipeline — coarse-placer soft prior (#244)", () => {
 	})
 })
 
-/**
- * #40 / mailfail finding 4 — the defensive `safeClassify` wrapper caught every classifier throw and returned an empty
- * tree, which the grouper-audit then repopulated from rule-based phrase proposals. The caller got a normal-looking
- * parse with no indication the model never ran: measured on the mailfail probes, 10 of 110 inputs crashed the
- * classifier while the pipeline reported success (`size-10kb` produced a tidy five-field parse off a 3,031-node tree).
- * The interface now is that the wrapper still degrades — it does not abort the pipeline — but it records what it caught
- * on `PipelineResult.faults`, so "the model faulted" is distinguishable from "the model found nothing".
- */
-describe("stage faults — a swallowed stage crash is recorded, never silent (#40)", () => {
+describe("Stage faults — a swallowed stage crash is recorded, never silent", () => {
 	const throwingClassifier = (error: unknown): AddressClassifier => ({
 		parse: vi.fn(async () => {
 			throw error
@@ -819,7 +785,6 @@ describe("stage faults — a swallowed stage crash is recorded, never silent (#4
 	})
 
 	it("records a classifier throw as a `classifier` fault while still returning a tree", async () => {
-		// The real shape from the 128-piece desync (neural/word-consistency.ts:238).
 		const boom = new TypeError("emissions[pi] is not iterable")
 
 		const result = await runPipeline("350 5th Ave, New York, NY 10118", { classifier: throwingClassifier(boom) })
@@ -833,7 +798,6 @@ describe("stage faults — a swallowed stage crash is recorded, never silent (#4
 			message: "emissions[pi] is not iterable",
 		})
 
-		// The thrown value is kept verbatim so a caller can rethrow it or read its stack.
 		expect(result.faults[0]!.cause).toBe(boom)
 	})
 

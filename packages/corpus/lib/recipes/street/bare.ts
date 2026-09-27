@@ -19,14 +19,17 @@
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
-import { recipeSourceID, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
+import { recipeSourceID, requireRegister, type CanonicalRecipeRow, type CorpusRecipe } from "#recipes/scaffold"
 import { DEFAULT_US_BASES } from "#synthesizers/intersection"
 import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const streetBareRecipe: CorpusRecipe = {
 	name: "street-bare",
@@ -81,9 +84,9 @@ export const streetBareRecipe: CorpusRecipe = {
 				license: "Synthetic — US street templates, public-domain street/city pools",
 			}
 
-			// Strict labeled-only check (matches the legacy builder): alignRow always returns a `row`
-			// (labeled or quarantined), so the scaffold's `alignAndWrite` would write quarantined rows
-			// too — call alignRow directly and skip anything not "labeled".
+			// Strict labeled-only check (matches the legacy builder): alignRow always returns
+			// a `row` (labeled or quarantined), so the scaffold's `alignAndWrite` would write
+			// quarantined rows too — call alignRow directly and skip anything not "labeled".
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0])
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
@@ -92,7 +95,15 @@ export const streetBareRecipe: CorpusRecipe = {
 				continue
 			}
 
-			write(stringifyJSON({ ...aligned.row, synth_method: "street-bare", synth_base_id: null }))
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: "street-bare",
+					base_source_id: null,
+					register: requireRegister(opts, "street-bare"),
+					surface: SurfaceOrigin.Composed,
+				})
+			)
 
 			emitted++
 		}

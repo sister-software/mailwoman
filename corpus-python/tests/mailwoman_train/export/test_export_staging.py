@@ -1,12 +1,4 @@
-"""#2207 — an unverified graph never reaches the output path, and zero parity rows are a refusal.
-
-`export` wrote `model.onnx` and then read the val rows the parity check compares against. A config whose MANIFEST
-names parts this host cannot resolve raised at that read, leaving a graph on disk that nothing had compared against
-torch — and the v8-cjk-regs export did exactly that, after which the parity read was done from a scratch script.
-
-The second half is quieter: `verify_parity` over an empty sample returns a well-formed metrics dict, so an unreadable
-val split printed the same shape a verified export does.
-"""
+"""An unverified graph never reaches the output path, and zero parity rows are a refusal rather than a well-formed metrics dict."""
 
 from __future__ import annotations
 

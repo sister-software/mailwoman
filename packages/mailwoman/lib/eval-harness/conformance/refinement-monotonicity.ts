@@ -2,34 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The refinement-monotonicity law: a query that says more must not make a candidate the coarser query could
- *   reach unreachable, unless the added information contradicts it. Pure — no model, no I/O beyond reading the
- *   committed suite. The reading itself lives in `candidate-admissibility.ts`; this module owns the row
- *   vocabulary and the refusal.
+ *   Refinement-monotonicity suite rows and their audit. The law itself is evaluated in `candidate-admissibility.ts`.
  *
- *   why IT is A product commitment. Refinement is what a person does when the answer was wrong: they type
- *   `Springfield`, get Missouri, and add `IL`. If adding the state can push the Illinois Springfield out of
- *   reach, the one repair a user knows how to make is the one that cannot be relied on. Every other law in
- *   this directory states that a rewrite of the same information changes nothing. this one is the only law
- *   about information being added and the axis those four cannot see.
- *
- *   the base is derived rather than authored — and the derivation runs backward. The other four laws take a
- *   committed board row as the `base` and derive the `variant` from it. Here the committed row is the fullest
- *   query, so it is the `variant`, and each `base` is that row's own text with one named piece removed. A
- *   hand-typed base would let a row quietly become an address nobody geocodes, and the law would then measure
- *   a query the corpus never attested. {@linkcode REFINEMENT_DERIVATION_BY_STEP} is the source every base is
- *   re-derived from, and {@linkcode auditRefinementSuite} re-derives it.
- *
- *   A chain is A sequence OF pairs. `Springfield` → `Springfield, IL` → `Springfield, IL, USA` is two rows
- *   sharing one `rowRef`, each stating one link. The audit checks the links join: within a `rowRef` group,
- *   every fixture but one has its `variant` appear as another fixture's `base`, and that one is the chain's
- *   TIP — the query the committed row actually holds. Nothing here can check the tip against the corpus (this
- *   module never loads it); `refinement-monotonicity-suite.test.ts` does, and that is the check which makes
- *   the whole chain corpus-attested rather than merely self-consistent.
+ *   Each row's `variant` is the finer query, and a named coarsening step derives its `base`. Rows that share a
+ *   `rowRef` must form one chain whose finest query is the committed corpus row.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { TextSpliterator } from "spliterator"
 
 import {
 	auditCommonFixtureFields,
@@ -38,44 +19,33 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * The law name every row in this suite carries.
+ * Law identifier that every suite row carries.
  */
 export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 
 /**
- * The closed set of named coarsenings a row may state, and the only three a committed row may name.
+ * Named coarsening steps.
  *
- * Each removes information, so the surviving text is a query the fuller one strictly contains. That direction is what
- * makes the pair a refinement at all: the variant says everything the base says and one thing more.
- *
- * - `drop-leading-segment` — remove the first comma-delimited part. Peels a venue or a street line off the front of a
- *   structured address, leaving the place it sits in.
- * - `drop-trailing-segment` — remove the last comma-delimited part. Peels the coarsest admin off the back, which is the
- *   arm that produces an ambiguous bare toponym from a disambiguated one.
- * - `drop-leading-numeric-token` — remove the leading whitespace-delimited token when it carries a digit. A postcode or a
- *   house number written without a comma is not a segment, so neither segment step can reach it, and the DE and FR
- *   structured rows are written exactly that way.
+ * - `drop-leading-segment` removes the first comma-separated segment, such as a venue or street line.
+ * - `drop-trailing-segment` removes the last comma-separated segment,
+ *   which is usually the coarsest admin area.
+ * - `drop-leading-numeric-token` removes the first whitespace-separated token when it contains a digit.
+ *   It reaches a postcode or house number that a comma does not separate, as in many DE and FR addresses.
  */
 export const REFINEMENT_STEPS = ["drop-leading-segment", "drop-trailing-segment", "drop-leading-numeric-token"] as const
 
 export type RefinementStep = (typeof REFINEMENT_STEPS)[number]
 
 /**
- * The comma-delimited parts of a query, trimmed, with empty parts dropped.
+ * Returns the trimmed, non-empty comma-separated segments of a query.
  */
 function segmentsOf(text: string): string[] {
-	return text
-		.split(",")
-		.map((part) => part.trim())
-		.filter((part) => part.length)
+	return TextSpliterator.from(text, { delimiter: "," }).toArray()
 }
 
 /**
- * Each step's derivation: given the fuller query, return the coarser one, or `null` when the step has nothing to
- * remove.
- *
- * `null` rather than the input unchanged, because a step that removed nothing has not stated the law — the pair would
- * be the identity wearing a refinement label, and it would hold trivially.
+ * Implementation of each step.
+ * A step returns `null` when it cannot remove anything.
  */
 export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string) => string | null> = {
 	"drop-leading-segment": (text) => {
@@ -98,14 +68,7 @@ export const REFINEMENT_DERIVATION_BY_STEP: Record<RefinementStep, (text: string
 }
 
 /**
- * Which named step turns `variant` into `base`, or `null` when none does.
- *
- * Derived from the pair rather than stored on the fixture, on the canonical-form law's own reasoning: a stored step
- * name is a second copy of something the two strings already say, and the copy is what goes stale.
- *
- * The steps are tried in {@linkcode REFINEMENT_STEPS} order and the first match wins. Two steps can agree on a pair — a
- * two-token single-segment query is reachable by both a segment step and the numeric one — and the order determines the
- * result rather than leaving the name to whichever branch ran last.
+ * Returns the first step in {@link REFINEMENT_STEPS} order that derives `base` from `variant`, or `null`.
  */
 export function classifyRefinementStep(base: string, variant: string): RefinementStep | null {
 	if (base === variant) return null
@@ -118,17 +81,14 @@ export function classifyRefinementStep(base: string, variant: string): Refinemen
 }
 
 /**
- * Every step that can be stated over `text` at all — the eligibility reading the coverage line is built from.
+ * Returns the steps that can remove something from `text`.
  */
 export function statableSteps(text: string): RefinementStep[] {
 	return REFINEMENT_STEPS.filter((step) => REFINEMENT_DERIVATION_BY_STEP[step](text) !== null)
 }
 
 /**
- * The committed suite.
- *
- * Anchored at the package root: `tsc` emits no `.jsonl` into `out/`, so the file is named from where the package starts
- * rather than from where this module runs.
+ * Path to the committed refinement suite.
  */
 export const REFINEMENT_MONOTONICITY_SUITE_PATH: string = resolvePackagePath(
 	"mailwoman",
@@ -139,26 +99,25 @@ export const REFINEMENT_MONOTONICITY_SUITE_PATH: string = resolvePackagePath(
 )
 
 /**
- * One `rowRef` group's chain structure.
+ * Chain of fixtures that share one `rowRef`.
  */
 export interface RefinementChain {
 	rowRef: string
 	/**
-	 * The links in order, coarsest first. Each entry is one fixture id.
+	 * Fixture IDs in chain order, coarsest first.
+	 *
+	 * The walk stops at a break, so a broken chain lists fewer IDs than its group has fixtures.
 	 */
 	links: string[]
 	/**
-	 * The fullest query in the group — the text the committed row must hold.
+	 * Finest query in the group, which the committed corpus row must hold.
+	 * It is empty when the group has no single finest query.
 	 */
 	tip: string
 }
 
 /**
- * Read the chains a suite states, one per `rowRef`.
- *
- * A group whose links do not join returns a chain whose `links` is shorter than the group;
- * {@linkcode auditRefinementSuite} is what turns that into a refusal. Exported because the suite test checks each `tip`
- * against the committed corpus, which is the check this module cannot perform.
+ * Builds one chain per `rowRef` by walking from the single base that no fixture produces as a variant.
  */
 export function refinementChains(fixtures: readonly ConformanceFixture[]): RefinementChain[] {
 	const groups = new Map<string, ConformanceFixture[]>()
@@ -183,7 +142,7 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 		const tip = tips.length === 1 ? tips[0]!.variant : ""
 		const links: string[] = []
 
-		// Walk from the coarsest end: the one base no fixture produces as a variant.
+		// The length guard stops the walk if the links form a cycle.
 		const variants = new Set(group.map((fixture) => fixture.variant))
 		const roots = group.filter((fixture) => !variants.has(fixture.base))
 
@@ -201,41 +160,34 @@ export function refinementChains(fixtures: readonly ConformanceFixture[]): Refin
 }
 
 /**
- * How much of the population this law states a link over.
- *
- * Counted in committed rows, like the canonical-form law's own coverage: the denominator is rows a step can be stated
- * over at all, and a row carrying a three-link chain would otherwise read as three rows of coverage.
+ * Counts that compare the suite against a corpus.
  */
 export interface RefinementCoverage {
 	/**
-	 * Committed board rows read.
+	 * Number of corpus inputs read.
 	 */
 	read: number
 	/**
-	 * Of those, rows at least one named step can act on — the only rows this law can be stated over.
+	 * Number of inputs that at least one step can coarsen.
 	 */
 	eligible: number
 	/**
-	 * Of the eligible rows, how many this suite states at least one link over.
+	 * Number of distinct source rows that the fixtures cover.
 	 */
 	stated: number
 	/**
-	 * Links stated, across every chain. Always at least {@linkcode stated}, and larger wherever a row carries a chain.
+	 * Number of fixtures.
 	 */
 	links: number
 	/**
-	 * Eligible rows by the step that can act on them. A row several steps reach is counted under each, so these do not
-	 * sum to {@linkcode eligible} — the question the breakdown answers is which arms the population can state rather than
-	 * how the rows partition.
+	 * Eligible inputs per step.
+	 * An input counts once for each step that applies to it.
 	 */
 	eligibleByStep: Record<RefinementStep, number>
 }
 
 /**
- * Measure this suite against the population it draws from.
- *
- * `corpusInputs` is every committed board row's query text, supplied by the runner rather than loaded here, so the law
- * module stays free of the corpus loader.
+ * Measures how much of the corpus the suite covers.
  */
 export function refinementCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -267,8 +219,7 @@ export function refinementCoverage(
 }
 
 /**
- * The coverage line a report prints — stated rows over eligible rows, with the link count and the denominator's own
- * breakdown, so a hold count cannot imply a breadth the suite never exercised.
+ * Formats the coverage counts as one line.
  */
 export function describeRefinementCoverage(
 	fixtures: readonly ConformanceFixture[],
@@ -284,13 +235,11 @@ export function describeRefinementCoverage(
 }
 
 /**
- * Everything that must be true of a refinement row, checked without running anything.
+ * Audits suite rows and chains.
  *
- * Returns one message per problem, each naming the fixture. Empty means the suite states this law and only this law.
- *
- * The `caseCountry` requirement is the canonical-form law's, for the same reason: a row graded with no country routes
- * through the base en-US weights package rather than its own overlay, so a violation would be reported for an
- * instrument that was never pointed at the row's locale.
+ * Each row needs the `candidate_admissibility` comparator, a `refines` expectation,
+ * a `rowRef`, a `caseCountry`, and a named coarsening step.
+ * Each chain must be connected, end at one finest query, and share one context.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	const problems = auditCommonFixtureFields(
@@ -363,8 +312,7 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * The step label a report line carries, e.g. `drop-trailing-segment`. `?` when the pair does not classify — which the
- * audit refuses, so it can only appear on a hand-built fixture that skipped the loader.
+ * Returns the fixture's step name, or `?` when no named step fits.
  */
 export function describeRefinementStep(fixture: ConformanceFixture): string {
 	return classifyRefinementStep(fixture.base, fixture.variant) ?? "?"

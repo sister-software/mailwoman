@@ -1,6 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 import { buildAddressTree } from "@mailwoman/core/decoder/build-tree"
 import type { AddressNode, DecoderToken } from "@mailwoman/core/decoder/types"
 import { describe, expect, test } from "vitest"
@@ -8,9 +5,9 @@ import { describe, expect, test } from "vitest"
 import { findByTag, tok, WHITE_HOUSE_RAW, whiteHouseTokens } from "./fixtures.ts"
 
 describe("buildAddressTree", () => {
-	test("emits one span per B-/I- group, dropping O", () => {
+	test("Emits one span per B-/I- group, dropping O", () => {
 		const tree = buildAddressTree(WHITE_HOUSE_RAW, whiteHouseTokens())
-		// 5 spans: house_number, street, locality, region, postcode
+
 		const allTags: string[] = []
 
 		const collect = (n: AddressNode): void => {
@@ -79,7 +76,6 @@ describe("buildAddressTree", () => {
 	})
 
 	test("postcode-before-locality still attaches to locality (nearest-parent rule)", () => {
-		// "75004 Paris"
 		const raw = "75004 Paris"
 		const tokens: DecoderToken[] = [tok("75004", 0, 5, "B-postcode"), tok("Paris", 6, 11, "B-locality")]
 		const tree = buildAddressTree(raw, tokens)
@@ -88,14 +84,8 @@ describe("buildAddressTree", () => {
 	})
 })
 
-// Boundary-trim regression coverage. Samples sourced from v0.4.0's post-hoc regression
-// diagnostic (.playpen/control/drafts/v0_4_0-regression-diagnostic.md). The shipped v0.4.0 model
-// occasionally emits BIO spans with leading/trailing punctuation. the decoder now trims the span
-// boundary past non-word characters. start/end tighten in sync so consumers slicing raw[start:end]
-// get the same string as node.value.
 describe("buildAddressTree — boundary trim", () => {
 	test("strips leading comma+space from postcode span", () => {
-		// Simulates ", 7647" pred for the gold "76470" — the slip from the diagnostic.
 		const raw = ", 22220"
 		const tokens: DecoderToken[] = [tok(", 22220", 0, 7, "B-postcode")]
 		const tree = buildAddressTree(raw, tokens)
@@ -120,7 +110,7 @@ describe("buildAddressTree — boundary trim", () => {
 
 		const tokens: DecoderToken[] = [
 			tok("350", 0, 3, "B-house_number"),
-			tok(" ", 3, 4, "B-postcode"), // pathological model emission
+			tok(" ", 3, 4, "B-postcode"),
 			tok("5th", 4, 7, "B-street"),
 			tok("Ave", 8, 11, "I-street"),
 		]
@@ -150,9 +140,7 @@ describe("buildAddressTree — boundary trim", () => {
 		expect(tree.roots[0]!.value).toBe("Sainte-Livrade-sur-Lot")
 	})
 
-	test("preserves trailing abbreviation period (#1519 trailing-dot fix)", () => {
-		// "Neusser Str." — model correctly labels the dot as I-street.
-		// The period is an abbreviation marker rather than a punctuation slip.
+	test("Preserves trailing abbreviation period ( trailing-dot fix)", () => {
 		const raw = "Neusser Str. 12"
 
 		const tokens: DecoderToken[] = [
@@ -169,7 +157,6 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 
 	test("strips trailing comma but preserves abbreviation period", () => {
-		// "Neusser Str.," — the comma is punctuation slip, the dot is abbreviation.
 		const raw = "Neusser Str., 12"
 
 		const tokens: DecoderToken[] = [
@@ -185,7 +172,6 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 
 	test("preserves abbreviation period on single-token street span", () => {
-		// "Av." as a standalone abbreviation — span is the whole token.
 		const raw = "Av. Paulista, 100"
 
 		const tokens: DecoderToken[] = [
@@ -201,14 +187,8 @@ describe("buildAddressTree — boundary trim", () => {
 	})
 })
 
-// Paired-punctuation span-edge trimming (paired-punctuation audit, .superpowers/sdd/task-9-audit-report.md).
-// `trimBoundary` is generic — it strips any leading/trailing non-word character, one at a time, with no notion of
-// "pairing" at all. That's what makes it inherently safe for unbalanced paired punctuation too: it never looks for a
-// matching partner, so a lone leading quote with no closer, or a lone trailing paren with no opener, trims exactly
-// the same way a single stray comma does. These cases characterize that the existing mechanism (built for the
-// v0.4.0 comma-slip class) generalizes to quotes/brackets/braces/guillemets without any dedicated code.
 describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
-	test('strips a wrapping straight-quote pair from a venue-shaped span ("The Grange")', () => {
+	test('Strips a wrapping straight-quote pair from a venue-shaped span ("The Grange")', () => {
 		const raw = '"The Grange", Fishburn'
 
 		const tokens: DecoderToken[] = [
@@ -223,7 +203,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(raw.slice(venue.start, venue.end)).toBe("The Grange")
 	})
 
-	test("strips a wrapping parenthetical from an aside-shaped span (rear entrance)", () => {
+	test("Strips a wrapping parenthetical from an aside-shaped span (rear entrance)", () => {
 		const raw = "12 High St (rear entrance), Leeds"
 		const tokens: DecoderToken[] = [tok("(rear", 11, 16, "B-unit"), tok("entrance),", 17, 27, "I-unit")]
 		const tree = buildAddressTree(raw, tokens)
@@ -231,7 +211,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(unit.value).toBe("rear entrance")
 	})
 
-	test("strips a wrapping bracket pair from a designator-shaped span [Block B]", () => {
+	test("Strips a wrapping bracket pair from a designator-shaped span [Block B]", () => {
 		const raw = "Unit 4 [Block B]"
 		const tokens: DecoderToken[] = [tok("[Block", 7, 13, "B-unit"), tok("B]", 14, 16, "I-unit")]
 		const tree = buildAddressTree(raw, tokens)
@@ -239,7 +219,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(unit.value).toBe("Block B")
 	})
 
-	test("strips a wrapping brace pair {Block C}", () => {
+	test("Strips a wrapping brace pair {Block C}", () => {
 		const raw = "{Block C}, Leeds"
 		const tokens: DecoderToken[] = [tok("{Block", 0, 6, "B-unit"), tok("C},", 7, 10, "I-unit")]
 		const tree = buildAddressTree(raw, tokens)
@@ -247,7 +227,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(unit.value).toBe("Block C")
 	})
 
-	test("strips wrapping guillemets «The Grange»", () => {
+	test("Strips wrapping guillemets «The Grange»", () => {
 		const raw = "«The Grange», Fishburn"
 
 		const tokens: DecoderToken[] = [
@@ -269,7 +249,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(venue.value).toBe("The Grange")
 	})
 
-	test("UNBALANCED leading quote (no closer anywhere) still trims cleanly, no crash", () => {
+	test("UNBALANCED leading quote (no closer anywhere) still trims cleanly without throwing", () => {
 		const raw = '"The Grange, Fishburn'
 
 		const tokens: DecoderToken[] = [
@@ -283,7 +263,7 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 		expect(venue.value).toBe("The Grange")
 	})
 
-	test("UNBALANCED trailing paren (no opener anywhere) still trims cleanly, no crash", () => {
+	test("UNBALANCED trailing paren (no opener anywhere) still trims cleanly without throwing", () => {
 		const raw = "12 High St rear entrance), Leeds"
 		const tokens: DecoderToken[] = [tok("rear", 11, 15, "B-unit"), tok("entrance),", 16, 26, "I-unit")]
 		expect(() => buildAddressTree(raw, tokens)).not.toThrow()
@@ -300,10 +280,6 @@ describe("buildAddressTree — paired-punctuation span-edge trimming", () => {
 	})
 })
 
-// Spurious-boundary repair. The neural model fragments some multi-word locality values into two
-// B-locality spans ("Saint Paul" → B-locality "Saint" + B-locality "Paul") — a real, decode-
-// agnostic emission bug (argmax == viterbi. see scripts/diag-saintalbans.ts). A `B-X` token that is
-// whitespace-adjacent to an open `X` span is folded in. a comma/separator keeps spans distinct.
 describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", () => {
 	function localitySpans(nodes: AddressNode[]): AddressNode[] {
 		const out: AddressNode[] = []
@@ -326,7 +302,6 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	}
 
 	test("folds whitespace-adjacent B-locality B-locality into one span", () => {
-		// "Saint Paul, MN" — model emits B-locality on both "Saint" and "Paul".
 		const raw = "Saint Paul, MN"
 
 		const tokens: DecoderToken[] = [
@@ -344,8 +319,6 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	})
 
 	test("folds across a zero-width whitespace-only O artifact (real SentencePiece stream)", () => {
-		// Exact stream observed from the model (scripts/diag-saintalbans.ts): SentencePiece emits a
-		// standalone zero-width "▁" marker between the words, labeled O. It must not break the span.
 		const raw = "Saint Paul, MN"
 
 		const tokens: DecoderToken[] = [
@@ -362,8 +335,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		expect(locs[0]!.value).toBe("Saint Paul")
 	})
 
-	test("merges within a full address too (St + Albans → one locality)", () => {
-		// "22 Brigham Rd, Saint Albans, VT 05478"
+	test("Merges within a full address too (St + Albans → one locality)", () => {
 		const raw = "22 Brigham Rd, Saint Albans, VT 05478"
 
 		const tokens: DecoderToken[] = [
@@ -383,8 +355,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		expect(locs[0]!.value).toBe("Saint Albans")
 	})
 
-	test("GUARD: comma between same-tag spans keeps them distinct (no merge)", () => {
-		// Two separate localities, comma in the gap (no intervening O token).
+	test("Comma between same-tag spans keeps them distinct (no merge)", () => {
 		const raw = "Dallas, Austin"
 		const tokens: DecoderToken[] = [tok("Dallas", 0, 6, "B-locality"), tok("Austin", 8, 14, "B-locality")]
 		const locs = localitySpans(buildAddressTree(raw, tokens).roots)
@@ -392,7 +363,7 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 		expect(locs.map((l) => l.value).toSorted()).toEqual(["Austin", "Dallas"])
 	})
 
-	test("GUARD: intervening O token keeps same-tag spans distinct", () => {
+	test("Intervening O token keeps same-tag spans distinct", () => {
 		const raw = "Dallas , Austin"
 
 		const tokens: DecoderToken[] = [
@@ -414,10 +385,6 @@ describe("buildAddressTree — adjacent same-tag merge (fragmentation repair)", 
 	})
 })
 
-// Diagnostic for the en-GB locale arc (docs/superpowers/specs/2026-07-22-en-gb-locale-arc-design.md,
-// Phase 3): the spec assumed the word-consistency heal lumps "suburb, city" into one locality span.
-// These characterize `emitSpans` directly to settle whether the decode pipeline itself preserves the
-// dependent_locality/locality distinction across a comma.
 describe("buildAddressTree — dependent_locality/locality comma separation (spec Phase-3 diagnostic)", () => {
 	function tagsOf(nodes: AddressNode[]): string[] {
 		const out: string[] = []
@@ -438,7 +405,6 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 	}
 
 	test("distinct tags across a comma stay two spans (Plimmerton, Porirua)", () => {
-		// "Plimmerton, Porirua" — dependent_locality then (after the comma) locality.
 		const raw = "Plimmerton, Porirua"
 
 		const tokens: DecoderToken[] = [
@@ -457,10 +423,7 @@ describe("buildAddressTree — dependent_locality/locality comma separation (spe
 		expect(locality.value).toBe("Porirua")
 	})
 
-	test("GUARD: same-tag spans across a comma stay two spans (Springfield, Chicago)", () => {
-		// Documents the comma guard already asserted in emitSpans: same-tag same-address spans
-		// separated by a comma never merge, so a locality/locality "suburb, city" pair the model
-		// emits as two distinct B-locality spans is not lumped by the decoder.
+	test("Same-tag spans across a comma stay two spans (Springfield, Chicago)", () => {
 		const raw = "Springfield, Chicago"
 
 		const tokens: DecoderToken[] = [

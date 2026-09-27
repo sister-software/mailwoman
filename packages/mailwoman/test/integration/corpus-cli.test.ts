@@ -16,25 +16,30 @@ import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 
 /**
- * Wall-clock budget for a CLI spawn — see the note in `mailwoman/commands/geocode.test.ts`. A single spawn costs ~5.6
- * s, 2.7 s of it node boot alone.
+ * Wall-clock budget for a CLI spawn.
+ * See the note in `mailwoman/commands/geocode.test.ts`.
+ *
+ * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Vitest's own per-test budget. It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock — a
- * per-test timeout below the child's timeout means vitest kills the test before the thing it is measuring can report,
- * which reads as "timed out" with no indication of what actually took the time.
+ * Vitest's own per-test budget.
+ *
+ * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * A per-test timeout below the child's timeout means vitest kills the test before the thing it is
+ * measuring can report, which reads as "timed out" with no indication of what actually took the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
 
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs seconds before any
- * assertion runs and then queues behind {@link withCLISpawnLockAsync}. A per-test annotation has to be remembered on
- * each new test, and the one that forgets inherits the global 15s — which kills the test before the thing being
- * measured can report, surfacing as a bare timeout with no attribution.
+ * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
+ * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
+ * A per-test annotation has to be remembered on each new test, and the one that forgets
+ * inherits the global 15s, which kills the test before the thing being measured can report,
+ * surfacing as a bare timeout with no attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -72,9 +77,9 @@ describe("corpus run option validation", () => {
 	})
 
 	test("the retired --output still satisfies the requirement it used to", () => {
-		// The alias is checked here and not only in the spec unit test, because `out` is `required` and the required
-		// check reads the current key: an alias folded in after that check would make every existing caller fail with
-		// "Missing required option: --out" while passing a destination.
+		// The alias is checked here and not only in the spec unit test, because `out` is `required`
+		// and the required check reads the current key: an alias folded in after that check would make
+		// every existing caller fail with "Missing required option: --out" while passing a destination.
 		const parsed = parseCommand(runSpec, ["adapter", "--input", "x", "--output", "y"])
 
 		expect(parsed.values.out).toBe("y")
@@ -85,9 +90,7 @@ describe("npx mailwoman corpus list", () => {
 	test(
 		"exits 0 and includes every registered adapter id",
 		async () => {
-			// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040
-			// punycode noise from a transitive dep on Node 22) that would
-			// otherwise pollute stderr and break the `stderr === ""` assertion.
+			// NODE_NO_WARNINGS=1 silences Node deprecation chatter (e.g. DEP0040 punycode noise from a transitive dep on Node 22) that would otherwise pollute stderr and break the `stderr === ""` assertion.
 			const { stdout, stderr } = await withCLISpawnLockAsync(() =>
 				runFile("node", [cliBin, "corpus", "list"], {
 					timeout: CLI_SPAWN_TIMEOUT_MS,

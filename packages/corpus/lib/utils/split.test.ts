@@ -25,8 +25,9 @@ interface MinRow {
 }
 
 /**
- * A country's holdout as a policy object, with a bare array read as its region list — the same reading `splitForRow`
- * makes, so these assertions hold whichever form `defaultHoldouts` returns.
+ * A country's holdout as a policy object, with a bare array read as its region list.
+ *
+ * The same reading `splitForRow` makes, so these assertions hold whichever form `defaultHoldouts` returns.
  */
 const policyOf = (holdout: CountryHoldout | undefined): HoldoutPolicy =>
 	Array.isArray(holdout) ? { regions: holdout } : ((holdout ?? {}) as HoldoutPolicy)
@@ -169,15 +170,42 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("names the three French departments by postcode prefix as well as by region", () => {
-		// The same three places, in the component BAN emits. Corse 20, Creuse 23, Lozère 48.
+		// The same three places, in the component BAN emits.
+		// Corse 20, Creuse 23, Lozère 48.
 		expect(policyOf(defaultHoldouts().FR).postcodePrefixes).toEqual(["20", "23", "48"])
+	})
+
+	it("names GB by postcode area, since a GB street row carries no region", () => {
+		// GB carried no entry at all before this, so both its splits held zero rows.
+		// How many rows the entry holds out is unmeasured: no corpus in the lab data root
+		// carries a natural GB street row, and `split.ts`'s comment records what settles it.
+		const gb = policyOf(defaultHoldouts().GB)
+
+		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
+		expect(gb.regions).toEqual(["Cornwall"])
+	})
+
+	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
+		// `L` is Liverpool and `LL` is Llandudno.
+		// A one-letter prefix matches by `startsWith`, so it would hold out both,
+		// and the holdout would be larger than the one anybody reviewed.
+		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
+
+		for (const prefix of prefixes) {
+			expect(prefix).toHaveLength(2)
+		}
+
+		for (const prefix of prefixes) {
+			expect(prefixes.filter((other) => other !== prefix && prefix.startsWith(other))).toEqual([])
+		}
 	})
 })
 
 describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
 	/**
-	 * BAN's shape: a street row carrying a postcode and a locality, and no region at all. 96.9% of FR train rows are
-	 * this, and a region-only predicate holds out none of them however many departments it names.
+	 * BAN's shape: a street row carrying a postcode and a locality, and no region at
+	 * all. 96.9% of FR train rows are this, and a region-only predicate holds out
+	 * none of them however many departments it names.
 	 */
 	const banRow = (id: string, postcode: string): MinRow => ({
 		source_id: id,
@@ -195,7 +223,8 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	it("trains on a BAN row from any other department", () => {
 		expect(splitForRow(banRow("ban-paris", "75001"))).toBe("train")
 		expect(splitForRow(banRow("ban-lyon", "69001"))).toBe("train")
-		// 02 is Aisne. A prefix match reads the first two digits, so a leading zero stays distinct from 20.
+		// 02 is Aisne.
+		// A prefix match reads the first two digits, so a leading zero stays distinct from 20.
 		expect(splitForRow(banRow("ban-aisne", "02000"))).toBe("train")
 	})
 
@@ -206,6 +235,71 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 	it("reads a bare array as a region list, which is what every manifest built before this carries", () => {
 		expect(splitForRow(row("us-vt", "US", "Vermont"), { US: ["Vermont"] })).not.toBe("train")
 		expect(splitForRow(row("us-or", "US", "Oregon"), { US: ["Vermont"] })).toBe("train")
+	})
+
+	it("holds out a GB street row by its postcode area, and trains on every other area", () => {
+		// The same shape as BAN's, in GB's components: a street row with a postcode and no region.
+		const gbRow = (id: string, postcode: string): MinRow => ({
+			source_id: id,
+			country: "GB",
+			corpus_version: "0.1.0",
+			components: { postcode, locality: "Truro", street: "Lemon Street", house_number: "12" },
+		})
+
+		expect(splitForRow(gbRow("gb-truro", "TR1 2LS"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-llandudno", "LL30 2NB"))).not.toBe("train")
+		expect(splitForRow(gbRow("gb-halifax", "HX1 1UG"))).not.toBe("train")
+
+		expect(splitForRow(gbRow("gb-london", "SW1A 1AA"))).toBe("train")
+		expect(splitForRow(gbRow("gb-manchester", "M1 1AE"))).toBe("train")
+		// Liverpool, which a one-letter `L` prefix would have taken along with Llandudno.
+		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
+	})
+
+	it("names DE by postcode area as well as by region, since its street source emits neither Land", () => {
+		// `synth-german` is the source of every DE street row, and over `v0.6.0-register-surface`
+		// it emits exactly two region values, `Sachsen` and `Berlin`.
+		// The region list therefore reaches `wof-admin` rows alone, and `02` reaches the street rows.
+		const de = policyOf(defaultHoldouts().DE)
+
+		expect(de.regions).toEqual(["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"])
+		expect(de.postcodePrefixes).toEqual(["02"])
+	})
+
+	it("holds out a DE street row in postcode area 02 and trains on the rest of Sachsen", () => {
+		// A `synth-german` row's shape: a street row carrying a postcode, with a region on some rows.
+		const deRow = (id: string, postcode: string): MinRow => ({
+			source_id: id,
+			country: "DE",
+			corpus_version: "0.1.0",
+			components: { postcode, locality: "Görlitz", street: "Berliner Straße", house_number: "14" },
+		})
+
+		// Görlitz, Bautzen and Zittau — Upper Lusatia, the declared area.
+		expect(splitForRow(deRow("de-goerlitz", "02826"))).not.toBe("train")
+		expect(splitForRow(deRow("de-bautzen", "02625"))).not.toBe("train")
+
+		// The rest of Sachsen, which the corpus holds in quantity, stays in train.
+		expect(splitForRow(deRow("de-dresden", "01067"))).toBe("train")
+		expect(splitForRow(deRow("de-leipzig", "04103"))).toBe("train")
+		expect(splitForRow(deRow("de-chemnitz", "09126"))).toBe("train")
+		// Berlin, the other region `synth-german` emits.
+		expect(splitForRow(deRow("de-berlin", "13469"))).toBe("train")
+	})
+
+	it("holds out a DE admin row by its Land, which carries no postcode", () => {
+		// `wof-admin` is the only DE source carrying a region and it emits no postcode,
+		// so the region list is what reaches it.
+		const adminRow = (id: string, region: string): MinRow => ({
+			source_id: id,
+			country: "DE",
+			corpus_version: "0.1.0",
+			components: { region, locality: "Saarbrücken" },
+		})
+
+		expect(splitForRow(adminRow("de-sl", "Saarland"))).not.toBe("train")
+		expect(splitForRow(adminRow("de-mv", "Mecklenburg-Vorpommern"))).not.toBe("train")
+		expect(splitForRow(adminRow("de-sn", "Sachsen"))).toBe("train")
 	})
 
 	it("holds out nothing for a country whose policy declares no matcher", () => {
@@ -222,9 +316,9 @@ describe("writeSplitManifests", () => {
 		const m = splitRows([row("us-1", "US", "Vermont"), row("us-2", "US", "Oregon"), row("fr-1", "FR", "Corse")])
 		await writeSplitManifests(m, scratch.path)
 
-		const train = await readLocalTextFile(scratch.resolve("train.txt"))
+		const train = await readLocalTextFile(scratch.path("train.txt"))
 
-		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.resolve("SPLIT_MANIFEST.json"))
+		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.path("SPLIT_MANIFEST.json"))
 		expect(train.trim()).toBe("us-2")
 		expect(summary.counts.total).toBe(3)
 		expect(summary.corpus_version).toBe("0.1.0")
@@ -235,11 +329,11 @@ describe("writeSplitManifests", () => {
 		const rows: MinRow[] = [row("a", "US", "Oregon"), row("c", "US", "Oregon"), row("b", "US", "Oregon")]
 		await writeSplitManifests(splitRows(rows), scratch.path)
 
-		const first = await readLocalTextFile(scratch.resolve("train.txt"))
+		const first = await readLocalTextFile(scratch.path("train.txt"))
 
 		await writeSplitManifests(splitRows(rows), scratch.path)
 
-		const second = await readLocalTextFile(scratch.resolve("train.txt"))
+		const second = await readLocalTextFile(scratch.path("train.txt"))
 
 		expect(first).toBe(second)
 		expect(splitTextIntoArray(first)).toEqual(["a", "b", "c"])
@@ -284,9 +378,9 @@ describe("splitForRow (pure per-row decision)", () => {
 describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 	it("writes sorted train/val/test.txt + SPLIT_MANIFEST.json from per-split labeled JSONL", async () => {
 		const labeledPaths = {
-			train: scratch.resolve("labeled-train.jsonl"),
-			val: scratch.resolve("labeled-val.jsonl"),
-			test: scratch.resolve("labeled-test.jsonl"),
+			train: scratch.path("labeled-train.jsonl"),
+			val: scratch.path("labeled-val.jsonl"),
+			test: scratch.path("labeled-test.jsonl"),
 		}
 
 		// Write per-split labeled files in non-sorted order to exercise the external sort.
@@ -309,19 +403,19 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 		expect(result).toEqual({ train: 3, val: 2, test: 1, total: 6 })
 
-		const train = await readLocalTextFile(scratch.resolve("train.txt"))
+		const train = await readLocalTextFile(scratch.path("train.txt"))
 
 		expect(splitTextIntoArray(train)).toEqual(["us-a", "us-b", "us-c"])
 
-		const val = await readLocalTextFile(scratch.resolve("val.txt"))
+		const val = await readLocalTextFile(scratch.path("val.txt"))
 
 		expect(splitTextIntoArray(val)).toEqual(["vt-1", "vt-2"])
 
-		const test = await readLocalTextFile(scratch.resolve("test.txt"))
+		const test = await readLocalTextFile(scratch.path("test.txt"))
 
 		expect(test.trim()).toBe("wy-1")
 
-		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.resolve("SPLIT_MANIFEST.json"))
+		const summary = await readLocalJSONFile<SplitManifestOnDisk>(scratch.path("SPLIT_MANIFEST.json"))
 
 		expect(summary).toMatchObject({
 			corpus_version: "0.1.1",
@@ -333,9 +427,9 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 
 	it("handles an empty per-split file (no source_ids → empty .txt)", async () => {
 		const labeledPaths = {
-			train: scratch.resolve("labeled-train.jsonl"),
-			val: scratch.resolve("labeled-val.jsonl"),
-			test: scratch.resolve("labeled-test.jsonl"),
+			train: scratch.path("labeled-train.jsonl"),
+			val: scratch.path("labeled-val.jsonl"),
+			test: scratch.path("labeled-test.jsonl"),
 		}
 
 		await writeLocalTextFile('{"source_id":"only-train"}\n', labeledPaths.train)
@@ -349,8 +443,8 @@ describe("writeSplitManifestsFromLabeledFiles (streaming)", () => {
 			counts: { train: 1, val: 0, test: 0 },
 		})
 
-		expect((await readLocalTextFile(scratch.resolve("val.txt"))).trim()).toBe("")
-		expect((await readLocalTextFile(scratch.resolve("test.txt"))).trim()).toBe("")
-		expect((await readLocalTextFile(scratch.resolve("train.txt"))).trim()).toBe("only-train")
+		expect((await readLocalTextFile(scratch.path("val.txt"))).trim()).toBe("")
+		expect((await readLocalTextFile(scratch.path("test.txt"))).trim()).toBe("")
+		expect((await readLocalTextFile(scratch.path("train.txt"))).trim()).toBe("only-train")
 	})
 })

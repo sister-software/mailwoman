@@ -1,22 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   The refinement-monotonicity instrument, over hand-built resolver traces. No model, no gazetteer — the
- *   whole point of taking {@link ResolveNodeTrace} as the input is that every reading can be stated as a
- *   table and checked without resolving anything.
- *
- *   The two asymmetries are the tests that matter. A removal at the window leaves the row unmeasured, because
- *   the observation could not decide it. An addition at the window does not, because the law constrains what
- *   refinement removes — and a naïve `top5(refined) ⊆ top5(base)` assertion gets exactly that case wrong, in
- *   the direction that fails valid refinements. Both are asserted here rather than left to the live suite,
- *   where a run that happens to produce neither would report the same green as a run that handles both.
- *
- *   And `unexplained` is asserted IN both directions, because the live suite does not produce it: the shipped
- *   pipeline holds this law on every committed row, so the failing branch has no live witness and would
- *   otherwise ship unexercised.
- */
-
 import type { ResolveCandidateTrace, ResolveNodeTrace } from "@mailwoman/core/resolver"
 import {
 	accountRefinement,
@@ -87,7 +68,7 @@ describe("the account vocabularies", () => {
 })
 
 describe("folding a run's lookups", () => {
-	it("collapses repeats of one lookup into a single pool, keeping the BEST rank observed", () => {
+	it("Collapses repeats of one lookup into a single pool, keeping the BEST rank observed", () => {
 		const folds = foldLookups([
 			lookup({ candidates: [{ id: 1 }, { id: 2 }, { id: 3 }] }),
 			lookup({ candidates: [{ id: 3 }, { id: 1 }] }),
@@ -223,8 +204,6 @@ describe("reading a refinement pair", () => {
 		expect(reading.counts.beyond_window).toBe(2)
 	})
 
-	// The refined table being short does not explain a candidate arriving: its window bounds what the refined
-	// lookup could show, never what the base's roomy table failed to hold.
 	it("does not let the refined table's own window explain an addition the base had room for", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }, { id: 2 }, { id: 3 }], limit: 5 })],
@@ -236,8 +215,6 @@ describe("reading a refinement pair", () => {
 		expect(reading.readings.find((entry) => entry.key === "locality:2")!.account).toBe("beyond_window")
 	})
 
-	// The case a `top5(refined) ⊆ top5(base)` assertion fails and this instrument must not: the refined query
-	// surfaced a candidate that was sixth before, and the base table is the only reason nobody saw it.
 	it("explains an ADDITION by the base's own window, and does not hold the row back for it", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }, { id: 2 }], limit: 2 })],
@@ -253,7 +230,7 @@ describe("reading a refinement pair", () => {
 		expect(account.reason).toContain("never observed absent")
 	})
 
-	it("fails a removal with no contradiction, no re-scope, and a table that had room", () => {
+	it("Fails a removal with neither contradiction nor re-scope, and a table that had room", () => {
 		const reading = accountRefinement(
 			[lookup({ candidates: [{ id: 1 }, { id: 2 }], limit: 5 })],
 			[

@@ -10,6 +10,7 @@
  */
 
 import { ProgressBar } from "@inkjs/ui"
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { Box, Text } from "ink"
@@ -35,11 +36,22 @@ export const spec = {
 		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
 		country: {
 			type: "string",
-			validate: (value) => /^[A-Z]{2}$/u.test(value),
+			validate: isAlpha2CodeShape,
 			validationMessage: "--country must be an ISO alpha-2 code.",
 			description: "Country filter",
 		},
 		limit: positiveIntegerOption("--limit"),
+		"country-fraction": {
+			type: "string",
+			validate: (value) => Number.parseFloat(value) >= 0 && Number.parseFloat(value) <= 1,
+			validationMessage: "--country-fraction must be between 0 and 1.",
+			description: "Fraction of rows carrying an explicit country component",
+		},
+		seed: { type: "string", description: "Seed for --country-fraction. Default 20260922" },
+		"source-name": {
+			type: "string",
+			description: "The `source` id stamped on every row, when it differs from the adapter id",
+		},
 		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
 		"progress-every": positiveIntegerOption("--progress-every", 1000),
 	},
@@ -74,10 +86,13 @@ const CorpusRun: CommandComponent<typeof spec, [string]> = ({ options, args }) =
 				outputDir: options.out,
 				country: options.country,
 				limit: options.limit,
+				countryFraction: options.countryFraction ? Number.parseFloat(options.countryFraction) : undefined,
+				seed: options.seed ? Number.parseInt(options.seed, 10) : undefined,
 				signal: ac.signal,
 			},
 			outputDir: options.out,
 			corpusVersion: options.corpusVersion,
+			sourceName: options.sourceName,
 			progressEvery: options.progressEvery,
 			onProgress: (snap) => {
 				setProgress({ yielded: snap.yielded, written: snap.written, bytes: snap.bytes })

@@ -54,8 +54,10 @@ describe("convention engine — merge + resolve", () => {
 	})
 
 	it("deep-merges country → region → locality with most-specific winning", () => {
-		// country sets a base strategy list + pc weight. region overrides the strategy list. locality
-		// nudges name weight. The resolved convention reflects the most-specific value per field.
+		// country sets a base strategy list + pc weight.
+		// Region overrides the strategy list.
+		// Locality nudges name weight.
+		// The resolved convention reflects the most-specific value per field.
 		const source = new SeedConventionSource({
 			100: { candidateStrategies: ["postcode_area_resolution"], scoringWeights: { pc: 0.7 } }, // country (JP)
 			200: { candidateStrategies: ["grid_interpolation", "postcode_area_resolution"] }, // region (Hokkaido)
@@ -111,7 +113,8 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	afterEach(() => {
-		// lookup[Symbol.dispose]() in each test closes db. nothing else to do.
+		// lookup[Symbol.dispose]() in each test closes db.
+		// No other cleanup is needed.
 	})
 
 	it("default (empty source) → coordinate-first recovers the postcode's town from a typo", async () => {
@@ -122,9 +125,10 @@ describe("convention engine — live dispatch", () => {
 	})
 
 	it("an injected country convention that drops postcode_area_resolution reroutes dispatch", async () => {
-		// Key the convention by the DE country WOF id (90). Removing postcode_area_resolution from the
-		// strategy list means the typo no longer recovers Plauen — proof the merged convention controls
-		// findPlace dispatch through the live country → WOF-id → convention path.
+		// Key the convention by the DE country WOF id (90).
+		// Removing postcode_area_resolution from the strategy list means the typo no
+		// longer recovers Plauen — proof the merged convention controls findPlace dispatch
+		// through the live country → WOF-id → convention path.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: db,
 			buildFTS: true,

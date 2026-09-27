@@ -12,9 +12,11 @@ import { resolvePackagePathFrom } from "@mailwoman/core/module/resolve-from"
 /**
  * The directory a workspace keeps its TypeScript in, relative to the package root.
  *
- * Each source probe below is followed by an `out/` fallback, so a probe aimed at the wrong directory does not fail
- * loudly — it silently hands the site bundle compiled JavaScript instead of the source the alias exists to select. That
- * is what happened when source moved here from the package root, and only `webpack-policy.test.ts` noticed.
+ * Each source probe below is followed by an `out/` fallback, so a probe aimed at the wrong
+ * directory does not fail loudly — it silently hands the site bundle compiled JavaScript
+ * instead of the source the alias exists to select.
+ * That is what happened when source moved here from the package root,
+ * and only `webpack-policy.test.ts` noticed.
  */
 const SourceDirectoryName = "lib"
 
@@ -52,8 +54,9 @@ export async function resolvePackageDirectoryEntry(packageName: string, subpath:
 }
 
 /**
- * An alias that points at a missing file breaks the client bundle at the first import, while a skipped alias falls
- * through to the package's own exports map, which is the correct answer for a subpath the alias list has outgrown.
+ * An alias that points at a missing file breaks the client bundle at the first import,
+ * while a skipped alias falls through to the package's own exports map, which is the
+ * correct answer for a subpath the alias list has outgrown.
  */
 async function existingCompiledFile(target: string): Promise<string | null> {
 	if (await pathExists(target)) return target

@@ -4,9 +4,9 @@
 /**
  * @file The half of a move that is not a module specifier: the `exports`/`imports` targets naming the file.
  *
- *   A subpath key is a interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
+ *   A subpath key is an interface and stays exactly as written — `@mailwoman/geocode-oracle/sdk/census-client` keeps
  *   its name whatever the file underneath is called. The target does not: it is a path, and a path that has moved
- *   names nothing. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
+ *   names no file. Rewriting the target and leaving the key is what lets a file move without a consumer noticing.
  *
  *   Each target is generated from the move rather than searched for, so a string is replaced only where it is exactly
  *   the path this file computes. A workspace narrows `rootDir` to `lib/` and emits to `out/`, so one source file is
@@ -54,9 +54,9 @@ export interface ManifestMove {
 /**
  * Rewrites for one package's manifest, given every move landing inside that package.
  *
- * The manifest is edited as text rather than reserialized: a `package.json` carries key order and formatting the
- * repository's own tooling compares, and a round-trip through `JSON.parse` rewrites the whole file to change one
- * string.
+ * The manifest is edited as text rather than reserialized: a `package.json` carries key order
+ * and formatting the repository's own tooling compares, and a round-trip through
+ * `JSON.parse` rewrites the whole file to change one string.
  */
 export function manifestRewritesIn(file: string, text: string, moves: readonly ManifestMove[]): ManifestRewrite[] {
 	const rewrites: ManifestRewrite[] = []
@@ -90,8 +90,8 @@ export function manifestRewritesIn(file: string, text: string, moves: readonly M
 /**
  * Every manifest target the moves invalidate, across each package that owns one of them.
  *
- * `packageDirectories` is the set a caller already knows — every tracked `package.json`'s directory — so this reads
- * only the manifests a move actually lands in.
+ * `packageDirectories` is the set a caller already knows — every tracked `package.json`'s
+ * directory — so this reads only the manifests a move actually lands in.
  */
 export async function planManifestRewrites(
 	repoRoot: string,

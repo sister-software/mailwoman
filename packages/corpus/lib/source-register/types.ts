@@ -2,20 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Types for the address-source register — the reviewed table of jurisdictions and the address sources research has
- *   resolved for each.
- *
- *   Two tables, each keyed differently. The jurisdiction table is a complete enumeration: one row per ISO 3166-1
- *   alpha-2 code plus the operational code `XK`, always 250 rows, whether or not anybody has found a source. The
- *   source table is zero or more rows per jurisdiction. Nesting the second inside the first would make a jurisdiction
- *   nobody has researched structurally identical to one whose list happens to be empty, and the reader would have to
- *   guess which it was looking at. A jurisdiction row states `researchState` instead, so "nobody has looked yet" is
- *   written down rather than inferred from an empty array — the rule in
- *   `docs/engineering/reference/the-meaning-of-zero.mdx`.
- *
- *   Splitting them also gives the audit something to check in both directions: every source names a jurisdiction the
- *   register carries, and every jurisdiction it calls `seeded` has at least one source. Under a nested list the
- *   second check cannot fail.
+ *   Types for the address-source register, which holds a jurisdiction table and a separate source table.
  */
 
 import type { AssertedProposition } from "@mailwoman/evidence/status"
@@ -23,99 +10,108 @@ import type { AssertedProposition } from "@mailwoman/evidence/status"
 import type { AddressRole } from "#types"
 
 /**
- * How far research has got on a jurisdiction's own premise-address backbone.
+ * The research state of a jurisdiction's premise-address backbone.
  *
- * Each value records a position in the backlog, and the letters are the ones the global address corpus specification
- * uses in its own prose, so a reader can move between the two without a translation table. They are deliberately not
- * called a tier: this repository already has locale tiers 1 through 5 in `scope.config.json` and the `shipped` /
- * `build-local` / `private` tiers in the layer interface, and a third single-letter ladder under that name would be
- * read as one of those two.
+ * The letters match the global address corpus specification and are separate
+ * from locale tiers and layer tiers.
  */
 export const BackboneState = {
 	/**
-	 * A verified open nationwide, or effectively nationwide, official premise-address source, subject to its own terms.
+	 * A verified open nationwide, or effectively nationwide, official premise-address
+	 * source, subject to its own terms.
 	 */
 	Verified: "A",
 	/**
-	 * A strong open official source that is federated, partial, establishment-only or territory-specific, or whose
-	 * national completeness has not been measured.
+	 * A strong open official source that is federated, partial, establishment-only
+	 * or territory-specific, or whose national completeness has not been measured.
 	 */
 	VerifiedPartial: "A~",
 	/**
-	 * An official address system exists, and bulk access, openness, coverage or redistribution rights are incomplete.
+	 * An official address system exists, and bulk access, openness, coverage
+	 * or redistribution rights are incomplete.
 	 */
 	Restricted: "B",
 	/**
-	 * No permissive nationwide premise corpus was verified in this pass. It never means none exists.
+	 * The research pass verified no permissive nationwide premise corpus, which may still exist.
 	 */
 	Unverified: "C",
 	/**
-	 * An exceptional jurisdiction where routing and hand-verified grammar dominate over an ordinary street hierarchy.
+	 * A jurisdiction where routing and hand-verified grammar outweigh an ordinary street hierarchy.
 	 */
 	Exceptional: "D",
 } as const
 
+/**
+ * One of the {@link BackboneState} values.
+ */
 export type BackboneState = (typeof BackboneState)[keyof typeof BackboneState]
 
 /**
- * What the functional-authority research pass did about a jurisdiction, kept separate from what it found.
- *
- * The three are not degrees of the same thing. `exception` is a researched absence — somebody looked and recorded that
- * no ordinary register exists, which is a finding. `unexamined` is no reading at all. Collapsing them would let a
- * consumer read "we could not look" as "there is nothing there".
+ * What the research pass did for a jurisdiction.
  */
 export const JurisdictionResearchState = {
 	/**
-	 * At least one national source was resolved. The jurisdiction must have source rows.
+	 * Research resolved at least one national source, so the jurisdiction must have source rows.
 	 */
 	Seeded: "seeded",
 	/**
-	 * No ordinary national registry exists to resolve — an uninhabited territory, a treaty area, a defence installation.
-	 * The reason is recorded on the row.
+	 * No ordinary national registry exists, as in an uninhabited territory or a treaty area.
+	 *
+	 * The row records the reason.
 	 */
 	Exception: "exception",
 	/**
-	 * Nothing has been resolved and nothing has been ruled out. The reason is recorded on the row.
+	 * Research has neither resolved a source nor ruled one out.
+	 *
+	 * The row records the reason.
 	 */
 	Unexamined: "unexamined",
 } as const
 
+/**
+ * One of the {@link JurisdictionResearchState} values.
+ */
 export type JurisdictionResearchState = (typeof JurisdictionResearchState)[keyof typeof JurisdictionResearchState]
 
 /**
- * How far one source has been taken. Every value here is a statement about OUR reading of the source, never about the
- * publisher's competence.
+ * How far this repository's review of one source has progressed.
  */
 export const SourceStatus = {
 	/**
-	 * The register was confirmed to exist and be the national authority. Its address fields, bulk access and terms were
-	 * not inspected.
+	 * Research confirmed that the register exists and is the national authority.
+	 *
+	 * Nobody has inspected its address fields, bulk access or terms.
 	 */
 	VerifiedAuthority: "verified-authority",
 	/**
-	 * Carried forward from the earlier memo without recheck. These rows have no publisher and no URL, so a reader cannot
-	 * visit them. Re-resolving one is what moves it out of this state.
+	 * A row carried forward from the earlier memo without a recheck.
+	 * These rows lack a publisher and a URL.
 	 */
 	RetainedOriginal: "retained-original",
 	/**
-	 * A bulk corpus was confirmed reachable. This is the strongest state in the table and still not ingest-eligible on
-	 * its own — see {@linkcode AddressSourceRegister} and the eligibility reasons the reader reports.
+	 * Research confirmed that a bulk corpus is reachable.
+	 *
+	 * This state alone does not make a source eligible for ingest.
 	 */
 	VerifiedCorpus: "verified-corpus",
 	/**
-	 * A bulk corpus was reachable and the copy examined has stopped being updated. The row names the national portal to
-	 * inspect instead, and reading it gets you a corpus frozen at the date the aggregator stopped. It is its own state
-	 * rather than a note on {@linkcode SourceStatus.VerifiedCorpus} because a consumer filtering for a reachable corpus
-	 * would otherwise take it.
+	 * A bulk corpus is reachable but the examined copy is no longer updated.
+	 *
+	 * The row points to the national portal instead, and the state is separate from
+	 * `VerifiedCorpus` so a filter for reachable corpora excludes it.
 	 */
 	VerifiedCorpusStale: "verified-corpus-stale",
 } as const
 
+/**
+ * One of the {@link SourceStatus} values.
+ */
 export type SourceStatus = (typeof SourceStatus)[keyof typeof SourceStatus]
 
 /**
- * The sectors the research pass worked in. Closed so that adding one is an edit somebody makes on purpose. The audit
- * refuses a row naming anything else.
+ * The closed list of sectors that source rows may use.
+ *
+ * The audit rejects a row with any other sector.
  */
 export const REGISTER_SECTORS = [
 	"business-legal",
@@ -135,128 +131,138 @@ export const REGISTER_SECTORS = [
 	"transport",
 ] as const
 
+/**
+ * One of the {@link REGISTER_SECTORS}.
+ */
 export type RegisterSector = (typeof REGISTER_SECTORS)[number]
 
 /**
- * Whether the source carries coordinates, with the unread case named rather than folded into `absent`.
+ * Whether a source carries coordinates; `Unresolved` differs from `Absent`.
  */
 export const SourceGeometry = {
 	Present: "present",
 	/**
-	 * Read, and there are no coordinates.
+	 * A reviewer checked and found no coordinates.
 	 */
 	Absent: "absent",
 	/**
-	 * Read, and some records carry coordinates.
+	 * A reviewer checked and found coordinates on some records.
 	 */
 	Partial: "partial",
 	/**
-	 * Not read. Not the same claim as `absent`.
+	 * Nobody has checked the source for coordinates.
 	 */
 	Unresolved: "unresolved",
 } as const
 
+/**
+ * One of the {@link SourceGeometry} values.
+ */
 export type SourceGeometry = (typeof SourceGeometry)[keyof typeof SourceGeometry]
 
 /**
- * Which research pass put a row in the table. It is the coarsest provenance the pass recorded, and for a
- * `retained-original` row it is the only one there is.
+ * The research pass that added a row to the table.
+ *
+ * A `retained-original` row has no other provenance.
  */
 export const ResearchPass = {
 	WebResearch: "2026-09-18-web-research",
 	OriginalMemo: "original-memo",
 } as const
 
+/**
+ * One of the {@link ResearchPass} values.
+ */
 export type ResearchPass = (typeof ResearchPass)[keyof typeof ResearchPass]
 
 /**
- * What has been established about a source's terms. `unchecked` is a first-class value and the one every row carries
- * today: a source whose terms nobody opened is a different record from one that was read and found permissive, and a
- * type that could not tell them apart would let an unread source into a training build on a label that only ever
- * described what the download costs.
+ * The review state of a source's terms.
+ *
+ * An `unchecked` source cannot enter a training build because its recorded label describes only access cost.
  */
 export const LicenseReviewState = {
 	/**
-	 * Nobody opened the publisher's terms. Whatever the research pass wrote in the licence column is carried verbatim as
-	 * {@linkcode UncheckedLicense.publisherStatement} and licenses nothing.
+	 * Nobody has read the publisher's terms.
+	 *
+	 * The research pass's license text is kept verbatim in
+	 * {@linkcode UncheckedLicense.publisherStatement} and grants no license.
 	 */
 	Unchecked: "unchecked",
 	/**
-	 * The terms were read and one grant elected, with the copy retrieved and the reason recorded.
+	 * A reviewer read the terms, elected one grant, retrieved a copy and recorded the reason.
 	 */
 	Elected: "elected",
 	/**
-	 * The terms were read and the source may not be used here. The reason is recorded so the decision is not retaken by
-	 * the next reader.
+	 * A reviewer read the terms and ruled the source out, and the row records the reason.
 	 */
 	Refused: "refused",
 } as const
 
+/**
+ * One of the {@link LicenseReviewState} values.
+ */
 export type LicenseReviewState = (typeof LicenseReviewState)[keyof typeof LicenseReviewState]
 
 /**
- * A source whose terms have not been read.
+ * A license decision whose terms nobody has read.
  */
 export interface UncheckedLicense {
 	licenseID: string
 	state: typeof LicenseReviewState.Unchecked
 	/**
-	 * What the research pass wrote down, verbatim. Most of these are access labels — `Free`, `Free-reg`, `Licensed` —
-	 * which say what the download costs and nothing about redistribution or training rights.
+	 * The research pass's license text, verbatim.
+	 *
+	 * Most values are access labels such as `Free` or `Licensed` that make no
+	 * statement about redistribution or training.
 	 */
 	publisherStatement: string
 	note: string
 }
 
 /**
- * The acts this repository performs on a source, each of which a grant permits or does not.
+ * The acts this repository performs on a source, in pipeline order.
  *
- * One `license` field answers all of them at once, and a grant rarely does. A publisher may permit copying its file and
- * say nothing about redistributing a model trained on it. Another may permit non-commercial reuse, which covers
- * training and refuses the commercial license sold over the result. Recording one decision per source makes the
- * narrowest of those the answer for every act, or the widest. Which of the two it made is invisible in the record.
- *
- * The list is the acts named in the license review, in the order a row moves through them.
+ * A grant can permit some and stay silent on others, so license decisions record a permission per operation.
  */
 export const SourceOperation = {
 	/**
-	 * Bulk copy the published dataset into `$MAILWOMAN_DATA_ROOT`.
+	 * Copying the published dataset in bulk into `$MAILWOMAN_DATA_ROOT`.
 	 */
 	Fetch: "fetch",
 	/**
-	 * Read postal addresses out of the copied file.
+	 * Reading postal addresses out of the copied file.
 	 */
 	Extract: "extract",
 	/**
-	 * Relabel extracted rows into a token and tag corpus.
+	 * Relabeling extracted rows into a token and tag corpus.
 	 */
 	Transform: "transform",
 	/**
-	 * Train a statistical model on the transformed rows.
+	 * Training a model on the transformed rows.
 	 */
 	Train: "train",
 	/**
-	 * Republish the rows themselves, raw or transformed — a packaged database, a lexicon, an index.
+	 * Republishing the rows, raw or transformed, as a database, lexicon or index.
 	 */
 	RedistributeData: "redistribute-data",
 	/**
-	 * Publish weights trained on the rows.
+	 * Publishing weights trained on the rows.
 	 */
 	RedistributeModel: "redistribute-model",
 	/**
-	 * Sell a commercial license over the result.
+	 * Selling a commercial license over the result.
 	 */
 	CommercialSublicense: "commercial-sublicense",
 } as const
 
+/**
+ * One of the {@link SourceOperation} values.
+ */
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
- * What a grant says about one operation.
- *
- * `Unreviewed` is the default for an operation a decision does not name, and it is not a synonym for refused: it says
- * nobody has read the terms against this act. A control refuses on it, and a reviewer can tell it apart from a term
- * somebody read and rejected.
+ * What a grant says about one operation; `unreviewed` means nobody has read the terms against it,
+ * eligibility checks treat it as blocking, and it stays distinct from `refused`.
  */
 export const OperationPermission = {
 	Permitted: "permitted",
@@ -264,11 +270,15 @@ export const OperationPermission = {
 	Unreviewed: "unreviewed",
 } as const
 
+/**
+ * One of the {@link OperationPermission} values.
+ */
 export type OperationPermission = (typeof OperationPermission)[keyof typeof OperationPermission]
 
 /**
- * Where a permission comes from. A grant is the ordinary case. The other two exist so a permission resting on something
- * other than the publisher's own words says so rather than reading as one.
+ * The legal basis of a permission.
+ *
+ * Most permissions rest on a publisher grant, and the other values mark permissions that rest elsewhere.
  */
 export const PermissionBasis = {
 	PublisherGrant: "publisher-grant",
@@ -276,62 +286,62 @@ export const PermissionBasis = {
 	OtherDocumented: "other-documented",
 } as const
 
+/**
+ * One of the {@link PermissionBasis} values.
+ */
 export type PermissionBasis = (typeof PermissionBasis)[keyof typeof PermissionBasis]
 
 /**
- * One operation's reading, with what it rests on.
+ * The permission recorded for one operation, with its basis and reason.
  */
 export interface OperationDecision {
 	permission: OperationPermission
 	/**
-	 * Required when the permission is `permitted`. A permission with no stated basis is a claim with no source.
+	 * The basis of the permission, which the audit requires when the permission is `permitted`.
 	 */
 	basis?: PermissionBasis
 	/**
-	 * The sentence in the terms, or the reason for a refusal. Read by a later reviewer rather than re-derived.
+	 * The relevant sentence in the terms, or the reason for a refusal.
 	 */
 	because: string
 }
 
 /**
- * A source whose terms were read and one grant elected. The four required fields are what the corpus acceptance rules
- * ask for: which terms, the copy they were read from, their version where the publisher gives one, and why this grant
- * rather than another. BAN is the case that shaped it — dual-licensed, and the build elects the attribution-only half.
+ * A license decision whose terms a reviewer read and under which one grant was elected.
  */
 export interface ElectedLicense {
 	licenseID: string
 	state: typeof LicenseReviewState.Elected
 	/**
-	 * The elected terms as the publisher names them, e.g. `Licence Ouverte 2.0`.
+	 * The elected terms as the publisher names them, such as `Licence Ouverte 2.0`.
 	 */
 	electedTerms: string
 	/**
-	 * An spdx identifier when one applies. The mechanical exclude filter reads this in preference to
-	 * {@linkcode ElectedLicense.electedTerms}; see `electedLicenseLabel`.
+	 * The SPDX identifier, when one applies.
+	 *
+	 * `electedLicenseLabel` prefers this value to {@linkcode ElectedLicense.electedTerms}.
 	 */
 	spdx?: string
 	termsVersion?: string
 	/**
-	 * Where the copy that was read is held, so a later reader checks the same text rather than today's page.
+	 * The location of the retrieved copy of the terms, so later reviewers read the same text.
 	 */
 	retrievedCopy: string
 	retrievedAt?: string
 	/**
-	 * Why this grant. A dual-licensed source has an election to explain. A single-grant source says so here.
+	 * The reason for electing this grant, or a note that the source offers only one.
 	 */
 	electedBecause: string
 	/**
-	 * What the elected terms permit, per operation. An operation this omits reads `unreviewed`, never `permitted`.
+	 * The permission for each reviewed operation.
 	 *
-	 * Electing terms establishes which grant applies rather than what every act under it is allowed. A publisher
-	 * permitting bulk download and silent on model redistribution has one elected grant and two different answers, and
-	 * the omission is the honest record of the second.
+	 * An omitted operation reads as `unreviewed`.
 	 */
 	operations?: Partial<Record<SourceOperation, OperationDecision>>
 }
 
 /**
- * A source whose terms were read and refused.
+ * A license decision whose terms a reviewer read and refused.
  */
 export interface RefusedLicense {
 	licenseID: string
@@ -340,43 +350,86 @@ export interface RefusedLicense {
 	refusedBecause: string
 }
 
+/**
+ * A license decision in any review state.
+ */
 export type LicenseDecision = UncheckedLicense | ElectedLicense | RefusedLicense
 
 /**
- * One jurisdiction. Present for all 250 whether or not any source has been resolved.
+ * One jurisdiction row.
+ *
+ * The table holds a row for every jurisdiction whether or not research has found a source.
  */
 export interface JurisdictionRecord {
 	/**
-	 * ISO 3166-1 alpha-2, plus `XK`, which is operational rather than ISO and carries no claim about sovereignty.
+	 * The ISO 3166-1 alpha-2 code, or the operational code `XK`.
 	 */
 	iso2: string
 	name: string
 	backboneState: BackboneState
 	researchState: JurisdictionResearchState
 	/**
-	 * The best path currently known to an address backbone for this jurisdiction, as the research pass wrote it.
+	 * The research pass's note on the best known route to an address backbone.
 	 */
 	bestPath: string
 	/**
-	 * The propositions the pass expected this jurisdiction's sources to carry, in its own prose. It is not the
-	 * `AssertedProposition` vocabulary — it uses wider words such as `admin` and `global geometry` — and is carried
-	 * verbatim rather than mapped, because mapping it would invent precision the pass did not have.
+	 * The research pass's free-text list of propositions it expected sources to carry.
+	 *
+	 * The text is kept verbatim because it does not map onto the `AssertedProposition` vocabulary.
 	 */
 	assertionPlan: string
 	note: string
 	/**
-	 * Why a jurisdiction has no sources. Required on every row that is not `seeded`, so an empty result always carries
-	 * its own explanation, and refused by the audit when it is missing.
+	 * The reason a jurisdiction has no sources.
+	 *
+	 * The audit requires it on every row that is not `seeded`.
 	 */
 	stateReason?: string
 }
 
 /**
- * One address source, in one sector, in one jurisdiction.
+ * What a review found about personal data in one publication, a question separate from licensing.
+ *
+ * Only `Present` blocks ingest, and a source without any review is also blocked.
+ */
+export const PersonalDataReading = {
+	/**
+	 * A review found no record about an identified or identifiable natural person.
+	 */
+	Absent: "absent",
+	/**
+	 * A review found such records, and no analysis of them is complete.
+	 */
+	Present: "present",
+	/**
+	 * A review found such records, and {@link PersonalDataReview.record} points to the completed analysis.
+	 */
+	Assessed: "assessed",
+} as const
+
+/**
+ * One of the {@link PersonalDataReading} values.
+ */
+export type PersonalDataReading = (typeof PersonalDataReading)[keyof typeof PersonalDataReading]
+
+/**
+ * One publication's personal-data review.
+ */
+export interface PersonalDataReview {
+	reading: PersonalDataReading
+	because: string
+	/**
+	 * The location of the completed analysis, which the audit requires when the reading is `assessed`.
+	 */
+	record?: string
+}
+
+/**
+ * One address source in one sector of one jurisdiction.
  */
 export interface AddressSourceRecord {
 	/**
-	 * `<iso2 lowercased>-<sector>-<n>`, stable across rebuilds of the register.
+	 * The id `<lowercase iso2>-<sector>-<n>`, which stays stable across rebuilds.
 	 */
 	sourceID: string
 	iso2: string
@@ -384,24 +437,22 @@ export interface AddressSourceRecord {
 	name: string
 	status: SourceStatus
 	/**
-	 * Which propositions this source asserts, per the `@mailwoman/evidence` axis. A company register asserting both
-	 * carries `["identity", "observation"]`: it issues the identifier and it received the address string.
+	 * The `@mailwoman/evidence` propositions that this source asserts.
 	 */
 	asserts: readonly AssertedProposition[]
 	/**
-	 * What makes the publisher authoritative, in the pass's own words.
+	 * The research pass's reason for treating the publisher as authoritative.
 	 */
 	authorityBasis: string
 	/**
-	 * How the data is reached — bulk CSV, an API, a portal search. Free text, because normalizing the spellings would
-	 * lose the qualifications each one carries.
+	 * Free text on how the data is reached, such as a bulk CSV, an API or a portal search.
 	 *
-	 * Absent means the research pass did not record a route, which is not the same as the data being unreachable.
+	 * An absent value means that research recorded no route, and the data may still be reachable.
 	 */
 	access?: string
 	geometry: SourceGeometry
 	/**
-	 * The `licenseID` of a decision in the register's own `licenses` table. The audit refuses an id nothing declares.
+	 * The `licenseID` of a decision in the register's `licenses` table.
 	 */
 	license: string
 	researchPass: ResearchPass
@@ -409,61 +460,66 @@ export interface AddressSourceRecord {
 	sourceURL?: string
 	note?: string
 	/**
-	 * What role the addresses in this source play. Absent while unresolved. A source becomes ingest-eligible only once it
-	 * carries one, because ingesting a register of seats as premises is the defect the role field exists to stop.
+	 * The role that the source's addresses play, such as a registered seat or a premise.
+	 *
+	 * A source is ineligible for ingest until this is set.
 	 */
 	addressRole?: AddressRole
 	/**
-	 * The upstream sources this one copied from, where known. Two downstream databases carrying one upstream submission
-	 * are one observation and not two votes, which is only checkable once this is filled.
+	 * The upstream sources that this source copies from, where known.
+	 *
+	 * Two databases that copy one upstream record count as one observation.
 	 */
 	upstreamLineage?: readonly string[]
 	/**
-	 * A measured coverage statement. A national portal is not evidence of national coverage.
+	 * A measured coverage statement.
 	 */
 	coverage?: string
+	/**
+	 * The personal-data review of this publication.
+	 *
+	 * A source without a review is ineligible for ingest.
+	 */
+	personalDataReview?: PersonalDataReview
 }
 
 /**
- * A field the research pass resolved on no source row at all.
+ * Source fields that no row resolves yet.
  *
- * Declared at the top of the register rather than repeated as a null on 389 rows, and audited in both directions: a
- * field listed here must be absent from every row, and a field not listed must be present on at least one. That makes
- * the claim checkable instead of a sentence somebody has to keep true by hand.
+ * The audit checks both directions: a listed field must be absent from every row,
+ * and an unlisted field must be present on at least one row.
  */
-export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage"] as const
+export const UNRESOLVED_FIELDS = ["addressRole", "upstreamLineage", "coverage", "personalDataReview"] as const
 
+/**
+ * One of the {@link UNRESOLVED_FIELDS}.
+ */
 export type UnresolvedField = (typeof UNRESOLVED_FIELDS)[number]
 
 /**
- * Where the register came from.
+ * The origin of the register's research data.
  */
 export interface RegisterProvenance {
 	source: string
 	sourceVersion?: string
 	/**
-	 * ISO 8601 calendar date, `yyyy-MM-DD`.
+	 * An ISO 8601 calendar date in the form `YYYY-MM-DD`.
 	 */
 	authoredAt?: string
 	notes?: string
 }
 
 /**
- * The committed register.
+ * The committed address-source register.
  */
 export interface AddressSourceRegister {
 	registerID: string
 	version: string
 	/**
-	 * A sha256 over everything in this register except the digest itself, written by the build.
+	 * The SHA-256 digest of every other field, which the build writes.
 	 *
-	 * The register is generated and the two research CSVs it is generated from are working documents under `.notes/`,
-	 * which is not committed, so no check can regenerate the file and compare. Without a recorded digest a hand edit to a
-	 * generated artifact is undetectable: a prose sweep renamed Contracts Finder to "Interfaces Finder" on three rows and
-	 * the structural audit passed, because nothing here knew what the build had written (#2352).
-	 *
-	 * It detects an edit rather than attributing one. Someone who changes a value and reruns the build gets a new digest,
-	 * which is the intended path. Someone who changes a value in the committed file does not, and the audit refuses it.
+	 * The research inputs are not committed, so this is the only way to detect
+	 * a hand edit to the generated file.
 	 */
 	contentDigest: string
 	provenance: RegisterProvenance

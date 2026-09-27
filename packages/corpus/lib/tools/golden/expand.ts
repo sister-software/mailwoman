@@ -18,7 +18,7 @@
  *        are pipeline-verified.
  *   2. **LLM only varies the surface form** — case, abbreviations, reordering, dropped components. The
  *        component values (locality string, postcode digits, etc.) are preserved verbatim.
- *   3. **Programmatic validator drops hallucinations** — every component value must appear as a
+ *   3. **Programmatic validator drops hallucinations**. Every component value must appear as a
  *        substring (case-insensitive, whitespace-normalized) of the variant's raw. Failures dropped
  *        silently. cost is wasted tokens, never bad-labeled golden entries.
  *
@@ -54,7 +54,7 @@ import { SeededRandom } from "@mailwoman/core/random"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
-import { createNewlineWriter } from "spliterator"
+import { createNewlineWriter, TextSpliterator } from "spliterator"
 
 import { $private } from "#env"
 import { openParquetRowStream } from "#parquet/streams"
@@ -67,8 +67,10 @@ import { openParquetRowStream } from "#parquet/streams"
 const MAX_CANDIDATE_LENGTH = 500
 
 /**
- * The stream position the per-source subsample draws from. Fixed rather than supplied, because the point is that two
- * runs over one corpus choose the same seeds. a caller-supplied seed would make that the caller's problem to remember.
+ * The stream position the per-source subsample draws from.
+ *
+ * Fixed rather than supplied, because the point is that two runs over one corpus choose the same seeds.
+ * A caller-supplied seed would make that the caller's problem to remember.
  */
 const SUBSAMPLE_SEED = 20_260_913
 
@@ -108,31 +110,45 @@ interface GoldenCandidate {
 
 export interface ExpandGoldenOptions {
 	/**
-	 * Corpus test-split parquet path(s), comma-separated. Default: the v0.2.0 test parquet file under the data root.
+	 * Corpus test-split parquet path(s), comma-separated.
+	 *
+	 * Default: the v0.2.0 test parquet file under the data root.
 	 */
 	corpus?: string
 	/**
-	 * Total seeds to process. Default `100` (pilot).
+	 * Total seeds to process.
+	 *
+	 * Default `100` (pilot).
 	 */
 	count?: number
 	/**
-	 * Variants requested per seed. Default `5`.
+	 * Variants requested per seed.
+	 *
+	 * Default `5`.
 	 */
 	variants?: number
 	/**
-	 * Jsonl output path. Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
+	 * Jsonl output path.
+	 *
+	 * Default `data/eval/golden/candidates/expand-<ts>.jsonl`.
 	 */
 	output?: string
 	/**
-	 * LLM provider. Default `deepseek`.
+	 * LLM provider.
+	 *
+	 * Default `deepseek`.
 	 */
 	provider?: "deepseek" | "anthropic"
 	/**
-	 * Model id. Default depends on provider.
+	 * Model id.
+	 *
+	 * Default depends on provider.
 	 */
 	model?: string
 	/**
-	 * Parallel LLM calls. Default `4`.
+	 * Parallel LLM calls.
+	 *
+	 * Default `4`.
 	 */
 	concurrency?: number
 	/**
@@ -152,9 +168,11 @@ export interface ExpandGoldenSummary {
 // ── Seed loading ──────────────────────────────────────────────────────────
 
 /**
- * Decode BIO labels + tokens into a verified components map. Mirrors the Python `decode_components` in
- * mailwoman_train/eval.py — first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single space
- * (the canonical separator used by corpus alignment).
+ * Decode BIO labels + tokens into a verified components map.
+ *
+ * Mirrors the Python `decode_components` in mailwoman_train/eval.py —
+ * first-occurrence-wins per tag, contiguous B-X/I-X runs concatenated with a single
+ * space (the canonical separator used by corpus alignment).
  */
 function decodeComponents(tokens: string[], labels: string[]): Record<string, string> {
 	const out: Record<string, string> = {}
@@ -210,9 +228,10 @@ async function loadSeeds(
 		report?.(`  include-sources filter: ${Array.from(includeSources).join(", ")}`)
 	}
 
-	// Stratified sampling: read all rows from all parquet files, group by source. Bounded by per-source
-	// reservoir: keep at most max(2*count, 5000) rows per source so we don't blow memory on train
-	// parquet files (1M rows × many files). Sampling later is uniform within each pool.
+	// Stratified sampling: read all rows from all parquet files, group by source.
+	// Bounded by per-source reservoir: keep at most max(2*count, 5000) rows per source
+	// so we don't blow memory on train parquet files (1M rows × many files).
+	// Sampling later is uniform within each pool.
 	const bySource = new Map<string, Seed[]>()
 	const PER_SOURCE_CAP = Math.max(2 * count, 5000)
 	let scanned = 0
@@ -264,14 +283,17 @@ async function loadSeeds(
 		report?.(`    ${src}: ${pool.length}`)
 	}
 
-	// Round-robin sample. Each source gives floor(count / nSources) seeds. rounding goes
-	// to sources in alphabetical order. If a pool is smaller than its target, take all of it.
+	// Round-robin sample.
+	// Each source gives floor(count / nSources) seeds.
+	// Rounding goes to sources in alphabetical order.
+	// If a pool is smaller than its target, take all of it.
 	const sources = Array.from(bySource.keys()).toSorted()
 	const perSource = Math.floor(count / sources.length)
 	const remainder = count - perSource * sources.length
 	const picked: Seed[] = []
-	// One stream across every source, so the same inputs choose the same seeds on every run and two sources do not draw
-	// the same positions. The previous shuffle called `Math.random()` under a comment promising determinism.
+	// One stream across every source, so the same inputs choose the same seeds on every run
+	// and two sources do not draw the same positions.
+	// The previous shuffle called `Math.random()` under a comment promising determinism.
 	const random = new SeededRandom(SUBSAMPLE_SEED)
 
 	for (let i = 0; i < sources.length; i++) {
@@ -487,7 +509,11 @@ export async function expandGolden(
 	const providerName = options.provider ?? "deepseek"
 	const model = options.model ?? (providerName === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat")
 	const concurrencyLimit = options.concurrency ?? 4
-	const includeSources = options.includeSources ? new Set(options.includeSources.split(",").map((s) => s.trim())) : null
+
+	const includeSources = options.includeSources
+		? new Set(TextSpliterator.from(options.includeSources, { delimiter: "," }))
+		: null
+
 	const ts = new Date().toISOString().replaceAll(/[:.]/g, "-").slice(0, 19)
 	const outputPath = options.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`
 

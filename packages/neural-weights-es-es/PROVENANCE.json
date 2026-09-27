@@ -60,33 +60,39 @@
 	"artifacts": [
 		{
 			"path": "pair-index-es.bin",
+			"role": "placetype-pair-index",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "anchor-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "locality-surface-lexicon-v7.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "street-type-lexicon-v3.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "country-surface-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		}
 	],
 	"training_attribution": {
 		"status": "none-recorded-in-this-package",
-		"entries": []
+		"entries": [],
+		"by_use": {}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
@@ -94,6 +100,6 @@
 	"unresolved": [
 		"No digest is recorded for 5 of 5 declared artifacts: pair-index-es.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
 		"This package's model card records no training attribution of its own. It ships 5 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

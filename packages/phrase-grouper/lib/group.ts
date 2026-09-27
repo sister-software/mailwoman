@@ -8,7 +8,8 @@
  *   fired rule. Overlapping proposals are expected — the reconciler (Stage 5) picks the best
  *   non-overlapping subset.
  *
- *   See `docs/articles/concepts/the-knowledge-ladder.md` § Phrase grouper for the design rationale,
+ *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase grouper
+ *   for the design rationale,
  *   and `phrase-grouper/rules.ts` for per-rule documentation.
  */
 
@@ -29,9 +30,10 @@ import {
 import type { GroupPhrasesOpts } from "#types"
 
 /**
- * Walk every QueryShape segment and emit one `tokens-by-segment` list. Falls back to treating the whole input as a
- * single segment when QueryShape didn't supply segmentation (e.g. callers wiring the grouper into a path that bypasses
- * QueryShape).
+ * Walk every QueryShape segment and emit one `tokens-by-segment` list.
+ *
+ * Falls back to treating the whole input as a single segment when QueryShape didn't supply
+ * segmentation (e.g. Callers wiring the grouper into a path that bypasses QueryShape).
  */
 function tokensPerSegment(
 	text: string,
@@ -56,14 +58,18 @@ function tokensPerSegment(
 }
 
 /**
- * Synchronous, pure rule-based implementation. The async wrapper matches the pipeline interface.
+ * Synchronous, pure rule-based implementation.
  *
- * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best non-overlapping subset under
- * semantic+hierarchical constraints. Confidence is a [0,1] score per proposal. relative ordering is what matters more
- * than absolute calibration at v0.5.0.
+ * The async wrapper matches the pipeline interface.
  *
- * The `_locale` parameter is reserved for future locale-aware rule packs (Japanese postcode/honorific patterns, French
- * preposition-bound localities) — currently unused.
+ * Emits overlapping proposals freely — the consumer (Stage 5 reconcile) picks the best
+ * non-overlapping subset under semantic+hierarchical constraints.
+ * Confidence is a [0,1] score per proposal.
+ *
+ * Relative ordering is what matters more than absolute calibration at v0.5.0.
+ *
+ * The `_locale` parameter is reserved for future locale-aware rule packs
+ * (Japanese postcode/honorific patterns, French preposition-bound localities) — currently unused.
  */
 export function groupPhrasesSync(
 	input: NormalizedInputLite,
@@ -89,8 +95,8 @@ export function groupPhrasesSync(
 		proposals.push(...scoreVenuePhrase(tokens, text, isFirst))
 	}
 
-	// Sort: descending confidence, ties broken by span start (left-to-right). Downstream Stage 5
-	// can rely on this ordering for top-k selection without re-sorting.
+	// Sort: descending confidence, ties broken by span start (left-to-right).
+	// Downstream Stage 5 can rely on this ordering for top-k selection without re-sorting.
 	proposals.sort((a, b) => {
 		if (a.confidence !== b.confidence) return b.confidence - a.confidence
 
@@ -101,8 +107,9 @@ export function groupPhrasesSync(
 }
 
 /**
- * Async variant matching `RuntimePipelineStages.groupPhrases`. Wraps the sync impl so the pipeline coordinator can use
- * it as-is.
+ * Async variant matching `RuntimePipelineStages.groupPhrases`.
+ *
+ * Wraps the sync impl so the pipeline coordinator can use it as-is.
  */
 export async function groupPhrases(
 	input: NormalizedInputLite,

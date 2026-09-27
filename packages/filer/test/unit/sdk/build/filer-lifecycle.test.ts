@@ -1,14 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- * @file `buildFilerDatabase`'s Form 499 lifecycle writes — cessation windows and supersession edges.
- *
- *   Kept out of `build-filer.test.ts` because every case here turns on `Form499Row.lifecycle`, which only
- *   the workbook reader populates. The 17-column TSV path leaves it `undefined`, and the last describe
- *   below pins that a TSV-shaped row still produces byte-identical output.
- */
-
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { toFRN } from "@mailwoman/filer/frn"
 import { type FilerDatabase, FilerIdentifierType, FilerRelationship } from "@mailwoman/filer/schema"
@@ -52,7 +41,7 @@ function filerRow(overrides: Partial<Form499Row> & Pick<Form499Row, "form499ID">
 }
 
 async function build(rows: Form499Row[]) {
-	const out = scratch.resolve("filer.db")
+	const out = scratch.path("filer.db")
 
 	const result = await buildFilerDatabase({
 		form499Rows: rows,
@@ -62,7 +51,7 @@ async function build(rows: Form499Row[]) {
 		buildSHA: "deadbeef",
 	})
 
-	await using db = new DatabaseClient<FilerDatabase>(out, { readOnly: true })
+	using db = new DatabaseClient<FilerDatabase>(out, { readOnly: true })
 
 	const edges = db
 		.prepare("SELECT from_node_id, to_node_id, relationship, valid_from, valid_to FROM filer_edge ORDER BY 1, 2, 3")
@@ -101,7 +90,7 @@ describe("cessation closes a relationship window — when the two dates order co
 		expect(result.cessationWindowAbstained).toBe(0)
 	})
 
-	it("leaves the IDENTITY edge open — an identifier mapping does not expire when the company does", async () => {
+	it("Leaves the IDENTITY edge open — an identifier mapping does not expire when the company does", async () => {
 		const { edges } = await build([
 			filerRow({
 				form499ID: "900001",
@@ -119,8 +108,6 @@ describe("cessation closes a relationship window — when the two dates order co
 
 describe("cessation ABSTAINS rather than asserting an incoherent window", () => {
 	it("leaves the window open when the cessation date PREDATES the last filing", async () => {
-		// Form 499 is an annual filing, so a carrier that ceased in September still files the next April.
-		// 3,916 of 9,706 dated cessations in the 2025-12-07 vintage look like this.
 		const { result, edges } = await build([
 			filerRow({
 				form499ID: "900002",
@@ -132,8 +119,6 @@ describe("cessation ABSTAINS rather than asserting an incoherent window", () => 
 
 		const holding = edges.find((edge) => edge.relationship === FilerRelationship.HoldingCompany)
 
-		// An inverted window matches nothing under `valid_from <= t < valid_to` — the filer would vanish
-		// from every asOf read with no error to notice. Open is visibly incomplete. inverted is invisible.
 		expect(holding?.valid_to).toBeNull()
 		expect(result.cessationWindowAbstained).toBe(1)
 		expect(result.closedByCessation).toBe(0)
@@ -205,7 +190,7 @@ describe("supersession edges", () => {
 		expect(superseded).toMatchObject({
 			from_node_id: `${FilerIdentifierType.Form499ID}:801004`,
 			to_node_id: `${FilerIdentifierType.Form499ID}:821002`,
-			// Effective when the FCC said the filer ceased rather than when it last filed.
+
 			valid_from: "2013-09-08",
 			valid_to: null,
 		})
@@ -227,7 +212,6 @@ describe("supersession edges", () => {
 	})
 
 	it("mints the successor node even when its own row never appears", async () => {
-		// 6 of 2,826 targets in the real vintage dangle. The edge is still what the FCC stated.
 		const { edges } = await build([
 			filerRow({
 				form499ID: "900007",
@@ -248,8 +232,7 @@ describe("supersession edges", () => {
 })
 
 describe("a TSV-shaped row is unaffected", () => {
-	it("writes no lifecycle attribute, no supersession, and closes no window", async () => {
-		// `lifecycle` is undefined for every row parseForm499 produces — the TSV has no note columns.
+	it("Writes neither lifecycle attribute nor supersession, and closes no window", async () => {
 		const { result, edges, attributes } = await build([filerRow({ form499ID: "900009" })])
 
 		expect(result.closedByCessation).toBe(0)

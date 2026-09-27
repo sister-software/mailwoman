@@ -6,83 +6,77 @@ tags: [neural, evals, training, corpus]
 date: 2026-06-17
 ---
 
-Our failure taxonomy finally has a line at the very top: of everything wrong with the parser,
-boundary instability is the one worth fixing first. So we spent a night building the training
-data to fix it. And then we didn't retrain. Three separate checks each caught a step that looked
-completely reasonable and was wrong underneath, and that's the story worth telling, more than the
-extract ever was. Those checks are the only reason you can move fast on your worst weakness without
-shipping a fix that looks great on the headline and rots underneath.
+Our failure taxonomy now ranks boundary instability first among the parser's weaknesses. We
+spent a night building training data to fix it and then chose not to retrain. Three separate
+checks each caught a step that looked reasonable and was wrong, and this post is about those
+checks more than the extract. The checks let us work quickly on the worst weakness without
+shipping a fix that improves the headline number while introducing hidden errors.
 
 {/* truncate */}
 
 ## The weakness with several faces
 
-Boundary instability is what you get when two address components meet and the model puts the
-boundary in the wrong place. Give it `Country Club Rd` and the street swallows its own suffix. Give
-it `North Sydney NSW 2060` with the commas stripped out and the city and the state melt into
-each other. Hand it a French street like `Neuve-des-Capucines 5` and the house number gets
-absorbed into the name.
+Boundary instability means that where two address components meet, the model puts the boundary
+in the wrong place. For `Country Club Rd`, the street name absorbs its own suffix. For
+`North Sydney NSW 2060` with the commas stripped, the city and the state merge. For a French
+street like `Neuve-des-Capucines 5`, the house number is absorbed into the name.
 
-For a while we filed several this under "within-token punctuation" and blamed the apostrophes
-and hyphens. Then we measured that class, and the punctuation turned out to be innocent
-almost every time. `O'Connell` parses fine. `Coeur d'Alene` parses fine. What breaks is the
-boundary sitting right next to the punctuation, the same wobble wearing a different hat each
-time. One weakness, a dozen faces.
+For a while we filed several of these cases under "within-token punctuation" and blamed the
+apostrophes and hyphens. When we measured that class, the punctuation was almost never the
+cause. `O'Connell` parses fine, and so does `Coeur d'Alene`. What breaks is the boundary next to
+the punctuation. The same boundary error appears in many different forms.
 
 ## The plan
 
-Build a synthetic extract that drops the gold boundary exactly where the model wobbles, spread
-across a wide enough range of real-looking addresses that a retrain learns the boundary from
-context instead of memorizing the strings. Generate it, baseline the current model so we know
-how big the hole is, write the recipe, wire it into the corpus. Routine, on paper.
+We planned a synthetic extract that places the gold boundary exactly where the model errs,
+spread across enough real-looking addresses that a retrain learns the boundary from context
+instead of memorizing the strings. The steps were to generate it, baseline the current model to
+measure the size of the gap, write the recipe, and add it to the corpus.
 
 ## Check one: the extract that graded on a curve
 
-The first version pulled from a thin vocabulary: sixteen street names and a handful of cities.
-Twenty thousand rows out of sixteen streets means the model sees `Country Club Rd` a thousand
-times over, so it learns the lexeme and never the boundary. That part we expected. The sneaky part
-showed up when we baselined the current model against that same thin data and it scored 48% on
-the suffix boundary and 70% on the French prefix. Respectable. Encouraging, even.
+The first version drew from a thin vocabulary of sixteen street names and a handful of cities.
+Twenty thousand rows from sixteen streets means the model sees `Country Club Rd` a thousand
+times, so it learns the word and not the boundary. We expected that. We did not expect the
+baseline result: the current model scored 48% on the suffix boundary and 70% on the French
+prefix against that thin data, which looked reasonable.
 
-Then we tripled the vocabulary, a hundred streets and real cities with every row unique, and the
-same model scored 41 and 48. So the thin data had done two things at once: it taught the lexeme
-instead of the boundary, and it graded its own exam on a curve. The runbook already warns
-that thin diversity teaches the pattern-matcher and skips the boundary. Now there's a number
-sitting next to the warning.
+We then tripled the vocabulary to a hundred streets and real cities, with every row unique, and
+the same model scored 41 and 48. The thin data had two effects. It taught the word instead of
+the boundary, and it inflated the baseline score. The runbook already warns that thin diversity
+teaches memorization instead of the boundary. The warning now has a measurement next to it.
 
 ## Check two: the postcode that was already a house number
 
-To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the extract
-reached for Australian addresses. The base-consistency lint stopped it cold. In our training
-corpus the token `3000` shows up thousands of times, every one of them a US house number, and
-the extract wanted to teach it as an Australian postcode. A coverage extract can't outvote the base
-corpus it sits on top of. It can only pick a fight with it and lose, slowly, over a release or
-three, and we still have the scars from the last time. The lint caught the collision before
-we'd burned a single GPU-hour on it. Australia came back out, the extract is base-locales-only
-now, and the slash convention got filed as its own job, the kind that has to bring its own base
-coverage to the table.
+To teach the Australian slash convention, where `4/2A` means unit 4, number 2A, the extract used
+Australian addresses. The base-consistency lint blocked it. In our training corpus the token
+`3000` appears thousands of times, always as a US house number, and the extract labeled it as an
+Australian postcode. A coverage extract cannot outweigh the base corpus it is added to. It can
+only conflict with the base corpus and degrade results slowly over one to three releases, which
+happened to us before. The lint caught the conflict before we spent any GPU-hours on it. We
+removed Australia, the extract now covers base locales only, and the slash convention became a
+separate task that must also add base coverage for its locale.
 
 ## Check three: the city that was typically a street
 
-Even with the extract confined to the locales we train on, the lint wasn't done with us.
-Paris. Springfield. Burlington. In our corpus those tokens are overwhelmingly streets, the Paris
-Avenues and Springfield Streets of the world, and only rarely cities. Our extract labels them as
-localities. Both readings are true depending on where the token lands, and the model is
-context-aware enough that it might well sort it out on its own. The lint's job is to not take
-that on faith. It flagged the minority sense, because the last time we waved this exact thing
-through, a theatre on 5th Avenue talked a extract into believing `5th Avenue` was a venue. So the
-retrain will watch this number, and a cleaner extract draws its cities from names the corpus
-already agrees are cities.
+With the extract limited to the locales we train on, the lint found another problem. In our
+corpus, tokens like Paris, Springfield, and Burlington are mostly streets (Paris Avenue,
+Springfield Street) and only rarely cities. Our extract labels them as localities. Either label
+can be correct depending on context, and the model may be context-aware enough to handle it. The
+lint does not assume that. It flagged the minority sense, because the last time we let a similar
+case through, a theater on 5th Avenue caused an extract to label `5th Avenue` as a venue. The
+retrain will track this number, and a cleaner extract will draw its cities from names that the corpus
+already labels as cities.
 
 ## Why we didn't retrain
 
-Here's where the night ended. The extract is built. The baseline is measured. The recipe
-is written and signed off, the corpus is assembled, and the manifest is tested against the real
-base. By every box on the checklist it's ready, sitting on the shelf one command short of a
-training run. And we left it there on purpose.
+At the end of the night, the extract was built and the baseline measured. The recipe was written
+and approved, the corpus assembled, and the manifest tested against the real base. Every
+checklist item was complete, and a training run needed one more command. We deliberately did not
+run it.
 
-Those three refusals were the actual work. Naming the weakness took a taxonomy; fixing it
-correctly took the checks saying _not yet_, once about the data and twice about the corpus, and
-each no cost us a few minutes and spared us a retrain that would have looked fine up top and been
-wrong all the way down. That's a trade we'll take every time. **The fastest way we know to fix
-your worst weakness is to let the checks make you warrant it.**
+The three checks were the main work of the night. The taxonomy identified the weakness. The
+checks blocked the fix three times, once for the data and twice for the corpus. Each block cost
+a few minutes and prevented a retrain whose headline numbers would have looked fine while its
+labels were wrong. **Letting the checks block a fix until it passes them is the fastest way we
+know to fix a serious weakness correctly.**

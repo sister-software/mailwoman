@@ -10,26 +10,43 @@
  */
 
 /**
- * An open DuckDB connection, re-exported so consumers of {@link connectDuckDB} can name the type without their own
- * static dependency on the optional peer.
+ * An open DuckDB connection, re-exported so consumers of {@link openDuckDB} can name
+ * the type without their own static dependency on the optional peer.
  */
 export type { DuckDBConnection } from "@duckdb/node-api"
 
 /**
- * Open an in-memory DuckDB connection.
+ * An in-memory DuckDB connection whose disposal also closes the instance behind it.
  *
- * The caller owns the close. Every reader and writer in this family wraps its use in `try`/`finally` with
- * `db.closeSync()`, because a connection left open holds the native instance for the life of the process.
+ * Both closes are synchronous, so this is `Disposable` rather than `AsyncDisposable`,
+ * the same as {@link DatabaseClient}.
  */
-export async function connectDuckDB(): Promise<import("@duckdb/node-api").DuckDBConnection> {
+export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Disposable
+
+/**
+ * Open an in-memory DuckDB connection, taken with `using db = await openDuckDB()`.
+ *
+ * The connection is returned directly, so it reads as a connection at every call site.
+ * Disposal closes it and then the instance: a connection left open holds the native instance
+ * for the life of the process, and one opened per file in a loop holds one per file.
+ */
+export async function openDuckDB(): Promise<DisposableDuckDB> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")
 	const instance = await DuckDBInstance.create()
+	const connection = await instance.connect()
 
-	return await instance.connect()
+	return Object.assign(connection, {
+		[Symbol.dispose]: () => {
+			connection.closeSync()
+			instance.closeSync()
+		},
+	})
 }
 
 /**
- * Escape `value` for a single-quoted SQL string literal. The caller supplies the quotes.
+ * Escape `value` for a single-quoted SQL string literal.
+ *
+ * The caller supplies the quotes.
  */
 export function escapeSQLString(value: string): string {
 	return value.replaceAll("'", "''")
@@ -38,8 +55,9 @@ export function escapeSQLString(value: string): string {
 /**
  * Escape `value` as a double-quoted SQL identifier, for a column name that reaches a statement from data.
  *
- * A projection names columns the caller chose, so the name is not a literal this module wrote. Quoting it keeps a
- * column whose name collides with a keyword — or carries a space — from re-parsing as syntax.
+ * A projection names columns the caller chose, so the name is not a literal this module wrote.
+ * Quoting it keeps a column whose name collides with a keyword — or carries a space —
+ * from re-parsing as syntax.
  */
 export function escapeSQLIdentifier(value: string): string {
 	return `"${value.replaceAll('"', '""')}"`

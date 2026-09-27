@@ -2,15 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The compiler, its derivations, and the two determinism properties the artifact is a interface for:
- *   the same document compiles to the same bytes, and a document whose tables and object keys are
- *   permuted compiles to the same bytes as the unpermuted one.
- *
- *   The fixture extends the frozen first record set (`pharmacy affords obtain_medication`) with the
- *   inheritance shapes a closure has to get right and one record set cannot exercise: a chain
- *   (`hospital_pharmacy` → `pharmacy` → `retailer`), a diamond (`late_night_pharmacy` reaching
- *   `retailer` by two routes), two ancestors stating one proposition (`corner_shop`), and a
- *   descendant that speaks for itself (`veterinary_pharmacy`).
+ * The compiler, its derivations, and the artifact's two determinism properties.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -134,8 +126,8 @@ const lateNightPharmacy = establishment("late_night_pharmacy", ["pharmacy", "ret
 const cornerShop = establishment("corner_shop", ["retailer", "general_store"])
 
 /**
- * A descendant that states the inherited proposition itself, under a weaker modality. The authored record is the more
- * specific one, so nothing is derived for that pair.
+ * A descendant stating the inherited proposition itself under a weaker modality,
+ * so no fact is derived for that pair.
  */
 const veterinaryPharmacy = establishment(
 	"veterinary_pharmacy",
@@ -182,8 +174,8 @@ function fixture(): GeographicModelDocument {
 }
 
 /**
- * Rebuild a value with every object's keys in the opposite order, at every depth. Arrays keep their order — the caller
- * reverses the tables it wants reversed, and an assertion list is authored order the compiler is supposed to preserve.
+ * Rebuild a value with every object's keys in the opposite order at every depth, leaving
+ * arrays in order so an assertion list keeps the authored order the compiler must preserve.
  */
 function withReversedKeys(value: unknown): unknown {
 	if (Array.isArray(value)) return value.map(withReversedKeys)
@@ -225,13 +217,10 @@ describe("the inheritance closure", () => {
 
 		expect(model.inheritanceClosure.map((entry) => entry.concept)).toEqual(model.concepts.map((concept) => concept.id))
 
-		// A chain: two links up through `pharmacy`.
 		expect(ancestorsIn(model, "hospital_pharmacy")).toEqual(["pharmacy", "retailer"])
 
-		// A diamond: `retailer` is reachable directly and through `pharmacy`, and appears once.
 		expect(ancestorsIn(model, "late_night_pharmacy")).toEqual(["pharmacy", "retailer"])
 
-		// A concept that is a kind of nothing gets an entry stating that rather than an absent entry.
 		expect(ancestorsIn(model, "retailer")).toEqual([])
 		expect(ancestorsIn(model, "obtain_medication")).toEqual([])
 	})
@@ -291,7 +280,6 @@ describe("derived facts", () => {
 		const model = compileGeographicModel(fixture())
 		const facts = factsAbout(model, "veterinary_pharmacy")
 
-		// The authored `unusual` assertion stands alone. only the unrelated inherited pair is materialized.
 		expect(facts.map((fact) => fact.object)).toEqual(["purchase_goods"])
 	})
 
@@ -398,7 +386,7 @@ describe("the artifact's bytes", () => {
 	})
 
 	it("are identical for a document whose tables and keys are permuted", () => {
-		// Without this the test would pass on two identical inputs and prove nothing about ordering.
+		// Without this the test would pass on two identical inputs and leave the ordering property unchecked.
 		expect(stringifyJSON(permuted(fixture()))).not.toBe(stringifyJSON(fixture()))
 
 		expect(compiledBytes(permuted(fixture()))).toBe(compiledBytes(fixture()))
@@ -446,9 +434,7 @@ describe("the read surface", () => {
 		expect(index.relation(toRelationID("affords"))?.semantics).toBe(RelationSemantics.Defeasible)
 		expect(index.ancestorsOf(toConceptID("hospital_pharmacy"))).toEqual(["pharmacy", "retailer"])
 
-		// Known, and a kind of nothing.
 		expect(index.ancestorsOf(toConceptID("retailer"))).toEqual([])
-		// Not in the artifact at all.
 		expect(index.ancestorsOf(toConceptID("chemist"))).toBeUndefined()
 
 		expect(index.derivedFactsAbout(toConceptID("retailer"))).toEqual([])

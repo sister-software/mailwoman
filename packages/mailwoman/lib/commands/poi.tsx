@@ -8,7 +8,7 @@
  *   at a sealed `poi.db` layer (`mailwoman gazetteer build poi`). `--overpass` additionally renders
  *   the OverpassQL export block (`@mailwoman/poi-overpass`) — export-only, mailwoman never queries
  *   Overpass itself. A non-POI query (kind classifier never emits `poi_query`, or the intent stage
- *   fell through) reports that and exits 0 — this command is a debug probe rather than a strict
+ *   fell through) reports that and exits 0. This command is a debug probe rather than a strict
  *   POI-only parser.
  *
  *   Exit-code interface:
@@ -34,6 +34,7 @@ import { Text } from "ink"
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	isLocaleTag,
 	loadClassifierTolerant,
 	type OptionsOf,
 	type ParsedCommandComponent,
@@ -53,7 +54,7 @@ export const spec = {
 		locale: {
 			type: "string",
 			default: "en-US",
-			validate: (value: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value),
+			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
 		db: { type: "string", description: "Sealed poi.db layer" },
@@ -67,11 +68,13 @@ export const spec = {
 type Options = OptionsOf<typeof spec>
 
 /**
- * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an anchor remainder
- * resolves to lat/lon and `--db` category/brand queries can compute a search center. Lazy + optional: an absent
- * gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer degrades to no resolver (today's pre-wiring behavior)
- * rather than failing the probe — a stderr note explains what's missing. Caller owns closing the returned handle's
- * backend lookup.
+ * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an
+ * anchor remainder resolves to lat/lon and `--db` category/brand queries can compute a search center.
+ *
+ * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite`
+ * peer degrades to no resolver (today's pre-wiring behavior) rather than failing
+ * the probe — a stderr note explains what's missing.
+ * Caller owns closing the returned handle's backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
 	const { resolvePOIResolverPaths } = await import("#resolver-backend")
@@ -129,8 +132,9 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 	if (intent.subject.kind === "category") {
 		const { getPOICategory } = await import("@mailwoman/poi-taxonomy")
 		const { categoryIDs } = intent.subject
-		// Every member needs a tag rather than just one: a union emitted from the subset that happens to carry `osmTag` is a
-		// narrower query than the one the POI branch ran, and the difference would be invisible in the printed result.
+		// Every member needs a tag rather than just one: a union emitted from the subset that
+		// happens to carry `osmTag` is a narrower query than the one the POI branch ran,
+		// and the difference would be invisible in the printed result.
 		const untagged = categoryIDs.filter((id) => !getPOICategory(id)?.osmTag)
 
 		if (untagged.length) {
@@ -144,10 +148,12 @@ async function formatOverpassBlock(intent: POIIntent): Promise<string> {
 }
 
 /**
- * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries, coarsest-last (the
- * hierarchy's own deepest-first order reversed), skipping other placetypes (county, neighbourhood, …) to keep the table
- * narrow. Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none of those three tiers (e.g.
- * open-ocean/approximate misses).
+ * Compact ancestry suffix, e.g. "· Springfield, IL, US" — locality/region/country entries,
+ * coarsest-last (the hierarchy's own deepest-first order reversed), skipping other
+ * placetypes (county, neighbourhood, …) to keep the table narrow.
+ *
+ * Empty string when `ancestry` is absent (no reverse geocoder wired) or carries none
+ * of those three tiers (e.g. open-ocean/approximate misses).
  */
 function formatAncestrySuffix(ancestry: POIResult["ancestry"]): string {
 	if (!ancestry || !ancestry.length) return ""
@@ -216,8 +222,7 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
-	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint,
-	// a corrupt bundle surfaces its underlying error. Stderr only. stdout stays the probe output.
+	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint, a corrupt bundle surfaces its underlying error. Stderr only. Stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 
@@ -260,8 +265,8 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 		return <CommandTaskResult state={state} running={<Spinner />} />
 	}
 
-	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts long
-	// lines at 80 cols when piped (see writeRawStdout).
+	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts
+	// long lines at 80 cols when piped (see writeRawStdout).
 	if (options.json) {
 		return writeRawStdout(state.result)
 	}

@@ -24,11 +24,14 @@ import {
 } from "@mailwoman/flood/test-kit"
 import { EA_COVERAGE_STATEMENT, EA_COVERAGE_STATEMENT_URL } from "@mailwoman/flood/vocabulary"
 import { rectangleRing } from "@mailwoman/spatial"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away from the fixture's
- * own FZ3 square so the nearest-vertex distance is under this test's control. `null` answers with nothing.
+ * A service that answers every point with one polygon carrying `zone`, drawn `offsetDegrees` away
+ * from the fixture's own FZ3 square so the nearest-vertex distance is under this test's control.
+ *
+ * `null` answers with no polygon.
  */
 function scriptedService(zone: string | null | undefined, offsetDegrees = 0): ServiceFeatureReader {
 	return async () =>
@@ -62,11 +65,11 @@ const INSIDE_FZ3 = {
 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-flood-verify-")
-	databasePath = scratch.resolve("flood.db")
+	databasePath = scratch.path("flood.db")
 
 	await buildFloodDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -103,8 +106,9 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a disagreement as one when the service's polygon is nowhere near the point", async () => {
-		// The service's polygon sits a whole fixture square away, so the nearest vertex is far outside the boundary
-		// tolerance and the difference cannot be attributed to the two channels rendering the same edge.
+		// The service's polygon sits a whole fixture square away, so the nearest vertex
+		// is far outside the boundary tolerance and the difference cannot be attributed
+		// to the two channels rendering the same edge.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService("FZ2", FIXTURE_SIDE * 4),
@@ -113,7 +117,8 @@ describe("verifyFloodDatabase", () => {
 
 		expect(result.disagreed).toBe(1)
 		expect(result.boundaryTolerance).toBe(0)
-		// The distance rides on the row even though it was not acted on — it is what triage starts from.
+		// The distance rides on the row even though it was not acted on.
+		// It is what triage starts from.
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeGreaterThan(0)
 	})
 
@@ -130,8 +135,10 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// The artifact reads FZ3 here. the service's polygon contains the point and says nothing. Reading that as `null`
-		// would let it agree with an absence reading elsewhere, which is the manufactured Zone 1 the interface forbids.
+		// The artifact reads FZ3 here.
+		// The service's polygon contains the point and makes no statement.
+		// Reading that as `null` would let it agree with an absence reading elsewhere,
+		// which is the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(undefined),
@@ -169,9 +176,9 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("FAILS the negative half on a point the footprint does cover — the check has teeth", async () => {
-		// Inside the fixture's extent and outside every polygon, so the artifact answers the designated absence. The
-		// negative half must not pass on it: an artifact that answered a designation everywhere would slip through a check
-		// that only ever asked about places it happened to be silent.
+		// Inside the fixture's extent and outside every polygon, so the artifact answers the designated absence.
+		// The negative half must not pass on it: an artifact that answered a designation everywhere
+		// would slip through a check that only ever asked about places it happened to be silent.
 		const result = await verifyFloodDatabase({
 			databasePath,
 			readServiceFeatures: scriptedService(null),

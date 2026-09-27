@@ -35,14 +35,16 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	const fc = toFeatureCollection([r, { ...r, lat: "", lon: "" }])
 
 	expect(fc.type).toBe("FeatureCollection")
-	// the row without a coordinate is dropped — a Feature needs a geometry.
+	// the row without a coordinate is dropped.
+	// A Feature needs a geometry.
 	expect(fc.features).toHaveLength(1)
 	const f = fc.features[0]!
 	expect(f.type).toBe("Feature")
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
 	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
 	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
-	// the coordinate + boundingbox move OUT of properties. the rest stays.
+	// the coordinate + boundingbox move OUT of properties.
+	// The rest stays.
 	expect(f.properties["display_name"]).toBeDefined()
 	expect(f.properties["lat"]).toBeUndefined()
 	expect(f.properties["boundingbox"]).toBeUndefined()
@@ -180,13 +182,13 @@ test("/status without an engine method answers 200 OK, not 501 (the one non-501 
 	expect(await res.json()).toEqual({ status: 0, message: "OK" })
 })
 
-test("absent engine methods answer the exact issue-ref 501 bodies", async () => {
+test("absent engine methods answer a 501 naming the unimplemented operation", async () => {
 	const app = createNominatimApp({})
 
 	for (const [path, message] of [
-		["/search?q=berlin", "search not implemented (see #802)"],
-		["/reverse?lat=52.5&lon=13.4", "reverse not implemented (see #803)"],
-		["/lookup?osm_ids=N1", "lookup not implemented (see #805)"],
+		["/search?q=berlin", "this engine does not implement search"],
+		["/reverse?lat=52.5&lon=13.4", "this engine does not implement reverse"],
+		["/lookup?osm_ids=N1", "this engine does not implement lookup"],
 	] as const) {
 		const res = await app.request(path)
 		expect(res.status).toBe(501)

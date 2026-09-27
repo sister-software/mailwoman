@@ -32,24 +32,28 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { CSVSpliterator } from "spliterator"
 
 import { splitStreetLine, stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter. Column names
- * match the canonical HRSA Data Warehouse export header. Operators substituting a closely-related extract should rename
- * columns to match. the readme has the mapping cheatsheet.
+ * Subset of HRSA "Health Center Service Delivery Site Locations" CSV columns consulted by the adapter.
+ *
+ * Column names match the canonical HRSA Data Warehouse export header.
+ * Operators substituting a closely-related extract should rename columns to match.
+ * The readme has the mapping cheatsheet.
  */
 interface HRSASiteRow {
 	"Site Name": string
@@ -58,19 +62,25 @@ interface HRSASiteRow {
 	"Site State Abbreviation": string
 	"Site Postal Code": string
 	/**
-	 * Optional. Falls back to `stableSourceID` derived from components when missing.
+	 * Optional.
+	 *
+	 * Falls back to `stableSourceID` derived from components when missing.
 	 */
 	"Site ID"?: string
 }
 
 /**
- * Split a "123 Main St Suite 4" surface form into `(house_number, street)`. The regex tolerates one trailing letter on
- * the number (`"123A Main St"`) and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
+ * Split a "123 Main St Suite 4" surface form into `(house_number, street)`.
  *
- * Suite / Apt / Unit designators stay on `street` — Mailwoman's `unit` component exists but the address-formatter does
- * not have a clean slot for it, and HRSA addresses do not separate the suite into its own column. Leaving the surface
- * form intact in `street` keeps the adversarial training signal (the model learns that a trailing "Suite 4" is part of
- * the road line in this distribution).
+ * The regex tolerates one trailing letter on the number (`"123A Main St"`)
+ * and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
+ *
+ * Suite / Apt / Unit designators stay on `street`.
+ * Mailwoman's `unit` component exists but the address-formatter does not have a clean
+ * slot for it, and HRSA addresses do not separate the suite into its own column.
+ *
+ * Leaving the surface form intact in `street` keeps the adversarial training signal
+ * (the model learns that a trailing "Suite 4" is part of the road line in this distribution).
  */
 
 export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
@@ -78,6 +88,8 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 		id: USGOV_HRSA_FQHC_ADAPTER_ID,
 		defaultLicense: USGOV_HRSA_FQHC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Facility,
+		register: SourceRegister.HRSAHealthCenters,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"HRSA Federally Qualified Health Center site locations (public-domain). Adversarial source: venue + address co-occurrence, hand-entered.",
 
@@ -97,20 +109,20 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const venue = (record["Site Name"] ?? "").trim()
+				const venue = record["Site Name"] ?? ""
 				const split = splitStreetLine(record["Site Address"] ?? "")
-				const city = (record["Site City"] ?? "").trim()
-				const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
-				const postcode = (record["Site Postal Code"] ?? "").trim()
+				const city = record["Site City"] ?? ""
+				const stateAbbr = record["Site State Abbreviation"] ?? ""
+				const postcode = record["Site Postal Code"] ?? ""
 
 				if (!venue || !split || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
 
 				if (!state) continue
 
-				// Insertion order matters here. `venue` first so alignment claims its span
-				// (which may contain a token like "Buffalo") before `locality` runs its
-				// search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
+				// Insertion order matters here.
+				// `venue` first so alignment claims its span (which may contain a token like "Buffalo")
+				// before `locality` runs its search — the kryptonite case `Buffalo Health Clinic, Buffalo NY`
 				// otherwise mis-labels the venue's "Buffalo" as locality.
 				const components: CanonicalRow["components"] = {
 					venue,
@@ -127,7 +139,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const siteID = (record["Site ID"] ?? "").trim()
+				const siteID = record["Site ID"] ?? ""
 
 				const sourceID = siteID
 					? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`

@@ -51,8 +51,8 @@ describe("censusTrees", () => {
 	})
 
 	it("enumerates every strict dependent, fired or not", () => {
-		// The check's denominator is the tag set, so a class that never fires still has to appear — otherwise the
-		// report is a list of what happened with no way to see what did not.
+		// The check's denominator is the tag set, so a class that never fires still has to appear.
+		// Otherwise the report is a list of what happened with no way to see what did not.
 		const census = censusTrees([row("plain", "Alburgh, VT", [node("locality", "Alburgh")])])
 
 		expect(census.stranding.map((entry) => entry.tag).toSorted()).toEqual([
@@ -68,8 +68,8 @@ describe("censusTrees", () => {
 	})
 
 	it("counts a tag once per row however many nodes carry it", () => {
-		// Two stranded units on one row is one row that produced `unit`. Counting nodes would let a single pathological
-		// row report broad coverage of a tag.
+		// Two stranded units on one row is one row that produced `unit`.
+		// Counting nodes would let a single pathological row report broad coverage of a tag.
 		const census = censusTrees([row("two", "Apt 1 Apt 2", [node("unit", "Apt 1"), node("unit", "Apt 2")])])
 
 		expect(census.stranding.find((entry) => entry.tag === "unit")?.produced_on_rows).toBe(1)

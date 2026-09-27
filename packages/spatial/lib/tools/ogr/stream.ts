@@ -7,6 +7,7 @@
 
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { spawnProcess } from "@mailwoman/core/process"
+import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 const RECORD_SEPARATOR = 0x1e
@@ -15,9 +16,12 @@ const STDERR_TAIL_CHARS = 800
 export interface OGRProcess {
 	stdout: NodeJS.ReadableStream
 	/**
-	 * Resolves on a clean exit. rejects with the exit code and the stderr tail otherwise. A truncated stream reads as a
-	 * short but well-formed feature list, which is exactly the partial result that must throw rather than be reported as
-	 * a smaller extract . Therefore, consume the stream fully, then await this.
+	 * Resolves on a clean exit.
+	 * Rejects with the exit code and the stderr tail otherwise.
+	 *
+	 * A truncated stream reads as a short but well-formed feature list, which is exactly
+	 * the partial result that must throw rather than be reported as a smaller extract .
+	 * Therefore, consume the stream fully, then await this.
 	 */
 	settled: Promise<void>
 	/**
@@ -27,10 +31,12 @@ export interface OGRProcess {
 }
 
 /**
- * Spawn `ogr2ogr` with stderr accumulated for the failure message. The caller owns the stdout format (GeoJSONSeq, CSV,
- * …) and its parsing; {@link ogr2ogrGeoJSONSeq} is the GeoJSONSeq reading over this.
+ * Spawn `ogr2ogr` with stderr accumulated for the failure message.
+ *
+ * The caller owns the stdout format (GeoJSONSeq, CSV, …) and its parsing;
+ * {@link ogr2ogrGeoJSONSeq} is the GeoJSONSeq reading over this.
  */
-export function spawnOGR2OGR(args: readonly string[], context: string): OGRProcess {
+export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string): OGRProcess {
 	const child = spawnProcess("ogr2ogr", [...args], { stdio: ["ignore", "pipe", "pipe"] })
 	let stderr = ""
 
@@ -52,9 +58,11 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
 		})
 	})
 
-	// A failed spawn rejects `settled` before any consumer awaits it — the consumer is still draining the stream on a
-	// later tick, and a consumer that abandons the stream never awaits it at all — so an unobserved rejection would trip
-	// the process's unhandled-rejection hook. Observed at birth instead. every consumer still awaits the real verdict.
+	// A failed spawn rejects `settled` before any consumer awaits it — the consumer is still
+	// draining the stream on a later tick, and a consumer that abandons the stream never awaits
+	// it at all — so an unobserved rejection would trip the process's unhandled-rejection hook.
+	// Observed at birth instead.
+	// Every consumer still awaits the real verdict.
 	settled.catch(() => undefined)
 
 	return {
@@ -71,12 +79,14 @@ export function spawnOGR2OGR(args: readonly string[], context: string): OGRProce
 /**
  * Stream a GeoJSONSeq extraction as parsed features.
  *
- * Strips the RFC-8142 record separator (U+001E) gdal may prefix records with — `.trim()` does not remove it (not
- * whitespace), so an RS-framed record would fail to parse and be silently skipped, all of them, and an empty extract
- * would read as a real absence. A malformed record is tolerated (skipped) rather than thrown. a non-zero exit throws
- * after the stream drains.
+ * Strips the RFC-8142 record separator (U+001E) gdal may prefix records with.
+ * `.trim()` does not remove it (not whitespace), so an RS-framed record would fail to parse
+ * and be silently skipped, all of them, and an empty extract would read as a real absence.
+ *
+ * A malformed record is tolerated (skipped) rather than thrown.
+ * A non-zero exit throws after the stream drains.
  */
-export async function* ogr2ogrGeoJSONSeq<T>(args: readonly string[], context: string): AsyncGenerator<T> {
+export async function* ogr2ogrGeoJSONSeq<T>(args: readonly PathBuilderLike[], context: string): AsyncGenerator<T> {
 	const proc = spawnOGR2OGR(args, context)
 
 	try {

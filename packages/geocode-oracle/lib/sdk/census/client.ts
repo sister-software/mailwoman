@@ -2,38 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file US Census Bureau geocoder client, built on {@linkcode APIClient}. Ported from
- *   `earlier-draft/mailwoman/sdk/census/index.ts`, which was a bare `Axios.create({ baseURL,
- *   timeout: 5000 })` with no pacing, no cache, no retry, and a bespoke `CensusGeocoderError` that
- *   carried no status — so a caller could only tell "no match here" from "the service is down" by
- *   reading message prose. All four now come from `@mailwoman/core/api`.
- *
- *   no credential. The Census geocoder is free and unauthenticated, which makes this the simplest
- *   client in the repo and removes the fail-fast constructor check `sec-client.ts` and
- *   `bdc/sdk/client.ts` both open with.
- *
- *   two divergences from the original that change behaviour, both deliberate:
- *
- *     1. **The PO Box shortcut is gone.** `lookupAddress` opened by sanitizing its input and, if the
- *        result started with `PO BOX`, returning A locally-parsed address without issuing A request —
- *        so one branch of a method named "lookup" answered from a local parser and produced a record
- *        with no coordinate, silently, under the same return type. That is a reasonable shortcut in a
- *        pipeline that just needs an address record. it is disqualifying in an oracle, whose entire
- *        interface is "this is what the provider said". A PO Box the Census geocoder cannot match now
- *        raises the same 404 as any other unmatched address.
- *     2. **`vintage` is no longer sent to the `locations/*` endpoints.** It is a `geographies/*`
- *        parameter only. the original sent it on every call. Harmless in practice (the API ignores it)
- *        and wrong to keep, because it implied the two knobs were independent when the API requires
- *        them to agree — see {@linkcode CensusVintageName}.
- *
- *   error interface. Every failure is a {@linkcode ResourceError}, so a sweep branches on `status` plus
- *   {@linkcode isTransientResourceError} and never on message prose:
- *
- *   | Outcome                                   | Caller action     | Test                              |
- *   | ----------------------------------------- | ----------------- | --------------------------------- |
- *   | no `addressMatches`                       | no match, move on | `error.status === 404`            |
- *   | exhausted 429/5xx, network, timeout       | requeue           | `isTransientResourceError(error)` |
- *   | undecodable body                          | programmer bug    | `isTransientResourceError(error)` is false |
+ * @file US Census Bureau geocoder client built on {@linkcode APIClient}.
  */
 
 import { APIClient, type APIClientConfig, type ClockLike } from "@mailwoman/core/api"
@@ -41,6 +10,7 @@ import { buildDiskStorage } from "@mailwoman/core/api/disk-storage"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { ResourceError } from "@mailwoman/core/errors"
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 
 import type { OracleGeocodeResult } from "#result"
 import { parseCensusAddressMatch } from "#sdk/census/parser"
@@ -53,56 +23,39 @@ import {
 } from "#sdk/census/types"
 
 /**
- * The geocoder's base URL. Every path below is appended to it.
+ * Base URL for Census geocoder endpoints.
  */
 export const CENSUS_GEOCODER_BASE_URL = "https://geocoding.geo.census.gov/geocoder"
 
 /**
- * What this client paces at by default: **60 requests per minute**, one per second.
+ * Default request rate per minute.
  *
- * Sourcing, stated precisely because it could not be verified: the Census Bureau publishes no rate limit for the
- * single-address geocoding endpoints. It does cap the separate batch endpoint at 10,000 records per submission, which
- * is a size limit rather than a rate. So this number is a politeness posture toward a free public service rather than a
- * published ceiling — the same footing `BDC_DEFAULT_REQUESTS_PER_MINUTE` is on, and for the same reason it is a default
- * rather than a clamp.
- *
- * The service is also genuinely slow (multi-second responses are routine under load) and answers with a 500 when
- * overwhelmed, which the retry policy below treats as transient.
+ * The Census Bureau publishes no rate limit for single-address requests,
+ * so this value is a courtesy default.
  */
 export const CENSUS_DEFAULT_REQUESTS_PER_MINUTE = 60
 
-/**
- * Milliseconds in a minute — the numerator when turning a requests/minute budget into a pacing interval.
- */
 const MS_PER_MINUTE = 60_000
 
 /**
- * How long a cached match stays fresh: **7 days**.
- *
- * Shorter than the Google client's thirty because the answer is versioned rather than stable. `Public_AR_Current` is
- * re-issued from mtdb twice a year, and a re-issue can move an interpolated coordinate along its segment or reassign
- * the segment entirely. A week bounds how long a run can be reading pre-roll answers, and costs nothing — the requests
- * are free, and the cache exists here to spare a slow public service rather than a bill.
+ * Cache lifetime of one week, which bounds reuse across Census address-range refreshes.
  */
 const DEFAULT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000
 
 /**
- * Total attempts (including the first) before giving up on a 429/5xx or a network-class failure.
+ * Maximum attempts for a transient failure, including the first attempt.
  */
 const DEFAULT_MAX_ATTEMPTS = 3
 
 /**
- * Base delay for the exponential backoff between retry attempts, in milliseconds.
+ * Base delay of the exponential retry backoff, in milliseconds.
  */
 const DEFAULT_BASE_RETRY_DELAY_MS = 500
 
 /**
- * Per-attempt socket-inactivity timeout, in milliseconds.
+ * Per-attempt timeout in milliseconds.
  *
- * Deliberately SIX times the earlier draft'S 5,000. That client timed out at five seconds against a service whose
- * responses routinely take longer than that under load — so a busy afternoon read as a hard failure. Axios applies
- * `timeout` as an idle-socket timer rather than a total-elapsed budget, so a larger value bounds "the transfer stalled"
- * without capping a slow-but-healthy response.
+ * Axios applies it to socket inactivity, so a slow but active response can take longer.
  */
 const DEFAULT_REQUEST_TIMEOUT_MS = 30_000
 
@@ -116,89 +69,86 @@ const HTTP_MULTIPLE_CHOICES = 300
  */
 export interface CreateCensusGeocoderClientOptions {
 	/**
-	 * Requests per minute this client will dispatch. Defaults to {@linkcode CENSUS_DEFAULT_REQUESTS_PER_MINUTE}.
+	 * Maximum requests per minute.
+	 * Defaults to {@linkcode CENSUS_DEFAULT_REQUESTS_PER_MINUTE}.
 	 */
 	requestsPerMinute?: number
 	/**
-	 * Time source powering the pacer, the cooldown timer, and the retry backoff. Defaults to the system clock. tests
-	 * inject a fake one so no suite sleeps on the wall clock.
+	 * Clock for pacing and retry delays.
+	 * Tests inject a fake clock.
 	 */
 	clock?: ClockLike
 	/**
-	 * On-disk cache root. Defaults to `dataRootPath("geocode-oracle", "census")`, resolved once at construction.
+	 * Cache directory.
+	 * Defaults to `dataRootPath("geocode-oracle", "census")`.
 	 */
-	cacheDir?: string
+	cacheDir?: PathBuilderLike
 	/**
-	 * How long a cached match stays fresh, in milliseconds. See {@linkcode DEFAULT_CACHE_TTL_MS}.
+	 * Cache lifetime in milliseconds.
+	 * Defaults to one week.
 	 */
 	cacheTTLMs?: number
 	/**
-	 * Total attempts (including the first) before giving up on a transient failure. Never applies to a 404.
+	 * Maximum attempts for a transient failure.
+	 * The client does not retry a 404 response.
 	 */
 	maxAttempts?: number
 	/**
-	 * Base delay for the exponential backoff between retry attempts, in milliseconds.
+	 * Base delay of the exponential retry backoff, in milliseconds.
 	 */
 	baseRetryDelayMs?: number
 	/**
-	 * Per-attempt socket-inactivity timeout, in milliseconds. See {@linkcode DEFAULT_REQUEST_TIMEOUT_MS}.
+	 * Per-attempt socket-inactivity timeout, in milliseconds.
 	 */
 	requestTimeoutMs?: number
 	/**
-	 * Axios overrides, merged over this client's own defaults. the test injection point: every test passes an `adapter`
-	 * here, so no test in this workspace performs a live network call.
+	 * Axios options merged over the defaults.
+	 * Tests inject an adapter here to avoid network calls.
 	 */
 	axios?: APIClientConfig["axios"]
 }
 
 /**
- * A structured address, as the `locations/address` and `geographies/address` endpoints take it. Every field is
- * optional. the geocoder matches on whatever it is given, and more fields is a narrower search.
+ * Structured address accepted by the `locations/address` and `geographies/address` endpoints.
  */
 export interface CensusAddressQuery {
 	/**
-	 * The street line including the house number — `"4600 Silver Hill Rd"`.
+	 * Street line, including house number.
 	 */
 	street?: string
 	/**
-	 * The city. Named `city` rather than `locality` because it is the API's own parameter name.
+	 * City name.
 	 */
 	city?: string
 	/**
-	 * The two-letter state abbreviation.
+	 * Two-letter state abbreviation.
 	 */
 	state?: string
 	/**
-	 * The ZIP code, five-digit or plus-four.
+	 * Five-digit or ZIP+4 code.
 	 */
 	zip?: string
 }
 
 /**
- * A Census geocoder input: a one-line address string, or the structured form.
+ * One-line or structured Census geocoder input.
  */
 export type CensusGeocoderInput = string | CensusAddressQuery
 
 /**
- * {@linkcode APIClient} configuration plus the fields {@linkcode CensusGeocoderClient} reads back off `config`.
+ * API client configuration plus Census-specific settings.
  */
 export interface CensusGeocoderClientConfig extends APIClientConfig {
 	/**
-	 * The benchmark every `locations/*` lookup pins.
+	 * Benchmark for `locations/*` lookups.
 	 */
 	benchmark: CensusBenchmarkName
 }
 
 /**
- * Whether a decoded body is the `{ result: { addressMatches: [...] } }` envelope this API answers with.
+ * Reports whether a response body is safe to cache.
  *
- * Validated before writing, per `core/api/disk-storage.ts`'s first rule. The Census geocoder answers an overload with
- * an html error page, and — because Axios's `transitional.silentJSONParsing` is turned off below — that already raises
- * rather than being handed back as a string. This is the second check: a 200 whose JSON is structurally something else
- * must not reach disk under a week-long TTL.
- *
- * An empty `addressMatches` array is cacheable. "This address does not match tiger" is a real, stable answer, and it is
- * the answer for a large share of the rural and PO-Box inputs an oracle sweep will hand it.
+ * An empty `addressMatches` array is a cacheable no-match result.
  */
 export function isCacheableCensusBody(value: { data?: { data?: unknown } }): boolean {
 	const body = value.data?.data as CensusGeocodeResponse | undefined
@@ -207,14 +157,11 @@ export function isCacheableCensusBody(value: { data?: { data?: unknown } }): boo
 }
 
 /**
- * A US Census Bureau geocoder client. Build one with {@linkcode createCensusGeocoderClient}.
+ * US Census Bureau geocoder client.
  */
 export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> {
 	/**
-	 * Geocode an address and return every tiger match, best first.
-	 *
-	 * `locations/*` — the address + coordinate only. Use {@linkcode CensusGeocoderClient.lookupGeography} when the census
-	 * block/tract attributes are wanted too. it is a different endpoint rather than a flag on this one.
+	 * Returns all `locations/*` address matches, best first.
 	 */
 	public async lookupAddress(input: CensusGeocoderInput): Promise<OracleGeocodeResult<CensusAddressMatch>[]> {
 		const { path, params } = buildQuery(input, "locations")
@@ -225,11 +172,9 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	}
 
 	/**
-	 * Geocode an address and attach the census geography layers the match falls in — the `geographies.Census Blocks`
-	 * entry carries the 2020 block geoid, population and housing counts.
+	 * Returns address matches with census geography layers.
 	 *
-	 * Pins the Census 2020 benchmark/vintage pair. The two must agree (see {@linkcode CensusVintageName}), so they are
-	 * pinned together here rather than exposed as two knobs a caller can put out of step.
+	 * The benchmark and vintage must agree, so this method pins both to the 2020 census.
 	 */
 	public async lookupGeography(input: CensusGeocoderInput): Promise<OracleGeocodeResult<CensusGeographyMatch>[]> {
 		const { path, params } = buildQuery(input, "geographies")
@@ -241,13 +186,9 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 	}
 
 	/**
-	 * Issue one lookup and parse its matches, raising a 404 when there are none.
+	 * Requests and parses matches.
 	 *
-	 * A no-match is an error here rather than an empty array, and the choice is deliberate: it makes "the address did not
-	 * geocode" land on the same `error.status` branch a caller already writes for every other client in this repo, rather
-	 * than as a second success shape only this one has. The empty response is still cached (see
-	 * {@linkcode isCacheableCensusBody}) — the error is raised after the interceptor has persisted the body, so a repeat
-	 * of an unmatched address costs no request.
+	 * A no-match response throws a 404 error after the client caches the empty response.
 	 */
 	async #matches<Match extends CensusAddressMatch>(
 		path: string,
@@ -277,11 +218,7 @@ export class CensusGeocoderClient extends APIClient<CensusGeocoderClientConfig> 
 }
 
 /**
- * Turn an input into its endpoint path and query parameters.
- *
- * The one-line and structured forms are different endpoints (`…/onelineaddress` vs `…/address`), not two ways of
- * filling one — which is why this returns the path alongside the parameters instead of leaving the caller to pair
- * them.
+ * Builds the endpoint path and query parameters for one-line or structured input.
  */
 function buildQuery(
 	input: CensusGeocoderInput,
@@ -305,8 +242,7 @@ function buildQuery(
 
 	const params: Record<string, string> = {}
 
-	// Omitted rather than serialized as the literal string "undefined" — the geocoder treats an empty
-	// `state` as a filter that nothing matches, so sending one is worse than sending none.
+	// The API treats an empty field as a filter, so blank fields are omitted.
 	for (const [name, value] of Object.entries(input)) {
 		if (value !== undefined && value !== null && String(value).trim()) {
 			params[name] = String(value).trim()
@@ -327,7 +263,7 @@ function buildQuery(
 }
 
 /**
- * Create a US Census Bureau geocoder client. See the file header for the full rationale.
+ * Creates a configured US Census Bureau geocoder client.
  */
 export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOptions = {}): CensusGeocoderClient {
 	const requestsPerMinute = Math.max(1, options.requestsPerMinute ?? CENSUS_DEFAULT_REQUESTS_PER_MINUTE)
@@ -335,9 +271,8 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 	return new CensusGeocoderClient({
 		displayName: "US Census Geocoder",
 		benchmark: CensusBenchmarkName.Current,
-		// both limits, and the interval is the one that holds the rate — `requestsPerMinute` alone is a
-		// budget that dispatches N back to back and then waits 60/N seconds, measured at 100/minute for a
-		// configured 10/minute. See `bdc/sdk/client.ts` for the full arrival trace.
+		// The minimum interval spaces requests evenly.
+		// The per-minute budget alone would allow bursts.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {
@@ -351,19 +286,14 @@ export function createCensusGeocoderClient(options: CreateCensusGeocoderClientOp
 				validate: isCacheableCensusBody,
 			}),
 			ttl: options.cacheTTLMs ?? DEFAULT_CACHE_TTL_MS,
-			// The TTL above is chosen against the twice-yearly mtdb re-issue. Letting a response header
-			// override it would replace that reasoning with whatever the CDN happens to send.
+			// The configured TTL overrides any cache headers in the response.
 			interpretHeader: false,
-			// Never cache a failure: the interceptor's default predicate admits 3xx too.
 			cachePredicate: { statusCheck: (status) => status >= HTTP_OK && status < HTTP_MULTIPLE_CHOICES },
 		},
 		axios: {
 			timeout: options.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS,
 			responseType: "json",
-			// `silentJSONParsing` defaults to true, which hands back the RAW string when a body fails to
-			// parse. The Census geocoder answers an overload with an html error page under a 200. returning
-			// that as a `CensusGeocodeResponse` would surface as `result` being undefined at the call site
-			// rather than as an error, so parse failures must raise.
+			// A malformed or HTML body raises a parse error instead of passing through as a typed response.
 			transitional: { silentJSONParsing: false },
 			...options.axios,
 		},

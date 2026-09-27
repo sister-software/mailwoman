@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { smartSnakeCase } from "@mailwoman/core"
+import { smartSnakeCase } from "spliterator"
 
 import { TIGERProperty } from "#index"
 
@@ -20,4 +20,4 @@ export const TIGERTabulatedBlockEntitySelections = (
 		TIGERProperty.WaterAreaSqm,
 		TIGERProperty.Population,
 	] as const
-).map((columnName) => smartSnakeCase(columnName))
+).map(smartSnakeCase)

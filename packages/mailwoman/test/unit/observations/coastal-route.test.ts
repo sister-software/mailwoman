@@ -5,7 +5,7 @@
  *   #1993: the coastal-erosion route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built coastal layer.
  *
- *   the first test is the one that matters. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction.
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -13,7 +13,7 @@
  *   the rest PIN what this layer says and, more importantly, what IT refuses TO. A designation becomes one
  *   additive marker naming the verdict's own top kind, the scenario in the sentence rather than only in the
  *   evidence, and the coverage limit that says an absent polygon is not a reassurance. A location with no
- *   erosion polygon raises nothing — the inversion of the flood route, which raises a marker for a designated
+ *   erosion polygon raises no marker — the inversion of the flood route, which raises a marker for a designated
  *   absence because inside England a location with no flood polygon is Flood Zone 1 by definition. ncerm
  *   publishes no such definition, so silence here is a named refusal rather than an advisory.
  */
@@ -32,6 +32,7 @@ import type { QueryKind } from "@mailwoman/core/pipeline"
 import type { Resolver } from "@mailwoman/core/resolver"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createCoastalErosionRoute, describeCoastalErosion } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -39,14 +40,16 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's own top kind — because a
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
  * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`, so the coordinate the route is handed is the
- * one this test chose.
+ * A minimal always-resolves engine that answers at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one this test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -91,16 +94,17 @@ const INSIDE_BAND = {
 }
 
 /**
- * Well away from every fixture band — the reading this layer must never turn into a reassurance.
+ * Well away from every fixture band.
+ * The reading this layer must never turn into a reassurance.
  */
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-coastal-route-")
-	databasePath = scratch.resolve("coastal-england.db")
+	databasePath = scratch.path("coastal-england.db")
 
 	await buildCoastalDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -152,8 +156,9 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 		expect(marker.mechanism).toBe("layer:coastal_erosion")
 		expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-		// The scenario is in the sentence. A message reading "at erosion risk" without naming which of twelve questions
-		// it answers would let a 2105 projection be taken for a present-day designation.
+		// The scenario is in the sentence.
+		// A message reading "at erosion risk" without naming which of twelve questions it
+		// answers would let a 2105 projection be taken for a present-day designation.
 		expect(marker.message).toMatch(/under scenario NFI_2055_0CC/u)
 		expect(marker.message).toMatch(/No Future Intervention/u)
 		expect(marker.message).toMatch(/not whether a property will erode/u)
@@ -210,8 +215,9 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 			coastalErosionRoute: route,
 		})
 
-		// The inversion of the flood route, and the whole reason this layer is the second one: an advisory here would be
-		// a determination nobody made. The refusal is named instead.
+		// The inversion of the flood route, and the whole reason this layer is the second one:
+		// an advisory here would be a determination nobody made.
+		// The refusal is named instead.
 		expect(result.intent_markers).toEqual([])
 
 		const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

@@ -1,28 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Which remote a WOF repo is pulled from — our fork when one exists, upstream otherwise.
- *
- *   We carry corrections upstream cannot merge on our schedule. The first is the January 2019 GB batch that deprecated
- *   `Rochester`, `Gillingham`, `Swansea`, `Telford` and 50 others with no successor (`gazetteer triage` reports the
- *   whole class): every one is a live settlement, and a geocoder that cannot name them is wrong today, whatever the
- *   upstream PR queue does. Forking is how a correction ships without waiting and without becoming a private patch
- *   nobody else can see — the fork is public, the diff is a normal WOF record change, and the upstream PR is a push
- *   away from the same branch.
- *
- *   The preference is divergence-based, and must be: the fork org holds a fork of every `whosonfirst-data-*` repo,
- *   almost all of which carry nothing of ours. Existence therefore says only that a fork was made. Divergence says a
- *   correction lives there, which is the thing worth preferring a remote for. Nothing needs a second registration
- *   step, so the two lists cannot drift apart.
- *
- *   A machine with no network, no `gh`, or no fork resolves upstream and says so — the plain degradation, never a
- *   hard failure.
- *
- *   Nothing here clones. It answers "where should this come from", so a clone, a fetch and an audit all read the same
- *   answer instead of three hand-typed URLs.
- */
-
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { runFile } from "@mailwoman/core/process"
 
@@ -37,8 +12,8 @@ export const FORK_ORG = "mailwoman"
 export const UPSTREAM_ORG = "whosonfirst-data"
 
 /**
- * Where a repo should be pulled from, and why — the `reason` travels so a build log can say which remote it read
- * without the reader inferring it from the URL.
+ * Describes the remote a WOF repo should be cloned from.
+ * The `reason` field is meant for build logs.
  */
 export interface RepoOrigin {
 	repo: string
@@ -49,41 +24,30 @@ export interface RepoOrigin {
 }
 
 /**
- * SSH remote for an org/repo pair — the form the existing clones already use.
+ * Returns the GitHub SSH remote URL for an org and repo.
  */
 export function repoURL(org: string, repo: string): string {
 	return `ssh://git@github.com/${org}/${repo}`
 }
 
 /**
- * What our fork of a repo is, relative to upstream.
+ * The state of our fork of a repo.
  *
- * `"absent"` — the fork org does not hold it. `"clean"` — a fork exists carrying nothing upstream lacks. `"diverged"` —
- * the fork holds at least one commit upstream does not, i.e. a correction of ours.
+ * A `clean` fork has no commits ahead of upstream, and a `diverged` fork has at least one.
  */
 export type ForkState = "absent" | "clean" | "diverged"
 
 /**
- * What our fork looks like. Injected so the resolver stays pure and testable. the CLI passes a `gh`-backed probe, tests
- * pass a map.
- *
- * A boolean cannot express this: "a fork exists" and "the fork holds a correction" are different questions, and the
- * fork org answers yes to the first for every WOF repo.
+ * Reports the {@link ForkState} of a repo in an org.
+ * Tests inject a stub in place of GitHub.
  */
 export type ForkProbe = (org: string, repo: string) => Promise<ForkState>
 
 /**
- * Resolve the origin for one WOF repo.
+ * Resolves a WOF repo to our fork when the fork has diverged, and to upstream otherwise.
  *
- * Divergence rather than existence. A GitHub fork does not track its parent, so a fork carrying none of our commits is
- * a point-in-time snapshot that drifts further from upstream every day it sits there. Preferring one would read older
- * data for no benefit, silently, on every fresh clone — which is why a clean fork resolves upstream and says why.
- * "Prefer our fork" always meant "prefer the remote our corrections are on"; `diverged` is that, stated so a machine
- * can check it.
- *
- * A probe that throws (no network, no `gh`, no auth) resolves upstream with the failure in `reason`: an unreachable
- * fork registry is not evidence about the fork either way, and pretending otherwise would silently pull upstream data
- * over a correction we rely on. The caller sees which happened.
+ * A clean fork resolves to upstream because GitHub forks do not track their parent.
+ * A probe failure also resolves to upstream and records the failure in `reason`.
  */
 export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Promise<RepoOrigin> {
 	let state: ForkState
@@ -117,13 +81,11 @@ export async function resolveWOFRepoOrigin(repo: string, probe: ForkProbe): Prom
 }
 
 /**
- * The `gh`-backed {@linkcode ForkProbe} the CLI passes — asks GitHub what our fork is rather than merely whether it
- * exists. `compare` answers `ahead_by` — commits the fork holds that upstream does not — and that is the only thing
- * that makes a fork worth preferring, since the fork org holds a fork of every WOF repo whether or not we have
- * corrected it.
+ * Probes our fork through the `gh` CLI.
  *
- * A throw is not "no fork": {@linkcode resolveWOFRepoOrigin} keeps that distinction, so a failed lookup is recorded as
- * upstream-with-a-caveat rather than upstream-as-established-fact.
+ * @returns `diverged` when GitHub's compare shows the fork ahead of upstream, `clean`
+ * when the fork has no commits ahead, and `absent` when the fork lookup returns 404.
+ * @throws Error when the fork lookup fails for another reason or the compare yields no `ahead_by`.
  */
 export const githubForkProbe: ForkProbe = async (org, repo) => {
 	try {
@@ -131,8 +93,6 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 	} catch (error) {
 		const stderr = error instanceof Error && "stderr" in error && typeof error.stderr === "string" ? error.stderr : ""
 
-		// A 404 is a real answer: the fork does not exist. Anything else (no auth, no network, rate limit) is a
-		// failed lookup, and must reach the resolver as a throw so it is not recorded as absence.
 		if (/HTTP 404|Not Found/i.test(`${errorMessage(error)}${stderr}`)) {
 			return "absent"
 		}
@@ -140,18 +100,18 @@ export const githubForkProbe: ForkProbe = async (org, repo) => {
 		throw error
 	}
 
-	try {
-		const { stdout } = await runFile("gh", [
-			"api",
-			`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
-			"--jq",
-			".ahead_by",
-		])
+	const { stdout } = await runFile("gh", [
+		"api",
+		`/repos/${org}/${repo}/compare/${UPSTREAM_ORG}:HEAD...${org}:HEAD`,
+		"--jq",
+		".ahead_by",
+	])
 
-		return Number(stdout.trim()) > 0 ? "diverged" : "clean"
-	} catch {
-		// The fork is known to exist. only the comparison failed. Calling that "diverged" would prefer a
-		// possibly-stale snapshot on no evidence.
-		return "clean"
+	const aheadBy = Number(stdout.trim())
+
+	if (stdout.trim() === "" || !Number.isInteger(aheadBy)) {
+		throw new Error(`compare returned no ahead_by for ${org}/${repo}: "${stdout.trim()}"`)
 	}
+
+	return aheadBy > 0 ? "diverged" : "clean"
 }

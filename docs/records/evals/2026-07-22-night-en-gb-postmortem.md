@@ -20,7 +20,7 @@ The arc's science, in four runs (full record: config headers + `.superpowers/sdd
 | feed (8k)        | one var: 4-locale split at same density       | 0/246 · 0/69                            | 0/69, gaps worsened                    | skew costs recovered (bare-locality 0.988) but tag re-buried                                                                    |
 | checkpoint sweep | (no GPU)                                      | flat zero all checkpoints               | **peak 5/69 @ 2k → monotonic decline** | **RE-BURIAL: hot classifier LR is a ~2k resurrection window, after which the 93% negative mass re-buries the tag at hot speed** |
 
-The null condition is **not** met — the tag is learnable; the _schedule_ is wrong. Diversification did exactly what it promised for the guards and nothing for retention.
+The null condition is **not** met. The tag is learnable; the _schedule_ is wrong. Diversification did exactly what it promised for the guards and nothing for retention.
 
 ## Decisions needed (the morning fork)
 

@@ -48,8 +48,8 @@ describe("universal augmentations", () => {
 
 		expect(out.raw).toBe("PORTLAND, OR 97214")
 		expect(out.components.locality).toBe("PORTLAND")
-		expect(out.synth?.method).toBe("case-upper")
-		expect(out.synth?.base_source_id).toBe("t-1")
+		expect(out.recipe?.recipe).toBe("case-upper")
+		expect(out.recipe?.base_source_id).toBe("t-1")
 		expect(out.source_id).toBe("t-1+case-upper")
 	})
 
@@ -70,7 +70,7 @@ describe("universal augmentations", () => {
 		)!
 
 		expect(out.raw).toBe("Portland OR 97214")
-		expect(out.synth?.method).toBe("drop-commas")
+		expect(out.recipe?.recipe).toBe("drop-commas")
 	})
 
 	it("doubleSpace inserts double spaces in raw AND in components (alignment-safe)", () => {
@@ -126,7 +126,7 @@ describe("US augmentations", () => {
 
 		expect(out.raw).toBe("Portland, Oregon 97214")
 		expect(out.components.region).toBe("Oregon")
-		expect(out.synth?.method).toBe("state-expand")
+		expect(out.recipe?.recipe).toBe("state-expand")
 	})
 
 	it("stateAbbreviate Oregon → OR", () => {
@@ -204,7 +204,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 
 		expect(out.components.street).toBe("5th Ave")
 		expect(out.raw).toBe("350 5th Ave, New York, NY 10118")
-		expect(out.synth?.method).toBe("us-street-suffix-abbreviate")
+		expect(out.recipe?.recipe).toBe("us-street-suffix-abbreviate")
 	})
 
 	it("streetSuffixAbbreviate AVENUE → AVE (uppercase preserved, OpenAddresses-style)", () => {
@@ -296,7 +296,7 @@ describe("US street-suffix codex augmentations (Pub-28 Appendix C)", () => {
 
 		expect(out.components.street).toBe("5th Avenue")
 		expect(out.raw).toBe("350 5th Avenue, New York, NY 10118")
-		expect(out.synth?.method).toBe("us-street-suffix-expand")
+		expect(out.recipe?.recipe).toBe("us-street-suffix-expand")
 	})
 
 	it("streetSuffixExpand AVE → AVENUE (uppercase preserved)", () => {
@@ -363,7 +363,7 @@ describe("US unit-designator codex augmentations (Pub-28 Appendix C2)", () => {
 		const out = unitDesignatorExpand(unitRow({}))!
 		expect(out.components.unit).toBe("Apartment 4B")
 		expect(out.raw).toBe("123 Main St Apartment 4B, Oakland, CA 94601")
-		expect(out.synth?.method).toBe("us-unit-designator-expand")
+		expect(out.recipe?.recipe).toBe("us-unit-designator-expand")
 	})
 
 	it("unitDesignatorAbbreviate Apartment → Apt", () => {
@@ -461,7 +461,7 @@ describe("FR augmentations", () => {
 		expect(out.raw).toBe("10 Rue République, 75008 Paris")
 		expect(out.components.street_prefix_particle).toBeUndefined()
 		expect(out.components.street_prefix).toBe("Rue")
-		expect(out.synth?.method).toBe("particle-strip")
+		expect(out.recipe?.recipe).toBe("particle-strip")
 	})
 
 	it("particleStrip returns null when no particle is present", () => {
@@ -501,7 +501,7 @@ describe("registry + defaults", () => {
 
 		const out = Array.from(synthesizeRow(row))
 		// Case-upper + case-lower + drop-commas + double-space + state-expand all apply
-		const methods = out.map((r) => r.synth?.method)
+		const methods = out.map((r) => r.recipe?.recipe)
 		expect(methods).toContain("case-upper")
 		expect(methods).toContain("case-lower")
 		expect(methods).toContain("drop-commas")
@@ -516,19 +516,20 @@ describe("registry + defaults", () => {
 		})
 
 		const out = Array.from(synthesizeRow(row))
-		const upper = out.find((r) => r.synth?.method === "case-upper")!
+		const upper = out.find((r) => r.recipe?.recipe === "case-upper")!
 		expect(upper.source_id).toBe("t-1+case-upper")
-		expect(upper.synth?.base_source_id).toBe("t-1")
+		expect(upper.recipe?.base_source_id).toBe("t-1")
 	})
 })
 
 // Raw-surface punctuation survival.
 //
 // Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
-// itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow` on each
-// augmented copy, deriving the char-offset span triple from the augmented raw. These probes pin
-// the property v0.5.0 makes essential: intra-span punctuation (the dotted `P.O. Box` is the
-// canonical case) survives onto the augmented copy, and every span addresses the new raw exactly.
+// itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow`
+// on each augmented copy, deriving the char-offset span triple from the augmented raw.
+// These probes pin the property v0.5.0 makes essential: intra-span punctuation
+// (the dotted `P.O. Box` is the canonical case) survives onto the augmented copy,
+// and every span addresses the new raw exactly.
 // A future refactor that rebuilds raw from tokens would fail these.
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
@@ -599,7 +600,8 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 	const cases: ReadonlyArray<[id: string, row: CanonicalRow, expectedPoBox: string]> = [
 		["case-upper", poBoxRow(), "P.O. BOX 5"],
 		["case-lower", poBoxRow(), "p.o. box 5"],
-		// drop-commas deliberately deletes the commas between spans. the dots inside the span stay.
+		// drop-commas deliberately deletes the commas between spans.
+		// The dots inside the span stay.
 		["drop-commas", poBoxRow(), "P.O. Box 5"],
 		["double-space", poBoxRow(), "P.O.  Box  5"],
 		// typo-inject edits the locality ("Portland"); the po_box span (digits → never eligible) survives.
@@ -668,7 +670,7 @@ describe("augmented copies keep intra-span punctuation (#519)", () => {
 		expect(abbreviated.raw).toBe("P.O. Box 5, 100 Main St, Portland, OR 97214")
 		const upper = caseUpper(abbreviated)!
 		expect(upper.source_id).toBe("t-1+us-street-suffix-abbreviate+case-upper")
-		expect(upper.synth?.base_source_id).toBe("t-1")
+		expect(upper.recipe?.base_source_id).toBe("t-1")
 		const aligned = alignRow(upper)
 		expect(aligned.kind).toBe("labeled")
 
@@ -763,8 +765,9 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
-		// Kryptonite case #3: apostrophe + St./Saint ambiguity. "P'tit" and "St." are inside
-		// the venue surface form rather than a street_prefix or honorific in the address.
+		// Kryptonite case #3: apostrophe + St./Saint ambiguity.
+		// "P'tit" and "St." are inside the venue surface form rather than a street_prefix
+		// or honorific in the address.
 		const address = baseRow({
 			raw: "Montreal, QC H2X 1Y4",
 			country: "CA",
@@ -780,12 +783,12 @@ describe("composeAdversarialRow", () => {
 
 		if (result.kind !== "labeled") return
 
-		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street, Café
-		// (period is a separator, apostrophe joins, accented chars are word chars).
+		// The venue tokens via the whitespace tokenizer: P'tit, St, Denis, Street,
+		// Café (period is a separator, apostrophe joins, accented chars are word chars).
 		expect(result.row.tokens[0]).toBe("P'tit")
 		expect(result.row.tokens[1]).toBe("St")
-		// Every venue token gets the venue label — the embedded "St" is venue rather than
-		// street_prefix.
+		// Every venue token gets the venue label.
+		// The embedded "St" is venue rather than street_prefix.
 		const venueTokenCount = 5
 
 		for (let i = 0; i < venueTokenCount; i++) {
@@ -831,8 +834,8 @@ describe("composeAdversarialRow", () => {
 
 		if (result.kind !== "labeled") return
 
-		expect(result.row.synth?.method).toBe("compose:place-name-venue")
-		expect(result.row.synth?.base_source_id).toBe("wof-admin-buffalo")
+		expect(result.row.recipe?.recipe).toBe("compose:place-name-venue")
+		expect(result.row.recipe?.base_source_id).toBe("wof-admin-buffalo")
 		expect(result.row.source_id).toBe("wof-admin-buffalo+compose:place-name-venue")
 	})
 
@@ -906,8 +909,7 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("address that fails alignment quarantines with the propagated reason", () => {
-		// region "qqqqqq" can't be located in the raw and is too far from any window to match
-		// under default edit distance — alignment quarantines it.
+		// region "qqqqqq" can't be located in the raw and is too far from any window to match under default edit distance — alignment quarantines it.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },
@@ -1051,7 +1053,7 @@ describe("typoInject (#530)", () => {
 	it("injects exactly one typo into an alpha-name component, applied to raw + the component", () => {
 		const out = typoInject(row)
 		expect(out).not.toBeNull()
-		expect(out!.synth?.method).toBe("typo-inject")
+		expect(out!.recipe?.recipe).toBe("typo-inject")
 
 		const changed = (Object.keys(row.components) as ComponentTag[]).filter(
 			(k) => row.components[k] !== out!.components[k]

@@ -12,14 +12,17 @@ import { parseMapURL } from "@mailwoman/geocode-oracle/sdk/map-link"
 import { describe, expect, it } from "vitest"
 
 /**
- * Real, from the batch. Carries both an `@` viewport and a `!3d`/`!4d` pin, which is the point.
+ * Real, from the batch.
+ *
+ * Carries both an `@` viewport and a `!3d`/`!4d` pin, which is the point.
  */
 const DONKEYS =
 	"https://www.google.com/maps/place/Donkey's+Place+Downtown/@39.9942189,-74.792132,1062m/data=!3m1!1e3!4m6!3m5!1s0x89c149851392e0e1:0x5fa9b478e2137c3b!8m2!3d39.9933298!4d-74.7902421!16s%2Fg%2F11p0564gth"
 
 describe("parseMapURL", () => {
 	it("takes the PLACE PIN, not the viewport, when both are present", () => {
-		// The two differ by ~230 m here. Reading `@` instead would spend the entire tolerance budget of a rooftop case
+		// The two differ by ~230 m here.
+		// Reading `@` instead would spend the entire tolerance budget of a rooftop case
 		// before the geocoder is even asked anything.
 		const row = parseMapURL("https://maps.app.goo.gl/Ze46", DONKEYS)
 
@@ -52,8 +55,8 @@ describe("parseMapURL", () => {
 	})
 
 	it("reports an unresolvable URL rather than inventing a coordinate", () => {
-		// Never 0,0 and never a silent drop: a batch that loses rows quietly produces a case file whose denominator
-		// nobody can reconstruct.
+		// Never 0,0 and never a silent drop: a batch that loses rows quietly produces
+		// a case file whose denominator nobody can reconstruct.
 		const row = parseMapURL("https://maps.app.goo.gl/nope", "https://www.google.com/maps/search/nothing+here")
 
 		expect(row.resolved).toBe(false)

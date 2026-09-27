@@ -2,14 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `@mailwoman/kind-classifier` — Stage 2.5 of the runtime pipeline.
- *
- *   Categorize inputs into one of eight `QueryKind`s by composing rule-based scorers over the
- *   QueryShape sub-system's output. Pure functions, no ML, no place-name dictionaries. Returns
- *   possibilities (alternatives) alongside the top pick so the coordinator can fall back when the
- *   winning kind isn't actionable.
- *
- *   See `docs/engineering/reference/stages.md` § Stage 2.5 for the interface.
+ *   Stage 2.5 classifier: compose rule-based scorers over QueryShape and return a top kind with alternatives.
  */
 
 export { classifyKind, classifyKindSync, createKindClassifier } from "#classify"

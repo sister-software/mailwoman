@@ -26,7 +26,7 @@ import {
 	type UPRNDatabase,
 } from "@mailwoman/resolver-wof-sqlite/uprn"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -34,20 +34,23 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Westminster holds a point. Edinburgh is covered and empty. New York is outside coverage entirely.
+ * Westminster holds a point.
+ *
+ * Edinburgh is covered and empty.
+ * New York is outside coverage entirely.
  */
 const WESTMINSTER = { latitude: 51.5007, longitude: -0.1246 }
 const EDINBURGH = { latitude: 55.9533, longitude: -3.1883 }
 const NEW_YORK = { latitude: 40.7128, longitude: -74.006 }
 
-let dir: PathBuilderLike
+let dir: PathBuilder
 
 beforeAll(async () => {
 	dir = fixtures.use(await temporaryDirectory("uprn-existence-")).path
 })
 
-async function fixture(name: string, basis: CoverageBasis): Promise<string> {
-	const path = String(join(dir, name))
+async function fixture(name: string, basis: CoverageBasis): Promise<PathBuilder> {
+	const path = dir(name)
 	using kdb = new DatabaseClient<UPRNDatabase>(path)
 
 	await createUPRNTable(kdb)
@@ -76,7 +79,9 @@ async function fixture(name: string, basis: CoverageBasis): Promise<string> {
 		createdAt: "2026-08-18T00:00:00.000Z",
 	})
 
-	// Both cells are covered. Only one holds a point — that is the whole distinction under test.
+	// Both cells are covered.
+	// Only one holds a point.
+	// That is the whole distinction under test.
 	const cells = new Set([WESTMINSTER, EDINBURGH].map((p) => uprnCoverageCell(p.latitude, p.longitude)))
 
 	await writeLayerCoverage(

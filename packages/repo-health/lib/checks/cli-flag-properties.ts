@@ -6,8 +6,8 @@
  *
  *   A command declares its flags in kebab case and reads them as properties. the router derives one from the other with
  *   `optionPropertyName`, whose table says which segments capitalize a whole acronym. A segment missing from that table
- *   title-cases instead, and the flag then reaches the component under a name nothing reads. Nothing reports it: the
- *   flag parses, passes validation, and does nothing, so the command succeeds and writes no file. Ten flags across
+ *   title-cases instead, and the flag then reaches the component under a name no code reads. No check reports it: the
+ *   flag parses, passes validation, and has no effect, so the command succeeds and writes no file. Ten flags across
  *   seven commands were in that state when the table knew only `db` — `eval oa-resolver --out-json` among them.
  *
  *   The check derives each flag's property with the router's own function, so the check and the runtime cannot
@@ -28,8 +28,11 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * The flag keys of one `spec.options` block: the object between `options: {` and the `satisfies CommandSpec` that
- * closes the spec. Only kebab keys are read — a single-segment flag derives itself and can never disagree.
+ * The flag keys of one `spec.options` block: the object between `options: {`
+ * and the `satisfies CommandSpec` that closes the spec.
+ *
+ * Only kebab keys are read.
+ * A single-segment flag derives itself and can never disagree.
  */
 const KEBAB_FLAG = /["']([a-z0-9]+(?:-[a-z0-9]+)+)["']\s*:/gu
 
@@ -59,8 +62,8 @@ function specFlags(source: string): string[] {
 }
 
 /**
- * The check that keeps the acronym table honest: a flag whose derived property no source mentions fails here rather
- * than parsing, validating and doing nothing.
+ * The check that keeps the acronym table honest: a flag whose derived property no source
+ * mentions fails here rather than parsing, validating and having no effect.
  */
 export const cliFlagPropertiesCheck: RepoCheck = {
 	id: "cli-flag-properties",

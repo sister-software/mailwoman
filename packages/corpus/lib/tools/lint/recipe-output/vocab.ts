@@ -7,7 +7,7 @@
  *
  *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
  *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
- *   `dataRootPath` so the lab `/mnt/playpen` literal stays in its one home
+ *   `dataRootPath` so the lab `$MAILWOMAN_DATA_ROOT` literal stays in its one home
  *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored. with the env unset it equals
  *   the Python default.
  *
@@ -38,10 +38,10 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { tryParsingJSON } from "@mailwoman/core/json"
 import { pyRound } from "@mailwoman/core/numeric"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
-import { connectDuckDB, type DuckDBConnection } from "#parquet/duckdb"
+import { type DuckDBConnection, openDuckDB } from "#parquet/duckdb"
 
 /**
  * A column-projected base or recipe-output row: parallel token + label lists plus the row's country.
@@ -62,9 +62,11 @@ function stripBIO(label: string): string {
 }
 
 /**
- * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens (house_number / postcode)
- * are context-determined rather than lexical vocab, so they're excluded. `\p{Nd}` covers the decimal digits these
- * address corpora actually contain.
+ * Python `str.isdigit()`: non-empty and every character a Unicode digit.
+ *
+ * Pure-numeric tokens (house_number / postcode) are context-determined
+ * rather than lexical vocab, so they're excluded.
+ * `\p{Nd}` covers the decimal digits these address corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
@@ -78,9 +80,10 @@ function pct(frac: number): string {
 }
 
 /**
- * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0 -> "1.0"),
- * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `fraction` echo so the banner matches the Python
- * print.
+ * Format a float the way a Python f-string renders it: integer-valued floats keep one
+ * decimal (1.0 -> "1.0"), everything else is its shortest decimal (0.5 -> "0.5").
+ *
+ * Used for the `fraction` echo so the banner matches the Python print.
  */
 function formatPyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
@@ -94,8 +97,10 @@ function pad(value: string, width: number): string {
 }
 
 /**
- * The dominant tag of a counter: (tag, total, fraction). Empty counter -> ("", 0, 0.0). Ties go to the first-inserted
- * tag, mirroring `Counter.most_common(1)` (stable on equal counts).
+ * The dominant tag of a counter: (tag, total, fraction).
+ *
+ * Empty counter -> ("", 0, 0.0).
+ * Ties go to the first-inserted tag, mirroring `Counter.most_common(1)` (stable on equal counts).
  */
 function dominant(counter: Map<string, number>): [string, number, number] {
 	let total = 0
@@ -131,9 +136,10 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 }
 
 /**
- * Read a corpus parquet into rows, projecting only tokens/labels/country. The list columns ride out as JSON text
- * (DuckDB `to_json`) — the same trick the gazetteer builders use for nested columns — and parse back to string arrays
- * here.
+ * Read a corpus parquet into rows, projecting only tokens/labels/country.
+ *
+ * The list columns ride out as JSON text (DuckDB `to_json`) — the same trick the gazetteer
+ * builders use for nested columns — and parse back to string arrays here.
  */
 async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(
@@ -178,23 +184,33 @@ export interface LintRecipeVocabOptions {
 	 */
 	recipeOutputPath: string
 	/**
-	 * Base corpus version. Default `v0.5.0`.
+	 * Base corpus version.
+	 *
+	 * Default `v0.5.0`.
 	 */
 	baseVersion?: string
 	/**
-	 * Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 * Base corpus root.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
 	 */
 	baseRoot?: string
 	/**
-	 * Base-majority confidence floor for a contradiction. Default 0.7.
+	 * Base-majority confidence floor for a contradiction.
+	 *
+	 * Default 0.7.
 	 */
 	threshold?: number
 	/**
-	 * Minimum base support to judge a token. Default 50.
+	 * Minimum base support to judge a token.
+	 *
+	 * Default 50.
 	 */
 	minCount?: number
 	/**
-	 * Fraction of base parts to scan (proportional per-source sample below 1.0). Default 1.0.
+	 * Fraction of base parts to scan (proportional per-source sample below 1.0).
+	 *
+	 * Default 1.0.
 	 */
 	fraction?: number
 }
@@ -224,12 +240,12 @@ export interface LintRecipeVocabSummary {
  */
 export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<LintRecipeVocabSummary> {
 	const baseVersion = options.baseVersion ?? "v0.5.0"
-	const baseRoot = options.baseRoot ?? dataRootPath("corpus", "versioned")
+	const baseRoot = PathBuilder.from(options.baseRoot ?? dataRootPath("corpus", "versioned"))
 	const threshold = options.threshold ?? 0.7
 	const minCount = options.minCount ?? 50
 	const fraction = options.fraction ?? 1
 
-	const con = await connectDuckDB()
+	using con = await openDuckDB()
 
 	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)
@@ -261,7 +277,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
 	// 2. base parts — full by default. fraction<1 takes a proportional per-source sample (still big)
-	const trainDir = join(baseRoot, baseVersion, `corpus-${baseVersion}`, "train")
+	const trainDir = baseRoot(baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
 		await Globerator.from("*.parquet", {
@@ -329,7 +345,8 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		}
 	}
 
-	// 4. compare. flag contradictions (affix-split is expected — surfaced but tagged)
+	// 4. compare.
+	//    Flag contradictions (affix-split is expected — surfaced but tagged)
 	const flagged: VocabRow[] = []
 	const affix: VocabRow[] = []
 

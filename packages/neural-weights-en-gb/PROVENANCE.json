@@ -60,41 +60,49 @@
 	"artifacts": [
 		{
 			"path": "postcode-gb.bin",
+			"role": "postcode-binary",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "pair-index-gb.bin",
+			"role": "placetype-pair-index",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "fst-en-gb.bin",
+			"role": "gazetteer-fst",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "fst-street-morphology.bin",
+			"role": "gazetteer-fst",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "anchor-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "locality-surface-lexicon-v7.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "street-type-lexicon-v3.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		},
 		{
 			"path": "country-surface-lexicon-v1.json",
+			"role": "lexicon",
 			"md5": null,
 			"digest": "unrecorded"
 		}
@@ -104,15 +112,19 @@
 		"entries": [
 			{
 				"text": "HM Land Registry — Price Paid Data (OGL v3.0): the `pair-index-gb.bin` placetype-pair index this package ships. Crown copyright, attribution required. The same source feeds the `synth-gb-v1` training extract recorded in `neural-weights-en-us`.",
-				"license_named": "OGL v3.0"
+				"license_named": "OGL v3.0",
+				"uses": ["training"]
 			}
-		]
+		],
+		"by_use": {
+			"training": 1
+		}
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 8 of 8 declared artifacts: postcode-gb.bin, pair-index-gb.bin, fst-en-gb.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

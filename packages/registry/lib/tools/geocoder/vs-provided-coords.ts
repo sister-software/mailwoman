@@ -12,7 +12,7 @@
  *   geocoder on real facility addresses. it does not touch the matcher.
  *
  *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
- *   it is itself a third-party geocode of unknown provenance — a large delta is a discrepancy to
+ *   it is itself a third-party geocode of unknown provenance. A large delta is a discrepancy to
  *   inspect rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
@@ -24,6 +24,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/match"
+import { TextSpliterator } from "spliterator"
 
 import { streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -48,11 +49,15 @@ export interface GeocoderVsProvidedCoordsOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: string
 	/**
-	 * Facilities geocoded. Default 2000.
+	 * Facilities geocoded.
+	 *
+	 * Default 2000.
 	 */
 	max?: number
 	/**
@@ -64,20 +69,27 @@ export interface GeocoderVsProvidedCoordsOptions {
 /**
  * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.
  *
- * Deliberately strict, and deliberately not `GeoPoint.from()`. The provided coordinate is this eval's ground truth, so
- * a row we cannot read exactly has to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible
- * — a silently repaired coordinate lands in the delta distribution as geocoder error. Two of the three divergences that
- * originally justified this parser were defects in `GeoPoint` and were fixed on 2026-08-05: it no longer guesses axis
- * order from the magnitudes, and an out-of-range value is now rejected instead of accepted (`200,-97.74` used to become
- * a point). What remains is not a defect and not negotiable. This source writes `latitude,longitude`; `GeoPoint` reads
- * GeoJSON `[longitude, latitude]`, so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there — and
- * `GeoPoint.from` maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
- * The report below attributes part of its p99/max tail to malformed provided coordinates, so those rows have to stay
- * rejected or measured as-is, never rewritten. Strictness is the measurement rather than an unfinished migration.
+ * Deliberately strict, and deliberately not `GeoPoint.from()`.
+ * The provided coordinate is this eval's ground truth, so a row we cannot read exactly has
+ * to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible —
+ * a silently repaired coordinate lands in the delta distribution as geocoder error.
+ *
+ * Two of the three divergences that originally justified this parser were defects in `GeoPoint`
+ * and were fixed on 2026-08-05: it no longer guesses axis order from the magnitudes, and an
+ * out-of-range value is now rejected instead of accepted (`200,-97.74` used to become a point).
+ * What remains is not a defect and not negotiable.
+ *
+ * This source writes `latitude,longitude`; `GeoPoint` reads GeoJSON `[longitude, latitude]`,
+ * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there, and `GeoPoint.from`
+ * maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
+ * The report below attributes part of its p99/max tail to malformed provided coordinates,
+ * so those rows have to stay rejected or measured as-is, never rewritten.
+ *
+ * Strictness is the measurement rather than an unfinished migration.
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
-	const [a, b] = raw.split(",").map((x) => Number(x.trim()))
+	const [a, b] = TextSpliterator.from(raw, { delimiter: "," }).map(Number).toArray()
 
 	if (!Number.isFinite(a) || !Number.isFinite(b)) return null
 
@@ -86,12 +98,14 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 	return { latitude: a!, longitude: b! }
 }
 
-// The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)`
-// — byte-identical semantics (floor index, clamped); `?? NaN` keeps empty-sample behavior.
+// The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)` —
+// byte-identical semantics (floor index, clamped); `?? NaN` keeps empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**
- * Geocoder validation against provided coordinates (#619) — see the module doc. Emits the report to stdout.
+ * Geocoder validation against provided coordinates (#619) — see the module doc.
+ *
+ * Emits the report to stdout.
  */
 export async function geocoderVsProvidedCoords(
 	options: GeocoderVsProvidedCoordsOptions,

@@ -2,40 +2,33 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Build the derived street-centroid extract (`ban/street-centroids-<cc>.db`, #1042) from the sealed
- *   rooftop address-point extract (`ban/address-points-<cc>.db`, #1012). No new data source: it is a
- *   `group BY street` roll-up of the register we already ingested — one row per (street_norm, postcode,
- *   commune) carrying the street's centroid + bounding-box extent + member-point count. The output feeds
- *   `StreetCentroidSqliteLookup`, the street-level tier for a street-only query (a thoroughfare with no
- *   house number) that no address-point tier can serve by definition.
+ *   Builds the street-centroid database (`street-centroids-<cc>.db`) from the sealed BAN
+ *   address-point database. Each row holds one street, postcode and commune with its centroid,
+ *   bounding box and point count. `StreetCentroidSqliteLookup` reads it to answer queries that have a
+ *   street but no house number.
  *
- *   The commune is the arrondissement-stripped base commune (`stripArrondissement` — BAN names
- *   Paris/Lyon/Marseille rows per arrondissement, but a query names the base commune); the aggregation
- *   groups on the full `locality_norm` and emits the base, so a rare (street, postcode, base) collision
- *   across two arrondissements is merged harmlessly by the reader's weighted aggregate.
- *
- *   The sealed input is opened read-only and never modified. Build discipline (house rules): aggregate
- *   in SQLite → stream via `.iterate()` → positional prepared insert (batched) into a staging DB →
- *   indexes → analyze → atomic swap into place → seal 0444 → record md5 + the derivation provenance in
- *   `ban/street-centroids-<cc>.attribution.json`. Purely additive. it never touches the rooftop extract.
+ *   BAN splits Paris, Lyon and Marseille into arrondissements, but queries use the base commune.
+ *   The query groups by the full locality and emits the base commune. The reader's weighted average
+ *   merges the rare case where two arrondissements share a street and postcode.
  *
  *   Usage:
- *     node ban/out/scripts/build-street-centroid-extract.js            # fr, default paths
- *     node ban/out/scripts/build-street-centroid-extract.js --country fr --out /tmp/sc-fr.db
+ *     node packages/ban/out/scripts/build/street-centroid-database.js
+ *     node packages/ban/out/scripts/build/street-centroid-database.js --country fr --out /tmp/sc-fr.db
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile, removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
 import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	type layerschemadatabase,
 	LayerFreshnessPolicy,
 	LayerTier,
+	scriptBuildCommand,
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
@@ -57,6 +50,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { dirname, resolvePath } from "path-ts"
 
+import { banDatabasePath } from "#paths"
 import {
 	certifiedCoverageCells,
 	type CoveragePoint,
@@ -84,26 +78,26 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// Throws for an unsupported country — fail loud, never derive a tier keyed with the wrong locale rules.
+	// This call throws for an unsupported country, which would otherwise get the wrong street keys.
 	streetLocaleForBANCountry(country)
-	const source = resolvePath(values.source ?? dataRootPath("ban", `address-points-${country}.db`))
+	const source = resolvePath(values.source ?? banDatabasePath(`address-points-${country}.db`))
 
 	if (!(await pathExists(source)))
 		throw new Error(`sealed BAN rooftop extract not found: ${source} (build it via #1012 first)`)
 
 	const release = values.release ?? "2026-05-18"
-	const output = resolvePath(values.out ?? dataRootPath("ban", `street-centroids-${country}.db`))
+	const output = resolvePath(values.out ?? banDatabasePath(`street-centroids-${country}.db`))
 
 	return { country, source, release, output }
 }
 
 /**
- * The md5 the #1012 build recorded for the sealed rooftop input, for the derivation provenance chain.
+ * Read the md5 that the address-point build recorded for its output, or `null` when it is missing.
  */
 async function sourceMD5(country: string): Promise<string | null> {
 	try {
 		const rec = tryParsingJSON<{ artifact?: string; md5?: string }>(
-			await readLocalTextFile(dataRootPath("ban", "ATTRIBUTION.json")),
+			await readLocalTextFile(banDatabasePath("ATTRIBUTION.json")),
 			{}
 		)
 
@@ -124,13 +118,11 @@ async function main(): Promise<void> {
 		await removePathIfPresent(tmp + sfx)
 	}
 
-	// The sealed input — read-only, immutable. register the base-commune folder as a scalar SQL function.
 	using src = new DatabaseClient<AddressPointDatabase>(args.source, { readOnly: true })
 
-	// SQLite hands a scalar function its argument as `unknown`, which erases the key brand. The value is
-	// `address_point.locality_norm`, which the shared schema declares a `NameKey` (the builder wrote it through
-	// `normalizeLocalityForKey`). Therefore, re-minting it here restores a fact the SQL boundary dropped rather than asserting a
-	// new one — the fold is not re-applied, because a second fold of an already-folded key is what would drift.
+	// SQLite passes the argument as `unknown`.
+	// The value is `locality_norm`, which the schema declares a `NameKey`, so the cast restores the brand.
+	// Folding it again could change the key.
 	src.function("ban_base_commune", { deterministic: true }, (loc: unknown): string =>
 		typeof loc === "string" && loc ? stripArrondissement(loc as NameKey) : ""
 	)
@@ -147,9 +139,8 @@ async function main(): Promise<void> {
 			`INSERT INTO street_centroid VALUES (${STREET_CENTROID_COLUMNS.map(() => "?").join(", ")})`
 		)
 
-		// group BY the sealed rooftop points into per-(street, postcode, commune) roll-ups. AVG(lat/lon) over the group's
-		// member points is the exact centroid. MIN/MAX is the extent. count is the weight for the reader's cross-group mean.
-		// The base commune is emitted per group (2.2M calls), not per source row.
+		// The point count weights the reader's average across groups.
+		// Calling `ban_base_commune` in the select list runs it once per group instead of once per point.
 		const agg = src.prepare(
 			`SELECT street_norm,
 			        postcode,
@@ -181,7 +172,7 @@ async function main(): Promise<void> {
 			n: number
 			street_raw: string
 		}>) {
-			// Positional, in STREET_CENTROID_COLUMNS order.
+			// Values follow STREET_CENTROID_COLUMNS order.
 			insert.run(
 				row.street_norm,
 				row.postcode,
@@ -196,8 +187,8 @@ async function main(): Promise<void> {
 				row.street_raw,
 				source,
 				args.release,
-				// #727 phase-4c name-existence key: the interface fold of the display name, quotes stripped (a rare CSV
-				// artifact). The rerank folds the model's street surface with this same function (the fold-parity interface).
+				// The rerank folds the model's street with the same function, so the two keys compare.
+				// Some CSV rows carry stray quotes.
 				foldStreetSurface(row.street_raw.replaceAll('"', ""))
 			)
 
@@ -219,8 +210,7 @@ async function main(): Promise<void> {
 
 		await createStreetCentroidIndexes(kdb)
 
-		// The layer interface's two tables (#2150): coverage per res-9 cell from BAN's own certification flag, the
-		// commune's whole total deciding the basis, and the manifest that names where the cells live.
+		// The layer coverage comes from BAN's certification flag, judged per commune.
 		console.error(`[ban] coverage from certification (per commune, ${STREET_CENTROID_COVERAGE_RESOLUTION} cells)…`)
 
 		const flags = new Map<string, number | null>()
@@ -253,17 +243,21 @@ async function main(): Promise<void> {
 		await createLayerManifestTable(kdb)
 		await writeLayerCoverage(kdb, cells)
 
+		// `etalab-2.0` is the SPDX identifier the obligations table knows; `BAN_LICENSE` is a display string.
+		// The grant is attribution-only, so the layer is published like the situs extract it aggregates.
+		const distribution = { tier: LayerTier.Shipped, license: "etalab-2.0" }
+
+		assertTierMatchesLicense(distribution, "ban street-centroid build")
+
 		await writeLayerManifest(kdb, {
 			name: `street-centroids-${args.country}`,
 			version: args.release,
 			schemaVersion: 1,
-			tier: LayerTier.BuildLocal,
-			// The spdx identifier the obligations table knows; `BAN_LICENSE` is the display string attribution.json carries.
-			license: "etalab-2.0",
+			...distribution,
 			attribution: BAN_ATTRIBUTION,
 			source,
 			sourceVintage: args.release,
-			buildCmd: "node packages/ban/out/scripts/build/street-centroid-database.js",
+			buildCmd: scriptBuildCommand(import.meta.url),
 			buildSHA: await gitHead(repoRootPath(), { short: true }),
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: STREET_CENTROID_COVERAGE_RESOLUTION } },
@@ -287,9 +281,8 @@ async function main(): Promise<void> {
 	const bytes = (await statPath(args.output)).size
 	const srcMD5 = await sourceMD5(args.country)
 
-	// Provenance manifest — additive, written at creation (house discipline). Records the derivation chain: this
-	// artifact is derived from the sealed #1012 rooftop extract, itself derived from the BAN release.
-	const attributionPath = dataRootPath("ban", `street-centroids-${args.country}.ATTRIBUTION.json`)
+	// The attribution record links this database to the address-point database it came from.
+	const attributionPath = banDatabasePath(`street-centroids-${args.country}.ATTRIBUTION.json`)
 
 	await writeLocalTextFile(
 		prettyJSON({

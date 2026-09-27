@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Composed PipelineExplorer stories against a mock runtime — no ONNX, no gazetteer. The `Ready`
- *   story returns a fixed parse; `Loading` shows the bundle-load state.
- */
-
 import { prettyJSON } from "@mailwoman/core/json"
 import type { Meta, StoryObj } from "@storybook/react-vite"
 
@@ -13,6 +8,9 @@ import { makePipelineRuntime } from "#map/fake-runtime"
 
 import { PipelineExplorer } from "./PipelineExplorer.tsx"
 
+/**
+ * Stories for `PipelineExplorer` against a mock runtime that loads neither a model nor a gazetteer.
+ */
 const meta: Meta<typeof PipelineExplorer> = {
 	title: "Pipeline/PipelineExplorer",
 	component: PipelineExplorer,
@@ -23,8 +21,14 @@ export default meta
 
 type Story = StoryObj<typeof PipelineExplorer>
 
+/**
+ * A ready runtime that returns a fixed parse.
+ */
 export const Ready: Story = { args: { runtime: makePipelineRuntime() } }
 
+/**
+ * A runtime that is still loading its bundle.
+ */
 export const Loading: Story = {
 	args: {
 		runtime: makePipelineRuntime({
@@ -34,6 +38,9 @@ export const Loading: Story = {
 	},
 }
 
+/**
+ * A ready runtime with a host `extras` panel that shows the raw parse nodes.
+ */
 export const WithExtras: Story = {
 	args: {
 		runtime: makePipelineRuntime(),

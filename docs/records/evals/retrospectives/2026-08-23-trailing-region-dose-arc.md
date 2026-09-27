@@ -104,7 +104,7 @@ Same extract as v4.9.0, byte-identical, at a third the exposure. One variable.
 
 The damage scales with the share and does not vanish with it. A 3× reduce bought back 7 net rows and 6 venue
 rows, and the arm is still net −13, still FR −3 / GB −5 / IE −3. Regressions fall sub-linearly (25 → 22
-for a 3× reduce) because what remains is not over-exposure — it is that the extract's signal is wrong for
+for a 3× reduce) because what remains is not over-exposure. It is that the extract's signal is wrong for
 the classes it does not contain, at any exposure that teaches anything.
 
 **All four runs are DO-NOT-SHIP. Nothing was promoted or published.**
@@ -263,7 +263,7 @@ countries. Composition and share modulate the size of the shift; the shift itsel
 
 That points past the corpus at the model: a 39.3M-param encoder fine-tuned with an EWC brake against a
 US/FR base may not have capacity to hold a new tail convention without moving an old one. The next
-experiment is therefore not another extract — it is the same data against a different training shape
+experiment is therefore not another extract. It is the same data against a different training shape
 (no EWC brake, or a longer run, or a from-scratch base that sees all the tails at once). That is a
 larger commitment than a fine-tune and should be scoped as one.
 

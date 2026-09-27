@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Fixtures are lifted verbatim from real runs on 2026-08-15/16, including the exact line that got skipped the day
- *   the conditional-header rule was written.
- */
-
 import { parseGauntletReport, summarizeGauntletReport } from "@mailwoman/dev-mcp/gauntlet-report"
 import { describe, expect, it } from "vitest"
 
@@ -44,7 +39,7 @@ describe("parseGauntletReport", () => {
 	})
 
 	it("reads the firing count separately from the verdict", () => {
-		// An unchanged verdict from a mechanism that never ran proves nothing.
+		// An unchanged verdict from a mechanism that never ran proves no fact.
 		expect(parseGauntletReport(STDOUT, STDERR).postcode_country_coherence_fired_on).toEqual({ n: 110, of: 558 })
 	})
 
@@ -57,7 +52,8 @@ describe("parseGauntletReport", () => {
 	})
 
 	it("does not count a tracked non-blocking row as a counted failure", () => {
-		// The `~` rows are non-blocking. Folding them in would inflate the failure count that a verdict rests on.
+		// The `~` rows are non-blocking, and folding them in would inflate the
+		// failure count that a verdict rests on.
 		expect(parseGauntletReport(STDOUT, STDERR).counted_failures.every((f) => !f.includes("andorra"))).toBe(true)
 	})
 
@@ -97,8 +93,6 @@ describe("parseGauntletReport", () => {
 
 describe("summarizeGauntletReport", () => {
 	it("leads with the counted fraction, not the verdict word", () => {
-		// Reading the tail instead of this line is how a 329/352 run got reported as "zero regressions" against a
-		// 350/352 baseline on 2026-08-15.
 		const summary = summarizeGauntletReport(parseGauntletReport(STDOUT, STDERR))
 
 		expect(summary.startsWith("regression 352/354 counted")).toBe(true)

@@ -15,7 +15,9 @@ import type { LayerManifest } from "@mailwoman/core/layers"
 import type { CoverageBasis } from "@mailwoman/evidence"
 
 /**
- * Which artifact answered, and on what terms. Everything a reader needs to go and check the claim.
+ * Which artifact answered, and on what terms.
+ *
+ * Everything a reader needs to go and check the claim.
  */
 export interface ObservationLayerRecord {
 	name: string
@@ -33,9 +35,10 @@ export interface ObservationLayerRecord {
 /**
  * The coverage side of a designation, flattened for a marker's evidence.
  *
- * `basis` travels as a plain string because a marker's evidence is JSON a caller reads rather than a typed value it
- * branches on — but it is never omitted: `completeness` alone is a magnitude, and the whole point of the interface's
- * `basis` column is that a magnitude cannot be acted on without it.
+ * `basis` travels as a plain string because a marker's evidence is JSON a caller reads
+ * rather than a typed value it branches on, but it is never omitted: `completeness`
+ * alone is a magnitude, and the whole point of the interface's `basis` column is
+ * that a magnitude cannot be acted on without it.
  */
 export interface ObservationCoverageRecord {
 	h3Cell: number
@@ -65,10 +68,10 @@ export function observationLayerRecord(manifest: LayerManifest): ObservationLaye
 }
 
 /**
- * A reader's coverage row as the record a designation carries, or nothing where the reading had none.
+ * A reader's coverage row as the record a designation carries, or no record where the reading had none.
  *
- * Absent rather than zeroed where the layer holds no coverage row for the cell: a missing row means unknown, and a
- * record reading `completeness: 0` would say the opposite.
+ * Absent rather than zeroed where the layer holds no coverage row for the cell:
+ * a missing row means unknown, and a record reading `completeness: 0` would say the opposite.
  */
 export function observationCoverageRecord(
 	coverage:
@@ -97,8 +100,10 @@ export function observationCoverageRecord(
 }
 
 /**
- * The coverage sentence a designation's one-line description carries — one wording for every layer, with the
- * completeness term added only where the layer's basis makes a completeness magnitude meaningful.
+ * The coverage sentence a designation's one-line description carries.
+ *
+ * One wording for every layer, with the completeness term added only where the
+ * layer's basis makes a completeness magnitude meaningful.
  */
 export function describeCoverage(
 	coverage: ObservationCoverageRecord | undefined,
@@ -112,8 +117,10 @@ export function describeCoverage(
 }
 
 /**
- * The provenance sentence: which artifact answered, in one wording. `tier` widens it for a layer whose tier is part of
- * the claim (zoning ships `build-local`, and a reader must see that on the line).
+ * The provenance sentence: which artifact answered, in one wording.
+ *
+ * `tier` widens it for a layer whose tier is part of the claim
+ * (zoning ships `build-local`, and a reader must see that on the line).
  */
 export function describeLayerProvenance(layer: ObservationLayerRecord, options: { tier?: boolean } = {}): string {
 	const terms = options.tier ? `tier ${layer.tier}, license ${layer.license}` : layer.license
@@ -144,9 +151,9 @@ export interface CreateDesignationRouteOptions<Reading, Observation, Refusal ext
 }
 
 /**
- * The factory frame every designation route shares: the nullable-coordinate refusal (a geocode result has `lat`/`lon`
- * as nullable, and a coordinate-less answer is a named refusal here rather than a caller's problem), the reading-shaped
- * refusal, and the disposal that closes the lookup.
+ * The factory frame every designation route shares: the nullable-coordinate refusal
+ * (a geocode result has `lat`/`lon` as nullable, and a coordinate-less answer is a named refusal here
+ * rather than a caller's problem), the reading-shaped refusal, and the disposal that closes the lookup.
  */
 export function createDesignationRoute<Identity, Reading, Observation, Refusal extends string>(
 	lookup: { identity: Identity } & Disposable,

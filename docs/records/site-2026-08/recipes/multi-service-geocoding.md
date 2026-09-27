@@ -27,7 +27,7 @@ const res = await fetch("http://localhost:3000/v1/batch", {
 const { results } = await res.json()
 ```
 
-A local pass costs CPU time and nothing else, so "geocode all of it, twice if you like" is, for once, a perfectly reasonable plan.
+A local pass costs CPU time and no other resource, so "geocode all of it, twice if you like" is, for once, a perfectly reasonable plan.
 
 ## The routing decision
 

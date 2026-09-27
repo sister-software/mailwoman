@@ -15,6 +15,7 @@ import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { CoverageVerdict, CurrencyClass, triageWOFCurrency } from "mailwoman/gazetteer-pipeline/wof/triage"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory
@@ -28,7 +29,7 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 /**
  * A minimal admin gazetteer in the shape the triage reads.
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -74,7 +75,9 @@ function buildFixtureAdmin(path: string): void {
 }
 
 /**
- * GeoNames dump lines: 19 tab-separated columns. the pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 class, 14 population.
+ * GeoNames dump lines: 19 tab-separated columns.
+ *
+ * The pass reads 1 name, 2 ascii, 4 lat, 5 lon, 6 class, 14 population.
  */
 function geonamesLine(id: number, name: string, lat: number, lon: number, fclass: string, pop: number): string {
 	const f = new Array(19).fill("")
@@ -92,7 +95,7 @@ function geonamesLine(id: number, name: string, lat: number, lon: number, fclass
 
 describe("triageWOFCurrency", () => {
 	it("classes the Medway cluster: deprecated-no-successor and not-current-unstated, all uncovered", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -103,7 +106,7 @@ describe("triageWOFCurrency", () => {
 		expect(byName.get("Gillingham")?.currencyClass).toBe(CurrencyClass.DeprecatedNoSuccessor)
 		expect(byName.get("Medway")?.currencyClass).toBe(CurrencyClass.NotCurrentUnstated)
 
-		// Chatham is live, so it is not a subject at all — and no live record bears the other three names.
+		// Chatham is live, so it is not a subject at all, and no live record bears the other three names.
 		expect(byName.has("Chatham")).toBe(false)
 
 		for (const name of ["Rochester", "Gillingham", "Medway"]) {
@@ -114,7 +117,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("calls a same-name live record in ANOTHER BAND cross-band, not covered — the Swansea class", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -128,7 +131,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("calls the legal-form duplicate COVERED by containment — the verdict that keeps 11k US rows out of the hole count", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -141,7 +144,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("refuses both cover mirages the first live run exposed: a nameless neighbour and reverse containment", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -154,7 +157,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("never judges a SUPERSEDED record — its successor is the answer", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -164,7 +167,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("excludes placeholder 0,0 coordinates rather than measuring distances against the sentinel", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -174,7 +177,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("reports attestation as UNMEASURED when the country has no dump — absence is not a negative", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -190,7 +193,7 @@ describe("triageWOFCurrency", () => {
 	})
 
 	it("attests an uncovered record a second source independently carries, and separates it from one it does not", async () => {
-		const adminDB = scratch.resolve("admin.db")
+		const adminDB = scratch.path("admin.db")
 
 		buildFixtureAdmin(adminDB)
 
@@ -200,7 +203,7 @@ describe("triageWOFCurrency", () => {
 				// An S-class row for Gillingham must not attest — feature class is the check.
 				geonamesLine(2, "Gillingham", 51.376, 0.577, "S", 90_000),
 			],
-			scratch.resolve("GB.txt")
+			scratch.path("GB.txt")
 		)
 
 		const { rows, summary } = await triageWOFCurrency({
@@ -216,8 +219,9 @@ describe("triageWOFCurrency", () => {
 
 		const deprecated = summary.find((s) => s.currencyClass === CurrencyClass.DeprecatedNoSuccessor)
 
-		// Three deprecated GB rows in the fixture. Swansea is cross-band, so only Rochester + Gillingham are
-		// uncovered, and only Rochester is attested (Gillingham's dump row is S-class).
+		// Three deprecated GB rows in the fixture.
+		// Swansea is cross-band, so only Rochester + Gillingham are uncovered,
+		// and only Rochester is attested (Gillingham's dump row is S-class).
 		expect(deprecated).toMatchObject({
 			country: "GB",
 			total: 4,

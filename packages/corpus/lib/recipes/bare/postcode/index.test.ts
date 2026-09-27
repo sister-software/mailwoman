@@ -2,10 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file `bare-postcode` — the postcode standing alone. The interface worth pinning is that every surface the recipe
- *   renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface the detector refuses
- *   would train the model on a string the query-shape prior cannot then support. `run` reads a 500 MB archive. this
- *   reaches the rendering and the agreement without it.
+ * @file `bare-postcode` — the postcode standing alone. The interface worth pinning is that every surface
+ *   the recipe renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface
+ *   the detector refuses would train the model on a string the query-shape prior cannot then support.
  */
 
 import { BARE_POSTCODE_EVAL_CASES, isReservedBarePostcode } from "@mailwoman/corpus/recipes/bare/postcode/eval"
@@ -25,8 +24,8 @@ describe("renderBarePostcode", () => {
 	})
 
 	it("accepts a code the source already spaced", () => {
-		// OpenAddresses stores Swedish codes spaced ("162 68") and Czech ones compact ("11900"); the
-		// rendering must not depend on which spelling the publisher chose.
+		// OpenAddresses stores Swedish codes spaced ("162 68") and Czech ones compact ("11900");
+		// the rendering must not depend on which spelling the publisher chose.
 		expect(renderBarePostcode("SE", "162 68")).toEqual(["162 68", "16268"])
 	})
 
@@ -36,16 +35,14 @@ describe("renderBarePostcode", () => {
 	})
 
 	it("renders nothing for a country whose bare postcode was never in doubt", () => {
-		// GB opens with letters. It no model read as a house number. Therefore, it is deliberately absent from
-		// the written-form table.
+		// GB opens with letters, so it is deliberately absent from the written-form table.
 		expect(renderBarePostcode("GB", "SW1A 1AA")).toEqual([])
 	})
 
 	it("keeps Greece's written form even though no source carries Greek postcodes", () => {
-		// Two separate facts, and collapsing them would lose one. The shape is known — `gr_postcode` is
-		// `NNN NN`, same as its three neighbours — so the rendering answers. The data is absent: the
-		// archive's only Greek member declares a postcode column holding nothing across 10,877 rows, so
-		// `sources` names no Greek file and the recipe emits no row claiming to be Greek.
+		// The shape is known (`gr_postcode` is `NNN NN` like its neighbours) while the data
+		// is absent — the only Greek member declares a postcode column with no values over
+		// 10,877 rows — so the rendering answers and `sources` names no Greek file.
 		expect(renderBarePostcode("GR", "55131")).toEqual(["551 31", "55131"])
 	})
 
@@ -134,8 +131,8 @@ describe("the rendering agrees with known-formats", () => {
 	}
 
 	it("refuses a surface the detector reads as something else", () => {
-		// The guard's own polarity: a four-digit group alone is not a postcode shape any pattern claims
-		// over its whole span, so the recipe would refuse it rather than emit it.
+		// The guard's own polarity: a four-digit group alone is not a postcode shape any pattern
+		// claims over its whole span, so the recipe would refuse it rather than emit it.
 		expect(detectedAsPostcode("1012")).toBe(false)
 		expect(detectedAsPostcode("119 000")).toBe(false)
 	})

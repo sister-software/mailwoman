@@ -18,8 +18,8 @@ import {
 } from "mailwoman/gazetteer-pipeline/admin/label-point-adjudicator"
 import { afterAll, describe, expect, it } from "vitest"
 
-// The real Washington DC record (wof:85931779): geom: downtown, lbl: the district's southern tip,
-// GeoNames anchor at the city.
+// The real Washington DC record (wof:85931779): geom: downtown, lbl:
+// the district's southern tip, GeoNames anchor at the city.
 const WASHINGTON_GEOM = { latitude: 38.904831, longitude: -77.016216 }
 const WASHINGTON_LBL = { latitude: 38.82652, longitude: -77.01712 }
 const WASHINGTON_ANCHOR = { latitude: 38.89511, longitude: -77.03637 }
@@ -55,7 +55,8 @@ describe("choosePoint (#1905)", () => {
 	it(`agreement within ${LABEL_GEOM_DISAGREEMENT_KM} km never consults the anchor`, () => {
 		const geom = { latitude: 48.8566, longitude: 2.3522 }
 		const lbl = { latitude: 48.86, longitude: 2.35 }
-		// An anchor that would pick geom if consulted — it must not be.
+		// An anchor that would pick geom if consulted.
+		// It must not be.
 		const chosen = choosePoint(geom, lbl, geom)
 
 		expect(chosen.choice).toBe("lbl")
@@ -80,7 +81,7 @@ await writeLocalTextFile(
 		"4140963\tWashington\tWashington\t\t38.89511\t-77.03637\tP\tPPLC\tUS",
 		"999\tElsewhere\tElsewhere\t\t10\t20\tP\tPPL\tUS",
 	].join("\n"),
-	GN_ROOT.resolve("US.txt")
+	GN_ROOT.path("US.txt")
 )
 
 afterAll(() => GN_ROOT[Symbol.asyncDispose]())

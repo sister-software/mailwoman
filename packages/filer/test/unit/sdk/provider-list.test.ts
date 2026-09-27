@@ -1,26 +1,16 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- * @file Tests for {@linkcode parseProviderList} — the BDC provider-list streaming CSV parser that
- *   preserves multi-FRN / multi-holding-company cardinality (decision 6). The required
- *   assertions here are the two tests that yield every row: nothing in this file may collapse two rows
- *   sharing a `provider_id` into one, no matter how tempting a `Map` keyed by `provider_id` looks.
- */
-
-import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { resolvePackageDirectory } from "@mailwoman/core/module/resolvers"
 import { parseProviderList, type ProviderListRow } from "@mailwoman/filer/sdk/provider-list"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const FIXTURES_DIR = resolvePackagePath("@mailwoman/filer", "test-fixtures")
-const SAMPLE_CSV = join(FIXTURES_DIR, "provider-list-sample.csv")
-const MALFORMED_CSV = join(FIXTURES_DIR, "provider-list-malformed.csv")
-const MISSING_COLUMN_CSV = join(FIXTURES_DIR, "provider-list-missing-column.csv")
-const BAD_FRN_CSV = join(FIXTURES_DIR, "provider-list-bad-frn.csv")
-const BAD_PROVIDER_ID_CSV = join(FIXTURES_DIR, "provider-list-bad-provider-id.csv")
+const FIXTURES_DIR = resolvePackageDirectory("@mailwoman/filer")("test-fixtures")
+const SAMPLE_CSV = FIXTURES_DIR("provider-list-sample.csv")
+const MALFORMED_CSV = FIXTURES_DIR("provider-list-malformed.csv")
+const MISSING_COLUMN_CSV = FIXTURES_DIR("provider-list-missing-column.csv")
+const BAD_FRN_CSV = FIXTURES_DIR("provider-list-bad-frn.csv")
+const BAD_PROVIDER_ID_CSV = FIXTURES_DIR("provider-list-bad-provider-id.csv")
 
-async function collect(csvPath: string): Promise<ProviderListRow[]> {
+async function collect(csvPath: PathBuilder): Promise<ProviderListRow[]> {
 	const rows: ProviderListRow[] = []
 
 	for await (const row of parseProviderList(csvPath)) {
@@ -37,7 +27,7 @@ describe("parseProviderList", () => {
 		expect(rows).toHaveLength(5)
 	})
 
-	it("yields EVERY row for a provider_id appearing with two different FRNs — no dedup, no last-wins (decision 6)", async () => {
+	it("Yields EVERY row for a provider_id appearing with two different FRNs — neither dedup nor last-wins (decision 6)", async () => {
 		const rows = await collect(SAMPLE_CSV)
 		const providerRows = rows.filter((row) => row.providerID === 130_077)
 
@@ -45,7 +35,7 @@ describe("parseProviderList", () => {
 		expect(providerRows.map((row) => row.frn)).toEqual(["0001753557", "0009999999"])
 	})
 
-	it("yields EVERY row for a provider_id appearing with two different holding-company strings — no dedup, no last-wins (decision 6)", async () => {
+	it("Yields EVERY row for a provider_id appearing with two different holding-company strings — neither dedup nor last-wins (decision 6)", async () => {
 		const rows = await collect(SAMPLE_CSV)
 		const providerRows = rows.filter((row) => row.providerID === 140_088)
 

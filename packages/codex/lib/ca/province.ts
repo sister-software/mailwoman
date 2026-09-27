@@ -36,8 +36,9 @@ export interface CanadianProvinceInfo {
 }
 
 /**
- * ISO 3166-2:CA code → province/territory info, for all 13 subdivisions (10 provinces + 3 territories). Codes are the
- * official subdivision codes minus the `CA-` prefix.
+ * ISO 3166-2:CA code → province/territory info, for all 13 subdivisions (10 provinces + 3 territories).
+ *
+ * Codes are the official subdivision codes minus the `CA-` prefix.
  */
 export const CA_PROVINCES = {
 	AB: { code: "AB", name: "Alberta", french: "Alberta" },
@@ -63,17 +64,23 @@ export type CanadianProvinceCode = keyof typeof CA_PROVINCES
 const PROVINCE_CODE_SET: ReadonlySet<string> = new Set(Object.keys(CA_PROVINCES))
 
 /**
- * Type-predicate for an ISO 3166-2:CA province/territory code. Case-insensitive.
+ * Type-predicate for an ISO 3166-2:CA province/territory code.
+ *
+ * Case-insensitive.
  */
 export function isCanadianProvinceCode(input: unknown): input is CanadianProvinceCode {
 	return typeof input === "string" && PROVINCE_CODE_SET.has(input.toUpperCase())
 }
 
 /**
- * Folded province name (English or French) / code → ISO 3166-2:CA code. Built diacritic-insensitive so both co-official
- * names map regardless of accents: `Québec`, `Quebec`, and an unaccented `Nouvelle-Ecosse` all resolve. The two-name
- * design is the Canadian wrinkle — unlike the German lookup's English exonym, the French form here is a name a real
- * address may legitimately use.
+ * Folded province name (English or French) / code → ISO 3166-2:CA code.
+ *
+ * Built diacritic-insensitive so both co-official names map regardless of accents:
+ * `Québec`, `Quebec`, and an unaccented `Nouvelle-Ecosse` all resolve.
+ * The two-name design is the Canadian wrinkle.
+ *
+ * Unlike the German lookup's English exonym, the French form here is a name a
+ * real address may legitimately use.
  */
 export const CA_PROVINCE_NAME_TO_CODE: ReadonlyMap<string, CanadianProvinceCode> = (() => {
 	const out = new Map<string, CanadianProvinceCode>()
@@ -89,8 +96,9 @@ export const CA_PROVINCE_NAME_TO_CODE: ReadonlyMap<string, CanadianProvinceCode>
 })()
 
 /**
- * Resolve a Canadian province/territory surface form (ISO code, English name, or French name, accents optional) to its
- * ISO code. null if unknown.
+ * Resolve a Canadian province/territory surface form
+ * (ISO code, English name, or French name, accents optional) to its ISO code.
+ * Null if unknown.
  */
 export function lookupCanadianProvince(input: string | null | undefined): CanadianProvinceCode | null {
 	if (!input || typeof input !== "string") return null

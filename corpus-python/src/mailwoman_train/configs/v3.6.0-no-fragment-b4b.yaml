@@ -1,39 +1,11 @@
-# === v3.6.0-no-fragment-b4b — Track B, knob 1: raise the bare-street ratio. 2k probe rather than a ship. ===
+# v3.6.0-no-fragment-b4b is a 2k-step probe that raises the bare-street share of synth-no-fragment.
 #
-# PRE-registered read (written before the numbers exist. graded on the Norway digit board, board 3,
-# scratchpad/run-digit-board.run.ts, package-shaped int8, vs the registered shipped-v310 baselines).
+# The only change from v3.3.0 is the recipe flag --bare-street-prob, raised from 0.30 to 0.70. That flag
+# moves bare-street rows from 21% to 49% of the recipe output. A bare street without a number teaches the
+# model that a street is distinct from a locality, which it cannot learn by leaning on a following digit.
 #
-# the one variable vs v3.3.0: the synth-no-fragment recipe's --bare-street-prob 0.30 -> 0.70. Config,
-# weight (12.0), tokenizer, init base — all identical to v3.3.0. Only the recipe output's composition changed:
-# bare-street rows 21% -> 49% of the recipe output (measured, scratchpad/build-no-fragment-b4b.run.ts).
-#
-# why. v3.3.0 (bare-street-prob 0.30) moved the target only +1.7pp (overlapping CIs, bar not cleared).
-# Its own verdict named the cause: "only 30% of signal rows are pure bare streets. the source spends
-# most of its weight on {street}{number}, a form the model mostly already handles." The fix (B0's
-# mechanism): the street is mistagged as a locality and the digit follows it. teach bare-street !=
-# bare-locality. It requires the street without a number. Therefore, the model can't lean on the digit. This
-# is exactly the fr-fragment fix (which moved its analogue +50pp). knob 1 concentrates the signal there.
-# B4c (the vocab splice) is closed as a diffuse-cost trade (scratchpad/deepparse-cmp/numsplice-8k-verdict.md);
-# this corpus change cannot perturb the numeric manifold the way the tokenizer surgery did.
-#
-# the measured problem (board 3, n=400/class, 95% Wilson, shipped v310, zero Norwegian rows pre-#1145):
-#     bare-street-hn   "Hallingrudveien 32"   0.693 [0.646, 0.736]   <- target (no postcode competing)
-#
-# move  : bare-street-hn clears the bar v3.3.0 missed — clear motion, i.e. its lower CI clears v310's
-#         upper CI (0.736), so ~>=0.78. +1.7pp with overlapping CIs (v3.3.0) does not count. Falsifier:
-#         if 0.70 still does not clear, the corpus change is refuted for this defect and digit-ownership
-#         closes (numsplice already closed) — a real, decision-ending result.
-# guard : bare-pc (negative class) stays at 1.000 — the model must not stop emitting postcode.
-# guard : street-led-hn / city-first-hn / pc-first-hn do not regress from 0.94-0.968.
-# guard : the FR fragment board (board 2) does not re-drift — v3.3.0 lost -1.7pp overall (weight
-#         dilution); this run must hold FR overall >= ~0.725 (v310 0.733). If FR drifts again, knob 2
-#         (no-fragment weight relative to fr-fragment) is the next one-at-a-time probe rather than this one.
-# guard : golden (post-numsplice lesson — an on-board win can hide an off-board cost). If board 3 passes,
-#         run the golden check delta vs v310. fr.house_number / us.unit_real must not regress >2pp.
-#
-# not A ship. A pass justifies a full 8k pre-registered against the same board. Promotion is operator's.
-#
-# init_from v310 step-008000, fresh optimizer, LR 1.0e-5 constant, 2000 steps, warmup 200.
+# The target is board 3 bare-street-hn, such as "Hallingrudveien 32". The guards are postcode recall on
+# bare-pc, the other Norwegian house-number classes, the FR fragment board and the golden set.
 #
 # Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.6.0-no-fragment-b4b.yaml --resume none
 
@@ -41,7 +13,7 @@ data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
   tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -65,7 +37,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # v3.1.0 weights + synth-no-fragment (the one new variable); synth-no-street-led ZEROED (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+  source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -91,17 +63,17 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains board 3 surfaces.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # This source holds partial and autocomplete-style inputs.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # This source holds French streets without a house number and bare-locality counterexamples.
+    # Its weight matches the other targeted-fix sources at 12.0.
     synth-fr-fragment: 12.0
-    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
+    # This source holds Norwegian bare streets and street-plus-number rows without a postcode,
+    # plus counterexamples. Its weight matches the other targeted-fix sources at 12.0.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -111,14 +83,14 @@ data:
   augment_glue_prob: 0.25
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  # The country lexicon feeds the country channel. Its feature_dim must equal model.country_feature_dim.
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -138,16 +110,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # The country channel is a 2-dim [country_surface, country_ambiguous] soft feed with its own projection.
+  # The country_feature_dim value must equal the country lexicon's feature_dim.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # This value scales the country_ambiguous dim before country_projection and is baked into the exported ONNX.
+  # A scale of 1.0 over-suppressed countries whose names are also common words, such as Georgia and Jordan.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -186,9 +154,9 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# The init_from checkpoint loads weights only, so the optimizer starts fresh.
+# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+train:
   output_dir: /data/output-v360-no-fragment-b4b-s42/checkpoints
   seed: 42
   init_from: /data/output-v310-fr-fragment-s42/checkpoints/step-008000

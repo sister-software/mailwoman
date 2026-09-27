@@ -37,7 +37,7 @@ Mailwoman [resolves to the finest tier](./how-mailwoman-resolves-a-place.mdx) it
 | `interpolated`  | house-number estimate along the street segment | **0.1 km** | a TIGER segment matches       |
 | `address_point` | rooftop / parcel centroid                      | **0.7 km** | a situs extract has the point |
 
-When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city," nothing finer.
+When a finer tier fires, the geocoder is street-to-rooftop accurate — **98.8% within 100 m** on the non-circular Travis-County E-911 holdout. The admin tier means "right city" and no finer grain.
 
 So the first half of "close enough" is **which tier did we reach**, because the tier _is_ the grain. A matcher that needs buildings should treat an `admin`-tier result as a building it hasn't located, even though the centroid happens to sit a mere 3 km away.
 
@@ -53,7 +53,7 @@ This is the same move the parser makes with [confidence calibration](./confidenc
 
 ## Coverage is the frontier rather than precision
 
-Where the finer tiers fire, accuracy is solved (0.1–0.7 km, calibrated). The open problem is **coverage** — on the TX facility set, the rooftop tier fired on 47% and interpolation on a further 12.5%, so ~40% fell back to the city centroid. "Close enough" for a building-grain task therefore depends mostly on _did we have a extract for this place_ rather than on the tier math. Widening situs/interpolation coverage is the change that moves the most addresses into "close enough," and it's a data problem rather than a model one.
+Where the finer tiers fire, accuracy is solved (0.1–0.7 km, calibrated). The open problem is **coverage** — on the TX facility set, the rooftop tier fired on 47% and interpolation on a further 12.5%, so ~40% fell back to the city centroid. "Close enough" for a building-grain task therefore depends mostly on _did we have an extract for this place_ rather than on the tier math. Widening situs/interpolation coverage is the change that moves the most addresses into "close enough," and it's a data problem rather than a model one.
 
 ## So: how do we know how close is close enough?
 
@@ -61,8 +61,8 @@ We don't decide it — we **report enough that the consumer can**. Every resolve
 
 1. a **tier** (the grain we reached), and
 2. a **calibrated radius** (the calibrated 90% bound), so that
-3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains** — the same calibrated-radius downgrade the resolver already makes when its candidates scatter.
+3. the consumer compares the radius to **their** tolerance and either uses the point or **abstains**. The same calibrated-radius downgrade the resolver already makes when its candidates scatter.
 
 "Close enough" is not a property of the geocoder. It's a comparison, and our job is to make that comparison truthful: never a bare point, always a point with a tier and a radius that means what it says.
 
-_What's still owed: per-use-case sufficiency thresholds (the matcher's "building-grain" cutoff, a routing cutoff) measured against the calibrated radius, and the coverage push to move the ~40% admin-tier fallbacks onto a extract. Both are tracked under the geocoder-quality work._
+_What's still owed: per-use-case sufficiency thresholds (the matcher's "building-grain" cutoff, a routing cutoff) measured against the calibrated radius, and the coverage push to move the ~40% admin-tier fallbacks onto an extract. Both are tracked under the geocoder-quality work._

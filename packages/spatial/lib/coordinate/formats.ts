@@ -1,30 +1,14 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   Coordinate-format conversions — the pure-math annotators OpenCage exposes (DMS, geohash,
- *   Maidenhead, mgrs, Web Mercator, qibla direction, sun times). No data, no I/O. each is a
- *   deterministic function of a `{lat, lon}`. {@link coordinateFormatAnnotator} packages them as an
- *   `@mailwoman/annotations` `Annotator`.
- */
-
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
 import { MERCATOR_LATITUDE_MAX, MERCATOR_LATITUDE_MIN } from "#coordinate/bounds"
 
-/**
- * Bits packed into each base-32 geohash character.
- */
 const GEOHASH_BITS_PER_CHAR = 5
 
-/**
- * Southern limit of the mgrs lettered bands. Below it mgrs is undefined and the UPS grid applies instead.
- */
 const MGRS_LAT_MIN = -80
 
-/**
- * Northern limit of the mgrs lettered bands. Band X is extended to 84°, so there is no 84–90° band.
- */
 const MGRS_LAT_MAX = 84
 
 /**
@@ -41,9 +25,6 @@ export function toDeg(rad: number): number {
 	return (rad * 180) / Math.PI
 }
 
-/**
- * Render a single signed degree as `D° M′ S″ H` with the given hemisphere letters `[positive, negative]`.
- */
 function dmsComponent(value: number, hemispheres: [string, string], secondsDp = 2): string {
 	const hemisphere = value >= 0 ? hemispheres[0] : hemispheres[1]
 	const abs = Math.abs(value)
@@ -166,9 +147,10 @@ const J2000 = 2_451_545
 const unixEpochJulian = 2_440_587.5
 
 /**
- * Sunrise / solar-noon / sunset for a coordinate on a date, as UTC epoch seconds, via the standard sunrise equation.
- * `rise` and `set` are absent during polar day or polar night (the sun never crosses the horizon); `noon` (solar
- * transit) is always present.
+ * Computes sunrise, solar noon and sunset for a coordinate and date as UTC epoch
+ * seconds using the standard sunrise equation.
+ *
+ * `rise` and `set` are omitted during polar day or polar night, while `noon` is always present.
  */
 export function sunTimes(
 	lat: number,
@@ -198,9 +180,6 @@ export function sunTimes(
 	return { rise: toEpoch(transit - hourAngle / 360), set: toEpoch(transit + hourAngle / 360), noon }
 }
 
-/**
- * Mgrs / UTM (WGS84). The forward Transverse Mercator series + the military grid lettering.
- */
 const UTM_A = 6_378_137
 const UTM_F = 1 / 298.257223563
 const UTM_K0 = 0.9996
@@ -248,11 +227,13 @@ const MGRS_COL_SETS = ["ABCDEFGH", "JKLMNPQR", "STUVWXYZ"]
 const MGRS_ROW_LETTERS = "ABCDEFGHJKLMNPQRSTUV"
 
 /**
- * Military Grid Reference System for a coordinate (`"18SUJ2340806479"`); `""` outside mgrs bands (±80°/84°).
+ * Formats a coordinate as a Military Grid Reference System string such as `"18SUJ2340806479"`,
+ * or returns `""` outside latitudes −80° to 84°.
  */
 export function toMGRS(lat: number, lon: number): string {
 	if (lat < MGRS_LAT_MIN || lat > MGRS_LAT_MAX) return ""
-	const band = MGRS_LAT_BANDS[Math.floor((lat + 80) / 8)]!
+	// Band X spans 72° to 84°, so 80° and above still maps to the last band.
+	const band = MGRS_LAT_BANDS[Math.min(Math.floor((lat + 80) / 8), MGRS_LAT_BANDS.length - 1)]!
 	const { zone, easting, northing } = latLonToUtm(lat, lon)
 	const colLetter = MGRS_COL_SETS[(zone - 1) % 3]![Math.floor(easting / 100_000) - 1]!
 	let row = Math.floor(northing / 100_000) % 20

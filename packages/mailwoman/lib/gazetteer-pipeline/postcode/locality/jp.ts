@@ -4,7 +4,7 @@
 /**
  *   Build a CJK postcode → WOF locality table by authoritative name-match (#292, Direction E).
  *
- *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level — there
+ *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level. There
  *   are no municipality polygons — so the European point-in-polygon coordinate-first build
  *   (build-postcode-locality.ts) is structurally inapplicable. This is the CJK substitute:
  *
@@ -25,8 +25,8 @@
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/JP.txt\
- *   --admin-db $MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db\
- *   --output $MAILWOMAN_DATA_ROOT/wof/postcode-locality-jp.db
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
  *   port note (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
  *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s
@@ -57,8 +57,10 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 
 /**
- * Digit at which a fractional remainder is exactly half. Above it the value rounds up. at it the tie is broken toward
- * even, which is what keeps repeated centroid rounding unbiased.
+ * Digit at which a fractional remainder is exactly half.
+ *
+ * Above it the value rounds up.
+ * At it the tie is broken toward even, which is what keeps repeated centroid rounding unbiased.
  */
 /**
  * Columns a Japan Post KEN_ALL row needs before it is usable.
@@ -83,8 +85,8 @@ function norm(s: string): string {
 }
 
 /**
- * The WOF place name (suffix-stripped) appears as a token in the authoritative municipality string (which carries
- * city+ward, e.g. 'sapporo SHI chuo KU').
+ * The WOF place name (suffix-stripped) appears as a token in the authoritative
+ * municipality string (which carries city+ward, e.g. 'sapporo SHI chuo KU').
  */
 function nameMatches(wofName: string, postalMuni: string): boolean {
 	const nw = norm(wofName).replace(SUFFIX, "")
@@ -98,13 +100,16 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
-	// `cp932` through iconv rather than `TextDecoder("shift_jis")`. Japan Post ships CP932, and Node's whatwg `shift_jis` reads
-	// 801 of CP932's 20,296 two-byte sequences differently — silently, since most yield a different character rather than
-	// a replacement. Measured on the 2026 edition: the file contains zero of those 801, in any column, so this changes no
-	// value today. It is here because the file is reissued monthly and the next edition is not measured.
+	// `cp932` through iconv rather than `TextDecoder("shift_jis")`.
+	// Japan Post ships CP932, and Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte
+	// sequences differently — silently, since most yield a different character rather than a replacement.
+	// Measured on the 2026 edition: the file contains zero of those 801,
+	// in any column, so this changes no value today.
+	// It is here because the file is reissued monthly and the next edition is not measured.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
-	// Decode CP932 once, then let the CSV reader handle quoted fields and crlf. KEN_ALL has no header row.
+	// Decode CP932 once, then let the CSV reader handle quoted fields and crlf.
+	// KEN_ALL has no header row.
 	for (const f of CSVSpliterator.from<string[]>(text, { header: false })) {
 		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
 			out.set(`${f[0]!.slice(0, 3)}-${f[0]!.slice(3)}`, f[5]!)

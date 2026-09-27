@@ -143,14 +143,14 @@ The mixed-script case is the hardest: the human typed the city in the script the
 
 ### Administrative hierarchy confusion
 
-| What they type | What they mean       | What the the system                             |
+| What they type | What they mean       | What the parser thinks                          |
 | -------------- | -------------------- | ----------------------------------------------- |
 | `Washington`   | Washington, DC       | Washington state? George Washington University? |
 | `Paris`        | Paris, France        | Paris, Texas? Paris, Ontario?                   |
 | `Quebec`       | Province of Quebec   | Quebec City?                                    |
 | `Mexico`       | Mexico (the country) | Mexico City?                                    |
 
-The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital rather than the state rather than the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
+The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, as opposed to the state or the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
 
 ### Crossing metro areas / border cities
 
@@ -185,7 +185,7 @@ The building at 123 Main Street contains 20 apartments. The human omitted the un
 
 A ZIP code is a delivery route rather than a point. But several mapping services return a centroid when given only a ZIP code — and label it "the address." The human copies the coordinates. The parser now has what looks like a high-confidence geocode that is a ZIP-level approximation, off by up to several miles.
 
-This is an input-quality problem rather than a parser problem, but the parser is the first system that can detect it: if the input is `90210` and nothing else, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
+This is an input-quality problem rather than a parser problem, but the parser is the first system that can detect it: if the input is `90210` and no other component, the parser should return `postcode=90210` at high confidence and `locality` at low confidence — not `locality=Beverly Hills` at high confidence inferred from the postcode.
 
 ### Autocomplete contamination
 
@@ -204,7 +204,7 @@ The correct design response is to make the parser report what it cannot decide r
 - Distinguish "I'm confident this is a locality" from "I'm confident this locality resolves to this WOF ID."
 - Let the downstream system decide how much ambiguity it can tolerate.
 
-The postal system already works this way. The Remote Encoding Center operator sees an ambiguous address and keys in their best guess. The carrier sees the guess and corrects it with local knowledge. The parser is the first link in that chain — its job is to give the next link enough information to decide.
+The postal system already works this way. The Remote Encoding Center operator sees an ambiguous address and keys in their best guess. The carrier sees the guess and corrects it with local knowledge. The parser is the first link in that chain. Its job is to give the next link enough information to decide.
 
 ## See also
 

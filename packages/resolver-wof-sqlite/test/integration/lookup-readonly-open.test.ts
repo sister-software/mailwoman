@@ -17,7 +17,7 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { changeMode } from "@mailwoman/core/fs/writers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -48,11 +48,11 @@ vi.mock("node:sqlite", async (importOriginal) => {
 
 // vi.resetModules() before importing the module under test: the root vitest config runs
 // `isolate: false` (one shared module graph per worker), so `node:sqlite` / `./lookup.ts` may
-// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file. A
-// cached module is never re-evaluated, so this file's vi.mock factory would never run and the
-// construction spy would stay empty (the failure this guards against reads as "expected [] to
-// have a length of 1"). Reset on the way in so the chain re-evaluates against the mock, and on the
-// way out so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
+// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file.
+// A cached module is never re-evaluated, so this file's vi.mock factory would never run and the construction
+// spy would stay empty (the failure this guards against reads as "expected [] to have a length of 1").
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -63,9 +63,11 @@ await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
- * Seed a minimal on-disk WOF fixture (schema + one place), without the FTS index. Writable.
+ * Seed a minimal on-disk WOF fixture (schema + one place), without the FTS index.
+ *
+ * Writable.
  */
-function seedFixture(path: string): void {
+function seedFixture(path: PathBuilder): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
 	db.exec(`
@@ -89,8 +91,8 @@ function seedFixture(path: string): void {
 /**
  * The readOnly option recorded for the main-extract open of `path` (asserts exactly one such open).
  */
-function readOnlyForOpenOf(path: string): boolean | undefined {
-	const opens = spy.opens.filter((o) => o.path === path)
+function readOnlyForOpenOf(path: PathBuilder): boolean | undefined {
+	const opens = spy.opens.filter((o) => o.path === path.toString())
 	expect(opens).toHaveLength(1)
 
 	return opens[0]!.readOnly
@@ -98,11 +100,11 @@ function readOnlyForOpenOf(path: string): boolean | undefined {
 
 describe("WOFSQLitePlaceLookup open mode (databasePath branch)", () => {
 	let dir: PathBuilder
-	let dbPath: string
+	let dbPath: PathBuilder
 
 	beforeEach(async () => {
 		dir = fixtures.use(await temporaryDirectory("mw-wof-openmode-")).path
-		dbPath = join(dir, "admin-fixture.db")
+		dbPath = dir("admin-fixture.db")
 		seedFixture(dbPath)
 	})
 

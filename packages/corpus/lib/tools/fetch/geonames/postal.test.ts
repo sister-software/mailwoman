@@ -5,7 +5,7 @@
  * @file `fetchGeonamesPostal` — and specifically what it does with a country GeoNames does not publish.
  *
  *   That is the behaviour worth a test. GeoNames covers ~80 countries rather than all of them, so a caller planning a postcode
- *   recipe output needs "this country does not exist upstream" kept apart from "the transfer failed" — the first is an
+ *   recipe output needs "this country does not exist upstream" kept apart from "the transfer failed". The first is an
  *   acquisition question and the second is a retry. Venezuela is the live instance: it 404s and the country the
  *   gauntlet evidence for the `«locality» «postcode»` defect comes from.
  */
@@ -16,7 +16,7 @@ import type { AddressInfo } from "node:net"
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { fetchGeonamesPostal } from "@mailwoman/corpus/tools"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -25,23 +25,27 @@ afterAll(() => fixtures.disposeAsync())
 
 let server: Server
 let baseURL: string
-let outRoot: PathBuilderLike
+let outRoot: PathBuilder
 
 /**
- * The manifest as written. `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is a test failure
- * rather than a fallback.
+ * The manifest as written.
+ *
+ * `parseJSONStrict` rather than a tolerant parse: a corrupt manifest here is
+ * a test failure rather than a fallback.
  */
 async function readManifest(): Promise<{
 	unavailable: string[]
 	files: Array<Record<string, unknown>>
 	[key: string]: unknown
 }> {
-	return await readLocalJSONFile(join(outRoot, "geonames-postal", "MANIFEST.json"))
+	return await readLocalJSONFile(outRoot("geonames-postal", "MANIFEST.json"))
 }
 
 beforeAll(async () => {
 	server = createServer((req, res) => {
-		// PT is published. VE is not. Anything else is a 500, so a transfer failure stays distinguishable from both.
+		// PT is published.
+		// VE is not.
+		// Anything else is a 500, so a transfer failure stays distinguishable from both.
 		if (req.url === "/PT.zip") {
 			res.writeHead(200)
 			res.end("pt-payload")
@@ -49,9 +53,10 @@ beforeAll(async () => {
 			res.writeHead(404)
 			res.end("not found")
 		} else if (req.url === "/v404/ZZ.zip") {
-			// The regression route: a 500 whose URL contains the substring "404". CI drew an ephemeral server
-			// port containing "404" and the prose-matching classifier filed a transfer failure as "GeoNames
-			// does not publish this country". The path plants the same substring deterministically.
+			// The regression route: a 500 whose URL contains the substring "404".
+			// CI drew an ephemeral server port containing "404" and the prose-matching classifier
+			// filed a transfer failure as "GeoNames does not publish this country".
+			// The path plants the same substring deterministically.
 			res.writeHead(500)
 			res.end("boom")
 		} else {
@@ -71,8 +76,10 @@ beforeAll(async () => {
 afterAll(() => server[Symbol.asyncDispose]())
 
 /**
- * The retry count is what these cases pin. the pause between attempts is not, and paying the shipped 5 s twice per
- * failing transfer cost this file 20.1 s of the fast leg.
+ * The retry count is what these cases pin.
+ *
+ * The pause between attempts is not, and paying the shipped 5 s twice per failing
+ * transfer cost this file 20.1 s of the fast leg.
  */
 const RETRY_DELAY_MS = 1
 
@@ -111,8 +118,8 @@ describe("fetchGeonamesPostal", () => {
 	})
 
 	it("classifies by STATUS rather than by message prose — a 500 from a URL containing '404' stays a transfer failure", async () => {
-		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode with the substring in
-		// the path instead, where it is deterministic.
+		// ~1-2% of ephemeral ports contain the substring "404"; this pins the failure mode
+		// with the substring in the path instead, where it is deterministic.
 		const summary = await fetchGeonamesPostal({
 			retryDelayMs: RETRY_DELAY_MS,
 			outRoot,

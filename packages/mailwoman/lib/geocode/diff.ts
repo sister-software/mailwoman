@@ -8,7 +8,7 @@
  *   The three ways a geocode changes are different problems with different fixes, and only a per-span view separates
  *   them:
  *
- *   1. **The parse changed**, so the resolver was asked a different question. Nothing is wrong with retrieval.
+ *   1. **The parse changed**, so the resolver was asked a different question. No retrieval fault exists.
  *   2. **The parse held and a span resolved to a different place** — same text, same tag, new `placeID`. That is a
  *      ranking or a gazetteer-coverage problem.
  *   3. **The parse held, the places held, and the tier changed** — the same components fell through to a coarser rung
@@ -39,8 +39,10 @@ export interface SpanResolution {
 	lat?: number
 	lon?: number
 	/**
-	 * How many candidates the retrieval considered. Breadth rather than correctness — a span that won from 40 is less
-	 * settled than one that won from 2, even when both picked the same place.
+	 * How many candidates the retrieval considered.
+	 *
+	 * Breadth rather than correctness.
+	 * A span that won from 40 is less settled than one that won from 2, even when both picked the same place.
 	 */
 	candidates?: number
 }
@@ -60,8 +62,8 @@ export interface SpanGeoDelta {
 	candidatesBefore?: number
 	candidatesAfter?: number
 	/**
-	 * `resolved` / `unresolved` / `repointed` — the last meaning the span kept its text and tag and landed on a different
-	 * place.
+	 * `resolved` / `unresolved` / `repointed` — the last meaning the span kept its text
+	 * and tag and landed on a different place.
 	 */
 	kind: "repointed" | "resolved" | "unresolved" | "unchanged"
 }
@@ -69,8 +71,10 @@ export interface SpanGeoDelta {
 export interface GeocodeDiff {
 	input: string
 	/**
-	 * The span-level parse story. A geocode change whose `parse.identical` is false was asked a different question, and
-	 * the resolver is not the suspect.
+	 * The span-level parse story.
+	 *
+	 * A geocode change whose `parse.identical` is false was asked a different question,
+	 * and the resolver is not the suspect.
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
@@ -81,7 +85,9 @@ export interface GeocodeDiff {
 	latAfter?: number | null
 	lonAfter?: number | null
 	/**
-	 * Kilometres the final answer moved. Undefined when either arm returned no coordinate — which is a different event
+	 * Kilometres the final answer moved.
+	 *
+	 * Undefined when either arm returned no coordinate, which is a different event
 	 * from moving zero kilometres and must not read as one.
 	 */
 	movedKm?: number
@@ -89,8 +95,10 @@ export interface GeocodeDiff {
 	uncertaintyAfter?: number | null
 	identical: boolean
 	/**
-	 * Which of the three explanations the evidence supports. Stated rather than left to the reader, because the whole
-	 * point is that a distance delta alone cannot choose between them.
+	 * Which of the three explanations the evidence supports.
+	 *
+	 * Stated rather than left to the reader, because the whole point is that a
+	 * distance delta alone cannot choose between them.
 	 */
 	attribution:
 		| "parse-changed"
@@ -104,8 +112,8 @@ function resolutions(tree: AddressTree | null | undefined): Map<string, SpanReso
 	const out = new Map<string, SpanResolution>()
 
 	for (const node of flattenTreeNodes(tree)) {
-		out.set(`${node.start}:${node.end}:${String(node.tag)}`, {
-			tag: String(node.tag),
+		out.set(`${node.start}:${node.end}:${node.tag}`, {
+			tag: node.tag,
 			value: node.value,
 			...(node.placeID === undefined ? {} : { placeID: node.placeID }),
 			...(node.lat === undefined ? {} : { lat: node.lat }),
@@ -209,8 +217,8 @@ export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm
 /**
  * Metres below which a coordinate move is rendered as "same point".
  *
- * Int8 quantization and float round-tripping move a centroid by centimetres. rendering that as a delta buries the moves
- * that matter.
+ * Int8 quantization and float round-tripping move a centroid by centimetres.
+ * Rendering that as a delta buries the moves that matter.
  */
 export const SAME_POINT_M = 1
 

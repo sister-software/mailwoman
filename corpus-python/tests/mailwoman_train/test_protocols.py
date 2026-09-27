@@ -45,7 +45,7 @@ def test_every_country_builder_already_carries_the_constants() -> None:
 def test_build_corpus_matches_the_signature_every_builder_already_has() -> None:
     """The protocol takes a parsed `Namespace` because that is what `build` takes.
 
-    Each builder reads more than a dozen settings off it — the JP one reads eighteen — so a
+    Each builder reads more than a dozen settings off it. The JP one reads eighteen — so a
     narrower interface would either drop them or silently substitute defaults.
     """
     # eval_str resolves the annotations, which `from __future__ import annotations` leaves as

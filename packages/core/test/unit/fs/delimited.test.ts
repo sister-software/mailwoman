@@ -1,23 +1,26 @@
 import { readUnquotedTSV, readUnquotedTSVChecked, readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
+import type { PathBuilder } from "path-ts"
 import { TSVSpliterator } from "spliterator"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Three GeoNames-shaped rows. The middle one carries a `"` in a place name, which the real dumps do — `Ovrag
- * Kyzylak"on` is line 394 of Turkmenistan's, and every row after it was swallowed.
+ * Three GeoNames-shaped rows.
+ *
+ * The middle one carries a `"` in a place name, which the real dumps do.
+ * `Ovrag Kyzylak"on` is line 394 of Turkmenistan's, and every row after it was swallowed.
  */
 const DUMP = ["1\tAshgabat\t37.95\t58.38", `2\tOvrag Kyzylak"on\t38.23\t55.11`, "3\tTürkmenabat\t39.07\t63.57"].join(
 	"\n"
 )
 
 let dir: TemporaryDirectory
-let file: string
+let file: PathBuilder
 
 beforeAll(async () => {
 	dir = await temporaryDirectory("delimited-")
-	file = String(dir.resolve("TM.txt"))
+	file = dir.path("TM.txt")
 	await writeLocalTextFile(DUMP, file)
 })
 
@@ -53,9 +56,10 @@ describe("reading an unquoted delimited file", () => {
 	})
 
 	/**
-	 * The defect this module exists for, pinned as the behaviour it must not have. A quote-aware reader over this input
-	 * answers two rows and neither of them is Türkmenabat — and two rows is indistinguishable from a two-row file at
-	 * every later boundary.
+	 * The defect this module exists for, pinned as the behaviour it must not have.
+	 *
+	 * A quote-aware reader over this input answers two rows and neither of them is Türkmenabat,
+	 * and two rows is indistinguishable from a two-row file at every later boundary.
 	 */
 	it("differs from the default, which swallows the rows between one quote and the next", async () => {
 		const rows: string[][] = []
@@ -75,9 +79,9 @@ describe("the checked read", () => {
 	})
 
 	it("recovers the full count on an input where the default answers short", async () => {
-		// An unterminated quote is the worst case: the default reader runs to the end of the file holding one
-		// open region and answers fewer records than the file has lines.
-		const truncating = String(dir.resolve("open-quote.txt"))
+		// An unterminated quote is the worst case: the default reader runs to the end of the
+		// file holding one open region and answers fewer records than the file has lines.
+		const truncating = dir.path("open-quote.txt")
 
 		await writeLocalTextFile(`1\tAshgabat\t37.95\t58.38\n2\tOvrag "on\t38.23\t55.11\n3\tMary\t37.6\t61.8`, truncating)
 
@@ -87,22 +91,26 @@ describe("the checked read", () => {
 			viaDefault.push(row as string[])
 		}
 
-		// The comparison is only meaningful where the default actually loses rows. assert that first.
+		// The comparison is only meaningful where the default actually loses rows.
+		// Assert that first.
 		expect(viaDefault.length).toBeLessThan(3)
 		await expect(readUnquotedTSVChecked(truncating)).resolves.toHaveLength(3)
 	})
 
 	/**
-	 * The shortfall branch is defence IN depth and no file content reaches it: with quote handling off, the TSV reader
-	 * yields one record per non-empty line for every input, which is what the cases above establish. It exists to catch a
-	 * reader whose options regress — the defect it was written for was a default rather than a file — so the test drives
-	 * the branch directly rather than inventing content that cannot produce it.
+	 * The shortfall branch is defence IN depth and no file content reaches it:
+	 * with quote handling off, the TSV reader yields one record per non-empty line
+	 * for every input, which is what the cases above establish.
+	 *
+	 * It exists to catch a reader whose options regress — the defect it was written
+	 * for was a default rather than a file — so the test drives the branch directly
+	 * rather than inventing content that cannot produce it.
 	 */
 	it("raises rather than answering short, naming both counts", async () => {
-		const missing = String(dir.resolve("gone.txt"))
+		const missing = dir.path("gone.txt")
 
-		// A read that cannot happen at all must also not answer an empty array, which is the same failure
-		// wearing a different mask.
+		// A read that cannot happen at all must also not answer an empty array,
+		// which is the same failure wearing a different mask.
 		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
 	})
 })

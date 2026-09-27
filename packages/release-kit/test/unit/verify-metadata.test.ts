@@ -14,7 +14,6 @@ import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { verifyReleaseMetadata } from "@mailwoman/release-kit/release/verify-metadata"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -38,8 +37,8 @@ const statusPage = (version: string) =>
 	].join("\n")
 
 /**
- * The version matrix, in the shape `checkReleases` reads: newest first, `(current)` on the first column, and the third
- * column carrying the model lineage.
+ * The version matrix, in the shape `checkReleases` reads: newest first, `(current)`
+ * on the first column, and the third column carrying the model lineage.
  */
 const releasesPage = (version: string) =>
 	[
@@ -52,18 +51,18 @@ const releasesPage = (version: string) =>
 	].join("\n")
 
 async function plant(options: { status: string; statusVersion?: string }) {
-	const repoRoot = String(fixtures.use(await temporaryDirectory("verify-metadata-")).path)
+	const repoRoot = fixtures.use(await temporaryDirectory("verify-metadata-")).path
 
 	const files: Record<string, string> = {
 		"packages/neural-weights-en-us/model-card.json": stringifyJSON({ version: MODEL }),
 		"evals/scores-by-version.json": stringifyJSON({ schema_version: 1, runs: [{ model_version: MODEL }] }),
-		"docs/records/site-2026-08/releases.mdx": releasesPage(MODEL),
+		"docs/engineering/releases.mdx": releasesPage(MODEL),
 		[options.status]: statusPage(options.statusVersion ?? MODEL),
 	}
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(repoRoot, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(repoRoot, file))
+		await makeDirectories(repoRoot(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, repoRoot(file))
 	}
 
 	return repoRoot
@@ -89,8 +88,8 @@ describe("verifyReleaseMetadata", () => {
 	it("refuses a status page outside the tree the site publishes", async () => {
 		const repoRoot = await plant({ status: "docs/records/site-2026-08/status.mdx" })
 
-		// The archived copy cites the shipped model, so without the constraint this run would pass — which is
-		// exactly how the live page went four releases without being read.
+		// The archived copy cites the shipped model, so without the constraint this run would pass,
+		// which is exactly how the live page went four releases without being read.
 		await expect(
 			verifyReleaseMetadata({ repoRoot, status: "docs/records/site-2026-08/status.mdx", log: () => {} })
 		).rejects.toThrow(/must be a page the site publishes/u)

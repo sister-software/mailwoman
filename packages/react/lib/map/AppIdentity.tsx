@@ -2,19 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `<AppIdentity>` — the left half of the footer strip: the app's name, a link to the documentation, and the commit
- *   the build was made from.
- *
- *   One home for all three sites. Earth, Moon and Mars mount the same `<MapFooter>` and differ only in a display name
- *   and their credits, so a commit link written into any one of them would be a copy the other two either lack or
- *   grow separately.
- *
- *   The commit is what a bug report cannot otherwise carry. These deploy from `main` on every push that reaches them,
- *   so "the site" is whichever revision was head at build time and a visitor describing a behaviour has no way to say
- *   which one they saw. `build.json` is that record, and its absence — a dev server, an offline first paint — renders
- *   the name alone rather than a dangling link.
- *
- *   node-safe: pure React, no maplibre.
+ *   Renders the footer identity with the app name, an optional documentation link and the build
+ *   commit. This component does not depend on the map.
  */
 
 import type { ReactNode } from "react"
@@ -22,38 +11,42 @@ import type { ReactNode } from "react"
 import { useBuildInfo } from "#common/useBuildInfo"
 
 /**
- * How much of the revision the link shows. Long enough to be unambiguous in this repository, short enough to sit in a
- * one-line strip beside the name and the credits.
+ * The number of commit characters shown in the footer.
  */
 const DISPLAYED_LENGTH = 6
 
+/**
+ * Props for {@link AppIdentity}.
+ */
 export interface AppIdentityProps {
 	/**
-	 * The app's display name — `Mailwoman Earth`, `Mailwoman Moon`, `Mailwoman Mars`.
+	 * The app's display name, such as `Mailwoman Earth`.
 	 */
 	name: ReactNode
 	/**
-	 * The documentation link's target. Omit to render the name and commit without one.
+	 * The documentation link's target.
+	 * The link is omitted when this is unset.
 	 */
 	docsURL?: string
 	/**
-	 * What the documentation link reads. @default "Developer Documentation"
+	 * The documentation link's text. @default "Developer Documentation"
 	 */
 	docsLabel?: string
 	/**
-	 * Where to read the deployment record. @default "/build.json"
+	 * The URL of the build record. @default "/build.json"
 	 */
 	buildInfoURL?: string
 	/**
-	 * Build the href for a commit. injected rather than written here: the repository's URL belongs to the deployment, and
-	 * `@mailwoman/react` publishes to npm while `@mailwoman/site-kit` — which owns `commitURL` beside the record that
-	 * carries the sha — is private, so this package cannot import it. `commitURL` takes the sha for this reason: every
-	 * caller passes it directly, so no app writes an adapter and the URL keeps a single home. Without this prop the
-	 * revision renders as text rather than a link.
+	 * Builds the commit link.
+	 * Without it, the commit is shown as plain text.
 	 */
 	commitHref?: (commit: string) => string
 }
 
+/**
+ * Renders the app name, documentation link and short build commit.
+ * The commit is omitted when no build record loads.
+ */
 export function AppIdentity({
 	name,
 	docsURL,

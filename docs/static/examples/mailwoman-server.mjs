@@ -1,14 +1,14 @@
 // A minimal geocoding server for the example Dockerfile: node:http, no framework, three routes.
 //
-// The classifier, the gazetteer handle and the resolver are built once at module scope. That is the
-// whole performance story of a container deploy — the model load is the expensive part and it is paid
-// once per process, not once per request.
+// The classifier, the gazetteer handle and the resolver are built once at module scope.
+// That is the whole performance story of a container deploy.
+// The model load is the expensive part and it is paid once per process, not once per request.
 import { createServer } from "node:http"
 
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 // This file is served at /examples/mailwoman-server.mjs and runs in a reader's project, where
@@ -21,13 +21,14 @@ const PORT = Number(process.env.PORT ?? 3000)
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 
 // Geocoding is opt-in on a gazetteer being there, not on anything being configured.
-// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit path, then
-// `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/wof/candidate.db`, and returns undefined unless one of
-// them is a file that exists. That last position is why an image needs only its volume mount, and the
-// existence check is why a first run without one still boots: a truthiness check on the variable would
-// open a file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
+// `resolveCandidateDBPath` is the shipped helper for exactly this: it tries an explicit
+// path, then `$MAILWOMAN_CANDIDATE_DB`, then `<data-root>/db/wof/candidate.db`,
+// and returns undefined unless one of them is a file that exists.
+// That last position is why an image needs only its volume mount, and the existence check is
+// why a first run without one still boots: a truthiness check on the variable would open a
+// file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
 // Same guard the published image's server.mjs uses.
-const candidateDB = resolveCandidateDBPath()
+const candidateDB = await resolveCandidateDBPath()
 
 let resolver
 
@@ -56,7 +57,8 @@ createServer(async (req, res) => {
 		}
 
 		if (url.pathname === "/geocode") {
-			if (!resolver) return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/wof/candidate.db" })
+			if (!resolver)
+				return send(res, 503, { error: "no gazetteer found — mount one at <data-root>/db/wof/candidate.db" })
 
 			return send(res, 200, await geocodeAddress(address, { classifier, resolver, defaultCountry: "US" }))
 		}

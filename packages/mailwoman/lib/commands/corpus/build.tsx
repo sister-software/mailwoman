@@ -2,33 +2,34 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus build --version 0.1.0 --out /data/corpus/versioned/ --inputs '{ "wof-admin":
- *   "/data/wof/admin.db", "wof-postalcode": "/data/wof/post.db" }'`
+ *   End-to-end corpus build: drives every registered adapter (or the filtered subset) per `--inputs`, runs
+ *   synthesis and alignment, computes the locality-holdout split, and writes the final jsonl and parquet
+ *   files plus per-stage manifests under `<out>/corpus-v<version>/`.
  *
- *   End-to-end corpus build. Drives every registered adapter (or the filtered subset) per `--inputs`,
- *   runs synthesis + alignment, computes the locality-holdout split, and writes the final jsonl
- *   parquet files + per-stage manifests under `<out>/corpus-v<version>/`.
- *
- *   Adapters whose id is missing from `--inputs` are skipped (and noted in the manifest); this is how
- *   the CLI handles partial builds during development.
+ *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest, which is how the
+ *   CLI handles partial builds during development.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
+import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * `--inputs` accepts either:
+ * The accepted `--license-policy` values, for the flag's validation message.
  *
- * - A bare string (path-only, for adapters that need no extra options): `"wof-admin": "/data/wof.db"`
- * - A full AdapterOptions object: `"openaddresses": { "inputPath": "/data/oa.geojsonl", "country": "US" }`
- *
- * The object form is required by adapters that need a country filter (OpenAddresses), or for fixture runs that want a
- * `limit`.
+ * Derived from {@linkcode LicensePolicy} so a value added there reaches the CLI.
+ */
+const LICENSE_POLICIES: readonly LicensePolicy[] = Object.values(LicensePolicy)
+
+/**
+ * `--inputs` values are either a bare path string, for adapters needing no extra options,
+ * or an `AdapterOptions` object, which a country filter (OpenAddresses) or a fixture `limit` requires.
  */
 export const spec = {
 	name: "build",
@@ -45,6 +46,32 @@ export const spec = {
 			validationMessage: "--rows-per-file must be a positive integer.",
 			description: "Max rows per parquet file",
 			deprecatedName: "rows-per-slice",
+		},
+		"shuffle-window": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value >= 0,
+			validationMessage: "--shuffle-window must be a non-negative integer.",
+			description: "Rows held in memory while shuffling each split. 0 writes arrival order",
+		},
+		"shuffle-seed": {
+			type: "number",
+			validate: (value) => Number.isInteger(value) && value >= 0,
+			validationMessage: "--shuffle-seed must be a non-negative integer.",
+			description: "Seed for --shuffle-window",
+		},
+		"license-policy": {
+			type: "string",
+			default: LicensePolicy.All,
+			validate: (value): boolean => LICENSE_POLICIES.includes(value as LicensePolicy),
+			validationMessage: `--license-policy must be one of ${LICENSE_POLICIES.join(", ")}.`,
+			description:
+				"Which rows to admit on the evidence of their license obligations: " +
+				"all, share-alike-free (refuse a license carrying or mentioning share-alike), " +
+				"or resolved-only (also refuse a license resolving to no SPDX expression)",
+		},
+		"exclude-licenses": {
+			type: "string",
+			description: "Comma-separated license prefixes to refuse, e.g. ODbL,CC-BY-SA",
 		},
 	},
 } as const satisfies CommandSpec
@@ -63,7 +90,10 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
 
-		if ("country" in value && value.country !== undefined && typeof value.country !== "string") return false
+		// The shape rather than the type: a lower-case `nl` is a string, and the four
+		// adapters that filter per row compare it against the row's upper-case code,
+		// so it selects zero rows and reports no matches.
+		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
 
 		return (
 			!("limit" in value) ||
@@ -79,6 +109,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
 
 		let inputsParsed: unknown
 
@@ -103,6 +134,10 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			adapterInputs,
 			synthesize: options.synthesize,
 			rowsPerFile: options.rowsPerFile,
+			shuffleWindow: options.shuffleWindow,
+			shuffleSeed: options.shuffleSeed,
+			licensePolicy: options.licensePolicy as LicensePolicy,
+			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
@@ -111,6 +146,9 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			aligned: m.total_aligned_rows,
 			quarantined: m.quarantine_count,
 			adapters: m.adapters.length,
+			refusedByLicense: m.excluded_by_license,
+			refusedKinds: m.refused_by_license_kind,
+			unresolvedLicenseRows: m.admitted_unresolved_license_rows,
 		}
 	})
 
@@ -124,6 +162,15 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				<Text>
 					corpus-v{options.corpusVersion}: <Text color="green">{done.total}</Text> rows ({done.adapters} adapters,{" "}
 					<Text dimColor>{done.quarantined} quarantined</Text>)
+				</Text>
+				<Text dimColor>
+					license policy {options.licensePolicy}: {done.refusedByLicense} rows refused
+					{Object.keys(done.refusedKinds).length
+						? ` (${Object.entries(done.refusedKinds)
+								.map(([kind, rows]) => `${kind}=${rows}`)
+								.join(", ")})`
+						: ""}
+					, {done.unresolvedLicenseRows} admitted whose license resolves to no expression
 				</Text>
 				<Text dimColor>{options.out}</Text>
 			</Box>

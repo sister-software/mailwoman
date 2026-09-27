@@ -1,13 +1,9 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
 /**
- * @file Monotonic debt counters for patterns that are too contextual for a blanket lint error.
+ * Debt counters for patterns not covered by a simple lint rule.
  *
- *   Existing debt is recorded in `baseline.json` beside this package. the `debt` check reports a counter that grew as an
- *   error and a counter that fell as a warning asking for the baseline to be ratcheted. writing the baseline is a
- *   mutation, so it is not a check: `mwops health baseline debt` calls {@link computeDebtCounters} through
- *   `lib/baseline.ts`, which the registry does not list. Never raise a counter to make a failure disappear.
+ * Counts are compared against `baseline.json`.
+ * Higher counts fail.
+ * Lower counts warn so the baseline can be ratcheted.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -15,92 +11,190 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
 import { relative, resolvePath } from "path-ts"
+import { TextSpliterator } from "spliterator"
 import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
 import { findDanglingLinks } from "#checks/doc-link-targets"
+import { findDuplicateShapes } from "#checks/duplicate-exported-shape"
 import { findAffixPairs } from "#checks/export-name-affix"
 import { findPrivateNameShadows } from "#checks/private-name-shadows"
 import { trackedSourcePaths } from "#tracked-sources"
 
 export interface DebtCounters {
 	/**
-	 * Module-private functions in `packages/*\/lib` sharing a name with a function another module exports, minus the
-	 * marked copies — the population `private-name-shadows-export` lists site by site. Ratchets down as copies are
-	 * replaced by imports or given their reason.
+	 * Private functions shadowing exported names from other modules.
 	 */
 	privateNameShadows: number
 	/**
-	 * Exported functions in `packages/*\/lib` whose name spells out another package's exported name at greater length,
-	 * minus the marked pairs — the population `export-name-affix` lists site by site. The shape a duplicate arrives in,
-	 * since an author who knew the shorter name would have imported it.
+	 * Export names that are longer affix forms of another exported name.
 	 */
 	exportNameAffix: number
 	/**
-	 * `{@link}` tags in `packages/*\/lib` naming a symbol nothing in the tree declares — the population
-	 * `doc-link-targets` lists site by site. A tag reads as a promise the thing exists, and one of these was implemented
-	 * as a new function rather than recognized as a broken reference.
+	 * `{@link}` targets that do not exist in the repository.
 	 */
 	danglingDocLinks: number
+	/**
+	 * Exported interfaces and type aliases whose body another workspace also exports, one per site.
+	 */
+	duplicateExportedShapes: number
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
 	filterBoolean: number
 	/**
-	 * Non-generated, non-test source files over 1,000 lines. Any file crossing 1,000 fails the check.
+	 * Non-generated, non-test source files over 1,000 lines of code.
+	 *
+	 * Comment and blank lines are excluded, so the count tracks what a file does
+	 * rather than how its comments are laid out.
 	 */
 	productionFilesOver1000Lines: number
 	selfPackageImports: number
 	synchronousFilesystemCalls: number
 	/**
-	 * Raw NUL bytes in tracked TypeScript. A NUL makes grep classify the file as binary and skip it, so a guard that
-	 * carries one is invisible to the sweeps that would read it. the escaped form (`\\0`, `\\x00`) is byte-identical at
-	 * runtime and stays visible.
+	 * Raw NUL bytes in tracked TypeScript files.
 	 */
 	rawNULBytes: number
 	/**
-	 * Occurrences of the retired vocabulary word — see {@link BANNED_VOCABULARY} for which — in any spelling, anywhere in
-	 * tracked source: identifiers, comments and string literals alike.
-	 *
-	 * This sentence does not name the word, deliberately: a case-preserving sweep once rewrote the name to the
-	 * replacement and left the doc describing a different word than the pattern counts. One constant holds the term.
-	 * prose points at the constant.
-	 *
-	 * The vocabulary is being removed because the word stood for four different things (corpus recipes, per-country
-	 * postcode databases, WOF extracts, and the providers' region databases), so there is no replacement synonym — each
-	 * site takes the noun for the thing it actually names. The target is zero, and this counter is the finish line:
-	 * ratcheted down per PR, it can only fall.
-	 *
-	 * Counted here rather than with `grep` on purpose. Tracked sources can carry raw NUL bytes, which `grep` treats as
-	 * binary and skips silently — no error, no count. Measured: 3,481 occurrences with `grep -a` against 3,427 without,
-	 * so a `grep`-based ratchet would hide 54 occurrences and could certify zero while they remained. `readLocalTextFile`
-	 * has no such blind spot.
+	 * Matches of the retired vocabulary pattern in tracked text.
 	 */
 	bannedVocabulary: number
 	/**
-	 * `stack.push(...node.children)` — a hand-rolled lifo tree walk. The idiom yields siblings in reverse text order, and
-	 * a `find` over it picked the second of two same-tag spans (#2156, #2163); `walkNodes` in `@mailwoman/core/decoder`
-	 * is the one walk, in document order. Baseline zero.
+	 * `stack.push(...node.children)` style manual tree walks.
 	 */
 	handRolledTreeWalks: number
 }
 
 /**
- * The committed baseline the `debt` check compares against, beside this package's manifest.
+ * Counter names.
+ */
+export type DebtCounterKind = Extract<keyof DebtCounters, string>
+
+/**
+ * Path to the committed debt baseline.
  */
 export const BASELINE_PATH = resolvePackagePath("@mailwoman/repo-health", "baseline.json")
 
 /**
- * This module's own repo-relative path — excluded from the counts it takes, because the pattern below has to spell the
- * words it bans.
+ * Repo-relative path to this file.
  */
 const SELF = "packages/repo-health/lib/checks/debt.ts"
 
-function emptyCounters(): DebtCounters {
+/**
+ * Maximum code lines allowed for non-generated, non-test source files.
+ */
+const PRODUCTION_FILE_LINE_CEILING = 1000
+
+/**
+ * Lines of a source file that carry code, which is what {@link PRODUCTION_FILE_LINE_CEILING} bounds.
+ *
+ * A raw line count measures comment layout as much as file size.
+ * This repository sets comments one sentence per line (`config/oxlint/comment-reflow`),
+ * and adopting that layout took `packages/tiger/lib/class-code.ts` from 978 lines
+ * to 1,088 without adding a member to its table.
+ *
+ * That file documents 164 Census feature-class codes in 167 lines of code.
+ *
+ * Block-comment state carries across lines, so a continuation line counts as comment however it begins.
+ * A `//` or a block marker inside a string literal reads as a comment here,
+ * which undercounts a file holding one.
+ *
+ * The ceiling is a size heuristic, and a few lines either way does not carry a file across 1,000.
+ */
+function codeLineCount(text: string): number {
+	let count = 0
+	let inBlock = false
+
+	for (const rawLine of TextSpliterator.from(text)) {
+		let rest = rawLine
+		let code = ""
+
+		while (rest !== "") {
+			if (inBlock) {
+				const end = rest.indexOf("*/")
+
+				if (end === -1) break
+
+				inBlock = false
+				rest = rest.slice(end + 2)
+
+				continue
+			}
+
+			const lineComment = rest.indexOf("//")
+			const blockOpen = rest.indexOf("/*")
+
+			if (blockOpen !== -1 && (lineComment === -1 || blockOpen < lineComment)) {
+				code += rest.slice(0, blockOpen)
+				rest = rest.slice(blockOpen + 2)
+				inBlock = true
+
+				continue
+			}
+
+			if (lineComment !== -1) {
+				code += rest.slice(0, lineComment)
+
+				break
+			}
+
+			code += rest
+
+			break
+		}
+
+		if (code.trim() !== "") {
+			count++
+		}
+	}
+
+	return count
+}
+
+/**
+ * Collected locations for each counter.
+ */
+export type DebtSites = Record<DebtCounterKind, string[]>
+
+/**
+ * Aggregated counters and sites for one repository walk.
+ */
+interface DebtLedger {
+	counters: DebtCounters
+	sites: DebtSites
+	root: string
+}
+
+/**
+ * Increment a counter and record its site.
+ */
+function note(ledger: DebtLedger, name: keyof DebtCounters, site: string): void {
+	ledger.counters[name]++
+	ledger.sites[name].push(site)
+}
+
+/**
+ * Record one AST node occurrence at its start line.
+ */
+function noteNode(ledger: DebtLedger, name: keyof DebtCounters, source: ts.SourceFile, node: ts.Node): void {
+	const { line } = source.getLineAndCharacterOfPosition(node.getStart(source))
+
+	note(ledger, name, `${relative(ledger.root, source.fileName)}:${line + 1}`)
+}
+
+function emptySites(): DebtSites {
+	const initialCounters = createDebtRecord()
+	const keys = Object.keys(initialCounters) as DebtCounterKind[]
+
+	return Object.fromEntries(keys.map((name): [DebtCounterKind, string[]] => [name, []])) as DebtSites
+}
+
+function createDebtRecord(): DebtCounters {
 	return {
 		privateNameShadows: 0,
 		exportNameAffix: 0,
 		danglingDocLinks: 0,
+		duplicateExportedShapes: 0,
 		asNever: 0,
 		doubleCast: 0,
 		deepRelativeImports: 0,
@@ -115,9 +209,7 @@ function emptyCounters(): DebtCounters {
 }
 
 /**
- * Unwrap the array/readonly/parenthesized wrappers a cast target can carry, so the check sees the type the author
- * actually named. `x as never[]` is an `ArrayTypeNode` whose element is the keyword, and it is exactly as unchecked as
- * the bare form.
+ * Strip wrappers from a cast type (array/readonly/parenthesized).
  */
 function unwrapTypeNode(type: ts.TypeNode): ts.TypeNode {
 	if (ts.isArrayTypeNode(type)) return unwrapTypeNode(type.elementType)
@@ -148,9 +240,7 @@ function isSelfPackageSpecifier(value: string, packageName: string | undefined):
 }
 
 /**
- * The synchronous `node:fs` surface, by name.
- *
- * A `*Sync` suffix over-matches: `execSync`, `spawnSync`, `deflateSync` and `flushSync` are not filesystem calls
+ * Known synchronous filesystem call names.
  */
 const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 	"accessSync",
@@ -182,17 +272,7 @@ const SYNCHRONOUS_FILESYSTEM_CALLS = new Set([
 ])
 
 /**
- * Whether a call reaches the synchronous filesystem directly, bypassing `@mailwoman/core/fs`.
- *
- * The baseline is zero. Workspaces that do not depend on `@mailwoman/core` — `api-kit`, `nuts-lookup`,
- * `timezone-lookup`, `un-locode-lookup`, `variant-aliases` — would install core's ~9 MB of data to replace a `mkdir` or
- * a `readFileSync`, and `oxlint.config.ts` exempts those files by name. they collapse the day the fs helpers can be
- * reached without core's tarball.
- *
- * A bare identifier is counted. a property access is counted only when the receiver is spelled `fs`. That receiver rule
- * is what separates this population from two unrelated ones that share a method name: `node:sqlite`'s
- * `DatabaseSync.closeSync()`, and an injected dependency (`deps.existsSync`), which is a parameter a test substitutes
- * rather than a filesystem call the module makes.
+ * True when a node is a direct synchronous filesystem call.
  */
 function isSynchronousFilesystemCall(node: ts.Node): boolean {
 	if (!ts.isCallExpression(node)) return false
@@ -208,8 +288,7 @@ function isSynchronousFilesystemCall(node: ts.Node): boolean {
 }
 
 /**
- * `<stack>.push(...<expr>.children)` — the push half of a hand-rolled tree walk. The pop half is any `.pop()`, which
- * too many honest stacks share. the spread of `.children` is the tell.
+ * Detect `stack.push(...node.children)` style tree-walk pushes.
  */
 function isChildrenSpreadPush(node: ts.Node): boolean {
 	return (
@@ -227,25 +306,25 @@ function isChildrenSpreadPush(node: ts.Node): boolean {
 
 function visit(
 	source: ts.SourceFile,
-	counters: DebtCounters,
+	ledger: DebtLedger,
 	packageName: string | undefined,
 	countSelfPackageImports: boolean
 ): void {
 	function walk(node: ts.Node): void {
 		if (isSynchronousFilesystemCall(node)) {
-			counters.synchronousFilesystemCalls++
+			noteNode(ledger, "synchronousFilesystemCalls", source, node)
 		}
 
 		if (isNeverCast(node)) {
-			counters.asNever++
+			noteNode(ledger, "asNever", source, node)
 		}
 
 		if (ts.isAsExpression(node) && isUnknownCast(node.expression)) {
-			counters.doubleCast++
+			noteNode(ledger, "doubleCast", source, node)
 		}
 
 		if (isChildrenSpreadPush(node)) {
-			counters.handRolledTreeWalks++
+			noteNode(ledger, "handRolledTreeWalks", source, node)
 		}
 
 		if (
@@ -254,7 +333,7 @@ function visit(
 			ts.isStringLiteral(node.moduleSpecifier) &&
 			isDeepRelativeSpecifier(node.moduleSpecifier.text)
 		) {
-			counters.deepRelativeImports++
+			noteNode(ledger, "deepRelativeImports", source, node)
 		}
 
 		if (
@@ -264,7 +343,7 @@ function visit(
 			countSelfPackageImports &&
 			isSelfPackageSpecifier(node.moduleSpecifier.text, packageName)
 		) {
-			counters.selfPackageImports++
+			noteNode(ledger, "selfPackageImports", source, node)
 		}
 
 		if (
@@ -274,7 +353,7 @@ function visit(
 			ts.isStringLiteral(node.arguments[0]!) &&
 			isDeepRelativeSpecifier(node.arguments[0]!.text)
 		) {
-			counters.deepRelativeImports++
+			noteNode(ledger, "deepRelativeImports", source, node)
 		}
 
 		if (
@@ -285,7 +364,7 @@ function visit(
 			countSelfPackageImports &&
 			isSelfPackageSpecifier(node.arguments[0]!.text, packageName)
 		) {
-			counters.selfPackageImports++
+			noteNode(ledger, "selfPackageImports", source, node)
 		}
 
 		if (
@@ -296,7 +375,7 @@ function visit(
 			ts.isIdentifier(node.arguments[0]!) &&
 			node.arguments[0]!.text === "Boolean"
 		) {
-			counters.filterBoolean++
+			noteNode(ledger, "filterBoolean", source, node)
 		}
 
 		ts.forEachChild(node, walk)
@@ -306,45 +385,23 @@ function visit(
 }
 
 /**
- * Paths whose sources do not count toward repository debt, and why each is excluded.
- *
- * The set is every tracked `.ts`/`.tsx` minus what is listed here — the denominator a count is reported against, and a
- * count reported without one says less than it appears to.
+ * Tracked source prefixes excluded from debt counting.
  */
 const UNCOUNTED = [
-	// The runtime mirror and the idiom over it call the builtins on purpose. counting them would measure the
-	// implementation rather than its callers.
+	// Runtime implementation files.
 	"packages/core/lib/fs/",
-	// this file counts itself otherwise, and the count could never reach zero: {@link BANNED_VOCABULARY} has to
-	// spell the word it bans. Excluded for the same reason as the line above — the implementation is not a caller.
+	// This checker file itself.
 	SELF,
 ]
 
 /**
- * The words being removed from the codebase, and the pattern {@link DebtCounters.bannedVocabulary} counts. The third
- * alternation is the boundary word. it stops before the North Yorkshire town and the surname. The second alternation
- * carries a negative lookahead for the letter runs that continue it into an unrelated English word ("advantage") and
- * into six place names. It is case-sensitive on purpose: `availableVersions` and `localeVerdict` contain the letters
- * across a camelCase boundary that appear in eval rows and records. those survive verbatim by construction rather than
- * by allowlist. The last alternation stops before a coreutils flag (` -c`, ` -d`): a shell command in a fenced block is
- * the utility rather than the word.
- *
- * Keep the counter'S name free OF the word. This ratchet is written in the language it polices, so the vocabulary sweep
- * it exists to drive rewrote it: a case-preserving `shard` → `extract` pass over `scripts/` renamed `shardVocabulary`
- * to `extractVocabulary` and rewrote this very pattern, so the check began measuring the replacement word while still
- * reporting a falling number. It stayed green throughout. A neutral counter name and a single pattern constant are what
- * make that impossible to repeat.
+ * Regex for retired vocabulary matches.
  */
 const BANNED_VOCABULARY =
-	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ll]ever|LEVER)(?!age|AGE|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
+	/(?<!\p{L})(?:[Ss]hard|SHARD)(?:s|ed|ing|S|ED|ING)?(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]hard|SHARD)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?:[A-Za-z_]*[a-z0-9_](?=Lever|LEVER)|[A-Za-z_]*_(?=lever))?(?:[Ll]ever|LEVER)(?!ag|AG|ano|ANO|ton|TON|ock|OCK|stock|STOCK|dalsveien|DALSVEIEN|kusen|KUSEN|n\b|N\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*(?:[Ss]eam|SEAM)(?!er\b|ER\b|an\b|AN\b)[A-Za-z_]*(?!\p{L})|(?<!\p{L})(?<!Golden )(?:gat(?:e|es|ed|ing)|Gat(?:e|es|ed|ing)|GAT(?:E|ES|ED|ING))(?!\p{L})|(?<![\p{L}])[a-z][A-Za-z]*Gat(?:e|es|ed|ing)[A-Za-z]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})gat(?:e|es|ed|ing)_[A-Za-z_]*(?!\p{L})|(?<!\p{L})[A-Za-z_]*_gat(?:e|es|ed)(?!\p{L})|(?<!\p{L})[A-Z_]*GAT(?:E|ES|ED|ING)_[A-Z_]*(?!\p{L})|(?<!\p{L})[Cc]ut(?:s|ting)?(?!\p{L}|\s-[a-z])|(?<!\p{L})CUT(?:S|TING)?(?!\p{L})/gu
 
 /**
- * Where the banned word is allowed to survive, and why each one warrants it.
- *
- * The count is over every tracked text file rather than just `.ts`/`.tsx`. The first version of this counter scanned
- * only TypeScript, reported zero, and left 125 occurrences standing in prose, config, dictionaries and eval rows —
- * including three sentences in `agents.md` that still told the next agent the old names were current. A vocabulary an
- * agent reads is a vocabulary an agent writes, so prose is in scope.
+ * Allowed path prefixes for retired-vocabulary matches, with reasons.
  */
 const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason: string]> = [
 	[SELF, "the pattern above has to spell the words it bans"],
@@ -361,14 +418,7 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	["config/vale/fixtures/", "Vale fixtures whose purpose is to keep failing, permanently"],
 	[".claude/output-styles/", "the same refusal list, mirrored for agent replies"],
 	["AGENTS.md", "carries that refusal list, plus the note recording that this family reached zero"],
-	// records are not exempt, and that is a deliberate reversal. They were exempt on the reasoning that
-	// rewriting a record falsifies it — but a record names paths and identifiers rather than measurements, and a
-	// retired name in a record is read as a live one by the next agent. Every number, date and verdict is
-	// untouched. only the spelling of things that were renamed moved with them. Operator direction, and the
-	// reason given was the operative one: agents pick the vocabulary back up from prose.
-	// content rather than vocabulary. `shardza`, `sechshard` and `shykshard` are transliterated place names;
-	// `Bosshardt` and `Rashard` are real people's names. the eval rows are dated notes on committed board
-	// cases. Renaming any of them would corrupt data to satisfy a style rule.
+	// Data and records may contain real names that must remain verbatim.
 	["packages/core/data/", "libpostal dictionaries — real given names and surnames"],
 	["data/", "address rows and reference tables carry real place names: Golden Gate Bridge, South Gate, Cut Bank"],
 	[
@@ -376,6 +426,32 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
 	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
+	// Records that cite receipts by their historical path, which must stay byte-exact.
+	[
+		"packages/mailwoman/lib/eval-harness/baselines.json",
+		"the precision note cites a scratchpad script by its historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v2.3.0-nl-postcode.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v5.2.0-nordic.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v5.3.0-family.json",
+		"the us.postcode revision cites its evidence receipt by historical path",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/specs/v6.0.0-shipped-baseline.json",
+		"the provenance note cites the v264 battery run by its historical path",
+	],
+	[
+		"packages/neural-weights-en-us/model-card.json",
+		"the card's eval history cites receipts and retired spec files by historical path",
+	],
+	["release.config.json", "the weights lineage cites its promotion receipts by historical path"],
 	["packages/corpus/data/", "the sub-venue lexicon: an airport gate is a real sub-venue token"],
 	["packages/corpus/lib/recipes/sub/venue", "sub-venue recipes name the physical gate"],
 	["packages/corpus/lib/tools/sub/venue", "sub-venue tooling names the physical gate"],
@@ -416,20 +492,37 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 	],
 	["packages/neural/test/fixtures/", "a binary tokenizer model"],
 	["data/gazetteer/", "gazetteer place names"],
+	[
+		"packages/mailwoman/lib/eval-harness/fixtures/",
+		"eval fixtures hold real addresses: Norwegian streets end in gate, and GB venues are named Gate",
+	],
+	[
+		"packages/mailwoman/lib/eval-harness/gauntlet/cases/gb/regression.jsonl",
+		"the Manchester case is a real venue, Gate 12",
+	],
+	["docs/static/benchmarks/", "benchmark panels hold real addresses such as Hobsons Gate"],
+	["packages/mailwoman/data/county-population-ranked.json", "Gates County is a real North Carolina county"],
+	["packages/osm/fixtures/", "OSM fixtures carry tags verbatim, such as aeroway=gate"],
 	[".yarn/", "vendored third-party release"],
 ]
 
 /**
- * Count every debt counter over the tracked tree of `context`.
+ * Compute all debt counters.
  */
 export async function computeDebtCounters(context: RepoContext): Promise<DebtCounters> {
+	return (await computeDebtLedger(context)).counters
+}
+
+/**
+ * Compute counters and record per-counter sites.
+ */
+async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 	const root = context.repoRoot
 
-	// `existingOnly`: a tracked path can be absent from the working tree (a deletion staged but not
-	// committed); skip it rather than failing the whole check on a file the next commit removes anyway.
+	// Skip tracked files missing from the working tree.
 	const paths = await trackedSourcePaths(context, { excludePrefixes: UNCOUNTED, existingOnly: true })
 
-	const counters = emptyCounters()
+	const ledger: DebtLedger = { counters: createDebtRecord(), sites: emptySites(), root }
 
 	const workspacePackages = await Promise.all(
 		(await readWorkspaceDirectories(root)).map(async (workspace) => {
@@ -452,24 +545,27 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 
 		const workspacePackage = workspacePackages.find(({ directory }) => path.startsWith(`${directory}/`))
 
-		// Package tests intentionally import their own package name: that is the interface this repository's
-		// test layout verifies. Self-imports remain debt in production source, where `#imports` avoid cycles/noise.
+		// Tests may self-import by package name.
 		const countSelfPackageImports = !path.includes("/test/") && !/[.]test[.]tsx?$/.test(path)
 
-		visit(source, counters, workspacePackage?.name, countSelfPackageImports)
+		visit(source, ledger, workspacePackage?.name, countSelfPackageImports)
 
-		counters.rawNULBytes += text.split("\0").length - 1
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- File text already loaded.
+		const nulBytes = text.split("\0").length - 1
 
-		const lineCount = (text.match(/\n/g)?.length ?? 0) + 1
+		for (let i = 0; i < nulBytes; i++) {
+			note(ledger, "rawNULBytes", relative(root, path))
+		}
+
+		const lineCount = codeLineCount(text)
 		const generated = /(?:@generated|This file was generated by:)/.test(text.slice(0, 1000))
 
-		if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > 1000) {
-			counters.productionFilesOver1000Lines++
+		if (!generated && !/[.]test[.]tsx?$/.test(path) && lineCount > PRODUCTION_FILE_LINE_CEILING) {
+			note(ledger, "productionFilesOver1000Lines", `${relative(root, path)} (${lineCount} code lines)`)
 		}
 	}
 
-	// The banned vocabulary is counted over every tracked text file rather than the TypeScript-only set above:
-	// prose an agent reads is prose an agent copies. Binary blobs are skipped by the read failing rather than by a list.
+	// Scan all tracked text files for retired vocabulary.
 	for (const trackedPath of await trackedSourcePaths(context, { globs: ["*"], existingOnly: true })) {
 		const relativePath = relative(root, trackedPath)
 
@@ -483,25 +579,43 @@ export async function computeDebtCounters(context: RepoContext): Promise<DebtCou
 			continue
 		}
 
-		counters.bannedVocabulary += text.match(BANNED_VOCABULARY)?.length ?? 0
+		for (const match of text.matchAll(BANNED_VOCABULARY)) {
+			const line = (text.slice(0, match.index).match(/\n/g)?.length ?? 0) + 1
+
+			note(ledger, "bannedVocabulary", `${relativePath}:${line} — ${match[0]}`)
+		}
 	}
 
-	counters.privateNameShadows = (await findPrivateNameShadows(context)).length
-	counters.exportNameAffix = (await findAffixPairs(context)).length
-	counters.danglingDocLinks = (await findDanglingLinks(context)).length
+	for (const shadow of await findPrivateNameShadows(context)) {
+		note(ledger, "privateNameShadows", `${shadow.file}:${shadow.line}`)
+	}
 
-	return counters
+	for (const pair of await findAffixPairs(context)) {
+		note(ledger, "exportNameAffix", `${pair.file}:${pair.line}`)
+	}
+
+	for (const link of await findDanglingLinks(context)) {
+		note(ledger, "danglingDocLinks", `${link.file}:${link.line}`)
+	}
+
+	for (const duplicate of await findDuplicateShapes(context)) {
+		for (const site of duplicate.sites) {
+			note(ledger, "duplicateExportedShapes", `${site.file}:${site.line} ${site.name}`)
+		}
+	}
+
+	return ledger
 }
 
 /**
- * The committed counters.
+ * Read committed baseline counters.
  */
 export async function readBaseline(): Promise<DebtCounters> {
 	return await readLocalJSONFile<DebtCounters>(BASELINE_PATH)
 }
 
 /**
- * One line per counter, each with its baseline, for a human reading the readings.
+ * Format counters with baseline values.
  */
 export function formatCounters(counters: DebtCounters, baseline: DebtCounters): string[] {
 	return Object.entries(counters).map(
@@ -510,14 +624,29 @@ export function formatCounters(counters: DebtCounters, baseline: DebtCounters): 
 }
 
 /**
- * The `debt` check: an error per counter above its baseline, a warning per counter below it.
+ * Cap listed sites so one counter does not flood output.
+ */
+function listSites(sites: readonly string[]): string[] {
+	if (sites.length <= SITE_CEILING) return [...sites]
+
+	return [...sites.slice(0, SITE_CEILING), `… and ${sites.length - SITE_CEILING} more`]
+}
+
+/**
+ * Max sites shown per counter.
+ */
+const SITE_CEILING = 40
+
+/**
+ * Debt check against baseline counters.
  */
 export const debtCheck: RepoCheck = {
 	id: "debt",
 	description:
 		"Monotonic debt counters against baseline.json: a counter that grew fails, one that fell asks for a ratchet.",
 	async run(context) {
-		const [counters, baseline] = await Promise.all([computeDebtCounters(context), readBaseline()])
+		const [ledger, baseline] = await Promise.all([computeDebtLedger(context), readBaseline()])
+		const { counters, sites } = ledger
 		const diagnostics: Diagnostic[] = []
 		const file = relative(context.repoRoot, BASELINE_PATH)
 
@@ -529,12 +658,14 @@ export const debtCheck: RepoCheck = {
 					severity: DiagnosticSeverity.Error,
 					message: `${name} is ${count} and has no baseline entry — record one with \`mwops health baseline debt\``,
 					file,
+					details: listSites(sites[name]),
 				})
 			} else if (count > recorded) {
 				diagnostics.push({
 					severity: DiagnosticSeverity.Error,
 					message: `Repository debt grew: ${name} ${recorded} → ${count}`,
 					file,
+					details: listSites(sites[name]),
 				})
 			} else if (count < recorded) {
 				diagnostics.push({

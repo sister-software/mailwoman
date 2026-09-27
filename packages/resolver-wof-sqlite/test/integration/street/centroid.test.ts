@@ -18,6 +18,7 @@ import {
 	stripArrondissement,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 interface Seed {
@@ -34,18 +35,18 @@ interface Seed {
 }
 
 /**
- * A seeded `street_centroid` extract, owned by the caller: the reader opens it by path, so the directory has to outlive
- * this function.
+ * A seeded `street_centroid` extract, owned by the caller: the reader opens it by path,
+ * so the directory has to outlive this function.
  */
-type StreetCentroidFixture = TemporaryDirectory & { extractPath: string }
+type StreetCentroidFixture = TemporaryDirectory & { extractPath: PathBuilder }
 
 /**
  * Seed a temp-file `street_centroid` extract and hand its directory to the caller.
  */
 async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 	const scratch = await temporaryDirectory("sc-test-")
-	const extractPath = scratch.resolve("street-centroids.db")
-	await using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
+	const extractPath = scratch.path("street-centroids.db")
+	using kdb = new DatabaseClient<StreetCentroidDatabase>(extractPath)
 	await createStreetCentroidTable(kdb)
 
 	const ins = kdb.prepare(
@@ -83,8 +84,8 @@ describe("stripArrondissement", () => {
 
 	it("is a no-op for every other commune", () => {
 		expect(stripArrondissement(normalizeLocalityForKey("Bordeaux"))).toBe("bordeaux")
-		// The fold keeps hyphens (only the street normalizer splits them), so the stored commune key is hyphenated —
-		// and a commune merely containing "paris" is never stripped.
+		// The fold keeps hyphens (only the street normalizer splits them), so the stored commune
+		// key is hyphenated, and a commune merely containing "paris" is never stripped.
 		expect(stripArrondissement(normalizeLocalityForKey("Le Touquet-Paris-Plage"))).toBe("le touquet-paris-plage")
 		expect(stripArrondissement(normalizeLocalityForKey(""))).toBe("")
 	})
@@ -98,8 +99,8 @@ describe("StreetCentroidSqliteLookup", () => {
 
 	beforeAll(async () => {
 		fixture = await seedExtract([
-			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon". The
-			// weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
+			// "Place Bellecour" split across two arrondissement/postcode rows, both base-commune "lyon".
+			// The weighted centroid over the two rows weights by point_count (10 @ lon 4.83, 30 @ lon 4.85).
 			{
 				street_norm: "place bellecour",
 				postcode: "69002",
@@ -157,7 +158,8 @@ describe("StreetCentroidSqliteLookup", () => {
 	})
 
 	it("probes by base commune, folding a query arrondissement, and WEIGHTED-aggregates across rows", () => {
-		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845 — the point-count-weighted centroid rather than the plain mean 4.84.
+		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845.
+		// The point-count-weighted centroid rather than the plain mean 4.84.
 		const hit = lookup.find({ street: "Place Bellecour", locality: "Lyon 2e Arrondissement" })
 		expect(hit).not.toBeNull()
 		expect(hit!.lon).toBeCloseTo(4.845, 4)

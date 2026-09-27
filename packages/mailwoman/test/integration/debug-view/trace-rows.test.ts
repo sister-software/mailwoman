@@ -3,7 +3,7 @@
 
 /**
  *   The evidence rows' vocabulary, against a hand-built trace. What these tests are really guarding is the
- *   meaning-of-zero discipline: an unfed channel, a channel that fired on nothing, and a bundle with no locale head
+ *   meaning-of-zero discipline: an unfed channel, a channel that fired on no token, and a bundle with no locale head
  *   are three different statements, and a row that collapsed any pair of them would make its own question
  *   unanswerable.
  */
@@ -15,8 +15,10 @@ import { describe, expect, it } from "vitest"
 const TEXT = "3215 SE Clinton St"
 
 /**
- * A whole query shape, carrying only the formats a case wants to state. Built rather than cast: the annotated return
- * type is what checks that a `format` name is one the detector can actually emit.
+ * A whole query shape, carrying only the formats a case wants to state.
+ *
+ * Built rather than cast: the annotated return type is what checks that a `format`
+ * name is one the detector can actually emit.
  */
 function queryShapeOf(knownFormats: GeocodeTrace["queryShape"]["knownFormats"] = []): GeocodeTrace["queryShape"] {
 	return {
@@ -102,7 +104,8 @@ describe("localeHeadRow", () => {
 
 		expect(row.startsWith("US 0.9")).toBe(true)
 		expect(row).toContain("FR 0.0")
-		// The axis is read off the trace — a re-ordered head must re-order the row, never be re-labelled by us.
+		// The axis is read off the trace.
+		// A re-ordered head must re-order the row, never be re-labelled by us.
 		expect(localeHeadRow(traceOf({ localeLogits: [1, 4, 0], localeCountries: ["US", "FR", "DE"] }))).toMatch(/^FR /u)
 	})
 

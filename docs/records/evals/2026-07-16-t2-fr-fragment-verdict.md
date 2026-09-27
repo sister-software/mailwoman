@@ -160,7 +160,7 @@ The two populations do not contradict each other; they partition:
 
 The fix is a sibling of what is already there — extend the counter-distribution to French zone
 designators (`ZAC`, `ZA`, `Lotissement`, `Résidence` as NOT-street). Not a new idea, a wider one.
-It is a extract change, so it belongs to the next run rather than to this verdict.
+It is an extract change, so it belongs to the next run, not to this verdict.
 
 **This is what pre-registration is for.** Two of the three check clauses passed decisively; the third
 went the other way and is on the page at the same size as the wins.

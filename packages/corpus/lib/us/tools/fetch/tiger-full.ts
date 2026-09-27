@@ -3,67 +3,36 @@
 
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 /**
- *   Fetch the full tiger 2024 addrfeat dataset — all US counties.
+ * Fetch the full TIGER 2024 addrfeat dataset for all US counties from
+ * `https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/`, where files are named
+ * `tl_2024_<statefips><countyfips>_addrfeat.zip`.
  *
- *   tiger addrfeat 2024 source:
- *
- *   - https://www2.census.gov/geo/tiger/TIGER2024/addrfeat/
- *   - Files: `tl_2024_<statefips><countyfips>_addrfeat.zip`
- *
- *   Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
- *   `manifest.json` recording filename, sha256, and bytes for every county ZIP so re-runs can skip
- *   already-verified files. (Extraction + ogr2ogr ingestion happen later, in the `tiger` adapter.
- *   this module is download + provenance only.)
- *
- *   Invoke via `mailwoman corpus fetch tiger-full --out-root <path>`. Native `fetch` streams each
- *   county ZIP to disk (no curl subprocess).
+ * Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
+ * `manifest.json` recording filename, sha256 and bytes so re-runs skip already-verified files.
+ * Extraction and ogr2ogr ingestion happen later, in the `tiger` adapter.
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { BYTES_PER_KIB, ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
 import { isoSeconds } from "@mailwoman/core/utils"
 import { sleep } from "@mailwoman/core/utils/sleep"
-import { basename, join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { readManifest, streamDownload, writeManifest } from "#tools/fetch/download/index"
 
-/**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
- */
-/**
- * Lowest 2xx status. anything below is informational.
- */
 const HTTP_OK = 200
-
-/**
- * Lowest 3xx status. at or above it the response is a redirect or an error rather than a body.
- */
 const HTTP_REDIRECT = 300
 
 const TIGER_BASE_URL = "https://www2.census.gov/geo/tiger/TIGER2024/ADDRFEAT"
 
 export interface FetchTigerFullOptions extends BaseFetchOptions {
-	/**
-	 * Space-separated list of 2-digit state FIPS codes to skip entirely. Default `"50"` — Vermont, already fetched in
-	 * v0.1.1.
-	 */
 	skipStateFips?: string
-	/**
-	 * Seconds to sleep between downloads. Default `0.2`.
-	 */
 	rateSleep?: number
-	/**
-	 * Max concurrent download workers per state. Default `4`.
-	 */
 	maxParallel?: number
-	/**
-	 * Print planned downloads without fetching. Default `false`.
-	 */
 	dryRun?: boolean
 }
 
@@ -73,10 +42,7 @@ interface CountyEntry {
 	bytes: number
 }
 
-/**
- * Read a per-state manifest.json into a filename → entry map.
- */
-async function readCountyManifest(manifestPath: string): Promise<Map<string, CountyEntry>> {
+async function readCountyManifest(manifestPath: PathBuilder): Promise<Map<string, CountyEntry>> {
 	const map = new Map<string, CountyEntry>()
 	const parsed = await readManifest<{ counties?: CountyEntry[] }>(manifestPath)
 
@@ -89,10 +55,7 @@ async function readCountyManifest(manifestPath: string): Promise<Map<string, Cou
 	return map
 }
 
-/**
- * Check whether a file already matches a recorded sha256 and byte count.
- */
-async function fileMatchesSha(path: string, expectedSha: string, expectedBytes: number): Promise<boolean> {
+async function fileMatchesSha(path: PathBuilder, expectedSha: string, expectedBytes: number): Promise<boolean> {
 	if (!(await pathExists(path))) return false
 
 	if ((await statPath(path)).size !== expectedBytes) return false
@@ -104,11 +67,8 @@ type CountyResult =
 	| { ok: true; filename: string; sha256: string; bytes: number }
 	| { ok: false; filename: string; reason: string }
 
-/**
- * Download one county ZIP (size sanity check + sha256).
- */
-async function downloadCounty(url: string, dest: string): Promise<CountyResult> {
-	const filename = basename(dest)
+async function downloadCounty(url: string, dest: PathBuilder): Promise<CountyResult> {
+	const filename = dest.basename()
 	const status = await streamDownload(url, dest, { timeoutMs: 600_000, retries: 3, retryDelayMs: 5000 })
 
 	if (status < HTTP_OK || status >= HTTP_REDIRECT) {
@@ -137,15 +97,13 @@ export async function fetchTigerFull(
 	const maxParallel = options.maxParallel ?? 4
 	const dryRun = options.dryRun ?? false
 
-	const addrfeatDir = join(options.outRoot, "tiger", "addrfeat")
+	const addrfeatDir = options.outRoot("tiger", "addrfeat")
 	await makeDirectories(addrfeatDir)
 
 	// MARK: Step 1 — discover the county file list
 
 	report?.(`=== Fetching TIGER 2024 ADDRFEAT directory listing...`)
 
-	// `responseType: "text"` — an Apache directory index, scraped below. The per-county archive downloads
-	// stay on raw `fetch` (they stream to disk. see `downloadOne`).
 	const listingRes = await new APIClient({
 		displayName: "tiger-listing",
 		retry: true,
@@ -159,8 +117,7 @@ export async function fetchTigerFull(
 	const totalCounties = allZips.length
 	report?.(`  Found ${totalCounties} county ZIPs in the TIGER 2024 ADDRFEAT index.`)
 
-	// Build a map: state_fips -> list of filenames.
-	// tl_2024_SSCCC_addrfeat.zip — SS = 2-digit state FIPS (chars 8-9), CCC = county FIPS.
+	// `tl_2024_SSCCC_addrfeat.zip`: SS is the 2-digit state FIPS at chars 8-9.
 	const stateFiles = new Map<string, string[]>()
 
 	for (const fname of allZips) {
@@ -181,13 +138,11 @@ export async function fetchTigerFull(
 	let totalBytesFetched = 0
 	const failedCodes: string[] = []
 
-	// Process states in sorted FIPS order for predictable output.
 	const sortedStates = [...stateFiles.keys()].toSorted()
 
 	for (const stateFips of sortedStates) {
 		const countyFiles = stateFiles.get(stateFips) ?? []
 
-		// Respect an explicit request to skip this state before scheduling its counties.
 		if (skipStateFips.includes(stateFips)) {
 			report?.(`--- State ${stateFips} — SKIPPED (in --skip-state-fips, ${countyFiles.length} counties)`)
 			totalSkippedState += countyFiles.length
@@ -195,24 +150,21 @@ export async function fetchTigerFull(
 			continue
 		}
 
-		const stateDir = join(addrfeatDir, `state-${stateFips}`)
+		const stateDir = addrfeatDir(`state-${stateFips}`)
 		await makeDirectories(stateDir)
-		const manifestPath = join(stateDir, "MANIFEST.json")
+		const manifestPath = stateDir("MANIFEST.json")
 
-		// Load existing manifest for O(1) verified-skip lookup.
 		const manifest = await readCountyManifest(manifestPath)
 
 		report?.(`--- State ${stateFips} — ${countyFiles.length} counties`)
 
-		// Build a list of URLs+dests that need fetching.
-		const pending: Array<{ url: string; dest: string }> = []
+		const pending: Array<{ url: string; dest: PathBuilder }> = []
 
 		for (const fname of countyFiles) {
-			const dest = join(stateDir, fname)
+			const dest = stateDir(fname)
 			const url = `${TIGER_BASE_URL}/${fname}`
 			const known = manifest.get(fname)
 
-			// Skip if already verified via manifest.
 			if (known && (await fileMatchesSha(dest, known.sha256, known.bytes))) {
 				report?.(`  skip (verified) ${fname}`)
 
@@ -236,7 +188,6 @@ export async function fetchTigerFull(
 
 		if (!pending.length) continue
 
-		// Download pending counties with bounded parallelism and rate-limit spacing.
 		const results: CountyResult[] = Array.from({ length: pending.length })
 		let cursor = 0
 
@@ -246,7 +197,6 @@ export async function fetchTigerFull(
 
 				if (i >= pending.length) return
 				const item = pending[i]!
-				// Rate-limit: polite spacing before each fetch.
 				await sleep(rateSleepMs)
 				results[i] = await downloadCounty(item.url, item.dest)
 			}
@@ -254,7 +204,6 @@ export async function fetchTigerFull(
 
 		await Promise.all(workers)
 
-		// Collect results from this state.
 		for (const result of results) {
 			if (result.ok) {
 				report?.(
@@ -273,7 +222,6 @@ export async function fetchTigerFull(
 			}
 		}
 
-		// Rewrite per-state manifest.json with all known-good counties (sorted for determinism).
 		const counties = [...manifest.values()].toSorted((a, b) => a.filename.localeCompare(b.filename))
 
 		const manifestDoc = {

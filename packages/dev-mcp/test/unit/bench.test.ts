@@ -16,7 +16,8 @@ describe("summarizeLatency", () => {
 	})
 
 	it("passes p in [0, 100], not a fraction", () => {
-		// The unit agents.md flags specifically. A fraction would floor to index 0 and report the minimum as the median.
+		// The unit agents.md flags specifically.
+		// A fraction would floor to index 0 and report the minimum as the median.
 		const reading = summarizeLatency([1, 2, 3, 4, 100])
 
 		expect(reading.p50_ms).not.toBe(1)
@@ -39,8 +40,8 @@ describe("assembleBench", () => {
 	const warm = summarizeLatency([100, 110, 120])
 
 	it("says so loudly when the cold start was not measured", () => {
-		// A warm daemon makes it easy to publish a number no user sees. Absence of a cold measurement is stated, never
-		// left to be read as zero.
+		// A warm daemon makes it easy to publish a number no user sees.
+		// Absence of a cold measurement is stated, never left to be read as zero.
 		const reading = assembleBench(null, warm)
 
 		expect(reading.cold).toBeNull()

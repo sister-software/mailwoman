@@ -5,7 +5,7 @@ shipped the coarse-placer as an int8 **model** (#581) — a 0.79 MB linear count
 consumed yet. This shift wired it into the geocoder as a **soft country prior**, proved it safe at every
 step, flipped it **on by default**, and shipped the whole thing to npm as **v4.9.0**. Five PRs in a clean
 stack (#606, #608, #609, #610, #611), each conditional and merged on green; one DeepSeek consult; the broken-then-
-fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout — every merge and
+fixed v4.8.0/4.8.1 release saga as the lead-in. The operator was at the keyboard throughout. Every merge and
 the default-on flip were authorized rather than self-granted._
 
 ## What shipped
@@ -62,7 +62,7 @@ the default-on flip were authorized rather than self-granted._
   reflex: M1 and the misroute check both measure the geocoder's right-country rate against truth, never the
   placer's intrinsic F1. M2's component probe picked the _method_; the assembled check validated it. They
   agreed, but the discipline is what makes that meaningful.
-- **The open-set result is the good kind of surprise** — the fix was simpler than the plan. We expected to
+- **The open-set result is the good kind of surprise**. The fix was simpler than the plan. We expected to
   retrain (Mahalanobis-on-the-manifold or a binary reject-head); instead a one-line decision-rule change
   cleared the bar. Pausing to write up _why_ (the mass-vs-argmax decomposition) before wiring it kept us from
   cargo-culting the pre-registered method.

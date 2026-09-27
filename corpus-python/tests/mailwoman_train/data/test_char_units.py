@@ -104,7 +104,7 @@ def test_word_mode_bi_comes_straight_from_the_span_array() -> None:
         LABEL_TO_ID["I-street"],
         LABEL_TO_ID["B-locality"],
     ]
-    # Two adjacent street spans (distinct entities): each keeps its own B — the boundary a
+    # Two adjacent street spans (distinct entities): each keeps its own B. The boundary a
     # contiguous-family re-flip would have destroyed.
     labels = char_label_array_from_spans(raw, [0, 5, 8], [4, 7, 15], ["street", "street", "locality"])
     enc = encode_row_units(raw, spans, labels, vocab, max_units=4, max_unit_width=8, ctx_chars=0)

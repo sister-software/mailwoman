@@ -19,8 +19,8 @@ export interface TIGERTract extends ParsedGeoIDTractLevel {
 	GEOID: FIPSTractGeoID
 
 	/**
-	 * The geometry of the tabulated block, typically a polygon, but may be a multi-polygon for blocks with holes, or
-	 * islands.
+	 * The geometry of the tabulated block, typically a polygon, but may be a
+	 * multi-polygon for blocks with holes, or islands.
 	 *
 	 * @title Geometry
 	 */

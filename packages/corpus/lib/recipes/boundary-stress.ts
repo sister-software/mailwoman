@@ -16,14 +16,19 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
+import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
 
 /**
- * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11% (recover the 84% locality drop on bare
- * "City, state" rows without becoming a locality-first majority), and house-number-before:after = 7:3 (FR's dominant
- * order is number-before. 30% after breaks the order-bias shortcut without risking FR hn-before accuracy). The three
- * original non-number shapes keep the bulk. Weights sum to 1.0. Key order is required — it drives the cumulative
- * thresholds below.
+ * Revised composition (v1.7.0, DeepSeek-tuned 2026-06-18): `bare-locality` ~11%
+ * (recover the 84% locality drop on bare "City, state" rows without becoming a locality-first majority),
+ * and house-number-before:after = 7:3 (FR's dominant order is number-before. 30%
+ * after breaks the order-bias shortcut without risking FR hn-before accuracy).
+ *
+ * The three original non-number shapes keep the bulk.
+ * Weights sum to 1.0.
+ *
+ * Key order is required — it drives the cumulative thresholds below.
  */
 const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"street-eats-affix": 0.22,
@@ -51,8 +56,10 @@ function pickTemplate(r: () => number): BoundaryStressTemplate {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const boundaryStressRecipe: CorpusRecipe = {
 	name: "boundary-stress",
@@ -89,8 +96,17 @@ export const boundaryStressRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Match the base corpus parquet schema: flat synth_method / synth_base_id rather than a nested `synth`.
-			write(stringifyJSON({ ...aligned.row, synth_method: `boundary-stress:${row.template}`, synth_base_id: null }))
+			// Match the base corpus parquet schema: flat columns rather than a nested object.
+			write(
+				stringifyJSON({
+					...aligned.row,
+					recipe: `boundary-stress:${row.template}`,
+					base_source_id: null,
+					// Every component is drawn from a template mix built to sit on a tag boundary.
+					register: null,
+					surface: SurfaceOrigin.Invented,
+				})
+			)
 
 			emitted++
 		}

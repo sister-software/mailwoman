@@ -9,8 +9,9 @@ import { text } from "#operations/inputs"
 import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
 
 /**
- * `release.fetch-hf-weights` — writes inside the checkout or the data root. Listed in `registry.ts`; the description on
- * the operation is what `mwops` prints.
+ * `release.fetch-hf-weights` — writes inside the checkout or the data root.
+ *
+ * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const fetchHFWeightsOperation = defineOperation({
 	id: "release.fetch-hf-weights",
@@ -28,7 +29,7 @@ export const fetchHFWeightsOperation = defineOperation({
 		checksumUndeclared: z.array(z.string()),
 	}),
 	async run(input, context) {
-		const destRoot = input.into ? String(resolvePath(context.repoRoot, input.into)) : context.repoRoot
+		const destRoot = input.into ? resolvePath(context.repoRoot, input.into) : context.repoRoot
 
 		const report = await fetchHFWeights(destRoot, {
 			repoRoot: context.repoRoot,

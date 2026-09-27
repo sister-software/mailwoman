@@ -1,15 +1,13 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { DefaultMailwomanPaths } from "@mailwoman/core/env"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
-import { mailwomanDataRoot, wofExtractPaths } from "@mailwoman/core/utils"
 import type { CandidateDatabase } from "@mailwoman/resolver-wof-sqlite/candidate-schema"
+import { wofDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { conventionCandidateDBPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
-import { join } from "path-ts"
 import { afterEach, expect, test, vi } from "vitest"
 
 // This source file is a guaranteed-existing absolute path for the existsSync checks.
@@ -23,33 +21,11 @@ afterEach(() => {
 	vi.unstubAllEnvs()
 })
 
-test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
-	expect(wofExtractPaths("/data")).toEqual([
-		"/data/wof/admin-global-priority.db",
-		"/data/wof/postalcode-us.db",
-		"/data/wof/postalcode-geonames-tail.db",
-		"/data/wof/postalcode-intl.db",
-		"/data/wof/postalcode-nl-pc6.db",
-		// Build-local (ODbL): present only on the machine that built it, which is exactly why it can be
-		// listed unconditionally — every caller filters with `existsSync`, and that filter is the tier.
-		"/data/wof/postalcode-ni-osm.db",
-	])
-})
-
-test("mailwomanDataRoot: honors MAILWOMAN_DATA_ROOT and threads it into wofExtractPaths", () => {
-	setEnv("MAILWOMAN_DATA_ROOT", "/custom/root")
-	expect(mailwomanDataRoot()).toBe("/custom/root")
-	expect(wofExtractPaths()[0]).toBe("/custom/root/wof/admin-global-priority.db") // default arg uses the env
-
-	setEnv("MAILWOMAN_DATA_ROOT", DefaultMailwomanPaths.data)
-	expect(mailwomanDataRoot()).toBe(DefaultMailwomanPaths.data)
-})
-
 test("resolveCandidateDBPath: returns an explicit/env path only when it exists on disk", async () => {
 	// A data root with no candidate.db under it, so the convention fallback stays out of the way.
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(await resolveCandidateDBPath()).toBeUndefined() // nothing set, nothing at the convention path
+	expect(await resolveCandidateDBPath()).toBeUndefined() // no env var set and no file at the convention path
 	expect(await resolveCandidateDBPath("/no/such/candidate.db")).toBeUndefined() // explicit but missing
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE) // explicit + exists
 
@@ -59,21 +35,27 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 	expect(await resolveCandidateDBPath()).toBeUndefined() // env path missing
 })
 
-test("resolveCandidateDBPath: falls back to <data-root>/wof/candidate.db, and 'none' pins the FTS backend", async () => {
-	// The fallback is what makes the candidate table the default backend. Pointed at this file's own
-	// directory tree so the convention path is a real file: `<root>/wof/candidate.db`.
+test("resolveCandidateDBPath: falls back to the convention path under the data root, and 'none' pins the FTS backend", async () => {
+	// The fallback is what makes the candidate table the default backend, so the path
+	// it reaches has to be the one `data pull candidate` writes.
+	// This asserted `<root>/wof/candidate.db` while the 2026-09-15 regrouping moved
+	// the artifact to `<root>/db/wof/`, and the fixture carried the old layout too —
+	// so the pair agreed with each other and with no data root on disk.
+	// `resolveCandidateDBPath()` answered undefined on a host holding the file,
+	// and the resolver fell back to FTS without saying so.
 	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
+	const conventionPath = wofDatabaseRoot(root)("candidate.db").toString()
 
 	setEnv("MAILWOMAN_DATA_ROOT", root)
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
-	expect(conventionCandidateDBPath()).toBe(join(root, "wof", "candidate.db"))
-	expect(await resolveCandidateDBPath()).toBe(join(root, "wof", "candidate.db"))
+	expect(conventionCandidateDBPath()).toBe(conventionPath)
+	expect(await resolveCandidateDBPath()).toBe(conventionPath)
 
 	// An explicit path still outranks the convention.
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
 
-	// `none` is the opt-out, and it has to beat the convention path — otherwise there is no way back
-	// to the FTS backend on a machine that has pulled the gazetteer.
+	// `none` is the opt-out, and it has to beat the convention path.
+	// Otherwise there is no way back to the FTS backend on a machine that has pulled the gazetteer.
 	expect(await resolveCandidateDBPath("none")).toBeUndefined()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	expect(await resolveCandidateDBPath()).toBeUndefined()
@@ -85,7 +67,7 @@ test("resolveCandidateDBPath: an explicit data root does not depend on MAILWOMAN
 	setEnv("MAILWOMAN_DATA_ROOT", "/no/such/root")
 	setEnv("MAILWOMAN_CANDIDATE_DB", undefined)
 
-	expect(await resolveCandidateDBPath(undefined, root)).toBe(join(root, "wof", "candidate.db"))
+	expect(await resolveCandidateDBPath(undefined, root)).toBe(wofDatabaseRoot(root)("candidate.db").toString())
 })
 
 test("loadCapitalIndex prefers the artifact's capital table, falls back to the repo file, and throws with neither (#1880)", async () => {
@@ -97,7 +79,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	const dir = dirDirectory.path
 
 	// An artifact carrying the table: the CR capital only.
-	const artifactPath = join(dir, "candidate.db")
+	const artifactPath = dir("candidate.db")
 	using artifact = new DatabaseClient<CandidateDatabase>(artifactPath)
 
 	await createCapitalTable<CandidateDatabase>(artifact)
@@ -107,7 +89,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 		.run("CR", 9.9333, -84.0833, "national", stringifyJSON(["san jose"]))
 
 	// A repo-style file carrying a different entry (GD), so which source served is observable.
-	const repoPath = join(dir, "capitals-v1.json")
+	const repoPath = dir("capitals-v1.json")
 
 	await writeLocalJSONFile(
 		{
@@ -124,7 +106,7 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	expect(fromArtifact!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(0)
 
 	// An artifact without the table falls through to the repo file.
-	const barePath = join(dir, "bare.db")
+	const barePath = dir("bare.db")
 
 	new DatabaseClient<CandidateDatabase>(barePath).destroy()
 	const fromRepo = await loadCapitalIndex({ candidateDB: barePath, path: repoPath })
@@ -132,17 +114,15 @@ test("loadCapitalIndex prefers the artifact's capital table, falls back to the r
 	expect(fromRepo!.levelOfPlace("St. Georges", "GD", 12.05, -61.75)).toBe(2)
 
 	// Neither source: the explicitly-asked-for key must fail loudly rather than no-op.
-	await expect(loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json") })).rejects.toThrow(
-		/capital_tier/
-	)
+	await expect(loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json") })).rejects.toThrow(/capital_tier/)
 
 	// The default-on path degrades on the same absence instead of failing session construction.
 	expect(
-		await loadCapitalIndex({ candidateDB: barePath, path: join(dir, "missing.json"), missing: "degrade" })
+		await loadCapitalIndex({ candidateDB: barePath, path: dir("missing.json"), missing: "degrade" })
 	).toBeUndefined()
 
 	// A reference that exists but is malformed throws under both modes — corruption is a defect, never an absence.
-	const corruptPath = join(dir, "corrupt.json")
+	const corruptPath = dir("corrupt.json")
 
 	await writeLocalJSONFile({ version: 99, entries: [] }, corruptPath)
 	await expect(loadCapitalIndex({ candidateDB: barePath, path: corruptPath, missing: "degrade" })).rejects.toThrow(/v1/)

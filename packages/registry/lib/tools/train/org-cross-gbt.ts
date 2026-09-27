@@ -42,19 +42,27 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: PathBuilderLike
 	/**
-	 * Care Compare facilities sampled. Default 6000.
+	 * Care Compare facilities sampled.
+	 *
+	 * Default 6000.
 	 */
 	cap?: number
 	/**
-	 * Output TS module path. Default `registry/models/org-crosssource-gbt-en-us.ts`.
+	 * Output TS module path.
+	 *
+	 * Default `registry/models/org-crosssource-gbt-en-us.ts`.
 	 */
 	out?: string
 	/**
-	 * Locale recorded in the model meta. Default en-US.
+	 * Locale recorded in the model meta.
+	 *
+	 * Default en-US.
 	 */
 	locale?: string
 	/**
@@ -62,14 +70,18 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	precisionBar?: number
 	/**
-	 * Training date stamped into the meta. Default today.
+	 * Training date stamped into the meta.
+	 *
+	 * Default today.
 	 */
 	date?: string
 }
 
 /**
- * Train + emit the org-level cross-source link GBT — see the module doc. The CCN is the cross-system facility key. it
- * rides {@link CrossSourceRow.npi} → `record.id` as the held-out label.
+ * Train + emit the org-level cross-source link GBT — see the module doc.
+ *
+ * The CCN is the cross-system facility key.
+ * It rides {@link CrossSourceRow.npi} → `record.id` as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,
@@ -141,8 +153,8 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
-	// → shipped model → committed module). ---
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
+	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,

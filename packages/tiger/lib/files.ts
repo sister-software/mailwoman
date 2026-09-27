@@ -7,7 +7,7 @@
 
 import type { AdminLevel1Code } from "#state"
 
-//#region Constants
+// #region Constants
 
 /**
  * Census tiger levels for geographic data.
@@ -44,7 +44,9 @@ export const TIGERFileExtension = {
 	 */
 	Attributes: ".dbf",
 	/**
-	 * Coordinate system information. Describes the projection of the geographic data.
+	 * Coordinate system information.
+	 *
+	 * Describes the projection of the geographic data.
 	 */
 	Projection: ".prj",
 	/**
@@ -91,9 +93,24 @@ export const TIGERCurrentVintage = 2023
 
 export type TIGERCurrentVintage = typeof TIGERCurrentVintage
 
-//#endregion
+/**
+ * Parses a TIGER release tag such as `TIGER2023` into its vintage year.
+ *
+ * @throws Error when the tag is not `TIGER` followed by a four-digit year.
+ */
+export function parseTIGERRelease(release: string): number {
+	const match = /^TIGER(\d{4})$/.exec(release)
 
-//#region File Name Generation
+	if (!match) {
+		throw new Error(`A TIGER release tag looks like TIGER${TIGERCurrentVintage}, but got "${release}".`)
+	}
+
+	return Number(match[1])
+}
+
+// #endregion
+
+// #region File Name Generation
 
 /**
  * Type-helper for tiger feature geometry file names.
@@ -167,9 +184,9 @@ export function TIGERNationZIPPath<Vintage extends number = TIGERCurrentVintage>
 	return path
 }
 
-//#endregion
+// #endregion
 
-//#region Manifests
+// #region Manifests
 
 /**
  * A tiger manifest for a specific state at a specific level of detail.
@@ -260,4 +277,4 @@ export function TIGERStateManifest<SFC extends AdminLevel1Code, Vintage extends 
 	return manifest as TIGERStateManifest<SFC, Vintage>
 }
 
-//#endregion
+// #endregion

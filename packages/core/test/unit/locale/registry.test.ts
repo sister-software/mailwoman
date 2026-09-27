@@ -30,7 +30,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 	test("re-registering the same locale replaces the prior entry", () => {
 		const registry = new InMemoryLocaleRegistry()
 		registry.register(enUS)
-		const altered = { ...enUS, ruleClassifiers: ["overridden"] }
+		const altered = { ...enUS, weightsPackage: "@mailwoman/neural-weights-overridden" }
 		registry.register(altered)
 		expect(registry.get("en-US")).toBe(altered)
 	})
@@ -50,7 +50,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "xx-XX",
-				ruleClassifiers: [],
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				componentsSupported: ["country", "not_a_real_tag" as any],
 				policy: [],
@@ -64,7 +63,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "",
-				ruleClassifiers: [],
 				componentsSupported: [],
 				policy: [],
 			})
@@ -77,7 +75,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "en-US",
-				ruleClassifiers: [],
 				componentsSupported: ["country"],
 				policy: [{ component: "postcode", mode: "neural_only" }],
 			})
@@ -107,8 +104,6 @@ describe("LocaleProfile — bundled profiles", () => {
 		for (const tag of expected) {
 			expect(enUS.componentsSupported).toContain(tag)
 		}
-
-		expect(enUS.ruleClassifiers.length).toBeGreaterThan(0)
 	})
 
 	test("fr-FR adds cedex, dependent_locality, street_prefix_particle", () => {
@@ -118,10 +113,10 @@ describe("LocaleProfile — bundled profiles", () => {
 	})
 
 	test("ja-JP omits street but carries house_number (CJK Phase 2 / D4)", () => {
-		// JP remains forward-compatible: it has no `street` role (district/block
-		// carry that ladder) and the core abstraction must accept the omission. D4 added
-		// house_number — the compact number ("2-3-16") is one whole-span house_number. the fine
-		// block/sub_block/building_number tags label the kanji-designator long form only.
+		// JP remains forward-compatible: it has no `street` role (district/block carry that ladder)
+		// and the core abstraction must accept the omission.
+		// D4 added house_number — the compact number ("2-3-16") is one whole-span house_number.
+		// The fine block/sub_block/building_number tags label the kanji-designator long form only.
 		expect(jaJP.componentsSupported).not.toContain("street")
 		expect(jaJP.componentsSupported).toContain("house_number")
 		expect(jaJP.componentsSupported).toContain("prefecture")

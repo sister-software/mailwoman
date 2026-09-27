@@ -19,10 +19,24 @@ import {
 	type CorpusRecipe,
 } from "#recipes/scaffold"
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
+import { SurfaceOrigin } from "#types"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * The venue name and house number are drawn and joined to a tuple's admin components.
+ *
+ * No register asserts that this venue stands at this number, so the row teaches the
+ * co-occurrence shape rather than reporting a published record.
+ */
+const HOUSE_VENUE_PROVENANCE = {
+	register: null,
+	surface: SurfaceOrigin.Invented,
+}
+
+/**
+ * Recipe registered with the corpus builder.
+ *
+ * See the file header for the parse behaviour it exists to exercise,
+ * and `description` below for the surface form it generates.
  */
 export const houseVenueRecipe: CorpusRecipe = {
 	name: "house-venue",
@@ -40,8 +54,8 @@ export const houseVenueRecipe: CorpusRecipe = {
 		for await (const tuple of readTuples(opts.input)) {
 			read++
 
-			// FR renders without a region (postcode-before-locality tail — the run-2 contingency), so
-			// an empty region is valid there and stays required everywhere else.
+			// FR renders without a region (postcode-before-locality tail — the run-2 contingency),
+			// so an empty region is valid there and stays required everywhere else.
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && tuple.country !== "FR")) {
 				skipped++
 
@@ -76,7 +90,8 @@ export const houseVenueRecipe: CorpusRecipe = {
 						corpus_version: "0.4.0",
 						license: LICENSE,
 					},
-					synth.template
+					synth.template,
+					HOUSE_VENUE_PROVENANCE
 				)
 
 				if (ok) {

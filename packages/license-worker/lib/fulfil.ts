@@ -39,7 +39,9 @@ export interface FulfilDependencies {
 	ledger: Ledger
 	email: EmailProvider
 	/**
-	 * The clock, in milliseconds; `Date.now` unless a test injects one. Read where a date decides a state.
+	 * The clock, in milliseconds; `Date.now` unless a test injects one.
+	 *
+	 * Read where a date decides a state.
 	 */
 	now?: () => number
 }
@@ -49,9 +51,11 @@ export type FulfilOutcome =
 	| { outcome: "refused"; reason: string }
 
 /**
- * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret, read back after,
- * and read back all the same when a concurrent caller's row landed first. Mints no token; `invoice.paid` does. The
- * refresh secret is stored by digest and held in plaintext only until the first claim reads it.
+ * The license row for a Checkout Session: created on first sight with a fresh lid and refresh secret,
+ * read back after, and read back all the same when a concurrent caller's row landed first.
+ *
+ * Mints no token; `invoice.paid` does.
+ * The refresh secret is stored by digest and held in plaintext only until the first claim reads it.
  */
 export async function ensureLicenseFromCheckoutSession(
 	env: LicenseWorkerEnv,
@@ -112,9 +116,9 @@ export async function ensureLicenseFromCheckoutSession(
 }
 
 /**
- * One paid invoice to one token: refused with a reason when the invoice, its Price or its subscription is not one this
- * worker mints for, `already_minted` when the ledger holds the token, `minted` once the token is inserted and the email
- * attempted.
+ * One paid invoice to one token: refused with a reason when the invoice, its Price
+ * or its subscription is not one this worker mints for, `already_minted` when the ledger
+ * holds the token, `minted` once the token is inserted and the email attempted.
  */
 export async function fulfilInvoice(
 	env: LicenseWorkerEnv,
@@ -159,8 +163,8 @@ export async function fulfilInvoice(
 		}
 	}
 
-	// The line's own period rather than the subscription's current one: a replayed or backfilled invoice after a later renewal
-	// must mint the period it paid for, never the newer one.
+	// The line's own period rather than the subscription's current one: a replayed or backfilled
+	// invoice after a later renewal must mint the period it paid for, never the newer one.
 	const periodEnd = line.period?.end
 
 	if (periodEnd === undefined) return { outcome: "refused", reason: `invoice ${invoiceID} line carries no period end` }
@@ -212,7 +216,8 @@ export async function fulfilInvoice(
 	})
 
 	if (inserted === "present") {
-		// Another mint for this invoice landed between the read above and this insert. its row is the token.
+		// Another mint for this invoice landed between the read above and this insert.
+		// Its row is the token.
 		const winner = await findToken(deps.ledger, invoiceID)
 
 		if (!winner) throw new Error(`token for ${invoiceID} vanished after a concurrent insert`)
@@ -226,8 +231,10 @@ export async function fulfilInvoice(
 }
 
 /**
- * The answer for an invoice whose token exists. A crash between the insert and the send leaves the email pending, and
- * the retry that finds the token sends it.
+ * The answer for an invoice whose token exists.
+ *
+ * A crash between the insert and the send leaves the email pending,
+ * and the retry that finds the token sends it.
  */
 async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): Promise<FulfilOutcome> {
 	if (token.email_state !== "sent") {
@@ -242,15 +249,20 @@ async function alreadyMinted(deps: FulfilDependencies, token: LicenseTokenRow): 
 }
 
 /**
- * What one send attempt came to. `failed` is the provider's refusal, recorded as such so the reconciliation pass sends
- * again. A failure to record either answer throws instead: the row keeps its earlier state and the pass sends again,
- * which after an accepted send is the one window in which a licensee can receive the message twice.
+ * What one send attempt came to.
+ *
+ * `failed` is the provider's refusal, recorded as such so the reconciliation pass sends again.
+ * A failure to record either answer throws instead: the row keeps its earlier state
+ * and the pass sends again, which after an accepted send is the one window in
+ * which a licensee can receive the message twice.
  */
 export type SendOutcome = { state: "sent" } | { state: "failed"; reason: string }
 
 /**
- * Send a token to its licensee under the invoice id and record the outcome. The refresh secret rides along while the
- * plaintext is still pending, so a re-send before the first claim includes what the first would have.
+ * Send a token to its licensee under the invoice id and record the outcome.
+ *
+ * The refresh secret rides along while the plaintext is still pending, so a re-send
+ * before the first claim includes what the first would have.
  */
 export async function sendTokenEmail(
 	deps: Pick<FulfilDependencies, "ledger" | "email">,

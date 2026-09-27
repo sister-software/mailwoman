@@ -5,13 +5,13 @@ authors: [playpen-agent]
 tags: [neural, corpus, evals, international]
 ---
 
-Feed an address into a sequence labeler and part of it goes missing. The model tags the tokens it recognizes — house number, street, city — and the characters it doesn't understand fall on the floor. `decodeAsJSON` hands you back a tidy object with every field in its place, and nothing in that object tells you the modelshrugged at a fifth of the input.
+Feed an address into a sequence labeler and part of it goes missing. The model tags the tokens it recognizes — house number, street, city — and the characters it doesn't understand fall on the floor. `decodeAsJSON` hands you back a tidy object with every field in its place, and no field in that object tells you the modelshrugged at a fifth of the input.
 
 So you ship that parser. It looks great on the addresses you tested it against. And you have no idea what it's dropping in production, because the output format was built to hide exactly that.
 
 {/* truncate */}
 
-We got tired of not knowing. So we made the decoder keep a promise: every byte of the input lands in exactly one typed span, including the bytes we can't classify. The runs the model leaves untagged stop being absence and become a thing you can hold — an `unknown` span, with a start, an end, and the literal text the model couldn't place. Concatenate all the spans back together and you get the original string, character for character. Nothing gets lost, because there's nowhere left for it to go.
+We got tired of not knowing. So we made the decoder keep a promise: every byte of the input lands in exactly one typed span, including the bytes we can't classify. The runs the model leaves untagged stop being absence and become a thing you can hold — an `unknown` span, with a start, an end, and the literal text the model couldn't place. Concatenate all the spans back together and you get the original string, character for character. No byte gets lost, because there's nowhere left for it to go.
 
 That's a small change to a decoder. It turns into a diagnostic you can point at production addresses.
 
@@ -29,7 +29,7 @@ The United States and Australia came back spotless: zero content gaps. France, t
 
 The top entries said why in the plainest possible terms: `ł`, `á`, `ó`, `í`, `ě`, `ś`, `ę`, `č`. The whole Latin-Extended block. Our tokenizer isolates a Slavic diacritic into its own little subword, the model was never shown enough of them to learn what they are, so it files them under background noise. `Grudziądz` comes apart at the `ą`: the model labels `Grudzi`, drops the accent, and picks the city back up at `dz`, as if the letter in the middle were a coffee stain. `Bohaterów` splits at the `ó` and takes the neighboring house number down with it.
 
-We had a comfortable theory that this was a decoder bug, a character-offset mismatch around multi-byte characters, the kind of thing you fix in an afternoon without touching a GPU. We checked before we wrote it down, which is the entire point of the exercise. It wasn't the decoder. The offsets were fine; the model only doesn't know these letters, and there is no cchange preprocessing that fixes not-knowing. It's a retrain. The difference is that now we know precisely which characters to weight and which locales to leave alone, because Australia and the US don't need a thing.
+We had a comfortable theory that this was a decoder bug, a character-offset mismatch around multi-byte characters, the kind of thing you fix in an afternoon without touching a GPU. We checked before we wrote it down, which is the entire point of the exercise. It wasn't the decoder. The offsets were fine; the model only doesn't know these letters, and there is no clever preprocessing that fixes not-knowing. It's a retrain. The difference is that now we know precisely which characters to weight and which locales to leave alone, because Australia and the US don't need a thing.
 
 ## Honesty you can query
 

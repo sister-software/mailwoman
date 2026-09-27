@@ -6,7 +6,7 @@
  *
  *   the footprint is the coverage statement, never the polygon union. The EA states that the Flood Zone
  *   mapping "covers all of England". Zone 1 is defined as the land outside Zones 2 and 3, so the union of
- *   the hazard polygons is the mapped area minus Zone 1 — a footprint taken from the polygons would report
+ *   the hazard polygons is the mapped area minus Zone 1. A footprint taken from the polygons would report
  *   every Zone 1 location as unmapped, which inverts the one reading this layer exists to get right.
  *
  *   the flood authority does not publish where england is, so a second authority's artifact is needed to
@@ -43,9 +43,10 @@ export const EA_EXTENT_ID = "ea-england"
 /**
  * `flood_map_extent.status` for a footprint an authority states it has mapped.
  *
- * A source publishing its own availability categories writes those instead — fema's availability layer distinguishes
- * "Digital Data Available", "No Digital Data Available" and "Unmapped", and folding three published categories into one
- * would discard the distinction that makes its coverage rows meaningful.
+ * A source publishing its own availability categories writes those instead —
+ * fema's availability layer distinguishes "Digital Data Available", "No Digital Data
+ * Available" and "Unmapped", and folding three published categories into one would
+ * discard the distinction that makes its coverage rows meaningful.
  */
 export const FLOOD_EXTENT_STATUS_MAPPED = "mapped"
 
@@ -102,14 +103,16 @@ export interface RealizeExtentOptions {
 }
 
 /**
- * Pull the outline out of whatever a boundary file actually holds: a bare geometry, a `Feature` wrapping one, or a
- * `FeatureCollection`.
+ * Pull the outline out of whatever a boundary file actually holds: a bare geometry,
+ * a `Feature` wrapping one, or a `FeatureCollection`.
  *
- * A collection must contain exactly one feature. Every export tool writes a `FeatureCollection`, so refusing the shape
- * outright would refuse the ordinary case — but taking the first of several would silently choose which country the
+ * A collection must contain exactly one feature.
+ * Every export tool writes a `FeatureCollection`, so refusing the shape outright would refuse
+ * the ordinary case, but taking the first of several would silently choose which country the
  * coverage claim is about, and the claim is only as good as the outline it was clipped to.
  *
- * @throws {TypeError} When the document holds no geometry, or a collection holds anything other than one feature.
+ * @throws {TypeError} When the document holds no geometry, or a collection
+ * holds anything other than one feature.
  */
 export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeometry {
 	const node = document as {
@@ -141,9 +144,10 @@ export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeo
 /**
  * Turn an outline plus a coverage statement into a footprint.
  *
- * @throws {Error} When the outline yields no interior cell at `coverageResolution`. That is not an empty country: it
- *   means the resolution is coarser than the outline, and a zero-cell footprint would silently write no coverage rows —
- *   an artifact that answers "unknown" everywhere while reporting a successful build.
+ * @throws {Error} When the outline yields no interior cell at `coverageResolution`.
+ * That is not an empty country: it means the resolution is coarser than the outline,
+ * and a zero-cell footprint would silently write no coverage rows.
+ * An artifact that answers "unknown" everywhere while reporting a successful build.
  */
 export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapExtent {
 	const coverageCells = interiorCoverageCellSet(options.geometry, options.coverageResolution)
@@ -169,7 +173,9 @@ export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapEx
 }
 
 /**
- * The outline's bounding rectangle, holes included — a coarse descriptor for the receipt, never the footprint itself.
+ * The outline's bounding rectangle, holes included.
+ *
+ * A coarse descriptor for the receipt, never the footprint itself.
  */
 function geometryBounds(geometry: ParsedGeometry): {
 	minLat: number

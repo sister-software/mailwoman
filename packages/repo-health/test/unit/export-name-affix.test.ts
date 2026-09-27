@@ -3,7 +3,7 @@
 
 /**
  * @file The affix finder and the doc-link finder over planted trees. Both exist because of the same session: a helper
- *   was written twice under a longer name, and a third was implemented from a doc link that named nothing.
+ *   was written twice under a longer name, and a third was implemented from a doc link that named no file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -11,7 +11,6 @@ import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { DiagnosticSeverity } from "@mailwoman/repo-health"
 import { docLinkTargetsCheck, findDanglingLinks } from "@mailwoman/repo-health/checks/doc-link-targets"
 import { exportNameAffixCheck, findAffixPairs } from "@mailwoman/repo-health/checks/export-name-affix"
-import { join, resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -22,11 +21,11 @@ async function plant(files: Record<string, string>): Promise<{ repoRoot: string;
 	const root = fixtures.use(await temporaryDirectory("affix-")).path
 
 	for (const [file, text] of Object.entries(files)) {
-		await makeDirectories(join(root, file.slice(0, file.lastIndexOf("/"))))
-		await writeLocalTextFile(text, resolvePath(root, file))
+		await makeDirectories(root(file.slice(0, file.lastIndexOf("/"))))
+		await writeLocalTextFile(text, root(file))
 	}
 
-	return { repoRoot: String(root), trackedFiles: Object.keys(files) }
+	return { repoRoot: root.toString(), trackedFiles: Object.keys(files) }
 }
 
 describe("findAffixPairs", () => {
@@ -117,6 +116,39 @@ describe("findDanglingLinks", () => {
 			"packages/a/lib/home.ts": "export function readPackageJSON(path: string): string { return path }\n",
 			"packages/b/lib/user.ts":
 				"/**\n * {@link readPackageJSON} and {@link Object.entries} both resolve.\n */\nexport function use(): void {}\n",
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([])
+	})
+
+	it("reads a declaration-shaped backticked name in a doc comment, and leaves a word alone", async () => {
+		const context = await plant({
+			"packages/a/lib/reader.ts": [
+				"/**",
+				" * @deprecated Use `readPackageJSONFile` instead; `wrapLegacy()` and `db` and `lat` are prose.",
+				" */",
+				"export function readLocalJSONFile(path: string): string { return path }",
+				"// A line comment spelling `missingLineName` is not a doc comment.",
+				"const x = `template with missingTemplateName`",
+			].join("\n"),
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "readPackageJSONFile" },
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "wrapLegacy" },
+		])
+	})
+
+	it("accepts a backticked name the tree spells anywhere, and a registered external name", async () => {
+		const context = await plant({
+			"packages/a/lib/use.ts": [
+				"/**",
+				" * `getShortName` is registered as external. `resolveJsonModule` the test spells. `SW1A2AA` is a code.",
+				" * `admin1CodesASCII.txt` is a file, and `str.isupper()` is a call on a word.",
+				" */",
+				"export const value = other.toLowerCase()",
+			].join("\n"),
+			"packages/a/test/unit/use.test.ts": "const resolveJsonModule = true\n",
 		})
 
 		expect(await findDanglingLinks(context)).toEqual([])

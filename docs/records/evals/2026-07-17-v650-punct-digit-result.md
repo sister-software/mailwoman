@@ -60,7 +60,7 @@ golden check on five tags, so it was not shipped.
 
 The **French** comma-free case (`181 Rue du Chevaleret Paris`) is not fixed and stays a tracked #1101
 xfail. It is not French-specific and not a resolver gap: it is the **no-anchor bare-terminal-locality**
-case — a locality that is the last token with no trailing state or postcode to anchor it. A trailing state
+case. A locality that is the last token with no trailing state or postcode to anchor it. A trailing state
 (`Washington DC`) or a postcode before the locality (`75013 Paris`) anchors the segmentation and resolves
 correctly; a bare terminal toponym is in fact ambiguous against a street continuation, and the punct-drop
 augmentation does not disambiguate it. Closing it needs a locality name-index

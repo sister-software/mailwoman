@@ -10,7 +10,7 @@
  *
  *   Address tags live in the driver's `other_tags` hstore. we pull them with ogrsql `hstore_get_value`
  *   over the `points` (nodes) and `multipolygons` (building ways/relations) layers. `addr:interpolation`
- *   ways are intentionally not read here — the rooftop tier is point-first. explicit interpolation is a
+ *   ways are intentionally not read here. The rooftop tier is point-first. explicit interpolation is a
  *   separate, confidence-restricted tier (never synthesize a number line from scattered points).
  */
 
@@ -27,7 +27,8 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point carries no street tag (the association gap. counted rather than written).
+	 * `addr:street` — null when the point carries no street tag
+	 * (the association gap. Counted rather than written).
 	 */
 	street: string | null
 	postcode: string | null
@@ -38,8 +39,8 @@ export interface OSMAddrRecord {
 	 */
 	unit: string | null
 	/**
-	 * `addr:place` — the named scheme or estate that stands in for a street where none is named (Pakistan's `DHA Phase
-	 * 6`, `Gulshan e Iqbal Block 2`).
+	 * `addr:place` — the named scheme or estate that stands in for a street where none
+	 * is named (Pakistan's `DHA Phase 6`, `Gulshan e Iqbal Block 2`).
 	 */
 	place: string | null
 	/**
@@ -59,8 +60,10 @@ export interface OSMAddrRecord {
 }
 
 /**
- * The `addr:*` tags the extract projects, in the order the record names them. The rooftop builder reads the first five.
- * the corpus jsonl carries them all.
+ * The `addr:*` tags the extract projects, in the order the record names them.
+ *
+ * The rooftop builder reads the first five.
+ * The corpus jsonl carries them all.
  */
 const ADDR_TAGS = [
 	"housenumber",
@@ -90,7 +93,8 @@ function tagValue(properties: Record<string, unknown>, tag: string): string | nu
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 
 /**
- * Ogrsql projecting the `addr:*` tags out of the `other_tags` hstore, filtered to rows that have a house number.
+ * Ogrsql projecting the `addr:*` tags out of the `other_tags` hstore,
+ * filtered to rows that have a house number.
  */
 function addrSQL(layer: string): string {
 	const projection = ADDR_TAGS.map((tag) => `hstore_get_value(other_tags,'addr:${tag}') AS ${tag}`).join(", ")
@@ -145,9 +149,7 @@ async function* runLayer(pbfPath: string, layer: string): AsyncGenerator<OSMAddr
 }
 
 /**
- * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a
- * representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count
- * the association gap before deciding to write them.
+ * Stream every `features with `addr:housenumber` from a PBF extract (nodes + building polygons), geometry reduced to a representative coordinate. Records with no `addr:street` are still yielded (street === null) so the caller can count the association gap before deciding to write them.
  */
 export async function* extractAddrPoints(pbfPath: string): AsyncGenerator<OSMAddrRecord> {
 	for (const layer of ADDR_LAYERS) {

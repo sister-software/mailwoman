@@ -10,7 +10,7 @@
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
-import { join, type PathBuilderLike } from "path-ts"
+import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 type JSONValue = boolean | null | number | string | JSONValue[] | { [key: string]: JSONValue }
@@ -89,7 +89,7 @@ async function listFiles(directory: PathBuilderLike, prefix = ""): Promise<strin
 		const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name
 
 		if (entry.isDirectory()) {
-			files.push(...(await listFiles(join(directory, entry.name), relativePath)))
+			files.push(...(await listFiles(resolvePathBuilder(directory, entry.name), relativePath)))
 		} else if (entry.isFile()) {
 			files.push(relativePath)
 		}
@@ -99,8 +99,10 @@ async function listFiles(directory: PathBuilderLike, prefix = ""): Promise<strin
 }
 
 /**
- * Compare every top-level promotion output. JSON files receive a field-level comparison so a changed score names its
- * field. Markdown and provenance files compare byte-for-byte.
+ * Compare every top-level promotion output.
+ *
+ * JSON files receive a field-level comparison so a changed score names its field.
+ * Markdown and provenance files compare byte-for-byte.
  */
 export async function comparePromotionOutputs(
 	baselineDirectory: PathBuilderLike,
@@ -115,8 +117,8 @@ export async function comparePromotionOutputs(
 	const names = new Set([...baselineNames, ...candidateNames])
 
 	for (const name of [...names].toSorted()) {
-		const baselinePath = join(baselineDirectory, name)
-		const candidatePath = join(candidateDirectory, name)
+		const baselinePath = resolvePathBuilder(baselineDirectory, name)
+		const candidatePath = resolvePathBuilder(candidateDirectory, name)
 		const presentInBaseline = baselineNames.includes(name)
 		const presentInCandidate = candidateNames.includes(name)
 

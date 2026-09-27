@@ -9,7 +9,7 @@ role: explanation
 ## The question
 
 At the end of scoring, every piece of the input carries a number for each of the 33 available labels.
-Taking each piece's highest-scoring label is the obvious next move, and it is wrong — it produces
+Taking each piece's highest-scoring label is the obvious next move, and it is wrong. It produces
 sequences that are not readings of anything, like a "continues the locality" label with no locality
 open in front of it. The standard symptom is `Saint Petersburg, FL` coming back with a locality of
 `Petersburg`.
@@ -30,7 +30,7 @@ silently shortened a town name. Prefer the longer span and you have swallowed th
 
 The alternative is to stop repairing readings and start scoring them. Instead of picking each
 piece's best label and fixing the result, ask which complete reading of the whole line scores highest
-— where a reading that is not structurally possible scores nothing at all, so it is never in
+— where a reading that is not structurally possible scores zero, so it is never in
 contention and never needs repairing.
 
 That is the difference between a route planner that picks the best next turn at every intersection
@@ -46,7 +46,7 @@ may follow which. The rule is short enough to state in full:
 - Anything may be followed by a `B-` label, of any type. A new span can always start.
 - `I-<type>` may follow only `B-<type>` or `I-<type>`. A continuation must continue something of the
   same kind.
-- A sequence may not open on an `I-` label. There is nothing before the first piece to continue.
+- A sequence may not open on an `I-` label. No piece precedes the first piece to continue.
 
 Everything the table permits scores zero, and everything it forbids scores as impossible. Notice what
 the table does not contain: it holds no view about which permitted transition is likely. `B-region`
@@ -55,7 +55,7 @@ them identically, even though real addresses use the first far more.
 
 That is deliberate, and it is the answer to a question the label space raises. `I-locality` without a
 `B-locality` is not an unlikely reading, it is not a reading. Encoding it as a hard constraint means
-the orphan cannot appear in any candidate, so nothing downstream has to be defensive about it.
+the orphan cannot appear in any candidate, so no downstream stage has to defend against it.
 
 ## Best path
 
@@ -78,13 +78,13 @@ Here is the part worth knowing about the shipped model, because it changes what 
 for. The classifier accepts a diagnostic per-piece decode alongside the default best-path one, so
 the two can be compared directly. Run 56 varied inputs through both — lowercase, comma-free,
 venue-led, fragments, non-Latin script, deliberately broken rows — and they produce byte-identical
-output on every one. On this model, over that set, the constraint rescues nothing you can observe.
+output on every one. On this model, over that set, the constraint rescues no observable failure.
 
 That is not an argument for removing it. A model well-fit enough to rarely emit an impossible
 sequence is not a model that cannot, and the failure is silent when it happens: an orphan
 continuation does not raise, it shortens a town name. The table costs one table build at startup and
 a comparison per transition, and in exchange the tree that reaches your code is well-formed on input
-nobody has tried yet. Guarantees are worth most exactly where measurement has nothing to report.
+nobody has tried yet. Guarantees are worth most exactly where measurement reports no failure.
 
 ## Why the transition scores are constraints rather than weights
 
@@ -95,7 +95,7 @@ learned from data.
 
 Mailwoman decodes with Viterbi over a transition table, so the shape is a conditional random field's.
 The transition table is not. It is built from the label list at startup, holds only legality, and is
-never updated by training. Nothing in the shipped weights packages supplies a learned transition
+never updated by training. No shipped weights package supplies a learned transition
 matrix; the decoder has a slot for one and every published bundle leaves it empty. Training scores
 each piece's label on its own — cross-entropy per position, with no sequence-level term — which is
 what the model card records as training without a conditional random field and decoding with one.
@@ -122,7 +122,7 @@ would see if the scores were being produced without reference to their neighbors
 
 **It cannot fix a confidently wrong label.** Best-path search redistributes among readings the scores
 make close. When the model is sure and wrong, every legal reading agrees with it, and the decoder
-returns the wrong answer in structurally valid form. Valid is not the same as correct — the tree that
+returns the wrong answer in structurally valid form. Valid is not the same as correct. The tree that
 comes out is always well-formed, and being well-formed is not evidence about the content.
 
 **The guarantee stops at the decoder.** Span construction downstream is lenient by design: hand it an

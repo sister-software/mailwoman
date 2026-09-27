@@ -2,20 +2,23 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The shape every release operation takes. An operation is a capability: it has an id, a declared effect, typed
- *   input and output, and a `run`. It has no interface of its own — the private `mwops` CLI and the release MCP server
- *   are views over the registry in `registry.ts`, and neither carries release logic.
+ *   The release family of operations: its effect union and its context, bound to the shared `Operation` shape from
+ *   `@mailwoman/core/scripting`. The private `mwops` CLI and the release MCP server are views over the registry in
+ *   `registry.ts`, and neither carries release logic.
  */
 
-import type { ZodType } from "zod"
+import { type Operation, type OperationContext, operationDefiner } from "@mailwoman/core/scripting"
 
 /**
- * What an operation does to the world, declared rather than inferred. `external-write` names the operations that
- * publish (npm, Hugging Face, R2) and are therefore reachable only through the plan → execute interface.
+ * What a release operation does to the world, declared rather than inferred.
+ *
+ * `external-write` names the operations that publish (npm, Hugging Face, R2)
+ * and are therefore reachable only through the plan → execute interface.
  */
 export const OperationEffect = {
 	/**
-	 * Reads the checkout, the data root, or a registry. changes nothing.
+	 * Reads the checkout, the data root, or a registry.
+	 * Makes no change.
 	 */
 	Read: "read",
 	/**
@@ -23,8 +26,9 @@ export const OperationEffect = {
 	 */
 	LocalWrite: "local-write",
 	/**
-	 * Writes to a system outside this machine. Irreversible, credentialed, and reachable only through the plan → execute
-	 * interface.
+	 * Writes to a system outside this machine.
+	 *
+	 * Irreversible, credentialed, and reachable only through the plan → execute interface.
 	 */
 	ExternalWrite: "external-write",
 } as const
@@ -32,42 +36,18 @@ export const OperationEffect = {
 export type OperationEffect = (typeof OperationEffect)[keyof typeof OperationEffect]
 
 /**
- * What every operation receives beside its input.
+ * What every release operation receives beside its input.
  */
-export interface ReleaseContext {
+export interface ReleaseContext extends OperationContext {
 	/**
 	 * The repository root the operation works in.
 	 */
 	repoRoot: string
-	/**
-	 * When true, an operation with a write effect describes what it would do and writes nothing.
-	 */
-	dryRun: boolean
-	/**
-	 * Where an operation's progress lines go. An adapter that owns stdout (a `--json` command) passes a silent one.
-	 */
-	log: (line: string) => void
 }
 
-export interface ReleaseOperation<In = unknown, Out = unknown> {
-	/**
-	 * Dotted, stable, and the name an adapter exposes: `release.preflight`, `release.publish`.
-	 */
-	id: string
-	description: string
-	effect: OperationEffect
-	inputSchema: ZodType<In>
-	outputSchema: ZodType<Out>
-	run(input: In, context: ReleaseContext): Promise<Out>
-	/**
-	 * Optional one-line rendering for an interactive CLI. Structured adapters continue to use the operation's output.
-	 */
-	formatOutput?: (output: Out) => string
-}
+export type ReleaseOperation<In = unknown, Out = unknown> = Operation<OperationEffect, ReleaseContext, In, Out>
 
 /**
  * Preserve an operation's input and output types while it sits in a heterogeneous registry array.
  */
-export function defineOperation<In, Out>(operation: ReleaseOperation<In, Out>): ReleaseOperation<In, Out> {
-	return operation
-}
+export const defineOperation = operationDefiner<OperationEffect, ReleaseContext>()

@@ -19,7 +19,8 @@ export interface SpanHighlightProps {
 	 */
 	input: string
 	/**
-	 * Flattened parse nodes. only those with numeric `start`/`end` are rendered.
+	 * Flattened parse nodes.
+	 * Only those with numeric `start`/`end` are rendered.
 	 */
 	nodes: ParsedComponent[]
 }
@@ -46,8 +47,9 @@ export function SpanHighlight({ input, nodes }: SpanHighlightProps): ReactNode {
 
 	if (!spans.length) return null
 
-	// Per-character owner: the most specific (shortest) span covering it, the same rule the word-level panels apply
-	// per word. The leaf always wins whatever nesting the tree hands over, so every character renders once.
+	// Per-character owner: the most specific (shortest) span covering it,
+	// the same rule the word-level panels apply per word.
+	// The leaf always wins whatever nesting the tree hands over, so every character renders once.
 	const characters = Array.from({ length: input.length }, (_, i) => ({ start: i, end: i + 1 }))
 	const owner = shortestSpanOwners(characters, spans)
 

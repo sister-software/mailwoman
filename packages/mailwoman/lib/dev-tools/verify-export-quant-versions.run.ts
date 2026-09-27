@@ -2,16 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Verify the local export/quant toolchain matches the pinned training-image set (#480).
- *
- *   Why this exists: the set was once unpinned (`>=`) and drifted between v0.9.3 and v0.9.7, silently
- *   breaking int8 quant for Safari WebGPU (the value_info/opset incident — see
- *   project-v4.1.0-release + the pinned block in corpus-python/launch/app.py, which is the source
- *   OF truth this script reads). Run before any local quantize. CI-able (exit 1 on mismatch). A
- *   bumped dep here is never a free upgrade — it must re-prove the Safari int8 graph (opset <= 17,
- *   value_info strip) end to end.
- *
- *   Plain-node tool-script (no env banner, no zx). Run: node packages/mailwoman/lib/dev-tools/verify-export-quant-versions.run.ts
+ * Checks the local export and quantization packages against the training-image pins before local quantization.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -29,14 +20,13 @@ if (!(await pathExists(PYTHON))) {
 }
 
 /**
- * Local quantize needs only the quant subset (onnx, onnxruntime) — export runs on Modal, where the full image pins
- * apply. Export-side packages absent locally are a warning. present-but-mismatched is a failure either way (a wrong
- * version is worse than a missing one).
+ * Lists the packages local quantization requires.
+ * Other pinned packages may be absent locally.
  */
 const QUANT_PKGS = new Set(["onnx", "onnxruntime"])
 
 /**
- * Read the pinned `"pkg==1.2.3"` literals straight out of the Modal training-image source of truth.
+ * Reads the pinned package versions from the training-image source.
  */
 async function pinnedVersions(): Promise<Array<[string, string]>> {
 	const src = await readLocalTextFile(TRAIN_REMOTE)
@@ -45,10 +35,12 @@ async function pinnedVersions(): Promise<Array<[string, string]>> {
 	return [...matches].map((m) => [m[1], m[2]] as [string, string])
 }
 
+/**
+ * Returns the installed version of a Python package, or `MISSING` when it is not installed.
+ */
 function installedVersion(pkg: string): string {
 	try {
-		// stderr → "ignore" mirrors the bash `2>/dev/null`: a not-installed package throws
-		// PackageNotFoundError with a noisy traceback we deliberately swallow (it's the missing path).
+		// Stderr is ignored so a missing package prints no traceback.
 		return runFileSync(PYTHON, ["-c", `import importlib.metadata as m; print(m.version('${pkg}'))`], {
 			encoding: "utf8",
 			stdio: ["ignore", "pipe", "ignore"],

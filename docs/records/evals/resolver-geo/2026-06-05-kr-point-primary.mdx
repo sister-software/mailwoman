@@ -31,7 +31,7 @@ The name confirmation only fires for **9,020 / 34,249 postcodes — 26.3%.** Jap
 
 The first build reported 56% name-confirmed — and it was wrong. Korean place names repeat heavily across the country (homonymous villages), and the matcher was finding name matches _globally_ and then taking the nearest homonym. The "nearest" 신촌 can be in another province; the name-confirmed tier came out at **71 km mean, 537 km max.** The fix is the same proximity constraint Japan's builder already used: a name only confirms if the matched locality is _also_ within the search radius. That dropped the tier to its direct 26% — and to a 4.8 km mean, 20 km max. Two signals have to agree; one signal pretending to be two is worse than the point alone.
 
-## Verdict: a working coarse resolver, an direct name ceiling
+## Verdict: a working coarse resolver, an honest name ceiling
 
 Korea is a partial, and labeling it anything else would be dishonest. Province and coordinate resolve at 100%; the administrative name resolves at 26%, capped by WOF KR's Hangul-name coverage — the ri-granularity offset and the absent 구 districts. The architecture carried over intact (point-primary build, same strategy, no resolver code changed), which is what the "less special" mandate was really testing. What it can't manufacture is admin names WOF doesn't hold.
 

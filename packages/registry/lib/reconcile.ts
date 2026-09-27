@@ -1,31 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   Coverage reconciliation (#621) — the library home for what `registry/tools/
- *   coverage-reconciliation.ts` does inline, so the CLI (`registry --reconcile`) and any consumer
- *   can reuse it.
- *
- *   Given entities already resolved across sources (#618), classify each by which kind of source its
- *   records come from. You tag each source label as either an **eligibility** source (it denotes
- *   membership in some base set — e.g. registered providers/facilities) or a **funding/enrollment**
- *   source (it denotes participation in a program). Three buckets fall out per entity:
- *
- *   - **enrolled** — resolves to both an eligibility and a funding record.
- *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
- *       anti-join).
- *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
- *       it.
- *
- *   This is strictly a **set-membership reconciliation, never a determination.** We produce the
- *   reconciled join and surface the candidate set. what a gap means — and whether it is real, a
- *   sampling artifact, or actionable — is entirely the data consumer's call. Nothing here is an
- *   allegation. {@link reconciliationReport} bakes that caveat in by construction.
- *
- *   Pairs with {@link toMapHTML}: {@link reconciliationGeoJSON} tags each feature with its `bucket`,
- *   which the map auto-detects and colors categorically.
- */
-
 import { formatPersonName } from "@mailwoman/record/name"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 
@@ -33,43 +5,49 @@ import { toFeature } from "#geojson"
 import type { EntityGeoData, ReconciliationBucket, ResolvedEntity } from "#types"
 
 /**
- * Which source labels denote eligibility vs funding/enrollment.
+ * The source labels that mark eligibility and the labels that mark funding or enrollment.
  */
 export interface ReconcileConfig {
 	/**
-	 * Source labels denoting membership in the base/eligibility set.
+	 * Source labels that denote membership in the eligibility set.
 	 */
 	eligibilitySources: readonly string[]
+
 	/**
-	 * Source labels denoting enrollment / funding / program participation.
+	 * Source labels that denote enrollment, funding or program participation.
 	 */
 	fundingSources: readonly string[]
 }
 
 /**
- * One entity, classified.
+ * One entity with its reconciliation bucket.
  */
 export interface ReconciledEntity {
 	entity: ResolvedEntity
+
 	/**
-	 * Distinct provenance labels the entity's records span, sorted.
+	 * The distinct, sorted source labels across the entity's records.
 	 */
 	sources: string[]
 	bucket: ReconciliationBucket
 }
 
+/**
+ * The entities that {@link reconcileCoverage} placed in a bucket, with a count per bucket.
+ */
 export interface ReconciliationResult {
 	/**
-	 * Entities that carry at least one eligibility- or funding-tagged source, each bucketed.
+	 * The entities that have at least one eligibility or funding source.
 	 */
 	reconciled: ReconciledEntity[]
 	counts: Record<ReconciliationBucket, number>
 }
 
 /**
- * Bucket an entity from the source labels its records span. Returns `null` when the entity carries no eligibility- or
- * funding-tagged source (it is outside this reconciliation — e.g. a source the caller didn't assign a role) so callers
- * can exclude it rather than silently miscount it.
+ * Places an entity in a reconciliation bucket by whether its source labels include
+ * eligibility sources, funding sources, or both.
+ *
+ * @returns `null` when the entity has neither kind of source.
  */
 export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): ReconciliationBucket | null {
 	const elig = new Set(config.eligibilitySources)
@@ -97,8 +75,9 @@ export function bucketOf(sources: Iterable<string>, config: ReconcileConfig): Re
 }
 
 /**
- * Classify resolved entities into reconciliation buckets. Entities with no eligibility- or funding-tagged source are
- * excluded (see {@link bucketOf}).
+ * Buckets resolved entities by their sources with {@link bucketOf}.
+ *
+ * Entities without an eligibility or funding source are dropped.
  */
 export function reconcileCoverage(entities: readonly ResolvedEntity[], config: ReconcileConfig): ReconciliationResult {
 	const reconciled: ReconciledEntity[] = []
@@ -124,8 +103,9 @@ export function reconcileCoverage(entities: readonly ResolvedEntity[], config: R
 }
 
 /**
- * A display name for a reconciled entity's representative record — the organization's canonical form, else the person
- * name, else the record id.
+ * Returns a display name for an entity's representative record.
+ *
+ * It prefers the organization's canonical name, then the person's name, then the record ID.
  */
 export function repName(entity: ResolvedEntity): string {
 	const rep = entity.representative
@@ -135,8 +115,7 @@ export function repName(entity: ResolvedEntity): string {
 }
 
 /**
- * GeoJSON of every located reconciled entity, each feature tagged with its `bucket` + `sources` — the shape
- * {@link toMapHTML} colors categorically by bucket. Entities without a coordinate are skipped.
+ * Converts the reconciled entities that have coordinates to point features tagged with their bucket.
  */
 export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureCollection<PointLiteral, EntityGeoData> {
 	return {
@@ -147,33 +126,44 @@ export function reconciliationGeoJSON(result: ReconciliationResult): GeoFeatureC
 	}
 }
 
+/**
+ * Options for {@link reconciliationReport}.
+ */
 export interface ReconciliationReportOptions {
 	/**
-	 * H1 title. Default: "Coverage reconciliation — eligibility ↔ enrollment".
+	 * The report's level-one heading.
+	 *
+	 * It defaults to "Coverage reconciliation — eligibility ↔ enrollment".
 	 */
 	title?: string
+
 	/**
-	 * An italic scope paragraph under the title (what the sources are, how they were scoped).
+	 * An italic paragraph under the title that describes the sources and their scope.
 	 */
 	scopeNote?: string
+
 	/**
-	 * A paragraph about the scorer choice (e.g. why the FS baseline rather than the dedup GBT).
+	 * A paragraph that explains the choice of match scorer.
 	 */
 	scorerNote?: string
+
 	/**
-	 * A paragraph about sampling/capping, woven into the caveat.
+	 * A sentence about sampling or capping that the report places before the closing caveat.
 	 */
 	sampleNote?: string
+
 	/**
-	 * How many "eligible rather than enrolled" rows to spot-check. Default 15.
+	 * The number of `eligible-not-enrolled` entities that the spot-check lists.
+	 * It defaults to 15.
 	 */
 	spotCheckLimit?: number
 }
 
 /**
- * A markdown reconciliation report: the bucket counts, the enrolled-rate floor, an anti-join spot-check, and — always,
- * by construction — the neutral caveat. The deliverable is the anti-join SET rather than a rate, and never an
- * allegation.
+ * Renders a Markdown reconciliation report with the bucket counts, the enrolled rate,
+ * a spot-check of `eligible-not-enrolled` entities, and a fixed caveat.
+ *
+ * The report presents the enrolled rate as a floor because incomplete resolution can only miss links.
  */
 export function reconciliationReport(result: ReconciliationResult, options: ReconciliationReportOptions = {}): string {
 	const { counts, reconciled } = result
@@ -201,11 +191,11 @@ export function reconciliationReport(result: ReconciliationResult, options: Reco
 	lines.push(`| **enrolled** | ${counts.enrolled} | resolves to an eligibility record AND a funding record |`)
 
 	lines.push(
-		`| **eligible, not enrolled** | ${counts["eligible-not-enrolled"]} | eligibility record, no funding record resolved (the **anti-join**) |`
+		`| **eligible, not enrolled** | ${counts["eligible-not-enrolled"]} | eligibility record without a resolved funding record (the **anti-join**) |`
 	)
 
 	lines.push(
-		`| **funded, not in eligibility set** | ${counts["funded-not-eligible"]} | funding record, no eligibility record resolved |`
+		`| **funded, not in eligibility set** | ${counts["funded-not-eligible"]} | funding record without a resolved eligibility record |`
 	)
 
 	lines.push("")

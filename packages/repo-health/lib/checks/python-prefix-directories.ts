@@ -4,7 +4,7 @@
 /**
  *   `prefix-directories.ts` for the Python tree: a repeated underscore prefix among a directory's children is a
  *   hierarchy encoded in names. `audit_epoch_mixture.py` and `audit_suffix_feed.py` do not merely happen to start
- *   alike — they are audits, and belong under `audits/`. Keeping that boundary as a directory lets an import, a file
+ *   alike. They are audits, and belong under `audits/`. Keeping that boundary as a directory lets an import, a file
  *   listing and an editor's tree state the same thing.
  *
  *   The rule is the same and three details differ, each because Python is not TypeScript:
@@ -12,7 +12,7 @@
  *   - The delimiter is `_`, which is what a Python module name uses where a TypeScript one uses `-`.
  *   - There is no workspace exclusion. A TypeScript directory name can be an npm package name, and
  *     `packages/neural-weights-en-gb` is published under that name. no Python directory here carries that kind of
- *     interface, so nothing needs the exemption.
+ *     interface, so no directory needs the exemption.
  *   - `__init__.py` and `__main__.py` never join a group. Both are Python's own names — the first marks a package and
  *     the second is what `python -m` runs — and neither is this repository's to arrange. They share no prefix with
  *     each other either, since the dunder is not an underscore-delimited segment a reader would group by.
@@ -26,13 +26,16 @@ import { DiagnosticSeverity, type RepoCheck } from "#check"
 const CHECK_ID = "python-prefix-directories"
 
 /**
- * Where the Python tree lives. A path outside it is not this check's business.
+ * Where the Python tree lives.
+ *
+ * A path outside it is not this check's business.
  */
 const PYTHON_ROOT = "corpus-python/"
 
 /**
- * How many children must share a prefix before it is a family. Two siblings are a coincidence often enough that the
- * TypeScript check uses the same floor.
+ * How many children must share a prefix before it is a family.
+ *
+ * Two siblings are a coincidence often enough that the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3
 
@@ -45,9 +48,11 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a discovery interface rather than a hierarchy. pytest collects `test_*.py` by default, so every
- * test file in the tree shares the prefix by obligation. grouping them would report every test directory in the
- * repository and propose moving each into a `test/` subdirectory pytest would then have to be retaught to find.
+ * Prefixes that are a discovery interface rather than a hierarchy.
+ *
+ * Pytest collects `test_*.py` by default, so every test file in the tree shares the prefix by obligation.
+ * Grouping them would report every test directory in the repository and propose moving
+ * each into a `test/` subdirectory pytest would then have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])
 
@@ -81,8 +86,8 @@ function isSource(file: string): boolean {
 /**
  * Every directory-with-children view of the Python tree, as one member list per parent directory.
  *
- * A directory child is admitted only when it carries a tracked `.py` file somewhere beneath it, which is what keeps a
- * data directory mirroring someone else's names out of the grouping.
+ * A directory child is admitted only when it carries a tracked `.py` file somewhere beneath it,
+ * which is what keeps a data directory mirroring someone else's names out of the grouping.
  */
 function directoryChildren(trackedFiles: readonly string[]): Map<string, PythonPrefixMember[]> {
 	const pythonFiles = trackedFiles.filter((file) => file.startsWith(PYTHON_ROOT) && !file.includes("/.venv/"))
@@ -145,8 +150,9 @@ export function findPythonPrefixGroups(trackedFiles: readonly string[]): PythonP
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself heads the family rather than sitting beside it: `splice.py` beside
-		// `splice_check.py` is the family's own module, and leaving it out splits the family across two levels.
+		// A sibling named for the prefix itself heads the family rather than sitting
+		// beside it: `splice.py` beside `splice_check.py` is the family's own module,
+		// and leaving it out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 

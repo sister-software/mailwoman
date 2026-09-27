@@ -20,7 +20,7 @@ interpolation (#483) exists for — and this extract is its gold standard.
 ## Rollout decision note
 
 - **Extract shape: per-state.** VT = 333,610 points → 56 MB (~168 B/point); full US
-  extrapolates to ~21 GB — fine on the playpen as per-state files, a non-starter as one
+  extrapolates to ~21 GB — fine on the lab volume as per-state files, a non-starter as one
   artifact. Build is `scripts/build-address-point-extract.ts --state XX` (~1 min/small state),
   idempotent, release-pinned.
 - **Postcode scope first, locality fallback.** Postcode is the selective key and dodges the
@@ -36,5 +36,5 @@ interpolation (#483) exists for — and this extract is its gold standard.
   scope (#378's two-tier split).
 
 Next: DE/FR extracts need the analogous Overture pulls (street/number fill ≈100% in both);
-US rollout = build the state list + a extract-routing wrapper (state → db path) behind the
+US rollout = build the state list + an extract-routing wrapper (state → db path) behind the
 same interface.

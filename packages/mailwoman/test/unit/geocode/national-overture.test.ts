@@ -4,7 +4,7 @@
 /**
  *   The national Overture rooftop provider: a registered country with its database on disk answers a `zh`-keyed
  *   lookup. a registered country with no database, and an unregistered country, answer `{}` rather than a handle to
- *   nothing.
+ *   no place.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -21,7 +21,9 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import {
+	licenseForOvertureCountry,
 	nationalAddressPointsPath,
+	overtureCountryLicense,
 	OvertureNationalDatabaseProvider,
 	streetLocaleForOvertureCountry,
 	supportedOvertureCountries,
@@ -40,9 +42,50 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(() => streetLocaleForOvertureCountry("kr")).toThrow(/COUNTRY_TO_STREET_LOCALE/)
 	})
 
+	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {
+		// Overture's attribution page declares an identifier for every theme but addresses,
+		// where it states only that the sources carry permissive open licenses and
+		// then lists the register per country.
+		// An expression naming `CDLA-Permissive-2.0` here would assert the places grant.
+		// Read through `overtureCountryLicense`, because a country whose grant is unsettled
+		// has no expression to check and `licenseForOvertureCountry` refuses it.
+		for (const country of supportedOvertureCountries()) {
+			const entry = overtureCountryLicense(country)
+
+			expect(entry).toBeDefined()
+			expect(entry?.expression ?? "").not.toMatch(/CDLA/)
+			expect((entry?.candidates ?? []).join(" ")).not.toMatch(/CDLA/)
+		}
+
+		expect(licenseForOvertureCountry("es")).toBe("CC-BY-4.0")
+		expect(licenseForOvertureCountry("IT")).toBe("CC-BY-4.0")
+		expect(() => licenseForOvertureCountry("kr")).toThrow(/COUNTRY_LICENSES/)
+	})
+
+	it("refuses Taiwan's grant, because two documents name different licenses over the same rows", () => {
+		// Overture's attribution page gives CC BY 4.0 for each of the 18 Civil Affairs bodies,
+		// and `counsel-dossier.md` §6 reads OGDL-Taiwan-1.0 over the same municipal 門牌 rows.
+		// Recording the stricter of the two states a grant nobody established,
+		// and a stricter incorrect attribution is as incorrect as a permissive one.
+		expect(() => licenseForOvertureCountry("tw")).toThrow(/unsettled: CC-BY-4\.0 or OGDL-Taiwan-1\.0/)
+		expect(() => licenseForOvertureCountry("tw")).toThrow(/counsel-dossier/)
+	})
+
+	it("reports Taiwan's candidates without throwing, for a caller reasoning about the grant", () => {
+		const taiwan = overtureCountryLicense("TW")
+
+		expect(taiwan?.expression).toBeUndefined()
+		expect(taiwan?.candidates).toEqual(["CC-BY-4.0", "OGDL-Taiwan-1.0"])
+		expect(taiwan?.evidence).toHaveLength(2)
+		expect(taiwan?.register).toBe("OpenAddresses/<bureau> Civil Affairs")
+
+		expect(overtureCountryLicense("es")?.expression).toBe("CC-BY-4.0")
+		expect(overtureCountryLicense("kr")).toBeUndefined()
+	})
+
 	it("answers {} for a registered country whose database is not on disk, and for an unregistered one", async () => {
 		const root = fixtures.use(await temporaryDirectory("overture-national-")).path
-		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(String(root)))
+		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(root))
 
 		expect(provider.for("tw")).toEqual({})
 		expect(provider.for("TW")).toEqual({})
@@ -51,7 +94,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 
 	it("opens the on-disk database with the country's street locale, so a 台/臺 query reaches the register's row", async () => {
 		const root = fixtures.use(await temporaryDirectory("overture-national-")).path
-		const path = nationalAddressPointsPath(String(root), "tw")
+		const path = nationalAddressPointsPath(root, "tw")
 
 		await makeDirectories(dirname(path))
 
@@ -81,7 +124,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 				)
 		}
 
-		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(String(root)))
+		const provider = fixtures.use(await OvertureNationalDatabaseProvider.create(root))
 		const lookup = provider.for("tw").addressPoints
 
 		expect(lookup).toBeDefined()

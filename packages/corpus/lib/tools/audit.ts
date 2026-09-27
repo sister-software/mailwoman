@@ -15,7 +15,7 @@
  */
 
 import { pathExists, readLocalBuffer, readLocalJSONFile } from "@mailwoman/core/fs/readers"
-import { basename, join, type PathBuilderLike } from "path-ts"
+import { basename, type PathBuilderLike, resolvePathBuilder } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -25,8 +25,10 @@ import { Globerator } from "spliterator/node/fs"
 const DOMINANT_SOURCE_SHARE = 0.4
 
 /**
- * How far the leading source may outweigh the runner-up before the mix is flagged. Catches the case where no single
- * source clears {@link DOMINANT_SOURCE_SHARE} but the distribution is still lopsided.
+ * How far the leading source may outweigh the runner-up before the mix is flagged.
+ *
+ * Catches the case where no single source clears {@link DOMINANT_SOURCE_SHARE}
+ * but the distribution is still lopsided.
  */
 const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
 
@@ -35,11 +37,15 @@ const MAX_TOP_TO_RUNNER_UP_RATIO = 1.5
  */
 export interface AuditOpts {
 	corpusDir: PathBuilderLike
-	configPath?: string
+	configPath?: PathBuilderLike
 	/**
-	 * Sample at most N parquet files per split when counting sources. Default 100 for speed. bump to read the full set on
-	 * a slow run. The first row of each file determines its source — corpus-v0.2.0+ files are 100% source-segregated, so
-	 * a one-row read is authoritative.
+	 * Sample at most N parquet files per split when counting sources.
+	 *
+	 * Default 100 for speed.
+	 * Bump to read the full set on a slow run.
+	 *
+	 * The first row of each file determines its source — corpus-v0.2.0+ files are 100%
+	 * source-segregated, so a one-row read is authoritative.
 	 */
 	sampleFileCount?: number
 }
@@ -64,17 +70,20 @@ interface ParsedConfig {
 }
 
 /**
- * Try parsing a training YAML's source_weights as a minimal regex-based extract. We don't pull in a YAML lib for this
- * script — the syntax is so small that a regex over the source_weights block is sufficient + keeps the script
- * dep-free.
+ * Try parsing a training YAML's source_weights as a minimal regex-based extract.
+ *
+ * We don't pull in a YAML lib for this script.
+ * The syntax is so small that a regex over the source_weights block is
+ * sufficient + keeps the script dep-free.
  */
-async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
+async function parseConfig(configPath: PathBuilderLike): Promise<ParsedConfig | null> {
 	if (!(await pathExists(configPath))) return null
 	const weights: Record<string, number> = {}
 	let inBlock = false
 	let blockIndent = -1
 
-	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath))) {
+	// The block is indentation-delimited, so leading whitespace is data here.
+	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath), { trim: false })) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
 
 		if (sourceWeightsMatch) {
@@ -88,7 +97,8 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 
 		// Skip blank lines and comments.
 		if (/^[\t ]*(#|$)/.test(raw)) continue
-		// Lines indented more than `source_weights:` are entries. lines with ≤ indent end the block.
+		// Lines indented more than `source_weights:` are entries.
+		// Lines with ≤ indent end the block.
 		const indent = raw.match(/^[\t ]*/)![0].length
 
 		if (indent <= blockIndent) {
@@ -108,14 +118,14 @@ async function parseConfig(configPath: string): Promise<ParsedConfig | null> {
 }
 
 /**
- * Scan a corpus directory's parquet files (typically under <corpus_dir>/train, /val, /test) and count files per source
- * per split.
+ * Scan a corpus directory's parquet files (typically under <corpus_dir>/train, /val, /test)
+ * and count files per source per split.
  */
 async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number): Promise<FileCountStats> {
 	const stats: FileCountStats = { bySplit: {}, totalCounted: 0, totalFiles: 0 }
 
 	for (const split of ["train", "val", "test"]) {
-		const splitDir = join(corpusDir, split)
+		const splitDir = resolvePathBuilder(corpusDir, split)
 
 		if (!(await pathExists(splitDir))) continue
 
@@ -127,9 +137,9 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 		const splitMap: Record<string, number> = {}
 
 		// We can't read parquet without a dep, so we infer source from filenames where possible.
-		// The corpus build typically writes deterministically by source — fall back to "<unknown>"
-		// when filename gives no hint. For accurate per-source counts on real corpora, the
-		// manifest.json route below is preferred.
+		// The corpus build typically writes deterministically by source —
+		// fall back to "<unknown>" when filename gives no hint.
+		// For accurate per-source counts on real corpora, the manifest.json route below is preferred.
 		for (const f of sampled) {
 			const inferred = inferSourceFromFilename(f)
 			splitMap[inferred] = (splitMap[inferred] ?? 0) + 1
@@ -150,9 +160,10 @@ async function scanParquetFiles(corpusDir: PathBuilderLike, sampleCount: number)
 }
 
 function inferSourceFromFilename(filename: string): string {
-	// Many corpus builds write part-<source>-<n>.parquet or part-<n>.parquet. The latter (current
-	// build at corpus-v0.3.0) gives no source signal in the filename — see manifestScan() for the
-	// authoritative path. Return "<unknown>" so the caller flags this case.
+	// Many corpus builds write part-<source>-<n>.parquet or part-<n>.parquet.
+	// The latter (current build at corpus-v0.3.0) gives no source signal in the filename.
+	// See manifestScan() for the authoritative path.
+	// Return "<unknown>" so the caller flags this case.
 	const m = basename(filename).match(/part-([\w-]+)-\d+\.parquet$/)
 
 	if (m && m[1] !== undefined) return m[1]
@@ -161,11 +172,15 @@ function inferSourceFromFilename(filename: string): string {
 }
 
 /**
- * Known source name prefixes. Corpus-v0.3.0 uses these as `source_id` prefixes. matching against the longest prefix
- * that fits a given `first_source_id` recovers the canonical source name.
+ * Known source name prefixes.
  *
- * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches `usgov-nad` rather than `usgov`. Sorted
- * descending by length at use site.
+ * Corpus-v0.3.0 uses these as `source_id` prefixes.
+ * Matching against the longest prefix that fits a given `first_source_id`
+ * recovers the canonical source name.
+ *
+ * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches
+ * `usgov-nad` rather than `usgov`.
+ * Sorted descending by length at use site.
  */
 const KNOWN_SOURCE_PREFIXES: ReadonlyArray<string> = [
 	"wof-admin",
@@ -204,19 +219,24 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
 }
 
 /**
- * Prefer reading manifest.json when present — uses each file's `first_source_id` + prefix matching to recover the
- * source name. Falls back to scanParquetFiles when manifest is absent.
+ * Prefer reading manifest.json when present — uses each file's `first_source_id` +
+ * prefix matching to recover the source name.
  *
- * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`). The first-row
- * source is an approximation. reading the parquet's full source column would be authoritative but requires a parquet
- * dep. For audit purposes the first-row approximation is accurate within ~5% for the corpus-v0.3.0 shape (most files
- * are >95% one source).
+ * Falls back to scanParquetFiles when manifest is absent.
+ *
+ * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`).
+ * The first-row source is an approximation.
+ *
+ * Reading the parquet's full source column would be authoritative but requires a parquet dep.
+ *
+ * For audit purposes the first-row approximation is accurate within ~5% for the
+ * corpus-v0.3.0 shape (most files are >95% one source).
  */
 async function manifestScan(
 	corpusDir: PathBuilderLike,
 	knownPrefixes: readonly string[]
 ): Promise<FileCountStats | null> {
-	const manifestPath = join(corpusDir, "MANIFEST.json")
+	const manifestPath = resolvePathBuilder(corpusDir, "MANIFEST.json")
 
 	if (!(await pathExists(manifestPath))) return null
 
@@ -252,8 +272,8 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	const totalCounted = Object.values(stats).reduce((a, b) => a + b, 0)
 	const allSources = new Set([...Object.keys(stats), ...Object.keys(weights)])
 	const rows: AuditRow[] = []
-	// Compute effective sample weight: file_count × source_weight. Sources with no weight get the
-	// "—" marker (loader skips them).
+	// Compute effective sample weight: file_count × source_weight.
+	// Sources with no weight get the "—" marker (loader skips them).
 	const sampleWeights: Array<[string, number]> = []
 
 	for (const src of allSources) {
@@ -280,9 +300,10 @@ function buildAuditRows(stats: Record<string, number>, weights: Record<string, n
 	}
 
 	// Flag the dominator: empirically calibrated against the v0.3.0 → v0.4.0 retrospective.
-	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space dilution
-	// was responsible for the coarse-F1 regression. So flag a source as "concentration warning"
-	// when it's above 40% effective sample or more than 1.5× the next-highest.
+	// v0.3.0 had usgov-nad at 52% effective sample (1.9× ban); the resulting label-space
+	// dilution was responsible for the coarse-F1 regression.
+	// So flag a source as "concentration warning" when it's above 40% effective sample
+	// or more than 1.5× the next-highest.
 	const numeric = rows.filter((r) => typeof r.effectiveSamplePct === "number") as Array<
 		AuditRow & { effectiveSamplePct: number }
 	>
@@ -314,7 +335,7 @@ function formatPct(v: number | "—"): string {
 
 function printReport(
 	corpusDir: PathBuilderLike,
-	configPath: string | undefined,
+	configPath: PathBuilderLike | undefined,
 	stats: FileCountStats,
 	rows: AuditRow[]
 ): void {
@@ -396,8 +417,8 @@ function printReport(
 
 export async function audit(opts: AuditOpts): Promise<void> {
 	const config = opts.configPath ? await parseConfig(opts.configPath) : null
-	// Compose the known-prefix list from both the hardcoded set and any extra names in the config
-	// (forward-compat for future adapters added before this file is updated).
+	// Compose the known-prefix list from both the hardcoded set and any extra names in the
+	// config (forward-compat for future adapters added before this file is updated).
 	const prefixes = [...new Set([...KNOWN_SOURCE_PREFIXES, ...Object.keys(config?.sourceWeights ?? {})])]
 
 	const stats =

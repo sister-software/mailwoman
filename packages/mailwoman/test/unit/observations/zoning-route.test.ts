@@ -5,7 +5,7 @@
  *   #1995: the zoning route on the geocode path, exercised through `geocodeAddress` with mock
  *   classifier/resolver deps and a fixture-built zoning layer.
  *
- *   the first test is the one that matters. With the layer absent — which is every default construction —
+ *   the first test is the one that matters. With the layer absent — which is every default construction.
  *   the geocode result must be identical to a run against a build without the field existing. That is a
  *   statement about construction rather than about a measurement, and it is what makes the option safe to
  *   configure: rollback is removing the argument.
@@ -13,7 +13,7 @@
  *   the rest PIN what this layer says and, more importantly, what IT refuses TO. A designation becomes one
  *   additive marker naming the verdict's own top kind. the authority'S own code is in the sentence with the
  *   generic type beside it rather than instead of it. the plan and its window ride on the evidence. and a
- *   location with no zoning polygon raises nothing. That last one is the hardest case of the meaning-of-zero
+ *   location with no zoning polygon raises no marker. That last one is the hardest case of the meaning-of-zero
  *   rule: an absent zoning polygon is one of at least four different things, and the publisher proves the
  *   asymmetry by stating `UNZ - Unzoned` as a positive value where it means it.
  */
@@ -26,6 +26,7 @@ import { buildZoningDatabase } from "@mailwoman/zoning/sdk/build-zoning"
 import { fixtureFeatures, fixtureSource, FIXTURE_ORIGIN, FIXTURE_PLANS, FIXTURE_SIDE } from "@mailwoman/zoning/test-kit"
 import { geocodeAddress, type GeocodeClassifier, type GeocodeDeps } from "mailwoman/geocode"
 import { createZoningDesignationRoute, describeZoningDesignation } from "mailwoman/observations"
+import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">): AddressNode {
@@ -33,14 +34,16 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports. A designation marker must name it — the verdict's own top kind — because a
+ * The kind the mock classifier reports.
+ *
+ * A designation marker must name it — the verdict's own top kind — because a
  * designation is not raised by intent and has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`, so the coordinate the route is handed is the
- * one this test chose.
+ * A minimal always-resolves engine that answers at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one this test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -82,7 +85,9 @@ const INSIDE_ZONE = {
 }
 
 /**
- * Well away from every fixture zone — the reading this layer must never turn into "no restriction applies".
+ * Well away from every fixture zone.
+ *
+ * The reading this layer must never turn into "no restriction applies".
  */
 const NO_DESIGNATION = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 
@@ -95,11 +100,11 @@ const INSIDE_UNZONED = {
 }
 
 let scratch: TemporaryDirectory
-let databasePath: string
+let databasePath: PathBuilder
 
 beforeAll(async () => {
 	scratch = await temporaryDirectory("mw-zoning-route-")
-	databasePath = scratch.resolve("zoning-ireland.db")
+	databasePath = scratch.path("zoning-ireland.db")
 
 	await buildZoningDatabase({
 		source: fixtureSource(fixtureFeatures()),
@@ -156,8 +161,9 @@ describe("#1995: the zoning route on the geocode path", () => {
 			expect(marker.mechanism).toBe("layer:zoning")
 			expect(marker.kind).toBe(TEST_VERDICT_KIND)
 
-			// The local code leads and the generic type follows. A message that led with the generic type would report the
-			// national summary as the designation, and the local half is the one that cannot be reconstructed from it.
+			// The local code leads and the generic type follows.
+			// A message that led with the generic type would report the national summary as the
+			// designation, and the local half is the one that cannot be reconstructed from it.
 			expect(marker.message).toMatch(/"R2 - Existing Residential"/u)
 			expect(marker.message).toMatch(/IE-GZT R2/u)
 			expect(marker.message.indexOf("R2 - Existing Residential")).toBeLessThan(marker.message.indexOf("IE-GZT R2"))
@@ -194,8 +200,8 @@ describe("#1995: the zoning route on the geocode path", () => {
 				expect(designation.provenanceGrade).toBe("authoritative")
 			}
 
-			// The one-line description carries the authority, the code and the plan, so a receipt cannot lose which of them
-			// spoke.
+			// The one-line description carries the authority, the code and the plan,
+			// so a receipt cannot lose which of them spoke.
 			expect(describeZoningDesignation(decision.observation)).toMatch(/Fixture County Council/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/R2 - Existing Residential/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/build-local/u)
@@ -234,8 +240,10 @@ describe("#1995: the zoning route on the geocode path", () => {
 				zoningDesignationRoute: route,
 			})
 
-			// An advisory here would be a determination nobody made: the location may be outside any plan area, unzoned land
-			// inside one, in a jurisdiction that has never zoned, or in one nobody has published. The refusal is named instead.
+			// An advisory here would be a determination nobody made: the location may
+			// be outside any plan area, unzoned land inside one, in a jurisdiction that
+			// has never zoned, or in one nobody has published.
+			// The refusal is named instead.
 			expect(result.intent_markers).toEqual([])
 
 			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

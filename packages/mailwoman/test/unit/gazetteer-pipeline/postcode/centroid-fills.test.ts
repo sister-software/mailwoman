@@ -7,14 +7,14 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { createUnifiedSchema } from "@mailwoman/resolver-wof-sqlite/unified-schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { fillPostcodeCentroids } from "mailwoman/gazetteer-pipeline/postcode/centroid-fills"
-import { join } from "path-ts"
 import { expect, test } from "vitest"
 
 test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordinates untouched", async () => {
-	// The staging database: two postcodes — one placeholder (parented), one already placed.
+	// The staging database: two postcodes.
+	// One placeholder (parented), one already placed.
 	await using dirDirectory = await temporaryDirectory("centroid-fills-")
 	const dir = dirDirectory.path
-	const databasePath = join(dir, "postalcode-tl.db")
+	const databasePath = dir("postalcode-tl.db")
 	using database = new DatabaseClient<WOFDatabase>(databasePath)
 	await createUnifiedSchema(database)
 
@@ -26,7 +26,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 	ins.run(101, 9, "2000", "postalcode", "TL", 5.5, 6.5) // real coordinate → must be untouched
 
 	// The admin gazetteer carrying the parent locality.
-	const adminPath = join(dir, "admin.db")
+	const adminPath = dir("admin.db")
 	using admin = new DatabaseClient<WOFDatabase>(adminPath)
 	await createUnifiedSchema(admin)
 
@@ -36,7 +36,7 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 		)
 		.run()
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 	const r = await fillPostcodeCentroids(db, { adminPath })
 	expect(r.placedBefore).toBe(1)
 	expect(r.placedAfter).toBe(2)
@@ -58,11 +58,12 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
-	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the locality New York,
-	// and Queens uses neighbourhood names rather than the borough. Both shapes are here on purpose.
+	// A delivery city is not the geographic locality: 11201 is Brooklyn inside the locality
+	// New York, and Queens uses neighbourhood names rather than the borough.
+	// Both shapes are here on purpose.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
-	const databasePath = join(dir, "postalcode-us.db")
+	const databasePath = dir("postalcode-us.db")
 	using database = new DatabaseClient<WOFDatabase>(databasePath)
 
 	await createUnifiedSchema(database)
@@ -75,9 +76,11 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
-	// GeoNames files a US territory under PR rather than US. The database files it under US. Reading only `US`
-	// rows leaves every territory postcode unnamed — 149 of them against the 2024 Census zcta list.
-	const geonamesDir = join(dir, "geonames-postal")
+	// GeoNames files a US territory under PR rather than US.
+	// The database files it under US.
+	// Reading only `US` rows leaves every territory postcode unnamed —
+	// 149 of them against the 2024 Census zcta list.
+	const geonamesDir = dir("geonames-postal")
 
 	await makeDirectories(geonamesDir)
 
@@ -87,10 +90,10 @@ test("GeoNames postal names each postcode's delivery city, including territories
 			"US\t11375\tForest Hills\tNew York\tNY\tQueens\t081\t\t\t40.7229\t-73.8473\t4",
 			"PR\t00601\tAdjuntas\tPuerto Rico\tPR\tAdjuntas\t001\t\t\t18.1801\t-66.7522\t4",
 		].join("\n"),
-		join(geonamesDir, "US.txt")
+		geonamesDir("US.txt")
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir })
 
@@ -107,7 +110,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 
 	expect(named("11201")).toEqual(["Brooklyn"])
 	expect(named("11375")).toEqual(["Forest Hills"])
-	// The country-alias case. Without it this is [] and the postcode also keeps its (0,0) placeholder.
+	// The country-alias case.
+	// Without it this is [] and the postcode also keeps its (0,0) placeholder.
 	expect(named("00601")).toEqual(["Adjuntas"])
 
 	const pr = db.prepare("SELECT latitude FROM spr WHERE id = 3").get() as { latitude: number }
@@ -116,11 +120,12 @@ test("GeoNames postal names each postcode's delivery city, including territories
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
-	// The US case. `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so
-	// without this branch the whole GeoNames pass short-circuits on existsSync and writes nothing.
+	// The US case.
+	// `<data-root>/geonames-postal/` carries CZ, DK, FI and eight others and no US.txt, so without
+	// this branch the whole GeoNames pass short-circuits on existsSync and writes no postcode.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path
-	const databasePath = join(dir, "postalcode-us.db")
+	const databasePath = dir("postalcode-us.db")
 	using database = new DatabaseClient<WOFDatabase>(databasePath)
 
 	await createUnifiedSchema(database)
@@ -132,11 +137,11 @@ test("falls back to the combined dump for a country the per-country directory ha
 		.run()
 
 	// An empty per-country directory — the shape on disk that made this branch required.
-	const geonamesDir = join(dir, "geonames-postal")
+	const geonamesDir = dir("geonames-postal")
 
 	await makeDirectories(geonamesDir)
 
-	const geonamesCombined = join(dir, "allCountries-postal.txt")
+	const geonamesCombined = dir("allCountries-postal.txt")
 
 	await writeLocalTextFile(
 		["FI\t11201\tSomewhere\t\t\t\t\t\t\t60.1\t24.9\t4", "US\t11201\tBrooklyn\t\t\t\t\t\t\t40.694\t-73.9903\t4"].join(
@@ -145,7 +150,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 		geonamesCombined
 	)
 
-	await using db = new DatabaseClient<WOFDatabase>(databasePath)
+	using db = new DatabaseClient<WOFDatabase>(databasePath)
 
 	const r = await fillPostcodeCentroids(db, { geonamesDir, geonamesCombined })
 

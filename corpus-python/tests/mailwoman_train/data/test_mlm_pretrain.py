@@ -1,19 +1,3 @@
-"""MLM pre-training wiring smoke: masking + forward_mlm correctness.
-
-The supervised trainer learns BIO classification from scratch. this checks the new
-self-supervised PRE-training surface (masking.py + MailwomanCoarseEncoder.forward_mlm),
-which produces an encoder checkpoint a later supervised run fine-tunes from. Runs in
-seconds on CPU. no real corpus, no backward, no optimizer — those are exercised by the
-manual end-to-end smoke. Geometry + invariants only.
-
-Covered:
-- mask_tokens: ~mask_prob of ATTENDED tokens selected. pad positions never masked. targets
-  are the ORIGINAL ids at masked positions and -100 elsewhere. unselected inputs unchanged.
-- forward_mlm: returns (B, S, vocab) logits + a finite scalar loss. uses the TIED token-
-  embedding head so it adds no parameters (state_dict key-identical to a supervised model);
-  the supervised forward path still works unchanged.
-"""
-
 from __future__ import annotations
 
 import pytest
@@ -27,7 +11,7 @@ from mailwoman_train.nn.encoder import MailwomanCoarseEncoder  # noqa: E402
 NUM_LABELS = len(ACTIVE_BIO_LABELS)
 VOCAB_SIZE = 64
 PAD_ID = 0
-UNK_ID = 1  # the mask substitute (SentencePiece has no [MASK])
+UNK_ID = 1
 HIDDEN_SIZE = 32
 
 
@@ -49,21 +33,21 @@ def _build_encoder() -> MailwomanCoarseEncoder:
 def test_mask_tokens_respects_padding_and_targets() -> None:
     gen = torch.Generator().manual_seed(0)
     b, s = 32, 24
-    ids = torch.randint(2, VOCAB_SIZE, (b, s))  # 2.. avoids pad(0)/unk(1)
+    ids = torch.randint(2, VOCAB_SIZE, (b, s))
     am = torch.ones(b, s, dtype=torch.long)
-    am[:, 18:] = 0  # last 6 positions are padding
+    am[:, 18:] = 0
 
     masked, labels = mask_tokens(ids, am, mask_prob=0.15, mask_token_id=UNK_ID, vocab_size=VOCAB_SIZE, generator=gen)
 
     assert masked.shape == ids.shape
     assert labels.shape == ids.shape
-    # pad positions are never selected for masking
+
     assert bool((labels[am == 0] == -100).all())
     selected = labels != -100
-    # selection rate is roughly mask_prob over attended tokens
+
     rate = float(selected.sum()) / float(am.sum())
     assert 0.08 < rate < 0.22, rate
-    # unselected inputs are unchanged. targets at selected positions equal the original id
+
     assert bool((masked[~selected] == ids[~selected]).all())
     assert bool((labels[selected] == ids[selected]).all())
 
@@ -93,22 +77,19 @@ def test_forward_mlm_shapes_and_finite_loss() -> None:
     assert out.loss is not None
     assert out.loss.dim() == 0
     assert torch.isfinite(out.loss)
-    # loss without labels is None (pure inference)
+
     assert model.forward_mlm(input_ids=ids, attention_mask=am).loss is None
 
 
 def test_forward_mlm_adds_no_parameters_vs_supervised() -> None:
-    """The tied-embedding MLM head reuses token_embeddings.weight — no new params, so the
-    pretrain checkpoint's state_dict is key-identical to a supervised model's (loads via
-    from_pretrained for fine-tuning)."""
     model = _build_encoder()
     keys_before = set(model.state_dict().keys())
-    # touch forward_mlm. it must not have lazily created any module/parameter
+
     _ = model.forward_mlm(
         input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)), attention_mask=torch.ones(2, 8, dtype=torch.long)
     )
     assert set(model.state_dict().keys()) == keys_before
-    # supervised forward still works unchanged
+
     sup = model(
         input_ids=torch.randint(2, VOCAB_SIZE, (2, 8)),
         attention_mask=torch.ones(2, 8, dtype=torch.long),

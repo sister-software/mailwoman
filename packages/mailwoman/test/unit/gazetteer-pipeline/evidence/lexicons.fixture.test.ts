@@ -23,7 +23,7 @@
  *   Which floor applies depends on whether libpostal's given_names/surnames/personal_titles carry
  *   the surface. Verified against the shipped dictionaries: paris, lyon, joseph, fargo and
  *   washington are person names. rennes, belleville, smallville, minot, rutland, plainfield,
- *   cheyenne and roazhon are not. Fargo is the one that surprises — it needs the 0.45 tier, which is
+ *   cheyenne and roazhon are not. Fargo is the one that surprises. It needs the 0.45 tier, which is
  *   why it is seeded at 130 k rather than something merely above 10 k.
  */
 
@@ -33,22 +33,24 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { BuiltLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
 import { buildLocalitySurfaceLexicon } from "mailwoman/gazetteer-pipeline/evidence-lexicons"
+import type { PathBuilderLike } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 let scratch: TemporaryDirectory
 
 /**
- * A minimal admin WOF carrying the four tables `buildLocalitySurfaceLexicon` reads: `spr` (primaries), `names`
- * (aliases), `place_population` (the law-2/3 importance input), and `ancestors` (the v4 parent-prominence proxy).
+ * A minimal admin WOF carrying the four tables `buildLocalitySurfaceLexicon` reads:
+ * `spr` (primaries), `names` (aliases), `place_population` (the law-2/3 importance input),
+ * and `ancestors` (the v4 parent-prominence proxy).
  */
-function buildFixtureAdmin(path: string): void {
+function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
-	// Throwaway fixture, so durability is worthless and expensive. `db.exec` runs each statement in
-	// its own autocommit transaction, and the ~50 INSERTs below were paying an fsync apiece —
-	// measured at ~1.8s per build inside vitest against 1ms for the build itself. Turning off
-	// synchronous writes and keeping the journal in memory is what makes this layer cheap enough to
-	// run on every PR, which is the whole point of it.
+	// Throwaway fixture, so durability is worthless and expensive.
+	// `db.exec` runs each statement in its own autocommit transaction, and the ~50 INSERTs below were
+	// paying an fsync apiece — measured at ~1.8s per build inside vitest against 1ms for the build itself.
+	// Turning off synchronous writes and keeping the journal in memory is what makes this
+	// layer cheap enough to run on every PR, which is the whole point of it.
 	db.exec(`
 		PRAGMA synchronous = OFF;
 		PRAGMA journal_mode = MEMORY;
@@ -141,9 +143,9 @@ afterEach(() => scratch[Symbol.asyncDispose]())
 /**
  * Build against the fixture and return the emitted surface map plus the build's counters.
  *
- * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count (`BuiltLexicon.entries:
- * number`) while the lexicon file's `entries` is the surface→bitmask MAP. The map comes back as `surfaces` so the two
- * cannot be confused at a call site.
+ * Naming trap, called out because both halves are spelled "entries": `built.entries` is a count
+ * (`BuiltLexicon.entries: number`) while the lexicon file's `entries` is the surface→bitmask MAP.
+ * The map comes back as `surfaces` so the two cannot be confused at a call site.
  */
 let buildSeq = 0
 
@@ -151,11 +153,12 @@ async function buildAgainstFixture(
 	countries: string[],
 	placetypes: string[]
 ): Promise<{ built: BuiltLexicon; surfaces: Record<string, number> }> {
-	// A fresh DB per call. Two tests build twice — the sub-phrase one covers both country sets, and
-	// the invariance one runs the same build twice on purpose — and `create table` is not idempotent.
+	// A fresh DB per call.
+	// Two tests build twice — the sub-phrase one covers both country sets, and the invariance
+	// one runs the same build twice on purpose — and `create table` is not idempotent.
 	const seq = buildSeq++
-	const dbPath = scratch.resolve(`admin-${seq}.db`)
-	const output = scratch.resolve(`lexicon-${seq}.json`)
+	const dbPath = scratch.path(`admin-${seq}.db`)
+	const output = scratch.path(`lexicon-${seq}.json`)
 	buildFixtureAdmin(dbPath)
 
 	const built = await buildLocalitySurfaceLexicon({ countries, placetypes, dbPath, output })
@@ -173,7 +176,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		expect(surfaces.lyon).toBeDefined()
 		// A given name at ordinary-town prominence is refused — the Rue-Joseph hazard.
 		expect(surfaces.joseph).toBeUndefined()
-		// A non-name surface at comparable prominence passes. only law 2 applies to it.
+		// A non-name surface at comparable prominence passes.
+		// Only law 2 applies to it.
 		expect(surfaces.rennes).toBeDefined()
 	})
 
@@ -198,10 +202,11 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
-		// exact, which the full build cannot assert. Two surfaces fail the post-scan prominence pass
-		// and only two: `smallville` (0.166, under the 0.25 one-token floor) and `joseph` (0.383 —
-		// over that floor, under the 0.45 person-name tier). If a third ever appears here, a law
-		// changed scope.
+		// exact, which the full build cannot assert.
+		// Two surfaces fail the post-scan prominence pass and only two:
+		// `smallville` (0.166, under the 0.25 one-token floor) and `joseph`
+		// (0.383 — over that floor, under the 0.45 person-name tier).
+		// If a third ever appears here, a law changed scope.
 		expect(built.skippedProminence).toBe(2)
 	})
 
@@ -228,8 +233,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 
 		// A directional inside a multi-token surface survives.
 		expect(surfaces["east nashville"]).toBeDefined()
-		// …and nothing in the US set is refused on prominence, unlike the FR set. The asymmetry is
-		// the point: these rows are seeded at their real magnitudes.
+		// …and no row in the US set is refused on prominence, unlike the FR set.
+		// The asymmetry is the point: these rows are seeded at their real magnitudes.
 		expect(built.skippedProminence).toBe(0)
 	})
 

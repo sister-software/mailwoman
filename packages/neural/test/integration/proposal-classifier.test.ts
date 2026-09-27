@@ -24,7 +24,9 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Minimal duck-typed Section — see proposal-classifier.ts for why we don't construct real Spans.
+ * Minimal duck-typed Section.
+ *
+ * See proposal-classifier.ts for why we don't construct real Spans.
  */
 function makeSection(body: string, start = 0): Section {
 	return { body, start, end: start + body.length } as Section
@@ -33,14 +35,14 @@ function makeSection(body: string, start = 0): Section {
 const TOKENIZER_PATH = workspacePath("neural", "test", "fixtures", "tokenizer-v0.1.0.model")
 
 const MODEL_PATH =
-	$public.MAILWOMAN_TEST_ONNX_MODEL ??
-	String(dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx"))
+	$public.MAILWOMAN_TEST_ONNX_MODEL ?? dataRootPath("models", "quantized", "model-stage1-coarse-step-050000-int8.onnx")
 
 const haveModel = await pathExists(MODEL_PATH)
 
 /**
- * The coarse tags the v0.2.0 model is expected to reach at least one of. Typed so a tag that leaves the union stops
- * compiling rather than silently never matching.
+ * The coarse tags the v0.2.0 model is expected to reach at least one of.
+ *
+ * Typed so a tag that leaves the union stops compiling rather than silently never matching.
  */
 const COARSE_TAGS: readonly ComponentTag[] = ["region", "locality", "postcode"]
 
@@ -171,7 +173,8 @@ describe.skipIf(!haveModel)("createNeuralProposalClassifier — e2e with v0.2.0 
 		const cls = createNeuralProposalClassifier({ id: "neural-v0.2.0-en-us", classifier: neural })
 		const proposals = await cls.classify(makeSection("Washington DC 20500"), {})
 		const tags = new Set(proposals.map((p) => p.component))
-		// Don't over-assert — the v0.2.0 model can miss country/region. insist on at least one of them.
+		// Don't over-assert — the v0.2.0 model can miss country/region.
+		// Insist on at least one of them.
 		const coarseHit = COARSE_TAGS.some((tag) => tags.has(tag))
 		expect(coarseHit).toBe(true)
 

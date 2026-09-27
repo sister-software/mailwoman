@@ -5,7 +5,7 @@
  *   Re-fetch the state-level open-data sources (NY/TX/DE/or notaries, IA contractors, WA health
  *   providers, HI lobbyists). Reproducible recovery if `$MAILWOMAN_DATA_ROOT` is lost.
  *
- *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools` — its
+ *   HI public schools is fetched separately by `mailwoman corpus fetch state-hi-schools`. Its
  *   upstream is an xlsx workbook that requires an openpyxl-driven sheet-concatenation pre-step
  *   before the adapter can consume it.
  *
@@ -19,14 +19,13 @@
 import { BYTES_PER_KIB } from "@mailwoman/core/fs/formatters"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
 
 import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetch/download/index"
 import { downloadToFile, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
+ * Bytes per KiB — the divisor for human-readable sizes, and the floor below
+ * which a "download" is an error page rather than data.
  */
 
 export type FetchStateSourcesOptions = BaseFetchOptions
@@ -86,9 +85,9 @@ export async function fetchStateSources(
 	const failedCodes: string[] = []
 
 	for (const { slug, filename, url } of SOURCES) {
-		const destDir = join(options.outRoot, slug)
+		const destDir = options.outRoot(slug)
 		await makeDirectories(destDir)
-		const dest = join(destDir, filename)
+		const dest = destDir(filename)
 
 		report?.(`=== ${slug} / ${filename}`)
 
@@ -130,7 +129,7 @@ export async function fetchStateSources(
 			bytes,
 		}
 
-		await writeManifest(join(destDir, "MANIFEST.json"), manifest)
+		await writeManifest(destDir("MANIFEST.json"), manifest)
 
 		report?.(`  ✓ ${(bytes / 1024 / 1024).toFixed(1)} MB  sha256=${sha}`)
 

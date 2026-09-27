@@ -10,7 +10,7 @@
  *
  *   1. An explicit `artifactPath` (e.g. the weights-package sibling surfaced by
  *      `NeuralAddressClassifier.streetMorphologyPath`). When given, it is the only artifact probed.
- *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
+ *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
  *   3. Build-from-dictionaries fallback: `buildStreetMorphologyFST` over core's bundled libpostal
  *      `street_types.txt` files — the pre-artifact behavior, kept so a missing artifact degrades to
  *      a per-process build rather than a crash.
@@ -20,7 +20,6 @@
  *   `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { resourceDictionaryPath } from "@mailwoman/core/paths"
 import type { PathBuilder, PathBuilderLike } from "path-ts"
@@ -28,32 +27,40 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import type { FSTMatcher } from "#fst/matcher"
 import { deserializeFST, readFSTProvenance } from "#fst/serialize"
 import type { FSTProvenance } from "#fst/types"
+import { wofDatabasePath } from "#paths"
 import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 
 /**
- * The sealed artifact's canonical filename — identical in the data-root staging dir and as a weights-package sibling.
+ * The sealed artifact's canonical filename — identical in the data-root staging dir
+ * and as a weights-package sibling.
  */
 export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 
 /**
- * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/wof/fst-street-morphology.bin`.
+ * The staged artifact's default location: `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
  */
 export function defaultStreetMorphologyArtifactPath(): PathBuilder {
-	return dataRootPath("wof", STREET_MORPHOLOGY_ARTIFACT_FILENAME)
+	return wofDatabasePath(STREET_MORPHOLOGY_ARTIFACT_FILENAME)
 }
 
 export interface LoadStreetMorphologyFSTOpts {
 	/**
-	 * Explicit artifact path (e.g. a weights-package sibling). When given it is the only artifact probed — missing or
-	 * unreadable degrades straight to the dictionary build, never a throw.
+	 * Explicit artifact path (e.g. A weights-package sibling).
+	 *
+	 * When given it is the only artifact probed — missing or unreadable degrades
+	 * straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike
 	/**
-	 * Dictionaries dir for the build fallback. Defaults to core's bundled libpostal dictionaries.
+	 * Dictionaries dir for the build fallback.
+	 *
+	 * Defaults to core's bundled libpostal dictionaries.
 	 */
 	dictionariesDir?: PathBuilderLike
 	/**
-	 * Unreadable-artifact diagnostics. Defaults to silent (the caller owns its warn channel).
+	 * Unreadable-artifact diagnostics.
+	 *
+	 * Defaults to silent (the caller owns its warn channel).
 	 */
 	onWarn?: (message: string) => void
 }
@@ -75,7 +82,8 @@ export interface LoadedStreetMorphologyFST {
 }
 
 /**
- * Load the street-morphology matcher: sealed artifact first, per-process dictionary build as the degrade path.
+ * Load the street-morphology matcher: sealed artifact first, per-process
+ * dictionary build as the degrade path.
  */
 export async function loadStreetMorphologyFST(
 	opts: LoadStreetMorphologyFSTOpts = {}

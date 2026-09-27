@@ -23,6 +23,7 @@ import { pathExists } from "@mailwoman/core/fs/readers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { percentile } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
@@ -30,7 +31,6 @@ import { JSONSpliterator } from "spliterator"
 // Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 const { values: rawValues } = parseArguments({
 	options: { model: { type: "string" }, n: { type: "string" } },
-	strict: false,
 	allowPositionals: true,
 })
 
@@ -39,7 +39,7 @@ const values = rawValues as { model?: string; n?: string }
 const TOK = dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")
 const CARD = "packages/neural-weights-en-us/model-card.json"
 const ANCHOR = dataRootPath("anchor", "pilot-anchor-lookup.json")
-const WOF = dataRootPath("wof", "admin-global-priority.db")
+const WOF = wofDatabasePath("admin-global-priority.db")
 const MODEL = values["model"] || "out/v191/model.onnx"
 const N = Number(values["n"] || "150")
 
@@ -71,9 +71,9 @@ async function main() {
 	console.log(`loc | n   res  unres | swap needsK emitUnres covGap | swapKm p50/p90 (top1·best5)`)
 
 	const T = { n: 0, res: 0, unres: 0, swap: 0, needsK: 0, emitUn: 0, cov: 0 }
-	// falsifier accumulators: great-circle error (km) from the postcode-disambiguated gold-locality
-	// resolution to truth, over the swap cases. top1 = resolver's ranked choice. best5 = the ceiling
-	// if same-name disambiguation picks the right candidate from the top 5.
+	// falsifier accumulators: great-circle error (km) from the postcode-disambiguated
+	// gold-locality resolution to truth, over the swap cases. top1 = resolver's ranked choice.
+	// best5 = the ceiling if same-name disambiguation picks the right candidate from the top 5.
 	const swapTop1: number[] = []
 	const swapBest5: number[] = []
 
@@ -114,10 +114,11 @@ async function main() {
 			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
 
-				// falsifier: resolve the gold locality with the row's postcode (what the rescore keeps as
-				// an anchor) and measure great-circle to truth. p50 < 10km → the swap recovers a real
-				// coordinate. scatter → the gold name resolves to a same-name collision (a label-F1 mirage,
-				// the #685 trap). (0,0) placeholders are dropped — WOF ships them on some rows.
+				// falsifier: resolve the gold locality with the row's postcode
+				// (what the rescore keeps as an anchor) and measure great-circle to truth.
+				// p50 < 10km → the swap recovers a real coordinate.
+				// Scatter → the gold name resolves to a same-name collision (a label-F1 mirage, the #685 trap).
+				// (0,0) placeholders are dropped — WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)
 

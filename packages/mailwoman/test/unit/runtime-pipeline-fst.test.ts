@@ -14,15 +14,17 @@ import { buildFSTFromWOF, serializeFST } from "@mailwoman/resolver-wof-sqlite/fs
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { createRuntimePipeline } from "mailwoman/runtime-pipeline"
-import { join, type PathBuilderLike } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 /**
- * Build a minimal but real FST binary (one locality entry, "testville") via the actual builder + serializer — no
- * hand-rolled bytes. Returns the written file path.
+ * Build a minimal but real FST binary (one locality entry, "testville") via the
+ * actual builder + serializer — no hand-rolled bytes.
+ *
+ * @returns The written file path.
  */
-async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
-	const dbPath = join(dir, "tiny-wof.db")
+async function writeTinyFST(dir: PathBuilder): Promise<PathBuilder> {
+	const dbPath = dir("tiny-wof.db")
 	using db = new DatabaseClient<WOFDatabase>(dbPath)
 
 	db.exec(
@@ -40,7 +42,7 @@ async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 	db.prepare("INSERT INTO place_importance (id, importance) VALUES (1, 0.5)").run()
 
 	const { matcher, provenance } = await buildFSTFromWOF({ dbPath, countries: ["US"], languages: ["*"] })
-	const fstPath = join(dir, "fst-en-us.bin")
+	const fstPath = dir("fst-en-us.bin")
 	await writeLocalFile(serializeFST(matcher, provenance), fstPath)
 
 	return fstPath
@@ -49,7 +51,7 @@ async function writeTinyFST(dir: PathBuilderLike): Promise<string> {
 /**
  * Minimal classifier stand-in: records the opts it was called with, returns an empty tree.
  */
-function fakeClassifier(fstPath?: string) {
+function fakeClassifier(fstPath?: PathBuilder) {
 	const calls: Array<Record<string, unknown>> = []
 
 	return {
@@ -75,8 +77,8 @@ describe("createRuntimePipeline — weights-FST auto-load (FST-distribution arc)
 		await pipeline("1 Testville Road")
 		expect(calls.length).toBeGreaterThan(0)
 		expect(calls[0]!.fst).toBeDefined()
-		// The check's morphology matcher is wired with the emission prior zeroed (the measured-sweet
-		// F config — the emission prior stays off on production paths).
+		// The check's morphology matcher is wired with the emission prior zeroed
+		// (the measured-sweet F config — the emission prior stays off on production paths).
 		expect(calls[0]!.fstStreetMorphology).toBeDefined()
 		expect(calls[0]!.fstStreetMorphologyOpts).toEqual({ biasScale: 0, dependentLocalityPenalty: 0 })
 	})

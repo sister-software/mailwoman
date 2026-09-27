@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Lossless decomposition (#493) — the typed-`unknown`-span primitive. Every byte of the input belongs to
- *   exactly one segment: a span some node covers, or an `unknown` run the model left all-O. Those all-O runs
- *   are what `decodeAsJSON` silently drops (the JSON-hides-gaps trap) — surfacing them lets a consumer route
- *   them to fallback logic, display them, or aggregate them as the self-reporting corpus-gap detector.
+ *   Lossless decomposition: the typed-`unknown`-span primitive. Every byte of the input belongs to exactly one
+ *   segment — a span some node covers, or an `unknown` run the model left all-O. Those all-O runs are what
+ *   `decodeAsJSON` silently drops, and surfacing them lets a consumer route them to fallback logic, display them, or
+ *   aggregate them.
  *
- *   This is the pure primitive: it reads `tree.raw` + node `[start,end)` ranges and returns the complement.
- *   It mutates nothing and changes no serializer — wiring `unknown` into the JSON/XML/tuple interfaces + the
- *   demo is the focused follow-up (#493). Byte-stable by construction, so it ships ahead of that work.
+ *   This is the pure primitive: it reads `tree.raw` and node `[start,end)` ranges and returns the complement,
+ *   mutating no state and changing no serializer.
  */
 import { walkNodes } from "#decoder/tree/walk"
 import type { AddressTree } from "#decoder/types"
@@ -37,9 +36,6 @@ export interface LosslessSegment {
 	end: number
 }
 
-/**
- * Mark every char index `tree.raw` that any node's `[start,end)` covers (nesting overlaps merge naturally).
- */
 function coveredMask(tree: AddressTree): Uint8Array {
 	const len = tree.raw.length
 	const covered = new Uint8Array(len)
@@ -57,8 +53,9 @@ function coveredMask(tree: AddressTree): Uint8Array {
 }
 
 /**
- * Tile `tree.raw` into maximal covered/unknown runs, in source order. The concatenation of the segment values
- * reproduces `tree.raw` exactly — that is the #493 round-trip invariant ({@link isLossless}).
+ * Tile `tree.raw` into maximal covered/unknown runs, in source order.
+ *
+ * The concatenation of the segment values reproduces `tree.raw` exactly ({@link isLossless}).
  */
 export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 	const len = tree.raw.length
@@ -84,8 +81,8 @@ export function losslessSegments(tree: AddressTree): LosslessSegment[] {
 }
 
 /**
- * The all-O runs no node covers, as typed `unknown` spans, in source order. The complement of the node coverage over
- * `tree.raw`.
+ * The all-O runs no node covers, as typed `unknown` spans, in source order —
+ * the complement of the node coverage over `tree.raw`.
  */
 export function unknownSpans(tree: AddressTree): UnknownSpan[] {
 	return losslessSegments(tree)
@@ -94,8 +91,10 @@ export function unknownSpans(tree: AddressTree): UnknownSpan[] {
 }
 
 /**
- * The #493 round-trip guarantee: concatenating the lossless segments (covered + unknown), in order, reproduces the
- * original input. Holds by construction unless a node span overshoots the input bounds.
+ * The round-trip guarantee: concatenating the lossless segments (covered + unknown),
+ * in order, reproduces the original input.
+ *
+ * Holds by construction unless a node span overshoots the input bounds.
  */
 export function isLossless(tree: AddressTree): boolean {
 	return (

@@ -2,15 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the
- *   corpus build consumes (disk-loss recovery, weekly refresh, fresh-environment bootstrap). Each
- *   source writes its raw files plus a sibling `manifest.json` (origin URL, timestamp, byte count,
- *   sha256). See `@mailwoman/corpus/tools` `fetch/index.ts` for the source registry + license tiers.
+ *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the corpus
+ *   build consumes. Each source writes its raw files plus a sibling `manifest.json` (origin URL,
+ *   timestamp, byte count, sha256).
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import type { FetchSourceID, FetchSummary } from "@mailwoman/corpus/tools"
 import { Text } from "ink"
+import { PathBuilder } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -93,7 +93,7 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 		fetchWikidataSubVenue,
 	} = await import("@mailwoman/corpus/tools")
 
-	const base = { outRoot: options.outRoot }
+	const base = { outRoot: PathBuilder.from(options.outRoot) }
 
 	switch (source) {
 		case "acra-sg":
@@ -129,7 +129,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined = every country the source's own countryInfo.txt catalogs. present dumps are skipped.
+					// Undefined means every country the source's own countryInfo.txt catalogs.
+					// Present dumps are skipped.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr
@@ -138,8 +139,9 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesPostal(
 				{
 					...base,
-					// Undefined rather than an empty list, when the flag is absent — the module's own default set is the answer for
-					// 'fetch what the corpus wants', and an empty array would fetch nothing while looking deliberate.
+					// Undefined rather than an empty list when the flag is absent:
+					// the module's own default set is the answer for "fetch what the corpus wants",
+					// and an empty array would fetch no countries while looking deliberate.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr

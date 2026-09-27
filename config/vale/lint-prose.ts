@@ -51,6 +51,13 @@ const DOC_EXCLUDES = [
 	"**/THIRD_PARTY_NOTICES.md",
 	"packages/**/data/PROVENANCE.md",
 	"packages/**/lib/**/*.md",
+	// `docs/records/evals/2026-07-31-filer-linkage.md` is regenerated from string literals in
+	// `packages/filer/lib/tools/linkage/report.ts`, and a test compares the two byte for byte.
+	// A vocabulary rule reaching the generated copy and not its generator desynchronizes them,
+	// which is what broke the `Test` workflow on 2026-09-22.
+	// The rest of this directory is dated eval receipts, whose value is that
+	// they say what they said at the time.
+	"docs/records/evals/**",
 	"packages/mailwoman/skills/**",
 	"packages/mailwoman/lib/eval-harness/**",
 	"packages/resolver-wof-sqlite/CONVENTION.md",
@@ -88,12 +95,13 @@ function pathspecsFor(value: Surface): string[] {
  *
  * We intersect here instead of passing the caller paths to git with the exclude pathspecs.
  *
- * Why: git pathspec rules can produce false negatives when literals and recursive excludes are combined. In practice, a
- * literal path plus the recursive `test-fixtures` exclude in `DOC_EXCLUDES` can return zero matches even when the
- * literal file is unrelated to that exclude (for example `packages/core/lib/module/compiled-freshness.ts`).
+ * Why: git pathspec rules can produce false negatives when literals and recursive excludes are combined.
+ * In practice, a literal path plus the recursive `test-fixtures` exclude in `DOC_EXCLUDES`
+ * can return zero matches even when the literal file is unrelated to that exclude
+ * (for example `packages/core/lib/module/compiled-freshness.ts`).
  *
- * If we trusted that result, a narrowed run could report clean for a file Vale never read. String-set intersection
- * avoids that pathspec behavior and keeps narrowing deterministic.
+ * If we trusted that result, a narrowed run could report clean for a file Vale never read.
+ * String-set intersection avoids that pathspec behavior and keeps narrowing deterministic.
  */
 function narrowTo(files: readonly string[], narrowing: readonly string[]): string[] {
 	if (!narrowing.length) return [...files]
@@ -117,12 +125,16 @@ function configFor(value: Surface): string {
 /**
  * Each named path that reached no file, with the reason it did.
  *
- * Three causes produce one empty set and want three different repairs. A path absent from the working tree is a typo or
- * a stale reference. A path an ignore rule covers is a build output, and linting one would report findings its author
- * cannot act on. A path present and carried by git is one this surface excludes by design, which is the only case where
- * silence was ever the right answer.
+ * Three causes produce one empty set and want three different repairs.
+ * A path absent from the working tree is a typo or a stale reference.
  *
- * The second `git ls-files` runs only when something failed to match, so an ordinary invocation pays for one.
+ * A path an ignore rule covers is a build output, and linting one would report
+ * findings its author cannot act on.
+ * A path present and carried by git is one this surface excludes by design,
+ * which is the only case where silence was ever the right answer.
+ *
+ * The second `git ls-files` runs only when something failed to match,
+ * so an ordinary invocation pays for one.
  */
 async function describeUnmatched(
 	narrowing: readonly string[],
@@ -153,25 +165,28 @@ async function describeUnmatched(
 
 async function main(args: readonly string[]): Promise<number> {
 	const selectedSurface = surface(args[0])
-	// Narrowing paths, for a caller that has just edited a file and wants the same verdict CI would give it. They are
-	// intersected with the surface's pathspecs rather than linted directly, so an excluded path stays excluded and the
-	// caller never has to carry a second copy of the exclusion list.
+	// Narrowing paths, for a caller that has just edited a file and wants the same verdict CI would give it.
+	// They are intersected with the surface's pathspecs rather than linted directly, so an excluded
+	// path stays excluded and the caller never has to carry a second copy of the exclusion list.
 	const narrowing = args.slice(1)
-	// The working tree rather than the index. A file written a minute ago carries prose nobody has read, and reading
-	// the committed list reported it clean without opening it. `--exclude-standard` keeps build outputs out.
+	// The working tree rather than the index.
+	// A file written a minute ago carries prose nobody has read, and reading the
+	// committed list reported it clean without opening it.
+	// `--exclude-standard` keeps build outputs out.
 	const surfaceFiles = await workingTreeFiles(REPO_ROOT, pathspecsFor(selectedSurface))
 
 	if (!surfaceFiles.length) throw new Error(`No files in the working tree matched the ${selectedSurface} Vale surface`)
 
 	const files = narrowTo(surfaceFiles, narrowing)
 
-	// A named path that reaches no file is reported rather than passed over. Returning 0 here answered "no findings"
-	// to a question Vale was never asked: the surface list comes from `git ls-files`, so naming an untracked file
-	// produced an empty set, printed nothing and exited clean. A new file's prose is exactly what a caller wants read,
-	// and this reported it as read and clean instead.
+	// A named path that reaches no file is reported rather than passed over.
+	// Returning 0 here answered "no findings" to a question Vale was never asked:
+	// the surface list comes from `git ls-files`, so naming an untracked file produced
+	// an empty set, printed nothing and exited clean.
+	// A new file's prose is exactly what a caller wants read, and this reported it as read and clean instead.
 	//
-	// Each unmatched path carries the reason it matched nothing, because the three cases need different repairs and a
-	// bare count distinguishes none of them.
+	// Each unmatched path carries the reason it matched nothing, because the three cases
+	// need different repairs and a bare count distinguishes none of them.
 	if (narrowing.length) {
 		const unmatched = await describeUnmatched(narrowing, files, selectedSurface)
 

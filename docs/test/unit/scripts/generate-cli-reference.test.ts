@@ -2,23 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Drift check for the generated CLI reference (`generate-cli-reference.ts`). Three things are
- *   asserted, and each fails for a different reason:
- *
- *   1. Two known commands render exactly as snapshotted. A flag added, removed, renamed or
- *      re-defaulted on `doctor` or `data pull` fails here with the diff in the message. `doctor`
- *      pins the smallest shape (one boolean flag, no arguments); `data pull` pins the rest of the
- *      grammar in one command — a variadic required argument, a `--no-`-free boolean pair, an
- *      optional string, and a description carrying a `$variable`.
- *   2. The committed page equals a fresh render. This is the one that catches a flag changed
- *      anywhere in the documented surface without a regenerate, which no per-command snapshot can
- *      see.
- *   3. The render is a pure function of the surface — same input, same bytes, and no host path or
- *      timestamp anywhere in the output.
- *
- *   The walk reads `mailwoman/out/commands`, so `yarn compile` is a prerequisite. That is already
- *   true of every CI test leg (each runs `yarn compile` before `vitest`), and a missing tree throws
- *   with that instruction rather than skipping — a silently-skipped drift check is not a check.
+ * Checks representative command snapshots, the committed generated page, deterministic rendering, and omission of host paths and timestamps.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -34,9 +18,6 @@ import {
 } from "@mailwoman/docs/scripts/generate-cli-reference"
 import { beforeAll, describe, expect, it } from "vitest"
 
-/**
- * Pull one command's rendered section out of the whole page, so a snapshot pins that command rather than the page.
- */
 function sectionFor(page: string, commandPath: string): string {
 	const heading = `### \`mailwoman ${commandPath}\``
 	const start = page.indexOf(heading)
@@ -64,7 +45,7 @@ describe("generate-cli-reference", () => {
 		expect(sectionFor(page, "doctor")).toMatchInlineSnapshot(`
 			"### \`mailwoman doctor\`
 
-			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs — a missing layer is reported, never fatal, and every failing line carries the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license carries (attribution, share-alike, source offer).
+			Check whether this machine can run mailwoman, and what each gap costs you. Runtime first (node, ONNX), then the model weights, then the optional data layers geocoding needs. A missing layer is reported, never fatal, and every failing line carries the one command that closes it. Then the license posture: the branch of mailwoman's license that applies to this installation, and the obligations each attached layer's recorded license carries (attribution, share-alike, source offer).
 
 			\`\`\`
 			mailwoman doctor [options]
@@ -91,7 +72,7 @@ describe("generate-cli-reference", () => {
 
 			| Flag                      | Type    | Default | Description                                                                                                                                                 |
 			| ------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--dry-run\`               | boolean | \`false\` | Print the download plan; touch no network and write nothing                                                                                                 |
+			| \`--dry-run\`               | boolean | \`false\` | Print the download plan; touch no network and write no data                                                                                                 |
 			| \`--only [only]\`           | string  | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
 			| \`--force\`                 | boolean | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
 			| \`--data-root [data-root]\` | string  | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
@@ -111,8 +92,6 @@ describe("generate-cli-reference", () => {
 	it("renders deterministically and leaks no host path or timestamp", () => {
 		expect(renderCLIReference(surface)).toBe(page)
 
-		// A default that resolves from the environment is suppressed rather than printed, so the
-		// generating machine's data root can never reach a published page.
 		expect(page).not.toContain("/mnt/")
 		expect(page).not.toContain("/home/")
 		expect(page).toContain("environment-dependent")
@@ -136,7 +115,7 @@ describe("generate-cli-reference", () => {
 
 describe("renderDefault", () => {
 	it("suppresses an absolute path", () => {
-		expect(renderDefault("/mnt/playpen/mailwoman-data")).toBe("environment-dependent")
+		expect(renderDefault("/srv/mailwoman-data")).toBe("environment-dependent")
 	})
 
 	it("renders scalars and arrays as inline code, and no default as an em dash", () => {

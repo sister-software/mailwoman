@@ -14,8 +14,10 @@ import { rootAttribute } from "#html/document"
 import { stringifyJSON } from "#json"
 
 /**
- * The error an OGC `ServiceExceptionReport` becomes. The report arrives on an http 200, so nothing upstream maps it: a
- * caller that does not ask reads the exception body as an empty answer.
+ * The error an OGC `ServiceExceptionReport` becomes.
+ *
+ * The report arrives on an http 200, so no upstream layer maps it and a caller that
+ * does not ask reads the exception body as an empty answer.
  */
 export class OGCServiceError extends Error {
 	public readonly serviceException: string
@@ -28,7 +30,9 @@ export class OGCServiceError extends Error {
 	}
 
 	/**
-	 * Did the service exceed its own query timeout? No service publishes the figure, so the message is the only signal.
+	 * Did the service exceed its own query timeout?
+	 *
+	 * No service publishes the figure, so the message is the only signal.
 	 */
 	public get timedOut(): boolean {
 		return /timed out/iu.test(this.serviceException)
@@ -41,12 +45,14 @@ export class OGCServiceError extends Error {
 const EXCEPTION_OPEN = "<ServiceException"
 
 /**
- * The inner text of the first real `<ServiceException>` element. index scans rather than A regex. The obvious form —
- * `/<ServiceException(?:\s[^>]*)?>([\s\S]*?)<\/ServiceException>/` — backtracks polynomially on a body whose opening
- * tag has no closing partner, and this body is whatever a network service returned. Two more things it has to get
- * right, both of which cost nothing here: the tag name must END at the match, because `<ServiceExceptionReport
- * xmlns="…">` shares the prefix and taking it captures the entire report as the message. and an unclosed element reads
- * as unreadable rather than as empty.
+ * The inner text of the first real `<ServiceException>` element.
+ *
+ * Index scans rather than a regex, because the obvious pattern backtracks polynomially on a body
+ * whose opening tag has no closing partner — and this body is whatever a network service returned.
+ *
+ * The tag name must end at the match: `<ServiceExceptionReport xmlns="…">` shares the prefix,
+ * and taking it captures the entire report as the message.
+ * An unclosed element reads as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
 	let cursor = 0
@@ -60,8 +66,9 @@ function exceptionText(body: string): string | undefined {
 
 		cursor = after
 
-		// `>` closes a bare tag. whitespace introduces attributes. Anything else continues the tag name, which means this
-		// is `ServiceExceptionReport` or a sibling and not the element being read.
+		// `>` closes a bare tag and whitespace introduces attributes.
+		// Anything else continues the tag name, which means this is `ServiceExceptionReport`
+		// or a sibling rather than the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
 
 		const contentStart = body.indexOf(">", after)
@@ -77,21 +84,24 @@ function exceptionText(body: string): string | undefined {
 }
 
 /**
- * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one. Split from the
- * request so the detection is testable against captured bodies. Both shapes were taken from live services: the report
- * arrives with an XML declaration and an `xmlns` of `http://www.opengis.net/ogc`.
+ * The `<ServiceException>` text inside an OGC exception report, or `undefined` when the body is not one.
+ *
+ * Split from the request so the detection is testable against captured bodies.
+ * The report arrives with an XML declaration and an `xmlns` of `http://www.opengis.net/ogc`.
  */
 export function readOGCServiceException(body: string): string | undefined {
 	if (!body.includes("ServiceExceptionReport")) return undefined
 
-	// A report whose exception element cannot be read is still a report, and reporting it as a successful empty answer
-	// is the failure this whole function exists to prevent.
+	// A report whose exception element cannot be read is still a report, and reporting it
+	// as a successful empty answer is the failure this whole function exists to prevent.
 	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
 }
 
 /**
- * Refuse a text body that is an OGC exception report. Every OGC text read a layer product makes goes through this
- * before it parses, because the report shares the http 200 a real answer arrives on.
+ * Refuse a text body that is an OGC exception report.
+ *
+ * Every OGC text read a layer product makes goes through this before it parses,
+ * because the report shares the http 200 a real answer arrives on.
  */
 export function assertNoOGCServiceException(body: string, context: string): void {
 	const exception = readOGCServiceException(body)
@@ -102,8 +112,10 @@ export function assertNoOGCServiceException(body: string, context: string): void
 }
 
 /**
- * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`. A shorter array is a 3D extent this reader does
- * not understand rather than a 2D one with something missing.
+ * Ordinates in a CRS84 bounding box: `minLon, minLat, maxLon, maxLat`.
+ *
+ * A shorter array is a 3D extent this reader does not understand rather than
+ * a 2D one with something missing.
  */
 const BBOX_ORDINATES = 4
 
@@ -126,9 +138,10 @@ export interface CreateOGCFeaturesBBoxReaderOptions {
 /**
  * A reader answering an OGC API Features bbox query around a point.
  *
- * The service answers a bbox rather than a point, so this returns what it published nearby and the containment decision
- * belongs to the caller, against the returned rings — comparing a verdict against a bare "the service returned
- * something here" would pass on any polygon within the probe's width.
+ * The service answers a bbox rather than a point, so this returns what it published nearby
+ * and the containment decision belongs to the caller, against the returned rings —
+ * comparing a verdict against a bare "the service returned something here" would
+ * pass on any polygon within the probe's width.
  */
 export function createOGCFeaturesBBoxReader<Feature>(
 	options: CreateOGCFeaturesBBoxReaderOptions
@@ -182,7 +195,9 @@ export async function readOGCCollectionBBox(
 }
 
 /**
- * The feature count a WFS reports for one type — `resultType=hits`, which returns the count without a single geometry.
+ * The feature count a WFS reports for one type.
+ *
+ * `resultType=hits`, which returns the count without a single geometry.
  *
  * @param options.subject Names the layer in the refusal, where the caller reads more than one.
  */
@@ -205,8 +220,9 @@ export async function readWFSFeatureCount(
 
 	assertNoOGCServiceException(data, options.context)
 
-	// The root element's attribute rather than the first match anywhere in the body: the count describes the collection,
-	// and a regex cannot tell that apart from the same attribute repeated on a nested member.
+	// The root element's attribute rather than the first match anywhere in the body:
+	// the count describes the collection, and a regex cannot tell that apart from
+	// the same attribute repeated on a nested member.
 	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
 
@@ -214,8 +230,9 @@ export async function readWFSFeatureCount(
 		throw new Error(`${options.context}: the WFS hits response${subject} carried no numberMatched attribute`)
 	}
 
-	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count rather than a count of
-	// zero. Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
+	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
+	// rather than a count of zero.
+	// Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
 			`${options.context}: the WFS hits response${subject} reported numberMatched=${stringifyJSON(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`

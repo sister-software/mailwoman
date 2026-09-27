@@ -12,6 +12,7 @@
  *   chain. Read-only. The `--json` payload is shaped to feed an "effective placetype" soft-prior later.
  */
 
+import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { prettyJSON } from "@mailwoman/core/json"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { allRows } from "@mailwoman/core/utils"
@@ -36,7 +37,7 @@ export const spec = {
 		db: { type: "string", description: "WOF admin DB" },
 		country: {
 			type: "string",
-			validate: (value: string) => /^[A-Z]{2}$/u.test(value),
+			validate: isAlpha2CodeShape,
 			description: "ISO 3166-1 alpha-2 filter",
 		},
 		json: { type: "boolean", description: "Emit raw JSON" },
@@ -55,14 +56,14 @@ interface PlacetypeStat {
 	 */
 	ancestors: Array<{ placetype: string; fraction: number }>
 	/**
-	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping) — the ones the model must
-	 * emit.
+	 * True iff this WOF placetype maps to a trained `ComponentTag` (via core/types/mapping).
+	 * The ones the model must emit.
 	 */
 	trained: boolean
 }
 
 /**
- * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts. only the admin-hierarchy ones).
+ * WOF placetype -> mailwoman ComponentTag (mirrors core/types/mapping.ts. Only the admin-hierarchy ones).
  */
 const PLACETYPE_TO_TAG: Record<string, string> = {
 	country: "country",
@@ -79,9 +80,9 @@ const PLACETYPE_TO_TAG: Record<string, string> = {
 const GazetteerPlacetypeStats: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { COMPONENT_TAGS } = await import("@mailwoman/codex/component")
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const dbPath = options.db ?? dataRootPath("wof", "admin-global-priority.db").toString()
+		const dbPath = options.db ?? wofDatabasePath("admin-global-priority.db").toString()
 		const country = options.country
 
 		let db: DatabaseClient<WOFDatabase>

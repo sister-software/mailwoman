@@ -61,7 +61,7 @@ coverage are independent axes, and the scorecard must not conflate them.
 **The 11 are exactly the countries whose WOF repo the build clones.**
 `DEFAULT_WOF_PRIORITY_COUNTRIES` (`gazetteer-pipeline/defaults.ts:20`) is CN, DE, ES, FR, GB, IT,
 JP, KR, NL, TW, US — the same eleven, in the same set. Verified against
-`$MAILWOMAN_DATA_ROOT/wof/repos`, which holds those repos and no others.
+`$MAILWOMAN_DATA_ROOT/src/wof-repos`, which holds those repos and no others.
 
 **WOF publishes 260 per-country admin repos.** The recipe ingests 11. Everything else arrives via
 Overture divisions — whose `OVERTURE_DIVISION_SUBTYPES` carries no hood-level subtype — or the
@@ -69,7 +69,7 @@ GeoNames alias fold. Repos exist and are substantial for countries we have never
 (larger than the US's 1,858 MB), FR-sized PL at 482 MB, BR 303 MB, NZ 235 MB, IE 114 MB.
 
 So the "dependent_locality in 11 of 244" headline is a true statement about the **artifact** and a
-false one about **WOF**. Nothing here has tested whether WOF is granular enough outside those eleven
+false one about **WOF**. No measurement here has tested whether WOF is granular enough outside those eleven
 countries, because outside them WOF was never asked. Ireland is the sharpest case: this spec framed
 IE's zero as a WOF gap that Overture could fill, and the cheaper reading is that
 `whosonfirst-data-admin-ie` exists, is 114 MB, and has never been cloned.
@@ -135,7 +135,7 @@ compare to WOF") does not reach the tier we care about. Measured depth distribut
 | IT      |              3 (100%) | region → province → comune |
 
 None reach dependent_locality. So `address_levels` can grade WOF at the locality rung and above and
-nothing below it. Two further limits on the same source:
+no rung below it. Two further limits on the same source:
 
 - **GB and IE `addresses-*.parquet` are 532 bytes** — effectively empty. Overture's addresses theme
   is largely OpenAddresses-derived and neither Royal Mail PAF nor Tailte Éireann is open. The
@@ -188,7 +188,7 @@ Overture's 992, and mailwoman ships **zero** because the repo was never cloned. 
 Ireland at a different scale.
 
 So "is WOF granular enough?" has no country-independent answer, and neither does "should we prefer
-Overture?" The scorecard carrying both columns per country is therefore not redundancy — it is the
+Overture?" The scorecard carrying both columns per country is therefore not redundancy. It is the
 only defensible shape. This is what makes the ABSENT/MISTYPED name match required rather than a
 refinement.
 
@@ -214,7 +214,7 @@ Overture is a node-count artifact; in the campaign's actual currency it yields 2
 Overture's 992 macrohoods carry `parent_division_id`.
 
 **Conversion ranges from 15% to 99%.** Ranking gazetteer work by node count is therefore not a
-shortcut with acceptable error — it is wrong by up to 6×, and wrong in a way that inverts the
+shortcut with acceptable error. It is wrong by up to 6×, and wrong in a way that inverts the
 ordering. The pair-yield column is required rather than a refinement, and the scorecard must never
 present a node count as an opportunity estimate.
 
@@ -271,7 +271,7 @@ that is the vocabulary the decoder consumes:
 
 Context-only and out-of-grammar placetypes (`metroarea`, `marketarea`, `postalregion`, `timezone`,
 `continent`, `ocean`, `marinearea`, `planet`, `empire`) project to `null` and are **excluded from the
-ladder** — they are conditioning features and annotation surfaces, never emitted spans. They still
+ladder**. They are conditioning features and annotation surfaces, never emitted spans. They still
 appear in a footer count so "we looked and deliberately skipped these" stays distinguishable from
 "we never looked."
 
@@ -309,7 +309,7 @@ A count alone routes nowhere. Every thin or empty cell is attributed by walking 
 1. **Recipe gap** — the country is absent from `DEFAULT_WOF_PRIORITY_COUNTRIES`, so no WOF repo was
    ever cloned or ingested for it. Fix: clone the repo and add the country to the recipe. **This is
    the dominant class — 233 of 244 countries — and it was missed in the first draft of this spec.**
-   A recipe-gap cell says nothing about WOF's depth.
+   A recipe-gap cell makes no statement about WOF's depth.
 2. **Allowlist gap** — the placetype is absent from `ADMIN_PLACETYPES`. Fix: one-line recipe change
    plus a rebuild. Covers 25 of 34 placetypes, and applies even to the eleven cloned countries.
 3. **Source gap** — the country is cloned and the placetype allowlisted, but the repo holds no such
@@ -324,7 +324,7 @@ report's `source` column. Attribution (3) requires counting placetypes on disk i
 discovery and a per-(country, placetype) tally, which means parsing `wof:placetype` out of each
 feature — the repos carry no `meta/` CSV shortcut.
 
-**Open question 1 is resolved.** The repos are at `$MAILWOMAN_DATA_ROOT/wof/repos` (the default the
+**Open question 1 is resolved.** The repos are at `$MAILWOMAN_DATA_ROOT/src/wof-repos` (the default the
 `gazetteer build admin --data` flag documents), holding the eleven priority admin repos plus eight
 `whosonfirst-data-postalcode-*`. The design-stage claim that they were missing was a truncated
 directory listing rather than a fact.
@@ -336,12 +336,11 @@ WOF, folded through `foldName` (`resolver/fold-name.ts`), scoped to country:
 
 - **absent** — no WOF row of any placetype carries the surface. actual coverage gap; fix is ingestion.
 - **MISTYPED** — WOF has the surface at a placetype projecting onto a different `ComponentTag`
-  (Shoreditch as `locality` rather than `neighbourhood`). Fix is re-projection or re-parenting, and costs
-  nothing to acquire.
+  (Shoreditch as `locality` rather than `neighbourhood`). Fix is re-projection or re-parenting, and requires no new data.
 - **present** — WOF has it at a rung that projects the same way.
 
 Without this leg the raw ratios are uninterpretable. DE reads 2.5× richer, but if its 67k
-`neighbourhood` rows do not correspond to the surfaces Overture names, that number means nothing.
+`neighbourhood` rows do not correspond to the surfaces Overture names, that number carries no meaning.
 absent and MISTYPED route to two entirely different pieces of work.
 
 ### Pair yield
@@ -398,7 +397,7 @@ Printed in the report, notrecorded here:
 - **Counts are not quality.** Overture divisions rows are OSM-derived and unaudited for duplicates,
   noise, and address-relevance. A count comparison establishes where to look, never that the rows are
   good.
-- **No demand-side grounding below the locality line.** Nothing in this scorecard proves a
+- **No demand-side grounding below the locality line.** No measurement in this scorecard proves a
   sub-locality surface appears in real addresses. `address_levels` bottoms out at municipality
   (Finding 4).
 - **GB and IE have no usable Overture address data at all** (532-byte parquets).
@@ -460,7 +459,7 @@ ships with the source-gap leg reporting "unknown" rather than blocking.
 ## Open questions for the plan stage
 
 1. ~~Where are the cloned `whosonfirst-data*` repos?~~ **Resolved 2026-08-02:**
-   `$MAILWOMAN_DATA_ROOT/wof/repos`, holding the eleven priority admin repos. The source-gap leg is
+   `$MAILWOMAN_DATA_ROOT/src/wof-repos`, holding the eleven priority admin repos. The source-gap leg is
    unblocked for those eleven; for the other 249 it needs the repo cloned first, which is now its own
    piece of work (see the new open question 4).
 2. Whether the venue sub-structure rungs collapse into one `venue` row for v1. `poi.db` answers venue

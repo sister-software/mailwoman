@@ -18,7 +18,7 @@
  *       rewritten from `$MAILWOMAN_DATA_ROOT/...` to `/data/...` in the combined manifest so
  *       all paths share one container-friendly form.
  *
- *   See docs/engineering/reference/CORPUS_V0_4_0_GENERATION.md for prompts, model, and the
+ *   See docs/records/engineering/CORPUS_V0_4_0_GENERATION.mdx for prompts, model, and the
  *   reproducibility interface.
  *
  *   Invoke via `mailwoman corpus slice translit \
@@ -27,23 +27,24 @@
  *   --out-dir /data/corpus/versioned/v0.4.0`
  */
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { delimitedSource } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { sha256File } from "@mailwoman/core/hash"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
-import type { CanonicalRow, LabeledRow } from "#types"
+import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
 import { alignRow } from "#utils"
 
 export interface TranslitOverlayOptions {
 	jsonl: string
 	baseManifest: string
-	outDir: string
+	outDir: PathBuilderLike
 	/**
 	 * Default `"0.4.0"`.
 	 */
@@ -53,9 +54,11 @@ export interface TranslitOverlayOptions {
 	 */
 	canonicalPathPrefix?: string
 	/**
-	 * Prefix the base manifest's file paths currently carry, to be rewritten to
-	 * {@link TranslitOverlayOptions.canonicalPathPrefix}. Defaults to `mailwomanDataRoot()` with a trailing slash — the
-	 * root that wrote those paths. Pass it explicitly when translating a manifest generated under a different
+	 * Prefix the base manifest's file paths currently carry, to be rewritten
+	 * to {@link TranslitOverlayOptions.canonicalPathPrefix}.
+	 *
+	 * Defaults to `dataRootPath()` with a trailing slash — the root that wrote those paths.
+	 * Pass it explicitly when translating a manifest generated under a different
 	 * `$MAILWOMAN_DATA_ROOT` than the one you are running with.
 	 */
 	legacyPathPrefix?: string
@@ -71,13 +74,17 @@ function toCanonicalRow(raw: Record<string, unknown>, corpusVersion: string): Ca
 		source_id: raw["source_id"] as string,
 		corpus_version: corpusVersion,
 		license: (raw["license"] as string) ?? "Synthetic (DeepSeek-v4-flash, AGPL-compatible)",
-		synth: raw["synth"] as CanonicalRow["synth"],
+		recipe: raw["recipe"] as CanonicalRow["recipe"],
+		register: (raw["register"] as string | null) ?? null,
+		surface: requireSurface(raw, "translit"),
 	}
 }
 
 /**
- * Write one parquet file for a single source slug. Returns the populated ParquetFileDescriptor + a list of quarantine
- * reasons for rows that failed alignment.
+ * Write one parquet file for a single source slug.
+ *
+ * @returns The populated ParquetFileDescriptor + a list of quarantine reasons
+ * for rows that failed alignment.
  */
 async function writeOneFile(
 	rows: readonly LabeledRow[],
@@ -128,22 +135,23 @@ export async function buildTranslitOverlay(
 	const corpusVersion = options.corpusVersion ?? "0.4.0"
 	// This is a portable manifest namespace rather than a host filesystem default.
 	const canonicalPathPrefix = options.canonicalPathPrefix ?? "/data/"
-	const legacyPathPrefix = options.legacyPathPrefix ?? `${mailwomanDataRoot()}/`
+	const legacyPathPrefix = options.legacyPathPrefix ?? `${dataRootPath()}/`
 
 	if (!(await pathExists(options.jsonl))) throw new Error(`jsonl not found: ${options.jsonl}`)
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	const corpusDir = join(options.outDir, `corpus-v${corpusVersion}`)
-	const trainDir = join(corpusDir, "train")
+	const corpusDir = PathBuilder.from(options.outDir)(`corpus-v${corpusVersion}`)
+	const trainDir = corpusDir("train")
 	await makeDirectories(trainDir)
 
-	// Bucket canonical rows by source. Quarantined rows are logged.
+	// Bucket canonical rows by source.
+	// Quarantined rows are logged.
 	const buckets = new Map<string, LabeledRow[]>()
 	const quarantine: string[] = []
 	let totalIn = 0
 
-	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(options.jsonl)) {
+	for await (const raw of JSONSpliterator.fromAsync<Record<string, unknown>>(delimitedSource(options.jsonl))) {
 		totalIn++
 		const canon = toCanonicalRow(raw, corpusVersion)
 		const result = alignRow(canon)
@@ -171,21 +179,22 @@ export async function buildTranslitOverlay(
 	for (const source of sortedKeys) {
 		const rows = buckets.get(source)!
 		const slug = source.startsWith("deepseek-translit-") ? source.slice("deepseek-translit-".length) : source
-		const outPath = join(trainDir, `part-translit-${slug}.parquet`)
+		// A string, because the manifest records it.
+		const outPath = trainDir(`part-translit-${slug}.parquet`).toString()
 		const descriptor = await writeOneFile(rows, outPath, source)
 		newFiles.push(descriptor)
 		report?.(`  ${source}: ${descriptor.rows} rows → ${outPath} (${descriptor.bytes} bytes)`)
 	}
 
 	if (quarantine.length) {
-		const qPath = join(corpusDir, "quarantine-transliteration.tsv")
+		const qPath = corpusDir("quarantine-transliteration.tsv")
 		await writeLocalTextFile(quarantine, qPath)
 		report?.(`quarantine log → ${qPath} (${quarantine.length} rows)`)
 	}
 
-	// Compose final manifest: rewrite the base's file paths from the data root → /data/... and append
-	// the new translit files. The kryptonite file already lives in the base manifest (it was written
-	// there by Thread B).
+	// Compose final manifest: rewrite the base's file paths from the data root → /data/...
+	// And append the new translit files.
+	// The kryptonite file already lives in the base manifest (it was written there by Thread B).
 	const base = await readLocalJSONFile<ParquetManifest>(options.baseManifest)
 
 	const rewrittenBase = base.slices.map((file) => ({
@@ -209,7 +218,7 @@ export async function buildTranslitOverlay(
 		total_rows: base.total_rows + newTrainRows,
 	}
 
-	const combinedPath = join(corpusDir, "MANIFEST.json")
+	const combinedPath = corpusDir("MANIFEST.json")
 	await writeLocalJSONFile(combined, combinedPath)
 	report?.(`wrote combined manifest → ${combinedPath}`)
 	report?.(`  total_rows=${combined.total_rows} (base=${base.total_rows}, added=${newTrainRows})`)

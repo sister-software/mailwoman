@@ -210,7 +210,7 @@ Prototyped out-of-tree against the live gazetteer, over the public `findPlace` s
 
 ### Confound board
 
-Verdicts were identical at 15, 25 and 50 km checks — the mechanism is not check-tuned.
+Verdicts were identical at 15, 25 and 50 km checks. The mechanism is not check-tuned.
 
 | postcode | locality      | verdict                            | distance | note                                   |
 | -------- | ------------- | ---------------------------------- | -------: | -------------------------------------- |
@@ -308,7 +308,7 @@ narrowing predicate wants measuring on the resolver gauntlet before anyone belie
 ## Reproduction
 
 ```bash
-WOF=/mnt/playpen/mailwoman-data/wof/admin-global-priority.db
+WOF=$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
 
 # the reported behaviour
 node mailwoman/out/cli.js parse "12 Rue de Rivoli, 75001 Paris" \

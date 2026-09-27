@@ -46,19 +46,25 @@ const { values } = parseArguments({
 		country: { type: "string", default: "US" },
 		"country-name": { type: "string", default: "United States" },
 		"per-region": { type: "string", default: "120" },
-		out: { type: "string", default: String(dataRootPath("eval", "coord", "us-stratified.jsonl")) },
+		out: { type: "string", default: dataRootPath("eval", "coord", "us-stratified.jsonl").toString() },
 		/**
-		 * The GeoNames postal export to draw from. Defaults to the standard fetch out-root for the country.
+		 * The GeoNames postal export to draw from.
+		 *
+		 * Defaults to the standard fetch out-root for the country.
 		 */
 		source: { type: "string" },
 		quota: { type: "string", default: String(DEFAULT_LOCALITY_QUOTA) },
 		/**
 		 * What the even draw is taken across: `region`, `shape` (the locality name's shape), or `region-shape`.
 		 *
-		 * Region answers #2311's interior spread. Shape answers a different question, and one the region draw cannot:
-		 * measured on `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS street suffix (`Orland
-		 * Park`, `Saxtons River`), while the default US panel draws that shape at 12.8% and the corpus recipe teaches it at
-		 * 9.7%. A rate measured on a draw that under-samples the shape it fails on reports the easy population (#2329).
+		 * Region answers #2311's interior spread.
+		 * Shape answers a different question, and one the region draw cannot: measured on
+		 * `candidate.db`, 34.7% of the 86,063 distinct US locality names end in a USPS
+		 * street suffix (`Orland Park`, `Saxtons River`), while the default US panel draws
+		 * that shape at 12.8% and the corpus recipe teaches it at 9.7%.
+		 *
+		 * A rate measured on a draw that under-samples the shape it fails on reports
+		 * the easy population (#2329).
 		 */
 		stratify: { type: "string", default: "region" },
 	},
@@ -69,8 +75,8 @@ const source = values.source ?? geonamesPostalPath(country)
 const perRegion = Number(values["per-region"])
 
 /**
- * The export's own coordinate for each postcode, keyed before the triples pass so the filtered triples can take it
- * without a second reader spelling the column map again.
+ * The export's own coordinate for each postcode, keyed before the triples pass
+ * so the filtered triples can take it without a second reader spelling the column map again.
  */
 const coordinateOf = new Map<string, { lat: number; lon: number }>()
 
@@ -94,8 +100,9 @@ if (!STRATIFY.has(values.stratify!)) {
 }
 
 /**
- * The locality name's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts` reports, using the
- * same {@linkcode suffixTail} so a rate read on this panel and a rate read on that one are about the same populations.
+ * The locality name's shape, in the same three buckets `us/locality-region-postcode-arms.run.ts`
+ * reports, using the same {@linkcode suffixTail} so a rate read on this panel
+ * and a rate read on that one are about the same populations.
  */
 function shapeOf(locality: string): string {
 	if (suffixTail(locality)) return "suffix-tail"
@@ -104,8 +111,10 @@ function shapeOf(locality: string): string {
 }
 
 /**
- * A deterministic comparator that shuffles a bucket. Seeded so two runs of this tool write the same panel: a panel that
- * changes between draws cannot be used to compare two models measured a day apart.
+ * A deterministic comparator that shuffles a bucket.
+ *
+ * Seeded so two runs of this tool write the same panel: a panel that changes between
+ * draws cannot be used to compare two models measured a day apart.
  */
 function seededOrder(size: number): (a: unknown, b: unknown) => number {
 	const next = mulberry32(size)
@@ -125,9 +134,11 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
 }
 
 /**
- * Keyed by the stratum the draw is even across. The region form is the one the panel writes out — GeoNames publishes
- * `California`, never `CA`, and the surface under test is the code — so folding here keeps the shortfall report and the
- * rows speaking the same vocabulary.
+ * Keyed by the stratum the draw is even across.
+ *
+ * The region form is the one the panel writes out — GeoNames publishes `California`,
+ * never `CA`, and the surface under test is the code — so folding here keeps the
+ * shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 
@@ -136,8 +147,8 @@ let keptSourceForm = 0
 for (const triple of quotaed) {
 	if (!coordinateOf.has(triple.postcode)) continue
 
-	// A country whose subdivisions codex does not carry keeps the source's form, counted so the run says how much of
-	// the panel that is rather than writing two kinds of row silently.
+	// A country whose subdivisions codex does not carry keeps the source's form, counted
+	// so the run says how much of the panel that is rather than writing two kinds of row silently.
 	const subdivision = matchSubdivisionIn(triple.cc, triple.region)
 
 	if (!subdivision) {
@@ -171,11 +182,14 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 		short.push(`${stratum} ${bucket.length}`)
 	}
 
-	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state. For a
-	// region stratum that is harmless — the stratum already fixes the state. For a shape stratum it is not: the first
-	// 400 suffix-tail names in US.txt are all Alaskan, so a shape draw taken from the head measures one state per
-	// bucket. A seeded shuffle spreads each shape across the country. The region draw keeps its existing order so the
-	// numbers already published against `us-stratified.jsonl` still describe the panel this writes.
+	// Taking the head of the bucket is a sample ordered by the source, which is postcode order within a state.
+	// For a region stratum that is harmless.
+	// The stratum already fixes the state.
+	// For a shape stratum it is not: the first 400 suffix-tail names in US.txt are all Alaskan,
+	// so a shape draw taken from the head measures one state per bucket.
+	// A seeded shuffle spreads each shape across the country.
+	// The region draw keeps its existing order so the numbers already published against
+	// `us-stratified.jsonl` still describe the panel this writes.
 	const drawn = values.stratify === "region" ? bucket : bucket.toSorted(seededOrder(bucket.length)).slice(0, perRegion)
 
 	for (const triple of drawn.slice(0, perRegion)) {
@@ -192,7 +206,8 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 			country: triple.cc,
 			expected: { locality: triple.locality, region: triple.written, postcode: triple.postcode },
 			/**
-			 * Named on every row because a consumer that grades distance needs to know it is holding a postcode centroid.
+			 * Named on every row because a consumer that grades distance needs to know
+			 * it is holding a postcode centroid.
 			 */
 			coordinate_basis: "geonames-postcode-centroid",
 		})

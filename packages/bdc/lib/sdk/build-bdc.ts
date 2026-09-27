@@ -1,58 +1,11 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   The `bdc.db` builder — ingests parsed FCC BDC availability rows ({@link BDCAvailabilityRow})
- *   into the schema declared in `schema.ts`, producing a sealed layer database.
- *
- *   Mirrors `mailwoman/gazetteer-pipeline/poi/build-poi.ts`'s shape closely: the same build-tuning
- *   pragmas, the same single-pass `Map<number, number>` coverage aggregation taken during the load
- *   (no second scan), and the same `writeLayerManifest` → `sealDatabase` tail.
- *
- *   Two differences from that precedent, both deliberate:
- *
- *   1. **A staging-dedup pass.** BDC's per-provider CSVs can carry exact-duplicate rows (repeat
- *      filings, overlapping re-downloads); poi's Overture rows never needed this. `bdc_stage` is a
- *      plain Kysely-built table (not part of the public {@link BDCDatabase} — it never survives to the
- *      sealed artifact) carrying a composite primary KEY on the natural key
- *      `(geoid, provider_id, technology_code, location_id)`. Rows load via a RAW prepared
- *      `insert or ignore` — the agents.md "hot bulk write" carve-out, same discipline as the
- *      candidate-gazetteer builder — which is the direct replacement for the Redis
- *      set-membership check the earlier draft's `sync/commands/bdc/infer-locations.ts` used for this exact
- *      dedup (dedup semantics only. The earlier draft's Redis-backed location inference itself has no analog
- *      here). `h3_cell` is computed only after staging, per distinct geoid, against the deduped set —
- *      so a duplicate row is never charged twice against `unknownGeoids` or `layer_coverage` either.
- *      The natural key's `location_id` component means the same (geoid, provider_id, technology_code)
- *      triple legitimately survives staging once per distinct BSL — correct when `includeLocationIDs`
- *      is true. The default (NULL `location_id`) mode collapses at materialize time via `select distinct`
- *      over every column except `location_id` — that is, to one row per distinct (geoid, provider_id,
- *      technology_code, max_advertised_download_speed, max_advertised_upload_speed, low_latency,
- *      business_residential_code) tuple rather than one row per (geoid, provider_id, technology_code) triple.
- *      When every BSL in a block shares identical speeds/flags for a given provider/technology (the
- *      common case), those two are the same thing and the collapse yields exactly one row per triple.
- *      But when BSLs at the same triple carry different speeds/flags (a real, accepted FCC filing
- *      pattern — a provider filing different advertised speeds at different addresses in one block),
- *      the distinct rows survive collapse as multiple NULL-`location_id` rows at that one triple. This
- *      is deliberate, matches the FCC source data's own granularity, and is not a bug to fix — see
- *      `filing-landscape.ts`'s module docstring for the read-side consequence (the same provider/tech
- *      can surface in more than one `speed_bucket` for one queried block).
- *   2. **Temp-path build + move-aside-first swap**, per agents.md's database house rule ("build
- *      successfully, then move the previous version to a temp directory, and then move the new
- *      version into place... ensures the database is always in a consistent state, even if the build
- *      script fails halfway through"): build lands at `${out}.building`, seals there, then
- *      `${out}` (if present) is renamed to `${out}.prev` before the sealed build takes its place —
- *      mirroring `mailwoman/eval-harness/gauntlet/build-regression-db.ts`'s swap. `build-poi.ts`
- *      instead writes `out` directly (removing any stale file first) and records its own deviation
- *      from an even older staging-suffix convention — see that file's docstring. This builder takes
- *      the opposite fork on purpose: a from-scratch nationwide BDC ingest is long enough that a
- *      mid-build crash mustn't cost the previously-good artifact, which is exactly the failure mode
- *      the house rule exists for.
- */
-
 import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -62,10 +15,6 @@ import {
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
 import type { FilerDatabase } from "@mailwoman/filer"
-// `pickPrimaryFRN`/`readFRNFilingCandidates` are loaded via a lazy `await import("@mailwoman/filer/filer-lookup")`
-// inside `populateBDCProviderTable`, not a top-level runtime import — see that function's docstring
-//
-// Only the types are imported here; `import type` is fully erased.
 import type { FRN } from "@mailwoman/filer/frn"
 import type { ProviderListRow } from "@mailwoman/filer/sdk"
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
@@ -74,7 +23,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell } from "h3-js"
 import type { Insertable, Kysely } from "kysely"
-import { basename, dirname, join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import {
@@ -89,135 +38,129 @@ import {
 import type { ProviderID } from "#sdk/common"
 import { readAvailabilityRows, type BDCAvailabilityRow } from "#sdk/parsing"
 
+/**
+ * Re-exports the TIGER block centroid helpers that callers use to supply
+ * {@link BuildBDCOptions.blockCentroids}, since the geometry module has no package entry point of its own.
+ */
 export { createTIGERBlockCentroidLookup, geometryCentroid } from "#sdk/geometry"
 
-/**
- * Rows committed per `begin`/`commit` batch during both the staging load and the materialize pass — matches
- * `build-poi.ts`'s `STAGE_BATCH_SIZE` discipline.
- */
 const STAGE_BATCH_SIZE = 10_000
 
 /**
- * The manifest's `attribution` — names the FCC as the source, then copies the Fabric-boundary sentence verbatim from
- * `bdc/readme.md`'s "CostQuest Fabric boundary" section (backticks stripped — this is plain prose rather than
- * markdown).
+ * FCC attribution and the required statement that `location_id` is only an opaque join key.
  */
 export const BDC_ATTRIBUTION =
 	"FCC Broadband Data Collection. This workspace never ingests, ships, or derives data from the Fabric: " +
 	"location_id is carried only as an opaque join key that a licensed user may join against their own Fabric copy."
 
+/**
+ * Configures {@link buildBDCDatabase}.
+ *
+ * Rows come from `rows` or from per-provider `csvPaths`.
+ */
 export interface BuildBDCOptions {
 	/**
-	 * Injected row source — the test injection point (mirrors `BuildPOIOptions.rows`). When given, `csvPaths` is ignored
-	 * and no filesystem read happens.
+	 * Row source injected by tests.
+	 * When it is set, `csvPaths` is ignored.
 	 */
 	rows?: Iterable<BDCAvailabilityRow> | AsyncIterable<BDCAvailabilityRow>
+
 	/**
-	 * Per-provider availability CSVs for one state (as extracted by `downloadBDCFile`). Ignored when `rows` is given.
-	 * Required unless `rows` is given. Each file's constant `provider_id` column is peeked off its first data row (see
-	 * {@linkcode peekProviderID}) rather than threaded through as a parallel array — the FCC's per-provider files already
-	 * carry it once per file, redundantly, in column 1.
+	 * Per-provider availability CSVs.
+	 * Each file's provider ID comes from its first data row.
 	 */
 	csvPaths?: string[]
+
 	/**
-	 * Output `bdc.db` path. Built at `${out}.building` and moved into place last — see the module docstring.
+	 * The `bdc.db` destination, built at `${out}.building` and swapped into place only after sealing.
 	 */
-	out: string
+	out: PathBuilderLike
+
 	/**
-	 * The FCC filing's `as_of_date` (e.g. from `resolveLatestVintage`) — becomes the manifest's `sourceVintage` and
-	 * `version` (BDC has no independent layer versioning yet, same deferral `build-poi.ts` makes for `release`).
+	 * The FCC filing's `as_of_date`, recorded as both the manifest's `version` and its `sourceVintage`.
 	 */
 	asOfDate: string
+
 	/**
-	 * `git rev-parse --short head` — passed in by the command rather than read from the repo here.
+	 * The short git commit hash recorded in the manifest, passed in by the command rather than read here.
 	 */
 	buildSHA: string
+
 	/**
-	 * Populate `bdc_availability.location_id` (the opaque BSL join key — spec §2.2, never resolved against the Fabric).
-	 * Default `false`: the column stays `NULL` unless a caller explicitly opts in.
+	 * Whether to populate `bdc_availability.location_id`.
+	 * Defaults to false.
+	 *
+	 * The column is an opaque join key.
+	 * When it is off, rows with the same block and service collapse into one,
+	 * so `BuildBDCResult.rows` counts those tuples instead of locations.
 	 */
 	includeLocationIDs?: boolean
+
 	/**
-	 * Resolve a 15-char census block geoid to its centroid. Injected so tests supply a small fixture `Map` lookup instead
-	 * of touching a real tiger database. the real (CLI-wired) implementation is
-	 * {@linkcode createTIGERBlockCentroidLookup}, which reads `tabblock20.geoid` (uppercase — `TIGERBlockTable`) block
-	 * geometry. Returning `undefined` for an unknown geoid is required: the materialize pass counts it in `unknownGeoids`
-	 * and skips the row — it must never guess a cell.
+	 * Resolves a 15-character census block GEOID to its centroid, such as `createTIGERBlockCentroidLookup`.
+	 *
+	 * It returns `undefined` for an unknown GEOID.
+	 * The build then skips the row and counts it in `unknownGeoids`.
 	 */
 	blockCentroids: (geoid: string) => { lat: number; lon: number } | undefined
 	onProgress?: (message: string) => void
+
 	/**
-	 * Provider-list rows ({@link ProviderListRow}, `@mailwoman/filer/sdk`'s `parseProviderList`) — the test/CLI injection
-	 * point for populating `bdc_provider` (2a decision 8 / 3a decision 6). When absent (the default), `bdc_provider`
-	 * stays empty and the rest of the build is untouched: every code path this option touches is conditioned behind `if
-	 * (options.providers)`, so omitting it changes nothing. When present, `buildBDCDatabase` groups rows by `providerID`
-	 * and inserts one `bdc_provider` row per distinct provider — see {@link BuildBDCOptions.filerDB} for how the primary
-	 * FRN is picked when a provider carries more than one, and `schema.ts`'s `BDCProviderTable` docstring for the full
-	 * lossy-denormalization rationale (decision 6).
+	 * Provider-list rows that populate `bdc_provider`, one row per provider ID.
 	 */
 	providers?: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
+
 	/**
-	 * Filer.db handle (`@mailwoman/filer`) used to resolve a multi-FRN provider's primary FRN via
-	 * `readFRNFilingCandidates` + `pickPrimaryFRN` (`@mailwoman/filer/sdk`, decision 6) — imported rather than
-	 * reimplemented, because the candidate query needs both halves of the half-open `valid_from`/`valid_to` predicate and
-	 * a second implementation here would be a second place to drop the `valid_to` half. Only actually queried for a
-	 * `provider_id` whose rows carry more than one distinct `frn` — a single-FRN provider needs no lookup, since its lone
-	 * FRN is already primary by construction. Required whenever `providers` is given and at least one `provider_id` turns
-	 * out to be multi-FRN; `buildBDCDatabase` throws a descriptive error naming the offending `provider_id` if it's
-	 * needed but missing, rather than silently picking an arbitrary FRN.
+	 * The filer database used to choose the primary FRN for a provider ID listed under several FRNs.
+	 *
+	 * The build throws if such a provider exists and this option is missing.
 	 */
 	filerDB?: DatabaseClient<FilerDatabase>
+
 	/**
-	 * `asOf` date for the primary-FRN candidate query (`readFRNFilingCandidates`'s half-open `valid_from`/`valid_to`
-	 * scoping — see `filer/sdk/filer-lookup.ts`). Defaults to {@link BuildBDCOptions.asOfDate} (this bdc.db build's own
-	 * vintage) when omitted.
+	 * The date for the primary-FRN filing query.
+	 * Defaults to `asOfDate`.
 	 */
 	primaryFRNAsOf?: string
 }
 
+/**
+ * Counts from a {@link buildBDCDatabase} run.
+ */
 export interface BuildBDCResult {
 	out: string
+
 	/**
-	 * Rows materialized into `bdc_availability` (post-dedup, post-unknown-geoid-skip). In the default
-	 * (`includeLocationIDs: false`) mode this is per distinct (geoid, provider_id, technology_code, speeds, low_latency,
-	 * business_residential_code) tuple rather than per BSL — multiple BSLs at the same (geoid, provider_id,
-	 * technology_code) triple collapse to one row only when their speeds/flags also match. BSLs at the same triple with
-	 * differing speeds/flags survive as separate rows (see the module docstring).
+	 * Rows written to `bdc_availability` after deduplication and unknown-GEOID skips.
 	 */
 	rows: number
+
 	/**
-	 * Raw rows removed by the staging natural-key dedup (staged attempts minus distinct rows kept).
+	 * Input rows dropped as duplicates of the staging natural key.
 	 */
 	deduped: number
+
 	/**
-	 * Distinct `provider_id` values among the materialized rows.
+	 * Distinct provider IDs among the written rows.
 	 */
 	providers: number
+
 	/**
-	 * Res-6 coverage cells written.
+	 * Resolution-6 coverage cells written.
 	 */
 	coverageCells: number
+
 	/**
-	 * Rows whose `geoid` had no resolvable centroid — skipped, never inserted, never guessed at a cell.
+	 * Staged rows skipped because their GEOID had no centroid.
 	 */
 	unknownGeoids: number
+
 	/**
-	 * `bdc_provider` rows written — 0 when `options.providers` was not supplied (the default path never touches this
-	 * table, see {@link BuildBDCOptions.providers}).
+	 * `bdc_provider` rows written, or 0 when `providers` was not supplied.
 	 */
 	providersPopulated: number
 }
 
-/**
- * Create the build-only `bdc_stage` table — deliberately not part of the public {@link BDCDatabase} interface (it's
- * dropped before the artifact seals, so it never appears in the shipped schema). Built via Kysely's schema builder per
- * the agents.md DDL convention (`createTable` takes any string table name — it doesn't need to be a `keyof DB` to
- * type-check); all of `bdc_stage`'s actual reads/writes below go through raw `.prepare()` on the shared `DatabaseSync`
- * instead, per the "hot bulk write" carve-out.
- *
- * The composite primary KEY on the natural key is what makes `insert or ignore` a dedup: SQLite silently drops any
- * insert whose key already exists rather than raising the constraint violation.
- */
 async function createBDCStageTable(db: Kysely<BDCDatabase>): Promise<void> {
 	await db.schema
 		.createTable("bdc_stage")
@@ -233,12 +176,6 @@ async function createBDCStageTable(db: Kysely<BDCDatabase>): Promise<void> {
 		.execute()
 }
 
-/**
- * A `bdc_stage` row, as read back by the materialize pass. When `includeLocationIDs` is true, `location_id` is
- * populated (one row per distinct BSL). When false (default), the materialize query collapses on every column except
- * `location_id` (see {@linkcode buildBDCDatabase}'s materialize step), so `location_id` is simply absent from that
- * query and never read.
- */
 interface BDCStageRow {
 	geoid: string
 	provider_id: number
@@ -251,20 +188,11 @@ interface BDCStageRow {
 }
 
 /**
- * Peek the constant `provider_id` column (index 1) off an FCC BDC availability CSV's first data row.
+ * Reads `provider_id` from the first data row of an FCC BDC availability CSV.
+ * Every row in a file shares one provider.
  *
- * Production per-provider files carry the same `provider_id` in every row (the FCC partitions availability files per
- * provider) — `parsing.ts`'s `takeAvailabilityLine` already assumes this, taking `providerID` as a parameter rather
- * than re-slicing column 1 per row. This reads it once, directly off the raw bytes, rather than threading a parallel
- * `providerID` array alongside `csvPaths` through the public options shape.
- *
- * `csvPath` is optional and used only to name the offending file in a thrown error (the direct-buffer unit tests call
- * this without one; {@linkcode readAvailabilityRowsFromCSVPaths} always supplies it). The `Number.isSafeInteger` guard
- * below is required rather than defensive dressing: `bdc_stage.provider_id` is `integer not NULL`, and a bare
- * `Number.parseInt` on a non-numeric field (a malformed/re-headered/truncated CSV) silently produces `NaN`. `NaN` binds
- * to that not NULL column as SQLite `NULL`, `insert or ignore` then drops the row without a constraint error, and every
- * dropped row gets counted as `deduped` — the entire file's rows vanish silently, misreported as ordinary dedup. A
- * malformed CSV must be loud, never silently absorbed, so this throws instead.
+ * It throws on a value that is not a safe integer.
+ * A `NaN` would bind as NULL, and `INSERT OR IGNORE` would then drop every row as if it were a duplicate.
  */
 export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID {
 	const headerEnd = csvBuffer.indexOf(0x0a)
@@ -299,22 +227,8 @@ export function peekProviderID(csvBuffer: Buffer, csvPath?: string): ProviderID 
 	return providerID as ProviderID
 }
 
-/**
- * Bytes read to peek the `provider_id`. Only the header row plus the first data row are needed and an FCC availability
- * row is ~110 bytes, so this is three orders of magnitude of slack. A file shorter than this simply reads short —
- * {@linkcode peekProviderID} already reports a header-only or empty file by message.
- *
- * `provider_id` is a constant per file, so establishing it needs the first data row and nothing else. a whole-file read
- * was resident-loading 920 MB (one state × technology) to read one column of one row.
- */
 const PROVIDER_ID_PEEK_BYTES = 64 * 1024
 
-/**
- * Peeks each file's `provider_id` off its head ({@linkcode peekProviderID}, passing the path through so a malformed
- * file's error names it), then streams every row via `readAvailabilityRows` — the file is never resident. This is the
- * production counterpart to the test injection point's injected `rows` — exercised by `build-bdc.test.ts` only for the
- * malformed-provider-id rejection path, same as `build-poi.ts`'s Parquet reader.
- */
 async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): AsyncIterable<BDCAvailabilityRow> {
 	for (const csvPath of csvPaths) {
 		const providerID = peekProviderID(await readFileRange(csvPath, 0, PROVIDER_ID_PEEK_BYTES), csvPath)
@@ -323,19 +237,8 @@ async function* readAvailabilityRowsFromCSVPaths(csvPaths: readonly string[]): A
 	}
 }
 
-/**
- * Rows per `insert` batch when populating `bdc_provider`. Far smaller than {@link STAGE_BATCH_SIZE}: that constant
- * tunes `bdc_availability`'s multi-million-row raw-prepared-statement path, whereas `bdc_provider` is a small
- * per-provider dictionary (thousands of rows rather than millions) inserted through Kysely's typed `insertInto` — this
- * batches only to stay comfortably under SQLite's bound-parameter ceiling rather than for throughput.
- */
 const PROVIDER_INSERT_BATCH_SIZE = 500
 
-/**
- * Groups `providers` by `providerID`. `parseProviderList` yields one {@link ProviderListRow} PER line of the source
- * CSV, preserving cardinality (never folded, never last-wins — see that module's docstring) — so a `provider_id`
- * appearing on N rows arrives here as N separate rows, exactly as decision 6 requires downstream.
- */
 async function groupProviderListRows(
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>
 ): Promise<Map<number, ProviderListRow[]>> {
@@ -354,38 +257,6 @@ async function groupProviderListRows(
 	return byProviderID
 }
 
-/**
- * Populate `bdc_provider` from `options.providers` (2a decision 8 / 3a decision 6) — see `schema.ts`'s
- * `BDCProviderTable` docstring for the full lossy-denormalization rationale. For each distinct `provider_id`:
- *
- * - Exactly one `frn` among its rows → that FRN is primary by construction. no `filerDB` query needed at all.
- * - More than one distinct `frn` → `readFRNFilingCandidates` (`@mailwoman/filer/sdk`, lazily imported — see below) reads
- *   each FRN's own most recent IN-force `form-499` filing edge from `filerDB`, `asOf` the given date, and
- *   `pickPrimaryFRN` picks the winner (decision 6: most recent 499 filing date wins). A `provider_id` whose FRNs carry
- *   no 499 filing to rank by inserts `frn: NULL` rather than guessing — `pickPrimaryFRN` throws on empty input, so this
- *   checks `candidates.length` first, mirroring `filerLookup`'s own `primary_frn: null` handling of the same case.
- * - `filerDB` is required the instant a multi-FRN `provider_id` is encountered. its absence throws immediately, naming
- *   the offending `provider_id`, rather than silently picking an arbitrary FRN.
- * - `holding_company` gets the identical single-distinct-value shortcut `frn` gets: exactly one distinct non-null
- *   `holdingCompany` across a provider's rows means there's no conflict to resolve, so it's populated directly, no rule
- *   needed. Two or more distinct values is the real conflict decision 6 refuses to paper over with last-wins — that
- *   case inserts NULL, and every value stays recoverable from `filer.db`. A `null` `holdingCompany` on some rows
- *   doesn't count as a competing value (a row simply not stating it isn't a conflicting assertion) — only distinct
- *   NON-NULL strings are compared.
- *
- * `brand_name` is always inserted NULL — the provider list carries no brand-name column at all, so there is nothing to
- * populate it from, primary or otherwise (see the schema docstring).
- *
- * **Lazy `@mailwoman/filer/filer-lookup` import.** `readFRNFilingCandidates`/`pickPrimaryFRN` are loaded via `await
- * import("@mailwoman/filer/filer-lookup")`, memoized in `filerSDK` below, rather than a top-level static import. The
- * cost this avoids is smaller than it was: the specifier used to be the `@mailwoman/filer/sdk` barrel, which `export
- * *`s `cluster-filers.ts` and so pulls `@mailwoman/match`/`record`/`registry` in behind it — a top-level import of that
- * barrel regressed `@mailwoman/bdc`'s import time ~32% for every consumer, including ones that never populate
- * providers. `filer-lookup.ts` alone imports only `@mailwoman/sqlite/client`, `#schema` and `#frn` (measured
- * 2026-09-01), so the heavy graph is no longer on this path at all. The laziness is kept because it also defers opening
- * the filer database, and a static import here is now a viable simplification if someone wants to measure it — but it
- * is no longer required for import time.
- */
 async function populateBDCProviderTable(
 	db: DatabaseClient<BDCDatabase>,
 	providers: Iterable<ProviderListRow> | AsyncIterable<ProviderListRow>,
@@ -440,9 +311,9 @@ async function populateBDCProviderTable(
 }
 
 /**
- * Build `bdc.db`: stage (raw dedup) → materialize (resolve `h3_cell` per geoid, skip+count unknown geoids) → drop stage
- * → geoid index (index-after-load) → coverage → layer manifest → seal → atomic move-into-place. See the module
- * docstring for the two deliberate deviations from `build-poi.ts`.
+ * Build and seal `bdc.db`, then atomically replace the destination.
+ *
+ * If the destination is missing but a parked copy from a crashed swap exists, the copy is restored first.
  */
 export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildBDCResult> {
 	const progress = options.onProgress ?? (() => {})
@@ -459,20 +330,20 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		await removePath(buildingPath)
 	}
 
-	await makeDirectories(dirname(options.out))
+	const outPath = PathBuilder.from(options.out)
+	const outDir = outPath.dirname()
 
-	// A crash inside a prior run's swap can leave the slot empty while the previous version sits
-	// parked aside — restore it before building, so a failure in this run still leaves an artifact
-	// serving. Both aside spellings: this builder's old `.prev` and swapDatabaseIntoPlace's `.old-<pid>`.
+	await makeDirectories(outDir)
+
 	if (!(await pathExists(options.out))) {
-		const base = basename(options.out)
+		const base = outPath.basename()
 
-		const parked = await Globerator.from("*", { cwd: dirname(options.out), absolute: false }).find(
+		const parked = await Globerator.from("*", { cwd: outDir, absolute: false }).find(
 			(name) => name === `${base}.prev` || name.startsWith(`${base}.old-`)
 		)
 
 		if (parked) {
-			await movePath(join(dirname(options.out), parked), options.out)
+			await movePath(outDir(parked), options.out)
 			progress(`restored ${parked} into place (a prior run crashed mid-swap)`)
 		}
 	}
@@ -481,10 +352,9 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		options.rows ?? readAvailabilityRowsFromCSVPaths(options.csvPaths!)
 
 	const db = new DatabaseClient<BDCDatabase>(buildingPath)
-	// Build-tuning pragmas — identical to build-poi.ts's discipline.
+
 	db.exec("PRAGMA page_size=8192; PRAGMA journal_mode=OFF; PRAGMA synchronous=OFF; PRAGMA cache_size=-2000000;")
 
-	// Assigned at the end of the try — the tallies live inside its scope. the seal + swap do not.
 	let result: BuildBDCResult
 
 	try {
@@ -538,10 +408,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		)
 
 		const centroidCache = new Map<string, { h3Cell: number; coverageCell: number } | null>()
-		/**
-		 * Res-6 short-cell int → observed row count, aggregated during materialize (one pass, no second scan) — matches
-		 * `build-poi.ts`'s `coverage` Map.
-		 */
+
 		const coverage = new Map<number, number>()
 		const providers = new Set<number>()
 		let unknownGeoids = 0
@@ -554,18 +421,6 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 
-		// The FCC's per-provider CSVs are per-BSL: the same (geoid, provider_id, technology_code, speeds, low_latency,
-		// business_residential_code) tuple can repeat once per Broadband Serviceable Location within that block (a
-		// dense urban block can carry ~100 BSLs) — `bdc_stage`'s natural key includes `location_id`, so those BSL rows
-		// all survive the staging dedup as distinct staged rows. In `includeLocationIDs` mode that's correct: every BSL
-		// is a real, distinct row the caller asked to keep. In the default (NULL `location_id`) mode, when those BSLs
-		// also share identical speeds/flags, they'd otherwise materialize as byte-identical rows, inflating `result.rows`
-		// and `layer_coverage.observed_rows` by the BSL count (~100x at real scale) — `select distinct`
-		// over every column except `location_id` collapses those byte-identical BSL duplicates down to one row.
-		// important — this is not a guarantee of one row per (geoid, provider_id, technology_code) triple: BSLs at the
-		// same triple with differing speeds/flags are not the same tuple, so `select distinct` does not merge them —
-		// they survive as multiple NULL-`location_id` rows at that one triple. Accepted rather than a bug. see the module
-		// docstring and `filing-landscape.ts`'s docstring for the read-side consequence.
 		const stageStmt = options.includeLocationIDs
 			? db.prepare(
 					`SELECT geoid, provider_id, technology_code, location_id,
@@ -592,15 +447,6 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 				resolved = centroid
 					? (() => {
-							// Coverage cell must be derived as the res-9 cell's H3 hierarchy parent — not a second,
-							// independent `latLngToCell(centroid, 6)` call. H3's cell hierarchy is not geometrically
-							// exact: a point's directly-indexed res-6 cell and its res-9 cell's `cellToParent(…, 6)`
-							// disagree for a real fraction of points (~6% empirically over conus — hexagon/pentagon
-							// boundary artifacts). Deriving both `h3_cell` and the coverage cell from
-							// the same full res-9 index is what lets `filing-landscape.ts`'s reader reconstruct this
-							// exact coverage cell from nothing but the stored `h3_cell` (its `res9ShortCellToRes6Parent`
-							// applies `cellToParent` to the reconstructed res-9 cell) — builder and reader must derive
-							// the res-6 parent identically, or a genuinely-surveyed block can read back as unknown.
 							const fullRes9Cell = latLngToCell(centroid.lat, centroid.lon, BDC_H3_RESOLUTION) as H3Cell
 
 							return {
@@ -622,8 +468,7 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			insAvailability.run(
 				resolved.h3Cell,
 				row.geoid,
-				// wof_id stays NULL here — WOF point-in-polygon resolution against the block centroid is a later
-				// registry-join task, the same decision-8 scoping schema.ts documents for `bdc_provider`.
+
 				null,
 				row.provider_id,
 				row.technology_code,
@@ -653,21 +498,21 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 		progress("geoid index (index-after-load — see schema.ts)")
 		await createBDCGeoidIndex(db)
 
-		// Coverage is source-level rather than survey completeness — same convention build-poi.ts documents: a res-6 cell we
-		// have availability rows in is recorded at completeness 1.0. A cell absent from `layer_coverage` means no rows
-		// were observed there at all (the meaning-of-zero rule — missing = unknown, never `{completeness: 0}`).
 		const coverageCells = sourcePresentCoverageCells(coverage)
 
 		await writeLayerCoverage(db, coverageCells)
 
 		progress("writing layer manifest")
 
+		const distribution = { tier: LayerTier.Shipped, license: "LicenseRef-USGov-Public-Domain" }
+
+		assertTierMatchesLicense(distribution, "bdc build")
+
 		await writeLayerManifest(db, {
 			name: "bdc",
 			version: options.asOfDate,
 			schemaVersion: 1,
-			tier: LayerTier.Shipped,
-			license: "LicenseRef-USGov-Public-Domain",
+			...distribution,
 			attribution: BDC_ATTRIBUTION,
 			source: "fcc-bdc",
 			sourceVintage: options.asOfDate,
@@ -678,9 +523,6 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			createdAt: new Date().toISOString(),
 		})
 
-		// bdc_provider population (2a decision 8 / 3a decision 6) — entirely additive and conditioned on
-		// `options.providers`: when absent, this block never runs and `bdc_provider` stays empty (see
-		// `BuildBDCOptions.providers`'s docstring for the default-path guarantee).
 		let providersPopulated = 0
 
 		if (options.providers) {
@@ -698,15 +540,13 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 		progress("finalize: ANALYZE + VACUUM")
 		db.exec("ANALYZE")
-		// page_size must be set right before vacuum — node:sqlite initializes the file at the 4096 default on
-		// `new DatabaseSync`, so the earlier pragma is a no-op until a vacuum rebuilds at the new size (build-poi.ts's
-		// same discipline).
+
 		db.exec("PRAGMA page_size=8192")
 		db.exec("VACUUM")
 		await db.destroy()
 
 		result = {
-			out: options.out,
+			out: outPath.toString(),
 			rows: inserted,
 			deduped,
 			providers: providers.size,
@@ -715,13 +555,9 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 			providersPopulated,
 		}
 	} catch (error) {
-		// A mid-build throw must not leak the handle or orphan the staging file. The original error
-		// always wins over anything the cleanup itself throws.
 		try {
 			await db.destroy()
-		} catch {
-			// The handle may already be closed or mid-statement — nothing more to release.
-		}
+		} catch {}
 
 		await removePathIfPresent(buildingPath)
 
@@ -731,8 +567,6 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 	progress("seal")
 	await sealDatabase(buildingPath)
 
-	// Atomic move-into-place via the shared helper (the agents.md database house rule): prior
-	// version aside first, forward rename restored on failure so the slot is never left empty.
 	await swapDatabaseIntoPlace(buildingPath, options.out)
 
 	return result

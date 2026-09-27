@@ -4,7 +4,7 @@
 /**
  *   Tests for the fragment board's interval math and fixture interface (#727 stage-2, Tier 1c).
  *
- *   The interval is the whole reason this board exists — it is what turns "3/15" into "somewhere
+ *   The interval is the whole reason this board exists. It is what turns "3/15" into "somewhere
  *   between 4% and 48%, so stop quoting it". If the math is wrong the board is worse than no board,
  *   because it launders an anecdote into a decimal.
  */
@@ -25,11 +25,11 @@ describe("wilson", () => {
 	})
 
 	it("matches a hand-computed value — 3/15 is the Paris cell that motivated this board", () => {
-		// Standard Wilson, z=1.96, computed independently:
-		//   p=0.2, denom=1+3.8416/15=1.25611, centre=0.32805, spread=1.96*sqrt(0.010667+0.004268)=0.23953
-		//   => [(0.32805-0.23953)/1.25611, (0.32805+0.23953)/1.25611] = [0.070474, 0.451859]
-		// i.e. "3/15" means "somewhere between 7% and 45%". That is not a measurement, and the whole
-		// point of this board is to stop anyone quoting it as one.
+		// Standard Wilson, z=1.96, computed independently: p=0.2, denom=1+3.8416/15=1.25611,
+		// centre=0.32805, spread=1.96*sqrt(0.010667+0.004268)=0.23953 =>
+		// [(0.32805-0.23953)/1.25611, (0.32805+0.23953)/1.25611] = [0.070474, 0.451859]
+		// i.e. "3/15" means "somewhere between 7% and 45%".
+		// That is not a measurement, and the whole point of this board is to stop anyone quoting it as one.
 		const ci = wilson(3, 15)
 
 		expect(ci.low).toBeCloseTo(0.070474, 5)
@@ -133,13 +133,11 @@ describe("the FR fragment board fixture", () => {
 	})
 
 	it("reserves every street surface it uses, so a database can exclude them", async () => {
-		const reserved = new Set(
-			[
-				...TextSpliterator.from(
-					await readLocalTextFile("packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
-				),
-			].filter((line) => line && !line.startsWith("#"))
+		const reserved = TextSpliterator.from(
+			await readLocalTextFile("packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 		)
+			.filter((line) => line && !line.startsWith("#"))
+			.toSet()
 
 		for (const row of fixtures) {
 			if (!row.surface) continue

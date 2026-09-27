@@ -16,7 +16,7 @@
  *   Following the `tiger` / `wof-admin` pattern, this adapter consumes a SQLite database the operator
  *   pre-builds via the earlier-draft BDC ETL (`/srv/earlier-draft/sync/fcc/bdc/`) or any equivalent
  *   host-side pipeline. The mailwoman side does not download or parse the raw CSV/ZIP distribution
- *   directly — that keeps the adapter narrow and the BDC ingest pluggable.
+ *   directly. That keeps the adapter narrow and the BDC ingest pluggable.
  *
  *   The SQLite schema is documented in readme.md and modeled after `NTIARecord`
  *   (`earlier-draft/fcc/bdc/data-collection.ts`): one row per `location_id`. The adapter splits
@@ -38,22 +38,26 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import { splitStreetLine } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { lookupStateAbbreviation } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const FCC_BDC_ADAPTER_ID = "fcc-bdc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const FCC_BDC_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * SQLite row shape — one row per BSL `location_id`. Columns mirror NTIARecord.
+ * SQLite row shape — one row per BSL `location_id`.
+ *
+ * Columns mirror NTIARecord.
  */
 interface BdcLocationRow {
 	location_id: number
@@ -67,8 +71,9 @@ interface BdcLocationRow {
 /**
  * Combine `zip` + optional `zip_suffix` into the canonical USPS postcode surface form.
  *
- * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone or the full ZIP+4 string. This
- * handles both:
+ * NTIARecord doc is ambiguous about whether `zip_suffix` is the 4-digit extension alone
+ * or the full ZIP+4 string.
+ * This handles both:
  *
  * - Bare 4-digit extension (`zip="94103"`, `zip_suffix="1234"`) → `"94103-1234"`
  * - Already-joined form (`zip_suffix="94103-1234"`) → returned as-is
@@ -90,13 +95,17 @@ export function buildPostcode(zip: string, suffix: string | null): string {
 }
 
 /**
- * Build a BDC adapter. Pure factory so multiple instances can be created in tests.
+ * Build a BDC adapter.
+ *
+ * Pure factory so multiple instances can be created in tests.
  */
 export function createFccBdcAdapter(): CorpusAdapter {
 	return {
 		id: FCC_BDC_ADAPTER_ID,
 		defaultLicense: FCC_BDC_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.FCCBroadbandData,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"FCC Broadband Data Collection — Fabric-derived BSL addresses (public-domain); SQLite DB the operator builds via the earlier-draft BDC ETL.",
 

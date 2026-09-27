@@ -36,7 +36,7 @@ import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { makeDirectories } from "@mailwoman/core/fs/writers"
 import { extractZipEntries, listZipEntries } from "@mailwoman/core/fs/zip"
-import { join } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
  * Archive-internal prefix of the per-area CSVs.
@@ -49,8 +49,9 @@ const CSV_ENTRY_PREFIX = "Data/CSV/"
 const DOC_ENTRY_PREFIX = "Doc/"
 
 /**
- * The header block of `Doc/metadata.txt`, parsed off the leading lines. Everything after these is the per-area count
- * table.
+ * The header block of `Doc/metadata.txt`, parsed off the leading lines.
+ *
+ * Everything after these is the per-area count table.
  */
 export interface CodePointMetadata {
 	/**
@@ -58,8 +59,10 @@ export interface CodePointMetadata {
 	 */
 	product: string
 	/**
-	 * `2026.2.0` — the internal dataset version. Distinct from the Downloads API's `2026-05` release label. both are
-	 * recorded in the database's provenance because they move independently.
+	 * `2026.2.0` — the internal dataset version.
+	 *
+	 * Distinct from the Downloads API's `2026-05` release label.
+	 * Both are recorded in the database's provenance because they move independently.
 	 */
 	datasetVersion: string
 	/**
@@ -75,7 +78,8 @@ export interface CodePointMetadata {
 	 */
 	rowsByArea: Record<string, number>
 	/**
-	 * Sum of {@link rowsByArea} — the total row count the archive claims to contain.
+	 * Sum of {@link rowsByArea}.
+	 * The total row count the archive claims to contain.
 	 */
 	totalRows: number
 }
@@ -83,10 +87,13 @@ export interface CodePointMetadata {
 /**
  * Parse `Doc/metadata.txt`.
  *
- * The format is positional and undocumented, so this is defensive: the four header fields are located by their `KEY:`
- * label rather than by line number, and the count table is every remaining line that looks like `<area> <integer>`. A
- * line that does not is skipped rather than fatal — OS has added header fields before (the `RM update date` row is
- * newer than the product), and a new one must not break the build.
+ * The format is positional and undocumented, so this is defensive: the four header
+ * fields are located by their `KEY:` label rather than by line number, and the count
+ * table is every remaining line that looks like `<area> <integer>`.
+ * A line that does not is skipped rather than fatal.
+ *
+ * OS has added header fields before (the `RM update date` row is newer than the product),
+ * and a new one must not break the build.
  */
 export function parseCodePointMetadata(text: string): CodePointMetadata {
 	const field = (label: string): string => {
@@ -119,12 +126,12 @@ export interface ExtractCodePointOptions {
 	/**
 	 * The downloaded `codepo_gb.zip`.
 	 */
-	archivePath: string
+	archivePath: PathBuilderLike
 	/**
-	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same dated acquisition directory the
-	 * archive sits in.
+	 * Directory the `Data/CSV` and `Doc` trees are written under — normally the same
+	 * dated acquisition directory the archive sits in.
 	 */
-	destDir: string
+	destDir: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
 }
 
@@ -138,17 +145,15 @@ export interface ExtractCodePointResult {
 	 */
 	docDir: string
 	/**
-	 * The archive's own manifest — the row-count oracle. See the module docstring.
+	 * The archive's own manifest — the row-count oracle.
+	 *
+	 * See the module docstring.
 	 */
 	metadata: CodePointMetadata
 	/**
 	 * `Doc/licence.txt` verbatim, so the database's provenance quotes OS's own words rather than ours.
 	 *
-	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's
-	 * only non-ascii byte is `0xA9` — Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every
-	 * copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the
-	 * database's `meta`. Mojibake in a decorative string is cosmetic. mojibake in the attribution text a redistributor is
-	 * legally required to carry is not.
+	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's only non-ascii byte is `0xA9`. Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the database's `meta`. Mojibake in a decorative string is cosmetic. Mojibake in the attribution text a redistributor is legally required to carry is not.
 	 */
 	licenseText: string
 	totalBytes: number
@@ -159,12 +164,13 @@ export interface ExtractCodePointResult {
  */
 export async function extractCodePointOpen(options: ExtractCodePointOptions): Promise<ExtractCodePointResult> {
 	const phase = options.onPhase ?? (() => {})
-	const csvDir = join(options.destDir, "Data", "CSV")
-	const docDir = join(options.destDir, "Doc")
+	const destDir = PathBuilder.from(options.destDir)
+	const csvDir = destDir("Data", "CSV")
+	const docDir = destDir("Doc")
 
 	await makeDirectories(csvDir, docDir)
 
-	phase("extract", options.archivePath)
+	phase("extract", options.archivePath.toString())
 
 	const entries = await listZipEntries(options.archivePath)
 
@@ -184,7 +190,7 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	const csvPaths = csvEntries
 		.map((entry) => {
-			return join(csvDir, entry.name.slice(entry.name.lastIndexOf("/") + 1))
+			return csvDir(entry.name.slice(entry.name.lastIndexOf("/") + 1)).toString()
 		})
 		.toSorted()
 
@@ -194,13 +200,11 @@ export async function extractCodePointOpen(options: ExtractCodePointOptions): Pr
 
 	phase("extract", `${csvPaths.length} area CSVs, ${ByteFormatter.formatIEC(totalBytes)}`)
 
-	const metadataPath = join(docDir, "metadata.txt")
-	const metadata = parseCodePointMetadata(await readLocalTextFile(metadataPath))
+	const metadata = parseCodePointMetadata(await readLocalTextFile(docDir("metadata.txt")))
 
 	// Latin-1, deliberately — see `ExtractCodePointResult.licenseText`.
-	const licenseText = await readLocalBuffer(join(docDir, "licence.txt"))
-		.then((bytes) => bytes.toString("latin1"))
-		.catch(() => "")
+	// A missing file throws, because the database must quote the attribution text.
+	const licenseText = (await readLocalBuffer(docDir("licence.txt"))).toString("latin1")
 
-	return { csvPaths, docDir, metadata, licenseText, totalBytes }
+	return { csvPaths, docDir: docDir.toString(), metadata, licenseText, totalBytes }
 }

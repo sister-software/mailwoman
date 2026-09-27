@@ -6,7 +6,7 @@
  *
  *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
  *   shipped v4.0.1 recipe and the v4.2.0 candidate train against v7. Serving fed the channel a
- *   different lexicon generation than training painted, and nothing said so — the v6 file exists, the
+ *   different lexicon generation than training painted, and no check reported it — the v6 file exists, the
  *   channel loads, the parse works. The Run B check had to stage v7's content under the v6 filename to
  *   score faithfully.
  *
@@ -20,20 +20,20 @@ import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolveWeights, weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { LexiconVersionMismatchError } from "@mailwoman/neural/weights-lexicon"
-import { join, type PathBuilder } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest"
 
 let cacheRoot: TemporaryDirectory
 let packageDir: PathBuilder
 
 /**
- * A package-shaped directory the `cache:` resolution rung finds:
- * `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
+ * A package-shaped directory the `cache:` resolution rung
+ * finds: `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
  */
 async function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): Promise<void> {
-	await writeLocalTextFile("", join(packageDir, "model.onnx"))
-	await writeLocalTextFile("", join(packageDir, "tokenizer.model"))
-	await writeLocalJSONFile(card, join(packageDir, "model-card.json"))
+	await writeLocalTextFile("", packageDir("model.onnx"))
+	await writeLocalTextFile("", packageDir("tokenizer.model"))
+	await writeLocalJSONFile(card, packageDir("model-card.json"))
 
 	for (const name of lexicons) {
 		await writeLocalJSONFile({ entries: {} }, packageDir, name)
@@ -90,8 +90,9 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 	})
 
 	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", async () => {
-		// `neural-weights-base-latn` is the live example: it symlinks en-us's card and ships no lexicons.
-		// createScorer's declared-required fail-closed is what covers this case rather than a resolution throw.
+		// `neural-weights-base-latn` is the live example: it symlinks en-us's card
+		// and ships no lexicons. createScorer's declared-required fail-closed is what
+		// covers this case rather than a resolution throw.
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
 		expect(

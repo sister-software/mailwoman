@@ -16,7 +16,7 @@ import { createSymbolicLink, makeDirectories, writeLocalJSONFile, writeLocalText
 import { stringifyJSON } from "@mailwoman/core/json"
 import { runFileSync } from "@mailwoman/core/process"
 import { runWorktreeArm, WORKING_TREE_REF } from "@mailwoman/dev-mcp/worktree/arm"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, describe, expect, it } from "vitest"
 
@@ -27,15 +27,18 @@ afterAll(() => fixtures.disposeAsync())
 /**
  * A minimal git repo whose "pipeline" is one file, plus a `node_modules` the farm can mirror.
  *
- * `mailwoman/geocode` is stubbed as a real package directory so the runner's import resolves without this test needing
- * the monorepo. That is the same resolution path the real arm uses — a stub here proves the farm and the subprocess,
- * and the engine is exercised for real by the tools that call this.
+ * `mailwoman/geocode` is stubbed as a real package directory so the runner's import
+ * resolves without this test needing the monorepo.
+ * That is the same resolution path the real arm uses.
+ *
+ * A stub here proves the farm and the subprocess, and the engine is exercised
+ * for real by the tools that call this.
  */
-async function fakeRepo(marker: string): Promise<string> {
-	const root = String(fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path)
+async function fakeRepo(marker: string): Promise<PathBuilder> {
+	const root = fixtures.use(await temporaryDirectory("mwdev-wt-test-")).path
 
-	await makeDirectories(join(root, "packages", "mailwoman"))
-	await writeLocalJSONFile({ name: "root", workspaces: ["packages/mailwoman"] }, join(root, "package.json"))
+	await makeDirectories(root("packages", "mailwoman"))
+	await writeLocalJSONFile({ name: "root", workspaces: ["packages/mailwoman"] }, root("package.json"))
 
 	await writeLocalJSONFile(
 		{
@@ -44,7 +47,7 @@ async function fakeRepo(marker: string): Promise<string> {
 			// behind the `./geocode` directory entry, which is the subpath the arm runner imports.
 			exports: { "./geocode": { node: "./geocode/index.ts", default: "./geocode/index.ts" } },
 		},
-		join(root, "packages", "mailwoman", "package.json")
+		root("packages", "mailwoman", "package.json")
 	)
 
 	await writeLocalTextFile(
@@ -54,17 +57,18 @@ async function fakeRepo(marker: string): Promise<string> {
 				[Symbol.dispose]: () => {},
 			}
 		}\n`,
-		join(root, "packages", "mailwoman", "geocode", "index.ts")
+		root("packages", "mailwoman", "geocode", "index.ts")
 	)
 
-	// The workspace link yarn would have installed. Both arms need it and for different reasons: the worktree arm
-	// resolves through it directly, and the ref arm's farm mirrors this directory to build its own — so an empty
-	// node_modules here would test neither path.
-	await makeDirectories(join(root, "node_modules"))
-	await createSymbolicLink(join(root, "packages", "mailwoman"), join(root, "node_modules", "mailwoman"))
-	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares a clean status to a clean
-	// status rather than to one this helper dirtied.
-	await writeLocalTextFile("node_modules\n", join(root, ".gitignore"))
+	// The workspace link yarn would have installed.
+	// Both arms need it and for different reasons: the worktree arm resolves through it
+	// directly, and the ref arm's farm mirrors this directory to build its own.
+	// So an empty node_modules here would test neither path.
+	await makeDirectories(root("node_modules"))
+	await createSymbolicLink(root("packages", "mailwoman"), root("node_modules", "mailwoman"))
+	// Untracked and ignored, so the "does not touch the caller's tree" assertion compares
+	// a clean status to a clean status rather than to one this helper dirtied.
+	await writeLocalTextFile("node_modules\n", root(".gitignore"))
 
 	runFileSync("git", ["init", "-q", "-b", "main"], { cwd: root })
 	runFileSync("git", ["config", "user.email", "t@example.com"], { cwd: root })
@@ -81,12 +85,14 @@ describe("runWorktreeArm — a ref arm runs THAT ref's source", () => {
 	it("answers from the committed source, not the working tree", async () => {
 		const root = await fakeRepo("committed")
 
-		// Edit without committing. A ref arm must not see this. that is the whole distinction it sells.
+		// Edit without committing.
+		// A ref arm must not see this.
+		// That is the whole distinction it sells.
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode", "index.ts")
+			root("packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({ repoRoot: root, ref: "HEAD", inputs: ["x"], options: OPTIONS })
@@ -104,7 +110,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 			`export async function createGeocodeSession() {
 				return { geocode: async () => ({ result: { lat: 9, lon: 9, resolution_tier: "uncommitted", components: {} } }), [Symbol.dispose]: () => {} }
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode", "index.ts")
+			root("packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({
@@ -115,7 +121,8 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 		})
 
 		expect(result.answers[0]!.tier).toBe("uncommitted")
-		// A dirty tree is not its head. Reporting the bare sha would let a result claim a commit it did not run.
+		// A dirty tree is not its head.
+		// Reporting the bare sha would let a result claim a commit it did not run.
 		expect(result.commit).toContain("+dirty")
 	})
 
@@ -124,7 +131,7 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		await runWorktreeArm({ repoRoot: root, ref: WORKING_TREE_REF, inputs: ["x"], options: OPTIONS })
 
-		expect(await pathExists(join(root, ".mwdev-arm-runner.ts"))).toBe(false)
+		expect(await pathExists(root(".mwdev-arm-runner.ts"))).toBe(false)
 	})
 
 	it("removes the runner even when the child throws", async () => {
@@ -132,14 +139,14 @@ describe("runWorktreeArm — the WORKTREE arm runs the UNCOMMITTED source", () =
 
 		await writeLocalTextFile(
 			`export async function createGeocodeSession() { throw new Error("boom") }\n`,
-			join(root, "packages", "mailwoman", "geocode", "index.ts")
+			root("packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		await expect(
 			runWorktreeArm({ repoRoot: root, ref: WORKING_TREE_REF, inputs: ["x"], options: OPTIONS })
 		).rejects.toThrow(/boom|Command failed/)
 
-		expect(await pathExists(join(root, ".mwdev-arm-runner.ts"))).toBe(false)
+		expect(await pathExists(root(".mwdev-arm-runner.ts"))).toBe(false)
 	})
 })
 
@@ -165,7 +172,8 @@ describe("runWorktreeArm — cleanup", () => {
 
 		expect(runFileSync("git", ["status", "--porcelain"], { cwd: root, encoding: "utf8" })).toBe(before)
 		expect(runFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" })).toBe(head)
-		// A stash-based arm would have moved these. a worktree cannot, which is why it is a worktree.
+		// A stash-based arm would have moved these.
+		// A worktree cannot, which is why it is a worktree.
 		expect(await Globerator.from("*", { cwd: root, absolute: false, onlyFiles: false }).toArray()).toContain("packages")
 	})
 })
@@ -184,7 +192,7 @@ describe("runWorktreeArm — per-input failures", () => {
 					[Symbol.dispose]: () => {},
 				}
 			}\n`,
-			join(root, "packages", "mailwoman", "geocode", "index.ts")
+			root("packages", "mailwoman", "geocode", "index.ts")
 		)
 
 		const result = await runWorktreeArm({

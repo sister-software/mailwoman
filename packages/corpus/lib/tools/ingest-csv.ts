@@ -29,10 +29,10 @@ import { tryStat, pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import type { SQLInputValue } from "@mailwoman/sqlite/client"
 import type { Database } from "@mailwoman/sqlite/database-schema"
-import { basename, dirname, extname, join } from "path-ts"
+import { basename, dirname, extname, PathBuilder } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
-//#region Column name normalization
+// #region Column name normalization
 
 /**
  * @deprecated belongs in core, if really needed. spliterator should handle this.
@@ -59,9 +59,9 @@ function dedupColumns(names: string[]): string[] {
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Type inference
+// #region Type inference
 
 type SQLiteColType = "INTEGER" | "REAL" | "TEXT"
 
@@ -114,9 +114,9 @@ function inferColumnType(samples: (string | null)[]): ColumnInfo {
 	return { name: "", type, nullable: nullCount / total >= 0.5 }
 }
 
-//#endregion
+// #endregion
 
-//#region Main: read CSV, infer schema, produce SQL
+// #region Main: read CSV, infer schema, produce SQL
 
 interface IngestOptions {
 	inputPath: string
@@ -130,11 +130,12 @@ interface IngestOptions {
 }
 
 async function runIngest(opts: IngestOptions): Promise<void> {
-	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header handling consumes the
-	// first row as the header, and `drop` counts from the row after it, so a preamble before the header has to be
-	// dropped here and the header row taken by hand. Quote handling is end-to-end (quoted delimiters, doubled quotes);
-	// `skipEmpty` drops blank lines that readline would have turned into all-null rows. The early `break` closes the
-	// file descriptor.
+	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header
+	// handling consumes the first row as the header, and `drop` counts from the row after it,
+	// so a preamble before the header has to be dropped here and the header row taken by hand.
+	// Quote handling is end-to-end (quoted delimiters, doubled quotes); `skipEmpty` drops
+	// blank lines that readline would have turned into all-null rows.
+	// The early `break` closes the file descriptor.
 	const rows = (): AsyncIterable<string[]> =>
 		CSVSpliterator.fromAsync<string[]>(opts.inputPath, {
 			header: false,
@@ -214,19 +215,19 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	const { DatabaseClient } = await import("@mailwoman/sqlite/client")
 	await makeDirectories(dirname(opts.outputPath))
 
-	// `Database` — the empty schema — deliberately rather than by default: `createTableSQL` is built from the columns and
-	// types inferred from the CSV at runtime, so there is no table this file could name at compile time. Every write
-	// below goes through `exec`/`prepare` for the same reason.
+	// `Database` — the empty schema — deliberately rather than by default:
+	// `createTableSQL` is built from the columns and types inferred from the CSV at runtime,
+	// so there is no table this file could name at compile time.
+	// Every write below goes through `exec`/`prepare` for the same reason.
 	using db = new DatabaseClient<Database>(opts.outputPath)
 	db.exec("PRAGMA journal_mode = OFF") // faster for bulk import
 	db.exec("PRAGMA synchronous = OFF")
 
 	db.exec(createTableSQL)
 
-	// Use the .import approach via a temp table, then insert into ... select to handle
-	// NULL normalization and type coercion.
-	// better-sqlite3 doesn't support .import natively, so we use a different approach:
-	// Read the CSV line-by-line and insert in a transaction.
+	// Use the .import approach via a temp table, then insert into ...
+	// Select to handle NULL normalization and type coercion. better-sqlite3 doesn't support .import
+	// natively, so we use a different approach: Read the CSV line-by-line and insert in a transaction.
 	process.stderr.write(`Importing rows...\n`)
 
 	const insertStmt = db.prepare(
@@ -236,7 +237,8 @@ async function runIngest(opts: IngestOptions): Promise<void> {
 	let imported = 0
 	let headerSkipped = false
 
-	// node:sqlite has no `db.transaction(fn)` wrapper. use raw begin/commit around the batch.
+	// node:sqlite has no `db.transaction(fn)` wrapper.
+	// Use raw begin/commit around the batch.
 	const doInsert = () => {
 		db.exec("BEGIN")
 
@@ -348,10 +350,11 @@ export interface IngestCSVOptions {
 }
 
 /**
- * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows. Throws when `input` is
- * missing. note(phase1): progress narration still writes stderr directly — this predates the report-callback interface
- * and the write sites are deep in the type-inference helpers. thread a report param if a caller ever needs to capture
- * it.
+ * Ingest a CSV into SQLite: infer column types from a sample, create the table, import the rows.
+ *
+ * @throws When `input` is missing. note(phase1): progress narration still writes stderr directly.
+ * This predates the report-callback interface and the write sites are deep in the type-inference helpers.
+ * Thread a report param if a caller ever needs to capture it.
  */
 export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	if (!(await pathExists(options.input))) {
@@ -363,7 +366,7 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	await runIngest({
 		inputPath: options.input,
 		tableName: options.table ?? csvName.replaceAll(/[^a-zA-Z0-9_]/g, "_"),
-		outputPath: options.output ?? join(dirname(options.input), csvName + ".db"),
+		outputPath: options.output ?? PathBuilder.from(options.input).dirname()(`${csvName}.db`).toString(),
 		sampleSize: options.sample ?? 100,
 		separator: options.separator ?? ",",
 		skipLines: options.skip ?? 0,
@@ -372,4 +375,4 @@ export async function ingestCSV(options: IngestCSVOptions): Promise<void> {
 	})
 }
 
-//#endregion
+// #endregion

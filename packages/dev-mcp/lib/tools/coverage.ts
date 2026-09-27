@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   The `mwdev_coverage` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The census itself lives in `../coverage-census.ts`; this file is the interface.
+ *   MCP interface for per-country parse, geocoding, and training coverage reports.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -12,7 +11,11 @@ import {
 	censusCoverage,
 	type CountryCoverage,
 	type CoverageReport,
+	GeocodeReading,
+	geocodeReading,
 	newestManifest,
+	ParseReading,
+	parseReading,
 	resolveTrainingConfig,
 } from "mailwoman/coverage"
 import { z } from "zod"
@@ -20,26 +23,27 @@ import { z } from "zod"
 import type { DevTool, DevToolDeps } from "#tool-kit"
 
 /**
- * One country as a line a reader can act on. Parse and geocode stay in separate columns because they are separate
- * capabilities with wildly different coverage.
+ * Format one country's parse and geocoding coverage separately.
  */
 function line(c: CountryCoverage): string {
-	const parse = !c.admitted
-		? c.corpusRows > 0
-			? `DROPPED (${c.corpusRows.toLocaleString()} rows, not admitted)`
-			: "not trained"
-		: c.corpusRows === 0
-			? "admitted, NO ROWS"
-			: c.corpusStreetRows > 0
-				? `${c.corpusRows.toLocaleString()} rows (${c.corpusStreetRows.toLocaleString()} street)`
-				: `${c.corpusRows.toLocaleString()} rows, NO STREET`
+	const rows = c.corpusRows.toLocaleString()
 
-	const geo =
-		c.geocodeTier === "rooftop-published"
-			? "rooftop"
-			: c.gazetteerPlaces > 0
-				? `locality (${c.gazetteerPlaces.toLocaleString()})`
-				: "none"
+	// Include the row count because this line is shown without a table context.
+	const parse = {
+		[ParseReading.Absent]: "absent",
+		[ParseReading.Declined]: "not trained",
+		[ParseReading.DeclinedWithRows]: `DROPPED (${rows} rows, not admitted)`,
+		[ParseReading.AdmittedEmpty]: "admitted, NO ROWS",
+		[ParseReading.RowsWithStreet]: `${rows} rows (${c.corpusStreetRows.toLocaleString()} street)`,
+		[ParseReading.RowsWithoutStreet]: `${rows} rows, NO STREET`,
+	}[parseReading(c)]
+
+	const geo = {
+		[GeocodeReading.Absent]: "none",
+		[GeocodeReading.Rooftop]: "rooftop",
+		[GeocodeReading.Locality]: `locality (${c.gazetteerPlaces.toLocaleString()})`,
+		[GeocodeReading.None]: "none",
+	}[geocodeReading(c)]
 
 	const board = c.boardRows ? `${c.boardPassedRows}/${c.boardRows} conditional` : "unmeasured"
 
@@ -103,7 +107,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 		const report = await censusCoverage({
 			configPath,
 			manifestPath,
-			casesRoot: `${String(repoRootPath())}/packages/mailwoman/lib/eval-harness/gauntlet/cases`,
+			casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 			refresh: args["refresh"] === true,
 		})
 
@@ -112,12 +116,7 @@ export const coverageTool = async (_deps: DevToolDeps): Promise<DevTool> => ({
 })
 
 /**
- * Project a {@linkcode CoverageReport} into the tool's response shape.
- *
- * Pure and exported so the projection can be tested. It builds its result field by field, which means a field the
- * report grows and this function does not name is dropped in silence — and the consumer reads that as the field not
- * existing. The corpus-mismatch guard shipped inert for exactly that reason: the census computed it, fifteen tests
- * passed, and the first live call showed nothing, because this function did not carry it.
+ * Convert a coverage report into the tool response, preserving mismatch and requested-country details.
  */
 export function projectCoverage(report: CoverageReport, wantedCountries?: string[]): Record<string, unknown> {
 	const wanted = wantedCountries?.map((c) => c.toUpperCase())
@@ -138,8 +137,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		corpus_rows_total: report.corpusRowsTotal,
 		corpus_census_taken_at: report.corpusCensusTakenAt ?? "just now (recounted)",
 		config: report.configPath,
-		// This tool takes no manifest argument, so the corpus was chosen rather than named. Saying so lets a reader tell
-		// a census of the corpus they meant from a census of whichever one was written to most recently (#2349).
+		// Identify how the manifest was selected.
 		manifest_chosen_by: "newest modification time under the data root",
 		n_trained: trained.length,
 		n_trained_with_street_data: withStreet.length,
@@ -149,8 +147,7 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
 		mismatches: report.mismatches,
 		summary:
-			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run
-			// does not read.
+			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run does not read.
 			(report.corpusMismatch ? `CORPUS MISMATCH — ${report.corpusMismatch} ` : "") +
 			`${trained.length} countries train (${withStreet.length} with street-level rows); ` +
 			`${report.countries.filter((c) => c.gazetteerPlaces > 0).length} are geocodable to a locality, ` +

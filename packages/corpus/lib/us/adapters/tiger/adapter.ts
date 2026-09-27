@@ -37,24 +37,28 @@ import { formatAddressRow } from "@mailwoman/codex/address-format"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { TIGERDatabase } from "@mailwoman/tiger/sdk/schema"
 
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { decomposeStreet } from "#us/adapters/tiger/street-decompose"
 import { lookupFipsState } from "#us/fips-state"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const TIGER_ADAPTER_ID = "tiger"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (Public Domain), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const TIGER_DEFAULT_LICENSE = "Public Domain"
 
 /**
- * The country surface form used in `formatAddress` for US. Matches the canonical OpenCage US template output so
- * reconciliation doesn't strip it when the row carries `country` explicitly.
+ * The country surface form used in `formatAddress` for US.
+ *
+ * Matches the canonical OpenCage US template output so reconciliation doesn't strip it
+ * when the row carries `country` explicitly.
  */
 const US_COUNTRY_DISPLAY = "United States of America"
 
@@ -74,7 +78,9 @@ interface TigerPlaceRow {
 }
 
 /**
- * Yield one or more `CanonicalRow`s per street segment. Postcode variants:
+ * Yield one or more `CanonicalRow`s per street segment.
+ *
+ * Postcode variants:
  *
  * - No ZIP set → one row, street + region.
  * - `zipl === zipr` → one row, street + region + postcode.
@@ -164,13 +170,17 @@ function* placeVariants(row: TigerPlaceRow): Iterable<{
 }
 
 /**
- * Build a tiger adapter. Pure factory so multiple instances can be created in tests.
+ * Build a tiger adapter.
+ *
+ * Pure factory so multiple instances can be created in tests.
  */
 export function createTigerAdapter(): CorpusAdapter {
 	return {
 		id: TIGER_ADAPTER_ID,
 		defaultLicense: TIGER_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.CensusTIGER,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"US Census TIGER/Line streets + places consumer (public-domain); SQLite DB built via `mailwoman tiger fetch`.",
 

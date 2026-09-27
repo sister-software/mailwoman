@@ -3,55 +3,10 @@
 
 import { APIClient, isSuccessStatus } from "@mailwoman/core/api"
 /**
- *   Fetch an OpenAddresses country collection from batch.openaddresses.io.
- *
- *   Source: https://batch.openaddresses.io
- *   License: mixed — OpenAddresses aggregates hundreds of upstream sources with per-source licenses
- *   (CC-BY, CC0, pddl, ODbL, CC-BY-SA, and proprietary attribution-only). The per-row LICENSE filter
- *   in the openaddresses adapter is essential for proprietary-weights training: Tier-C rows (ODbL,
- *   CC-BY-SA, CC-SA) are dropped at ingest by default. This module downloads the raw collection. the
- *   adapter does the license filtering.
- *
- *   Native `fetch` streams the download to disk (no curl + Python subprocess tax);
- *   `node:child_process` keeps the genuine shell ops it still needs (`file` magic detection +
- *   `gunzip` decompression, both nice/ionice-deprioritized).
- *
- *   ## Authentication note (2026-05-18)
- *
- *   The batch.openaddresses.io download endpoint now requires a registered account. Downloads are
- *   still free at the "basic" tier (GeoJSON+LD output).
- *
- *   1. Register at https://batch.openaddresses.io/register
- *   2. Log in and go to Profile → "Create Token"
- *   3. Export the token: `export OA_BATCH_TOKEN=<your-token>`
- *   4. Re-run the command.
- *
- *   The collection URL pattern (verified 2026-05-18):
- *
- *   - `post /api/login {username, password}` → `{token}`
- *   - `GET  /api/job/{job_id}/output/source.geojson.gz?token={token}`
- *
- *   Collections are downloaded as a combined GeoJSON.gz via:
- *
- *   - `GET  /api/collections/{collection_id}/download` (returns a redirect to S3)
- *
- *   Collection IDs discovered from `/api/collections`:
- *
- *   - `id=6  name="ca"  size=2044467556` (~1.9 GiB uncompressed, verified 2026-05-18)
- *
- *   ## Usage
- *
- *   ```sh
- *   # With token (preferred). Default country: ca. Supports any OA country code (us-west, fr, …)
- *   OA_BATCH_TOKEN=<token> mailwoman corpus fetch openaddresses --country ca \
- *     --out-root $MAILWOMAN_DATA_ROOT/corpus/sources
- *
- *   # Without token (will detect + print instructions, then report the failure):
- *   mailwoman corpus fetch openaddresses --country ca
- *   ```
+ * Fetch an OpenAddresses country collection from batch.openaddresses.io.
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
-   procedure rather than sections of declarations. A region there folds nothing a reader wants folded. */
+   procedure rather than sections of declarations. A region there folds no element a reader wants folded. */
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { openWriteStream, pipeline } from "@mailwoman/core/fs/streams"
@@ -59,34 +14,25 @@ import { movePath, removePathIfPresent, makeDirectories } from "@mailwoman/core/
 import { sha256File } from "@mailwoman/core/hash"
 import { runFile, spawnProcess } from "@mailwoman/core/process"
 import { isoSeconds } from "@mailwoman/core/utils"
-import { join } from "path-ts"
+import type { PathBuilderLike } from "path-ts"
 import { AsyncSpliterator } from "spliterator"
 
 import { $private } from "#env"
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { streamDownload, writeManifest } from "#tools/fetch/download/index"
 
-/**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below which a "download" is an error page rather
- * than data.
- */
-/**
- * A successful fetch. anything else is an error page or a redirect we did not follow.
- */
 const HTTP_OK = 200
 
 /**
- * Smallest plausible OpenAddresses country archive. Below 10 KiB the file is a stub or an error body.
+ * Below this size the file is a stub or an error body rather than an archive.
  */
 const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
 
 const OA_BASE = "https://batch.openaddresses.io"
 
 /**
- * Collection IDs known as of 2026-05-18 (discovered via `GET /api/collections`). OA assigns stable integer IDs to each
- * country collection. re-check `GET /api/collections` if a new country is needed and the ID is unknown.
- *
- * TODO: Move this to a config file or the OA adapter
+ * OA assigns stable integer collection IDs.
+ * Re-check `GET /api/collections` for a country absent here.
  */
 const OA_COLLECTION_IDS: Record<string, number> = {
 	ca: 6,
@@ -98,9 +44,6 @@ const OA_COLLECTION_IDS: Record<string, number> = {
 }
 
 export interface FetchOpenAddressesOptions extends BaseFetchOptions {
-	/**
-	 * OA country collection code. Default `ca`.
-	 */
 	country?: string
 }
 
@@ -111,12 +54,7 @@ interface OaCollection {
 	size?: number
 }
 
-/**
- * Decompress `src` → `dest` with the same deprioritized subprocess the old fetcher used.
- *
- * TODO: Move to our own zip utils.
- */
-async function gunzipToFile(src: string, dest: string): Promise<void> {
+async function gunzipToFile(src: PathBuilderLike, dest: PathBuilderLike): Promise<void> {
 	const child = spawnProcess("nice", ["-n", "15", "ionice", "-c", "3", "gunzip", "-c", src], {
 		stdio: ["ignore", "pipe", "inherit"],
 	})
@@ -136,9 +74,9 @@ export async function fetchOpenAddresses(
 	const country = options.country ?? "ca"
 	const token = $private.OA_BATCH_TOKEN
 
-	const destDir = join(options.outRoot, "openaddresses", country)
-	const manifestPath = join(destDir, "MANIFEST.json")
-	const outputFile = join(destDir, "collection.geojsonl")
+	const destDir = options.outRoot("openaddresses", country)
+	const manifestPath = destDir("MANIFEST.json")
+	const outputFile = destDir("collection.geojsonl")
 
 	const fail = (code: string): FetchSummary => ({ fetched: 0, skipped: 0, failed: 1, failedCodes: [code] })
 
@@ -146,8 +84,6 @@ export async function fetchOpenAddresses(
 	report?.(`    dest: ${destDir}`)
 
 	await makeDirectories(destDir)
-
-	// MARK: Authentication check
 
 	if (!token) {
 		report?.(`
@@ -172,22 +108,18 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		return fail("OA_BATCH_TOKEN")
 	}
 
-	// MARK: Determine collection ID
-
 	let collectionID = OA_COLLECTION_IDS[country]
 
 	if (collectionID === undefined) {
 		report?.(`Unknown country code '${country}'. Fetching collection list to find ID...`)
 
-		// The collections API only. The collection archives stay on raw `fetch` — they stream multi-gigabyte
-		// bodies straight to disk, where response caching is nonsense and axios would buffer them in memory.
+		// The archive streams multi-gigabyte bodies to disk, where axios would buffer them in memory.
 		const res = await new APIClient({
 			displayName: "openaddresses-api",
 			retry: true,
 			axios: { headers: { Authorization: `Bearer ${token}`, "Accept-Encoding": "gzip, br" } },
 		})
-			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and
-			// returns `fail(country)`, a graceful path this must not turn into an exception.
+			// `validateStatus` keeps a non-2xx as a response rather than a throw: the caller reports the status and returns `fail(country)`, a graceful path this must not turn into an exception.
 			.fetch<OaCollection[]>({
 				url: `${OA_BASE}/api/collections`,
 				timeout: 30_000,
@@ -219,13 +151,11 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 		report?.(`  Found collection id=${collectionID} for '${country}'`)
 	}
 
-	// MARK: Download via the collections download endpoint (302s to S3)
-
 	report?.(`  Resolving download URL for collection id=${collectionID}...`)
 	report?.(`  Attempting authenticated download...`)
 
-	const tmpGz = join(destDir, "collection.geojsonl.gz.tmp")
-	const tmpRaw = join(destDir, "collection.geojsonl.tmp")
+	const tmpGz = destDir("collection.geojsonl.gz.tmp")
+	const tmpRaw = destDir("collection.geojsonl.tmp")
 	const sourceURL = `${OA_BASE}/api/collections/${collectionID}/download`
 
 	let httpStatus = await streamDownload(sourceURL, tmpGz, {
@@ -236,7 +166,6 @@ The Canada collection (ca) is ~2 GiB compressed / ~7 GiB uncompressed
 	})
 
 	if (httpStatus !== HTTP_OK) {
-		// Try the geojsonl.gz directly with token as query param (alternate URL shape).
 		httpStatus = await streamDownload(`${OA_BASE}/api/collections/${collectionID}/geojsonl.gz?token=${token}`, tmpGz, {
 			timeoutMs: 7_200_000,
 			retries: 3,
@@ -267,8 +196,6 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		return fail(country)
 	}
 
-	// MARK: Decompress if the downloaded file is gzipped
-
 	const fileMagic = (await runFile("file", ["--brief", tmpGz]).catch(() => ({ stdout: "" }))).stdout
 
 	if (/gzip|compressed/i.test(fileMagic)) {
@@ -277,16 +204,12 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		await removePathIfPresent(tmpGz)
 		await movePath(tmpRaw, outputFile)
 	} else if (/JSON|ASCII|UTF-8/i.test(fileMagic)) {
-		// Already line-delimited GeoJSON.
 		await movePath(tmpGz, outputFile)
 		await removePathIfPresent(tmpRaw)
 	} else {
-		// Unknown type — keep as-is and let the operator inspect.
 		await movePath(tmpGz, outputFile)
 		report?.(`  WARNING: Downloaded file type is '${fileMagic.trim()}' — may need manual decompression.`)
 	}
-
-	// MARK: Verify + write manifest
 
 	if (!(await pathExists(outputFile))) {
 		report?.(`ERROR: Output file not found at ${outputFile} after download.`)
@@ -316,7 +239,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		bytes: size,
 		row_count: rowCount,
 		notes:
-			"batch.openaddresses.io requires a free registered account for downloads. License is mixed per-row; use the openaddresses adapter with allowShareAlike=false (default) to filter Tier-C rows.",
+			"batch.openaddresses.io requires a free registered account for downloads. The license is mixed per row, and the openaddresses adapter admits every row by default. Build with `mailwoman corpus build --license-policy share-alike-free` to refuse the share-alike rows, or pass `allowShareAlike: false` for an adapter-scoped drop.",
 	}
 
 	await writeManifest(manifestPath, manifest)

@@ -13,6 +13,7 @@ import { NeuralAddressClassifier, parseAnchorLookup, parseGazetteerLexicon } fro
 import { ONNXRunner } from "@mailwoman/neural/onnx-runner"
 import { createScorer, type ScorerOverrides } from "@mailwoman/neural/scorer"
 import { MailwomanTokenizer } from "@mailwoman/neural/tokenizer"
+import type { PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
 export interface PerTagEvalRow {
@@ -75,9 +76,11 @@ export interface PerTagCounts {
 }
 
 /**
- * Accumulate exact-match counts per tag. The caller owns inference so checks can choose their precise parse options
- * without duplicating the scoring implementation; `onRow` hands each row's predicted components back so a scorer can
- * run per-row diagnostics over the same parse the counts were taken from.
+ * Accumulate exact-match counts per tag.
+ *
+ * The caller owns inference so checks can choose their precise parse options without
+ * duplicating the scoring implementation; `onRow` hands each row's predicted components back
+ * so a scorer can run per-row diagnostics over the same parse the counts were taken from.
  */
 export async function scorePerTagCounts(
 	rows: readonly PerTagEvalRow[],
@@ -133,8 +136,10 @@ export function perTagRates(counts: PerTagCounts): PerTagRates {
 }
 
 /**
- * Compute exact-match F1 percentages (one decimal, 0–100). The caller owns inference so checks can choose their precise
- * parse options without duplicating the scoring implementation.
+ * Compute exact-match F1 percentages (one decimal, 0–100).
+ *
+ * The caller owns inference so checks can choose their precise parse options
+ * without duplicating the scoring implementation.
  */
 export async function scorePerTagF1(
 	rows: readonly PerTagEvalRow[],
@@ -146,30 +151,39 @@ export async function scorePerTagF1(
 	return Object.fromEntries(tags.map((tag) => [tag, +(100 * perTagRates(counts[tag]!).f1).toFixed(1)]))
 }
 
-//#region Classifier construction
+// #region Classifier construction
 
 /**
- * Options for {@linkcode createUnfoldedEvalClassifier} — the classifier-construction block `score-affix` and
- * `score-country-homograph` carried byte-for-byte before it was shared.
+ * Options for {@linkcode createUnfoldedEvalClassifier}.
+ *
+ * The classifier-construction block `score-affix` and `score-country-homograph`
+ * carried byte-for-byte before it was shared.
  */
 export interface UnfoldedEvalClassifierOptions {
 	/**
-	 * ONNX artifact to grade. Empty is legal alongside {@linkcode UnfoldedEvalClassifierOptions.weightsCache}.
+	 * ONNX artifact to grade.
+	 *
+	 * Empty is legal alongside {@linkcode UnfoldedEvalClassifierOptions.weightsCache}.
 	 */
 	model: string
 	/**
-	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft channels from the package via
-	 * `loadFromWeights` — the only in-distribution grade for a country-channel model (v6.2.0+). Takes precedence over the
-	 * explicit {@linkcode UnfoldedEvalClassifierOptions.model} path.
+	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
+	 * channels from the package via `loadFromWeights`.
+	 *
+	 * The only in-distribution grade for a country-channel model (v6.2.0+).
+	 *
+	 * Takes precedence over the explicit {@linkcode UnfoldedEvalClassifierOptions.model} path.
 	 */
 	weightsCache: string
 	/**
-	 * Gazetteer-anchor lexicon path. empty feeds nothing.
+	 * Gazetteer-anchor lexicon path.
+	 * Empty feeds no lexicon.
 	 */
 	gazetteerLexicon: string
 	/**
-	 * Feed the lexicon only when the path exists on disk (the country probe's posture, harmless for older models) rather
-	 * than whenever it is set (the affix scorer's, where a missing file should fail loudly).
+	 * Feed the lexicon only when the path exists on disk
+	 * (the country probe's posture, harmless for older models) rather than whenever it
+	 * is set (the affix scorer's, where a missing file should fail loudly).
 	 */
 	gazetteerLexiconWhenPresent?: boolean
 	/**
@@ -223,9 +237,9 @@ export async function createUnfoldedEvalClassifier(
 	})
 }
 
-//#endregion
+// #endregion
 
-//#region Conventions mask off/on battery
+// #region Conventions mask off/on battery
 
 export interface LocaleEvalSpec {
 	/**
@@ -233,20 +247,28 @@ export interface LocaleEvalSpec {
 	 */
 	system: SystemCode
 	/**
-	 * Eval jsonl files (raw + components). Multiple files are concatenated.
+	 * Eval jsonl files (raw + components).
+	 *
+	 * Multiple files are concatenated.
 	 */
 	files: string[]
 }
 
 /**
- * One eval spec per locale that has an eval set, shared by the capability-manifest generator and the mask-regression
- * release check. The eval rows carry split street parts so the affix capability (`street_prefix`/`street_suffix`) is
- * measurable — the folded `per-locale-f1.ts` joins the three street parts and cannot see it. FR uses the dedicated
- * street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction), not the broad golden dev set, for the
- * essential tags: golden FR carries only ~7 `street_prefix` rows against ~1535 without it, so the unfolded
- * `street_prefix` F1 there is dominated by absent-gold rows (measured 5.3) — it would under-certify the very capability
- * the delta check exists to guard. On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0 (the
- * figure the #719 fix cites), which is the honest capability number the loader must guard.
+ * One eval spec per locale that has an eval set, shared by the capability-manifest
+ * generator and the mask-regression release check.
+ *
+ * The eval rows carry split street parts so the affix capability (`street_prefix`/`street_suffix`)
+ * is measurable — the folded `per-locale-f1.ts` joins the three street parts and cannot see it.
+ * FR uses the dedicated street-prefix eval set (`fr-street-prefix-real.jsonl`, the #719 reproduction),
+ * not the broad golden dev set, for the essential tags: golden FR carries only ~7
+ * `street_prefix` rows against ~1535 without it, so the unfolded `street_prefix`
+ * F1 there is dominated by absent-gold rows (measured 5.3).
+ *
+ * It would under-certify the very capability the delta check exists to guard.
+ *
+ * On the purpose-built eval set the model emits FR `street_prefix` at F1 80.0
+ * (the figure the #719 fix cites), which is the honest capability number the loader must guard.
  */
 export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
 	{ system: "us", files: ["data/eval/golden/v0.1.2/dev/us.jsonl"] },
@@ -257,36 +279,45 @@ export const MASK_EVAL_LOCALES: LocaleEvalSpec[] = [
  * The artifacts a mask battery's scorers are built from — the keys `createScorer` reads.
  */
 export interface MaskScorerArtifactPaths {
-	modelPath: string
-	tokenizerPath: string
-	modelCardPath: string
-	anchorLookupPath: string
-	gazetteerLexiconPath: string
+	modelPath: PathBuilderLike
+	tokenizerPath: PathBuilderLike
+	modelCardPath: PathBuilderLike
+	anchorLookupPath: PathBuilderLike
+	gazetteerLexiconPath: PathBuilderLike
 }
 
 export interface MaskOffOnOptions {
 	/**
-	 * Serving-tier channel overrides layered under the conventions toggle (`{ gazetteer: false }` for the pocket tier).
+	 * Serving-tier channel overrides layered under the conventions toggle
+	 * (`{ gazetteer: false }` for the pocket tier).
 	 */
 	tierOverrides?: ScorerOverrides
 	/**
-	 * The parse mode the rows are graded in. Both callers — the capability-manifest generator and the mask-regression
-	 * release check — pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
-	 * derives `formatted` and runs the evidence-bundle channels off as a declared ablation. Omitting it grades the
-	 * bare-library default (`fragmented`), a path production does not take on these inputs. the option stays so a caller
-	 * can measure that path on purpose, never by accident (#2048).
+	 * The parse mode the rows are graded in.
+	 *
+	 * Both callers — the capability-manifest generator and the mask-regression release check —
+	 * pass `"formatted"`: the rows are formatted postal addresses, on which the production pipeline
+	 * derives `formatted` and runs the evidence-bundle channels off as a declared ablation.
+	 * Omitting it grades the bare-library default (`fragmented`), a path production
+	 * does not take on these inputs.
+	 *
+	 * The option stays so a caller can measure that path on purpose, never by accident (#2048).
 	 */
 	inputMode?: "formatted"
 }
 
 /**
- * Score one locale's rows mask-off (conventions disabled — the model's raw capability; `createScorer` warns about the
- * declared-required override, which is expected) and mask-on (conventions `auto`: locale-head detection applies the
- * detected system's `forbiddenTags` as a hard emission mask — the ship behavior whose damage the callers measure).
+ * Score one locale's rows mask-off (conventions disabled — the model's raw capability;
+ * `createScorer` warns about the declared-required override, which is expected) and mask-on
+ * (conventions `auto`: locale-head detection applies the detected system's `forbiddenTags`
+ * as a hard emission mask — the ship behavior whose damage the callers measure).
  *
- * Full ship-config otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults, less any declared tier override).
- * Only the conventions channel toggles. `strict: true` fails closed if a declared channel can't be fed, so a
- * stale/incomplete feed surfaces loudly rather than silently grading a handicapped model.
+ * Full ship-config otherwise (anchor-on + gazetteer-on — `createScorer`'s defaults,
+ * less any declared tier override).
+ * Only the conventions channel toggles.
+ *
+ * `strict: true` fails closed if a declared channel can't be fed, so a stale/incomplete
+ * feed surfaces loudly rather than silently grading a handicapped model.
  */
 export async function scoreConventionsMaskOffOn(
 	rows: readonly PerTagEvalRow[],
@@ -313,4 +344,4 @@ export async function scoreConventionsMaskOffOn(
 	return { off, on }
 }
 
-//#endregion
+// #endregion

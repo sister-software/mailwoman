@@ -21,7 +21,7 @@ import { allRows } from "@mailwoman/core/utils"
 import type { AddressPointDatabase } from "@mailwoman/resolver-wof-sqlite/address"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
+import { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
@@ -35,7 +35,7 @@ export const spec = {
 	options: {
 		"out-dir": {
 			type: "string",
-			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/address-points",
+			description: "Directory holding the address-points-us-<st>.db databases. Default <data-root>/db/address-points",
 		},
 		release: {
 			type: "string",
@@ -54,13 +54,13 @@ interface StateLedger {
 
 const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
+		const { addressPointDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
 
-		const outDir = options.outDir ?? dataRootPath("address-points")
+		const outDir = PathBuilder.from(options.outDir ?? addressPointDatabasePath)
 
-		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db. Excludes county-scoped
-		// dev artifacts (e.g. address-points-us-il-cook.db) that overlap a state database and the CLI never
-		// selects.
+		// Canonical per-state databases only: address-points-us-<2-letter-slug>.db.
+		// Excludes county-scoped dev artifacts (e.g. Address-points-us-il-cook.db) that
+		// overlap a state database and the CLI never selects.
 		const databaseFiles = (await Globerator.files("db", { cwd: outDir, absolute: false, recursive: false }).toArray())
 			.filter((f) => /^address-points-us-[a-z]{2}\.db$/.test(f))
 			.toSorted()
@@ -84,7 +84,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 			let db: DatabaseClient<AddressPointDatabase>
 
 			try {
-				db = new DatabaseClient<AddressPointDatabase>(join(outDir, file), { readOnly: true })
+				db = new DatabaseClient<AddressPointDatabase>(outDir(file), { readOnly: true })
 			} catch {
 				manifest.states[slug] = { ok: false, error: "unreadable" }
 
@@ -100,7 +100,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 				let points = 0
 
 				for (const { source, n } of rows) {
-					const ds = String(source).replace(/^overture:/, "")
+					const ds = source.replace(/^overture:/, "")
 					datasets[ds] = Number(n)
 					manifest.datasetTotals[ds] = (manifest.datasetTotals[ds] ?? 0) + Number(n)
 					points += Number(n)
@@ -118,7 +118,7 @@ const SitusAttributionManifest: CommandComponent<typeof spec> = ({ options }) =>
 		// Sort datasetTotals descending for readability.
 		manifest.datasetTotals = Object.fromEntries(Object.entries(manifest.datasetTotals).toSorted((a, b) => b[1] - a[1]))
 
-		const attributionPath = join(outDir, "ATTRIBUTION.json")
+		const attributionPath = outDir("ATTRIBUTION.json")
 		await writeLocalJSONFile(manifest, attributionPath)
 
 		const lines = [

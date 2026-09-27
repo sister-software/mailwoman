@@ -46,23 +46,33 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * Record-matcher sources directory. Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
+	 * Record-matcher sources directory.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/record-matcher/sources`.
 	 */
 	sources?: PathBuilderLike
 	/**
-	 * State filter. Default TX.
+	 * State filter.
+	 *
+	 * Default TX.
 	 */
 	state?: string
 	/**
-	 * NPIs sampled. Default 2000.
+	 * NPIs sampled.
+	 *
+	 * Default 2000.
 	 */
 	npis?: number
 	/**
-	 * Output TS module path. Default `registry/models/crosssource-gbt-en-us.ts`.
+	 * Output TS module path.
+	 *
+	 * Default `registry/models/crosssource-gbt-en-us.ts`.
 	 */
 	out?: string
 	/**
-	 * Locale recorded in the model meta. Default en-US.
+	 * Locale recorded in the model meta.
+	 *
+	 * Default en-US.
 	 */
 	locale?: string
 	/**
@@ -70,7 +80,9 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	precisionBar?: number
 	/**
-	 * Training date stamped into the meta. Default today.
+	 * Training date stamped into the meta.
+	 *
+	 * Default today.
 	 */
 	date?: string
 }
@@ -157,7 +169,8 @@ export async function trainCrossSourceGBT(
 		rows.push({ npi, name, org: "", address: practice, source: "nppes" })
 	}
 
-	// Keep only NPIs present in both sources — every record has a cross-source counterpart.
+	// Keep only NPIs present in both sources.
+	// Every record has a cross-source counterpart.
 	for (const npi of joined) {
 		rows.push(opByNPI.get(npi)!)
 	}
@@ -170,8 +183,8 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate, and train.
-	// → shipped model → committed module). ---
+	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
+	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,

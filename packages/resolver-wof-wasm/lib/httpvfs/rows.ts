@@ -11,7 +11,9 @@ export interface ExecResult {
 }
 
 /**
- * The first result set of a Sql.js `exec` call as one object per row, keyed by column name. No result set answers `[]`.
+ * The first result set of a Sql.js `exec` call as one object per row, keyed by column name.
+ *
+ * No result set answers `[]`.
  */
 export function rowsFromExec<Row = Record<string, unknown>>(res: ExecResult[] | undefined): Row[] {
 	const first = res?.[0]
@@ -40,8 +42,9 @@ export function tableExists(worker: SQLExecutor, name: string): Promise<boolean>
 }
 
 /**
- * Memoize a zero-argument async probe as its in-flight promise so concurrent callers share one round trip. a rejection
- * clears the memo so a transient failure can retry.
+ * Memoize a zero-argument async probe as its in-flight promise so concurrent callers share one round trip.
+ *
+ * A rejection clears the memo so a transient failure can retry.
  */
 export function memoizeResettable<T>(fn: () => Promise<T>): () => Promise<T> {
 	let memo: Promise<T> | undefined

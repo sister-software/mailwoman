@@ -13,7 +13,7 @@ afterAll(() => fixtures.disposeAsync())
 
 async function plant(path: string, text: string): Promise<{ repoRoot: string; trackedFiles: string[] }> {
 	const root = fixtures.use(await temporaryDirectory("module-cohesion-"))
-	await makeDirectories(root.resolve("packages", "fixture", "lib"))
+	await makeDirectories(root.path("packages", "fixture", "lib"))
 	await writeLocalTextFile(text, resolvePath(root.path, path))
 
 	return { repoRoot: root.path.toString(), trackedFiles: [path] }
@@ -34,7 +34,8 @@ const TWO_RESPONSIBILITIES = [
 ].join("\n")
 
 /**
- * The same two chains, each reading one specifier — the shape a facade of same-form wrappers takes.
+ * The same two chains, each reading one specifier.
+ * The shape a facade of same-form wrappers takes.
  */
 const ONE_SPECIFIER_EACH = [
 	`import { alpha } from "pkg-a"`,

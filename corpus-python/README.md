@@ -1,37 +1,39 @@
 # `mailwoman-corpus-python`
 
-Python helpers for the Mailwoman pipeline. **Not** a Yarn workspace — has its own
-`pyproject.toml` and runs under `uv` (Python 3.12, pinned by `.python-version`), never from Node.
+Python helpers for the Mailwoman pipeline. This directory is not a Yarn workspace. It has its own
+`pyproject.toml` and runs under `uv` (Python 3.12, pinned by `.python-version`) instead of from
+Node.
 
-Everything is one package, `src/mailwoman_train/`, laid out by role:
+All the code is in one package, `src/mailwoman_train/`, with one directory per role:
 
-- **`cli/commands/`** — one module per subcommand of `python -m mailwoman_train`: the pipeline
-  from train through eval, ONNX export, int8 quantize and weights-package assembly.
-- **`countries/<code>/`** — what one country contributes, and nothing another country reads. A
-  country with its own corpus builder and label set is in `countries.COUNTRY_MODULES`; one that
-  only contributes source readers is in `SOURCE_ONLY`.
+- **`cli/commands/`** holds one module per subcommand of `python -m mailwoman_train`. The
+  subcommands cover training, eval, ONNX export, int8 quantization and weights-package assembly.
+- **`countries/<code>/`** holds code that only one country uses. A country with its own corpus
+  builder and label set is listed in `countries.COUNTRY_MODULES`. A country that only contributes
+  source readers is listed in `SOURCE_ONLY`.
 - **`corpora/`, `data/`, `text/`, `tokenizer/`, `features/`, `nn/`, `optim/`, `train/`,
-  `evaluation/`, `export/`, `audits/`, `calibration/`, `observability/`** — the shared machinery,
-  one directory per role.
+  `evaluation/`, `export/`, `audits/`, `calibration/`, `observability/`** hold the code that all
+  countries share.
 
-A module with an `if __name__ == "__main__"` block runs as `python -m mailwoman_train.<path>`; its
-docstring carries the command, and `test_builder_entry_points` checks that the command names the
-module it is written in.
+A module with an `if __name__ == "__main__"` block runs as `python -m mailwoman_train.<path>`. Its
+docstring gives the command, and `test_builder_entry_points` checks that the command refers to the
+module that contains it.
 
-`launch/` is the second package: the Modal launcher, one module per role, with `launch/AGENTS.md`
-as its runbook. Run it with `-m` from this directory — `modal run -m launch.train_remote::<name>` —
-because a file path puts `launch/` itself on `sys.path` and the package's relative imports then
-fail. `launch/train_remote.py`'s docstring is the table of what each module owns.
+`launch/` is the second package. It holds the Modal launcher, one module per role, and
+`launch/AGENTS.md` is its runbook. Run it with `-m` from this directory
+(`modal run -m launch.train_remote::<name>`). Running it by file path puts `launch/` itself on
+`sys.path`, and the package's relative imports then fail. The docstring of
+`launch/train_remote.py` lists what each module owns.
 
-The JSONL → Parquet conversion that lived here in Phase 1 was deleted alongside the JS-native
-Parquet writer (`@dsnp/parquetjs`-based) that landed in `packages/corpus/lib/parquet.ts` —
-`mailwoman corpus build` now writes the `.parquet` files directly with no Python in the loop.
+Phase 1 had a JSONL-to-Parquet conversion here. It was deleted when the JS-native Parquet writer
+(based on `@dsnp/parquetjs`) landed in `packages/corpus/lib/parquet.ts`. `mailwoman corpus build`
+now writes the `.parquet` files directly without Python.
 
 ## Install
 
-Everything runs under [`uv`](https://docs.astral.sh/uv/); the interpreter is pinned by
-`.python-version` (3.12 — matches `launch/app.py`'s image). Call every tool through
-`uv run` so it uses the project environment, never a stray system install.
+Everything runs under [`uv`](https://docs.astral.sh/uv/). `.python-version` pins the interpreter
+to 3.12, which matches the image in `launch/app.py`. Call every tool through `uv run` so that it
+uses the project environment instead of a system install.
 
 ```sh
 cd corpus-python
@@ -46,22 +48,22 @@ For Phase 2 model training you also need the heavy ML stack (`torch`, `transform
 uv sync --extra train
 ```
 
-The `[train]` extra pulls CPU-default PyTorch wheels; if you want CUDA, install `torch`
-separately from the appropriate wheel index _before_ syncing — uv's resolver will keep the CUDA
-build (see the Lab GPU recipe below).
+The `[train]` extra installs CPU PyTorch wheels by default. For CUDA, install `torch` from the
+appropriate wheel index _before_ syncing, and uv's resolver keeps the CUDA build. The Lab GPU
+recipe below follows this pattern.
 
 ## Toolchain
 
-All tools resolve through the `[dev]` extra and are invoked with `uv run` so they read the
-project environment and the `pyproject.toml` config:
+All tools come from the `[dev]` extra. Invoke them with `uv run` so they read the project
+environment and the `pyproject.toml` config:
 
-- **Ruff** (`uv run ruff`) — lint **and** format in one tool; the Python counterpart of the
-  repo's `oxlint` + `oxfmt`. Config: `[tool.ruff]`.
-- **mypy** (`uv run mypy`) — `--strict` typing over `src/`, at zero errors. `launch/` stays outside
-  it: it imports the Modal SDK, which is installed wherever `modal run` runs, never here.
-  Config: `[tool.mypy]`.
-- **bandit** (`uv run bandit -r src`) — security/static analysis. Config: `[tool.bandit]`.
-- **pytest** (`uv run pytest`) — the corpus test suite.
+- **Ruff** (`uv run ruff`) lints and formats. It is the Python counterpart of the repo's `oxlint`
+  and `oxfmt`. Config: `[tool.ruff]`.
+- **mypy** (`uv run mypy`) runs `--strict` type checking over `src/` and currently reports zero
+  errors. It does not check `launch/`, because `launch/` imports the Modal SDK, which is installed
+  only where `modal run` runs. Config: `[tool.mypy]`.
+- **bandit** (`uv run bandit -r src`) runs security and static analysis. Config: `[tool.bandit]`.
+- **pytest** (`uv run pytest`) runs the corpus test suite.
 
 ```sh
 uv run ruff check .            # lint        (oxlint)
@@ -74,14 +76,14 @@ uv run pytest                  # tests       (vitest)
 uv run python scripts/verify_toolchain.py   # train-pin consistency guard
 ```
 
-`yarn lint` from the repo root runs the full python check repo-wide (see
-`.github/workflows/test.yml`): ruff lint + format, the `verify_toolchain.py` pin guard, then
-`mypy --strict` and `bandit` — each via `uv run`, which syncs corpus-python's venv
-(including the `[train]` extras mypy needs to resolve torch) on demand.
+`yarn lint` from the repo root runs the full Python check (see `.github/workflows/test.yml`). It
+runs ruff lint and format, the `verify_toolchain.py` pin check, `mypy --strict` and `bandit`. Each
+step goes through `uv run`, which syncs the corpus-python venv on demand. The sync includes the
+`[train]` extras that mypy needs to resolve torch.
 
 ### Lab GPU (Radeon 780M / gfx1103) recipe
 
-For the lab's specific iGPU you must use the ROCm 6.2 wheel and set the override env var:
+The lab's iGPU requires the ROCm 6.2 wheel and an override environment variable:
 
 ```sh
 uv venv ~/training-venv
@@ -92,19 +94,20 @@ uv pip install -e .[train]
 export HSA_OVERRIDE_GFX_VERSION=11.0.0   # required: gfx1103 unofficially supported
 ```
 
-`mailwoman_train` automatically forces math SDPA (the only attention kernel that runs
-stably on this iGPU) at every CLI entry point. The `MailwomanCoarseEncoder` is hand-rolled
-(no `nn.TransformerEncoderLayer`, no `BertForTokenClassification`) to avoid two known
-firmware hangs in fused attention paths. See `DECISIONS.md` for the full rationale.
+`mailwoman_train` forces math SDPA at every CLI entry point, because math SDPA is the only
+attention kernel that runs stably on this iGPU. The `MailwomanCoarseEncoder` is hand-written
+instead of using `nn.TransformerEncoderLayer` or `BertForTokenClassification`. This avoids two
+known firmware hangs in fused attention paths. `DECISIONS.md` gives the full rationale.
 
-Empirical batch envelope on gfx1103: micro-batch ≤64 bf16 stable, ≥96 hangs.
-`configs/stage1-coarse.yaml` ships with `batch_size=64`, `grad_accum_steps=2` (effective 128).
+On gfx1103, bf16 training ran stably at micro-batch sizes up to 64 and hung at 96 and above.
+`configs/stage1-coarse.yaml` ships with `batch_size=64` and `grad_accum_steps=2` (effective 128).
 
 ## `scripts/`
 
-One Python file, and it stays out of the package on purpose. `verify_toolchain.py` imports only
-the standard library, and the pre-commit hook plus `package.json` invoke it as bare `python3`;
-folding it in would make a commit depend on a synced virtual environment.
+This directory holds one Python file, kept outside the package on purpose. `verify_toolchain.py`
+imports only the standard library, and the pre-commit hook and `package.json` invoke it as bare
+`python3`. Moving it into the package would make every commit depend on a synced virtual
+environment.
 
 ## Phase 2 training CLI (`mailwoman_train`)
 
@@ -140,7 +143,7 @@ python -m mailwoman_train package \
   --corpus-version 0.1.0 --tokenizer-version 0.1.0
 ```
 
-For wiring validation only — produces _non-production_ weights:
+The `smoke` command checks the wiring only and produces _non-production_ weights:
 
 ```sh
 python -m mailwoman_train smoke \
@@ -153,11 +156,11 @@ weights packages tagged as smoke builds in their README.
 
 ## Why a separate Python package at all?
 
-SentencePiece is a native binary dep without a maintained Node bindings story for **training**
-(the JS ports are inference-only). PyTorch / Transformers are similarly Python-canonical.
-Keeping the Python side standalone:
+SentencePiece is a native binary dependency without maintained Node bindings for **training**. The
+JS ports support inference only. PyTorch and Transformers are also primarily Python libraries.
+Keeping the Python side standalone has two effects:
 
-- Lets the TS pipeline build / test / ship without a Python toolchain on every CI runner.
-- Separates training (slow, GPU-bound) from the streaming corpus build (fast, JS).
+- The TS pipeline can build, test and ship without a Python toolchain on every CI runner.
+- Training (slow, GPU-bound) stays separate from the streaming corpus build (fast, JS).
 
-See `DECISIONS.md` for the formal rationale on each call.
+`DECISIONS.md` gives the formal rationale for each decision.

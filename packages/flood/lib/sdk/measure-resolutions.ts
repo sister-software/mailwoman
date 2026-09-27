@@ -11,7 +11,7 @@
  *   one.
  *
  *   one stream, every resolution. Re-reading a 367 MB geodatabase per candidate costs minutes each and
- *   adds nothing — the classification is per feature, so every candidate index folds the same feature in
+ *   adds no information. The classification is per feature, so every candidate index folds the same feature in
  *   turn. The cost is memory: each resolution holds its own cell sets, and the finest candidate dominates.
  *   A caller that runs out of headroom runs the candidates in separate invocations.
  */
@@ -27,7 +27,9 @@ export interface MeasureResolutionsOptions extends FloodIngestOptions, Resolutio
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself. A run whose streamed total differs read a truncated file.
+	 * The count the source declares for itself.
+	 *
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]
@@ -38,8 +40,9 @@ const DEFAULT_PROGRESS_EVERY = 50_000
 /**
  * Measure every candidate resolution over the real source.
  *
- * @throws {Error} When the streamed feature count does not match the count the source declares. A short read produces a
- *   well-formed table describing a smaller England, which is the partial result that must throw.
+ * @throws {Error} When the streamed feature count does not match the count the source declares.
+ * A short read produces a well-formed table describing a smaller England,
+ * which is the partial result that must throw.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions
@@ -82,7 +85,9 @@ export async function measureFloodCellResolutions(
 }
 
 /**
- * The measurement as markdown table rows — what a build receipt carries, one line per element so a caller printing them
+ * The measurement as markdown table rows.
+ *
+ * What a build receipt carries, one line per element so a caller printing them
  * never has to split a joined string back apart.
  */
 export function formatResolutionMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {

@@ -2,26 +2,15 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Emit `eval-harness/fixtures/hard-case-board.jsonl` (ROAD_TO_V9 §3). The board's selection is curated by
- *   hand — every row below pins one discrimination case and says why — but its numbers are machine-filled
- *   from primary data, and that split is the point:
+ *   Coordinates, place names and FST biases are machine-filled from primary data, so a row's truth is never a
+ *   hand-typed decimal.
  *
- *   - **Coordinates + place names** come from the WOF admin DB by place id, so a row's truth is never a
- *       hand-typed decimal. The curator picks the ID. the builder reads the point.
- *   - **`popBias` / `impBias`** come from walking the two FST binaries themselves and collapsing the
- *       accepting entries exactly as `neural/fst-prior.ts`'s `applyBias` does (max per BIO tag, and only the
- *       four placetypes `PLACETYPE_TO_BIO` maps — `localadmin`/`county`/`borough`/`neighbourhood` reach no
- *       label and contribute nothing). So the recorded delta is the bias the decoder sees rather than a proxy for it
- *       computed off the database.
- *
- *   The sweep-derived classes (`country_structure`, `fst_out_of_reach`) are lifted verbatim from
- *   `gauntlet/cases/<cc>/regression.jsonl` — same input, same coordinate, same tolerance — so the board and
- *   the corpus cannot drift apart on a row they share.
+ *   The sweep-derived classes are lifted verbatim from `gauntlet/cases/<cc>/regression.jsonl`, so the board and the
+ *   corpus cannot drift apart on a row they share.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/build/hard-case-board.run.ts [--out <path>]
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -29,6 +18,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { getRow } from "@mailwoman/core/utils"
 import { collapseFSTBias } from "@mailwoman/neural/fst-prior"
 import { normalizeTokens, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { JSONSpliterator } from "spliterator"
@@ -42,9 +32,9 @@ const { values } = parseArguments({ options: { out: { type: "string" } } })
 const OUT = values.out ?? HARD_CASE_BOARD_PATH
 
 const ADDED_AT = "2026-08-06"
-const WOF_DB = String(dataRootPath("wof", "fst-staging-2026-08-05", "admin-global-priority-importance.db"))
-const POP_FST_DIR = String(dataRootPath("wof", "fst-per-locale"))
-const IMP_FST_DIR = String(dataRootPath("wof", "fst-staging-2026-08-05-importance-fanoutfix"))
+const WOF_DB = wofDatabasePath("fst-staging-2026-08-05", "admin-global-priority-importance.db")
+const POP_FST_DIR = wofDatabasePath("fst-per-locale")
+const IMP_FST_DIR = wofDatabasePath("fst-staging-2026-08-05-importance-fanoutfix")
 
 using db = new DatabaseClient<WOFDatabase>(WOF_DB, { readOnly: true })
 const pointStmt = db.prepare("SELECT name, latitude, longitude FROM spr WHERE id = ?")
@@ -71,8 +61,8 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
 	if (cached) return cached
 
 	const pair = {
-		pop: deserializeFST(await readLocalBuffer(`${POP_FST_DIR}/fst-${locale}.bin`)),
-		imp: deserializeFST(await readLocalBuffer(`${IMP_FST_DIR}/fst-${locale}.bin`)),
+		pop: deserializeFST(await readLocalBuffer(POP_FST_DIR(`fst-${locale}.bin`))),
+		imp: deserializeFST(await readLocalBuffer(IMP_FST_DIR(`fst-${locale}.bin`))),
 	}
 
 	matcherCache.set(locale, pair)
@@ -81,9 +71,8 @@ async function matchers(locale: string): Promise<{ pop: unknown; imp: unknown }>
 }
 
 /**
- * `max(importance)` per BIO tag for `surface` — the collapse `applyBias` performs before it touches the emission
- * matrix. A surface the FST does not accept returns an empty map, which is absence (the gazetteer has nothing to say),
- * reported by the caller as a zero bias on a named tag rather than silently as 0.
+ * The per-BIO-tag max collapse `applyBias` performs, where a surface the FST does
+ * not accept returns an empty map (absence) rather than a zero.
  */
 function biasOf(matcher: unknown, surface: string): Map<string, number> {
 	const walk = (matcher as { walk(t: string[]): { stateID: number; accepted: boolean } | null }).walk(
@@ -96,14 +85,12 @@ function biasOf(matcher: unknown, surface: string): Map<string, number> {
 		walk.stateID
 	)
 
-	// Collapsed by the decoder's own function: a bias measured over placetypes the decoder cannot see would overstate
-	// every delta on this board.
 	return collapseFSTBias(entries, normalizeTokens(surface))
 }
 
 const round4 = (n: number): number => Math.round(n * 1e4) / 1e4
 
-//#region Emit
+// #region Emit
 
 const CASES_ROOT = new URL("../eval-harness/gauntlet/cases/", import.meta.url)
 
@@ -125,9 +112,8 @@ for (const c of [...FRAGMENT_ROWS, ...TOPONYM_ROWS]) {
 	const { pop, imp } = await matchers(c.locale)
 	const popTags = biasOf(pop, c.probeSurface)
 	const impTags = biasOf(imp, c.probeSurface)
-	// Report on the tag the row is about — locality unless the curator named another. A surface the FST
-	// does not accept yields 0 on that named tag, which is a declared zero (the gazetteer has nothing), not
-	// a missing measurement.
+	// Report on the tag the row is about — locality unless the curator named another,
+	// with an unaccepted surface reading as a declared zero on that tag.
 	const tag = c.probeTag ?? "locality"
 	const point = c.expectID === undefined ? undefined : pointOf(c.expectID)
 
@@ -167,13 +153,8 @@ for (const s of SWEEP_ROWS) {
 	const hasCoord = lat !== undefined && lon !== undefined && tol !== undefined
 	// Sweep rows grade under the base package: no overlay ships for these countries.
 	const locale = "en-us"
-	// measured, never declared. The first version of this builder wrote `popBias: 0, impBias: 0` here on the
-	// reasoning that "no FST covers Botswana", and that was wrong in the way this repo keeps finding: the
-	// arm loads the FST by locale rather than by answer-country, so an en-us row's surface is scored against the
-	// US gazetteer whatever the answer's country is. "Moscow" carries 0.3411 → 0.5465 from 33 US bearers
-	// and "Nassau" 0.0755 → 0.4234 from 8 — real bias, on rows whose correct answer is in RU and BS. A
-	// declared zero would have hidden the single most interesting thing about this class, which is that
-	// the gazetteer can only pull these rows toward the wrong place.
+	// Measured, never declared: the arm loads the FST by locale rather than by answer-country,
+	// so a hard-coded zero would hide the bias these surfaces carry.
 	const { pop, imp } = await matchers(locale)
 	const popTags = biasOf(pop, s.probeSurface)
 	const impTags = biasOf(imp, s.probeSurface)
@@ -207,4 +188,4 @@ console.error(`wrote ${sorted.length} rows → ${OUT}`)
 console.error(`  fstReach in=${inReach} out=${sorted.length - inReach}`)
 console.error(`  rows whose probe surface has a DIFFERENT bias between arms: ${moved}`)
 
-//#endregion
+// #endregion

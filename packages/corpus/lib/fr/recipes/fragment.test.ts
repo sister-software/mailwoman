@@ -2,20 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `fr-fragment` recipe (#727 T2).
- *
- *   Two invariants here are not "nice to have":
- *
- *   1. **The split.** A recipe output that trains on its own eval set measures memorization, and nothing
- *      downstream can detect it — the board just reads high and everyone celebrates. The recipe must
- *      refuse to run without the exclusion list and must skip every reserved surface.
- *   2. **The counter-distribution.** Teaching bare streets alone lets the model satisfy every row by
- *      flipping its default from "bare ⇒ locality" to "bare ⇒ street" — trading a broken prior for a
- *      broken prior. The bare-locality rows must exist and must carry no street-side label.
+ *   Tests that the French fragment recipe requires reserved surfaces, emits standalone streets and
+ *   preserves bare localities as counterexamples.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/fr/recipes/fragment"
+import { frFragmentRecipe } from "@mailwoman/corpus/fr/recipes/fragment"
 import { scratch, recipeRunner, type RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
@@ -28,19 +20,6 @@ const TUPLES = [
 	{ street: "Avenue des Champs", locality: "saint-jean-de-luz", postcode: "64500" },
 	{ street: "Boulevard Voltaire", locality: "mery-sur-oise", postcode: "95540" },
 ]
-
-describe("frTitleCase", () => {
-	it("capitalizes elements and leaves French particles lowercase", () => {
-		expect(frTitleCase("saint-jean-de-luz")).toBe("Saint-Jean-de-Luz")
-		expect(frTitleCase("mery-sur-oise")).toBe("Mery-sur-Oise")
-		expect(frTitleCase("paris")).toBe("Paris")
-	})
-
-	it("capitalizes a leading particle — it is not a joiner there", () => {
-		expect(frTitleCase("le mans")).toBe("Le Mans")
-		expect(frTitleCase("la rochelle")).toBe("La Rochelle")
-	})
-})
 
 describe("fr-fragment: the split", () => {
 	it("REFUSES to run without an exclusion list rather than mint a contaminated recipe output", async () => {
@@ -64,13 +43,13 @@ describe("fr-fragment: the split", () => {
 	})
 
 	it("skips every reserved surface, accent- and case-insensitively", async () => {
-		// The list is normalized. the tuple is not. They must still match.
+		// Surface matching is case- and accent-insensitive.
 		const { rows } = await run(TUPLES, ["rue montmartre", "allee du 11 novembre 1918"])
 		const streets = rows.map((r) => String(r.raw))
 
 		expect(streets.some((s) => s.includes("Montmartre"))).toBe(false)
 		expect(streets.some((s) => s.includes("11 Novembre"))).toBe(false)
-		// …while the unreserved ones survive.
+		// Unreserved surfaces remain in the output.
 		expect(streets.some((s) => s.includes("de la Paix"))).toBe(true)
 	})
 })
@@ -78,13 +57,13 @@ describe("fr-fragment: the split", () => {
 describe("fr-fragment: the forms", () => {
 	it("mints streets with NO house number — the class the existing recipe cannot reach", async () => {
 		const { rows } = await run(TUPLES, ["nothing"], { hnProb: 0 })
-		const streetRows = rows.filter((r) => String(r.synth_method).startsWith("fr-fragment:") && r.components!.street)
+		const streetRows = rows.filter((r) => String(r.recipe).startsWith("fr-fragment:") && r.components!.street)
 
 		expect(streetRows.length).toBeGreaterThan(0)
 
 		for (const row of streetRows) {
 			expect(row.components!.house_number, `${row.raw} carries a house number at hnProb=0`).toBeUndefined()
-			// The whole point: the street stands alone, no locality to lean on either.
+			// These examples contain no locality label.
 			expect(row.components!.locality).toBeUndefined()
 		}
 	})
@@ -112,7 +91,7 @@ describe("fr-fragment: the forms", () => {
 describe("fr-fragment: the counter-distribution", () => {
 	it("mints bare localities carrying NO street-side label", async () => {
 		const { rows } = await run(TUPLES, ["nothing"])
-		const negative = rows.filter((r) => String(r.synth_method) === "fr-fragment:bare-locality")
+		const negative = rows.filter((r) => String(r.recipe) === "fr-fragment:bare-locality")
 
 		expect(negative.length).toBeGreaterThan(0)
 
@@ -124,7 +103,7 @@ describe("fr-fragment: the counter-distribution", () => {
 
 	it("title-cases the locality — BAN stores it normalized, the model must not learn that shape", async () => {
 		const { rows } = await run(TUPLES, ["nothing"])
-		const negative = rows.filter((r) => String(r.synth_method) === "fr-fragment:bare-locality")
+		const negative = rows.filter((r) => String(r.recipe) === "fr-fragment:bare-locality")
 
 		for (const row of negative) {
 			expect(String(row.raw)).not.toBe(String(row.raw).toLowerCase())
@@ -138,7 +117,7 @@ describe("fr-fragment: the counter-distribution", () => {
 		const lots = await run(TUPLES, ["nothing"], { bareProb: 0.5 })
 
 		const count = (r: { rows: RecipeRow[] }) =>
-			r.rows.filter((x) => String(x.synth_method) === "fr-fragment:bare-locality").length
+			r.rows.filter((x) => String(x.recipe) === "fr-fragment:bare-locality").length
 
 		expect(count(none)).toBe(0)
 		expect(count(lots)).toBeGreaterThan(count(none))

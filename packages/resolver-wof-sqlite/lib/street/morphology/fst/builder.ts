@@ -22,8 +22,8 @@
  *   `fst-street-morphology.bin`.
  */
 
-import { isDirectory, readLocalTextFile, statPath } from "@mailwoman/core/fs/readers"
-import { join } from "path-ts"
+import { isDirectory, isFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
@@ -32,9 +32,11 @@ import { FSTMatcher, normalizeTokens } from "#fst/matcher"
 import type { FSTProvenance, PlaceEntry } from "#fst/types"
 
 /**
- * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned, well above any realistic WOF
- * allocation. Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them. See
- * [[project-schema-storage-decision]] for the reserved range policy.
+ * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned,
+ * well above any realistic WOF allocation.
+ *
+ * Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them.
+ * See [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000
 
@@ -44,19 +46,26 @@ export interface BuildStreetMorphologyFSTOpts {
 	/**
 	 * Path to the `core/data/libpostal/dictionaries` directory containing per-locale subfolders.
 	 */
-	dictionariesDir: string
+	dictionariesDir: PathBuilderLike
 	/**
-	 * Optional locale filter — only ingest these locale subfolders. Defaults to all that have a `street_types.txt`.
+	 * Optional locale filter — only ingest these locale subfolders.
+	 *
+	 * Defaults to all that have a `street_types.txt`.
 	 */
 	locales?: string[]
 	/**
-	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie. Defaults to 3.
+	 * Minimum length (in characters, post-normalization) of variant surface forms to insert into the trie.
 	 *
-	 * Rationale: libpostal's street_types dictionaries contain 1-2 character abbreviations (`a`, `b`, `av`, `bd`, `br`,
-	 * ...) that collide with non-affix tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
-	 * single-letter unit designators, and arbitrary short tokens. Empirically these collisions push the morphology prior
-	 * to mis-tag state abbreviations as `street_suffix`. A minimum length of 3 retains useful forms (`ave`, `blvd`,
-	 * `rue`, `str`) while filtering out the noise.
+	 * Defaults to 3.
+	 *
+	 * Rationale: libpostal's street_types dictionaries contain 1-2 character
+	 * abbreviations (`a`, `b`, `av`, `bd`, `br`, ...) that collide with non-affix
+	 * tokens at parse time — notably US state abbreviations (`or`, `CA`, `ND`, `NY`),
+	 * single-letter unit designators, and arbitrary short tokens.
+	 * Empirically these collisions push the morphology prior to mis-tag state
+	 * abbreviations as `street_suffix`.
+	 *
+	 * A minimum length of 3 retains useful forms (`ave`, `blvd`, `rue`, `str`) while filtering out the noise.
 	 */
 	minVariantLength?: number
 	/**
@@ -75,8 +84,10 @@ export interface BuildStreetMorphologyFSTResult {
 }
 
 /**
- * Parse one `street_types.txt` line into `{ canonical, variants }`. Canonical is the first token (pre-`|`); variants
- * are all whitespace-stripped non-empty tokens including the canonical.
+ * Parse one `street_types.txt` line into `{ canonical, variants }`.
+ *
+ * Canonical is the first token (pre-`|`); variants are all whitespace-stripped
+ * non-empty tokens including the canonical.
  *
  * Lines with no `|` are treated as a single-form entry where canonical == variant.
  */
@@ -85,10 +96,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 
 	if (!trimmed.length || trimmed.startsWith("#")) return null
 
-	const parts = trimmed
-		.split("|")
-		.map((s) => s.trim())
-		.filter((s) => s.length)
+	const parts = TextSpliterator.from(trimmed, { delimiter: "|" }).toArray()
 
 	if (!parts.length) return null
 
@@ -100,6 +108,7 @@ export async function buildStreetMorphologyFST(
 ): Promise<BuildStreetMorphologyFSTResult> {
 	const progress = opts.onProgress ?? (() => {})
 	const minVariantLength = opts.minVariantLength ?? 3
+	const dictionariesDir = PathBuilder.from(opts.dictionariesDir)
 
 	// Discover locales — either provided explicitly, or all directories containing street_types.txt.
 	let locales: string[]
@@ -109,7 +118,7 @@ export async function buildStreetMorphologyFST(
 		locales = opts.locales
 	} else {
 		const entries = await Globerator.from("*", {
-			cwd: opts.dictionariesDir,
+			cwd: dictionariesDir,
 			absolute: false,
 			onlyFiles: false,
 		}).toArray()
@@ -117,7 +126,7 @@ export async function buildStreetMorphologyFST(
 		const localeProbes: Array<[string, boolean]> = []
 
 		for (const entry of entries) {
-			const localePath = join(opts.dictionariesDir, entry)
+			const localePath = dictionariesDir(entry)
 
 			if (!(await isDirectory(localePath))) {
 				localeProbes.push([entry, false])
@@ -125,13 +134,7 @@ export async function buildStreetMorphologyFST(
 				continue
 			}
 
-			try {
-				await statPath(join(localePath, STREET_TYPES_FILENAME))
-
-				localeProbes.push([entry, true])
-			} catch {
-				localeProbes.push([entry, false])
-			}
+			localeProbes.push([entry, await isFile(localePath(STREET_TYPES_FILENAME))])
 		}
 
 		locales = localeProbes.filter(([, hasFile]) => hasFile).map(([entry]) => entry)
@@ -139,12 +142,12 @@ export async function buildStreetMorphologyFST(
 
 	progress("discover", `Found ${locales.length} locales with ${STREET_TYPES_FILENAME}`)
 
-	// Collect canonical → set-of-variants across all locales. Same canonical form may appear in
-	// multiple locales (e.g. "avenue" in en/fr); we union the variant sets.
+	// Collect canonical → set-of-variants across all locales.
+	// Same canonical form may appear in multiple locales (e.g. "avenue" in en/fr); we union the variant sets.
 	const canonicalToVariants = new Map<string, Set<string>>()
 
 	for (const locale of locales) {
-		const filePath = join(opts.dictionariesDir, locale, STREET_TYPES_FILENAME)
+		const filePath = dictionariesDir(locale, STREET_TYPES_FILENAME)
 		const content = await readLocalTextFile(filePath)
 
 		for (const line of TextSpliterator.from(content)) {
@@ -163,7 +166,8 @@ export async function buildStreetMorphologyFST(
 
 	progress("collect", `Collected ${canonicalToVariants.size} canonical affixes`)
 
-	// Assign stable synthetic wofIDs. Sort canonicals for determinism.
+	// Assign stable synthetic wofIDs.
+	// Sort canonicals for determinism.
 	const sortedCanonicals = [...canonicalToVariants.keys()].toSorted()
 	const canonicalToWOFID = new Map<string, number>()
 
@@ -171,8 +175,9 @@ export async function buildStreetMorphologyFST(
 		canonicalToWOFID.set(sortedCanonicals[i]!, STREET_AFFIX_WOFID_BASE + i)
 	}
 
-	// Build the trie. Each variant is inserted as a token sequence pointing to its canonical's
-	// PlaceEntry — so all variants of "avenue" (av/ave/aven/...) lead to the same terminal entry.
+	// Build the trie.
+	// Each variant is inserted as a token sequence pointing to its canonical's PlaceEntry —
+	// so all variants of "avenue" (av/ave/aven/...) lead to the same terminal entry.
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
 	function insertName(tokens: string[], entry: PlaceEntry): void {
@@ -211,10 +216,12 @@ export async function buildStreetMorphologyFST(
 			placetype: "street_affix",
 			name: canonical,
 			parentChain: [],
-			// Fixed referential score: street affixes are structurally unambiguous (Avenue is almost
-			// never anything but street-typing). The morphology prior caps bias separately. this value
-			// just feeds the cap formula `referential * cap`. No encyclopedic field — a street affix is
-			// not a place and has no article. absence here is the correct statement.
+			// Fixed referential score: street affixes are structurally unambiguous
+			// (Avenue is almost never anything but street-typing).
+			// The morphology prior caps bias separately.
+			// This value just feeds the cap formula `referential * cap`.
+			// No encyclopedic field — a street affix is not a place and has no article.
+			// Absence here is the correct statement.
 			referential: 1,
 			lat: 0,
 			lon: 0,
@@ -250,7 +257,7 @@ export async function buildStreetMorphologyFST(
 		edgeCount,
 		nameInsertions: insertCount,
 		importanceMatches: 0, // No importance scoring for morphology — fixed at 1.0.
-		sourceDB: opts.dictionariesDir,
+		sourceDB: dictionariesDir.toString(),
 	}
 
 	return {

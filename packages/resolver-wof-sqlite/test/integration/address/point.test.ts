@@ -1,12 +1,3 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   The address-point reader's probe interface, pinned over a fixture extract — the scope ladder and
- *   the range-surface fallback ("385-387 Esplanade" keys the register's `385`; an exact range key,
- *   where a source carries one verbatim, is never second-guessed).
- */
-
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import {
 	AddressPointSqliteLookup,
@@ -21,7 +12,6 @@ import {
 	normalizeStreetForKeyLocale,
 } from "@mailwoman/resolver-wof-sqlite/street"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
-import { join } from "path-ts"
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -29,21 +19,18 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 let lookup: AddressPointSqliteLookup
-/**
- * The same fixture read as a BAN/OSM-shaped extract, whose locality keys are full place names a query can be held to.
- */
+
 let fullKeys: AddressPointSqliteLookup
 
 beforeAll(async () => {
 	const dir = fixtures.use(await temporaryDirectory("ap-lookup-")).path
-	const path = join(dir, "fixture.db")
+	const path = dir("fixture.db")
 	using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 	await createAddressPointTable(kdb)
 
 	const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
-	// (street_norm, street_key, number, unit, postcode, locality_norm, street_raw, lat, lon, source, release, admin_code, certified)
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -60,7 +47,6 @@ beforeAll(async () => {
 		null
 	)
 
-	// A source that carries the range verbatim — the exact key must win over the low-end retry.
 	insert.run(
 		"osborne drive",
 		"osborne drive",
@@ -78,13 +64,11 @@ beforeAll(async () => {
 	)
 
 	insert.run("forest road", "forest road", "19", null, "7250", "trevallyn", "Forest Road", -41.4316, 147.1185, "t", "r")
-	// BAN-style space-separated letter suffix — the spacing-variant fallback's fixture. The key comes
-	// from the shared normalizer so this fixture can never drift from the probe side's derivation.
+
 	const egliseKey = normalizeStreetForKey("Rue de l'Église")
 
 	insert.run(egliseKey, egliseKey, "3 a", null, "67530", "boersch", "Rue de l'Église", 48.4771, 7.4433, "t", "r")
-	// A BAN-shaped row for the bbox rung's contradiction case (#1913): Servon's `10 rue de la République`, whose own
-	// postcode and commune disagree with a `75008 Paris` query, sits inside a box drawn around Paris.
+
 	const republiqueKey = normalizeStreetForKey("Rue de la République")
 
 	insert.run(
@@ -103,16 +87,12 @@ beforeAll(async () => {
 		null
 	)
 
-	// Two villages under one DE postcode, both with a Teichstraße 3 (#1631): the postcode rung must not answer the other
-	// village's rooftop when the query names a locality.
 	const teichKey = normalizeStreetForKey("Teichstraße")
 	insert.run(teichKey, teichKey, "3", null, "04509", "werlitzsch", "Teichstraße", 51.4367, 12.1958, "osm", "r")
 	insert.run(teichKey, teichKey, "3", null, "04509", "krensitz", "Teichstraße", 51.52, 12.45, "osm", "r")
-	// An OSM-shaped row with no scope of its own — the case the bbox rung exists for.
+
 	insert.run("mill lane", "mill lane", "7", null, null, null, "Mill Lane", 51.5, -0.1, "osm", "r")
-	// A NAD-shaped US row whose city field is abbreviated — the Texas extract writes `addi` for Addison on 5,174 rows. The
-	// board's `us-addison-zip-75001` (status pass) is this row. a locality check that reads the truncation as a
-	// different place loses it to interpolation.
+
 	const airportKey = normalizeStreetForKey("Airport Pkwy")
 
 	insert.run(
@@ -160,35 +140,29 @@ describe("AddressPointSqliteLookup", () => {
 	it("bridges letter-suffix spacing in both directions, then falls to the base number", () => {
 		expect(lookup.find({ street: "Rue de l'Église", number: "3a", postcode: "67530" })?.lat).toBe(48.4771)
 		expect(lookup.find({ street: "Rue de l'Église", number: "3 a", postcode: "67530" })?.lat).toBe(48.4771)
-		// No 19a and no "19 a" on Forest Road — the base-number rung answers 19's parcel.
+
 		expect(lookup.find({ street: "Forest Road", number: "19a", postcode: "7250" })?.lat).toBe(-41.4316)
-		// No 4, "4 a", or 4a anywhere — the whole ladder stays null.
+
 		expect(lookup.find({ street: "Rue de l'Église", number: "4a", postcode: "67530" })).toBeNull()
 	})
 
 	it("never range-splits or suffix-folds the unit-containing and box shapes", () => {
-		// AU slash convention: '5/7' is unit 5 of house 7 — not a range. The ladder must not derive '5'.
 		expect(lookup.find({ street: "Osborne Drive", number: "5/32", postcode: "4505" })).toBeNull()
-		// Fractional house numbers survive untouched — '32 1/2' is neither a spaced suffix nor a range.
+
 		expect(lookup.find({ street: "Osborne Drive", number: "32 1/2", postcode: "4505" })).toBeNull()
-		// A unit-designator prefix folded into the span is not a suffix shape.
+
 		expect(lookup.find({ street: "Osborne Drive", number: "unit 32", postcode: "4505" })).toBeNull()
 		expect(lookup.find({ street: "Osborne Drive", number: "apt 3a", postcode: "4505" })).toBeNull()
-		// A PO-Box surface that leaks this far probes an absent street key and stays null, never throws.
+
 		expect(lookup.find({ street: "PO Box", number: "123-125", postcode: "4505" })).toBeNull()
 	})
 
 	it("unit siblings share the building coordinate through every rung", () => {
-		// The fixture has unit rows for 32 (unit 6 etc. in the real register. here the plain row) — a
-		// range surface resolving through the low-end rung lands the same building coordinate the
-		// plain-number probe returns, so a unit-containing query can never be worse than its base.
 		const base = lookup.find({ street: "Osborne Drive", number: "32", postcode: "4505" })
 		const viaRange = lookup.find({ street: "Osborne Drive", number: "32-36", postcode: "4505" })
 
 		expect(base?.lat).toBeDefined()
 
-		// The verbatim '32-36' fixture row wins for the range surface (precedence pin, again from the
-		// unit angle): the low-end rung only ever fires when no row carries the surface as written.
 		expect(viaRange?.lat).toBe(-27.9999)
 	})
 
@@ -200,7 +174,7 @@ describe("AddressPointSqliteLookup", () => {
 	})
 })
 
-describe("the bbox fall-through's scope contradiction (#1913)", () => {
+describe("The bbox fall-through's scope contradiction", () => {
 	const parisBox = { minLat: 48.5, maxLat: 49.1, minLon: 2, maxLon: 2.8 }
 
 	it("refuses a row whose own postcode names a different place than the query's", () => {
@@ -229,7 +203,7 @@ describe("the bbox fall-through's scope contradiction (#1913)", () => {
 	})
 })
 
-describe("the postcode rung's locality contradiction (#1631)", () => {
+describe("The postcode rung's locality contradiction", () => {
 	it("answers the row whose locality agrees, whichever village the query names", () => {
 		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509", locality: "Krensitz" })?.lat).toBe(
 			51.52
@@ -248,10 +222,7 @@ describe("the postcode rung's locality contradiction (#1631)", () => {
 		expect(fullKeys.find({ street: "Teichstraße", number: "3", postcode: "04509" })).not.toBeNull()
 	})
 
-	// `us-addison-zip-75001`: the US extract's key is the NAD abbreviation `addi`, the query says Addison. An abbreviated
-	// key steers the choice among same-postcode rows but never refuses one, so the postcode-only row answers at rooftop.
-	// exact comparison sent this row to interpolation 198 m away.
-	it("never refuses on the locality under the US extract, whose keys are abbreviated (#1631 follow-up)", () => {
+	it("Never refuses on the locality under the US extract, whose keys are abbreviated ( follow-up)", () => {
 		const hit = lookup.find({ street: "Airport Pkwy", number: "4900", postcode: "75001", locality: "Addison" })
 
 		expect(hit?.lat).toBe(32.965477444)
@@ -272,15 +243,13 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 
 	beforeAll(async () => {
 		const dir = fixtures.use(await temporaryDirectory("ap-lookup-zh-")).path
-		const path = join(dir, "tw.db")
+		const path = dir("tw.db")
 		using kdb = new DatabaseClient<AddressPointDatabase>(path)
 
 		await createAddressPointTable(kdb)
 
 		const insert = kdb.prepare(`INSERT INTO address_point VALUES (${ADDRESS_POINT_COLUMNS.map(() => "?").join(", ")})`)
 
-		// The register's own surfaces: 臺 in the 縣市, full-width digits and 號 on the number, the 里 in admin_code, no
-		// postcode. Two 中正區 exist (臺北市, 基隆市), so the scope key carries the 縣市 too.
 		const rows: Array<[string, string, string, string | null, string]> = [
 			["臺北市中正區", "重慶南路一段", "１２２號", null, "建國里"],
 			["基隆市中正區", "中正路", "１２２號", null, "正義里"],
@@ -327,7 +296,7 @@ describe("a zh extract — the Taiwanese register keyed by 縣市 + 鄉鎮市區
 		expect(zh.find({ street: "旗下巷", number: "14之12號", ...scope })?.lat).toBe(22.6133451)
 		expect(zh.find({ street: "旗下巷", number: "14號之12", ...scope })?.lat).toBe(22.6133451)
 		expect(zh.find({ street: "旗下巷", number: "１４號之１２", ...scope })?.lat).toBe(22.6133451)
-		// The attached number, alone and after a sub-number.
+
 		expect(zh.find({ street: "旗下巷", number: "14附3號", ...scope })?.lat).toBe(22.6133451)
 		expect(zh.find({ street: "旗下巷", number: "14之12附1號", ...scope })?.lat).toBe(22.6133451)
 	})

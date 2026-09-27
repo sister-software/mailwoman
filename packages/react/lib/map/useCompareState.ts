@@ -21,7 +21,8 @@ export interface UseCompareState {
 	 */
 	compareVersion: string | null
 	/**
-	 * Flip compare mode. turning it off clears the chosen version.
+	 * Flip compare mode.
+	 * Turning it off clears the chosen version.
 	 */
 	setCompareMode: (compareMode: boolean) => void
 	/**

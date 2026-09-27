@@ -1,34 +1,17 @@
-// SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
-// SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
-
-/**
- *   `bare-country` — the country name as the whole query. Addresses almost never consist of one bare
- *   country name, so the class is out of the model's training distribution and the tag is a coin
- *   flip: measured on the 2026-08-13 panel, France/Germany/United States/New Zealand parsed
- *   `country` while Japan/China/Nigeria/Australia/Deutschland parsed `locality`. The retrieval-side
- *   bare-country race (#1651) covers the answer either way. this recipe closes the parse half so the
- *   tag itself is right.
- *
- *   Source is the codex country table — every ISO canonical English name plus the curated surface
- *   forms (endonyms and long-form names). The 2–3 letter codes are deliberately excluded: a bare
- *   `JP` or `GER` is an abbreviation register with its own ambiguity surface (`IN`, `DE`, `TO` are
- *   English words), and teaching it here would be an unmeasured claim. Case augmentation is the
- *   loader's job, as everywhere.
- */
-
 import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/codex/country"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
-/**
- * Surfaces shorter than this are the code register (`JP`, `GER`), not a name — excluded (see the module doc).
- */
+import { SourceRegister } from "#registers"
+import { SurfaceOrigin } from "#types"
+
+const BARE_COUNTRY_PROVENANCE = {
+	register: SourceRegister.Codex,
+	surface: SurfaceOrigin.Attested,
+}
+
 const MIN_NAME_LENGTH = 4
 
-/**
- * Every (surface, iso2) pair the recipe emits: the ISO canonical names plus each country's curated surface forms,
- * deduplicated on the surface string (a form shared across countries — none known — would keep its first bearer).
- */
 function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 	const seen = new Set<string>()
 
@@ -51,15 +34,15 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 }
 
 /**
- * Recipe registered with the corpus builder — see the file header for the parse behaviour it exists to exercise, and
- * `description` below for the surface form it generates.
+ * Generates queries that consist of a country name alone, drawn from ISO names
+ * and curated surface forms of at least four characters, with no country codes.
  */
 export const bareCountryRecipe: CorpusRecipe = {
 	name: "bare-country",
-	description: "The country name as the whole query (#1651 parse half): ISO names + curated endonyms, no codes",
+	description:
+		"Emits a country name as the whole query, drawn from ISO names and curated endonyms but never from country codes",
 	mode: "generate",
 	async run(opts, write) {
-		// Seeded for parity with the other recipes. the surfaces themselves drive the content.
 		makeMulberry32(opts.seed)
 		let read = 0
 		let emitted = 0
@@ -82,7 +65,7 @@ export const bareCountryRecipe: CorpusRecipe = {
 				license: "Synthetic — bare-country; surfaces from the codex country table (ISO 3166 + curated forms)",
 			}
 
-			if (alignAndWrite(write, canonical, "bare-country")) {
+			if (alignAndWrite(write, canonical, "bare-country", BARE_COUNTRY_PROVENANCE)) {
 				emitted++
 			} else {
 				skipped++

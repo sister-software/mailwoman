@@ -15,14 +15,14 @@
  *   every frame is stripped OF ansi before IT is matched. The frame has two outputs and the assertions below are about
  *   only one of them: chalk emits a dim/reset pair around each evidence label, so `/system\s+us/` cannot match a
  *   coloured frame — `\s+` does not span the reset sequence sitting between the label and its value. chalk's level
- *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and nothing here clears. Therefore, a test
+ *   follows `FORCE_COLOR`. It several terminals and `tmux`/`direnv` setups set and no code here clears. Therefore, a test
  *   that matches the raw capture passes or fails by the environment it happens to run in.
  */
 
-import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workspacePath } from "@mailwoman/core/paths"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { stripAnsi } from "mailwoman/cli-kit"
 import { runStaticDebug } from "mailwoman/debug-view/command"
 import { mapPaneCellSize } from "mailwoman/debug-view/DebugFrame"
@@ -33,7 +33,7 @@ import { describe, expect, test } from "vitest"
 // MARK: Environment guard
 
 // Same predicate as commands/geocode.test.ts's `hasWOFDB`.
-const DEFAULT_WOF_PATH = String(dataRootPath("wof", "admin-global-priority.db"))
+const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
 
@@ -47,7 +47,7 @@ const hasWeights = await (async () => {
 	}
 })()
 
-const TILES_PATH = String(workspacePath("map-tui", "test", "fixtures", "portland.pmtiles"))
+const TILES_PATH = workspacePath("map-tui", "test", "fixtures", "portland.pmtiles")
 const hasTiles = await pathExists(TILES_PATH)
 
 const canRun = hasWOFDB && hasWeights && hasTiles
@@ -73,12 +73,12 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The resolved tier line — street-level when the database is present, admin centroid otherwise. either is a
-		// legitimate resolve for this environment, so the assertion accepts both.
+		// The resolved tier line — street-level when the database is present, admin centroid otherwise.
+		// Either is a legitimate resolve for this environment, so the assertion accepts both.
 		expect(text).toMatch(/address_point|admin/)
 
-		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the tile geometry, or at
-		// minimum the marker glyph at the resolved coordinate.
+		// The map pane inked something: a rendered braille cell (U+2800..U+28FF) from the
+		// tile geometry, or at minimum the marker glyph at the resolved coordinate.
 		expect(/[⠀-⣿]/u.test(text) || text.includes("●")).toBe(true)
 
 		// The raw query echoed back in the input row.
@@ -90,8 +90,9 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 
 		const text = stripAnsi(await runStaticDebug("3215 SE Clinton St, Portland OR", options))
 
-		// The evidence rows, each with a value only the live classifier can produce: the conventions system and how
-		// it was chosen, the locale head's own axis, the SentencePiece stream, the channels as fed, the decode.
+		// The evidence rows, each with a value only the live classifier can produce:
+		// the conventions system and how it was chosen, the locale head's own axis,
+		// the SentencePiece stream, the channels as fed, the decode.
 		expect(text).toMatch(/system\s+us \((auto|pinned)\)/u)
 		expect(text).toContain("mode ")
 		expect(text).toMatch(/locale-head\s+[A-Z]{2} \d\.\d\d/u)
@@ -104,7 +105,8 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 			expect(text).toContain(heading)
 		}
 
-		// Timing is measured rather than defaulted — a zero here would mean the session handed over a placeholder.
+		// Timing is measured rather than defaulted.
+		// A zero here would mean the session handed over a placeholder.
 		expect(text).toMatch(/parse\s+\d+\.\d ms/u)
 
 		// And the footer says what this frame is.
@@ -118,18 +120,19 @@ describe("runStaticDebug --debug-size floor", () => {
 	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
 		const options = createGeocodeCommandOptions({ debugSize: "100x5" })
 
-		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw at this size
-		// (mapPaneCellSize's row math goes negative before map-tui's allocation does) — assertDebugSizeFloor now
-		// catches it before any DB/weights work, so this rejects even without a resolvable session.
+		// Regression for the raw `RangeError: Invalid typed array length: -4608` `new RGBAGrid` threw
+		// at this size (mapPaneCellSize's row math goes negative before map-tui's allocation does) —
+		// assertDebugSizeFloor now catches it before any DB/weights work,
+		// so this rejects even without a resolvable session.
 		await expect(runStaticDebug("3215 SE Clinton St, Portland OR", options)).rejects.toThrow(
 			/--debug-size below the 60x20 minimum: 100x5/
 		)
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6. Asserting
-		// the pair is what keeps the constant and `mapPaneCellSize` from drifting apart the next time a row is added
-		// to the input area.
+		// The floor is arithmetic rather than taste: 19 rows leaves the map pane 5 content rows, 20 leaves it 6.
+		// Asserting the pair is what keeps the constant and `mapPaneCellSize` from drifting
+		// apart the next time a row is added to the input area.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
@@ -143,9 +146,9 @@ describe("runStaticDebug --debug-size floor", () => {
 
 describe("runStaticDebug empty input", () => {
 	test("an empty input rejects with the one-shot path's missing-argument message, not a junk frame", async () => {
-		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor and before
-		// createGeocodeSession, so this rejects even without a resolvable session — same unconditional posture as
-		// the --debug-size floor test above.
+		// `runStaticDebug`'s empty-input guard runs before assertDebugFormatSanity/assertDebugSizeFloor
+		// and before createGeocodeSession, so this rejects even without a resolvable session —
+		// same unconditional posture as the --debug-size floor test above.
 		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)

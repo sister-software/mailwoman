@@ -1,17 +1,6 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   ONNX inference wrapper.
- *
- *   Loads a token-classification model exported by `packages/corpus-python/src/mailwoman_train/
- *   export_onnx.py` (BertForTokenClassification w/ inputs `input_ids` + `attention_mask`, output
- *   `logits` shape `[batch, sequence, num_labels]`).
- *
- *   Lazy-loads on first `infer()` call unless `warmup: true` is passed. the constructor itself is
- *   cheap and synchronous.
- */
-
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import ort from "onnxruntime-node"
 import type { PathBuilderLike } from "path-ts"
@@ -26,82 +15,81 @@ import {
 	type OutputTensor,
 } from "#ort-feeds"
 
-// Back-compat: the dims moved to gazetteer-inference.ts (browser-safe) so the web runner can
-// import them without touching this node-only module.
+/**
+ * Re-exports the evidence feature widths from the browser-safe gazetteer inference module.
+ */
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
-// Back-compat: the result type moved to ort-feeds.ts (pure, shared with the browser runner).
+
+/**
+ * Re-exports the character feed packer, which lives in the pure feed module shared with the browser runner.
+ */
 export { packCharFeed } from "#ort-feeds"
+/**
+ * Re-exports the inference result type from the feed module shared with the browser runner.
+ */
 export type { InferResult } from "#ort-feeds"
 
+/**
+ * Configures an {@link ONNXRunner}.
+ *
+ * The runner always appends a CPU fallback to the requested execution providers.
+ */
 export interface ONNXRunnerOpts {
 	/**
-	 * If true, load the model immediately in `create()`. Default false.
+	 * Whether `create()` loads the session immediately instead of on first inference.
+	 * It defaults to `false`.
 	 */
 	warmup?: boolean
+
 	/**
-	 * Fixed sequence length the model expects. v0.1.0 / v0.2.0 quantization baked in 128 (the training-time max position)
-	 * even though the fp32 export specified dynamic axes — re-quantize with a different shape to override. Inputs shorter
-	 * than this are padded with id `0` and masked out via attention_mask=0. inputs longer are truncated.
+	 * The fixed input sequence length of the model, which defaults to {@link DEFAULT_FIXED_SEQ_LEN}.
+	 *
+	 * Shorter inputs are padded with id 0 and masked out.
+	 * Longer inputs are truncated.
 	 */
 	fixedSeqLen?: number
+
 	/**
-	 * ONNX Runtime execution providers to try, in priority order — e.g. `["cuda", "cpu"]` or `["webgpu", "cpu"]`.
-	 * **Default `["cpu"]`** (unchanged behavior). GPU providers (`cuda`, `webgpu`) throw at session-create when their
-	 * runtime/driver is absent rather than soft-falling-back, so this is **guarded**: if the requested list fails to
-	 * initialize, the runner retries on CPU alone. The cost of a failed GPU probe is a one-time sub-`100 ms` hit at load,
-	 * so a GPU box lights up and a CPU box pays ~nothing. `cpu` is always appended if not present.
+	 * ONNX Runtime execution providers in priority order, such as `["cuda", "cpu"]`.
+	 * It defaults to `["cpu"]`.
+	 *
+	 * The runner appends `cpu` when it is missing.
+	 * GPU providers throw when they fail to initialize, so the runner then retries on CPU alone.
 	 */
 	executionProviders?: string[]
+
 	/**
-	 * Cap ONNX Runtime's intra-op thread pool — the threads a single operator splits its work across.
+	 * The maximum intra-op thread count for one operator.
 	 *
-	 * Unset means ORT sizes the pool to the machine's core count. That is the right default for a server running one
-	 * session over long sequences, and the wrong one for the shape this repo actually runs: short addresses, frequently
-	 * several processes at once. Every CLI invocation is its own session, so N concurrent processes each claim every
-	 * core, and the oversubscription surfaces as latency rather than error — measured 2026-08-03, eight concurrent
-	 * `mailwoman geocode` calls took 8.75 s against a 10 s test timeout on an otherwise idle 16-core box, where one alone
-	 * took 5.62 s.
-	 *
-	 * Set it when the caller knows it is one of many, or when sequences are short enough that thread coordination costs
-	 * more than the parallelism returns.
+	 * When unset, ONNX Runtime uses every core, which oversubscribes the machine
+	 * when several processes run at once.
 	 */
 	intraOpNumThreads?: number
 }
 
 /**
- * Default sequence length for v0.1.0 / v0.2.0 (BertConfig max_position_embeddings = 128).
+ * The default model sequence length in pieces.
  */
 export const DEFAULT_FIXED_SEQ_LEN = 128
 
 /**
- * Intra-op thread cap applied by `NeuralAddressClassifier.loadFromWeights`, overridable per-process via
- * `MAILWOMAN_INTRA_OP_THREADS`.
+ * The default ONNX Runtime intra-op thread count.
+ * `MAILWOMAN_INTRA_OP_THREADS` overrides it per process.
  *
- * There is no value that is right FOR both regimes, which is why this is a knob with a compromise default rather than a
- * tuned constant. Measured on a 16-core box:
- *
- * - One process, 120 warm parses: 1 thread 18.3 ms/parse, 2 threads 12.5, 4 threads 9.2, ORT's all-cores default 9.3.
- *   More threads win. the parallelism is doing real work.
- * - Four concurrent processes, full geocode: 1 thread 32 req/s each, 2 threads 45, 4 threads 33. Fewer threads win,
- *   because N processes each sizing a pool to the machine oversubscribe it N-fold.
- *
- * Two is the compromise: it costs a single process ~35% latency against its own optimum, and provides a four-process
- * server ~36% throughput against the single-process optimum applied blindly. A server that knows its own worker count
- * should set `MAILWOMAN_INTRA_OP_THREADS` to roughly cores/workers instead of accepting this.
- *
- * Re-derive both curves before changing it. They are properties of the model and the box, and the single-process one
- * alone will point at the wrong answer.
+ * A multi-worker server should set the override to about the core count divided by the worker count.
  */
 export const DEFAULT_INTRA_OP_THREADS = 2
 
-/**
- * The `{data, dims}` view `decodeInferOutput` reads. The float32 dtype is the export interface's rather than a runtime
- * check.
- */
 function outputTensor(tensor: ort.Tensor): OutputTensor {
 	return { data: tensor.data as Float32Array, dims: tensor.dims }
 }
 
+/**
+ * Runs a token-input or character-input ONNX model in Node.
+ *
+ * The session loads lazily from a path or from bytes.
+ * The runner falls back to the CPU provider when the requested providers fail to initialize.
+ */
 export class ONNXRunner {
 	private session: ort.InferenceSession | null = null
 	private loadPromise: Promise<ort.InferenceSession> | null = null
@@ -117,13 +105,13 @@ export class ONNXRunner {
 		this.modelBytes = modelBytes
 		this.fixedSeqLen = opts.fixedSeqLen ?? DEFAULT_FIXED_SEQ_LEN
 		const requested = opts.executionProviders ?? ["cpu"]
-		// CPU is the universal final fallback — append it so a GPU-only list still has somewhere to land.
+
 		this.executionProviders = requested.includes("cpu") ? requested : [...requested, "cpu"]
 		this.intraOpNumThreads = opts.intraOpNumThreads
 	}
 
 	/**
-	 * Load by path. Reads the model lazily unless `warmup` is true.
+	 * Creates a runner for the model at `modelPath`, reading it on first inference unless `warmup` is set.
 	 */
 	static async create(modelPath: PathBuilderLike, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner(modelPath, null, opts)
@@ -136,7 +124,7 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Load from an already-read byte buffer.
+	 * Creates a runner from model bytes that have already been read.
 	 */
 	static async fromBytes(modelBytes: Uint8Array, opts: ONNXRunnerOpts = {}): Promise<ONNXRunner> {
 		const runner = new ONNXRunner("(bytes)", modelBytes, opts)
@@ -164,9 +152,7 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Create the session on the configured execution providers, guarded: GPU providers (`cuda`/`webgpu`) throw at
-	 * create-time when their runtime/driver is missing, so on failure we retry on CPU alone. A box with the GPU runtime
-	 * uses it. a box without one transparently lands on CPU.
+	 * Creates the session on the configured providers and retries on CPU alone if they fail to initialize.
 	 */
 	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
 		try {
@@ -178,7 +164,6 @@ export class ONNXRunner {
 		} catch (error) {
 			if (this.executionProviders.length === 1 && this.executionProviders[0] === "cpu") throw error
 
-			// A requested GPU provider failed to initialize — fall back to CPU so inference still loads.
 			console.warn(
 				`[ONNXRunner] execution providers [${this.executionProviders.join(", ")}] failed to initialize ` +
 					// oxlint-disable-next-line mailwoman/prefer-spliterator -- In-memory error message. only its first line is logged.
@@ -194,11 +179,11 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Run inference on a single token id sequence — see {@link InferFunction} for the parameter interface.
+	 * Runs one token-id sequence, padded or truncated to `fixedSeqLen`,
+	 * and trims the output to the real length.
 	 *
-	 * Pads to `fixedSeqLen` (default 128) with id 0 + mask 0. truncates if longer. Output is trimmed back to the actual
-	 * input length. Every soft-feed channel is present-conditional on the graph's declared inputs, with the zero-fill
-	 * confidence=0 identity for a declared-but-unsupplied channel (`packSoftChannelFeeds`).
+	 * A soft-feature channel is fed only when the graph declares it.
+	 * A declared channel that the caller omits is zero-filled.
 	 */
 	infer: InferFunction = async (tokenIDs, anchor, gazetteer, country, evidence) => {
 		const session = await this.ensureSession()
@@ -236,9 +221,9 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Run a char-path graph (`char_ids` + `attention_mask`, no `input_ids`; #2164) on one encoding. The encoder already
-	 * padded to S, so no fixed sequence length applies. the output is trimmed to the real unit count. The char path is
-	 * channel-free by interface, so no soft-feed tensors are packed.
+	 * Runs a character-input graph on one padded encoding and trims the output to the real unit count.
+	 *
+	 * The character path takes no soft-feature channels.
 	 */
 	inferChars: InferCharsFunction = async (charIDs, attentionMask) => {
 		const session = await this.ensureSession()
@@ -259,10 +244,10 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * The model's declared input names (loads the session if not already loaded). Used by the ProductionScorer (#718)
-	 * back-compat path: when a model-card has no `requires` block, the required soft-feature channels are inferred from
-	 * the graph — a model exporting `anchor_features` / `gazetteer_features` declared those channels mandatory at train
-	 * time.
+	 * Returns the graph's declared input names, loading the session if needed.
+	 *
+	 * Callers infer the required soft-feature channels from these names
+	 * when the model card has no `requires` block.
 	 */
 	async inputNames(): Promise<readonly string[]> {
 		const session = await this.ensureSession()

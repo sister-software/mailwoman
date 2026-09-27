@@ -23,7 +23,9 @@ const PRESETS = [
  */
 export interface PresetCompareOptions {
 	/**
-	 * Candidate ONNX model path. Omit to print the baseline only.
+	 * Candidate ONNX model path.
+	 *
+	 * Omit to print the baseline only.
 	 */
 	modelPath?: string
 	/**

@@ -48,14 +48,15 @@ import {
 	nameSlotsFor as wofNameSlotsFor,
 	type WOFVariantSpec,
 } from "#adapters/wof/json-rows"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
  *
- * Per-adapter deliberately (the postalcode adapter carries its own): each table is a record filter for its adapter's
- * emission set rather than a shared vocabulary.
+ * Per-adapter deliberately (the postalcode adapter carries its own): each table is a
+ * record filter for its adapter's emission set rather than a shared vocabulary.
  */
 function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag | undefined {
 	switch (placetype) {
@@ -84,20 +85,25 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
 /**
  * Compute the hierarchy variants for a record given its ancestry chain and the chosen `selfName`.
  *
- * `selfName` is the surface form to use for the record's own component (locality / region / country / subregion).
- * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*` localized value for variant slots.
- * ancestor names always come from the ancestor's canonical `wof:name`.
+ * `selfName` is the surface form to use for the record's own component
+ * (locality / region / country / subregion).
+ * Callers pass the canonical `wof:name` for the `"default"` slot and a `name:*`
+ * localized value for variant slots.
  *
- * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the OpenCage template produces the
- * canonicalized form (`"United States of America"`), matching the legacy SQLite adapter's behavior.
+ * Ancestor names always come from the ancestor's canonical `wof:name`.
+ *
+ * Country variants substitute `COUNTRY_DISPLAY_NAME` for the default slot so the
+ * OpenCage template produces the canonicalized form (`"United States of America"`),
+ * matching the legacy SQLite adapter's behavior.
  */
 export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
 
-	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`, `Paris, Île-de-France, France` —
-	// and several steps are not addresses at all. See `WOFVariantSpec.hierarchy`.
+	// Every variant here is a gazetteer hierarchy — `Paris`, `Paris, Île-de-France`,
+	// `Paris, Île-de-France, France` — and several steps are not addresses at all.
+	// See `WOFVariantSpec.hierarchy`.
 	const hierarchy = true
 
 	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
@@ -168,9 +174,11 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 }
 
 /**
- * Build the per-record name-slot list. The canonical `"default"` slot uses the OpenCage-canonical country form when the
- * record is itself a country (matches SQLite-adapter behavior); every other placetype's default slot uses `wof:name`
- * verbatim.
+ * Build the per-record name-slot list.
+ *
+ * The canonical `"default"` slot uses the OpenCage-canonical country form
+ * when the record is itself a country (matches SQLite-adapter behavior);
+ * every other placetype's default slot uses `wof:name` verbatim.
  */
 export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string }> {
 	return wofNameSlotsFor(rec, {
@@ -182,30 +190,36 @@ export function nameSlotsFor(rec: WOFRecord): Array<{ key: string; value: string
 }
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const WOF_ADMIN_ADAPTER_ID = "wof-admin"
 
 /**
- * Construct the wof-admin JSON-bundle adapter. The adapter is stateless across runs. calling this twice with the same
- * input directory produces byte-identical `canonical.jsonl` (records are emitted in sorted `wof:id` order to be
- * insensitive to filesystem walk ordering).
+ * Construct the wof-admin JSON-bundle adapter.
+ *
+ * The adapter is stateless across runs.
+ * Calling this twice with the same input directory produces byte-identical `canonical.jsonl`
+ * (records are emitted in sorted `wof:id` order to be insensitive to filesystem walk ordering).
  */
 export function createWOFAdminAdapter(): CorpusAdapter {
 	return {
 		id: WOF_ADMIN_ADAPTER_ID,
 		defaultLicense: "CC0-1.0",
 		addressRole: AddressRole.Premise,
+		register: SourceRegister.WhosOnFirst,
+		surface: SurfaceOrigin.Attested,
 		description:
 			"Who's On First admin GeoJSON bundles (countries, regions, counties, localities) — multi-name variants per record.",
 
 		async *rows(opts: AdapterOptions): AsyncIterable<CanonicalRow> {
 			// Pass 1: scan every GeoJSON file once, build the in-memory record index.
-			// We keep only records whose placetype maps to a ComponentTag — irrelevant placetypes
-			// (campus, county-region hybrids on which Mailwoman has no opinion) are dropped here so
-			// they don't inflate the ancestry index. Country-filtered runs prune to the matching
-			// country code too. the ancestors of a same-country record live in the same admin repo.
+			// We keep only records whose placetype maps to a ComponentTag — irrelevant
+			// placetypes (campus, county-region hybrids on which Mailwoman has no opinion)
+			// are dropped here so they don't inflate the ancestry index.
+			// Country-filtered runs prune to the matching country code too.
+			// The ancestors of a same-country record live in the same admin repo.
 			const byID = new Map<number, WOFRecord>()
 
 			for await (const rec of walkFeatures(opts.inputPath, { signal: opts.signal })) {

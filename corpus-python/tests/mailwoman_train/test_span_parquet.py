@@ -72,8 +72,10 @@ def _row(**over) -> dict:
         "source_id": "t-1",
         "corpus_version": "0.5.0",
         "license": "CC0-1.0",
-        "synth_method": None,
-        "synth_base_id": None,
+        "register": "us-census-tiger",
+        "surface": "attested",
+        "recipe": None,
+        "base_source_id": None,
     }
     base.update(over)
     return base

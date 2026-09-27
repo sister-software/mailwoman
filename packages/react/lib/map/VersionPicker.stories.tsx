@@ -3,7 +3,7 @@
 
 /**
  *   `<VersionPicker>` states over fake data — a stateful three-option picker, a disabled one, and the
- *   single-version case where the control renders nothing. No maplibre. plain DOM.
+ *   single-version case where the control renders no element. No maplibre. plain DOM.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
@@ -36,14 +36,14 @@ export const ThreeOptions: Story = {
 }
 
 /**
- * Disabled (e.g. while a parse runs).
+ * Disabled (e.g. While a parse runs).
  */
 export const Disabled: Story = {
 	args: { versions: VERSIONS, selected: "v7.1.0", onSelect: () => {}, disabled: true },
 }
 
 /**
- * A single version → the picker renders nothing.
+ * A single version → the picker renders no element.
  */
 export const SingleHidden: Story = {
 	render: () => (

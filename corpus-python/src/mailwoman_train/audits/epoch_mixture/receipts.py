@@ -1,14 +1,11 @@
-"""Corpus receipts: the hypothesis a recipe asserts about its own corpus, and the bytes it binds to.
+"""Match drawn rows against corpus receipts and bind a passing audit to its input bytes.
 
-A receipt names a row shape the config claims the corpus contains — a source, a country, an ordered
-component sequence — and the minimum number of draws an epoch must serve it. The audit counts them
-on the draw pass and RAISES when one falls short, which is the point: a recipe whose hypothesis the
-corpus cannot feed trains a model that answers the question nobody asked.
+A receipt describes a row shape that a config expects its corpus to contain. The shape can fix a
+source, a country and an ordered component sequence. The receipt also sets the minimum number of
+matching draws per epoch, and the audit raises when a receipt falls short.
 
-The binding is what stops a passing audit from being reused. It digests the config and the corpus
-MANIFEST together, so a GPU run must present a token derived from the same bytes the CPU preflight
-read. A receipt audit against a different corpus is not a weaker check. it is a check of something
-else.
+The binding token is a digest of the config file and the corpus MANIFEST. A GPU run must present
+the token from the CPU preflight, which prevents a passing audit from being reused for other bytes.
 """
 
 from __future__ import annotations
@@ -23,7 +20,7 @@ if TYPE_CHECKING:
 
 
 class CorpusReceiptError(ValueError):
-    """A failed receipt audit with its complete report attached for persistence."""
+    """Report a failed receipt audit and carry the full report so the caller can save it."""
 
     def __init__(self, message: str, report: dict[str, Any]):
         super().__init__(message)
@@ -31,7 +28,7 @@ class CorpusReceiptError(ValueError):
 
 
 def corpus_receipt_binding(config_path: Path, corpus_dir: Path) -> str:
-    """Bind a passing receipt audit to the exact config and corpus manifest bytes."""
+    """Return a SHA-256 digest of the config file and the corpus MANIFEST, each prefixed by its length."""
     manifest_path = corpus_dir / "MANIFEST.json"
     if not manifest_path.is_file():
         raise FileNotFoundError(f"required corpus receipt binding needs {manifest_path}")
@@ -49,7 +46,7 @@ def verify_corpus_receipt_binding(
     required_receipts: list[CorpusReceiptConfig],
     token: str,
 ) -> None:
-    """Refuse a receipt-containing GPU run unless the CPU audit bound these bytes."""
+    """Raise unless `token` matches the binding for these files, when the config requires receipts."""
     if not required_receipts:
         return
     if token != corpus_receipt_binding(config_path, corpus_dir):
@@ -66,7 +63,7 @@ def verify_corpus_receipt_report(
     token: str,
     report_path: Path,
 ) -> None:
-    """Verify that the bound CPU audit persisted a passing report."""
+    """Raise unless the saved report records a passing audit with this binding token."""
     if not required_receipts:
         return
     verify_corpus_receipt_binding(config_path, corpus_dir, required_receipts, token)
@@ -82,8 +79,8 @@ def verify_corpus_receipt_report(
 def component_sequence(labels: list[str]) -> list[str]:
     """Collapse BIO token labels to their ordered component-span sequence.
 
-    A malformed or orphan label RAISES rather than being skipped: a receipt counted over labels the
-    reader could not parse reports a shortfall that is the reader's rather than the corpus's.
+    A malformed or orphan label raises. Skipping it would make a parse failure look like a corpus
+    shortfall.
     """
     sequence: list[str] = []
     active: str | None = None
@@ -105,7 +102,7 @@ def component_sequence(labels: list[str]) -> list[str]:
 
 
 def contains_contiguous(sequence: list[str], expected: list[str]) -> bool:
-    """Whether `expected` appears as an unbroken run in `sequence`. An empty expectation matches."""
+    """Return whether `expected` appears as a contiguous run in `sequence`. An empty `expected` matches."""
     if not expected:
         return True
     width = len(expected)
@@ -113,7 +110,7 @@ def contains_contiguous(sequence: list[str], expected: list[str]) -> bool:
 
 
 def matches_receipt(row: dict[str, Any], receipt: CorpusReceiptConfig) -> bool:
-    """Whether one drawn row is an instance of the shape a receipt asserts."""
+    """Return whether a drawn row matches the receipt's source, country and component sequence."""
     if receipt.source is not None and row.get("source") != receipt.source:
         return False
     if receipt.country is not None and row.get("country") != receipt.country:

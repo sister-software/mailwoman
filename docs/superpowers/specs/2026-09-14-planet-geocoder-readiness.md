@@ -16,7 +16,7 @@ boards were built when it shipped two. This records where those have kept up and
 | Release list   | eleven locales over eleven countries — AU CN DE ES FR GB IN IT JP NZ US                                                    | `release.config.json` (`locales` + `charWeights[].overlays`) |
 | Country tables | 35 country sets across 29 files, each its own subset                                                                       | measured, below                                              |
 
-The three do not agree, and they are not meant to identically — a tier is a claim about measurement, the release
+The three do not agree, and they are not meant to identically. A tier is a claim about measurement, the release
 list is a claim about artifacts, a table is a claim about one mechanism. What follows is the places where they
 contradict rather than merely differ.
 
@@ -74,7 +74,7 @@ ships a weights package and is checked by two rows; China by two. The release li
 can measure, and a summary score over 1,261 rows reads as planet coverage while a third of those rows track
 rather than check and 36% of the total sits in eleven countries.
 
-Nothing here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
+No claim here says the board is wrong. It says a per-country verdict is only available where the rows are, and the
 places a planet geocoder is about to be judged — the other 119 countries — are not those places.
 
 **The instrument for this already ships.** `mailwoman data coverage` reports `boardRows` and `boardPassedRows`
@@ -130,7 +130,7 @@ This is adjacent to #2266, whose failures are all cross-country: `WA Sammamish` 
 and `Fort Worth` answering Fořt in Czechia (8,666 km) are the shape a bbox guard exists to refuse. For a Japanese
 or Chinese answer there is no box to check against.
 
-Adding four boxes is a small data change and a real behaviour change — the guard would begin firing where it
+Adding four boxes is a small data change and a real behaviour change. The guard would begin firing where it
 never has — so it needs the board rather than a commit.
 
 ## Where the country tables' center of gravity still is
@@ -140,7 +140,7 @@ never has — so it needs the board rather than a commit.
 the name alone admits `TIGERClassCode`, the literals alone admit every US state table, since `AL`, `CA` and `DE`
 are each a state and a country.
 
-Ranked by how several of the 35 name them:
+Ranked by the count of the 35 that name them:
 
 ```
 DE 26   FR 25   US 24   GB 23   ES 20   IT 16   AU 14   CA 14   NL 14
@@ -170,10 +170,10 @@ repository holds:
 
 Korean is categorical: the address vocabulary itself — 로, 길, 동, 시 — is Hangul, and every Korean row today is
 labeled `ja-JP`. Japanese is not: 97% of those rows are Han-only because 県/市/区/郡/町 and most place names are
-Han, so script does almost nothing for the Japanese/Chinese distinction.
+Han, so script offers almost no signal for the Japanese/Chinese distinction.
 
 The Japanese figure is a floor with a narrow denominator. That gold set carries postcode + prefecture +
-municipality and nothing below it — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
+municipality and no component below that level — median input 16 characters, p90 19, longest row `〒401-0300 山梨県南都留郡富士
 河口湖町` — which is the most Han-heavy part of a Japanese address. A full address with a building name
 (マンション, ハイツ, ビル) would carry Kana far more frequently, and this set cannot say how much more.
 
@@ -192,7 +192,7 @@ SG        66
 ```
 
 **India holds more places than any other country and is checked by two board rows.** That pairing states the
-planet problem in one line: retrieval reaches a million Indian places, and nothing measures whether the answers
+planet problem in one line: retrieval reaches a million Indian places, and no instrument measures whether the answers
 are right.
 
 ### One reading here was the instrument rather than the data
@@ -207,7 +207,7 @@ value that reads as the promoted gazetteer losing the Netherlands. It has not:
 
 The census counts `spr` rows; the resolver reads the FTS index. Only the first is low. What remains true and
 narrow is that the `spr` count for NL moved 19,812 → 28 between generations while the FTS content stayed rich,
-and nothing reachable from here says why or what still reads `spr`.
+and no evidence reachable from here says why or what still reads `spr`.
 
 ## What is still unanswered
 
@@ -231,4 +231,4 @@ Named so the next reader does not mistake silence for absence:
    anything measured against those numbers.
 4. **#2266 and #2267**, the resolver ranking defects, in whatever order the board's power allows.
 
-Items 3 and 4 are already filed with diagnosis and receipts; nothing here supersedes them.
+Items 3 and 4 are already filed with diagnosis and receipts, and no item here supersedes them.

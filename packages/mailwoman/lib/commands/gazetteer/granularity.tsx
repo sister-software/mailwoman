@@ -1,28 +1,16 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-/**
- *   `mailwoman gazetteer granularity` — the per-country gazetteer depth scorecard.
- *
- *   Answers "where does the admin gazetteer bottom out?" for every country it knows, which nobody
- *   had measured: the shipped artifact stocks 9 of WOF's 34 placetypes and carries a
- *   `dependent_locality` tier in 11 of 244 countries. Read-only, no network, no model — three
- *   grouped queries over `spr`/`ancestors` and a markdown render.
- *
- *   The report is a committed artifact (the `fill-rates.md` precedent), so the source md5 and the
- *   parent-coverage floor are pinned in its header. Re-running against a rebuilt gazetteer and
- *   diffing the report is the intended workflow.
- */
-
 import { writeLocalFile, makeDirectories } from "@mailwoman/core/fs/writers"
 import { Box, Text } from "ink"
-import { dirname } from "path-ts"
+import { dirname, isAbsolute, relative, resolvePath, sep } from "path-ts"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { DEFAULT_COVERAGE_FLOOR } from "#gazetteer-pipeline/defaults"
 
 /**
- * Native command-line interface consumed by the filesystem command router.
+ * Command specification for `gazetteer granularity`, which reports the deepest
+ * admin placetype the gazetteer covers in each country.
  */
 export const spec = {
 	name: "granularity",
@@ -40,20 +28,25 @@ export const spec = {
 
 const GazetteerGranularity: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { dataRootPath, md5File } = await import("@mailwoman/core/utils")
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+		const { md5File } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 		const { bottomsOutAt, buildGranularityLadder } = await import("#gazetteer-pipeline/granularity/index")
 		const { renderGranularityReport } = await import("#gazetteer-pipeline/granularity/report")
 
-		const sourcePath = options.source ?? String(dataRootPath("wof", "admin-global-priority.db"))
+		const sourcePath = options.source ?? wofDatabasePath("admin-global-priority.db")
 		const rows = buildGranularityLadder(sourcePath)
 
 		if (!rows.length) {
 			throw new Error(`granularity: no countries measured from ${sourcePath} — is this an admin DB?`)
 		}
 
+		// The report is committed, so a source under the data root is recorded relative to it.
+		const fromDataRoot = relative(dataRootPath(), resolvePath(sourcePath))
+		const underDataRoot = !isAbsolute(fromDataRoot) && fromDataRoot !== ".." && !fromDataRoot.startsWith(`..${sep}`)
+
 		const markdown = renderGranularityReport(rows, {
-			// Display the portable form. never bake the resolved lab path into a committed artifact.
-			sourcePath: "$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db",
+			sourcePath: underDataRoot ? `$MAILWOMAN_DATA_ROOT/${fromDataRoot.split(sep).join("/")}` : String(sourcePath),
 			sourceMD5: await md5File(sourcePath),
 			buildDate: new Date().toISOString(),
 			floor: options.floor,

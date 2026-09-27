@@ -10,8 +10,8 @@ annotations** (v0 rules beat neural by 13.9), **bare-slash unit designators** (v
 
 Survey method: source code, official docs, and issue trackers of libpostal, Pelias, Nominatim,
 and Photon, plus public docs of commercial geocoders and the OSM address-data conventions.
-Claims read directly from source are marked as such; where documentation is thin, that is said
-outright rather than papered over.
+Claims read directly from source are marked as such. Where documentation is thin, the survey
+says so.
 
 ---
 
@@ -69,10 +69,10 @@ slash-form sub-premises are under-represented.
 **(d) Issue-tracker lessons.**
 
 - [#255 "Using field separators to increase parsing accuracy"](https://github.com/openvenues/libpostal/issues/255)
-  (open, no maintainer reply): "100 Queens Road Central, Hong Kong" vs "100 Queens Road,
-  Central Hong Kong" — users perceive their commas as being thrown away. The separator
-  _feature_ exists but is evidently too weak to disambiguate, and there is no API to assert a
-  boundary.
+  (open, without a maintainer reply): "100 Queens Road Central, Hong Kong" vs "100 Queens
+  Road, Central Hong Kong". Users perceive that their commas are thrown away. The separator
+  _feature_ exists but is evidently too weak to disambiguate, and no API lets the caller assert
+  a boundary.
 - [#405 "Input delimiters are ignored"](https://github.com/openvenues/libpostal/issues/405)
   (open): same complaint class, still unresolved years later.
 - [#573 "Improving flat number detection"](https://github.com/openvenues/libpostal/issues/573):
@@ -125,14 +125,14 @@ component.
 motivated by "10 Boulevard Saint-Germain Paris": the graph holds `Saint-Germain` _and_
 `Saint` + `Germain`, and solvers (`ExclusiveCartesianSolver` + penalty/filter passes) pick
 whichever composition yields a valid solution. The same split function covers `/`, which is
-what gives Pelias a shot at slash forms — but note: we found no test or issue
-demonstrating it resolves the Australian `1/123` unit/house convention specifically.
+what gives Pelias a chance at slash forms. We found no test or issue showing that it resolves
+the Australian `1/123` unit/house convention specifically.
 
 **pelias/api sanitizers.** Read from
 [sanitizer/\_text.js](https://github.com/pelias/api/blob/master/sanitizer/_text.js): unicode
 normalization, whitespace trim, **trim of leading/trailing quotes** (same long quote list),
-truncation to 140 chars. That's all — no bracket stripping, no punctuation deletion before the
-parser sees the text. The parser is trusted with raw punctuation.
+truncation to 140 chars. The sanitizers perform no other step. They neither strip brackets nor
+delete punctuation before the parser sees the text, so the parser receives raw punctuation.
 
 **(d) Lessons.** PR #56's discussion frames hyphens as "glue" whose alternative readings must
 both stay alive; [#71 "Street number prefixes"](https://github.com/pelias/parser/issues/71)
@@ -182,7 +182,7 @@ the whitespace/punctuation breaks the pipeline expects).
 - [#3754](https://github.com/osm-search/Nominatim/issues/3754): "Severobaykal'sk" findable
   only _with_ the apostrophe — closed as a data issue. Because the apostrophe becomes a token
   break, the name indexes as two tokens while the apostrophe-less query is one fused token.
-  Lesson: **normalize-to-break and normalize-to-nothing diverge exactly on the
+  Lesson: **normalize-to-break and normalize-to-empty diverge exactly on the
   punctuation-omitted query**, and pushing that onto users gets issues filed.
 
 ## 4. Photon (Komoot)
@@ -220,7 +220,7 @@ char_filter provides most of it.
   numbers" — i.e. the punctuation-heavy sub-premise tail is by agreement out of scope
   ([Geocoding best practices](https://developers.google.com/maps/documentation/geocoding/best-practices)).
   Abbreviation interpretation is acknowledged as language-dependent. Everything else is a
-  black box; nothing citable about brackets or slashes.
+  black box; no citable source about brackets or slashes.
 - **Mapbox**: the only punctuation with documented semantics is the **semicolon — banned
   inside a single query because it's the batch-query delimiter**; queries are otherwise "20
   words and numbers … separated by spacing and punctuation," handling undocumented
@@ -401,16 +401,16 @@ data normalization and query reality.
 **Evidence:** Nominatim `strip-brace-terms` + `split-name-list` are shipped, battle-tested
 sanitizers doing exactly this; Photon's analyzers are the same bet; Pelias's API trims quotes
 before parsing for the same reason.
-**vs Stage 2.7 doc:** outside its scope (that doc is parser-side); complementary, no conflict.
+**vs Stage 2.7 doc:** This is outside that doc's scope, which is parser-side. The two are complementary and do not conflict.
 
 ### Sequencing note
 
 M2 + M3 are one build (the Stage 2.7 proposer with three cue families: designators, paired
 delimiters, numeric punctuation) and need no retrain. M4's lookup folds are partially
 inference-side. M1 rides the next scheduled retrain with char-offset labels. M5 is an
-independent wof-build change. Nothing in the survey contradicts the Stage 2.7 direction; the
+independent wof-build change. No finding in the survey contradicts the Stage 2.7 direction; the
 survey's strongest external validation is that the two systems closest to our architecture
-(Pelias for parse-side, Nominatim for index-side) each independently converged on "record
-punctuation, defer the decision, generate variants" — and the one system that reduced
-punctuation to features alone (libpostal) is the one whose issue tracker still collects our
-exact failure classes.
+(Pelias for parse-side, Nominatim for index-side) each independently arrived at "record
+punctuation, defer the decision, generate variants". The one system that reduced punctuation to
+features alone (libpostal) is the one whose issue tracker still collects our exact failure
+classes.

@@ -34,10 +34,7 @@ const withHouseNumber = await JSONSpliterator.fromAsync<ParityRow>(PARITY_PATH)
 	.take(172)
 	.toArray()
 
-const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
-	.map((line) => line.trim())
-	.filter((line) => line.length)
-	.toArray()
+const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH).toArray()
 
 const queries = [...new Set([...withHouseNumber, ...syntheticInputs])]
 
@@ -48,7 +45,8 @@ const child = spawnProcess("node", ["packages/nominatim/out/cli.js", "serve", "-
 try {
 	const deadline = Date.now() + 180_000
 
-	// Model + gazetteer boot takes a while. poll /status until the server answers.
+	// Model + gazetteer boot takes a while.
+	// Poll /status until the server answers.
 	for (;;) {
 		try {
 			const res = await fetch(`${BASE}/status`)

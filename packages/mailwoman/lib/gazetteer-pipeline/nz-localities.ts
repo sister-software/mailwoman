@@ -20,7 +20,7 @@
  *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
  *   address point (robust against depot-coded outliers); the bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
- *   parsed toponym queries — a `neighbourhood` row would be invisible to the locality filter group,
+ *   parsed toponym queries. A `neighbourhood` row would be invisible to the locality filter group,
  *   and widening that group is a global ranking change this database must not smuggle in. Population
  *   is deliberately 0/unmeasured (meaning-of-zero: an address-point count is not a population), so
  *   a database row ranks behind any populated namesake and wins only where its key is the answer.
@@ -32,24 +32,43 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { isoDate } from "@mailwoman/core/utils"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
-import type { PathBuilderLike } from "path-ts"
+import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
 /**
- * Minimum address points a (city, district) group needs before it warrants a database row. Below this the "centroid" is
- * a handful of rural delivery points and the name is as likely a farm check as a locality. 5 keeps 3,000-odd real
- * localities and drops the tail of one-off strings.
+ * The grant the artifact records, as its `database_meta` table has stated it since the first build.
+ */
+const NZ_LOCALITIES_LICENSE = "CC-BY-4.0, attribution Land Information New Zealand"
+
+/**
+ * The extract's vintage, as its `database_meta` table records it.
+ */
+const NZ_LOCALITIES_SOURCE_VINTAGE = "2021-10-21 (extract mtime); md5-sidecar verified"
+
+/**
+ * Minimum address points a (city, district) group needs before it warrants a database row.
+ *
+ * Below this the "centroid" is a handful of rural delivery points and the name is as likely a farm
+ * check as a locality. 5 keeps 3,000-odd real localities and drops the tail of one-off strings.
  */
 const MIN_GROUP_POINTS = 5
 
 /**
- * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the Chathams (~-44, -176.5) and the
- * subantarctic islands (Campbell Island ~-52.5). A point outside it is source noise (a wrong-hemisphere or null-island
- * row), not a New Zealand address.
+ * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the Chathams
+ * (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
+ *
+ * A point outside it is source noise (a wrong-hemisphere or null-island row), not a New Zealand address.
  */
 const NZ_LAT_MIN = -53
 const NZ_LAT_MAX = -29
@@ -58,33 +77,38 @@ const NZ_LON_MAX = 180
 
 export interface BuildNZLocalitiesOptions {
 	/**
-	 * The linz-derived OpenAddresses NZ countrywide CSV. Default
-	 * `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
+	 * The linz-derived OpenAddresses NZ countrywide CSV.
+	 *
+	 * Default `<data-root>/openaddresses/extracted/nz/countrywide.csv`.
 	 */
 	csvPath?: PathBuilderLike
 	/**
-	 * Output database. Default `<data-root>/wof/localities-nz-linz.db`.
+	 * Output database.
+	 *
+	 * Default `<data-root>/db/wof/localities-nz-linz.db`.
 	 */
 	out?: PathBuilderLike
 }
 
 /**
- * Title-case comparison surface for the CSV's already-title-cased city values — the database stores the display form
- * verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
+ * Title-case comparison surface for the CSV's already-title-cased city values — the database stores
+ * the display form verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
-	return (raw ?? "").trim().replaceAll(/\s+/g, " ")
+	return normalizeWhitespace(raw ?? "")
 }
 
 /**
  * The p-th percentile of a sorted numeric array (nearest-rank, p in [0, 100]).
  *
- * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based nearest rank
- * (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with, where core floors (`floor(p/100 · n)`) —
- * swapping conventions moves a percentile by up to one member row and with it every derived label point.
+ * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based
+ * nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with,
+ * where core floors (`floor(p/100 · n)`) — swapping conventions moves a percentile
+ * by up to one member row and with it every derived label point.
  *
- * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank the shipped NZ label points were
- * computed with. core floors
+ * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank
+ * the shipped NZ label points were computed with.
+ * Core floors
  */
 function percentileSorted(sorted: readonly number[], p: number): number {
 	const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1))
@@ -93,20 +117,22 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 }
 
 /**
- * Build the sealed NZ locality database. Not re-exported from a barrel — the command lazy-imports it (optional-peer
- * discipline, same as the NL PC6 builder).
+ * Build the sealed NZ locality database.
+ *
+ * Not re-exported from a barrel — the command lazy-imports it
+ * (optional-peer discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}
 ): Promise<{ out: string; inserted: number; skippedGroups: number; sourceMD5: string }> {
 	const { createUnifiedIndexes, createUnifiedSchema } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const { buildPlaceSearchFTS } = await import("@mailwoman/resolver-wof-sqlite")
-	const csvPath = (opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")).toString()
-	const outPath = (opts.out ?? dataRootPath("wof", "localities-nz-linz.db")).toString()
+	const csvPath = PathBuilder.from(opts.csvPath ?? dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"))
+	const outPath = (opts.out ?? wofDatabasePath("localities-nz-linz.db")).toString()
 	const tmpPath = `${outPath}.tmp`
 
-	// Provenance check: the md5 sidecar must exist and match. A database whose source cannot be named is
-	// exactly the artifact the provenance discipline forbids.
+	// Provenance check: the md5 sidecar must exist and match.
+	// A database whose source cannot be named is exactly the artifact the provenance discipline forbids.
 	const sourceMD5 = md5Hex(await readLocalBuffer(csvPath))
 
 	const sidecar = (await readLocalTextFile(`${csvPath}.md5`)).trim().split(/\s+/)[0]
@@ -115,7 +141,8 @@ export async function buildNZLocalitiesDatabase(
 		throw new Error(`source md5 mismatch: computed ${sourceMD5}, sidecar ${sidecar} — re-verify the extract`)
 	}
 
-	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows. two float arrays per group.
+	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows.
+	// Two float arrays per group.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
 	let header: string[] | undefined
 
@@ -161,9 +188,9 @@ export async function buildNZLocalitiesDatabase(
 	db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 	const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 	meta.run("source", "LINZ NZ Street Address via OpenAddresses (nz/countrywide)")
-	meta.run("license", "CC-BY-4.0, attribution Land Information New Zealand")
+	meta.run("license", NZ_LOCALITIES_LICENSE)
 	meta.run("source_md5", sourceMD5)
-	meta.run("source_vintage", "2021-10-21 (extract mtime); md5-sidecar verified")
+	meta.run("source_vintage", NZ_LOCALITIES_SOURCE_VINTAGE)
 	meta.run("min_group_points", String(MIN_GROUP_POINTS))
 
 	const sprInsert = db.prepare(
@@ -214,6 +241,28 @@ export async function buildNZLocalitiesDatabase(
 	buildPlaceSearchFTS(db, { drop: true })
 	db.exec("ANALYZE")
 	await db.destroy()
+
+	// The layer interface's manifest, beside `database_meta` and stating the same terms.
+	// The candidate build reads its tier before folding the database.
+	const now = new Date()
+
+	await stampLayerManifest(
+		tmpPath,
+		foldLayerManifest({
+			name: "localities-nz-linz",
+			version: isoDate(now),
+			// CC-BY 4.0 carries attribution and no share-alike term, so the artifact is published.
+			tier: LayerTier.Shipped,
+			license: NZ_LOCALITIES_LICENSE,
+			attribution: "Land Information New Zealand",
+			source: "LINZ NZ Street Address via OpenAddresses (nz/countrywide)",
+			sourceVintage: `${NZ_LOCALITIES_SOURCE_VINTAGE} (md5 ${sourceMD5})`,
+			buildCmd: "mailwoman gazetteer build nz-localities",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
+	)
 
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)

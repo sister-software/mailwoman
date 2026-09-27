@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: Teffen Ellis and Mailwoman contributors
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
 export interface GeocodeCommandOptions {
@@ -23,18 +23,24 @@ export interface GeocodeCommandOptions {
 	postcodeShapeCoherence: boolean
 	postcodeContainmentCoherence: boolean
 	/**
-	 * Admin-containment re-rank (#1717 stage 2). On by default since 2026-08-18 (promotion evidence in
-	 * docs/records/evals/) — `--no-admin-containment-rerank` opts out.
+	 * Admin-containment re-rank (#1717 stage 2).
+	 *
+	 * On by default since 2026-08-18 (promotion evidence in docs/records/evals/) —
+	 * `--no-admin-containment-rerank` opts out.
 	 */
 	adminContainmentRerank: boolean
 	/**
-	 * Capital-status ranking axis (#1880). Deliberately TRI-state with no entry in {@link createGeocodeCommandOptions}:
-	 * unstated flows through as absent so the session default (on, with the missing-reference degrade) applies —
-	 * `--capital-tier` demands the reference loudly, `--no-capital-tier` opts out.
+	 * Capital-status ranking axis (#1880).
+	 *
+	 * Deliberately TRI-state with no entry in {@link createGeocodeCommandOptions}: unstated
+	 * flows through as absent so the session default (on, with the missing-reference degrade)
+	 * applies — `--capital-tier` demands the reference loudly, `--no-capital-tier` opts out.
 	 */
 	capitalTier?: boolean
 	/**
-	 * Own-name variant-alias exemption (#1882). Tri-state for the same reason; `--no-variant-alias-exemption` opts out.
+	 * Own-name variant-alias exemption (#1882).
+	 *
+	 * Tri-state for the same reason; `--no-variant-alias-exemption` opts out.
 	 */
 	variantAliasExemption?: boolean
 	placeCountryThreshold: number
@@ -53,7 +59,7 @@ export function createGeocodeCommandOptions(overrides: Partial<GeocodeCommandOpt
 	return {
 		locale: "en-US",
 		countryScope: "auto",
-		dataRoot: mailwomanDataRoot(),
+		dataRoot: dataRootPath(),
 		localeCountryPrior: false,
 		gazetteerPrior: true,
 		placeCountry: true,

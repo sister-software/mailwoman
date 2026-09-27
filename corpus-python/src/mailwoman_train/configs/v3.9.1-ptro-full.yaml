@@ -1,37 +1,23 @@
-# === v3.9.0-ptro-probe — B1 step 3 (plan #1134): the PT/RO diacritic tokenizer splice. 8k ship candidate (2k probe passed: ro 0.800->1.000, fr guard +0.022, BR held, goldens noise). ===
+# v3.9.1-ptro-full is the 8k-step run of the v3.9.0 Portuguese and Romanian tokenizer probe.
 #
-# The one variable vs the shipped v381 (6.5.0): tokenizer v0.9.0-multisplice -> v0.12.0-ptro-splice
-# (+2,310 PT/RO diacritic pieces from 35k WOF PT+RO surfaces. English identity verified at splice time)
-# + init_from /data/models/ptro-expanded (v381 step-8000 FVT mean-init to 75,453). Same recipe otherwise
-# (the no-fragment tweak source + punct-drop augmentation v381 shipped with).
+# This config matches v3.9.0 except for the step count and run names. The v0.12.0-ptro-splice tokenizer
+# adds 2,310 Portuguese and Romanian diacritic pieces. Text without those letters tokenizes as before.
 #
-# Why. Night-2 measured the parity accent class (15% of street fails) with RO comma-below (s,/t,) at
-# byte-fallback and PT/RO words shattering at fertility 4-7 (Constanta -> Cons tan <0xC8> <0x9B> a).
-# Letter-family splices shipped clean three times (v5.1.0 bsplice CZ/PL, v5.2.0 nsplice Nordic,
-# v5.9.0 fr-nsplice); the v5.9.0 lesson applies — a training-free splice regressed FR streets, so the
-# spliced pieces get gradient via this fine-tune, never shipped mean-init-only. The closed numsplice
-# verdict does not apply: that was the shared numeric manifold. letters are disjoint codepoints.
-# note: RO is not in country_weights (never trained) — the splice gives RO tokenizer coverage. the
-# model reads RO only via constituent composition + PT/shared-Romance morphology. Pre-registered as such.
+# The init_from checkpoint is v381's step-008000 with the embedding table expanded to 75,453 rows.
+# Each new row is the mean of the rows for the pieces the old tokenizer produced.
 #
-# PRE-registered read (2k, package-shaped int8 vs shipped v381 baselines):
-#   primary — parity PT/RO subset: street-tag surface exactness on the accent-class rows improves
-#     (fertility is fixed by construction. the question is whether the mean-init'd pieces decode right
-#     at 2k). Falsifier: if PT/RO rows do not move, the pieces need more gradient -> the 8k decides.
-#   guard — golden us/fr micro within noise of v381 (F1 comparison across tokenizers is invalid for
-#     PT/RO rows by design. english tokenization is byte-identical so us/fr comparisons hold).
-#   guard — boards: Norway digit board bare-street-hn holds ~0.733. FR fragment overall holds ~0.758.
-#   guard — 6 demo presets byte-identical. the gauntlet passes on the 8k candidate before any ship.
-#   #378 — vocab +3.2%; embedding +2310x384 int8 ~ +0.9MB artifact. Within SLO.
+# RO is absent from country_weights, so the model sees Romanian only through the new pieces and shared
+# Romance morphology.
 #
-# Not a ship. A pass justifies the 8k. Promotion is the operator's act (autonomous shift: stage +
-# report, do not promote defaultVersion without the full check battery green).
-# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.9.0-ptro-probe.yaml --resume none
+# The target is street tagging on PT and RO rows with diacritics. The guards are the golden set, the
+# Norway digit board, the FR fragment board and the demo presets.
+#
+# Launch: cd corpus-python && modal run -d -m launch.train_remote --config v3.9.1-ptro-full.yaml --resume none
 data:
   corpus_dir: /data/corpus/versioned/v0.11.0-no-fragment/corpus-v0.11.0-no-fragment
   tokenizer_dir: /data/models/tokenizer/v0.12.0-ptro-splice
   max_length: 128
-  country_weights: # Verbatim from v2.4.1.
+  country_weights:
     US: 1.0
     FR: 1.0
     DE: 1.0
@@ -55,7 +41,7 @@ data:
     HR: 1.0
     HU: 1.0
     AU: 1.0
-  source_weights: # v3.1.0 weights + synth-no-fragment (the one new variable); synth-no-street-led zeroed (its on-disk part predates --exclude-surfaces and is contaminated vs the board — see the overlay note).
+  source_weights:
     wof-admin: 2.0
     wof-postalcode: 2.0
     ban: 3.0
@@ -81,17 +67,17 @@ data:
     synth-anchor-absorption: 6.0
     synth-fr-bare-street: 12.0
     synth-si-bare-village: 12.0
+    # The on-disk synth-no-street-led part predates --exclude-surfaces and contains board 3 surfaces.
     synth-no-street-led: 0.0
     synth-cz-pcfirst-preposition: 12.0
     synth-nl-postcode: 6.0
-    # probe 1: the fragment/autocomplete source (assay weight — moderate precedent).
+    # This source holds partial and autocomplete-style inputs.
     synth-fragment: 6.0
-    # #727 T2 new — the one variable. 12.0 = the targeted-fix precedent (fr-bare-street,
-    # si-bare-village, no-street-led are all 12.0). Streets with no house number + the
-    # bare-locality counter.
+    # This source holds French streets without a house number and bare-locality counterexamples.
+    # Its weight matches the other targeted-fix sources at 12.0.
     synth-fr-fragment: 12.0
-    # Track B — the Norway house-number-licence change. 12.0 = the targeted-fix tier
-    # (matches fr-fragment). Bare streets + street+number with no postcode partner, + counters.
+    # This source holds Norwegian bare streets and street-plus-number rows without a postcode,
+    # plus counterexamples. Its weight matches the other targeted-fix sources at 12.0.
     synth-no-fragment: 12.0
   train_rows_per_epoch: 1000000
   val_rows: 4096
@@ -99,20 +85,19 @@ data:
   augment_directional_prob: 0.3
   augment_region_prob: 0.3
   augment_glue_prob: 0.25
-  # #1101 FIX — the delimiter-free augmentation (built+tested, never shipped): an extra comma-stripped
-  # copy per row so the model segments street/locality without leaning on the comma. Closes the gauntlet
-  # comma-drop INV (White House + FR Rue du Chevaleret). One new variable vs v373.
+  # With this probability, a row also yields a copy with separator commas and quotes removed.
+  # The copy teaches the model to segment street and locality without relying on the comma.
   augment_punct_drop_prob: 0.3
   anchor_lookup_path: /data/anchor/pilot-anchor-lookup.json
   gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
-  # #1104 country-lexicon channel — the dedicated country soft-feed vocabulary (feature_dim 2).
+  # The country lexicon feeds the country channel. Its feature_dim must equal model.country_feature_dim.
   country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
   gazetteer_choreography: true
   affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v1.json
   anchor_paint_mode: shaped
   anchor_value_mode: posterior_latlon
 
-model: # Verbatim from v2.4.1.
+model:
   hidden_size: 384
   use_span_boundary_head: true
   span_boundary_loss_weight: 0.5
@@ -132,16 +117,12 @@ model: # Verbatim from v2.4.1.
   use_postcode_anchor: true
   use_gazetteer_anchor: true
   gazetteer_feature_dim: 5
-  # #1104 country channel on — dedicated 2-dim [country_surface, country_ambiguous] soft feed with its
-  # own projection + confidence (must equal the lexicon's feature_dim). Default-False elsewhere, so a
-  # resume from a pre-country checkpoint stays byte-identical until this flips.
+  # The country channel is a 2-dim [country_surface, country_ambiguous] soft feed with its own projection.
+  # The country_feature_dim value must equal the country lexicon's feature_dim.
   use_country_anchor: true
   country_feature_dim: 2
-  # #1104 homograph-guard softener — the one variable vs v263. Scales the country_ambiguous dim by 0.5
-  # before the country_projection (bakes into the exported ONNX. no lexicon/inference change). v263's
-  # hard guard (scale 1.0) over-suppressed homograph countries Georgia/Jordan (country-homograph F1
-  # 89.8->82.6); softening should recover homograph recall without giving back the country F1 the
-  # WOF-admin rows produced.
+  # This value scales the country_ambiguous dim before country_projection and is baked into the exported ONNX.
+  # A scale of 1.0 over-suppressed countries whose names are also common words, such as Georgia and Jordan.
   country_ambiguous_scale: 0.5
   class_weights:
     O: 0.5
@@ -180,9 +161,9 @@ model: # Verbatim from v2.4.1.
   use_phrase_priors: true
   phrase_feature_dim: 10
 
-train: # Same-vocab init_from fine-tune off the shipped v261 (fresh optimizer; --resume none on a fresh
-  # output_dir honors init_from, weights only). The new country_projection starts random and learns to
-  # route the cue. the encoder keeps v261's span-boundary + street grammar.
+# The init_from checkpoint loads weights only, so the optimizer starts fresh.
+# A resumed run skips init_from, so launch with --resume none on a fresh output_dir.
+train:
   output_dir: /data/output-v391-ptro-full-s42/checkpoints
   seed: 42
   init_from: /data/models/ptro-expanded

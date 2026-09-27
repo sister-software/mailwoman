@@ -9,11 +9,12 @@
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Pub 28 Appendix C1}
  */
 
-import { matchCase } from "#us/street/suffix"
+import { matchCase } from "spliterator/casing"
 
 /**
- * The 8 directional abbreviations accepted by the USPS. The USPS prefers the abbreviation over the fully-spelled-out
- * name.
+ * The 8 directional abbreviations accepted by the USPS.
+ *
+ * The USPS prefers the abbreviation over the fully-spelled-out name.
  */
 export const DirectionalAbbreviation = {
 	NORTH: "N",
@@ -184,10 +185,16 @@ export function lookupDirectional(input: unknown): DirectionalMatch | null {
 // ── Codex extract-facing helpers (mirror street-suffix's matchTrailingSuffix) ───────────────────────
 
 /**
- * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name), return the canonical
- * name, its abbreviation, and the matched surface word. Null otherwise. (The leading-end counterpart of
- * {@link matchTrailingSuffix}; mirrors unit-designator's `matchLeadingDesignator`.) Single-word only — the spaced "north
- * east" form is normalized to its one-word variant in real US streets, which this matches via the lookup.
+ * If the first whitespace-separated word of `street` is a known USPS directional (abbrev or name),
+ * return the canonical name, its abbreviation, and the matched surface word.
+ *
+ * Null otherwise.
+ * (The leading-end counterpart of {@link matchTrailingSuffix}; mirrors
+ * unit-designator's `matchLeadingDesignator`.)
+ *
+ * Single-word only.
+ * The spaced "north east" form is normalized to its one-word variant in real US streets,
+ * which this matches via the lookup.
  */
 export function matchLeadingDirectional(
 	street: string
@@ -207,8 +214,8 @@ export function matchLeadingDirectional(
  * Render a directional in the requested surface form, in `reference`'s case pattern:
  *
  * - `"abbr"` → the USPS abbreviation ("N", "NE").
- * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US street form rather than the
- *   publication's spaced "north east".
+ * - `"full"` → the one-word spelled-out form ("North", "Northeast") — the common US
+ *   street form rather than the publication's spaced "north east".
  */
 export function renderDirectional(
 	match: { canonical: DirectionalName; abbreviation: DirectionalAbbreviation },

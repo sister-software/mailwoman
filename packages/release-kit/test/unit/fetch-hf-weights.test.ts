@@ -17,12 +17,12 @@ import {
 import { resolvePath } from "path-ts"
 import { describe, expect, it } from "vitest"
 
-const repoRoot = String(repoRootPath())
+const repoRoot = repoRootPath()
 const CJK = "packages/neural-weights-cjk"
 
 /**
- * The family's card version names its bucket directory (`cjk/v<version>/`), so the pins below follow the card rather
- * than a literal a base swap would leave behind.
+ * The family's card version names its bucket directory (`cjk/v<version>/`), so the pins
+ * below follow the card rather than a literal a base swap would leave behind.
  */
 async function cjkCardVersion(): Promise<string> {
 	const card = await readLocalJSONFile<{ version: string }>(resolvePath(repoRoot, CJK, "model-card.json"))
@@ -46,7 +46,7 @@ describe("fetch-hf-weights — character-path families", () => {
 		})
 
 		expect(model?.expectedMD5).toBe(card.files_md5["model.onnx"])
-		// The committed vocabulary and card are tracked, so nothing else is planned.
+		// The committed vocabulary and card are tracked, so no other file is planned.
 		expect(plans.map((plan) => plan.filename)).toEqual(["model.onnx"])
 	})
 

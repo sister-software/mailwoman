@@ -43,6 +43,7 @@ import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, prettyJSON } from "@mailwoman/core/json"
 import type { ScorerOverrides } from "@mailwoman/neural/scorer"
+import type { PathBuilderLike } from "path-ts"
 
 import {
 	loadPerTagEvalRows,
@@ -57,23 +58,33 @@ import {
  */
 export interface CapabilityManifestOptions {
 	/**
-	 * ONNX artifact. Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
+	 * ONNX artifact.
+	 *
+	 * Default: the production v1.5.0 int8 under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	model?: string
 	/**
-	 * SentencePiece tokenizer. Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * SentencePiece tokenizer.
+	 *
+	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
-	 * Model card JSON. Default `neural-weights-en-us/model-card.json`.
+	 * Model card JSON.
+	 *
+	 * Default `neural-weights-en-us/model-card.json`.
 	 */
 	modelCard?: string
 	/**
-	 * Anchor lookup JSON. Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
+	 * Anchor lookup JSON.
+	 *
+	 * Default: the pilot lookup under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	anchorLookup?: string
 	/**
-	 * Gazetteer lexicon JSON. Default `data/gazetteer/anchor-lexicon-v1.json`.
+	 * Gazetteer lexicon JSON.
+	 *
+	 * Default `data/gazetteer/anchor-lexicon-v1.json`.
 	 */
 	gazetteerLexicon?: string
 	/**
@@ -82,7 +93,7 @@ export interface CapabilityManifestOptions {
 	write?: boolean
 }
 
-//#region Tier + locale matrix
+// #region Tier + locale matrix
 
 /**
  * Serving tiers and their channel feed (vs the model-card ship-config, expressed as overrides).
@@ -90,8 +101,9 @@ export interface CapabilityManifestOptions {
 const TIERS: Record<string, ScorerOverrides> = {
 	// Production default — anchor + gazetteer both fed (no override needed. createScorer's defaults).
 	server: {},
-	// On-device lighter feed — anchor on, gazetteer ablated. `overrides.gazetteer:false` warns loudly
-	// (a declared ablation), which is correct: pocket is a deliberate below-ship-config tier.
+	// On-device lighter feed — anchor on, gazetteer ablated.
+	// `overrides.gazetteer:false` warns loudly (a declared ablation), which is correct:
+	// pocket is a deliberate below-ship-config tier.
 	pocket: { gazetteer: false },
 }
 
@@ -101,17 +113,20 @@ const TIERS: Record<string, ScorerOverrides> = {
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
 /**
- * The union of every tag any codex conventions row forbids — the only tags the loader's delta check reads, so the only
- * tags that need a paired `maskOnF1`. Derived from the codex so a new forbid row automatically widens the manifest the
- * next time it's regenerated.
+ * The union of every tag any codex conventions row forbids.
+ *
+ * The only tags the loader's delta check reads, so the only tags that need a paired `maskOnF1`.
+ *
+ * Derived from the codex so a new forbid row automatically widens the manifest
+ * the next time it's regenerated.
  */
 const FORBIDDEN_TAGS: Set<string> = new Set(
 	Object.values(ADDRESS_SYSTEM_CONVENTIONS).flatMap((c) => c?.forbiddenTags ?? [])
 )
 
-//#endregion
+// #endregion
 
-//#region Build the manifest
+// #region Build the manifest
 
 /**
  * `{ maskOffF1, maskOnF1? }` — maskOnF1 present only for forbidden-set tags the model emits.
@@ -124,10 +139,10 @@ interface TagCapability {
 type Capabilities = Record<string, Record<string, Record<string, TagCapability>>>
 
 interface ResolvedPaths {
-	model: string
-	tokenizer: string
+	model: PathBuilderLike
+	tokenizer: PathBuilderLike
 	modelCard: string
-	anchorLookup: string
+	anchorLookup: PathBuilderLike
 	gazetteerLexicon: string
 }
 
@@ -142,13 +157,13 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// The generator constructs its scorers while the card's `capabilities` block may not yet
-			// exist. the loader's delta check is a no-op until the block is written. After a `--write`,
-			// regenerating uses the already-written block, but mask-off construction never trips the
-			// check (it only fires for a forbidden certified tag, and mask-off forbids none).
-			// `inputMode: "formatted"`: certification probes are formatted postal addresses, whose
-			// production path disables evidence-bundle channels. The mask-regression check grades the
-			// same mode (#2048), so the two report one number for one row.
+			// The generator constructs its scorers while the card's `capabilities` block may not yet exist.
+			// The loader's delta check is a no-op until the block is written.
+			// After a `--write`, regenerating uses the already-written block, but mask-off construction never
+			// trips the check (it only fires for a forbidden certified tag, and mask-off forbids none).
+			// `inputMode: "formatted"`: certification probes are formatted postal addresses,
+			// whose production path disables evidence-bundle channels.
+			// The mask-regression check grades the same mode (#2048), so the two report one number for one row.
 			const { off, on } = await scoreConventionsMaskOffOn(
 				rows,
 				TAGS,
@@ -165,13 +180,14 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 			const perTag: Record<string, TagCapability> = {}
 
 			for (const t of TAGS) {
-				// Skip tags the model never emits and never sees in gold under either mask — a 0/0 F1 is
-				// not a capability claim, just noise. (maskOffF1 0 with the tag genuinely present in gold
-				// is a real claim and is kept.)
+				// Skip tags the model never emits and never sees in gold under either mask.
+				// A 0/0 F1 is not a capability claim, just noise.
+				// (maskOffF1 0 with the tag genuinely present in gold is a real claim and is kept.)
 				if (off[t] === 0 && on[t] === 0 && !rowsHaveTag(rows, t)) continue
 				const cap: TagCapability = { maskOffF1: off[t]! }
 
-				// maskOnF1 only for forbidden-set tags — the only tags the loader's delta check consults.
+				// maskOnF1 only for forbidden-set tags.
+				// The only tags the loader's delta check consults.
 				if (FORBIDDEN_TAGS.has(t)) {
 					cap.maskOnF1 = on[t]!
 				}
@@ -195,19 +211,20 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 	return capabilities
 }
 
-//#endregion
+// #endregion
 
-//#region Entry
+// #region Entry
 
 /**
- * Measure the per-tier × system × tag capability manifest. optionally patch it into the model card.
+ * Measure the per-tier × system × tag capability manifest.
+ * Optionally patch it into the model card.
  */
 export async function generateCapabilityManifest(options: CapabilityManifestOptions = {}): Promise<void> {
 	const paths: ResolvedPaths = {
-		model: options.model || String(dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx")),
-		tokenizer: options.tokenizer || String(dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model")),
+		model: options.model || dataRootPath("models", "quantized", "model-v150-step-40000-int8.onnx"),
+		tokenizer: options.tokenizer || dataRootPath("models", "tokenizer", "v0.6.0-a0", "tokenizer.model"),
 		modelCard: options.modelCard || "packages/neural-weights-en-us/model-card.json",
-		anchorLookup: options.anchorLookup || String(dataRootPath("anchor", "pilot-anchor-lookup.json")),
+		anchorLookup: options.anchorLookup || dataRootPath("anchor", "pilot-anchor-lookup.json"),
 		gazetteerLexicon: options.gazetteerLexicon || "data/gazetteer/anchor-lexicon-v1.json",
 	}
 
@@ -219,7 +236,8 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	console.log(prettyJSON({ capabilities }))
 
 	if (WRITE) {
-		// Provenance key alongside the tier keys. ignored by readers (`lookupTagCapability` skips it).
+		// Provenance key alongside the tier keys.
+		// Ignored by readers (`lookupTagCapability` skips it).
 		;(capabilities as Record<string, unknown>).$comment =
 			"Per-tier (server=anchor+gazetteer; pocket=anchor-only) × address-system × tag capability " +
 			"manifest (#718/#719). maskOffF1 = measured per-tag exact-match F1 with the conventions mask " +
@@ -228,20 +246,22 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 			"conventions row forbids a tag with maskOffF1 − maskOnF1 > 0.05 (the mask provably destroys a " +
 			"real capability). Generated by `mailwoman eval capability-manifest` against the v1.5.0 int8."
 
-		// surgical insert (not a JSON round-trip): the shipped card hand-formats compact inline objects
-		// (`"anchor": { "required": true }`) that a `JSON.stringify` would expand, spuriously reordering a
-		// shipped artifact. Instead, append one new top-level key, byte-preserving everything else. The
-		// card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
+		// surgical insert (not a JSON round-trip): the shipped card hand-formats compact
+		// inline objects (`"anchor": { "required": true }`) that a `JSON.stringify`
+		// would expand, spuriously reordering a shipped artifact.
+		// Instead, append one new top-level key, byte-preserving everything else.
+		// The card is validated JSON, so its tail is `…\n}\n` (root close); we splice `,\n\t"capabilities":…`
 		// before that final brace, one indent level deep (each block line tab-prefixed).
 		const original = await readLocalTextFile(paths.modelCard)
 		const lastBrace = original.lastIndexOf("}")
 
 		if (lastBrace === -1) throw new Error(`model-card has no closing brace: ${paths.modelCard}`)
 
-		// Strict rather than tolerant: a corrupt model card must abort the splice rather than read as
-		// "no capabilities block" and append a second one.
+		// Strict rather than tolerant: a corrupt model card must abort the splice
+		// rather than read as "no capabilities block" and append a second one.
 		if (parseJSONStrict<{ capabilities?: unknown }>(original).capabilities !== undefined) {
-			// Idempotency guard: a prior write left a block. A text-splice would duplicate the key, so refuse.
+			// Idempotency guard: a prior write left a block.
+			// A text-splice would duplicate the key, so refuse.
 			throw new Error(
 				`${paths.modelCard} already has a \`capabilities\` block — \`git checkout\` it first, then re-run --write ` +
 					`(the surgical insert appends; it does not replace).`
@@ -264,4 +284,4 @@ export async function generateCapabilityManifest(options: CapabilityManifestOpti
 	}
 }
 
-//#endregion
+// #endregion

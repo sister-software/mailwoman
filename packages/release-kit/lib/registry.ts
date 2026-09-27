@@ -8,6 +8,8 @@
  *   they never import an operation module directly.
  */
 
+import { findOperation as findRegisteredOperation } from "@mailwoman/core/scripting"
+
 import type { ReleaseOperation } from "#operation"
 import { blessPackage } from "#operations/bless-package"
 import { checkParity } from "#operations/check-parity"
@@ -21,6 +23,7 @@ import { plan } from "#operations/plan"
 import { preflight } from "#operations/preflight"
 import { prepareVersion } from "#operations/prepare-version"
 import { publishWorkspaceOperation } from "#operations/publish-workspace"
+import { rightsAudit } from "#operations/rights-audit"
 import { sbom } from "#operations/sbom"
 import { scaffoldWeightsOverlayOperation } from "#operations/scaffold-weights-overlay"
 import { smokeCleanInstallOperation } from "#operations/smoke/clean-install"
@@ -30,13 +33,14 @@ import { verifyMetadata } from "#operations/verify-metadata"
 import { writeRightsFiles } from "#operations/write-rights-files"
 
 /**
- * Every release operation, in the order an adapter lists them: the plan first, then the read-only checks, the local
- * writes in release order, and the two external writes last.
+ * Every release operation, in the order an adapter lists them: the plan first, then the
+ * read-only checks, the local writes in release order, and the two external writes last.
  */
 export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
 	plan,
 	verifyMetadata,
 	checkParity,
+	rightsAudit,
 	cleanOperation,
 	prepareVersion,
 	generatedSurfaces,
@@ -59,5 +63,5 @@ export const operations: ReadonlyArray<ReleaseOperation<unknown, unknown>> = [
  * Look an operation up by id, or `undefined`.
  */
 export function findOperation(id: string): ReleaseOperation<unknown, unknown> | undefined {
-	return operations.find((operation) => operation.id === id)
+	return findRegisteredOperation(operations, "release", id)
 }

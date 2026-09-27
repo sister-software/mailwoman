@@ -12,7 +12,7 @@
 #
 # This is not a promote check. The standing floors (street 0.90 / hn 0.97 / pc 0.97) and the 2pp golden
 # check are untouched. this checkpoint ships nowhere on its own. Phase 2 (export) only starts if this
-# crosses. If seg@1 < token@1: do not tune span_loss_weight and re-run — that is the treadmill. One
+# crosses. If seg@1 < token@1: do not tune span_loss_weight and re-run. That is the treadmill. One
 # diagnostic (is the loss decreasing?), then fork to the operator.
 #
 # fp32 partition math is enforced inside span_scorer.py regardless of autocast (v0.5.0 bf16 CRF NaN

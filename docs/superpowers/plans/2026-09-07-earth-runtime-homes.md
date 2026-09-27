@@ -4,7 +4,7 @@
 
 **Goal:** Every browser-runtime module under `docs/src/shared/` moves to the package that owns it, the docs site consumes the packages and still serves the geocoder page unchanged, and the result interface the runtime produces and the UI renders is written once. After this plan the docs site owns no runtime module; the second runtime plan mounts the real runtime in `packages/earth` and retires the docs page.
 
-**Architecture:** Four homes. `@mailwoman/core/pipeline/client-result` keeps parse results compatible that `@mailwoman/react` renders and the loader produces (today written twice, as react's `ParseResult` and docs' `DemoResult`). `@mailwoman/resolver-wof-wasm/httpvfs/*` holds the sql.js-httpvfs readers, their tests, and the host-side asset staging. `mailwoman/browser-runtime/*` holds the release manifest, the asset URL composition and version pins, the classify stage, and the release-asset loader; `mailwoman` already depends on `neural` and `resolver-wof-wasm`, so it is the one package that can compose them, and the version bump `mailwoman gazetteer publish` prints becomes package-local. `@mailwoman/react/common/*` holds the two presentation helpers. Nothing is copied: every move is a `git mv` followed by import rewrites, and every consumer imports the new home.
+**Architecture:** Four homes. `@mailwoman/core/pipeline/client-result` keeps parse results compatible that `@mailwoman/react` renders and the loader produces (today written twice, as react's `ParseResult` and docs' `DemoResult`). `@mailwoman/resolver-wof-wasm/httpvfs/*` holds the sql.js-httpvfs readers, their tests, and the host-side asset staging. `mailwoman/browser-runtime/*` holds the release manifest, the asset URL composition and version pins, the classify stage, and the release-asset loader; `mailwoman` already depends on `neural` and `resolver-wof-wasm`, so it is the one package that can compose them, and the version bump `mailwoman gazetteer publish` prints becomes package-local. `@mailwoman/react/common/*` holds the two presentation helpers. No file is copied: every move is a `git mv` followed by import rewrites, and every consumer imports the new home.
 
 **Tech Stack:** TypeScript under Node type stripping; vitest (fast leg for core, react, mailwoman unit tests; slow leg where a test opens a SQLite fixture); the docs Docusaurus build and its two Playwright specs as the parity proof; `bundle-graph` for the browser condition on every new subpath.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - A moved name gets no compatibility re-export: the old specifier stops resolving and every consumer imports the new home in the same commit.
-- `@mailwoman/react` never depends on `neural`, `resolver-wof-wasm`, `cartographer` or `mailwoman`; it gains `@mailwoman/core` for the result interface, nothing else.
+- `@mailwoman/react` never depends on `neural`, `resolver-wof-wasm`, `cartographer` or `mailwoman`; it gains `@mailwoman/core` for the result interface and no other dependency.
 - `mailwoman` never depends on `@mailwoman/react`; the loader's progress interface is its own structural type.
 - `@mailwoman/resolver-wof-wasm` never depends on `mailwoman` (cycle); a URL the reader needs is a parameter.
 - A test imports the package under test through its public exports; a moved test moves with its module and gets an `exports` entry for what it names.
@@ -411,7 +411,7 @@ git commit -m "refactor(resolver-wof-wasm): the httpvfs readers, resolveStreet, 
   - `mailwoman/browser-runtime/manifest`: `ReleaseInfo`, `ReleasesManifest`, `WireReleaseEntry`, `normalizeReleasesManifest`, `fetchReleasesManifest`.
   - `mailwoman/browser-runtime/classify`: `runClassifyStage`, `ClassifyStageDeps`, `ClassifyStageHooks`, `ClassifyStageResult`, `SelectPairIndex`, `resolveDualRoles`, `projectCascadeHits`, `parseStageLabelsFor`, `pairCountryForInput`, `createCalibrator`, `Calibrator`, `DEFAULT_LOCALE`, `DEFAULT_ADDRESS`, `EXAMPLE_ADDRESSES`, `ParsedNode`, `TreeNode`, `FlatNode`.
   - `mailwoman/browser-runtime/load-assets`: `loadReleaseAssets(release: ReleaseInfo, progress: AssetLoadProgress, options: { gazetteer?: { sqljsBaseURL: string } }): Promise<ReleaseAssets>` and `ReleaseAssets` (the former `DocsDemoAssets`, its `wofLookup` field `null` when `gazetteer` is not passed).
-  - `mailwoman/browser-runtime` (index): re-exports nothing; it is the subpath a bundler resolves for the row and exports `loadReleaseAssets` and `fetchReleasesManifest` directly by importing them, so a host has one entry.
+  - `mailwoman/browser-runtime` (index): re-exports no name; it is the subpath a bundler resolves for the row and exports `loadReleaseAssets` and `fetchReleasesManifest` directly by importing them, so a host has one entry.
 
 - [ ] **Step 1: Move the three modules into the split**
 
@@ -480,7 +480,7 @@ For each: `#shared/resources` → `mailwoman/browser-runtime/resources` for URLs
 
 - [ ] **Step 5: Row, compile, tests, docs build**
 
-Add `browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS })` to `bundle-graph.ts`; the loader's `import("@mailwoman/neural/web-loader")` stays external under the default policy, and nothing on its static graph may reach Node.
+Add `browserRow("mailwoman/browser-runtime", { allowedDynamicImports: NEURAL_DYNAMIC_IMPORTS })` to `bundle-graph.ts`; the loader's `import("@mailwoman/neural/web-loader")` stays external under the default policy, and no module on its static graph may reach Node.
 
 ```bash
 yarn install
@@ -552,7 +552,7 @@ ls docs/src/shared
 grep -rn "docs/src/shared" packages --include='*.ts' --include='*.tsx' | grep -v "/out/"
 ```
 
-Expected: `maplibre-worker.ts`, `maplibre-worker-url.ts`, `register-range-sw.ts` and nothing else; the second command prints only the two twin comments in `resolver-wof-sqlite` (`candidate-lookup.ts:8`, `primary-preference.ts:8`) and `spatial/polyline.ts:11`, which now name the wasm subpath:
+Expected: `maplibre-worker.ts`, `maplibre-worker-url.ts`, `register-range-sw.ts` and no other file; the second command prints only the two twin comments in `resolver-wof-sqlite` (`candidate-lookup.ts:8`, `primary-preference.ts:8`) and `spatial/polyline.ts:11`, which now name the wasm subpath:
 
 ```bash
 sed -i 's#docs/src/shared/httpvfs-resolver.ts#packages/resolver-wof-wasm/lib/httpvfs/resolver.ts#' packages/resolver-wof-sqlite/lib/candidate-lookup.ts packages/resolver-wof-sqlite/lib/primary-preference.ts

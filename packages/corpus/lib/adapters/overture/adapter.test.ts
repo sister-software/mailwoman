@@ -11,7 +11,7 @@ import {
 } from "@mailwoman/corpus/adapters/overture/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { join } from "path-ts"
+import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
 const scratch = useScratchDir("ov")
@@ -19,10 +19,11 @@ const scratch = useScratchDir("ov")
 const loadRows = () => readCanonicalRows(scratch.path, OVERTURE_ADAPTER_ID)
 
 /**
- * Write a per-country Overture corpus jsonl fixture (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
+ * Write a per-country Overture corpus jsonl fixture
+ * (the shape `ingest-overture-addresses.ts --corpus-jsonl` emits).
  */
-async function writeFixture(rows: Record<string, unknown>[]): Promise<string> {
-	const p = join(scratch.path, "overture-es.corpus.jsonl")
+async function writeFixture(rows: Record<string, unknown>[]): Promise<PathBuilder> {
+	const p = scratch.path("overture-es.corpus.jsonl")
 	await writeLocalJSONLFile(rows, p)
 
 	return p
@@ -175,7 +176,7 @@ describe("overture adapter", () => {
 	})
 
 	it("skips blanks, comments, garbage, and street-less rows", async () => {
-		const p = join(scratch.path, "messy.jsonl")
+		const p = scratch.path("messy.jsonl")
 
 		await writeLocalTextFile(
 			[
@@ -210,7 +211,7 @@ describe("overture adapter", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		await removePathIfPresent(join(scratch.path, OVERTURE_ADAPTER_ID))
+		await removePathIfPresent(scratch.path(OVERTURE_ADAPTER_ID))
 
 		const b = await runAdapter({
 			adapter: createOvertureAdapter(),

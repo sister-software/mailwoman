@@ -12,10 +12,10 @@ same method: git history + the dated eval/check records, direction not code qual
 The review's four-week success state was reached in three days, and then exceeded in a direction
 the review didn't anticipate: the measurement system it asked us to repair started **finding
 shipped defects on its own** — including one (#949) that the model line's newest release existed
-to create, and which the next release (v5.3.0, reduce today) exists to fix. The re-railing worked
-not because the plan was executed line by line, but because the two disciplines it guarded —
-pre-registered checks and coordinate-first grading — compounded once the record-keeping around
-them was repaired.
+to create, and which the next release (v5.3.0, reduce today) exists to fix. The plan was not
+executed line by line. The re-railing worked because the two practices the plan said to keep,
+pre-registered checks and coordinate-first grading, became more effective once the record-keeping
+around them was repaired.
 
 The numbers that frame the three days: **80 commits to main, 29 issues closed, four releases
 (5.0.0 → 5.3.0), zero regressions shipped knowingly, and roughly $0 of new GPU spend against
@@ -23,7 +23,7 @@ The numbers that frame the three days: **80 commits to main, 29 issues closed, f
 from artifacts the old process would have re-trained (the vocab-splice needed no training at all;
 v2.2.0 was promoted from the archive after a re-check replaced a ~4 A100-h rerun).
 
-The headline the whole arc rolls up to: on 2026-07-01 a Czech address had a **44% chance** of
+The main result of the arc is this: on 2026-07-01 a Czech address had a **44% chance** of
 resolving to the wrong city. Today it is **6.6%**, Polish is 6.2%, Slovak 6.6%, and the fix
 class that drove it (diacritic tokenization) went from "stalled with no probe" to two shipped
 tokenizer generations, one from-scratch retrain, a proven-impossible residual class, and a
@@ -36,7 +36,7 @@ model-independent resolver floor covering that residual.
 **R1 — metric substitution without a re-anchor: CLOSED, and the backstop has already fired.**
 The #885 re-score ran (17/17 floors, first full scorecard since 06-11), the ledger was revived
 with an **automated** append (`ledger-append.ts`, invoked from the promotion check's pass output —
-the fix targeted why it froze, notthat it froze), and the cadence rule is in
+the fix targeted the reason it froze as well as the freeze), and the cadence rule is in
 CONTRIBUTING_MODEL_WORK as a check. Evidence it works: the re-score surfaced two unsigned drifts
 (fr.cedex_real −6.7, libpostal clean arena −6); the zero-margin postcode floor it documented
 fired on the very next candidate (v2.2.0's fr.postcode −0.1) and was **adjudicated at a fork
@@ -90,9 +90,13 @@ repaired on contact, reinforcing the ship-whole-or-wait rule.
 | 4 — #825, probe-first     | the funded one | Rewritten by the addendum, then exceeded: 5.1.0 (splice, $0), 5.2.0 (nordic), 5.3.0 (from-scratch v2.2.0, salvaged from the archive) — the "funded campaign" ultimately spent ~3.6 A100-h once, and its artifact shipped after the calculus changed rather than being re-run. |
 | 5 — scope re-declaration  | half a day     | SCOPE.mdx + the flag register (which found two default split-brains, #895) + plan/README marked historical.                                                                                                                                                                   |
 
-The review's "what not to do" held on all four counts: no resolver micro-changes past the frontier
-(the residual went to a _typed floor_ rather than a change), no breaking sweeps, no new locales before
-the coordinated bump (the freeze lifted exactly when designed), no new workstreams before 1–3.
+The project followed all four of the review's "what not to do" rules:
+
+- It added no resolver micro-changes past the frontier. The residual went to a _typed floor_ rather
+  than a change.
+- It landed no breaking sweeps.
+- It added no new locales before the coordinated bump. The freeze lifted exactly when designed.
+- It started no new workstreams before Tracks 1–3 finished.
 
 ---
 
@@ -109,15 +113,15 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    replaced a training run: the tokenizer probe replaced the #825 retrain class entirely, and
    the v220 re-check replaced a same-shape rerun. Both were pre-registered _before_ measurement,
    with explicit falsified-by-copy branches. "No GPU while an archived artifact dominates the
-   target class" is now a measured behavior rather than a slogan.
+   target class" is now a measured behavior.
 
 3. **The checks catch real things at both ends of the lifecycle.** Pre-ship: the v2.2.0 wall
    held under the old calculus and the SI bar failed as-registered under the new one (then went
    to a fork, by the book). Post-ship: the standing 40-row FR harness — re-run only because a
    retrain directive triggered salvage-first — caught #949 on the _shipped_ line. The gap it
    exposed (no fr.street-class floor; golden-dev FR is postcode-anchored canonical) is the next
-   check-spec improvement, and it rhymes with the review's R1 exactly: the blind spot was a subset
-   nobody re-measured.
+   check-spec improvement. It matches the review's R1: the blind spot was a subset nobody
+   re-measured.
 
 4. **Introspection as a product surface.** #941's parse-trace + visualizer turns the decode path
    into something a visitor can watch. Its review hardened the trace's _interface_ (per-piece
@@ -125,9 +129,9 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
    locale axis) — the kind of precision that matters precisely because the tool's job is to be
    believed.
 
-5. **The record discipline catching its own lapses.** The strongest signal that the re-railing
-   stuck isn't any single artifact — it's that when a parallel session's release reduce skipped two
-   bookkeeping steps, the _next_ release's checklist surfaced both without anyone hunting.
+5. **The record discipline catching its own lapses.** The strongest evidence that the re-railing
+   lasted is a process result rather than an artifact. A parallel session's release reduce skipped
+   two bookkeeping steps, and the _next_ release's checklist surfaced both without anyone searching.
 
 ---
 
@@ -145,10 +149,9 @@ the coordinated bump (the freeze lifted exactly when designed), no new workstrea
 | Vocab                   | 48,000 (diacritic-blind)              | 58,582+ nsplice (two splice generations)                |
 | Tier-3 locales measured | ~8                                    | all obtainable (IE/GB/HU lack sources)                  |
 
-The US row is the quiet one worth naming: three successive model generations — a spliced
-embedding, a second splice, and a from-scratch retrain — shipped with the US coordinate
-_identical to the row level_. That is what the guarantee-by-construction discipline plus
-byte-level verification buys.
+The US row deserves attention. Three successive model generations (a spliced embedding, a
+second splice, and a from-scratch retrain) shipped with the US coordinate _identical to the row
+level_. Guarantee-by-construction design plus byte-level verification produced that result.
 
 ---
 
@@ -177,16 +180,16 @@ dependency retires.
 
 ---
 
-_The 2026-07-01 review closed by defining "back on rails" as pointed where it is going rather than
-faster. Three days later the direct summary is: both — and the speed came from the rails._
+_The 2026-07-01 review defined "back on rails" as pointed in the right direction rather than
+faster. Three days later, the project was both, and the speed came from the repaired process._
 
 ---
 
 ## Addendum — 2026-07-04, fourteen hours later
 
 This review was written at 04:10. By evening, the same day's work had both strengthened its
-thesis and falsified one of its verdicts. A review whose theme is record accuracy corrects its
-own record; this is that correction.
+thesis and falsified one of its verdicts. This review is about record accuracy, so this
+addendum corrects its own record.
 
 ### R3 was scored wrong: the demo had been lying since July 1
 
@@ -210,10 +213,9 @@ after the tolerant reader deployed, and interface tests pinning all of it. Verif
 Playwright: an address-point rooftop hit and an SI village through the browser cascade, markers
 on both — all three tiers working together in production **for the first time since July 1**.
 
-The corrected R3 verdict: _the code convergence was real; the deployment truth was not._ And the
-caveat this review already carried — "the process still depends on the next careful actor" — now
-has four exhibits instead of one. #894-class structural checks are no longer the retirement path
-for a dependency; they are overdue.
+The corrected R3 verdict is that the code converged, but production did not run the converged
+code. The caveat this review already carried, "the process still depends on the next careful
+actor", now has four examples instead of one. #894-class structural checks are overdue.
 
 ### The v5.2.0 grading claim this document inherits is also wrong
 

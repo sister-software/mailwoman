@@ -1,6 +1,5 @@
 """`train.trainable_only_prefixes` — the cRT probe setting (classifier-only retraining, frozen
-encoder). See docs/superpowers/plans/2026-07-22-placetype-census-bias.md "Parallel training-side
-experiment" and the v3.12.0-crt-probe.yaml config that exercises it.
+encoder). The v3.12.0-crt-probe.yaml config exercises it.
 
 Covers:
   - the config field default (empty = no-op) and that `load_config` round-trips the shipped

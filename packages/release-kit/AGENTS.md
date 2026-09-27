@@ -12,7 +12,7 @@ The `neural-weights-<locale>` workspaces ship binary artifacts (`model.onnx`, `t
 
 - `<workspace>/scripts/link-dev-weights.ts` — materializes the artifacts from `$MAILWOMAN_DATA_ROOT/...` into the **data-root overlay** (`$MAILWOMAN_DATA_ROOT/weights/<locale>/`) rather than into the tracked workspace — the workspace package stays bare on a dev checkout (writing into it caused the four hazards `packages/release-kit/lib/weights/link-weights-overlay.ts`'s header lists: empty worktrees, `yarn test` mutating tracked dirs, copy-through-symlink, `YN0035` tarballs). `resolveWeights`'s overlay rung is what reads it in local dev; a test asserting the consumer's package-carries-weights state must seed its own scratch overlay instead (`dropin-cold-start.test.ts`, #1733).
 - `packages/neural/test/weights.test.ts` — invokes `link-dev-weights.ts` to verify auto-resolve. **Running `yarn test` re-populates the data-root overlay** as a side effect.
-- `mwops release copy-weights` (`packages/release-kit/lib/weights/copy-weights.ts`) — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace. Skipped in CI when `MAILWOMAN_SKIP_WEIGHTS_COPY=1` (the default for the `publish` workflow when `release_weights=false`).
+- `mwops release copy-weights` (`packages/release-kit/lib/weights/copy-weights.ts`) — invoked by release-it's `before:init` hook. Materializes the real binaries into each workspace from this machine's data root. The `publish` workflow has no data root: its publish step sets `MAILWOMAN_SKIP_WEIGHTS_COPY=1` and relies on the earlier `mwops release fetch-hf-weights` step, which downloads each weights package's untracked `files` from the Hugging Face bucket and checks them against the model card md5s.
 - A character-path family (`charWeights` in `release.config.json`, `packages/neural-weights-cjk`) reads from its OWN Hugging Face directory, `<family>/v<card version>/`, and is verified against its own card: its `model.onnx` shares a basename with the Latin base's and is different bytes, and the bucket is flat by basename. `fetch-hf-weights` plans a family only once its workspace is in the release list; `mailwoman release hf --char-vocab …` stages it (RELEASING.md).
 - `mwops release publish-workspace` (`packages/release-kit/lib/pack/publish/workspace.ts`) — invoked per workspace by release-it's hook (with `--allow-unplanned`) and by `publish.yml`'s loop (with `--plan`). Calls `yarn pack -o <tmp>` (translates `workspace:*` → concrete versions) then `npm publish <tmp>` (npm CLI handles npm-side auth, including Trusted Publishing OIDC in CI).
 
@@ -68,12 +68,35 @@ Editing a model card changes what a package owes and what it can show, and the c
 `files` array omits either name, so a card edit either regenerates them or fails. Adding an overlay means running the
 writer and committing what it produces; `scaffold-weights-overlay` does not write them.
 
+A record is retained by being committed. `PROVENANCE.json` carries its package's version, and git
+history holds the record every published version shipped with, so what `10.0.0` said survives `10.1.0`
+regenerating. That is the retention, and it holds only while nobody rewrites a record for a version
+already on npm. A source's terms changing tomorrow moves the next version's record rather than the
+description of a release that already went out; a correction to a published release is a new release
+with a new record, or a separately documented notice.
+
 The record makes three distinctions on purpose. A package whose card records no attribution reads
 `none-recorded-in-this-package`, which states what the card holds rather than that the artifacts have no attributable
 inputs. An artifact with no digest reads `unrecorded` rather than verified. And
 `attribution_recorded_in_another_package` names the case the single-card layout produced: `pair-index-gb.bin` ships in
 `@mailwoman/neural-weights-en-gb`, and the entry attributing it to HM Land Registry Price Paid Data under OGL v3.0 sits
 in `@mailwoman/neural-weights-en-us`'s card.
+
+## One pass over the whole rights chain
+
+`mwops release rights-audit` reads the source register, every published weights package's record, and any frozen
+training manifest, and prints what the chain from a source's terms to a published tarball establishes and what it
+leaves open. It changes nothing and takes no input.
+
+Read it before a release and read the `Unresolved` section first. The report is not a verdict: an empty `Unresolved`
+list would mean the pass found nothing it could not read, which is not a statement that an artifact is cleared for a
+use. As of 2026-09-21 the list is not empty — no register source is eligible for ingest, no package has a frozen
+training manifest, and four attribution entries name no license this reader could find.
+
+The per-check invariants stay where they are. `weights-rights` holds the generated files equal to their writer's
+output, `third-party-notices` holds the three notice copies equal, and `rights-chain` holds every rights document to
+naming the licensor. This operation composes their inputs into one report; it does not replace them, and a release
+still runs `yarn lint`.
 
 ## Recovering from a partial release
 

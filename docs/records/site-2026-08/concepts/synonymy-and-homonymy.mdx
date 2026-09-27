@@ -64,7 +64,7 @@ alone) or under-committing (refusing to tag "Georgia" at all).
 
 A note on scale, because it surprises people: there are ~195 countries, and the
 country tag still felt hard. The size is not the problem. ~180 country names collide
-with nothing and are trivial; the difficulty is the **~12 surfaces that overlap the
+with no other set and are trivial; the difficulty is the **~12 surfaces that overlap the
 other closed sets** (Georgia/Jordan/Lebanon/Mexico/Peru/Turkey ↔ US places; CA/GA/IN
 ↔ state codes; Jordan/Chad ↔ given names). So "differentiate 195 countries" is
 "make ~12 _binary_ sense calls against the other vocabularies", every one
@@ -79,7 +79,7 @@ moment you want to do anything _adjacent_ to geocoding — chiefly **record link
 deciding whether two rows from two datasets are the same entity.
 
 Mailwoman's parser emits a label for **every token** — the BIO sequence covers the
-whole string, so nothing is silently eaten. The one trap is cosmetic: the JSON
+whole string, so no token is silently eaten. The one trap is cosmetic: the JSON
 projection currently drops `O` runs (see [eval discipline](./eval-discipline.mdx),
 "JSON hides gaps"), so unclassified material _looks_ gone even though the parse kept
 it. The fix is a typed **`unknown`/`other`** span that survives projection. Then a

@@ -2,33 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Stream unit-postcode records out of the extracted Code-Point Open area CSVs, converting OS's
- *   eastings/northings to WGS84 on the way through.
- *
- *   ## The row shape
- *
- *   Headerless, ten columns, every text field double-quoted. From `Doc/Code-Point_Open_Column_Headers.csv`:
- *
- *     PC, PQ, EA, no, CY, RH, LH, CC, DC, WC
- *     Postcode, Positional_quality_indicator, Eastings, Northings, Country_code,
- *     NHS_regional_HA_code, NHS_HA_code, Admin_county_code, Admin_district_code, Admin_ward_code
- *
- *   We read the first five and drop the health/admin codes — they are ONS lookup keys rather than geography,
- *   and nothing in the resolver consumes them.
- *
- *   ## Two traps, both measured against the 2026-05 extract
- *
- *   1. **865 rows carry no coordinate.** Positional quality indicator `90` means "no coordinate
- *      available", and those rows are written as eastings `0`, northings `0`. Grid `0,0` is a real
- *      place — open Atlantic south-west of the Scillies — so nothing downstream can recognise it as a
- *      sentinel after conversion. They are dropped here, at the only layer that still has the PQI to
- *      drop them by. Distribution across all 1,747,841 rows: PQI 10 → 1,742,328 · 20 → 253 · 30 → 26 ·
- *      50 → 4,166 · 60 → 203 · 90 → 865. So 99.69 % of the file is PQI 10, OS's best grade (within the
- *      building of the address nearest the postcode's mean position).
- *   2. **Quoting applies to record boundaries as well as columns.** The current extract carries no embedded
- *      comma or newline, but both are legal inside a quoted CSV field. Parsing the byte stream with quote
- *      handling enabled keeps such a field intact even when its newline or closing quote crosses a read
- *      boundary. a line-first parser cannot repair the record after splitting it.
+ *   Streams unit-postcode rows from extracted Code-Point Open CSVs and converts their OSGB36
+ *   coordinates to WGS84.
  */
 
 import { osgb36ToWGS84 } from "@mailwoman/spatial"
@@ -37,18 +12,21 @@ import { CSVSpliterator } from "spliterator"
 import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-form"
 
 /**
- * Positional quality indicator meaning "no coordinate available". Such rows carry eastings/northings of zero.
+ * The positional quality indicator for a row with no coordinate.
+ *
+ * These rows carry zero eastings and northings, which would convert to a real but wrong location.
  */
 export const PQI_NO_COORDINATE = 90
 
 /**
- * Number of columns in a Code-Point Open CSV row.
+ * The number of columns in a Code-Point Open CSV row.
  */
 const CODEPOINT_COLUMNS = 10
 
 /**
- * ONS country codes present in Code-Point Open, and the ISO-3166-2 subdivision each maps to. There are exactly three —
- * the absence of a Northern Ireland code is the product's defining coverage limit rather than an omission here.
+ * The ONS country codes in Code-Point Open, mapped to ISO 3166-2 subdivisions.
+ *
+ * Northern Ireland has no code because the product does not cover it.
  */
 export const CODEPOINT_COUNTRY_CODES = {
 	E92000001: "ENG",
@@ -56,6 +34,9 @@ export const CODEPOINT_COUNTRY_CODES = {
 	W92000004: "WLS",
 } as const
 
+/**
+ * One subdivision code from {@link CODEPOINT_COUNTRY_CODES}.
+ */
 export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof CODEPOINT_COUNTRY_CODES]
 
 /**
@@ -63,47 +44,47 @@ export type CodePointCountry = (typeof CODEPOINT_COUNTRY_CODES)[keyof typeof COD
  */
 export interface CodePointRecord {
 	/**
-	 * The postcode in OS's own spacing — outward code, one space, inward code (`SW1A 1AA`). This is the display form. the
-	 * normalized lookup form is derived by the database builder via the #920 name law.
+	 * The display form of the postcode, with one space between outward and inward codes, such as `SW1A 1AA`.
+	 * The database builder derives the lookup form.
 	 */
 	postcode: string
 	/**
-	 * Positional quality indicator: 10 (best) … 60. Never 90 — those rows are dropped.
+	 * The positional quality indicator, from 10 (best) to 60.
+	 * Rows with 90 are dropped.
 	 */
 	quality: number
 	/**
-	 * OSGB36 easting in metres, as published.
+	 * The OSGB36 easting in metres, as published.
 	 */
 	easting: number
 	/**
-	 * OSGB36 northing in metres, as published.
+	 * The OSGB36 northing in metres, as published.
 	 */
 	northing: number
 	/**
-	 * WGS84 latitude, converted from the grid reference. Accurate to ~2 m (see `@mailwoman/spatial`'s `osgb36.ts`).
+	 * The WGS84 latitude converted from the grid reference, accurate to about 2 m.
 	 */
 	latitude: number
 	/**
-	 * WGS84 longitude.
+	 * The WGS84 longitude.
 	 */
 	longitude: number
 	/**
-	 * ONS country code, verbatim (`E92000001` / `S92000003` / `W92000004`).
+	 * The ONS country code as published.
 	 */
 	countryCode: string
 	/**
-	 * The subdivision the country code maps to, or null if OS ever emits one we don't know.
+	 * The subdivision for the country code, or null for an unknown code.
 	 */
 	country: CodePointCountry | null
 }
 
 /**
- * What a parse run skipped, and why. Kept as counters rather than a boolean so the builder's provenance can state the
- * meaning of each zero — "measured, none" is a different claim from "never looked".
+ * Counts from a parse run, including the reason for each skipped row.
  */
 export interface CodePointParseStats {
 	/**
-	 * Rows read from the CSVs, including every skipped one.
+	 * Rows read, including skipped rows.
 	 */
 	read: number
 	/**
@@ -111,7 +92,7 @@ export interface CodePointParseStats {
 	 */
 	yielded: number
 	/**
-	 * Rows dropped for positional quality 90 (no coordinate available).
+	 * Rows dropped for positional quality 90.
 	 */
 	skippedNoCoordinate: number
 	/**
@@ -119,49 +100,47 @@ export interface CodePointParseStats {
 	 */
 	skippedMalformed: number
 	/**
-	 * Per-postcode-area yielded counts, keyed by uppercase outward area (`AB`, `B`, `ZE`) — the figures compared against
-	 * the archive's own `Doc/metadata.txt` manifest.
+	 * Yielded rows per postcode area, such as `AB` or `B`.
+	 *
+	 * These counts can be compared with the archive's `Doc/metadata.txt`.
 	 */
 	yieldedByArea: Record<string, number>
 }
 
 /**
- * A GB unit postcode: 1-2 letters, then the rest of the outward code, a space, then digit + two letters. Deliberately
- * loose about the outward code's shape (`W1A`, `EC1A`, `B1`, `DN55` are all legal and differ structurally) and strict
- * about the inward code, which is invariant.
+ * Matches a GB unit postcode with a single space.
+ *
+ * The pattern accepts any valid outward-code shape, such as `W1A`, `EC1A`, `B1`, or `DN55`.
+ * The inward code is always a digit followed by two letters.
  */
 const UNIT_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * Extract the postcode area — the leading one or two letters (`SW1A 1AA` → `SW`, `B33 8TH` → `B`). This is the key
- * `Doc/metadata.txt` counts by.
+ * Returns the postcode area, which is the leading one or two letters.
+ *
+ * For example, `SW1A 1AA` gives `SW` and `B33 8TH` gives `B`.
+ * `Doc/metadata.txt` counts rows by area.
  */
 export function postcodeArea(postcode: string): string {
 	return /^[A-Z]{1,2}/.exec(postcode)?.[0] ?? ""
 }
 
 /**
- * Split one CSV line into fields, honouring RFC-4180 double quoting: quotes wrap a field, a doubled `""` inside a
- * quoted field is a literal quote, and a comma inside quotes is data rather than a separator.
- *
- * Retained as a compatibility helper for callers parsing one resident record. Streaming callers should use
- * {@linkcode readCodePointCSV}, which preserves quoted newlines across read boundaries.
+ * Splits one CSV record into fields with RFC 4180 quoting.
  *
  * @deprecated Use `CSVSpliterator` directly.
+ * Streaming callers should use {@linkcode readCodePointCSV}.
  */
 export function splitCSVLine(line: string): string[] {
 	return CSVSpliterator.from<string[]>(line, { header: false }).next().value ?? []
 }
 
 /**
- * Stream every usable record from one extracted area CSV, mutating `stats` as it goes.
- *
- * Yields rather than collecting: the whole of GB is 1.75 M rows, and the database builder inserts as it reads rather
- * than materializing an array it would only iterate once.
+ * Streams every usable record from one extracted area CSV and updates `stats` as it reads.
  */
 export async function* readCodePointCSV(csvPath: string, stats: CodePointParseStats): AsyncGenerator<CodePointRecord> {
-	// These files have no header row. the column names ship separately in
-	// `Doc/Code-Point_Open_Column_Headers.csv`.
+	// The CSVs have no header row.
+	// OS ships the column names in `Doc/Code-Point_Open_Column_Headers.csv`.
 	for await (const row of CSVSpliterator.fromAsync<string[]>(csvPath, {
 		header: false,
 	})) {
@@ -177,7 +156,7 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 		const quality = Number(row[1])
 		const easting = Number(row[2])
 		const northing = Number(row[3])
-		const countryCode = (row[4] ?? "").trim()
+		const countryCode = row[4] ?? ""
 
 		if (quality === PQI_NO_COORDINATE) {
 			stats.skippedNoCoordinate++
@@ -211,20 +190,17 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 }
 
 /**
- * Normalize Code-Point's postcode spacing to the single-space display form.
+ * Normalizes Code-Point postcode spacing to the single-space display form.
  *
- * The product is specified as a fixed 7-character field — the outward code left-justified, the inward code
- * right-justified, so a short postcode like `B1 1AA` is padded to `B1 1AA` with two spaces. The 2026-05 CSVs happen to
- * ship the single-spaced form already, but the specification is what a future extract will follow, and a double space
- * would otherwise sail through as a distinct postcode from its single-spaced twin. Collapsing runs of whitespace costs
- * one regex and closes that.
+ * The product specification uses a fixed seven-character field that pads short postcodes with extra spaces.
+ * Normalizing keeps a padded postcode from becoming a separate entry.
  */
 export function normalizeCodePointSpacing(raw: string): string {
 	return normalizePostcodeDisplay(raw)
 }
 
 /**
- * A zeroed stats accumulator.
+ * Returns a stats object with every count at zero.
  */
 export function createCodePointParseStats(): CodePointParseStats {
 	return { read: 0, yielded: 0, skippedNoCoordinate: 0, skippedMalformed: 0, yieldedByArea: {} }

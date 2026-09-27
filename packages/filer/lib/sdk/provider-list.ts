@@ -2,75 +2,39 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file BDC provider list CSV — streaming parser preserving multi-FRN cardinality (decision 6).
- *
- *   Source shape reference: the earlier draft's `sync/scripts/registrations.ts` parses `bdc_us_provider_list_*.csv`
- *   into `{frn, provider_id, holding_company}` rows via `csv.parse(contents, { columns: true })` — a
- *   whole-file, header-keyed read. This port keeps the header-keyed shape (so extra or reordered
- *   real-world columns, e.g. `provider_name`/`dba_name`, don't break it — only the three named columns
- *   below are required, anywhere in the header), but rewrites the loader per decision 8: it streams
- *   row by row through `CSVSpliterator` rather than reading the file whole, and it throws a descriptive
- *   error naming the file and 1-indexed row number the instant a row's column count doesn't match the
- *   header — no partial/truncated row is ever silently yielded.
- *
- *   Decision 6 is the entire point of this file, so it bears repeating exactly what not to copy: the earlier draft's
- *   `parseBDCProvidersFiles` folds every row sharing a `provider_id` into one `BroadbandProvider` via a
- *   `Map<ProviderID, BroadbandProvider>` — a later row's FRN is added to a `Set` (cardinality preserved
- *   there, incidentally) but its `holdingCompany` silently overwrites the previous value, only warning
- *   to the console when the two strings differ. That fold happens at parse time, before anything
- *   downstream ever sees the discarded string. {@linkcode parseProviderList} does none of that: it is a
- *   flat streaming pass with no `Map` keyed by `provider_id`, no dedup, and no last-wins — every row in
- *   the file is yielded exactly once, in file order. A `provider_id` appearing on N rows yields N
- *   {@linkcode ProviderListRow}s, full stop. The crosswalk graph (`filer.db`) is where that cardinality gets
- *   to mean something. collapsing it here would be unrecoverable downstream.
- *
- *   `frn` is parsed through {@linkcode toFRN} (decision 3's zero-padded 10-digit branded string). Unlike
- *   `Form499Row.frn`, this field is not nullable: the provider list — unlike a 499 filing — has no
- *   legitimate row without a resolvable FRN, so a row whose `frn` field doesn't parse is treated as
- *   malformed input and throws (decision 8), not silently coerced to `null`.
+ * @file Parses the BDC provider-list CSV.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
+import type { PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
 
 import { toFRN, type FRN } from "#frn"
 
 /**
- * The three provider-list CSV columns this parser actually reads, named after the earlier draft's `RawProviderRecord`
- * (`sync/scripts/registrations.ts`). Looked up by name against the file's own header row — not by position — so extra
- * or reordered columns in the real FCC file don't break parsing.
+ * Required columns.
+ *
+ * The parser finds them by header name, so their order does not matter.
  */
 const REQUIRED_PROVIDER_LIST_COLUMNS = ["frn", "provider_id", "holding_company"] as const satisfies readonly string[]
 
 /**
- * One parsed row of the BDC provider list CSV. See the module docstring for decision 6 (why
- * {@linkcode parseProviderList} yields every row rather than folding by `provider_id`) and decision 3 (why `frn` is the
- * zero-padded branded string rather than a bare number).
+ * One parsed provider-list row.
  */
 export interface ProviderListRow {
-	/**
-	 * The FCC's numeric provider identifier. Not branded — the task brief specifies a plain `number`, and unlike
-	 * {@link ProviderListRow.frn} there is no leading-zero concern (BDC provider IDs are ordinary small integers rather
-	 * than zero-padded strings).
-	 */
 	providerID: number
 	/**
-	 * Zero-padded 10-digit FRN ({@linkcode toFRN}). Never `null` — see the module docstring.
+	 * Zero-padded 10-digit FRN.
 	 */
 	frn: FRN
 	/**
-	 * The filer's holding company as it appears on this row. `null` when the raw CSV field is empty — one `providerID`
-	 * can legitimately carry different `holdingCompany` strings across rows (decision 6); do not assume this field is
-	 * stable per `providerID`.
+	 * Holding-company name, or `null` when empty.
+	 *
+	 * Rows for the same provider ID can carry different names.
 	 */
 	holdingCompany: string | null
 }
 
-/**
- * Confirms `header` names every column {@linkcode REQUIRED_PROVIDER_LIST_COLUMNS} needs, throwing a descriptive error
- * naming `csvPath` and the missing column otherwise — decision 8's "malformed input must be loud" discipline applied to
- * the header row rather than just data rows.
- */
 function assertRequiredProviderListColumns(header: readonly string[], csvPath: string): void {
 	for (const column of REQUIRED_PROVIDER_LIST_COLUMNS) {
 		if (!header.includes(column)) {
@@ -82,11 +46,8 @@ function assertRequiredProviderListColumns(header: readonly string[], csvPath: s
 }
 
 /**
- * Converts one data row's split `fields` (already confirmed to match `header`'s length) into a typed
- * {@linkcode ProviderListRow}, throwing a descriptive error naming `csvPath` and the 1-indexed `lineNumber` when
- * `provider_id` doesn't parse to a safe integer or `frn` doesn't parse via {@linkcode toFRN} — both decision 8's
- * "malformed input must be loud" discipline, mirroring the 2a `peekProviderID` precedent (`bdc/sdk/build-bdc.ts`) for
- * the integer guard.
+ * Converts one CSV row to a typed row.
+ * An invalid provider ID or FRN throws.
  */
 function toProviderListRow(
 	header: readonly string[],
@@ -129,25 +90,19 @@ function toProviderListRow(
 }
 
 /**
- * Streams the BDC provider list CSV at `csvPath` row by row through `CSVSpliterator`, which is quote-aware across
- * physical lines — a line reader splits a quoted `holding_company` containing a newline into two broken rows, and the
- * column-count check below then rejects both. The file is never read into memory whole. Yields every row as a typed
- * {@linkcode ProviderListRow}. The first non-blank line is read as the header and used to locate the
- * `frn`/`provider_id`/`holding_company` columns by name. a header missing any of the three throws immediately. A data
- * row whose column count doesn't match the header's throws immediately, naming `csvPath` and the 1-indexed line number
- * (decision 8) — no partial/truncated row is ever silently yielded. A blank line is skipped rather than treated as
- * malformed.
+ * Streams rows from a BDC provider-list CSV.
  *
- * Decision 6 (repeated from the module docstring because it is the entire point of this function): a `provider_id`
- * appearing on multiple rows is yielded once PER row, exactly as it appears in the file. No dedup, no last-wins, no
- * folding into a `Map` keyed by `provider_id` — the crosswalk graph is where that cardinality belongs rather than
- * here.
+ * The first non-blank row is the header.
+ * The parser skips blank rows and throws on a row whose column count differs from the header.
+ *
+ * It yields every row in file order, including repeated provider IDs.
  */
-export async function* parseProviderList(csvPath: string): AsyncIterable<ProviderListRow> {
+export async function* parseProviderList(source: PathBuilderLike): AsyncIterable<ProviderListRow> {
+	const csvPath = source.toString()
 	let lineNumber = 0
 	let header: string[] | null = null
 
-	for await (const fields of CSVSpliterator.fromAsync<string[]>(csvPath, { header: false })) {
+	for await (const fields of CSVSpliterator.fromAsync<string[]>(source, { header: false })) {
 		lineNumber++
 
 		if (!fields.length || (fields.length === 1 && !fields[0])) continue

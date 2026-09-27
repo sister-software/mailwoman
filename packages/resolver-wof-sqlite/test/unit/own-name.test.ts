@@ -30,8 +30,8 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("refuses the coincidental-collision class the penalty exists for", () => {
-		// Changchun's Turkish exonym "Çançun" folds to `cancun` — the required negative: the query
-		// means Cancún, Mexico, and the penalty must keep protecting it.
+		// Changchun's Turkish exonym "Çançun" folds to `cancun`.
+		// The required negative: the query means Cancún, Mexico, and the penalty must keep protecting it.
 		expect(isOwnNameVariant("чанчунь", "cancun")).toBe(false)
 		// Augsburg's Latin name `augusta` is a different name rather than an orthography of "Augsburg".
 		expect(isOwnNameVariant("augsburg", "augusta")).toBe(false)
@@ -40,16 +40,16 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("refuses the near-identical DIFFERENT places (Liévin vs Levin) and the dual-name class (Derry/Londonderry)", () => {
-		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor. the panel's
-		// `41 Weraroa Road, Levin` row needs Levin NZ to keep winning the primary side.
+		// Liévin, France vs Levin, New Zealand — 0.833, just under the floor.
+		// The panel's `41 Weraroa Road, Levin` row needs Levin NZ to keep winning the primary side.
 		expect(isOwnNameVariant("lievin", "levin")).toBe(false)
 		// Derry/Londonderry is a dual name rather than a variant — its own follow-up on #1882.
 		expect(isOwnNameVariant("derry", "londonderry")).toBe(false)
 	})
 
 	it("answers no-verdict — never a stamp — on an uncovered script", () => {
-		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only, and absence of a
-		// verdict must not read as "different name".
+		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only,
+		// and absence of a verdict must not read as "different name".
 		expect(ownNameSimilarity("آبادان", "abadan")).toBeNull()
 		expect(isOwnNameVariant("آبادان", "abadan")).toBe(false)
 	})

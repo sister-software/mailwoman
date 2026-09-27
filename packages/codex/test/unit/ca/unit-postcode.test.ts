@@ -37,13 +37,15 @@ describe("CA urban LDU", () => {
 	it("promotes only on an EXACT hit, never on a coarsened one", () => {
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j1a8")).toBe(true)
 		expect(isUnitGradePostcodeHit("M1J 1A8", "M1J1A8")).toBe(true)
-		// The resolver answered with the FSA. Area-class, and promoting it is the trade the epoch convention forbids.
+		// The resolver answered with the FSA.
+		// Area-class, and promoting it is the trade the epoch convention forbids.
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j")).toBe(false)
 		expect(isUnitGradePostcodeHit("M1J 1A8", undefined)).toBe(false)
 	})
 
 	it("does not collide with the systems already in the tier", () => {
-		// A GB unit and an NL PC6 keep matching. a US ZIP, a DE PLZ and a JP code stay out.
+		// A GB unit and an NL PC6 keep matching.
+		// A US ZIP, a DE PLZ and a JP code stay out.
 		expect(shapeAccepts("N7 0BT")).toBe(true)
 		expect(shapeAccepts("1012 LG")).toBe(true)
 

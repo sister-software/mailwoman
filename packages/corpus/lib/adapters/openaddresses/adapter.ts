@@ -40,23 +40,27 @@ import { tryParsingJSON } from "@mailwoman/core/json"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
-import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter } from "#types"
-import { SHARE_ALIKE_PATTERN } from "#utils"
+import { SourceRegister } from "#registers"
+import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
+import { createLicenseVerdictCache, LicensePolicy } from "#utils"
 
 /**
- * Registry id for this adapter. Stamped into every row it emits, so a corpus record can be traced back to the dataset
- * it came from.
+ * Registry id for this adapter.
+ *
+ * Stamped into every row it emits, so a corpus record can be traced back to the dataset it came from.
  */
 export const OPENADDRESSES_ADAPTER_ID = "openaddresses"
 /**
- * License carried by this source (CC-BY-4.0), attached to each row so downstream consumers inherit the terms rather
- * than having to look them up.
+ * License carried by this source (CC-BY-4.0), attached to each row so downstream
+ * consumers inherit the terms rather than having to look them up.
  */
 export const OPENADDRESSES_DEFAULT_LICENSE = "CC-BY-4.0"
 
 /**
- * Subset of OpenAddresses Feature properties the adapter inspects. The runtime accepts uppercase or lowercase keys.
- * this interface documents the canonical lowercase form after normalization.
+ * Subset of OpenAddresses Feature properties the adapter inspects.
+ *
+ * The runtime accepts uppercase or lowercase keys.
+ * This interface documents the canonical lowercase form after normalization.
  */
 interface OaProperties {
 	hash?: string
@@ -90,7 +94,8 @@ function normalizeProperties(raw: unknown): OaProperties {
 }
 
 /**
- * Parse a single ND-GeoJSON line. return null for blanks, comments, or non-Feature shapes.
+ * Parse a single ND-GeoJSON line.
+ * Return null for blanks, comments, or non-Feature shapes.
  */
 function parseFeatureLine(line: string): OaProperties | null {
 	const trimmed = line.trim()
@@ -108,32 +113,52 @@ function parseFeatureLine(line: string): OaProperties | null {
 
 export interface OpenaddressesAdapterOptions {
 	/**
-	 * Per-row license used when a Feature lacks an explicit `LICENSE` property. Defaults to `CC-BY-4.0` — the most common
-	 * license across the OpenAddresses collection. Override per dump via the runner's adapter-options passthrough.
+	 * Per-row license used when a Feature lacks an explicit `LICENSE` property.
+	 *
+	 * Defaults to `CC-BY-4.0` — the most common license across the OpenAddresses collection.
+	 * Override per dump via the runner's adapter-options passthrough.
 	 */
 	defaultLicense?: string
 
 	/**
-	 * Per-adapter share-alike drop. Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
-	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent adapter default (#26 — "purposely
-	 * exclude, don't opt in to include"). Set false only for an explicit adapter-scoped drop. the build-level
-	 * `--exclude-share-alike` is the normal path.
+	 * Whether this adapter emits a row whose per-file license carries share-alike.
+	 *
+	 * The default is `true`.
+	 * Refusing a share-alike row is a deliberate build-level act, which
+	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
+	 * express, rather than a silent adapter default (#26).
+	 *
+	 * That path is the normal one, because it reads the obligations of every adapter's
+	 * rows under one policy and records what it refused.
+	 *
+	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
 	 */
 	allowShareAlike?: boolean
 }
 
 /**
- * Build an OpenAddresses adapter. The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
- * known to carry a single license throughout (e.g. a pddl-only state extract).
+ * Build an OpenAddresses adapter.
+ *
+ * The optional `defaultLicense` lets callers stamp a non-default fallback for dumps
+ * known to carry a single license throughout (e.g. A pddl-only state extract).
  */
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
 	const allowShareAlike = opts.allowShareAlike ?? true
+	// The same reading the build applies, so an adapter-scoped drop
+	// and a build-level policy refuse the same rows.
+	// OpenAddresses stamps a per-file license, and a file's value can be prose naming
+	// a share-alike register rather than an identifier.
+	const shareAlike = createLicenseVerdictCache(LicensePolicy.ShareAlikeFree)
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
 		defaultLicense,
 		addressRole: AddressRole.Premise,
+		// OpenAddresses redistributes national and municipal registers whose terms differ per file,
+		// and a row's upstream is named by the source file it came from rather than by this adapter.
+		register: SourceRegister.OpenAddresses,
+		surface: SurfaceOrigin.Attested,
 		description: "OpenAddresses (global): line-delimited GeoJSON dumps with per-row licenses.",
 
 		async *rows(adapterOpts: AdapterOptions): AsyncIterable<CanonicalRow> {
@@ -145,9 +170,9 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 			const country = adapterOpts.country
 
-			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating blank/`#`/
-			// malformed lines by returning null); passing the path string lets the lib own + dispose
-			// the file handle, including on an early `break`.
+			// TextSpliterator streams string lines (parseFeatureLine keeps tolerating
+			// blank/`#`/ malformed lines by returning null); passing the path string lets the
+			// lib own + dispose the file handle, including on an early `break`.
 			const lines = TextSpliterator.fromAsync(adapterOpts.inputPath)
 
 			let emitted = 0
@@ -178,7 +203,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					const license = (props.license?.trim() || defaultLicense).trim()
 
-					if (!allowShareAlike && SHARE_ALIKE_PATTERN.test(license)) {
+					if (!allowShareAlike && shareAlike.read(license).refusal !== null) {
 						shareAlikeBlocked++
 
 						continue

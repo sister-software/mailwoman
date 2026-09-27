@@ -11,7 +11,6 @@
 import { tryStat } from "@mailwoman/core/fs/readers"
 import { formatGeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite/geonames"
 import { Box, Text } from "ink"
-import { join } from "path-ts"
 
 import {
 	type CommandSpec,
@@ -31,8 +30,8 @@ export const spec = {
 	name: "candidate",
 	description: "Build the byte-range gazetteer candidate database",
 	options: {
-		admin: { type: "string", description: "Admin source DB. Default <data-root>/wof/admin-global-priority.db" },
-		out: { type: "string", description: "Candidate DB output. Default <data-root>/wof/candidate-global.db" },
+		admin: { type: "string", description: "Admin source DB. Default <data-root>/db/wof/admin-global-priority.db" },
+		out: { type: "string", description: "Candidate DB output. Default <data-root>/db/wof/candidate-global.db" },
 		fold: { type: "boolean", default: false, description: "Re-run the GeoNames alias fold before building" },
 		countries: {
 			type: "string",
@@ -44,34 +43,41 @@ export const spec = {
 			default: false,
 			description: "Build from a fold output older than its admin database on purpose",
 		},
-		importance: { type: "string", description: `Importance source. Default <data-root>/wof/${DEFAULT_IMPORTANCE_DB}` },
+		importance: {
+			type: "string",
+			description: `Importance source. Default <data-root>/db/wof/${DEFAULT_IMPORTANCE_DB}`,
+		},
 		"skip-importance": { type: "boolean", default: false, description: "Build with an empty importance column" },
+		"include-build-local": {
+			type: "boolean",
+			default: false,
+			description:
+				"Fold a database whose own layer_manifest records tier build-local, for a gazetteer built for local use. " +
+				"Without it the build refuses such a fold and names it",
+		},
 	},
 } as const satisfies CommandSpec
 
 const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
-		const { mailwomanDataRoot } = await import("@mailwoman/core/utils")
+		const { dataRootPath } = await import("@mailwoman/core/data-root")
 
-		const {
-			buildCandidate,
-			DEFAULT_ADMIN_DB,
-			foldGeonamesIntoAdmin,
-			resolveImportanceDB,
-			resolvePostcodeDatabases,
-			wofDir,
-		} = await import("#gazetteer-pipeline")
+		const { buildCandidate, DEFAULT_ADMIN_DB, foldGeonamesIntoAdmin, resolveImportanceDB, resolvePostcodeDatabases } =
+			await import("#gazetteer-pipeline")
 
-		const root = mailwomanDataRoot()
-		const adminIn = options.admin ?? join(wofDir(root), DEFAULT_ADMIN_DB)
-		const out = options.out ?? join(wofDir(root), DEFAULT_CANDIDATE_OUT)
+		const { wofDatabasePath } = await import("@mailwoman/resolver-wof-sqlite/paths")
+
+		const root = dataRootPath()
+		const adminIn = options.admin ?? wofDatabasePath(DEFAULT_ADMIN_DB)
+		const out = options.out ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 
 		const countries = options.countries ? splitCountryCodes(options.countries) : DEFAULT_FOLD_COUNTRIES
 
 		let adminDB = adminIn
 
-		// A fold output that predates its admin database carries the admin database's old coordinates (the Frankfurt
-		// read of 2026-09-06): refused unless asked for, since the action is `--fold` on this same command.
+		// A fold output that predates its admin database carries the admin database's
+		// old coordinates (the Frankfurt read of 2026-09-06): refused unless asked for,
+		// since the action is `--fold` on this same command.
 		if (!options.fold && !options.allowStaleFold) {
 			const source = foldSourceAdminPath(adminIn)
 			const [foldStat, adminStat] = await Promise.all([tryStat(adminIn), source ? tryStat(source) : null])
@@ -116,12 +122,13 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 		if (importanceDB) {
 			console.error(`  importance ← ${importanceDB}`)
 		} else {
-			// Say which of the two absences this is. "No importance column" from a missing artifact and
-			// from `--skip-importance` produce the same DB and want different follow-ups.
+			// Say which of the two absences this is.
+			// "No importance column" from a missing artifact and from `--skip-importance`
+			// produce the same DB and want different follow-ups.
 			console.error(
 				options.skipImportance
 					? "  importance: SKIPPED by --skip-importance — the column will be empty"
-					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDir(root)} — the column will be empty`
+					: `  importance: no ${DEFAULT_IMPORTANCE_DB} under ${wofDatabasePath} — the column will be empty`
 			)
 		}
 
@@ -130,6 +137,7 @@ const GazetteerBuildCandidate: CommandComponent<typeof spec> = ({ options }) => 
 			out,
 			postcodeDatabases: databases,
 			importanceDB,
+			includeBuildLocalFolds: options.includeBuildLocal,
 			onProgress: (phase, msg) => console.error(`  [${phase}] ${msg}`),
 		})
 

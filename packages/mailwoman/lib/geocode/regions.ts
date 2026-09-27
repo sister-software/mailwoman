@@ -2,43 +2,32 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file Per-state artifact routing: which address-point / interpolation database serves a parse, the state-slug
- *   derivation that picks it, and `RegionDatabaseProvider`, the bounded cache of open handles. Split from `geocode-core.ts`,
- *   which consumes these through `GeocodeDeps`.
+ * @file Selects and caches the per-state address-point and interpolation databases for a parse.
  */
 
 import { US_STATE_BY_ABBREVIATION } from "@mailwoman/codex/us"
 import type { AddressTree } from "@mailwoman/core/decoder"
 import { walkNodes } from "@mailwoman/core/decoder"
 import { pathExists } from "@mailwoman/core/fs/readers"
-import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import type {
+	AddressPointLookup,
+	InterpolationLookup,
+	RegionDatabaseProvider,
+	RegionDatabases,
+} from "@mailwoman/core/resolver"
+import { addressPointDatabaseRoot, interpolationDatabaseRoot } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
 
 import { readReleaseManifest, resolveDatabasePath, type DataReleaseManifest } from "#data/release"
 
 /**
- * The per-state databases to wire into a single geocode resolve. Either/both may be absent (admin-only).
- */
-export interface RegionDatabases {
-	addressPoints?: AddressPointLookup
-	interpolation?: InterpolationLookup
-	/**
-	 * Derived street-centroid tier (#1042) — a `group BY street` roll-up of a national register's rooftop points, keyed
-	 * for a street-only query (no house number). Supplied today only by `@mailwoman/ban`'s `BANRegionDatabaseProvider`
-	 * for FR (the US per-state {@link RegionDatabaseProvider} never opens one), so the tier is FR-only in practice and
-	 * every non-FR path stays byte-stable. Consulted below the address-point/interpolation tiers, above admin.
-	 */
-	streetCentroids?: StreetCentroidLookup
-}
-
-/**
- * Resolve the situs/interpolation databases for a state slug (e.g. `"tx"`). `null` slug → no databases.
+ * Returns the databases for a state slug such as `"tx"`.
+ * A `null` slug yields no databases.
  */
 export type RegionDatabaseResolver = (stateSlug: string | null) => RegionDatabases
 
 /**
- * Full US state name (case-folded) → lowercase 2-letter slug, from the codex table. Built once — the inverse the codex
- * doesn't ship directly.
+ * Maps a lowercased full US state name to its lowercase two-letter slug.
  */
 export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
 	Object.entries(US_STATE_BY_ABBREVIATION).map(([abbreviation, name]) => [
@@ -48,10 +37,10 @@ export const US_STATE_SLUG_BY_NAME: ReadonlyMap<string, string> = new Map(
 )
 
 /**
- * Lowercase 2-letter state slug from a parsed region value / resolver name, else null. Accepts the abbreviation
- * register ("MI") and the full-name register ("Michigan", "New York") — a user spells the state however they spell it,
- * and a null here silently drops the whole per-state street tier (situs + interpolation), which is how "…, Fraser MI"
- * reached the register while "…, Brooklyn New York" never loaded a database.
+ * Returns the lowercase two-letter state slug for a parsed region value or resolver name, or null.
+ *
+ * Both abbreviations ("MI") and full names ("New York") are accepted.
+ * A null result disables the per-state address-point and interpolation tiers for the query.
  */
 export function regionToStateSlug(
 	regionValue: string | null | undefined,
@@ -71,7 +60,9 @@ export function regionToStateSlug(
 }
 
 /**
- * Walk a (parsed or resolved) tree for its region → the per-state database slug (e.g. `"tx"`), else null.
+ * Returns the per-state database slug, such as `"tx"`, for the region in a parsed or resolved tree.
+ *
+ * It returns null when the tree has no usable region or resolves to a country other than the US.
  */
 export function regionSlugFromTree(tree: AddressTree): string | null {
 	let regionValue: string | null = null
@@ -93,85 +84,82 @@ export function regionSlugFromTree(tree: AddressTree): string | null {
 		}
 	}
 
-	// A slug names a US database and nothing else, but `regionToStateSlug` accepts any two-letter region, so a foreign
-	// subnational code that happens to spell a US state selects that state's rooftop database. Measured against the databases
-	// on disk: 8 of 16 Italian province codes reach one (MI→Michigan, CO→Colorado, PA→Pennsylvania, VA→Virginia,
-	// CA→California, MO→Missouri, AL→Alabama, MT→Montana), 5 of 5 Spanish, 6 of 12 Brazilian, and AU's WA→Washington.
-	// IT and ES are tier-1 and write the code in ordinary postal form — `20121 Milano MI`.
-	//
-	// Nothing wrong comes back today, and the reason is not structural: the lookup keys on (postcode, street, number) or
-	// (locality, street, number), and Milano's 20xxx simply does not collide with Michigan's 48xxx–49xxx. Cádiz province
-	// is `CA`, Cadiz is a real California locality and Calle Real a real California street, so the locality variant is one
-	// coincident house number away from a rooftop-tier answer on the wrong continent — the highest-confidence thing this
-	// pipeline emits.
-	//
-	// An unknown country still passes: dropping the slug there would take the street tier away from every US address whose
-	// country never resolved, which is the failure #1787 exists to avoid rather than to cause.
+	// `regionToStateSlug` accepts any two-letter region, so a foreign code such as Italy's `MI`
+	// or Spain's `CA` would select a US state's database.
+	// A resolved non-US country therefore gets no slug.
+	// An unresolved country still gets one so that US addresses keep their street tiers.
 	if (resolvedCountry !== null && resolvedCountry !== "US") return null
 
 	return regionToStateSlug(regionValue, regionResolverName)
 }
 
 /**
- * Per-state situs database path under `<dataRoot>/address-points/`, or null if the slug/file is absent.
+ * Returns the per-state address-point database path under `<dataRoot>/db/address-points/`.
+ *
+ * It returns null when the slug is null or the file does not exist.
  */
 export async function selectAddressPointsDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = `${dataRoot}/address-points/address-points-us-${stateSlug}.db`
+	const candidate = addressPointDatabaseRoot(dataRoot)(`address-points-us-${stateSlug}.db`)
 
-	return (await pathExists(candidate)) ? candidate : null
+	return (await pathExists(candidate)) ? candidate.toString() : null
 }
 
 /**
- * Per-state interpolation database path under `<dataRoot>/interpolation/`, or null if absent.
+ * Returns the per-state interpolation database path under `<dataRoot>/db/interpolation/`.
+ *
+ * It returns null when the slug is null or the file does not exist.
  */
 export async function selectInterpolationDB(dataRoot: string, stateSlug: string | null): Promise<string | null> {
 	if (!stateSlug) return null
-	const candidate = `${dataRoot}/interpolation/interpolation-us-${stateSlug}.db`
+	const candidate = interpolationDatabaseRoot(dataRoot)(`interpolation-us-${stateSlug}.db`)
 
-	return (await pathExists(candidate)) ? candidate : null
+	return (await pathExists(candidate)) ? candidate.toString() : null
 }
 
 /**
- * The lookup-class surface a {@link RegionDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
+ * The lookup classes that a {@link USStateDatabaseProvider} needs from `@mailwoman/resolver-wof-sqlite`.
  */
 export interface RegionDatabaseFactory {
 	AddressPointSqliteLookup: new (dbPath: string) => AddressPointLookup & Disposable
 	StreetInterpolator: new (opts: { dbPath: string }) => InterpolationLookup & Disposable
 }
 
+/**
+ * One cached state's open lookups and the paths they were opened from.
+ */
 export interface RegionDatabaseCacheEntry extends RegionDatabases {
 	_ap?: Disposable
 	_ip?: Disposable
 	/**
-	 * The resolved on-disk paths this entry was opened from — reload() diffs against these.
+	 * The resolved database path. {@link USStateDatabaseProvider.reload} compares it with the new path.
 	 */
 	apPath: string | null
 	ipPath: string | null
 }
 
 /**
- * Opens + caches per-state situs/interpolation lookups so a batch geocoding many addresses in one state opens that
- * state's (possibly multi-GB) databases once rather than once per row. Versioned-data aware (#485): paths resolve
- * through the `releases.json` manifest (legacy unversioned fallback), and {@link reload} performs a zero-downtime atomic
- * switchover when a new version is published. Call {@link close} when done to release every cached handle.
+ * Opens and caches per-state address-point and interpolation lookups,
+ * so each state's databases open once per batch.
  *
- * `for` is synchronous, so on-disk existence is probed asynchronously once instead of per call: {@linkcode warm} awaits
- * the #2029-async manifest read + `resolveDatabasePath` for every US state/territory slug and records what exists;
- * `for` then consults that map. Prefer {@linkcode RegionDatabaseProvider.create}, which constructs and warms before
- * answering — the constructor itself is private because it cannot await those probes.
+ * Paths resolve through the `releases.json` manifest when one exists. {@link reload} swaps
+ * in a newly published version, and {@link close} releases every cached handle.
+ *
+ * Because `for` is synchronous, {@linkcode warm} probes every US state and territory path up front.
+ * Construct instances with {@linkcode USStateDatabaseProvider.create}, which warms before returning.
  */
-export class RegionDatabaseProvider implements Disposable {
+export class USStateDatabaseProvider implements RegionDatabaseProvider<string, RegionDatabases> {
 	readonly #factory: RegionDatabaseFactory
 	readonly #dataRoot: string
 	readonly #cache = new Map<string, RegionDatabaseCacheEntry>()
 	/**
-	 * Previous-generation handles, retired by reload() and closed on the next reload (one-gen grace).
+	 * Handles replaced by the last `reload()`.
+	 * The next `reload()` closes them.
 	 */
 	#retired: Disposable[] = []
 	#manifest: DataReleaseManifest | null
 	/**
-	 * Per-slug resolved database paths, preloaded by {@linkcode warm} so `for` never touches the filesystem.
+	 * Resolved database paths per slug, filled by {@linkcode warm}.
 	 */
 	readonly #paths = new Map<string, { apPath: string | null; ipPath: string | null }>()
 
@@ -182,12 +170,11 @@ export class RegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Construct a provider and warm its path map before answering. The constructor cannot await the #2029-async manifest
-	 * read + database-path probes, so this static factory does.
+	 * Constructs a provider, reads the release manifest, and warms the path map.
 	 */
-	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<RegionDatabaseProvider> {
+	static async create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<USStateDatabaseProvider> {
 		const root = resolvePath(dataRoot)
-		const provider = new RegionDatabaseProvider(factory, root, await readReleaseManifest(root))
+		const provider = new USStateDatabaseProvider(factory, root, await readReleaseManifest(root))
 
 		await provider.warm()
 
@@ -195,10 +182,9 @@ export class RegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * Preload database paths for every US state/territory slug. Awaits `resolveDatabasePath` for each slug's rooftop
-	 * database and its interpolation tier, recording the paths that exist so `for` never touches the filesystem. Safe to
-	 * call more than once: it re-probes the same slug set and overwrites the map, which is how {@linkcode reload} re-reads
-	 * the disk.
+	 * Resolves the address-point and interpolation paths for every US state and territory slug.
+	 *
+	 * Each call replaces the path map. {@linkcode reload} calls it to re-read the disk.
 	 */
 	async warm(): Promise<void> {
 		this.#paths.clear()
@@ -236,17 +222,18 @@ export class RegionDatabaseProvider implements Disposable {
 	}
 
 	/**
-	 * The current data-release versions ({@link readReleaseManifest}), or null in legacy mode.
+	 * Returns a copy of the release manifest, or null when the data root has none.
 	 */
 	versions(): DataReleaseManifest | null {
 		return this.#manifest ? { ...this.#manifest } : null
 	}
 
 	/**
-	 * Re-read the manifest, re-probe the database paths, and atomically swap any cached database whose resolved path
-	 * changed. New requests see the new version immediately. the old handles are retired and closed on the next reload
-	 * (one-generation grace — safe because find() is synchronous, so no in-flight query can still hold a handle once a
-	 * request yields). Returns the new version map.
+	 * Re-reads the manifest and database paths, and reopens any cached state whose path changed.
+	 *
+	 * The replaced handles stay open until the next reload.
+	 * Lookups are synchronous, so no query still holds one by then.
+	 * The method returns the new manifest.
 	 */
 	async reload(): Promise<DataReleaseManifest | null> {
 		for (const h of this.#retired) {
@@ -260,7 +247,7 @@ export class RegionDatabaseProvider implements Disposable {
 		for (const [slug, old] of this.#cache) {
 			const { apPath, ipPath } = this.#paths.get(slug.toLowerCase()) ?? { apPath: null, ipPath: null }
 
-			if (apPath === old.apPath && ipPath === old.ipPath) continue // unchanged — keep the open handle
+			if (apPath === old.apPath && ipPath === old.ipPath) continue
 			this.#cache.set(slug, this.#open(slug))
 
 			if (old._ap) {

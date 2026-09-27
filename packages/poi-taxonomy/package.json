@@ -86,10 +86,10 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"path-ts": "^2.4.1"
+		"@mailwoman/core": "workspace:*",
+		"path-ts": "^2.5.0"
 	},
 	"devDependencies": {
-		"@mailwoman/core": "workspace:*",
-		"spliterator": "^7.11.0"
+		"spliterator": "^8.1.0"
 	}
 }

@@ -9,7 +9,7 @@ title: v3.0.0 span-head probe — INCONCLUSIVE (under-trained) rather than falsi
 > `seg@1 > token@1` on the parity corpus. Baselines (v264, ship config): street token@1 0.573; a
 > segment decode over the SUMMED-BIO stand-in scored 0.453.
 > Secondary read: oracle@10 must RISE from 0.749.
-> If seg@1 < token@1: do not tune span_loss_weight and re-run — that is the treadmill. One
+> If seg@1 < token@1: do not tune span_loss_weight and re-run. That is the treadmill. One
 > diagnostic (is the loss decreasing?), then fork to the operator.
 
 **Result: the check reads fail, but it does not adjudicate the arc.** Per the pre-registered

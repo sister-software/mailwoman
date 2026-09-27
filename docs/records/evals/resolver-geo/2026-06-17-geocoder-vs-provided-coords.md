@@ -23,7 +23,7 @@ tier where we have a rooftop for the parsed street + number, and p50 collapses t
 **interpolation** tier (no exact point, interpolated along the street segment) lands p50 **0.1 km** —
 100 m, street-accurate. The direct caveat is **coverage**: the rooftop tier fires on 47% of these
 facilities and interpolation on a further 12.5%, so ~40% still fall back to the city centroid. The tail
-(p99 ~470–740 km) is wrong-place resolutions rather than tier imprecision — a handful of facilities whose
+(p99 ~470–740 km) is wrong-place resolutions rather than tier imprecision. A handful of facilities whose
 parse resolves to the wrong locality entirely.
 
 ## The direct surprise — v0 out-parses neural on this distribution

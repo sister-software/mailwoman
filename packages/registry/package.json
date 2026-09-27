@@ -135,6 +135,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",
@@ -143,11 +144,11 @@
 		"@mailwoman/sqlite": "workspace:*",
 		"@protomaps/basemaps": "^5.7.2",
 		"h3-js": "^4.5.0",
-		"spliterator": "^7.11.0"
+		"spliterator": "^8.1.0"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1",
-		"path-ts": "^2.4.1",
+		"path-ts": "^2.5.0",
 		"playwright": "^1.63.0"
 	}
 }

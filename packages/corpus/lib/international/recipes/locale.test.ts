@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- *   Tests for the `locale` recipe's OA city-noise normalization (#241) and the country-append fraction (#728
- *   pattern). The `cleanCityNoise` classes come from the 2026-07-02 full-stream audit of the
- *   ES/IT/NL sources — see the {@link cleanCityNoise} docstring for the audit numbers. The invariant under test:
- *   drop pseudo-localities, strip glued admin-code suffixes, and DON'T touch the audit-verified real names a naive
- *   suffix rule would mangle. `applyCountryAppend` is tested in isolation (not through the full `localeRecipe.run`,
- *   which streams real multi-GB OA/PPD CSVs) so the byte-identical-when-unset invariant is provable without I/O.
+ *   Tests the locale recipe's city cleanup, CSV reading, country appending and district overrides against small
+ *   fixtures.
  */
 
 import { COUNTRY_SURFACE_FORMS } from "@mailwoman/codex/country"
@@ -23,8 +19,9 @@ import {
 	readTuples,
 	resolveLocaleParts,
 } from "@mailwoman/corpus/international/recipes/locale"
-import type { SynthesizedLocaleRow } from "@mailwoman/corpus/synthesizers/locale"
-import { join, resolvePath } from "path-ts"
+import { SourceRegister } from "@mailwoman/corpus/registers"
+import type { RenderedLocaleRow } from "@mailwoman/corpus/surfaces/locale"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const fixtures = new AsyncDisposableStack()
@@ -72,10 +69,10 @@ describe("cleanCityNoise", () => {
 })
 
 describe("readTuples (OA CSV parse)", () => {
-	const dirs: string[] = []
+	const dirs: PathBuilder[] = []
 
-	const tmp = async (): Promise<string> => {
-		const d = resolvePath(fixtures.use(await temporaryDirectory("mw-locale-")).path)
+	const tmp = async (): Promise<PathBuilder> => {
+		const d = fixtures.use(await temporaryDirectory("mw-locale-")).path
 		dirs.push(d)
 
 		return d
@@ -83,20 +80,16 @@ describe("readTuples (OA CSV parse)", () => {
 
 	afterAll(() => Promise.all(dirs.map((d) => removePathIfPresent(d))))
 
-	// A tiny OA sample exercising exactly what the CSVSpliterator migration touches: a crlf terminator
-	// (the real OA files are crlf), a quoted field with an embedded comma, an empty region cell that
-	// must fall back to part.region, and a header-driven column index. rng is unused below RESERVOIR_CAP.
 	const OA_HEADER = "LON,LAT,NUMBER,STREET,UNIT,CITY,DISTRICT,REGION,POSTCODE,ID,HASH"
 
 	it("parses quoted fields, CRLF terminators, and the region fallback", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// Quoted street with an embedded comma. populated region.
 				'22.6,49.3,12,"Main St, West",,Springfield,dist,Bayern,38-710,id1,hash1',
-				// Empty region cell → must fall back to part.region.
+				// This row has an empty region, so the part's region applies.
 				"22.7,49.2,5,Elm Ave,,Shelbyville,dist,,38-711,id2,hash2",
 			].join("\r\n") + "\r\n",
 			file
@@ -111,14 +104,14 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality (NZ) maps DISTRICT→locality, CITY→dependent_locality; falls back when DISTRICT empty", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// NZ shape: city = suburb (Birkenhead), district = city (Auckland). NZ OA carries no postcode.
+				// NZ puts the suburb in CITY and the city in DISTRICT.
 				"174.7,-36.8,31,Rawene Road,,Birkenhead,Auckland,,,id1,hash1",
-				// Empty district (~18% of NZ rows) → city becomes the locality, no dependent_locality.
+				// This row has no district, so CITY becomes the locality.
 				"174.4,-36.6,26A,Henley Road,,Kaukapakapa,,,,id2,hash2",
 			],
 			file
@@ -140,7 +133,7 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("GB tuples: CITY→dependent_locality, DISTRICT→locality via districtAsLocality (empty CITY kept)", async () => {
-		const file = join(await tmp(), "gb.csv")
+		const file = (await tmp())("gb.csv")
 
 		await writeLocalTextFile(
 			[
@@ -167,17 +160,12 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("districtAsLocality: drops dependent_locality when it equals locality (case-insensitive) instead of emitting a same-value pair", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				// city and district name the same place (differing only in case) — the ES cnig `poblacion ==
-				// municipio` majority case (the address point sits in the municipio's own main town rather than a
-				// pedanía). Must not surface as dependent_locality === locality.
 				"1,2,10,Main St,,AMURRIO,Amurrio,Araba,01450,id,hash",
-				// Genuinely distinct city/district still produces dependent_locality (the districtAsLocality
-				// interface is otherwise unchanged).
 				"1,2,11,Elm Ave,,Baranbio,Amurrio,Araba,01450,id2,hash2",
 			],
 			file
@@ -199,15 +187,13 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("ES pedanía (cnigRaw): joins tipo_vial+nombre_via→street, poblacion→dependent_locality, municipio→locality", async () => {
-		const file = join(await tmp(), "es-raw.csv")
+		const file = (await tmp())("es-raw.csv")
 
 		await writeLocalTextFile(
 			[
 				"X,Y,id_porpk,tipo,tipo_vial,nombre_via,numero,extension,id_pob,poblacion,cod_postal,ine_mun,municipio,provincia,comunidad_autonoma,fuente_datos,fecha_modificacion",
-				// poblacion filled + distinct from municipio (real pedanía row, mirrors the verified Amurrio/Baranbio sample).
 				'-2.922,43.0507,"1","PK",CARRETERA,A-2522,35,,"1600005667",Baranbio,01450,01002,Amurrio,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
-				// poblacion empty → falls back to municipio→locality, no dependent_locality (the districtAsLocality
-				// NZ-pattern fallback, exercised here through the cnig column names instead of city/district).
+				// This row has an empty `poblacion`, so it gets no dependent locality.
 				'-2.503,42.836,"2","PK",CARRETERA,A-4136,15,,,,01240,01001,Alegría-Dulantzi,Araba/Álava,País Vasco/Euskadi,src,2017/04/03',
 			],
 			file
@@ -235,15 +221,15 @@ describe("readTuples (OA CSV parse)", () => {
 	})
 
 	it("skips rows missing street or city, and drops city-noise rows", async () => {
-		const file = join(await tmp(), "part.csv")
+		const file = (await tmp())("part.csv")
 
 		await writeLocalTextFile(
 			[
 				OA_HEADER,
-				"1,2,10,,,NoStreetCity,d,R,00000,i,h", // no street → skip
-				"1,2,11,SomeSt,,,d,R,00000,i,h", // no city → skip
-				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h', // quoted city-noise → drop
-				"1,2,13,Keep St,,Keepville,d,R,00000,i,h", // kept
+				"1,2,10,,,NoStreetCity,d,R,00000,i,h",
+				"1,2,11,SomeSt,,,d,R,00000,i,h",
+				'1,2,12,RealSt,,"Comunidad de 09076, 09150 y 09578",d,R,00000,i,h',
+				"1,2,13,Keep St,,Keepville,d,R,00000,i,h",
 			],
 			file
 		)
@@ -257,7 +243,7 @@ describe("readTuples (OA CSV parse)", () => {
 })
 
 describe("applyCountryAppend (country-append fraction, #728 pattern)", () => {
-	const makeRow = (): SynthesizedLocaleRow => ({
+	const makeRow = (): RenderedLocaleRow => ({
 		raw: "14 Beulah Hill, London SE19 3NF",
 		components: { house_number: "14", street: "Beulah Hill", locality: "London", postcode: "SE19 3NF" },
 		locale: "en-GB",
@@ -327,7 +313,7 @@ describe("applyDistrictAsLocalityOverride (--district-as-locality tri-state)", (
 		const part: LocalePart = { path: "/x.csv" }
 
 		expect(applyDistrictAsLocalityOverride(part, true)).toEqual({ path: "/x.csv", districtAsLocality: true })
-		// original part is untouched — the override never mutates the registered COUNTRY_SOURCES entry.
+		// The override returns a copy and leaves the registered part unchanged.
 		expect(part.districtAsLocality).toBeUndefined()
 	})
 
@@ -344,12 +330,18 @@ describe("resolveLocaleParts (ES pedanía part-list selection)", () => {
 
 	const esLikeSource: LocaleCountrySource = {
 		source: "synth-es",
+		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: defaultParts,
 		pedaniaParts,
 	}
 
-	const noPedaniaSource: LocaleCountrySource = { source: "synth-de", corpusVersion: "0.4.0", parts: defaultParts }
+	const noPedaniaSource: LocaleCountrySource = {
+		source: "synth-de",
+		register: SourceRegister.OpenAddresses,
+		corpusVersion: "0.4.0",
+		parts: defaultParts,
+	}
 
 	it("override undefined (flag absent): default parts, regardless of whether pedaniaParts exists", () => {
 		expect(resolveLocaleParts(esLikeSource, undefined)).toBe(defaultParts)

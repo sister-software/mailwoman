@@ -5,7 +5,7 @@
  *   Fixture-scale cover for the FST build stamp and the freshness check.
  *
  *   Everything here runs on a three-state FST and a 12-byte "source database", because the thing under
- *   test is a comparison rather than a gazetteer. The one property that does need a real artifact — that the
+ *   test is a comparison rather than a gazetteer. The one property that does need a real artifact. That the
  *   trailer can be read by seek without buffering 317 MB — is exercised structurally: the fixture
  *   writes a trailer at a non-zero offset and the reader is never handed the buffer.
  */
@@ -25,6 +25,7 @@ import {
 	serializeFST,
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import type { FSTProvenance } from "@mailwoman/resolver-wof-sqlite/fst"
+import type { PathBuilder } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const TMP = await temporaryDirectory("fst-freshness-")
@@ -32,8 +33,9 @@ const TMP = await temporaryDirectory("fst-freshness-")
 afterAll(() => TMP[Symbol.asyncDispose]())
 
 /**
- * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real string table, edge table and
- * place table between the header and the trailer — the trailer offset must be computed rather than guessed.
+ * A two-token FST ("aa" → "bb") with one place, so the serialized artifact has a real
+ * string table, edge table and place table between the header and the trailer.
+ * The trailer offset must be computed rather than guessed.
  */
 function fixtureMatcher(): FSTMatcher {
 	return FSTMatcher.fromNodes([
@@ -56,8 +58,8 @@ function fixtureMatcher(): FSTMatcher {
 	])
 }
 
-async function writeFST(name: string, provenance?: FSTProvenance): Promise<string> {
-	const path = TMP.resolve(name)
+async function writeFST(name: string, provenance?: FSTProvenance): Promise<PathBuilder> {
+	const path = TMP.path(name)
 	await writeLocalFile(serializeFST(fixtureMatcher(), provenance), path)
 
 	return path
@@ -76,7 +78,7 @@ function provenanceOf(overrides: Partial<FSTProvenance> = {}): FSTProvenance {
 	}
 }
 
-const SOURCE = TMP.resolve("source.db")
+const SOURCE = TMP.path("source.db")
 await writeLocalTextFile("source bytes", SOURCE)
 const SOURCE_IDENTITY = { md5: await md5File(SOURCE), bytes: (await statPath(SOURCE)).size }
 
@@ -86,11 +88,11 @@ describe("md5File", () => {
 	})
 
 	it("hashes a file LARGER than one read chunk identically", async () => {
-		// The defect this catches lives in the input tail: every fixture-sized file fits one 8 MiB read,
-		// so an off-by-one in the chunk loop is invisible until a real 5 GB source arrives. 20 MiB runs
-		// the loop three times, with the last read short.
+		// The defect this catches lives in the input tail: every fixture-sized file fits
+		// one 8 MiB read, so an off-by-one in the chunk loop is invisible until a real 5 GB
+		// source arrives. 20 MiB runs the loop three times, with the last read short.
 		const bytes = Buffer.alloc(20 * 1024 * 1024 + 7, 0xab)
-		const big = TMP.resolve("big.bin")
+		const big = TMP.path("big.bin")
 		await writeLocalFile(bytes, big)
 
 		expect(await md5File(big)).toBe(md5Hex(bytes))
@@ -99,18 +101,18 @@ describe("md5File", () => {
 
 describe("readWOFSourceIdentity", () => {
 	it("computes and caches the digest in an md5sum-format sidecar", async () => {
-		const path = TMP.resolve("sidecar-source.db")
+		const path = TMP.path("sidecar-source.db")
 		await writeLocalTextFile("abc", path)
 		const identity = await readWOFSourceIdentity(path)
 
 		expect(identity.md5).toBe(await md5File(path))
 		expect(identity.bytes).toBe(3)
-		// md5sum(1) format: "<hash>  <basename>".
+		// md5sum(1) format: "<hash> <basename>".
 		expect(await readLocalTextFile(`${path}.md5`)).toBe(`${identity.md5}  sidecar-source.db\n`)
 	})
 
 	it("recomputes when the sidecar is OLDER than the source", async () => {
-		const path = TMP.resolve("stale-sidecar.db")
+		const path = TMP.path("stale-sidecar.db")
 		await writeLocalTextFile("one", path)
 		await writeLocalTextFile("00000000000000000000000000000000  stale-sidecar.db\n", `${path}.md5`)
 		// Sidecar predates the source: the guard must not trust it.
@@ -120,13 +122,13 @@ describe("readWOFSourceIdentity", () => {
 	})
 
 	it("trusts a sidecar at or after the source's mtime without reading the source", async () => {
-		const path = TMP.resolve("trusted-sidecar.db")
+		const path = TMP.path("trusted-sidecar.db")
 		await writeLocalTextFile("two", path)
 		const lie = "11111111111111111111111111111111"
 		await writeLocalTextFile(`${lie}  trusted-sidecar.db\n`, `${path}.md5`)
 
-		// The lie proves the sidecar was read rather than the file re-hashed — the property that keeps
-		// the guard cheap enough to leave switched on for a 5 GB source.
+		// The lie proves the sidecar was read rather than the file re-hashed.
+		// The property that keeps the guard cheap enough to leave switched on for a 5 GB source.
 		expect((await readWOFSourceIdentity(path)).md5).toBe(lie)
 	})
 })
@@ -149,15 +151,15 @@ describe("peekFSTStampFields", () => {
 	})
 
 	it("returns undefined for a non-FST file, a stub, and an absent path", async () => {
-		const notFST = TMP.resolve("not-an-fst.bin")
+		const notFST = TMP.path("not-an-fst.bin")
 		await writeLocalBuffer(Buffer.alloc(64, 0x7f), notFST)
 		expect(await peekFSTStampFields(notFST)).toBeUndefined()
 
-		const tooSmall = TMP.resolve("tiny.bin")
+		const tooSmall = TMP.path("tiny.bin")
 		await writeLocalBuffer(Buffer.from("FST\0"), tooSmall)
 		expect(await peekFSTStampFields(tooSmall)).toBeUndefined()
 
-		expect(await peekFSTStampFields(TMP.resolve("nope.bin"))).toBeUndefined()
+		expect(await peekFSTStampFields(TMP.path("nope.bin"))).toBeUndefined()
 	})
 
 	it("survives a truncated trailer instead of throwing", async () => {
@@ -207,8 +209,7 @@ describe("fstStaleReason", () => {
 	})
 
 	it("flags a format older than the tree writes even when the source matches", async () => {
-		// The R5 lesson in format edition: a guard comparing only the source reads a format-obsolete
-		// artifact as current.
+		// The R5 lesson in format edition: a guard comparing only the source reads a format-obsolete artifact as current.
 		const path = await writeFST(
 			"format-stale.bin",
 			provenanceOf({ sourceDBMD5: SOURCE_IDENTITY.md5, sourceDBBytes: SOURCE_IDENTITY.bytes })
@@ -279,13 +280,13 @@ describe("fstFreshnessWarning", () => {
 
 	it("is silent when either side is absent — a missing file is a different report", async () => {
 		expect(
-			await fstFreshnessWarning({ fstPath: TMP.resolve("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
+			await fstFreshnessWarning({ fstPath: TMP.path("gone.bin"), sourceDBPath: SOURCE, rebuildCommand: "x" })
 		).toBeUndefined()
 
 		expect(
 			await fstFreshnessWarning({
 				fstPath: await writeFST("orphan.bin", provenanceOf()),
-				sourceDBPath: TMP.resolve("gone.db"),
+				sourceDBPath: TMP.path("gone.db"),
 				rebuildCommand: "x",
 			})
 		).toBeUndefined()

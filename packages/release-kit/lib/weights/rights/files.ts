@@ -18,7 +18,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
-import type { WeightsRightsRecord } from "#weights/rights/record"
+import type { AttributionRecord, WeightsRightsRecord } from "#weights/rights/record"
 
 /**
  * The name of the generated obligations file inside a weights workspace.
@@ -31,8 +31,10 @@ export const LICENSE_FILE = "LICENSE.md"
 export const PROVENANCE_FILE = "PROVENANCE.json"
 
 /**
- * The provenance record as it is written to disk. Field names are snake_case to match `model-card.json`, which is the
- * file a reader of this one will open next.
+ * The provenance record as it is written to disk.
+ *
+ * Field names are snake_case to match `model-card.json`, which is the file a
+ * reader of this one will open next.
  */
 export interface ProvenanceDocument {
 	$comment: string
@@ -44,7 +46,9 @@ export interface ProvenanceDocument {
 	version_series_meaning: string
 	base_weights: string | null
 	/**
-	 * What this package inherits by decoding through another package's graph. `null` for a graph package.
+	 * What this package inherits by decoding through another package's graph.
+	 *
+	 * `null` for a graph package.
 	 */
 	inherited_lineage: {
 		package: string
@@ -55,10 +59,16 @@ export interface ProvenanceDocument {
 		attribution: Array<{ text: string; license_named: string | null }>
 		unresolved: string | null
 	} | null
-	artifacts: Array<{ path: string; md5: string | null; digest: string }>
+	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
-		entries: Array<{ text: string; license_named: string | null }>
+		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
+		/**
+		 * How many entries state each use.
+		 *
+		 * An entry may state more than one, so these do not sum to the entry count.
+		 */
+		by_use: Record<string, number>
 	}
 	attribution_recorded_in_another_package: Array<{ artifact: string; recorded_in: string; text: string }>
 	corpus_version: string | null
@@ -77,9 +87,10 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 }
 
 /**
- * The questions this record leaves open, each phrased as the question rather than as a finding. A reader has to be able
- * to tell a package with no recorded training inputs from a package trained on nothing, and an artifact with no
- * recorded digest from an artifact whose digest was checked.
+ * The questions this record leaves open, each phrased as the question rather than as a finding.
+ *
+ * A reader has to be able to tell a package with no recorded training inputs from a package trained on
+ * no inputs, and an artifact with no recorded digest from an artifact whose digest was checked.
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []
@@ -111,6 +122,27 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		questions.push(`One attribution entry names no license: ${entry.text}`)
 	}
 
+	// A list that runs training, tokenizer and evaluation contributions together reads as
+	// though every source in it trained the model.
+	// Naming the split lets a reader see which entries describe rows the model never learned from.
+	const evaluationOnly = record.attribution.filter(
+		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
+	)
+
+	if (evaluationOnly.length) {
+		questions.push(
+			`${evaluationOnly.length} of ${record.attribution.length} attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: ${evaluationOnly.map((entry) => entry.text.split(":")[0]).join("; ")}.`
+		)
+	}
+
+	const unstated = record.attribution.filter((entry) => entry.uses.includes("unstated"))
+
+	if (unstated.length) {
+		questions.push(
+			`${unstated.length} of ${record.attribution.length} attribution entries do not say how the source was used, so whether it trained this model is unrecorded.`
+		)
+	}
+
 	for (const foreign of record.foreignAttribution) {
 		questions.push(
 			`${foreign.artifact} ships here, and the entry attributing it sits in ${foreign.recordedIn}'s model card. A consumer installing this package alone receives the artifact without the attribution.`
@@ -118,10 +150,29 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	}
 
 	questions.push(
-		"Which records trained the model this package ships or inherits is unresolved. No frozen per-release training manifest exists, and the corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	)
 
 	return questions
+}
+
+/**
+ * How many attribution entries state each use, in a fixed key order so the document is reproducible.
+ *
+ * A use that no entry states is omitted rather than written as zero.
+ * Zero would read as a measurement — "no source was used for evaluation" — where the truth is that no
+ * entry said so, and these entries are prose a reader wrote rather than a field a build filled.
+ */
+function countUses(attribution: readonly AttributionRecord[]): Record<string, number> {
+	const counts = new Map<string, number>()
+
+	for (const entry of attribution) {
+		for (const use of entry.uses) {
+			counts.set(use, (counts.get(use) ?? 0) + 1)
+		}
+	}
+
+	return Object.fromEntries([...counts.entries()].toSorted(([a], [b]) => a.localeCompare(b)))
 }
 
 /**
@@ -153,12 +204,18 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 			: null,
 		artifacts: record.artifacts.map((artifact) => ({
 			path: artifact.path,
+			role: artifact.role,
 			md5: artifact.md5,
 			digest: artifact.digest,
 		})),
 		training_attribution: {
 			status: record.attribution.length ? "recorded" : "none-recorded-in-this-package",
-			entries: record.attribution.map((entry) => ({ text: entry.text, license_named: entry.licenseNamed })),
+			entries: record.attribution.map((entry) => ({
+				text: entry.text,
+				license_named: entry.licenseNamed,
+				uses: entry.uses,
+			})),
+			by_use: countUses(record.attribution),
 		},
 		attribution_recorded_in_another_package: record.foreignAttribution.map((foreign) => ({
 			artifact: foreign.artifact,
@@ -174,8 +231,8 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 /**
  * Whether a committed provenance document equals the one this record renders.
  *
- * Parsed JSON is compared rather than text, so the repository formatter may lay the file out as it likes — the same
- * reason `license-register` compares the well-known key file that way.
+ * Parsed JSON is compared rather than text, so the repository formatter may lay the file out
+ * as it likes — the same reason `license-register` compares the well-known key file that way.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
 	return stringifyJSON(committed) === stringifyJSON(renderProvenance(record))
@@ -184,10 +241,10 @@ export function provenanceMatches(committed: unknown, record: WeightsRightsRecor
 /**
  * The obligations file for one package.
  *
- * Every published mailwoman package carries the same expression, so this text does not vary with the package beyond its
- * name and the pointer to its own provenance record. It exists per package because npm ships per package: a consumer
- * who installs one weights overlay and reads its tarball finds the terms there rather than in a repository they were
- * never sent to.
+ * Every published mailwoman package carries the same expression, so this text does not
+ * vary with the package beyond its name and the pointer to its own provenance record.
+ * It exists per package because npm ships per package: a consumer who installs one weights overlay
+ * and reads its tarball finds the terms there rather than in a repository they were never sent to.
  */
 export function renderLicenseFile(record: WeightsRightsRecord): string {
 	return `# License — ${record.packageName}

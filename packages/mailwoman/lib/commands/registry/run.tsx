@@ -19,7 +19,7 @@
  */
 
 import { Spinner } from "@inkjs/ui"
-import { mailwomanDataRoot } from "@mailwoman/core/data-root"
+import { dataRootPath } from "@mailwoman/core/data-root"
 import { errorMessage } from "@mailwoman/core/errors/schema"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -29,12 +29,14 @@ import { CommandError } from "@mailwoman/core/scripting/command"
 import type { NeuralAddressClassifier } from "@mailwoman/neural"
 import type { ColumnMapping, EntityGeoData, GeocodeAddress, SourceRecord } from "@mailwoman/registry"
 import type { EvalGeocoder, EvalGeocoderFactory } from "@mailwoman/registry/tools"
+import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { Text } from "ink"
 
 import {
 	type CommandSpec,
 	CommandTaskResult,
+	isLocaleTag,
 	type OptionsOf,
 	type ParsedCommandComponent,
 	useCommandTask,
@@ -46,7 +48,7 @@ import type { RegionDatabaseResolver } from "#geocode/regions"
  */
 export const isDefault = true
 
-//#region CLI interface — args + options
+// #region CLI interface — args + options
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -69,27 +71,29 @@ export const spec = {
 		locale: {
 			type: "string",
 			default: "en-US",
-			validate: (v: string) => /^[a-z]{2}(-[A-Z]{2})?$/u.test(v),
+			validate: isLocaleTag,
 			description: "BCP-47 locale",
 		},
 		"default-country": { type: "string", description: "Resolver country scope" },
 		"place-country": { type: "boolean", default: true, description: "Enable coarse country prior" },
 		"resolve-db": { type: "string", description: "WOF admin database" },
-		"data-root": { type: "string", default: mailwomanDataRoot(), description: "Per-state database root" },
+		"data-root": { type: "string", default: dataRootPath().toString(), description: "Per-state database root" },
 	},
 } as const satisfies CommandSpec
 
 type Options = OptionsOf<typeof spec>
 
-//#endregion
+// #endregion
 
-//#region Column mapping
+// #region Column mapping
 
 /**
- * Built-in best-effort mapping for tidy contact/org CSVs. Multi-column fields are joined (so a CSV that splits the
- * address across columns composes one string). Real datasets with bespoke headers (e.g. NPPES "Provider First Line
- * Business Practice Location Address") pass an explicit --mapping. inferring it from the header is the #603
- * fast-follow.
+ * Built-in best-effort mapping for tidy contact/org CSVs.
+ *
+ * Multi-column fields are joined (so a CSV that splits the address across columns composes one string).
+ * Real datasets with bespoke headers (e.g. NPPES "Provider First Line Business Practice Location Address")
+ * pass an explicit --mapping.
+ * Inferring it from the header is the #603 fast-follow.
  */
 export const DEFAULT_MAPPING: ColumnMapping = {
 	id: "id",
@@ -135,9 +139,11 @@ async function resolveWOFPath(options: Options): Promise<string> {
 }
 
 /**
- * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases) and wire it into the matcher's
- * {@link GeocodeAddress} interface. Returns it plus a disposal hook for the database handles. Shared by the single-CSV
- * and multi-source paths.
+ * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases)
+ * and wire it into the matcher's {@link GeocodeAddress} interface.
+ *
+ * @returns it plus a disposal hook for the database handles.
+ * Shared by the single-CSV and multi-source paths.
  */
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
@@ -145,7 +151,7 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 	const { geocodeAddressVia } = await import("@mailwoman/registry")
 	const { createWOFResolver } = await import("@mailwoman/resolver")
 
-	const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
+	const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 		import("#geocode/core"),
 		import("#geocode/regions"),
 	])
@@ -173,9 +179,10 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
 		throw new CommandError("registry requires `@mailwoman/resolver-wof-sqlite` to be installed.")
 	}
 
-	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend. else FTS over wofPath.
+	// $MAILWOMAN_CANDIDATE_DB → the demo-parity candidate backend.
+	// Else FTS over wofPath.
 	const lookup = await createResolverBackend(mod, { wofPaths: wofPath })
-	const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, options.dataRoot)
+	const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, options.dataRoot)
 	const databases: RegionDatabaseResolver = regionDatabaseProvider.for
 	const defaultCountry = resolverDefaultCountry(options, !!(await resolveCandidateDBPath())) || undefined
 	const resolver = createWOFResolver(lookup)
@@ -208,19 +215,27 @@ async function buildGeocoder(options: Options): Promise<{ geocodeAddress: Geocod
  */
 export interface EvalGeocoderFlags {
 	/**
-	 * WOF admin SQLite path. Default `$MAILWOMAN_DATA_ROOT/wof/admin-global-priority.db`.
+	 * WOF admin SQLite path.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
 	 */
 	wof?: string
 	/**
-	 * Per-state database root. Default `$MAILWOMAN_DATA_ROOT`.
+	 * Per-state database root.
+	 *
+	 * Default `$MAILWOMAN_DATA_ROOT`.
 	 */
 	dataRoot?: string
 	/**
-	 * Weights locale. Default en-US.
+	 * Weights locale.
+	 *
+	 * Default en-US.
 	 */
 	locale?: string
 	/**
-	 * Model-swap overrides (`nppes-benchmark` multi-version curves). `modelCardPath` is mandatory with `modelPath`.
+	 * Model-swap overrides (`nppes-benchmark` multi-version curves).
+	 *
+	 * `modelCardPath` is mandatory with `modelPath`.
 	 */
 	modelPath?: string
 	tokenizerPath?: string
@@ -228,27 +243,28 @@ export interface EvalGeocoderFlags {
 }
 
 /**
- * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take. This is the eval
- * scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup` over an explicit WOF path (not
- * the candidate-table backend {@link buildGeocoder} uses), `defaultCountry: "US"`, `placeCountry: false`, and
- * `postcodeRepair: true` at the parse — so migrated evals reproduce the retired scripts' numbers. Shared by the
- * `registry train-scorer` and `registry scorer-eval` commands.
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take.
+ *
+ * This is the eval scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup`
+ * over an explicit WOF path (not the candidate-table backend {@link buildGeocoder} uses),
+ * `defaultCountry: "US"`, `placeCountry: false`, and `postcodeRepair: true` at the parse —
+ * so migrated evals reproduce the retired scripts' numbers.
+ * Shared by the `registry train-scorer` and `registry scorer-eval` commands.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
-		const { dataRootPath } = await import("@mailwoman/core/utils")
 		const { decodeAsJSON } = await import("@mailwoman/core/decoder")
 		const { NeuralAddressClassifier } = await import("@mailwoman/neural")
 		const { geocodeAddressVia } = await import("@mailwoman/registry")
 		const { createWOFResolver } = await import("@mailwoman/resolver")
 
-		const [{ geocodeAddress }, { RegionDatabaseProvider }] = await Promise.all([
+		const [{ geocodeAddress }, { USStateDatabaseProvider }] = await Promise.all([
 			import("#geocode/core"),
 			import("#geocode/regions"),
 		])
 
-		const wof = flags.wof || String(dataRootPath("wof", "admin-global-priority.db"))
-		const dataRoot = flags.dataRoot || mailwomanDataRoot()
+		const wof = flags.wof || wofDatabasePath("admin-global-priority.db")
+		const dataRoot = flags.dataRoot || dataRootPath()
 
 		const classifier = await NeuralAddressClassifier.loadFromWeights({
 			locale: flags.locale || "en-US",
@@ -260,7 +276,7 @@ export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFacto
 		const mod = await import("@mailwoman/resolver-wof-sqlite")
 		const lookup = new mod.WOFSQLitePlaceLookup({ databasePath: wof })
 		const resolver = createWOFResolver(lookup)
-		const regionDatabaseProvider = await RegionDatabaseProvider.create(mod, dataRoot)
+		const regionDatabaseProvider = await USStateDatabaseProvider.create(mod, dataRoot)
 
 		const geocode = (raw: string) =>
 			geocodeAddress(raw, {
@@ -326,9 +342,11 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
 }
 
 /**
- * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map), returning the lines to
- * append to the run summary. Returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original
- * default). Shared by both pipeline paths.
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map),
+ * returning the lines to append to the run summary.
+ *
+ * @returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original default).
+ * Shared by both pipeline paths.
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -357,9 +375,12 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode (#618): stream each dataset under its own mapping + provenance label into one combined record set,
- * geocode, resolve, and report the entities that span ≥2 sources — the cross-dataset links. No shared key required.
- * geography is the join.
+ * Multi-source mode (#618): stream each dataset under its own mapping + provenance
+ * label into one combined record set, geocode, resolve, and report the entities
+ * that span ≥2 sources — the cross-dataset links.
+ *
+ * No shared key required.
+ * Geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
 	const {
@@ -406,10 +427,11 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		perSource.push(`${label} ${recs.length}`)
 	}
 
-	// learnedScorer:false — multi-source is cross-dataset link discovery (recall-oriented): the same
-	// facility under different operational names across sources is the signal we want. The default GBT is
-	// dedup-calibrated and rejects exactly that (it learned "same place + name drift = distinct"), so the
-	// cross-dataset path uses the FS spine. (Single-CSV dedup below keeps the GBT default.)
+	// learnedScorer:false — multi-source is cross-dataset link discovery (recall-oriented):
+	// the same facility under different operational names across sources is the signal we want.
+	// The default GBT is dedup-calibrated and rejects exactly that
+	// (it learned "same place + name drift = distinct"), so the cross-dataset path uses the FS spine.
+	// (Single-CSV dedup below keeps the GBT default.)
 	const result = resolveEntities(records, {
 		trainEM: options.trainEm,
 		threshold: options.threshold,
@@ -419,8 +441,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
-	// Reconciliation mode (#621): classify entities by eligibility/funding role membership, via the
-	// same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	// Reconciliation mode (#621): classify entities by eligibility/funding role membership,
+	// via the same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
@@ -467,9 +489,9 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-//#endregion
+// #endregion
 
-//#region Core
+// #region Core
 
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
@@ -482,8 +504,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	}
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
-	// --infer-mapping reads the header (the first row's keys) and guesses the mapping. an explicit --mapping
-	// still merges on top of it. Otherwise the base is the built-in default.
+	// --infer-mapping reads the header (the first row's keys) and guesses the mapping.
+	// An explicit --mapping still merges on top of it.
+	// Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping, options.source, base)
 	using geocoder = await buildGeocoder(options)
@@ -511,9 +534,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-//#endregion
+// #endregion
 
-//#region React command component
+// #region React command component
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
@@ -541,4 +564,4 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 
 export default RegistryCommand
 
-//#endregion
+// #endregion

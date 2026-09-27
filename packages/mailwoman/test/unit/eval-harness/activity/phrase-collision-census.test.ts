@@ -22,30 +22,29 @@ import {
 	type PhraseCollisionCensus,
 	runPhraseCollisionCensus,
 } from "mailwoman/eval-harness/activity-lexicon/phrase-collision-census"
-import { resolvePath } from "path-ts"
 import { afterAll, describe, expect, it } from "vitest"
 
 const COMMITTED_CENSUS = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
 const lexicon = await readActivityLexicon()
 
-const committedCensusPath = resolvePath(String(repoRootPath()), COMMITTED_CENSUS)
+const committedCensusPath = repoRootPath(COMMITTED_CENSUS)
 const committed = await readLocalJSONFile<PhraseCollisionCensus>(committedCensusPath)
 
 /**
- * A repository root carrying one committed query, so the carrier-prefix family is exercised without reading the real
- * 17k-input corpus on every run.
+ * A repository root carrying one committed query, so the carrier-prefix family is
+ * exercised without reading the real 17k-input corpus on every run.
  */
 const scratchRoot = await temporaryDirectory("collision-census-")
 
 afterAll(() => scratchRoot[Symbol.asyncDispose]())
 
-await makeDirectories(scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures"))
+await makeDirectories(scratchRoot.path("packages/mailwoman/lib/eval-harness/fixtures"))
 
 await writeLocalTextFile(
 	`${stringifyJSON({ id: "sem-act-fr-01", query: "somewhere to fill a prescription near Toulouse" })}\n` +
 		`${stringifyJSON({ id: "cat-fr-03", query: "pharmacy near Toulouse" })}\n`,
-	scratchRoot.resolve("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
+	scratchRoot.path("packages/mailwoman/lib/eval-harness/fixtures/rows.jsonl")
 )
 
 afterAll(async () => {
@@ -54,7 +53,7 @@ afterAll(async () => {
 
 function census(venues: CensusVenue[]): Promise<PhraseCollisionCensus> {
 	return runPhraseCollisionCensus({
-		databasePath: scratchRoot.resolve("absent.db"),
+		databasePath: scratchRoot.path("absent.db"),
 		repositoryRoot: scratchRoot.path,
 		reader: {
 			candidates: () => venues,

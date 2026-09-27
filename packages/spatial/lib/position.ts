@@ -12,6 +12,22 @@ import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 export { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 
 /**
+ * A point in decimal degrees under the `latitude` and `longitude` keys.
+ */
+export interface GeoCoordinate {
+	latitude: number
+	longitude: number
+}
+
+/**
+ * A point in decimal degrees under the `lat` and `lon` keys.
+ */
+export interface LatLon {
+	lat: number
+	lon: number
+}
+
+/**
  * Arity of a `[lon, lat]` coordinate tuple.
  */
 const COORD_PAIR_LENGTH = 2
@@ -24,8 +40,8 @@ const COORD_TRIPLE_LENGTH = 3
 /**
  * An ordered pair of coordinates in the form of [longitude, latitude].
  *
- * Note that unlike the typical order, GeoJSON coordinates are in the order of [longitude, latitude] to match the order
- * of [x, y] in Cartesian coordinates.
+ * Note that unlike the typical order, GeoJSON coordinates are in the order of
+ * [longitude, latitude] to match the order of [x, y] in Cartesian coordinates.
  *
  * @category Position
  * @category GeoJSON

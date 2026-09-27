@@ -4,7 +4,7 @@
 /**
  * @file The #1891 regression pin: bumping `release.config.json#version` changes exactly the version line — the
  *   `weights` block (the model identity, which a code-only release must never move) stays byte-equivalent. v9.2.0
- *   shipped while this file read 9.1.0 because nothing bumped it (#1024's drift class); the bump is a targeted
+ *   shipped while this file read 9.1.0 because no operation bumped it (#1024's drift class); the bump is a targeted
  *   textual replacement because the file is oxfmt-formatted and a parse-then-stringify write would reformat it
  *   wholesale (measured: the single-line `locales` array expands to eleven lines).
  */
@@ -18,7 +18,7 @@ import { resolvePath } from "path-ts"
 import { beforeAll, describe, expect, it } from "vitest"
 
 describe("release.config.json under the prepare bump", () => {
-	const path = resolvePath(String(repoRootPath()), "release.config.json")
+	const path = resolvePath(repoRootPath(), "release.config.json")
 	let original: string
 	let currentVersion: string
 
@@ -47,11 +47,12 @@ describe("release.config.json under the prepare bump", () => {
 	})
 
 	it("carries the current release number, not a lagged one", async () => {
-		const rootManifestPath = resolvePath(String(repoRootPath()), "package.json")
+		const rootManifestPath = resolvePath(repoRootPath(), "package.json")
 		const root = await readPackageJSON(rootManifestPath)
 
-		// The v9.2.0 incident: the root moved and this file did not. The prepare bump now writes both,
-		// and its pre-write sync check refuses drift — this assertion is the standing regression check.
+		// The v9.2.0 incident: the root moved and this file did not.
+		// The prepare bump now writes both, and its pre-write sync check refuses drift.
+		// This assertion is the standing regression check.
 		expect(currentVersion).toBe(root.version)
 	})
 })

@@ -10,25 +10,30 @@
 
 import type { AnnotationSet, Annotator } from "@mailwoman/annotations"
 
+import { isAlpha2CodeShape } from "#country/country"
 import { COUNTRY_REFERENCE } from "#country/reference/data"
 
 const REGIONAL_INDICATOR_BASE = 0x1_f1_e6
 const A_UPPER = "A".charCodeAt(0)
 
 /**
- * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two Regional Indicator Symbols (`US` → 🇺🇸).
- * Returns `""` for anything that is not two ascii letters.
+ * The flag emoji for an ISO 3166-1 alpha-2 country code, formed from the two
+ * Regional Indicator Symbols (`US` → 🇺🇸).
+ *
+ * @returns `""` for anything that is not two ascii letters.
  */
 export function countryFlag(alpha2: string): string {
 	const code = alpha2.toUpperCase()
 
-	if (!/^[A-Z]{2}$/.test(code)) return ""
+	if (!isAlpha2CodeShape(code)) return ""
 
 	return String.fromCodePoint(...[...code].map((c) => REGIONAL_INDICATOR_BASE + c.charCodeAt(0) - A_UPPER))
 }
 
 /**
- * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency) from a resolved country code.
+ * Fill the country-reference fields (ISO 3166 alpha-2, flag, calling code, currency)
+ * from a resolved country code.
+ *
  * Abstains on anything that isn't two ascii letters.
  */
 export const countryReferenceAnnotator: Annotator = ({ countryCode }): Partial<AnnotationSet> => {

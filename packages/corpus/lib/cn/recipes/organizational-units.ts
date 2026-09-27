@@ -2,42 +2,27 @@
 // SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Commercial
 
 /**
- * @file `cn-organizational-units` recipe (#2034) — real CN address strings whose settlement is an organizational
- *   ladder (`赵光三分场二十九队`: the Zhaoguang farm, No. 3 sub-farm, No. 29 production team), labeled by rule and aligned
- *   character by character for the CJK sibling model.
+ * @file Labels Chinese rows whose settlement ends in an organizational unit chain.
  *
- *   the labels are A reading OF the suffix rather than A guess. Every generic that ends an ordinal unit (`分场`, `大队`, `队`,
- *   `连`, `团`, `组`, `场部`) is in `@mailwoman/core/locale/zh-cn-units`' one table, and the same table reads the span back
- *   after decode. The whole ordinal chain is one `locality_unit` span. the named head it belongs to (`赵光`, `孟定农场`) is
- *   `dependent_locality`; a province, city or county written in front of it takes `region`, `locality`, `subregion`; a
- *   Latin admin tail (`, Heilongjiang, China`) takes `region` and `country`. A row with no chain is skipped rather than labeled:
- *   `红卫大队` is a village name whose generic carries no ordinal, and `苗辽林场` is a named forest farm.
- *
- *   where the rows come from. `--input` is a jsonl of `{ raw, country }` rows — the shape of `data/coarse-placer/*.jsonl`,
- *   whose 50,000 CN rows hold 328 with unit vocabulary. That file is a local artifact and carries no per-row source. the
- *   `<name>, <admin1>, <country>` shape is the corpus's GeoNames adapter's, so the rows are stamped with GeoNames'
- *   licence and the inference is stated in the `license` field rather than hidden behind it.
- *
- *   FOR the CJK model only. The tokenizer is {@link cjkAwareTokenizer}: one token per Han character, because the
- *   whitespace tokenizer reads `三分场八队` as one word and could never give it two labels. The Latin model never trains
- *   on this recipe's rows. its label set has no `locality_unit`.
+ *   The unit grammar tags the whole chain as `locality_unit` and its named head as `dependent_locality`. Input is JSONL
+ *   with `{ raw, country }`. Rows are aligned per character for the CJK model.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"
+import { TextSpliterator } from "spliterator"
 
 import { type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 import { alignRow } from "#utils/align"
 import { cjkAwareTokenizer } from "#utils/tokenize"
 
 /**
- * The leading run of Han characters (plus the digits an ordinal may be written with): the Chinese half of a row.
+ * Matches the leading run of Han characters and digits.
  */
 const LEADING_HAN = /^[\p{Script=Han}〇\d]+/u
 
 /**
- * Admin prefixes a CJK address writes in front of the settlement, coarsest first. Each is matched at the start of what
- * remains, so `云南省临沧市孟定农场三分场二队` peels `云南省` (province), `临沧市` (city), and hands `孟定农场三分场二队` to the unit reader.
+ * Administrative prefixes, matched in order from broadest to narrowest.
  */
 const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "locality" | "subregion"]> = [
 	[/^(.+?(?:省|自治区))/u, "region"],
@@ -46,8 +31,7 @@ const ADMIN_PREFIXES: ReadonlyArray<readonly [pattern: RegExp, tag: "region" | "
 ]
 
 /**
- * The components a row's string supports, every value a verbatim substring of `raw`, or `null` when the string carries
- * no organizational chain and so teaches nothing this recipe exists for.
+ * Labels the components of a row, or returns `null` when the row has no unit chain.
  */
 export function labelCNOrganizationalRow(raw: string): Record<string, string> | null {
 	const han = LEADING_HAN.exec(raw)?.[0]
@@ -60,7 +44,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	for (const [pattern, tag] of ADMIN_PREFIXES) {
 		const match = pattern.exec(rest)
 
-		// A prefix must leave something behind it, or the whole run was the admin name and there is no settlement.
+		// A prefix is taken only when text remains after it for the settlement.
 		if (match && match[1]!.length < rest.length) {
 			components[tag] = match[1]!
 			rest = rest.slice(match[1]!.length)
@@ -80,13 +64,9 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	const tail = raw.slice(han.length).trim()
 
 	if (tail) {
-		// `, Heilongjiang, China` or `Hunan China` or `Inner Mongolia`: comma segments when there are commas, else the last
-		// word is the country when it says so and the rest is the admin1 name.
+		// A Latin tail becomes a region and a trailing "China" country.
 		const segments = tail.includes(",")
-			? tail
-					.split(",")
-					.map((segment) => segment.trim())
-					.filter((segment) => segment.length)
+			? TextSpliterator.from(tail, { delimiter: "," }).toArray()
 			: tailWithoutCommas(tail)
 
 		for (const segment of segments) {
@@ -102,8 +82,8 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 }
 
 /**
- * A space-separated tail: `Hunan China` → [`Hunan`, `China`]; `Inner Mongolia` → [`Inner Mongolia`]; `Xinjiang Uyghur`
- * → [`Xinjiang Uyghur`].
+ * Splits a trailing `China` off a tail without commas.
+ * Any other tail stays one segment.
  */
 function tailWithoutCommas(tail: string): string[] {
 	const words = tail.split(/\s+/u).filter((word) => word.length)
@@ -119,8 +99,7 @@ function tailWithoutCommas(tail: string): string[] {
 const SOURCE = "coarse-placer-cn-units"
 
 /**
- * Recipe registered with the corpus builder — see the file header for the rows it labels and why every label is a
- * reading of a generic rather than a guess.
+ * The recipe registered with the corpus builder.
  */
 export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 	name: "cn-organizational-units",
@@ -176,8 +155,7 @@ export const cnOrganizationalUnitsRecipe: CorpusRecipe = {
 					"CC-BY-4.0 — GeoNames populated places, INFERRED from the `<name>, <admin1>, <country>` row shape; data/coarse-placer carries no per-row source",
 			}
 
-			// Verbatim only: every value above is a substring of `raw`, so an edit-distance match would mean this file
-			// has a bug rather than that the source spells something differently.
+			// Every component must appear verbatim in `raw`.
 			const aligned = alignRow(canonical as Parameters<typeof alignRow>[0], { tokenizer, maxEditDistance: 0 })
 
 			if (aligned.kind !== "labeled" || !aligned.row) {
