@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LatLon, LatLonBounds } from "@mailwoman/annotations/geo"
+import type { LatLon, LatLonBounds } from "@mailwoman/spatial"
 
 /**
  * Lists the Who's On First placetypes this resolver looks up, ordered roughly from coarsest to finest.

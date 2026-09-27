@@ -8,7 +8,6 @@
  *   name resolve to one entity, because blocking is geographic rather than textual.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { block, geoCellKey } from "@mailwoman/match/blocking"
 import { cluster } from "@mailwoman/match/clustering"
 import {
@@ -17,6 +16,7 @@ import {
 	scorePair,
 	similarityComparison,
 } from "@mailwoman/match/fellegi-sunter"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 interface Clinic {

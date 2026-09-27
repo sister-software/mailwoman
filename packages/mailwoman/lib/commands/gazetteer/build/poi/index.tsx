@@ -21,10 +21,10 @@
  *   below is untouched and stays byte-identical when `--source` is omitted.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
+import type { LatLonBounds } from "@mailwoman/spatial"
 import { Box, Text } from "ink"
 
 import {

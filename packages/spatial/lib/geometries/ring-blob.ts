@@ -31,8 +31,7 @@
  *   for every point in a hole.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
-
+import type { LatLonBounds } from "#bbox"
 import type { MultiPolygonRings } from "#geometries/polygon"
 
 /**

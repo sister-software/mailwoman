@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
+import type { LatLonBounds } from "@mailwoman/spatial"
 
 const CIRCLE_SEGMENTS = 64
 

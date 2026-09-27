@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LatLon } from "@mailwoman/annotations/geo"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
+import type { LatLon } from "@mailwoman/spatial"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
 
 const GAZETTEER_ROW_COLUMNS = 7

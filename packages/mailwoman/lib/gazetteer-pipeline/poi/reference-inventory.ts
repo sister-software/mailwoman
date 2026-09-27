@@ -13,9 +13,9 @@
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
+import type { LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 

@@ -59,7 +59,6 @@
  *   `packages/flood/lib/sdk/ingest/chunk.ts` and `packages/soil/lib/sdk/ingest/chunk.ts`.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import {
 	cellToChildren,
 	cellToParent,
@@ -72,6 +71,7 @@ import {
 	POLYGON_TO_CELLS_FLAGS,
 } from "h3-js"
 
+import type { LatLonBounds } from "#bbox"
 import { METRES_PER_DEGREE } from "#distance"
 import type { MultiPolygonRings } from "#geometries/polygon"
 import { ringsBoundingBox } from "#geometries/ring-blob"

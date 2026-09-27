@@ -4,9 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
-
-import type { Coordinates2D } from "#position"
+import type { Coordinates2D, GeoCoordinate } from "#position"
 
 const AIRY_1830_A = 6_377_563.396
 

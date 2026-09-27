@@ -13,6 +13,22 @@ import { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 export { isValidLatitude, isValidLongitude } from "#coordinate/bounds"
 
 /**
+ * A point in decimal degrees under the `latitude` and `longitude` keys.
+ */
+export interface GeoCoordinate {
+	latitude: number
+	longitude: number
+}
+
+/**
+ * A point in decimal degrees under the `lat` and `lon` keys.
+ */
+export interface LatLon {
+	lat: number
+	lon: number
+}
+
+/**
  * Arity of a `[lon, lat]` coordinate tuple.
  */
 const COORD_PAIR_LENGTH = 2

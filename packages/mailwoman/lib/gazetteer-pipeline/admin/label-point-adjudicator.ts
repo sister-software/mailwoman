@@ -7,10 +7,9 @@
  *   anchor.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversineKm, type GeoCoordinate } from "@mailwoman/spatial"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 /**

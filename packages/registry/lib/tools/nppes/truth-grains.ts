@@ -6,9 +6,9 @@
  *   ways — the address string, a haversine co-location radius, and an H3 cell.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
 import { haversineKm, jaccard } from "@mailwoman/match"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 import type { SourceRecord } from "#index"

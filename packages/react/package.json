@@ -330,11 +330,11 @@
 		"test:node": "vitest run --config vitest.node.config.ts"
 	},
 	"dependencies": {
-		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/kind-classifier": "workspace:*",
 		"@mailwoman/poi-taxonomy": "workspace:*",
 		"@mailwoman/query-shape": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"@types/geojson": "^7946.0.16"
 	},
 	"devDependencies": {

@@ -19,7 +19,7 @@
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 
 /**
  * Maps a record to zero or more block keys.

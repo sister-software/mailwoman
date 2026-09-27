@@ -60,7 +60,8 @@
 	},
 	"dependencies": {
 		"@mailwoman/annotations": "workspace:*",
-		"@mailwoman/codex": "workspace:*"
+		"@mailwoman/codex": "workspace:*",
+		"@mailwoman/spatial": "workspace:*"
 	},
 	"devDependencies": {
 		"@types/node": "^26.4.1"

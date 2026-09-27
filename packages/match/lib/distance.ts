@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
-import { haversineKm as greatCircleKm } from "@mailwoman/spatial"
+import { haversineKm as greatCircleKm, type GeoCoordinate } from "@mailwoman/spatial"
 
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 

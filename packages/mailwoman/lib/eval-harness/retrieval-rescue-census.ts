@@ -8,8 +8,7 @@
  *   This census classifies rows but makes no decision about changing checks or behavior.
  */
 
-import type { LatLon } from "@mailwoman/annotations/geo"
-import { haversineKm } from "@mailwoman/spatial"
+import { haversineKm, type LatLon } from "@mailwoman/spatial"
 
 import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
 

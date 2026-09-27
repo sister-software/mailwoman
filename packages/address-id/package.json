@@ -44,10 +44,10 @@
 		"access": "public"
 	},
 	"dependencies": {
-		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/normalize": "workspace:*",
+		"@mailwoman/spatial": "workspace:*",
 		"h3-js": "^4.5.0"
 	},
 	"devDependencies": {

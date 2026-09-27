@@ -4,7 +4,6 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import {
 	DEFAULT_DISTANCE_LEVELS,
 	DEFAULT_SPATIAL_LEVELS,
@@ -12,6 +11,7 @@ import {
 	haversineKm,
 	spatialComparison,
 } from "@mailwoman/match/distance"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 describe("haversineKm", () => {

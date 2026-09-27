@@ -5673,10 +5673,10 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/address-id@workspace:packages/address-id"
   dependencies:
-    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/normalize": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@types/node": "npm:^26.4.1"
     h3-js: "npm:^4.5.0"
   languageName: unknown
@@ -6140,8 +6140,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/map-tui@workspace:packages/map-tui"
   dependencies:
-    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@mapbox/vector-tile": "npm:^3.0.0"
     "@sister.software/asciify": "npm:^4.3.0"
     htmlparser2: "npm:^12.0.0"
@@ -6156,7 +6156,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/match@workspace:packages/match"
   dependencies:
-    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/spatial": "workspace:*"
     "@types/node": "npm:^26.4.1"
     fastest-levenshtein: "npm:^1.0.16"
@@ -6487,11 +6486,11 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@mailwoman/react@workspace:packages/react"
   dependencies:
-    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/kind-classifier": "workspace:*"
     "@mailwoman/poi-taxonomy": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@storybook/addon-docs": "npm:^10.6.0"
     "@storybook/react-vite": "npm:^10.6.0"
     "@styleframe/core": "npm:^3.6.2"
@@ -6534,6 +6533,7 @@ __metadata:
   dependencies:
     "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
+    "@mailwoman/spatial": "workspace:*"
     "@types/node": "npm:^26.4.1"
   languageName: unknown
   linkType: soft
@@ -6613,7 +6613,6 @@ __metadata:
   resolution: "@mailwoman/resolver-wof-sqlite@workspace:packages/resolver-wof-sqlite"
   dependencies:
     "@mailwoman/ancestrie": "workspace:*"
-    "@mailwoman/annotations": "workspace:*"
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/evidence": "workspace:*"

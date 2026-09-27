@@ -26,10 +26,10 @@
  *   which isn't published.)
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { us } from "@mailwoman/codex"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { normalize } from "@mailwoman/normalize"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { latLngToCell } from "h3-js"
 
 /**

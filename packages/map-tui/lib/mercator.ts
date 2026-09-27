@@ -15,7 +15,7 @@
  * Map-tui maintains a dependency-lean surface for the standalone `npx` story (the nuts-lookup precedent).
  */
 
-import type { LatLon } from "@mailwoman/annotations/geo"
+import type { LatLon } from "@mailwoman/spatial"
 
 /**
  * Number of pixels per tile in the Web-Mercator projection (standard: 256).

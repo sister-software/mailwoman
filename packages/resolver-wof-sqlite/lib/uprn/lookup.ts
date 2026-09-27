@@ -25,9 +25,8 @@
  *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { allRows } from "@mailwoman/core/utils"
-import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { haversineKm, shortCellToInt, type GeoCoordinate, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { gridDisk } from "h3-js"
 import type { PathBuilderLike } from "path-ts"

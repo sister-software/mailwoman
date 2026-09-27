@@ -4,9 +4,10 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeoCoordinate, ResolutionTier } from "@mailwoman/annotations/geo"
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
 import { canonicalKey } from "@mailwoman/codex/address-key"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 
 /**
  * One resolved admin-hierarchy ancestor (most specific first), for spelling-invariant blocking.

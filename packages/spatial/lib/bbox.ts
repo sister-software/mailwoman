@@ -6,8 +6,6 @@
  *   GeoJSON Bounding Boxes
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
-
 import { toRad } from "#coordinate/formats"
 import type { PolygonLiteral, SolidPolygonPath } from "#geometries/polygon"
 import { clampLatitude, wrapLongitude } from "#position"
@@ -470,6 +468,16 @@ export class GeoBoundingBox {
 }
 
 // #region Equirectangular bbox around a point
+
+/**
+ * Plain latitude and longitude bounds in decimal degrees.
+ */
+export interface LatLonBounds {
+	minLat: number
+	maxLat: number
+	minLon: number
+	maxLon: number
+}
 
 /**
  * Approximate bounds `radiusKM` in each direction around a point.

@@ -6,7 +6,6 @@
  *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
  */
 
-import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
@@ -31,7 +30,7 @@ import {
 	type POIDatabase,
 } from "@mailwoman/resolver-wof-sqlite/poi"
 import { normalizeLocalityForKey } from "@mailwoman/resolver-wof-sqlite/street"
-import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
+import { shortCellToInt, type H3Cell, type LatLonBounds } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { cellToParent, latLngToCell, polygonToCells } from "h3-js"

@@ -381,7 +381,6 @@
 	},
 	"dependencies": {
 		"@mailwoman/ancestrie": "workspace:*",
-		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/evidence": "workspace:*",

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { block, conjunction, exactKey, geoCellKey } from "@mailwoman/match/blocking"
+import type { GeoCoordinate } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
 interface Rec {
