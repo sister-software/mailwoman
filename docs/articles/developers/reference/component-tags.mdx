@@ -9,7 +9,7 @@ source-of-truth: core/types/component.ts, docs/engineering/reference/SCHEMA.mdx,
 
 ## Scope
 
-A parse labels spans of the input with component tags. This page lists all 25 tags in the union, gives
+A parse labels spans of the input with component tags. This page lists all 26 tags in the union, gives
 each one a meaning and an example, and states which of them the shipped model can emit.
 
 The tag union is defined in `core/types/component.ts` and its design record — why each tag exists and
@@ -61,19 +61,20 @@ the assembled name in its `street` field.
 
 ## Locale-specific
 
-`cedex` is French. The seven tags below it are Japanese and belong to a separate model head — see
+`cedex` is French. The seven Japanese tags and the Chinese `locality_unit` belong to the CJK model head — see
 [What the shipped model emits](#what-the-shipped-model-emits).
 
-| Tag               | Locale | Meaning                                   | Example          |
-| ----------------- | ------ | ----------------------------------------- | ---------------- |
-| `cedex`           | FR     | A special postal routing designation      | `CEDEX 08`       |
-| `prefecture`      | JP     | First-level administrative division       | `東京都`         |
-| `municipality`    | JP     | City or ward                              | `千代田区`       |
-| `district`        | JP     | District                                  | `丸の内`         |
-| `block`           | JP     | Chōme                                     | `1丁目`          |
-| `sub_block`       | JP     | Banchi                                    | `1番地`          |
-| `building_number` | JP     | Gō                                        | `1号`            |
-| `building_name`   | JP     | A named building, in Latin script or kana | `Tokyo Building` |
+| Tag               | Locale | Meaning                                                                                                                 | Example          |
+| ----------------- | ------ | ----------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| `cedex`           | FR     | A special postal routing designation                                                                                    | `CEDEX 08`       |
+| `prefecture`      | JP     | First-level administrative division                                                                                     | `東京都`         |
+| `municipality`    | JP     | City or ward                                                                                                            | `千代田区`       |
+| `district`        | JP     | District                                                                                                                | `丸の内`         |
+| `block`           | JP     | Chōme                                                                                                                   | `1丁目`          |
+| `sub_block`       | JP     | Banchi                                                                                                                  | `1番地`          |
+| `building_number` | JP     | Gō                                                                                                                      | `1号`            |
+| `building_name`   | JP     | A named building, in Latin script or kana                                                                               | `Tokyo Building` |
+| `locality_unit`   | CN     | The organizational ladder below a rural settlement: sub-farm, brigade, team, regiment, villager group, held as one span | `三分场八队`     |
 
 The Japanese tags label the long form written with kanji designators. A compact Japanese number such
 as `2-3-16` stays one `house_number` span.
@@ -84,7 +85,7 @@ The model is a sequence labeler, so each tag becomes two per-token labels: `B-<t
 token of a span and `I-<tag>` for each continuation. One further label, `O`, marks a token outside
 every component.
 
-The union of 25 tags therefore spans 51 possible labels. That is the schema's capacity rather than any one
+The union of 26 tags therefore spans 53 possible labels. That is the schema's capacity rather than any one
 model's output alphabet.
 
 ## What the shipped model emits

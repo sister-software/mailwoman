@@ -86,8 +86,9 @@ The tiers are roughly the same everywhere, whatever the software is called:
 - An **administrative centroid** — the middle of the town, the postcode, or the region. This tier
   always exists, because a gazetteer that knows the place at all knows roughly where it is.
 
-Mailwoman names its four in a field called `resolution_tier` and prices the top three with a radius.
-[Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) walks all four with real
+Mailwoman names these four in a field called `resolution_tier`, along with two more for a matched venue
+and a decoded plus code, and prices every tier but the administrative centroid with a radius.
+[Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) walks the ladder with real
 output and the download that moves a result from the bottom tier to the top one.
 
 ## Three things people mean by accurate
@@ -126,6 +127,6 @@ tier.
 - [Gazetteers](./gazetteers.mdx) — the place database the identification half depends on.
 - [Why addresses are hard](./why-addresses-are-hard.mdx) — why the identification half is not a
   lookup.
-- [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) — Mailwoman's four
+- [Improve geocode precision](../../tutorials/improve-geocode-precision.mdx) — Mailwoman's six
   tiers, with the output.
 - [Reverse geocode a coordinate](../../how-to/reverse-geocode.mdx) — the other direction.

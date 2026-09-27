@@ -43,7 +43,7 @@ find . -type f
 ./.claude/skills/mailwoman/SKILL.md
 ```
 
-Commit it. It is 103 lines of Markdown and it belongs in the repository, next to the other things that
+Commit it. It is 112 lines of Markdown and it belongs in the repository, next to the other things that
 tell a contributor how this project works.
 
 ## 2. Put it somewhere else, if you need to
@@ -83,7 +83,7 @@ Five sections, and each one exists because it is a place agents go wrong:
 - **Run doctor first.** What the seven checks are, that exit code 0 means the two core checks passed, and
   that a red mark on a data layer is a reported gap with a `fix:` line rather than a failure.
 - **Parse.** The CLI form and the library form, the tree shape, and a pointer to the `ComponentTag` type
-  in `@mailwoman/core/types` for the tag vocabulary. It points at the shipped type rather than at a
+  in `@mailwoman/codex/component` for the tag vocabulary. It points at the shipped type rather than at a
   documentation URL, because the skill installs into projects that may be offline.
 - **Geocode.** `mailwoman data pull candidate` as the whole setup — the file lands where every entry
   point looks — plus the measured case for leaving that default alone, and the one trap in the

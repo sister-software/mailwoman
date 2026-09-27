@@ -1,8 +1,8 @@
 ---
 title: Library API
-description: The TypeScript surface — createRuntimePipeline, NeuralAddressClassifier, geocode-core, geocode-stream, and createCalibrator.
+description: The TypeScript surface — createRuntimePipeline, NeuralAddressClassifier, mailwoman/geocode, and createCalibrator.
 role: reference
-source-of-truth: mailwoman/runtime-pipeline.ts, mailwoman/geocode-core.ts, mailwoman/geocode-stream.ts, neural/classifier.ts, core/decoder/calibration.ts, core/pipeline/types.ts
+source-of-truth: mailwoman/runtime-pipeline.ts, packages/mailwoman/lib/geocode/core.ts, packages/mailwoman/lib/geocode/stream.ts, neural/classifier.ts, core/decoder/calibration.ts, core/pipeline/types.ts
 ---
 
 # Library API
@@ -10,8 +10,8 @@ source-of-truth: mailwoman/runtime-pipeline.ts, mailwoman/geocode-core.ts, mailw
 ## Scope
 
 This page describes the five entry points a consumer calls from TypeScript: `createRuntimePipeline`,
-`NeuralAddressClassifier`, the geocoding functions in `mailwoman/geocode-core`, the batch iterator in
-`mailwoman/geocode-stream`, and `createCalibrator`. Each section carries a full runnable file and the
+`NeuralAddressClassifier`, the geocoding functions and the batch iterator in `mailwoman/geocode`, and
+`createCalibrator`. Each section carries a full runnable file and the
 output that file produced.
 
 It does not describe the stage packages (`@mailwoman/normalize`, `@mailwoman/query-shape`,
@@ -27,23 +27,24 @@ is a subset, it says so and says what it left out.
 
 ## Import map
 
-`mailwoman` exports eight import paths, one of which takes a wildcard suffix. On Node the package
-serves TypeScript source directly, so no build step stands between an installed package and a running
-script.
+These are the import paths a consumer reaches for; one of them takes a wildcard suffix. On Node the
+package serves TypeScript source directly, so no build step stands between an installed package and a
+running script.
 
-| Import                         | What it carries                                                                  |
-| ------------------------------ | -------------------------------------------------------------------------------- |
-| `mailwoman`                    | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports            |
-| `mailwoman/geocode-core`       | `geocodeAddress`, `parseForGeocode`, `USStateDatabaseProvider`, the result types |
-| `mailwoman/geocode-stream`     | `geocodeStream`                                                                  |
-| `mailwoman/resolver-backend`   | `createResolverBackend`, `resolveCandidateDBPath`, data-root path helpers        |
-| `mailwoman/cli-kit`            | Ink helpers for building an interactive command                                  |
-| `mailwoman/test-kit`           | The parser test helpers                                                          |
-| `mailwoman/poi-overpass`       | OverpassQL export for a matched POI intent                                       |
-| `mailwoman/gazetteer-pipeline` | Gazetteer build internals, plus a wildcard subpath for its modules               |
+| Import                             | What it carries                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `mailwoman`                        | `createRuntimePipeline`, plus everything `@mailwoman/core` re-exports                             |
+| `mailwoman/geocode`                | `geocodeAddress`, `parseForGeocode`, `USStateDatabaseProvider`, `geocodeStream`, the result types |
+| `mailwoman/resolver-backend`       | `createResolverBackend` and `resolveCandidateDBPath`                                              |
+| `@mailwoman/core/data-root`        | `dataRootPath` and the other data-root path helpers                                               |
+| `mailwoman/cli-kit`                | Ink helpers for building an interactive command                                                   |
+| `mailwoman/test-kit`               | The parser test helpers                                                                           |
+| `mailwoman/poi`                    | The POI intent stage and executor                                                                 |
+| `@mailwoman/poi-taxonomy/overpass` | `emitOverpassQL`, the OverpassQL export for a matched POI intent                                  |
+| `mailwoman/gazetteer-pipeline`     | Gazetteer build internals, plus a wildcard subpath for its modules                                |
 
-`geocodeAddress` and its result types are reachable only through `mailwoman/geocode-core`. They are
-not re-exported from the bare specifier.
+`geocodeAddress` and its result types are reachable only through `mailwoman/geocode`. They are not
+re-exported from the bare specifier.
 
 ## createRuntimePipeline
 
@@ -280,7 +281,7 @@ three.
 
 ## Geocoding
 
-`mailwoman/geocode-core` turns a string into a coordinate with a resolution tier and an uncertainty
+`mailwoman/geocode` turns a string into a coordinate with a resolution tier and an uncertainty
 radius.
 
 ```ts
@@ -357,16 +358,19 @@ swaps them atomically when the data release changes. It implements the `RegionDa
 
 ```ts
 class USStateDatabaseProvider implements RegionDatabaseProvider {
-	constructor(factory: RegionDatabaseFactory, dataRoot: string)
+	static create(factory: RegionDatabaseFactory, dataRoot: PathBuilderLike): Promise<USStateDatabaseProvider>
 	readonly for: RegionDatabaseResolver
 	versions(): DataReleaseManifest | null
-	reload(): DataReleaseManifest | null
+	reload(): Promise<DataReleaseManifest | null>
 	close(): void
+	[Symbol.dispose](): void
 }
 ```
 
-The constructor is positional. `factory` is the `@mailwoman/resolver-wof-sqlite` module namespace in
-practice. `for` is a property rather than a method so it can be passed unbound as `deps.extracts`.
+The constructor is private; `create` reads the release manifest and warms the path map before it
+returns. Its arguments are positional. `factory` is the `@mailwoman/resolver-wof-sqlite` module
+namespace in practice. `for` is a property rather than a method so it can be passed unbound as
+`deps.extracts`.
 
 ### Example
 
@@ -379,7 +383,7 @@ call](#wiring-the-gazetteer-index-on-a-bare-call).
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 // Replace <CANDIDATE_DB> with the path `mailwoman data pull candidate` printed.
@@ -537,7 +541,7 @@ softmax confidences, which is the byte-stable default.
 ## Rationale
 
 The classifier and the resolver are the two stages with no default, and that is deliberate rather
-than unfinished. The model is a 39 MB download and the gazetteer is 1.65 GB. A factory that acquired
+than unfinished. The model is a 39 MB download and the gazetteer is 2.88 GB. A factory that acquired
 either implicitly would make `import "mailwoman"` an unpredictable amount of disk and network for a
 caller who wanted to parse one string.
 

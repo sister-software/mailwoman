@@ -236,7 +236,7 @@ Two constraints ride on that:
 
 ## Resolving in the browser
 
-Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 1.65 GB gazetteer
+Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own
 build notes put at about a dozen range requests per session. That implementation is docs-site code rather
 than a published package, and two things stand between it and your page.
@@ -248,7 +248,7 @@ reason.
 
 The data is the other. `@mailwoman/resolver-wof-wasm` is the published browser lookup, and its
 loader fetches a whole database and opens it in memory — workable for a slim, purpose-built
-distribution rather than for the 1.65 GB worldwide one. `buildSlimWOFDatabase` from
+distribution rather than for the 2.88 GB worldwide one. `buildSlimWOFDatabase` from
 `@mailwoman/resolver-wof-sqlite/build-slim` is what produces such a distribution: give it a source
 gazetteer, a country set and a locality cap, and it writes a resolver-schema database sized for a
 static deploy.

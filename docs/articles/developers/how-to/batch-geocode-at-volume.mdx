@@ -39,8 +39,9 @@ Before any pool, get the number you are trying to beat. This script builds the g
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode-core"
-import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const repeats = Number(process.argv[2] ?? 250)
@@ -54,9 +55,9 @@ for (let i = 0; i < repeats; i++) queries.push(...rows)
 
 const t0 = performance.now()
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+using lookup = new WOFCandidateTableLookup({ databasePath: await resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
-using extracts = new USStateDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
+using extracts = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 const startupMs = performance.now() - t0
 
 // Warm the session: the first few inferences pay one-time allocation the steady-state rate should not carry.
@@ -137,13 +138,16 @@ import { parentPort, workerData } from "node:worker_threads"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode-core"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 
 // Per-worker init, paid once: its own model session, its own read-only DB handle, its own extracts.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: workerData.locale })
 using lookup = new WOFCandidateTableLookup({ databasePath: workerData.candidateDB })
 const resolver = createWOFResolver(lookup)
-using extracts = new USStateDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, workerData.dataRoot)
+using extracts = await USStateDatabaseProvider.create(
+	{ AddressPointSqliteLookup, StreetInterpolator },
+	workerData.dataRoot
+)
 const deps = { classifier, resolver, databases: extracts.for, defaultCountry: workerData.country }
 
 parentPort.on("message", async (batch) => {
@@ -166,7 +170,8 @@ And this as `pool.mjs`:
 import { createWriteStream } from "node:fs"
 import { Worker } from "node:worker_threads"
 
-import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const workerCount = Number(process.argv[2] ?? 4)
@@ -189,7 +194,7 @@ for (let i = 0; i < queries.length; i += batchSize) batches.push(queries.slice(i
 const workerData = {
 	locale: "en-US",
 	country: "US",
-	candidateDB: resolveCandidateDBPath(),
+	candidateDB: await resolveCandidateDBPath(),
 	dataRoot: dataRootPath(),
 }
 
@@ -307,12 +312,12 @@ the end.
 
 ## The shipped version of this
 
-`mailwoman/geocode-stream` is the same pattern already built, wired to `@mailwoman/registry`'s CSV
-normalizer:
+`geocodeStream` from `mailwoman/geocode` is the same pattern already built, wired to `@mailwoman/registry`'s
+CSV normalizer:
 
 ```js
 import { normalizeCSV } from "@mailwoman/registry"
-import { geocodeStream } from "mailwoman/geocode-stream"
+import { geocodeStream } from "mailwoman/geocode"
 
 const normalized = normalizeCSV("customers.csv", { mapping })
 for await (const rec of geocodeStream(normalized, { mapping, geocode, concurrency: 4 })) sink.write(rec)
@@ -329,7 +334,7 @@ you can run today.
 - **Memory scales with workers rather than rows.** Each worker loads its own copy of the model, so eight
   workers is eight model sessions. The gazetteer is opened read-only and shares the OS page cache
   across workers, so it does not multiply. Watch resident set size before raising the count.
-- **The peak is per-machine and per-dataset.** The module doc for `mailwoman/geocode-stream` records a
+- **The peak is per-machine and per-dataset.** The module doc for `geocodeStream` records a
   different sweep — an NPPES run against a single 4 GB WOF database that peaked at 2 workers and
   degraded from there. Same shape, different peak. Re-run step 4 when the data root or the box changes.
 - **This is CPU inference.** The browser runtime (`@mailwoman/neural/web-onnx-runner`) has a WebGPU

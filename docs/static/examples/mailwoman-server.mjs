@@ -8,7 +8,7 @@ import { createServer } from "node:http"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 // This file is served at /examples/mailwoman-server.mjs and runs in a reader's project, where
@@ -28,7 +28,7 @@ const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-U
 // why a first run without one still boots: a truthiness check on the variable would open a
 // file that is not there and kill the process with SQLITE_CANTOPEN before it bound a port.
 // Same guard the published image's server.mjs uses.
-const candidateDB = resolveCandidateDBPath()
+const candidateDB = await resolveCandidateDBPath()
 
 let resolver
 

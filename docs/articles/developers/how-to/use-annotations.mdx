@@ -149,13 +149,13 @@ Three more annotators exist, each behind a database you build the same way the g
 `un-locode.db` or `nuts.db` was on the machine the transcripts above ran on, so there is no run to
 paste. The names, signatures and presence-check idiom come from the packages themselves and from the Nominatim
 drop-in's own composition
-([`nominatim/cli.ts`](https://github.com/sister-software/mailwoman/blob/main/nominatim/cli.ts)). To run
+([`packages/nominatim/lib/cli.ts`](https://github.com/sister-software/mailwoman/blob/main/packages/nominatim/lib/cli.ts)). To run
 it, build each lookup database per its package README first.
 
 | Annotator                       | Package                       | Fills      | Needs                           |
 | ------------------------------- | ----------------------------- | ---------- | ------------------------------- |
 | `makeTimezoneAnnotator(lookup)` | `@mailwoman/timezone-lookup`  | `timezone` | `timezone.db`                   |
-| `makeUnLocodeAnnotator(lookup)` | `@mailwoman/un-locode-lookup` | `unLocode` | `un-locode.db`                  |
+| `makeUNLocodeAnnotator(lookup)` | `@mailwoman/un-locode-lookup` | `unLocode` | `un-locode.db`                  |
 | `makeNUTSAnnotator(lookup)`     | `@mailwoman/nuts-lookup`      | `nuts`     | `nuts.db`, and an EU coordinate |
 
 Switch each one on only when its file is present rather than assuming it, which is what the Nominatim drop-in

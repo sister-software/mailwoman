@@ -11,7 +11,7 @@ verified-with: mailwoman 8.7.0
 from outside the image, and you know when to build your own image instead of pulling the published one.
 
 The image installs the published `@mailwoman/*` packages from npm and includes the model weights. The
-gazetteer is kept out of the image because it is 1.65 GB or larger and changes on a different schedule
+gazetteer is kept out of the image because it is 2.88 GB or larger and changes on a different schedule
 from the code. It mounts read-only at `/data`. Parsing works without any volume.
 
 **How this page was verified.** Docker is not installed on the machine these docs are written on, so no
@@ -154,7 +154,7 @@ server makes that layout sufficient, and the same line lets the server boot when
 
 ```js
 // Check on the gazetteer being THERE rather than on anything being configured.
-const candidateDB = resolveCandidateDBPath()
+const candidateDB = await resolveCandidateDBPath()
 ```
 
 `resolveCandidateDBPath` from `mailwoman/resolver-backend` tries an explicit path, then

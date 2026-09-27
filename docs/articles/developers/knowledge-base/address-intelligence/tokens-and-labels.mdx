@@ -100,9 +100,9 @@ where that gets ruled out.
 
 Three numbers get quoted around the label space, and they answer different questions.
 
-The **schema** defines 25 component tags — everything a parse result is allowed to carry, including
-tags for Japanese address structure and tags no shipped model produces. At two labels per tag plus
-one shared `O`, that is a capacity of 51 labels.
+The **schema** defines 26 component tags — everything a parse result is allowed to carry, including
+tags for Japanese and Chinese address structure and tags no shipped model produces. At two labels per tag plus
+one shared `O`, that is a capacity of 53 labels.
 
 The **shipped model's head** is fixed at training time and carries 33 labels over 16 tags. That is
 the alphabet this model can write in. Nine tags in the schema are outside it: seven belong to a
@@ -136,5 +136,5 @@ it.
 - [How a model reads an address](./how-a-model-reads-an-address.mdx) — the whole chain, on one input.
 - [Decoding and the best path](./decoding-and-viterbi.mdx) — the constraint that rules out an orphan
   continuation.
-- [Component tags](../../reference/component-tags.mdx) — the 25 tags, and which the shipped model emits.
+- [Component tags](../../reference/component-tags.mdx) — the 26 tags, and which the shipped model emits.
 - [Library API](../../reference/library-api.mdx) — where spans, offsets and options live in code.

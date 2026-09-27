@@ -268,7 +268,7 @@ Nominatim's `/status` is the one endpoint that answers `200` with no engine meth
 Each server serves its document at `/openapi.json` and each CLI emits it to a file:
 
 ```bash
-node mailwoman/out/cli.js openapi --out ./mailwoman.json
+node node_modules/mailwoman/out/cli/index.js openapi --out ./mailwoman.json
 ```
 
 `--flavor` selects `3.1` (the default, emitting `3.1.0`) or `3.0` (emitting `3.0.3`). Output is

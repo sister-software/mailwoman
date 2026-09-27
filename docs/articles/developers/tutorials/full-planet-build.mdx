@@ -12,7 +12,7 @@ resolves to a coordinate; that one is answered globally by a single gazetteer. T
 number resolves to a building; that one is answered country by country, and today it is answered for two
 countries. By the end of this page you'll have built street-level coverage for one region of France twice
 — once from the French government's address register, once from OpenStreetMap — geocoded the same address
-against both, and seen which answers it. About twenty minutes of work plus a 1.65 GB download.
+against both, and seen which answers it. About twenty minutes of work plus a 2.88 GB download.
 
 You will also know which countries you could repeat it for and which have no path at all. The
 [status page](../status.mdx) answers that question in terms of parser locales; this page answers it in
@@ -24,7 +24,7 @@ terms of data.
 run entirely from npm. Step 3 does not: `@mailwoman/osm` is not published to npm, so that section needs a
 repository checkout. Each requirement below says which half it belongs to.
 
-- **About 2 GB of free disk** for the path below: 1.65 GB of gazetteer and under 100 MB of everything
+- **About 3 GB of free disk** for the path below: 2.88 GB of gazetteer and under 100 MB of everything
   else. Adding France's whole national register instead of three départements is 6.95 GB; adding the US
   is 41.3 GB. Check the number for the country you want before you start it.
 - **Steps 1–2, from npm.** The CLI, plus the French register's builder:
@@ -56,7 +56,7 @@ of one.
 
 | Layer                  | Scope                       | Published today                                             |
 | ---------------------- | --------------------------- | ----------------------------------------------------------- |
-| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 1.65 GB                                     |
+| Candidate gazetteer    | 244 countries, one database | `candidate.db`, 2.88 GB                                     |
 | Rooftop address points | Per country                 | US (30.3 GB, 52 databases) and France (6.95 GB, 1 database) |
 | Street interpolation   | Per country                 | US only (11.0 GB, 51 databases)                             |
 | POI                    | Per country                 | US, Canada, Mexico, France in one 3.89 GB layer             |
@@ -83,7 +83,8 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-planet/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-Four minutes for 1.65 GB here. The `export` line is a leftover the pull still prints; the file landed at
+Four minutes for the 1.65 GB `2026-07-07a` build shown in this transcript; the current `2026-08-25b`
+build is 2.88 GB, so your download will be larger. The `export` line is a leftover the pull still prints; the file landed at
 `<data root>/db/wof/candidate.db` and is found there without it. Take the download unless you have a reason
 not to, because the build behind it is the heaviest thing in this repository, and this page does not run
 it. What it involves, so you can price it:

@@ -25,8 +25,8 @@ numbers, and it uses a different index from forward geocoding.
 
 ## 1. Try it from the command line
 
-Tell the CLI where the FST is. Its built-in default is a staging path that will not exist on your
-machine, so pass `--fst` or set `$MAILWOMAN_FST_BIN`:
+Tell the CLI where the FST is. Its built-in default is `db/wof/fst-per-locale/fst-en-us.bin` under the
+data root. That file exists only after `mailwoman gazetteer build fst` has run. Pass `--fst` or set `$MAILWOMAN_FST_BIN`:
 
 ```bash
 export MAILWOMAN_FST_BIN="$PWD/node_modules/@mailwoman/neural-weights-en-us/fst-en-us.bin"
@@ -60,8 +60,7 @@ does not re-export them, so import them by subpath:
 import { readFile } from "node:fs/promises"
 
 import { resolveWeights } from "@mailwoman/neural/weights"
-import { autocomplete } from "@mailwoman/resolver-wof-sqlite/fst-autocomplete"
-import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst-serialize"
+import { autocomplete, deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 
 // resolveWeights finds the installed weights package, so you never hard-code a node_modules path.
 const { fstPath } = await resolveWeights({ locale: "en-US" })
@@ -206,8 +205,8 @@ the dropdown on this index instead of on repeated geocodes.
 - **Ranking uses importance and ignores proximity.** There is no `near` parameter. A user in Boston typing
   `brookl` gets Brooklyn first because Brooklyn has higher importance, even though Brookline is
   closer. Re-rank on your side with the coordinates that the `wofID` resolves to.
-- **The CLI's default FST path is a staging directory.** Set `$MAILWOMAN_FST_BIN` in any environment
-  where you rely on the command.
+- **The CLI's default FST path is a build output under the data root.** Set `$MAILWOMAN_FST_BIN` in any environment
+  where you rely on the command and did not build the FST there.
 
 ## Related
 

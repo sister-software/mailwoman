@@ -24,7 +24,7 @@ Three things, and the second one will stop you partway through if it isn't done.
   ```
 
 - **`candidate.db` on disk**, at `<data root>/db/wof/candidate.db`. Coordinates come from the gazetteer,
-  which is a 1.65 GB download you do once, and it lands at that path.
+  which is a 2.88 GB download you do once, and it lands at that path.
   [Your first ten minutes](../get-started/ten-minute-trial.mdx#5-geocode-it) has the command. Every
   transcript below assumes you ran it; none of them exports anything.
 - **A CSV whose columns you know.** This page uses
@@ -64,16 +64,17 @@ import { createWriteStream } from "node:fs"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { AddressPointSqliteLookup, StreetInterpolator, WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode-core"
-import { dataRootPath, resolveCandidateDBPath } from "mailwoman/resolver-backend"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
+import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 import { CSVSpliterator } from "spliterator"
 
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 // The same search the CLI runs: --candidate-db, then $MAILWOMAN_CANDIDATE_DB, then <data root>/db/wof/candidate.db.
-using lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+using lookup = new WOFCandidateTableLookup({ databasePath: await resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 // Street extracts, when any are on disk under $MAILWOMAN_DATA_ROOT. Absent ones degrade to admin.
-using extracts = new USStateDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
+using extracts = await USStateDatabaseProvider.create({ AddressPointSqliteLookup, StreetInterpolator }, dataRootPath())
 
 const out = createWriteStream("customers.geocoded.jsonl")
 const counts = { matched: 0, mismatched: 0, skipped: 0 }

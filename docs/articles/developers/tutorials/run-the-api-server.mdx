@@ -31,7 +31,7 @@ Read the memory line before you start — it is the one that bites.
 Two is a starting point with a measurement behind it. The threaded geocode path in this codebase was
 swept on a 16-core box against a single database and peaked at 2 workers, degrading from there — the
 ceiling is database and memory bandwidth rather than core count. The reasoning is written up in
-[`geocode-stream.ts`](https://github.com/sister-software/mailwoman/blob/main/mailwoman/geocode-stream.ts).
+[`stream.ts`](https://github.com/sister-software/mailwoman/blob/main/packages/mailwoman/lib/geocode/stream.ts).
 
 ## 1. Start it
 
@@ -226,7 +226,7 @@ curl -s -X POST http://127.0.0.1:7788/v1/batch \
 ]
 ```
 
-The batch route caps at 500 rows per request by default. Past that, chunk your input or run the loop in
+The batch route caps at 1,000 rows per request by default (`MAILWOMAN_BATCH_MAX`). Past that, chunk your input or run the loop in
 [Geocode a CSV](./geocode-a-csv.mdx) instead, which has no HTTP layer to pay for.
 
 ## 5. Read the failures

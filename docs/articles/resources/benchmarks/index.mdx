@@ -28,7 +28,8 @@ measures parsing and routing. It does not measure coordinate accuracy.
 
 ## I want to see what happens without one
 
-Belgium lacks a rooftop register, a locale of its own, and an eval tier. The panel runs thirty
+Belgium has no rooftop register and no locale of its own; it sits in tier 2 on the global candidate
+gazetteer alone. The panel runs thirty
 bilingual Belgian address lines through the global candidate gazetteer in three configurations. With
 default settings, 24 of 30 land in Belgium. With the country pinned, 30 of 30 do. Without the pin,
 six rows go wrong. Five of them fail because a country prior filters out the right answer before
@@ -47,7 +48,7 @@ page illustrates each case with one of our own numbers.
 
 ## Running them yourself
 
-[`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need, the 1.65 GB global
+[`run-all.sh`](/benchmarks/run-all.sh) pulls the two data bundles the panels need, the 2.88 GB global
 gazetteer and the 6.95 GB French rooftop database. It then runs both panels in one pass:
 
 ```bash

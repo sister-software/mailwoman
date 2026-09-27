@@ -50,10 +50,11 @@ distribution, and each consumer needs a fact about _this result_.
 The first half of a per-result answer is which method produced the coordinate. A geocoder does not
 have one way of placing a point; it has a ladder, and the rung it reached is the grain of the answer.
 
-Mailwoman reports the rung in `resolution_tier`, with four values. A registered address point, an
+Mailwoman reports the rung in `resolution_tier`, with six values. Four form the ladder: a registered address point, an
 estimate interpolated along a street segment, a street centroid, and an administrative centroid — the
-last of which always exists, because it is what the gazetteer knows. [Improve geocode
-precision](../../tutorials/improve-geocode-precision.mdx) walks all four with real output and shows a
+last of which always exists, because it is what the gazetteer knows. Two sit beside it: a matched
+venue from the POI layer, and a plus code decoded from the input. [Improve geocode
+precision](../../tutorials/improve-geocode-precision.mdx) walks the ladder with real output and shows a
 result moving from the bottom rung to the top one after a per-state download.
 
 The practical rule is that a consumer with a building-grain tolerance should treat an

@@ -143,7 +143,7 @@ Downloaded with `mailwoman data pull`, never through npm. Sizes are the register
 
 | Bundle      | Artifacts | Size    | What it covers                                |
 | ----------- | --------- | ------- | --------------------------------------------- |
-| `candidate` | 1         | 1.65 GB | The global candidate gazetteer, 244 countries |
+| `candidate` | 1         | 2.88 GB | The global candidate gazetteer, 244 countries |
 | `poi`       | 1         | 3.89 GB | 13.68 million points across US, CA, MX, FR    |
 | `fr`        | 1         | 6.95 GB | French rooftop address points                 |
 | `us`        | 103       | 41.3 GB | US rooftop and interpolation, per state       |
@@ -161,7 +161,7 @@ These were measured by the tutorials that run the workloads, and are not re-meas
 
 | Workload                               | Envelope                                | Measured in                                                   |
 | -------------------------------------- | --------------------------------------- | ------------------------------------------------------------- |
-| Geocoding a CSV against `candidate.db` | 2 GB of free disk for the download path | [Geocode a CSV](../tutorials/geocode-a-csv.mdx)               |
+| Geocoding a CSV against `candidate.db` | 3 GB of free disk for the download path | [Geocode a CSV](../tutorials/geocode-a-csv.mdx)               |
 | Building one US state, Vermont         | 8.94 GB of disk, 8 GB of free RAM       | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
 | The same build, peak resident memory   | 7.45 GiB, by `/usr/bin/time -v`         | [Build the US dataset](../tutorials/build-the-us-dataset.mdx) |
 | A whole-planet gazetteer build         | Tens of gigabytes, hours of wall clock  | [Full planet build](../tutorials/full-planet-build.mdx)       |
@@ -181,7 +181,7 @@ Parse latency is not a footprint and is not on this page. It is measured per hos
 
 ## Rationale
 
-The gazetteer stays outside npm because it is 1.65 GB, and a registry tarball that size would be paid
+The gazetteer stays outside npm because it is 2.88 GB, and a registry tarball that size would be paid
 for by every consumer who wanted only the parser. Splitting it into a download makes parsing a 74 MB
 proposition and geocoding an explicit second decision.
 

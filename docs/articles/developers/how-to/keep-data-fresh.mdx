@@ -113,9 +113,10 @@ missing file is reported from the registry without a request.
 
 Two limits on what this proves. No bundle publishes an md5 sidecar today, so the comparison is byte
 count, with no stronger check; a rebuild that landed at the same size would pass. And the remote path is
-dated and immutable (`gazetteer/2026-07-07a/candidate.db`), so a live `HEAD` confirms your copy of _that_
-artifact rather than that a newer artifact exists. A new build is a new path, which arrives in a new release of
-the `mailwoman` package.
+dated and immutable (the transcripts above show `gazetteer/2026-07-07a/candidate.db`; the current build is
+`gazetteer/2026-08-25b/candidate.db` at 2.88 GB), so a live `HEAD` confirms your copy of _that_ artifact
+rather than that a newer artifact exists. A new build is a new path, which arrives in a new release of the
+`mailwoman` package.
 
 ## 4. There is no refresh cadence
 
@@ -138,13 +139,16 @@ root naming the current version per family:
 { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
 ```
 
-`USStateDatabaseProvider` reads that manifest when it is constructed:
+`USStateDatabaseProvider.create` reads that manifest before it returns the provider:
 
 ```js
 import { AddressPointSqliteLookup, StreetInterpolator } from "@mailwoman/resolver-wof-sqlite"
-import { USStateDatabaseProvider } from "mailwoman/geocode-core"
+import { USStateDatabaseProvider } from "mailwoman/geocode"
 
-const extracts = new USStateDatabaseProvider({ AddressPointSqliteLookup, StreetInterpolator }, "/tmp/mw-releases-demo")
+const extracts = await USStateDatabaseProvider.create(
+	{ AddressPointSqliteLookup, StreetInterpolator },
+	"/tmp/mw-releases-demo"
+)
 
 console.log("versions:", JSON.stringify(extracts.versions()))
 console.log("dc address points open:", Boolean(extracts.for("dc").addressPoints))
@@ -185,14 +189,14 @@ So a typo in `releases.json` degrades to the old data rather than to an error. A
 after deploy rather than assuming the pin took.
 
 The reason to run the manifest at all is `reload()`. Write the new database files alongside the old, then
-write `releases.json` — one atomic file write — then call `extracts.reload()`. Any database whose resolved
+write `releases.json` — one atomic file write — then `await extracts.reload()`. Any database whose resolved
 path changed is reopened; any whose path is unchanged keeps its open handle. Retired handles close
 on the _next_ reload, which gives in-flight reads a generation of grace.
 
 ```js
 // A long-running server, on a signal or a poll.
-process.on("SIGHUP", () => {
-	console.log("switched to", JSON.stringify(extracts.reload()))
+process.on("SIGHUP", async () => {
+	console.log("switched to", JSON.stringify(await extracts.reload()))
 })
 ```
 

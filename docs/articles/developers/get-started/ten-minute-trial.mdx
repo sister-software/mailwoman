@@ -17,7 +17,7 @@ steps take about ten minutes, plus the time for the one-time gazetteer download.
 
 - Node.js 24.18.0 or later, and roughly 750 MB of free disk for the install.
   [Install and first parse](./install-and-first-parse.mdx#prerequisites) explains both numbers.
-- About 1.65 GB more disk and a few minutes of download time when you reach
+- About 2.88 GB more disk and a few minutes of download time when you reach
   [Geocode it](#5-geocode-it) below. That space holds the gazetteer database, which you pull once and
   keep for every later geocode.
 - `mailwoman data pull`, the command the gazetteer step runs, ships in `8.7.0`. Check
@@ -98,8 +98,9 @@ street, unit, locality, region, postcode, and the rest. The model file ships ins
 needs one more package (`@mailwoman/neural-weights-fr-fr`) and no other change.
 
 **Geocoding needs the resolver database.** Turning `New York` into a latitude and longitude requires a
-lookup in the gazetteer, which is a file you download once and keep. At the `2026-07-07a` build, the
-candidate gazetteer `candidate.db` is 1.65 GB. Your `doctor` output prints the exact one-line command
+lookup in the gazetteer, which is a file you download once and keep. The transcript below shows the
+`2026-07-07a` build; at the current `2026-08-25b` build, the candidate gazetteer `candidate.db` is 2.88 GB,
+so your download will be larger. Your `doctor` output prints the exact one-line command
 that fetches it. The CLI generates that command from the build it knows about, so prefer it over a
 command copied from a web page. Run it next.
 

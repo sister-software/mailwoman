@@ -9,7 +9,7 @@ role: evidence
 ## What ran
 
 On **2026-08-04** we ran 30 Belgian address lines through a local install three times, changing one
-thing each time. We chose Belgium because it is an unmeasured locale. No Belgian rooftop register
+thing each time. We chose Belgium because on that date it had no eval tier; it has since entered tier 2. No Belgian rooftop register
 ships, no `nl-BE` or `fr-BE` weights package exists, and the global candidate gazetteer is the only
 artifact that answers. This panel reports the results you get from that setup.
 
@@ -223,7 +223,7 @@ mailwoman data pull candidate
 node be-panel.mjs --data-root <DATA_ROOT> --out be-results.json
 ```
 
-The run needs one 1.65 GB bundle and no rooftop database, which is the condition the panel tests. The
+The run needs one 2.88 GB bundle and no rooftop database, which is the condition the panel tests. The
 three arms took 4,273 ms together, excluding model load.
 
 ## Related

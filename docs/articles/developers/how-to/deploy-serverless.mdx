@@ -35,7 +35,7 @@ Two deploys, and the difference is whether a gazetteer is on the instance.
 | npm packages                  | `mailwoman`, `@mailwoman/neural`, `@mailwoman/neural-weights-en-us` | those plus `@mailwoman/resolver`, `@mailwoman/resolver-wof-sqlite` |
 | `node_modules` as installed   | 746 MB                                                              | 746 MB                                                             |
 | `node_modules` after trimming | 303 MB                                                              | 303 MB                                                             |
-| Data root                     | none                                                                | 1.65 GB and up                                                     |
+| Data root                     | none                                                                | 2.88 GB and up                                                     |
 | Answers                       | components, confidence, a match key                                 | components plus a coordinate                                       |
 
 `node_modules` is the same size for both, which is the first surprise. `@mailwoman/resolver-wof-sqlite`
@@ -121,7 +121,7 @@ import 192 ms | model 690 ms | open db 1 ms | first geocode 226 ms | total 1109 
 
 Three things to take from that.
 
-**Opening the gazetteer costs 1 ms.** A 1.65 GB SQLite file is memory-mapped rather than read, so the file's
+**Opening the gazetteer costs 1 ms.** A 2.88 GB SQLite file is memory-mapped rather than read, so the file's
 size does not appear in the cold start at all. Geocoding adds about 100 ms of cold start over parsing,
 and all of it is the extra module graph rather than the database.
 
@@ -141,12 +141,12 @@ Build at module scope so a warm invocation reuses the session and the open datab
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { WOFCandidateTableLookup } from "@mailwoman/resolver-wof-sqlite"
-import { geocodeAddress } from "mailwoman/geocode-core"
+import { geocodeAddress } from "mailwoman/geocode"
 import { resolveCandidateDBPath } from "mailwoman/resolver-backend"
 
 // Module scope: paid once per instance, reused by every warm invocation.
 const classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
-const lookup = new WOFCandidateTableLookup({ databasePath: resolveCandidateDBPath() })
+const lookup = new WOFCandidateTableLookup({ databasePath: await resolveCandidateDBPath() })
 const resolver = createWOFResolver(lookup)
 
 export async function handler(event) {
@@ -177,11 +177,11 @@ Set `$MAILWOMAN_CANDIDATE_DB` as well only when the file lives somewhere that co
 reach:
 
 ```bash
-MAILWOMAN_CANDIDATE_DB=/mnt/gazetteer/candidate-2026-07-07a.db
+MAILWOMAN_CANDIDATE_DB=/mnt/gazetteer/candidate-2026-08-25b.db
 ```
 
 Both are read on each call rather than cached at import, so setting them after the module graph loads
-still works. That is why the snippet in step 4 calls `resolveCandidateDBPath()` rather than reading
+still works. That is why the snippet in step 4 calls `await resolveCandidateDBPath()` rather than reading
 either variable itself: the helper applies the full flag-then-variable-then-convention search, it is
 what the CLI and the drop-in servers use, and it returns no path when the file is
 absent — so a cold instance with a broken mount fails at the resolver you can see instead of inside

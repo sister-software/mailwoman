@@ -22,7 +22,7 @@ Read the first two before you start anything. They are the ones that stop a run 
 
 - **9 GB of free disk for Vermont.** The parts, in decimal GB as your disk vendor counts them: a 6.93 GB
   national Overture parquet you need even for one state (the ingest has no per-state mode), 215 MB of
-  Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 1.65 GB gazetteer.
+  Census TIGER archives for Vermont's 14 counties, 140 MB of finished databases, and a 2.88 GB gazetteer.
   That sums to 8.94 GB, which `du -sh` will report back to you as `8.4G` because `du` counts in GiB.
   Step 9 gives the national figures.
 - **8 GB of free RAM.** The ingest peaked at 7.62 GB resident (`/usr/bin/time -v` reports "maximum
@@ -264,7 +264,8 @@ export MAILWOMAN_CANDIDATE_DB=/tmp/mw-us-build/wof/candidate.db
 PASS (1/1 checks)
 ```
 
-4 minutes and 7 seconds for 1.65 GB here. `content-length verified` is the check the pull does: it HEADs
+4 minutes and 7 seconds for the 1.65 GB `2026-07-07a` build shown in this transcript; the current
+`2026-08-25b` build is 2.88 GB, so your download will be larger. `content-length verified` is the check the pull does: it HEADs
 the object and compares the byte count it downloaded against what the server declared. The bucket publishes
 no checksum sidecar for any artifact, so content-length is the strongest integrity signal available.
 

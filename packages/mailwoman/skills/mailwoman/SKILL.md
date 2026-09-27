@@ -46,7 +46,7 @@ const result = await parse(input)
 geographic containment rather than a flat record. Build the pipeline once and reuse it across calls —
 loading the model is the expensive part rather than the parse.
 
-The full `ComponentTag` vocabulary is the type of that name exported from `@mailwoman/core/types`.
+The full `ComponentTag` vocabulary is the type of that name exported from `@mailwoman/codex/component`.
 Read it before assuming a tag exists or guessing at its name.
 
 **Confidence is the model's own score rather than a calibrated probability, by default.** Don't read `0.91`
