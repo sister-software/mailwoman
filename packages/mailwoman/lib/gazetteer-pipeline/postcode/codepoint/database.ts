@@ -42,6 +42,8 @@
 
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { type LayerManifest, LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { CODEPOINT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -74,6 +76,41 @@ import {
 	readCodePointCSV,
 } from "#gazetteer-pipeline/postcode/codepoint/index"
 import { createDatabaseMetaTable, writeMetaRows } from "#gazetteer-pipeline/postcode/geonames/tail"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
+/**
+ * The year the attribution block names, taken from OS's own `copyright date` rather than the build
+ * clock: republishing a 2026 extract in 2027 still attributes the 2026 data.
+ * The build clock stands in only when the archive's metadata carries no date.
+ */
+function attributionYear(metadata: CodePointMetadata, now: Date): number {
+	return Number(metadata.copyrightDate.slice(0, 4)) || now.getUTCFullYear()
+}
+
+/**
+ * Compose the artifact's `layer_manifest` from the release it reproduces.
+ *
+ * OGL v3 carries attribution and no share-alike term, so the tier is `shipped`.
+ */
+export function codePointLayerManifest(input: {
+	osVersion: string
+	metadata: CodePointMetadata
+	now: Date
+}): LayerManifest {
+	return foldLayerManifest({
+		name: "postalcode-gb-codepoint",
+		version: input.osVersion,
+		tier: LayerTier.Shipped,
+		license: CODEPOINT_LICENSE,
+		attribution: codePointAttribution(attributionYear(input.metadata, input.now)),
+		source: "Ordnance Survey Code-Point Open",
+		sourceVintage: `${input.osVersion} (dataset ${input.metadata.datasetVersion}, copyright ${input.metadata.copyrightDate})`,
+		buildCmd: "mailwoman gazetteer build postcode-codepoint",
+		buildSHA: buildSHA(repoRootPath()),
+		createdAt: input.now.toISOString(),
+		spineKeys: { wofID: "id" },
+	})
+}
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
@@ -305,6 +342,11 @@ export async function buildPostcodeCodePoint(
 
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
+	// The layer interface's manifest, beside the `meta` record.
+	// The candidate build reads its tier before folding the database.
+	phase("layer-manifest")
+	await stampLayerManifest(out, codePointLayerManifest({ osVersion, metadata: extracted.metadata, now }))
+
 	phase("seal")
 	await sealDatabase(out)
 
@@ -396,7 +438,7 @@ interface DatabaseMetaInput {
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {
 	await createDatabaseMetaTable(db)
 
-	const copyrightYear = Number(input.metadata.copyrightDate.slice(0, 4)) || input.now.getUTCFullYear()
+	const copyrightYear = attributionYear(input.metadata, input.now)
 
 	const rows: Array<[string, string]> = [
 		["name", "mailwoman-postalcode-gb-codepoint"],

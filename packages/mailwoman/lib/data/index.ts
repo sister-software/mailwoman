@@ -6,5 +6,6 @@
 
 export * from "#data/bundles"
 export * from "#data/inventory"
+export * from "#data/obligations"
 export * from "#data/release"
 export * from "#data/sources"

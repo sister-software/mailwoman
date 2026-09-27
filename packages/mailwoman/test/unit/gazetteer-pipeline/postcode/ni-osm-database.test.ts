@@ -20,6 +20,7 @@ import { statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalJSONFile, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { type layerschemadatabase, LayerTier, readLayerManifest } from "@mailwoman/core/layers"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -192,6 +193,18 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 
 	const drops = parseJSONStrict<{ malformedValues: Record<string, number> }>(meta.get("quality_drops")!)
 	expect(drops.malformedValues).toEqual({ "BT36 4RU,": 1 })
+
+	// The layer interface's manifest states the same tier, which is the field the candidate build reads.
+	using layer = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
+
+	const manifest = await readLayerManifest(layer)
+
+	expect(manifest.name).toBe("postalcode-ni-osm")
+	expect(manifest.tier).toBe(LayerTier.BuildLocal)
+	expect(manifest.license).toBe("ODbL-1.0")
+	expect(manifest.attribution).toContain("OpenStreetMap contributors")
+	expect(manifest.sourceVintage).toBe("2026-08-05T13:14:01Z")
+	expect(manifest.spineKeys).toEqual({ wofID: "id" })
 })
 
 test("buildPostcodeNIOSM: a response modified since acquisition is refused, not built from", async () => {

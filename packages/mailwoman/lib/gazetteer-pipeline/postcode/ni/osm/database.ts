@@ -46,6 +46,8 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { NI_OSM_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
@@ -81,6 +83,7 @@ import {
 	type OverpassResponse,
 	parseNIPostcodes,
 } from "#gazetteer-pipeline/postcode/ni/osm/index"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
@@ -346,6 +349,29 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 	phase("fts")
 
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
+
+	// The layer interface's manifest, beside the `meta` record and stating the same tier.
+	// The candidate build reads this field before folding the database, and a publish
+	// reads it through the candidate's own manifest.
+	phase("layer-manifest")
+
+	await stampLayerManifest(
+		out,
+		foldLayerManifest({
+			name: "postalcode-ni-osm",
+			version: stamp,
+			// ODbL 1.0 is share-alike on a Derived Database, as the module docstring and `meta.tier` state.
+			tier: LayerTier.BuildLocal,
+			license: OSM_LICENSE,
+			attribution: OSM_ATTRIBUTION,
+			source: "OpenStreetMap via the Overpass API",
+			sourceVintage: osmTimestamp,
+			buildCmd: "mailwoman gazetteer build postcode-ni-osm",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
+	)
 
 	phase("seal")
 	await sealDatabase(out)

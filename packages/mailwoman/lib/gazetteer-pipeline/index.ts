@@ -28,9 +28,11 @@ import {
 	removePathIfPresent,
 	writeLocalFile,
 } from "@mailwoman/core/fs/writers"
+import { refusalsForPublication } from "@mailwoman/core/layers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { CommandError } from "@mailwoman/core/scripting/command"
 import { isoDate } from "@mailwoman/core/utils"
 // resolver-wof-sqlite's runtime modules are imported inside the functions that use them.
 // `mailwoman --help` imports every command, and a module-level value import would
@@ -46,7 +48,13 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 
-import { candidateLayerManifest } from "#gazetteer-pipeline/candidate-manifest"
+import { probeManifest } from "#data/inventory"
+import {
+	candidateLayerManifest,
+	type FoldTerms,
+	foldsRefusingPublication,
+	readFoldTerms,
+} from "#gazetteer-pipeline/candidate-manifest"
 import { emitCoverageManifest } from "#gazetteer-pipeline/coverage-manifest"
 import {
 	DEFAULT_FOLD_COUNTRIES,
@@ -65,13 +73,14 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
  *   Overture postcode centroids (CA + the EU-coverage locales).
  *   Missing databases are skipped rather than fatal.
  *
- * That skip is not merely tolerant.
- * It is the **build-local tier's mechanism**.
+ * That skip is tolerance rather than enforcement.
  *
  * `postalcode-ni-osm.db` is ODbL and is never published, so on every machine but the one
  * that built it the `pathExists` filter in {@link resolvePostcodeDatabases} removes it
  * and the set degrades to the permissive databases alone.
- * No other code enforces the tier, and no other code needs to.
+ * On the machine that built it, the file is present and {@link buildCandidate} reads its
+ * recorded tier before folding: a `build-local` fold is refused unless the build asks for it,
+ * and the candidate's manifest records how many were included.
  *
  * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB —
  * superseded by Code-Point Open, the same underlying survey under a clean licence).
@@ -106,9 +115,9 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	//
 	// build-local tier — ODbL 1.0 is share-alike on a Derived Database, so this
 	// artifact is never published to npm, R2 or the demo.
-	// It is present only on a machine that built it, and the `pathExists` filter in
-	// `resolvePostcodeDatabases` is that tier's mechanism: a deployment without the
-	// file simply has no NI coverage, exactly as before.
+	// It is present only on a machine that built it: a deployment without the file has
+	// no NI coverage, and a build on the machine that has it folds the rows only under
+	// `includeBuildLocalFolds`, because its manifest records `tier = build-local`.
 	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from
 	// the saved Overpass response rather than re-querying a volunteer endpoint).
 	"postalcode-ni-osm.db",
@@ -408,7 +417,30 @@ export interface BuildOptions {
 	 * Pass `false` to disable.
 	 */
 	currencyBackfillCountries?: readonly string[] | false
+	/**
+	 * Fold a database whose own tier permits no publication, for a gazetteer built for local use.
+	 *
+	 * Off by default, so a build that could reach a publish carries only folds whose tier allows it.
+	 * The manifest records how many such folds were included, as `build-local-folds`.
+	 */
+	includeBuildLocalFolds?: boolean
 	onProgress?: (phase: string, message: string) => void
+}
+
+/**
+ * The message a build stops with when a fold's own tier permits no publication.
+ */
+function foldRefusalMessage(refusing: readonly FoldTerms[]): string {
+	const lines = refusing.map(
+		(fold) => `  ${fold.path} (${fold.name}) tier ${fold.tier}, recorded in ${fold.recordedIn}`
+	)
+
+	return (
+		`buildCandidate: ${refusing.length} fold(s) record a tier that permits no publication:\n${lines.join("\n")}\n` +
+		`Their rows would leave inside the candidate while the file itself stays behind. Pass includeBuildLocalFolds ` +
+		`(mailwoman gazetteer build candidate --include-build-local) to build a gazetteer for local use, or leave ` +
+		`them out of the fold list.`
+	)
 }
 
 /**
@@ -438,11 +470,40 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		? (await readLocalJSONFile<{ entries?: CapitalPoint[] }>(capitalsPath)).entries
 		: undefined
 
+	const postcodeDatabases = [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))]
+	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]
+
+	// Each fold's own tier decides whether its rows may enter a gazetteer that could be published.
+	// A fold that states no tier is reported rather than refused: its undeclared grant reaches the
+	// manifest's expression as `LicenseRef-Undeclared-Input`, which refuses publication of the whole.
+	const foldTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readFoldTerms(path)))
+	const refusing = foldsRefusingPublication(foldTerms)
+	const unstated = foldTerms.filter((fold) => fold.tier === null)
+
+	if (unstated.length) {
+		opts.onProgress?.(
+			"fold-terms",
+			`${unstated.length} of ${foldTerms.length} folds state no tier: ${unstated.map((fold) => fold.name).join(", ")}`
+		)
+	}
+
+	if (refusing.length) {
+		if (!opts.includeBuildLocalFolds) {
+			throw new CommandError(foldRefusalMessage(refusing))
+		}
+
+		opts.onProgress?.(
+			"fold-terms",
+			`folding ${refusing.length} database(s) whose tier permits no publication, as asked: ` +
+				refusing.map((fold) => `${fold.name} (${fold.tier})`).join(", ")
+		)
+	}
+
 	const result = await buildCandidateTable({
 		input: opts.adminDB,
 		output: opts.out,
-		postcodes: [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))],
-		localities: [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))],
+		postcodes: postcodeDatabases,
+		localities: localityDatabases,
 		...(importance ? { importance } : {}),
 		...(backfillCountries ? { currencyBackfill: { geonamesDir: geonamesDir(), countries: backfillCountries } } : {}),
 		...(capitals?.length ? { capitals } : {}),
@@ -467,10 +528,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		opts.out,
 		await candidateLayerManifest({
 			adminDBPath: opts.adminDB,
-			contributingDatabases: {
-				postcodes: opts.postcodeDatabases ?? (await resolvePostcodeDatabases()),
-				localities: opts.localityDatabases ?? (await resolveLocalityDatabases()),
-			},
+			contributingDatabases: { postcodes: postcodeDatabases, localities: localityDatabases },
 			importance: Boolean(importance),
 			buildSHA: sha,
 			version: isoDate(),
@@ -539,7 +597,65 @@ export interface PublishOptions {
 	bucket?: string
 	prefix?: string
 	dryRun?: boolean
+	/**
+	 * Publish over every refusal the candidate's own `layer_manifest` raises, printing each one.
+	 *
+	 * Off by default, so a candidate whose tier or license permits no publication stops before a byte moves.
+	 */
+	overrideRefusals?: boolean
 	onPhase?: (phase: string, detail?: string) => void
+}
+
+/**
+ * Stop unless the candidate's own manifest permits publication, or the caller overrides.
+ *
+ * An absent or unreadable manifest refuses as well: an artifact that states no
+ * tier cannot be said to permit publication.
+ *
+ * @throws When a refusal stands and `overrideRefusals` is not set.
+ */
+function assertCandidatePublishable(candidateDB: PathBuilderLike, key: string, overrideRefusals: boolean): void {
+	const probed = probeManifest(candidateDB)
+
+	if (probed.error) {
+		throw new CommandError(
+			`gazetteer publish: ${candidateDB} has no readable layer_manifest (${probed.error}), so it states no tier, ` +
+				`and an artifact that states no tier cannot be said to permit publication.`
+		)
+	}
+
+	if (!probed.manifest) {
+		throw new CommandError(
+			`gazetteer publish: ${candidateDB} carries no layer_manifest, so it states no tier, and an artifact that ` +
+				`states no tier cannot be said to permit publication. Rebuild it with \`mailwoman gazetteer build candidate\`.`
+		)
+	}
+
+	const refusals = refusalsForPublication([
+		{
+			name: probed.manifest.name,
+			tier: probed.manifest.tier ?? "",
+			license: probed.manifest.license ?? "",
+			publishedAs: key,
+		},
+	])
+
+	if (!refusals.length) return
+
+	const lines = refusals.map((refusal) => `  ${refusal.field}: ${refusal.reason}`)
+
+	if (!overrideRefusals) {
+		throw new CommandError(
+			`gazetteer publish: ${candidateDB} (layer ${probed.manifest.name}) may not be published as ${key}:\n` +
+				`${lines.join("\n")}\n` +
+				`Pass --override-refusals to publish it deliberately; the override prints each refusal it overrides.`
+		)
+	}
+
+	console.error(
+		`▸ publishing ${candidateDB} (layer ${probed.manifest.name}) as ${key} under --override-refusals, over ` +
+			`${refusals.length} refusal(s):\n${lines.join("\n")}`
+	)
 }
 
 export interface PublishResult {
@@ -566,6 +682,11 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 	if (!(await pathExists(opts.uploadScript))) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
 	const prefix = opts.prefix ?? "mailwoman"
+	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
+
+	// The artifact's own manifest decides, before any staging or transfer.
+	assertCandidatePublishable(opts.candidateDB, key, opts.overrideRefusals === true)
+
 	const versionDir = resolvePathBuilder(opts.stageDir, "gazetteer", opts.version)
 	await makeDirectories(versionDir)
 	const staged = versionDir("candidate.db")
@@ -578,7 +699,6 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	await createSymbolicLink(opts.candidateDB, staged)
 
-	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
 	const args: PathBuilderLike[] = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
 

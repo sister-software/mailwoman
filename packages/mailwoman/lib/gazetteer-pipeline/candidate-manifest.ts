@@ -28,7 +28,7 @@ import { licenseIdentifiers } from "@mailwoman/core/license/obligations"
 import { readLicenseRecord } from "@mailwoman/core/license/record"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
-import type { PathBuilderLike } from "path-ts"
+import { basename, type PathBuilderLike } from "path-ts"
 
 import { probeManifest } from "#data/inventory"
 
@@ -104,37 +104,126 @@ export interface CandidateManifestInput {
 export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
 
 /**
- * The SPDX expression a contributing database declares, or `null` when it declares none.
+ * Where a contributing database recorded its terms.
  *
- * A layer database records its grant in `layer_manifest.license`.
- * The postcode and locality builders predate that interface and record it in a `meta`
- * key/value table instead, as prose rather than an identifier, so both are read
- * and the value resolved through `readLicenseRecord`.
+ * `layer_manifest` is the layer interface.
+ * `meta` and `database_meta` are the key/value tables the postcode and locality builders wrote before
+ * they stamped a manifest, and every database built before 2026-09-27 carries at most one of those.
  *
- * Prose that resolves to no expression returns `null` rather than the prose, because the caller
- * composes an SPDX expression and a sentence inside one is not a grant a reader can act on.
+ * `none` means the database records no terms, or could not be read.
  */
-async function declaredLicense(path: PathBuilderLike): Promise<string | null> {
-	if (!(await pathExists(path))) return null
+export const FoldTermsRecord = {
+	LayerManifest: "layer_manifest",
+	Meta: "meta",
+	DatabaseMeta: "database_meta",
+	None: "none",
+} as const
+
+export type FoldTermsRecord = (typeof FoldTermsRecord)[keyof typeof FoldTermsRecord]
+
+/**
+ * What one contributing database says about its own publication.
+ */
+export interface FoldTerms {
+	path: string
+	/**
+	 * The layer name the manifest records, or the filename when no manifest names one.
+	 */
+	name: string
+	recordedIn: FoldTermsRecord
+	/**
+	 * The tier as recorded, or `null` when the database states none.
+	 */
+	tier: string | null
+	/**
+	 * The SPDX expression the recorded grant resolves to, or `null` when it states none
+	 * or states prose that resolves to no expression.
+	 */
+	license: string | null
+	/**
+	 * Why the database could not be read, when it could not.
+	 */
+	error?: string
+}
+
+/**
+ * The key/value tables a builder wrote its terms into before the manifest existed,
+ * in the order they are consulted.
+ */
+const TERMS_TABLES = [FoldTermsRecord.Meta, FoldTermsRecord.DatabaseMeta] as const
+
+/**
+ * Read what a contributing database records about its tier and grant.
+ *
+ * A layer database records both in `layer_manifest`.
+ * The postcode and locality builders predate that interface and record them in a `meta`
+ * or `database_meta` key/value table instead, as prose rather than an identifier,
+ * so all three are read and the grant resolved through `readLicenseRecord`.
+ *
+ * Prose that resolves to no expression reads as `null` rather than as the prose, because the
+ * caller composes an SPDX expression and a sentence inside one is not a grant a reader can act on.
+ * An unreadable database records no terms this build can quote, and says why.
+ */
+export async function readFoldTerms(path: PathBuilderLike): Promise<FoldTerms> {
+	const pathString = path.toString()
+	const name = basename(pathString, ".db")
+	const none: FoldTerms = { path: pathString, name, recordedIn: FoldTermsRecord.None, tier: null, license: null }
+
+	if (!(await pathExists(path))) return { ...none, error: "not found" }
 
 	const probed = probeManifest(path)
 
-	if (probed.manifest?.license) return readLicenseRecord(probed.manifest.license).expression
+	if (probed.error) return { ...none, error: probed.error }
+
+	if (probed.manifest) {
+		return {
+			path: pathString,
+			name: probed.manifest.name,
+			recordedIn: FoldTermsRecord.LayerManifest,
+			tier: probed.manifest.tier ?? null,
+			license: probed.manifest.license ? readLicenseRecord(probed.manifest.license).expression : null,
+		}
+	}
 
 	try {
 		using db = new DatabaseClient<layerschemadatabase>(path, { readOnly: true })
 
-		if (!tableExists(db, "meta")) return null
+		for (const table of TERMS_TABLES) {
+			if (!tableExists(db, table)) continue
 
-		const row = db.prepare("SELECT value FROM meta WHERE key = 'license'").get()
-		const value = row?.["value"]
+			const rows = db.prepare(`SELECT key, value FROM ${table} WHERE key IN ('tier', 'license')`).all() as Array<{
+				key: string
+				value: unknown
+			}>
 
-		return typeof value === "string" ? readLicenseRecord(value).expression : null
-	} catch {
-		// An unreadable database declares no terms this build can quote, which the caller
-		// records as an undeclared fold rather than as an absence of obligations.
-		return null
+			const values = new Map(rows.map((row) => [row.key, row.value]))
+			const tier = values.get("tier")
+			const license = values.get("license")
+
+			return {
+				path: pathString,
+				name,
+				recordedIn: table,
+				tier: typeof tier === "string" ? tier : null,
+				license: typeof license === "string" ? readLicenseRecord(license).expression : null,
+			}
+		}
+
+		return none
+	} catch (error) {
+		return { ...none, error: (error as Error).message }
 	}
+}
+
+/**
+ * Every contributing database whose recorded tier permits no publication.
+ *
+ * A fold that states no tier is not in this list.
+ * It is a finding the caller reports separately, and its undeclared grant already reaches the
+ * candidate's expression as {@link UNDECLARED_INPUT_LICENSE}, which refuses publication of the whole.
+ */
+export function foldsRefusingPublication(terms: readonly FoldTerms[]): FoldTerms[] {
+	return terms.filter((fold) => fold.tier !== null && fold.tier !== LayerTier.Shipped)
 }
 
 /**
@@ -146,16 +235,19 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 	const identifiers = new Set<string>()
 	let undeclared = 0
 
-	for (const path of [input.adminDBPath, ...contributing]) {
-		const expression = await declaredLicense(path)
+	const adminTerms = await readFoldTerms(input.adminDBPath)
+	const foldTerms = await Promise.all(contributing.map((path) => readFoldTerms(path)))
+	// The ancestor is not a fold, so the count reads the contributing databases alone.
+	const buildLocal = foldsRefusingPublication(foldTerms).length
 
-		if (!expression) {
+	for (const terms of [adminTerms, ...foldTerms]) {
+		if (!terms.license) {
 			undeclared++
 
 			continue
 		}
 
-		for (const identifier of licenseIdentifiers(expression)) {
+		for (const identifier of licenseIdentifiers(terms.license)) {
 			identifiers.add(identifier)
 		}
 	}
@@ -179,10 +271,12 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		license: [...identifiers].toSorted().join(" AND "),
 		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",
 		source: ancestor,
+		// `build-local-folds` is the count a publish decision can read without re-opening the inputs:
+		// a fold whose own tier permits no publication was folded in, and the caller asked for it.
 		sourceVintage:
 			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
-			`undeclared-folds=${undeclared} importance=${input.importance ? "yes" : "no"}`,
+			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} importance=${input.importance ? "yes" : "no"}`,
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,

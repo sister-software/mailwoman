@@ -33,14 +33,29 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile, readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { NZ_LOCALITY_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
+import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { CSVSpliterator } from "spliterator"
+
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
+/**
+ * The grant the artifact records, as its `database_meta` table has stated it since the first build.
+ */
+const NZ_LOCALITIES_LICENSE = "CC-BY-4.0, attribution Land Information New Zealand"
+
+/**
+ * The extract's vintage, as its `database_meta` table records it.
+ */
+const NZ_LOCALITIES_SOURCE_VINTAGE = "2021-10-21 (extract mtime); md5-sidecar verified"
 
 /**
  * Minimum address points a (city, district) group needs before it warrants a database row.
@@ -174,9 +189,9 @@ export async function buildNZLocalitiesDatabase(
 	db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 	const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 	meta.run("source", "LINZ NZ Street Address via OpenAddresses (nz/countrywide)")
-	meta.run("license", "CC-BY-4.0, attribution Land Information New Zealand")
+	meta.run("license", NZ_LOCALITIES_LICENSE)
 	meta.run("source_md5", sourceMD5)
-	meta.run("source_vintage", "2021-10-21 (extract mtime); md5-sidecar verified")
+	meta.run("source_vintage", NZ_LOCALITIES_SOURCE_VINTAGE)
 	meta.run("min_group_points", String(MIN_GROUP_POINTS))
 
 	const sprInsert = db.prepare(
@@ -227,6 +242,28 @@ export async function buildNZLocalitiesDatabase(
 	buildPlaceSearchFTS(db, { drop: true })
 	db.exec("ANALYZE")
 	await db.destroy()
+
+	// The layer interface's manifest, beside `database_meta` and stating the same terms.
+	// The candidate build reads its tier before folding the database.
+	const now = new Date()
+
+	await stampLayerManifest(
+		tmpPath,
+		foldLayerManifest({
+			name: "localities-nz-linz",
+			version: isoDate(now),
+			// CC-BY 4.0 carries attribution and no share-alike term, so the artifact is published.
+			tier: LayerTier.Shipped,
+			license: NZ_LOCALITIES_LICENSE,
+			attribution: "Land Information New Zealand",
+			source: "LINZ NZ Street Address via OpenAddresses (nz/countrywide)",
+			sourceVintage: `${NZ_LOCALITIES_SOURCE_VINTAGE} (md5 ${sourceMD5})`,
+			buildCmd: "mailwoman gazetteer build nz-localities",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
+	)
 
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)

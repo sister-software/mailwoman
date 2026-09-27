@@ -36,6 +36,8 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { statPath, pathExists } from "@mailwoman/core/fs/readers"
 import { md5File } from "@mailwoman/core/hash"
 import { stringifyJSON } from "@mailwoman/core/json"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { isoDate } from "@mailwoman/core/utils"
 import { EpistemicStatus } from "@mailwoman/evidence"
 import type { GeonamesPostalIngestResult } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -45,6 +47,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase } from "@mailwoman/sqlite/sealed-db"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
+import { UNDECLARED_INPUT_LICENSE } from "#gazetteer-pipeline/candidate-manifest"
 import {
 	applyStagingPragmas,
 	buildDatabaseFTS,
@@ -54,8 +57,31 @@ import {
 } from "#gazetteer-pipeline/database-lifecycle"
 import { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 import type { BuildFTSResult } from "#gazetteer-pipeline/fts"
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
+
+/**
+ * The terms the artifact's `layer_manifest` records for a given country list.
+ *
+ * GeoNames postal is CC-BY 4.0.
+ * GB rides in from `GB_full`, whose England, Scotland and Wales rows are Code-Point Open under OGL v3
+ * and whose Northern Ireland rows have no documented provenance, as {@link GB_LICENSE_NOTE} records.
+ *
+ * A build that ingests GB therefore carries an input nobody has declared terms for,
+ * and that is a reason to withhold publication rather than a permissive grant, so the tier
+ * is `build-local` and the expression carries `LicenseRef-Undeclared-Input` for that input.
+ */
+export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTier; license: string } {
+	if (countries.includes("GB")) {
+		return {
+			tier: LayerTier.BuildLocal,
+			license: `CC-BY-4.0 AND OGL-UK-3.0 AND ${UNDECLARED_INPUT_LICENSE}`,
+		}
+	}
+
+	return { tier: LayerTier.Shipped, license: "CC-BY-4.0" }
+}
 
 /**
  * `meta` is the artifact's own provenance record.
@@ -258,6 +284,26 @@ export async function buildPostcodeGeonamesTail(
 		out,
 		(path) => new DatabaseClient<DatabaseMetaDatabase>(path),
 		phase
+	)
+
+	// The layer interface's manifest, beside the `meta` record.
+	// The candidate build reads its tier before folding the database.
+	phase("layer-manifest")
+
+	await stampLayerManifest(
+		out,
+		foldLayerManifest({
+			name: "postalcode-geonames-tail",
+			version: isoDate(now),
+			...geonamesTailTerms(countries),
+			attribution: GEONAMES_ATTRIBUTION,
+			source: "GeoNames postal-code dumps",
+			sourceVintage: `${countries.join(",")} (${sources.length} of ${countries.length} dumps present)`,
+			buildCmd: `mailwoman gazetteer build postcode-geonames --countries ${countries.join(",")}`,
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
 	)
 
 	phase("seal")

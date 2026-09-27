@@ -109,6 +109,18 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 	// Its `meta.attribution` names Ordnance Survey Crown copyright and Royal Mail copyright.
 	["Open Government Licence v3.0", "OGL-UK-3.0"],
 	["Open Government Licence v.3.0", "OGL-UK-3.0"],
+	// The `meta.license` value in `postalcode-geonames-tail.db`, measured 2026-09-27.
+	// GB rows in that database carry OGL-UK-3.0 as well, which its `meta.license_gb` states
+	// and the builder's own manifest records.
+	["CC-BY 4.0 (GeoNames) — attribution required on redistribution", "CC-BY-4.0"],
+	// The `meta.license` value in `postcode-locality-intl.db`, measured 2026-09-27.
+	// The admin gazetteer's manifest reads Who's On First as `LicenseRef-WhosOnFirst-Mixed`.
+	// This alias resolves what the locality builder wrote, which is that builder's claim.
+	["CC-BY 4.0 (Who's On First) — attribution required on redistribution", "CC-BY-4.0"],
+	// The `database_meta.license` values in `localities-cz-districts.db`
+	// and `localities-nz-linz.db`, measured 2026-09-27.
+	["CC-BY-4.0, attribution GeoNames", "CC-BY-4.0"],
+	["CC-BY-4.0, attribution Land Information New Zealand", "CC-BY-4.0"],
 	// INEGI's own terms document, which names no Creative Commons license.
 	// Retrieved 2026-09-27, retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/.
 	["Términos de Libre Uso de la Información del INEGI", "LicenseRef-INEGI-Terms"],

@@ -1,7 +1,10 @@
 import { stringifyJSON } from "@mailwoman/core/json"
+import { assertAdmissibleLicenseExpression } from "@mailwoman/core/license/obligations"
 import {
 	artifactURL,
+	type ArtifactTermsObservation,
 	BUNDLES,
+	describeArtifactTerms,
 	describeBundleRights,
 	filterArtifacts,
 	needsDownload,
@@ -100,6 +103,46 @@ describe("every bundle states its terms before it is pulled", () => {
 		expect(lines.some((line) => line.startsWith("unresolved:"))).toBe(true)
 	})
 
+	it.each(Object.values(BUNDLES))("$name records an admissible expression a pull can decide on", (bundle) => {
+		expect(() => assertAdmissibleLicenseExpression(bundle.rights.expression, bundle.name)).not.toThrow()
+	})
+
+	it("prints what the recorded expression implies, beside the prose", () => {
+		// The candidate's expression carries ODbL-1.0, which is what `--refuse share-alike` declines on.
+		const lines = describeBundleRights(BUNDLES["candidate"]!)
+		const recorded = lines.find((line) => line.startsWith("recorded expression:"))
+
+		expect(recorded).toContain("ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0")
+		expect(recorded).toContain("share_alike")
+	})
+
+	it("prints what the artifact on disk records, and flags a disagreement with the registry", () => {
+		const bundle = BUNDLES["candidate"]!
+
+		const agreeing: ArtifactTermsObservation = {
+			path: "/data/db/wof/candidate.db",
+			state: "recorded",
+			tier: "build-local",
+			license: bundle.rights.expression,
+		}
+
+		expect(describeArtifactTerms(bundle, [agreeing])).toEqual([
+			"on disk: /data/db/wof/candidate.db records tier build-local, license ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0 — obligations: attribution, share_alike",
+		])
+
+		const differing = describeArtifactTerms(bundle, [{ ...agreeing, license: "CC-BY-4.0" }])
+
+		expect(differing[1]).toContain("disagreement: the artifact records CC-BY-4.0 while this registry records")
+	})
+
+	it("groups artifacts that say the same thing, so a hundred files print one line", () => {
+		const absent = (slug: string): ArtifactTermsObservation => ({ path: `/data/db/${slug}.db`, state: "absent" })
+		const lines = describeArtifactTerms(BUNDLES["us"]!, [absent("ca"), absent("ny"), absent("tx")])
+
+		expect(lines).toHaveLength(1)
+		expect(lines[0]).toContain("not on disk: 3 artifacts, such as /data/db/ca.db")
+	})
+
 	it("says where each bundle's rows name their publisher, or that they do not", () => {
 		expect(BUNDLES["us"]?.sourceCensus).toStrictEqual({
 			table: "address_point",
@@ -116,7 +159,7 @@ describe("every bundle states its terms before it is pulled", () => {
 })
 
 describe("resolveBundleArtifacts — maps versioned names", () => {
-	const noRights = { publishers: [], terms: [], conditions: [], unresolved: [] }
+	const noRights = { publishers: [], expression: "NOASSERTION", terms: [], conditions: [], unresolved: [] }
 
 	const bundle: DataBundle = {
 		name: "us",
@@ -161,7 +204,7 @@ describe("resolveBundleArtifacts — maps versioned names", () => {
 		const candidate: DataBundle = {
 			name: "candidate",
 			description: "test",
-			rights: { publishers: [], terms: [], conditions: [], unresolved: [] },
+			rights: { publishers: [], expression: "NOASSERTION", terms: [], conditions: [], unresolved: [] },
 			artifacts: [
 				{
 					remotePath: "gazetteer/2026-07-07a/candidate.db",

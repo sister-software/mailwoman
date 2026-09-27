@@ -25,11 +25,21 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { md5Hex } from "@mailwoman/core/hash"
+import { LayerTier } from "@mailwoman/core/layers"
+import { repoRootPath } from "@mailwoman/core/paths"
 import { CZ_DISTRICT_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
+import { isoDate } from "@mailwoman/core/utils"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
+
+import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+
+/**
+ * The grant the artifact records, as its `database_meta` table has stated it since the first build.
+ */
+const CZ_DISTRICTS_LICENSE = "CC-BY-4.0, attribution GeoNames"
 
 export interface BuildCZDistrictsOptions {
 	/**
@@ -99,7 +109,7 @@ export async function buildCZDistrictsDatabase(
 		db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 		const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 		meta.run("source", "GeoNames CZ places file (Praha district rows)")
-		meta.run("license", "CC-BY-4.0, attribution GeoNames")
+		meta.run("license", CZ_DISTRICTS_LICENSE)
 		meta.run("source_md5", sourceMD5)
 		meta.run("selection", String.raw`name ~ ^Praha \d+$, A-feature preferred per name`)
 
@@ -126,6 +136,28 @@ export async function buildCZDistrictsDatabase(
 		buildPlaceSearchFTS(db, { drop: true })
 		db.exec("ANALYZE")
 	}
+
+	// The layer interface's manifest, beside `database_meta` and stating the same terms.
+	// The candidate build reads its tier before folding the database.
+	const now = new Date()
+
+	await stampLayerManifest(
+		tmpPath,
+		foldLayerManifest({
+			name: "localities-cz-districts",
+			version: isoDate(now),
+			// CC-BY 4.0 carries attribution and no share-alike term, so the artifact is published.
+			tier: LayerTier.Shipped,
+			license: CZ_DISTRICTS_LICENSE,
+			attribution: "GeoNames",
+			source: "GeoNames CZ places file (Praha district rows)",
+			sourceVintage: `md5 ${sourceMD5}`,
+			buildCmd: "mailwoman gazetteer build cz-districts",
+			buildSHA: buildSHA(repoRootPath()),
+			createdAt: now.toISOString(),
+			spineKeys: { wofID: "id" },
+		})
+	)
 
 	await swapDatabaseIntoPlace(tmpPath, outPath)
 	await sealDatabase(outPath)

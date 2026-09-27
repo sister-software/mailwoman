@@ -5,6 +5,7 @@
  */
 
 import { databaseRootPath } from "@mailwoman/core/data-root"
+import { summarizeLicense } from "@mailwoman/core/license/obligations"
 import type { PathBuilderLike } from "path-ts"
 
 import type { DataReleaseManifest } from "#data/release"
@@ -89,6 +90,16 @@ export interface BundleSourceCensus {
  */
 export interface BundleRights {
 	publishers: readonly string[]
+
+	/**
+	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`, or, where
+	 * an artifact records none, the expression this registry assigns from the publishers' stated terms.
+	 *
+	 * A `LicenseRef-` names a grant nobody has resolved to an identifier, and reads as unresolved.
+	 * `mailwoman data pull --refuse` decides on this field, and prints the artifact's own
+	 * expression beside it once the artifact is on disk, so the two disagreeing is visible.
+	 */
+	expression: string
 
 	/**
 	 * Lists the license terms, with one entry per source where the sources differ.
@@ -224,6 +235,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["Who's On First", "GeoNames", "Overture Maps Foundation, for its Divisions theme"],
+			// The published artifact's own `layer_manifest.license`, read over HTTP range requests on 2026-09-27.
+			expression: "ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0",
 			terms: [
 				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
 				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
@@ -257,6 +270,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["Overture Maps Foundation"],
+			// The artifact's own `layer_manifest.license`, measured on the lab host's copy 2026-09-27.
+			expression: "CDLA-Permissive-2.0",
 			terms: [
 				"Overture Places theme: CDLA-Permissive-2.0. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/cdla-permissive-2.0.md.",
 			],
@@ -284,6 +299,9 @@ export const BUNDLES: Record<string, DataBundle> = {
 		],
 		rights: {
 			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
+			// Assigned from the elected half of BAN's dual grant.
+			// The lab host's copy of the artifact carries no `layer_manifest`, measured 2026-09-27.
+			expression: "etalab-2.0",
 			terms: [
 				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
 			],
@@ -309,6 +327,11 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"119 county and state bodies, for the rows OpenAddresses collected from them, likewise through Overture",
 				"United States Census Bureau, for the TIGER/Line interpolation databases in this bundle",
 			],
+			// Assigned from the publishers' stated terms.
+			// The lab host's per-state copies carry no `layer_manifest`, measured 2026-09-27.
+			// `LicenseRef-OpenAddresses-PerSource` stands for the 119 contributing bodies' own terms.
+			// No one has resolved those per source, so the expression reads as unresolved.
+			expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource",
 			terms: [
 				"National Address Database: a work of the federal government carrying no copyright under 17 U.S.C. § 105, and the same page states it is not intended for use as a mailing list and is subject to state statutes prohibiting that use. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/national-address-database.md.",
 				"OpenAddresses: per-source terms that differ, which THIRD_PARTY_NOTICES.md records as commonly requiring attribution and share-alike. Every row names its contributing body.",
@@ -329,7 +352,24 @@ export const BUNDLES: Record<string, DataBundle> = {
 }
 
 /**
- * Format publishers, terms, conditions, and unresolved rights questions for terminal output.
+ * The obligations an SPDX expression implies, for a terminal line.
+ */
+function describeExpression(expression: string): string {
+	const summary = summarizeLicense(expression)
+	const obligations = summary.obligations.length ? summary.obligations.join(", ") : "none recorded"
+
+	return summary.unrecognized.length
+		? `${expression} — obligations: ${obligations}; ${summary.unrecognized.join(", ")} resolve(s) to no recorded obligations`
+		: `${expression} — obligations: ${obligations}`
+}
+
+/**
+ * Format publishers, terms, conditions, unresolved rights questions
+ * and the recorded expression for terminal output.
+ *
+ * The prose carries publisher names and conditions no manifest holds.
+ * The expression line is what {@link BundleRights.expression} implies, which is what
+ * a pull decides on when the artifact is not yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -339,7 +379,86 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 		...rights.terms.map((line) => `terms: ${line}`),
 		...rights.conditions.map((line) => `you must: ${line}`),
 		...rights.unresolved.map((line) => `unresolved: ${line}`),
+		`recorded expression: ${describeExpression(rights.expression)}`,
 	]
+}
+
+/**
+ * What one of a bundle's artifacts says for itself on this machine.
+ */
+export interface ArtifactTermsObservation {
+	path: string
+	/**
+	 * `absent` when the file is not on disk, `unmanifested` when it carries no `layer_manifest`,
+	 * `unreadable` when opening it failed, and `recorded` when its manifest was read.
+	 */
+	state: "absent" | "unmanifested" | "unreadable" | "recorded"
+	tier?: string
+	license?: string
+	error?: string
+}
+
+/**
+ * Format what the bundle's artifacts on disk record, beside what the registry records.
+ *
+ * Artifacts are grouped by what they say, so a bundle of a hundred files prints
+ * a line per distinct answer rather than per file.
+ * An artifact whose own expression differs from the registry's is the finding worth
+ * surfacing, and the artifact is the authority for what it carries.
+ */
+export function describeArtifactTerms(bundle: DataBundle, observations: readonly ArtifactTermsObservation[]): string[] {
+	const groups = new Map<string, { count: number; example: ArtifactTermsObservation }>()
+
+	for (const observation of observations) {
+		const key = [observation.state, observation.tier ?? "", observation.license ?? "", observation.error ?? ""].join(
+			"\0"
+		)
+
+		const group = groups.get(key)
+
+		if (group) {
+			group.count++
+		} else {
+			groups.set(key, { count: 1, example: observation })
+		}
+	}
+
+	const lines: string[] = []
+
+	for (const { count, example } of groups.values()) {
+		const subject = count === 1 ? example.path : `${count} artifacts, such as ${example.path}`
+
+		switch (example.state) {
+			case "absent":
+				lines.push(`not on disk: ${subject}; the recorded expression above is what a pull would take on`)
+
+				break
+			case "unmanifested":
+				lines.push(`on disk: ${subject} carries no layer_manifest, so it states no terms of its own`)
+
+				break
+			case "unreadable":
+				lines.push(`on disk: ${subject} could not be read: ${example.error}`)
+
+				break
+			case "recorded": {
+				const license = example.license ?? ""
+
+				lines.push(
+					`on disk: ${subject} records tier ${example.tier ?? "absent"}, license ${describeExpression(license)}`
+				)
+
+				if (license !== bundle.rights.expression) {
+					lines.push(
+						`disagreement: the artifact records ${license || "no expression"} while this registry records ` +
+							`${bundle.rights.expression}; the artifact is the authority for what it carries`
+					)
+				}
+			}
+		}
+	}
+
+	return lines
 }
 
 /**

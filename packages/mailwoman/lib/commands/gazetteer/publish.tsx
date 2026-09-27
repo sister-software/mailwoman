@@ -33,6 +33,13 @@ export const spec = {
 		prefix: { type: "string", default: "mailwoman", description: "R2 key prefix" },
 		"dry-run": { type: "boolean", default: false, description: "Show without uploading" },
 		"bump-demo": { type: "boolean", default: true, description: "Bump the demo gazetteer version" },
+		"override-refusals": {
+			type: "boolean",
+			default: false,
+			description:
+				"Publish over every refusal the candidate's own layer_manifest raises, printing each one. " +
+				"Without it a candidate whose tier or license permits no publication stops before a byte moves",
+		},
 	},
 } as const satisfies CommandSpec
 
@@ -65,6 +72,7 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 			bucket: options.bucket,
 			prefix: options.prefix,
 			dryRun: options.dryRun,
+			overrideRefusals: options.overrideRefusals,
 			onPhase: phaseReporter(),
 		})
 

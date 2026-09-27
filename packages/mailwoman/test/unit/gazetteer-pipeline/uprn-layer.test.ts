@@ -167,6 +167,8 @@ describe("buildUPRNLayer (fixture)", () => {
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest.name).toBe("os-open-uprn")
+		// The tier the builder states, which a candidate build or a publish would read.
+		expect(manifest.tier).toBe("build-local")
 		expect(manifest.license).toBe("OGL-UK-3.0")
 		expect(manifest.attribution).toContain("© Crown copyright and database right 2026")
 		expect(manifest.spineKeys.h3).toEqual({ column: "h3_cell", resolution: 9 })

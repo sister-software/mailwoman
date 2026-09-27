@@ -25,14 +25,17 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
 
 import { readMailwomanManifest } from "#cli/kit/metadata"
+import { type ObligationRefusal, parseObligationRefusals } from "#data/obligations"
 import {
 	assembleReport,
 	checkPOI,
+	CheckStatus,
 	dataRootCheck,
 	gazetteerCheck,
 	layerLicenseCheck,
 	localeOverlayCheck,
 	nodeVersionCheck,
+	obligationPostureCheck,
 	onnxRuntimeCheck,
 	runtimeLicenseCheck,
 	weightsCheck,
@@ -157,6 +160,12 @@ export interface DoctorDeps {
 	 */
 	checkLicenseStatus(lid: string): Promise<LicenseStatusAnswer>
 	/**
+	 * The obligation classes the installation refuses, as `MAILWOMAN_REFUSE_OBLIGATIONS` lists them.
+	 *
+	 * Raw values, so a class the variable misspells is reported by the check rather than thrown here.
+	 */
+	refusedObligations(): string[]
+	/**
 	 * Attempt to load the ONNX native binding (throws when unavailable).
 	 */
 	loadONNX(): Promise<void>
@@ -265,6 +274,7 @@ export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 		licenseKey: () => verifyConfiguredLicenseKey(),
 		confirmLicenseKeyPublished: (kid) => confirmLicenseKeyPublished(kid),
 		checkLicenseStatus: (lid) => checkLicenseStatus(lid),
+		refusedObligations: () => ($public.MAILWOMAN_REFUSE_OBLIGATIONS ?? "").split(",").filter((value) => value.trim()),
 		loadONNX: async () => {
 			await import("onnxruntime-node")
 		},
@@ -422,7 +432,8 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		fromEnv: root.fromEnv,
 	})
 
-	const gazetteer = gazetteerCheck(await gatherGazetteer(deps))
+	const gazetteerObservation = await gatherGazetteer(deps)
+	const gazetteer = gazetteerCheck(gazetteerObservation)
 	const poi = checkPOI(await gatherPOI(deps))
 
 	// License posture: mailwoman's own branch, then each attached layer's recorded license.
@@ -442,9 +453,15 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		...(lidStatus ? { lidStatus } : {}),
 	})
 
-	const layerLicenses = (await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer))))
-		.filter((o): o is LayerLicenseObservation => o !== undefined)
-		.map(layerLicenseCheck)
+	const layerObservations = (
+		await Promise.all(deps.layerDatabases().map((layer) => gatherLayerLicense(deps, layer)))
+	).filter((o): o is LayerLicenseObservation => o !== undefined)
+
+	const layerLicenses = layerObservations.map(layerLicenseCheck)
+
+	// The installation's standing refusal, reported against the same manifests the license lines read.
+	// Absent a refusal there is no posture to report, so the check is absent too.
+	const posture = await gatherObligationPosture(deps, gazetteerObservation, layerObservations)
 
 	// Informational: locale overlays.
 	const overlays = await Promise.all(deps.overlayLocales.map((locale) => gatherOverlay(deps, locale)))
@@ -458,8 +475,65 @@ export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<Doctor
 		poi,
 		runtimeLicense,
 		...layerLicenses,
+		...(posture ? [posture] : []),
 		...overlays,
 	])
+}
+
+/**
+ * The obligation-posture check, or `undefined` when the installation refuses no class.
+ *
+ * The gazetteer in use is read alongside the attached layers, because a geocode reads it
+ * and its manifest is where the candidate's own terms live.
+ */
+async function gatherObligationPosture(
+	deps: DoctorDeps,
+	gazetteer: GazetteerObservation,
+	layers: readonly LayerLicenseObservation[]
+): Promise<DoctorCheck | undefined> {
+	const raw = deps.refusedObligations()
+
+	if (!raw.length) return undefined
+
+	let refuse: ObligationRefusal[]
+
+	try {
+		refuse = parseObligationRefusals(raw)
+	} catch (error) {
+		return {
+			id: "obligation-posture",
+			label: "Obligation posture",
+			core: false,
+			status: CheckStatus.Degraded,
+			detail: `MAILWOMAN_REFUSE_OBLIGATIONS could not be read: ${error instanceof Error ? error.message : String(error)}`,
+			fix: "set MAILWOMAN_REFUSE_OBLIGATIONS to a comma-separated list of share-alike, unresolved",
+		}
+	}
+
+	const recorded: Array<{ subject: string; expression: string }> = []
+	const unreadable: string[] = []
+
+	const gazetteerPath = gazetteer.envCandidate?.path ?? gazetteer.conventionCandidate ?? gazetteer.wofDatabase?.path
+
+	if (gazetteerPath) {
+		try {
+			const identity = await deps.readLayerIdentity(gazetteerPath)
+
+			recorded.push({ subject: identity.name, expression: identity.license })
+		} catch {
+			unreadable.push(gazetteerPath)
+		}
+	}
+
+	for (const layer of layers) {
+		if (layer.manifest) {
+			recorded.push({ subject: layer.id, expression: layer.manifest.license })
+		} else if (!layer.alternates?.length) {
+			unreadable.push(layer.path)
+		}
+	}
+
+	return obligationPostureCheck({ refuse, layers: recorded, unreadable })
 }
 
 // #region --verbose environment dump
@@ -504,6 +578,7 @@ export async function describeEnvironment(overrides?: Partial<DoctorDeps>): Prom
 		{ key: "candidate.db (convention)", value: await deps.conventionCandidatePath(), source: "derived" },
 		{ key: "MAILWOMAN_WOF_DB", value: $public.MAILWOMAN_WOF_DB, source: "env" },
 		{ key: "POI layer", value: deps.poiPath(), source: "derived" },
+		{ key: "MAILWOMAN_REFUSE_OBLIGATIONS", value: $public.MAILWOMAN_REFUSE_OBLIGATIONS, source: "env" },
 	]
 
 	for (const [index, database] of deps.wofExtractPaths().entries()) {

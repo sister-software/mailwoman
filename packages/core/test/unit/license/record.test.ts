@@ -48,6 +48,23 @@ describe("readLicenseRecord", () => {
 		expect(ouverte.obligations).toEqual([LicenseObligation.Attribution])
 	})
 
+	it("resolves the four prose values the postcode and locality builders wrote, measured 2026-09-27", () => {
+		// `postalcode-geonames-tail.db` and `postcode-locality-intl.db` in `meta.license`,
+		// `localities-cz-districts.db` and `localities-nz-linz.db` in `database_meta.license`.
+		for (const prose of [
+			"CC-BY 4.0 (GeoNames) — attribution required on redistribution",
+			"CC-BY 4.0 (Who's On First) — attribution required on redistribution",
+			"CC-BY-4.0, attribution GeoNames",
+			"CC-BY-4.0, attribution Land Information New Zealand",
+		]) {
+			const record = readLicenseRecord(prose)
+
+			expect(record.resolution).toBe(LicenseResolution.Resolved)
+			expect(record.expression).toBe("CC-BY-4.0")
+			expect(record.obligations).toEqual([LicenseObligation.Attribution])
+		}
+	})
+
 	it("resolves a stated CC-BY-SA grant, so its share-alike term is carried rather than unrecognized", () => {
 		for (const identifier of ["CC-BY-SA-4.0", "CC-BY-SA-3.0", "CC-BY-SA-2.0"]) {
 			const record = readLicenseRecord(identifier)
