@@ -11,6 +11,20 @@ The [code licensing](./index.md) pages cover the engine, which is AGPL or commer
 
 The core gazetteer is built entirely from permissive sources, so a resolved coordinate carries no copyleft. One optional precision tier, OpenStreetMap rooftop, is share-alike. It is kept separate from the core so that its obligations never apply to the default product.
 
+:::danger[Correction, 2026-09-27: the sentence above is contradicted by the artifact]
+
+This page records the state as of 2026-08 and its text is left as it was written. The paragraph above no longer describes what the shipped `candidate` bundle contains, and a reader acting on it would be misinformed.
+
+Measured 2026-09-27 from the artifacts themselves. `candidate.db`, which ships as the `candidate` bundle, records in its own `layer_manifest` `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and `source = admin-global-priority@2026-09-15`. That admin gazetteer records `whosonfirst+overture-divisions+geonames` as its sources, with the Overture Divisions release `2026-07-22.0`. Overture's attribution page gives its Divisions theme `License for theme: ODbL`.
+
+So the core gazetteer reads a share-alike source, and this page says it does not. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
+
+Two things are unmeasured and bear on the answer: what share of the gazetteer's 4,921,635 places came from Overture Divisions, and which of their fields survive into `candidate.db`. The `spr` table carries no source column, so neither is readable from the artifact.
+
+`packages/mailwoman/lib/data/bundles.ts` now names Overture Divisions among the bundle's publishers and carries the unresolved question. `refusalsForPublication` in `@mailwoman/core/layers` refuses to publish a layer whose `tier` or license expression forbids it, which catches this artifact.
+
+:::
+
 :::caution[Legal sign-off: ☐ not cleared (as of 2026-06-30)]
 
 The OpenStreetMap precision tier is **built but not enabled** in any published artifact. It is not on npm, on R2, or in the demo. Enabling it is blocked until counsel reviews the [questions below](#what-counsel-needs-to-confirm). When that review is complete, change this banner to **☑ cleared**, name the reviewing counsel, and add the date.

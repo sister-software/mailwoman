@@ -90,6 +90,20 @@ The full source catalog, with per-source notes and the licensing gradient, is [t
 
 Provenance is a design constraint. The shipped core is built entirely from permissive sources (WOF is CC0, TIGER and NAD are public domain, Overture is CDLA-Permissive, GeoNames is CC-BY, BAN is Licence Ouverte), so a resolved coordinate carries no copyleft. An OpenStreetMap-derived rooftop tier exists in code for countries without an open register, but OSM's ODbL is share-alike, so those extracts are quarantined behind a structural boundary and are not enabled in any published artifact pending legal review. [The data licensing page](../licensing/data-provenance.md) walks the whole boundary.
 
+:::danger[Correction, 2026-09-27: two claims in the paragraph above are contradicted by the artifacts]
+
+This page records the state as of 2026-08 and its text is left as it was written. Two of the paragraph's claims report terms that the shipped artifacts and the publisher's own attribution page state differently, and a reader acting on either would be misinformed.
+
+**"Overture is CDLA-Permissive" holds for one Overture theme.** Overture licenses per theme, and its attribution page read 2026-09-25 gives `License for theme: CDLA Permissive 2.0` for Places, `License for theme: ODbL` for Divisions, and a separate license for each contributing source and country under Addresses. This repository reads all three themes. `docs/engineering/reference/address-data-sources.mdx` now carries one row per theme rather than a single Overture row.
+
+**A resolved coordinate can read a share-alike source.** Measured 2026-09-27 from `candidate.db`, which ships as the `candidate` bundle: its own `layer_manifest` records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and `source = admin-global-priority@2026-09-15`. That admin gazetteer records `whosonfirst+overture-divisions+geonames` as its sources, with Overture Divisions release `2026-07-22.0`. What the Open Database License then requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. **That reading is with counsel and this correction states no conclusion about it.**
+
+The OpenStreetMap statement in the paragraph above still holds: the OSM rooftop extracts remain absent from every published artifact. The correction concerns Overture Divisions, which reached a published artifact through the admin gazetteer rather than through the OSM boundary the paragraph describes.
+
+`packages/mailwoman/lib/data/bundles.ts` now lists Overture Divisions among the `candidate` bundle's publishers and carries the unresolved question. [The data licensing page](../licensing/data-provenance.md) carries the same correction with the unmeasured quantities named.
+
+:::
+
 ## Where coverage runs out
 
 Coverage gives out by degrees. [The precision ladder](./how-mailwoman-resolves-a-place.mdx#the-precision-ladder) consults each rung only when the finer one has no candidate, so a missing register degrades the answer rather than emptying it. Without a rooftop point, the resolver returns an interpolated estimate. Without a street segment, it returns a postcode or locality centroid. The output's `resolution_tier` field reports the rung it used. Do not ignore `resolution_tier` and treat every coordinate as a delivery point. The Kraków result is a correct town rather than a correct door.

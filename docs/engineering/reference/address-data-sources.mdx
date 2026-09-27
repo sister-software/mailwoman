@@ -80,15 +80,32 @@ Overture Maps is a Meta/Microsoft/AWS/TomTom consortium (2023+, newer than the c
 
 For an AGPL product, license terms matter more than coverage:
 
-| Source        | License                 | Friction for a shipped DB                                                              |
-| ------------- | ----------------------- | -------------------------------------------------------------------------------------- |
-| WOF           | CC0                     | none (public domain)                                                                   |
-| OpenAddresses | per-source, mostly open | per-source attribution tracking (we already do this)                                   |
-| GeoNames      | CC-BY 4.0               | attribution                                                                            |
-| Overture      | CDLA-Permissive 2.0     | attribution                                                                            |
-| OpenStreetMap | ODbL                    | attribution + share-alike on derived databases — the highest risk; can impose copyleft |
+Overture licenses each theme separately, so a row that gives Overture one license reports the wrong terms
+for every theme but one. Its attribution page, read 2026-09-25, gives a `License for theme:` line per
+theme, and the themes this repository reads differ:
 
-The licenses favor **GeoNames + Overture + OpenAddresses** as the supplements. Use OSM with care, for derived signals rather than in the shipped DB.
+| Source               | License                 | Friction for a shipped DB                                                              |
+| -------------------- | ----------------------- | -------------------------------------------------------------------------------------- |
+| WOF                  | CC0                     | none (public domain)                                                                   |
+| OpenAddresses        | per-source, mostly open | per-source attribution tracking (we already do this)                                   |
+| GeoNames             | CC-BY 4.0               | attribution                                                                            |
+| Overture — Places    | CDLA-Permissive 2.0     | attribution                                                                            |
+| Overture — Addresses | per-source, per country | the theme declares no identifier of its own; each country's register states its terms  |
+| Overture — Divisions | ODbL                    | attribution + share-alike, the same friction as OpenStreetMap                          |
+| OpenStreetMap        | ODbL                    | attribution + share-alike on derived databases — the highest risk; can impose copyleft |
+
+The licenses favor **GeoNames + Overture Places + OpenAddresses** as the supplements. Use OSM and
+Overture Divisions with care, for derived signals rather than in the shipped DB.
+
+The Addresses row reads per-source because Overture's theme line for it is prose rather than an
+identifier: "The addresses data comes from a variety of sources. All carry permissive open licenses." The
+page then lists the upstream register per country, so an entry has to record theme, release and register
+rather than the word Overture. `COUNTRY_LICENSES` in `packages/mailwoman/lib/geocode/national-overture.ts`
+holds one entry per country for that reason.
+
+The Divisions row matters because `candidate.db` derives from a gazetteer that reads that theme, and the
+share-alike consequence of it is unresolved. `docs/engineering/reference/artifact-rights-inventory.mdx`
+carries the current state.
 
 ### Integrity discipline
 

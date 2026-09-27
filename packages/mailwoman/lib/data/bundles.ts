@@ -223,16 +223,20 @@ export const BUNDLES: Record<string, DataBundle> = {
 			},
 		],
 		rights: {
-			publishers: ["Who's On First", "GeoNames"],
+			publishers: ["Who's On First", "GeoNames", "Overture Maps Foundation, for its Divisions theme"],
 			terms: [
 				"Who's On First: Creative Commons Zero covers the format and structure, in those words, and the dataset is also a modification of existing open data whose sources carry their own terms. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/whosonfirst-licenses.md.",
 				"GeoNames: Creative Commons Attribution 4.0, the version its export readme names. Its about page names the license without a version. Both as retrieved on 2026-09-21, archived at packages/corpus/data/licenses/geonames-publication.md.",
+				"Overture Maps Divisions: the Open Database License. Overture's attribution page gives its Divisions theme `License for theme: ODbL`, read 2026-09-25. This database's own layer_manifest records `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0` and derives from admin-global-priority@2026-09-15, whose manifest records the Overture Divisions release 2026-07-22.0 among its sources.",
 			],
 			conditions: [
 				"Link back to the Who's On First license. Its own text makes the link required and crediting the project recommended, which is the one place those two differ.",
 				"Attribute GeoNames.",
+				"Read the Open Database License before redistributing this database or a database derived from it. Its share-alike term is what the unresolved question below is about.",
 			],
 			unresolved: [
+				"Whether the Open Database License's share-alike term reaches this database and its consumers. The expression on the artifact records ODbL-1.0, and what that requires of a redistributor depends on whether the combination is a Derivative Database, a Collective Database, a Produced Work, or an extraction below the threshold the license sets. That reading is with counsel and this entry states no conclusion about it.",
+				"What share of the gazetteer's 4,921,635 places came from Overture Divisions, and which of their fields survive here. The spr table carries no source column, so neither is readable from this artifact.",
 				"Which upstream project each row's name came from. Who's On First records a geometry source per record and the corpus adapters read none of it — see docs/engineering/reference/artifact-rights-inventory.mdx.",
 				"Whether the Ordnance Survey notice in Who's On First's source list reaches any row in this bundle. The list names Ordnance Survey of Northern Ireland under Open Government Licence v3.0 and Ordnance Survey Ireland under its own portal terms, and names Royal Mail nowhere.",
 				"Which of the 102 sources the Who's On First list names contributed to a given record. The list was generated 2020-02-21 and the dataset has moved since, so it is evidence of what contributed up to that date.",
