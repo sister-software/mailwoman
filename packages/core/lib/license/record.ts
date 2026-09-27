@@ -189,3 +189,66 @@ export function mentionsShareAlike(record: LicenseRecord): boolean {
 		record.mentions.some((identifier) => identifier === "ODbL-1.0" || identifier === "CC-BY-SA-4.0")
 	)
 }
+
+/**
+ * Returns the attribution entries a model card records, from whichever field holds them.
+ *
+ * Published cards carry the list under `training.data_attribution` or under a top-level
+ * `attribution`, and a published card cannot change, so both spellings have to be read.
+ * The first candidate holding at least one string wins, and a candidate that
+ * is not an array of strings is skipped.
+ *
+ * The caller passes the field values rather than a card, because the card's own
+ * shape belongs to the package that reads the file.
+ *
+ * @param candidates The card fields to try, in preference order.
+ */
+export function attributionEntries(...candidates: readonly unknown[]): string[] {
+	for (const candidate of candidates) {
+		if (!Array.isArray(candidate)) continue
+
+		const entries = candidate.filter((entry): entry is string => typeof entry === "string")
+
+		if (entries.length) return entries
+	}
+
+	return []
+}
+
+/**
+ * Words whose presence in a parenthetical marks it as a license statement.
+ *
+ * Looser than {@link readLicenseRecord}'s own mention patterns on purpose.
+ * Those answer which licence a string cites and resolve it to an identifier.
+ *
+ * This answers whether a parenthetical is a licence statement at all, so it accepts a bare family word
+ * and a spelling of the word "license" in three languages, neither of which identifies a grant.
+ */
+const LICENSE_FAMILY_WORDS =
+	/\b(?:CC0|CC-BY|CC|ODbL|ODC-By|PDDL|OGL|OGDL|KOGL|CDLA|Etalab|MIT|Apache|Licence|License|Lizenz)\b/iu
+
+/**
+ * Returns the license an attribution entry states in a parenthetical, verbatim.
+ *
+ * `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
+ * The text is returned as written rather than resolved to an identifier, because a
+ * caller reporting on a published card has to quote what the card says.
+ *
+ * Returns `null` when no parenthetical holds a license.
+ * Some entries state their terms outside a parenthetical, so `null` describes what this
+ * reader found rather than establishing that the entry states no license.
+ * The caller keeps the verbatim entry beside the result.
+ */
+export function licenseNamedIn(entry: string): string | null {
+	// An entry often opens with a parenthetical belonging to the dataset's own name,
+	// such as "OpenAddresses PL — GUGiK / PRG (public, BDOT-derived)", so every
+	// parenthetical is read rather than the first.
+	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
+		const inner = match[1]!.trim()
+
+		// A parenthetical states a license when it carries a version number or a license family word.
+		if (/\d/u.test(inner) || LICENSE_FAMILY_WORDS.test(inner)) return inner
+	}
+
+	return null
+}

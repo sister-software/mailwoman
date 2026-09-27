@@ -9,6 +9,7 @@ import { tempRootPath } from "@mailwoman/core/data-root"
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
 import { pathExists, readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
+import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { basename, type PathBuilderLike } from "path-ts"
@@ -194,15 +195,11 @@ async function verifyRequiredFiles(args: PublishHFOptions): Promise<void> {
  */
 export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promise<void> {
 	const card = await readLocalJSONFile<{ attribution?: unknown; training?: { data_attribution?: unknown } }>(cardPath)
+	const entries = attributionEntries(card.training?.data_attribution, card.attribution)
 
-	const entries = [card.training?.data_attribution, card.attribution]
-		.filter((candidate): candidate is unknown[] => Array.isArray(candidate))
-		.map((candidate) => candidate.filter((entry): entry is string => typeof entry === "string"))
-		.find((candidate) => candidate.length)
-
-	if (!entries) {
+	if (!entries.length) {
 		fail(
-			`${cardPath} records attribution at neither training.data_attribution nor attribution, so this upload would publish a model whose sources nothing states. ` +
+			`${cardPath} records attribution at neither training.data_attribution nor attribution, so this upload would publish a model whose sources are unstated. ` +
 				"Record the sources the run trained on in the card before publishing. " +
 				"See docs/engineering/reference/artifact-rights-inventory.mdx."
 		)
@@ -211,13 +208,9 @@ export async function verifyTrainingProvenance(cardPath: PathBuilderLike): Promi
 	console.error(`  ✓ recorded training sources: ${entries.length} entries`)
 
 	for (const entry of entries) {
-		const parenthetical = /\(([^()]{1,120})\)/u.exec(entry)
-		const inner = parenthetical?.[1]?.trim() ?? ""
-		const namesLicense = /\d/u.test(inner) || /\b(?:CC0|CC-BY|CC|ODbL|OGL|MIT|Apache|Licence|License)\b/iu.test(inner)
+		if (licenseNamedIn(entry)) continue
 
-		if (namesLicense) continue
-
-		console.error(`  ! names no license: ${entry}`)
+		console.error(`  ! states no license: ${entry}`)
 	}
 }
 

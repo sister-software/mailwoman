@@ -16,7 +16,6 @@ import { makeDirectories, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { repoRootPath } from "@mailwoman/core/paths"
 import { renderProvenance } from "@mailwoman/release-kit/weights/rights/files"
 import {
-	licenseNamedIn,
 	readWeightsRightsRecords,
 	roleForArtifact,
 	usesStatedIn,
@@ -46,24 +45,6 @@ async function treeWith(fixtures: readonly Fixture[]): Promise<{ root: PathBuild
 
 	return { root: directory.path, dispose: async () => void (await directory[Symbol.asyncDispose]()) }
 }
-
-describe("licenseNamedIn", () => {
-	it("reads the license out of the parenthetical the cards use", () => {
-		expect(licenseNamedIn("LINZ-derived OpenAddresses NZ (CC-BY 4.0): the synth-nz-v2 extract")).toBe("CC-BY 4.0")
-		expect(licenseNamedIn("HM Land Registry — Price Paid Data (OGL v3.0): the synth-gb-v1 extract")).toBe("OGL v3.0")
-	})
-
-	it("returns null for a parenthetical that describes access rather than a grant", () => {
-		// The OA PL entry.
-		// `public` states that the download costs no fee, which is not a license,
-		// and reading it as one would turn the gap this record exists to report into an answer.
-		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
-	})
-
-	it("returns null for an entry with no parenthetical at all", () => {
-		expect(licenseNamedIn("See THIRD_PARTY_NOTICES.md for the standing attribution.")).toBeNull()
-	})
-})
 
 describe("usesStatedIn", () => {
 	it("reads an entry describing a training extract as training", () => {

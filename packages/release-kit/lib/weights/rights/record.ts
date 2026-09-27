@@ -14,6 +14,7 @@
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
@@ -265,52 +266,6 @@ interface ModelCard {
 }
 
 /**
- * Returns a card's attribution entries from `training.data_attribution` or a top-level `attribution`.
- *
- * Published cards use both spellings, and published cards cannot change, so the reader accepts both.
- */
-function attributionEntries(card: ModelCard | null): string[] {
-	const candidates = [card?.training?.data_attribution, card?.attribution]
-
-	for (const candidate of candidates) {
-		if (!Array.isArray(candidate)) continue
-
-		const entries = candidate.filter((entry): entry is string => typeof entry === "string")
-
-		if (entries.length) return entries
-	}
-
-	return []
-}
-
-/**
- * Returns the license that an attribution entry states in a parenthetical.
- *
- * For example, `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
- *
- * It returns `null` when no parenthetical holds a license.
- * Some entries state their terms outside a parenthetical, so `null` describes what this reader found.
- * The verbatim entry text stays beside it.
- */
-export function licenseNamedIn(entry: string): string | null {
-	// An entry often opens with a parenthetical in the dataset's own name,
-	// so the reader checks every parenthetical.
-	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
-		const inner = match[1]!.trim()
-
-		// A parenthetical holds a license when it contains a version number,
-		// a known license family, or a spelling of the word "license".
-		const namesLicense =
-			/\d/u.test(inner) ||
-			/\b(?:CC0|CC-BY|CC|ODbL|PDDL|OGL|OGDL|KOGL|CDLA|Etalab|MIT|Apache|Licence|License|Lizenz)\b/iu.test(inner)
-
-		if (namesLicense) return inner
-	}
-
-	return null
-}
-
-/**
  * The documentation files that a weights package declares.
  *
  * The record excludes them from the artifact list because they carry no data with provenance.
@@ -360,7 +315,7 @@ export async function readWeightsRightsRecord(
 			return { path, role: roleForArtifact(path), md5, digest: md5 ? "recorded" : "unrecorded" }
 		})
 
-	const attribution = attributionEntries(card)
+	const attribution = attributionEntries(card?.training?.data_attribution, card?.attribution)
 
 	return {
 		workspace,

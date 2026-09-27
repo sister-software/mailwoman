@@ -5,9 +5,11 @@
  */
 
 import {
+	attributionEntries,
 	carriesShareAlike,
 	LicenseObligation,
 	LicenseResolution,
+	licenseNamedIn,
 	mentionsShareAlike,
 	readLicenseRecord,
 } from "@mailwoman/core/license"
@@ -116,5 +118,60 @@ describe("readLicenseRecord", () => {
 
 		expect(record.resolution).toBe(LicenseResolution.Unresolved)
 		expect(record.obligations).toEqual([])
+	})
+})
+
+describe("attributionEntries", () => {
+	it("takes the first candidate holding at least one string, in the order given", () => {
+		expect(attributionEntries(["a", "b"], ["c"])).toEqual(["a", "b"])
+		expect(attributionEntries(undefined, ["c"])).toEqual(["c"])
+		expect(attributionEntries([], ["c"])).toEqual(["c"])
+	})
+
+	it("keeps only the strings in a candidate, and returns an empty list when none holds one", () => {
+		expect(attributionEntries([1, "a", null])).toEqual(["a"])
+		expect(attributionEntries(undefined, null, "not an array", [1, 2])).toEqual([])
+		expect(attributionEntries()).toEqual([])
+	})
+})
+
+describe("licenseNamedIn", () => {
+	it("reads the license out of the parenthetical the cards use", () => {
+		expect(licenseNamedIn("LINZ-derived OpenAddresses NZ (CC-BY 4.0): the synth-nz-v2 extract")).toBe("CC-BY 4.0")
+		expect(licenseNamedIn("HM Land Registry — Price Paid Data (OGL v3.0): the synth-gb-v1 extract")).toBe("OGL v3.0")
+	})
+
+	it("reads a later parenthetical when the first states no license", () => {
+		// A dataset's own name carries a parenthetical ahead of the grant's,
+		// so a reader taking only the first finds the name.
+		// This is the case the `publish-hf.ts` copy of this reader got wrong.
+		expect(licenseNamedIn("Overture Maps (the Places theme) (CDLA-Permissive-2.0): names")).toBe("CDLA-Permissive-2.0")
+		expect(licenseNamedIn("Korean permit registry (지방행정인허가데이터) (KOGL Type 1): rows")).toBe("KOGL Type 1")
+	})
+
+	it("returns null for an entry stating its grant outside every parenthetical", () => {
+		// `KOGL Type 1` is the grant and sits in the prose, so this reader finds no license
+		// and the caller keeps the verbatim entry.
+		// That is a gap to report rather than an answer.
+		expect(licenseNamedIn("Korean permit registry (지방행정인허가데이터) under KOGL Type 1")).toBeNull()
+	})
+
+	it("returns null for a parenthetical that describes access rather than a grant", () => {
+		// The OA PL entry.
+		// `public` states that the download costs no fee, which is not a license,
+		// and reading it as one would turn the gap this record exists to report into an answer.
+		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
+	})
+
+	it("returns null for an entry with no parenthetical at all", () => {
+		expect(licenseNamedIn("See THIRD_PARTY_NOTICES.md for the standing attribution.")).toBeNull()
+	})
+
+	it("reads the six families the `mailwoman` copy of this reader did not know", () => {
+		// PDDL, OGDL, KOGL, CDLA, Etalab and Lizenz were absent from the `publish-hf.ts` list,
+		// so a card entry citing one read as stating no license and printed a warning it had not earned.
+		for (const family of ["PDDL", "OGDL", "KOGL", "CDLA", "Etalab", "Lizenz"]) {
+			expect(licenseNamedIn(`A source (${family}): rows`), family).toBe(family)
+		}
 	})
 })
