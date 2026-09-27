@@ -148,7 +148,7 @@ def main() -> int:
         sys.stderr.write(f"using {len(inputs)} curated inputs\n")
 
     out = [
-				# Note: Third-party library names `Ids` vs our typical `IDs`.
+        # Note: Third-party library names `Ids` vs our typical `IDs`.
         {"raw": raw, "pieces": sp.EncodeAsPieces(raw), "ids": sp.EncodeAsIds(raw)}
         for raw in inputs
     ]

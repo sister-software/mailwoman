@@ -128,8 +128,8 @@ must not join them.
 
 `filer/test-fixtures/edgar/expected.json` records the subsidiary list each vendored document
 states, and the parser is held to it exactly. It was **not** generated from parser output. It
-comes from an independent DOM-based implementation in a different language over a real HTML
-parser (`filer/test-fixtures/edgar/reference-oracle.py`, kept so the numbers can be
+comes from an independent DOM-based implementation over a real HTML parser
+(`packages/filer/lib/tools/reference-oracle.ts`, kept so the numbers can be
 re-derived), read line by line against the source documents.
 
 That distinction is the whole point of this exercise. An `expected.json` generated from the
@@ -165,10 +165,10 @@ The vendored corpus needs no network:
 yarn vitest run filer/sdk/exhibit21-real.test.ts
 ```
 
-Re-deriving `expected.json` needs `beautifulsoup4` and `lxml` in a virtualenv:
+Re-deriving `expected.json` uses the repository's TypeScript toolchain:
 
 ```bash
-python filer/test-fixtures/edgar/reference-oracle.py filer/test-fixtures/edgar/*.htm
+node packages/filer/lib/tools/reference-oracle.run.ts packages/filer/test-fixtures/edgar/*.htm
 ```
 
 Refetching a document needs `SEC_EDGAR_USER_AGENT` set to a descriptive
