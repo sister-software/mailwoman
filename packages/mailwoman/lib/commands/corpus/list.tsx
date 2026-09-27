@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus list` — print every adapter known to the default registry, one per line, for humans
- *   and for scripts that fan a build out over adapters; it prints zero lines and exits 0 when no adapter has
+ *   and for scripts that fan a build out over adapters. It prints zero lines and exits 0 when no adapter has
  *   been registered.
  */
 

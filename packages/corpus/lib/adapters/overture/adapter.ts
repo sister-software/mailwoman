@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `overture`: Overture Maps Addresses adapter; the `street` value keeps the locale's street keyword
+ * `overture`: Overture Maps Addresses adapter. The `street` value keeps the locale's street keyword
  * verbatim, and the downstream affix-relabel splits `street_prefix` from it.
  */
 
@@ -31,8 +31,10 @@ export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
 const DEFAULT_COUNTRY_SEED = 20_260_922
 
 /**
- * One attested written form of a country's name; raises rather than returning empty
- * when the codex has no entry, so a requested fraction cannot silently produce no country rows.
+ * One attested written form of a country's name.
+ *
+ * Raises rather than returning empty when the codex has no entry, so a requested
+ * fraction cannot silently produce no country rows.
  */
 function countrySurfaceForm(country: string, random: () => number): string {
 	const forms = COUNTRY_SURFACE_FORMS[country as keyof typeof COUNTRY_SURFACE_FORMS]
@@ -58,9 +60,11 @@ interface OvertureCorpusRow {
 }
 
 /**
- * Whether an Overture `unit` value is a secondary-unit designator (a digit or a single bare word)
- * rather than a name; Overture-SG puts an estate name in this field on 91,818 of 142,210 rows
- * and the literal `NIL` on 47,407 more, so a name taught as `unit` would teach a trailing proper name.
+ * Whether an Overture `unit` value is a secondary-unit designator
+ * (a digit or a single bare word) rather than a name.
+ *
+ * Overture-SG puts an estate name in this field on 91,818 of 142,210 rows and the literal
+ * `NIL` on 47,407 more, so a name taught as `unit` would teach a trailing proper name.
  */
 export function unitFieldIsDesignator(value: string): boolean {
 	const trimmed = value.trim()

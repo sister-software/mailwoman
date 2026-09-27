@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `bare-postcode` — a postcode standing alone, in the form its country writes, and no other component;
- * every surface the recipe renders is run through `detectKnownFormats` and refused unless the detector
+ * `bare-postcode` — a postcode standing alone, in the form its country writes, and no other component.
+ * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the detector
  * calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
  */
 
@@ -23,8 +23,10 @@ import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-in
 import { SurfaceOrigin } from "#types"
 
 /**
- * A postcode in the form its country writes, with no surrounding text; the codes come from this
- * repository's postcode-format tables rather than a national postcode file, so the register is the codex.
+ * A postcode in the form its country writes, with no surrounding text.
+ *
+ * The codes come from this repository's postcode-format tables rather than a
+ * national postcode file, so the register is the codex.
  */
 const BARE_POSTCODE_PROVENANCE = {
 	register: SourceRegister.Codex,
@@ -80,13 +82,14 @@ const SOURCES: PostcodeSource[] = [
 ]
 
 /**
- * How a country writes its postcode when typed alone, and the locale to stamp;
- * only countries whose bare postcode collides with a house number are here, `render` answers
+ * How a country writes its postcode when typed alone, and the locale to stamp.
+ *
+ * Only countries whose bare postcode collides with a house number are here, `render` answers
  * the spaced form first, and GB is deliberately absent because `SW1A 1AA` opens with letters.
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
-	// `NNN NN`, written with the space; the four countries share the shape,
-	// so `detectKnownFormats` labels all four the same.
+	// `NNN NN`, written with the space.
+	// The four countries share the shape, so `detectKnownFormats` labels all four the same.
 	["CZ", { locale: "cs-CZ", render: spacedThree }],
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
@@ -112,8 +115,10 @@ function spacedThree(compact: string): string[] {
 }
 
 /**
- * Choose distinct postcodes without inheriting the publisher's row order; sorting first makes the
- * result input-order independent, and the seeded sample spreads reproducibly across the complete set.
+ * Choose distinct postcodes without inheriting the publisher's row order.
+ *
+ * Sorting first makes the result input-order independent, and the seeded sample
+ * spreads reproducibly across the complete set.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
 	const pool = [...new Set(codes)].toSorted()
@@ -137,8 +142,9 @@ export async function findMissingPostcodeSources<P extends PathBuilderLike>(
 
 /**
  * Every surface a country writes for one postcode, spaced form first, or `[]`
- * when this recipe carries no form for that country or the code does not fit; exported
- * so a test can pin that every rendered surface is one {@linkcode detectedAsPostcode} accepts.
+ * when this recipe carries no form for that country or the code does not fit.
+ *
+ * Exported so a test can pin that every rendered surface is one {@linkcode detectedAsPostcode} accepts.
  */
 export function renderBarePostcode(country: string, postcode: string): string[] {
 	const form = WRITTEN_FORMS.get(country.trim().toUpperCase())
@@ -149,8 +155,9 @@ export function renderBarePostcode(country: string, postcode: string): string[] 
 }
 
 /**
- * Whether `known-formats.ts` reads this surface as a postcode across its whole span;
- * a surface the detector does not recognize would train the model on a string
+ * Whether `known-formats.ts` reads this surface as a postcode across its whole span.
+ *
+ * A surface the detector does not recognize would train the model on a string
  * the query-shape prior cannot then support.
  */
 export function detectedAsPostcode(surface: string): boolean {
@@ -179,8 +186,9 @@ export const barePostcodeRecipe: CorpusRecipe = {
 		let skipped = 0
 		let unrecognized = 0
 
-		// Preflight the complete input set before writing a row; a missing municipality would
-		// otherwise produce a plausible artifact with less Swedish coverage than the recipe declares.
+		// Preflight the complete input set before writing a row.
+		// A missing municipality would otherwise produce a plausible artifact with
+		// less Swedish coverage than the recipe declares.
 		const missing = await findMissingPostcodeSources(SOURCES.map(({ csv }) => csv))
 
 		if (missing.length) {
@@ -293,8 +301,8 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			}
 		}
 
-		// A rendered surface the detector refuses is an interface failure, not a data quirk: every
-		// form here is one `known-formats.ts` declares a pattern for, so the count is expected to be zero.
+		// A rendered surface the detector refuses is an interface failure: every form here is
+		// one `known-formats.ts` declares a pattern for, so the count is expected to be zero.
 		if (unrecognized > 0) {
 			throw new Error(
 				`${unrecognized} rendered surfaces were not read as a postcode by detectKnownFormats — the ` +
@@ -312,8 +320,8 @@ export const barePostcodeRecipe: CorpusRecipe = {
 			)
 		}
 
-		// Reported rather than folded into `skipped` so a growing board is visible; a count of zero
-		// where the boards hold postcodes means the check stopped reaching them.
+		// Reported rather than folded into `skipped` so a growing board is visible.
+		// A count of zero where the boards hold postcodes means the check stopped reaching them.
 		console.error(
 			`  bare-postcode: ${boardRefused.toLocaleString()} rows refused as gauntlet board inputs ` +
 				`(${boardInputs.size.toLocaleString()} inputs read)`

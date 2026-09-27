@@ -5,7 +5,7 @@
  * @file `trailing-region` — postcode placement, the surface that decides which countries this recipe can teach.
  *
  *   The same digits change tag with position, so a recipe emitting one placement teaches one family of
- *   countries; the tests pin which surface each placement writes, including that an absent placement
+ *   countries. The tests pin which surface each placement writes, including that an absent placement
  *   means `leading`.
  */
 
@@ -132,8 +132,8 @@ describe("trailing-region Canadian province codes", () => {
 	})
 
 	it("writes the US state code too, which is the surface #2303 measured missing", async () => {
-		// US state codes reach the model only with a street in front of the city;
-		// this recipe's `after_region` surface is the bare one.
+		// US state codes reach the model only with a street in front of the city.
+		// This recipe's `after_region` surface is the bare one.
 		const us = (region: string) => ({
 			locality: "Washington",
 			region,

@@ -74,8 +74,10 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 /**
  * Read an INT64 span offset back as a plain number.
  *
- * DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses; the current schema declares the
- * span triple INT32 because `raw` is a short address string, so every in-range value is lossless.
+ * DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses.
+ * The current schema declares the span triple INT32 because `raw` is a short
+ * address string, so every in-range value is lossless.
+ *
  * A value outside the safe-integer range is a corrupt offset, so this raises instead of truncating.
  */
 function narrowBigInts(row: Record<string, unknown>): Record<string, unknown> {

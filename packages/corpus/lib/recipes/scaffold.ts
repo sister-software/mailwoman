@@ -5,7 +5,7 @@
  *
  *   Shared scaffolding for the synthetic-corpus recipes: the seeded LCG prng, the tuple reader, and
  *   the canonical → `alignRow` → `LabeledRow` jsonl emit step. A recipe ({@link CorpusRecipe})
- *   supplies only its synthesis and filter; the `mailwoman corpus slice <recipe>` command supplies the I/O.
+ *   supplies only its synthesis and filter. The `mailwoman corpus slice <recipe>` command supplies the I/O.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -28,9 +28,10 @@ export function recipeSourceID(adapterID: string, parts: Record<string, string |
 }
 
 /**
- * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]`
- * admin tail; the position changes which tag the same digits receive, so a recipe
- * emitting one placement teaches one family of countries.
+ * Where a country's convention writes the postcode inside the `«locality», «region»[, «country»]` admin tail.
+ *
+ * The position changes which tag the same digits receive, so a recipe emitting
+ * one placement teaches one family of countries.
  * Each value is attested by a gauntlet board row:
  *
  * - `leading` — `«postcode» «locality», «region»`; the default, and what every
@@ -62,15 +63,16 @@ export interface RecipeTuple {
 }
 
 /**
- * One CSV record, keyed by its lower-cased header name, every value trimmed;
- * an undeclared column reads as `undefined`, a declared but unreached column as `""`.
+ * One CSV record, keyed by its lower-cased header name, every value trimmed.
+ *
+ * An undeclared column reads as `undefined`, a declared but unreached column as `""`.
  */
 export type CSVRecord = Record<string, string | undefined>
 
 /**
  * Line breaks inside a value become single spaces, and every value is trimmed.
  *
- * Only `\r` and `\n`, deliberately, not `\s`: widening to `\s+` would silently rewrite values on
+ * The pattern matches exactly `\r` and `\n`: widening to `\s+` would silently rewrite values on
  * rows with no line break at all (OA's IA extract writes `north`, three spaces, `main street`),
  * and `scaffold.test.ts` pins both directions.
  */
@@ -88,16 +90,18 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  * Read a CSV as header-keyed records.
  *
  * Returns the spliterator's own {@linkcode AsyncSequence} so a caller composes
- * `take`/`drop`/`filter` onto it; wrapping this in an `async function*` would cost
- * an async frame per row and take those ops away.
+ * `take`/`drop`/`filter` onto it.
+ * Wrapping this in an `async function*` would cost an async frame per row and take those ops away.
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(source).map(withoutLineBreaks)
 }
 
 /**
- * {@link readCSVRecords} over one member of a zip archive; a source a checkout has not cached
- * yields no rows after warning, while a recipe that ends up with no tuples at all still throws.
+ * {@link readCSVRecords} over one member of a zip archive.
+ *
+ * A source a checkout has not cached yields no rows after warning, while a recipe
+ * that ends up with no tuples at all still throws.
  */
 export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: string): AsyncSequence<CSVRecord> {
 	return AsyncSequence.from<CSVRecord>(async () => {
@@ -112,8 +116,10 @@ export function readZippedCSVRecords(archivePath: PathBuilderLike, entryName: st
 }
 
 /**
- * License stamped on the synthetic tuple-derived recipe outputs; the output is generated
- * but inherits the terms of the real tuples it derives from, so the attribution travels with it.
+ * License stamped on the synthetic tuple-derived recipe outputs.
+ *
+ * The output is generated but inherits the terms of the real tuples it derives from,
+ * so the attribution travels with it.
  */
 export const SYNTHETIC_TUPLE_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 
@@ -148,8 +154,9 @@ export interface OATupleFields {
 
 export interface ReadOATuplesOptions<T> {
 	/**
-	 * Stop after this many distinct tuples; the `break` closes the reader and releases
-	 * the archive, which the GB-scale countrywide extracts need.
+	 * Stop after this many distinct tuples.
+	 *
+	 * The `break` closes the reader and releases the archive, which the GB-scale countrywide extracts need.
 	 */
 	limit?: number
 	/**
@@ -158,8 +165,9 @@ export interface ReadOATuplesOptions<T> {
 	 */
 	requirePostcode?: boolean
 	/**
-	 * Fold the postcode into the dedup key; the default key is
-	 * `${house_number}|${street}|${locality}`, lower-cased.
+	 * Fold the postcode into the dedup key.
+	 *
+	 * The default key is `${house_number}|${street}|${locality}`, lower-cased.
 	 */
 	dedupIncludesPostcode?: boolean
 	/**
@@ -170,8 +178,9 @@ export interface ReadOATuplesOptions<T> {
 
 /**
  * Stream distinct tuples out of a cached OA zip, the reader the OA-skeleton recipes
- * (`street-affix`, `unit`, `country-balanced`, `fr-order`) share; field reads, filters,
- * dedup keys and row order keep each recipe's output byte-identical.
+ * (`street-affix`, `unit`, `country-balanced`, `fr-order`) share.
+ *
+ * Field reads, filters, dedup keys and row order keep each recipe's output byte-identical.
  */
 export async function readOATuples<T>(source: OATupleSource, options: ReadOATuplesOptions<T>): Promise<T[]> {
 	const tuples: T[] = []
@@ -208,8 +217,8 @@ export async function readOATuples<T>(source: OATupleSource, options: ReadOATupl
  * Stream-parse a tuples jsonl file, yielding each parsed object (blank/invalid lines skipped).
  */
 export function readTuples(input: PathBuilderLike): AsyncSequence<RecipeTuple> {
-	// TextSpliterator, not JSONSpliterator, keeps the reader tolerant of malformed lines,
-	// and these operators fuse into the source's pull loop.
+	// TextSpliterator keeps the reader tolerant of malformed lines, where JSONSpliterator
+	// would throw, and these operators fuse into the source's pull loop.
 	return TextSpliterator.fromAsync(input)
 		.map((line) => line.trim())
 		.filter((line) => Boolean(line))
@@ -233,8 +242,9 @@ export interface CanonicalRecipeRow {
 }
 
 /**
- * Emit one line of a recipe's output; the delimiter is supplied separately,
- * so pass the content alone, never `content + "\n"`.
+ * Emit one line of a recipe's output.
+ *
+ * The delimiter is supplied separately, so pass the content alone, never `content + "\n"`.
  */
 export type WriteRecipeLine = (line: string) => void
 
@@ -246,8 +256,9 @@ export interface RecipeLineSink {
 }
 
 /**
- * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter; concatenating the
- * two would stringify a non-string chunk through `toString()` and corrupt its bytes.
+ * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter.
+ *
+ * Concatenating the two would stringify a non-string chunk through `toString()` and corrupt its bytes.
  */
 export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 	return (line) => {
@@ -278,8 +289,10 @@ export interface RecipeProvenance {
 }
 
 /**
- * The register a tuple-reading recipe was invoked with; it throws when the flag is absent,
- * naming the recipe, because a default would stamp one register's id on another register's records.
+ * The register a tuple-reading recipe was invoked with.
+ *
+ * It throws when the flag is absent, naming the recipe, because a default would
+ * stamp one register's id on another register's records.
  */
 export function requireRegister(opts: RecipeOptions, recipe: string): string {
 	if (!opts.register) {
@@ -293,8 +306,10 @@ export function requireRegister(opts: RecipeOptions, recipe: string): string {
 }
 
 /**
- * Run a canonical row through `alignRow` and, on success, write the `LabeledRow` with its recipe id
- * and provenance as one jsonl line; the provenance columns are flat because the parquet schema is flat.
+ * Run a canonical row through `alignRow` and, on success, write the `LabeledRow`
+ * with its recipe id and provenance as one jsonl line.
+ *
+ * The provenance columns are flat because the parquet schema is flat.
  */
 export function alignAndWrite(
 	write: WriteRecipeLine,
@@ -335,8 +350,8 @@ export interface RecipeOptions {
 	/**
 	 * The published register the `--input` tuples were extracted from.
 	 *
-	 * {@link requireRegister} refuses a run that omits it rather than recording a guess; a recipe
-	 * that generates its rows from this repository's own tables declares its register in code.
+	 * {@link requireRegister} refuses a run that omits it rather than recording a guess.
+	 * A recipe that generates its rows from this repository's own tables declares its register in code.
 	 */
 	register?: string
 	houseNumberProb?: number
@@ -347,7 +362,8 @@ export interface RecipeOptions {
 	country?: string
 	intlFraction?: number
 	/**
-	 * `german`: fraction of native-order rows rendered with no commas at all; default 0.3.
+	 * `german`: fraction of native-order rows rendered with no commas at all.
+	 * The default is 0.3.
 	 */
 	commaFreeFraction?: number
 	/**
@@ -384,9 +400,10 @@ export interface RecipeOptions {
 	banDir?: PathBuilderLike
 	multilocaleCount?: number
 	/**
-	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved
-	 * street-surface list; required for those recipes, because a recipe output that
-	 * trains on its own eval set measures memorization.
+	 * `fr-fragment` / `no-fragment` / `no-street-led`: the eval board's reserved street-surface list.
+	 *
+	 * It is required for those recipes, because a recipe output that trains on
+	 * its own eval set measures memorization.
 	 */
 	excludeSurfaces?: PathBuilderLike
 	/**
@@ -449,8 +466,9 @@ export interface RecipeStats {
 	emitted: number
 	skipped: number
 	/**
-	 * Rows dropped because their street surface is reserved by an eval board; separate from
-	 * `skipped` so a nonzero value is the audit trail that the train/eval split fired.
+	 * Rows dropped because their street surface is reserved by an eval board.
+	 *
+	 * It is separate from `skipped` so a nonzero value is the audit trail that the train/eval split fired.
 	 */
 	contaminated?: number
 }

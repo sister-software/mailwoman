@@ -33,7 +33,8 @@ export type SplitName = "train" | "val" | "test"
  *
  * Sources carry a place in different components: `usgov-nad` and `tiger` emit `region`,
  * but BAN emits none, so a French holdout must also match on postcode.
- * A row is held out when any declared matcher fires; a policy with no matchers holds out no entry.
+ * A row is held out when any declared matcher fires.
+ * A policy with no matchers holds out no entry.
  */
 export interface HoldoutPolicy {
 	regions?: readonly string[]
@@ -77,8 +78,8 @@ export interface SplitManifest {
 }
 
 /**
- * Returns the default holdouts — small, peripheral places in each country;
- * a change here takes effect at the next base corpus rebuild.
+ * Returns the default holdouts — small, peripheral places in each country.
+ * A change here takes effect at the next base corpus rebuild.
  */
 export function defaultHoldouts(): Record<string, CountryHoldout> {
 	return {
@@ -92,15 +93,17 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		DE: {
 			// Only `wof-admin` carries a DE region, so these Länder hold out admin rows alone.
 			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
-			// DE street rows come from two OpenAddresses members, Berlin and Sachsen, so the regions
-			// above match no street row; postcode area `02` (Upper Lusatia in eastern Sachsen) is
-			// the street-level holdout, and a five-digit German postcode means it cannot collide.
+			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
+			// so the regions above match no street row.
+			// Postcode area `02` (Upper Lusatia in eastern Sachsen) is the street-level holdout,
+			// and a five-digit German postcode means it cannot collide.
 			postcodePrefixes: ["02"],
 		},
 		GB: {
-			// GB street rows carry no region, so the holdout matches postcode areas — Truro,
-			// Llandudno and Halifax; each prefix has two letters and none is a prefix of
-			// another (`L` for Liverpool would also match `LL`).
+			// GB street rows carry no region, so the holdout matches postcode areas —
+			// Truro, Llandudno and Halifax.
+			// Each prefix has two letters and none is a prefix of another
+			// (`L` for Liverpool would also match `LL`).
 			postcodePrefixes: ["TR", "LL", "HX"],
 			// Cornwall matches the admin rows for the same place `TR` covers.
 			regions: ["Cornwall"],
@@ -120,8 +123,10 @@ export function holdoutPolicyFor(holdout: CountryHoldout | undefined): HoldoutPo
 type SplitInputRow = Pick<CanonicalRow, "source_id" | "country" | "corpus_version" | "components">
 
 /**
- * Returns the split for one row; both `splitRows` and the streaming `buildCorpus`
- * loop call this, so every caller assigns a row to the same split.
+ * Returns the split for one row.
+ *
+ * Both `splitRows` and the streaming `buildCorpus` loop call this, so every
+ * caller assigns a row to the same split.
  */
 export function splitForRow(
 	row: Pick<SplitInputRow, "source_id" | "country" | "components">,
@@ -141,9 +146,10 @@ export function splitForRow(
 }
 
 /**
- * Builds a `SplitManifest` in memory from labeled or canonical rows; tests and small fixtures
- * use this, while `buildCorpus` uses `splitForRow` and `writeSplitManifestsFromLabeledFiles`
- * so it never holds every row's split in memory.
+ * Builds a `SplitManifest` in memory from labeled or canonical rows.
+ *
+ * Tests and small fixtures use this, while `buildCorpus` uses `splitForRow`
+ * and `writeSplitManifestsFromLabeledFiles` so it never holds every row's split in memory.
  */
 export function splitRows(rows: Iterable<SplitInputRow>, opts: SplitOptions = {}): SplitManifest {
 	const holdouts = opts.holdouts ?? defaultHoldouts()
@@ -266,7 +272,8 @@ async function streamSortedSourceIDs(labeledJsonlPath: PathBuilderLike, outPath:
 		out.on("error", reject)
 	})
 
-	// A malformed row throws out of the loop; the `finally` block still closes the write stream.
+	// A malformed row throws out of the loop.
+	// The `finally` block still closes the write stream.
 	try {
 		for await (const obj of JSONSpliterator.fromAsync<{ source_id?: string }>(
 			delimitedSource(await preferCompressed(labeledJsonlPath))

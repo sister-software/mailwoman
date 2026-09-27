@@ -20,16 +20,17 @@ import { DEFAULT_RETRY_DELAY_MS, HTTPStatusError } from "#tools/fetch/download/n
 const HTTP_RANGE_NOT_SATISFIABLE = 416
 
 /**
- * The answer to a satisfiable `Range` request; anything else means the host ignored
- * the range and would send the whole body again.
+ * The answer to a satisfiable `Range` request.
+ *
+ * Anything else means the host ignored the range and would send the whole body again.
  */
 const HTTP_PARTIAL_CONTENT = 206
 
 /**
  * Run one transfer up to `1 + retries` times, pausing `retryDelayMs` between attempts.
  *
- * A portal that drops a long connection would otherwise lose a whole collection fetch to
- * one file; the last error is rethrown so the caller can name the file it lost.
+ * A portal that drops a long connection would otherwise lose a whole collection fetch to one file.
+ * The last error is rethrown so the caller can name the file it lost.
  */
 export async function withRetries<T>(
 	transfer: () => Promise<T>,
@@ -122,7 +123,8 @@ export async function resumableDownload(options: {
 				openWriteStream(tmp, { flags: "a" })
 			)
 		} catch {
-			// The connection dropped mid-body; the bytes that landed are on disk, and the next range starts after them.
+			// The connection dropped mid-body.
+			// The bytes that landed are on disk, and the next range starts after them.
 		}
 
 		have = await bytesOnDisk(tmp)

@@ -131,7 +131,8 @@ describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
-		// A literal nobody generated, so it carries no meaningful digest; the structural audit does not read the field.
+		// A literal nobody generated, so it carries no meaningful digest.
+		// The structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
 		unresolved: ["addressRole", "upstreamLineage", "coverage", "personalDataReview"],
@@ -470,8 +471,8 @@ describe("permission by operation", () => {
 	})
 
 	it("refuses model release on that same grant, because the terms never mention it", () => {
-		// A permissive dataset may be used without becoming publication-cleared;
-		// the grant is unchanged and the act being asked about is different.
+		// A permissive dataset may be used without becoming publication-cleared.
+		// The grant is unchanged and the act being asked about is different.
 		const problems = ingestEligibilityProblems(source, registerWith(ingestOnly), MODEL_RELEASE_OPERATIONS)
 
 		expect(problems).toHaveLength(2)
@@ -580,9 +581,10 @@ describe("permission by operation", () => {
 	})
 
 	/**
-	 * The grant shapes counsel is reading, written as the per-operation record would
-	 * hold them; the fixtures establish that the shape decides which acts it admits
-	 * rather than a single permissive or restrictive label doing so.
+	 * The grant shapes counsel is reading, written as the per-operation record would hold them.
+	 *
+	 * The fixtures establish that the shape decides which acts it admits rather than
+	 * a single permissive or restrictive label doing so.
 	 */
 	describe("real grant shapes", () => {
 		const everyIngestAct = {
@@ -664,8 +666,9 @@ describe("permission by operation", () => {
 		})
 
 		it("records which half of a dual grant was elected, so the other half's conditions are not inherited", () => {
-			// A dual-licensed publication offers a choice; the decision's own fields carry
-			// which half was elected and why rather than a reader inferring it from the operations.
+			// A dual-licensed publication offers a choice.
+			// The decision's own fields carry which half was elected and why
+			// rather than a reader inferring it from the operations.
 			const elected: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -678,8 +681,9 @@ describe("permission by operation", () => {
 			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
-			// Electing the permissive half makes no statement about publishing a model, which nobody
-			// read these terms against, so it reads unreviewed rather than inheriting either half's answer.
+			// Electing the permissive half makes no statement about publishing a model.
+			// Nobody read these terms against that act, so it reads unreviewed
+			// rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)
 		})
 	})

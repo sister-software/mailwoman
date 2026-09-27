@@ -13,13 +13,17 @@
 import type { SubVenuePromotion } from "#tools/sub/venue/promotions"
 
 /**
- * This table's own data version; bump when the source vintages or the build semantics change.
+ * This table's own data version.
+ *
+ * Bump when the source vintages or the build semantics change.
  */
 export const SUBVENUE_LEXICON_VERSION = "0.2.0"
 
 /**
- * Which side of the containment relation a designator names; mirrors `@mailwoman/osm/sdk`'s
- * `SubVenueTier`, re-declared for the same dependency-direction reason as the seed.
+ * Which side of the containment relation a designator names.
+ *
+ * It mirrors `@mailwoman/osm/sdk`'s `SubVenueTier`, re-declared for the same
+ * dependency-direction reason as the seed.
  */
 export const LexiconTier = {
 	SubVenue: "subvenue",
@@ -33,8 +37,9 @@ export type LexiconTier = (typeof LexiconTier)[keyof typeof LexiconTier]
  */
 export interface SubVenueDesignator {
 	/**
-	 * Canonical id, lowercase English; matches `neural/venue-structure.ts`'s
-	 * `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
+	 * Canonical id, lowercase English.
+	 *
+	 * It matches `neural/venue-structure.ts`'s `VENUE_STRUCTURE_DESIGNATORS` wherever the two overlap.
 	 */
 	id: string
 	tier: LexiconTier
@@ -69,9 +74,10 @@ export interface SubVenueModifier {
  */
 export interface SubVenueSurface {
 	/**
-	 * The phrase, lowercased for Latin script and left as written otherwise; the Turkish `İ`
-	 * (U+0130) is `\p{Script=Latin}` and folds to `i` plus a combining dot above, so it round-trips
-	 * through a form its own locale would not write (no shipped code depends on that today).
+	 * The phrase, lowercased for Latin script and left as written otherwise.
+	 *
+	 * The Turkish `İ` (U+0130) is `\p{Script=Latin}` and folds to `i` plus a combining dot above, so it
+	 * round-trips through a form its own locale would not write (no shipped code depends on that today).
 	 */
 	phrase: string
 	recordID: string
@@ -82,9 +88,10 @@ export interface SubVenueSurface {
 	 */
 	lang: string
 	/**
-	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary sources
-	 * that attest a term's existence rather than its use; this is the axis promotion is
-	 * decided on (`hall` is attested 3,274 times in `GB`), never a global census.
+	 * ISO 3166-1 alpha-2 of the data the phrase was attested in, `""` for vocabulary
+	 * sources that attest a term's existence rather than its use.
+	 *
+	 * This is the axis promotion is decided on (`hall` is attested 3,274 times in `GB`), never a global census.
 	 */
 	region: string
 	/**
@@ -93,9 +100,10 @@ export interface SubVenueSurface {
 	 */
 	source: string
 	/**
-	 * Whether a human has approved this surface for parsing use in its region; everything
-	 * machine-derived starts `false` and only a matching {@link SubVenuePromotion} flips it,
-	 * so a consumer that gates a parse must filter on this.
+	 * Whether a human has approved this surface for parsing use in its region.
+	 *
+	 * Everything machine-derived starts `false` and only a matching {@link SubVenuePromotion}
+	 * flips it, so a consumer that gates a parse must filter on this.
 	 */
 	curated: boolean
 	/**
@@ -107,9 +115,8 @@ export interface SubVenueSurface {
 	 * The rule-assigned designator of the features that carried this phrase, with a count
 	 * each (`platform:3205 campus:49` for GB's `hall`); empty for vocabulary sources.
 	 *
-	 * Without it an `observations` count is a magnitude with no sign
-	 * (`hall` on a `platform` row is a British bus stop named after a village hall;
-	 * on a `terminal` row it is a real German departure hall).
+	 * Without it an `observations` count is a magnitude with no sign (`hall` on a `platform` row is a
+	 * British bus stop named after a village hall. On a `terminal` row it is a real German departure hall).
 	 */
 	context: Record<string, number>
 }
@@ -124,9 +131,10 @@ export interface SubVenueSurface {
 export interface IdentifierShape {
 	designatorID: string
 	/**
-	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in; per-region because the
-	 * shapes differ (GB gates are 70% bare digits, Japanese platform refs a different range),
-	 * so a recipe for a French address should sample France's distribution.
+	 * ISO 3166-1 alpha-2 of the extract this distribution was measured in.
+	 *
+	 * It is per-region because the shapes differ (GB gates are 70% bare digits, Japanese platform
+	 * refs a different range), so a recipe for a French address should sample France's distribution.
 	 */
 	region: string
 	/**
@@ -164,8 +172,10 @@ export interface SubVenueLexiconTable {
 	identifierShapes: IdentifierShape[]
 	/**
 	 * Every curation decision taken against this table, promotion and rejection,
-	 * each with the census that backs it; a rejection is as required as a promotion
-	 * because it stops the next reader re-proposing `hall` for en-GB.
+	 * each with the census that backs it.
+	 *
+	 * A rejection is as required as a promotion because it stops the next reader
+	 * re-proposing `hall` for en-GB.
 	 */
 	promotions: SubVenuePromotion[]
 }

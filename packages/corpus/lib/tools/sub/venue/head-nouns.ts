@@ -30,8 +30,8 @@ function asciiFold(text: string): string {
 /**
  * How many leading characters two ascii-folded forms must share for one to count as the other's inflection.
  *
- * Five, or the id's own length when shorter; at six the Spanish `satélite` is lost,
- * and at four Italian `campo` is admitted and means field.
+ * Five, or the id's own length when shorter.
+ * At six the Spanish `satélite` is lost, and at four Italian `campo` is admitted and means field.
  */
 const HEAD_NOUN_PREFIX_FLOOR = 5
 
@@ -67,8 +67,8 @@ const SHARED_SUBSTRING_SCRIPT = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Kat
  * Derive the head noun of every multi-part surface, so `terminal aeroportuaria`
  * contributes the form anyone actually writes on an envelope.
  *
- * Latin script uses a cognate test against the designator's own canonical id; Han
- * and Kana use a shared substring, because a token split finds no boundary there.
+ * Latin script uses a cognate test against the designator's own canonical id.
+ * Han and Kana use a shared substring, because a token split finds no boundary there.
  * Everything derived lands `curated: false`.
  */
 export function deriveHeadNounSurfaces(surfaces: readonly SubVenueSurface[]): SubVenueSurface[] {

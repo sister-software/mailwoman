@@ -24,7 +24,9 @@ const SLUG = "ourairports"
 const BASE_URL = "https://davidmegginson.github.io/ourairports-data"
 
 /**
- * `airports.csv` is the payload; the other three join its codes to text or carry the negative class.
+ * `airports.csv` is the payload.
+ *
+ * The other three join its codes to text or carry the negative class.
  */
 const FILES = ["airports.csv", "countries.csv", "regions.csv", "runways.csv"] as const
 

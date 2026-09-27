@@ -93,8 +93,10 @@ export interface SplitSliceResult {
 	rows: number
 	counts: Record<SplitName, number>
 	/**
-	 * The file written per split; a split that drew no row is absent rather than an
-	 * empty parquet, which would read as a file whose rows were lost.
+	 * The file written per split.
+	 *
+	 * A split that drew no row is absent rather than an empty parquet,
+	 * which would read as a file whose rows were lost.
 	 */
 	outputs: Partial<Record<SplitName, string>>
 }

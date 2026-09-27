@@ -18,8 +18,9 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * How each source id's recipe produced its surface; a source absent from this
- * table refuses rather than taking a default.
+ * How each source id's recipe produced its surface.
+ *
+ * A source absent from this table refuses rather than taking a default.
  */
 export const RECIPE_SURFACES: Record<string, SurfaceOrigin> = {
 	// Assembled from template tables.

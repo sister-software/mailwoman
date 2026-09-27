@@ -8,7 +8,7 @@
  *   by `sha256`.
  *
  *   Each migrated file is written beside its original as `<name>.migrated.parquet` and no file is swapped, so the
- *   existing corpus stays readable by the code that built it; pass the migrated files to
+ *   existing corpus stays readable by the code that built it. Pass the migrated files to
  *   `mailwoman corpus overlay-manifest` to assemble the new corpus.
  */
 

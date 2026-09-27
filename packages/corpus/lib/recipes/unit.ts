@@ -7,7 +7,7 @@
  *   skeletons, varying the surface form and the unit's position per row.
  *
  *   `--golden` emits the held-out Vermont eval (`{raw, components, country}`) with a different
- *   seed; train uses every non-Vermont US source. `--count` bounds the output, not the input.
+ *   seed. Train uses every non-Vermont US source. `--count` bounds the output and leaves the input unbounded.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -57,8 +57,9 @@ const STANDALONE_DESIGNATORS: readonly USUnitDesignator[] = [
 const ID_WEIGHT = 0.85
 
 /**
- * Share of id-containing rows written with the `#` sigil, which also leads a private
- * mailbox, so only context can decide the reading.
+ * Share of id-containing rows written with the `#` sigil.
+ *
+ * The same sigil leads a private mailbox, so only context can decide the reading.
  */
 const SIGIL_WEIGHT = 0.2
 const SYNTH_IDS: readonly string[] = ["4B", "200", "12", "3", "A", "101", "5", "2A", "310", "B", "7", "1500", "404"]
@@ -117,8 +118,10 @@ const VENUES: readonly string[] = [
 ]
 
 /**
- * Share of tails that write a comma before the postcode; a bare number alone in a later comma segment
- * appears nowhere else in the mixture, so this is the only counter-evidence for that segment.
+ * Share of tails that write a comma before the postcode.
+ *
+ * A bare number alone in a later comma segment appears nowhere else in the mixture,
+ * so this is the only counter-evidence for that segment.
  */
 const COMMA_POSTCODE_WEIGHT = 0.15
 

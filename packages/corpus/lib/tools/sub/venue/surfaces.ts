@@ -13,7 +13,8 @@ import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import type { SubVenueSurface } from "#tools/sub/venue/table"
 
 /**
- * Scripts whose case is meaningful to fold; everything else is left as written.
+ * Scripts whose case is meaningful to fold.
+ * Everything else is left as written.
  */
 const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}\d\s\p{P}]+$/u
 
@@ -21,7 +22,9 @@ const CASE_FOLDING_SCRIPT = /^[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Gree
  * Scripts written without spaces between words, where a token split cannot find a
  * designator and a substring test is the correct operator.
  *
- * Han, Hiragana and Katakana; Hangul is excluded because Korean does space its words.
+ * Han, Hiragana and Katakana.
+ * Hangul is excluded because Korean does space its words.
+ *
  * The Germanic-compound argument that keeps {@link nameContainsSurfaces}
  * token-bounded for Latin does not transfer here.
  */
@@ -63,7 +66,7 @@ export function buildSurfaceIndex(surfaces: readonly SubVenueSurface[]): Surface
  * Every known phrase found in `name`, as whole-token runs for spacing scripts
  * and as substrings for non-spacing ones.
  *
- * Latin matching is token-bounded rather than substring, so `Nordterminal` is a deliberate miss;
+ * Latin matching is token-bounded rather than substring, so `Nordterminal` is a deliberate miss.
  * Han and Kana have no word boundaries, so the longest known substring is the correct operator there.
  */
 export function nameContainsSurfaces(name: string, index: SurfaceIndex): string[] {

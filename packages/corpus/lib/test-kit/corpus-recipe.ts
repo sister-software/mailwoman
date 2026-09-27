@@ -17,8 +17,9 @@ import type { PathBuilder } from "path-ts"
 import type { RecipeOptions } from "#recipes/scaffold"
 
 /**
- * The fields a recipe assertion reads off an emitted row; naming the shape is what
- * lets `parseJSONStrict`'s `unknown` be checked at all.
+ * The fields a recipe assertion reads off an emitted row.
+ *
+ * Naming the shape is what lets `parseJSONStrict`'s `unknown` be checked at all.
  */
 export interface RecipeRow {
 	raw: string
@@ -41,8 +42,9 @@ export interface CorpusRecipe<TStats> {
 }
 
 /**
- * The two input paths a recipe reads, plus the directory holding them; the caller owns it,
- * because a recipe opens both files by path well after this function returns.
+ * The two input paths a recipe reads, plus the directory holding them.
+ *
+ * The caller owns it, because a recipe opens both files by path well after this function returns.
  */
 export type RecipeInputs = TemporaryDirectory & { input: PathBuilder; exclude: PathBuilder }
 
@@ -61,14 +63,16 @@ export async function scratch(prefix: string, tuples: object[], surfaces: string
 }
 
 /**
- * The register id a harness-built tuple set carries; it names no publisher,
- * so a row written under it cannot be mistaken for a real register's record.
+ * The register id a harness-built tuple set carries.
+ *
+ * It names no publisher, so a row written under it cannot be mistaken for a real register's record.
  */
 export const TEST_REGISTER = "test-harness"
 
 /**
- * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved
- * surfaces; the seed is required because these suites assert on generated distributions.
+ * Bind a recipe and its seed to a runner the tests call with just the tuples and reserved surfaces.
+ *
+ * The seed is required because these suites assert on generated distributions.
  */
 export function recipeRunner<TStats>(prefix: string, recipe: CorpusRecipe<TStats>, seed: number) {
 	return async function run(

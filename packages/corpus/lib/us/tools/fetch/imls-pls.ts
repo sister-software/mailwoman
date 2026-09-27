@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  * Re-fetch the IMLS Public Libraries Survey outlet-level data — one row per US public library branch —
- * for the `usgov-imls-pls` adapter; the source is US Public Domain (a federal statistical survey).
- * Extracts the outlet-level CSV from IMLS's single ZIP and discards the rest; the system-level CSV is
+ * for the `usgov-imls-pls` adapter. The source is US Public Domain (a federal statistical survey).
+ * Extracts the outlet-level CSV from IMLS's single ZIP and discards the rest. The system-level CSV is
  * skipped for having no per-branch address detail.
  */
 
@@ -23,7 +23,8 @@ import type { BaseFetchOptions, FetchSummary, SourceManifest } from "#tools/fetc
 import { downloadToFile, readManifest, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * The PLS FY 2023 bulk CSV ZIP; update this URL if IMLS publishes a newer year.
+ * The PLS FY 2023 bulk CSV ZIP.
+ * Update this URL if IMLS publishes a newer year.
  */
 const ZIP_URL = "https://www.imls.gov/sites/default/files/2025-08/pls_fy2023_csv.zip"
 const SLUG = "usgov-imls-pls"

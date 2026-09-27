@@ -25,8 +25,8 @@ export interface TrainingSourceRecord {
 	 */
 	source: string
 	/**
-	 * Rows this source contributed after license exclusion and eligibility but
-	 * before augmentation; a synthetic row counts under the source it was fanned from.
+	 * Rows this source contributed after license exclusion and eligibility but before augmentation.
+	 * A synthetic row counts under the source it was fanned from.
 	 */
 	rows: number
 	license: string
@@ -39,8 +39,9 @@ export interface TrainingSourceRecord {
 		state: LicenseReviewState
 		electedTerms: string | null
 		/**
-		 * The operations the elected grant permitted at build time; an operation absent here
-		 * was `unreviewed` or `refused`, which the decision records separately.
+		 * The operations the elected grant permitted at build time.
+		 *
+		 * An operation absent here was `unreviewed` or `refused`, which the decision records separately.
 		 */
 		permitted: SourceOperation[]
 	} | null
@@ -138,8 +139,9 @@ export function freezeTrainingManifest(input: {
 }
 
 /**
- * Everything wrong with a training manifest, one message per problem; the digest
- * check is what makes the record frozen rather than merely written.
+ * Everything wrong with a training manifest, one message per problem.
+ *
+ * The digest check is what makes the record frozen rather than merely written.
  */
 export function auditTrainingManifest(manifest: TrainingManifest): string[] {
 	const problems: string[] = []

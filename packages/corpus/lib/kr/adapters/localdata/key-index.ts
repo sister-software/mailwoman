@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The address register's key sets, the only thing a permit string is allowed to align against; the
+ * The address register's key sets, the only thing a permit string is allowed to align against. The
  * permit registry's address field is an `observation` a clerk typed without validation, so every part
  * of a string — 시도, 시군구, road, 동, 리 — must be one the register lists under its parent.
  */
@@ -11,8 +11,10 @@
 import { type JusoLabelRow, REGION_ALIASES } from "#kr/adapters/juso/label-rows"
 
 /**
- * The separator between the parts of a composite key, written as an escape so no NUL byte
- * enters the source; a space cannot serve, because a 시군구 is written with one (`수원시 장안구`)
+ * The separator between the parts of a composite key, written as an escape
+ * so no NUL byte enters the source.
+ *
+ * A space cannot serve, because a 시군구 is written with one (`수원시 장안구`)
  * and `unitKey("A", "B C")` would collide with `unitKey("A B", "C")`.
  */
 const UNIT_SEPARATOR = "\0"
@@ -69,8 +71,10 @@ function add(map: Map<string, Set<string>>, key: string, value: string): void {
 }
 
 /**
- * Add one label row's names to the key sets; the 읍/면 joins the unit's 동 set as a road-form
- * token, since the road address writes it between the 시군구 and the road.
+ * Add one label row's names to the key sets.
+ *
+ * The 읍/면 joins the unit's 동 set as a road-form token, since the road address
+ * writes it between the 시군구 and the road.
  */
 export function indexLabelRow(index: KeyIndex, row: JusoLabelRow): void {
 	index.regions.add(row.region)
@@ -138,9 +142,9 @@ export function aliasKeyIndex(index: KeyIndex): void {
 }
 
 /**
- * How many tokens from `start` form one of the region's 시군구 — 2 for `수원시 장안구`,
- * 1 for `종로구`, 0 for none; two-token first, because `수원시` alone is also listed
- * and taking it would leave `장안구` to be read as a road.
+ * How many tokens from `start` form one of the region's 시군구 — 2 for `수원시 장안구`, 1 for `종로구`, 0 for none.
+ *
+ * Two-token first, because `수원시` alone is also listed and taking it would leave `장안구` to be read as a road.
  */
 export function sigunguSpan(index: KeyIndex, region: string, tokens: readonly string[], start: number): number {
 	const candidates = index.sigunguByRegion.get(region)

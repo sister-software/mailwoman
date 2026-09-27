@@ -43,7 +43,8 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * Root output directory; the runner creates `<outputDir>/<adapter.id>/` under it.
+	 * Root output directory.
+	 * The runner creates `<outputDir>/<adapter.id>/` under it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -55,20 +56,21 @@ export interface RunAdapterOptions {
 	/**
 	 * The `source` id stamped on every emitted row, when it differs from the adapter's own id.
 	 *
-	 * A source id is a wire identifier keyed by `source_weights`, so re-using a name
-	 * a built corpus already carries makes this run's rows indistinguishable from
-	 * that corpus's; absent, rows carry `adapter.id`.
+	 * A source id is a wire identifier keyed by `source_weights`, so re-using a name a built
+	 * corpus already carries makes this run's rows indistinguishable from that corpus's.
+	 * When absent, rows carry `adapter.id`.
 	 */
 	sourceName?: string
 
 	/**
-	 * Invoked every `progressEvery` rows yielded and once at the end; a thrown error aborts the run.
+	 * Invoked every `progressEvery` rows yielded and once at the end.
+	 * A thrown error aborts the run.
 	 */
 	onProgress?: (snapshot: RunnerProgress) => void
 
 	/**
-	 * Yielded-row interval at which `onProgress` fires; defaults to 1000,
-	 * and the terminal tick is always emitted.
+	 * Yielded-row interval at which `onProgress` fires.
+	 * Defaults to 1000, and the terminal tick is always emitted.
 	 */
 	progressEvery?: number
 }

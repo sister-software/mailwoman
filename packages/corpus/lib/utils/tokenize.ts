@@ -5,7 +5,7 @@
  *
  * Tokenizer interface for alignment. Each token comes back with its (start, end) character offsets so
  * BIO labels can be assigned by span overlap with component spans, independent of how the tokenizer
- * chose its splits; the interface is deliberately minimal — only what alignment needs.
+ * chose its splits. The interface is deliberately minimal — only what alignment needs.
  */
 
 /**
@@ -13,7 +13,8 @@
  */
 export interface TokenSpan {
 	/**
-	 * The token text, possibly normalized; this tokenizer leaves case unchanged.
+	 * The token text, possibly normalized.
+	 * This tokenizer leaves case unchanged.
 	 */
 	text: string
 

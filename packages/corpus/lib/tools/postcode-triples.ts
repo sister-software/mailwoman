@@ -45,8 +45,9 @@ export interface PostcodeTriple {
 /**
  * Which GeoNames postal column carries the locality for a country.
  *
- * `admin2` is the default; for the US it is the inverse, because column 3 is the city
- * and admin2 the county, so taking the default would train counties as cities.
+ * `admin2` is the default.
+ * For the US it is the inverse, because column 3 is the city and admin2 the county,
+ * so taking the default would train counties as cities.
  */
 export type GeonamesLocalityColumn = "place" | "admin2"
 
@@ -69,16 +70,17 @@ export const POSTCODE_CONVENTIONS: ReadonlyMap<
 	["NL", { placement: "leading", locale: "nl-NL" }],
 	["PT", { placement: "leading", locale: "pt-PT" }],
 	["MX", { placement: "leading", locale: "es-MX" }],
-	// No postcode source on disk and GeoNames does not publish VE, so this entry yields no row;
-	// it is here because the placement makes the absence legible.
+	// No postcode source on disk and GeoNames does not publish VE, so this entry yields no row.
+	// It is here because the placement makes the absence legible.
 	["VE", { placement: "after_locality", locale: "es-VE" }],
 	// `12 MG Road, Indiranagar, Bengaluru, Karnataka 560038, India` — three `in_*` rows,
 	// the one trailing placement with real data behind it.
 	["IN", { placement: "after_region", locale: "en-IN" }],
 	// Attested by the four `us_city_state_postcode` board rows; `localityColumn` keeps it from training counties.
 	["US", { placement: "after_region", locale: "en-US", localityColumn: "place" }],
-	// The two `br_*` rows carry locality, region and CEP in that order; the default `admin2` column
-	// is right here, because BR's export writes the municipality in column 3 and admin2 alike.
+	// The two `br_*` rows carry locality, region and CEP in that order.
+	// The default `admin2` column is right here, because BR's export writes the
+	// municipality in column 3 and admin2 alike.
 	["BR", { placement: "after_region", locale: "pt-BR" }],
 ])
 
@@ -92,8 +94,8 @@ export const DEFAULT_LOCALITY_QUOTA = 24
 /**
  * Take at most `quota` tuples per locality, in the order they arrive.
  *
- * Both readers walk their source in id/file order, which is stable across runs,
- * so the same quota selects the same rows.
+ * Both readers walk their source in id/file order.
+ * That order is stable across runs, so the same quota selects the same rows.
  */
 export function applyLocalityQuota<T extends { cc: string; locality: string }>(
 	triples: readonly T[],
@@ -207,8 +209,9 @@ export function regionWrittenForms(sprName: string, names: PreferredNames): stri
 }
 
 /**
- * The separator Who's On First joins a region's two co-official names with; spaces are required
- * on both sides, because a slash with no surrounding spaces appears inside single names.
+ * The separator Who's On First joins a region's two co-official names with.
+ *
+ * Spaces are required on both sides, because a slash with no surrounding spaces appears inside single names.
  */
 const BILINGUAL_JOINED = / \/ /
 
@@ -355,8 +358,8 @@ function createSurfaceReader(db: DatabaseClient<WOFDatabase>): SurfaceReader {
 		region(cc, id, sprName) {
 			const officialLanguages = officialLanguagesAlpha3(cc)
 			const official = namesIn(preferredNames(id), officialLanguages)
-			// The co-official table is keyed by the region's name in the first official language;
-			// a region the names table has no such name for is looked up by its `spr.name`,
+			// The co-official table is keyed by the region's name in the first official language.
+			// A region the names table has no such name for is looked up by its `spr.name`,
 			// which for a monolingual country is the same string.
 			const regionLanguages = regionLanguagesAlpha3(cc, official[0] ?? sprName)
 			const coOfficialLanguages = regionLanguages.filter((language) => !officialLanguages.includes(language))
@@ -438,8 +441,9 @@ export async function readPairsFromAdmin(
 /**
  * A predicate answering whether a name is a locality the admin gazetteer knows, for one country.
  *
- * The parent-join reader gets this for free; the GeoNames reader does not, and a row teaching
- * a colonia as `locality` trains the locality/dependent_locality boundary the wrong way.
+ * The parent-join reader gets this for free.
+ * The GeoNames reader does not, and a row teaching a colonia as `locality` trains
+ * the locality/dependent_locality boundary the wrong way.
  *
  * @throws When the gazetteer is not on disk, because a predicate that accepted every
  * name would emit unfiltered rows as though the filter had run.

@@ -37,8 +37,8 @@ import {
 import { AddressRole } from "#types"
 
 /**
- * The `origin` value the research pass gives its eight repeated discovery lookups;
- * every row carrying it is dropped.
+ * The `origin` value the research pass gives its eight repeated discovery lookups.
+ * Every row carrying it is dropped.
  */
 const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
 
@@ -93,8 +93,10 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 }
 
 /**
- * The research pass writes a source's propositions as one string; closed, because a spelling this
- * does not carry is a vocabulary the register has not agreed to rather than a row to guess at.
+ * The research pass writes a source's propositions as one string.
+ *
+ * The table is closed, because a spelling this does not carry is a vocabulary the
+ * register has not agreed to rather than a row to guess at.
  */
 const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["asserts"][number][]>> = {
 	"IDENTITY + OBSERVATION": ["identity", "observation"],
@@ -228,8 +230,8 @@ export interface BuildSourceRegisterOptions {
 	 * `unchecked` defaults this build derives from the research pass's access labels.
 	 *
 	 * An input rather than an edit of the output, because the register is generated
-	 * and {@linkcode buildSourceRegister} rewrites it whole; a path that does not
-	 * exist is read as no decisions recorded.
+	 * and {@linkcode buildSourceRegister} rewrites it whole.
+	 * A path that does not exist is read as no decisions recorded.
 	 */
 	decisionsPath?: PathBuilderLike
 	version: string

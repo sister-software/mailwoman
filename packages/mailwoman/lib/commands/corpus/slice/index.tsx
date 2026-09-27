@@ -160,7 +160,7 @@ const CorpusRecipeRun: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		await movePath(stagedPath, options.out)
 
-		// A recipe output records what a recipe emitted, not what it was asked for,
+		// A recipe output records what a recipe emitted rather than what it was asked for,
 		// so the invocation is written beside it after the rows, marking only a finished run.
 		await writeLocalJSONFile(
 			{

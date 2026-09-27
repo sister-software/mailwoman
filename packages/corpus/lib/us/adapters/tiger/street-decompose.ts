@@ -23,9 +23,10 @@ export interface DecomposedStreet {
 }
 
 /**
- * Decompose a US street name into prefix/name/suffix components; conservative,
- * emitting a prefix or suffix only for a clear directional or street-type keyword,
- * and returning the original as `street` when no pattern matches.
+ * Decompose a US street name into prefix/name/suffix components.
+ *
+ * Conservative, emitting a prefix or suffix only for a clear directional or street-type
+ * keyword, and returning the original as `street` when no pattern matches.
  */
 export function decomposeStreet(fullname: string): DecomposedStreet {
 	const trimmed = fullname.trim()

@@ -9,7 +9,7 @@
  *   Source : https://download.geonames.org/export/zip/<CC>.zip
  *   License: CC-BY-4.0, attribute "GeoNames". Tier B.
  *
- *   GeoNames publishes roughly 80 countries; an absent country fails as one entry, never as the whole run.
+ *   GeoNames publishes roughly 80 countries. An absent country fails as one entry, never as the whole run.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
@@ -40,7 +40,9 @@ export const GEONAMES_POSTAL_DEFAULT_COUNTRIES = ["PT", "AU", "NZ", "IE", "BR", 
 
 export interface FetchGeonamesPostalOptions extends BaseFetchOptions {
 	/**
-	 * ISO alpha-2 codes in any casing; defaults to `{@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}`.
+	 * ISO alpha-2 codes in any casing.
+	 *
+	 * Defaults to `{@linkcode GEONAMES_POSTAL_DEFAULT_COUNTRIES}`.
 	 */
 	countries?: readonly string[]
 	/**
@@ -111,8 +113,9 @@ export async function fetchGeonamesPostal(
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error)
 
-			// A 404 means GeoNames does not publish the country at all, a different finding
-			// from a failed transfer; branch on the typed status rather than message prose.
+			// A 404 means GeoNames does not publish the country at all, a different
+			// finding from a failed transfer.
+			// Branch on the typed status rather than message prose.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames does not publish a postal export for this country`)
 				unavailable.push(country)

@@ -9,8 +9,8 @@ import { APIClient, pluckResponseData } from "@mailwoman/core/api"
  * `tl_2024_<statefips><countyfips>_addrfeat.zip`.
  *
  * Each state's ZIPs land in `<outRoot>/tiger/addrfeat/state-<statefips>/` with a per-state
- * `manifest.json` recording filename, sha256 and bytes so re-runs skip already-verified files;
- * extraction and ogr2ogr ingestion happen later, in the `tiger` adapter.
+ * `manifest.json` recording filename, sha256 and bytes so re-runs skip already-verified files.
+ * Extraction and ogr2ogr ingestion happen later, in the `tiger` adapter.
  */
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
    procedure rather than sections of declarations. A region there folds no element a reader wants folded. */

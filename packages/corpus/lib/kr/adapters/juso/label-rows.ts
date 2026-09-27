@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The Korean road-name address register (주소DB) used as alignment ground truth; the ministry assigns
+ * The Korean road-name address register (주소DB) used as alignment ground truth. The ministry assigns
  * the road names and building numbers it publishes, so the register asserts `address` on `premise`
  * rows where the permit registry's address field is an `observation`. The archive is four
  * pipe-delimited CP949 text files per 시도 plus one nationwide road-code file, as the guide inside the
@@ -73,8 +73,9 @@ export interface JusoLabelRow {
 	region: string
 	sigungu: string
 	/**
-	 * The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 `0`),
-	 * else empty; a 동 is never written in the road form, it goes in the parenthetical.
+	 * The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 `0`), else empty.
+	 *
+	 * A 동 is never written in the road form, it goes in the parenthetical.
 	 */
 	eupmyeon: string
 	dong: string
@@ -95,8 +96,9 @@ export function parenthetical(row: JusoLabelRow): string {
 }
 
 /**
- * Every full-edition member of one kind as `[region suffix, archive name]`, sorted by region;
- * the monthly edition's 변동 (change-only) files under the same prefixes are excluded by name.
+ * Every full-edition member of one kind as `[region suffix, archive name]`, sorted by region.
+ *
+ * The monthly edition's 변동 (change-only) files under the same prefixes are excluded by name.
  */
 export function regionMembers(names: readonly string[], prefix: string): Array<[string, string]> {
 	return names
@@ -150,7 +152,8 @@ function joinNumber(main: string, sub: string): string {
 
 export interface ReadJusoOptions {
 	/**
-	 * Stop after this many rows per 시도, for a fixture or a smoke run; omit for the whole register.
+	 * Stop after this many rows per 시도, for a fixture or a smoke run.
+	 * Omit for the whole register.
 	 */
 	maxRowsPerRegion?: number
 }

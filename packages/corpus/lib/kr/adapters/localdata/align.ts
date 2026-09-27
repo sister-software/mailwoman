@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Align one permit-registry address string to the address register's key, or answer null; alignment
+ * Align one permit-registry address string to the address register's key, or answer null. Alignment
  * is exact against {@link KeyIndex} rather than fuzzy, so a string that satisfies the whole key becomes
  * a training row of matched spans and one that does not becomes a board row.
  */
@@ -50,8 +50,10 @@ interface Span {
 }
 
 /**
- * Record a span unless it is empty or blank; a blank span from a clerk's double space
- * or a zero-width one at a token's own end would train the model on no component.
+ * Record a span unless it is empty or blank.
+ *
+ * A blank span from a clerk's double space or a zero-width one at a token's own
+ * end would train the model on no component.
  */
 function put(spans: Span[], text: string, start: number, end: number, tag: string): void {
 	if (end > start && text.slice(start, end).trim()) {

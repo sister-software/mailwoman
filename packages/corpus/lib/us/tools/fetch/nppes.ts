@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Re-fetch the NPPES (National Plan and Provider Enumeration System) full monthly data dissemination
- * file for the `usgov-nppes` adapter; the source is US Public Domain. Discovers the current filename
+ * file for the `usgov-nppes` adapter. The source is US Public Domain. Discovers the current filename
  * by scraping the NPI_Files.html index, then extracts only the main registry CSV
  * (`npidata_pfile_*.csv`) and leaves the endpoint/othername/pl files zipped.
  *

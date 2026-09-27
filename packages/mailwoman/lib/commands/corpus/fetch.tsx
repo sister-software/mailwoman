@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman corpus fetch <source>` — reproducible bulk-download of the open-data sources the corpus
- *   build consumes; each source writes its raw files plus a sibling `manifest.json` (origin URL,
+ *   build consumes. Each source writes its raw files plus a sibling `manifest.json` (origin URL,
  *   timestamp, byte count, sha256).
  */
 
@@ -130,7 +130,8 @@ async function runSource(source: FetchSourceID, options: Options): Promise<Fetch
 			return fetchGeonamesDumps(
 				{
 					...base,
-					// Undefined means every country the source's own countryInfo.txt catalogs; present dumps are skipped.
+					// Undefined means every country the source's own countryInfo.txt catalogs.
+					// Present dumps are skipped.
 					countries: options.countries === undefined ? undefined : extractDelimited(options.countries),
 				},
 				reportToStderr

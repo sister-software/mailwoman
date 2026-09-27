@@ -16,7 +16,8 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 
 /**
- * The golden row fields that the relabeler reads; other fields are copied unchanged.
+ * The golden row fields that the relabeler reads.
+ * Other fields are copied unchanged.
  */
 export interface GoldenStreetRow {
 	raw: string

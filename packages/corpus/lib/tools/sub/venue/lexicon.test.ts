@@ -109,9 +109,9 @@ test("SHIPPED_DESIGNATOR_SEED mirrors neural/venue-structure.ts's VENUE_STRUCTUR
 })
 
 test("SHIPPED_DESIGNATOR_SEED's modifierEligible set matches MODIFIER_ELIGIBLE_STRUCTURE_DESIGNATORS", () => {
-	// `gate` and `building` are excluded upstream because "East Gate" and "Building
-	// Society Place" are real GB streets; the GB extract's 890 `gate` transport
-	// features are essentially none of them sub-venues.
+	// `gate` and `building` are excluded upstream because "East Gate"
+	// and "Building Society Place" are real GB streets.
+	// The GB extract's 890 `gate` transport features are essentially none of them sub-venues.
 	expect(
 		SHIPPED_DESIGNATOR_SEED.filter((d) => d.modifierEligible)
 			.map((d) => d.id)
@@ -156,8 +156,8 @@ test("CONCEPT_QIDS covers every concept the wikidata fetch pulls", () => {
 test("normalizeSurface folds case for bicameral scripts and leaves others alone", () => {
 	expect(normalizeSurface("  Flughafen   Terminal ")).toBe("flughafen terminal")
 	expect(normalizeSurface("Терминал")).toBe("терминал")
-	// Japanese and Chinese have no case to fold; the guard is what keeps a mixed
-	// string like `Terminal ターミナル` from being half-folded.
+	// Japanese and Chinese have no case to fold.
+	// The guard is what keeps a mixed string like `Terminal ターミナル` from being half-folded.
 	expect(normalizeSurface("空港ターミナル")).toBe("空港ターミナル")
 	expect(normalizeSurface("航站楼")).toBe("航站楼")
 })
@@ -475,7 +475,8 @@ test("applyPromotions reaches a region-free Wikidata surface through the locale'
 })
 
 test("every committed promotion carries a confound note and a census", () => {
-	// A bare number is not a board; this is the rule the ledger exists to enforce.
+	// A bare number is not a board.
+	// This is the rule the ledger exists to enforce.
 	for (const promotion of SUBVENUE_PROMOTIONS) {
 		expect(promotion.confoundNote.length, `${promotion.designatorID}/${promotion.locale}`).toBeGreaterThan(0)
 		expect(promotion.census.length, `${promotion.designatorID}/${promotion.locale}`).toBeGreaterThan(0)

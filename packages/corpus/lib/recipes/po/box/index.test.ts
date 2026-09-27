@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `po-box` — the two knobs that let one recipe emit an output for one class; the military rows
+ * @file `po-box` — the two knobs that let one recipe emit an output for one class. The military rows
  *   are self-contained and draw no tuple, so `--variants 0` with `--military-ratio 1` asks for them
  *   and no other variant.
  */

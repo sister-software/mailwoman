@@ -9,7 +9,7 @@
  * `<id>-alt-quattroshapes.geojson`, of which only the canonical record is consumed.
  *
  * `is_current` semantics follow WOF + Pelias: `mz:is_current` ∈ {`1`, `-1`} are live and `0` is
- * superseded; WOF's official postalcode distribution stamps every row `-1` ("unknown but treated as
+ * superseded. WOF's official postalcode distribution stamps every row `-1` ("unknown but treated as
  * active"), so an `is_current = 1` filter silently emits zero rows from the real corpus.
  */
 
@@ -28,8 +28,9 @@ export interface WOFFeature {
 }
 
 /**
- * Lightweight in-memory shape both adapters keep per record; geometry is intentionally
- * dropped because the adapters never consult it.
+ * Lightweight in-memory shape both adapters keep per record.
+ *
+ * Geometry is intentionally dropped because the adapters never consult it.
  */
 export interface WOFRecord {
 	id: number
@@ -46,8 +47,10 @@ export interface WOFRecord {
 	/**
 	 * Localized name variants from `name:*` properties.
 	 *
-	 * Keys are the raw `name:eng_x_preferred` form; values are the first non-empty string from the
-	 * underlying array, because WOF stores variants as arrays even when only one form is present.
+	 * Keys are the raw `name:eng_x_preferred` form.
+	 * Values are the first non-empty string from the underlying array, because WOF
+	 * stores variants as arrays even when only one form is present.
+	 *
 	 * The canonical `wof:name` is not included — adapters add a synthetic `"default"` slot for it.
 	 */
 	nameVariants: Map<string, string>
