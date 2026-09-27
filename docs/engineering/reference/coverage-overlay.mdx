@@ -11,7 +11,7 @@
 A demo-map overlay that answers **"where do we need data"** at a glance — covered → clear (basemap shows through), uncovered → gray fog. Two layers in one tileset:
 
 1. **US rooftop fine map** — shades each US area by address-point density (street/block detail). The original overlay; reveals the "looks covered until you zoom in, then the gaps go gray" holes.
-2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](./WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
+2. **Global "work to do" holes** (`fog = salience·(1 − coverage)`) — populated places worldwide that we **can't geocode yet** show as gray-fog holes, [weighted by importance](../../records/engineering/WIKIPEDIA_IMPORTANCE.mdx) (big uncovered cities are darkest). Postcode/rooftop coverage **clears** the hole, so the holes land where civilization exists but our data doesn't — Africa, the Middle East, C/S Asia, South America, and gaps like UK/Ireland (Royal Mail isn't in open GeoNames).
 
 - **Live:** `https://tiles.mailwoman.ai/coverage-v5.json` (XYZ vector tiles via the tile worker).
 - **In the demo:** the **Layers** panel (top-right) has two **default-off** toggle groups — _Coverage · optimistic fog_ and _Coverage · measured fog_. The user picks one.
@@ -85,7 +85,7 @@ mailwoman tiles publish --file $MAILWOMAN_DATA_ROOT/coverage/coverage-global-v5.
 
 - **Which keys write `nexus-assets`:** the `RCLONE_S3_PUBLIC_*` keys. The plain `RCLONE_S3_*` keys are scoped to `mailwoman-assets` and **403 on nexus-assets** (read _and_ write). `CF_AUTH_TOKEN` is the Cloudflare API token (wrangler).
 - **`wrangler r2 object put` hard-caps at 300 MiB** — useless for these archives. **rclone does multipart with no cap** — that's why `tiles publish` uses rclone rather than wrangler.
-- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.mailwoman.ai/mailwoman/`, the `docs/scripts/publish-demo-assets-to-r2.py` target) hosts the demo's model/DBs/data files. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
+- **`nexus-public` ≠ `nexus-assets`.** `nexus-public` (`public.mailwoman.ai/mailwoman/`, the `publish-demo-assets-to-r2.run.ts` target) hosts the demo's model/DBs/data files. The tile worker reads `nexus-assets`. Don't put tiles in `nexus-public`.
 
 ## Data state + the HI/NH situation
 

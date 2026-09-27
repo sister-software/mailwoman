@@ -11,10 +11,9 @@
  *
  *   `fold` and `build` reuse the canonical package functions (`ingestGeonamesAliases`,
  *   `buildPlaceSearchFTS`, `buildCandidateTable`) so the CLI, the standalone scripts, and a future
- *   `build-unified-wof --geonames-countries` all share one implementation. `publish` shells out to
- *   the proven `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas) and
- *   bumps the demo's `ADMIN_GAZETTEER_VERSION` — the only repo-coupled step, so its repo paths are
- *   passed in.
+ *   `build-unified-wof --geonames-countries` all share one implementation. `publish` uses the same
+ *   TypeScript R2 publisher as the standalone release tool and bumps the demo's `ADMIN_GAZETTEER_VERSION`.
+ *   The demo resource file is the only repo-coupled path, so callers pass it in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -29,7 +28,6 @@ import {
 	writeLocalFile,
 } from "@mailwoman/core/fs/writers"
 import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
-import { runFileSync } from "@mailwoman/core/process"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { isoDate } from "@mailwoman/core/utils"
 // resolver-wof-sqlite's runtime modules are imported inside the functions that use them.
@@ -55,6 +53,7 @@ import {
 	geonamesAdminGapCountries,
 } from "#gazetteer-pipeline/defaults"
 import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
+import { publishDemoAssets } from "#release-tools/publish-demo-assets"
 
 /**
  * The canonical postcode-database set (filenames under `<data-root>/db/wof/`):
@@ -522,10 +521,6 @@ export interface PublishOptions {
 	 */
 	version: string
 	/**
-	 * Path to `docs/scripts/publish-demo-assets-to-r2.py`.
-	 */
-	uploadScript: PathBuilderLike
-	/**
 	 * A staging dir.
 	 *
 	 * The candidate is symlinked under `<stageDir>/gazetteer/<version>/candidate.db`.
@@ -554,16 +549,15 @@ export interface PublishResult {
 }
 
 /**
- * Publish the candidate gazetteer to R2 (the demo's byte-range source)
- * and bump the demo's `ADMIN_GAZETTEER_VERSION`.
+ * Publishes the candidate gazetteer to R2 and updates the demo's pinned version.
  *
- * Shells out to the proven `publish-demo-assets-to-r2.py` (boto3 + R2 cache-control);
- * RCLONE_S3_PUBLIC_* creds must be in the process env (source `.env` first).
+ * The TypeScript uploader uses multipart S3 requests.
+ * It applies the cache metadata required by range requests.
+ *
+ * RCLONE_S3_PUBLIC_* credentials must be in the process environment.
  */
 export async function publishGazetteer(opts: PublishOptions): Promise<PublishResult> {
 	if (!(await pathExists(opts.candidateDB))) throw new Error(`candidate DB not found: ${opts.candidateDB}`)
-
-	if (!(await pathExists(opts.uploadScript))) throw new Error(`upload script not found: ${opts.uploadScript}`)
 
 	const prefix = opts.prefix ?? "mailwoman"
 	const versionDir = resolvePathBuilder(opts.stageDir, "gazetteer", opts.version)
@@ -580,17 +574,14 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	const key = `${prefix}/gazetteer/${opts.version}/candidate.db`
 	opts.onPhase?.("upload", `R2 ${key}${opts.dryRun ? " (dry-run)" : ""}`)
-	const args: PathBuilderLike[] = [opts.uploadScript, "--src", resolvePath(opts.stageDir), "--prefix", prefix]
 
-	if (opts.bucket) {
-		args.push("--bucket", opts.bucket)
-	}
-
-	if (opts.dryRun) {
-		args.push("--dry-run")
-	}
-
-	runFileSync("python3", args, { stdio: "inherit" })
+	await publishDemoAssets({
+		src: resolvePath(opts.stageDir),
+		bucket: opts.bucket,
+		prefix,
+		dryRun: opts.dryRun,
+		onObject: console.error,
+	})
 
 	let bumped = false
 

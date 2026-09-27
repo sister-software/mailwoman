@@ -3,7 +3,7 @@ title: POI layer runbook — building, verifying, and publishing poi.db
 role: reference
 audience: maintainer
 owner: operations
-source-of-truth: docs/superpowers/specs/2026-07-18-spatial-layers-and-poi-design.md
+source-of-truth: packages/mailwoman/lib/gazetteer-pipeline/poi/build/poi.ts
 tags:
   - operations
   - poi
@@ -129,9 +129,9 @@ CLI default is 12). Contingency if the shipped file or probe latency surprises: 
 labeled regional extract, as fallback only.
 
 **Publish flow (canonical POI path, 2026-07-20).** The poi.db goes up via the R2 asset
-uploader (`docs/scripts/publish-demo-assets-to-r2.py`) rather than the gazetteer path: stage a hardlink dir mirroring the R2 layout
+uploader (`packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts`) rather than the gazetteer path: stage a hardlink dir mirroring the R2 layout
 `poi/<version>/poi.db` (a hardlink avoids re-copying the 3.7 GB file), then
-`set -a; . ./.env; set +a; python3 docs/scripts/publish-demo-assets-to-r2.py --src <staged-dir>`
+`set -a; . ./.env; set +a; node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>`
 (source the repo `.env` first — the R2 credentials live there). Then bump the browser runtime's
 version constant (`POI_LAYER_VERSION` in `packages/mailwoman/lib/browser-runtime/resources.ts`). Note:
 `gazetteer publish` is admin-gazetteer-shaped — it uploads as `candidate.db` — and is **not**

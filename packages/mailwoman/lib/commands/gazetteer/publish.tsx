@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer publish [<candidate-db>]` — upload the candidate gazetteer to R2 (the demo's
- *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. Shells out to the proven
- *   `docs/scripts/publish-demo-assets-to-r2.py` (boto3 + the R2 cache-control gotchas). The version
- *   defaults to today's date + `a` (e.g. `2026-06-27a`), the immutable convention.
+ *   byte-range source) and bump the demo's `ADMIN_GAZETTEER_VERSION`. The version defaults to today's
+ *   date + `a` (e.g. `2026-06-27a`), the immutable convention.
  *
  *   Creds: `RCLONE_S3_PUBLIC_*` must be in the process env — `set -a. . ./.env. set +a` first. This
- *   is an in-repo operator command (it needs the upload script + the demo's resources file).
+ *   is an in-repo operator command because it updates the demo's resources file.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -44,7 +43,6 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 
 		const candidateDB = args[0] ?? wofDatabasePath(DEFAULT_CANDIDATE_OUT)
 		const version = options.gazetteerVersion ?? defaultGazetteerVersion(new Date())
-		const uploadScript = repoRootPathBuilder("docs", "scripts", "publish-demo-assets-to-r2.py")
 
 		const resourcesFile = options.bumpDemo
 			? repoRootPathBuilder("docs", "src", "shared", "resources", "index.ts")
@@ -59,7 +57,6 @@ const GazetteerPublish: CommandComponent<typeof spec> = ({ options, args }) => {
 		const r = await publishGazetteer({
 			candidateDB,
 			version,
-			uploadScript,
 			resourcesFile,
 			stageDir: stage.path,
 			bucket: options.bucket,

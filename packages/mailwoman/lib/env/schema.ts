@@ -119,6 +119,22 @@ export const PrivateMailwomanEnvSchema = z.object({
 		title: "S3 secret access key",
 		description: "S3-compatible secret access key used by rclone when publishing tile and corpus artifacts.",
 	}),
+	RCLONE_S3_PUBLIC_ENDPOINT: z.string().optional().meta({
+		title: "Public S3 endpoint",
+		description: "S3-compatible endpoint used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_ACCESS_KEY_ID: z.string().optional().meta({
+		title: "Public S3 access key ID",
+		description: "S3-compatible access key ID used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_SECRET_ACCESS_KEY: z.string().optional().meta({
+		title: "Public S3 secret access key",
+		description: "S3-compatible secret access key used when publishing public demo assets.",
+	}),
+	RCLONE_S3_PUBLIC_REGION: z.string().optional().meta({
+		title: "Public S3 region",
+		description: "S3-compatible region used when publishing public demo assets. Defaults to auto.",
+	}),
 	/**
 	 * Per-run secret salting the published case identifiers of a controlled premise-linkage
 	 * evaluation (`mailwoman eval premise-linkage`).

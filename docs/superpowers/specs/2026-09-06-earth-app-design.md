@@ -259,14 +259,14 @@ Receipts, one per bullet, as of the launch PR (`feat/earth-runtime-launch`):
 
 This table is recorded so nobody reads the proposal as current.
 
-| Proposal                                                    | Checkout at `c79757bdf`                                                                |
-| ----------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `apps/earth`, `apps/web-demo` status to decide              | `apps/` was removed 2026-08-21 (`9d22f6fe6`); every workspace is under `packages/`     |
-| `@mailwoman/browser` new package                            | refused; owning-package export conditions                                              |
-| `tiles.sister.software`, `public.sister.software`           | `tiles.mailwoman.ai`, `public.mailwoman.ai`                                            |
-| `wrangler.jsonc`                                            | the repository's workers use `wrangler.toml`                                           |
-| `packages/react/map/DemoMap.tsx`                            | `packages/react/lib/map/DemoMap.tsx`; source is under `lib/` everywhere                |
-| `scripts/publish-demo-assets-to-r2.py` bumps docs constants | `mailwoman gazetteer publish` prints the bump instruction                              |
-| `/demo` and `/debug` only                                   | `/trace` also exists                                                                   |
-| `httpvfs-street` is a hand-kept twin                        | the geometry is already shared through `@mailwoman/spatial/polyline`; only I/O remains |
-| GitHub Actions deploy with wrangler                         | Workers Builds from the dashboard                                                      |
+| Proposal                                                 | Checkout at `c79757bdf`                                                                |
+| -------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `apps/earth`, `apps/web-demo` status to decide           | `apps/` was removed 2026-08-21 (`9d22f6fe6`); every workspace is under `packages/`     |
+| `@mailwoman/browser` new package                         | refused; owning-package export conditions                                              |
+| `tiles.sister.software`, `public.sister.software`        | `tiles.mailwoman.ai`, `public.mailwoman.ai`                                            |
+| `wrangler.jsonc`                                         | the repository's workers use `wrangler.toml`                                           |
+| `packages/react/map/DemoMap.tsx`                         | `packages/react/lib/map/DemoMap.tsx`; source is under `lib/` everywhere                |
+| `publish-demo-assets-to-r2.run.ts` publishes demo assets | `mailwoman gazetteer publish` prints the bump instruction                              |
+| `/demo` and `/debug` only                                | `/trace` also exists                                                                   |
+| `httpvfs-street` is a hand-kept twin                     | the geometry is already shared through `@mailwoman/spatial/polyline`; only I/O remains |
+| GitHub Actions deploy with wrangler                      | Workers Builds from the dashboard                                                      |
