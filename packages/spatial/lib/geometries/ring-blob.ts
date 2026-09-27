@@ -31,6 +31,8 @@
  *   for every point in a hole.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
+
 import type { MultiPolygonRings } from "#geometries/polygon"
 
 /**
@@ -335,16 +337,6 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 }
 
 /**
- * A rectangle in CRS84 degrees.
- */
-export interface DegreeExtent {
-	minLon: number
-	minLat: number
-	maxLon: number
-	maxLat: number
-}
-
-/**
  * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent.
  *
  * The check A projection check cannot make.
@@ -365,7 +357,7 @@ export interface DegreeExtent {
 export function assertRingsInsideExtent(
 	polygons: MultiPolygonRings,
 	label: string,
-	extent: DegreeExtent,
+	extent: LatLonBounds,
 	marginDegrees: number,
 	context = "polygon ingest"
 ): void {

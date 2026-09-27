@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
+
 import type { Coordinates2D } from "#position"
 
 const AIRY_1830_A = 6_377_563.396
@@ -49,23 +51,6 @@ const OSGB36_TO_WGS84_HELMERT = {
 } as const
 
 /**
- * A geodetic latitude and longitude in degrees on an ellipsoid that the caller must track.
- *
- * The same numbers refer to different places on Airy 1830 and on GRS80.
- */
-export interface GeodeticLatLon {
-	/**
-	 * Latitude in decimal degrees, positive north.
-	 */
-	latitude: number
-
-	/**
-	 * Longitude in decimal degrees, positive east.
-	 */
-	longitude: number
-}
-
-/**
  * A position on the British National Grid, in metres.
  */
 export interface NationalGridPoint {
@@ -88,7 +73,7 @@ export interface NationalGridPoint {
  *
  * Pass the result to {@link osgb36AiryToWGS84} to get WGS84 coordinates.
  */
-export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint): GeodeticLatLon {
+export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint): GeoCoordinate {
 	const a = AIRY_1830_A
 	const b = AIRY_1830_B
 	const f0 = NATIONAL_GRID_F0
@@ -163,7 +148,7 @@ export function osgb36GridToAiryLatLon({ easting, northing }: NationalGridPoint)
  *
  * The transform ignores height, so use the result for horizontal positions only.
  */
-export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): GeodeticLatLon {
+export function osgb36AiryToWGS84({ latitude, longitude }: GeoCoordinate): GeoCoordinate {
 	const { tx, ty, tz, scalePPM, rx, ry, rz } = OSGB36_TO_WGS84_HELMERT
 
 	const phi = (latitude * Math.PI) / 180
@@ -214,7 +199,7 @@ export function osgb36AiryToWGS84({ latitude, longitude }: GeodeticLatLon): Geod
  * It converts `{ easting: 0, northing: 0 }` like any other point, so callers must
  * filter out Code-Point Open's zero placeholder rows.
  */
-export function osgb36ToWGS84(point: NationalGridPoint): GeodeticLatLon {
+export function osgb36ToWGS84(point: NationalGridPoint): GeoCoordinate {
 	return osgb36AiryToWGS84(osgb36GridToAiryLatLon(point))
 }
 

@@ -13,12 +13,11 @@
  *   read some other class's rows under this class's name, which no downstream check could catch.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { stringifyJSON } from "@mailwoman/core/json"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { PathBuilderLike } from "path-ts"
-
-import type { BBox } from "#gazetteer-pipeline/poi/build/poi"
 
 export interface ReferenceInventoryQuery {
 	/**
@@ -34,7 +33,7 @@ export interface ReferenceInventoryQuery {
 	 *
 	 * Must contain the region of interest — the caller clips exactly, on the H3 cell set.
 	 */
-	bbox: BBox
+	bbox: LatLonBounds
 }
 
 export interface ReferenceRow {

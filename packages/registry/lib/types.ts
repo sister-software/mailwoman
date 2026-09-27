@@ -7,7 +7,8 @@
  *   comes out. Plain interfaces over the `@mailwoman/record` types.
  */
 
-import type { OrganizationName, PersonName, PostalAddress, ResolutionTier } from "@mailwoman/record"
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
+import type { OrganizationName, PersonName, PostalAddress } from "@mailwoman/record"
 
 /**
  * A single source record: one row of a messy contact/organization dataset, after normalization.

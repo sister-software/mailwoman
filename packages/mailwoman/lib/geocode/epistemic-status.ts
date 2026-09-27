@@ -6,9 +6,8 @@
  *   rewrite a tier afterwards (the fork→entity answer and the plus-code override), so the two fields cannot disagree.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { CoverageBasis, EpistemicStatus } from "@mailwoman/evidence"
-
-import type { ResolutionTier } from "#geocode/result"
 
 /**
  * What may be claimed about a coordinate, from how it was produced and, when the

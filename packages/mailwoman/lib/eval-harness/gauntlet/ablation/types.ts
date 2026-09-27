@@ -12,11 +12,11 @@
  *   additive and says why it exists.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { percentile } from "@mailwoman/core/stats"
 
 import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/gauntlet/ablation/expectation"
-import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
  * The component classes this runner deletes.

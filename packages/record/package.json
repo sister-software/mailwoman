@@ -59,6 +59,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*"
 	},
 	"devDependencies": {

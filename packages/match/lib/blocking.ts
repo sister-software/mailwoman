@@ -19,20 +19,14 @@
  *   default, and any block too large to scan is _reported_, never silently dropped.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
+
 /**
  * Maps a record to zero or more block keys.
  *
  * Two records sharing any key become a candidate pair.
  */
 export type BlockingKey<R> = (record: R) => string[]
-
-/**
- * A geographic coordinate (WGS84 decimal degrees).
- */
-export interface LatLon {
-	latitude: number
-	longitude: number
-}
 
 /**
  * A spatial-cell block key: a configurable lat/lon grid.
@@ -48,7 +42,7 @@ export interface LatLon {
  * Behaviour — proximity co-blocking — is the same.
  */
 export function geoCellKey<R>(
-	extract: (record: R) => LatLon | null | undefined,
+	extract: (record: R) => GeoCoordinate | null | undefined,
 	opts: { precisionDegrees?: number; neighbors?: boolean } = {}
 ): BlockingKey<R> {
 	const step = opts.precisionDegrees ?? 0.05

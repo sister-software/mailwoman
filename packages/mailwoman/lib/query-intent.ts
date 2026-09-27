@@ -13,6 +13,7 @@
  *   population. Without collapsing coincident places first, every major city would look ambiguous.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { AddressNode, AddressTree, QueryIntentMarker, QueryKind } from "@mailwoman/core"
 import { collectNodes } from "@mailwoman/core/decoder"
 
@@ -24,7 +25,6 @@ import {
 } from "#eval-harness/gauntlet/ablation/expectation"
 import { collapseCoincident } from "#eval-harness/gauntlet/ablation/gazetteer"
 import { tierRank } from "#eval-harness/gauntlet/ablation/scoring"
-import type { ResolutionTier } from "#geocode/result"
 
 /**
  * The fields of a resolver place that this module reads.

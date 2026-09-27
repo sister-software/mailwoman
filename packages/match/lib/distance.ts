@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { haversineKm as greatCircleKm } from "@mailwoman/spatial"
 
-import type { LatLon } from "#blocking"
 import type { Comparison, ComparisonLevel } from "#fellegi-sunter"
 
 /**
- * Computes the great-circle distance in kilometres between two `LatLon` records by
- * delegating to the scalar helper in `@mailwoman/spatial`.
+ * Computes the great-circle distance in kilometres between two `GeoCoordinate` records.
+ * It delegates to the scalar helper in `@mailwoman/spatial`.
  */
-export const haversineKm = (a: LatLon, b: LatLon): number =>
+export const haversineKm = (a: GeoCoordinate, b: GeoCoordinate): number =>
 	greatCircleKm(a.latitude, a.longitude, b.latitude, b.longitude)
 
 /**
@@ -24,10 +24,10 @@ export const haversineKm = (a: LatLon, b: LatLon): number =>
  */
 export function distanceComparison<R>(config: {
 	name: string
-	extract: (record: R) => LatLon | null | undefined
+	extract: (record: R) => GeoCoordinate | null | undefined
 	levels: ComparisonLevel[]
 }): Comparison<R> {
-	const valid = (c: LatLon | null | undefined): c is LatLon =>
+	const valid = (c: GeoCoordinate | null | undefined): c is GeoCoordinate =>
 		!!c && Number.isFinite(c.latitude) && Number.isFinite(c.longitude)
 
 	return {
@@ -71,10 +71,10 @@ export const DEFAULT_DISTANCE_LEVELS: ComparisonLevel[] = [
 export function spatialComparison<R>(config: {
 	name: string
 	key: (record: R) => string | null | undefined
-	coordinate: (record: R) => LatLon | null | undefined
+	coordinate: (record: R) => GeoCoordinate | null | undefined
 	levels: ComparisonLevel[]
 }): Comparison<R> {
-	const valid = (c: LatLon | null | undefined): c is LatLon =>
+	const valid = (c: GeoCoordinate | null | undefined): c is GeoCoordinate =>
 		!!c && Number.isFinite(c.latitude) && Number.isFinite(c.longitude)
 
 	return {

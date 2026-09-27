@@ -4,6 +4,7 @@
  * @file Gauntlet ablation scoring and aggregation.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/spatial"
 
@@ -17,7 +18,6 @@ import {
 } from "#eval-harness/gauntlet/ablation/types"
 import { componentOf } from "#eval-harness/gauntlet/check-case"
 import type { GauntletResult } from "#eval-harness/gauntlet/harness"
-import type { ResolutionTier } from "#eval-harness/gauntlet/schema"
 
 /**
  * Fold to the comparison form used for slot classification: lowercase, alphanumerics only.

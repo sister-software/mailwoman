@@ -85,6 +85,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mapbox/vector-tile": "^3.0.0",
 		"@sister.software/asciify": "^4.3.0",

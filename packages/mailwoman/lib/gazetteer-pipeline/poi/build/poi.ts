@@ -6,6 +6,7 @@
  *   Builds and seals the `poi.db` layer from Overture Places or OSM rows.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
@@ -120,22 +121,12 @@ async function* streamPOIRows(parquetPaths: readonly string[]): AsyncIterable<PO
 }
 
 /**
- * A longitude and latitude rectangle, such as the declared bounding box of an OSM extract.
- */
-export interface BBox {
-	minLon: number
-	minLat: number
-	maxLon: number
-	maxLat: number
-}
-
-/**
  * Returns every H3 cell covering a bounding box with its observed row count, including cells with no rows.
  *
  * Rows in cells outside the box are not counted, so the box should be the extract's full extent.
  */
 export function bboxCoverageCells(
-	bbox: BBox,
+	bbox: LatLonBounds,
 	rows: Iterable<Pick<POISourceRow, "latitude" | "longitude">>,
 	resolution: number = COVERAGE_H3_RESOLUTION
 ): Array<{ h3Cell: number; observedRows: number }> {

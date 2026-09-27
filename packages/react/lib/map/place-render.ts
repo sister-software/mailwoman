@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import type { ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
 
 import { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
-import type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
+import type { BoundsTuple, PlaceGeometry } from "#map/geometry"
 
 /**
  * A coordinate pair as `[longitude, latitude]`.
@@ -29,7 +30,7 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	 * The place's bounding box.
 	 * Postcodes located by an anchor centroid have none.
 	 */
-	bbox?: PlaceBBox
+	bbox?: LatLonBounds
 
 	/**
 	 * The street-level tier.

@@ -15,6 +15,7 @@
  *   coordinates the loader must skip (and count) rather than insert.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { isFile, statPath } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { LayerTier, readLayerCoverage, readLayerManifest } from "@mailwoman/core/layers"
@@ -24,12 +25,7 @@ import type { POICategoryCodeTable, POIDatabase } from "@mailwoman/resolver-wof-
 import { shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { cellToParent, latLngToCell } from "h3-js"
-import {
-	bboxCoverageCells,
-	buildPOIDatabase,
-	type BBox,
-	type POISourceRow,
-} from "mailwoman/gazetteer-pipeline/poi/build/poi"
+import { bboxCoverageCells, buildPOIDatabase, type POISourceRow } from "mailwoman/gazetteer-pipeline/poi/build/poi"
 import type { PathBuilder } from "path-ts"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
@@ -224,7 +220,7 @@ describe("buildPOIDatabase", () => {
  * `observedRows: 0` to exercise decision 5's "well-surveyed, none found" case.
  */
 describe("bboxCoverageCells", () => {
-	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
+	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
 
 	it("polyfills every res-6 cell touching the bbox, defaulting observedRows to 0", () => {
 		const cells = bboxCoverageCells(bbox, [])
@@ -269,7 +265,7 @@ describe("bboxCoverageCells", () => {
  * / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
  */
 describe("buildPOIDatabase — --source osm build-local branch", () => {
-	const bbox: BBox = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
+	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
 
 	function osmFixtureRows(): POISourceRow[] {
 		return [
@@ -425,7 +421,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 
 describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b final review wave)", () => {
-	const bbox: BBox = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
+	const bbox: LatLonBounds = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
 		// Prove this point is genuinely divergent before trusting the rest of the test — if this

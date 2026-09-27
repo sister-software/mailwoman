@@ -112,6 +112,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"geo-coordinates-parser": "^1.7.4",
 		"h3-js": "^4.5.0",
@@ -120,7 +121,6 @@
 	},
 	"devDependencies": {
 		"@googlemaps/google-maps-services-js": "^3.4.2",
-		"@mailwoman/annotations": "workspace:*",
 		"type-fest": "^5.9.0"
 	},
 	"optionalDependencies": {

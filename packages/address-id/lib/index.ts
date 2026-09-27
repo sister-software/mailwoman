@@ -26,18 +26,11 @@
  *   which isn't published.)
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { us } from "@mailwoman/codex"
 import { sha256Hex } from "@mailwoman/core/hash"
 import { normalize } from "@mailwoman/normalize"
 import { latLngToCell } from "h3-js"
-
-/**
- * A geographic coordinate (the geocoder/resolver shape).
- */
-export interface LatLng {
-	latitude: number
-	longitude: number
-}
 
 /**
  * H3 resolution for the locality cell — coarse on purpose (~edge 174 m).
@@ -76,7 +69,7 @@ export interface CreatePostalAddressIDInput {
 	/**
 	 * The resolved coordinate (the geocoder's output) — drives the locality cell.
 	 */
-	coordinate: LatLng
+	coordinate: GeoCoordinate
 	/**
 	 * The address string to content-hash.
 	 *

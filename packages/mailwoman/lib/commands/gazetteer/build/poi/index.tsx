@@ -21,6 +21,7 @@
  *   below is untouched and stays byte-identical when `--source` is omitted.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import { formatFileSize } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -34,7 +35,7 @@ import {
 	splitCountryCodes,
 	useCommandTask,
 } from "#cli-kit"
-import type { BBox, POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
+import type { POISourceRow } from "#gazetteer-pipeline/poi/build/poi"
 import { DEFAULT_RELEASE } from "#gazetteer-pipeline/poi/defaults"
 import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 
@@ -65,12 +66,12 @@ export const spec = {
 const BBOX_FIELD_COUNT = 4
 
 /**
- * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link BBox}.
+ * Parse `--bbox "minLon,minLat,maxLon,maxLat"` into a {@link LatLonBounds}.
  *
  * @throws With the raw input echoed back on any shape/finiteness mismatch.
  * A silently-mis-parsed bbox would corrupt coverage silently, so fail loud instead.
  */
-function parseBBoxFlag(raw: string): BBox {
+function parseBBoxFlag(raw: string): LatLonBounds {
 	const parts = raw.split(",").map((s) => Number(s.trim()))
 
 	if (parts.length !== BBOX_FIELD_COUNT || parts.some((n) => !Number.isFinite(n))) {

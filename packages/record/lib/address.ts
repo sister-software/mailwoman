@@ -4,23 +4,9 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { GeoCoordinate, ResolutionTier } from "@mailwoman/annotations/geo"
 import { type ComponentDict, type FormatAddressOptions, formatAddress } from "@mailwoman/codex/address-format"
 import { canonicalKey } from "@mailwoman/codex/address-key"
-
-/**
- * A geographic coordinate (WGS84 decimal degrees).
- */
-export interface GeoCoordinate {
-	latitude: number
-	longitude: number
-}
-
-/**
- * Names the geocoder resolution tier that produced a coordinate, matching `GeocodeResult.resolution_tier`.
- *
- * It is a local union so this package does not depend on the geocoder runtime.
- */
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * One resolved admin-hierarchy ancestor (most specific first), for spelling-invariant blocking.

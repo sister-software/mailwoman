@@ -7,18 +7,11 @@
  *   anchor.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { haversineKm } from "@mailwoman/spatial"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
-
-/**
- * A coordinate in WGS-84 decimal degrees.
- */
-export interface PointPair {
-	latitude: number
-	longitude: number
-}
 
 /**
  * The label-to-geometry distance in kilometers above which the anchor is consulted.
@@ -38,7 +31,7 @@ export type PointChoice = "lbl" | "geom" | "geom-by-anchor" | "lbl-by-anchor"
 /**
  * The chosen point and the reason for the choice.
  */
-export interface AdjudicatedPoint extends PointPair {
+export interface AdjudicatedPoint extends GeoCoordinate {
 	choice: PointChoice
 }
 
@@ -47,7 +40,7 @@ export interface AdjudicatedPoint extends PointPair {
  *
  * It returns `undefined` when there is no anchor, and the caller then keeps the label point.
  */
-export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<PointPair | undefined>
+export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => Promise<GeoCoordinate | undefined>
 
 /**
  * Chooses the point to store.
@@ -56,7 +49,11 @@ export type GeoNamesAnchorLookup = (country: string, gnID: string | number) => P
  * apart and the geometry point is {@link ANCHOR_DECISIVE_RATIO} times closer to the anchor.
  * Every other case keeps the label point.
  */
-export function choosePoint(geom: PointPair, lbl: PointPair, anchor: PointPair | undefined): AdjudicatedPoint {
+export function choosePoint(
+	geom: GeoCoordinate,
+	lbl: GeoCoordinate,
+	anchor: GeoCoordinate | undefined
+): AdjudicatedPoint {
 	const disagreement = haversineKm(geom.latitude, geom.longitude, lbl.latitude, lbl.longitude)
 
 	if (disagreement <= LABEL_GEOM_DISAGREEMENT_KM || !anchor) {
@@ -91,15 +88,15 @@ const GN_COLUMN_LON = 5
  * A missing file behaves as an empty file.
  */
 export async function createGeoNamesAnchorLookup(geonamesDir: PathBuilderLike): Promise<GeoNamesAnchorLookup> {
-	const byCountry = new Map<string, Promise<Map<string, PointPair>>>()
+	const byCountry = new Map<string, Promise<Map<string, GeoCoordinate>>>()
 
-	const load = (country: string): Promise<Map<string, PointPair>> => {
+	const load = (country: string): Promise<Map<string, GeoCoordinate>> => {
 		const cached = byCountry.get(country)
 
 		if (cached) return cached
 
-		const pending = (async (): Promise<Map<string, PointPair>> => {
-			const points = new Map<string, PointPair>()
+		const pending = (async (): Promise<Map<string, GeoCoordinate>> => {
+			const points = new Map<string, GeoCoordinate>()
 			const path = resolvePathBuilder(geonamesDir, `${country.toUpperCase()}.txt`)
 
 			if (await pathExists(path)) {

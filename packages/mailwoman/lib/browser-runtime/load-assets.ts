@@ -12,6 +12,7 @@
 
 import type { CalibrationTable, Calibrator } from "@mailwoman/core/decoder/calibration"
 import { createCalibrator } from "@mailwoman/core/decoder/calibration"
+import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
 import type { MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm/browser-cascade"
 
 import type { SelectPairIndex } from "#browser-runtime/classify"
@@ -28,12 +29,7 @@ import {
 	pairIndexBaseURL,
 	pairIndexURLs,
 } from "#browser-runtime/resources"
-import type {
-	AssetLoadProgress,
-	FSTMatcherLike,
-	FSTProvenanceLike,
-	MailwomanClassifierLike,
-} from "#browser-runtime/types"
+import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
 /**
  * What one release loads to: every field a host may read.
@@ -48,7 +44,7 @@ export interface ReleaseAssets {
 	 */
 	anchorLookup: Map<string, { lat: number; lon: number }> | null
 	fstMatcher: FSTMatcherLike | null
-	fstProvenance: FSTProvenanceLike | null
+	fstProvenance: FSTProvenance | null
 	/**
 	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity
 	 * fix (scope invariant 2: node runtimes wire this by default. The browser previously never could).
@@ -205,7 +201,7 @@ export async function loadReleaseAssets(
 	}
 
 	let fstMatcher: FSTMatcherLike | null = null
-	let fstProvenance: FSTProvenanceLike | null = null
+	let fstProvenance: FSTProvenance | null = null
 	let streetMorphologyMatcher: FSTMatcherLike | null = null
 
 	if (release.hasFST) {

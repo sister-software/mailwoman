@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LatLon, LatLonBounds } from "@mailwoman/annotations/geo"
+
 /**
  * Lists the Who's On First placetypes this resolver looks up, ordered roughly from coarsest to finest.
  */
@@ -99,7 +101,7 @@ export interface PlaceCandidate {
 	/**
 	 * The bounding box from the WOF `spr` extent columns, omitted when the schema lacks them.
 	 */
-	bbox?: GeoBbox
+	bbox?: LatLonBounds
 
 	/**
 	 * Set by the postcode path when the chosen locality is far from the postcode's own locality.
@@ -123,24 +125,6 @@ export interface PlaceCandidate {
 	 * Only the candidate-table backend sets it.
 	 */
 	variantAliasExempted?: true
-}
-
-/**
- * Represents a WGS-84 point, used as a proximity hint by {@link FindPlaceQuery}.
- */
-export interface GeoPoint {
-	lat: number
-	lon: number
-}
-
-/**
- * Represents a WGS-84 bounding box, used as a hard filter by {@link FindPlaceQuery}.
- */
-export interface GeoBbox {
-	minLat: number
-	maxLat: number
-	minLon: number
-	maxLon: number
 }
 
 /**
@@ -215,7 +199,7 @@ export interface FindPlaceQuery {
 	 * A proximity hint that boosts nearby candidates.
 	 * It filters by radius only when `maxDistanceKm` is set.
 	 */
-	near?: GeoPoint & { maxDistanceKm?: number }
+	near?: LatLon & { maxDistanceKm?: number }
 
 	/**
 	 * Ordered proximity-bias points, such as a viewport center or user location.
@@ -224,12 +208,12 @@ export interface FindPlaceQuery {
 	 * The bias re-ranks exact-tier candidates by combined prominence and never removes candidates.
 	 * The `near` point counts as a bias point of weight 1.
 	 */
-	bias?: Array<GeoPoint & { weight?: number }>
+	bias?: Array<LatLon & { weight?: number }>
 
 	/**
 	 * Returns only candidates whose bounding box intersects this box.
 	 */
-	bbox?: GeoBbox
+	bbox?: LatLonBounds
 
 	/**
 	 * The maximum number of candidates to return, defaulting to 10.

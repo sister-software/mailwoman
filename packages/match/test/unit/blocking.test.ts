@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-import { type LatLon, block, conjunction, exactKey, geoCellKey } from "@mailwoman/match/blocking"
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
+import { block, conjunction, exactKey, geoCellKey } from "@mailwoman/match/blocking"
 import { describe, expect, it } from "vitest"
 
 interface Rec {
 	id: string
-	coord?: LatLon
+	coord?: GeoCoordinate
 	canonical?: string
 	postcode?: string
 }

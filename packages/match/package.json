@@ -84,6 +84,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/spatial": "workspace:*",
 		"fastest-levenshtein": "^1.0.16"
 	},

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-export type { FindPlaceQuery, GeoBbox, GeoPoint, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
+export type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "#types"
 
 export type {
 	AncestorsTable,

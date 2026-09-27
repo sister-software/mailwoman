@@ -4,6 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
+
 const CIRCLE_SEGMENTS = 64
 
 const KM_PER_DEG_LAT = 111.32
@@ -14,16 +16,6 @@ const KM_PER_DEG_LAT = 111.32
 export type PlaceGeometry =
 	| { type: "Polygon"; coordinates: number[][][] }
 	| { type: "MultiPolygon"; coordinates: number[][][][] }
-
-/**
- * A place bounding box in the demo's object form (the WOF points DB carries only these four numbers).
- */
-export interface PlaceBBox {
-	minLat: number
-	maxLat: number
-	minLon: number
-	maxLon: number
-}
 
 /**
  * A `[west, south, east, north]` → `[[minLon, minLat], [maxLon, maxLat]]` pair, the shape `fitBounds` wants.
@@ -51,7 +43,7 @@ function circleRing(lat: number, lon: number, radiusKM: number): number[][] {
  * Returns a circle approximating the extent of a place that has no polygon, with a radius
  * of half the bbox diagonal clamped to 0.5–50 km, or 3 km when there is no bbox.
  */
-export function approxCircleGeometry(lat: number, lon: number, bbox?: PlaceBBox): PlaceGeometry {
+export function approxCircleGeometry(lat: number, lon: number, bbox?: LatLonBounds): PlaceGeometry {
 	const halfDiagKm = bbox
 		? Math.hypot((bbox.maxLat - bbox.minLat) * KM_PER_DEG_LAT, (bbox.maxLon - bbox.minLon) * kmPerDegLon(lat)) / 2
 		: 3
@@ -77,7 +69,7 @@ export function radiusCircleGeometry(lat: number, lon: number, radiusM: number):
  * Geometry that crosses the antimeridian gets a naive min/max box, so callers
  * that need a wrapped box must handle it themselves.
  */
-export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
+export function geomBounds(geometry: PlaceGeometry): LatLonBounds {
 	let minLon = Infinity
 	let minLat = Infinity
 	let maxLon = -Infinity
@@ -120,9 +112,9 @@ export function geomBounds(geometry: PlaceGeometry): PlaceBBox {
 }
 
 /**
- * Reshape a {@link PlaceBBox} into the `[[minLon, minLat], [maxLon, maxLat]]` pair `fitBounds` expects.
+ * Reshape a {@link LatLonBounds} into the `[[minLon, minLat], [maxLon, maxLat]]` pair `fitBounds` expects.
  */
-export function bboxToBounds(bbox: PlaceBBox): BoundsTuple {
+export function bboxToBounds(bbox: LatLonBounds): BoundsTuple {
 	return [
 		[bbox.minLon, bbox.minLat],
 		[bbox.maxLon, bbox.maxLat],

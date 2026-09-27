@@ -49,7 +49,7 @@ export type {
 
 // ── Pure geometry + render spec (node-safe. No react-map-gl at runtime) ──────
 export { approxCircleGeometry, bboxToBounds, geomBounds, radiusCircleGeometry } from "#map/geometry"
-export type { BoundsTuple, PlaceBBox, PlaceGeometry } from "#map/geometry"
+export type { BoundsTuple, PlaceGeometry } from "#map/geometry"
 export { cameraToViewState, computeMapPlaceRenderSpec } from "#map/place-render"
 export type { LngLat, MapCameraTarget, MapPlaceRenderSpec, PlaceTier, ResolvedMapPlace } from "#map/place-render"
 export { useMapPlaceRender } from "#map/useMapPlaceRender"

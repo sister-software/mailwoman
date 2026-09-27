@@ -92,6 +92,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/codex": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/record": "workspace:*",

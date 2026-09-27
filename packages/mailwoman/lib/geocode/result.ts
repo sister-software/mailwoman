@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { GeocodeOutcomeLike } from "@mailwoman/api"
 import type { ComponentTag } from "@mailwoman/codex/component"
 import { slotNodes, decodeAsJSON, type AddressNode, type AddressTree, type DroppedSpan } from "@mailwoman/core/decoder"
@@ -17,14 +18,6 @@ import { epistemicStatusFor } from "#geocode/epistemic-status"
 import { capitalPromotionOf, postcodeCountryScopeOf, variantAliasExemptionOf } from "#geocode/tree-reads"
 import { assembleHierarchy, lineageAnchorNode, type HierarchyEntry } from "#hierarchy-lineage"
 import { assembleStreetName } from "#street/name-assembly"
-
-/**
- * The resolution tier that produced a result's coordinate.
- *
- * `admin` results carry no uncertainty estimate.
- * Later overrides set `venue` and `plus_code`, and {@link extractGeocodeResult} never returns them.
- */
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * A parsed component that the answer's coordinate ignored.

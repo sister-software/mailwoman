@@ -8,13 +8,6 @@
  *   imports on the load path.
  */
 
-export interface FSTProvenanceLike {
-	builtAt: string
-	stateCount: number
-	placeCount: number
-	importanceMatches: number
-}
-
 export interface FSTMatcherLike {
 	walk(tokens: string[]): { stateID: number; accepted: boolean; depth: number } | null
 	walkFrom(
@@ -29,8 +22,10 @@ export interface FSTMatcherLike {
 		 */
 		referential: number
 		/**
-		 * Wikipedia importance, present only when the artifact is v5+ and the place has an article;
-		 * displayed but never ranked on, and `undefined` is absence rather than 0.
+		 * Wikipedia importance, present only when the artifact is v5+ and the place has an article.
+		 *
+		 * It is displayed but never ranked on.
+		 * `undefined` is absence rather than 0.
 		 */
 		encyclopedic?: number
 	}>
@@ -41,8 +36,9 @@ export interface FSTMatcherLike {
 export interface MailwomanClassifierLike {
 	parse: (text: string, opts?: { queryShape?: unknown; fst?: FSTMatcherLike }) => Promise<unknown>
 	/**
-	 * Optional decode-path introspection; bundles built before the `traceParse`
-	 * hook lack it, so feature-detect before calling.
+	 * Optional decode-path introspection.
+	 *
+	 * Bundles built before the `traceParse` hook lack it, so feature-detect before calling.
 	 */
 	traceParse?: (text: string, opts?: { addressSystemConventions?: "auto" }) => Promise<ParseTraceLike>
 }
@@ -85,7 +81,8 @@ export interface ParseTraceLike {
 	logits: number[][]
 	localeLogits?: number[]
 	/**
-	 * The locale-head axis, a country code per `localeLogits` index; never hardcode the order.
+	 * The locale-head axis, a country code per `localeLogits` index.
+	 * Never hardcode the order.
 	 */
 	localeCountries?: string[]
 	detectedSystem: string | null
@@ -105,8 +102,8 @@ export interface ParseTraceLike {
  */
 export interface AssetLoadProgress {
 	/**
-	 * Aborts when this load is superseded or the host goes away; the loader stops
-	 * handing back a lookup once it fires.
+	 * Aborts when this load is superseded or the host goes away.
+	 * The loader stops handing back a lookup once it fires.
 	 */
 	signal: AbortSignal
 	/**
@@ -118,9 +115,12 @@ export interface AssetLoadProgress {
 	setStepIndex: (index: number) => void
 	setBackend: (backend: string) => void
 	/**
-	 * Bytes received over bytes expected for the artifact downloading now, in [0, 1], `null`
-	 * when none is in flight, and optional so a host that predates it still satisfies this interface;
-	 * the step index cannot report the model, which is fetched before the first step is entered.
+	 * Bytes received over bytes expected for the artifact downloading now, in [0, 1].
+	 *
+	 * It is `null` when none is in flight.
+	 * It is optional so a host that predates it still satisfies this interface.
+	 *
+	 * The step index cannot report the model, which is fetched before the first step is entered.
 	 */
 	setByteFraction?: (fraction: number | null) => void
 }

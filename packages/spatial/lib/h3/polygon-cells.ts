@@ -59,6 +59,7 @@
  *   `packages/flood/lib/sdk/ingest/chunk.ts` and `packages/soil/lib/sdk/ingest/chunk.ts`.
  */
 
+import type { LatLonBounds } from "@mailwoman/annotations/geo"
 import {
 	cellToChildren,
 	cellToParent,
@@ -95,20 +96,10 @@ export const CELL_ESTIMATE_BUDGET = 2_000_000
 export const MIN_INDEX_RESOLUTION = 4
 
 /**
- * A rectangle in degrees, the shape every helper here prefilters on.
- */
-export interface DegreeBox {
-	minLat: number
-	minLon: number
-	maxLat: number
-	maxLon: number
-}
-
-/**
  * A degree box's height and width in metres, longitude scaled at the box's
  * mid-latitude so the two are comparable.
  */
-function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
+function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number } {
 	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
 
 	return {
@@ -125,7 +116,7 @@ function boxExtentMetres(box: DegreeBox): { heightM: number; widthM: number } {
  * polyfill off the majority of a small-polygon product's parts: 38.8% of the EA flood
  * features are under 11 m across, and most parts of the multi-part ones are smaller still.
  */
-function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
+function enclosingCell(box: LatLonBounds, resolution: number): string | undefined {
 	if (!Number.isFinite(box.minLat)) return undefined
 
 	const first = latLngToCell(box.minLat, box.minLon, resolution)
@@ -152,7 +143,7 @@ function enclosingCell(box: DegreeBox, resolution: number): string | undefined {
  * while a wrong `false` would demote a whole cell to a partial one, which the ray
  * cast still answers correctly but more slowly.
  */
-function canContainCell(box: DegreeBox, resolution: number): boolean {
+function canContainCell(box: LatLonBounds, resolution: number): boolean {
 	if (!Number.isFinite(box.minLat)) return false
 
 	const minimumWidthM = getHexagonEdgeLengthAvg(resolution, "m") * Math.sqrt(3)

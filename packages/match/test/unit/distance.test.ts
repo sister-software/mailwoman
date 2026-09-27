@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import type { LatLon } from "@mailwoman/match/blocking"
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import {
 	DEFAULT_DISTANCE_LEVELS,
 	DEFAULT_SPATIAL_LEVELS,
@@ -32,7 +32,7 @@ describe("haversineKm", () => {
 
 describe("distanceComparison", () => {
 	interface R {
-		coord?: LatLon
+		coord?: GeoCoordinate
 	}
 
 	const cmp = distanceComparison<R>({ name: "geo", extract: (r) => r.coord, levels: DEFAULT_DISTANCE_LEVELS })
@@ -54,7 +54,7 @@ describe("distanceComparison", () => {
 describe("spatialComparison (collapsed key + distance, A1)", () => {
 	interface R {
 		key?: string
-		coord?: LatLon
+		coord?: GeoCoordinate
 	}
 
 	const cmp = spatialComparison<R>({

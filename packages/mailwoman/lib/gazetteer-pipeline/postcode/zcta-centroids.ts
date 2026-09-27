@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+import type { LatLon } from "@mailwoman/annotations/geo"
 import { readUnquotedTSVText } from "@mailwoman/core/fs/delimited"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -22,19 +23,11 @@ export const ZCTA_SOURCE = "census-zcta-2024"
 export const GEONAMES_US_SOURCE = "geonames-us"
 
 /**
- * Holds one postcode centroid in WGS84 degrees.
- */
-export interface ZCTACentroid {
-	lat: number
-	lon: number
-}
-
-/**
  * Parses a Census ZCTA Gazetteer TSV into a map from 5-digit code to its internal point,
  * skipping `(0,0)` rows so a placeholder never fills a placeholder.
  */
-export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
-	const out = new Map<string, ZCTACentroid>()
+export function parseZCTACentroids(text: string): Map<string, LatLon> {
+	const out = new Map<string, LatLon>()
 
 	for (const row of readUnquotedTSVText(text)) {
 		const fields = row.map((f) => f.trim())
@@ -61,7 +54,7 @@ export function parseZCTACentroids(text: string): Map<string, ZCTACentroid> {
  */
 export function fillPlaceholderCentroids(
 	db: DatabaseClient<WOFDatabase>,
-	zcta: ReadonlyMap<string, ZCTACentroid>,
+	zcta: ReadonlyMap<string, LatLon>,
 	source: string = ZCTA_SOURCE
 ): number {
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)
@@ -108,7 +101,7 @@ export function fillPlaceholderCentroids(
  * It deliberately does not reuse `geonamesPostalRows`, whose different number
  * parsing would shift the stored mean centroids.
  */
-export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> {
+export function parseGeonamesCentroids(text: string): Map<string, LatLon> {
 	const acc = new Map<string, { lat: number; lon: number; n: number }>()
 
 	for (const f of readUnquotedTSVText(text)) {
@@ -129,7 +122,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
 		}
 	}
 
-	const out = new Map<string, ZCTACentroid>()
+	const out = new Map<string, LatLon>()
 
 	for (const [pc, s] of acc) {
 		out.set(pc, { lat: s.lat / s.n, lon: s.lon / s.n })
@@ -146,7 +139,7 @@ export function parseGeonamesCentroids(text: string): Map<string, ZCTACentroid> 
  */
 export function fillGeonamesPlaceholders(
 	db: DatabaseClient<WOFDatabase>,
-	geonames: ReadonlyMap<string, ZCTACentroid>,
+	geonames: ReadonlyMap<string, LatLon>,
 	source: string = GEONAMES_US_SOURCE
 ): number {
 	db.exec(`CREATE TABLE IF NOT EXISTS centroid_source (id INTEGER PRIMARY KEY, source TEXT NOT NULL)`)

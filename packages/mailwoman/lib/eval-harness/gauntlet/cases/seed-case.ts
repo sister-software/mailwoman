@@ -7,10 +7,11 @@
  *   {@linkcode SEED_CASE_KEY_ORDER} in agreement.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import { stringifyJSON } from "@mailwoman/core/json"
 import zod from "zod"
 
-import type { AddressKind, CaseStatus, GauntletCaseTable, ResolutionTier } from "#eval-harness/gauntlet/schema"
+import type { AddressKind, CaseStatus, GauntletCaseTable } from "#eval-harness/gauntlet/schema"
 import type { MutuallyAssignable, SameShape } from "#eval-harness/shape-assertions"
 
 /**

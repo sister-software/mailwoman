@@ -25,6 +25,7 @@
  *   `@mailwoman/spatial`'s `shortCellToInt` via `uprnFullCell` — never reimplemented here.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { allRows } from "@mailwoman/core/utils"
 import { haversineKm, shortCellToInt, type H3Cell } from "@mailwoman/spatial"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -66,11 +67,6 @@ export const UPRN_MAX_NEAREST_RADIUS_M = 10_000
  * `IN`-list chunk size for the cell probe — far under SQLite's 32,766 bound-variable ceiling.
  */
 const CELL_PROBE_CHUNK = 900
-
-export interface UPRNCoordinate {
-	latitude: number
-	longitude: number
-}
 
 export interface UPRNNearestHit {
 	uprn: number
@@ -140,7 +136,7 @@ export class UPRNLookup implements Disposable {
 	 * The WGS84 point OS publishes for `uprn`, or `null` when the layer holds no such
 	 * uprn (see the module docstring for what that `null` claims).
 	 */
-	coordinateOf(uprn: number): UPRNCoordinate | null {
+	coordinateOf(uprn: number): GeoCoordinate | null {
 		const row = this.#coordinateProbe.get(uprn) as { lat: number; lon: number } | undefined
 
 		return row ? { latitude: row.lat, longitude: row.lon } : null

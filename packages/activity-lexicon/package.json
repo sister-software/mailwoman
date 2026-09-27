@@ -64,6 +64,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/core": "workspace:*",
+		"@mailwoman/geographic-model": "workspace:*",
 		"@mailwoman/variant-aliases": "workspace:*"
 	},
 	"devDependencies": {

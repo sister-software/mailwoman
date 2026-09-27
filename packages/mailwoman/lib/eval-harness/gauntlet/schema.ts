@@ -15,6 +15,7 @@
  *   hide "…all suburban-US residential." That is CheckList's capability matrix applied to addresses.
  */
 
+import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { Kysely } from "kysely"
 
 /**
@@ -30,8 +31,6 @@ export type AddressKind = string
  * Pelias-style status: tracked as a delta (regression / improvement), never as a raw pass-rate gauge.
  */
 export type CaseStatus = "pass" | "known_fail" | "improvement_target"
-
-export type ResolutionTier = "address_point" | "interpolated" | "street" | "admin" | "venue" | "plus_code"
 
 /**
  * One Gauntlet case: a raw input and its expected assembled output (parse + place + coordinate + tier).

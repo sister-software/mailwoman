@@ -6,8 +6,9 @@
  *   ways — the address string, a haversine co-location radius, and an H3 cell.
  */
 
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
 import { createUnionFind, type UnionFind } from "@mailwoman/core/utils"
-import { haversineKm, jaccard, type LatLon } from "@mailwoman/match"
+import { haversineKm, jaccard } from "@mailwoman/match"
 import { latLngToCell } from "h3-js"
 
 import type { SourceRecord } from "#index"
@@ -52,8 +53,8 @@ function unionAgreeingPairs(
  * The first geocoded record it owns, which is its primary row because the sample builder
  * pushes that row before the alternate-name and mailing variants.
  */
-export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map<string, LatLon> {
-	const npiCoord = new Map<string, LatLon>()
+export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map<string, GeoCoordinate> {
+	const npiCoord = new Map<string, GeoCoordinate>()
 
 	for (const rec of records) {
 		const c = rec.address?.geocode?.coordinate
@@ -111,7 +112,10 @@ export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLab
  * Brute-force pairwise over the sampled NPIs — trivial at this scale,
  * and unlike a cell key it has no boundary artifact.
  */
-export function buildOrgNameCoordGrain(npiPrimary: Map<string, NPIPrimary>, npiCoord: Map<string, LatLon>): TruthLabel {
+export function buildOrgNameCoordGrain(
+	npiPrimary: Map<string, NPIPrimary>,
+	npiCoord: Map<string, GeoCoordinate>
+): TruthLabel {
 	const uf = createUnionFind()
 	const coLocated = [...npiPrimary.keys()].filter((n) => npiCoord.has(n))
 
@@ -148,7 +152,7 @@ export function buildOrgNameCoordGrain(npiPrimary: Map<string, NPIPrimary>, npiC
  */
 export function buildOrgNameH3Grain(
 	npiPrimary: Map<string, NPIPrimary>,
-	npiCoord: Map<string, LatLon>,
+	npiCoord: Map<string, GeoCoordinate>,
 	h3Res: number
 ): TruthLabel {
 	const uf = createUnionFind()

@@ -9,8 +9,10 @@
  *   constants in this module select which path the runtime loads.
  */
 
+import type { FSTProvenance } from "@mailwoman/core/pipeline/client-result"
+
 import { fetchWithRetry } from "#browser-runtime/fetch"
-import type { FSTMatcherLike, FSTProvenanceLike } from "#browser-runtime/types"
+import type { FSTMatcherLike } from "#browser-runtime/types"
 
 /**
  * Public asset origin.
@@ -341,7 +343,7 @@ export function pairIndexURLs(baseURL: string): string[] {
 export async function loadFSTGazetteer(
 	locale: string,
 	version: string
-): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenanceLike }> {
+): Promise<{ matcher: FSTMatcherLike; provenance?: FSTProvenance }> {
 	const [fstModule, fstBinary] = await Promise.all([
 		import("@mailwoman/resolver-wof-sqlite/fst/deserialize-web"),
 		fetchWithRetry(assetURL(locale, version, "fst-en-US.bin")).then((r) => {
@@ -352,10 +354,10 @@ export async function loadFSTGazetteer(
 	])
 
 	const matcher = fstModule.deserializeFSTWeb(fstBinary) as FSTMatcherLike
-	let provenance: FSTProvenanceLike | undefined
+	let provenance: FSTProvenance | undefined
 
 	try {
-		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenanceLike | undefined
+		provenance = fstModule.readFSTProvenanceWeb(fstBinary) as FSTProvenance | undefined
 	} catch {
 		// Version 2 binaries have no provenance section.
 	}

@@ -8,7 +8,8 @@
  *   name resolve to one entity, because blocking is geographic rather than textual.
  */
 
-import { type LatLon, block, geoCellKey } from "@mailwoman/match/blocking"
+import type { GeoCoordinate } from "@mailwoman/annotations/geo"
+import { block, geoCellKey } from "@mailwoman/match/blocking"
 import { cluster } from "@mailwoman/match/clustering"
 import {
 	type ComparisonLevel,
@@ -23,7 +24,7 @@ interface Clinic {
 	given: string
 	family: string
 	canonical: string
-	coord: LatLon
+	coord: GeoCoordinate
 }
 
 const NAME_LEVELS: ComparisonLevel[] = [

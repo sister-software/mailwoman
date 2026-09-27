@@ -135,6 +135,7 @@
 	},
 	"dependencies": {
 		"@mailwoman/address-id": "workspace:*",
+		"@mailwoman/annotations": "workspace:*",
 		"@mailwoman/core": "workspace:*",
 		"@mailwoman/match": "workspace:*",
 		"@mailwoman/record": "workspace:*",

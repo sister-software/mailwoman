@@ -15,15 +15,12 @@
  * Map-tui maintains a dependency-lean surface for the standalone `npx` story (the nuts-lookup precedent).
  */
 
+import type { LatLon } from "@mailwoman/annotations/geo"
+
 /**
  * Number of pixels per tile in the Web-Mercator projection (standard: 256).
  */
 export const TILE_SIZE = 256
-
-export interface LonLat {
-	lon: number
-	lat: number
-}
 
 export interface WorldPx {
 	x: number
@@ -40,7 +37,7 @@ export function lonLatToWorldPx(lon: number, lat: number, zoom: number): WorldPx
 	}
 }
 
-export function worldPxToLonLat(x: number, y: number, zoom: number): LonLat {
+export function worldPxToLonLat(x: number, y: number, zoom: number): LatLon {
 	const scale = TILE_SIZE * 2 ** zoom
 	const n = Math.PI * (1 - (2 * y) / scale)
 

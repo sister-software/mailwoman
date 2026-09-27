@@ -6,29 +6,7 @@
  *   Types for the reviewed activity-phrase lexicon.
  */
 
-/**
- * Where a record came from.
- *
- * The shape matches the provenance type in `@mailwoman/geographic-model`.
- * It is copied because this package does not depend on that one.
- */
-export interface ActivityLexiconProvenance {
-	/**
-	 * The naming authority, dataset, publication, or curator.
-	 */
-	source: string
-	sourceVersion?: string
-	/**
-	 * The identifier of the specific record within the source.
-	 */
-	sourceRecord?: string
-	sourceURL?: string
-	/**
-	 * ISO 8601 calendar date the record was authored, `yyyy-MM-DD`.
-	 */
-	authoredAt?: string
-	notes?: string
-}
+import type { SourceProvenance } from "@mailwoman/geographic-model/schema"
 
 /**
  * Attestation for a phrase that appears in a query committed to this repository.
@@ -153,7 +131,7 @@ export interface ActivityPhraseEntry {
 export interface ActivityPhraseLexicon {
 	lexiconID: string
 	version: string
-	provenance: ActivityLexiconProvenance
+	provenance: SourceProvenance
 	phrases: ActivityPhraseEntry[]
 }
 

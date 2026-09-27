@@ -8,6 +8,7 @@
  *   This census classifies rows but makes no decision about changing checks or behavior.
  */
 
+import type { LatLon } from "@mailwoman/annotations/geo"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { DEFAULT_TOL_M } from "#eval-harness/gauntlet/check-case"
@@ -25,11 +26,6 @@ export type RescueClass =
 	| "rescue_available_both"
 	| "no_rescue_on_hand"
 	| "ungraded"
-
-export interface RescueCandidate {
-	lat: number
-	lon: number
-}
 
 export interface RescueRowInput {
 	/**
@@ -53,11 +49,11 @@ export interface RescueRowInput {
 	 *
 	 * Undefined = probe not applicable or no hit.
 	 */
-	unconditionalEntityHit?: RescueCandidate
+	unconditionalEntityHit?: LatLon
 	/**
 	 * The resolver's ranked alternatives excluding the winner (`candidates[1..]` of the delivered result).
 	 */
-	alternateCandidates: readonly RescueCandidate[]
+	alternateCandidates: readonly LatLon[]
 }
 
 export interface RescueRowReport {
