@@ -8,17 +8,17 @@ import { COMPONENT_TAGS } from "@mailwoman/codex/component"
 import { buildDefaultPolicies, defaultPolicyFor } from "@mailwoman/core/policy/defaults"
 import { expect, test } from "vitest"
 
-test("buildDefaultPolicies: one entry per ComponentTag, all rule_only by default", () => {
+test("buildDefaultPolicies: one entry per ComponentTag, all neural_only by default", () => {
 	const policies = buildDefaultPolicies()
 	expect(policies).toHaveLength(COMPONENT_TAGS.length)
 	expect(policies.map((p) => p.component)).toEqual([...COMPONENT_TAGS]) // covers every tag, in order
-	expect(policies.every((p) => p.mode === "rule_only")).toBe(true)
+	expect(policies.every((p) => p.mode === "neural_only")).toBe(true)
 })
 
 test("buildDefaultPolicies: honors a non-default mode for the whole table", () => {
-	const policies = buildDefaultPolicies("neural_preferred")
+	const policies = buildDefaultPolicies("both")
 	expect(policies).toHaveLength(COMPONENT_TAGS.length)
-	expect(policies.every((p) => p.mode === "neural_preferred")).toBe(true)
+	expect(policies.every((p) => p.mode === "both")).toBe(true)
 })
 
 test("buildDefaultPolicies: returns a fresh, mutable array each call", () => {
@@ -26,10 +26,10 @@ test("buildDefaultPolicies: returns a fresh, mutable array each call", () => {
 	const b = buildDefaultPolicies()
 	expect(a).not.toBe(b) // distinct references — callers may mutate freely
 	a[0]!.mode = "both"
-	expect(b[0]!.mode).toBe("rule_only") // mutating one does not leak into another
+	expect(b[0]!.mode).toBe("neural_only") // mutating one does not leak into another
 })
 
-test("defaultPolicyFor: a single component default (rule_only unless overridden)", () => {
-	expect(defaultPolicyFor("street")).toEqual({ component: "street", mode: "rule_only" })
+test("defaultPolicyFor: a single component default (neural_only unless overridden)", () => {
+	expect(defaultPolicyFor("street")).toEqual({ component: "street", mode: "neural_only" })
 	expect(defaultPolicyFor("postcode", "both")).toEqual({ component: "postcode", mode: "both" })
 })

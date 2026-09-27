@@ -9,13 +9,11 @@
  *   Implementation: for each section, run the neural classifier on `section.body`, walk the resulting
  *   `AddressTree`, and emit one `ClassificationProposal` per node whose tag is in the `emits` list.
  *   Spans are rebased to the original input via `section.start + node.start` so downstream
- *   consumers see character offsets in the caller's coordinate space — same convention as
- *   `wrapLegacyClassifier`.
+ *   consumers see character offsets in the caller's coordinate space.
  *
- *   Per-section calls trade a small amount of context for the uniform `ProposalClassifier` shape.
- *   Addresses inside a section are typically short and the model handles them well. whole-input
- *   inference is a future optimization once the policy layer has a way to invoke a classifier "once
- *   per parse" instead of per section.
+ *   The classifier runs once per section it receives. `collectProposals` in `@mailwoman/core/policy`
+ *   calls it for each section the caller supplies, and the `mailwoman parse` policy path supplies
+ *   the whole input as a single section, so the model sees the complete address in one call.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

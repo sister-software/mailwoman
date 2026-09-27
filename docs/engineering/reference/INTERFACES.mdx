@@ -39,16 +39,16 @@ export interface ClassificationProposal {
 	/** Which component type the classifier thinks this span is. */
 	component: ComponentTag
 
-	/** Classifier's confidence, 0..1. Rule classifiers may use heuristic values. */
+	/** Classifier's confidence, 0..1. */
 	confidence: number
 
 	/** Where this proposal came from. */
-	source: "rule" | "neural" | "merged"
+	source: "neural" | "merged"
 
 	/**
-	 * Identifier of the specific classifier instance. Rule: 'house_number', 'postcode',
-	 * 'whos_on_first', etc. Neural: 'neural-v0.3.1-en-us', 'neural-v0.3.1-fr-fr', etc. Merged: a
-	 * synthetic ID like 'merged-rule+neural-v0.3.1' (rare; mostly for telemetry).
+	 * Identifier of the specific classifier instance. Neural: 'neural-v0.3.1-en-us',
+	 * 'neural-v0.3.1-fr-fr', etc. Merged: a synthetic ID for a merger that fused several
+	 * classifiers' proposals.
 	 */
 	source_id: string
 
@@ -97,34 +97,7 @@ export interface ClassifierContext {
 }
 ```
 
-### Adapting existing rule classifiers
-
-Existing rule classifiers produce ad-hoc shapes. They must be wrapped:
-
-```ts
-// packages/classifiers/src/adapter.ts
-
-export function wrapLegacyClassifier(legacy: LegacyClassifier): Classifier {
-	return {
-		id: legacy.name,
-		emits: legacy.componentTags,
-		locales: legacy.locales ?? ["*"],
-		async classify(section, context) {
-			const raw = await legacy.run(section)
-			return raw.map((r) => ({
-				span: r.span,
-				component: r.tag,
-				confidence: r.confidence ?? 1.0,
-				source: "rule" as const,
-				source_id: legacy.name,
-				penalty: r.penalty ?? 0,
-			}))
-		},
-	}
-}
-```
-
-Goal: a one-pass refactor wraps every existing rule classifier without changing rule logic.
+`createNeuralProposalClassifier` in `@mailwoman/neural` is the one implementation. It runs the neural classifier on each section it receives and emits one proposal per tree node whose tag is in `emits`.
 
 ## Policy interface
 
@@ -133,7 +106,7 @@ Goal: a one-pass refactor wraps every existing rule classifier without changing 
 ```ts
 // packages/core/src/policy.ts
 
-export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+export type PolicyMode = "neural_only" | "both"
 
 export interface ClassifierPolicy {
 	component: ComponentTag
@@ -158,7 +131,7 @@ export interface PolicyRegistry {
 }
 ```
 
-Default policy table is in `packages/core/lib/policy/defaults.ts`. Initial state: every component is `rule_only`. Migrations to other modes happen via explicit commits with accompanying metric evidence.
+Default policy table is in `packages/core/lib/policy/defaults.ts`. Every component starts at `neural_only`, which retains the `neural` source. `both` also retains the `merged` source. A per-component change is recorded there with its rationale in the commit message.
 
 ## Locale interface
 
@@ -173,9 +146,6 @@ export interface LocaleProfile {
 
 	/** Npm package providing ONNX weights and tokenizer. */
 	weightsPackage?: string
-
-	/** Rule classifier IDs active in this locale. */
-	ruleClassifiers: string[]
 
 	/** Components this locale uses. Subset of COMPONENT_TAGS. */
 	componentsSupported: ComponentTag[]

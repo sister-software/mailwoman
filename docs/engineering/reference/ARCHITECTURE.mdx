@@ -99,46 +99,43 @@ The split between `neural/` (runtime) and `neural-weights-*/` (data) is delibera
 
 ### `ClassificationProposal`
 
-`ClassificationProposal` is the shape every classifier produces. It replaces the ad-hoc shape that rule classifiers currently use. See `reference/INTERFACES.md`.
+`ClassificationProposal` is the shape every classifier produces. See `reference/INTERFACES.md`.
 
 ```ts
 interface ClassificationProposal {
 	span: Span
 	component: ComponentTag
 	confidence: number // 0..1
-	source: "rule" | "neural" | "merged"
-	source_id: string // 'house_number' for rule, 'neural-v0.3-en-us' for neural
+	source: "neural" | "merged"
+	source_id: string // 'neural-v0.3-en-us' for neural
 	penalty: number
 	metadata?: Record<string, unknown>
 }
 ```
 
-Existing rule classifiers wrap their output in this shape, and the neural classifier emits the same shape. The solver treats proposals from both sources identically.
-
 ### `ClassifierPolicy`
 
-`ClassifierPolicy` is per-component configuration that decides which classifier(s) have authority for that component. It controls the gradual, component-by-component replacement of rule classifiers with the neural classifier.
+`ClassifierPolicy` is per-component configuration that decides which proposal sources are retained for that component.
 
 ```ts
 interface ClassifierPolicy {
 	component: ComponentTag
-	mode: "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+	mode: "neural_only" | "both"
 	confidence_threshold?: number
 	locale?: string // policy can vary per locale
 }
 ```
 
-The default policy is `rule_only` for every component until the neural classifier ships. Migration then happens one component at a time, based on golden-set metrics.
+The default policy is `neural_only` for every component.
 
 ### `LocaleProfile`
 
-`LocaleProfile` holds locale-specific behavior: which weights package to load, which rule classifiers apply, and which synthesis rules govern training data generation.
+`LocaleProfile` holds locale-specific behavior: which weights package to load, which components the locale uses, and which per-component policies apply.
 
 ```ts
 interface LocaleProfile {
 	locale: string // 'en-US', 'fr-FR', 'ja-JP'
 	weightsPackage: string // npm package name
-	ruleClassifiers: string[] // identifiers of rule classifiers active for this locale
 	componentsSupported: ComponentTag[] // not every locale supports every tag (e.g. JP has no `street`)
 	policy: ClassifierPolicy[]
 }
@@ -146,7 +143,7 @@ interface LocaleProfile {
 
 ## Locale strategy
 
-Locales are first-class, and the system does not assume English. Every classifier (rule or neural) declares which locales it serves.
+Locales are first-class, and the system does not assume English. Every classifier declares which locales it serves.
 
 - A US-only deployment loads the `en-US` profile, the English rule classifiers, and the US weights.
 - A multi-locale deployment loads all configured profiles. A `LocaleDetector` handles per-input locale detection separately (Phase 2 work; v0 can require an explicit locale).

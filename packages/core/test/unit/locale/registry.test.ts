@@ -33,7 +33,7 @@ describe("InMemoryLocaleRegistry — registration", () => {
 	test("re-registering the same locale replaces the prior entry", () => {
 		const registry = new InMemoryLocaleRegistry()
 		registry.register(enUS)
-		const altered = { ...enUS, ruleClassifiers: ["overridden"] }
+		const altered = { ...enUS, weightsPackage: "@mailwoman/neural-weights-overridden" }
 		registry.register(altered)
 		expect(registry.get("en-US")).toBe(altered)
 	})
@@ -53,7 +53,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "xx-XX",
-				ruleClassifiers: [],
 				// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				componentsSupported: ["country", "not_a_real_tag" as any],
 				policy: [],
@@ -67,7 +66,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "",
-				ruleClassifiers: [],
 				componentsSupported: [],
 				policy: [],
 			})
@@ -80,7 +78,6 @@ describe("InMemoryLocaleRegistry — validation", () => {
 		expect(() =>
 			registry.register({
 				locale: "en-US",
-				ruleClassifiers: [],
 				componentsSupported: ["country"],
 				policy: [{ component: "postcode", mode: "neural_only" }],
 			})
@@ -110,8 +107,6 @@ describe("LocaleProfile — bundled profiles", () => {
 		for (const tag of expected) {
 			expect(enUS.componentsSupported).toContain(tag)
 		}
-
-		expect(enUS.ruleClassifiers.length).toBeGreaterThan(0)
 	})
 
 	test("fr-FR adds cedex, dependent_locality, street_prefix_particle", () => {

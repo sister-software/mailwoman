@@ -3,14 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Locale-profile types (per #6 §LocaleProfile). A `LocaleProfile` declares everything
- *   locale-specific about classification: which weights package (if any) backs the neural
- *   classifier, which rule classifier IDs are active, which `ComponentTag`s the locale actually
- *   uses, and any per-component policy overrides.
+ *   Locale-profile types. A `LocaleProfile` declares everything locale-specific about
+ *   classification: which weights package (if any) backs the neural classifier, which
+ *   `ComponentTag`s the locale uses, and any per-component policy overrides.
  *
- *   The classifier IDs in `ruleClassifiers` are the stable `ProposalClassifier.id` values that
- *   `wrapLegacyClassifier` assigns when the legacy classifier registry lands (see the Phase 0
- *   task-3 follow-up in decisions.md).
+ *   A profile is keyed by its `locale` field, and `InMemoryLocaleRegistry.get` returns it for that
+ *   exact BCP-47 tag.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -26,18 +24,9 @@ export interface LocaleProfile {
 	/**
 	 * Npm package providing ONNX weights and tokenizer for the neural classifier in this locale.
 	 *
-	 * Optional — Phase 0 ships no weights.
-	 * A locale without a weights package runs rule-only.
+	 * A locale without a weights package has no classifier of its own.
 	 */
 	weightsPackage?: string
-
-	/**
-	 * Rule classifier IDs active in this locale.
-	 *
-	 * Stable identifiers declared by `ProposalClassifier.id`.
-	 * An empty list means the locale relies entirely on neural inference.
-	 */
-	ruleClassifiers: string[]
 
 	/**
 	 * Components this locale uses.

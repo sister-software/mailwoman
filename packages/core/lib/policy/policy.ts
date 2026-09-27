@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Policy types for selecting rule and neural proposals by component and locale.
+ *   Policy types for selecting classifier proposals by component and locale.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -12,8 +12,11 @@ import type { ClassificationProposal } from "#types"
 
 /**
  * Which classifier proposals to retain for a component.
+ *
+ * `neural_only` retains the `neural` source.
+ * `both` retains the `neural` and `merged` sources.
  */
-export type PolicyMode = "rule_only" | "neural_only" | "both" | "neural_preferred" | "rule_preferred"
+export type PolicyMode = "neural_only" | "both"
 
 /**
  * Policy for one component, optionally scoped to a locale.

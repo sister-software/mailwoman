@@ -45,7 +45,7 @@ export { localeToCountry, resolverDefaultCountry } from "#country-scope"
  */
 export type { CountryScope } from "#country-scope"
 
-const POLICY_MODES: readonly PolicyMode[] = ["rule_only", "neural_only", "both", "neural_preferred", "rule_preferred"]
+const POLICY_MODES: readonly PolicyMode[] = ["neural_only", "both"]
 const POLICY_SPEC_RE = /^([a-z_]+)=([a-z_]+)$/u
 
 /**
@@ -105,7 +105,7 @@ export const spec = {
 			type: "string",
 			multiple: true,
 			validate: (v: string) => POLICY_SPEC_RE.test(v),
-			description: "Repeatable component policy override",
+			description: "Repeatable component policy override, <component>=<neural_only|both>",
 		},
 		resolve: { type: "boolean", default: false, description: "Resolve parsed nodes against WOF" },
 		"resolve-db": { type: "string", description: "WOF SQLite distribution" },
@@ -753,13 +753,7 @@ async function runNeural(
 	if (policyOverrides.length) {
 		// The policy path loses containment nesting, as explained in `proposals-to-tree.ts`.
 		const proposalCls = createNeuralProposalClassifier({ id: `neural-cli-${options.locale}`, classifier: neural })
-		// The CLI runs no rule classifiers, so the registry's `rule_only` defaults would drop every proposal.
-		// Every component therefore starts at `neural_only`, and the user's overrides apply on top.
 		const policy = InMemoryPolicyRegistry.withDefaults()
-
-		for (const entry of policy.entries()) {
-			policy.set({ component: entry.component, mode: "neural_only" })
-		}
 
 		for (const o of policyOverrides) {
 			policy.set({ component: o.component, mode: o.mode })

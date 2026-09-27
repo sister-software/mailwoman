@@ -159,30 +159,30 @@ mailwoman parse [options] <address...>
 | -------------- | -------- | ------------------------ |
 | `<address...>` | Yes      | Formatted postal address |
 
-| Flag                                  | Type                         | Default | Description                          |
-| ------------------------------------- | ---------------------------- | ------- | ------------------------------------ |
-| `--debug`                             | boolean                      | `false` | Enable verbose output                |
-| `--input-mode [input-mode]`           | `fragmented` \| `formatted`  | —       | Input register                       |
-| `--locale [locale]`                   | string                       | `en-US` | BCP-47 locale                        |
-| `--default-country [default-country]` | string                       | —       | Resolver country scope               |
-| `--country-scope [country-scope]`     | `auto` \| `locale` \| `none` | `auto`  | Locale country-scoping policy        |
-| `--no-admin-coherence`                | boolean                      | `true`  | Joint admin consistency              |
-| `--no-postcode-country-coherence`     | boolean                      | `true`  | Postcode country consistency         |
-| `--postcode-shape-coherence`          | boolean                      | `false` | Postcode shape consistency           |
-| `--postcode-containment-coherence`    | boolean                      | `false` | Postcode containment reranking       |
-| `--neural`                            | boolean                      | `false` | Use neural-only path                 |
-| `--no-poi`                            | boolean                      | `true`  | Enable POI query detection           |
-| `--download-weights`                  | boolean                      | `false` | Download missing weights             |
-| `--degraded`                          | boolean                      | `false` | Run structural stages only           |
-| `--format [format]`                   | `json` \| `tuple` \| `xml`   | `json`  | Output projection                    |
-| `--model [model]`                     | string                       | —       | Explicit model path                  |
-| `--tokenizer [tokenizer]`             | string                       | —       | Explicit tokenizer path              |
-| `--policy [policy...]`                | string[]                     | —       | Repeatable component policy override |
-| `--resolve`                           | boolean                      | `false` | Resolve parsed nodes against WOF     |
-| `--resolve-db [resolve-db]`           | string                       | —       | WOF SQLite distribution              |
-| `--no-street-evidence-rerank`         | boolean                      | `true`  | Rerank street from atlas evidence    |
-| `--candidates [candidates]`           | number                       | —       | Alternative resolutions per node     |
-| `--benchmark [benchmark]`             | number                       | —       | Benchmark iteration count            |
+| Flag                                  | Type                         | Default | Description                                                                       |
+| ------------------------------------- | ---------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `--debug`                             | boolean                      | `false` | Enable verbose output                                                             |
+| `--input-mode [input-mode]`           | `fragmented` \| `formatted`  | —       | Input register                                                                    |
+| `--locale [locale]`                   | string                       | `en-US` | BCP-47 locale                                                                     |
+| `--default-country [default-country]` | string                       | —       | Resolver country scope                                                            |
+| `--country-scope [country-scope]`     | `auto` \| `locale` \| `none` | `auto`  | Locale country-scoping policy                                                     |
+| `--no-admin-coherence`                | boolean                      | `true`  | Joint admin consistency                                                           |
+| `--no-postcode-country-coherence`     | boolean                      | `true`  | Postcode country consistency                                                      |
+| `--postcode-shape-coherence`          | boolean                      | `false` | Postcode shape consistency                                                        |
+| `--postcode-containment-coherence`    | boolean                      | `false` | Postcode containment reranking                                                    |
+| `--neural`                            | boolean                      | `false` | Use neural-only path                                                              |
+| `--no-poi`                            | boolean                      | `true`  | Enable POI query detection                                                        |
+| `--download-weights`                  | boolean                      | `false` | Download missing weights                                                          |
+| `--degraded`                          | boolean                      | `false` | Run structural stages only                                                        |
+| `--format [format]`                   | `json` \| `tuple` \| `xml`   | `json`  | Output projection                                                                 |
+| `--model [model]`                     | string                       | —       | Explicit model path                                                               |
+| `--tokenizer [tokenizer]`             | string                       | —       | Explicit tokenizer path                                                           |
+| `--policy [policy...]`                | string[]                     | —       | Repeatable component policy override, &lt;component&gt;=&lt;neural_only\|both&gt; |
+| `--resolve`                           | boolean                      | `false` | Resolve parsed nodes against WOF                                                  |
+| `--resolve-db [resolve-db]`           | string                       | —       | WOF SQLite distribution                                                           |
+| `--no-street-evidence-rerank`         | boolean                      | `true`  | Rerank street from atlas evidence                                                 |
+| `--candidates [candidates]`           | number                       | —       | Alternative resolutions per node                                                  |
+| `--benchmark [benchmark]`             | number                       | —       | Benchmark iteration count                                                         |
 
 ### `mailwoman poi`
 

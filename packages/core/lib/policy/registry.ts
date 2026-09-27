@@ -32,12 +32,12 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	#entries = new Map<string, ClassifierPolicy>()
 
 	/**
-	 * Build a registry pre-loaded with `mode` for every component (default `rule_only`).
+	 * Build a registry pre-loaded with `mode` for every component (default `neural_only`).
 	 *
 	 * The input-shape router (#478) passes a shape-derived default so the whole
 	 * table starts from the routed prior.
 	 */
-	static withDefaults(mode: PolicyMode = "rule_only"): InMemoryPolicyRegistry {
+	static withDefaults(mode: PolicyMode = "neural_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()
 
 		for (const policy of buildDefaultPolicies(mode)) {
@@ -85,7 +85,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	}
 
 	apply(proposals: readonly ClassificationProposal[], locale?: string): ClassificationProposal[] {
-		const passedThreshold: ClassificationProposal[] = []
+		const retained: ClassificationProposal[] = []
 		const policyByComponent = new Map<ComponentTag, ClassifierPolicy>()
 
 		for (const proposal of proposals) {
@@ -98,69 +98,21 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 
 			if (!matchesMode(proposal, policy.mode)) continue
 
-			passedThreshold.push(proposal)
+			retained.push(proposal)
 		}
 
-		return applyPreferenceFilters(passedThreshold, policyByComponent)
-	}
-}
-
-function matchesMode(proposal: ClassificationProposal, mode: PolicyMode): boolean {
-	switch (mode) {
-		case "rule_only":
-			return proposal.source === "rule"
-		case "neural_only":
-			return proposal.source === "neural"
-		case "both":
-		case "rule_preferred":
-		case "neural_preferred":
-			return proposal.source === "rule" || proposal.source === "neural" || proposal.source === "merged"
+		return retained
 	}
 }
 
 /**
- * Second pass for `rule_preferred` / `neural_preferred`: within each component,
- * drop the dispreferred source when the preferred source has at least one survivor.
+ * Decide whether a proposal's source is admitted under a mode.
  */
-function applyPreferenceFilters(
-	proposals: readonly ClassificationProposal[],
-	policyByComponent: ReadonlyMap<ComponentTag, ClassifierPolicy>
-): ClassificationProposal[] {
-	const grouped = new Map<ComponentTag, ClassificationProposal[]>()
-
-	for (const proposal of proposals) {
-		const list = grouped.get(proposal.component) ?? []
-		list.push(proposal)
-		grouped.set(proposal.component, list)
+function matchesMode(proposal: ClassificationProposal, mode: PolicyMode): boolean {
+	switch (mode) {
+		case "neural_only":
+			return proposal.source === "neural"
+		case "both":
+			return true
 	}
-
-	const out: ClassificationProposal[] = []
-
-	for (const [component, list] of grouped) {
-		const policy = policyByComponent.get(component)
-
-		if (!policy) {
-			out.push(...list)
-
-			continue
-		}
-
-		if (policy.mode === "neural_preferred") {
-			const hasNeural = list.some((p) => p.source === "neural")
-			out.push(...(hasNeural ? list.filter((p) => p.source !== "rule") : list))
-
-			continue
-		}
-
-		if (policy.mode === "rule_preferred") {
-			const hasRule = list.some((p) => p.source === "rule")
-			out.push(...(hasRule ? list.filter((p) => p.source !== "neural") : list))
-
-			continue
-		}
-
-		out.push(...list)
-	}
-
-	return out
 }

@@ -12,9 +12,10 @@
  *   2. A migration plan for corpus rows tagged with the prior schema.
  *   3. A same-commit check that alignment, training, and inference code is updated to match.
  *
- *   The legacy `Classifications` set in `../classification/scheme.ts` is kept independent on purpose:
- *   rule classifiers continue to emit those, the neural classifier emits these. The bridge between
- *   the two lives in the adapter layer (see #6).
+ *   `Classification` in `@mailwoman/core/types` is a separate label set that `Span` still carries
+ *   and that the legacy parity fixtures are keyed by. `legacyClassificationToComponentTag` in
+ *   `@mailwoman/core/types/mapping` translates a `Classification` into a `ComponentTag`, and the
+ *   parity-fixture converter is its consumer.
  */
 
 /**

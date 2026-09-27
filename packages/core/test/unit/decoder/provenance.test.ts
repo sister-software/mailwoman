@@ -41,40 +41,40 @@ describe("Phase 4.1 source provenance", () => {
 	describe("proposalsToTree", () => {
 		test("threads source + source_id from ClassificationProposal onto AddressNode", () => {
 			const tree = proposalsToTree(PARIS_RAW, [
-				proposal("75004", 0, "postcode", "rule", "postcode"),
-				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
+				proposal("75004", 0, "postcode", "merged", "postcode"),
+				proposal("Paris", 6, "locality", "merged", "whos_on_first"),
 				proposal("FR", 13, "country", "neural", "neural-v0.3.1-en-us"),
 			])
 
 			expect(tree.roots).toHaveLength(3)
-			expect(tree.roots[0]).toMatchObject({ tag: "postcode", source: "rule", sourceID: "postcode" })
-			expect(tree.roots[1]).toMatchObject({ tag: "locality", source: "rule", sourceID: "whos_on_first" })
+			expect(tree.roots[0]).toMatchObject({ tag: "postcode", source: "merged", sourceID: "postcode" })
+			expect(tree.roots[1]).toMatchObject({ tag: "locality", source: "merged", sourceID: "whos_on_first" })
 			expect(tree.roots[2]).toMatchObject({ tag: "country", source: "neural", sourceID: "neural-v0.3.1-en-us" })
 		})
 
 		test("XML serializer emits src='<source>:<sourceID>' attribute", () => {
-			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", "whos_on_first")])
+			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "merged", "whos_on_first")])
 			const xml = decodeAsXML(tree)
-			expect(xml).toContain(`src="rule:whos_on_first"`)
+			expect(xml).toContain(`src="merged:whos_on_first"`)
 		})
 
 		test("includeSrc=false suppresses the src attribute", () => {
-			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", "whos_on_first")])
+			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "merged", "whos_on_first")])
 			const xml = decodeAsXML(tree, { includeSrc: false })
 			expect(xml).not.toContain(`src=`)
 			expect(xml).toContain(`conf=`) // other attrs unaffected
 		})
 
 		test("escapes XML special chars in src attribute", () => {
-			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "rule", `evil"&<>`)])
+			const tree = proposalsToTree(PARIS_RAW, [proposal("Paris", 6, "locality", "merged", `evil"&<>`)])
 			const xml = decodeAsXML(tree)
-			expect(xml).toContain(`src="rule:evil&quot;&amp;&lt;&gt;"`)
+			expect(xml).toContain(`src="merged:evil&quot;&amp;&lt;&gt;"`)
 		})
 
 		test("JSON projection is unchanged when provenance is set", () => {
 			const tree = proposalsToTree(PARIS_RAW, [
-				proposal("75004", 0, "postcode", "rule", "postcode"),
-				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
+				proposal("75004", 0, "postcode", "merged", "postcode"),
+				proposal("Paris", 6, "locality", "merged", "whos_on_first"),
 			])
 
 			expect(decodeAsJSON(tree)).toEqual({ postcode: "75004", locality: "Paris" })
@@ -82,8 +82,8 @@ describe("Phase 4.1 source provenance", () => {
 
 		test("tuple projection is unchanged when provenance is set", () => {
 			const tree = proposalsToTree(PARIS_RAW, [
-				proposal("75004", 0, "postcode", "rule", "postcode"),
-				proposal("Paris", 6, "locality", "rule", "whos_on_first"),
+				proposal("75004", 0, "postcode", "merged", "postcode"),
+				proposal("Paris", 6, "locality", "merged", "whos_on_first"),
 			])
 
 			expect(decodeAsTuples(tree)).toEqual([
@@ -141,11 +141,11 @@ describe("Phase 4.1 source provenance", () => {
 		})
 
 		test("omits sourceID when only source is set", () => {
-			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { source: "rule" })
-			expect(tree.roots[0]!.source).toBe("rule")
+			const tree = buildAddressTree(NYC_RAW, NYC_TOKENS, { source: "merged" })
+			expect(tree.roots[0]!.source).toBe("merged")
 			expect(tree.roots[0]!.sourceID).toBeUndefined()
 			const xml = decodeAsXML(tree)
-			expect(xml).toContain(`src="rule"`)
+			expect(xml).toContain(`src="merged"`)
 		})
 
 		test("no opts → no src attribute (backwards compatible)", () => {

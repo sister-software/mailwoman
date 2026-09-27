@@ -3,17 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Classifier-side interfaces for the neural integration (per #6).
+ *   Interfaces between a classifier and the policy layer.
  *
- *   These interfaces are deliberately distinct from the existing `Classifier` shape in
- *   `../classification/BaseClassifier.ts`. The legacy shape is mutation-based —
- *   `classifyTokens(context): void` — and runs synchronously over the span graph. The shape
- *   declared here is pull-based and async: a classifier returns a list of `ClassificationProposal`
- *   objects keyed by the canonical `ComponentTag` union.
- *
- *   The neural classifier implements this interface natively. The rule classifiers that once
- *   also implemented it (via a `wrapLegacyClassifier` adapter) were removed in v7.0.0 with the
- *   `@mailwoman/classifiers` workspace. this interface now describes the neural path only.
+ *   A classifier is pull-based and async: given a section of the input, it returns a list of
+ *   `ClassificationProposal` objects keyed by the canonical `ComponentTag` union. The policy registry
+ *   filters those proposals by component and locale, and the decoder converts the survivors into an
+ *   `AddressTree`. `@mailwoman/neural` provides the one classifier implementation.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -21,32 +16,28 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import type { Span } from "#tokenization/index"
 
 /**
- * Sections in Mailwoman are sub-Spans of the tokenized input
- * (split by boundary characters: commas, line breaks, etc.).
+ * A section is a sub-span of the input that a classifier receives as one unit.
  *
- * They are surfaced as `Span` instances in `TokenContext.sections`;
- * this alias documents the call-site intent.
+ * A caller may split the input at boundary characters such as commas and line breaks.
+ * A caller may also pass the whole input as a single section.
+ * The alias documents the call-site intent.
  */
 export type Section = Span
 
 /**
  * Source of a `ClassificationProposal`.
  *
- * Drives policy decisions and downstream telemetry.
+ * The policy registry selects proposals by source, and telemetry groups them by it.
  *
- * - `rule`: emitted by a legacy rule classifier through the adapter.
  * - `neural`: emitted by an ONNX-backed sequence classifier.
- * - `merged`: synthetic source for a merger that fused proposals from multiple
- *   classifiers (rare. Mostly for telemetry on `merged` ids).
+ * - `merged`: synthetic source for a merger that fused proposals from multiple classifiers.
  */
-export type ClassificationProposalSource = "rule" | "neural" | "merged"
+export type ClassificationProposalSource = "neural" | "merged"
 
 /**
- * A typed classification candidate produced by any classifier.
+ * A typed classification candidate produced by a classifier.
  *
- * Mirrors Mailwoman's pre-refactor per-component output shape with the addition
- * of `source` and `source_id` so downstream code can identify the origin of each
- * proposal without consulting external state.
+ * `source` and `source_id` identify the origin of each proposal without external state.
  */
 export interface ClassificationProposal {
 	/**
@@ -65,15 +56,14 @@ export interface ClassificationProposal {
 	confidence: number
 
 	/**
-	 * Provenance — which classifier family produced this proposal.
+	 * The classifier family that produced this proposal.
 	 */
 	source: ClassificationProposalSource
 
 	/**
 	 * Identifier of the specific classifier instance.
 	 *
-	 * Rule wrappers use the legacy classifier's stable id (e.g. `house_number`, `postcode`, `whos_on_first`).
-	 * Neural classifiers use a versioned model id like `neural-v0.3.1-en-us`.
+	 * A neural classifier uses a versioned model id such as `neural-v0.3.1-en-us`.
 	 */
 	source_id: string
 
@@ -88,7 +78,6 @@ export interface ClassificationProposal {
 	 * Opaque metadata for debugging and telemetry.
 	 *
 	 * Never consulted by the solver.
-	 * Common keys: `languages`, `flags`, `legacyClassification`.
 	 */
 	metadata?: Record<string, unknown>
 }
@@ -132,7 +121,7 @@ export interface ProposalClassifier {
 	/**
 	 * Components this classifier may emit.
 	 *
-	 * Enforced — proposals for tags outside this list are dropped by the adapter with a warning.
+	 * An implementation restricts its own output to this list.
 	 */
 	readonly emits: readonly ComponentTag[]
 
@@ -153,19 +142,8 @@ export interface ProposalClassifier {
 	/**
 	 * Classify a section.
 	 *
-	 * Implementations must not throw — return an empty array on failure and log via the project logger.
+	 * Implementations must not throw.
+	 * They return an empty array on failure and log via the project logger.
 	 */
 	classify(section: Section, context: ClassifierContext): Promise<ClassificationProposal[]>
-}
-
-/**
- * Convenience: synchronous classifier (legacy rule wrappers usually fit here).
- *
- * The adapter wraps these into the async `ProposalClassifier` interface so the solver path stays uniform.
- */
-export interface SyncProposalClassifier {
-	readonly id: string
-	readonly emits: readonly ComponentTag[]
-	readonly locales: readonly (string | "*")[]
-	classifySync(section: Section, context: ClassifierContext): ClassificationProposal[]
 }
