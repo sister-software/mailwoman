@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Docusaurus runtime-asset staging and bundle-policy entry point: the sql.js worker the explainers resolve
- *   through, the MapLibre worker the dashboard map spawns, and the webpack aliases and shim policy for the packages
- *   the explainers import.
+ *   through, the MapLibre worker the dashboard map spawns, the webpack aliases and shim policy for the packages
+ *   the explainers import, and the published data-bundle summary the data-products page reads as global data.
  */
 
 import type { LoadContext, Plugin } from "@docusaurus/types"
@@ -13,9 +13,10 @@ import { stageSQLJSAssets } from "@mailwoman/resolver-wof-wasm/host-assets"
 import { resolvePath } from "path-ts"
 
 import { stageMapLibreWorker } from "./artifacts.ts"
+import { type RuntimeAssetsGlobalData, summarizePublishedBundles } from "./bundles.ts"
 import { bundleAliases, configureRuntimeWebpack } from "./webpack-policy.ts"
 
-export default async function runtimeAssetsPlugin(context: LoadContext): Promise<Plugin> {
+export default async function runtimeAssetsPlugin(context: LoadContext): Promise<Plugin<RuntimeAssetsGlobalData>> {
 	const docsDir = context.siteDir
 	const staticDir = resolvePath(docsDir, "static", "mailwoman")
 
@@ -38,7 +39,7 @@ export default async function runtimeAssetsPlugin(context: LoadContext): Promise
 			await makeDirectories(maplibreDir)
 			await stageMapLibreWorker(maplibreDir)
 
-			return {}
+			return summarizePublishedBundles()
 		},
 
 		async contentLoaded({ content, actions }) {

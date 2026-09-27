@@ -80,9 +80,15 @@ records the source, release and license it was built from. The catalog of source
 
 Two items on that page matter to a review, and we would rather you heard them from us:
 
-- **The OpenStreetMap precision tier is built but not enabled** in any published artifact, either
-  on npm or in the demo. OSM data is share-alike, and enabling the tier is waiting on legal review.
-  No package you install today carries an ODbL obligation from it.
+- **The OpenStreetMap rooftop tier reaches no published artifact.** The rooftop extracts in
+  `@mailwoman/osm` are built and deliberately unpublished, on npm and in the demo alike, because OSM
+  data is share-alike and enabling that tier is waiting on legal review. The served `candidate`
+  gazetteer does carry a Northern Ireland postcode fold derived from OpenStreetMap under ODbL: 4,757
+  places, measured 2026-09-27 by downloading `gazetteer/2026-08-25b/candidate.db` in full and
+  counting the rows in that fold's id range. What ODbL asks of that is with counsel, and this page
+  states no conclusion about it. The
+  [data products](../product/data-products.mdx#as-served) page shows what each published bundle's
+  own manifest records.
 - **One source's license is recorded inconsistently in our own files.** Who's On First appears as
   CC0 in the provenance catalog and as CC-BY 4.0 in the resolver package's own notes. Until that is
   settled, attribute Who's On First.
