@@ -119,6 +119,21 @@ describe("readLicenseRecord", () => {
 		expect(record.resolution).toBe(LicenseResolution.Unresolved)
 		expect(record.obligations).toEqual([])
 	})
+
+	it("resolves the two publisher terms documents that name no SPDX license", () => {
+		// Both retrieved 2026-09-27 and retained under internal/strategy/rights-receipts/mx-gb-2026-09-27/.
+		// INEGI's document names no Creative Commons license and carries no version,
+		// and the ONS licences page spells OGL v3.0 with a dot after the v.
+		const inegi = readLicenseRecord("Términos de Libre Uso de la Información del INEGI")
+		const ons = readLicenseRecord("Open Government Licence v.3.0")
+
+		expect(inegi.expression).toBe("LicenseRef-INEGI-Terms")
+		expect(inegi.obligations).toEqual([LicenseObligation.Attribution])
+		expect(carriesShareAlike(inegi)).toBe(false)
+
+		expect(ons.expression).toBe("OGL-UK-3.0")
+		expect(ons.obligations).toEqual([LicenseObligation.Attribution])
+	})
 })
 
 describe("attributionEntries", () => {

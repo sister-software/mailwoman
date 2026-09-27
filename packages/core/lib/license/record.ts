@@ -108,6 +108,10 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 	// The `meta.license` value in `postalcode-gb-codepoint.db`, measured 2026-09-27.
 	// Its `meta.attribution` names Ordnance Survey Crown copyright and Royal Mail copyright.
 	["Open Government Licence v3.0", "OGL-UK-3.0"],
+	["Open Government Licence v.3.0", "OGL-UK-3.0"],
+	// INEGI's own terms document, which names no Creative Commons license.
+	// Retrieved 2026-09-27, retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/.
+	["Términos de Libre Uso de la Información del INEGI", "LicenseRef-INEGI-Terms"],
 ])
 
 /**

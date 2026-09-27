@@ -69,6 +69,13 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// The grant is void without the attribution statement, so the per-agency
 	// attribution list ships with the data.
 	["OGDL-Taiwan-1.0", [LicenseObligation.Attribution]],
+	// Mexico's national statistics institute publishes under its own "Términos de Libre Uso de
+	// la Información del INEGI", which names no Creative Commons license and carries no version.
+	// The terms permit copying, publishing, adapting, extracting and commercial use,
+	// and require the credit `Fuente: INEGI, <product name>`.
+	// They state no share-alike term.
+	// Retrieved 2026-09-27 and retained at internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html.
+	["LicenseRef-INEGI-Terms", [LicenseObligation.Attribution]],
 	["MIT", [LicenseObligation.Attribution]],
 	["Apache-2.0", [LicenseObligation.Attribution]],
 ])

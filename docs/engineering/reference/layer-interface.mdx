@@ -19,7 +19,7 @@ primitives, the `mailwoman_layer_manifest` MCP tool, the planned `layer_query`),
 consumer does not need to know where the data came from.
 
 This page describes the interface in prose for layer authors. The code lives in
-[`core/layers/`](https://github.com/sister-software/mailwoman/tree/main/core/layers)
+[`packages/core/lib/layers/`](https://github.com/sister-software/mailwoman/tree/main/packages/core/lib/layers)
 (`schema.ts` defines the tables, and `manifest.ts` handles read/write IO). The design
 rationale is in the spec listed in the front matter. If you are building a specific layer,
 read the worked example first. The [POI layer runbook](./poi-layer-runbook.mdx) records the
@@ -102,10 +102,11 @@ treat every row at another resolution as absent, which is the false negative thi
 designed to prevent.
 
 **`layer_coverage` has a SINGLE resolution, which is a third, separate value.**
-`recoverCoverageResolution` recovers one resolution from the stored coverage cells and throws on a
-table that mixes resolutions, so the coverage tier is never compacted. Three resolutions therefore
-coexist in one artifact: the manifest's index target, the per-row cell resolutions, and the
-coverage resolution. Read each one from where it is stored, and never infer one from another.
+`recoverShortCellResolution` in `@mailwoman/spatial` recovers one resolution from the stored coverage
+cells and throws on a table that mixes resolutions, so the coverage tier is never compacted. Three
+resolutions therefore coexist in one artifact: the manifest's index target, the per-row cell
+resolutions, and the coverage resolution. Read each one from where it is stored, and never infer
+one from another.
 
 ### A polygon builder must bound its h3 work, and must refuse an empty answer
 
@@ -425,11 +426,17 @@ unrecognized on every machine that opens it.
 | `LicenseRef-USGov-Public-Domain` | a work of the United States Government, 17 U.S.C. § 105 — SSURGO, the FCC BDC filings; SPDX has no identifier for it                                                               | none        |
 | `LicenseRef-WhosOnFirst-Mixed`   | the Who's On First records, which carry 102 upstream sources' terms. Its own text grants CC0 over "the format and structure", in those words, and states no grant over the records | unknown     |
 | `LicenseRef-Undeclared-Input`    | a fold whose own database declared no terms this build could read. `candidateLayerManifest` adds it rather than leaving the fold out of the expression                             | unknown     |
+| `LicenseRef-INEGI-Terms`         | Mexico's `Términos de Libre Uso de la Información del INEGI`, which names no Creative Commons license and carries no version. Retrieved 2026-09-27                                 | attribution |
 
-The last two are deliberately absent from the obligations table, so `summarizeLicense` reports them as
-unrecognized and `refusalsForPublication` refuses a layer carrying either. A grant nobody has read carries
-unknown obligations rather than none, and an expression that omitted the fold would read as a complete
-list of the artifact's terms.
+`LicenseRef-WhosOnFirst-Mixed` and `LicenseRef-Undeclared-Input` are deliberately absent from the
+obligations table, so `summarizeLicense` reports them as unrecognized and `refusalsForPublication` refuses
+a layer carrying either. A grant nobody has read carries unknown obligations rather than none, and an
+expression that omitted the fold would read as a complete list of the artifact's terms.
+
+`LicenseRef-INEGI-Terms` is in the table, because its terms were read. They permit copying, publishing,
+adapting, extracting and commercial use, require the credit `Fuente: INEGI, <product name>`, and state no
+share-alike term. The retained bytes are
+`internal/strategy/rights-receipts/mx-gb-2026-09-27/mx-inegi-terminos.html`.
 
 Measured 2026-09-27: 28 of the 28 postcode and locality databases under `db/wof/` carry no
 `layer_manifest`. Two record their terms in a `meta` key/value table instead, as prose —
