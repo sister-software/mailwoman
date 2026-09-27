@@ -19,8 +19,63 @@
  *   and needs no database to exercise. The caller reading them decides what to do with a refusal.
  */
 
+import { stringifyJSON } from "#json"
 import { LayerTier } from "#layers/schema"
 import { LicenseObligation, summarizeLicense } from "#license/obligations"
+import { carriesShareAlike, LicenseResolution, readLicenseRecord } from "#license/record"
+
+/**
+ * Throws when a manifest's tier contradicts what its license expression establishes.
+ *
+ * `shipped` requires a resolved expression that carries no share-alike obligation.
+ * `build-local` is the tier for a source that cannot be published, so it refuses a resolved
+ * expression whose obligations stop at attribution, because such a layer is publishable.
+ *
+ * An unresolved expression is accepted at `build-local`, because unknown obligations
+ * are a reason to withhold publication.
+ * `private` makes no claim about the license.
+ *
+ * @param subject The tier and license expression about to be stamped.
+ * @param context Names the build in the error message.
+ * @param detail Appended to the message where the caller knows why the license reads as it does.
+ * @throws When the tier and the license disagree.
+ */
+export function assertTierMatchesLicense(
+	subject: { tier: string; license: string },
+	context: string,
+	detail?: string
+): void {
+	const record = readLicenseRecord(subject.license)
+	const suffix = detail ? ` ${detail}` : ""
+
+	if (subject.tier === LayerTier.Shipped) {
+		if (record.resolution === LicenseResolution.Unresolved) {
+			throw new Error(
+				`${context}: tier "shipped" was asked for while the license reads ${stringifyJSON(subject.license)}, ` +
+					`whose obligations are not recorded. An unrecognized license carries unknown obligations rather than none.${suffix}`
+			)
+		}
+
+		if (carriesShareAlike(record)) {
+			throw new Error(
+				`${context}: license ${subject.license} carries share-alike, so the layer cannot be tier "shipped".${suffix}`
+			)
+		}
+
+		return
+	}
+
+	if (
+		subject.tier === LayerTier.BuildLocal &&
+		record.resolution === LicenseResolution.Resolved &&
+		!carriesShareAlike(record)
+	) {
+		throw new Error(
+			`${context}: tier "build-local" was asked for while license ${subject.license} carries no share-alike ` +
+				`obligation. The tier is reserved for a source that cannot be published, and this one can be.${suffix}`
+		)
+	}
+}
 
 /**
  * One reason a layer may not be published, naming the field that says so.

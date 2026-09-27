@@ -15,7 +15,7 @@
  *
  *   The `whole` cells are compacted to coarser parents, so each row stores its own `resolution`. A lookup
  *   walks `cellToParent` up from the index resolution. `layer_coverage` stays at one resolution because
- *   `recoverCoverageResolution` throws on mixed resolutions.
+ *   `recoverShortCellResolution` from `@mailwoman/spatial` throws on mixed resolutions.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -88,7 +88,9 @@ export interface FloodZoneAreaTable {
 	max_lon: number
 	/**
 	 * Unsimplified ring coordinates.
-	 * `rings.ts` defines the encoding and the point test.
+	 *
+	 * `@mailwoman/spatial`'s ring-blob encoding defines the layout.
+	 * `pointInEncodedRings` is the point test.
 	 */
 	rings: Uint8Array
 }

@@ -29,8 +29,8 @@
  *   the whole-cell SET is compacted PER feature, SO IT is mixed-resolution. A row therefore carries its own
  *   `resolution`, and a probe walks `cellToParent` from the index resolution up to the coarsest resolution
  *   present. `layer_coverage` is not compacted and stays single-resolution, because
- *   `recoverCoverageResolution` recovers one resolution from the stored cells and throws on a table that
- *   mixes them.
+ *   `recoverShortCellResolution` from `@mailwoman/spatial` recovers one resolution from the stored cells
+ *   and throws on a table that mixes them.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -140,7 +140,9 @@ export interface CoastalZoneAreaTable {
 	max_lon: number
 	/**
 	 * The authority's ring coordinates, unsimplified.
-	 * See `rings.ts` for the layout and the point test.
+	 *
+	 * `@mailwoman/spatial`'s ring-blob encoding defines the layout.
+	 * `pointInEncodedRings` is the point test.
 	 */
 	rings: Uint8Array
 }

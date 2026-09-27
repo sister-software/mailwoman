@@ -12,8 +12,8 @@
  *   several overlap is Stage 5 reconcile's job (Thread D); this file asserts only that the grouper
  *   surfaces the correct proposals at usable confidence ranges.
  *
- *   See `docs/articles/plan/phases/PHASE_8_v0_5_0_fresh_slate.md` § E for the v0.5.0 context. See
- *   `docs/articles/concepts/the-knowledge-ladder.md` for the design rationale.
+ *   See `docs/records/plan/phases/PHASE_8_v0_5_0_fresh_slate.mdx` § E for the v0.5.0 context. See
+ *   `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` for the design rationale.
  */
 
 import type { PhraseKind, PhraseProposal } from "@mailwoman/core/pipeline"

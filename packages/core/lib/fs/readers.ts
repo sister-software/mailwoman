@@ -104,7 +104,7 @@ export function readLocalTextFile<S extends Array<PathBuilderLike | URL>>(...pat
 }
 
 /**
- * @deprecated Use `readPackageJSONFile` instead
+ * @deprecated Use `readPackageJSON` from `@mailwoman/core/module/resolve-from` instead
  */
 export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}/package.json`): Promise<never>
 

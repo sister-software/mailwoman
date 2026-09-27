@@ -337,15 +337,9 @@ export function geonamesAdminGapCountries(): string[] {
 /**
  * The country set a standalone fold re-derives.
  *
- * The same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
- * because the fold rewrites its whole id range and any narrower list drops the difference (#1514).
- *
- * It used to be the 14-country bilingual EU set this fold was born for
- * (#743/#193 — FI hard-resolve 69.5 → 85.8 %), from when the fold was a separate step run against
- * an unfolded admin. #1027 moved the fold inside `buildAdmin` and widened it to 161 countries.
- * The 14-country default outlived that and became the payload of the 2026-08-05 incident,
- * re-folding 212,993 places over the front of a 774,338-place range and leaving the rest
- * of the world's names attached to Austrian, Swiss and Lithuanian villages.
+ * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
+ * because the fold rewrites its whole id range, and a narrower list re-folds the front of
+ * that range while leaving every other country's names attached to the wrong places.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 

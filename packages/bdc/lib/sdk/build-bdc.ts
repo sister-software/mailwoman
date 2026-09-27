@@ -8,6 +8,7 @@ import { pathExists, readFileRange } from "@mailwoman/core/fs/readers"
 import { removePathIfPresent, movePath, makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerFreshnessPolicy,
@@ -506,12 +507,15 @@ export async function buildBDCDatabase(options: BuildBDCOptions): Promise<BuildB
 
 		progress("writing layer manifest")
 
+		const distribution = { tier: LayerTier.Shipped, license: "LicenseRef-USGov-Public-Domain" }
+
+		assertTierMatchesLicense(distribution, "bdc build")
+
 		await writeLayerManifest(db, {
 			name: "bdc",
 			version: options.asOfDate,
 			schemaVersion: 1,
-			tier: LayerTier.Shipped,
-			license: "LicenseRef-USGov-Public-Domain",
+			...distribution,
 			attribution: BDC_ATTRIBUTION,
 			source: "fcc-bdc",
 			sourceVintage: options.asOfDate,

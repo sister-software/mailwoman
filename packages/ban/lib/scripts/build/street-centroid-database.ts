@@ -23,11 +23,13 @@ import { gitHead } from "@mailwoman/core/git"
 import { md5File } from "@mailwoman/core/hash"
 import { tryParsingJSON, prettyJSON } from "@mailwoman/core/json"
 import {
+	assertTierMatchesLicense,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	type layerschemadatabase,
 	LayerFreshnessPolicy,
 	LayerTier,
+	scriptBuildCommand,
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
@@ -242,18 +244,21 @@ async function main(): Promise<void> {
 		await createLayerManifestTable(kdb)
 		await writeLayerCoverage(kdb, cells)
 
+		// `etalab-2.0` is the SPDX identifier the obligations table knows; `BAN_LICENSE` is a display string.
+		// The grant is attribution-only, so the layer is published like the situs extract it aggregates.
+		const distribution = { tier: LayerTier.Shipped, license: "etalab-2.0" }
+
+		assertTierMatchesLicense(distribution, "ban street-centroid build")
+
 		await writeLayerManifest(kdb, {
 			name: `street-centroids-${args.country}`,
 			version: args.release,
 			schemaVersion: 1,
-			tier: LayerTier.BuildLocal,
-			// This is the SPDX-style ID the obligations table knows.
-			// `BAN_LICENSE` is a display string.
-			license: "etalab-2.0",
+			...distribution,
 			attribution: BAN_ATTRIBUTION,
 			source,
 			sourceVintage: args.release,
-			buildCmd: "node packages/ban/out/scripts/build/street-centroid-database.js",
+			buildCmd: scriptBuildCommand(import.meta.url),
 			buildSHA: await gitHead(repoRootPath(), { short: true }),
 			freshnessPolicy: LayerFreshnessPolicy.VersionedRefresh,
 			spineKeys: { h3: { column: "layer_coverage.h3_cell", resolution: STREET_CENTROID_COVERAGE_RESOLUTION } },

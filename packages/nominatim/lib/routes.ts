@@ -196,7 +196,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	app.openapi(rootRoute, (c) => c.html(ROOT_HTML))
 
 	app.openapi(searchRoute, async (c) => {
-		if (!engine.search) return c.json({ error: "search not implemented (see #802)" }, 501)
+		if (!engine.search) return c.json({ error: "this engine does not implement search" }, 501)
 		const q = legacyQuery(c)
 
 		const params: NominatimSearchParams = {
@@ -233,7 +233,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	})
 
 	app.openapi(reverseRoute, async (c) => {
-		if (!engine.reverse) return c.json({ error: "reverse not implemented (see #803)" }, 501)
+		if (!engine.reverse) return c.json({ error: "this engine does not implement reverse" }, 501)
 		const q = legacyQuery(c)
 		const lat = Number(q["lat"])
 		const lon = Number(q["lon"])
@@ -269,7 +269,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 	})
 
 	app.openapi(lookupRoute, async (c) => {
-		if (!engine.lookup) return c.json({ error: "lookup not implemented (see #805)" }, 501)
+		if (!engine.lookup) return c.json({ error: "this engine does not implement lookup" }, 501)
 		const q = legacyQuery(c)
 
 		const params: NominatimLookupParams = {

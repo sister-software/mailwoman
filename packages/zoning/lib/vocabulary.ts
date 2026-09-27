@@ -1,5 +1,3 @@
-import { stringifyJSON } from "@mailwoman/core/json"
-
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -56,8 +54,9 @@ export const GZT_ATTRIBUTION =
  * The licence expression written to `layer_manifest.license`.
  *
  * `NOASSERTION` is the SPDX token for an undetermined licence.
- * Three published statements disagree about the grant, as {@link GZT_LICENSE_CONTRADICTION}
- * explains. {@link assertTierMatchesLicense} rejects a `shipped` build while this value is set.
+ * Three published statements disagree about the grant, as {@link GZT_LICENSE_CONTRADICTION} explains.
+ *
+ * `assertTierMatchesLicense` in `@mailwoman/core/layers` rejects a `shipped` build while this value is set.
  */
 export const GZT_LICENSE = "NOASSERTION"
 
@@ -291,21 +290,3 @@ export const GZT_COVERAGE_LIMIT =
  * A location with no row makes no statement about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"
-
-/**
- * Throws when a build requests the `shipped` tier while the licence is unresolved.
- *
- * The check makes a tier change require an edit here, next to the explanation of the licence conflict.
- *
- * @throws {Error} When `tier` is `shipped` and `license` is {@link GZT_LICENSE}.
- */
-export function assertTierMatchesLicense(tier: string, license: string): void {
-	if (tier !== "shipped") return
-
-	if (license === GZT_LICENSE) {
-		throw new Error(
-			`zoning build: tier "shipped" was asked for while the licence reads ${stringifyJSON(GZT_LICENSE)}. ` +
-				`${GZT_LICENSE_CONTRADICTION} Resolve the grant in writing first, then change both this guard and the tier.`
-		)
-	}
-}

@@ -41,6 +41,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import {
 	areaAgreementFrom,
 	assertNoNegativeClaim as assertCoverageNoNegativeClaim,
+	assertTierMatchesLicense,
 	createLayerCoverageTable,
 	createLayerManifestTable,
 	LayerTier,
@@ -64,7 +65,6 @@ import type { CrosswalkPair, ObservedTerm, ZoningChunkResult } from "#sdk/ingest
 import { ingestZoningChunk } from "#sdk/ingest/chunk"
 import type { ZoningFeatureSource } from "#sdk/ingest/index"
 import {
-	assertTierMatchesLicense,
 	GZT_ATTRIBUTION,
 	GZT_COVERAGE_LIMIT,
 	GZT_CROSSWALK_SCHEME,
@@ -73,6 +73,7 @@ import {
 	GZT_ITEM_ID,
 	GZT_LAYER_NAME,
 	GZT_LICENSE,
+	GZT_LICENSE_CONTRADICTION,
 	GZT_PLAN_LEVELS,
 } from "#vocabulary"
 
@@ -304,7 +305,11 @@ const WORST_PAIRS_REPORTED = 8
 export async function buildZoningDatabase(options: BuildZoningOptions): Promise<BuildZoningResult> {
 	const tier = options.tier ?? LayerTier.BuildLocal
 
-	assertTierMatchesLicense(tier, GZT_LICENSE)
+	assertTierMatchesLicense(
+		{ tier, license: GZT_LICENSE },
+		"zoning build",
+		`${GZT_LICENSE_CONTRADICTION} Resolve the grant in writing first, then change the tier.`
+	)
 
 	if (options.coverageResolution >= options.indexResolution) {
 		throw new Error(

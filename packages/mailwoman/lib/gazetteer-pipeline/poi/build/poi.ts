@@ -11,12 +11,12 @@ import { makeDirectories, removePath } from "@mailwoman/core/fs/writers"
 import {
 	type CoverageCell,
 	createLayerCoverageTable,
+	assertTierMatchesLicense,
 	createLayerManifestTable,
 	LayerTier,
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
-import { carriesShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	POI_H3_RESOLUTION,
@@ -171,7 +171,7 @@ export function bboxCoverageCells(
  * The manifest fields each POI source contributes, absent its obligations.
  *
  * Whether a license carries share-alike is derived from the expression through
- * `carriesShareAlike` rather than recorded here.
+ * `assertTierMatchesLicense` rather than recorded here.
  * A boolean beside the expression can disagree with it, and that disagreement is
  * exactly what the tier check below exists to catch.
  */
@@ -310,11 +310,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
 	const tier = opts.tier ?? sourceManifestDefaults.tier
 
-	if (carriesShareAlike(readLicenseRecord(sourceManifestDefaults.license)) && tier === LayerTier.Shipped) {
-		throw new Error(
-			`buildPOIDatabase: ${source} is ${sourceManifestDefaults.license}, so the layer cannot be tier "shipped"`
-		)
-	}
+	assertTierMatchesLicense({ tier, license: sourceManifestDefaults.license }, `buildPOIDatabase: ${source}`)
 
 	if (await pathExists(opts.out)) {
 		await removePath(opts.out)

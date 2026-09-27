@@ -185,13 +185,13 @@ test("/status without an engine method answers 200 OK, not 501 (the one non-501 
 	expect(await res.json()).toEqual({ status: 0, message: "OK" })
 })
 
-test("absent engine methods answer the exact issue-ref 501 bodies", async () => {
+test("absent engine methods answer a 501 naming the unimplemented operation", async () => {
 	const app = createNominatimApp({})
 
 	for (const [path, message] of [
-		["/search?q=berlin", "search not implemented (see #802)"],
-		["/reverse?lat=52.5&lon=13.4", "reverse not implemented (see #803)"],
-		["/lookup?osm_ids=N1", "lookup not implemented (see #805)"],
+		["/search?q=berlin", "this engine does not implement search"],
+		["/reverse?lat=52.5&lon=13.4", "this engine does not implement reverse"],
+		["/lookup?osm_ids=N1", "this engine does not implement lookup"],
 	] as const) {
 		const res = await app.request(path)
 		expect(res.status).toBe(501)

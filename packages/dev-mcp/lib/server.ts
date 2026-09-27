@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   MCP wiring — adapts `tools.ts`'s table to the SDK's `registerTool` signature.
+ *   MCP wiring — adapts the `tools/` directory's table to the SDK's `registerTool` signature.
  *
  *   One departure from `@mailwoman/mcp`'s envelope and the reason this file exists separately rather than
  *   reusing that one. Results here are returned as `structuredContent` as well as text. A denominator that only exists

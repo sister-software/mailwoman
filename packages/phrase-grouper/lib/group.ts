@@ -9,7 +9,8 @@
  *   fired rule. Overlapping proposals are expected — the reconciler (Stage 5) picks the best
  *   non-overlapping subset.
  *
- *   See `docs/articles/concepts/the-knowledge-ladder.md` § Phrase grouper for the design rationale,
+ *   See `docs/records/site-2026-08/understanding/our-approach/the-knowledge-ladder.mdx` § Phrase grouper
+ *   for the design rationale,
  *   and `phrase-grouper/rules.ts` for per-rule documentation.
  */
 

@@ -5,17 +5,15 @@
  *
  *   `WOFWasmPlaceLookup` — browser-side `PlaceLookup` backed by `@sqlite.org/sqlite-wasm`.
  *
- *   V1 scope: text + placetype + limit + country. The full ranking surface from
- *   `WOFSQLitePlaceLookup` (parentID descendant filter, near-proximity boost, bbox hard filter,
- *   population-weighted ordering) is queued for v2 in the same PR series — see Phase B tracking
- *   issue #98. The v1 scope is the minimum that lets the public demo answer "type a US city /
- *   postcode, get a hit".
+ *   The lookup filters on text, placetype, limit, country and a bounding box, and re-ranks the
+ *   BM25 pool by exact-name tier and population weight with the same shared helpers the Node
+ *   resolver uses. It still lacks `WOFSQLitePlaceLookup`'s parentID descendant filter, because the
+ *   slim artifact's `parent_id` chain is incomplete, and its near-proximity boost.
  *
- *   Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. The SQL we
- *   issue is the same SQLite dialect the Node implementation uses — once we extract the SQL
- *   building into a shared helper (planned: `@mailwoman/resolver-wof-sqlite/query-builder`), both
- *   implementations will call into the same builder and the parity guarantee becomes mechanical
- *   rather than convention-driven.
+ *   Internally this is a thin facade over the OO1 DB returned by `loadSlimWOFDatabase`. The SQL it
+ *   issues is the SQLite dialect the Node implementation uses, and the alias-bag parser, query fold,
+ *   FTS sanitizer and ranking weights are imported from `@mailwoman/resolver-wof-sqlite` so the two
+ *   backends share one implementation of each rather than a convention.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"

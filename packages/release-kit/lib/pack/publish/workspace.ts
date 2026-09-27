@@ -30,9 +30,11 @@
  *   - RELEASE_IT_WORKSPACES_OTP: one-time password (may be empty)
  *   - RELEASE_IT_WORKSPACES_DRY_RUN: "true" / "false"
  *
- *   Per-workspace skip: MAILWOMAN_SKIP_WEIGHTS=1 makes this operation answer `skipped` for the
- *   neural-weights-* workspaces. CI release workflow uses this when its `release_weights` input is false
- *   — keeps the monorepo version-synced in git while npm doesn't see a weights tick.
+ *   Per-workspace skip: MAILWOMAN_SKIP_WEIGHTS=1 makes this operation answer `skipped-weights` for the
+ *   neural-weights-* workspaces, which keeps the monorepo version-synced in git while npm sees no
+ *   weights tick. No workflow sets it: `publish.yml` publishes every release workspace, and the only
+ *   weights variable it sets is MAILWOMAN_SKIP_WEIGHTS_COPY, which skips the data-root copy because the
+ *   binaries were fetched from Hugging Face earlier in the job. The skip is a local-run switch.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

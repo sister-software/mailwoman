@@ -9,20 +9,25 @@
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
+import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js"
 
 import { buildToolTable, type MCPToolDeps } from "#tools"
 
 /**
- * The advertised server version.
+ * The advertised server version, read from this package's own manifest at load.
  *
- * Keep in lockstep with `package.json`'s `version` (not read from it dynamically:
- * a static string avoids `resolveJsonModule`/`composite` friction for one cosmetic field,
- * the same tradeoff `nominatim`/`photon`'s OpenAPI `info.version` DON'T make
- * since theirs is a documented public interface. An MCP client only ever logs this).
+ * A JSON import would make `tsc` copy the file into `out/`, where it becomes the package
+ * scope for the compiled tree, so the manifest is read through the module resolver instead.
  */
-const MCP_SERVER_VERSION = "7.1.0"
+const MCP_SERVER_VERSION = await readPackageJSON(import.meta.url, "@mailwoman/mcp").then((manifest) => {
+	if (!manifest.version) {
+		throw new Error("@mailwoman/mcp: package.json carries no version to advertise")
+	}
+
+	return manifest.version
+})
 
 /**
  * Build an `McpServer` with every `tools.ts` tool registered.

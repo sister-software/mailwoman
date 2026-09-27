@@ -9,6 +9,7 @@
 import { supportsExclusion, CoverageBasis } from "@mailwoman/evidence"
 
 import { parseJSONStrict, stringifyJSON } from "#json"
+import { assertTierMatchesLicense } from "#layers/publication"
 import { LayerFreshnessPolicy, LayerTier, type layerschemahandle } from "#layers/schema"
 import { assertAdmissibleLicenseExpression } from "#license/obligations"
 
@@ -250,6 +251,8 @@ export interface PolygonLayerBuildStamp {
 
 /**
  * Create a versioned-refresh manifest for a polygon layer.
+ *
+ * @throws When the tier contradicts the license, as {@link assertTierMatchesLicense} decides.
  */
 export function polygonLayerManifest(
 	options: PolygonLayerBuildStamp,
@@ -269,11 +272,15 @@ export function polygonLayerManifest(
 		tier?: LayerTier
 	}
 ): LayerManifest {
+	const tier = product.tier ?? LayerTier.Shipped
+
+	assertTierMatchesLicense({ tier, license: product.license }, `${product.name} manifest`)
+
 	return {
 		name: product.name,
 		version: options.sourceVintage,
 		schemaVersion: product.schemaVersion,
-		tier: product.tier ?? LayerTier.Shipped,
+		tier,
 		license: product.license,
 		attribution: product.attribution,
 		source: product.source,

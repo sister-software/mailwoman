@@ -6,5 +6,3 @@
 
 export { loadSlimWOFDatabase, type LoadSlimOpts } from "#loader"
 export { WOFWasmPlaceLookup, type WOFWasmPlaceLookupOpts } from "#lookup"
-
-// Re-export the shared interface types so callers don't need both packages on the typed path.
