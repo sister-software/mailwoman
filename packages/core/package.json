@@ -131,6 +131,16 @@
 			"node": "./lib/license/key/index.ts",
 			"default": "./out/license/key/index.js"
 		},
+		"./license/obligations": {
+			"types": "./out/license/obligations.d.ts",
+			"node": "./lib/license/obligations.ts",
+			"default": "./out/license/obligations.js"
+		},
+		"./license/record": {
+			"types": "./out/license/record.d.ts",
+			"node": "./lib/license/record.ts",
+			"default": "./out/license/record.js"
+		},
 		"./license/register": {
 			"types": "./out/license/register.d.ts",
 			"node": "./lib/license/register.ts",

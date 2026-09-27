@@ -19,7 +19,8 @@
  *   draws one from the capital's grid. Every other value is the row's own. The components are the `osm` adapter's
  *   mapping (`componentsForOSMRow`), so the two surfaces cannot disagree about what a field means.
  *
- *   ⚠ ODbL: the rows inherit OpenStreetMap's share-alike license, and `--exclude-share-alike` drops them.
+ *   ⚠ ODbL: the rows inherit OpenStreetMap's share-alike license, and a corpus build run under
+ *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
  *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
  */

@@ -24,7 +24,12 @@ import { freezeTrainingManifest } from "#source-register/training-manifest"
 import { defaultAugmentationsForCountry, synthesizeRow } from "#synthesizers/utils"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter, LabeledRow } from "#types"
 import { alignRow } from "#utils/align"
-import { licenseExcluded } from "#utils/license"
+import {
+	createLicenseVerdictCache,
+	LicensePolicy,
+	type LicenseRefusalKind,
+	type LicenseVerdictCache,
+} from "#utils/license"
 import {
 	defaultHoldouts,
 	splitForRow,
@@ -48,7 +53,8 @@ export const TRAINING_MANIFEST_FILE = "TRAINING_SOURCES.json"
  */
 export interface BuildCorpusOptions {
 	/**
-	 * Root output directory; all build artifacts land beneath it.
+	 * Root output directory.
+	 * Every build artifact lands beneath it.
 	 */
 	outputDir: PathBuilderLike
 
@@ -58,56 +64,76 @@ export interface BuildCorpusOptions {
 	corpusVersion: string
 
 	/**
-	 * Adapters to drive, in order; defaults to `defaultAdapterRegistry.list()`,
-	 * and an explicit list filters the run.
+	 * Adapters to drive, in order.
+	 *
+	 * The default is `defaultAdapterRegistry.list()`, and an explicit list filters the run.
 	 */
 	adapters?: readonly CorpusAdapter[]
 
 	/**
-	 * Per-adapter `AdapterOptions` looked up by adapter id; an adapter whose id is
-	 * missing is skipped and noted in the manifest.
+	 * Per-adapter `AdapterOptions` looked up by adapter id.
+	 *
+	 * An adapter whose id is missing is skipped and recorded in the manifest.
 	 */
 	adapterInputs: Record<string, AdapterOptions>
 
 	/**
-	 * Enable the synthesis pass; default `true`, and `false` for fixture-driven smoke tests.
+	 * Enable the synthesis pass.
+	 *
+	 * The default is `true`, and a fixture-driven smoke test passes `false`.
 	 */
 	synthesize?: boolean
 
 	/**
-	 * Max rows per `.parquet` file, forwarded to `writeParquetSplits`; default 1_000_000.
+	 * Max rows per `.parquet` file, forwarded to `writeParquetSplits`.
+	 * The default is 1_000_000.
 	 */
 	rowsPerFile?: number
 
 	/**
-	 * Rows held in memory while shuffling each split before it is written to parquet; rows arrive
-	 * in adapter order, which is country order within a source, so an unshuffled row-group
-	 * holds one to eleven of its source's countries and a bounded epoch draw sees only those.
+	 * Rows held in memory while shuffling each split before it is written to parquet.
 	 *
-	 * Default {@linkcode DEFAULT_SHUFFLE_WINDOW}, where `0` or `1` writes arrival
-	 * order unchanged and consumes no random draw.
+	 * Rows arrive in adapter order, and within one source that order is by country.
+	 * An unshuffled row-group therefore holds one to eleven of its source's countries,
+	 * and a bounded epoch draw reads only those.
+	 *
+	 * The default is {@linkcode DEFAULT_SHUFFLE_WINDOW}, where `0` or `1` writes
+	 * arrival order unchanged and consumes no random draw.
 	 */
 	shuffleWindow?: number
 
 	/**
-	 * Seed for {@linkcode BuildCorpusOptions.shuffleWindow}'s draw; fixed by default
-	 * so two builds of one input write the same row order.
+	 * Seed for {@linkcode BuildCorpusOptions.shuffleWindow}'s draw.
+	 *
+	 * It is fixed by default, so two builds of one input write the same row order.
 	 */
 	shuffleSeed?: number
 
 	/**
-	 * Progress hook; an error thrown aborts the build.
+	 * Reports each build stage.
+	 * An error thrown from it aborts the build.
 	 */
 	onProgress?: (stage: BuildStage, message: string) => void
 
 	/**
-	 * Compiled license patterns excluded from this build; a row whose `license` matches
-	 * any is dropped at ingest (default: include everything), and a proprietary-weights
-	 * build passes the share-alike set (`--exclude-share-alike`).
+	 * License prefixes the operator named in `--exclude-licenses`.
+	 *
+	 * A row whose `license` starts with one is dropped at ingest.
+	 * The default excludes no prefix.
 	 */
 	excludeLicenses?: readonly RegExp[]
 	/**
-	 * What this corpus is being built for; defaults to {@linkcode BuildProfile.Exploratory}.
+	 * Which rows this build admits on the evidence of their license obligations.
+	 *
+	 * Defaults to {@linkcode LicensePolicy.All}, which admits every row an adapter yields.
+	 *
+	 * A weights build that must carry no share-alike obligation
+	 * passes {@linkcode LicensePolicy.ShareAlikeFree}.
+	 */
+	licensePolicy?: LicensePolicy
+	/**
+	 * What this corpus is being built for.
+	 * The default is {@linkcode BuildProfile.Exploratory}.
 	 */
 	profile?: BuildProfile
 }
@@ -118,12 +144,13 @@ export interface BuildCorpusOptions {
  */
 export const BuildProfile = {
 	/**
-	 * Include every row an adapter yields; the profile a measurement runs under.
+	 * Include every row an adapter yields.
+	 * A measurement runs under this profile.
 	 */
 	Exploratory: "exploratory",
 	/**
-	 * Include a row only when the register says its source is eligible for ingest;
-	 * a source whose terms nobody read is refused here.
+	 * Include a row only when the register says its source is eligible for ingest.
+	 * A source whose terms remain unread is refused here.
 	 */
 	ReleaseEligible: "release-eligible",
 } as const
@@ -170,12 +197,37 @@ export interface BuildCorpusManifest {
 	licenses: Record<string, number>
 	excluded_by_license: number
 	/**
+	 * The policy this build admitted rows under, so a consumer can tell a corpus that
+	 * was never filtered from one filtered and found clean.
+	 */
+	license_policy: LicensePolicy
+	/**
+	 * Rows refused per {@linkcode LicenseRefusalKind}, summing to `excluded_by_license`.
+	 *
+	 * The classes rest on different evidence and a reader deciding what to do needs them apart.
+	 */
+	refused_by_license_kind: Record<string, number>
+	/**
+	 * Every distinct license value this build refused, with the class it was refused under.
+	 *
+	 * A build that dropped rows records the values it dropped them for rather than only the count.
+	 */
+	refused_license_values: Record<string, LicenseRefusalKind>
+	/**
+	 * Admitted rows whose license resolves to no SPDX expression, whose obligations
+	 * are therefore unknown rather than known to be empty.
+	 *
+	 * Under {@linkcode LicensePolicy.ResolvedOnly} this reads zero because those rows are refused instead.
+	 */
+	admitted_unresolved_license_rows: number
+	/**
 	 * The profile this build ran under, so a consumer can tell whether the corpus's sources were checked.
 	 */
 	profile: BuildProfile
 	/**
-	 * Rows dropped because the register does not call their source eligible;
-	 * always zero under {@linkcode BuildProfile.Exploratory}.
+	 * Rows dropped because the register does not call their source eligible.
+	 *
+	 * This reads zero under {@linkcode BuildProfile.Exploratory}, which applies no eligibility check.
 	 */
 	excluded_by_eligibility: number
 	/**
@@ -267,9 +319,12 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	let quarantined = 0
 	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
 	const holdouts = defaultHoldouts()
-	const excludeLicenses = opts.excludeLicenses ?? []
+	const licensePolicy = opts.licensePolicy ?? LicensePolicy.All
+	const licenses: LicenseVerdictCache = createLicenseVerdictCache(licensePolicy, opts.excludeLicenses ?? [])
 	const licenseCounts = new Map<string, number>()
+	const refusedByKind = new Map<LicenseRefusalKind, number>()
 	let excludedByLicense = 0
+	let admittedUnresolved = 0
 
 	const profile = opts.profile ?? BuildProfile.Exploratory
 	const eligibility = profile === BuildProfile.ReleaseEligible ? await readSourceEligibility() : null
@@ -279,8 +334,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 	let excludedByEligibility = 0
 
 	/**
-	 * Why a row's source may not enter a release-eligible corpus, or `null` when it may;
-	 * a source the register does not name is refused rather than admitted.
+	 * Why a row's source may not enter a release-eligible corpus, or `null` when it may.
+	 *
+	 * A source the register does not record is refused rather than admitted.
 	 */
 	const ineligibleBecause = (row: CanonicalRow): readonly string[] | null => {
 		if (!eligibility) return null
@@ -312,10 +368,20 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 			// The license count is incremented before the drop, so the manifest's license set
 			// reflects what the corpus contained and `excluded_by_license` what was removed.
-			if (licenseExcluded(row.license, excludeLicenses)) {
+			const verdict = licenses.read(row.license)
+
+			if (verdict.refusal) {
 				excludedByLicense++
+				refusedByKind.set(verdict.refusal, (refusedByKind.get(verdict.refusal) ?? 0) + 1)
 
 				continue
+			}
+
+			// An admitted row whose license resolves to no expression entered with
+			// unknown obligations rather than with none.
+			// The manifest states the count so a consumer can tell the two apart.
+			if (!verdict.resolved) {
+				admittedUnresolved++
 			}
 
 			// Eligibility runs before augmentation: a synthetic row carries its ancestor's `source`,
@@ -350,8 +416,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 				try {
 					result = alignRow(r)
 				} catch (error) {
-					// No single row may crash a multi-hour build; an unknown throw is quarantined
-					// as `align-threw`, and a spike in that reason is a finding.
+					// No single row may crash a multi-hour build.
+					// An unknown throw is quarantined as `align-threw`, and a rise in
+					// that reason's count is a finding.
 					writeQuarantine(r, `align-threw:${(error as Error).message.slice(0, 160)}`)
 
 					quarantined++
@@ -422,12 +489,17 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 
 	const licenseSummary = [...licenseCounts.entries()].toSorted((a, b) => b[1] - a[1])
 
+	const refusedValues = licenses.refusedValues()
+	const refusalTally = [...refusedByKind.entries()].map(([kind, rows]) => `${kind}=${rows}`).join(", ")
+
 	opts.onProgress?.(
 		"manifest",
 		`license set: ${licenseSummary.map(([l, c]) => `${l}=${c}`).join(", ")}` +
+			` | policy ${licensePolicy}` +
 			(excludedByLicense > 0
-				? ` | EXCLUDED ${excludedByLicense} rows by --exclude-licenses`
-				: " | NO license exclusion applied (all rows kept)")
+				? ` | refused ${excludedByLicense} rows over ${refusedValues.size} values (${refusalTally})`
+				: ` | refused 0 rows`) +
+			` | admitted ${admittedUnresolved} rows whose license resolves to no expression`
 	)
 
 	opts.onProgress?.("manifest", "writing top-level MANIFEST.json")
@@ -456,6 +528,10 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		total_aligned_rows: aligned,
 		licenses: Object.fromEntries(licenseSummary),
 		excluded_by_license: excludedByLicense,
+		license_policy: licensePolicy,
+		refused_by_license_kind: Object.fromEntries(refusedByKind),
+		refused_license_values: Object.fromEntries(refusedValues),
+		admitted_unresolved_license_rows: admittedUnresolved,
 		profile,
 		excluded_by_eligibility: excludedByEligibility,
 		ineligible_sources: Object.fromEntries(ineligibleSources),

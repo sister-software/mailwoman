@@ -32,7 +32,8 @@ const MIN_PLAUSIBLE_ARCHIVE_BYTES = 10_240
 const OA_BASE = "https://batch.openaddresses.io"
 
 /**
- * OA assigns stable integer collection IDs; re-check `GET /api/collections` for a country absent here.
+ * OA assigns stable integer collection IDs.
+ * Re-check `GET /api/collections` for a country absent here.
  */
 const OA_COLLECTION_IDS: Record<string, number> = {
 	ca: 6,
@@ -239,7 +240,7 @@ URL tried: ${OA_BASE}/api/collections/${collectionID}/download
 		bytes: size,
 		row_count: rowCount,
 		notes:
-			"batch.openaddresses.io requires a free registered account for downloads. License is mixed per-row; use the openaddresses adapter with allowShareAlike=false (default) to filter Tier-C rows.",
+			"batch.openaddresses.io requires a free registered account for downloads. The license is mixed per row, and the openaddresses adapter admits every row by default. Build with `mailwoman corpus build --license-policy share-alike-free` to refuse the share-alike rows, or pass `allowShareAlike: false` for an adapter-scoped drop.",
 	}
 
 	await writeManifest(manifestPath, manifest)

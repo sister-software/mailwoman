@@ -70,6 +70,36 @@ The separation is built into the structure of the code and data, so it does not 
 
 4. **The corpus excludes share-alike data.** Training data is filtered through [`SHARE_ALIKE_PATTERN`](https://github.com/sister-software/mailwoman/blob/main/corpus/src/license.ts) (`--exclude-share-alike`), so no ODbL row can enter a proprietary weight build. Where a source is dual-licensed (France BAN), we elect the permissive option.
 
+:::danger[Correction, 2026-09-27: mechanism 4 above describes a flag that never existed]
+
+This page records the state as of 2026-08 and its text is left as it was written. Mechanism 4 above cites
+a command-line flag and a filter that a reader could not have used.
+
+`--exclude-share-alike` was never a flag on `mw corpus build` or on any other command. Its underlying
+option, `buildCorpus({ excludeLicenses })`, was reachable only from the library, and the only caller in
+the repository was `packages/corpus/lib/build.test.ts`. No corpus was ever built with it.
+
+`SHARE_ALIKE_PATTERN` was an anchored prefix match, `/^ODbL|^Open Database License|^CC-BY-SA|^CC-SA/i`,
+over the row's `license` column. Measured over `v0.7.0-de-holdout` on 2026-09-26, that column holds 71
+distinct values across 703,835,753 rows, of which 4 are SPDX identifiers covering 75,582,634 rows and 66
+are prose covering 628,203,119, plus 50,000 rows at `null`. A row whose license reads "Synthetic —
+OpenStreetMap venue + sub-venue names (ODbL, © OpenStreetMap contributors) …" is share-alike-derived and
+begins with neither identifier, so the prefix match admitted it. 358,597 rows carry a license value of
+that shape.
+
+As of 2026-09-27 the decision reads the obligations recorded for a license expression rather than the
+shape of its string. `mw corpus build --license-policy share-alike-free` refuses a row whose license
+resolves to an expression carrying share-alike, and separately a row whose text cites a share-alike
+license while stating no grant of its own. `mw corpus upload` refuses a corpus version whose license set
+holds either class unless `--allow-share-alike` is passed. The corpus manifest records which policy ran,
+how many rows each refusal class removed, and how many admitted rows carry a license resolving to no
+expression, because unknown obligations are different from none.
+
+The claim's second sentence still holds: the `ban` adapter stamps `Licence Ouverte 2.0`, which resolves to
+`etalab-2.0` and carries attribution alone.
+
+:::
+
 ## Attribution: required, and not yet wired
 
 ODbL requires attribution wherever the data is used. For Mailwoman, that means **"© OpenStreetMap contributors"** with an ODbL link on:

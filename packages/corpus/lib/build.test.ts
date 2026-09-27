@@ -11,6 +11,7 @@ import { wofAdminAdapter } from "@mailwoman/corpus/adapters/wof/admin/json/adapt
 import { buildCorpus, BuildProfile, type BuildStage } from "@mailwoman/corpus/build"
 import type { ParquetRow } from "@mailwoman/corpus/parquet/schema"
 import { openParquetRowStream } from "@mailwoman/corpus/parquet/streams"
+import { compileLicenseExcludes, LicensePolicy, LicenseRefusalKind } from "@mailwoman/corpus/utils/license"
 import type { PathBuilder } from "path-ts"
 import { JSONSpliterator, TextSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -200,5 +201,62 @@ describe("buildCorpus end-to-end against wof-admin JSON-bundle fixture", () => {
 		expect(manifest.skipped_adapters).toContain("wof-admin")
 		expect(manifest.adapters).toHaveLength(0)
 		expect(manifest.total_aligned_rows).toBe(0)
+	})
+
+	it("records the license policy it ran under, so an unfiltered corpus reads apart from a clean one", async () => {
+		const manifest = await buildCorpus({
+			outputDir: scratch.path("build"),
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+		})
+
+		expect(manifest.license_policy).toBe(LicensePolicy.All)
+		expect(manifest.excluded_by_license).toBe(0)
+		expect(manifest.refused_license_values).toEqual({})
+		// Every fixture row is stamped `CC0-1.0`, which resolves to an expression with no obligations.
+		expect(manifest.admitted_unresolved_license_rows).toBe(0)
+	})
+
+	it("admits the CC0 fixture under the share-alike-free policy", async () => {
+		const all = await buildCorpus({
+			outputDir: scratch.path("all"),
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+		})
+
+		const free = await buildCorpus({
+			outputDir: scratch.path("free"),
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+			licensePolicy: LicensePolicy.ShareAlikeFree,
+		})
+
+		expect(free.license_policy).toBe(LicensePolicy.ShareAlikeFree)
+		expect(free.excluded_by_license).toBe(0)
+		expect(free.total_aligned_rows).toBe(all.total_aligned_rows)
+	})
+
+	it("refuses every row under an operator prefix and records the value it refused them for", async () => {
+		const manifest = await buildCorpus({
+			outputDir: scratch.path("build"),
+			corpusVersion: "0.1.0",
+			adapters: [wofAdminAdapter],
+			adapterInputs: { "wof-admin": { inputPath: fixtureRoot } },
+			excludeLicenses: compileLicenseExcludes("CC0"),
+		})
+
+		expect(manifest.excluded_by_license).toBeGreaterThan(0)
+
+		expect(manifest.refused_by_license_kind).toEqual({
+			[LicenseRefusalKind.OperatorExcluded]: manifest.excluded_by_license,
+		})
+
+		expect(manifest.refused_license_values).toEqual({ "CC0-1.0": LicenseRefusalKind.OperatorExcluded })
+		expect(manifest.total_aligned_rows).toBe(0)
+		// The license set records what the adapters yielded rather than what survived the refusal.
+		expect(manifest.licenses["CC0-1.0"]).toBe(manifest.excluded_by_license)
 	})
 })

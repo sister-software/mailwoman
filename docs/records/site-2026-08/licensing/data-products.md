@@ -286,6 +286,21 @@ These packages are the parser itself, distributed as data-only npm packages that
 
 **Training data.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
 
+:::danger[Correction, 2026-09-27: the filter cited above never ran]
+
+This page records the state as of 2026-08 and its text is left as it was written. Its second sentence
+cites `--exclude-share-alike`, which was never a flag on `mw corpus build` or on any other command. Its
+underlying option, `buildCorpus({ excludeLicenses })`, was reachable only from the library and its only
+caller was `packages/corpus/lib/build.test.ts`, so no released corpus was built with it. `SHARE_ALIKE_PATTERN`
+was an anchored prefix match over the row's `license` column, which admitted 358,597 rows of
+`v0.7.0-de-holdout` whose license value is prose citing ODbL rather than the identifier.
+
+The paragraph's third and fourth sentences are about the model card's own attribution list and are
+unaffected. What is corrected is the mechanism the second sentence offers as the reason to believe them.
+[The data licensing page](./data-provenance.md) carries the same correction with the replacement named.
+
+:::
+
 **Tier:** shipped, on two backends that must agree. npm hosts the packages, and the public Hugging Face bucket `sister-software/mailwoman` hosts the binaries that the CI publish job downloads.
 
 **Cadence.** No cadence is committed. Versions are lockstep: every workspace, including the weights, shares one version per release. A weights package version therefore tracks the release number rather than the model's own lineage. Most releases change only code. Promoting a newly trained model to the default is a deliberate, larger operation. The model's own identity is recorded in `model_lineage` on the card.

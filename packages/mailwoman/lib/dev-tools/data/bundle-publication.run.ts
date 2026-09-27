@@ -22,7 +22,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { refusalsForPublication, type PublicationSubject } from "@mailwoman/core/layers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { BUNDLES, bundleArtifactPath, probeManifest } from "mailwoman/data"
+
+import { BUNDLES, bundleArtifactPath, probeManifest } from "#data"
 
 const { values } = parseArguments({
 	options: {

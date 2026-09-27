@@ -11,6 +11,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { childEnv } from "@mailwoman/core/scripting/utils"
+import type { BuildCorpusManifest } from "@mailwoman/corpus/build"
 import { Box, Text } from "ink"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
@@ -37,8 +38,84 @@ export const spec = {
 		tokenizer: { type: "boolean", default: false, description: "Also sync the tokenizer" },
 		code: { type: "boolean", default: false, description: "Also sync corpus-python (the training code)" },
 		"dry-run": { type: "boolean", default: false, description: "Report the plan and transfer nothing" },
+		"allow-share-alike": {
+			type: "boolean",
+			default: false,
+			description:
+				"Upload a corpus version whose license set carries or mentions share-alike. " +
+				"Without it the upload refuses and reports the values and row counts it read",
+		},
 	},
 } as const satisfies CommandSpec
+
+/**
+ * The fields this command reads from a built corpus version's top-level `MANIFEST.json`.
+ *
+ * Taken from `BuildCorpusManifest` so the field names cannot drift from what the build writes.
+ * Both are optional because a manifest written before the build recorded them still parses,
+ * and an absent `license_policy` then reads as unstated rather than as a policy that ran.
+ */
+type UploadedCorpusManifest = Partial<Pick<BuildCorpusManifest, "licenses" | "license_policy">>
+
+/**
+ * Throws when a corpus version's own license set carries or mentions share-alike.
+ *
+ * The decision reads the obligations recorded for each license value the corpus stores,
+ * through `shareAlikeFindings`.
+ * It does not read source ids, adapter names or license-string prefixes,
+ * because a row's obligation is a property of its license value and a share-alike
+ * register can reach a corpus through a source whose id says otherwise.
+ *
+ * An unreadable or absent `MANIFEST.json` throws as well.
+ * A corpus whose license set cannot be read is an unanswered question rather than a clean one.
+ */
+async function refuseShareAlike(version: string, manifestPath: PathBuilderLike, allow: boolean): Promise<void> {
+	const { readLocalJSONFile } = await import("@mailwoman/core/fs/readers")
+	const { shareAlikeFindings } = await import("@mailwoman/corpus/utils/license")
+
+	let manifest: UploadedCorpusManifest
+
+	try {
+		manifest = await readLocalJSONFile<UploadedCorpusManifest>(manifestPath)
+	} catch (error) {
+		throw new Error(
+			`corpus ${version}: ${manifestPath} could not be read (${(error as Error).message}), so its license ` +
+				`set is unknown. Build the version through \`mw corpus build\`, which writes it, or pass ` +
+				`--allow-share-alike to upload without the check.`
+		)
+	}
+
+	if (!manifest.licenses) {
+		throw new Error(
+			`corpus ${version}: ${manifestPath} records no \`licenses\` map, so its license set is unknown. ` +
+				`Pass --allow-share-alike to upload without the check.`
+		)
+	}
+
+	const findings = shareAlikeFindings(manifest.licenses)
+
+	if (!findings.length) return
+
+	const rows = findings.reduce((total, finding) => total + finding.rows, 0)
+	const lines = findings.map((finding) => `  ${finding.kind}  ${finding.rows} rows  ${finding.license}`)
+
+	if (allow) {
+		process.stderr.write(
+			`corpus ${version}: uploading ${rows} rows under --allow-share-alike across ` +
+				`${findings.length} license value(s):\n${lines.join("\n")}\n`
+		)
+
+		return
+	}
+
+	throw new Error(
+		`corpus ${version}: its license set holds ${findings.length} value(s) carrying or mentioning ` +
+			`share-alike over ${rows} rows, and the build ran under license policy ` +
+			`${manifest.license_policy ?? "unstated"}:\n${lines.join("\n")}\n` +
+			`Rebuild with \`mw corpus build --license-policy share-alike-free\`, or pass --allow-share-alike ` +
+			`to upload this set deliberately.`
+	)
+}
 
 interface Step {
 	label: string
@@ -75,8 +152,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			)
 		}
 
-		// rclone reads `:s3:` credentials from the environment; pointing RCLONE_CONFIG at
-		// no file keeps its absent-config notice from being read as a failure.
+		// rclone reads `:s3:` credentials from the environment.
+		// Pointing RCLONE_CONFIG at an empty path keeps its absent-config notice from being read as a failure.
 		const env = childEnv({
 			RCLONE_CONFIG: "",
 			RCLONE_S3_PROVIDER: "Cloudflare",
@@ -108,6 +185,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			// The on-disk layout nests the corpus under its own name: <root>/<version>/corpus-<version>/.
 			const nested = corpusRoot(version, `corpus-${version}`)
 			const source = (await pathExists(nested)) ? nested : corpusRoot(version)
+
+			await refuseShareAlike(version, corpusRoot(version, "MANIFEST.json"), options.allowShareAlike)
 
 			jobs.push({
 				label: `corpus ${version}`,
@@ -162,8 +241,8 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 		}
 	})
 
-	// A thrown selection or credential error is the whole message; rendering only the
-	// step list would print a bare header and look like a no-op.
+	// A thrown selection or credential error is the whole message.
+	// Rendering only the step list would print a bare header, which reads as a completed upload of zero files.
 	if (state.status === "error") return <CommandTaskResult state={state} />
 
 	return (

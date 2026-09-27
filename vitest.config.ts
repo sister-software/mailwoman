@@ -167,6 +167,10 @@ export default defineConfig({
 			// Without this exclude, vitest descends into every active worktree
 			// and runs every test suite N×(worktree count) times.
 			"**/.claude/worktrees/**",
+			// `.worktrees/` is the same case for a worktree the operator adds by hand.
+			// Its copy of a test file resolves `@mailwoman/*` to this tree, so a branch's test
+			// runs against main's source and reports a failure that belongs to neither.
+			"**/.worktrees/**",
 			// `corpus-python/.venv` is a Python virtualenv that vendors a Svelte app
 			// (trackio) carrying its own *.test.js files.
 			// Vitest collected five of them.

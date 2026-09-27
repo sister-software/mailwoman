@@ -15,10 +15,18 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
+import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+
+/**
+ * The accepted `--license-policy` values, for the flag's validation message.
+ *
+ * Derived from {@linkcode LicensePolicy} so a value added there reaches the CLI.
+ */
+const LICENSE_POLICIES: readonly LicensePolicy[] = Object.values(LicensePolicy)
 
 /**
  * `--inputs` values are either a bare path string, for adapters needing no extra options,
@@ -51,6 +59,20 @@ export const spec = {
 			validate: (value) => Number.isInteger(value) && value >= 0,
 			validationMessage: "--shuffle-seed must be a non-negative integer.",
 			description: "Seed for --shuffle-window",
+		},
+		"license-policy": {
+			type: "string",
+			default: LicensePolicy.All,
+			validate: (value): boolean => LICENSE_POLICIES.includes(value as LicensePolicy),
+			validationMessage: `--license-policy must be one of ${LICENSE_POLICIES.join(", ")}.`,
+			description:
+				"Which rows to admit on the evidence of their license obligations: " +
+				"all, share-alike-free (refuse a license carrying or mentioning share-alike), " +
+				"or resolved-only (also refuse a license resolving to no SPDX expression)",
+		},
+		"exclude-licenses": {
+			type: "string",
+			description: "Comma-separated license prefixes to refuse, e.g. ODbL,CC-BY-SA",
 		},
 	},
 } as const satisfies CommandSpec
@@ -88,6 +110,7 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/json")
 		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
 
 		let inputsParsed: unknown
 
@@ -114,6 +137,8 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			rowsPerFile: options.rowsPerFile,
 			shuffleWindow: options.shuffleWindow,
 			shuffleSeed: options.shuffleSeed,
+			licensePolicy: options.licensePolicy as LicensePolicy,
+			excludeLicenses: options.excludeLicenses ? compileLicenseExcludes(options.excludeLicenses) : undefined,
 			onProgress: (name, message) => setStage({ name, message }),
 		})
 
@@ -122,6 +147,9 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 			aligned: m.total_aligned_rows,
 			quarantined: m.quarantine_count,
 			adapters: m.adapters.length,
+			refusedByLicense: m.excluded_by_license,
+			refusedKinds: m.refused_by_license_kind,
+			unresolvedLicenseRows: m.admitted_unresolved_license_rows,
 		}
 	})
 
@@ -135,6 +163,15 @@ const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 				<Text>
 					corpus-v{options.corpusVersion}: <Text color="green">{done.total}</Text> rows ({done.adapters} adapters,{" "}
 					<Text dimColor>{done.quarantined} quarantined</Text>)
+				</Text>
+				<Text dimColor>
+					license policy {options.licensePolicy}: {done.refusedByLicense} rows refused
+					{Object.keys(done.refusedKinds).length
+						? ` (${Object.entries(done.refusedKinds)
+								.map(([kind, rows]) => `${kind}=${rows}`)
+								.join(", ")})`
+						: ""}
+					, {done.unresolvedLicenseRows} admitted whose license resolves to no expression
 				</Text>
 				<Text dimColor>{options.out}</Text>
 			</Box>

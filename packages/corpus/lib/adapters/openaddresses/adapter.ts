@@ -43,7 +43,7 @@ import { TextSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/utils"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { SHARE_ALIKE_PATTERN } from "#utils"
+import { createLicenseVerdictCache, LicensePolicy } from "#utils"
 
 /**
  * Registry id for this adapter.
@@ -122,13 +122,17 @@ export interface OpenaddressesAdapterOptions {
 	defaultLicense?: string
 
 	/**
-	 * Per-adapter share-alike drop.
+	 * Whether this adapter emits a row whose per-file license carries share-alike.
 	 *
-	 * Default **true** (include) as of 2026-06-19: exclusion is a deliberate build-level
-	 * act (`buildCorpus({ excludeLicenses })` / `--exclude-share-alike`), not a silent
-	 * adapter default (#26 — "purposely exclude, don't opt in to include").
-	 * Set false only for an explicit adapter-scoped drop.
-	 * The build-level `--exclude-share-alike` is the normal path.
+	 * The default is `true`.
+	 * Refusing a share-alike row is a deliberate build-level act, which
+	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
+	 * express, rather than a silent adapter default (#26).
+	 *
+	 * That path is the normal one, because it reads the obligations of every adapter's
+	 * rows under one policy and records what it refused.
+	 *
+	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
 	 */
 	allowShareAlike?: boolean
 }
@@ -142,6 +146,11 @@ export interface OpenaddressesAdapterOptions {
 export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {}): CorpusAdapter {
 	const defaultLicense = opts.defaultLicense ?? OPENADDRESSES_DEFAULT_LICENSE
 	const allowShareAlike = opts.allowShareAlike ?? true
+	// The same reading the build applies, so an adapter-scoped drop
+	// and a build-level policy refuse the same rows.
+	// OpenAddresses stamps a per-file license, and a file's value can be prose naming
+	// a share-alike register rather than an identifier.
+	const shareAlike = createLicenseVerdictCache(LicensePolicy.ShareAlikeFree)
 
 	return {
 		id: OPENADDRESSES_ADAPTER_ID,
@@ -195,7 +204,7 @@ export function createOpenaddressesAdapter(opts: OpenaddressesAdapterOptions = {
 
 					const license = (props.license?.trim() || defaultLicense).trim()
 
-					if (!allowShareAlike && SHARE_ALIKE_PATTERN.test(license)) {
+					if (!allowShareAlike && shareAlike.read(license).refusal !== null) {
 						shareAlikeBlocked++
 
 						continue

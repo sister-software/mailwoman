@@ -4,9 +4,8 @@
  * @author Teffen Ellis, et al.
  */
 
+import { assertPublishable, refusalsForPublication } from "@mailwoman/core/layers"
 import { describe, expect, it } from "vitest"
-
-import { assertPublishable, refusalsForPublication } from "#layers/publication"
 
 /**
  * The `candidate` bundle as its manifest recorded it on 2026-09-26, which is the case this exists for.

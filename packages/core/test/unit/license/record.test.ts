@@ -4,10 +4,14 @@
  * @author Teffen Ellis, et al.
  */
 
+import {
+	carriesShareAlike,
+	LicenseObligation,
+	LicenseResolution,
+	mentionsShareAlike,
+	readLicenseRecord,
+} from "@mailwoman/core/license"
 import { describe, expect, it } from "vitest"
-
-import { LicenseObligation } from "#license/obligations"
-import { carriesShareAlike, LicenseReviewState, mentionsShareAlike, readLicenseRecord } from "#license/record"
 
 /**
  * The `spliced-sub-venue` value, verbatim from 120,000 rows of `v0.7.0-de-holdout`.
@@ -24,7 +28,7 @@ describe("readLicenseRecord", () => {
 	it("resolves an SPDX identifier and reports its recorded obligations", () => {
 		const record = readLicenseRecord("ODbL-1.0")
 
-		expect(record.reviewState).toBe(LicenseReviewState.Resolved)
+		expect(record.resolution).toBe(LicenseResolution.Resolved)
 		expect(record.expression).toBe("ODbL-1.0")
 		expect(record.obligations).toContain(LicenseObligation.ShareAlike)
 		expect(carriesShareAlike(record)).toBe(true)
@@ -42,10 +46,19 @@ describe("readLicenseRecord", () => {
 		expect(ouverte.obligations).toEqual([LicenseObligation.Attribution])
 	})
 
+	it("resolves a stated CC-BY-SA grant, so its share-alike term is carried rather than unrecognized", () => {
+		for (const identifier of ["CC-BY-SA-4.0", "CC-BY-SA-3.0", "CC-BY-SA-2.0"]) {
+			const record = readLicenseRecord(identifier)
+
+			expect(record.resolution, identifier).toBe(LicenseResolution.Resolved)
+			expect(carriesShareAlike(record), identifier).toBe(true)
+		}
+	})
+
 	it("reads provenance prose as unresolved while recording what it mentions", () => {
 		const record = readLicenseRecord(SUB_VENUE)
 
-		expect(record.reviewState).toBe(LicenseReviewState.Unresolved)
+		expect(record.resolution).toBe(LicenseResolution.Unresolved)
 		expect(record.expression).toBeNull()
 		expect(record.obligations).toEqual([])
 		expect(record.mentions).toContain("ODbL-1.0")
@@ -72,7 +85,7 @@ describe("readLicenseRecord", () => {
 		for (const value of [null, undefined, ""]) {
 			const record = readLicenseRecord(value)
 
-			expect(record.reviewState).toBe(LicenseReviewState.Unresolved)
+			expect(record.resolution).toBe(LicenseResolution.Unresolved)
 			expect(record.expression).toBeNull()
 			expect(record.obligations).toEqual([])
 		}
@@ -101,7 +114,7 @@ describe("readLicenseRecord", () => {
 	it("refuses an expression whose identifiers are unrecognized rather than reporting no obligations", () => {
 		const record = readLicenseRecord("Totally-Made-Up-1.0")
 
-		expect(record.reviewState).toBe(LicenseReviewState.Unresolved)
+		expect(record.resolution).toBe(LicenseResolution.Unresolved)
 		expect(record.obligations).toEqual([])
 	})
 })

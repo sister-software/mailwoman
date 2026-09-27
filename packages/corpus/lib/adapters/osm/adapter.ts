@@ -3,9 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `osm`: OpenStreetMap address adapter for the countries no permissive source covers; every row carries
- * `ODbL-1.0`, which `SHARE_ALIKE_PATTERN` matches, so a proprietary-weights build drops these rows at
- * ingest and they reach only the open weights — the reason `defaultLicense` is not an option.
+ * `osm`: OpenStreetMap address adapter for the countries no permissive source covers.
+ *
+ * Every row carries `ODbL-1.0`, whose recorded obligations include share-alike. A build run under
+ * `LicensePolicy.ShareAlikeFree` refuses these rows at ingest, so they reach only the open weights.
+ * That is why `defaultLicense` is not an option on this adapter.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -24,7 +26,10 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 export const OSM_ADAPTER_ID = "osm"
 
 /**
- * OpenStreetMap's license; `SHARE_ALIKE_PATTERN` matches it, so `--exclude-share-alike` drops these rows.
+ * OpenStreetMap's license.
+ *
+ * Its recorded obligations include share-alike, so a build run under
+ * `LicensePolicy.ShareAlikeFree` refuses every row carrying it.
  */
 export const OSM_LICENSE = "ODbL-1.0"
 

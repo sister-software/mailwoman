@@ -31,8 +31,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 			corpusVersion: "0.1.0",
 		})
 
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row is kept — exclusion is a deliberate
-		// build-level act now (`--exclude-share-alike`), not a silent adapter default (#26) → 6 rows.
+		// The adapter admits the CC-BY-SA-4.0 row by default, so the fixture yields 6.
+		// Refusing a share-alike row is a deliberate build-level act under
+		// `--license-policy share-alike-free` rather than a silent adapter default (#26).
 		expect(manifest.yielded).toBe(6)
 		const rows = await loadRows()
 		expect(rows).toHaveLength(6)
@@ -252,9 +253,9 @@ describe("openaddresses adapter against fixture sample-us.geojson", () => {
 		expect(a.sha256).toBe(b.sha256)
 	})
 
-	it("INCLUDES share-alike by default; drops only on explicit allowShareAlike:false (#26 exclusion is deliberate)", async () => {
-		// Default-include (2026-06-19 flip): the CC-BY-SA-4.0 row (e5f6…) is present — no silent drop.
-		// Exclusion is now a deliberate build-level act (`--exclude-share-alike`), not an adapter default.
+	it("admits share-alike by default and drops it only on an explicit allowShareAlike: false (#26)", async () => {
+		// The CC-BY-SA-4.0 row (e5f6…) is present under the default, which drops no row silently.
+		// Refusing one is a deliberate build-level act under `--license-policy share-alike-free`.
 		await runAdapter({
 			adapter: createOpenaddressesAdapter(),
 			adapterOptions: { inputPath: fixtureGeojsonl, country: "US" },

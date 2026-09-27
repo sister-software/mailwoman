@@ -46,6 +46,15 @@ const KNOWN_OBLIGATIONS: ReadonlyMap<string, readonly LicenseObligation[]> = new
 	// Section 4 of commercial-LICENSE.md requires attribution.
 	["LicenseRef-Commercial", [LicenseObligation.Attribution]],
 	["ODbL-1.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	// Open Data Commons publishes an attribution-only license beside ODbL,
+	// and the two are confused because both are ODC.
+	// This one carries no share-alike term.
+	["ODC-By-1.0", [LicenseObligation.Attribution]],
+	// Every identifier `readLicenseRecord` can resolve a share-alike mention to belongs here,
+	// so a stated CC-BY-SA grant reads as carrying share-alike rather than as an unrecognized identifier.
+	["CC-BY-SA-4.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	["CC-BY-SA-3.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
+	["CC-BY-SA-2.0", [LicenseObligation.Attribution, LicenseObligation.ShareAlike]],
 	["OGL-UK-3.0", [LicenseObligation.Attribution]],
 	["CDLA-Permissive-2.0", [LicenseObligation.Attribution]],
 	["CC-BY-4.0", [LicenseObligation.Attribution]],

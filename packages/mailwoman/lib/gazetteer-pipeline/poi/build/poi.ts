@@ -16,6 +16,7 @@ import {
 	writeLayerCoverage,
 	writeLayerManifest,
 } from "@mailwoman/core/layers"
+import { carriesShareAlike, readLicenseRecord } from "@mailwoman/core/license/record"
 import { CoverageBasis } from "@mailwoman/evidence"
 import {
 	POI_H3_RESOLUTION,
@@ -166,15 +167,22 @@ export function bboxCoverageCells(
 	})
 }
 
+/**
+ * The manifest fields each POI source contributes, absent its obligations.
+ *
+ * Whether a license carries share-alike is derived from the expression through
+ * `carriesShareAlike` rather than recorded here.
+ * A boolean beside the expression can disagree with it, and that disagreement is
+ * exactly what the tier check below exists to catch.
+ */
 const SOURCE_MANIFEST_DEFAULTS = {
 	"overture-places": {
 		license: "CDLA-Permissive-2.0",
 		attribution: "Overture Maps Foundation",
 		tier: LayerTier.Shipped,
-		shareAlike: false,
 	},
-	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors", tier: LayerTier.BuildLocal, shareAlike: true },
-} as const satisfies Record<string, { license: string; attribution: string; tier: LayerTier; shareAlike: boolean }>
+	osm: { license: "ODbL-1.0", attribution: "OpenStreetMap contributors", tier: LayerTier.BuildLocal },
+} as const satisfies Record<string, { license: string; attribution: string; tier: LayerTier }>
 
 /**
  * Options for {@link buildPOIDatabase}.
@@ -302,7 +310,7 @@ export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIR
 	const sourceManifestDefaults = SOURCE_MANIFEST_DEFAULTS[source]
 	const tier = opts.tier ?? sourceManifestDefaults.tier
 
-	if (sourceManifestDefaults.shareAlike && tier === LayerTier.Shipped) {
+	if (carriesShareAlike(readLicenseRecord(sourceManifestDefaults.license)) && tier === LayerTier.Shipped) {
 		throw new Error(
 			`buildPOIDatabase: ${source} is ${sourceManifestDefaults.license}, so the layer cannot be tier "shipped"`
 		)

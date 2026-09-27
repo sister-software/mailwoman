@@ -32,8 +32,13 @@ import { LicenseObligation, summarizeLicense } from "#license/obligations"
 
 /**
  * Whether a license value has been mapped to an expression whose obligations are recorded.
+ *
+ * This states what reading the string achieved.
+ * `@mailwoman/corpus/source-register` exports a separate `LicenseReviewState`
+ * recording whether a person has read a source's terms and elected them,
+ * which is a different question about a different subject.
  */
-export const LicenseReviewState = {
+export const LicenseResolution = {
 	/**
 	 * The expression is an SPDX identifier or a `LicenseRef` this repository defines,
 	 * and `KNOWN_OBLIGATIONS` records its obligations.
@@ -47,9 +52,9 @@ export const LicenseReviewState = {
 } as const
 
 /**
- * One of the {@link LicenseReviewState} values.
+ * One of the {@link LicenseResolution} values.
  */
-export type LicenseReviewState = (typeof LicenseReviewState)[keyof typeof LicenseReviewState]
+export type LicenseResolution = (typeof LicenseResolution)[keyof typeof LicenseResolution]
 
 /**
  * A license as the four facts a caller asks about separately.
@@ -77,10 +82,10 @@ export interface LicenseRecord {
 	 */
 	mentions: string[]
 	/**
-	 * The obligations of {@link LicenseRecord.expression}, empty where the state is `unresolved`.
+	 * The obligations of {@link LicenseRecord.expression}, empty where the resolution is `unresolved`.
 	 */
 	obligations: LicenseObligation[]
-	reviewState: LicenseReviewState
+	resolution: LicenseResolution
 }
 
 /**
@@ -146,7 +151,7 @@ export function readLicenseRecord(raw: string | null | undefined): LicenseRecord
 			attribution: null,
 			mentions,
 			obligations: summary.obligations,
-			reviewState: LicenseReviewState.Resolved,
+			resolution: LicenseResolution.Resolved,
 		}
 	}
 
@@ -156,7 +161,7 @@ export function readLicenseRecord(raw: string | null | undefined): LicenseRecord
 		attribution: null,
 		mentions,
 		obligations: [],
-		reviewState: LicenseReviewState.Unresolved,
+		resolution: LicenseResolution.Unresolved,
 	}
 }
 

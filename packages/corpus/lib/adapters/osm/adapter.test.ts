@@ -11,7 +11,7 @@ import {
 } from "@mailwoman/corpus/adapters/osm/adapter"
 import { runAdapter } from "@mailwoman/corpus/runner"
 import { readCanonicalRows, useScratchDir } from "@mailwoman/corpus/test-kit"
-import { SHARE_ALIKE_PATTERN } from "@mailwoman/corpus/utils/license"
+import { LicensePolicy, LicenseRefusalKind, licenseVerdict } from "@mailwoman/corpus/utils/license"
 import type { PathBuilder } from "path-ts"
 import { describe, expect, it } from "vitest"
 
@@ -179,7 +179,7 @@ describe("componentsForOSMRow", () => {
 })
 
 describe("osm adapter", () => {
-	it("stamps every row ODbL-1.0, which the share-alike pattern matches", async () => {
+	it("stamps every row ODbL-1.0, which a share-alike-free build refuses", async () => {
 		const input = await writeFixture("osm-bd.corpus.jsonl", [
 			{ street: "Road 104", number: "24", city: "Dhaka", postcode: "1207" },
 			{ street: "Road 6", number: "14/E", city: "Mirpur 10, Dhaka" },
@@ -200,7 +200,7 @@ describe("osm adapter", () => {
 		expect(rows).toHaveLength(3)
 		expect(rows.every((r) => r.country === "BD")).toBe(true)
 		expect(rows.every((r) => r.license === OSM_LICENSE)).toBe(true)
-		expect(SHARE_ALIKE_PATTERN.test(OSM_LICENSE)).toBe(true)
+		expect(licenseVerdict(OSM_LICENSE, LicensePolicy.ShareAlikeFree).refusal).toBe(LicenseRefusalKind.ShareAlikeCarried)
 
 		const road104 = rows.find((r) => r.raw.includes("Road 104"))
 

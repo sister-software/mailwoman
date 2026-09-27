@@ -13,8 +13,8 @@
  *   omitted, plus the representative coordinate so a board can be drawn from the same file.
  *
  *   ⚠ ODbL: the output is derived from OpenStreetMap and carries the share-alike obligation. The adapter stamps every
- *   row `ODbL-1.0`. It `SHARE_ALIKE_PATTERN` matches. Therefore, a proprietary-weights build passing `--exclude-share-alike`
- *   drops these rows at ingest and only the open weights learn from them.
+ *   row `ODbL-1.0`, whose recorded obligations include share-alike. A corpus build run under
+ *   `LicensePolicy.ShareAlikeFree` refuses these rows at ingest, so only the open weights learn from them.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
