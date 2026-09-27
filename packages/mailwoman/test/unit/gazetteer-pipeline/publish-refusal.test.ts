@@ -9,24 +9,17 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
-import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { LayerTier } from "@mailwoman/core/layers"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { publishGazetteer } from "mailwoman/gazetteer-pipeline"
 import { foldLayerManifest, stampLayerManifest } from "mailwoman/gazetteer-pipeline/stamp-manifest"
-import type { PathBuilder } from "path-ts"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 let root: TemporaryDirectory
-let uploadScript: PathBuilder
 
 beforeAll(async () => {
 	root = await temporaryDirectory("publish-refusal-")
-	uploadScript = root.path("publish-demo-assets-to-r2.py")
-
-	// The refusal precedes the upload script, so the file only has to exist.
-	await writeLocalTextFile("raise SystemExit('the refusal must come first')\n", uploadScript)
 })
 
 afterAll(() => root[Symbol.asyncDispose]())
@@ -60,11 +53,11 @@ test("a build-local candidate is refused by name before staging", async () => {
 	const stageDir = root.path("stage")
 
 	await expect(
-		publishGazetteer({ candidateDB, version: "2026-09-27a", uploadScript, stageDir, dryRun: true })
+		publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })
 	).rejects.toThrow(/tier is build-local, and only shipped permits publication/)
 
 	await expect(
-		publishGazetteer({ candidateDB, version: "2026-09-27a", uploadScript, stageDir, dryRun: true })
+		publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })
 	).rejects.toThrow(/Pass --override-refusals/)
 
 	// Refused before the staging link existed.
@@ -81,6 +74,6 @@ test("a candidate with no layer_manifest is refused, because it states no tier",
 	}
 
 	await expect(
-		publishGazetteer({ candidateDB, version: "2026-09-27a", uploadScript, stageDir: root.path("stage2"), dryRun: true })
+		publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir: root.path("stage2"), dryRun: true })
 	).rejects.toThrow(/carries no layer_manifest, so it states no tier/)
 })

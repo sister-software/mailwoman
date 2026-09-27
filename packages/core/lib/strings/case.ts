@@ -39,8 +39,7 @@ export function upperFirst(phrase: string): string {
 /**
  * True when `text` is Latin-script all-caps.
  *
- * That is at least three uppercase letters, no lowercase letter anywhere,
- * and no cased letter from another script.
+ * That is at least three uppercase letters, without a lowercase or other-script cased letter.
  *
  * Diacritics are admitted, so `RUE DU FAUBOURG SAINT-HONORÉ` qualifies.
  * An accented uppercase input otherwise reaches the model as single-character pieces (#1938).
@@ -55,7 +54,7 @@ export function isAllCapsInput(text: string): boolean {
 /**
  * True when `text` is pure-ASCII all-lowercase.
  *
- * That is at least three lowercase letters, no uppercase, and no character above U+007F.
+ * That is at least three lowercase letters, all ASCII, without an uppercase letter.
  *
  * The mirror of {@link isAllCapsInput} for the #829 class.
  * It binds to pure ASCII because a lowercase input with diacritics parses as typed.
