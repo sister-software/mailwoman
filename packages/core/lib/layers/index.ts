@@ -11,4 +11,5 @@
 export * from "#layers/coverage"
 export * from "#layers/feature-count"
 export * from "#layers/manifest"
+export * from "#layers/publication"
 export * from "#layers/schema"

@@ -36,6 +36,7 @@ import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
+import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { CARRIED_SOURCES, currentSourceName } from "@mailwoman/corpus/recipes/sources"
 import { basename, dirname, join } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
@@ -45,6 +46,13 @@ const { values } = parseArguments({
 		"base-manifest": { type: "string", description: "The previous corpus's inner MANIFEST.json" },
 		search: { type: "string", description: "Comma-separated directories to look for each unsplit original in" },
 		out: { type: "string", description: "Where to write the plan JSON" },
+		routed: {
+			type: "string",
+			description:
+				"The directory holding the routed per-split parquets. Given it, the plan also emits the three " +
+				"comma-separated lists overlay-manifest takes, read from the files on disk rather than from the " +
+				"originals, so a file routing produced or omitted is reflected in what the manifest records.",
+		},
 	},
 })
 
@@ -270,6 +278,99 @@ if (renamed.length) {
 	for (const original of renamed) {
 		console.log(`  ${original.retiredSource} -> ${original.source}`)
 	}
+}
+
+/**
+ * The three comma-separated lists `overlay-manifest` takes, read from the routed files on disk.
+ *
+ * The lists are positional: `overlay-manifest` zips `--parquet`, `--source` and `--split` by index,
+ * so a transposition between two of them is a file recorded under another file's source and split.
+ * The last assembly typed 66 entries per list by hand.
+ *
+ * These are derived, and the source comes from the plan's current spelling
+ * rather than from the previous manifest's.
+ *
+ * Reading the directory rather than the originals is deliberate: routing decides how many files exist
+ * and which splits they carry, so a file it wrote and a file it declined both show up here as they are.
+ */
+async function routedLists(directory: string): Promise<{ parquet: string[]; source: string[]; split: string[] }> {
+	const names = (await Globerator.from("*.parquet", { cwd: directory, onlyFiles: true }).toArray())
+		.map((entry) => basename(String(entry)))
+		.toSorted((a, b) => a.localeCompare(b))
+
+	const parquet: string[] = []
+	const source: string[] = []
+	const split: string[] = []
+	const rejected: string[] = []
+
+	using db = await openDuckDB()
+
+	for (const name of names) {
+		// The label comes from the file's own `source` column rather than from its filename.
+		// A filename is what an assembly step chose to call the file, and `corpus merge-source`
+		// names its output `<stem>-00000.parquet` whatever `--out` asked for, so a stem
+		// that matched an original before the merge does not match after it.
+		// The column is what the loader groups by, so reading it is the only attribution
+		// that cannot disagree with the rows.
+		const path = join(directory, name)
+		const result = await db.runAndReadAll(`SELECT DISTINCT source FROM read_parquet('${path}')`)
+		const stored = result.getRowObjects().map((row: Record<string, unknown>) => row.source as string)
+
+		if (stored.length !== 1) {
+			rejected.push(`${name}: ${stored.length} distinct source values (${stored.toSorted().join(", ")})`)
+
+			continue
+		}
+
+		const label = stored[0]!
+
+		if (!CARRIED_SOURCES.includes(label) && !currentSourceName(label)) {
+			rejected.push(`${name}: source ${label}, which neither table knows`)
+
+			continue
+		}
+
+		// The manifest records the name the corpus holds, and the copy into the corpus drops
+		// the `.migrated` infix that marks a file carried from an older corpus.
+		// `overlay-manifest` resolves `<newDir>/<split>/<parquet>`, so a list carrying
+		// the staged spelling resolves to a path the corpus does not have.
+		parquet.push(name.replace(".migrated", ""))
+		source.push(label)
+		split.push(splitOf(name))
+	}
+
+	if (rejected.length) {
+		console.log()
+		console.log(`${rejected.length} routed files cannot enter a manifest:`)
+
+		for (const line of rejected) {
+			console.log(`  ${line}`)
+		}
+
+		process.exitCode = 1
+	}
+
+	return { parquet, source, split }
+}
+
+/**
+ * The split a routed filename carries, defaulting to `train` for a name routing left unsuffixed.
+ */
+function splitOf(name: string): string {
+	return ROUTED_SUFFIX.exec(name)?.[1] ?? "train"
+}
+
+if (values.routed) {
+	const lists = await routedLists(values.routed)
+
+	console.log()
+	console.log(`${lists.parquet.length} routed files, ready for overlay-manifest:`)
+	console.log()
+	console.log(`--parquet "${lists.parquet.join(",")}"`)
+	console.log()
+	console.log(`--source  "${lists.source.join(",")}"`)
+	console.log()
+	console.log(`--split   "${lists.split.join(",")}"`)
 }
 
 console.log()

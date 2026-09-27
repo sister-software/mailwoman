@@ -67,6 +67,14 @@ export interface LayerManifest {
 	name: string
 	version: string
 	tier: string
+	/**
+	 * The SPDX expression the build admitted, which `refusalsForPublication` reads beside `tier`.
+	 *
+	 * A row written before the column existed leaves it undefined.
+	 * An absent expression is an unstated one rather than a permissive one.
+	 */
+	license?: string
+	attribution?: string
 	source: string
 	source_vintage: string
 	build_cmd: string
