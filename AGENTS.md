@@ -90,8 +90,9 @@ Each compiling workspace sets `rootDir` to `./lib`; TypeScript therefore emits `
 `out/x.js`. Test configurations widen `rootDir` because `test/` sits outside `lib/`. The ten
 `neural-weights-*` data packages and `sentencepiece-wasm` compile no TypeScript.
 
-`sdk/` means data acquisition: fetching or extracting source data and implementing a
-`RegionDatabaseProvider`. CLI helpers belong in `packages/mailwoman/lib/cli/kit/`, and parser test
+`sdk/` means data acquisition: fetching or extracting source data and implementing the
+`RegionDatabaseProvider` interface from `@mailwoman/core/resolver`, as `BANRegionDatabaseProvider` and
+`OSMRegionDatabaseProvider` do. CLI helpers belong in `packages/mailwoman/lib/cli/kit/`, and parser test
 helpers belong in `packages/mailwoman/lib/test-kit/`. The
 `no-serve-package-to-build-tooling` dependency rule prevents request-path packages from importing any
 workspace's `lib/tools/` or `lib/sdk/` directory.
@@ -100,7 +101,10 @@ Use the established shared implementation before adding a local helper. `mailwom
 the `private-name-shadows-export` repository check report repeated implementation shapes and private
 names that collide with exports. Price the dependency before moving code into a shared package;
 `nuts-lookup`, `timezone-lookup`, and the GBT test
-retain documented local implementations to avoid large dependency graphs. When two platforms must
+retain documented local implementations to avoid large dependency graphs. That pricing applies to
+runtime imports. A declaration several packages need has one home and is imported with `import type`,
+which adds no runtime dependency; the `duplicate-exported-shape` repository check reports an exported
+interface or type alias whose body another workspace also exports. When two platforms must
 agree on behavior, share the function rather than copying its constants.
 
 The acronym convention capitalizes each acronym as a complete camel-case component: `createWOFResolver`,

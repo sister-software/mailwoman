@@ -121,6 +121,39 @@ describe("findDanglingLinks", () => {
 		expect(await findDanglingLinks(context)).toEqual([])
 	})
 
+	it("reads a declaration-shaped backticked name in a doc comment, and leaves a word alone", async () => {
+		const context = await plant({
+			"packages/a/lib/reader.ts": [
+				"/**",
+				" * @deprecated Use `readPackageJSONFile` instead; `wrapLegacy()` and `db` and `lat` are prose.",
+				" */",
+				"export function readLocalJSONFile(path: string): string { return path }",
+				"// A line comment spelling `missingLineName` is not a doc comment.",
+				"const x = `template with missingTemplateName`",
+			].join("\n"),
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "readPackageJSONFile" },
+			{ file: "packages/a/lib/reader.ts", line: 2, target: "wrapLegacy" },
+		])
+	})
+
+	it("accepts a backticked name the tree spells anywhere, and a registered external name", async () => {
+		const context = await plant({
+			"packages/a/lib/use.ts": [
+				"/**",
+				" * `getShortName` is registered as external. `resolveJsonModule` the test spells. `SW1A2AA` is a code.",
+				" * `admin1CodesASCII.txt` is a file, and `str.isupper()` is a call on a word.",
+				" */",
+				"export const value = other.toLowerCase()",
+			].join("\n"),
+			"packages/a/test/unit/use.test.ts": "const resolveJsonModule = true\n",
+		})
+
+		expect(await findDanglingLinks(context)).toEqual([])
+	})
+
 	it("leaves a URL target alone", async () => {
 		const context = await plant({
 			"packages/a/lib/x.ts": "/**\n * {@link https://example.com/spec}\n */\nexport function use(): void {}\n",

@@ -14,6 +14,7 @@ import { cliFlagPropertiesCheck } from "#checks/cli-flag-properties"
 import { dataProvenanceCheck } from "#checks/data-provenance"
 import { debtCheck } from "#checks/debt"
 import { docLinkTargetsCheck } from "#checks/doc-link-targets"
+import { duplicateExportedShapeCheck } from "#checks/duplicate-exported-shape"
 import { exportNameAffixCheck } from "#checks/export-name-affix"
 import { exportsCheck } from "#checks/exports"
 import { licenseRegisterCheck } from "#checks/license-register"
@@ -70,6 +71,7 @@ export const checks: ReadonlyArray<RepoCheck> = [
 	pythonPrefixDirectoriesCheck,
 	exportNameAffixCheck,
 	docLinkTargetsCheck,
+	duplicateExportedShapeCheck,
 	stylesheetCheck,
 	runtimeFlagsCheck,
 	wireIdentifiersCheck,

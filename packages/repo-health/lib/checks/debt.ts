@@ -16,6 +16,7 @@ import ts from "typescript"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck, type RepoContext } from "#check"
 import { findDanglingLinks } from "#checks/doc-link-targets"
+import { findDuplicateShapes } from "#checks/duplicate-exported-shape"
 import { findAffixPairs } from "#checks/export-name-affix"
 import { findPrivateNameShadows } from "#checks/private-name-shadows"
 import { trackedSourcePaths } from "#tracked-sources"
@@ -33,6 +34,10 @@ export interface DebtCounters {
 	 * `{@link}` targets that do not exist in the repository.
 	 */
 	danglingDocLinks: number
+	/**
+	 * Exported interfaces and type aliases whose body another workspace also exports, one per site.
+	 */
+	duplicateExportedShapes: number
 	asNever: number
 	doubleCast: number
 	deepRelativeImports: number
@@ -189,6 +194,7 @@ function createDebtRecord(): DebtCounters {
 		privateNameShadows: 0,
 		exportNameAffix: 0,
 		danglingDocLinks: 0,
+		duplicateExportedShapes: 0,
 		asNever: 0,
 		doubleCast: 0,
 		deepRelativeImports: 0,
@@ -590,6 +596,12 @@ async function computeDebtLedger(context: RepoContext): Promise<DebtLedger> {
 
 	for (const link of await findDanglingLinks(context)) {
 		note(ledger, "danglingDocLinks", `${link.file}:${link.line}`)
+	}
+
+	for (const duplicate of await findDuplicateShapes(context)) {
+		for (const site of duplicate.sites) {
+			note(ledger, "duplicateExportedShapes", `${site.file}:${site.line} ${site.name}`)
+		}
 	}
 
 	return ledger

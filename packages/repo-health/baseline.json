@@ -1,7 +1,8 @@
 {
 	"privateNameShadows": 29,
 	"exportNameAffix": 42,
-	"danglingDocLinks": 0,
+	"danglingDocLinks": 17,
+	"duplicateExportedShapes": 98,
 	"asNever": 0,
 	"doubleCast": 4,
 	"deepRelativeImports": 0,
