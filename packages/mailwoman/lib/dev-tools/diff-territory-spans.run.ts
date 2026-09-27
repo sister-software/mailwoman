@@ -49,8 +49,7 @@ function applyRegister(text: string, reg: Register): string {
 }
 
 const rows = await TextSpliterator.fromAsync(values.rows!)
-	.map((line) => line.trim())
-	.filter((line) => line.length && !line.startsWith("#"))
+	.filter((line) => !line.startsWith("#"))
 	.map((line) => {
 		const tab = line.indexOf("\t")
 

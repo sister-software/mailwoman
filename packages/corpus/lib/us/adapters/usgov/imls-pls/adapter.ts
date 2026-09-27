@@ -73,11 +73,11 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const libName = (record.LIBNAME ?? "").trim()
-				const address = (record.ADDRESS ?? "").trim()
-				const city = (record.CITY ?? "").trim()
-				const zip = (record.ZIP ?? "").trim()
-				const stateAbbr = (record.STABR ?? "").trim()
+				const libName = record.LIBNAME ?? ""
+				const address = record.ADDRESS ?? ""
+				const city = record.CITY ?? ""
+				const zip = record.ZIP ?? ""
+				const stateAbbr = record.STABR ?? ""
 
 				if (!libName || !city || !zip) continue
 
@@ -107,7 +107,7 @@ export function createUSGovIMLSPLSAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const fscsKey = (record.FSCSKEY ?? "").trim()
+				const fscsKey = record.FSCSKEY ?? ""
 
 				const sourceID = fscsKey
 					? `${USGOV_IMLS_PLS_ADAPTER_ID}-${fscsKey}`

@@ -14,7 +14,7 @@ import {
 	normalizeInputCase,
 	restoreLowerInput,
 	titleCaseInput,
-} from "@mailwoman/neural/case-normalize"
+} from "@mailwoman/core/strings/case"
 import { describe, expect, it } from "vitest"
 
 describe("isAllCapsInput", () => {

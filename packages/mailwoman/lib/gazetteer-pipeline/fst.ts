@@ -231,10 +231,7 @@ export async function checkAdminDerivedFSTFreshness(dbPath: PathBuilderLike): Pr
  * Every pipe-separated form is a surface.
  */
 function surfacesOfLine(line: string): string[] {
-	return line
-		.split("|")
-		.map((s) => s.trim())
-		.filter((surface) => surface.length)
+	return TextSpliterator.from(line, { delimiter: "|" }).toArray()
 }
 
 /**

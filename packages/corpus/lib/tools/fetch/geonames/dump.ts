@@ -21,6 +21,7 @@ import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@m
 import { makeDirectories, removePathIfPresent } from "@mailwoman/core/fs/writers"
 import { extractZipEntry } from "@mailwoman/core/fs/zip"
 import { sha256File } from "@mailwoman/core/hash"
+import { TSVSpliterator } from "spliterator"
 
 import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index"
 import { downloadToFile, HTTPStatusError, writeManifest } from "#tools/fetch/download/index"
@@ -144,16 +145,13 @@ export function looksLikeGazetteerDump(text: string): boolean {
 export function parseCountryInfo(text: string): Array<{ country: string; capital: string }> {
 	const rows: Array<{ country: string; capital: string }> = []
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- countryInfo.txt is ~40 KB, one row per country on Earth. it cannot grow past that
-	for (const line of text.split("\n")) {
-		if (line.startsWith("#") || !line.trim()) continue
+	for (const cols of TSVSpliterator.from(text, { header: false, enableQuoteHandling: false })) {
+		const country = cols[0]?.toUpperCase()
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- one bounded 19-column catalog row
-		const cols = line.split("\t")
-		const country = cols[0]?.trim().toUpperCase()
+		if (!country || country.startsWith("#")) continue
 
-		if (country?.length === 2) {
-			rows.push({ country, capital: cols[5]?.trim() ?? "" })
+		if (country.length === 2) {
+			rows.push({ country, capital: cols[5] ?? "" })
 		}
 	}
 

@@ -216,16 +216,10 @@ export async function loadLibpostalDictionary(language: string, filename: string
 	const set = new Set<string>()
 
 	for (const line of TextSpliterator.from(text)) {
-		const trimmed = line.trim()
+		if (line.startsWith("#")) continue
 
-		if (!trimmed || trimmed.startsWith("#")) continue
-
-		for (const form of trimmed.split("|")) {
-			const f = form.trim().toLowerCase()
-
-			if (f) {
-				set.add(f)
-			}
+		for (const form of TextSpliterator.from(line, { delimiter: "|" })) {
+			set.add(form.toLowerCase())
 		}
 	}
 

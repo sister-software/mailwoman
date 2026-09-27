@@ -171,9 +171,9 @@ export async function readPostalTuples(
 	const validPostcode = opts.withState ? isAuPostcode : isNZPostcode
 
 	for await (const columns of TSVSpliterator.fromAsync(readZipEntry(source.zip, source.txt), { header: false })) {
-		const postcode = (columns[1] ?? "").trim(),
-			locality = (columns[2] ?? "").trim(),
-			region = (columns[4] ?? "").trim()
+		const postcode = columns[1] ?? "",
+			locality = columns[2] ?? "",
+			region = columns[4] ?? ""
 
 		if (!cleanLocality(locality) || !validPostcode(postcode) || (opts.withState && !isAuStateAbbreviation(region)))
 			continue

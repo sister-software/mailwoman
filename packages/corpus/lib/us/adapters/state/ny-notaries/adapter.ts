@@ -55,26 +55,19 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 
 			let emitted = 0
 
-			for await (const rawRecord of rows as AsyncIterable<Record<string, string>>) {
+			for await (const record of rows as AsyncIterable<Record<string, string>>) {
 				if (opts.signal?.aborted) break
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				// NY CSV has columns with leading spaces, so we normalize by trimming keys.
-				const record: Record<string, string> = {}
-
-				for (const key of Object.keys(rawRecord)) {
-					record[key.trim()] = rawRecord[key] ?? ""
-				}
-
-				const holderName = (record["Commission Holder Name"] ?? "").trim()
-				const businessName = (record["Business Name (if available)"] ?? "").trim()
-				const address1 = (record["Business Address 1 (if available)"] ?? "").trim()
-				const address2 = (record["Business Address 2 (if available)"] ?? "").trim()
-				const city = (record["Business City (if available)"] ?? "").trim()
-				const stateAbbr = (record["Business State (if available)"] ?? "").trim()
-				const zip = (record["Business Zip (if available)"] ?? "").trim()
-				const county = (record["Commissioned County"] ?? "").trim()
+				const holderName = record["Commission Holder Name"] ?? ""
+				const businessName = record["Business Name (if available)"] ?? ""
+				const address1 = record["Business Address 1 (if available)"] ?? ""
+				const address2 = record["Business Address 2 (if available)"] ?? ""
+				const city = record["Business City (if available)"] ?? ""
+				const stateAbbr = record["Business State (if available)"] ?? ""
+				const zip = record["Business Zip (if available)"] ?? ""
+				const county = record["Commissioned County"] ?? ""
 
 				if (!city || !stateAbbr || !zip) continue
 
@@ -109,7 +102,7 @@ export function createStateNyNotariesAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const commNum = (record["Commission Number (UID)"] ?? "").trim()
+				const commNum = record["Commission Number (UID)"] ?? ""
 
 				const sourceID = commNum
 					? `${STATE_NY_NOTARIES_ADAPTER_ID}-${commNum}`

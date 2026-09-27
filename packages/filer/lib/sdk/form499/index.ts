@@ -170,7 +170,7 @@ function toForm499Row(raw: Record<Form499Column, string>): Form499Row {
 		form499ID: raw.form499ID,
 		frn: toFRN(raw.frn),
 		lastFiledAt: raw.lastFiledAt,
-		usfContributor: raw.usfContributor.trim() === "TRUE",
+		usfContributor: raw.usfContributor === "TRUE",
 		legalNameOfCarrier: raw.legalNameOfCarrier,
 		doingBusinessAs: raw.doingBusinessAs,
 		principalCommType: raw.principalCommType,

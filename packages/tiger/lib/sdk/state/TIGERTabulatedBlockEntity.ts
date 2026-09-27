@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { smartSnakeCase } from "@mailwoman/core"
+import { smartSnakeCase } from "spliterator"
 
 import { TIGERProperty } from "#index"
 
@@ -23,4 +23,4 @@ export const TIGERTabulatedBlockEntitySelections = (
 		TIGERProperty.WaterAreaSqm,
 		TIGERProperty.Population,
 	] as const
-).map((columnName) => smartSnakeCase(columnName))
+).map(smartSnakeCase)

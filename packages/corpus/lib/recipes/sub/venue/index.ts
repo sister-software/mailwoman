@@ -10,6 +10,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
+import { upperFirst } from "@mailwoman/core/strings/case"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
@@ -32,7 +33,6 @@ import {
 	readSubVenueLexicon,
 	rejectedPhrasesFor,
 	sampleIdentifier,
-	titleCase,
 } from "#recipes/sub/venue/sources"
 import type { LocaleBaseTuple } from "#surfaces/locale"
 import type { SubVenueLexiconTable } from "#tools"
@@ -289,7 +289,7 @@ export function buildSubVenueForm(
 		const modifier = sample(modifiers, random)
 
 		return {
-			text: `${titleCase(modifier)} ${promotedSurface.surface}`,
+			text: `${upperFirst(modifier)} ${promotedSurface.surface}`,
 			form: "modifier-designator",
 			designatorID: promotedSurface.designatorID,
 		}

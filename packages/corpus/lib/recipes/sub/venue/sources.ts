@@ -7,6 +7,7 @@
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { resolveModulePath } from "@mailwoman/core/module/resolvers"
 import { sample } from "@mailwoman/core/random"
+import { upperFirst } from "@mailwoman/core/strings/case"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import type { POIDatabase } from "@mailwoman/resolver-wof-sqlite/poi"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -158,13 +159,6 @@ export interface PromotedSurface {
 }
 
 /**
- * Uppercases the first character of a phrase.
- */
-export function titleCase(phrase: string): string {
-	return phrase.charAt(0).toUpperCase() + phrase.slice(1)
-}
-
-/**
  * Reports whether a lowercased name contains the phrase at word boundaries.
  *
  * The boundary check keeps `gate` from matching inside `Briggate`.
@@ -282,7 +276,7 @@ export function promotedSurfacesFor(
 			out.set(key, {
 				designatorID: designator.id,
 				phrase: designator.id,
-				surface: titleCase(designator.id),
+				surface: upperFirst(designator.id),
 				identifierRequired: false,
 				modifierEligible: designator.modifierEligible,
 			})
@@ -299,7 +293,7 @@ export function promotedSurfacesFor(
 		out.set(key, {
 			designatorID: promotion.designatorID,
 			phrase: promotion.phrase,
-			surface: titleCase(promotion.phrase),
+			surface: upperFirst(promotion.phrase),
 			identifierRequired: promotion.shape === "identifier-required",
 
 			modifierEligible: Boolean(designator?.modifierEligible) && promotion.shape !== "identifier-required",

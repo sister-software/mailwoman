@@ -12,6 +12,7 @@ import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
 import type { PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { readCSVRecords } from "#recipes/scaffold"
 import {
@@ -502,10 +503,7 @@ async function readSources(
 		const upstream = readUnresolvedColumn(record["upstream"], "upstream", row)
 
 		if (upstream) {
-			source.upstreamLineage = upstream
-				.split(";")
-				.map((entry) => entry.trim())
-				.filter((entry) => entry.length > 0)
+			source.upstreamLineage = TextSpliterator.from(upstream, { delimiter: ";" }).toArray()
 		}
 
 		records.push(source)

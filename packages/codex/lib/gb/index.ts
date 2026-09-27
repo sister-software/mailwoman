@@ -9,6 +9,7 @@
  */
 
 export * from "#gb/country"
+export * from "#gb/place-name"
 export * from "#gb/postcode/area"
 export * from "#gb/postcode/index"
 export * from "#gb/street-type"

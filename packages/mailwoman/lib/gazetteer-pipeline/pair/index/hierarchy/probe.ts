@@ -67,6 +67,7 @@ import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { basename, PathBuilder, resolvePath } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 /**
  * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
@@ -76,7 +77,9 @@ export function resolveHierarchyRunInputs(values: { countries?: string; db?: str
 	dbPath: string
 } {
 	return {
-		countries: (values.countries ?? "us,fr").split(",").map((c) => c.trim().toLowerCase()),
+		countries: TextSpliterator.from(values.countries ?? "us,fr", { delimiter: "," })
+			.map((c) => c.toLowerCase())
+			.toArray(),
 		dbPath: resolvePath(values.db ?? wofDatabasePath("admin-global-priority.db")),
 	}
 }

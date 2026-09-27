@@ -32,6 +32,7 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { workspacePathBuilder } from "@mailwoman/core/paths"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { weightsCachePackageDir } from "@mailwoman/neural/weights"
+import { TextSpliterator } from "spliterator"
 
 const { values } = parseArguments({
 	options: {
@@ -70,10 +71,9 @@ const BASE_LOCALE = "en-us"
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 
 const locales = values.locales
-	? values.locales
-			.split(",")
-			.map((locale) => locale.trim().toLowerCase())
-			.filter((locale) => locale.length)
+	? TextSpliterator.from(values.locales, { delimiter: "," })
+			.map((locale) => locale.toLowerCase())
+			.toArray()
 	: DEFAULT_LOCALES
 
 if (!locales.includes(BASE_LOCALE)) {

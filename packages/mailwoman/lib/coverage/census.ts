@@ -355,8 +355,6 @@ export async function readBoardCoverage(
 		for await (const file of Globerator.files("jsonl", { cwd: dirPath, recursive: false })) {
 			// Malformed lines are skipped.
 			for await (const line of TextSpliterator.fromAsync(dirPath(file))) {
-				if (!line.trim()) continue
-
 				const row = tryParsingJSON<{ country?: string; status?: string }>(line)
 
 				if (row === null) continue

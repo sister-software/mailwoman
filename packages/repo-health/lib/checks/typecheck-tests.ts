@@ -39,19 +39,17 @@ const TEST_PROJECT = /^(?:packages\/)?[^/]+\/tsconfig\.test\.json$/
  * A non-zero exit carries the diagnostics on stdout, so a rejected promise is
  * the normal path for a workspace with errors.
  */
-async function typecheck(workspace: string, repoRoot: string): Promise<Diagnostic[]> {
+async function* typecheck(workspace: string, repoRoot: string): AsyncGenerator<Diagnostic, void, unknown> {
 	const config = join(workspace, "tsconfig.test.json")
 
 	try {
 		await runFile("./node_modules/.bin/tsc", ["-p", config, "--noEmit", "--pretty", "false"], { cwd: repoRoot })
-
-		return []
 	} catch (error) {
 		const output = (error as { stdout?: string }).stdout ?? ""
 
-		return [...TextSpliterator.from(output)]
-			.filter((line) => line.includes("error TS"))
-			.map((line) => ({ severity: DiagnosticSeverity.Error, message: line, file: workspace }))
+		for (const line of TextSpliterator.from(output).filter((l) => l.includes("error TS"))) {
+			yield { severity: DiagnosticSeverity.Error, message: line, file: workspace }
+		}
 	}
 }
 
@@ -78,7 +76,9 @@ export const typecheckTestsCheck: RepoCheck = {
 		await Promise.all(
 			Array.from({ length: CONCURRENCY }, async () => {
 				for (let next = queue.shift(); next; next = queue.shift()) {
-					diagnostics.push(...(await typecheck(next, context.repoRoot)))
+					for await (const diag of typecheck(next, context.repoRoot)) {
+						diagnostics.push(diag)
+					}
 				}
 			})
 		)

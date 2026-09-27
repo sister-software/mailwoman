@@ -9,6 +9,8 @@
 
 import { parseArgs, type ParseArgsConfig } from "node:util"
 
+import { TextSpliterator } from "spliterator"
+
 export type { ParseArgsConfig } from "node:util"
 
 export type UnsafeCLIArgument = string & { __unsafeCLIArgumentBrand: never }
@@ -51,10 +53,7 @@ export function extractDelimited(value?: unknown, delimiter = ","): string[] {
 
 	if (!normalized) return []
 
-	return normalized
-		.split(delimiter)
-		.map((entry) => entry.trim())
-		.filter((entry) => entry.length > 0)
+	return TextSpliterator.from(normalized, { delimiter }).toArray()
 }
 
 /**

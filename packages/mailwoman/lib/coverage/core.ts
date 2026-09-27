@@ -17,6 +17,7 @@ import { dirname, PathBuilder } from "path-ts"
 import { $ } from "zx"
 import { Globerator } from "spliterator/node/fs"
 import { stringifyJSON } from "@mailwoman/core/json";
+import { TextSpliterator } from "spliterator"
 
 /**
  * Longitude span above which a ring is assumed to cross the antimeridian rather than genuinely
@@ -124,7 +125,7 @@ async function resolveStates(opts: CoverageBuildOptions): Promise<StateDatabase[
 	const bySlug = new Map(files.map((f) => [f.replaceAll(/^address-points-us-|\.db$/g, ""), f]))
 
 	const slugs =
-		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : opts.states.split(",").map((s) => s.trim().toLowerCase())
+		opts.states.toLowerCase() === "all" ? [...bySlug.keys()] : TextSpliterator.from(opts.states, { delimiter: "," }).map((s) => s.toLowerCase()).toArray()
 
 	const out: StateDatabase[] = []
 

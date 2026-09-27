@@ -16,7 +16,6 @@
 
 import { serveNode } from "@mailwoman/api-kit"
 import { matchCountry } from "@mailwoman/codex/country"
-import { pyTitle } from "@mailwoman/core"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { createWOFResolver } from "@mailwoman/resolver"
@@ -31,6 +30,7 @@ import {
 import type { ResolvedEngineStamp } from "mailwoman/cli-kit/engine-stamp"
 import { geocodeAddress, USStateDatabaseProvider } from "mailwoman/geocode"
 import { createResolverBackend } from "mailwoman/resolver-backend"
+import { titleCase } from "spliterator"
 
 import {
 	createPhotonApp,
@@ -156,9 +156,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
-				// The key form is normalized lowercase (the extracts store no display-cased locality);
-				// pyTitle display-cases it particle-and-apostrophe-aware.
-				places.push({ tag: "locality", name: pyTitle(result.rooftop.localityNorm) })
+				places.push({ tag: "locality", name: titleCase(result.rooftop.localityNorm) })
 			}
 
 			// Locality→postcode enrichment: an admin answer for a place whose containing

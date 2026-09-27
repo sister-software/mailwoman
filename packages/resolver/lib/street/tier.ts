@@ -8,6 +8,7 @@ import { isFrenchStreetWord } from "@mailwoman/codex/fr"
 import { isStreetDirectionalToken } from "@mailwoman/codex/us"
 import { collectNodes, walkNodes, type AddressNode } from "@mailwoman/core/decoder"
 import type { AddressPointLookup, InterpolationLookup, StreetCentroidLookup } from "@mailwoman/core/resolver"
+import { TextSpliterator } from "spliterator"
 
 import { foldName } from "#fold-name"
 
@@ -304,10 +305,7 @@ export function applyStreetCentroid(
 
 	if (!lookups.length) return
 
-	const rawSegments = raw
-		.split(",")
-		.map((s) => s.trim())
-		.filter((segment) => segment.length)
+	const rawSegments = TextSpliterator.from(raw, { delimiter: "," }).toArray()
 
 	const CAP = 5
 

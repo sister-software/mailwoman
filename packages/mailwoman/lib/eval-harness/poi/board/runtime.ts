@@ -12,6 +12,7 @@ import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { poiDatabasePath, wofExtractPaths } from "@mailwoman/resolver-wof-sqlite/paths"
 import { resolvePath, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { createRuntimePipeline } from "#index"
 import { createResolverBackend } from "#resolver-backend"
@@ -80,7 +81,7 @@ async function loadResolver(
 	const wofCandidates = options.candidateDB
 		? []
 		: options.resolveDB
-			? options.resolveDB.split(",").map((p) => p.trim())
+			? TextSpliterator.from(options.resolveDB, { delimiter: "," }).toArray()
 			: wofExtractPaths()
 
 	const wofPaths = (await Promise.all(wofCandidates.map(async (path) => ({ path, exists: await pathExists(path) }))))

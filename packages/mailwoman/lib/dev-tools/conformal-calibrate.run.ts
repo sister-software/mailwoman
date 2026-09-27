@@ -57,7 +57,7 @@ import { median } from "@mailwoman/core/stats"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversine } from "@mailwoman/spatial"
-import { JSONSpliterator } from "spliterator"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 // Loose scan parity with the retired local argv helpers: unknown flags tolerated.
 /**
@@ -259,11 +259,10 @@ async function main(): Promise<void> {
 	const tokenizerPath = values["tokenizer"] || "packages/neural-weights-en-us/tokenizer.model"
 	const modelCardPath = values["model-card"] || "packages/neural-weights-en-us/model-card.json"
 
-	const wofPaths = (
-		values["wof"] || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
-	)
-		.split(",")
-		.map((s) => s.trim())
+	const wofPaths = TextSpliterator.from(
+		values["wof"] || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`,
+		{ delimiter: "," }
+	).toArray()
 
 	const calFrac = Number(values["cal-frac"] || "0.5")
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level

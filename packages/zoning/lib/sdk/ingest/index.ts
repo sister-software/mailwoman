@@ -267,7 +267,7 @@ export async function* readZoningFeatures(options: ZoningIngestOptions): AsyncGe
 			const localCode = row.zone_orig ?? ""
 
 			// The authority never publishes a zone without a code, so a blank code is an error.
-			if (!localCode.trim()) {
+			if (!localCode) {
 				throw new Error(
 					`zoning ingest: feature ${areaID} carries a blank ZONE_ORIG — the authority's own code is the claim, so a blank is refused rather than stored`
 				)

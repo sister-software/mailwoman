@@ -25,6 +25,7 @@ import { writeLocalFile } from "@mailwoman/core/fs/writers"
 import { isPresent } from "@mailwoman/core/objects"
 import { percentile } from "@mailwoman/core/stats"
 import { haversineKm } from "@mailwoman/match"
+import { TextSpliterator } from "spliterator"
 
 import { streamRows } from "#index"
 import type { EvalGeocoderFactory } from "#tools/eval-geocoder"
@@ -89,7 +90,7 @@ export interface GeocoderVsProvidedCoordsOptions {
  */
 function parseLatLon(raw: string | undefined): { latitude: number; longitude: number } | null {
 	if (!raw) return null
-	const [a, b] = raw.split(",").map((x) => Number(x.trim()))
+	const [a, b] = TextSpliterator.from(raw, { delimiter: "," }).map(Number).toArray()
 
 	if (!Number.isFinite(a) || !Number.isFinite(b)) return null
 

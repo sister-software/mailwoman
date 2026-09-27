@@ -18,7 +18,7 @@
  *     training feed cannot drift onto different definitions of the ambiguous class.
  *
  *   This module remains the single TS home for the table: the synthesis-layer helpers
- *   (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchCase`, `matchTrailingSuffix` — used by
+ *   (`US_STREET_SUFFIX_PREFERRED_ABBR`, `matchTrailingSuffix` — used by
  *   `@mailwoman/corpus`) and the richer branded-type lookup (`StreetSuffix`,
  *   `lookupStreetSuffix`, `isStreetSuffix`) share the one underlying JSON record.
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Street Suffix Abbreviations}
@@ -86,25 +86,6 @@ export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, st
 	// the JSON import types values as string[], so assert the head's presence.
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
-
-/**
- * Apply `target`'s letters in the same case-pattern as `reference`.
- *
- * Three patterns covered:
- *
- * - All-uppercase reference (`"AVE"`) → uppercase target (`"avenue"`).
- * - All-lowercase reference (`"ave"`) → lowercase target (`"avenue"`).
- * - Anything else (`"Ave"`, `"aVe"`) → title-case target (`"Avenue"`).
- */
-export function matchCase(target: string, reference: string): string {
-	if (!reference) return target
-
-	if (reference === reference.toUpperCase()) return target.toUpperCase()
-
-	if (reference === reference.toLowerCase()) return target.toLowerCase()
-
-	return target.charAt(0).toUpperCase() + target.slice(1).toLowerCase()
-}
 
 /**
  * If the last whitespace-separated word of `street` is a known USPS suffix variant,

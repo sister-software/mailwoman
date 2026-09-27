@@ -241,12 +241,8 @@ export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRo
 	// A whole-country extract runs to 250,000 lines (52 MB for Great Britain), and materializing
 	// every segment before reading the first is exactly what the repo lint rule exists to prevent.
 	for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
-		const trimmed = line.trim()
-
-		if (!trimmed) continue
-
 		try {
-			out.push(parseJSONStrict<SubVenueHarvestRow>(trimmed))
+			out.push(parseJSONStrict<SubVenueHarvestRow>(line))
 		} catch {
 			continue
 		}

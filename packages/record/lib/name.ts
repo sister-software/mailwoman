@@ -1,3 +1,5 @@
+import { TextSpliterator } from "spliterator"
+
 /**
  * @copyright Sister Software
  * @license AGPL-3.0
@@ -242,7 +244,7 @@ export function parsePersonName(input: string | null | undefined): PersonName | 
 	// 2. Resolve a single comma: "Last, First" inversion, unless the tail is a known suffix
 	//    ("John Smith, Jr."), in which case keep order and treat the tail as a suffix.
 	if (countChar(working, ",") === 1) {
-		const [head, tail] = working.split(",").map((p) => p.trim())
+		const [head, tail] = TextSpliterator.from(working, { delimiter: "," }).toArray()
 
 		if (tail && tail.split(/\s+/).every((t) => SUFFIXES.has(norm(t)))) {
 			result.suffix = tail

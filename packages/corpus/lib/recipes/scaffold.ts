@@ -220,8 +220,6 @@ export function readTuples(input: PathBuilderLike): AsyncSequence<RecipeTuple> {
 	// TextSpliterator keeps the reader tolerant of malformed lines, where JSONSpliterator
 	// would throw, and these operators fuse into the source's pull loop.
 	return TextSpliterator.fromAsync(input)
-		.map((line) => line.trim())
-		.filter((line) => Boolean(line))
 		.map((line) => tryParsingJSON<RecipeTuple>(line))
 		.filter((tuple) => tuple !== null)
 		.map((tuple) => tuple!)

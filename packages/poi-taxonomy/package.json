@@ -90,6 +90,6 @@
 		"path-ts": "^2.5.0"
 	},
 	"devDependencies": {
-		"spliterator": "^7.11.0"
+		"spliterator": "^8.1.0"
 	}
 }

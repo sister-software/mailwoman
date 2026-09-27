@@ -96,12 +96,12 @@ export function createUSGovIRSBMFAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const ein = (record.EIN ?? "").trim()
-				const venue = (record.NAME ?? "").trim() || undefined
-				const street = (record.STREET ?? "").trim()
-				const city = (record.CITY ?? "").trim()
-				const state = (record.STATE ?? "").trim()
-				const zipRaw = (record.ZIP ?? "").trim()
+				const ein = record.EIN ?? ""
+				const venue = (record.NAME ?? "") || undefined
+				const street = record.STREET ?? ""
+				const city = record.CITY ?? ""
+				const state = record.STATE ?? ""
+				const zipRaw = record.ZIP ?? ""
 
 				if (!city || !zipRaw) continue
 				const postcode = zipRaw.split("-")[0]!.trim() // 5-digit. drop the optional +4

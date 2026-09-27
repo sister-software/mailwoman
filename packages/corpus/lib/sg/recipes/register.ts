@@ -8,8 +8,8 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { titleCaseIfUpper } from "spliterator"
 
-import { titlecase } from "#au/adapters/gnaf/assemble"
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
@@ -60,15 +60,6 @@ const REGISTER_DRAW: Record<SGRegister, number> = {
 	bracket_postcode: P_BLOCK,
 	building_led: P_BLOCK + P_BRACKET_POSTCODE,
 	official: 1,
-}
-
-/**
- * Title-cases an all-uppercase name and returns any other name unchanged.
- *
- * The source writes names in uppercase like G-NAF, so the function reuses the G-NAF title-caser.
- */
-export function titleCaseSGName(name: string): string {
-	return name === name.toUpperCase() ? titlecase(name) : name
 }
 
 /**
@@ -129,10 +120,10 @@ export interface SGRegisterRendering {
  * `Blk` and the `S(` and `)` around a postcode stay untagged.
  */
 export function renderSGRegister(row: SGRow, random: () => number, register?: SGRegister): SGRegisterRendering {
-	const street0 = titleCaseSGName(row.street)
+	const street0 = titleCaseIfUpper(row.street)
 	const street = random() < P_ABBREVIATE ? abbreviateSGStreet(street0) : street0
 	const drawn = random()
-	const building = isBuildingName(row.unit) ? titleCaseSGName(row.unit) : null
+	const building = isBuildingName(row.unit) ? titleCaseIfUpper(row.unit) : null
 	const draw = register === undefined ? drawn : REGISTER_DRAW[register]
 
 	let raw: string

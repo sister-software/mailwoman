@@ -149,7 +149,7 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 		"https://www2.census.gov/programs-surveys/popest/datasets/2020-2023/counties/totals/co-est2023-alldata.csv"
 
 	const csv = await fetchText(url)
-	const lines = [...TextSpliterator.from(csv)]
+	const lines = TextSpliterator.from(csv).toArray()
 	const header = lines[0]!.split(",")
 	const idx = (col: string) => header.indexOf(col)
 	const iSumlev = idx("SUMLEV")

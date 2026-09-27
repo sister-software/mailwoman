@@ -28,7 +28,6 @@
 
 // oxlint-disable max-depth -- the streaming source-format state machine is intentionally kept in one pass
 
-import { titlecaseIfUpper } from "@mailwoman/core"
 import { openReadStream } from "@mailwoman/core/fs/streams"
 import { makeDirectories, writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { readZipEntry } from "@mailwoman/core/fs/zip"
@@ -37,7 +36,7 @@ import { SeededRandom } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { pyJSONDumps } from "@mailwoman/core/utils"
 import { dirname } from "path-ts"
-import { CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
+import { titleCaseIfUpper, CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 // #region CSV source
@@ -96,10 +95,10 @@ interface Address {
  * House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {
-	const num = (row.NUMBER ?? "").trim()
-	const street = (row.STREET ?? "").trim()
-	const city = (row.CITY ?? "").trim()
-	const cp = (row.POSTCODE ?? "").trim()
+	const num = row.NUMBER ?? ""
+	const street = row.STREET ?? ""
+	const city = row.CITY ?? ""
+	const cp = row.POSTCODE ?? ""
 	const lat = pyFloat(row.LAT)
 	const lon = pyFloat(row.LON)
 
@@ -107,14 +106,14 @@ function parseRow(row: CSVRecord): Address | null {
 
 	if (!num || !street || !city || !cp || num === "0" || !/^\p{L}/u.test(street)) return null
 
-	return { street: titlecaseIfUpper(street), num, cp, city: titlecaseIfUpper(city), lat, lon }
+	return { street: titleCaseIfUpper(street), num, cp, city: titleCaseIfUpper(city), lat, lon }
 }
 
 /**
  * Geographic diversity key: the region when the dump carries one, else the postcode's leading pair.
  */
 function bucketKey(row: CSVRecord, address: Address): string {
-	return (row.REGION ?? "").trim() || address.cp.slice(0, 2)
+	return (row.REGION ?? "") || address.cp.slice(0, 2)
 }
 
 interface SampleOptions {

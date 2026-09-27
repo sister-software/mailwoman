@@ -55,7 +55,7 @@ import { SeededRandom } from "@mailwoman/core/random"
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"
 import { dirname } from "path-ts"
-import { createNewlineWriter } from "spliterator"
+import { createNewlineWriter, TextSpliterator } from "spliterator"
 
 import { $private } from "#env"
 import { openParquetRowStream } from "#parquet/streams"
@@ -510,7 +510,9 @@ export async function expandGolden(
 	const providerName = options.provider ?? "deepseek"
 	const model = options.model ?? (providerName === "anthropic" ? "claude-haiku-4-5-20251001" : "deepseek-chat")
 	const concurrencyLimit = options.concurrency ?? 4
-	const includeSources = options.includeSources ? new Set(options.includeSources.split(",").map((s) => s.trim())) : null
+	const includeSources = options.includeSources
+		? new Set(TextSpliterator.from(options.includeSources, { delimiter: "," }))
+		: null
 	const ts = new Date().toISOString().replaceAll(/[:.]/g, "-").slice(0, 19)
 	const outputPath = options.output ?? `data/eval/golden/candidates/expand-${ts}.jsonl`
 

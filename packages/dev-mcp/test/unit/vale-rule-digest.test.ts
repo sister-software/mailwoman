@@ -29,7 +29,7 @@ async function tokenPatterns(rule: string): Promise<RegExp[]> {
 
 	const patterns: RegExp[] = []
 
-	for (const line of TextSpliterator.from(block)) {
+	for (const line of TextSpliterator.from(block, { trim: false })) {
 		const token = /^\s+-\s+(.+?)\s*$/u.exec(line)?.[1]?.replace(/^["'](.*)["']$/su, "$1")
 
 		if (!token) continue

@@ -88,10 +88,8 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 	// by one per blank line above the failure.
 	// The report is then confidently wrong, which is worse than absent.
 	// Blank lines are dropped below, after they have been counted.
-	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
+	for await (const text of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
-
-		const text = raw.trim()
 
 		if (!text) continue
 

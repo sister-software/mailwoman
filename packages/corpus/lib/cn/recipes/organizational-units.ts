@@ -10,6 +10,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"
+import { TextSpliterator } from "spliterator"
 
 import { type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
 import { alignRow } from "#utils/align"
@@ -65,10 +66,7 @@ export function labelCNOrganizationalRow(raw: string): Record<string, string> | 
 	if (tail) {
 		// A Latin tail becomes a region and a trailing "China" country.
 		const segments = tail.includes(",")
-			? tail
-					.split(",")
-					.map((segment) => segment.trim())
-					.filter((segment) => segment.length)
+			? TextSpliterator.from(tail, { delimiter: "," }).toArray()
 			: tailWithoutCommas(tail)
 
 		for (const segment of segments) {

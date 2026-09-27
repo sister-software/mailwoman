@@ -184,7 +184,7 @@ describe("the Hugging Face materialization plan", () => {
 	function trackedPaths(): Set<string> {
 		const listing = $.sync({ cwd: repoRoot })`git ls-files -- packages`
 
-		return new Set([...TextSpliterator.from(listing.stdout)].filter(isPresent))
+		return TextSpliterator.from(listing.stdout).filter(isPresent).toSet()
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
@@ -256,9 +256,10 @@ describe("the pair-index parity selector", () => {
 		const filter = script!.split(/\s+/).at(-1)!
 		const listing = $.sync({ cwd: repoRoot })`git ls-files`
 
-		const matches = [...TextSpliterator.from(listing.stdout)]
+		const matches = TextSpliterator.from(listing.stdout)
 			.filter(isPresent)
 			.filter((path) => path.endsWith(".test.ts") && path.includes(filter))
+			.toArray()
 
 		expect(matches.length).toBeGreaterThan(0)
 	})

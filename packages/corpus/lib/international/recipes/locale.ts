@@ -215,7 +215,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 		? openReadStream(part.path)
 		: readZipEntry(part.zip!, part.csv!)
 
-	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "").trim() : "")
+	const get = (cells: string[], i: number): string => (i >= 0 && i < cells.length ? (cells[i] ?? "") : "")
 	const reservoir: LocaleBaseTuple[] = []
 	let cols: ColumnIndex | null = null
 	let header: string[] | null = null
@@ -228,7 +228,7 @@ export async function readTuples(part: LocalePart, rng: () => number): Promise<L
 			header: false,
 		})) {
 			if (header === null) {
-				header = cells.map((h) => h.trim().toLowerCase())
+				header = cells.map((h) => h.toLowerCase())
 				// oxlint-disable-next-line no-loop-func -- the binding is per-iteration (for-of/for-await) and the batch is awaited before the next
 				const ix = (name: string): number => header!.indexOf(name)
 

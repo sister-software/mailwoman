@@ -8,6 +8,7 @@ import type { AddressTree } from "@mailwoman/core/decoder"
 import { writeLocalJSONFile, writeLocalFile } from "@mailwoman/core/fs/writers"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
+import { TextSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { dumpAggPair, newAggPair, recordInto, stateBucket } from "#eval-harness/oa/resolver/aggregate"
@@ -55,11 +56,10 @@ export async function oaResolverEval(
 	const evalPath = options.eval || "data/eval/external/openaddresses-us-sample.jsonl"
 	const limit = (options.limit ?? 0) || Infinity
 
-	const wofPaths = (
-		options.wof || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`
-	)
-		.split(",")
-		.map((s) => s.trim())
+	const wofPaths = TextSpliterator.from(
+		options.wof || `${wofDatabasePath("admin-global-priority.db")},${wofDatabasePath("postcode-locality-intl.db")}`,
+		{ delimiter: "," }
+	).toArray()
 
 	const rows = await readOARows(evalPath, limit)
 	const setupStartedAt = performance.now()

@@ -9,6 +9,7 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import type { AddressPointLookup, InterpolationLookup, RegionDatabaseProvider } from "@mailwoman/core/resolver"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
+import { TextSpliterator } from "spliterator"
 
 import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 
@@ -106,11 +107,10 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	let extractAnchors: ExtractPostcodeAnchors | null = null
 
 	if (useAnchor || anchorRerank) {
-		const databases = (
-			options.postcodeDatabases || `${wofDatabasePath("postalcode-us.db")},${wofDatabasePath("postalcode-intl.db")}`
-		)
-			.split(",")
-			.map((s) => s.trim())
+		const databases = TextSpliterator.from(
+			options.postcodeDatabases || `${wofDatabasePath("postalcode-us.db")},${wofDatabasePath("postalcode-intl.db")}`,
+			{ delimiter: "," }
+		).toArray()
 
 		const { WOFPostcodeLookup } = await import("@mailwoman/resolver-wof-sqlite")
 		postcodeLookup = new WOFPostcodeLookup(databases)

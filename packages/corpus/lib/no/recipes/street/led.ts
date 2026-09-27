@@ -69,10 +69,8 @@ export const noStreetLedRecipe: CorpusRecipe = {
 		const excluded = new Set<string>()
 
 		for await (const line of TextSpliterator.fromAsync(excludePath)) {
-			const trimmed = line.trim()
-
-			if (trimmed && !trimmed.startsWith("#")) {
-				excluded.add(trimmed)
+			if (!line.startsWith("#")) {
+				excluded.add(line)
 			}
 		}
 

@@ -97,10 +97,7 @@ function parseLine(line: string): { canonical: string; variants: string[] } | nu
 
 	if (!trimmed.length || trimmed.startsWith("#")) return null
 
-	const parts = trimmed
-		.split("|")
-		.map((s) => s.trim())
-		.filter((s) => s.length)
+	const parts = TextSpliterator.from(trimmed, { delimiter: "|" }).toArray()
 
 	if (!parts.length) return null
 

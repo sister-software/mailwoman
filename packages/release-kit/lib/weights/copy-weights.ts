@@ -319,11 +319,9 @@ async function materializePairIndex(context: MaterializationContext, workspace: 
 	const boroughDB = entry.boroughDB ? resolvePath(wofDatabaseRoot(context.dataRoot), entry.boroughDB) : undefined
 
 	const pairsJsonl = entry.pairsJsonl
-		? entry.pairsJsonl
-				.split(",")
-				.map((path) => resolvePath(context.repoRoot, path.trim()))
-				.join(",")
-		: undefined
+		?.split(",")
+		.map((path) => resolvePath(context.repoRoot, path.trim()))
+		.join(",")
 
 	const banDir = entry.banDir ? resolvePath(context.dataRoot, entry.banDir) : undefined
 

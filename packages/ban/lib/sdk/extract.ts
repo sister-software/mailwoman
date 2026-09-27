@@ -191,26 +191,26 @@ export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGene
 			checkedHeader = true
 		}
 
-		const numero = row.numero?.trim()
-		const street = row.nom_voie?.trim()
+		const numero = row.numero
+		const street = row.nom_voie
 
 		if (!numero || !street) continue
 		// Guard the empty-string trap: `Number("")` is 0 (finite), which would write a bogus (0,0) point — .
 		// Therefore, require a non-empty coord string before parsing, then the finite check catches garbage.
-		const lonStr = row.lon?.trim()
-		const latStr = row.lat?.trim()
+		const lonStr = row.lon
+		const latStr = row.lat
 
 		if (!lonStr || !latStr) continue
 		const lon = Number(lonStr)
 		const lat = Number(latStr)
 
 		if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue
-		const rep = row.rep?.trim()
-		const postcode = row.code_postal?.trim()
-		const city = row.nom_commune?.trim()
+		const rep = row.rep
+		const postcode = row.code_postal
+		const city = row.nom_commune
 		const lieuDit = cleanLieuDit(row.nom_ld, city || null)
 
-		const certification = row.certification_commune?.trim()
+		const certification = row.certification_commune
 
 		yield {
 			numero,
@@ -221,7 +221,7 @@ export async function* extractBANAddrPoints(csvPath: PathBuilderLike): AsyncGene
 			lieuDit,
 			lon,
 			lat,
-			codeInsee: row.code_insee?.trim() || null,
+			codeInsee: row.code_insee || null,
 			certified: certification === "1" ? 1 : certification === "0" ? 0 : null,
 		}
 	}

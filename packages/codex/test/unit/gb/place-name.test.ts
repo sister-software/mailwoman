@@ -1,4 +1,10 @@
-import { titleCaseGB } from "@mailwoman/corpus/tools/gb-title-case"
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ */
+
+import { titleCaseGB } from "@mailwoman/codex/gb"
 import { describe, expect, it } from "vitest"
 
 describe("titleCaseGB", () => {

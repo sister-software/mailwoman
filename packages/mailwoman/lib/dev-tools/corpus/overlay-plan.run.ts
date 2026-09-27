@@ -39,6 +39,7 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { openDuckDB } from "@mailwoman/corpus/parquet/duckdb"
 import { CARRIED_SOURCES, currentSourceName } from "@mailwoman/corpus/recipes/sources"
 import { basename, dirname, join } from "path-ts"
+import { TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 const { values } = parseArguments({
@@ -132,7 +133,7 @@ for (const slice of overlays) {
 	grouped.set(stem, entry)
 }
 
-const searchDirectories = search.split(",").map((directory) => directory.trim())
+const searchDirectories = TextSpliterator.from(search, { delimiter: "," }).toArray()
 
 /**
  * Index every parquet under the search roots by basename.

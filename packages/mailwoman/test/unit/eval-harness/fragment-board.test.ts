@@ -134,13 +134,11 @@ describe("the FR fragment board fixture", () => {
 	})
 
 	it("reserves every street surface it uses, so a database can exclude them", async () => {
-		const reserved = new Set(
-			[
-				...TextSpliterator.from(
-					await readLocalTextFile("packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
-				),
-			].filter((line) => line && !line.startsWith("#"))
+		const reserved = TextSpliterator.from(
+			await readLocalTextFile("packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.surfaces.txt")
 		)
+			.filter((line) => line && !line.startsWith("#"))
+			.toSet()
 
 		for (const row of fixtures) {
 			if (!row.surface) continue

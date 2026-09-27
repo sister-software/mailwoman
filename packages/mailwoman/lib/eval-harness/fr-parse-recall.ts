@@ -196,9 +196,9 @@ export async function frParseRecall(
 					)
 				)
 			})()
-		: [...TextSpliterator.from(await readLocalTextFile(args.fixture))]
-				.filter((l) => l.trim())
+		: TextSpliterator.from(await readLocalTextFile(args.fixture))
 				.map((l) => parseJSONStrict<FRRow>(l))
+				.toArray()
 
 	const classifier = await (async (): Promise<NeuralAddressClassifier> => {
 		if (!args.model || !args.tokenizer) return NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })

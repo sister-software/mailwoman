@@ -142,9 +142,9 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 				const venue = composeVenue(record.name1 ?? "", record.name2)
 				const street = joinTwoLineStreet(record.street1 ?? "", record.street2)
 				const split = splitStreetLine(street)
-				const city = (record.city ?? "").trim()
-				const stateAbbr = (record.state ?? "").trim()
-				const postcode = (record.zip ?? "").trim()
+				const city = record.city ?? ""
+				const stateAbbr = record.state ?? ""
+				const postcode = record.zip ?? ""
 
 				if (!venue || !split || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
@@ -167,7 +167,7 @@ export function createUsgovSamhsaTreatmentLocatorAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const frID = (record.frid ?? "").trim()
+				const frID = record.frid ?? ""
 
 				const sourceID = frID ? `${USGOV_SAMHSA_ADAPTER_ID}-${frID}` : stableSourceID(USGOV_SAMHSA_ADAPTER_ID, aligned)
 

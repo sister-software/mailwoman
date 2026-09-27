@@ -10,6 +10,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
+import { TextSpliterator } from "spliterator"
 
 import { openMixture, readMixtureFiles } from "#dev-tools/corpus/mixture"
 
@@ -137,7 +138,11 @@ const CONTESTED_DOMINANCE = 0.95
  */
 const CONTESTED_FLOOR = 1000
 
-const asked = values.codes?.split(",").map((code) => code.trim().toUpperCase())
+const asked = values.codes
+	? TextSpliterator.from(values.codes, { delimiter: "," })
+			.map((code) => code.toUpperCase())
+			.toArray()
+	: undefined
 const ranked = [...census.values()].toSorted((a, b) => b.total - a.total)
 const detail = Number(values.detail)
 

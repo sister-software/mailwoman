@@ -11,10 +11,9 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
 import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { sentenceCaseSnake } from "@mailwoman/core/strings/case"
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { resolvePath } from "path-ts"
-import { CSVSpliterator } from "spliterator"
+import { CSVSpliterator, sentenceCase, TextSpliterator } from "spliterator"
 
 import type { CategoryRecord, POICategoryID, POITaxonomyTable, SynonymEntry } from "#types"
 
@@ -77,9 +76,9 @@ export function parseOvertureCSV(csvText: string): OvertureSnapshotRow[] {
 			throw new Error(`generate-taxonomy: malformed CSV row ${rowNumber}: ${stringifyJSON(fields.join(";"))}`)
 		}
 
-		const code = rawCode.trim()
-		const pathText = rawPath.trim().replaceAll(/^\[|\]$/g, "")
-		const path = pathText.split(",").map((p) => p.trim())
+		const code = rawCode
+		const pathText = rawPath.replaceAll(/^\[|\]$/g, "")
+		const path = TextSpliterator.from(pathText, { delimiter: "," }).toArray()
 
 		if (!code || !path.length || path.some((p) => !p)) {
 			throw new Error(
@@ -118,7 +117,7 @@ export function buildTaxonomyTable(snapshot: OvertureSnapshotRow[], overlay: Cur
 		.filter((row) => !curatedIDs.has(row.code) && !absorbedLeaves.has(row.code))
 		.map((row) => ({
 			id: row.code as POICategoryID,
-			label: sentenceCaseSnake(row.code),
+			label: sentenceCase(row.code),
 			hierarchy: row.path as POICategoryID[],
 			basicLabel: null,
 			source: "overture",

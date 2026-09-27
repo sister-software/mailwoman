@@ -10,6 +10,7 @@
  *   these rows needs the French `street_prefix` loss mask disabled.
  */
 
+import { titleCaseFR } from "@mailwoman/codex/fr"
 import { sample } from "@mailwoman/core/random"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { TextSpliterator } from "spliterator"
@@ -49,47 +50,6 @@ const norm = (value: string): string =>
 		.toLowerCase()
 		.replaceAll(/\s+/g, " ")
 		.trim()
-
-/**
- * Particles that stay lowercase inside a French commune name.
- */
-const FR_LOWER = new Set([
-	"le",
-	"la",
-	"les",
-	"de",
-	"du",
-	"des",
-	"d",
-	"l",
-	"sur",
-	"sous",
-	"en",
-	"aux",
-	"au",
-	"et",
-	"lez",
-])
-
-/**
- * Title-cases a French commune name.
- *
- * Each word and hyphenated part is capitalized except joining particles after the first.
- */
-export function frTitleCase(value: string): string {
-	const cap = (token: string, first: boolean): string =>
-		!first && FR_LOWER.has(token) ? token : token.charAt(0).toUpperCase() + token.slice(1)
-
-	return value
-		.split(" ")
-		.map((word, wordIndex) =>
-			word
-				.split("-")
-				.map((bit, bitIndex) => cap(bit, wordIndex === 0 && bitIndex === 0))
-				.join("-")
-		)
-		.join(" ")
-}
 
 /**
  * Matches common French particles in a street name.
@@ -142,10 +102,8 @@ export const frFragmentRecipe: CorpusRecipe = {
 		const excluded = new Set<string>()
 
 		for await (const line of TextSpliterator.fromAsync(excludePath)) {
-			const trimmed = line.trim()
-
-			if (trimmed && !trimmed.startsWith("#")) {
-				excluded.add(trimmed)
+			if (!line.startsWith("#")) {
+				excluded.add(line)
 			}
 		}
 
@@ -246,7 +204,7 @@ export const frFragmentRecipe: CorpusRecipe = {
 
 		for (let i = 0; i < wanted && pool.length; i++) {
 			// The fragment evaluation board uses title-cased commune names.
-			const name = frTitleCase(sample(pool, random))
+			const name = titleCaseFR(sample(pool, random))
 			const sourceID = recipeSourceID("synth-fr-fragment", { locality: name, v: `neg-${i}` })
 
 			if (

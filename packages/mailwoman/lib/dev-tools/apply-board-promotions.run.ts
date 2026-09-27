@@ -43,16 +43,12 @@ if (status !== "pass" && status !== "improvement_target" && status !== "known_fa
 }
 
 const refused = new Set(
-	values["refuse-country"]
-		.split(",")
-		.map((cc) => cc.trim().toLowerCase())
-		.filter((cc) => cc.length)
+	TextSpliterator.from(values["refuse-country"], { delimiter: "," }).map((cc) => cc.toLowerCase())
 )
 
 const wanted = new Set(
 	await TextSpliterator.fromAsync(idsPath)
-		.map((line) => line.trim())
-		.filter((line) => line.length && !line.startsWith("#"))
+		.filter((line) => !line.startsWith("#"))
 		.toArray()
 )
 

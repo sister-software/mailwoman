@@ -9,6 +9,7 @@
 
 export * from "#fr/cedex"
 export * from "#fr/code-postal"
+export * from "#fr/commune"
 export * from "#fr/departement"
 export * from "#fr/region"
 export * from "#fr/voie"

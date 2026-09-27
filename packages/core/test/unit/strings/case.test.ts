@@ -4,84 +4,103 @@
  * @author Teffen Ellis, et al.
  */
 
-import { isUniformlyCased, smartCamelCase, smartCapitalCase, smartSnakeCase } from "@mailwoman/core/strings/case"
+import {
+	isAllCapsInput,
+	isAllLowerInput,
+	normalizeInputCase,
+	restoreLowerInput,
+	titleCaseInput,
+} from "@mailwoman/core/strings/case"
 import { expect, test } from "vitest"
 
-test("smartSnakeCase: snake-cases mixed-case names", () => {
-	expect(smartSnakeCase("streetName")).toBe("street_name")
-	expect(smartSnakeCase("Street Name")).toBe("street_name")
-	expect(smartSnakeCase("street-name")).toBe("street_name")
-	expect(smartSnakeCase("HouseNumber")).toBe("house_number")
+test("isAllCapsInput: a pure-ASCII shouting address qualifies", () => {
+	expect(isAllCapsInput("214 JONES RD, ELKHART, TX 75839")).toBe(true)
+	expect(isAllCapsInput("ABC")).toBe(true)
 })
 
-test("smartSnakeCase: an already-snake_case name is unchanged", () => {
-	expect(smartSnakeCase("house_number")).toBe("house_number")
+test("isAllCapsInput: any lowercase letter disqualifies (mixed case stays byte-stable)", () => {
+	expect(isAllCapsInput("214 Jones Rd")).toBe(false)
+	expect(isAllCapsInput("MAINe ST")).toBe(false)
 })
 
-test("smartSnakeCase: an all-caps name is preserved, not lowercased", () => {
-	// The whole point of "smart": don't destroy an acronym/all-caps token.
-	expect(smartSnakeCase("USA")).toBe("USA")
+test("isAllCapsInput: Latin letters with diacritics qualify; a letter from another script disqualifies", () => {
+	// #1938: `É` kept the all-caps check from firing and the model read the shouting form letter by letter.
+	expect(isAllCapsInput("RUE DU FAUBOURG SAINT-HONORÉ")).toBe(true)
+	expect(isAllCapsInput("STRASSE PARÍS")).toBe(true)
+	expect(isAllCapsInput("MÜNCHEN")).toBe(true)
+	// Non-Latin case rules are locale-sensitive → the whole input is left alone.
+	expect(isAllCapsInput("ΑΘΗΝΑ ODOS")).toBe(false)
+	expect(isAllCapsInput("МОСКВА STREET")).toBe(false)
+	// Uncased non-Latin characters do not disqualify a Latin shouting input.
+	expect(isAllCapsInput("RUE D’ULM")).toBe(true)
 })
 
-test("smartSnakeCase: all-caps with spaces collapses non-word runs to single underscores", () => {
-	expect(smartSnakeCase("PO BOX")).toBe("PO_BOX")
-	expect(smartSnakeCase("HELLO WORLD")).toBe("HELLO_WORLD")
+test("isAllCapsInput: needs ≥3 cased letters; digits/punctuation alone do not qualify", () => {
+	expect(isAllCapsInput("TX")).toBe(false) // only 2 uppercase
+	expect(isAllCapsInput("123 456")).toBe(false) // no cased letters
+	expect(isAllCapsInput("")).toBe(false)
 })
 
-test("smartSnakeCase: dotted all-caps acronym normalizes periods away (U.S.A. -> USA)", () => {
-	// Regression: the all-caps branch used to operate on the original `name`, not the period-stripped
-	// `normalizedName`, so "U.S.A." yielded "U_S_A_" instead of the documented "USA".
-	// Fixed in this PR.
-	expect(smartSnakeCase("U.S.A.")).toBe("USA")
+test("titleCaseInput: title-cases ≥3-letter runs, PRESERVES ≤2-letter runs, length-preserving", () => {
+	expect(titleCaseInput("PALESTINE")).toBe("Palestine")
+	// ≤2-letter runs stay shouting.
+	// They're abbreviations the model reads correctly all-caps (suffix RD).
+	expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
+	const input = "ELKHART TX"
+	expect(titleCaseInput(input)).toHaveLength(input.length) // offsets unchanged
 })
 
-test("smartCamelCase: camel-cases mixed-case names", () => {
-	expect(smartCamelCase("street_name")).toBe("streetName")
-	expect(smartCamelCase("Street Name")).toBe("streetName")
-	expect(smartCamelCase("HouseNumber")).toBe("houseNumber")
+test("titleCaseInput: #252 — a 2-letter region/directional is preserved, not corrupted to a non-region form", () => {
+	// The Gauntlet casing-invariance catch: blind title-casing made NY→Ny / DC→Dc / NW→Nw,
+	// which the model then parsed as a locality, dropping the state.
+	// Preserving them lands upper on the correct mixed-case form.
+	expect(titleCaseInput("WASHINGTON DC")).toBe("Washington DC")
+	expect(titleCaseInput("NEW YORK NY")).toBe("New York NY")
+	expect(titleCaseInput("1600 PENNSYLVANIA AVE NW")).toBe("1600 Pennsylvania Ave NW")
 })
 
-test("smartCamelCase: an already-camelCase name is unchanged", () => {
-	expect(smartCamelCase("streetName")).toBe("streetName")
+test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchanged", () => {
+	// elkhart→Elkhart (the #690 locality recovery) and RD/TX preserved (the #252 region/suffix fix).
+	expect(normalizeInputCase("214 JONES RD, ELKHART, TX 75839")).toBe("214 Jones RD, Elkhart, TX 75839")
+	// mixed-case and non-ascii inputs pass through byte-for-byte
+	expect(normalizeInputCase("214 Jones Rd")).toBe("214 Jones Rd")
+	// Accented Latin shouting title-cases like ascii (#1938); the ≤2-letter rule is unchanged.
+	expect(normalizeInputCase("MÜNCHEN HBF")).toBe("München Hbf")
+	expect(normalizeInputCase("RUE DU FAUBOURG SAINT-HONORÉ")).toBe("Rue DU Faubourg Saint-Honoré")
+	expect(normalizeInputCase("AVENUE DES CHAMPS-ÉLYSÉES")).toBe("Avenue Des Champs-Élysées")
 })
 
-test("smartCamelCase: an all-caps name is preserved verbatim (incl. spaces)", () => {
-	expect(smartCamelCase("USA")).toBe("USA")
-	expect(smartCamelCase("PO BOX")).toBe("PO BOX")
+test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
+	// U+0130 lowercases to two code units.
+	// In `caddesİ` it sits inside the lowered tail, so that run stays shouting
+	// rather than shifting every later offset.
+	// In `İstanbul` it is the untouched first letter, so the run title-cases.
+	const input = "İSTANBUL CADDESİ"
+	const out = titleCaseInput(input)
+
+	expect(out).toHaveLength(input.length)
+	expect(out).toBe("İstanbul CADDESİ")
 })
 
-test("isUniformlyCased: true for all-upper or all-lower input", () => {
-	expect(isUniformlyCased("HELLO")).toBe(true)
-	expect(isUniformlyCased("hello")).toBe(true)
-	expect(isUniformlyCased("hello world")).toBe(true)
-	// Digits/punctuation equal their own upper- and lower-cased form.
-	expect(isUniformlyCased("123 main")).toBe(true)
+test("isAllLowerInput: #829 — pure-ASCII whispering qualifies; one uppercase or non-ASCII disqualifies", () => {
+	expect(isAllLowerInput("1600 pennsylvania ave nw, washington dc")).toBe(true)
+	expect(isAllLowerInput("214 Jones rd")).toBe(false) // one uppercase → mixed, byte-stable
+	expect(isAllLowerInput("straße parís")).toBe(false) // non-ASCII → left untouched
+	expect(isAllLowerInput("tx")).toBe(false) // <3 cased letters
 })
 
-test("isUniformlyCased: false for mixed-case input", () => {
-	expect(isUniformlyCased("Hello")).toBe(false)
-	expect(isUniformlyCased("streetName")).toBe(false)
-	expect(isUniformlyCased("MixedCase")).toBe(false)
+test("restoreLowerInput: #829 — title-case ≥3-letter runs, UPPERCASE ≤2-letter runs, length-preserving", () => {
+	// The ≤2 difference from titleCaseInput: a lowercase 2-letter token is an abbrev the model wants shouting.
+	expect(restoreLowerInput("washington dc")).toBe("Washington DC")
+	expect(restoreLowerInput("new york ny")).toBe("New York NY")
+	expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")
+	const input = "1600 pennsylvania ave nw"
+	expect(restoreLowerInput(input)).toHaveLength(input.length) // offsets unchanged
 })
 
-test("isUniformlyCased: false for null and empty string", () => {
-	expect(isUniformlyCased(null)).toBe(false)
-	expect(isUniformlyCased("")).toBe(false)
-})
-
-test("smartCapitalCase: capital-cases genuinely mixed-case input", () => {
-	expect(smartCapitalCase("streetName")).toBe("Street Name")
-	expect(smartCapitalCase("MixedCase")).toBe("Mixed Case")
-	expect(smartCapitalCase("Hello world")).toBe("Hello World")
-})
-
-test("smartCapitalCase: passes through email addresses unchanged", () => {
-	expect(smartCapitalCase("test@example.com")).toBe("test@example.com")
-})
-
-test("smartCapitalCase: passes through uniformly-cased input unchanged", () => {
-	// Per the docstring: uniformly-cased input is left alone, so an all-lower phrase is not title-cased.
-	expect(smartCapitalCase("hello world")).toBe("hello world")
-	expect(smartCapitalCase("HELLO WORLD")).toBe("HELLO WORLD")
-	expect(smartCapitalCase("street-name")).toBe("street-name")
+test("normalizeInputCase: #829 — all-lowercase canonicalizes to the trained mixed-case; converges with all-caps", () => {
+	const canon = "1600 Pennsylvania Ave NW, Washington DC"
+	expect(normalizeInputCase("1600 pennsylvania ave nw, washington dc")).toBe(canon)
+	expect(normalizeInputCase("1600 PENNSYLVANIA AVE NW, WASHINGTON DC")).toBe(canon) // same target from all-caps
+	expect(normalizeInputCase("café de parís")).toBe("café de parís") // lowercase non-ASCII untouched
 })

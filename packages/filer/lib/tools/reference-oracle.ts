@@ -10,6 +10,7 @@
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
+import { isPresent } from "@mailwoman/core/objects"
 import { canonicalizeOrganizationName } from "@mailwoman/record/organization"
 import render from "dom-serializer"
 import { isTag, type AnyNode, type Element } from "domhandler"
@@ -176,7 +177,7 @@ function containsMultipleEntityNames(blocks: readonly string[]): boolean {
 
 function headerMapping(rows: readonly ReferenceCell[][]): ColumnMapping | null {
 	for (const row of rows) {
-		const values = row.map((cell) => cell.text).filter(Boolean)
+		const values = row.map((cell) => cell.text).filter(isPresent)
 
 		if (!values.length || !values.every(isHeaderish)) continue
 
@@ -206,7 +207,7 @@ function classifyTable(
 	const subsidiaries: ReferenceSubsidiary[] = []
 	const rows = dropBlankColumns(inputRows)
 	const mapping = headerMapping(rows) ?? carried
-	const pairs = rows.map((row) => row.map((cell) => cell.text).filter(Boolean))
+	const pairs = rows.map((row) => row.map((cell) => cell.text).filter(isPresent))
 	const two = pairs.filter((pair) => pair.length === 2 && !FOOTNOTE.test(pair[0]!) && !pair.every(isHeaderish))
 
 	if (!mapping && two.length >= MINIMUM_NAME_PAIR_ROWS) {
@@ -225,7 +226,7 @@ function classifyTable(
 	const allSingle = pairs.length > 0 && pairs.every((pair) => pair.length <= 1) && singleRows >= 2
 
 	for (const row of rows) {
-		const values = row.map((cell) => cell.text).filter(Boolean)
+		const values = row.map((cell) => cell.text).filter(isPresent)
 
 		if (!values.length) {
 			stats.blank++
@@ -332,7 +333,7 @@ function textLines(document: AnyNode): string[] {
 
 	return TextSpliterator.from(text.replaceAll("\u00A0", " ").replaceAll("\u200B", ""))
 		.map((line) => line.replaceAll(/[ \t]+/gu, " ").trim())
-		.filter(Boolean)
+		.filter(isPresent)
 		.toArray()
 }
 

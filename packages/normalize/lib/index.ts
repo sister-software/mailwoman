@@ -13,12 +13,12 @@
  *   See `docs/engineering/reference/stages.md` § Stage 1 for the interface.
  */
 
-export { type AbbreviationEntry, abbreviationDictionary, expandAbbreviations } from "#abbreviations"
-export { applyCjkNormalization, type CjkResult } from "#cjk"
-export { normalize } from "#compute"
-export { foldCaseWhitespace, foldNFKCWhitespace, stripCombiningMarks } from "#fold"
-export { applyNFC } from "#nfc"
-export { composeMaps, identityMap } from "#offset-map"
-export { applyPunctuation } from "#punctuation"
-export type { NormalizationTransform, NormalizeOpts, NormalizedInput, SpanRange } from "#types"
-export { collapseWhitespace } from "#whitespace"
+export * from "#abbreviations"
+export * from "#cjk"
+export * from "#compute"
+export * from "#fold"
+export * from "#nfc"
+export * from "#offset-map"
+export * from "#punctuation"
+export * from "#types"
+export * from "#whitespace"

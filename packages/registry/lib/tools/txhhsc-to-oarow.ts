@@ -65,7 +65,7 @@ export async function convertTXHHSC(
 	let sawHeader = false
 
 	for (const f of TSVSpliterator.from(await readLocalTextFile(src), { header: false })) {
-		if (f.every((value) => !value.trim())) continue
+		if (f.every((value) => !value)) continue
 
 		if (!sawHeader) {
 			sawHeader = true
@@ -78,9 +78,9 @@ export async function convertTXHHSC(
 			continue
 		}
 
-		const addr = (f[cAddr] ?? "").trim()
-		const city = (f[cCity] ?? "").trim()
-		const zip = (f[cZip] ?? "").trim()
+		const addr = f[cAddr] ?? ""
+		const city = f[cCity] ?? ""
+		const zip = f[cZip] ?? ""
 		const m = GEO.exec(f[cGeo] ?? "")
 
 		if (!addr || !city || !m) {

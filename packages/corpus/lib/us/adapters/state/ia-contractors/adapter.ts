@@ -81,12 +81,12 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const businessName = (record["Business Name"] ?? "").trim()
-				const address1 = (record["Address 1"] ?? "").trim()
-				const address2 = (record["Address 2"] ?? "").trim()
-				const city = (record.City ?? "").trim()
-				const stateAbbr = (record.State ?? "").trim()
-				const zip = (record["Zip Code"] ?? "").trim()
+				const businessName = record["Business Name"] ?? ""
+				const address1 = record["Address 1"] ?? ""
+				const address2 = record["Address 2"] ?? ""
+				const city = record.City ?? ""
+				const stateAbbr = record.State ?? ""
+				const zip = record["Zip Code"] ?? ""
 
 				if (!city || !zip) continue
 
@@ -118,7 +118,7 @@ export function createStateIaContractorsAdapter(): CorpusAdapter {
 
 				if (Object.keys(aligned).length <= 2) continue
 
-				const regNum = (record["Registration #"] ?? "").trim()
+				const regNum = record["Registration #"] ?? ""
 
 				const sourceID = regNum
 					? `${STATE_IA_CONTRACTORS_ADAPTER_ID}-${regNum}`

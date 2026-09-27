@@ -173,7 +173,7 @@ export async function externalArenas(
 
 		await writeLocalFile(r.stderr, outDir(`${name}.stderr`))
 
-		report([...TextSpliterator.from(r.stdout)].slice(-40).join("\n"))
+		report(TextSpliterator.from(r.stdout).toArray().slice(-40).join("\n"))
 	}
 
 	await runArena("libpostal")

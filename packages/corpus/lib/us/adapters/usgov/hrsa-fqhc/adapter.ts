@@ -110,11 +110,11 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const venue = (record["Site Name"] ?? "").trim()
+				const venue = record["Site Name"] ?? ""
 				const split = splitStreetLine(record["Site Address"] ?? "")
-				const city = (record["Site City"] ?? "").trim()
-				const stateAbbr = (record["Site State Abbreviation"] ?? "").trim()
-				const postcode = (record["Site Postal Code"] ?? "").trim()
+				const city = record["Site City"] ?? ""
+				const stateAbbr = record["Site State Abbreviation"] ?? ""
+				const postcode = record["Site Postal Code"] ?? ""
 
 				if (!venue || !split || !city || !postcode) continue
 				const state = lookupStateAbbreviation(stateAbbr)
@@ -140,7 +140,7 @@ export function createUSGovHRSAFQHCAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const siteID = (record["Site ID"] ?? "").trim()
+				const siteID = record["Site ID"] ?? ""
 
 				const sourceID = siteID
 					? `${USGOV_HRSA_FQHC_ADAPTER_ID}-${siteID}`

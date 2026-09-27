@@ -132,9 +132,8 @@ export async function validateGoldenFile(source: PathBuilderLike): Promise<Golde
 	// Blank lines count too, so the number matches the line an editor shows.
 	let lineNumber = 0
 
-	for await (const raw of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
+	for await (const line of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		lineNumber++
-		const line = raw.trim()
 
 		if (!line) continue
 		const i = lineNumber - 1
@@ -172,11 +171,7 @@ export async function validateGoldenDir(dir: PathBuilderLike): Promise<GoldenRep
 		const fileIssues = await validateGoldenFile(fullPath)
 		issues.push(...fileIssues)
 
-		for await (const line of TextSpliterator.fromAsync(fullPath)) {
-			if (line.trim()) {
-				entries++
-			}
-		}
+		entries += await TextSpliterator.countAsync(fullPath)
 	}
 
 	return { entries, files: files.length, issues }

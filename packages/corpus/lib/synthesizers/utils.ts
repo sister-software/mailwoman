@@ -10,7 +10,6 @@ import type { BIOLabel, ComponentTag } from "@mailwoman/codex/component"
 import {
 	US_STREET_SUFFIX_PREFERRED_ABBR,
 	US_UNIT_DESIGNATOR_PREFERRED_ABBR,
-	matchCase,
 	matchLeadingDesignator,
 	matchTrailingSuffix,
 } from "@mailwoman/codex/us"
@@ -18,6 +17,7 @@ import { isPresent } from "@mailwoman/core/objects"
 import { mulberry32, sample } from "@mailwoman/core/random"
 import { escapeRegExp } from "@mailwoman/core/strings/regexp"
 import { stripCombiningMarks } from "@mailwoman/normalize/fold"
+import { matchCase } from "spliterator"
 
 import type { CanonicalRow, LabeledRow, QuarantinedRow } from "#types"
 import { alignRow, assertSpanInvariants, type ComponentSpan } from "#utils/align"

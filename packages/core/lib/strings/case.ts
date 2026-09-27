@@ -1,131 +1,116 @@
 /**
- * @copyright Sister Software.
+ * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- */
-
-import { camelCase, capitalCase, snakeCase } from "change-case"
-import type { CamelCase, SnakeCase } from "type-fest"
-
-/**
- * Any character that is not a letter, a digit, or an underscore, in any script.
  *
- * `\W` cannot serve: it is `[^A-Za-z0-9_]` in JavaScript with or without the `u` flag,
- * so every character of a non-Latin name is "non-word" and the name is replaced rather than kept.
+ *   Casing policy that is ours rather than the language's.
+ *   The primitives (`titleCase`, `isUpperCase`, `isLowerCase`, `matchCase`, `sentenceCase`)
+ *   live in `spliterator`.
+ *   This module fixes the thresholds and short-token rules an address parser needs on top of
+ *   them.
  */
-const NON_KEY_CHARACTER = /[^\p{L}\p{N}_]+/gu
+
+import { isLowerCase, isUpperCase, titleCase } from "spliterator/casing"
 
 /**
- * Converts a name to snake_case, unless the name is already in all caps.
+ * Cased letters an input needs before it counts as uniformly cased rather than
+ * shouting punctuation or a stray token.
  *
- * A caseless script takes the all-caps branch, because `toUpperCase()` is the
- * identity on Korean, Japanese, Chinese, Hebrew and Arabic.
- * That is the right branch.
- * Those names have no case to convert and survive as written.
+ * A digit- or punctuation-only input is then not treated as a whole shouting address.
  */
-export function smartSnakeCase<T extends string>(name: T): T extends Uppercase<T> ? T : SnakeCase<T> {
-	const normalizedName = name
-		// Remove periods after capital letters, e.g. "U.S.A." -> "USA"
-		.replaceAll(/([A-Z])(\.+)/g, "$1")
-		.trim()
-
-	if (normalizedName.toUpperCase() === normalizedName) {
-		return (
-			normalizedName
-				// Replace everything that cannot be part of a key with underscores...
-				.replaceAll(NON_KEY_CHARACTER, "_")
-				// ...and then replace all sequences of underscores with a single underscore.
-				.replaceAll(/_{2,}/g, "_") as T extends Uppercase<T> ? T : SnakeCase<T>
-		)
-	}
-
-	return snakeCase(normalizedName) as T extends Uppercase<T> ? T : SnakeCase<T>
-}
+const MIN_CASED_LETTERS = 3
 
 /**
- * Converts a name to camelCase, unless the name is already in all caps.
- */
-export function smartCamelCase<T extends string>(name: T): T extends Uppercase<T> ? T : CamelCase<T> {
-	if (name.toUpperCase() === name) {
-		return name as T extends Uppercase<T> ? T : CamelCase<T>
-	}
-
-	return camelCase(name) as T extends Uppercase<T> ? T : CamelCase<T>
-}
-
-/**
- * Predicate to determine if a given string is uniformly cased, i.e. all uppercase or all lowercase.
- */
-export function isUniformlyCased(input: string | null): boolean {
-	return Boolean(input && (input === input.toUpperCase() || input === input.toLowerCase()))
-}
-
-/**
- * Capitalizes a string, unless the string is uniformly cased, or an email address.
- */
-export function smartCapitalCase(input: string): string {
-	if (input.includes("@")) return input
-
-	if (isUniformlyCased(input)) return input
-
-	return capitalCase(input)
-}
-
-/**
- * Python `str.isupper()`: at least one cased character, and every cased character uppercase.
+ * Runs of this many Latin letters or fewer are abbreviations in address text.
  *
- * Distinct from {@link isUniformlyCased}, which reports `true` for a string with no cased characters at all.
- * `"123"` is uniformly cased and is not `isupper()`.
+ * State codes NY/DC, directionals N/NW/SE, suffixes ST/RD and the NL postcode
+ * suffix LG all read best uppercase.
+ * Titlecasing `NY` to `Ny` lands a region as a locality (#690 → #252).
+ */
+const ABBREVIATION_LENGTH = 2
+
+/**
+ * Uppercases the first character of a phrase and leaves the rest as typed.
+ */
+export function upperFirst(phrase: string): string {
+	return phrase.charAt(0).toUpperCase() + phrase.slice(1)
+}
+
+/**
+ * True when `text` is Latin-script all-caps.
  *
- * Ports that condition on a titlecase on the Python predicate need this one.
- */
-export function pyIsUpper(input: string): boolean {
-	let hasCased = false
-
-	for (const ch of input) {
-		if (ch.toLowerCase() === ch.toUpperCase()) continue
-
-		hasCased = true
-
-		if (ch !== ch.toUpperCase()) return false
-	}
-
-	return hasCased
-}
-
-/**
- * Python `str.title()`: titlecase the first cased character of each run, lowercase the rest.
+ * That is at least three uppercase letters, no lowercase letter anywhere,
+ * and no cased letter from another script.
  *
- * Not `capitalCase` from change-case, which splits on word boundaries and drops punctuation —
- * Python titlecases `"o'brien"` to `"O'Brien"` because the apostrophe ends a cased run.
+ * Diacritics are admitted, so `RUE DU FAUBOURG SAINT-HONORÉ` qualifies.
+ * An accented uppercase input otherwise reaches the model as single-character pieces (#1938).
+ *
+ * A cased letter from another script disqualifies the whole input.
+ * Its case rules are locale-sensitive and can change length.
  */
-export function pyTitle(input: string): string {
-	let out = ""
-	let prevCased = false
-
-	for (const ch of input) {
-		const cased = ch.toLowerCase() !== ch.toUpperCase()
-
-		out += prevCased ? ch.toLowerCase() : ch.toUpperCase()
-		prevCased = cased
-	}
-
-	return out
+export function isAllCapsInput(text: string): boolean {
+	return isUpperCase(text, { minimumCased: MIN_CASED_LETTERS, script: "latin" })
 }
 
 /**
- * Titlecase a shouted string, leave anything else alone.
- * The shape source dumps use when a field arrives all caps.
+ * True when `text` is pure-ASCII all-lowercase.
+ *
+ * That is at least three lowercase letters, no uppercase, and no character above U+007F.
+ *
+ * The mirror of {@link isAllCapsInput} for the #829 class.
+ * It binds to pure ASCII because a lowercase input with diacritics parses as typed.
+ *
+ * That was measured on the case-folding conformance suite, so the restore has
+ * no accented population to serve.
  */
-export function titlecaseIfUpper(input: string): string {
-	return pyIsUpper(input) ? pyTitle(input) : input
+export function isAllLowerInput(text: string): boolean {
+	return isLowerCase(text, { minimumCased: MIN_CASED_LETTERS, script: "ascii" })
 }
 
 /**
- * Sentence-case a snake_case code into a display label: `afghan_restaurant` → `Afghan restaurant`.
+ * Titlecase each Latin run longer than an abbreviation and keep the abbreviations as typed.
+ *
+ * `palestine` becomes `Palestine` and `honorÉ` becomes `Honoré`.
+ * On all-caps input the abbreviations are already shouting, which is the form the model reads them in.
+ * Length-preserving, so token offsets never move.
  */
-export function sentenceCaseSnake(code: string): string {
-	const spaced = code.replaceAll("_", " ")
+export function titleCaseInput(text: string): string {
+	return titleCase(text, { shortLength: ABBREVIATION_LENGTH })
+}
 
-	return spaced.charAt(0).toUpperCase() + spaced.slice(1)
+/**
+ * Restore a fully-lowercase input to the mixed case the model was trained on.
+ *
+ * Each run longer than an abbreviation is titlecased and the abbreviations are
+ * uppercased (`dc` → `DC`, `nw` → `NW`).
+ * Length-preserving.
+ *
+ * `1600 pennsylvania ave nw, washington dc` and `1600 pennsylvania AVE NW, washington DC` both
+ * canonicalize to `1600 Pennsylvania Ave NW, Washington DC`, the form that parses `region:DC`.
+ */
+export function restoreLowerInput(text: string): string {
+	return titleCase(text, { shortLength: ABBREVIATION_LENGTH, short: "upper" })
+}
+
+/**
+ * Normalize a shouting or whispering input to canonical mixed case before the model.
+ *
+ * Mixed-case and accented or non-Latin input pass through byte-identically.
+ *
+ * All-caps registry and compliance data (`214 JONES RD, ELKHART, TX 75839`) is
+ * partly out-of-domain for a model trained on mixed-case text.
+ * It drops or mis-bounds tokens (`palestine` → locality `alestine`).
+ *
+ * Titlecasing first recovers it: TX HHSC locality 90.1% → 99.7%, measured
+ * in `docs/articles/evals/resolver-geo/2026-06-17-geocoder-vs-provided-coords.md`.
+ * Fully-lowercase input is as out-of-domain (#829): it fragments the street and drops the state code.
+ *
+ * Detection is deliberately strict, so mixed-case input is never touched.
+ */
+export function normalizeInputCase(text: string): string {
+	if (isAllCapsInput(text)) return titleCaseInput(text)
+
+	if (isAllLowerInput(text)) return restoreLowerInput(text)
+
+	return text
 }

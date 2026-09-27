@@ -10,6 +10,7 @@ import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { APIClient, pluckResponseData } from "@mailwoman/core/api"
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { TSVSpliterator } from "spliterator"
 
 const SOURCE = "https://download.geonames.org/export/dump/countryInfo.txt"
 
@@ -77,14 +78,12 @@ export async function generateCountryPopulation(
 
 	const rows: Record<string, number> = {}
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- countryInfo.txt is ~35 kB and bounded (~300 rows)
-	for (const line of text.split("\n")) {
-		if (!line || line.startsWith("#")) continue
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- one 19-column row
-		const columns = line.split("\t")
+	for (const columns of TSVSpliterator.from(text, { header: false, enableQuoteHandling: false })) {
+		if (columns[0]?.startsWith("#")) continue
 
 		if (columns.length < MINIMUM_COLUMNS) continue
-		const alpha2 = columns[COLUMN_ISO2]!.trim()
+
+		const alpha2 = columns[COLUMN_ISO2]!
 		const population = Number(columns[COLUMN_POPULATION])
 
 		if (!isAlpha2CodeShape(alpha2)) continue

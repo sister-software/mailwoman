@@ -161,7 +161,7 @@ async function loadZCTA(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
 	for (const row of readUnquotedTSVText(await readLocalTextFile(path))) {
-		const fields = row.map((f) => f.trim())
+		const fields = row
 		const pc = fields.length ? fiveDigit(fields[0]) : null
 
 		if (!pc || fields.length < GAZETTEER_ROW_COLUMNS) continue

@@ -157,7 +157,7 @@ export async function* readCodePointCSV(csvPath: string, stats: CodePointParseSt
 		const quality = Number(row[1])
 		const easting = Number(row[2])
 		const northing = Number(row[3])
-		const countryCode = (row[4] ?? "").trim()
+		const countryCode = row[4] ?? ""
 
 		if (quality === PQI_NO_COORDINATE) {
 			stats.skippedNoCoordinate++

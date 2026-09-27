@@ -33,7 +33,7 @@ import { stripCombiningMarks } from "@mailwoman/normalize"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import { PathBuilder } from "path-ts"
-import { JSONSpliterator } from "spliterator"
+import { JSONSpliterator, TextSpliterator } from "spliterator"
 
 import { $public } from "#env"
 import { collectResolved, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
@@ -222,7 +222,11 @@ async function main() {
 
 	// keep in sync with geocode-core.ts #985: default safelist + any `--hard-country-safelist`
 	// additions (experiment without editing the const).
-	const extraSafelist = args["hard-country-safelist"]?.split(",").map((c) => c.trim().toUpperCase())
+	const extraSafelist = args["hard-country-safelist"]
+		? TextSpliterator.from(args["hard-country-safelist"], { delimiter: "," })
+				.map((c) => c.toUpperCase())
+				.toArray()
+		: undefined
 
 	const hardCountrySafelist = extraSafelist?.length
 		? new Set([...HARD_PLACE_COUNTRY_SAFELIST, ...extraSafelist])

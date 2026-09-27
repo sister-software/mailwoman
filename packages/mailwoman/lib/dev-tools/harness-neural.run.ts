@@ -552,8 +552,6 @@ async function loadFalsehoods(dir: PathBuilderLike): Promise<ExtractedAssertion[
 		const file = basename(entry, ".jsonl")
 
 		for await (const line of TextSpliterator.fromAsync(root(entry))) {
-			if (!line.trim()) continue
-
 			const row = tryParsingJSON<FalsehoodRow>(line)
 
 			if (!row) {

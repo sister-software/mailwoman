@@ -116,11 +116,10 @@ function readTarball(tarballPath: PathBuilderLike): TarballContents {
 		)
 	}
 
-	const shipped = new Set(
-		[...TextSpliterator.from(listing.stdout)]
-			.filter(isPresent)
-			.map((line) => normalizeEntry(line.replace(/^package\//, "")))
-	)
+	const shipped = TextSpliterator.from(listing.stdout)
+		.filter(isPresent)
+		.map((line) => normalizeEntry(line.replace(/^package\//, "")))
+		.toSet()
 
 	return { manifest: parseJSONStrict<TarballContents["manifest"]>(manifestRead.stdout), shipped }
 }

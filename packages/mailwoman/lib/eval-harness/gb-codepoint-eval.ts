@@ -18,6 +18,7 @@ import { mulberry32 } from "@mailwoman/core/random"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { haversineKm, osgb36ToWGS84 } from "@mailwoman/spatial"
 import { basename, type PathBuilder } from "path-ts"
+import { CSVSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 import { createGeocodeCommandOptions } from "#geocode/command-options"
@@ -55,9 +56,8 @@ async function allPostcodes(csvDir: PathBuilder): Promise<Set<string>> {
 	const out = new Set<string>()
 
 	for await (const file of Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false })) {
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
-		for (const line of (await readLocalTextFile(csvDir(file))).split("\n")) {
-			const pc = line.split(",")[0]?.replaceAll('"', "").trim()
+		for (const cols of CSVSpliterator.from(await readLocalTextFile(csvDir(file)), { header: false })) {
+			const pc = cols[0]
 
 			if (pc) {
 				out.add(pc.replaceAll(" ", "").toUpperCase())
@@ -75,12 +75,8 @@ async function samplePostcodes(csvDir: PathBuilder, perArea: number, seed: numbe
 	for (const file of await Globerator.files("csv", { cwd: csvDir, absolute: false, recursive: false }).toSorted()) {
 		const rows: SampledPostcode[] = []
 
-		// Code-Point area files are small (the largest ~90k rows); whole-file split is bounded here.
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- bounded input, one pass
-		for (const line of (await readLocalTextFile(csvDir(file))).split("\n")) {
-			if (!line) continue
-			// Code-Point carries no embedded commas inside quotes, so a plain split is faithful to this source.
-			const cols = line.split(",")
+		// Code-Point area files are small (the largest ~90k rows), so the whole file is parsed in one pass.
+		for (const cols of CSVSpliterator.from(await readLocalTextFile(csvDir(file)), { header: false })) {
 			const pq = Number(cols[1])
 
 			if (pq === PQ_NO_COORDINATE) continue

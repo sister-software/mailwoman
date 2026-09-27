@@ -74,13 +74,13 @@ export function createStateTxNotariesAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const rawAddress = (record.Address ?? "").trim()
+				const rawAddress = record.Address ?? ""
 
 				if (!rawAddress) continue
 
-				const firstName = (record["First Name"] ?? "").trim()
-				const lastName = (record["Last Name"] ?? "").trim()
-				const notaryID = (record["Notary ID"] ?? "").trim()
+				const firstName = record["First Name"] ?? ""
+				const lastName = record["Last Name"] ?? ""
+				const notaryID = record["Notary ID"] ?? ""
 
 				// Parse embedded city/state/zip from the trailing portion of the address.
 				// Addresses look like: "1215 mcmillan DR\nCEDAR hill, TX 75104"

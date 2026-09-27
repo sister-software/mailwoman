@@ -96,11 +96,6 @@
 			"node": "./lib/anchor-inference.ts",
 			"default": "./out/anchor-inference.js"
 		},
-		"./case-normalize": {
-			"types": "./out/case-normalize.d.ts",
-			"node": "./lib/case-normalize.ts",
-			"default": "./out/case-normalize.js"
-		},
 		"./fst-prior": {
 			"types": "./out/fst-prior.d.ts",
 			"node": "./lib/fst-prior.ts",
@@ -273,7 +268,7 @@
 		"@mailwoman/query-shape": "workspace:*",
 		"@mailwoman/sentencepiece-wasm": "workspace:*",
 		"path-ts": "^2.5.0",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

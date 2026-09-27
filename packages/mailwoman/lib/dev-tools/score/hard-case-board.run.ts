@@ -17,6 +17,7 @@ import { deserializeFST } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { haversineKm } from "@mailwoman/spatial"
 import type { PathBuilder } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { type HardCase, loadHardCaseBoard } from "#eval-harness/hard-case-board"
 import { collectResolved, mostSpecific, type Resolved } from "#eval-harness/oa/resolver/tree-hits"
@@ -42,7 +43,7 @@ const ARM_DIRS: Record<string, PathBuilder | null> = {
 	ref: wofDatabasePath("fst-staging-2026-08-06-two-score-split"),
 }
 
-const arms = values.arms!.split(",").map((a) => a.trim())
+const arms = TextSpliterator.from(values.arms!, { delimiter: "," }).toArray()
 
 for (const arm of arms) {
 	if (!(arm in ARM_DIRS)) throw new Error(`unknown arm "${arm}" — known: ${Object.keys(ARM_DIRS).join(", ")}`)

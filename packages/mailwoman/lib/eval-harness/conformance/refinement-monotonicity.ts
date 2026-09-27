@@ -11,6 +11,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { resolvePackagePath } from "@mailwoman/core/module/resolvers"
+import { TextSpliterator } from "spliterator"
 
 import {
 	auditCommonFixtureFields,
@@ -40,10 +41,7 @@ export type RefinementStep = (typeof REFINEMENT_STEPS)[number]
  * Returns the trimmed, non-empty comma-separated segments of a query.
  */
 function segmentsOf(text: string): string[] {
-	return text
-		.split(",")
-		.map((part) => part.trim())
-		.filter((part) => part.length)
+	return TextSpliterator.from(text, { delimiter: "," }).toArray()
 }
 
 /**

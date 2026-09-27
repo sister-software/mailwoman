@@ -24,9 +24,7 @@ const parityInputs = await JSONSpliterator.fromAsync<ParityCase>(PARITY_PATH)
 	.map((c) => c.input)
 	.toArray()
 
-const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH)
-	.map((line) => line.trim())
-	.toArray()
+const syntheticInputs = await TextSpliterator.fromAsync(SYNTHETIC_PATH).toArray()
 
 const inputs = [...new Set([...parityInputs, ...syntheticInputs.filter((line) => line.length)])]
 

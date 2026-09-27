@@ -8,7 +8,6 @@ import type { ComponentTag } from "@mailwoman/codex/component"
 import {
 	DirectionalAbbreviation,
 	lookupDirectional,
-	matchCase,
 	matchLeadingDirectional,
 	matchTrailingSuffix,
 	renderDirectional,
@@ -21,6 +20,7 @@ import { sample } from "@mailwoman/core/random"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
+import { matchCase } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import { readCSVRecords, readOATuples, recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"

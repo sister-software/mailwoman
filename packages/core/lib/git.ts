@@ -47,7 +47,10 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", "--untracked-files=no", ...scope])
 
-	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length)
+	return TextSpliterator.from(output)
+		.map((line) => line.trimEnd())
+		.filter((line) => line.length)
+		.toArray()
 }
 
 /**
@@ -64,7 +67,10 @@ export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: st
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
 
-	return [...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length)
+	return TextSpliterator.from(output)
+		.map((line) => line.trimEnd())
+		.filter((line) => line.length)
+		.toArray()
 }
 
 /**
@@ -136,5 +142,8 @@ export async function movedAwayPaths(repoRoot: PathBuilderLike): Promise<Set<str
 		64 * 1024 * 1024
 	)
 
-	return new Set([...TextSpliterator.from(output)].map((line) => line.trimEnd()).filter((line) => line.length))
+	return TextSpliterator.from(output)
+		.map((line) => line.trimEnd())
+		.filter((line) => line.length)
+		.toSet()
 }

@@ -8,6 +8,7 @@
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
+import { TextSpliterator } from "spliterator"
 
 /**
  * Expected top cascade hit for a smoke row.
@@ -80,14 +81,12 @@ class SmokeRowError extends Error {
  * @throws An `Error` when the file has no rows.
  */
 export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
-	// Error messages report file line numbers. `TextSpliterator` drops empty segments and would shift the numbering
-	// after a blank line. `split()` keeps every line.
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- row numbering needs blank lines kept
-	const lines = text.split("\n")
+	// Error messages report file line numbers, so blank lines are kept to preserve the numbering.
+	const lines = TextSpliterator.from(text, { skipEmpty: false }).toArray()
 	const rows: SmokeRow[] = []
 
 	for (let i = 0; i < lines.length; i++) {
-		const line = lines[i]!.trim()
+		const line = lines[i]!
 
 		if (!line || line.startsWith("//") || line.startsWith("#")) continue
 		const rowNumber = i + 1

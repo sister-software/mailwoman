@@ -335,8 +335,6 @@ async function committedInputs(repositoryRoot: PathBuilderLike): Promise<{ input
 			files++
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(path))) {
-				if (!line.trim()) continue
-
 				const row = parseJSONStrict<Record<string, unknown>>(line)
 
 				for (const key of INPUT_KEYS) {

@@ -8,7 +8,6 @@ import {
 	isStreetSuffix,
 	isStreetSuffixToken,
 	lookupStreetSuffix,
-	matchCase,
 	matchTrailingSuffix,
 	US_STREET_SUFFIX_LOOKUP,
 	US_STREET_SUFFIX_PREFERRED_ABBR,
@@ -47,14 +46,6 @@ describe("matchTrailingSuffix", () => {
 	it("returns null when the trailing word is not a suffix", () => {
 		expect(matchTrailingSuffix("Broadway")).toBeNull()
 		expect(matchTrailingSuffix("")).toBeNull()
-	})
-})
-
-describe("matchCase", () => {
-	it("mirrors the reference word's case pattern onto the target", () => {
-		expect(matchCase("AVENUE", "AVE")).toBe("AVENUE")
-		expect(matchCase("AVENUE", "ave")).toBe("avenue")
-		expect(matchCase("AVENUE", "Ave")).toBe("Avenue")
 	})
 })
 

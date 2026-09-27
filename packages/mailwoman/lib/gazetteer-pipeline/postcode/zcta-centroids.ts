@@ -30,7 +30,7 @@ export function parseZCTACentroids(text: string): Map<string, LatLon> {
 	const out = new Map<string, LatLon>()
 
 	for (const row of readUnquotedTSVText(text)) {
-		const fields = row.map((f) => f.trim())
+		const fields = row
 		const geoid = fields[0]
 
 		if (!geoid || !/^\d{5}$/.test(geoid) || fields.length < GAZETTEER_ROW_COLUMNS) continue

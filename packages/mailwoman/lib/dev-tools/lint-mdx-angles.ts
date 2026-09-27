@@ -68,7 +68,9 @@ export interface LintMDXAnglesSummary {
 function stagedDocsMarkdown(): string[] {
 	const out = runFileSync("git", ["diff", "--cached", "--name-only", "--diff-filter=ACM"], { encoding: "utf8" })
 
-	return [...TextSpliterator.from(out)].map((f) => f.trim()).filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
+	return TextSpliterator.from(out)
+		.filter((f) => /^docs\/.*\.(md|mdx)$/.test(f))
+		.toArray()
 }
 
 /**
@@ -77,8 +79,8 @@ function stagedDocsMarkdown(): string[] {
 async function violations(file: string): Promise<string[]> {
 	const hits: string[] = []
 	let fenced = false
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- A synchronous pre-commit check over staged MDX. the async spliterator would make this function and its caller async for files of a few hundred lines.
-	const lines = (await readLocalTextFile(file)).split("\n")
+	// Raw lines, blanks included: the fence test reads leading backticks and the report cites line numbers.
+	const lines = TextSpliterator.from(await readLocalTextFile(file), { trim: false, skipEmpty: false }).toArray()
 
 	for (const [i, line] of lines.entries()) {
 		if (line.startsWith("```")) {

@@ -71,7 +71,8 @@ function swapPairs(source: string): Array<[string, string]> {
 
 	const pairs: Array<[string, string]> = []
 
-	for (const line of TextSpliterator.from(block)) {
+	// The entries are the indented lines, so leading whitespace is data here.
+	for (const line of TextSpliterator.from(block, { trim: false })) {
 		// A quoted key may contain `:`, so the quoted forms are tried before the bare form.
 		const entry = /^\s+(?:'([^']*)'|"([^"]*)"|([^:]+)):\s*(.+?)\s*$/u.exec(line)
 		const key = entry?.[1] ?? entry?.[2] ?? entry?.[3]

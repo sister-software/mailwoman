@@ -247,11 +247,6 @@
 			"node": "./lib/tools/gauntlet-inputs.ts",
 			"default": "./out/tools/gauntlet-inputs.js"
 		},
-		"./tools/gb-title-case": {
-			"types": "./out/tools/gb-title-case.d.ts",
-			"node": "./lib/tools/gb-title-case.ts",
-			"default": "./out/tools/gb-title-case.js"
-		},
 		"./tools/golden-relabel-street": {
 			"types": "./out/tools/golden/relabel-street/index.d.ts",
 			"node": "./lib/tools/golden/relabel-street/index.ts",
@@ -348,7 +343,7 @@
 		"parquet-wasm": "0.7.2",
 		"path-ts": "^2.5.0",
 		"read-excel-file": "^9.3.10",
-		"spliterator": "^7.11.0",
+		"spliterator": "^8.1.0",
 		"zod": "^4.5.4"
 	},
 	"devDependencies": {

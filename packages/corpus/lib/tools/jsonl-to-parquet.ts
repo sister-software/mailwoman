@@ -143,11 +143,10 @@ export async function jsonlToParquet(
 	// TextSpliterator rather than JSONSpliterator: the staging write below streams
 	// the RAW line bytes to DuckDB verbatim (the parse here only validates),
 	// so a re-serialized JSONSpliterator row would defeat the point.
-	// Crlf is handled by the existing `rawLine.trim()` (strips a trailing \r),
-	// same as readline's crlfDelay:Infinity did.
-	for await (const rawLine of TextSpliterator.fromAsync(delimitedSource(options.input))) {
+	// The reader trims each line (a trailing \r included); `skipEmpty: false` keeps
+	// blank lines so `lineNo` matches the file.
+	for await (const line of TextSpliterator.fromAsync(delimitedSource(options.input), { skipEmpty: false })) {
 		lineNo++
-		const line = rawLine.trim()
 
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)

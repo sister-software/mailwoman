@@ -117,7 +117,7 @@ describe("renderGranularityReport", () => {
 	it("labels GeoNames-sourced rows gn rather than ovt", () => {
 		const markdown = renderGranularityReport([row("ZW", { locality: { nodes: 500, geonamesBackfilled: 500 } })], META)
 
-		const line = [...TextSpliterator.from(markdown)].find((l) => l.startsWith("| ZW |"))
+		const line = TextSpliterator.from(markdown).find((l) => l.startsWith("| ZW |"))
 
 		expect(line).toContain("100.0% gn")
 		expect(line).not.toContain("ovt")
@@ -133,7 +133,7 @@ describe("renderGranularityReport", () => {
 	it("renders a measured-and-empty rung as 0 rather than omitting it", () => {
 		const markdown = renderGranularityReport([row("IE", { country: { nodes: 1 }, locality: { nodes: 3230 } })], META)
 
-		const ieLine = [...TextSpliterator.from(markdown)].find((line) => line.startsWith("| IE |"))
+		const ieLine = TextSpliterator.from(markdown).find((line) => line.startsWith("| IE |"))
 
 		expect(ieLine).toBeDefined()
 		expect(ieLine).toContain("| 0 |")

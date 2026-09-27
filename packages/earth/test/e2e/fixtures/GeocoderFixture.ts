@@ -4,6 +4,7 @@
  */
 
 import { expect, type Page } from "@playwright/test"
+import { TextSpliterator } from "spliterator"
 
 import type { ConsoleFixture } from "./ConsoleFixture.ts"
 
@@ -145,9 +146,9 @@ export class GeocoderFixture {
 	async readCoords(): Promise<{ lat: number; lon: number }> {
 		const { resolved } = await this.readResult()
 
-		const [lat = Number.NaN, lon = Number.NaN] = (resolved["coords"] ?? "")
-			.split(",")
-			.map((s) => Number.parseFloat(s.trim()))
+		const [lat = Number.NaN, lon = Number.NaN] = TextSpliterator.from(resolved["coords"] ?? "", { delimiter: "," })
+			.map((s) => Number.parseFloat(s))
+			.toArray()
 
 		return { lat, lon }
 	}

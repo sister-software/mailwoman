@@ -175,8 +175,6 @@ export async function relabelGoldenDirectory(
 			let lineNumber = 0
 
 			for (const line of TextSpliterator.from(await readLocalTextFile(from))) {
-				if (!line.trim()) continue
-
 				lineNumber++
 				// A corrupt answer-key line must stop the relabel rather than silently drop a row.
 				// A golden file short by one row is a floor threshold against a different denominator.

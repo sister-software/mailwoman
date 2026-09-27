@@ -1,3 +1,4 @@
+import { titleCaseGB } from "@mailwoman/codex/gb"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { openReadStream, openWriteStream } from "@mailwoman/core/fs/streams"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -5,8 +6,6 @@ import { runIfScript } from "@mailwoman/core/scripting"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { resolvePath } from "path-ts"
 import { CSVSpliterator } from "spliterator"
-
-import { titleCaseGB } from "#tools/gb-title-case"
 
 const HOUSE_NUMBER_PATTERN = /^\d+[A-Za-z]?(\s*-\s*\d+[A-Za-z]?)?$/
 

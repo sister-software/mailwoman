@@ -507,12 +507,12 @@ export async function readTriplesFromGeonames(
 	const localityIsPlace = convention.localityColumn === "place"
 
 	for await (const cells of TSVSpliterator.fromAsync(path, { header: false }) as AsyncIterable<string[]>) {
-		const postcode = (cells[GEONAMES_POSTAL_COLUMNS.postcode] ?? "").trim()
-		const place = (cells[GEONAMES_POSTAL_COLUMNS.place] ?? "").trim()
-		const admin2 = (cells[GEONAMES_POSTAL_COLUMNS.admin2Name] ?? "").trim()
+		const postcode = cells[GEONAMES_POSTAL_COLUMNS.postcode] ?? ""
+		const place = cells[GEONAMES_POSTAL_COLUMNS.place] ?? ""
+		const admin2 = cells[GEONAMES_POSTAL_COLUMNS.admin2Name] ?? ""
 		const locality = localityIsPlace ? place : admin2
 		const dependentLocality = localityIsPlace ? "" : place
-		const region = (cells[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? "").trim()
+		const region = cells[GEONAMES_POSTAL_COLUMNS.admin1Name] ?? ""
 
 		if (!postcode || !locality || !region) continue
 

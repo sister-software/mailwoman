@@ -103,9 +103,9 @@ export function createBanAdapter(): CorpusAdapter {
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
 				const house = composeHouseNumber(record.numero ?? "", record.rep ?? "")
-				const street = (record.nom_voie ?? "").trim()
-				const postcode = (record.code_postal ?? "").trim()
-				const locality = (record.nom_commune ?? "").trim()
+				const street = record.nom_voie ?? ""
+				const postcode = record.code_postal ?? ""
+				const locality = record.nom_commune ?? ""
 
 				if (!street || !locality) continue
 
@@ -141,9 +141,7 @@ export function createBanAdapter(): CorpusAdapter {
 
 				const { raw, components: aligned } = rendered
 
-				const sourceID = record.id?.trim()
-					? `${BAN_ADAPTER_ID}-${record.id.trim()}`
-					: stableSourceID(BAN_ADAPTER_ID, aligned)
+				const sourceID = record.id ? `${BAN_ADAPTER_ID}-${record.id}` : stableSourceID(BAN_ADAPTER_ID, aligned)
 
 				yield {
 					raw,

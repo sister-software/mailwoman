@@ -28,7 +28,7 @@
 
 import { tryParsingJSON, stringifyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
-import { createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
+import { titleCase, createNewlineWriter, PSVSpliterator, TextSpliterator } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 export interface GNAFAssembleOptions {
@@ -60,16 +60,6 @@ export interface GNAFAssembleResult {
 	seen: number
 	heldOut: number
 	byState: Record<string, number>
-}
-
-/**
- * Uppercase → Title Case, preserving intra-word apostrophes/hyphens (O'Brien, Coff's Harbour).
- */
-export function titlecase(s: string): string {
-	return s
-		.toLowerCase()
-		.replaceAll(/(^|[\s'\-/])([a-z])/g, (_m, p: string, c: string) => p + c.toUpperCase())
-		.trim()
 }
 
 /**
@@ -111,8 +101,6 @@ async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()
 
 	for await (const line of TextSpliterator.fromAsync(path)) {
-		if (!line.trim()) continue
-
 		const c = tryParsingJSON<{ components?: Record<string, string> }>(line)?.components
 
 		if (c?.street && c?.locality && c?.postcode) {
@@ -171,8 +159,8 @@ export async function assembleGNAF(opts: GNAFAssembleOptions): Promise<GNAFAssem
 			const suburbRaw = localityMap.get(String(r.locality_pid ?? ""))
 
 			if (!st?.name || !suburbRaw) continue
-			const street = `${titlecase(st.name)} ${titlecase(st.type)}${st.suffix ? " " + titlecase(st.suffix) : ""}`.trim()
-			const locality = titlecase(suburbRaw)
+			const street = `${titleCase(st.name)} ${titleCase(st.type)}${st.suffix ? " " + titleCase(st.suffix) : ""}`.trim()
+			const locality = titleCase(suburbRaw)
 			const postcode = String(r.postcode)
 
 			if (holdout.has(gnafHoldoutKey(street, locality, postcode))) {

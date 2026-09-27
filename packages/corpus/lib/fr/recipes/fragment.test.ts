@@ -8,7 +8,7 @@
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
-import { frFragmentRecipe, frTitleCase } from "@mailwoman/corpus/fr/recipes/fragment"
+import { frFragmentRecipe } from "@mailwoman/corpus/fr/recipes/fragment"
 import { scratch, recipeRunner, type RecipeRow } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
@@ -21,19 +21,6 @@ const TUPLES = [
 	{ street: "Avenue des Champs", locality: "saint-jean-de-luz", postcode: "64500" },
 	{ street: "Boulevard Voltaire", locality: "mery-sur-oise", postcode: "95540" },
 ]
-
-describe("frTitleCase", () => {
-	it("capitalizes elements and leaves French particles lowercase", () => {
-		expect(frTitleCase("saint-jean-de-luz")).toBe("Saint-Jean-de-Luz")
-		expect(frTitleCase("mery-sur-oise")).toBe("Mery-sur-Oise")
-		expect(frTitleCase("paris")).toBe("Paris")
-	})
-
-	it("capitalizes a leading particle — it is not a joiner there", () => {
-		expect(frTitleCase("le mans")).toBe("Le Mans")
-		expect(frTitleCase("la rochelle")).toBe("La Rochelle")
-	})
-})
 
 describe("fr-fragment: the split", () => {
 	it("REFUSES to run without an exclusion list rather than mint a contaminated recipe output", async () => {

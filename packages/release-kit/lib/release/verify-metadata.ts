@@ -199,12 +199,10 @@ function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []
 
 	for (const line of TextSpliterator.from(markdown)) {
-		const trimmed = line.trim()
-
-		if (!trimmed.startsWith("|")) continue
+		if (!line.startsWith("|")) continue
 
 		// Split into cells, dropping the leading/trailing empties from the outer pipes.
-		const cells = trimmed
+		const cells = line
 			.split("|")
 			.slice(1, -1)
 			.map((cell) => cell.trim())

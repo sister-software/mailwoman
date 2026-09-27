@@ -220,7 +220,7 @@ export function pick(row: Record<string, string>, columns?: string | string[], s
 	const list = Array.isArray(columns) ? columns : [columns]
 
 	const value = list
-		.map((c) => row[c]?.trim())
+		.map((c) => row[c])
 		.filter(isPresent)
 		.join(separator)
 		.trim()
@@ -242,7 +242,7 @@ export async function ingestRow(
 	index: number,
 	opts: IngestOptions = {}
 ): Promise<SourceRecord> {
-	const id = (mapping.id ? row[mapping.id]?.trim() : "") || String(index)
+	const id = (mapping.id ? row[mapping.id] : "") || String(index)
 	const nameValue = pick(row, mapping.name)
 	const orgValue = pick(row, mapping.organization)
 	const addressValue = pick(row, mapping.address, opts.addressSeparator ?? ", ")
@@ -264,8 +264,8 @@ export async function ingestRow(
 		source: mapping.source,
 		name: nameValue ? parsePersonName(nameValue) : undefined,
 		organization: orgValue ? canonicalizeOrganizationName(orgValue) : undefined,
-		phone: (mapping.phone && row[mapping.phone]?.trim()) || undefined,
-		email: (mapping.email && row[mapping.email]?.trim()?.toLowerCase()) || undefined,
+		phone: (mapping.phone && row[mapping.phone]) || undefined,
+		email: (mapping.email && row[mapping.email]?.toLowerCase()) || undefined,
 		address: addressValue && opts.geocodeAddress ? ((await opts.geocodeAddress(addressValue)) ?? undefined) : undefined,
 		attributes,
 		raw: row,

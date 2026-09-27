@@ -43,6 +43,7 @@ import { matchSubdivisionIn } from "@mailwoman/codex/country"
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
+import { TextSpliterator } from "spliterator"
 
 import { readCoordPanel, renderAdmin, suffixTail } from "#dev-tools/coord-panel"
 import { buildGauntletDeps } from "#eval-harness/gauntlet/harness"
@@ -114,7 +115,11 @@ const { values } = parseArguments({
 })
 
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
-const asked = values.regions?.split(",").map((code) => code.trim().toUpperCase())
+const asked = values.regions
+	? TextSpliterator.from(values.regions, { delimiter: "," })
+			.map((code) => code.toUpperCase())
+			.toArray()
+	: undefined
 const perGroup = Number(values["per-group"] ?? values["per-region"])
 
 /**

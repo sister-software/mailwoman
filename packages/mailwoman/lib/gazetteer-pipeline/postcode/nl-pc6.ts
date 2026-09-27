@@ -100,7 +100,7 @@ export async function buildNLPC6Database(
 				continue
 			}
 
-			const pc6 = (pc6Raw ?? "").trim().toUpperCase()
+			const pc6 = (pc6Raw ?? "").toUpperCase()
 			const lon = Number(lonS)
 			const lat = Number(latS)
 

@@ -11,6 +11,7 @@
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
 import { normalizeWhitespace } from "@mailwoman/core/strings/format"
 import { relative } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
@@ -151,11 +152,7 @@ const MATERIAL_FALLBACK = "var(--material-glass-fallback-background)"
  * the same surfaces in another order still matches.
  */
 function selectorSet(selector: string): string {
-	return selector
-		.split(",")
-		.map((part) => part.trim())
-		.toSorted()
-		.join(", ")
+	return TextSpliterator.from(selector, { delimiter: "," }).toSorted().join(", ")
 }
 
 /**

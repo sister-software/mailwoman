@@ -83,7 +83,8 @@ async function parseConfig(configPath: PathBuilderLike): Promise<ParsedConfig | 
 	let inBlock = false
 	let blockIndent = -1
 
-	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath))) {
+	// The block is indentation-delimited, so leading whitespace is data here.
+	for (const raw of TextSpliterator.from(await readLocalBuffer(configPath), { trim: false })) {
 		const sourceWeightsMatch = raw.match(/^([\t ]*)source_weights:\s*$/)
 
 		if (sourceWeightsMatch) {

@@ -23,8 +23,8 @@
  *   stores types as full words but suffixes as codes); keys via the shared `en` normalizer — the
  *   same branch the GB/NZ databases use.
  *
- *   G-NAF PSV is crlf-terminated and quote-free: the trailing `\r` must be stripped at the reader
- *   boundary or the last column's name and every last-field value carry it — the geocode file's
+ *   G-NAF PSV is crlf-terminated and quote-free: the reader trims the trailing `\r`, because
+ *   otherwise the last column's name and every last-field value carry it — the geocode file's
  *   `latitude` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
  *   0-geocode failure).
  */
@@ -51,7 +51,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db"
 import { latLngToCell } from "h3-js"
 import { PathBuilder } from "path-ts"
-import { TextSpliterator } from "spliterator"
+import { TextSpliterator, titleCase } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
 /**
@@ -115,15 +115,11 @@ export interface GNAFRooftopResult {
 	noStreet: number
 }
 
-function stripCR(line: string): string {
-	return line.endsWith("\r") ? line.slice(0, -1) : line
-}
-
 function rowReader(header: string): (line: string) => Record<string, string> {
-	const cols = stripCR(header).split("|")
+	const cols = header.split("|")
 
 	return (line) => {
-		const parts = stripCR(line).split("|")
+		const parts = line.split("|")
 		const rec: Record<string, string> = {}
 
 		for (let i = 0; i < cols.length; i++) {
@@ -132,10 +128,6 @@ function rowReader(header: string): (line: string) => Record<string, string> {
 
 		return rec
 	}
-}
-
-function titleCase(s: string): string {
-	return s.toLowerCase().replaceAll(/(^|[\s'-])(\p{L})/gu, (_, sep: string, ch: string) => sep + ch.toUpperCase())
 }
 
 async function loadMap(

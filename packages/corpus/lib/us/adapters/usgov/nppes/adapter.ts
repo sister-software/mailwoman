@@ -107,16 +107,16 @@ export function createUsgovNPPESAdapter(): CorpusAdapter {
 
 				if (opts.limit !== undefined && emitted >= opts.limit) break
 
-				const npi = (record.NPI ?? "").trim()
-				const orgName = (record["Provider Organization Name (Legal Business Name)"] ?? "").trim()
-				const lastName = (record["Provider Last Name (Legal Name)"] ?? "").trim()
-				const firstName = (record["Provider First Name"] ?? "").trim()
+				const npi = record.NPI ?? ""
+				const orgName = record["Provider Organization Name (Legal Business Name)"] ?? ""
+				const lastName = record["Provider Last Name (Legal Name)"] ?? ""
+				const firstName = record["Provider First Name"] ?? ""
 
-				const address1 = (record["Provider First Line Business Practice Location Address"] ?? "").trim()
-				const address2 = (record["Provider Second Line Business Practice Location Address"] ?? "").trim()
-				const city = (record["Provider Business Practice Location Address City Name"] ?? "").trim()
-				const stateRaw = (record["Provider Business Practice Location Address State Name"] ?? "").trim()
-				const postcode = (record["Provider Business Practice Location Address Postal Code"] ?? "").trim()
+				const address1 = record["Provider First Line Business Practice Location Address"] ?? ""
+				const address2 = record["Provider Second Line Business Practice Location Address"] ?? ""
+				const city = record["Provider Business Practice Location Address City Name"] ?? ""
+				const stateRaw = record["Provider Business Practice Location Address State Name"] ?? ""
+				const postcode = record["Provider Business Practice Location Address Postal Code"] ?? ""
 
 				// The first record's keys reveal a renamed column before the filters below drop every row.
 				if (!checkedHeader) {

@@ -29,6 +29,7 @@ import { NeuralAddressClassifier, type ScriptRoutedClassifier, type NeuralParseT
 import type { QueryShape } from "@mailwoman/query-shape"
 import { createWOFResolver } from "@mailwoman/resolver"
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
+import { TextSpliterator } from "spliterator"
 
 import { resolverDefaultCountry } from "#country-scope"
 import { geocodeAddress, geocodeParseInputs, parseForGeocode, type GeocodeDeps } from "#geocode/core"
@@ -242,11 +243,8 @@ async function resolveWOFPath(options: Pick<GeocodeSessionOptions, "dataRoot" | 
 }
 
 function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias"]> {
-	return (raw ?? "")
-		.split(";")
-		.map((part: string) => part.trim())
-		.filter((part) => part.length)
-		.map((part: string) => {
+	return TextSpliterator.from(raw ?? "", { delimiter: ";" })
+		.map((part) => {
 			const [coords, w] = part.split(":")
 			const [lat, lon] = coords!.split(",").map(Number)
 
@@ -254,6 +252,7 @@ function parseBiasPoints(raw: string | undefined): NonNullable<GeocodeDeps["bias
 
 			return { lat: lat!, lon: lon!, ...(w != null ? { weight: Number(w) } : {}) }
 		})
+		.toArray()
 }
 
 /**

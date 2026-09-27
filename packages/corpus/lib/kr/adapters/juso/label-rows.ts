@@ -114,7 +114,7 @@ async function* fields(archivePath: PathBuilderLike, member: string): AsyncGener
 	const bytes = readZipEntry(archivePath, member, { filenameEncoding: ENCODING })
 
 	for await (const line of TextSpliterator.fromAsync(decodeByteStream(bytes, ENCODING))) {
-		yield line.replace(/\r$/u, "").split("|")
+		yield line.split("|")
 	}
 }
 

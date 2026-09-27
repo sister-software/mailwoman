@@ -10,7 +10,7 @@
  * @see {@link https://pe.usps.com/text/pub28/28apc_002.htm USPS Pub 28 Appendix C1}
  */
 
-import { matchCase } from "#us/street/suffix"
+import { matchCase } from "spliterator/casing"
 
 /**
  * The 8 directional abbreviations accepted by the USPS.
