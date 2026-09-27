@@ -33,8 +33,36 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
 }
 
 /**
- * The SPDX expression each country's national address-point database is published under,
- * which is the upstream register's license alone.
+ * What is known about the grant on one country's national address-point rows.
+ *
+ * Two documents can describe the same rows and disagree.
+ * Recording the stricter of them states a grant nobody established, and a stricter
+ * incorrect attribution is as incorrect as a permissive one.
+ *
+ * So an entry holds either a settled expression or the candidate readings
+ * and the evidence for each, and the build refuses to stamp an unsettled one.
+ */
+export interface OvertureCountryLicense {
+	/**
+	 * The SPDX expression, where one document settles it.
+	 */
+	expression?: string
+	/**
+	 * The readings that remain, where more than one document describes the rows.
+	 */
+	candidates?: readonly string[]
+	/**
+	 * What each reading rests on, so a later reader does not repeat the research.
+	 */
+	evidence: readonly string[]
+	/**
+	 * The register `sources[].dataset` records, which is what any research has to be about.
+	 */
+	register: string
+}
+
+/**
+ * The grant on each country's national address-point database, which is the upstream register's alone.
  *
  * Overture declares no identifier for the addresses theme.
  * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
@@ -46,36 +74,86 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
  * `sources[].license` reads NULL on every row of every country here, so the identifier
  * comes from Overture's entry for the register that `sources[].dataset` records.
  */
-const COUNTRY_TO_LICENSE = new Map<string, string>([
-	// `OpenAddresses/<bureau> Civil Affairs`, the county and city bodies Overture lists under Taiwan.
-	// Overture states CC-BY-4.0 for each one.
-	// `docs/superpowers/plans/counsel-dossier.md` reads the same municipal 門牌 rows as
-	// OGDL-Taiwan-1.0, whose attribution failure voids the grant.
-	// This records the stricter of the two readings.
-	["tw", "OGDL-Taiwan-1.0"],
-	// `OpenAddresses/Istat e dall'Agenzia delle Entrate`, which Overture lists as ANNCSU.
-	["it", "CC-BY-4.0"],
-	// `OpenAddresses/scne.es`, which Overture lists as `scne.es`: CartoCiudad,
-	// an IGN/CNIG product within the Sistema Cartográfico Nacional.
-	// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
-	["es", "CC-BY-4.0"],
+const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
+	[
+		"tw",
+		{
+			// Two documents describe the same municipal 門牌 rows and name different grants.
+			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
+			// The counsel dossier reads OGDL-Taiwan-1.0, whose attribution failure voids the
+			// grant ab initio and whose §5.2 permits an agency to withdraw data.
+			// Recording either one asserts a reading nobody has made.
+			candidates: ["CC-BY-4.0", "OGDL-Taiwan-1.0"],
+			evidence: [
+				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries",
+				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data",
+			],
+			register: "OpenAddresses/<bureau> Civil Affairs",
+		},
+	],
+	[
+		"it",
+		{
+			expression: "CC-BY-4.0",
+			evidence: ["Overture attribution page, Italy entry: ANNCSU under CC BY 4.0"],
+			register: "OpenAddresses/Istat e dall'Agenzia delle Entrate",
+		},
+	],
+	[
+		"es",
+		{
+			expression: "CC-BY-4.0",
+			// CartoCiudad, an IGN/CNIG product within the Sistema Cartográfico Nacional.
+			// Attribution reads `CartoCiudad CC-BY 4.0 scne.es`.
+			evidence: [
+				"Overture attribution page, Spain entry: scne.es under CC BY 4.0",
+				"IGN license PDF, which the CNIG product page and Overture both link",
+			],
+			register: "OpenAddresses/scne.es",
+		},
+	],
 ])
 
 /**
- * Returns the SPDX license expression that a country's national address-point database is published under.
+ * Returns what is known about a country's grant, or `undefined` for a country with no entry.
  *
- * @throws When the country has no registered license.
+ * A caller that needs to reason about an unsettled grant reads this.
+ * A caller that needs an expression to record uses {@link licenseForOvertureCountry},
+ * which refuses one that is unsettled.
+ */
+export function overtureCountryLicense(countryCode: string): OvertureCountryLicense | undefined {
+	return COUNTRY_LICENSES.get(countryCode.toLowerCase())
+}
+
+/**
+ * Returns the SPDX license expression a country's national address-point database is published under.
+ *
+ * @throws When the country has no entry, or when its entry holds candidate readings
+ * rather than a settled expression.
+ * A build that stamped a candidate would record a grant nobody established,
+ * and the artifact would carry that claim for as long as it exists.
  */
 export function licenseForOvertureCountry(countryCode: string): string {
-	const license = COUNTRY_TO_LICENSE.get(countryCode.toLowerCase())
+	const entry = overtureCountryLicense(countryCode)
 
-	if (!license) {
+	if (!entry) {
 		throw new Error(
-			`No license expression registered for country "${countryCode}". Add it to COUNTRY_TO_LICENSE in national-overture.ts.`
+			`No license registered for country "${countryCode}". Add it to COUNTRY_LICENSES in national-overture.ts.`
 		)
 	}
 
-	return license
+	if (!entry.expression) {
+		const candidates = entry.candidates?.join(" or ") ?? "none recorded"
+
+		throw new Error(
+			`The grant on ${countryCode}'s ${entry.register} rows is unsettled: ${candidates}. ` +
+				`Evidence: ${entry.evidence.join("; ")}. ` +
+				`Stamping either candidate would record a grant nobody established, so this build stops. ` +
+				`Settle it and give the entry an \`expression\` in COUNTRY_LICENSES.`
+		)
+	}
+
+	return entry.expression
 }
 
 /**

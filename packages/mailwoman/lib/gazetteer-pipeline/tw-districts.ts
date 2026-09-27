@@ -46,16 +46,26 @@ import { sealDatabase, swapDatabaseIntoPlace } from "@mailwoman/sqlite/sealed-db
 import type { PathBuilderLike } from "path-ts"
 
 import { DEFAULT_ADMIN_DB } from "#gazetteer-pipeline/defaults"
+import { licenseForOvertureCountry } from "#geocode/national-overture"
 
 /**
- * The license expression the artifact carries, which is the register's own.
+ * The license expression this artifact carries, read from the same entry the rooftop tier reads.
  *
- * Overture declares no identifier for the addresses theme, so the rooftop tier
- * stamps the same expression for the same input.
- * `licenseForOvertureCountry` in `#geocode/national-overture` documents why the earlier
- * pairing with `CDLA-Permissive-2.0` asserted a grant Overture does not make.
+ * Both artifacts are built from one input, the pinned Overture addresses parquet for Taiwan,
+ * so one grant covers both and one entry records it.
+ * `COUNTRY_LICENSES` in `#geocode/national-overture` holds Taiwan's as two candidate
+ * readings rather than a settled expression, because Overture's attribution page and
+ * `docs/superpowers/plans/counsel-dossier.md` §6 name different grants over the same municipal 門牌 rows.
+ *
+ * So this build stops until one is settled.
+ * Stamping a candidate would record a grant nobody established, and the artifact
+ * would carry that claim for as long as it exists.
+ *
+ * @throws Through `licenseForOvertureCountry`, naming both candidates and their evidence.
  */
-export const TW_DISTRICTS_LICENSE = "OGDL-Taiwan-1.0"
+export function twDistrictsLicense(): string {
+	return licenseForOvertureCountry("tw")
+}
 
 /**
  * One Han name a WOF Taiwan region carries, as the admin `names` table has it.
@@ -313,7 +323,7 @@ export async function buildTWDistrictsDatabase(opts: BuildTWDistrictsOptions = {
 		db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 		const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 		meta.run("source", "Overture Maps addresses, Taiwan (civil-affairs registers via OpenAddresses)")
-		meta.run("license", TW_DISTRICTS_LICENSE)
+		meta.run("license", twDistrictsLicense())
 		meta.run("source_release", release)
 		meta.run("source_md5", sourceMD5)
 
