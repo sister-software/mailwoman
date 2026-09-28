@@ -189,7 +189,7 @@ export async function buildFloodDatabase(options: BuildFloodOptions): Promise<Bu
 			await createLayerCoverageTable(kdb)
 
 			// The touch table exists only for this build and is dropped before the artifact is sealed.
-			// Loading uses no primary key.
+			// The loader uses no primary key.
 			// The resolution queries use indexes created after loading.
 			// A clustered key would sort every insert against an ingest order that this code does not control.
 			kdb.exec(
@@ -451,8 +451,8 @@ function resolveCells(database: DatabaseClient<FloodDatabase>): {
 		database.exec("COMMIT")
 	}
 
-	// The candidate list exists for the fringe only, since a whole cell is
-	// answered by `flood_zone_cell` alone.
+	// The candidate list exists for the fringe only, since a whole cell is answered
+	// by `flood_zone_cell` by itself.
 	database.exec(
 		"INSERT INTO flood_zone_cell_area (h3_cell, resolution, area_id) " +
 			"SELECT DISTINCT t.h3_cell, t.resolution, t.area_id FROM build_cell_touch t " +

@@ -16,7 +16,8 @@ import { runWorktreeArm } from "#worktree/arm"
  * A mailwoman arm running another version of the source, batched in a child process
  * because the child pays a full engine build.
  *
- * The answers exist before the first `answer()` call, which is why this arm cannot stream.
+ * The answers exist before the first `answer()` call.
+ * This arm therefore cannot stream.
  *
  * The config is resolved by {@linkcode resolveConfig}, the same function the in-process
  * arm uses, so a change there reaches this arm without being copied.

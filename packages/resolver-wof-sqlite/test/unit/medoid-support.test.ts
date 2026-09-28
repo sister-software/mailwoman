@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests for the medoid law under duplicate points. Rows sharing a coordinate to the digit carry one
- *   value rather than N, and the scattered case stays untouched.
+ * @file Tests for the medoid law under duplicate points. Rows sharing a coordinate to the digit have one
+ *   value rather than N. The scattered case stays untouched.
  */
 
 import { medoidPoint, medoidWithSupport, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -55,8 +55,8 @@ describe("medoidPoint", () => {
 
 	it("does not let a repeated point drag the pick toward itself", () => {
 		// Two rows at the western member and one at each of the others.
-		// Counting rows would put the mean at 50.05 / 14.1 and elect the duplicate.
-		// Counting distinct points keeps the true middle member.
+		// Equal row weights would put the mean at 50.05 / 14.1 and select the duplicate.
+		// The median uses distinct points and keeps the true middle member.
 		const members: PostcodePoint[] = [
 			[50, 14],
 			[50, 14],

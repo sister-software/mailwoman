@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data switchover: manifest read and path resolution, and the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
+ *   Versioned data switchover: manifest read and path resolution. It also tests the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

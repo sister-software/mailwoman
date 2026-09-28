@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading a delimited file compressed at rest must match reading an uncompressed file. This behavior lets the corpus be stored as `.zst`.
+ *   The reader must return the same rows for compressed and uncompressed delimited files. This lets the corpus be stored as `.zst`.
  */
 
 import { unzstd, zstd } from "@mailwoman/core/fs/compression"

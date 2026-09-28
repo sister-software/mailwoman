@@ -14,7 +14,7 @@ Some places hold two admin roles. Berlin is a city and a federal state. Milano i
 
 These places cause a specific failure. In an international-order address such as `5 Hauptstraße, Berlin, Berlin 10115`, the city and the state are the same word. The parser can label one `Berlin` as the region and drop the other. The resolved tree then has a region without a locality, and the resolver has no locality to place. On a 1,500-row Berlin eval, 955 rows resolved to no result.
 
-## Completing the hierarchy
+## Complete the hierarchy
 
 When the parser drops the locality of a dual-role place, the gazetteer still has it. The region and the locality are two linked records with the same name and a coincident centroid, so the resolver can recover the locality. With `hierarchyCompletion` enabled, the resolver checks the tree after the walk. If a region resolved and the tree has no locality node, the resolver looks the region up in a precomputed **coincident-roles relation** and synthesizes the missing locality from it.
 
@@ -28,13 +28,13 @@ At runtime the resolver does an O(1) membership lookup, with no distance calcula
 
 Each completion sets `metadata.relationship_type` to `city-state`, `capital-seat`, or `consolidated-county`, and marks the synthesized node with `metadata.resolver_synthesized = true`. The node has no span in the raw input, so a consumer can tell it apart from a parsed component.
 
-## Picking the right city
+## Pick the right city
 
 A few admins map to more than one same-name locality, so completion has to choose one. The rule is [population first](./importance-vs-population.mdx). The principal city is the populous one, and it can sit farther from the admin centroid than a small same-name hamlet. For example, Niigata prefecture's centroid lies out at sea. The real Niigata city is 41 km from it, while a 0-population point is closer. Nearest centroid breaks a population tie. When two candidates tie on both, completion abstains, because a wrong locality is worse than a missing one.
 
 Completion is on by default. A Berlin address that used to resolve to no result now comes back with its locality. Pass `hierarchyCompletion: false` to opt out, and resolution is byte-for-byte what it was before. Completion fires only for a dual-role region whose locality the parser dropped. It performs no work when the loaded gazetteer has no `coincident_roles` table.
 
-## Attaching the lineage
+## Attach the lineage
 
 A related option, `includeAncestors`, writes each resolved node's full containment chain onto `metadata.ancestors`, ordered nearest-first: county, region, country. Pelias and Nominatim do the same by default, returning each resolved place with its full admin hierarchy. The option reads the same gazetteer `ancestors` data that the coincident-roles relation is built from. It is off by default.
 

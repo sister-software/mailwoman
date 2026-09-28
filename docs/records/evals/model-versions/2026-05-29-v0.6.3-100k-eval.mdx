@@ -13,7 +13,7 @@ and the predicted dilution failure mode materialized.
 ## Setup
 
 - **Model:** v0.6.3 step 100K (`/data/output-v063/checkpoints/step-100000`)
-- **Training:** A100-SXM4-40GB, ~12.8 steps/s, ~130 min wall-clock. No NaN.
+- **Run setup:** A100-SXM4-40GB, ~12.8 steps/s, ~130 min wall-clock. No NaN.
 - **Corpus changes from v0.6.2:** filtered venue pool (removed
   `5th Avenue Theatre`, `7th Street Bistro`); ADDED `synth-house-venue-v063`
   extract at weight 1.0 (32K rows of house_number + venue + street
@@ -115,7 +115,7 @@ need to land the right setpoint," v0.6.4 is one `modal run` away. If the
 rethink concludes that something more structural needs to change, v0.6.4
 is reference data for what would have happened.
 
-## Reproducing
+## Reproduce the evaluation {#reproducing}
 
 ```bash
 ./scripts/eval-v062-checkpoint.sh 100000 v063

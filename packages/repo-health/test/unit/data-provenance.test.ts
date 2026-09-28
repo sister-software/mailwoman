@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `data/` provenance guard over a planted tree: an artifact the record names, one it does not, and the files
+ * @file The `data/` provenance guard over a planted tree: an artifact the record names, one it does not and the files
  *   that document a directory rather than live in it.
  */
 

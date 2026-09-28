@@ -7,7 +7,7 @@
  *   a feature list rather than a geodatabase.
  *
  *   the fourteen published layers do not share one schema. One layer differs by one column.
- *   `NCERM_SMP_2105_0CC` carries no `smp_name`; the other thirteen do. A builder that read the schema off a
+ *   `NCERM_SMP_2105_0CC` has no `smp_name`; the other thirteen do. A builder that read the schema off a
  *   sibling — the survey read `NCERM_SMP_2105_95CC` — fails on the twelfth layer with
  *   `error 1: Unrecognized field name smp_name` after 66,000 features. ogr2ogr refuses an unknown column.
  *   A source that returned NULL instead could have shipped. The `select` is built from the layer's own

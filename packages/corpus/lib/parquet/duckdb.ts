@@ -42,7 +42,7 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  * The query finishes slower.
  * That is the failure to prefer.
  *
- * A caller that knows it holds the host alone passes a larger `memoryLimitBytes`.
+ * A caller that knows it holds the host by itself passes a larger `memoryLimitBytes`.
  */
 export const DUCKDB_MEMORY_SHARE = 0.25
 
@@ -85,7 +85,7 @@ export interface DuckDBLimits {
  * An open connection holds the native instance for the life of the process.
  * A connection opened per file in a loop holds one instance per file.
  *
- * Every connection carries a memory limit.
+ * Every connection has a memory limit.
  * It is set here rather than at each call site because host memory exhaustion affects
  * every process, including processes unrelated to the query that caused it.
  */
@@ -136,7 +136,7 @@ export function escapeSQLString(value: string): string {
  * Escape `value` as a double-quoted SQL identifier, for a column name that reaches a statement from data.
  *
  * A projection names columns the caller chose, so the name is not a literal this module wrote.
- * Quoting it keeps a column whose name collides with a keyword — or carries a space —
+ * Quotes preserve a column whose name collides with a keyword — or includes a space —
  * from re-parsing as syntax.
  */
 export function escapeSQLIdentifier(value: string): string {

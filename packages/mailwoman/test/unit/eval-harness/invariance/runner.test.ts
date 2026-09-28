@@ -238,7 +238,7 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
-		// Comparing raw values would flag a correctly echoed "Ave" as a false `lost`,
+		// A raw-value comparison would flag a correctly echoed "Ave" as a false `lost`,
 		// so `compareForTransform` canonicalizes both sides to long form.
 		// This test exercises the real transform id so a typo in that dispatch fails here.
 		const abbrevRow: InvarianceRow = {

@@ -49,7 +49,7 @@ A separate, small model (#244) reads the whole normalized string and guesses its
 
 ### Stage 2 — Locale check
 
-Detects whether input is en-US, fr-FR, ja-JP, etc. Rule-based today: script-class detection (CJK → ja-JP, Cyrillic → ru, Arabic → ar) plus known-format hits (5-digit ZIP → en-US, FR postcode → fr-FR). The `@mailwoman/locale-hint` workspace ships the logic; it exists as a workspace but the factory default still falls back to caller-trust. Wiring it as the default is a near-term TODO.
+The locale check detects whether input is en-US, fr-FR, ja-JP, etc. It uses script classes (CJK → ja-JP, Cyrillic → ru, Arabic → ar) and known formats (5-digit ZIP → en-US, FR postcode → fr-FR). The `@mailwoman/locale-hint` workspace ships the logic, but the factory default still trusts the caller. The project plans to make the locale check the default.
 
 ### Stage 2.5 — Kind classifier
 

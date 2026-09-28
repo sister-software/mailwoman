@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Test whole/partial cell classification, zero-cell handling, adaptive resolution, and allocator equivalence.
+ *   Test whole/partial cell classification, zero-cell handling, adaptive resolution and allocator equivalence.
  */
 
 import { FIXTURE_ORIGIN } from "@mailwoman/flood/test-kit"

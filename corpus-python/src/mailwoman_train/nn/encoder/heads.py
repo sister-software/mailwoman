@@ -1,7 +1,7 @@
 """Build output heads before initializing their weights.
 
 Construction order is an interface. `_init_weights` walks `self.parameters()` in registration
-order. It draws from the global RNG once for each parameter. Moving a head's construction changes
+    order. It draws from the global RNG once for each parameter. A head constructed earlier changes
 the initial weights of every parameter registered after it.
 """
 
@@ -50,7 +50,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         earlier ones.
         """
         # PR3 self-conditioning: an auxiliary locale head over the pooled sequence, plus a FiLM
-        # modulation of the per-token reps by the inferred locale. `forward` carries the data flow.
+        # modulation of the per-token reps by the inferred locale. The `forward` function implements the data flow.
         self.use_locale_conditioning = use_locale_conditioning
         self.num_locales = int(num_locales)
         self.locale_loss_weight = float(locale_loss_weight)
@@ -126,7 +126,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # Separate dependent_locality head (P-B probe, ROAD_TO_MAILWOMAN_V8_1_0 §4). The dead dep-loc tag
         # is resurrected in its own head subspace instead of by reinit-ing the shared classifier's rows:
         # a fresh MLP whose 2 logits own the B/I-dependent_locality columns (merge-in-forward, exactly like
-        # the affix head, so the inference graph carries it). The encoder stays shared+trainable — the probe
+        # the affix head, so the inference graph includes it). The encoder stays shared+trainable — the probe
         # tests whether growing the capability in a separate head avoids the comma-drop invariance break that
         # every flat-head reinit recipe paid (v3.10–v3.13). init_from v385 (strict=False) leaves this head
         # fresh. the main CE loss trains it via the merged logits.
@@ -163,7 +163,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # This head places boundaries. The shared encoder must satisfy both tasks, so the pressure targets the
         # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
         # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
-        # locale aux-CE, the loss consumes it and the ONNX path emits only `logits`), so stage-1 carries no
+        # locale aux-CE, the loss consumes it and the ONNX path emits only `logits`), so stage-1 has no
         # export / browser-SLO cost — that is why it is the cheapest #727 falsifier.
         self.use_span_boundary_head = use_span_boundary_head
         self.span_boundary_loss_weight = float(span_boundary_loss_weight)

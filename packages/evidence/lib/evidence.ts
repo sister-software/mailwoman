@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file The typed evidence union. The difference between the kinds is what each is allowed to do:
  *
- *   - `observation` — retrieved from an identified source at a recorded vintage. Carries no score. a source either said it or
+ *   - `observation` — retrieved from an identified source at a recorded vintage. Has no score. A source either stated it or
  *     did not.
  *   - `relation` — structural compatibility between entities. It contains an assertion.
  *     It contains a score only when that assertion is `inferred`.
@@ -24,7 +24,7 @@ export interface Observation {
 	/**
 	 * The vintage the source recorded this at.
 	 *
-	 * `null` when the record does not carry one — the gazetteer trace, for instance,
+	 * `null` when the record does not include one — the gazetteer trace, for instance,
 	 * identifies the row the source picked.
 	 * It does not identify the extract's date.
 	 * A `null` means the source did not record a date.
@@ -64,7 +64,7 @@ export function observation(source: string, vintage: string | null, value: unkno
 }
 
 /**
- * A relation stated by a source is authoritative and carries no score.
+ * A relation stated by a source is authoritative and has no score.
  * One we concluded is inferred and may.
  *
  * A score on an authoritative relation is refused, because it means the link

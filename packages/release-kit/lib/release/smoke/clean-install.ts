@@ -334,7 +334,7 @@ export interface SmokeCleanInstallReport {
 /**
  * Packs published workspaces and installs them into a throwaway project.
  *
- * It runs the CLI, MCP server, and every import probe against the installed copy.
+ * It runs the CLI, MCP server and every import probe against the installed copy.
  *
  * @throws On the first failure, with the failing command's stdout and stderr attached to the message.
  */

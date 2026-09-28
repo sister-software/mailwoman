@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Parse-only read of the reserved bare-postcode cases. One classifier stays warm for all 56
- *   inputs, and the report names every input whose first token is not decoded as a postcode.
+ *   inputs. The report names every input whose first token is not decoded as a postcode.
  */
 
 import { bareBIOTag } from "@mailwoman/codex/component"

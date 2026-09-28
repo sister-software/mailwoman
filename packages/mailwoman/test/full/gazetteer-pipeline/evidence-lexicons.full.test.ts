@@ -12,7 +12,7 @@
  *   - `test.yml` job `lexicon-full`, path-conditional — a PR that changes the builder or its inputs.
  *   - `lexicon-nightly.yml` — data drift. The gazetteer is rebuilt outside any PR, so no path filter
  *       can see it. This is the only layer that catches that and the control for the fixture
- *       layer: if the fixture stops representing the real data, this is what says so.
+ *       layer: if the fixture stops representing the real data, this check reports it.
  *   - `publish.yml` prepare — the release eval.
  *
  *   The every-PR law coverage lives in `evidence-lexicons.fixture.test.ts`, which asserts the same
@@ -81,9 +81,9 @@ describe.skipIf(!(await pathExists(ADMIN_DB)))("locality-surface build — integ
 		expect(j.entries.school).toBeUndefined()
 		expect(j.entries.state).toBeUndefined()
 
-		// The lexicon still carries the ordinary locality surfaces the census rows need.
+		// The lexicon still contains the ordinary locality surfaces the census rows need.
 		// (Not casper/ powell: Casper WY is a given-name homograph at 0.42 < the 0.45 law-3 tier,
-		// Powell WY is below the law-2 floor, and both were absent from v4 too. Their census
+		// Powell WY is below the law-2 floor. Both were absent from v4 too. Their census
 		// flips were family-F1 street-code evidence, fixed in the street lexicon.)
 		for (const s of ["fargo", "minot", "rutland", "plainfield", "cheyenne"]) {
 			expect(j.entries[s], s).toBeDefined()

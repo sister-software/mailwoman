@@ -16,7 +16,7 @@ beforeEach(() => {
 })
 
 /**
- * The `detail` text every "engine method absent" 503 carries —
+ * The `detail` text every "engine method absent" 503 includes —
  * see `routes.ts`'s `GEOCODER_UNAVAILABLE_DETAIL`.
  */
 const GEOCODER_UNAVAILABLE_DETAIL =

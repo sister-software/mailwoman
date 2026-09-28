@@ -28,8 +28,7 @@ export interface OSMAddrRecord {
 	 */
 	housenumber: string
 	/**
-	 * `addr:street` — null when the point carries no street tag
-	 * (the association gap. Counted rather than written).
+	 * `addr:street` — null when the point has no street tag (the association gap. Counted rather than written).
 	 */
 	street: string | null
 	postcode: string | null
@@ -64,7 +63,7 @@ export interface OSMAddrRecord {
  * The `addr:*` tags the extract projects, in the order the record names them.
  *
  * The rooftop builder reads the first five.
- * The corpus jsonl carries them all.
+ * The corpus jsonl includes them all.
  */
 const ADDR_TAGS = [
 	"housenumber",
@@ -89,7 +88,7 @@ function tagValue(properties: Record<string, unknown>, tag: string): string | nu
 }
 
 /**
- * The OSM driver layers that can carry `addr:housenumber`: nodes and building ways/relations.
+ * The OSM driver layers that can have `addr:housenumber`: nodes and building ways/relations.
  */
 const ADDR_LAYERS = ["points", "multipolygons"] as const
 

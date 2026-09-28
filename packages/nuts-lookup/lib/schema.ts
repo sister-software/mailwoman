@@ -8,11 +8,11 @@
  */
 
 /**
- * One nuts region: its identifier, hierarchy level, bounding box, and encoded geometry.
+ * One NUTS region: its identifier, hierarchy level, bounding box and encoded geometry.
  */
 export interface NUTSRegionTable {
 	// The column is spelled `nutsId` in the built artifact's DDL, so this name is a string interface with the file
-	// rather than ours to choose. Renaming it here would stop matching the database.
+	// The database specifies this spelling. A different name here would stop matching the database.
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- column name in nuts.db
 	nutsId: string
 	level: number | null
@@ -24,7 +24,7 @@ export interface NUTSRegionTable {
 }
 
 /**
- * The tables `nuts.db` carries.
+ * The tables included in `nuts.db`.
  */
 export interface NUTSDatabase {
 	nuts_regions: NUTSRegionTable

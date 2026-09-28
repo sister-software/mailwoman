@@ -140,7 +140,7 @@ committed rows that is 33 (FTS) — consistent, since the fixture drops the over
 **The 33 is not 33 defects.** Nineteen of the resolving FTS probes carry a bar _weaker_ than `no-resolve`, and the
 fixture is right to grade them that way: `﻿350 5th Ave, New York, NY` (leading BOM), `Café de Flore, Paris` (NFD
 accents), `רחוב דיזנגוף 100, תל אביב`, the U+2028-separated address, the repeated-address size row, the CSV and YAML
-rows that contain `New York`, and `Springfield` are **real place names inside awkward wrappers**. Resolving them is
+rows that contain `New York`, and `Springfield` are **real place names inside awkward wrappers**. Those matches are
 correct behavior. Only the 14/35 `no-resolve` violations are the defect: `1` → Zona 1, `0` → Purwa 0, `a` → A,
 `home` → Home, `Aug` → Aug, `boom` → Boom, `amet` → Amet, `all` → All, `null` → Null, `DROP` → Drop, `Quote` → Quote,
 `NEAR` → Near Acres Estates. One row (`g76`, a SQL statement containing `'New York'`) carries `no-resolve` and
@@ -170,7 +170,7 @@ The framing this task arrived with was that **wrong answers score higher than ri
 candidate 6.52 vs 6.07. On the definitions above, that inequality does not hold: correct localities score _higher_
 than garbage localities on both backends (25.63 vs 21.05; 4.47 vs 2.26).
 
-The sign flips when you pool tags. Grading every resolved node by distance-to-truth, on the candidate backend:
+The sign flips when you pool tags. The distance-to-truth grades for every resolved node on the candidate backend are:
 
 ```
 control right <=25km   n=323 mean=2.53
@@ -283,7 +283,7 @@ the `postcode_city_mismatch` / `resolution_quality` idiom already in `decorateNo
   backends because the feature is upstream of them.
 - **Risk.** The confidence band on clean input is suspiciously tight, so the first shippable version of this is
   **advisory metadata with no default suppression** while the threshold is calibrated on real traffic-shaped input.
-  Shipping a suppression rule off a 149-row control would be exactly the "reasoned to instead of measured" failure
+  A suppression rule based on a 149-row control would be exactly the "reasoned to instead of measured" failure
   the house rules warn about.
 - **Evidence required to promote.** (1) The confidence distribution re-derived on a multi-locale control including
   fragments, bare localities, and non-Latin scripts — does the 0.918 floor survive? (2) A held-out violation set
@@ -300,7 +300,7 @@ to a probability-like quantity (FTS via a fitted logistic on bm25 + tiers; candi
 one preserved beside it as `resolver_score_raw`.
 
 - **Cost.** High, and it is the only option with a compatibility surface: `resolver_score` is a published metadata
-  field, `browser-cascade.ts` tiebreaks on it, and `reconcile.ts` clamps it. Changing its meaning is a breaking
+  field, `browser-cascade.ts` tiebreaks on it, and `reconcile.ts` clamps it. A change to its meaning is a breaking
   change to a shipped interface, so it wants a major.
 - **What it buys.** One threshold that means the same thing everywhere, and it repairs `normalizeResolverScore`'s
   saturation as a side effect (a calibrated `[0, 1]` score is exactly what that combiner was written expecting).
@@ -312,7 +312,7 @@ one preserved beside it as `resolver_score_raw`.
   survives the remap on the resolver evals. Plus the usual major-version consumer sweep.
 
 **If you only take one thing:** Designs B and C are complementary rather than alternatives, and B does not depend on C.
-Design C makes the number comparable; Design B makes the decision possible. Doing C alone would produce a
+Design C makes the number comparable; Design B makes the decision possible. Design C alone would produce a
 well-calibrated number that still cannot abstain.
 
 ---

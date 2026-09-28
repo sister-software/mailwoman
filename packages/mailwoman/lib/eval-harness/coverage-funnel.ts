@@ -62,7 +62,8 @@ export interface StageReading {
 	state: StageState
 	/**
 	 * Evidence for the state.
-	 * For `unknown`, it says which input would answer the stage.
+	 *
+	 * For `unknown`, it identifies which input would answer the stage.
 	 */
 	detail: string
 }

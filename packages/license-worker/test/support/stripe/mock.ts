@@ -11,7 +11,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
  *   write. An object path matches exactly, so `in_1` never answers for `in_1b`; a list key ends in `?` and matches by
  *   prefix, whatever the query. Anything else is a 404 the SDK raises as an error, so an unexpected retrieval is loud
  *   rather than silently absent. `recordingStripeFetch` is the same with every request written down, for a test that
- *   asserts what was and was not sent. A route whose body carries an `error` key answers 400, as Stripe does.
+ *   asserts what was and was not sent. A route whose body includes an `error` key answers 400, as Stripe does.
  */
 
 export async function signedWebhook(

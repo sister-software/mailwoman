@@ -120,7 +120,7 @@ describe("parseForm499Workbook — lifecycle and footprint", () => {
 
 describe("assertWorkbookHeader", () => {
 	it("accepts the real workbook's header", async () => {
-		// Reading the fixture runs the header check.
+		// The fixture load runs the header check.
 		await expect(readFixture()).resolves.toHaveLength(4)
 	})
 
@@ -183,7 +183,8 @@ describe("readOperatingStates", () => {
 
 describe("the fixture itself", () => {
 	it("is a real workbook, not a hand-authored one", async () => {
-		// An xlsx file is a ZIP archive, which starts with "PK".
+		// An xlsx file is a ZIP archive.
+		// ZIP archives start with "PK".
 		expect((await readLocalBuffer(WORKBOOK_PATH)).subarray(0, 2).toString("latin1")).toBe("PK")
 	})
 })

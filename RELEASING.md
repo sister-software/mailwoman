@@ -1,4 +1,4 @@
-# Releasing
+# Mailwoman release process
 
 Mailwoman publishes a coordinated set of npm packages: the `mailwoman` CLI plus its full transitive
 `@mailwoman/*` runtime closure. `.release-it.json` declares that closure, and the list **must stay in sync with
@@ -196,7 +196,7 @@ The binaries are gitignored in the workspace dirs (`neural-weights-*/.gitignore`
 `copy-weights` and the post-publish cleanup. **Always confirm that the tokenizer matches the model.** The
 model card's `training.tokenizer_version` is authoritative, and mismatches have shipped before.
 
-## Rebuilding + swapping the canonical admin gazetteer (`admin-global-priority.db`)
+## Rebuild and swap the canonical admin gazetteer (`admin-global-priority.db`)
 
 The resolver's gazetteer is the custom WOF SQLite DB at
 `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`. It is **never** an off-the-shelf geocode.earth dump,
@@ -361,7 +361,7 @@ can use Managed Challenge instead of Block, or tighten it to `contains "/mailwom
 custom rules take a few minutes to propagate to all edges, so do not conclude that the rule failed from a
 test in the first ~60 s.
 
-## Versioning policy
+## Release version policy
 
 - **Full sync.** Every package in `.release-it.json` shares one version per release, including the model. The
   workspaces plugin enforces this. `release.config.json#version` carries that number, and the model card's
@@ -372,10 +372,10 @@ test in the first ~60 s.
   This replaces the old "weights versioned to the model" scheme, which the sync-mode plugin could never
   express. That mismatch caused the version drift before 4.0.0.
 
-## Promoting a NON-default model (the full promotion flow)
+## Non-default model promotion (the full promotion flow)
 
 Most releases are code-only (`yarn release` / the `publish` workflow at the next version, with the model
-unchanged). **Promoting a different trained model to be the new default is a bigger operation.** It has broken
+unchanged). **A different trained model requires a separate promotion operation.** It has broken
 this pipeline more than once, because the moving parts are not obvious. This section is the ordered runbook,
 first walked end to end for v4.11.0 (the v1.8.0 fr-admin-split promotion). Do the steps in order and verify each.
 
@@ -513,7 +513,7 @@ from `FST_LOCALES` (`mailwoman/gazetteer-pipeline/fst.ts:428`), and its output t
   global artifact has had no consumer since #1318. The same change removed its last mention in a shipped
   card (the retired v0.6.2 model-card template's `inference.admin_fst`).
   **One-time release action for the operator:** delete the file from the HF `sister-software/mailwoman`
-  bucket. Leaving it is harmless, since it is a 317 MB orphan with a 2026-05-28 build stamp, so this is a
+  bucket. The 317 MB orphan with a 2026-05-28 build stamp is harmless, so this cleanup is a
   cleanup and never a release blocker.
 - **`fst-{ja-jp,zh-cn,ko-kr}.bin` are frozen and stay published.** They have the same no-builder status,
   but they are the only CJK gazetteer artifacts that exist, and `hf-publish/mailwoman-wof-gazetteer/README.md`
@@ -675,21 +675,21 @@ gh workflow run publish.yml -f mode=publish
 The E401/Web-Auth error was transient for v4.11.0, and the `publish_only` retry cleared it. If it recurs on
 the same packages, their npm Trusted Publisher is unconfigured. Configure it on npmjs.com, or publish the
 remaining packages with a token in dependency order (`record` before `registry`). **Note:** older notes say
-"the lab host has no npm credentials," but it currently has an `~/.npmrc` authToken. Running
+"the lab host has no npm credentials," but it currently has an `~/.npmrc` authToken. The command
 `yarn mwops release publish-workspace --allow-unplanned` in the recovery loop below can therefore finish the
 remaining packages from the lab host without OIDC.
 
 ## Common failures
 
-| Symptom                                  | Cause                                                 | Fix                                                                                                              |
-| ---------------------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| `403 Forbidden` from npm publish         | Token missing publish rights on `@mailwoman` scope    | npmjs.com → tokens → check scope coverage                                                                        |
-| `requireCleanWorkingDir` aborts          | Uncommitted changes                                   | `git status`, commit or stash                                                                                    |
-| `requireBranch` aborts                   | Not on `main`                                         | `git switch main`                                                                                                |
-| Hook `yarn test --run` fails             | Pre-existing test breakage                            | Fix tests or temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
-| `copy-weights.ts` `Missing source model` | Running from a machine without `$MAILWOMAN_DATA_ROOT` | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
+| Symptom                                  | Cause                                              | Fix                                                                                                              |
+| ---------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `403 Forbidden` from npm publish         | Token missing publish rights on `@mailwoman` scope | npmjs.com → tokens → check scope coverage                                                                        |
+| `requireCleanWorkingDir` aborts          | Uncommitted changes                                | `git status`, commit or stash                                                                                    |
+| `requireBranch` aborts                   | Not on `main`                                      | `git switch main`                                                                                                |
+| Hook `yarn test --run` fails             | Pre-existing test breakage                         | Fix tests or temporarily comment the hook in `.release-it.json` and document the divergence in the release notes |
+| `copy-weights.ts` `Missing source model` | Machine lacks `$MAILWOMAN_DATA_ROOT`               | Set `MAILWOMAN_PUBLISH_MODEL` + `MAILWOMAN_PUBLISH_TOKENIZER` env vars                                           |
 
-## Releasing from CI (manual dispatch + npm Trusted Publishing)
+## CI release (manual dispatch + npm Trusted Publishing)
 
 `.github/workflows/publish.yml` exposes the same flow from the GitHub Actions UI. Auth uses **npm Trusted Publishing** (OIDC), so the repo has no `NPM_TOKEN` secret and `~/.npmrc` needs no auth token. npmjs.com is configured to accept publishes from this exact workflow file path.
 
@@ -713,7 +713,7 @@ remaining packages from the lab host without OIDC.
 
 Each workspace publish runs `yarn pack -o <tmpfile>` (which translates `workspace:*` → concrete versions) followed by `npm publish <tmpfile>`. The npm CLI detects the OIDC environment and authenticates through Trusted Publishing, and it enables `--provenance` automatically. CI no longer invokes release-it itself. `.release-it.json` remains the canonical workspace list that both phases derive from, and it is the config for the legacy local flow, which the ruleset now blocks at the push step (dry runs still work).
 
-### Adding a new package: it can't be first-published from CI
+### First publish for a new package requires a local plan
 
 **Set the version field first.** A new workspace must join at the current unified version (`npm view
 mailwoman version`), never `0.0.0`. `mwops release prepare-version`'s drift guard refuses to bump an
@@ -731,7 +731,7 @@ for ws in <new-workspace-dirs>; do
 done
 ```
 
-> **Use the operation above (write the plan first with `yarn mwops release plan --json > release-plan.json`), or `yarn pack -o <tmp> && npm publish <tmp>`. Never run a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is specific to Yarn. `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.ts` runs) rewrites `workspace:*` → the concrete sibling version. This broke `@mailwoman/address-id`'s 4.9.0 first publish, which shipped `"@mailwoman/codex": "workspace:*"`. Republishing 4.9.1 from a `yarn pack`'d tarball fixed it.
+> **Use the operation above (write the plan first with `yarn mwops release plan --json > release-plan.json`), or `yarn pack -o <tmp> && npm publish <tmp>`. Never run a raw `npm publish` from the workspace dir.** Yarn 4's `workspace:*` dep protocol is specific to Yarn. `npm publish` ships the literal string `"workspace:*"`, and consumers then fail to install with `EUNSUPPORTEDPROTOCOL`. `yarn pack` (which `publish-workspace.ts` runs) rewrites `workspace:*` → the concrete sibling version. This broke `@mailwoman/address-id`'s 4.9.0 first publish, which shipped `"@mailwoman/codex": "workspace:*"`. A second publish of 4.9.1 from a `yarn pack`'d tarball fixed it.
 
 Then, on npmjs.com, **configure each new package's Trusted Publisher** (repo `sister-software/mailwoman`, workflow `.github/workflows/publish.yml`). After that, OIDC publishes it like every other package, and it needs no further manual steps.
 
@@ -749,7 +749,7 @@ replace a stale one with `npm trust revoke <pkg> --id <id>`, because retrying re
 Two traps wasted time during 4.0.0:
 
 - **`npm view <pkg> version` caches for minutes** and reports `UNPUBLISHED` right after a successful publish. Verify against the registry directly with `curl -s https://registry.npmjs.org/@mailwoman%2F<pkg>`. HTTP 200 with a `dist-tags.latest` means the package is published.
-- **npm rate-limits new-package creation.** The bootstrap loop above published the first package and then failed, and the `|| break` stopped it. Waiting a minute and re-running published the rest. A `402`/`403` indicates a different problem: the token lacks publish rights on the scope.
+- **npm rate-limits new-package creation.** The bootstrap loop above published the first package and then failed, and the `|| break` stopped it. A rerun after one minute published the rest. A `402`/`403` indicates a different problem: the token lacks publish rights on the scope.
 
 If a release fails partway like this (with the tag and some packages already published), do not re-dispatch the full CI workflow, because release-it will fail on the existing tag. Use the per-workspace bootstrap loop above to publish the remaining packages (`--tolerate-republish` makes already-published versions a no-op), then configure their publishers. See also "Recovering from a partial release" below.
 
@@ -773,18 +773,19 @@ runs from CI through OIDC, with **no npm credentials anywhere**. The order is:
    model, `fst-en-US.bin` and `wof-hot.db` are unchanged, so copy them from the previous version's bucket path.
 
    > **⚠️ The HF `--set-default` alone does not switch the live demo** (found on night 10, v4.2.0).
-   > `public.mailwoman.ai` serves from the **R2** bucket. Updating the demo is a second,
-   > mandatory step. Stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the
-   > prior version's R2 path when unchanged) into the R2 layout and run:
-   >
-   > ```bash
-   > set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
-   > node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
-   > ```
-   >
-   > Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
-   > and an md5 of the served `model.onnx` against the artifact the promotion eval passed. CI's weight fetch reads HF; the
-   > demo reads R2. A release is done when both backends agree.
+
+> `public.mailwoman.ai` serves from the **R2** bucket. A second step updates the demo,
+> mandatory step. Stage the same artifact set (plus `postcode-*.bin` + `wof-polygons.db`, copied from the
+> prior version's R2 path when unchanged) into the R2 layout and run:
+>
+> ```bash
+> set -a; . ./.env; set +a   # RCLONE_S3_PUBLIC_* creds
+> node packages/mailwoman/lib/dev-tools/data/publish-demo-assets-to-r2.run.ts --src <staged-dir>
+> ```
+>
+> Verify with `curl -s https://public.mailwoman.ai/mailwoman/en-us/releases.json | jq .defaultVersion`
+> and an md5 of the served `model.onnx` against the artifact the promotion eval passed. CI's weight fetch reads HF; the
+> demo reads R2. A release is done when both backends agree.
 
 2. **Publish all packages from CI** by running `publish.yml` at the same version. The "Fetch weight binaries from
    Hugging Face" step pulls `model.onnx` + `tokenizer.model` from the public bucket (no auth) into the
@@ -811,16 +812,16 @@ The `publish_python` / `publish_cargo` dispatch inputs (default true) make singl
 because no generator reruns. See `docs/records/site-2026-08/api.mdx` "Client libraries" for what the clients
 are. This section describes them from the release operator's side.
 
-> **Sequencing: do not publish clients before the next npm release.** The generated clients stamp
+> **Sequence: do not publish clients before the next npm release.** The generated clients stamp
 > `mailwoman/package.json`'s version and document the `/v1` and emitted-spec APIs, which exist on `main` but
 > in **no published npm release yet**. The Hono migration ships in the next release, which is a major
-> version. Dispatching either publish workflow before that release would claim the current version number on
+> version. A dispatch of either publish workflow before that release would claim the current version number on
 > PyPI/crates.io for a client that describes endpoints nobody can install, and both registries permanently
 > retire published version numbers. Publish the first clients right after the next npm release.
 
 > **Incident note:** the `clients` job holds the workflow's `publish` concurrency slot, so a `publish_only`
-> recovery dispatch queues behind its setup and generate steps, which take minutes on a cold runner. During
-> an incident, cancel the running `clients` job from the Actions UI first. It never publishes anything, and
+> recovery dispatch queues behind its setup and generate steps, which take minutes on a cold runner. If
+> an incident occurs, cancel the running `clients` job from the Actions UI first. It never publishes anything, and
 > cancelling it frees the queue immediately. (The two client-publish workflows join the same `publish`
 > concurrency group by design, so they cannot race a release into a half-bumped version.)
 
@@ -904,15 +905,15 @@ loop, but never use it to validate a real change, because verification is the pu
 - **Weights publish from CI.** The `neural-weights-*` npm publish is local-only, because the binaries are not
   on the runner. A future step could have CI fetch them from Hugging Face before publishing, as the demo
   already does at runtime.
-- **`mailwoman release hf` is still run by hand.** Staging the model to HF (and bumping `releases.json`) is a
+- **`mailwoman release hf` is still run by hand.** The operator stages the model to HF and bumps `releases.json` in a
   separate manual command after the npm release and is not part of `yarn release`.
-- **Client-package first publish.** Provisioning is done (see "Client packages" above: `pypi` + `cargo`
+- **Client-package first publish.** Setup is complete (see "Client packages" above: `pypi` + `cargo`
   environments, with the Trusted Publisher now bound to `publish-clients.yml`). The first PyPI publish is done
   (`mailwoman-client` 6.0.0 is live through Trusted Publishing). crates.io publishes through
   `publish-clients.yml` (the `cargo` job) once the account email is verified.
 - **Changelog generation.** release-it can emit one through the `@release-it/conventional-changelog` plugin. It is not configured yet, because commit messages have not standardized on Conventional Commits.
 
-## Recovering from a partial release
+## Partial release recovery
 
 If a release fails partway through publishing:
 

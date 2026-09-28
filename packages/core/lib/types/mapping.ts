@@ -15,7 +15,7 @@
  *   `start_token`, etc.) return `null`, and the converter records the row as dropped.
  *
  *   Intersection handling is coarse: the legacy `intersection` tag becomes `intersection_a`, because
- *   the legacy label carries no position that would distinguish `intersection_a` from
+ *   the legacy label contains no position that would distinguish `intersection_a` from
  *   `intersection_b`.
  */
 

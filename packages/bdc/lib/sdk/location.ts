@@ -24,7 +24,8 @@ export const BROADBAND_SERVICABLE_LOCATION_INPUT_PATTERN = /^\d{10}$/
  * - An ID will remain consistent across versions when a different building is selected on a single parcel.
  *
  * Uses the `string` type because numeric storage would lose leading zeroes.
- * The FCC's own IDs are 10-digit zero-padded strings, and leading zeros make integer storage lossy.
+ * FCC IDs use 10-digit zero-padded strings.
+ * Integer storage would lose leading zeros.
  *
  * @type string
  * @title Broadband Servicable Location ID

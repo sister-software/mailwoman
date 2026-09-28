@@ -37,7 +37,7 @@ import type { FSTProvenance, PlaceEntry } from "#fst/types"
  * Reserved synthetic wofID base for street-morphology entries. 32-bit unsigned,
  * well above any realistic WOF allocation.
  *
- * Reusing the same base across rebuilds keeps IDs stable for any consumer that caches them.
+ * The same base across rebuilds keeps IDs stable for consumers that cache them.
  * See [[project-schema-storage-decision]] for the reserved range policy.
  */
 const STREET_AFFIX_WOFID_BASE = 1_900_000_000

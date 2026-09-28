@@ -36,7 +36,7 @@ can be re-derived.
 
 ### The threshold the file clustering rests on
 
-| Threshold | Clusters | Upper bound | Reading                                                                      |
+| Threshold | Clusters | Upper bound | Interpretation                                                               |
 | --------: | -------: | ----------: | ---------------------------------------------------------------------------- |
 |      0.60 |       51 |       9,857 | near-twins only                                                              |
 |  **0.45** |   **77** |  **22,829** | largest cluster is 61 files, all one family — no cross-workspace chaining    |
@@ -78,12 +78,13 @@ instantiate. It does not mean moving constants into `core`, because there are al
 **In scope.** Reuse: a generic implementation replacing several parallel ones, a derived type replacing a
 hand-written one, a helper moved to the package that already owns the concept.
 
-**Out of scope.** Relocating the 36,088 lines of declared table literals or the 44,723 lines of type declarations
+**Out of scope.** This project will leave the 36,088 lines of declared table literals and the 44,723 lines of type declarations
 out of TypeScript. That would reach 15%, but it is a different project, and the operator chose reuse at its
 measured size.
 
-**Non-goals.** Deleting features, removing docstrings, and splitting files because they are long. The mechanical
-cleanup lane stays closed except where this campaign's own work touches a file.
+**Non-goals.** The project retains existing features and docstrings. It does not split files solely
+because they are long. The mechanical cleanup lane stays closed except where this campaign's work
+touches a file.
 
 ## Lanes
 
@@ -102,8 +103,8 @@ generic implementation keeps each instance's irreducible vocabulary.
 | Test families collapsing with A–C  |          6,733 | 2,500–4,000       | medium     |
 | **Total**                          |                | **11,850–17,150** |            |
 
-Lane B carries two bounds because two methods measured it. Clustering at 0.45 counts only the files that still
-look alike (3,378). Pairing the four packages by matching file name instead counts all 23 families (12,225), and
+Lane B carries two bounds because two methods measured it. The 0.45 cluster threshold counts only the files that still
+look alike (3,378). A filename match across the four packages instead counts all 23 families (12,225), and
 the 8,847-line difference sits in same-named files that have drifted. `sdk/client.ts` measures 0.23 best-pair
 similarity, and `sdk/download.ts` has one identical pair and one at 0.09. The real figure lies between the two
 bounds.
@@ -129,7 +130,7 @@ decided after A1 lands, by reading what it still catches. A flag whose property 
 different finding and may survive.
 
 **A2. Shared option groups.** 450 of 881 option declarations restate a key another command already declares, at
-~707 lines. The repetition is broad rather than deep: `out` appears 56 times in 77 lines. Consolidating trades
+~707 lines. The repetition is broad rather than deep: `out` appears 56 times in 77 lines. Consolidation trades
 per-command legibility for fewer lines, so this lane applies only where a group is coherent (the engine options
 `locale` / `weights-cache` / `db` / `resolve-db` / `candidate-db`) rather than key by key.
 
@@ -198,7 +199,7 @@ packages document the copy in place, because depending on `@mailwoman/spatial` w
 
 ## Outcome: the file-clustering number measures parallelism rather than duplication
 
-Lane A1 landed, and lane B was opened against the four authority-layer packages. Reading them revealed a systematic
+Lane A1 landed, and lane B was opened against the four authority-layer packages. Their review revealed a systematic
 bias in the 22,829 figure, and that bias changes the campaign's answer.
 
 **Every high-similarity family in lane B is already consolidated.** The shared implementation exists and each
@@ -276,7 +277,7 @@ A2 is the only remaining reuse work with more than a few hundred lines in it, an
 count. It needs a decision and is not a backlog item.
 
 **The 15% target is dropped**, because of the arithmetic above: the reuse ceiling across the tree is ~4,400 lines,
-1.4% of the 317,429-line denominator, of which #2270 delivered 1,208. Reaching 47,614 lines would require relocating
+1.4% of the 317,429-line denominator, of which #2270 delivered 1,208. A move of 47,614 lines would require relocating
 the 36,088 lines of declared table literals out of TypeScript. That is a real project, and it should be chosen to
 conform with the rule that reference data is provenance-tracked immutable SQLite, never to reduce a line count.
 
@@ -286,7 +287,7 @@ a notice (#2280, `ebd389ba7`). `country` (13) beside `countries` (14) is a delib
 read: every `country` carries one ISO code and every `countries` a comma-separated list. Two files declare both
 because they refer to different sources at different arities (`corpus/fetch.tsx`: the OpenAddresses
 country against the GeoNames postal countries; `gazetteer/build/poi/index.tsx`: the OSM country against the
-Overture countries). Renaming either would merge two sources into one flag.
+Overture countries). Either rename would merge two sources into one flag.
 
 ## Verification
 

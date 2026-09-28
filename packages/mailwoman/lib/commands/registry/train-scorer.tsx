@@ -38,7 +38,7 @@ export const spec = {
 		"precision-bar": { type: "number", description: "Held-out precision bar" },
 		out: { type: "string", description: "Output module" },
 		locale: { type: "string", default: "en-US", description: "Weights locale" },
-		date: { type: "string", description: "Training date" },
+		date: { type: "string", description: "Date of model fitting" },
 		wof: { type: "string", description: "WOF database" },
 		"data-root": { type: "string", description: "Per-state database root" },
 	},

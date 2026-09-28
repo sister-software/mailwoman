@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The manifest-targets check: source mapping, pattern directories, and a clean current tree.
+ * @file The manifest-targets check: source mapping, pattern directories and a clean current tree.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

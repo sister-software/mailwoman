@@ -75,7 +75,7 @@ rate**: the share of rows where the parser emits a locality token and an adjacen
 both. This separates the case where the parser blocks progress (fix: an admin-split extract, like FR) from the case where the gazetteer
 blocks it (fix: WOF ingest), without doing the ingest first.
 
-### Routing thresholds
+### Route thresholds
 
 | condition                                                 | route                                         |
 | --------------------------------------------------------- | --------------------------------------------- |
@@ -183,7 +183,7 @@ variant names. ES is further lowered by bilingual slash-truth (`Sant Vicent del 
 Vicente del Raspeig`); DE by the city-state drop. The relative ordering (FR ≫ IT/NL > DE > ES) is the
 trustworthy signal rather than the absolute floors. OA samples are clean-ish; real traffic may differ.
 
-**Routing implication:** the EU multi-locale work is larger and more parser-dependent than ingesting WOF.
+**Implication for routing:** the EU multi-locale work is larger and more parser-dependent than WOF ingestion.
 Per-locale parser readiness limits the coordinate before coverage can pay off. The cheapest
 EU coordinate improvement is a **DE admin-split extract** (resolver already covers DE; clear, measured parse
 gap), directly reusing the FR-admin-split template.

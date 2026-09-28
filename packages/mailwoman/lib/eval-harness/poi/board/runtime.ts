@@ -111,7 +111,7 @@ async function loadResolver(
  * Backend that answered anchor resolution.
  *
  * `createResolverBackend` can fall back to the default candidate path,
- * so the caller's options alone do not determine it.
+ * so the caller's options do not determine it by themselves.
  */
 export type POIBoardResolverBackend = "candidate" | "wof-fts" | "none"
 

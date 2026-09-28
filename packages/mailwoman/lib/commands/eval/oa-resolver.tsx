@@ -95,7 +95,7 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		// Keep the derivation and rename consistent.
 		// `--postcode-max-move-km` is the postcode-move cap.
 		// Its option name spells out the pass it caps.
-		// Spreading the derived name instead reaches no field, so the cap is accepted and never applied.
+		// The cap reaches no field if the code spreads the derived name, so it is accepted and never applied.
 		...(postcodeMaxMoveKM === undefined ? {} : { postcodeConsistencyMaxMoveKm: postcodeMaxMoveKM }),
 	})
 })

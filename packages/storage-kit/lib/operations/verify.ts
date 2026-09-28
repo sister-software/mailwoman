@@ -67,7 +67,7 @@ export const verifyOperation = defineOperation({
 			checks.push({ name: `mount option ${expected}`, ok: present, detail: present ? "active" : "missing" })
 		}
 
-		// `compress-force` silently voids every compression=none property below,
+		// `compress-force` silently voids every compression=none property below.
 		// which is invisible until someone measures a query.
 		// Verified on a scratch volume.
 		// See DEFAULT_MOUNT_OPTIONS.

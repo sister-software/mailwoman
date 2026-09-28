@@ -107,7 +107,7 @@ Write the successor to `plan/README.mdx` — a short "what mailwoman is now" sco
 
 ---
 
-## Sequencing
+## Sequence {#sequence}
 
 Tracks 1 and 2 are independent and can run in parallel (Track 1 is demo/runtime code; Track 2 is eval + docs). Track 3 needs an hour of operator time and can happen any day. Track 4 starts only after Track 2's re-score exists (its checks depend on the fresh baseline) and Track 3 sets its budget ceiling. Track 5 can be a night-shift deliverable once 1–3 have landed, so the new scope doc describes the re-railed state rather than promising it.
 
@@ -140,6 +140,6 @@ The remaining work is mechanical and tracked on #884:
 - **Track 3 decision table:** the "#825 GPU budget ceiling" row is moot. Replace with two calls: the #295 promote go/no-go (after #291 + #293 land), and the #293 fallback (prune vs server-only) if int8 exceeds the browser SLO.
 - **Locale freeze:** the rule "no new locales before the rendering fix lands" becomes "no new locales until #295 ships the coordinated bump" — the fix exists but is not shipped, and every pre-#295 locale extract would train against the old vocab.
 - **Track 2 sequencing gains a hard edge:** run #885's full re-score on the _current shipped line_ before #295 promotes, so the splice lands with a clean pre/post baseline; the post-#295 scorecard then becomes the first entry of the new re-score cadence.
-- **Grading hygiene carried forward from the handoff:** baseline grades go against the explicit `model-v193a3-step-80000-int8.onnx`, never the dev symlink, which drifts (#259).
+- **The handoff's grading hygiene:** baseline grades use the explicit `model-v193a3-step-80000-int8.onnx`; the dev symlink drifts (#259).
 
 Success at four weeks, restated: the demo resolves what the server resolves; the 2026-07 scorecard exists and the ledger question is settled; the operator queue holds only externally-blocked items; and the coordinated model + tokenizer bump has shipped — or the int8-budget fallback is documented. Track 4 went from the plan's most expensive unknown to its most concrete deliverable in one shift.

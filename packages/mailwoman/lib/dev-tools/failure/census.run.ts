@@ -21,7 +21,7 @@ import { PARITY_FIXTURES_V1_PATH, type ParityFixture } from "#eval-harness/parit
 const MIN_REPORTABLE_SAMPLES = 3
 
 /**
- * Missing components tolerated before a parse counts as a prefix match rather than a truncation.
+ * Maximum missing components allowed before a parse counts as a prefix match rather than a truncation.
  */
 const MAX_MISSING_TAIL_COMPONENTS = 3
 

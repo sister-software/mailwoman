@@ -34,8 +34,8 @@ function fields(parts: Array<string | null>): string {
 const LOCALE_HEAD_ENTRIES = 3
 
 /**
- * `systemSource` rides in parentheses to separate three reasons for the same system code:
- * `auto` means the locale head chose it.
+ * `systemSource` appears in parentheses to separate three reasons for the same
+ * system code: `auto` means the locale head chose it.
  *
  * `pinned` means the bundle or caller supplied it.
  * `off` means conventions never ran.
@@ -56,7 +56,7 @@ export function systemRow(trace: GeocodeTrace | undefined): string {
 
 /**
  * The locale head's top classes as probabilities, ordered by the `localeCountries`
- * axis that rides with the logits rather than by a hardcoded order.
+ * axis that accompanies the logits rather than by a hardcoded order.
  */
 export function localeHeadRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -90,8 +90,8 @@ export function tokensRow(trace: GeocodeTrace | undefined): string {
 }
 
 /**
- * Per channel, how many pieces carried a nonzero clue and which ones: `not fed` is an
- * unwired source while `0/12` is a wired channel that matched no entry.
+ * Per channel, how many pieces contributed a nonzero clue and which ones: `not fed` is
+ * an unwired source while `0/12` is a wired channel that matched no entry.
  */
 export function channelsRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -121,7 +121,7 @@ export function channelsRow(trace: GeocodeTrace | undefined): string {
 
 /**
  * What the decode did: algorithm, mean per-token confidence, component sequence,
- * priors that actually carried a nonzero bias and repair passes that changed a label.
+ * priors that actually contributed a nonzero bias and repair passes that changed a label.
  */
 export function decodeRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT

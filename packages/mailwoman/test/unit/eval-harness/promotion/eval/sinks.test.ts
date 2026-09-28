@@ -113,7 +113,7 @@ const LEG_SEMANTICS = [
 
 describe("error semantics — the per-leg table", () => {
 	test("all eight former spawns are accounted for", () => {
-		// Eight spawns, seven distinct modules: score-affix carried six of the call sites.
+		// Eight spawns, seven distinct modules: score-affix accounted for six of the call sites.
 		expect(LEG_SEMANTICS).toHaveLength(7)
 		expect(LEG_SEMANTICS.filter((row) => row.spawn.includes("nothrow"))).toHaveLength(4)
 	})

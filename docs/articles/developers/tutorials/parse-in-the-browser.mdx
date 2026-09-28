@@ -36,7 +36,7 @@ The third item decides how this page is structured, so read it before you copy a
   `Access-Control-Allow-Origin` header back and the fetch fails. Host your own copies. Step 1 is
   where they come from, and they arrive in an npm package you already have if you have installed the
   parser at all.
-- **The resolver is not part of this.** The browser runtime turns text into components. Turning
+- **The resolver runs separately.** The browser runtime turns text into components. A second step turns
   those components into coordinates needs a gazetteer, and the browser story there is narrower than
   the parse story — [Resolving in the browser](#resolving-in-the-browser) says exactly how narrow
   and what the next step is.
@@ -82,7 +82,7 @@ mkdir -p public/ort
 cp node_modules/onnxruntime-web/dist/*.wasm public/ort/
 ```
 
-Skipping this produces the failure that reads as a model problem and is not one. When the resolved
+If you skip this step, the fetch failure can look like a model problem. When the resolved
 `.wasm` path is not fetchable the session is never created, and the error reports the backend rather
 than the file:
 
@@ -184,13 +184,13 @@ back. That cost is inside step 2's number rather than step 3's.
 
 Measured by counting the bytes of every response the loader took, on the call in step 2:
 
-| File                               | Bytes          | What it is                   | Dropping it                                              |
+| File                               | Bytes          | What it is                   | Effect of removal                                        |
 | ---------------------------------- | -------------- | ---------------------------- | -------------------------------------------------------- |
 | `model.onnx`                       | 39,419,629     | The int8 graph               | Required                                                 |
 | `locality-surface-lexicon-v6.json` | 7,346,004      | Locality surface forms       | Locality evidence channel runs off, with a console error |
-| `postcode-us.bin`                  | 1,904,322      | The US postcode anchor table | Ranking degrades; parses still work                      |
+| `postcode-us.bin`                  | 1,904,322      | The US postcode anchor table | Rank quality drops; parses still work                    |
 | `tokenizer.model`                  | 1,632,289      | The SentencePiece model      | Required                                                 |
-| `model-card.json`                  | 42,380         | Label set and lineage        | Decoding breaks, as step 2 describes                     |
+| `model-card.json`                  | 42,380         | Label set and lineage        | The decoder cannot load the model                        |
 | `anchor-lexicon-v1.json`           | 11,238         | The gazetteer clue           | Segmentation degrades, with a console error              |
 | `street-type-lexicon-v3.json`      | 9,882          | Street-type evidence         | Fragment parses degrade, with a console error            |
 | `country-surface-lexicon-v1.json`  | 7,023          | Country-surface evidence     | Country tagging degrades, with a console error           |
@@ -234,7 +234,7 @@ Two constraints ride on that:
   is automatic, so a device without it still parses — on the slower backend. Log
   `diagnostics.backend` in production if you want to know which half of your traffic gets which.
 
-## Resolving in the browser
+## Resolve addresses in the browser
 
 Components are not coordinates. [Earth](https://earth.mailwoman.ai/) resolves them by range-loading a 2.88 GB gazetteer
 over HTTP: `sql.js-httpvfs` fetches only the SQLite pages a lookup touches, which the gazetteer's own

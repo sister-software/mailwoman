@@ -79,7 +79,7 @@ Paris 75008               ← Anglophone format (locality first)
 
 Both describe the same place. A parser trained exclusively on US-formatted addresses (number → street → city → state → postcode) will mislabel the postcode as a house number and fail on the locality entirely. The ordering assumption is a training-data bias rather than a structural requirement of addresses.
 
-### Building number after street (non-Anglophone)
+### A building number after the street (non-Anglophone)
 
 ```
 République 12              ← French/European format
@@ -119,7 +119,7 @@ Adjacent-character swaps are the most common typing error for English-language a
 
 The human sounds out the word and types what they hear. These errors are especially common for place names in languages the speaker does not speak: a non-French speaker typing `Versailles` from memory might produce `Versai`, `Versaille`, or `Versales`.
 
-### Missing diacritics
+### Absent diacritics
 
 | Intended  | Typed     |
 | --------- | --------- |
@@ -152,7 +152,7 @@ The mixed-script case is the hardest: the human typed the city in the script the
 
 The human assumes context the parser doesn't have. The human means "the Washington everyone knows" — the capital, as opposed to the state or the university. The parser has to guess from statistical priors. The correct answer is "it depends on what the rest of the address says, and sometimes you need to ask."
 
-### Crossing metro areas / border cities
+### Addresses across metro areas / border cities
 
 | Address                                           | Problem                                           |
 | ------------------------------------------------- | ------------------------------------------------- |
@@ -170,7 +170,7 @@ The human knows which Kansas City they meant. The parser sees a name that resolv
 
 Springfield exists in 34 US states. Main Street exists in most of them. Without a state, the parser has no way to know which Springfield the human meant. With a state but no ZIP, the parser can narrow to one state but still has street deduplication across towns within the state.
 
-### Missing unit or apartment
+### An absent unit or apartment
 
 ```
 123 Main St       ← typed

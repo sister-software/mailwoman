@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The registry of storage operations — the only executable entry point of this package, and the file knip treats as
+ *   The registry of storage operations — the only executable entry point of this package. Knip treats it as
  *   such. An operation that is not listed here is dead code. Adapters (`@mailwoman/ops-cli`) iterate this array and
  *   never import an operation module directly.
  */

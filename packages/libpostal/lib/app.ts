@@ -16,7 +16,8 @@ import type { LibpostalEngine } from "#engine"
 import { registerLibpostalRoutes } from "#routes"
 
 /**
- * Request-body limit of 100 KiB, which matches the usual JSON parser default.
+ * Request-body limit of 100 KiB.
+ * This matches the usual JSON parser default.
  */
 const MAX_BODY_BYTES = 102_400
 

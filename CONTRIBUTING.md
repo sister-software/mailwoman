@@ -1,4 +1,4 @@
-# Contributing to Mailwoman
+# Contributions to Mailwoman
 
 Thanks for wanting to help. Mailwoman is a postal-address parser — a calibrated,
 retrieval-augmented neural sequence labeler plus a Who's On First gazetteer
@@ -95,7 +95,7 @@ By making a contribution to this project, I certify that:
 - **Yarn 4** via Corepack — don't install Yarn globally.
 - **git**, and a POSIX-ish shell for the helper scripts.
 
-## Getting set up
+## Setup
 
 ```bash
 git clone https://github.com/sister-software/mailwoman.git
@@ -137,7 +137,7 @@ changing anything structural. The short version:
   `packages/spatial/`, `packages/normalize/`, … — the supporting packages.
 - `docs/` — the Docusaurus site published to https://mailwoman.ai.
 
-## Building, testing, and type-checking
+## Build, test, and type-check commands
 
 | Command                                | What it does                                                       |
 | -------------------------------------- | ------------------------------------------------------------------ |
@@ -157,7 +157,7 @@ class evaluates as `undefined`. The fix is a side-effect `import "@mailwoman/cor
 at the top of the test file. `AGENTS.md` documents this under the bare/subpath
 import cycle.
 
-## Running the CLI locally
+## Local CLI use
 
 After `yarn compile`:
 

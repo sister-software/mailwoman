@@ -20,7 +20,7 @@ import { describe, expect, test, vi } from "vitest"
  * Wall-clock budget for a CLI spawn.
  * See the note in `mailwoman/commands/geocode.test.ts`.
  *
- * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
+ * A single spawn costs ~5.6 s, including 2.7 s of node boot.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
@@ -30,7 +30,7 @@ const CLI_SPAWN_TIMEOUT_MS = 45_000
  * It has to exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  * A per-test timeout below the child's timeout lets Vitest kill the test before the child reports.
  *
- * The failure then says "timed out" without identifying what consumed the time.
+ * The failure then reports "timed out" without identifying what consumed the time.
  */
 const CLI_TEST_TIMEOUT_MS = 90_000
 
@@ -44,7 +44,7 @@ const CLI_TEST_TIMEOUT_MS = 90_000
  * It would inherit the global 15s timeout.
  *
  * That timeout can kill the operation before it reports.
- * The failure then says timeout without attribution.
+ * The failure then reports timeout without attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 

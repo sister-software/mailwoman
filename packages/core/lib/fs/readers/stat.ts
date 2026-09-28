@@ -239,7 +239,7 @@ export function isExecutable(path: PathBuilderLike): Promise<boolean> {
  * Whether a directory entry leads to a directory, symbolic links included.
  *
  * `Dirent.isDirectory()` is false for a symbolic link to a directory,
- * so a walk keyed on it alone skips every linked tree.
+ * so a walk keyed only on it skips every linked tree.
  * A caller that walks links must use this helper so both traversals describe the same tree.
  *
  * A link is resolved through `stat`, which also answers `false` for a dangling one.

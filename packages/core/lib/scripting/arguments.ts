@@ -75,7 +75,7 @@ export function requiredArgument(scope: string, name: string, value: string | un
  * Kebab segments whose property spelling capitalizes the whole acronym, because a
  * segment missing here derives a property the command's own `Options` does not declare:
  * the flag still parses but reaches the component under a name no code reads,
- * so add the segment here when a flag carries an acronym.
+ * so add the segment here when a flag contains an acronym.
  */
 export const OPTION_INITIALISMS = {
 	csv: "CSV",
@@ -141,8 +141,8 @@ export function optionPropertyName(value: string): string {
  */
 export function parseArguments<T extends ParseArgsConfig>(config: T): ReturnType<typeof parseArgs<T>> {
 	// The builtin types its result from the whole config object.
-	// Supplying `args` changes the type even though the parsed shape depends only
+	// An `args` value changes the type even though the parsed shape depends only
 	// on `options` and `allowPositionals`.
-	// `T` carries both settings.
+	// `T` includes both settings.
 	return parseArgs({ args: [...cliArguments()], ...config }) as ReturnType<typeof parseArgs<T>>
 }

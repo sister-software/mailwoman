@@ -65,7 +65,7 @@ export interface Form499Row {
 	 */
 	principalCommType: string
 	/**
-	 * Owning company.
+	 * The owning company.
 	 */
 	holdingCompany: string
 	/**

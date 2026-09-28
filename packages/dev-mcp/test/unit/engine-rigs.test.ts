@@ -51,7 +51,8 @@ describe("normalizeRigResults", () => {
 			features: [
 				{
 					properties: { name: "Telford", osm_type: "N", osm_id: 12_345, osm_value: "town" },
-					// London: lon is the small magnitude here, and swapping the pair puts this in the Indian Ocean.
+					// London: lon is the small magnitude here.
+					// The reversed pair places this coordinate in the Indian Ocean.
 					geometry: { coordinates: [-0.1278, 51.5074] },
 				},
 			],

@@ -20,12 +20,12 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier that every suite row carries.
+ * Law identifier included in every suite row.
  */
 export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 
 /**
- * Coarsening steps.
+ * Steps that coarsen the input.
  *
  * - `drop-leading-segment` removes the first comma-separated segment, such as a venue or street line.
  * - `drop-trailing-segment` removes the last comma-separated segment.
@@ -242,7 +242,7 @@ export function describeRefinementCoverage(
  *
  * Each row needs the `candidate_admissibility` comparator, a `refines` expectation,
  * a `rowRef`, a `caseCountry` plus a listed coarsening step.
- * Each chain must be connected, end at one finest query, and share one context.
+ * Each chain must be connected, end at one finest query and share one context.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	const problems = auditCommonFixtureFields(

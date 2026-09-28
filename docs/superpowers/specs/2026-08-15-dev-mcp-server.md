@@ -62,7 +62,7 @@ $ node packages/mailwoman/out/cli.js geocode --timing "350 5th Ave, New York, NY
 [timing] geocode.total                253.28 ms      ← first query (includes ONNX warmup)
 ```
 
-The fixed cost before the first answer is roughly **1.37 s**. Feeding 20 board inputs through one
+The fixed cost before the first answer is roughly **1.37 s**. One batch of 20 board inputs through one
 process (`geocode --stdin`) took **3.83 s wall**, about **123 ms per query** once warm.
 
 Twenty inputs cost **3.8 s in one warm process versus about 30 s when a process is spawned per row
@@ -225,8 +225,8 @@ warm engine has no value.
 1. **Reload.** The daemon runs _source_ rather than `out/` (§3.4). Because of Node's ESM module cache,
    an already-loaded module graph does not see a source edit. The only reliable reload is a fresh
    process.
-2. **Eviction.** Two resident candidate gazetteers are 4 GB of mapped state. Evicting a worker returns
-   the RSS. Dropping a reference inside a shared process does not reliably return it.
+2. **Eviction.** Two resident candidate gazetteers are 4 GB of mapped state. The process returns
+   the RSS when it evicts a worker. A shared process does not reliably return memory when code drops a reference.
 3. **Isolation.** A candidate model that segfaults `onnxruntime-node` takes down one worker rather than the
    registry.
 
@@ -261,8 +261,8 @@ The per-call options are `GauntletGeocodeOpts` (`defaultCountry`, `caseCountry`,
 `harness.ts:110-127`), and the change pins are spread into each `geocodeAddress` call
 (`harness.ts:392-403`). `postcodeCountryCoherence` is a _dep_ rather than a construction parameter.
 
-The tool surface should document the practical consequence. **Comparing two flag settings is nearly
-free** (one resident engine, two calls per input). **Comparing two models or two gazetteers is
+The tool surface should document the practical consequence. **Two flag settings differ by nearly
+free** (one resident engine, two calls per input). **A comparison between two models or two gazetteers is
 expensive** (two resident engines, two multi-GB footprints). An agent should know which kind of
 comparison it asked for before it waits.
 
@@ -487,7 +487,7 @@ interface Provenance {
 `config_effective` matters more than it appears to. Two arms whose _stated_ configs differ in one
 field can differ in three effective ones. `--country-scope auto` means "scope on FTS, and do not
 scope on candidate" (`docs/engineering/reference/resolver-backends.mdx:34-46`), so switching backend
-also switches country scope. Resolving defaults before recording makes §6's confound check possible.
+also switches country scope. Resolve defaults before recording to make §6's confound check possible.
 
 `limit` exists but is never the default. The result reports it as `n_requested` next to the set's real
 `n`.
@@ -615,7 +615,7 @@ notifications where the client supports them, but polling must work regardless.
 
 ---
 
-## 5. Making measurement direct by construction
+## 5. Make measurement direct by construction
 
 The rest of the design exists to support this section. Each rule is mechanical and checkable, and each
 applies a rule the repo already has rather than new vocabulary.
@@ -717,7 +717,7 @@ The tool enforces three refusals, all drawn from `docs/engineering/reference/res
 
 - **Named tier.** Refuse "the deepest coordinated node" as a grading target. The candidate table
   carries 3.66 M postcodes that the FTS admin extract lacks, so "deepest" means _postcode_ on one arm
-  and _locality_ on the other without saying so. Grading that way once reported a 54-row
+  and _locality_ on the other without saying so. One evaluation using that method reported a 54-row
   sub-kilometer collapse that was a commune centroid compared against a postcode-area centroid
   (`:111-127`).
 - **Stratum.** Panel results are reported per `truth_type`, never blended. The benchmark plan states
@@ -809,7 +809,7 @@ of the two variables changed. The guard catches a caller that declares `variable
 `tree_fingerprint` participates in the same check (§3.4d), so an arm captured before an edit cannot be
 compared with an arm captured after it without a warning.
 
-Declaring the confound explicitly (`variable: ["backend", "country_scope"]`) runs the same comparison
+The explicit declaration (`variable: ["backend", "country_scope"]`) runs the same comparison
 without the warning, because the caller has already stated what the warning would report. That
 comparison is one row of a 2×2.
 
@@ -895,7 +895,7 @@ constrains this package in particular because it is a _lab_ tool:
   are fine in a _result_ (the operator's own session) but must not be baked into _committed_ defaults,
   fixtures or docstrings.
 - **No vendor names or attributions in committed artifacts**, per standing project policy. The
-  external-arm engine identifiers are unavoidable and factual. Marketing comparisons are not allowed.
+  external-arm engine identifiers are unavoidable and factual. Comparative marketing claims are prohibited.
 
 ### 7.3 Oracles are metered and off by default
 
@@ -965,9 +965,9 @@ pins the _published_ server's tool list.
 
 These questions need a decision from the operator. Each one changes the design.
 
-1. **Does the daemon get to rebuild `regression.db`?** Adding a board case is a common agent task, and
+1. **Does the daemon get to rebuild `regression.db`?** Agents commonly add board cases, and
    the case has no effect until `eval gauntlet-build regression-db` runs. The check reads that derived
-   artifact, which puts the build outside §7.1's boundary. Refusing it, however, makes case authoring
+   artifact, which puts the build outside §7.1's boundary. If the daemon refuses the build, however, case authoring
    a two-tool process with a shell step in the middle. The build already has a stamp and an emptiness
    guard, so the 2026-08-06 failure cannot recur. Should the build be allowed as the single permitted
    write, or should the boundary stay strict?
@@ -985,7 +985,7 @@ These questions need a decision from the operator. Each one changes the design.
 
 4. ~~**Is the small-panel aggregate refusal (§5.2) set at the right threshold?**~~ **DECIDED 2026-08-16 —
    always report, with the bound in the summary sentence.** In the 2026-08-15 failure, the agent had
-   no reported bound to ignore. Putting the bound in the relayed sentence addresses that, and
+   no reported bound to ignore. Put the bound in the relayed sentence to address that, and
    withholding the aggregate does not. See §5.2.
 
 5. ~~**Where does this workspace live?**~~ **DECIDED 2026-08-16 — in-repo, `packages/dev-mcp/`,
@@ -1115,7 +1115,7 @@ out: { rows: [{ input,
 
 The structured form makes a trace _diffable_, which no rendering can do. It would have answered "which
 stage introduced this node?" without `pgn-probe.ts`. The rendered form makes the trace _legible_ in a
-transcript without the agent paraphrasing it, since paraphrase loses detail. Returning only the
+transcript without the agent paraphrasing it, since paraphrase loses detail. A result that contains only the
 structured form would repeat the 2026-08-15 failure in a new place: an agent summarizing evidence that
 only it can see.
 
@@ -1137,8 +1137,8 @@ tool with a different cost rather than a larger `n` on this one.
 > The shim forks a restartable worker (`worker.ts`, which loads the whole module graph) over IPC.
 > `mwdev_restart` is a shim-owned tool that emits `tools/list_changed` after a swap. This matches the
 > pattern other MCP projects use (mcp-reloader, reloaderoo, mcp-hmr). `process.execve` was evaluated
-> and rejected because it discards the initialized MCP session along with the module graph. Keeping
-> engines warm across restarts is deliberately not built. Engines are lazy and rebuild on first use,
+> and rejected because it discards the initialized MCP session along with the module graph. The worker
+> builds engines on first use after each restart. Engines are lazy and rebuild on first use,
 > and the restart report says so.
 
 > **Status, 2026-08-16.** This section is the plan of record and is kept as written. The increment shipped

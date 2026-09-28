@@ -7,7 +7,7 @@
  * country and category provenance.
  *
  * `poi.db` covers four countries — US, CA, FR and MX — so a zero count here is absence in four countries rather
- * than evidence of absence in the world, and every non-Latin designator comes from the OSM leg.
+ * than evidence of absence in the world. Every non-Latin designator comes from the OSM leg.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

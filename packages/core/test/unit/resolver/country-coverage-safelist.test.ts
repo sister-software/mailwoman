@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests what a coverage fact licenses. A hard country filter is safe only when a fact says it was measured and
+ *   Tests what a coverage fact licenses. A hard country filter is safe only when a fact records that it was measured and
  *   passed. Measured-and-failed and never-measured are separate readings. Neither reading permits the filter.
  */
 

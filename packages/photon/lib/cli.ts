@@ -103,7 +103,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
 			// No country constraint lets the placer route the query's own country.
-			// Forcing `US` here would resolve every non-US query to its US namesake.
+			// A hard-coded `US` value here would resolve every non-US query to its US namesake.
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -120,7 +120,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// Include state/county only on an ancestry-capable backend.
 			const country = matchCountry(result.countryCode)
 
-			// A rooftop or interpolated tier is house-grade: carry the parsed housenumber
+			// A rooftop or interpolated tier is house-grade: include the parsed housenumber
 			// and street so photonForwardProperties decorates it `type: house`
 			// rather than the admin locality's `type: city`.
 			const houseGrade =
@@ -133,7 +133,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const streetGrade = result.resolution_tier === "street"
 
 			// The register row's own locality decorates a house-grade answer whose hierarchy
-			// carries no locality, title-cased because extracts store no display-cased locality.
+			// has no locality, title-cased because extracts store no display-cased locality.
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
@@ -141,7 +141,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// Locality→postcode enrichment: an admin answer whose containing postcode is
-			// unambiguous (exactly one, keyed by the resolved place's WOF ID) carries it.
+			// unambiguous (exactly one, keyed by the resolved place's WOF ID) includes it.
 			// A multi-postcode city gets no postcode.
 			let enrichedPostcode: string | undefined
 
@@ -188,7 +188,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			if (!hierarchy.length) return photonCollection([])
 			const deepest = hierarchy[0]!
 
-			// Carry osm_key/osm_value/type from the deepest placetype so `/reverse` matches `/api`'s schema.
+			// Include osm_key/osm_value/type from the deepest placetype so `/reverse` matches `/api`'s schema.
 			const properties: PhotonProperties = {
 				name: deepest.name,
 				countrycode: deepest.country?.toLowerCase(),

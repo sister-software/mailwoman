@@ -41,7 +41,7 @@ export interface FoldGeonamesOptions {
 	 * Pass only zero-coverage locales (no WOF/Overture admin).
 	 * See `geonamesAdminGapCountries()`.
 	 *
-	 * Omitting this leaves a zero-coverage locale's nodes without the A-class admin fold.
+	 * A zero-coverage locale has no A-class admin fold unless the lookup includes it.
 	 */
 	adminForCountries?: ReadonlySet<string>
 }

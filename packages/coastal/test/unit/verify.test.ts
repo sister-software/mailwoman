@@ -130,8 +130,7 @@ describe("the positive half", () => {
 
 	it("tolerates a point a few centimetres outside the service's own edge", async () => {
 		// About 5 cm north of the band's northern edge.
-		// The distance being carried is what separates a rendering difference from
-		// a conversion defect on a receipt.
+		// The stored distance separates a rendering difference from a conversion defect on a receipt.
 		const nearEdge = {
 			label: "just outside band A's north edge",
 			latitude: FIXTURE_ORIGIN.lat + FIXTURE_SIDE + 0.0000005,

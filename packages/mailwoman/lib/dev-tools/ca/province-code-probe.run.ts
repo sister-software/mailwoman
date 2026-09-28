@@ -38,7 +38,7 @@ const { values } = parseArguments({
 /**
  * Use one locality per province: the province's own seat.
  *
- * The postcode artifact carries the code and point but has no name for a query.
+ * The postcode artifact contains the code and point but has no name for a query.
  */
 const SEATS: Readonly<Record<string, string>> = {
 	AB: "Edmonton",

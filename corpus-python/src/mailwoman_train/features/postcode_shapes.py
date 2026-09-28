@@ -25,7 +25,7 @@ from typing import NamedTuple
 
 from ..paths import package_path
 
-#: The field a row carries when its pattern is not valid Python, with the reason.
+#: The field a row records when its pattern is not valid Python, with the reason.
 JAVASCRIPT_ONLY = "javascriptOnly"
 
 #: The shared record, beside this file. `package_path` resolves it from the source tree, from an
@@ -48,7 +48,7 @@ UNREADABLE_HERE: dict[str, str] = {
 }
 
 #: The shapes this side paints, compiled. Priority is the INDEX, so the order of the record is part
-#: of the interface: a lower index wins an overlap. Dropping a row must not reorder the rest.
+#: of the interface: a lower index wins an overlap. A dropped row must not reorder the rest.
 POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     (label, kind, re.compile(pattern)) for label, kind, pattern in ALL_POSTCODE_SHAPES if label not in UNREADABLE_HERE
 ]

@@ -14,8 +14,8 @@ import { describe, expect, it } from "vitest"
  * The Numerical-Recipes LCG, kept local on purpose.
  *
  * `@mailwoman/match` has no `@mailwoman/core` dependency.
- * Taking one so a test can reach `makeLcg` would pull core's ~11 MB of shipped data
- * into a package that is otherwise pure comparator math.
+ * A test-only import for `makeLcg` would pull core's ~11 MB of shipped data into
+ * a package that is otherwise pure comparator math.
  * Same trade recorded in nuts-lookup and timezone-lookup.
  *
  * See core/utils/python-random.ts for the shared implementation.
@@ -24,7 +24,7 @@ function lcg(seed: number): () => number {
 	let s = seed >>> 0
 
 	return () => {
-		// oxlint-disable-next-line mailwoman/prefer-home -- `@mailwoman/match` carries no dependency on core. The fixture expectations pin this stream.
+		// oxlint-disable-next-line mailwoman/prefer-home -- `@mailwoman/match` has no dependency on core. The fixture expectations pin this stream.
 		s = (s * 1_664_525 + 1_013_904_223) >>> 0
 
 		return s / 0x1_00_00_00_00
@@ -36,7 +36,7 @@ function lcg(seed: number): () => number {
  *
  * The interaction a linear model can't capture but a depth-2+ tree ensemble can. x0/x1 are binary
  * (matching the matcher's one-hot agreement-level features that get clean midpoint splits);
- * x2 is pure continuous noise that carries no signal, so the trees should ignore it.
+ * x2 is pure continuous noise that provides no signal, so the trees should ignore it.
  */
 function makeXor(n: number, seed: number): { X: number[][]; y: number[] } {
 	const rnd = lcg(seed)
@@ -86,7 +86,7 @@ describe("trainGBT / gbtScore", () => {
 		const negMean = mean(scores.filter((_, i) => yt[i] === 0))
 		expect(posMean).toBeGreaterThan(negMean) // positives score higher
 
-		// Thresholding at 0 (the logit midpoint) classifies the held-out set well.
+		// A threshold at 0 (the logit midpoint) classifies the held-out set well.
 		const correct = Xt.filter((x, i) => (gbtScore(model, x) > 0 ? 1 : 0) === yt[i]).length
 		expect(correct / Xt.length).toBeGreaterThan(0.85)
 	})

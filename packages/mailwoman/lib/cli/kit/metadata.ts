@@ -55,7 +55,7 @@ let manifest: Promise<MailwomanManifest> | undefined
  *
  * It is the one place this read happens, memoized for the process.
  *
- * @throws {TypeError} When the manifest carries no string `version` or `license` —
+ * @throws {TypeError} When the manifest has no string `version` or `license` —
  * a broken install rather than a choice.
  */
 export function readMailwomanManifest(): Promise<MailwomanManifest> {

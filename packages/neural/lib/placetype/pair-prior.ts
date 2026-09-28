@@ -102,7 +102,8 @@ export interface PlacetypePairPriorOpts {
 	probeTrace?: PlacetypePairProbeTrace
 	/**
 	 * Optional census for observability.
-	 * Scoring reads the same values with it present or absent.
+	 *
+	 * The scorer reads the same values whether this value is present or absent.
 	 */
 	census?: PlacetypeCensusLike
 	/**

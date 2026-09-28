@@ -19,7 +19,7 @@ Self-emitted (`scripts/eval/external-arenas.sh` + `per-locale-f1.ts`); do not ha
 | perturb (noisy/degraded)    | 398 | 39% | **60%** |  32% |         28% |      8% |       33% |
 | postal (edge formats)       |  38 | 26% |     11% |   5% |          5% |     21% |       68% |
 
-**Routing truth (unchanged since #15):** rules win on clean/canonical, neural wins decisively on noisy/degraded (+21pp), both are weak on edge formats (PO-box/military/rural-route). The resolver should route by input shape.
+**Observed routing (unchanged since #15):** rules win on clean/canonical, neural wins decisively on noisy/degraded (+21pp), both are weak on edge formats (PO-box/military/rural-route). The resolver should route by input shape.
 
 Postal-arena edge classes where both are 0% (the parity frontier): `po-box` (4), `military-apofpo` (3), `rural-route` (1), `directional` (2). `secondary-unit` reads 0% whole-match here despite 92% per-tag (lens caveat).
 

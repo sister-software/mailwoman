@@ -139,7 +139,7 @@ describe("name-or-org corroboration check (A2, #625)", () => {
 	it("suppresses a spatial-only link — a shared address with disagreeing names does not merge", () => {
 		const a = coLocated("1", "Robert", "Smith") // same address...
 		const b = coLocated("2", "Maria", "Garcia") // ...different people
-		// A permissive threshold so the shared address alone would merge them without the check.
+		// A permissive threshold so the shared address by itself would merge them without the check.
 		const without = resolveEntities([a, b], { threshold: -100 })
 		expect(without.entities).toHaveLength(1) // over-merge: an address-only link
 

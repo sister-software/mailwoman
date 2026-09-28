@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The two-score split's interface (ROAD_TO_V9 §2 R1): the referential derivation, the ordering
- *   equivalence that makes the split a zero-delta change for the resolver, and the legacy
+ *   equivalence that makes the split a zero-delta change for the resolver. The legacy
  *   reconstruction the read-only 2026-08-05 staging database needs.
  */
 
@@ -106,7 +106,7 @@ describe("compareReferential — the zero-delta guarantee", () => {
 	})
 
 	it("takes no encyclopedic input at all", () => {
-		// Ranking on encyclopedic is what §2 forbids.
+		// A sort by encyclopedic prominence is what §2 forbids.
 		// The comparator cannot express it.
 		const aude = { population: 418, referential: referentialFromPopulation(418), encyclopedic: 0.5683 }
 		const suburb = { population: 96_128, referential: referentialFromPopulation(96_128), encyclopedic: 0.1173 }

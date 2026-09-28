@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Tests for `CapitalIndex`, the three-conjunct identity probe behind the capital promotion: same
- *   country, within the radius, and the candidate's own folded name a member of the entry's name set.
+ *   country, within the radius and the candidate's own folded name in the entry's name set.
  */
 
 import { CAPITAL_LEVEL, CAPITAL_MATCH_RADIUS_KM, CapitalIndex } from "@mailwoman/resolver-wof-sqlite/capitals"

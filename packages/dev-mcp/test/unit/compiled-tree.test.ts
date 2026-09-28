@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The RULE these two functions apply is `@mailwoman/core/module/compiled-freshness` and is tested there. What is
- *   tested here is what this package adds: the workspace SET a spawned CLI loads, and the refusal.
+ *   tested here is what this package adds: the workspace SET a spawned CLI loads and the refusal.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -76,7 +76,7 @@ describe("assertCompiledFresh", () => {
 		await touch(workspace("out", "thing.js"), -60_000)
 		await touch(workspace("thing.ts"), 0)
 
-		// The failure mode is silence, so the message has to carry the consequence rather than only the state.
+		// The failure mode is silence, so the message has to state the consequence alongside the state.
 		await expect(assertCompiledFresh(root)).rejects.toThrow(/yarn compile/)
 		await expect(assertCompiledFresh(root)).rejects.toThrow(/grade code you have replaced/)
 	})

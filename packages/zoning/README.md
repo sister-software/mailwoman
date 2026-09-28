@@ -7,7 +7,7 @@ with the plan and that plan's stated window.
 The Department of Housing, Local Government and Heritage publishes the data for the MyPlan.ie project. It
 covers **30 of the Republic's 31 local authorities**, and Donegal County Council is the one missing. Against
 Census 2022 (CSO table `FY003A`), **4,982,055 of 5,149,139 residents (96.76%) live in a local authority whose
-zoning is represented in the layer.** That figure describes jurisdictions only. Living in a covered authority
+zoning is represented in the layer.** That figure describes jurisdictions only. An address in a covered authority
 does not mean that a zoning polygon covers your address.
 
 **The artifact is built locally and never redistributed.** Three published statements disagree about the
@@ -25,7 +25,7 @@ The layer has two readings. The reading it lacks matters most.
 
 **This layer has no `designated_absence` reading, and zoning is the hardest case of this rule.** For flood
 zones the Environment Agency states England-wide coverage, and the Planning Practice Guidance defines Zone 1
-as the land outside Zones 2 and 3, so an empty flood answer inside England is a designation. Zoning has no
+as the land outside Zones 2 and 3, so an empty flood answer inside England is a designation. The zoning layer has no
 such definition anywhere. A location with no zoning polygon can be in at least four different situations:
 
 1. Outside any adopted plan area, which covers most land in most countries. The authority has made no statement.
@@ -78,7 +78,7 @@ The Department says the same thing in the item description:
 
 **The declared domain is closed, and the source already violates it.** The domain declares 54 codes and the
 data uses 55, because `N/A` appears on 4 rows and in no domain. `zoning_vocabulary` therefore carries the
-declared domain **plus** the values observed in the data, and the `declared` column separates them. Merging the
+declared domain **plus** the values observed in the data, and the `declared` column separates them. A merge of the
 two would either hide a source-schema change or invent a declaration that the Department never made. For the
 same reason, a declared code that the data never uses is kept with `observed_rows = 0`. `SDZ` is a real plan
 level that nobody has used yet.
@@ -190,8 +190,8 @@ over the full national set:
 | **10** |   85,330 |          48,412 (56.7%) |          237,411 |       426,993 |             **1.69** | **3** |  55 |    121,884 (28.5%) |         40.6% |         0 |
 | 11     |   85,330 |          19,224 (22.5%) |        1,121,461 |     1,897,777 |                 1.32 |     2 |  23 |    432,969 (22.8%) |         37.0% |         1 |
 
-**Resolution 10 was chosen from those numbers.** Going from 9 to 10 reduces the p90 candidate count from 9 to
-3, a threefold reduction in the geometry a fringe probe reads, for 4.9× the stored rows. Going from 10 to 11
+**Resolution 10 was chosen from those numbers.** A move from 9 to 10 reduces the p90 candidate count from 9 to
+3, a threefold reduction in the geometry a fringe probe reads, for 4.9× the stored rows. A move from 10 to 11
 reduces p90 from 3 to 2 for another 4.7× the rows. The curve bends at 10. The `partial` share (58.0 / 40.6 /
 37.0%) shows no bend at all, which confirms that it is the wrong column to choose on.
 
@@ -224,7 +224,7 @@ The full national build ran on this lab at the chosen resolution 10, with covera
 | verify (positive)   | **48/48 agree** with the live service · 0 within boundary tolerance · 0 disagree · 0 local-code mismatches                    |
 | verify (negative)   | **6/6** Donegal and Northern Irish points read `unknown` with no designation                                                  |
 
-## Building it
+## Build it
 
 ```bash
 # The whole country. Downloads the 247 MB export on the first run and caches it under its vintage.
@@ -271,11 +271,11 @@ reported the whole island as zoned.
 
 A shipped layer needs one grant that it can quote, and this record does not have one. As a result:
 
-- `layer_manifest.license` is **`NOASSERTION`**, SPDX's own token for a determination nobody has made. Writing
+- `layer_manifest.license` is **`NOASSERTION`**, SPDX's own token for a determination nobody has made. A `CC-BY-4.0` value
   `CC-BY-4.0` there while an all-rights-reserved clause identifies a licensor would mean this program asserting
   a grant.
 - `layer_manifest.tier` is **`build-local`**, and `assertTierMatchesLicense` refuses a `shipped` build while the
-  license reads `NOASSERTION`. Changing the tier requires a deliberate edit at a line that states what is
+  license reads `NOASSERTION`. A tier change requires a deliberate edit at a line that states what is
   unresolved.
 - `layer_manifest.attribution` carries **both parts**, the Department's credit line and the Tailte Éireann
   clause, because a re-user who saw only the first would not know that the second exists.
@@ -295,7 +295,7 @@ workspace list. The `build-local` tier applies to the data alone.
 detail only inside a map application. Donegal's absence was found by measuring `LA_CODE`, not read from a
 coverage statement. It is unknown whether other authorities are only partially represented.
 
-**Deriving a footprint from the union of the zoning polygons is forbidden**, for the same reason the flood layer
+**A footprint derived from the union of the zoning polygons is forbidden**, for the same reason the flood layer
 forbids it. The union of zoned areas differs from the area the authority examined, and that difference is
 exactly what a negative answer would need to report. The union is not even a stable shape here. One authority's
 drafting convention changes the national zoned-area figure by 41%, because Meath County Council zones its entire

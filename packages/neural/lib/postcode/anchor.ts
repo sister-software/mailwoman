@@ -104,7 +104,7 @@ const FUZZY_PENALTY = 0.6
  *
  * The variants are deletions, adjacent transpositions, substitutions and insertions
  * within the neighbouring character's class, either digit or letter.
- * Restricting the class keeps the candidate set small.
+ * The class restriction keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {
 	const classOf = (ch: string): string =>

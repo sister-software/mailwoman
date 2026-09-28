@@ -44,8 +44,8 @@ interface NPPESRow {
 /**
  * The columns that every emitted row needs, in the publisher's spelling.
  *
- * A missing column reads as `undefined` on every record, and the row filter would
- * then drop every row without an error.
+ * A missing column reads as `undefined` on every record.
+ * The row filter would then drop every row without an error.
  */
 const REQUIRED_COLUMNS = [
 	"Provider First Line Business Practice Location Address",

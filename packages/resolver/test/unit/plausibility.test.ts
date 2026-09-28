@@ -216,7 +216,7 @@ describe("COUNTRY_BBOX covers every shipping locale", () => {
 	})
 
 	test("the outlying territory the docstring names is inside its box", () => {
-		// Trimming a box to the populated core is the way a coarse guard becomes a wrong one.
+		// A box trimmed to the populated core would wrongly reject this coordinate.
 		expect(outsideExpectedCountry("NZ", -29.2665, -177.9159), "Raoul Island, Kermadecs").toBe(false)
 		expect(outsideExpectedCountry("NZ", -43.9535, -176.5597), "Chatham Islands").toBe(false)
 		expect(outsideExpectedCountry("JP", 24.2867, 153.9807), "Minamitorishima").toBe(false)

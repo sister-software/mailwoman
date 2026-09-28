@@ -75,7 +75,7 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
  * S3 listings use it as well.
  *
  * HTML mode recovers unclosed tags as a browser does.
- * Filing documents use that behavior.
+ * The filing-document parser uses that behavior.
  */
 export interface MarkupQueryOptions {
 	xml?: boolean
@@ -118,7 +118,7 @@ export function elementText(markup: string, name: string, options: MarkupQueryOp
 }
 
 /**
- * One attribute of the document's root element, or `undefined` when the root carries no such attribute.
+ * One attribute of the document's root element, or `undefined` when the root has no such attribute.
  *
  * Asked of the root specifically, so a value repeated on a descendant cannot answer for the document.
  * A service's collection count describes the collection.

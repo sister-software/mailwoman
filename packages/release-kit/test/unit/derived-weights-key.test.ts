@@ -110,7 +110,7 @@ describe("derivedWeightsKeyFrom", () => {
 		await writeLocalTextFile("same", a)
 		await writeLocalTextFile("same", b)
 
-		// Renaming an input is a change, even when the bytes are identical.
+		// An input rename is a change, even when the bytes are identical.
 		expect(await derivedWeightsKeyFrom([at(a)])).not.toBe(await derivedWeightsKeyFrom([at(b)]))
 	})
 

@@ -5,7 +5,7 @@
  *
  *   Dutch postal reference. The PC6 postcode is the complete key for this system.
  *   `candidateSystemsForPostcode` checks which address-system shapes fit a postcode.
- *   NL has no entry in that table. Adding one would change the systems that function reports.
+ *   NL has no entry in that table. An entry would change the systems that function reports.
  */
 
 export * from "#nl/postcode"

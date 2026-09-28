@@ -31,7 +31,7 @@ export type SplitName = "train" | "val" | "test"
 /**
  * The component values that identify the places one country holds out.
  *
- * Sources carry a place in different components: `usgov-nad` and `tiger` emit `region`,
+ * Sources represent a place in different components: `usgov-nad` and `tiger` emit `region`,
  * but BAN emits none, so a French holdout must also match on postcode.
  * A row is held out when any declared matcher fires.
  * A policy with no matchers holds out no entry.
@@ -87,12 +87,12 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 		US: ["Vermont", "VT", "Wyoming", "WY", "North Dakota", "ND"],
 		FR: {
 			regions: ["Corse", "Lozère", "Lozere", "Creuse"],
-			// BAN street rows carry no region, so these postcode departments hold out the
+			// BAN street rows have no region, so these postcode departments hold out the
 			// same three places: Corse 20, Creuse 23 and Lozère 48.
 			postcodePrefixes: ["20", "23", "48"],
 		},
 		DE: {
-			// Only `wof-admin` carries a DE region, so these Länder hold out admin rows alone.
+			// Only `wof-admin` has a DE region, so these Länder hold out admin rows only.
 			regions: ["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"],
 			// DE street rows come from two OpenAddresses members, Berlin and Sachsen,
 			// so the regions above match no street row.
@@ -101,7 +101,7 @@ export function defaultHoldouts(): Record<string, CountryHoldout> {
 			postcodePrefixes: ["02"],
 		},
 		GB: {
-			// GB street rows carry no region, so the holdout matches postcode areas —
+			// GB street rows have no region, so the holdout matches postcode areas —
 			// Truro, Llandudno and Halifax.
 			// Each prefix has two letters and none is a prefix of another
 			// (`L` for Liverpool would also match `LL`).

@@ -116,8 +116,7 @@ export function sanitizeTrustPolicy(): ReturnType<typeof trustedTypes.createPoli
 /**
  * `mw-strip-html` — {@link stripHTML} as a policy.
  *
- * The grade for values whose markup carries no meaning we want: license fields
- * compared or displayed as text.
+ * The grade for values whose markup has no meaning we want: license fields compared or displayed as text.
  */
 export function stripHTMLTrustPolicy(): ReturnType<typeof trustedTypes.createPolicy> {
 	return policy("mw-strip-html", (untrustedHTML) => stripHTML(untrustedHTML))

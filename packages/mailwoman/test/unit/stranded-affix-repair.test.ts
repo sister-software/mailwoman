@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for the stranded-affix repair. The required cases are the refusals: this pass rewrites a place name, so
- *   the interesting question is never "does it join `Brixton` to `Hill`" but "what does it leave alone".
+ *   the interesting question is never "does it join `Brixton` to `Hill`" but "what does it leave unchanged".
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -76,7 +76,8 @@ describe("repairStrandedAffix", () => {
 	})
 
 	it("leaves a NON-ADJACENT stranded suffix alone — a one-word street is not a naming error", () => {
-		// "12 Hill, London": `Hill` is genuinely the street, and nowhere near the locality.
+		// "12 Hill, London": `Hill` is the street.
+		// It is far from the locality.
 		const raw = "12 Hill, London"
 
 		const tree: AddressTree = {

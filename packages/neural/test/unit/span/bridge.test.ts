@@ -106,7 +106,7 @@ describe("bridgePunctuationGaps", () => {
 		})
 
 		it("blocks a merge across a CLOSING boundary", () => {
-			// Closing quote at index 12 sits inside the gap "' " between the fragments.
+			// The closing quote at index 12 sits inside the gap "' " between the fragments.
 			const text = "Joe's 'Pizza' Shop"
 			const input = [tok("Pizza", 7, "B-venue"), tok("Shop", 14, "B-venue")]
 			expect(bridgePunctuationGaps(text, input)).toHaveLength(1)

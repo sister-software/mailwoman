@@ -35,7 +35,7 @@ required terms acceptance, tax ID collection, a success URL with `{CHECKOUT_SESS
 That removes the endpoint, its rate limit, its CORS rule, and the pre-allocated order. Stripe's own IDs provide
 idempotency instead.
 
-**Billing uses Stripe's no-code Customer Portal, without a Mailwoman login.** A "Manage billing" link on the
+**Customers manage billing through Stripe's no-code Customer Portal without a Mailwoman login.** A "Manage billing" link on the
 `/license` page opens Stripe's portal login. A customer recovers the key with `mailwoman license refresh` and the
 per-license secret issued at purchase, so a "My Licenses" web page is not needed until a customer holds several
 licenses.
@@ -112,7 +112,7 @@ as a base64 transform of those bytes, sign, verify. Node 24 implements Ed25519 i
 every current browser, so there is one implementation and no condition is needed for it. `sha256Hex`, which
 `licenseKeyID` uses on the DER bytes, moves beside it onto `crypto.subtle.digest`; `#hash` keeps the file digests.
 
-Signing and verifying become `async`, because WebCrypto is. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
+WebCrypto requires asynchronous signing and verification. Every caller changes in the same PR: `verifyConfiguredLicenseKey`
 and `buildEngineStamp`'s input, `resolveEngineStamp`, `runtimeLicenseCheck`'s observation, the `license
 keygen|issue|verify` command, and the tests. `resolveEngineStamp` already answers a promise and the doctor's runner is
 already async, so the change is in signatures rather than in control flow.
@@ -176,7 +176,7 @@ sandbox signing key never enters shipped trust.
 
 ### Bindings
 
-| Binding                                       | Kind   | Meaning                                                                                                      |
+| License binding                               | Kind   | Meaning                                                                                                      |
 | --------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
 | `STRIPE_SECRET_KEY`                           | secret | the account's restricted key, read scope on checkout sessions, subscriptions, invoices, customers            |
 | `STRIPE_WEBHOOK_SECRET`                       | secret | the webhook destination's signing secret                                                                     |
@@ -368,7 +368,7 @@ failure, on any `email_state = failed` older than an hour, and on reconciliation
 - A customer pays through either Payment Link and, within the webhook's arrival, holds exactly one token whose signed
   payload matches the server-side plan and whose `expires` is the paid period's end plus fourteen days.
 - Each renewal mints exactly one new token; `mailwoman license refresh` fetches it; the email carries the same one.
-- Replaying, duplicating, or reordering Stripe events never creates a second token for one invoice.
+- Stripe event replay, duplication, or reordering never creates a second token for one invoice.
 - No token is issued for an unpaid invoice, an unallowlisted Price, or a test-mode event in production.
 - A full refund or a dispute makes the license read `revoked` online while the offline token keeps its date, and the
   docs say why.

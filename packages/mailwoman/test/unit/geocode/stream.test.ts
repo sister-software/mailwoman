@@ -15,7 +15,7 @@ const fakeWorker = workspacePath("mailwoman", "lib", "test-fixtures", "fake-geoc
  * What `fake-geocode-worker.js` writes into the `address` slot instead of a geocode:
  * the config locale it was handed and the number of mapped address columns.
  *
- * Reading it back is how the wiring becomes observable without a model.
+ * The test reads the result back so the wiring is observable without a model.
  */
 interface WiringEcho {
 	tag: string

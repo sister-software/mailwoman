@@ -108,7 +108,7 @@ longer than that get truncated, losing potential context.
 Attention is also expensive at the limit: 128 tokens × 128 positions × 6 heads
 × 6 layers = quadratic in seq_len. The v0.5.0 + work made
 hardware-validated choices about head/layer counts to fit the throughput
-budget on the A100. Making the model "deeper" or "wider" would need more
+budget on the A100. A deeper or wider model would need more
 GPU per inference call, which has a downstream UX cost (browser inference
 takes longer, larger model files to download).
 

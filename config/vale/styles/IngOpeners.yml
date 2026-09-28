@@ -1,0 +1,11 @@
+## Mailwoman prose rule: start each sentence with its subject or a direct statement.
+## A sentence beginning with an -ing form often postpones its actor or leaves the
+## thought as an incomplete noun phrase. The rule applies only at sentence starts
+## outside block quotes, where the text may be a verbatim source record.
+extends: sequence
+message: "'%s' opens with an -ing construction. Start with the subject and state its action."
+level: warning
+scope: sentence & ~blockquote
+tokens:
+  - pattern: '^(?!(?:Anything|Everything|Nothing|Something|String|Sibling|Meaning|During|Versioning|Hugging|Birling|Wyoming|Nursing|Senzing|Peking|Beijing|Ongoing|Zoning)\b)[A-Z]\w+ing\b'
+    target: true

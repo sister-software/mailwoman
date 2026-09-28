@@ -40,7 +40,7 @@ import {
 import { expect, test } from "vitest"
 
 /**
- * Timing samples per measurement.
+ * The test records timing samples for each measurement.
  *
  * Best-of, for the reason `phrase-grouper/rules.scaling.test.ts` gives: contention only
  * ever adds time, so the minimum is the sample least polluted by the neighbours.
@@ -75,13 +75,13 @@ function bestOf(run: () => void): number {
 /**
  * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair.
  *
- * Measuring all small trials then all large trials (even as best-of-N) leaves the
- * ratio exposed to a load burst between the two blocks.
+ * The test exposes the ratio to a load burst between blocks if it measures all small trials
+ * and then all large trials (even as best-of-N).
  * The test host also runs the CI fleet, so that condition occurs.
  *
  * It triggered the 3x bar three times in one night at 3.19–3.25x while both
  * arms remained individually healthy.
- * Pairing exposes both arms of an affected pair to the burst.
+ * Each pair exposes both arms to the same burst.
  * The median removes corrupted pairs in either direction.
  *
  * A genuinely quadratic run still shows ~4x in every clean pair.
@@ -233,8 +233,8 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	// V8 optimizes it inconsistently.
 	// Three consecutive runs measured 0.354, 0.585 and 0.663 us/query.
 	// The ratio moved from 1.94x to 3.48x while the numerator stayed within 1.185–1.284 us/query.
-	// Asserting on the ratio measures the JIT's mood.
-	// Asserting on the absolute measures Stage 2.5.
+	// The ratio mostly measures the JIT's schedule.
+	// The absolute value measures Stage 2.5.
 	//
 	// 10 us is ~8x the measured cost.
 	// The 10 us bar catches an order-of-magnitude regression, such as a lexicon load,

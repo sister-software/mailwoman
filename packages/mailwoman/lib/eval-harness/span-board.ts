@@ -54,7 +54,7 @@ export function wilson(successes: number, total: number, z = 1.96): { low: numbe
 }
 
 /**
- * The fields every span-board fixture carries.
+ * The fields every span-board fixture includes.
  */
 export interface SpanBoardFixture {
 	id: string

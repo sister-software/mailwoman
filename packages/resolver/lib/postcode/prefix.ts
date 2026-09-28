@@ -23,7 +23,7 @@ const MIN_US_SECTION_CODE_LENGTH = 3
  * Derives the key a postcode prefix index uses for `code`: the GB outward code
  * or the US three-digit prefix.
  *
- * @returns `null` for a country with no rule or a code too short to carry a prefix.
+ * @returns `null` for a country with no rule or a code too short to contain a prefix.
  */
 export function derivePostcodePrefix(code: string, country?: string): string | null {
 	if (!code || !country) return null
@@ -82,7 +82,7 @@ export function probePostcodePrefix(
 
 /**
  * Builds the synthetic `postalcode` place for a prefix hit, with `id: 0` because it is not a gazetteer row.
- * It carries a coordinate only when the prefix node has one.
+ * It includes a coordinate only when the prefix node has one.
  */
 export function postcodePrefixResolvedPlace(
 	prefix: string,

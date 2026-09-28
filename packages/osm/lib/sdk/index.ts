@@ -6,7 +6,7 @@
  *   `@mailwoman/osm` SDK — the OpenStreetMap rooftop ingestion surface. permissive code only: this
  *   workspace contains no OSM data bytes. It reads a Geofabrik `.osm.pbf` extract (the ODbL source)
  *   and writes a per-country rooftop address-point extract on the shared situs schema
- *   (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The ODbL obligation rides on the built
+ *   (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The ODbL obligation applies to the built
  *   extract (a Derived Database), never on this code. See `osm/readme.md` for the licensing boundary.
  */
 

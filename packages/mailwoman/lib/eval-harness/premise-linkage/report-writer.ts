@@ -46,7 +46,7 @@ export class PremiseLinkageRedactionError extends Error {
 }
 
 /**
- * Every key the publishable report may carry, at any depth.
+ * Every key the publishable report may include, at any depth.
  *
  * The writer refuses any key outside this set, so a field added later cannot leak data
  * until someone adds it here.

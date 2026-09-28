@@ -25,11 +25,11 @@ import { probeManifest } from "#data/inventory"
 export const ManifestState = {
 	/**
 	 * A `layer_manifest` row was read.
-	 * It carries a build date this reader could parse.
+	 * It contains a build date this reader could parse.
 	 */
 	Present: "present",
 	/**
-	 * The artifact is on disk and carries no manifest.
+	 * The artifact is on disk and has no manifest.
 	 *
 	 * It predates the layer interface and takes its stamp on the next rebuild.
 	 */
@@ -72,7 +72,7 @@ export interface ArtifactFreshness {
 	version?: string
 	/**
 	 * What it was built from — the manifest's `source` then its `source_vintage` — kept as two entries
-	 * because the candidate gazetteer's source is a chain and the vintage carries the database counts.
+	 * because the candidate gazetteer's source is a chain and the vintage records the database counts.
 	 */
 	sources?: string[]
 	/**
@@ -80,7 +80,7 @@ export interface ArtifactFreshness {
 	 *
 	 * A row written before the column existed leaves this undefined.
 	 * An absent expression states that the build recorded no obligations
-	 * rather than that the artifact carries none.
+	 * rather than that the artifact has none.
 	 *
 	 * This field makes the per-result rights record the subset of
 	 * `docs/static/sbom/mailwoman-data-<version>.cdx.json` that the process opened,
@@ -98,11 +98,10 @@ export interface ArtifactFreshness {
  */
 export interface FreshnessReport {
 	/**
-	 * The newest `built` epoch across the artifacts that carried one, verbatim,
+	 * The newest `built` epoch across the artifacts that recorded one, verbatim,
 	 * absent when no artifact was stamped.
 	 *
-	 * Answering with the boot time, the newest mtime, or zero would answer a
-	 * question this surface cannot answer.
+	 * A boot time, the newest mtime, or zero would answer a question this surface cannot answer.
 	 */
 	dataUpdated?: string
 	artifacts: ArtifactFreshness[]
@@ -145,7 +144,7 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 	}
 
 	// An undated stamp is a freshness fault, so it is reported as Unreadable.
-	// Reporting it as absent would read as an artifact that was never stamped.
+	// An absent label would read as an artifact that was never stamped.
 	if (Number.isNaN(Date.parse(manifest.created_at))) {
 		return {
 			name,
@@ -162,7 +161,7 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 		built: manifest.created_at,
 		version: `${manifest.name}@${manifest.version}`,
 		sources: [manifest.source, manifest.source_vintage],
-		// Spread rather than assigned, so an artifact whose row holds no expression carries no key at all.
+		// Spread rather than assigned, so an artifact whose row holds no expression has no key at all.
 		// A `license: undefined` and a `license: ""` both read to a JSON consumer as a recorded absence.
 		...(manifest.license ? { license: manifest.license } : {}),
 		...(manifest.attribution ? { attribution: manifest.attribution } : {}),

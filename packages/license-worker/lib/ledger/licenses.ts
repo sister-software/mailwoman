@@ -110,7 +110,7 @@ export async function setLicenseState(
  * The function reads the secret and clears it only when the stored value still matches.
  * Two racing claims can both read it, but only the claim whose clear updates a row returns it.
  *
- * (`returning` on the update alone would answer the cleared column. That value is null.)
+ * (`returning` by itself would answer the cleared column. That value is null.)
  */
 export async function takePendingRefreshSecret(ledger: Ledger, lid: string): Promise<string | undefined> {
 	const row = await ledger

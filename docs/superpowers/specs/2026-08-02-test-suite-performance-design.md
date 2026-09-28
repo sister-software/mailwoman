@@ -21,7 +21,7 @@ All numbers below are from probes run 2026-08-02 — CI run `30757682542` (main,
 the Actions API, and local runs on the lab host (16 cores, 29 GB, load ~4). Estimates are labeled
 as such; everything else is measured.
 
-### Finding 1 — the CI budget
+### CI budget
 
 | leg       | where            |  install |  compile |           leg-specific |     test |     total |
 | --------- | ---------------- | -------: | -------: | ---------------------: | -------: | --------: |
@@ -35,7 +35,7 @@ as such; everything else is measured.
 Wall-clock is `unit-slow` plus queueing. Install + compile is 442s — 42% of all machine-time — and
 it is the same build performed five times on the same commit.
 
-### Finding 2 — one test file is the entire critical path
+### One test file is the entire critical path
 
 Local slow-leg run: 87 files, 651s of summed file-duration, 240s wall.
 
@@ -54,7 +54,7 @@ the file that scales with the gazetteer.
 
 Measured control: the same leg with that one file excluded runs in **89s** instead of 240s.
 
-### Finding 3 — the Actions cache is over quota and thrashing
+### The Actions cache exceeds quota and repeatedly evicts entries
 
 ```
 active_caches_size_in_bytes: 10,715,161,750     ← 10.7 GB against a 10 GB repo limit
@@ -83,10 +83,10 @@ each of three hosted legs. No part of the yarn configuration is wrong. There is 
 Note the Link step is a flat **20.7–22.7s regardless** of cache state: yarn writing 74,244 files and
 10,444 directories.
 
-### Finding 4 — the weights cache moves 76 MB over the wrong wire
+### The weights cache sends 76 MB over the wrong wire
 
 The `weights-*` cache payload is **76.3 MB** of real files (the rest of the glob resolves to
-symlinks). Restoring it takes 48–54s on the two `mailwoman-data` legs ≈ **1.6 MB/s** — the lab's
+symlinks). The two `mailwoman-data` legs restore the cache in 48–54s, or about **1.6 MB/s** — the lab's
 documented-degraded path to GitHub's cache service.
 
 Meanwhile `release.config.json` points the source model at
@@ -95,7 +95,7 @@ on the same host the leg runs on. Only the derived `postcode-*.bin` / `pair-inde
 building, via `spawnSync` of `mailwoman gazetteer postcode-binary` and `gazetteer pair-index`. That
 is the "~5 min" the cache exists to avoid rather than the copy.
 
-### Finding 5 — the runner
+### The runner
 
 `vitest 4.1.10`, `forks` pool, `isolate: false` (already applied; the config docstring records the
 8m23s → 1m30s win it bought).
@@ -117,7 +117,7 @@ exactly). Relevant because four legs share the lab's 16 cores: `unit-slow` ran a
 `--pool=threads` measured 5.80s vs 6.00s — no win, and it would put `node:sqlite` and the ONNX
 native addon in shared-process land. Not pursued.
 
-### Finding 6 — vitest collects a Python virtualenv (local only)
+### Vitest collects a Python virtualenv (local only)
 
 The root config excludes `node_modules` but not `.venv`. In the main checkout vitest collects five
 files from `corpus-python/.venv/lib/python3.12/site-packages/trackio/frontend/`, a vendored Svelte
@@ -304,13 +304,13 @@ Key = a hash of workspace `.ts` sources plus the tsconfigs. Lands after (a) so t
 The `vitest.config.ts:82` hardcoded `onnxruntime-web` path (surfaced by the e2 spike) moves to the
 migration spec — it has to be fixed before the layout changes rather than after.
 
-## Sequencing
+## Sequence the work
 
 `e2` is done (negative). The pnpm migration is a **sibling project** rather than a step here — it touches
 the publish pipeline, which is orthogonal to test performance and is the most-scarred surface in the
 repo. It checks only (e1).
 
-Remaining order, most-certain-prize first:
+This section orders the remaining work by the certainty of its expected benefit:
 
 1. **a** — cache prune. Config only; unblocks quota for (e3).
 2. **b** — weights from the data root.
@@ -352,11 +352,11 @@ below ~185s, so steps 5–6 should be re-justified against a fresh measurement r
 
 - Machine-cost reduction as an end in itself. It falls out of (a)/(e1)/(e3) but is not what this is
   optimizing.
-- Replacing vitest. Finding 5 shows the Vite transform pipeline costs ~17× plain node for the same
+- Replace vitest. The fifth finding shows the Vite transform pipeline costs ~17× plain node for the same
   graph, but changing runners is a different project with a different risk profile.
 - The pnpm migration. Approved, but its own project with its own driver (ecosystem direction rather than
   speed) — `2026-08-02-pnpm-migration-design.md`. It checks only (e1).
-- Making the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
+- Make the fast/slow split declarative (vitest projects instead of the hand-maintained exclude list
   in `package.json`). Worth doing, does not serve wall-clock, deliberately deferred.
 
 ## Risks

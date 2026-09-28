@@ -9,7 +9,7 @@
  *   Both passes have the same skeleton: run a priority-ordered list of shape regexes over the raw
  *   input text, resolve the resulting overlapping candidates down to a non-overlapping set, map each
  *   surviving char range onto the token indices it covers, then relabel that run. `unit-repair.ts`
- *   was written as a deliberate mirror of `postcode-repair.ts` (its docstring says so), so the
+ *   was written as a deliberate mirror of `postcode-repair.ts` (its docstring states this), so the
  *   skeleton was duplicated line-for-line — including two byte-identical sort comparators. This
  *   module is that skeleton, extracted once so the two passes cannot drift on it.
  *
@@ -64,7 +64,7 @@ export function selectNonOverlappingMatches<T extends SpanMatch>(candidates: rea
 /**
  * Whether two half-open char ranges intersect.
  *
- * Touching ranges do not overlap.
+ * Ranges that share an endpoint are disjoint.
  */
 export function spansOverlap(a: { start: number; end: number }, b: { start: number; end: number }): boolean {
 	return a.start < b.end && b.start < a.end
@@ -73,8 +73,8 @@ export function spansOverlap(a: { start: number; end: number }, b: { start: numb
 /**
  * A shape pattern a repair pass scans the raw text with.
  *
- * Passes carry extra fields on their entries (postcode-repair's `kind`); {@link collectMatchesFor}
- * hands the matched pattern back so those fields survive onto the match.
+ * Passes include extra fields on their entries (postcode-repair's `kind`);
+ * {@link collectMatchesFor} hands the matched pattern back so those fields survive onto the match.
  */
 export interface SpanPattern {
 	re: RegExp

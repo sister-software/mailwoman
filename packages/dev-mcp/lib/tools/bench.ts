@@ -40,7 +40,7 @@ export const benchTool = ({ registry }: DevToolDeps): DevTool => ({
 		let cold: { engine_build_ms: number; first_query_ms: number; total_ms: number } | null = null
 
 		if (args["include_cold"]) {
-			// Evicting is what makes this a cold measurement rather than a second warm one.
+			// This eviction makes the measurement cold by removing the cached engine.
 			registry.evictAll()
 
 			const startedAt = Date.now()

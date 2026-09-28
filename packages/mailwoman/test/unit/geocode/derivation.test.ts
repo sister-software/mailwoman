@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A trace record becomes one derivation constraint, and a miss is reported as a miss.
+ * @file A trace record becomes one derivation constraint. A miss is reported as a miss.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"

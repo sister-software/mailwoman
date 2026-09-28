@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Tests the prefix-directories check, which groups sibling names that share a hyphen prefix into a directory.
+ * @file Tests the prefix-directories check. It groups sibling names that share a hyphen prefix into a directory.
  */
 
 import { collectRepoContext } from "@mailwoman/repo-health"

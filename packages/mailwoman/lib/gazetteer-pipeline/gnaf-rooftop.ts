@@ -24,7 +24,7 @@
  *   same branch the GB/NZ databases use.
  *
  *   G-NAF PSV is crlf-terminated and quote-free: the reader trims the trailing `\r`, because
- *   otherwise the last column's name and every last-field value carry it — the geocode file's
+ *   otherwise the last column's name and every last-field value have it — the geocode file's
  *   `latitude` column is last, so the un-stripped join loses every coordinate (the ACT smoke's
  *   0-geocode failure).
  */

@@ -27,7 +27,7 @@ critical path either way.
 
 ## What was measured before designing
 
-### Finding 1 — strict resolution costs three packages rather than a long tail
+### Constraint 1 — strict resolution costs three packages rather than a long tail
 
 The predicted blocker was phantom dependencies: pnpm's default layout is non-hoisted, so any module
 importing a package it does not declare breaks. Full scan of every workspace's `.ts`/`.tsx` bare
@@ -49,7 +49,7 @@ Fix is mechanical: add the three to the workspaces that use them, or one `public
 `vitest`. Preference is declaring them. It is what the strictness is for, and it keeps
 `smoke-clean-install.ts` direct.
 
-### Finding 2 — the publish pipeline is the risk
+### Constraint 2 — the publish pipeline is the risk
 
 `scripts/pack-workspace.ts:61–69` injects a derived `publishConfig.exports` into the workspace
 manifest and then relies on **`yarn pack` substituting it** into the tarball manifest:
@@ -75,7 +75,7 @@ Everything downstream of pack inherits the risk: `scripts/publish-workspace.ts`,
 existing guard that refuses to publish when an exports target is missing from the tarball is the
 backstop, and it stays.
 
-### Finding 3 — the surface inventory
+### Constraint 3 — the surface inventory
 
 - `packageManager: yarn@4.17.0` (root `package.json`), corepack 0.35.0 available; pnpm not currently
   installed on the lab host.
@@ -107,7 +107,7 @@ backstop, and it stays.
 | `approvedGitRepositories`                 | n/a                            | yarn-specific                                                                               |
 | root `resolutions` (6 entries)            | `pnpm.overrides`               | adm-zip, http-proxy-middleware, serialize-javascript, sockjs/uuid, undici, websocket-driver |
 
-### Sequencing — check first
+### Sequence — check first
 
 1. **Check: pack parity.** Install pnpm, pack one representative workspace (`core` — curated
    subpaths, the `kysley/*` glob, and a `.d.ts` surface) under both tools. Diff the tarball manifests
@@ -153,7 +153,7 @@ specified against whichever layout this migration lands, and is not built until 
 - **`@release-it-plugins/workspaces` compatibility.** The plugin is yarn/npm oriented. If it does not
   cooperate, the fallback is driving `publish-workspace.ts` per workspace directly — a path AGENTS.md
   already documents for partial-release recovery, so it is known-good.
-- **postinstall blocking.** pnpm 10 refuses build scripts unless allowlisted. Missing one produces a
+- **postinstall blocking.** pnpm 10 refuses build scripts unless allowlisted. One missing allowlist entry produces a
   package that installs "successfully" and fails at runtime — the meaning-of-zero shape. The 5 known
   builders are listed; a fresh `pnpm install` warning check is part of step 3.
 - **Lab host store.** pnpm's store is global per-user; 20+ agent worktrees sharing one store is a
@@ -167,5 +167,5 @@ specified against whichever layout this migration lands, and is not built until 
 ## Non-goals
 
 - Speed. See "What this is not".
-- Changing the workspace layout, the `exports` dev-map convention, or the pack-then-`npm publish`
+- Changes to the workspace layout, the `exports` dev-map convention, or the pack-then-`npm publish`
   split. Those stay exactly as they are; only the tool invoking them changes.

@@ -95,7 +95,7 @@ export async function freezeAdmin(
 		} else {
 			// Only real WOF places have `wof:hierarchy` geojson.
 			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never have GeoJSON.
-			// Probing millions of them across every repo root stalls the step for ~40 minutes.
+			// A probe of millions of them across every repo root stalls the step for ~40 minutes.
 			// Their ancestry comes from the parent_id closure.
 			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
 			backfillPlacesFixed = bf.placesFixed

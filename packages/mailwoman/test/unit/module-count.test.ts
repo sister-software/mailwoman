@@ -26,11 +26,11 @@ const cliBin = await mailwomanCLIPath()
  * Current whole-process module count for `mailwoman --version`.
  *
  * The license notice the launcher prints after every command verifies the configured key offline.
- * Reading `MAILWOMAN_LICENSE_KEY` goes through the typed env boundary. zod is 94 of these modules.
+ * The typed env boundary reads `MAILWOMAN_LICENSE_KEY`. zod appears in 94 of these modules.
  *
  * The key payload schema shares it.
  * Two things are not on this path and each once was: `@mailwoman/core/license/publication`
- * carries the http client and sits outside the `license` barrel (321 with it inside),
+ * includes the http client and sits outside the `license` barrel (321 with it inside),
  * `spliterator` left when the JSON helpers moved to `core/json` (164 with it).
  */
 const MEASURED_MODULE_COUNT = 136

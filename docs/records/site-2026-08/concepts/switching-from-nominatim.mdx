@@ -4,9 +4,9 @@ sidebar_label: Switching from Nominatim
 description: Point your existing Nominatim client at Mailwoman — the endpoint map, the response differences, and what's missing.
 ---
 
-# Switching from Nominatim
+# Migrate from Nominatim {#switching-from-nominatim}
 
-Nominatim is free and self-hosted. Running it also means running PostgreSQL, an `osm2pgsql` import that takes hours and tens of gigabytes, and a server that cannot ship inside an app or run in a browser. Mailwoman serves the same HTTP interface from a SQLite file. You can move your client without rewriting it and then remove the database stack.
+Nominatim is free and self-hosted. Its deployment also requires PostgreSQL, an `osm2pgsql` import that takes hours and tens of gigabytes, and a server that cannot ship inside an app or run in a browser. Mailwoman serves the same HTTP interface from a SQLite file. You can move your client without rewriting it and then remove the database stack.
 
 ## One command
 

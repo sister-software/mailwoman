@@ -102,8 +102,8 @@ const OGRINFO_MAX_BUFFER = 32 * 1024 * 1024
 const EXTENT_ORDINATES = 4
 
 /**
- * Read what the source declares about itself, and refuse a projection the
- * calling ingest was not written for.
+ * Read what the source declares about itself.
+ * Refuse a projection the calling ingest was not written for.
  *
  * @throws {Error} When the layer is missing, declares no epsg authority code, declares one other than
  * `expectEPSG`, reports no feature count, or fails a `requireExtent`/`requireFields` condition.

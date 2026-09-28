@@ -29,7 +29,7 @@ def test_every_spelling_of_a_step_resolves_the_same_directory(step: str | int) -
 
 
 def test_a_step_wider_than_the_pad_is_not_truncated() -> None:
-    # Padding is a minimum width, never a format the value has to fit.
+    # The width is a minimum. The value can exceed it.
     assert checkpoint_dir_name(1_234_567) == "step-1234567"
 
 

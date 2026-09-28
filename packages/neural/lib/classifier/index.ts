@@ -336,7 +336,7 @@ export class NeuralAddressClassifier {
 	 * The path encodes input, computes soft features and inference, applies priors,
 	 * runs Viterbi or argmax and applies repairs.
 	 */
-	// oxlint-disable-next-line complexity -- Complexity is 104. Splitting the method caused drift in the previous refactor.
+	// oxlint-disable-next-line complexity -- Complexity is 104. The previous split implementation drifted from this method.
 	async #decode(
 		text: string,
 		opts?: ParseOpts,

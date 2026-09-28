@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The compound-municipality split: city + ward and county + town, and the plain values it leaves alone.
+ * @file The compound-municipality split: city + ward and county + town. It leaves plain values unchanged.
  */
 
 import { compoundMunicipality } from "@mailwoman/resolver/admin"

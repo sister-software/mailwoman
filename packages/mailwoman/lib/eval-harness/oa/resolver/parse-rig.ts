@@ -26,7 +26,7 @@ import type { LookupCensus } from "#eval-harness/oa/resolver/profile"
  * When neither flag is passed, each tri-state pin resolves to `undefined`.
  * The library then uses its default.
  *
- * A check leg that says which side it graded is the point of a tri-state.
+ * A check leg that identifies which side it graded is the point of a tri-state.
  *
  * A silent config shift inside a check battery is what a tri-state prevents.
  */
@@ -149,7 +149,7 @@ export async function buildParseRig(
 
 							// Memoize the in-flight promise.
 							// Two rows can ask the same question before either answer arrives.
-							// Caching the promise lets both rows share one query.
+							// The cached promise lets both rows share one query.
 							let pending = lookupMemo.get(key)
 
 							if (!pending) {
@@ -181,10 +181,10 @@ export async function buildParseRig(
 	} as Parameters<typeof neural.parse>[1]
 
 	// `defaultCountry` is the hard country filter applied to admin lookups
-	// when the parse carries no resolved country node.
+	// when the parse has no resolved country node.
 	// It must match the dataset's locale, since hardcoding "US" silently filters a non-US
 	// eval to US places (a German "Berlin" then loses to a tiny US Berlin).
-	// Settable via `--default-country <ISO|none>`, and `none` disables the filter so ranking alone decides.
+	// Settable via `--default-country <ISO|none>`, and `none` disables the filter so ranking decides.
 	const dc = options.defaultCountry || "US"
 	const resolveOpts = resolveOptsFrom(options, dc)
 

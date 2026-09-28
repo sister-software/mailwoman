@@ -16,7 +16,7 @@ import { TextSpliterator } from "spliterator"
  */
 export interface SmokeRowExpect {
 	/**
-	 * WOF place ID that the top cascade hit must carry.
+	 * WOF place ID that the top cascade hit must include.
 	 */
 	id?: number
 	/**
@@ -164,7 +164,7 @@ export function parseSmokeRows(text: string, sourceLabel: string): SmokeRow[] {
 			}
 		}
 
-		// Building the row from the checked fields keeps the schema and the validation in sync.
+		// A row built from the checked fields keeps the schema and validation in sync.
 		rows.push({
 			input: row.input,
 			expect: {

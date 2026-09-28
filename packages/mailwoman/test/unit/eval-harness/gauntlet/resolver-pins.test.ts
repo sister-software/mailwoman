@@ -141,7 +141,7 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 })
 
 describe("gazetteerPrior pin (#1497)", () => {
-	// The pin carries an artifact, so the pure `resolverPinDeps` cannot see it
+	// The pin includes an artifact, so the pure `resolverPinDeps` cannot see it
 	// and only the banner can announce it.
 	it("is announced even though resolverPinDeps cannot carry it", () => {
 		expect(describeResolverPins({ gazetteerPrior: true })).toContain("gazetteerPrior=ON")

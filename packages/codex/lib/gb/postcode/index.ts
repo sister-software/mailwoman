@@ -28,7 +28,7 @@ import type { Tagged } from "type-fest"
 /**
  * A UK postcode: variable-length alphanumeric, outward + inward (`SW1A 1AA`, `M1 1AE`).
  *
- * The canonical form carries exactly one space before the final three characters.
+ * The canonical form has exactly one space before the final three characters.
  * Unlike a US/DE/FR postcode, the shape is not a fixed-width numeric string —
  * see {@link UK_POSTCODE_PATTERN}.
  *

@@ -131,7 +131,7 @@ describe("auditAddressSourceRegister", () => {
 	const base: AddressSourceRegister = {
 		registerID: "test",
 		version: "0.0.0",
-		// A literal without a generating source carries no meaningful digest.
+		// A literal without a generating source has no meaningful digest.
 		// The structural audit does not read the field.
 		contentDigest: "",
 		provenance: { source: "test" },
@@ -325,8 +325,8 @@ describe("applyLicenseDecisions", () => {
 	})
 
 	it("refuses a decision naming a licence the register does not carry", () => {
-		// Applying such a decision silently would leave the register asserting a grant no
-		// source points at, the shape a typo or a removed source takes.
+		// A silent application would leave the register asserting a grant no source points at,
+		// the shape a typo or a removed source takes.
 		expect(() =>
 			applyLicenseDecisions(generated, new Map([["no-such-licence", { ...elected, licenseID: "no-such-licence" }]]))
 		).toThrow(/does not carry/u)
@@ -334,7 +334,7 @@ describe("applyLicenseDecisions", () => {
 
 	/**
 	 * The smallest register the audit accepts, so these cases read the audit's
-	 * verdict on the applied decision alone.
+	 * verdict on the applied decision by itself.
 	 */
 	function registerWith(licenses: readonly LicenseDecision[]): AddressSourceRegister {
 		return {
@@ -615,8 +615,8 @@ describe("permission by operation", () => {
 		})
 
 		it("admits a grant whose permission carries a condition, with the condition recorded beside it", () => {
-			// A modification-notice grant permits the act and requires a statement that the
-			// work was changed, which lives in `because` rather than becoming a refusal.
+			// A modification-notice grant permits the act and requires a statement that the work was changed.
+			// The statement lives in `because` rather than becoming a refusal.
 			const modificationNotice: ElectedLicense = {
 				licenseID: "terms-under-review",
 				state: LicenseReviewState.Elected,
@@ -666,7 +666,7 @@ describe("permission by operation", () => {
 
 		it("records which half of a dual grant was elected, so the other half's conditions are not inherited", () => {
 			// A dual-licensed publication offers a choice.
-			// The decision's own fields carry which half was elected and why
+			// The decision's own fields record which half was elected and why
 			// rather than a reader inferring it from the operations.
 			const elected: ElectedLicense = {
 				licenseID: "terms-under-review",
@@ -680,7 +680,7 @@ describe("permission by operation", () => {
 			expect(electedLicenseLabel(elected)).toBe("Licence Ouverte / Open Licence 2.0")
 			expect(elected.electedBecause).toContain("attribution-only half")
 
-			// Electing the permissive half makes no statement about publishing a model.
+			// The permissive half makes no statement about publishing a model.
 			// No reviewer compared these terms with that act, so the record reads unreviewed
 			// rather than inheriting either half's answer.
 			expect(permissionFor(elected, SourceOperation.RedistributeModel).permission).toBe(OperationPermission.Unreviewed)

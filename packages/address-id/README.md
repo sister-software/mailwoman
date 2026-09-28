@@ -58,7 +58,7 @@ parsePostalAddressID(id: string): ParsedPostalAddressID
   canonical address without running the fuzzy matcher.
 - **Cross-dataset joins.** The key is a deterministic exact-match join key for
   linking records across data sources.
-- **Indexing.** Keys sort by state prefix, which supports efficient range scans.
+- **Key order.** The keys sort by state prefix to support efficient range scans.
 
 ## Related
 

@@ -70,7 +70,7 @@ interface CorpusAdapter {
 
 The adapter does the locale-specific work: column name mapping, address composition (when the source has `street1` + `street2` instead of a single `street`), source-specific cleaning (NPPES drops the `Provider Other Last Name` column on output, BAN composes `numero + rep` for `house_number`, etc.).
 
-Output is streamed to `intermediate/<adapter>/raw.jsonl.gz`. Streaming matters — some adapters emit tens of millions of rows.
+The builder streams output to `intermediate/<adapter>/raw.jsonl.gz`. This matters because some adapters emit tens of millions of rows.
 
 ## Stage 2 — Alignment
 
@@ -90,7 +90,7 @@ For each aligned row, synthesis generates several surface-form variants by apply
 
 - **State abbreviation** (`California` ↔ `CA`)
 - **Comma drop** (`New York, NY 10118` → `New York NY 10118`)
-- **Casing changes** (upper, lower, mixed)
+- **Changes to casing** (upper, lower, mixed)
 - **Accent stripping** (`Île` → `Ile`)
 - **Whitespace normalization** (collapse multiple spaces, add tab separators)
 - **Street suffix abbreviation** (`Avenue` ↔ `Ave`)
@@ -140,6 +140,6 @@ The training pipeline picks up from here. See [Training pipeline](./training-pip
 
 ## See also
 
-- [Training pipeline](./training-pipeline.mdx) — what happens after corpus build
+- [Workflow for training](./training-pipeline.mdx) — the steps after corpus build
 - [BIO labels](./bio-labels.mdx) — what the alignment step outputs
 - [Tokenization](./tokenization.mdx) — how `raw` becomes `tokens`

@@ -8,7 +8,7 @@
  */
 
 /**
- * One timezone polygon: its iana identifier, bounding box, and encoded geometry.
+ * One timezone polygon: its IANA identifier, bounding box and encoded geometry.
  */
 export interface TimezonePolygonTable {
 	tzid: string
@@ -20,7 +20,7 @@ export interface TimezonePolygonTable {
 }
 
 /**
- * The tables `timezone.db` carries.
+ * The tables included in `timezone.db`.
  */
 export interface TimezoneDatabase {
 	timezone_polygons: TimezonePolygonTable

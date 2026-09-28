@@ -40,7 +40,7 @@ export const GOLD_COHERENCE_KM = 25
  * Identifiers per `IN` clause.
  *
  * The value stays under SQLite's default limit of 999 host parameters.
- * Chunking keeps the filter in SQL.
+ * SQL chunks keep the filter in the database.
  *
  * This avoids loading about two million `gn:id` rows into JavaScript.
  */
@@ -176,7 +176,7 @@ export async function readGoldSets(databasePath: PathBuilderLike, subjects: read
 			continue
 		}
 
-		// The gazetteer may carry either the register's native name or its ASCII transliteration.
+		// The gazetteer may contain either the register's native name or its ASCII transliteration.
 		const accepted = new Set([normalizeLocalityForKey(subject.name), normalizeLocalityForKey(subject.asciiname)])
 
 		if (!tier.every((row) => accepted.has(normalizeLocalityForKey(row.name)))) {

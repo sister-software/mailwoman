@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Exercise `useReleaseRuntime` with a fake loader: interactive selection, delayed loading,
- *   and asset-failure states, without network or runtime dependencies.
+ *   Exercise `useReleaseRuntime` with a fake loader for interactive selection, delayed loading and asset-failure states. The story needs no network or runtime dependencies.
  */
 
 import { sleep } from "@mailwoman/core/utils/sleep"

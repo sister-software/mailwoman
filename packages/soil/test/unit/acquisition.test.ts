@@ -63,7 +63,7 @@ describe("readServiceException", () => {
 
 	it("never mistakes the enclosing report element for the exception it wraps", () => {
 		// `<ServiceExceptionReport …>` shares the whole prefix.
-		// Matching it captures the entire report body as the message.
+		// A match on this prefix captures the entire report body as the message.
 		const nested = `<ServiceExceptionReport xmlns="http://www.opengis.net/ogc">
 <ServiceException>Invalid query - access denied.</ServiceException>
 </ServiceExceptionReport>`

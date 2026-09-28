@@ -34,8 +34,8 @@ export type USPoBoxDesignator = (typeof US_PO_BOX_DESIGNATORS)[number]
 /**
  * Recognition patterns for {@link US_PO_BOX_DESIGNATORS}.
  *
- * Keeping the surface grammar next to the canonical designator prevents the
- * exported lexicon and matcher from drifting apart.
+ * The surface grammar beside the canonical designator prevents the exported lexicon
+ * and matcher from drifting apart.
  */
 const PO_BOX_DESIGNATOR_PATTERNS: ReadonlyArray<readonly [USPoBoxDesignator, string]> = [
 	["POST OFFICE BOX", String.raw`post\s+office\s+box`],
@@ -121,8 +121,7 @@ export function matchPOBox(input: unknown): PoBoxMatch | null {
  * Normalize any recognized PO-box phrase to the canonical USPS "PO BOX <id>" form.
  *
  * @returns The input unchanged if it isn't a PO box.
- * (Widens the original isp-nexus normalizer, which only collapsed the "P.O. BOX"
- * spelling and left the id/casing alone.)
+ * (The original isp-nexus normalizer collapsed only the "P.O. BOX" spelling. It left the id and casing unchanged.)
  */
 export function normalizePOBox(input: string): string {
 	const m = matchPOBox(input)

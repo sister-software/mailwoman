@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * OSM's additive extension of the shared rooftop schema. Existing address-point readers project
+ * OSM's additive extension of the shared rooftop schema. Readers of existing address points project
  * only the legacy columns, so the H3 spine and layer-interface tables do not change their query path.
  */
 

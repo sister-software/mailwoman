@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Google Geocoding result → mailwoman {@linkcode OracleGeocodeResult}.
  *
- *   Casing matches Google's response because this oracle canonicalizes gauntlet cases across about 160
- *   countries. Uppercasing would turn `Köln` into `KÖLN` and alter CJK and Cyrillic names as well.
+ *   The casing matches Google's response because this oracle canonicalizes gauntlet cases across about 160
+ *   countries. Uppercase conversion would turn `Köln` into `KÖLN` and alter CJK and Cyrillic names as well.
  *
  *   The component mapping is a judgment call. {@linkcode OracleGeocodeResult.raw} preserves the full
  *   response when that mapping loses information. See {@linkcode COMPONENT_RULES} for the ordering rule and
@@ -89,7 +89,7 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 const REGION_ABBREVIATION_COUNTRIES = new Set(["US", "CA", "AU", "MX", "BR"])
 
 /**
- * Index every component by every type it carries, so a lookup is a map probe rather than an array scan
+ * Index every component by every type it has, so a lookup is a map probe rather than an array scan
  * and a component tagged both `locality` and `political` is the same object under both keys.
  */
 function indexByType(components: readonly GoogleAddressComponent[]): Map<string, GoogleAddressComponent> {
@@ -203,8 +203,8 @@ function toCoordinate(location: GoogleLatLngLiteral): { latitude: number; longit
  * Turn one Google `results` entry into the package's normalized {@linkcode OracleGeocodeResult}.
  *
  * `uncertaintyMeters` is `null` because Google publishes no uncertainty radius.
- * Deriving one from `location_type` would put a fabricated number where the
- * matcher expects a calibrated value.
+ * A value derived from `location_type` would put a fabricated number
+ * where the matcher expects a calibrated value.
  */
 export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeocodeResult<GoogleGeocodeResult> {
 	const components = buildGoogleComponents(result)

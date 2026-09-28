@@ -57,7 +57,7 @@ describe("decorateNode and the unlocated sentinel", () => {
 		expect(n.lat).toBeUndefined()
 		expect(n.lon).toBeUndefined()
 		// The place is resolved — it simply cannot say where it is.
-		// Dropping the identity too would lose the one thing the extract does know.
+		// The removed identity would discard the one fact the extract does know.
 		expect(n.placeID).toBe("wof:538966645")
 		expect(n.metadata?.["resolver_name"]).toBe("51349")
 		expect(isResolvedWithCoord(n)).toBe(false)

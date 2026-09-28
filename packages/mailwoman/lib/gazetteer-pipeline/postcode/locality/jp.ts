@@ -77,7 +77,7 @@ function norm(s: string): string {
 
 /**
  * The WOF place name (suffix-stripped) appears as a token in the authoritative
- * municipality string (which carries city+ward, e.g. 'sapporo SHI chuo KU').
+ * municipality string (which combines city+ward, e.g. 'sapporo SHI chuo KU').
  */
 function nameMatches(wofName: string, postalMuni: string): boolean {
 	const nw = norm(wofName).replace(SUFFIX, "")

@@ -39,7 +39,7 @@ enough mail volume can have its own ZIP Code, and a tenant inside it gets a dist
 four digits identify units as small as "a floor or group of floors in a building, a firm within a
 building" ([USPS Domestic Mail Manual 602](https://pe.usps.com/text/dmm300/602.htm)). Emergency
 dispatch wants the entrance a vehicle can reach. A tax assessor wants the parcel. A visitor wants the
-name on the front of the building, which is why `Empire State Building` works as an address for a
+name on the front of the building. That is why `Empire State Building` works as an address for a
 tourist and fails as one for a sorting machine.
 
 None of these is a less accurate version of one true address. They are four instructions for four
@@ -53,8 +53,8 @@ both be usable, and the disagreement is informative: it shows which system each 
 
 Mailwoman divides the work along those lines. A parse splits the string into spans and labels them,
 for example as a house number or a locality, without deciding which postal system the writer had in
-mind. [Component tags](../../reference/component-tags.mdx) lists the label vocabulary. Attaching
-coordinates is a second pass over the labeled result. That pass reports which tier of data produced
+mind. [Component tags](../../reference/component-tags.mdx) lists the label vocabulary. The resolver
+adds coordinates in a second pass over the labeled result. That pass reports which tier of data produced
 the answer, because a rooftop point and a city centroid mean different things and would otherwise
 look identical.
 

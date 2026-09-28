@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * `overture`: Overture Maps Addresses adapter. The `street` value keeps the locale's street keyword
- * verbatim, and the downstream affix-relabel splits `street_prefix` from it.
+ * verbatim. The downstream affix-relabel step splits `street_prefix` from that value.
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
@@ -23,7 +23,7 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
  */
 export const OVERTURE_ADAPTER_ID = "overture"
 /**
- * License carried by this source (`cdla-Permissive-2.0`, attribution-only
+ * License assigned by this source (`cdla-Permissive-2.0`, attribution-only
  * rather than share-alike), attached to every row.
  */
 export const OVERTURE_DEFAULT_LICENSE = "CDLA-Permissive-2.0"
@@ -89,7 +89,7 @@ export function createOvertureAdapter(): CorpusAdapter {
 		id: OVERTURE_ADAPTER_ID,
 		defaultLicense: OVERTURE_DEFAULT_LICENSE,
 		addressRole: AddressRole.Premise,
-		// Overture rows carry their own `sources[].dataset` and `sources[].license`,
+		// Overture rows include their own `sources[].dataset` and `sources[].license`,
 		// so this declares the aggregator rather than asserting a national grant.
 		register: SourceRegister.Overture,
 		surface: SurfaceOrigin.Attested,

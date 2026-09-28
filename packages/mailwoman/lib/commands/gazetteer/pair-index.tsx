@@ -16,7 +16,7 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * The expected distinct-pair count for a GB build from the PPD CSV alone.
+ * The expected distinct-pair count for a GB build using only the PPD CSV.
  *
  * A mismatch means the fold changed, so the artifact needs investigation before use.
  */
@@ -105,7 +105,7 @@ function splitPathList(value: string | undefined): string[] {
  * The `--delta` flag has no default.
  *
  * Its value comes from calibration.
- * Omitting the optional `--parent-delta` leaves the parent bias off.
+ * An absent optional `--parent-delta` leaves the parent bias off.
  */
 export const spec = {
 	name: "pair-index",

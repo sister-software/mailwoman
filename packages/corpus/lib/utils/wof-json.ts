@@ -220,7 +220,7 @@ export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
 /**
  * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
  *
- * A tag with no ancestor carries no key.
+ * A tag with no ancestor has no key.
  * `ancestry.find(…) === undefined` expresses that state.
  */
 export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>

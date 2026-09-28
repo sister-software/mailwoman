@@ -121,8 +121,8 @@ describe("MapRenderer", async () => {
 	})
 
 	it("paints native detail over the ancestor fallback where both cover a cell", async () => {
-		// The viewport straddles absent tile 999 on the left and native tile 1000 on the right,
-		// and coarse tiles rasterize first so the native fill wins its own cells.
+		// The viewport straddles absent tile 999 on the left and native tile 1000 on the right.
+		// Coarse tiles rasterize first, so the native fill wins its cells.
 		const straddling = new MapRenderer(stubProvider({ native: true }))
 		const centerOnEdge = worldPxToLonLat(1000 * TILE_SIZE, 1500.5 * TILE_SIZE, 12)
 

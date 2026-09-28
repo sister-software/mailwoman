@@ -87,7 +87,7 @@ export function detectAddressSystem(
  * Returns the locale head's confident country, or null below the threshold.
  *
  * Unlike {@link detectAddressSystem}, it also returns countries without a `SystemCode`.
- * The country says that the text resembles that country's address format.
+ * The country indicates that the text resembles that country's address format.
  * It does not resolve the address's actual country.
  */
 export function confidentLocaleCountry(

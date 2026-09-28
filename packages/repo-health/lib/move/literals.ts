@@ -5,7 +5,7 @@
  * @file Finds repo-relative paths written as plain text (hook commands, globs, workflow steps, `Usage:` lines) that a
  *   move makes stale.
  *
- *   The compiler and `manifest-targets` do not check these paths. Matching uses an exact substring of the old path, so
+ *   The compiler and `manifest-targets` do not check these paths. The matcher uses an exact substring of the old path, so
  *   only the moved segment of a glob changes.
  */
 
@@ -71,7 +71,7 @@ const SOURCE_EXTENSION = /\.tsx?$/u
  * Tests and workflows refer to `out/` paths.
  * Docstrings refer to them too.
  *
- * A sweep over source paths alone would miss these references.
+ * A sweep over source paths by themselves would miss these references.
  */
 export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const emitted: ModuleMove[] = []

@@ -24,7 +24,7 @@ export interface USStateInfo {
 /**
  * FIPS state-or-territory code → `{ abbreviation, name }`.
  *
- * Includes all 50 states, DC, and the five primary territories (PR, GU, VI, MP, AS).
+ * Includes all 50 states, DC and the five primary territories (PR, GU, VI, MP, AS).
  * Codes are two-digit zero-padded strings to match tiger column `statefp`.
  */
 export const US_FIPS_STATE: Readonly<Record<string, USStateInfo>> = Object.freeze({

@@ -144,8 +144,8 @@ export function aggregateCells(
 			support: bucket.length,
 			brokenCount: bucket.filter((r) => r.broken === true).length,
 			// `percentile` returns null on an empty sample.
-			// A cell whose anchors all failed has no displacement distribution,
-			// and -1 would be a number the reader could average.
+			// A cell whose anchors all failed has no displacement distribution.
+			// A reader could average -1.
 			// Encode it as NaN-free absence via gradedCount === 0.
 			// The consumer's rule is "skip a cell you cannot read", same as support 0.
 			displacementKmP50: percentile(graded, 50) ?? 0,

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `projectCoverage` — the projection that dropped the guard it was supposed to carry.
+ * @file `projectCoverage` — the projection that dropped the guard it was supposed to preserve.
  *
  *   The census computed the corpus-mismatch guard correctly. Fifteen tests passed.
  *   The first live call still omitted the guard because this projection builds its result field by field.
@@ -60,7 +60,7 @@ describe("projectCoverage", () => {
 
 	it("puts the mismatch FIRST in the summary, ahead of every count it invalidates", () => {
 		// A caller reads the first sentence.
-		// Burying this after "33 countries train" means the counts are read as answers
+		// If this follows "33 countries train", readers can mistake the counts for answers
 		// before the reader learns they are about a corpus the run never opens.
 		const out = projectCoverage(
 			report({
@@ -81,7 +81,7 @@ describe("projectCoverage", () => {
 
 	it("reports a requested country that exists nowhere, rather than returning an empty row set", () => {
 		// An empty `rows` value for an unknown country is indistinguishable from a country with no data.
-		// Naming it separately is the difference between "absent" and "I could not find it".
+		// A separate label distinguishes "absent" from "I could not find it".
 		const out = projectCoverage(report(), ["ZZ"])
 
 		expect(out["requested_but_absent_everywhere"]).toEqual(["ZZ"])

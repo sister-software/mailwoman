@@ -7,7 +7,7 @@
  *   OpenAddresses country dump.
  *
  *   Label-F1 on non-US is confounded by labeling convention, since where a Spanish "Calle Mayor"
- *   street boundary falls is a judgement. These rows therefore carry the truth lat/lon and are graded
+ *   street boundary falls is a judgement. These rows therefore include the truth lat/lon and are graded
  *   on the assembled coordinate by
  *   `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
@@ -99,7 +99,7 @@ function parseRow(row: CSVRecord): Address | null {
 }
 
 /**
- * Geographic diversity key: the region when the dump carries one, else the postcode's leading pair.
+ * Geographic diversity key: the region when the dump includes one, else the postcode's leading pair.
  */
 function bucketKey(row: CSVRecord, address: Address): string {
 	return (row.REGION ?? "") || address.cp.slice(0, 2)

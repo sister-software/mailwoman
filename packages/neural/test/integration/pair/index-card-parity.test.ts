@@ -99,7 +99,7 @@ describe("pair-index ↔ model-card parity", () => {
 				facts.pairs
 			)
 
-			// A card claiming a delta the binary does not carry would misdescribe the
+			// A card claiming a delta the binary does not contain would misdescribe the
 			// shipped behaviour rather than just the shipped size.
 			const cardDelta = String(block!.delta_calibration ?? "")
 

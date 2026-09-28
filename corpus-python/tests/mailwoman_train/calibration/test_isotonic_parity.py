@@ -90,7 +90,7 @@ def fitted(tmp_path_factory: pytest.TempPathFactory) -> dict[str, Any]:
 
 #: How far a rebuilt figure may sit from the committed one and still count as unmoved.
 #:
-#: The table carries full-precision floats off numpy reductions whose last digit depends on SIMD
+#: The table stores full-precision floats from numpy reductions whose last digit depends on SIMD
 #: width, so an exact comparison would pin the host as well as the code. A fit that actually changed
 #: moves ECE in the third decimal.
 TOLERANCE = 1e-9

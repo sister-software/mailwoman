@@ -96,7 +96,7 @@ own edge, and any small unit beside it wins those edge points.
 - **Below the 80% floor on both denominators.** No runtime surface for an NI assignment. The in-sample
   86.78% is over the floor and decides nothing; it was pre-registered as optimistic by construction.
 
-## Reading
+## How to read the results {#reading}
 
 The recoverable-set rate (77.4%) is higher than the GB null model (69.6%), and the two are not the
 same measurement. In GB every unit in the box has a Code-Point centroid, so each UPRN competes against

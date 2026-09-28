@@ -51,7 +51,7 @@ describe("refusalsForPublication", () => {
 	})
 
 	it("refuses an identifier with no recorded obligations rather than reading it as unobliged", () => {
-		// `Licence Ouverte 2.0` is the free-text spelling 145,193,536 corpus rows carry,
+		// `Licence Ouverte 2.0` is the free-text spelling in 145,193,536 corpus rows,
 		// where `KNOWN_OBLIGATIONS` keys the SPDX identifier `etalab-2.0`.
 		const [refusal] = refusalsForPublication([
 			{ name: "fr", tier: "shipped", license: "Licence Ouverte 2.0", publishedAs: "bundle fr" },

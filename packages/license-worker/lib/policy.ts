@@ -33,7 +33,7 @@ export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 export interface SubscriptionObservation {
 	/**
 	 * `customer.subscription.deleted` arrived.
-	 * The status alone may still read otherwise.
+	 * The status by itself may still indicate otherwise.
 	 */
 	deleted?: boolean
 	/**
@@ -48,7 +48,7 @@ export interface SubscriptionObservation {
 }
 
 /**
- * What a subscription's current state says the license state should be.
+ * The license state implied by a subscription's current state.
  */
 export function licenseStateAfterSubscription(
 	current: LicenseState,
@@ -68,7 +68,7 @@ export function licenseStateAfterSubscription(
 }
 
 /**
- * What a refund says: a full refund revokes.
+ * A full refund revokes the license.
  *
  * The operator reviews a partial refund.
  * The license reads `active` during that review.
@@ -78,7 +78,7 @@ export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "
 }
 
 /**
- * What a dispute opened says: revoked, until Stripe rules it won.
+ * A dispute revokes the license until Stripe rules it won.
  */
 export function licenseStateAfterDispute(): LicenseState {
 	return LicenseState.Revoked

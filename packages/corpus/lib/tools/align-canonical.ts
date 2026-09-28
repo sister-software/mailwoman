@@ -10,7 +10,7 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated,
  * notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
  *
- * Their committed parquets carry whatever label format was current when they were first built.
+ * Their committed parquets use the label format that was current when they were first built.
  *
  * When the corpus label format changes (the char-offset span triple), those fixed
  * corpora are aligned again from their canonical source.

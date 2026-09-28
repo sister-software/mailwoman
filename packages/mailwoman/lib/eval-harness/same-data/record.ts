@@ -34,7 +34,7 @@ import {
 } from "#eval-harness/same-data/fixture"
 
 /**
- * Drop the query-verdict fields a fixture may never carry.
+ * Drop the query-verdict fields a fixture may never include.
  *
  * Destructured rather than filtered by key so the compiler checks the return
  * type against `WITHHELD_CANDIDATE_FIELDS`.
@@ -102,7 +102,7 @@ export interface RecordCensus {
 	 * Set when an arm's walk raised while recording.
 	 *
 	 * The recorder writes the row.
-	 * The run receipt carries the count.
+	 * The run receipt records the count.
 	 */
 	error?: string
 }
@@ -126,11 +126,11 @@ export interface RecordInputs {
 	 *
 	 * The option defaults to `false`, keeping frozen definitions byte-stable on a re-record.
 	 * It exists because the gold identity set comes from the `gn:id` concordance
-	 * while the gazetteer carries 285,478 of 2,689,326 populated localities twice,
+	 * while the gazetteer lists 285,478 of 2,689,326 populated localities twice,
 	 * so removing the concorded id leaves the twin answerable and an arm returning it
 	 * is graded as selecting where no correct candidate exists.
 	 *
-	 * Turning it on changes what the stratum means, so it belongs to a successor definition
+	 * An enabled option changes what the stratum means, so it belongs to a successor definition
 	 * rather than a version bump of a benchmark whose arms have run.
 	 */
 	withholdEveryDenotingRow?: boolean
@@ -164,7 +164,7 @@ function settlementKey(name: string): string {
 /**
  * Returns the recorder's withholding decision for one row.
  *
- * It returns `null` when the row carries its gold.
+ * It returns `null` when the row includes its gold.
  * The default compares ids. {@link RecordInputs.withholdEveryDenotingRow} also includes
  * rows whose folded name matches the gold within {@link SAME_SETTLEMENT_KM}.
  */

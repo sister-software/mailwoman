@@ -10,7 +10,7 @@
  *   stating a use that is not training, because reporting them together turns an unrecorded fact into a measured one.
  *
  *   The counts are against the committed tree, so a card edit moves them. That is intended: a number in this file
- *   moving is what says a rights-bearing document changed.
+ *   moving is what indicates that a rights-bearing document changed.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -78,9 +78,10 @@ describe("auditRights", () => {
 		expect(audit.register.sources).toBe(389)
 		expect(audit.register.eligible).toBe(0)
 
-		// Four blockers cover all 389, and the license one reaches the report only because refusals
-		// that differ by a quoted identifier are grouped: each source points at its own license id,
-		// so ungrouped it is 389 messages of one source each and never appears among the largest refusals.
+		// Four blockers cover all 389.
+		// The license blocker reaches the report only because refusals that differ by a quoted
+		// identifier are grouped: each source points at its own license id, so ungrouped it
+		// is 389 messages of one source each and never appears among the largest refusals.
 		const universal = audit.register.refusals.filter((refusal) => refusal.sources === 389)
 
 		expect(universal).toHaveLength(4)

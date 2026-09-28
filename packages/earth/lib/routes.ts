@@ -36,8 +36,8 @@ export function routeForPath(pathname: string): Route | null {
 }
 
 /**
- * Which runtime the page mounts: `fake` is the canned runtime the shell smoke
- * and the stories use, and any other value or none is the real geocoder.
+ * Which runtime the page mounts: `fake` is the canned runtime the shell smoke and the stories use.
+ * Any other value or no value selects the real geocoder.
  */
 export type RuntimeMode = "real" | "fake"
 

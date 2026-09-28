@@ -348,8 +348,8 @@ describe("a seeded normalization regression", () => {
 	 * The composing stand-in applies Stage 1 before parsing.
 	 * The shipped pipeline does the same.
 	 *
-	 * The seeded regression checks whether the failure line carries enough diagnostic detail.
-	 * Running one fixture through both stand-ins shows whether the result concerns Stage 1 or the row.
+	 * The seeded regression checks whether the failure line includes enough diagnostic detail.
+	 * One fixture through both stand-ins shows whether the result concerns Stage 1 or the row.
 	 */
 	function observer(stage1: (query: string) => string): ConformanceObserver {
 		return async (query) => {

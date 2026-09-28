@@ -137,7 +137,7 @@ export async function nppesDedupBenchmark(
 		name: "name",
 		organization: "org",
 		address: "address",
-		// `entityTruth` rides as an attribute purely for scoring, never as a discriminator
+		// `entityTruth` appears as an attribute purely for scoring, never as a discriminator
 		// in matching, carrying the site-level label alongside the NPI.
 		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
@@ -197,8 +197,8 @@ export async function nppesDedupBenchmark(
 	// Every grain scores against the same record population, so the ARI expectation is fixed for the run.
 	const score = (entities: readonly ResolvedEntity[], labelOf: TruthLabel): Score => scoreEntities(entities, labelOf, N)
 
-	// Scoring the same clusters at NPI and entity level isolates how much of the apparent
-	// over-merge is NPI over-segmentation rather than model error.
+	// A score for the same clusters at NPI and entity level isolates how much of the
+	// apparent over-merge is NPI over-segmentation rather than model error.
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 	const orgNameLabel = buildOrgNameGrain(npiPrimary)

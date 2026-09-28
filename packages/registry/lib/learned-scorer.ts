@@ -7,7 +7,7 @@
  *   {@link ResolveConfig.scorer}.
  *
  *   {@link createMatchFeaturizer} is the one feature extractor for a candidate pair, used
- *   identically at train time (`registry/tools/train-gbt.ts`), eval time, and inference time.
+ *   identically at train time (`registry/tools/train-gbt.ts`), eval time and inference time.
  *   {@link createGBTScorer} wraps a trained {@link GBT} and the featurizer into the `(a, b) => number`
  *   the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
  *   Fellegi-Sunter weight it replaces).

@@ -69,7 +69,7 @@ class TestSplitBuilderParity:
         assert split("Broadway") is None
 
     def test_no_suffix_no_split(self):
-        # Trailing directional is not a suffix — the builder requires a trailing suffix.
+        # The builder requires a trailing suffix. A directional at the end does not qualify.
         assert split("South County Road 175 West") is None
 
     def test_directional_is_the_name(self):
@@ -146,7 +146,7 @@ class TestRelabelRow:
         assert row["labels"][2] == "B-locality"
 
     def test_handles_multiple_street_spans(self):
-        # Intersection-style rows carry two street spans.
+        # Intersection-style rows contain two street spans.
         row = {
             "tokens": ["N", "Main", "St", "and", "W", "Oak", "Ave"],
             "labels": ["B-street", "I-street", "I-street", "O", "B-street", "I-street", "I-street"],
@@ -418,7 +418,7 @@ class TestPositionalLicensing:
 
     def test_v1_artifact_without_name_prone_keeps_the_old_blanket_rejection(self):
         """Back-compat: a v1 lexicon (no ``name_prone`` key) must reproduce the pre-licensing
-        behavior byte-for-byte — old runs stay reproducible. the fix rides the v2 artifact."""
+        behavior byte-for-byte — old runs stay reproducible. the fix uses the v2 artifact."""
         import dataclasses
 
         lex_v1 = dataclasses.replace(LEX, name_prone=frozenset())

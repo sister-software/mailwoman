@@ -73,7 +73,7 @@ A minimum-length-3 surface-form filter mitigates this (`av` no longer matches, b
 `resolver-wof-sqlite/street-morphology-fst-builder.ts`'s `minVariantLength` option).
 
 Even with the filter, default bias magnitudes still produce 238 hallucinations vs the 204
-baseline — a smaller but real regression. Lowering `maxAffixBias` to 1.0 brings collateral
+baseline — a smaller but real regression. A `maxAffixBias` value of 1.0 brings collateral
 damage back to 213, in practice baseline-equivalent.
 
 ### Layer 1 is a real deliverable on top of a v0.6.2 retrain
@@ -100,7 +100,7 @@ and the [street-supplement architecture doc](../../site-2026-08/concepts/street-
 The morphology FST infrastructure landed in this shift is exactly the inference plumbing v0.6.2
 will use.
 
-## Reproducing
+## Reproduce the result {#reproducing}
 
 ```bash
 # Baseline: v0.6.1 + admin FST only

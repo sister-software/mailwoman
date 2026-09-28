@@ -5,7 +5,7 @@
  *
  *   The verify step rereads a build's manifest and recomputes each output's SHA-256 and size.
  *   It reads each archive's `mailwoman:*` block and refuses any difference.
- *   Publishing runs this check before upload.
+ *   The publishing step runs this check before upload.
  */
 
 import { readLocalJSONFile, statPath } from "@mailwoman/core/fs/readers"

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The single-parse dedupe surface: `geocodeAddress` accepts a pre-parsed `parsedTree` and skips its
- *   internal `classifier.parse` when given one, and `parseForGeocode` exposes that exact parse so a
+ *   internal `classifier.parse` when given one. `parseForGeocode` exposes that exact parse so a
  *   caller can run it once and feed both the geocode and a PostalAddress. Fakes the classifier/resolver
  *   — no weights/WOF needed.
  */

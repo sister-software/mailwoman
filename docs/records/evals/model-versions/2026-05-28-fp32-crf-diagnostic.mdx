@@ -71,7 +71,7 @@ on A100.
 
 ## Result: PASS
 
-Training reached step 3000 with no NaN. Loss curve:
+The run reached step 3000 with no NaN. Loss curve:
 
 | Step     | train_loss | val_loss    | macro_f1 |
 | -------- | ---------- | ----------- | -------- |
@@ -101,7 +101,7 @@ runs in bf16 for throughput as before.
 
 2. **v0.6.2 stays CE-only.** Per the NaN protocol's "one variable at a time" rule: v0.6.2
    already changes corpus composition (synth-street weight + new synth-no-street extract).
-   Adding CRF activation in the same release confounds attribution. Defer to v0.6.3.
+   CRF activation in the same release would confound attribution. Defer it to v0.6.3.
 
 3. **fp32-CRF throughput cost is minimal.** The diagnostic ran at ~6 steps/s on an
    A100-SXM4-40GB, comparable to v0.6.0's CE-only throughput. The autocast boundary only
@@ -111,7 +111,7 @@ runs in bf16 for throughput as before.
    experiment was a 30-min run that closed a question that had been open since the
    postmortem. The cost of not running it was indefinite future uncertainty.
 
-## Reproducing
+## Reproduce the diagnostic {#reproducing}
 
 ```bash
 # Push the changed model.py + config.py + new diagnostic yaml to the Modal volume:

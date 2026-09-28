@@ -67,7 +67,8 @@ const SCAN_EXCLUDED_DELIVERY: ReadonlySet<string> = new Set([
  *
  * Short alphabetic words (≤ 3 chars: "PO", "GPO", "RMB") are treated as
  * initialisms with optional periods/spacing.
- * The punctuation amas tells mailers to strip but deliverable mail still carries ("P.O. Box", "R.M.B 4600").
+ * The punctuation amas tells mailers to strip but deliverable mail still
+ * includes ("P.O. Box", "R.M.B 4600").
  * Longer words match literally with flexible whitespace.
  */
 function phraseToPattern(phrase: string): string {

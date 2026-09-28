@@ -5,9 +5,9 @@
  *
  *   Generates `data/venue-word-hints.json` from the venue-word lexicon under the data root. The
  *   output is a deterministic filter of the input, so regenerating from the same input gives the
- *   same bytes. The output records the source md5, and `data/provenance.md` describes the source.
+ *   same bytes. The output records the source md5. `data/provenance.md` describes the source.
  *
- *   The filter combines several thresholds because the venue ratio alone favors famous place
+ *   The filter combines several thresholds because the venue ratio by itself favors famous place
  *   names. Tokens such as `paris` appear often in venue names ("Café de Paris") and score a high
  *   venue ratio without being venue words.
  *

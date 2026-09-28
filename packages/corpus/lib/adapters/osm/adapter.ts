@@ -5,7 +5,7 @@
  *
  * `osm`: OpenStreetMap address adapter for the countries no permissive source covers.
  *
- * Every row carries `ODbL-1.0`, whose recorded obligations include share-alike. A build run under
+ * Every row lists `ODbL-1.0`, whose recorded obligations include share-alike. A build run under
  * `LicensePolicy.ShareAlikeFree` refuses these rows at ingest, so they reach only the open weights.
  * That is why `defaultLicense` is not an option on this adapter.
  */
@@ -82,7 +82,7 @@ export function isStreetName(value: string): boolean {
 
 /**
  * Split an `addr:city` carrying a neighborhood ahead of the city (`Mirpur 10, Dhaka` →
- * locality `Dhaka`, head `Mirpur 10`); a value without a comma is the locality alone.
+ * locality `Dhaka`, head `Mirpur 10`); a value without a comma is only the locality.
  */
 export function splitCityValue(value: string): { locality: string; head: string | null } {
 	const parts = extractDelimited(value)

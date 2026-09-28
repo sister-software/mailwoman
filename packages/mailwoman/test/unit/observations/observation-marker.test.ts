@@ -8,7 +8,7 @@
  *   These tests check two properties of the marker interface. The conversion preserves the observation's full authority.
  *   A verdict without a POI kind produces no marker that claims a kind the result does not contain.
  *
- *   The semantic half is driven by the committed route, so the evidence the marker carries is the evidence
+ *   The semantic half is driven by the committed route, so the evidence the marker includes is the evidence
  *   a real firing produces. The absence half is built from a synthetic observation, because a real one
  *   needs a sealed coverage layer and the carrier reads the record rather than the layer.
  */
@@ -125,7 +125,7 @@ describe("a semantic observation as a marker", () => {
 	})
 
 	// Find the `pharmacy` member by concept rather than position. en-US admits both wave-1 kinds.
-	// Reading `[0]` would assert whichever concept sorts first.
+	// An assertion on `[0]` would depend on whichever concept sorts first.
 	it("carries the whole authority, so the marker can be checked rather than taken", () => {
 		const markers = semanticMarkers(POI_VERDICT)
 		const marker = markers.find(({ evidence }) => evidence?.["concept"] === "pharmacy")
@@ -150,7 +150,7 @@ describe("a semantic observation as a marker", () => {
 	})
 
 	// Emit one marker per member.
-	// Each marker carries its concept and assertion.
+	// Each marker includes its concept and assertion.
 	// A single marker for the set would lose which authority assigned each class.
 	it("emits one marker per member of a plural set, each with its own authority", () => {
 		const markers = semanticMarkers(POI_VERDICT)

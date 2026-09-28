@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Punctuation invariance suite, which asserts that separator commas, periods and apostrophe forms do not change a
+ *   Punctuation invariance suite. It asserts that separator commas, periods and apostrophe forms do not change a
  *   parse. Hyphens and punctuation inside tokens are out of scope.
  */
 
@@ -20,7 +20,7 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier that every suite row carries.
+ * Law identifier included in every suite row.
  */
 export const PUNCTUATION_LAW = "punctuation-invariance"
 
@@ -76,7 +76,7 @@ const TEXT_ECHOING_COMPARATORS = new Set<OutcomeComparatorName>(["parse_whole_st
 
 /**
  * Removals whose mark belongs to the preceding token, as in `Str.`.
- * Removing the mark changes that token's text.
+ * The mark's removal changes that token's text.
  */
 const TOKEN_TEXT_REMOVALS = new Set<PunctuationTransformationName>(["period-removed"])
 
@@ -176,7 +176,7 @@ export interface PunctuationApplicability {
 }
 
 /**
- * Grading details of the row that the applicability check needs besides its text.
+ * The applicability check needs these grading details beyond the row's text.
  */
 export interface PunctuationApplicabilityContext {
 	/**

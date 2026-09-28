@@ -67,8 +67,9 @@ const RESEARCH_STATE_BY_NAME: Readonly<Record<string, JurisdictionResearchState>
 }
 
 /**
- * Every `AddressRole` by its wire value, derived from the enum so a role added to `AddressRole` is
- * readable here without a second edit and a value the CSV carries that is not a role fails the build.
+ * Every `AddressRole` by its wire value, derived from the enum so a role added to
+ * `AddressRole` is readable here without a second edit.
+ * A CSV value outside this role set fails the build.
  */
 const ADDRESS_ROLE_BY_NAME: Readonly<Record<string, AddressRole>> = Object.fromEntries(
 	Object.values(AddressRole).map((role) => [role, role])
@@ -97,7 +98,7 @@ const GEOMETRY_BY_NAME: Readonly<Record<string, SourceGeometry>> = {
 /**
  * The research pass writes a source's propositions as one string.
  *
- * The table is closed, because a spelling this does not carry is a vocabulary the
+ * The table is closed, because a spelling it does not include is a vocabulary the
  * register has not agreed to rather than a row to guess at.
  */
 const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["asserts"][number][]>> = {
@@ -107,7 +108,7 @@ const ASSERTS_BY_ROLE: Readonly<Record<string, readonly AddressSourceRecord["ass
 
 /**
  * The access labels the research pass recorded, each with the id prefix
- * and note a decision derived from it carries.
+ * and note a decision derived from it records.
  *
  * A decision is scoped to one publisher in one jurisdiction by {@link scopedLicenseID},
  * so an election cannot reach past the grant it was made about.
@@ -210,7 +211,7 @@ export interface SourceRegisterBuildResult {
 	sources: number
 	licenses: number
 	/**
-	 * Rows dropped because they carry a global discovery lookup rather than a national source.
+	 * Rows dropped because their source identifies a global discovery lookup rather than a national source.
 	 */
 	discoveryRailRowsDropped: number
 	researchStates: Readonly<Record<JurisdictionResearchState, number>>
@@ -342,12 +343,12 @@ async function readJurisdictions(
 interface LicenseScope {
 	licenseID: string
 	/**
-	 * The label's own words, carried through so a reviewer sees what the pass wrote.
+	 * The pass retains the label's words so a reviewer sees what it wrote.
 	 */
 	statement: string
 	/**
 	 * The publisher whose terms this decision covers, or `null` when the row names none
-	 * and the decision therefore covers one source alone.
+	 * and the decision therefore covers only one source.
 	 */
 	publisher: string | null
 	scopedTo: string
@@ -521,15 +522,15 @@ async function readSources(
 /**
  * Values the research pass wrote into a column it did not resolve per source.
  *
- * Carrying them onto a record would turn "uninspected" into a value a consumer reads as an answer.
+ * A copy onto a record would turn "uninspected" into a value a consumer reads as an answer.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
 /**
  * A column's value, or `undefined` when the research pass left it unresolved.
  *
- * Anything outside the placeholder set is returned, so a value somebody fills in later
- * reaches the register or fails the build rather than being lost.
+ * Every value outside the placeholder set is returned, so a value somebody fills in
+ * later reaches the register or fails the build rather than being lost.
  */
 export function readUnresolvedColumn(value: string | undefined, column: string, row: number): string | undefined {
 	const trimmed = (value ?? "").trim()
@@ -555,12 +556,12 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
  * The output is tab-indented JSON.
  * `oxfmt` applies additional formatting.
  *
- * @throws When an input row carries a vocabulary this build has no mapping for, when a declared
+ * @throws When an input row contains a vocabulary this build has no mapping for, when a declared
  * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.
  */
 /**
- * The shape `license-decisions.json` carries: licence id to the decision minus its own id,
- * keyed by id so one licence cannot carry two.
+ * The shape of `license-decisions.json`: licence id to the decision minus its own id,
+ * keyed by id so each licence has one decision.
  */
 interface LicenseDecisionsFile {
 	decisions?: Record<string, Omit<ElectedLicense, "licenseID"> | Omit<RefusedLicense, "licenseID">>
@@ -579,7 +580,7 @@ async function readLicenseDecisions(decisionsPath: PathBuilderLike | undefined):
 	const file = await readLocalJSONFile<LicenseDecisionsFile>(decisionsPath)
 
 	// The id comes from the key, so a record cannot disagree with the licence it is filed under;
-	// `auditAddressSourceRegister` decides whether what it carries is a well-formed decision.
+	// `auditAddressSourceRegister` decides whether the fields form a well-formed decision.
 	return new Map(
 		Object.entries(file.decisions ?? {}).map(([licenseID, decision]) => [
 			licenseID,

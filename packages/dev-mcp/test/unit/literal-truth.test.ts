@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A hand-picked input set may carry its own truth point — the authoring loop for a new board row.
+ * @file A hand-picked input set may include its own truth point — the authoring loop for a new board row.
  *
  *   The point of the feature is that a row can be measured before its case file is written. So the tests that matter
- *   are: the truth reaches the resolved row, the graded fraction is reported against its own denominator, and a mixed
+ *   are: the truth reaches the resolved row, the graded fraction is reported against its own denominator and a mixed
  *   set does not let an ungraded row read as a graded one.
  */
 

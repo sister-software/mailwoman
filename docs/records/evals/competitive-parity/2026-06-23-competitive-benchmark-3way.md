@@ -44,7 +44,7 @@ incumbents.
 | nominatim         | 420 |  77% |  80% |   81% |            0.0 |       17% |
 | pelias            | 420 |  71% |  83% |   88% |            0.0 |        2% |
 
-## Reading it directly
+## Read the results directly {#reading-it-directly}
 
 1. **Pelias is the strongest system here** — 88% @25km all-panel, 2% no-result. A hosted Elasticsearch
    stack over mixed sources resolves nearly everything and places most of it at rooftop. It is the real

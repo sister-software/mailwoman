@@ -82,9 +82,9 @@ export function isResidentialElement(element: OSMOverpassElement): boolean {
  *
  * This is useful when working with the Overpass API.
  */
-// `unknown`, matched by the guard on the next line: this reads geometry off an API
-// response, and a parameter that promises a polygon makes the guard look redundant
-// while forcing every test of it to assert past the signature.
+// `unknown`, matched by the guard on the next line: this reads geometry off an API response.
+// A parameter that promises a polygon makes the guard look redundant while forcing
+// every test of it to assert past the signature.
 export function polygonToOSMFilter(input: unknown): string {
 	if (!isPolygonLiteral(input)) return ""
 

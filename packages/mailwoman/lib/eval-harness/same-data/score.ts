@@ -9,7 +9,7 @@
  *   Every arm answers the same rows, so the tests are paired. The decision uses the pooled comparison.
  *   Per-stratum tables describe the results.
  *
- *   A row whose arm threw an error is excluded from every metric and counted in `errors`. Counting it as
+ *   A row whose arm threw an error is excluded from every metric and counted in `errors`. An abstention count
  *   an abstention would make a harness failure look like a resolver refusal.
  */
 
@@ -97,7 +97,7 @@ export interface ArmMetrics {
 	stratum: string
 	/**
 	 * The number of rows scored, excluding errored rows.
-	 * Each rate carries its own denominator.
+	 * Each rate has its own denominator.
 	 */
 	n: number
 	errors: number
@@ -109,7 +109,7 @@ export interface ArmMetrics {
 	 */
 	selectionAccuracy: Ratio
 	/**
-	 * Wrong-area selections over the gold-present selections that carried a coordinate.
+	 * Wrong-area selections over the gold-present selections that had a coordinate.
 	 */
 	wrongArea: Ratio
 	/**
@@ -222,7 +222,7 @@ export interface PairedComparison {
  *
  * Each bootstrap resample draws row pairs with replacement and recomputes both
  * arms' accuracy on the same draw.
- * Reusing each draw makes the interval paired.
+ * Each reused draw makes the interval paired.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],

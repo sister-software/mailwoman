@@ -115,8 +115,8 @@ export interface RunAdapterOptions {
 	 * The `source` id stamped on every emitted row, when it differs from the adapter's own id.
 	 *
 	 * A source id is a wire identifier keyed by `source_weights`, so re-using a name a built
-	 * corpus already carries makes this run's rows indistinguishable from that corpus's.
-	 * When absent, rows carry `adapter.id`.
+	 * corpus already contains makes this run's rows indistinguishable from that corpus's.
+	 * When absent, rows use `adapter.id`.
 	 */
 	sourceName?: string
 
@@ -153,7 +153,7 @@ export interface AdapterRunManifest {
 	 * After that point, it still drops duplicates for keys already held.
 	 *
 	 * It writes duplicates for keys first seen after the cap.
-	 * `deduped` alone cannot say which, so a consumer comparing two builds'
+	 * `deduped` by itself cannot identify which, so a consumer comparing two builds'
 	 * duplicate counts needs this beside it.
 	 */
 	dedup_exhausted_at_yielded: number | null
@@ -257,9 +257,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 				}
 			} else if (seen) {
 				// The membership test runs whether or not the set is full.
-				// Reaching the cap stops the set from growing.
+				// The cap stops the set from growing.
 				// The set still rejects every duplicate of a key it holds.
-				// Skipping the membership test at the cap let duplicates of the first `dedupMaxSize` keys through.
+				// Without the membership test at the cap, duplicates of the first
+				// `dedupMaxSize` keys passed through.
 				// This ordering keeps those duplicates out.
 				if (seen.has(key)) {
 					if (yielded % progressEvery === 0) {

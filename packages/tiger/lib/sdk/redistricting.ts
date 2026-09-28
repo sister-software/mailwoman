@@ -9,7 +9,7 @@
  *   race + geometry (e.g. a dot-density map).
  *
  *   Keyless public data. The per-state ZIP holds a pipe-delimited geographic header
- *   (`<st>geo<yr>.pl`) and three data segments. segment 1 (`<st>00001<yr>.pl`) carries P1 + P2. We
+ *   (`<st>geo<yr>.pl`) and three data segments. segment 1 (`<st>00001<yr>.pl`) contains P1 + P2. We
  *   join the header (filtered to sumlev 750 = block) to segment 1 by logrecno. Field offsets are
  *   fixed by the 2020 P.L. layout (verified against the real files).
  *
@@ -53,7 +53,7 @@ const P2 = (fieldNo: number) => 76 + (fieldNo - 1)
  * / 916,517, the published CA 2020 figures.
  *
  * `occupied + vacant === housing_units` is the invariant that distinguishes a correct
- * offset from a plausible one, and {@link parseH1} refuses a row where it does not hold.
+ * offset from a plausible one. {@link parseH1} refuses a row when it does not hold.
  */
 export const SEG2_FIELD_COUNT = 152
 /**
@@ -65,7 +65,7 @@ export const H1_TOTAL = SEG2_FIELD_COUNT - 3
  */
 export const H1_OCCUPIED = SEG2_FIELD_COUNT - 2
 /**
- * H0010003 — vacant housing units, the last field (and so the one that carries a crlf file's trailing CR).
+ * H0010003 — vacant housing units, the last field (and so the one that contains a crlf file's trailing CR).
  */
 export const H1_VACANT = SEG2_FIELD_COUNT - 1
 
@@ -78,7 +78,7 @@ export interface H1Counts {
 /**
  * The three H1 counts from one segment-2 row.
  *
- * The last field carries crlf's trailing CR when the file has one, so each field
+ * The last field contains crlf's trailing CR when the file has one, so each field
  * is trimmed before it is read as a number.
  * A row whose counts do not add up is refused rather than stored.
  */
@@ -112,7 +112,7 @@ export function parseH1(fields: readonly string[]): H1Counts {
 const CATEGORY_INDEX = {
 	pop_total: P2(1),
 	hispanic: P2(2), // Hispanic or Latino (any race)
-	white: P2(5), // Not Hispanic: White alone
+	white: P2(5), // Not Hispanic: White without another race
 	black: P2(6),
 	aian: P2(7),
 	asian: P2(8),

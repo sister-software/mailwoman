@@ -74,7 +74,7 @@ export function collectPrimaryCoordinates(records: readonly SourceRecord[]): Map
  * (so an NPI's records stay together and recall is preserved), plus union two NPIs
  * at the same address KEY whose primary org names agree.
  *
- * Blocking on the address string is a conservative lower bound.
+ * The address-string block provides a conservative lower bound.
  * `1504 Taub loop` and `1504 Taub LP STE 100` key apart even though they are one building,
  * so a correct merge across them is still charged as an error.
  * The coordinate grain below is the tighter reading.
@@ -108,8 +108,8 @@ export function buildOrgNameGrain(npiPrimary: Map<string, NPIPrimary>): TruthLab
  * The coordinate-keyed org-name truth: union same-org NPIs whose primary practice
  * coordinates fall within {@linkcode COLOCATION_KM}.
  *
- * Blocking by the geocoded building catches the same-building pairs the address
- * string keys apart, so this F1 is at or above the string grain's.
+ * A geocoded-building block catches same-building pairs that the address string keys apart,
+ * so this F1 is at or above the string grain's.
  * The Jaccard test still blocks distinct co-located orgs.
  *
  * Compares every sampled NPI pair.

@@ -5,7 +5,7 @@
  *
  *   Adapter registry bootstrap.
  *
- *   Importing this module registers every built-in adapter with `defaultAdapterRegistry`. The CLI
+ *   The module registers every built-in adapter with `defaultAdapterRegistry` when loaded. The CLI
  *   (`commands/corpus/list.tsx`, `commands/corpus/run.tsx`) imports it once at startup.
  *
  *   Adapters under construction live in their own subdirectories (`./wof-admin-json/`, `./ban/`, ...)

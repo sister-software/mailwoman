@@ -9,14 +9,14 @@
  * This renders one set of real localities four ways and reports the locality-match rate of each,
  * so the three-arm table and the reverse risk are one measurement rather than two.
  *
- * Teaching `«locality», «region» «postcode»` risks the inverse, where a genuine street
- * before a region code is read as a locality.
+ * The `«locality», «region» «postcode»` training form risks the inverse,
+ * where a genuine street before a region code is read as a locality.
  * The reverse arm measures it by putting a street in that position and counting
  * how often it comes back tagged `locality`.
  * A row whose locality is null there is correct.
  *
  * Three arms render through `formatAddress` and the codex layouts.
- * They differ only in which components the dict carries.
+ * They differ only in which components the dict includes.
  *
  * `street_only` puts a street name where a locality belongs.
  * The normal renderer cannot produce this deliberate malformation.
@@ -26,7 +26,7 @@
  * Read the per-word table for its row counts first, since a per-word rate here
  * is a pointer to a question rather than an answer.
  *
- * `--out-json` carries every row's outcome for the same reason.
+ * `--out-json` records every row's outcome for the same reason.
  *
  * Run:
  *
@@ -74,7 +74,7 @@ const { values } = parseArguments({
  *
  * The reverse arm needs a street in the locality position.
  * A house number before the street makes the address shape unambiguous.
- * Removing the number measures the arm that already works.
+ * The number-free arm measures the case that already works.
  */
 function streetWithoutNumber(input: string): string | undefined {
 	const head = input.split(",")[0]?.trim()
@@ -93,16 +93,16 @@ const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
 
 /**
  * One panel locality, with the street the reverse arm stands in place of it
- * where the row's own input carries one.
+ * when the row's own input includes one.
  *
  * Only the reverse arm needs a street, so this field is optional.
  * A panel from a postcode export contains no streets.
  *
- * Requiring one would report every arm as `0/0` with a zero exit, an empty read
+ * Without one, every arm would report `0/0` with a zero exit, an empty read
  * that looks exactly like a measured zero.
  *
  * The three forward arms take every row.
- * `street_only` takes the rows that carry a street and says how many that was.
+ * `street_only` takes rows with a street and reports their count.
  */
 type ArmRow = PanelLocality & { street?: string }
 
@@ -161,16 +161,17 @@ const ARMS = [
 const EXAMPLES_PER_ARM = 5
 
 /**
- * One row's outcome, carried into the JSON so a per-word reading needs no second run.
+ * One row's outcome, included in the JSON so a per-word reading needs no second run.
  */
 interface RowOutcome {
 	arm: string
 	input: string
 	/**
-	 * The locality carried by the panel and the locality returned by the run.
+	 * The locality provided by the panel and the locality returned by the run.
 	 *
-	 * Both are localities, so neither is `locality` alone.
-	 * A field whose label is the tag says which tag, never which side of the comparison.
+	 * Both values describe a locality, so their property names must identify the comparison side.
+	 * A field labeled only `locality` would identify the tag but not
+	 * whether the value is expected or returned.
 	 */
 	expected: string
 	answered: string | null
@@ -197,8 +198,7 @@ for (const arm of ARMS) {
 	let noLocality = 0
 	const examples: string[] = []
 
-	// The reverse arm stands a real street where the locality belongs,
-	// so it can only read rows that carry one.
+	// The reverse arm stands a real street where the locality belongs, so it can only read rows that have one.
 	// The three forward arms read every row.
 	const rows = arm.name === "street_only" ? panel.filter((row) => row.street) : panel
 
@@ -232,7 +232,7 @@ for (const arm of ARMS) {
 
 		// What counts as a failure differs by arm, so the examples have to ask the arm.
 		// `street_only` is graded inverted.
-		// Listing rows whose answer differs from the expected locality would print its passes under "misses".
+		// A list of rows whose answer differs from the expected locality would print its passes under "misses".
 		// Every one of them `null`, which is the answer that arm wants.
 		const failed = arm.inverted ? locality !== null : locality !== place.locality
 
@@ -315,7 +315,7 @@ for (const arm of ARMS) {
 }
 
 if (values["out-json"]) {
-	// Reproducing a rate requires four values: panel bytes, model bytes, checkout
+	// A reproducible rate requires four values: panel bytes, model bytes, checkout
 	// and checkout cleanliness when the run read it.
 	// The two probe arms differ only by model.
 	// A staged candidate's model card can point through a symlink into the shared data root.

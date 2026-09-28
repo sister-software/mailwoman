@@ -27,7 +27,7 @@ const HIERARCHY_ORDER: readonly ComponentTag[] = [
 ]
 
 /**
- * Render an admin-hierarchy variant: the components it carries, in hierarchy order,
+ * Render an admin-hierarchy variant: the components it contains, in hierarchy order,
  * joined the way the country joins a line.
  *
  * This adapter emits a gazetteer query.
@@ -64,12 +64,12 @@ function renderHierarchy(
  * country names en route to its output (e.g. `"United States"` → `"United States of America"`).
  * If `components.country` and the formatted `raw` disagree, alignment will fail downstream.
  *
- * Keying off the canonical form keeps the two in lockstep.
+ * The canonical form keeps the two in lockstep.
  *
  * Phase 1 US + FR only.
  * Extend as new locales come online.
  *
- * Missing countries fall back to the country row's `wof:name`, accepting the
+ * A missing country uses the country row's `wof:name`; this preserves the
  * alignment risk for non-canonicalized names.
  */
 export const COUNTRY_DISPLAY_NAME: Record<string, string> = {
@@ -95,7 +95,7 @@ export interface WOFVariantSpec {
 	 *
 	 * A hierarchy variant is a query — `Paris`, then `Paris, Île-de-France`, then
 	 * `Paris, Île-de-France, France` — and several of its steps are not addresses at all.
-	 * France's postal layout carries no region, so rendering `{ locality, region }` through
+	 * France's postal layout has no region, so rendering `{ locality, region }` through
 	 * it prints `Paris` and the whole variant collapses into the one below it.
 	 *
 	 * So the hierarchy is joined in its own order: smallest unit first, or largest first
@@ -151,7 +151,7 @@ interface EmitWOFJSONRowsOptions {
 }
 
 /**
- * The value a record whose ancestors do not resolve carries in place of ancestor names.
+ * The value a record uses in place of ancestor names when its ancestors do not resolve.
  *
  * Frozen and shared, because the emitter reaches it once per such record
  * and constructing a fresh object per row would allocate one per name slot.

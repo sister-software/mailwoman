@@ -33,7 +33,7 @@ export type FetchNPPESOptions = BaseFetchOptions
 /**
  * Scrape the NPI_Files.html index for the latest full monthly ZIP: full-replacement
  * files match `NPPES_Data_Dissemination_<Month>_<Year>*.zip`, while weekly files
- * carry a `MMDDYY_MMDDYY` date range and are excluded.
+ * include a `MMDDYY_MMDDYY` date range and are excluded.
  */
 async function discoverLatestZip(): Promise<string | undefined> {
 	const html = await new APIClient({
@@ -54,8 +54,8 @@ async function discoverLatestZip(): Promise<string | undefined> {
 }
 
 /**
- * The main registry CSV (`npidata_pfile_*.csv`); the archive also carries a header file
- * and a per-month change file.
+ * The main registry CSV (`npidata_pfile_*.csv`); the archive also includes a
+ * header file and a per-month change file.
  */
 async function findNpidataCSV(zipPath: PathBuilderLike): Promise<string | undefined> {
 	const entries = await listZipEntries(zipPath)

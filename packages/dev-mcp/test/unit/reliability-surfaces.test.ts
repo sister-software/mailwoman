@@ -64,7 +64,7 @@ describe("decodeReliabilitySample", () => {
 	it("keeps a produced tag the truth row never mentions OUT of the curve, and counts it", async () => {
 		// No wired corpus asserts every component — the board asserts a median of one key
 		// per row — so an unasserted tag is not evidence of a hallucination.
-		// Curving it as one measures the corpus.
+		// A single curve measures the corpus rather than the behavior under test.
 		const sample = await decodeReliabilitySample(stubEngine(WITH_UNASSERTED), [ROW], ComponentAggregate.Min)
 
 		expect(sample.observations.map((observation) => observation.strata["tag"])).toEqual(["street"])
@@ -120,9 +120,9 @@ describe("decodeReliabilitySample", () => {
 	})
 
 	it("EXCLUDES a row with no component truth rather than grading it", async () => {
-		// A literal input carries no truth.
-		// Counting it as wrong would manufacture errors from rows without an assertion.
-		// Counting it as right would do the opposite.
+		// A literal input includes no truth.
+		// A wrong label would manufacture errors from rows without an assertion.
+		// A right label would hide errors in the same rows.
 		// Both are worse than saying so.
 		const run: GeocodeRunLike = {
 			result: { components: { street: "Main St" } },
@@ -155,7 +155,7 @@ describe("decodeReliabilitySample", () => {
 		// The result and the trace can disagree: a component assembled by a repair
 		// after the decode has no token carrying its tag.
 		// There is no confidence to grade there.
-		// Inventing one would be the defect.
+		// A fabricated value would be the defect.
 		const sample = await decodeReliabilitySample(
 			stubEngine({
 				result: { components: { locality: "Springfield" } },

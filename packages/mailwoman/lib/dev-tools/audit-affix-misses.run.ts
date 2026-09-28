@@ -24,7 +24,7 @@ import { JSONSpliterator } from "spliterator"
 import { normLoose } from "#dev-tools/value-match"
 
 /**
- * Longest suffix still likely an abbreviation when it carries no trailing period.
+ * Longest suffix still likely an abbreviation when it has no trailing period.
  */
 const MAX_ABBREVIATED_SUFFIX = 4
 

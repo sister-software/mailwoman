@@ -132,9 +132,9 @@ Six stages give us a different shape:
 - Each stage can be rolled back independently. A bad stage-4 release doesn't force a stage-3 rollback.
 - Smaller stages can run in environments that cannot host the encoder. A CLI normalizer takes microseconds, and the encoder takes milliseconds.
 
-Staging has a cost. Each handoff can drop signal, and each interface needs versioning and has to stay compatible across model upgrades. Six stages mean six model cards, six eval reports, and six rollback controls.
+The stages have a cost. Each handoff can drop signal, and each interface needs versioning and has to stay compatible across model upgrades. Six stages mean six model cards, six eval reports, and six rollback controls.
 
-## Mapping stages to Mailwoman versions
+## Map stages to Mailwoman versions
 
 | Stage                                 | What ships in…                                                                                                                                       |
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |

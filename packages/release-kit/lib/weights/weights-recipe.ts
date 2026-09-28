@@ -20,7 +20,7 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory rather than
+ * `shippedName` is the filename the artifact must have in a weights directory rather than
  * its source basename: `resolveFromPackageDir` finds siblings by fixed name, so an artifact
  * placed under its source name resolves to no path and reports absence rather than failing.
  */
@@ -76,7 +76,7 @@ export interface WeightsRecipe {
 /**
  * Read and resolve the recipe.
  *
- * `overrides` carries the publish-time environment escapes and their dev twins,
+ * `overrides` contains the publish-time environment escapes and their dev twins,
  * so a caller experimenting with a non-default model passes it here rather than each
  * consumer re-reading the environment and disagreeing about precedence.
  */
@@ -92,7 +92,7 @@ export async function readWeightsRecipe(
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
 	// `copy-weights.ts` lets an absolute config entry pass through.
-	// Matching that here keeps the two readers from disagreeing about what a leading slash means.
+	// This match keeps the two readers from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
 		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
@@ -148,8 +148,8 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// Presence rather than a path: the pair-index entries are heterogeneous — `gb` names
-		// a `source`, `us` only a `boroughDB`, and each country carries its own tuning —
+		// Presence rather than a path: the pair-index entries are heterogeneous —
+		// `gb` names a `source`, `us` only a `boroughDB`, and each country has its own tuning —
 		// and the build that reads them lives in `buildPairIndexOverlay`.
 		// Report that a build is owed and leave it where it lives.
 		if (softFeed.pairIndexByCountry?.[country]) {

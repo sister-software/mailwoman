@@ -50,7 +50,8 @@ export function VersionPicker({
 				value={selected ?? ""}
 				onChange={(e) => onSelect(e.target.value)}
 				disabled={disabled}
-				// The title shows the full label, which the field may clip.
+				// The title shows the full label.
+				// The field may clip it.
 				title={versions.find((v) => v.version === selected)?.label ?? selected ?? undefined}
 			>
 				{versions.map((v) => (

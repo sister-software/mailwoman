@@ -7,7 +7,7 @@
  *   the alternative to a refusal is a row that grades under an undeclared default and reports as authored.
  *
  *   The required pair is `rejects a fixture with no comparator` and `rejects an unknown comparator`:
- *   between them they are the whole reason the comparator set is closed, and both messages must carry the
+ *   between them they are the whole reason the comparator set is closed. Both messages must include the
  *   fixture's own id. A refusal that does not name the row sends the reader to a file with no line to open.
  */
 

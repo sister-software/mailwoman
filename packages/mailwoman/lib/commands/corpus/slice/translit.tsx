@@ -5,7 +5,7 @@
  *
  *   `mailwoman corpus slice translit` — build per-script parquet files from the DeepSeek-generated
  *   transliteration jsonl (one file per `deepseek-translit-<slug>` source) and emit the combined
- *   corpus manifest. Sibling of `corpus slice kryptonite`; also canonicalizes the base corpus's
+ *   corpus manifest. This command sits beside `corpus slice kryptonite`; it also canonicalizes the base corpus's
  *   legacy parquet paths (`$MAILWOMAN_DATA_ROOT/…` → `/data/…`).
  */
 

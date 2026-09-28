@@ -44,7 +44,7 @@ export function useMapBearing(map: MapInstance | null): UseMapBearing {
 		[map]
 	)
 
-	// The server snapshot is the same reading: no map during a server render,
+	// The server snapshot is the same reading: the server renders no map.
 	// and north is what a compass shows with no bearing to report.
 	const readBearing = useCallback(() => map?.getBearing() ?? 0, [map])
 

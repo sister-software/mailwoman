@@ -6,7 +6,7 @@ Three modules, in the order the builder uses them:
 - `rows.py` — turning one surface into a labeled row, with char offsets over the rendered text.
 - `build.py` — the CLI that assembles the recipe output and separates the 10% holdout.
 
-`python -m mailwoman_train.corpora.fragment` runs `__main__.py`, which carries the usage line.
+`python -m mailwoman_train.corpora.fragment` runs `__main__.py`, which prints the usage line.
 """
 
 from __future__ import annotations

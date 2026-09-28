@@ -81,7 +81,7 @@ const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
  * The FTS gazetteer supplies the `concordances` and `spr` tables.
  *
- * The candidate backend below carries no concordance table, so these use separate flags.
+ * The candidate backend below has no concordance table, so these use separate flags.
  */
 const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
 const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
@@ -186,7 +186,7 @@ async function recordPhase(): Promise<void> {
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
 			// Which withheld-gold rule produced this fixture.
-			// The two rules define different strata, so the benchmark id alone does not identify a run.
+			// The two rules define different strata, so the benchmark id by itself does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -261,16 +261,16 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
 const REQUIRED_MARGIN_POINTS = 8
 
 /**
- * What the receipt says about the fixture these results came from, read rather than assumed
+ * What the receipt records about the fixture these results came from, read rather than assumed
  * because the two withheld-gold rules define different strata and a report headed by the
- * definition alone would label a successor's numbers with the frozen benchmark's id.
+ * definition by itself would label a successor's numbers with the frozen benchmark's id.
  */
 async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
 	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was introduced carries no field.
+		// A fixture recorded before the rule was introduced has no field.
 		// This selects the v1 rule and marks the receipt's age.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
@@ -485,7 +485,7 @@ async function knobPhase(): Promise<void> {
 
 	// A raised floor changes what the walk asks next.
 	// Each arm loses a different set of rows to replay misses.
-	// Scoring each arm over its own survivors would compare rates whose denominators moved.
+	// Per-arm survivor scores would compare rates whose denominators moved.
 	// This intersection is what makes the columns comparable.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))

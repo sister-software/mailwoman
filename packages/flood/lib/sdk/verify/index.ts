@@ -10,10 +10,10 @@
  *   touched that geometry. The check runs the point test on the service's rings, then compares the two verdicts from
  *   the same authority. This measures our conversion against the authority's published geometry.
  *
- *   The negative half carries equal importance. Sample points in Wales and Scotland must return `unknown` with no
+ *   The negative half has equal importance. Sample points in Wales and Scotland must return `unknown` with no
  *   coverage row. They must never return Zone 1. Wales uses a different authority and a four-zone TAN15 scheme. That
- *   scheme differs from England's. Scotland uses a third system. Reporting either location as the EA's
- *   low-probability zone would violate this layer's coverage contract. The positive half alone could pass an artifact
+ *   scheme differs from England's. Scotland uses a third system. A report of either location as the EA's
+ *   low-probability zone would violate this layer's coverage contract. The positive half by itself could pass an artifact
  *   that answered Zone 1 for the whole
  *   planet.
  *
@@ -57,7 +57,7 @@ export interface AgreementRow {
 	/**
 	 * The zone the service's own geometry assigns, or `null` where no service polygon contains the point.
 	 *
-	 * A polygon that contains the point but carries no zone label is not `null`:
+	 * A polygon that contains the point but has no zone label is not `null`:
 	 * it is reported as `service_unlabelled`, because a service polygon with no label
 	 * is a defect in the service's answer and reading it as absence would
 	 * let it agree with an artifact that answers Zone 1 by absence.
@@ -74,7 +74,7 @@ export interface AgreementRow {
 	 * Vertex distance makes the boundary tolerance stricter than its stated value
 	 * and can report a rendering difference as a conversion defect.
 	 *
-	 * Every row carries this distance.
+	 * Every row includes this distance.
 	 * It separates a real defect from a difference caused by the two channels
 	 * rendering the same edge differently.
 	 *
@@ -168,7 +168,7 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
-			// Every row carries the distance.
+			// Every row includes the distance.
 			// Readers can inspect it when a disagreement appears without rerunning the check.
 			agreement.push({
 				...point,

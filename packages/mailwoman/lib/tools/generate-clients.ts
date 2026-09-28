@@ -28,7 +28,7 @@ const FLAVORS = ["3.1", "3.0"] as const
  * Resolves a surface's compiled CLI entry point from its `package.json` `bin`,
  * which is the OpenAPI emitter this pipeline runs.
  *
- * Reading `bin` rather than a literal emit path keeps it correct when a workspace's build layout moves.
+ * A `bin` lookup stays correct when a workspace's build layout moves, unlike a literal emit path.
  */
 export async function emitterCLIPath(surface: ClientSurface): Promise<string> {
 	const { bin } = await readPackageJSON<{ bin?: string | Record<string, string> }>(
@@ -85,7 +85,7 @@ export interface GenerateClientsOptions {
 
 	/**
 	 * Whether to skip the Python and Rust build checks.
-	 * Skipping them makes the output unfit as a release proof.
+	 * Their omission makes the output unfit as a release proof.
 	 */
 	skipVerify?: boolean
 	onPhase?: (phase: string, detail?: string) => void

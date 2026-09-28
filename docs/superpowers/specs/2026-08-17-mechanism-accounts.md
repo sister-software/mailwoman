@@ -6,7 +6,7 @@ claim-tagged research reports (`docs/records/research/2026-08-16-*.md`).
 
 ## 1. The problem
 
-Debugging this system today depends on whoever is reasoning about it at the time. The operator
+Diagnosis of this system today depends on whoever is reasoning about it at the time. The operator
 described the cost: after every context reset, someone has to re-learn how addresses behave from a
 narrow view, so the assistant's in-context reasoning has become a required part of improving the
 product. Nobody wants that dependency.
@@ -159,12 +159,12 @@ than prevent them), RRR gradient penalties, and attention-as-explanation.
   five-change counterfactual sweep, and `by_shape` aggregation. v1 reports the set of matching shapes
   with each predicate attached and `calibration: "none"`, rather than the normalized posterior §4
   describes. The scoring layer arrives with the v2 conformal calibration, which gives a posterior's
-  numbers their meaning. Building v1 exposed a coverage limit: the resolver-interior trace (#1721)
+  numbers their meaning. Version 1 exposed a coverage limit: the resolver-interior trace (#1721)
   records only the walk's own `#lookupAndPick`. A row answered by the post-walk span-rescore
   therefore carries a resolved coordinate beside an empty lookup list. Accounts report that case
   explicitly so the empty list is not read as "no retrieval happened".
 
-## 9. Sequencing
+## 9. Sequence
 
 `now` → #1717 (flag-only), remaining #1718 production bit
 `next` → #1721 (resolver interior in the trace), #1720 (ledger over accounts), census L2

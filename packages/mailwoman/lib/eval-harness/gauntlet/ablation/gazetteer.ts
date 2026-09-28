@@ -104,7 +104,7 @@ const NAME_PROBE_LIMIT = 2000
 
 /**
  * A two-database probe constructed once per run.
- * Disposing it releases both handles.
+ * Disposal releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -236,7 +236,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
 					// `spr` has no population column.
-					// Ranking never reads a lineage place's rank because the margin uses candidate-table rows.
+					// The margin uses candidate-table rows, so it never reads a lineage place's rank.
 					negRank: 0,
 					population: null,
 				}
@@ -280,7 +280,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 		if (!this.#reverse) return []
 
 		// The reverse hierarchy is already deepest-first.
-		// Each id is re-read off `spr` so every rung carries the bbox the reverse candidate shape lacks.
+		// Each id is re-read off `spr` so every rung includes the bbox the reverse candidate shape lacks.
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)
 			.hierarchy.map((h) => this.place(h.id))

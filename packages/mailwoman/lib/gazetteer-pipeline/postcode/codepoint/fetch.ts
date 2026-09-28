@@ -143,7 +143,7 @@ export function createOSDownloadsClient(): APIClient {
 
 /**
  * Fetches the Code-Point Open product record.
- * It carries the release `version`.
+ * It records the release `version`.
  */
 export async function fetchCodePointProduct(client: APIClient = createOSDownloadsClient()): Promise<CodePointProduct> {
 	const { data } = await client.fetch<CodePointProduct>({ url: `/products/${CODEPOINT_PRODUCT_ID}`, method: "GET" })
@@ -232,7 +232,7 @@ export interface DownloadCodePointResult {
  * Downloads a Code-Point Open archive into `destDir` and verifies its MD5 against the Downloads API record.
  *
  * It writes an `.md5` sidecar and `acquisition.json` provenance file beside the archive.
- * Reusing an archive leaves those files unchanged.
+ * Archive reuse leaves those files unchanged.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options

@@ -61,8 +61,8 @@ export interface SourceProvenanceMapOptions {
 
 // Collapse the raw `source` string into a human, mappable category.
 // The address-point DB stores e.g. "overture:NAD" or "overture:OpenAddresses/NY/NYC Open Data".
-// The suffix is the real upstream publisher, which is what we want to color by
-// (the "overture:" prefix is just the theme it arrived in).
+// The suffix gives the real upstream publisher.
+// Color features by that value (the "overture:" prefix is just the theme it arrived in).
 function categorize(source: string): { bucket: string; publisher: string } {
 	if (source === "overture:NAD") return { bucket: "National Address Database", publisher: "NAD (federal)" }
 
@@ -76,7 +76,7 @@ function categorize(source: string): { bucket: string; publisher: string } {
 }
 
 // Must stay a type alias. Rows come back from the driver as `Record<string, SQLOutputValue>[]` and
-// are asserted to `Row[]`; an object type alias carries an implicit index signature that makes that
+// are asserted to `Row[]`; an object type alias includes an implicit index signature that makes that
 // assertion legal, an interface does not.
 // oxlint-disable-next-line typescript/consistent-type-definitions -- needs the implicit index signature
 type Row = { lat: number; lon: number; source: string; number: string | null; street_raw: string | null }

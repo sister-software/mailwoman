@@ -57,8 +57,8 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
-	// A delivery city is not the geographic locality: 11201 is Brooklyn inside New York,
-	// and Queens uses neighbourhood names.
+	// A delivery city can differ from the geographic locality: 11201 is Brooklyn
+	// inside New York. and Queens uses neighbourhood names.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")
@@ -115,7 +115,7 @@ test("GeoNames postal names each postcode's delivery city, including territories
 })
 
 test("falls back to the combined dump for a country the per-country directory has no file for", async () => {
-	// The per-country directory carries no US.txt, so without this branch the GeoNames pass short-circuits on existsSync.
+	// The per-country directory has no US.txt, so without this branch the GeoNames pass short-circuits on existsSync.
 	await using dirDirectory = await temporaryDirectory("centroid-combined-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")
@@ -148,7 +148,7 @@ test("falls back to the combined dump for a country the per-country directory ha
 
 	expect(r.geonamesNames).toBe(1)
 
-	// FI carries the same postcode string — country scoping is what keeps Helsinki out of Brooklyn.
+	// FI has the same postcode string — country scoping is what keeps Helsinki out of Brooklyn.
 	const row = db.prepare("SELECT n.name AS name FROM names n WHERE n.id = 1").get() as { name: string }
 
 	expect(row.name).toBe("Brooklyn")

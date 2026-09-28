@@ -6,7 +6,7 @@
  *   Tests the prominence-floor definition audit. Each case supplies a definition the runner cannot execute.
  *   The audit reports the reason for each refusal.
  *
- *   Band edges define the measurement. Overlapping bands would count a row twice in per-band results.
+ *   Band edges define the measurement. Two bands that overlap would count a row twice in per-band results.
  *   A row without a recorded population must stay unbucketed rather than count as a zero-population member.
  */
 

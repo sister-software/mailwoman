@@ -47,7 +47,7 @@ export const GEONAMES_MAIN_COLUMNS = {
 const COL = GEONAMES_MAIN_COLUMNS
 
 /**
- * Feature codes for historical, abandoned or destroyed populated places, which the adapter skips.
+ * The adapter skips these feature codes for historical, abandoned, or destroyed populated places.
  */
 const NON_CURRENT_PPL = new Set(["PPLH", "PPLQ", "PPLW", "PPLCH"])
 

@@ -29,7 +29,7 @@ const probe = await loadForkEntityDeps({ dataRoot: dataRootPath(), forkEntity: t
 if (!probe.deps.poiLookup) {
 	// The census's entity half is the point.
 	// A run without poi.db would silently degrade every rescue_available_entity row into no_rescue_on_hand.
-	// The partial-reader rule says fail instead.
+	// The partial-reader rule requires a failure instead.
 	throw new Error("retrieval-rescue census requires poi.db (loadForkEntityDeps returned no lookup)")
 }
 
@@ -50,7 +50,7 @@ for (const c of cases) {
 
 	// Unconditional: ask the entity layer whenever the fork marker rode, including
 	// when the incumbent resolved.
-	// Measuring what check 1 currently silences is the census's purpose.
+	// The census measures what check 1 currently silences.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric
 			? probeForkEntity(c.input, {

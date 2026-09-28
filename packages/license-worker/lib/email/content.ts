@@ -5,7 +5,7 @@
  *
  *   The license message's copy, once, as sections: the text body and the html body render the same list, so neither
  *   can say something the other does not. It walks the buyer from the key to what comes after it: install it on each
- *   machine, let the subscription renew and fetch the renewed key, change the card or cancel at the portal, and where
+ *   machine, let the subscription renew and fetch the renewed key, change the card or cancel at the portal. It also explains where
  *   to write. It never names an amount or a Stripe id.
  */
 
@@ -39,7 +39,7 @@ export function licenseEmailPreview(message: LicenseEmail): string {
 /**
  * The command that installs the key on a machine: with the secret on the first message,
  * so renewals can be fetched from there.
- * The token alone after.
+ * The token by itself after.
  */
 export function adoptCommand(message: LicenseEmail): string {
 	return message.refreshSecret

@@ -202,7 +202,7 @@ export async function writePrivateTextFile<S extends PathBuilderLike[]>(
 	const filePath = resolvePath(...pathSegments)
 
 	await makeDirectories(dirname(filePath))
-	// Setting the mode at creation keeps a new file private from the start.
+	// The mode at creation keeps a new file private from the start.
 	// `writeFile` keeps an existing file's mode, so `changeMode` also runs afterwards.
 	await writeFile(filePath, await content, { encoding: "utf8", mode: 0o600 })
 	await changeMode(filePath, 0o600)

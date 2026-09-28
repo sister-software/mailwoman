@@ -749,7 +749,8 @@ describe("clusterInferredLinks — cross-vintage supersession", () => {
 		expect(edgesAfterFirstBuild).toHaveLength(1)
 		expect(edgesAfterFirstBuild[0]?.valid_to).toBeNull()
 
-		// Node B gets a corrected name, and the rerun keeps the same vintage label.
+		// Node B gets a corrected name.
+		// The rerun keeps the same vintage label.
 		await db
 			.insertInto("filer_attribute")
 			.values({

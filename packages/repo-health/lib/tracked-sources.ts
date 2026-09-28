@@ -76,7 +76,7 @@ export function pathspecPattern(pathspec: string): RegExp {
 /**
  * The tracked sources of `context`, as absolute paths in `git ls-files` order.
  *
- * The index can carry a stray build artifact under `out/` or `node_modules/`.
+ * The index can include a stray build artifact under `out/` or `node_modules/`.
  * Checks should never read those paths, so the function always drops these segments.
  */
 export async function trackedSourcePaths(context: RepoContext, options: TrackedSourceOptions = {}): Promise<string[]> {

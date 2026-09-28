@@ -49,7 +49,7 @@ SEED = 42
 #: for a corpus assembled after the rewrite, so it writes the current spelling.
 #:
 #: Composed into `source_id` rather than written twice, because `push` stamps the id from this and a rename
-#: that changed one and not the other would make the id name a source no row carries.
+#: that changed one and not the other would make the id name a source absent from every row.
 SOURCE = "fragment-assay"
 
 
@@ -146,7 +146,7 @@ def span_rows_from_corpus(
         if done:
             break
 
-        # `iter_batches().to_pylist()` is row-aligned by construction. Zipping multiple ChunkedArrays
+        # `iter_batches().to_pylist()` is row-aligned by construction. The code zips multiple ChunkedArrays
         # silently misaligns columns at chunk boundaries.
         for batch in pq.ParquetFile(path).iter_batches(
             columns=["raw", "span_starts", "span_ends", "span_tags", "country"], batch_size=8192

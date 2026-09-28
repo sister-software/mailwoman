@@ -119,7 +119,7 @@ describe("buildStreetComponents", () => {
 
 describe("buildCensusComponents", () => {
 	it("recovers the house number from matchedAddress", () => {
-		// The address components carry only a number range.
+		// The address components include only a number range.
 		expect(buildCensusComponents(match()).house_number).toBe("4600")
 	})
 

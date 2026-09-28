@@ -28,7 +28,7 @@ const hasCLICompiled = await pathExists(CLI_PATH)
  * Wall-clock budget for a CLI spawn.
  * See the note in `geocode.test.ts`.
  *
- * A single spawn costs ~5.6 s, 2.7 s of it node boot alone.
+ * A single spawn costs ~5.6 s, including 2.7 s of node boot.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
@@ -49,7 +49,7 @@ const CLI_TEST_TIMEOUT_MS = 120_000
  * It would inherit the global 15s timeout.
  *
  * That timeout can kill the operation before it reports.
- * The failure then says timeout without attribution.
+ * The failure then reports timeout without attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -121,7 +121,7 @@ describe.skipIf(!hasCLICompiled)("mailwoman skill install", () => {
 		const staleFile = skillDir("stale-reference.md")
 
 		// Plant a file that a hypothetical older install left behind and the current
-		// shipped skill no longer carries.
+		// shipped skill no longer includes.
 		// A merge-only copy (bare cpSync) would leave this in place forever.
 		await makeDirectories(skillDir)
 		await writeLocalTextFile("belongs to an older skill version; must not survive a reinstall", staleFile)

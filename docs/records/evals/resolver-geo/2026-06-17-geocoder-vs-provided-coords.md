@@ -59,7 +59,7 @@ parsed street/number then hits the rooftop extract more frequently (47% → 62%)
 small, fixable artifact (preserve all-caps 2-letter state codes) against a large net win. Ships
 **default-OFF** behind the `normalizeCase` opt.
 
-## Reading
+## How to read the results {#reading}
 
 - **The geocoder works where it has data.** On real TX facility addresses, the address-point + street
   tiers put p50 error at 0.1–0.7 km — rooftop-to-street accuracy rather than city-centroid. The pre-geocoded

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ratio alone does not separate a mis-recorded city from a namesake village under a large
+ *   The ratio by itself does not separate a mis-recorded city from a namesake village under a large
  *   district: what separates them is how common the name is and whether a second register agrees.
  */
 
@@ -41,7 +41,7 @@ const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 
 /**
  * Aurangabad, Maharashtra (renamed Chhatrapati Sambhajinagar), the row this detector
- * must reach, reported at the end so a run says whether it still does.
+ * must reach, reported at the end so a run shows whether it still does.
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
@@ -103,7 +103,7 @@ const candidates = db
 
 const sameName = candidates.filter((row) => nameKey(row.name) === nameKey(row.parentName))
 
-// How many reported rows carry the `gn:id` link a second register would be read through,
+// How many reported rows include the `gn:id` link a second register would be read through,
 // counted rather than followed because the GeoNames population file is a separate download.
 const wanted = new Set(sameName.map((row) => row.id))
 

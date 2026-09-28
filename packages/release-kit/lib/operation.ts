@@ -26,7 +26,8 @@ export const OperationEffect = {
 	/**
 	 * Writes to a system outside this machine.
 	 *
-	 * Irreversible, credentialed, and reachable only through the plan → execute interface.
+	 * The operation is irreversible and credentialed.
+	 * Only the plan → execute interface can reach it.
 	 */
 	ExternalWrite: "external-write",
 } as const

@@ -15,7 +15,7 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * The MIT permission sentence that a shipped copy must carry.
+ * The MIT permission sentence that a shipped copy must include.
  *
  * The sentence is wrapped across two blockquote lines to test that the check matches through a line break.
  */

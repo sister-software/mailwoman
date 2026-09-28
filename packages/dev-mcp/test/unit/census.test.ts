@@ -61,13 +61,13 @@ describe("evidenceCensus", () => {
 	})
 
 	it("flags starvation only when every PRESENT channel is silent", () => {
-		// The Weimar signature: channels configured, retrieval fed no row, model decided from embeddings alone.
+		// The Weimar signature: channels configured, retrieval fed no row, model decided using only embeddings.
 		expect(evidenceCensus(trace({ anchor: SILENT, gazetteer: SILENT, country: SILENT })).silent).toBe(true)
 	})
 
 	it("does not call an unconfigured session starved", () => {
-		// No channels at all is a fact about the configuration rather than the input, and reporting it as
-		// starvation would send the reader to the retrieval side when the wiring is what is missing.
+		// No channels at all is a fact about the configuration rather than the input.
+		// A starvation label would send the reader to the retrieval side when the wiring is what is missing.
 		expect(evidenceCensus(trace()).silent).toBe(false)
 	})
 

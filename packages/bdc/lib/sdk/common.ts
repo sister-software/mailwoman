@@ -157,7 +157,7 @@ export interface RawBDCFile {
 	/**
 	 * Comma-separated list of technology codes.
 	 *
-	 * Nullable in live data: the FCC's `/map/downloads/listAvailabilityData` response carries
+	 * Nullable in live data: the FCC's `/map/downloads/listAvailabilityData` response includes
 	 * `technology_code: null` for at least some State-category rows (first observed in the live
 	 * FCC smoke test, see `.superpowers/sdd/2026-07-30-bdc-2b-plan/live-smoke-findings.md`).
 	 * Guarded in {@linkcode parseRawBDCFile} — a null value parses to an empty

@@ -132,7 +132,7 @@ const WARM_LOWERCASE_INPUTS = 4
 const WARM_ITERATIONS = 64
 
 /**
- * Discarded parses before measurement starts, because the first few carry ORT's per-shape allocation.
+ * Discarded parses before measurement starts, because the first few include ORT's per-shape allocation.
  */
 const WARM_WARMUP_ITERATIONS = 8
 
@@ -410,7 +410,7 @@ async function createAssetServer(
 
 		if (!range) {
 			// The VFS requests ranges from a multi-gigabyte gazetteer.
-			// Answering a whole-file GET would hide the range behavior this test measures.
+			// A whole-file GET would hide the range behavior this test measures.
 			res.writeHead(HTTP_RANGE_NOT_SATISFIABLE, { "Content-Range": `bytes */${size}` })
 			res.end()
 
@@ -807,7 +807,7 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 		// ORT writes warnings to wasm stderr.
 		// They reach the page as console errors.
 		// `VerifyEachNodeIsAssignedToAnEp` fires on every session.
-		// Classifying those messages as page errors would make real page errors easy to miss.
+		// Those messages would become page errors and make genuine page errors easy to miss.
 		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
 			pageErrors.push(message.text())
 		}

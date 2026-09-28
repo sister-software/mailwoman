@@ -122,8 +122,8 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	/**
 	 * End the connection at scope exit, synchronously.
 	 *
-	 * `destroy()` returns a promise that `Symbol.dispose` cannot await,
-	 * and `node:sqlite`'s `close()` is synchronous.
+	 * `destroy()` returns a promise, so `Symbol.dispose` cannot call it.
+	 * `node:sqlite`'s `close()` is synchronous.
 	 */
 	[Symbol.dispose](): void {
 		this.#database[Symbol.dispose]()

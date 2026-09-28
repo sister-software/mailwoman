@@ -101,7 +101,7 @@ export function tieredCountries(scope: ScopeConfig): Set<string> {
  * Returns the training config for one weights family.
  *
  * @throws When the family has no entry.
- * Falling back to another family's config would report the wrong model's admissions.
+ * A fallback to another family's config would report the wrong model's admissions.
  */
 export function shippedTrainingConfig(scope: ScopeConfig, family: string): ShippedTrainingConfig {
 	const entry = scope.trainingConfigs?.[family]

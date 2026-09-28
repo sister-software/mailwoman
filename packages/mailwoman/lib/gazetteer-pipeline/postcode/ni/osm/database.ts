@@ -58,7 +58,7 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
  * ISO-3166-1 alpha-2 stamped on every row.
  *
  * Northern Ireland is part of the United Kingdom.
- * `pickExtractForPlacetype` routes on country, so the postcode area (`BT`) must carry
+ * `pickExtractForPlacetype` routes on country, so the postcode area (`BT`) must include
  * the distinction between Northern Ireland and Great Britain.
  */
 const COUNTRY = "GB"
@@ -76,7 +76,7 @@ export const NI_LIVE_POSTCODES = 50_032
 export const NI_TOTAL_SECTORS = 886
 
 /**
- * Total NI postcode districts — the outward code alone (`BT3`), i.e. `BT1`–`BT94` with the gaps removed.
+ * Total NI postcode districts — the outward code by itself (`BT3`), i.e. `BT1`–`BT94` with the gaps removed.
  */
 export const NI_TOTAL_DISTRICTS = 80
 
@@ -91,7 +91,7 @@ export interface BuildPostcodeNIOSMOptions {
 	 * Output artifact.
 	 *
 	 * Default `<data-root>/db/wof/postalcode-ni-osm-<yyyy-MM-DD>.db` — a new dated path every build.
-	 * Copying it to the canonical `postalcode-ni-osm.db` is a deliberate, separate step.
+	 * A separate step copies it to the canonical `postalcode-ni-osm.db`.
 	 */
 	out?: PathBuilderLike
 	/**
@@ -135,7 +135,7 @@ export interface BuildPostcodeNIOSMResult {
 	 */
 	osmTimestamp: string
 	/**
-	 * Anything that failed to reconcile: a drop the counters cannot account for, or a district/sector
+	 * Every unreconciled row represents a drop that the counters cannot account for, or a district/sector
 	 * count above the national total (which would mean the validator is admitting non-NI codes).
 	 */
 	reconciliationFailures: string[]
@@ -349,7 +349,7 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
  * Every tagged element is a point or an accounted drop.
  * Districts and sectors stay within the national totals.
  *
- * Every record carries at least one attestation, so zero means "not in OSM"
+ * Every record has at least one attestation, so zero means "not in OSM"
  * rather than "in OSM with no evidence".
  */
 function reconcile(

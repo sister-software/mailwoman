@@ -22,7 +22,7 @@ export interface GeonamesPostalRow {
 
 /**
  * Iterate a GeoNames postal dump (`download.geonames.org/export/zip/<CC>.zip` → `<CC>.txt`, TSV):
- * one row per (postcode, settlement) that carries a parseable coordinate.
+ * one row per (postcode, settlement) with a parseable coordinate.
  *
  * `header: false` is required.
  * The dump is headerless, so row 1 would otherwise be read as column names.

@@ -37,7 +37,7 @@ The full boundary doc (the per-source license matrix, the attribution requiremen
 requirement) is [`docs/articles/licensing/data-provenance.md`](../docs/articles/licensing/data-provenance.md); this
 section is the package-local summary.
 
-## Building a per-country database
+## Build a per-country database
 
 You need GDAL (`ogr2ogr`) on the path — the same dependency `@mailwoman/tiger` uses. GDAL's OSM driver
 resolves node and way/polygon geometries for us, so building-tagged addresses (the dominant German shape)

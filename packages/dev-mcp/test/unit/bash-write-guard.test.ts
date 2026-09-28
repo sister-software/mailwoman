@@ -173,12 +173,12 @@ describe("bash-write-guard: the work a session actually does", () => {
 		["process substitution as an argument", `comm -12 <(sort /tmp/a.txt) /tmp/b.txt`],
 		["reading the stash", `git stash list`],
 		// This command writes no file.
-		// The standing rule says to clear an entry after restoration.
+		// The standing rule requires clearing an entry after restoration.
 		// The explicit index is the condition: it is what stops a bare `drop` from
 		// silently taking another session's `stash@{0}`.
 		["dropping a named stash entry", `git stash drop stash@{0}`],
 		["dropping a named stash entry further down the stack", `git stash drop stash@{12}`],
-		// A brace glued to a word is part of that word. Splitting on it read each of these as two segments, the second
+		// A brace glued to a word is part of that word. The splitter would read each example as two segments, with the second
 		// The next segment started with a digit. The guard refused the read-only command with
 		// "`1` is not on the admitted command list".
 		// oxlint-disable-next-line mailwoman/prefer-home -- a fixture command string rather than this file reading git state.
@@ -221,7 +221,7 @@ describe("bash-write-guard: the work a session actually does", () => {
 		// A quoted value used to split the assignment into two words, so the head became
 		// the quote placeholder and the `quoted` refusal — a word absent from the input,
 		// for a command admitted the moment the quotes came off.
-		// Quoting a value that carries `$PWD` or a space is how anyone writes one.
+		// A value with `$PWD` or a space requires quoting in ordinary shell syntax.
 		["an environment assignment with a quoted value", `MAILWOMAN_DATA_ROOT="/srv/mailwoman-data/x" yarn test`],
 		["a quoted PATH before a node script", `PATH="$PWD/node_modules/.bin:$PATH" node config/vale/check-rules.ts`],
 		// A quote nested inside another kind of quote.

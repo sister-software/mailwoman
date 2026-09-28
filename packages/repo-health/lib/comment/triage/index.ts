@@ -81,7 +81,7 @@ const LONG_COMMENT_MINIMUM_LENGTH = 900
 const LONG_COMMENT_MINIMUM_SENTENCES = 8
 
 /**
- * How many sentences a comment's prose carries, splitting on terminal punctuation.
+ * How many sentences a comment's prose contains, splitting on terminal punctuation.
  *
  * The split leaves an empty segment wherever two terminators meet and one at the end
  * when the prose closes on a terminator, so only segments carrying a non-space character count.
@@ -105,7 +105,7 @@ function sourceFileFor(path: string, text: string): ts.SourceFile {
 }
 
 /**
- * Read every scanner-recognized line, block, and JSDoc comment with source coordinates.
+ * Read every scanner-recognized line, block and JSDoc comment with source coordinates.
  */
 export function sourceComments(path: string, text: string): SourceComment[] {
 	const source = sourceFileFor(path, text)

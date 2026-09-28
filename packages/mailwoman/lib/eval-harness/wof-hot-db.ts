@@ -5,7 +5,7 @@
  *
  *   Resolve the `wof-hot.db` used by the demo-cascade smoke test.
  *
- *   `promotion-eval.ts`, the smoke module, and the provenance report must use the same lookup order. The database
+ *   `promotion-eval.ts`, the smoke module and the provenance report must use the same lookup order. The database
  *   exists only in a staged demo release. The smoke test skips when the file is absent, so provenance must report
  *   the exact path that the test checks.
  *

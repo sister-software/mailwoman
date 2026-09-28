@@ -104,7 +104,8 @@ describe("scorePairwiseGrouping", () => {
 	})
 
 	it("reports F1 as 0 (not null) when BOTH components are defined and nothing was recovered — a measured miss", () => {
-		// Truth and prediction each have one pair, and the pairs differ.
+		// Truth and prediction each have one pair.
+		// The pairs differ.
 		const truth = new Map([
 			["a", "g1"],
 			["b", "g1"],

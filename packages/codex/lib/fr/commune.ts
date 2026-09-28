@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Casing of French commune names.
+ *   French commune-name casing.
  */
 
 import { titleCase } from "spliterator/casing"
 
 /**
- * Joining particles that stay lowercase inside a commune name: `Saint-Jean-de-Luz`, `Méry-sur-Oise`.
+ * Lowercase particles inside commune names include `Saint-Jean-de-Luz` and `Méry-sur-Oise`.
  *
  * A leading particle is not a joiner and is capitalized (`Le Mans`).
  */

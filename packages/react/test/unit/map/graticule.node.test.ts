@@ -5,7 +5,7 @@
  *
  *   `buildGraticule` is pure geometry, so it is tested here rather than in the browser suite. What matters is that the
  *   lines are densified. A meridian drawn as two endpoints is a straight chord through the sphere under a globe
- *   projection, and would pass through the globe instead of curving over it.
+ *   projection. It would pass through the globe instead of curving over it.
  */
 
 import { buildGraticule } from "@mailwoman/react/map/graticule"

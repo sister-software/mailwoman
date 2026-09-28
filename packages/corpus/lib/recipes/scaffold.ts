@@ -50,7 +50,7 @@ export interface RecipeTuple {
 	/**
 	 * The source's segment before the locality.
 	 *
-	 * Including it prevents every recipe row from beginning with the locality
+	 * Its inclusion prevents every recipe row from beginning with the locality
 	 * and teaching that the first segment is the locality.
 	 */
 	dependentLocality?: string
@@ -64,7 +64,7 @@ export interface RecipeTuple {
 	 */
 	postcodePlacement?: PostcodePlacement
 	/**
-	 * `source_id` of the record this tuple was extracted from, when the extraction carried it.
+	 * `source_id` of the record this tuple was extracted from, when the extraction included it.
 	 *
 	 * A recipe forwards it as `baseSourceID`, which is the only way a `composed`
 	 * row can name the record behind it.
@@ -105,7 +105,7 @@ export function withoutLineBreaks(record: CSVRecord): CSVRecord {
  *
  * Returns the spliterator's own {@linkcode AsyncSequence} so a caller composes
  * `take`/`drop`/`filter` onto it.
- * Wrapping this in an `async function*` would cost an async frame per row and take those ops away.
+ * An `async function*` wrapper would cost an async frame per row and remove those ops.
  */
 export function readCSVRecords(source: AsyncDataResource | AsyncChunkIterator): AsyncSequence<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(source).map(withoutLineBreaks)
@@ -157,7 +157,7 @@ export interface OATupleSource {
 
 /**
  * The four base fields every OA tuple reader extracts; `postcode` is `""` when the row
- * carries none and {@link ReadOATuplesOptions.requirePostcode} is unset.
+ * contains no postcode and {@link ReadOATuplesOptions.requirePostcode} is unset.
  */
 export interface OATupleFields {
 	house_number: string
@@ -258,7 +258,7 @@ export interface CanonicalRecipeRow {
 /**
  * Emit one line of a recipe's output.
  *
- * The delimiter is supplied separately, so pass the content alone, never `content + "\n"`.
+ * The delimiter is supplied separately, so pass only the content, without appending `"\n"`.
  */
 export type WriteRecipeLine = (line: string) => void
 
@@ -273,7 +273,7 @@ export interface RecipeLineSink {
 /**
  * Bind {@linkcode WriteRecipeLine} to a sink, supplying the delimiter.
  *
- * Concatenating the two would stringify a non-string chunk through `toString()` and corrupt its bytes.
+ * A concatenation would stringify a non-string chunk through `toString()` and corrupt its bytes.
  */
 export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
 	return (line) => {
@@ -286,7 +286,7 @@ export function createRecipeLineWriter(sink: RecipeLineSink): WriteRecipeLine {
  * What a recipe records about the rows it writes.
  *
  * `register` and `surface` answer separate questions.
- * Collapsing them would report a real record as fabricated.
+ * A collapsed result would report a real record as fabricated.
  */
 export interface RecipeProvenance {
 	/**
@@ -306,7 +306,7 @@ export interface RecipeProvenance {
 	 * `null` is a statement rather than an omission.
 	 *
 	 * A `composed` row reorders fields from a real record, so it has an underlying record by definition.
-	 * `null` says the recipe did not carry that record's id forward.
+	 * `null` means the recipe did not preserve that record's id.
 	 *
 	 * The cost of `null` is measurable.
 	 * Over `v0.6.0-register-surface` it is `null` for 4,176,539 of the 4,206,561 `composed` rows,
@@ -398,7 +398,7 @@ export interface RecipeOptions {
 	 */
 	commaFreeFraction?: number
 	/**
-	 * `german`: fraction of rows that carry a WOF Ortsteil of the tuple's locality as `dependent_locality`.
+	 * `german`: fraction of rows whose `dependent_locality` is a WOF Ortsteil of the tuple's locality.
 	 *
 	 * The default is 0.3.
 	 * It is 0 when no admin database is readable.

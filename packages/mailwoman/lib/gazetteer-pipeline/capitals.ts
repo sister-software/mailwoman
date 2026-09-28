@@ -30,7 +30,7 @@ import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
  *
  * `latitude`/`longitude` are rounded to 4 decimals (~11 m).
  * The consumer matches within a kilometre radius.
- * Rounding keeps the committed file small.
+ * The rounded coordinates keep the committed file small.
  */
 export interface CapitalReferenceEntry {
 	/**
@@ -76,11 +76,11 @@ export interface CapitalsReference {
 		 * (GeoNames' postal exports share the basename).
 		 *
 		 * A wrong-format file cannot answer the capital question, so it does not count as scanned.
-		 * Reporting "scanned, found none" would falsely claim the reader had complete evidence.
+		 * A "scanned, found none" result would falsely claim the reader had complete evidence.
 		 */
 		wrong_format: string[]
 		/**
-		 * Scanned catalog countries whose dump carries no `pplc` row, a fact about the source.
+		 * Scanned catalog countries whose dump contains no `pplc` row, a fact about the source.
 		 */
 		missing_national: string[]
 		/**

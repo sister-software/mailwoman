@@ -118,7 +118,7 @@ export function isRetryableStatus(status: number): boolean {
 }
 
 /**
- * Read the `Retry-After` header off an Axios error's response, if it carried one.
+ * Read the `Retry-After` header from an Axios error's response, if present.
  *
  * Axios lower-cases response header names, but `AxiosHeaders` lookups are case-insensitive anyway.
  * The lower-case spelling is used for the plain-object shape a stubbed adapter may return.
@@ -146,7 +146,8 @@ function retryAfterFrom(error: AxiosError): number | null {
  *
  * A caller-initiated cancel (`ERR_CANCELED`, i.e. the caller's own `AbortSignal` fired) is not retryable.
  * The caller asked us to stop.
- * Retrying would defy that request.
+ *
+ * The retry classification treats caller cancellation as terminal.
  *
  * Axios reports its own `timeout` config as `econnaborted`/`etimedout`, so the two are distinguishable.
  */
@@ -172,7 +173,7 @@ export function classifyAxiosFailure(error: unknown): RetryDirective {
  * An `APIClient` without this option makes exactly one attempt.
  *
  * The existing `TileAPI` consumer uses that behavior.
- * Turning it on repo-wide would silently multiply every caller's failure latency.
+ * A repo-wide default would silently multiply every caller's failure latency.
  */
 export interface RetryOptions {
 	/**
@@ -185,7 +186,7 @@ export interface RetryOptions {
 	/**
 	 * Base delay for the exponential backoff, in milliseconds.
 	 *
-	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response carried a `Retry-After` header.
+	 * Attempt `n`'s wait is `baseDelayMs * 2^(n-1)`, unless the response included a `Retry-After` header.
 	 * The client honors that delay instead.
 	 * Default {@linkcode DEFAULT_BASE_RETRY_DELAY_MS}.
 	 */

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The Hugging Face materialization plan: a character-path family reads from its own bucket directory against its
- *   own card, and is planned only once its workspace is in the release list.
+ *   own card. It is planned only once its workspace is in the release list.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

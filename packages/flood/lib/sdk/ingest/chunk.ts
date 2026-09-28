@@ -12,7 +12,7 @@
  *   A build that completes only when fragmentation happens to stay low is not a reproducible build, so
  *   {@linkcode buildFloodDatabase} bounds classification by running one chunk for each range of authority feature ids.
  *   It runs each chunk in a separate process, so each starts with an empty heap. The call-removal shortcuts in `cells.ts`
- *   improve speed. Chunking provides the correctness guarantee.
+ *   improve speed. Chunks provide the correctness guarantee.
  *
  *   The chunk appends rows to a database created and sealed by its parent. It returns counts for the parent to add.
  *   Chunks run sequentially against the file, so the build has one writer and requires no locking.
@@ -37,7 +37,7 @@ import { EA_FLOOD_ZONE_CODES } from "#vocabulary"
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table because each row carries a blob.
+ * Chosen for the geometry table because each row contains a blob.
  * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000

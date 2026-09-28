@@ -1,1 +1,1 @@
-"""Scoring a trained model: per-component metrics and the golden-set parse comparison."""
+"""Score a trained model with per-component metrics and a golden-set parse comparison."""

@@ -8,9 +8,9 @@ import { resolvePath } from "path-ts"
  * @author Teffen Ellis, et al.
  *
  *   Fail-fast guard for the npm-provenance `repository` requirement. Every npm publish is
- *   provenance-signed, and sigstore provenance verification rejects (http 422) any workspace
+ *   provenance-signed. Sigstore provenance verification rejects (HTTP 422) any workspace
  *   whose `package.json` lacks a `repository.url` matching the source repo. This asserts every
- *   workspace in the `.release-it.json` publish set carries the canonical `repository` block, so a
+ *   workspace in the `.release-it.json` publish set includes the canonical `repository` block, so a
  *   drift fails at PR/CI time instead of mid-release.
  */
 import { describe, expect, it } from "vitest"
@@ -26,7 +26,7 @@ describe("#757 release provenance: every published workspace declares its reposi
 
 		const repo = pkg.repository
 
-		// npm accepts a shorthand string here, but that form carries no `directory`.
+		// npm accepts a shorthand string here, but that form has no `directory`.
 		// A missing or empty repository.url is what npm provenance rejects with E422.
 		if (typeof repo !== "object") {
 			throw new TypeError(`${ws}/package.json must declare "repository" as an object, not ${typeof repo}`)

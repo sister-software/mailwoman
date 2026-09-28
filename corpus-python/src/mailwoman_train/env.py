@@ -1,7 +1,7 @@
 """The typed environment. No other module in this package reads `os.environ`.
 
-The counterpart of `packages/core/lib/env/schema.ts`, with the same split: `public()` carries
-non-secret operational configuration, `private()` carries credentials. A package that reads its own
+The counterpart of `packages/core/lib/env/schema.ts`, with the same split: `public()` exposes
+non-secret operational configuration, `private()` exposes credentials. A package that reads its own
 variable declares it here, beside the reader, so the set of variables this code depends on is one
 list rather than a grep.
 
@@ -74,7 +74,7 @@ def _blank_as_absent(name: str) -> str | None:
     """Read a variable, treating a present-but-empty value as unset.
 
     A shell exports a blank variable when an unset value is interpolated into an `env:` block.
-    Reading it as configured would pass an empty string to a path join.
+    A configured empty string would pass an empty value to a path join.
     """
     value = os.environ.get(name)
     return value if value else None

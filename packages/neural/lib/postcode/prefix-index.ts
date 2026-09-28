@@ -459,7 +459,7 @@ export class PostcodePrefixIndexResolver implements PostcodePrefixIndexLike {
 	/**
 	 * Returns the node for one prefix, or `null` when the index has none.
 	 *
-	 * A miss is neutral unless the header's `coverageNote` says the register is complete.
+	 * A miss is neutral unless the header's `coverageNote` reports that the register is complete.
 	 */
 	probe(prefix: string): PostcodePrefixNode | null {
 		return this.#nodes.get(prefix) ?? null

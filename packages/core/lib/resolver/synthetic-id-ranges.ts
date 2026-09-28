@@ -6,7 +6,7 @@
  *
  *   A real WOF id is below 2e9. Every other source a gazetteer artifact folds in mints ids from a higher base.
  *   The bases must be pairwise distinct. The candidate table's `candidate_ancestor` and
- *   `candidate_interval` sidecars are keyed by `spr_id` alone, a result's `placeID` is `wof:<spr_id>`, and the
+ *   `candidate_interval` sidecars are keyed only by `spr_id`, a result's `placeID` is `wof:<spr_id>`, and the
  *   backend's `ancestors(id)` answers whichever row wrote last. Two builders that pick the same base give two places
  *   one id — which happened twice while each builder kept its own list of the ranges it believed were taken
  *   (NZ localities and Code-Point Open both at 9.7e12, 3,033 shared ids in the served table. CZ districts and the NI

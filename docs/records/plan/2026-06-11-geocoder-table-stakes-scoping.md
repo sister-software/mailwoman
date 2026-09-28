@@ -1,6 +1,6 @@
 # Geocoder table stakes — scoping notes (#483 interpolation, #484 reverse)
 
-Scoping per the post-parity agenda (the Codex review's sequencing concurs: start these in
+This scope follows the post-parity agenda (the Codex review's sequencing concurs: start these in
 parallel with parser tail work, don't block on perfect parity). These are NOTES rather than designs —
 each gets its own design doc when picked up.
 
@@ -38,7 +38,7 @@ grain. **Open questions:** odd/even side handling fidelity in TIGER; ZIP+4-assis
 new `@mailwoman/resolver-interpolation` workspace (lean: new workspace — different data
 lifecycle, the slim/fat split the demo taught).
 
-## Sequencing recommendation
+## Recommended sequence
 
 #484 first (one agent-night of assembly against existing implementation, immediate demo value:
 click-the-map), then #483 (data pipeline + new tier, 2–3 agent-nights). Both behind the v0.5.0

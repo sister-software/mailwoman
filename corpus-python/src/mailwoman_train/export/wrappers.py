@@ -6,8 +6,8 @@ POSITIONAL SIGNATURE, so a single wrapper taking `**kwargs` cannot stand in for 
 combination a model was trained with decides which signature its graph gets.
 
 Every wrapper uses the same output assembly method. The method always returns `logits`.
-It returns `locale_logits` when the model carries the self-conditioning head. It returns
-`span_scores` when the model carries the span scorer. Trace-time reads of the plain Python flags
+It returns `locale_logits` when the model has the self-conditioning head. It returns
+`span_scores` when the model has the span scorer. Trace-time reads of the plain Python flags
 ensure the graph contains only the outputs supported by that model.
 
 `tests/mailwoman_train/export/test_channel_export.py` exports through every one of these.

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Corroborates an EDGAR name match with the registrant's SIC code or an explicit CIK pin.
- *   A high name score alone can pick an unrelated company, such as WidePoint (SIC 7373) for "WideOpenWest".
+ *   A high name score by itself can pick an unrelated company, such as WidePoint (SIC 7373) for "WideOpenWest".
  *   The SIC list stays narrow for that reason. Carriers filed under other codes, such as Bandwidth (7372),
  *   need a pin instead. A failed check leaves the match unconfirmed rather than disproving it.
  */

@@ -35,7 +35,7 @@ export function strippedDesignationKey(name: string): string {
  * Scores a subsidiary-name match by comparing the raw names and their legal designations.
  *
  * The score has three fixed levels.
- * String similarity would rate "X LLC" and "X Inc." as near-identical even
+ * A string-similarity score would rate "X LLC" and "X Inc." as near-identical even
  * though the designations identify different entities.
  */
 export function scoreEdgarSubsidiaryMatch(subsidiaryName: string, legalName: string): number {

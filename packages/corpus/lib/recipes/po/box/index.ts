@@ -26,7 +26,7 @@ import { SurfaceOrigin } from "#types"
  *
  * The locality, region and postcode around it come from the `--input` tuples.
  * The row as a whole identifies no published record.
- * The register field carries null for that reason.
+ * The register field is null for that reason.
  */
 const PO_BOX_PROVENANCE = {
 	register: null,
@@ -57,7 +57,7 @@ export const poBoxRecipe: CorpusRecipe = {
 		// `--source-name` gives an output built for one class its own source label and its own reps per row.
 		// A military-only output (`--variants 0 --military-ratio 1`) would otherwise be
 		// indistinguishable from the leader-template rows in the mixture.
-		// The two classes carry different weights.
+		// The two classes have different weights.
 		const source = opts.sourceName ?? defaultRecipeSource("synth-po-box")
 		let read = 0
 		let emitted = 0

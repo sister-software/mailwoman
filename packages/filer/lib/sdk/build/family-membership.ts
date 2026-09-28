@@ -38,8 +38,9 @@ export interface FamilyMembershipFact {
 }
 
 /**
- * Writes the family row for an ownership or control edge, which family queries need
- * because they read `filer_family`.
+ * Writes the family row for an ownership or control edge.
+ *
+ * Family queries need that row because they read `filer_family`.
  */
 export function insertFamilyMembership(insFamily: StatementSync, fact: FamilyMembershipFact): void {
 	const familyID = mintFamilyID(fact.identifierType, fact.name)

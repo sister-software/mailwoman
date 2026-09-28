@@ -109,7 +109,7 @@ process.on("message", (message: WorkerInbound) => {
 
 		// Validate here rather than in the shim: an unvalidated handler turns a stale-schema
 		// client's mis-shaped argument into a deep, misattributed TypeError.
-		// Parsing also applies the schema's defaults.
+		// The parser also applies the schema's defaults.
 		const parsed = tool.inputSchema.safeParse(message.args)
 
 		if (!parsed.success) {

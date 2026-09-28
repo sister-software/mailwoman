@@ -65,8 +65,7 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live
-	// source once it resolves its TileJSON.
+	// The deepest zoom in the body's terrain archive, read from the live source once it resolves its TileJSON.
 	// The two bodies differ, so a constant clamp would over-zoom one of them.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 

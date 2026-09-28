@@ -74,7 +74,7 @@ package.json, tsconfig.json, packages/release-kit/lib/release/stage.ts, dependen
 
 - Produces: `@mailwoman/react/map/fake-runtime` exporting `STUB_MAP_STYLE: DemoMapStyle`, `FAKE_SUGGESTIONS: Suggestion[]`, `makeFakeParseResult(input?: string): ParseResult`, `makePipelineRuntime(overrides?: Partial<PipelineRuntime>): PipelineRuntime`, `makeDemoRuntime(overrides?: Partial<DemoRuntime>): DemoRuntime`. Task 5 mounts `makeDemoRuntime()`.
 
-The app cannot import `packages/react/test/mocks.tsx`, because a test helper is private to its package's `test/`. Copying it into the app would create a duplicate, which this repository does not allow. A fake runtime is also a legitimate product surface, because a host that wants the UI without the model can mount it.
+The app cannot import `packages/react/test/mocks.tsx`, because a test helper is private to its package's `test/`. A duplicate in the app would violate the repository boundary. A fake runtime is also a legitimate product surface, because a host that wants the UI without the model can mount it.
 
 - [ ] **Step 1: Create the module with the five moved definitions**
 

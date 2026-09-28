@@ -163,7 +163,7 @@ describe("applyModuleMoves", () => {
 			encoding: "utf8",
 		})
 
-		// `RM`, not `R `: the index carries the rename and the worktree carries the
+		// `RM`, not `R `: the index records the rename and the worktree records the
 		// specifier rewrite inside the file that moved.
 		expect(stdout).toMatch(
 			/^RM packages\/recipes\/lib\/recipes\/fr-order\.ts -> packages\/recipes\/lib\/recipes\/fr\/order\.ts$/m

@@ -48,7 +48,7 @@ export interface FoldLayerManifestInput {
 	 */
 	tier: LayerTier
 	/**
-	 * The grant as the builder records it, as an SPDX expression or as the prose its `meta` table carries.
+	 * The grant as the builder records it, as an SPDX expression or as the prose in its `meta` table.
 	 *
 	 * Prose resolves through `readLicenseRecord`.
 	 * An expression naming a repository-defined `LicenseRef-` is admissible while unresolved.
@@ -68,8 +68,9 @@ export interface FoldLayerManifestInput {
 	/**
 	 * Input record count per publisher, counted during the build.
 	 *
-	 * Leaving it out records that the build did not count, which is what every
-	 * artifact built before the field carries.
+	 * The absent field records that the build did not count.
+	 * That is what every artifact built before the field existed.
+	 *
 	 * Overture removes a release from its bucket once a newer one lands, so a count
 	 * omitted here cannot be recovered from the input afterwards.
 	 */

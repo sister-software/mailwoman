@@ -80,7 +80,7 @@ In a measurement, this one proposition was injected behind an off-by-default fla
 
 ## Design commitments
 
-Each of these concerns belongs to another package. Listing the owner prevents a second copy from growing here.
+Each of these concerns belongs to another package. The ownership list prevents a second copy from growing here.
 
 | Not here                                                                                                     | Owner                                                                                                    |
 | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |

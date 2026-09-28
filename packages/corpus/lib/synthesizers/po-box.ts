@@ -19,8 +19,8 @@ const MIN_DIGITS_FOR_HYPHEN_GROUPING = 3
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds. `const r = random()` followed by `r < 0.4` branches defines the
-   output distribution. Reading those branches from top to bottom shows each weight. Naming every
-   cutoff would hide the distribution behind identifiers. Genuine thresholds in these files are
+   output distribution. The branches show each weight from top to bottom. A separate constant for each cutoff
+   would hide the distribution behind identifiers. Genuine thresholds in these files are
    constants defined above. */
 
 /**

@@ -115,7 +115,7 @@ export interface ResolvedSpecificityInput {
 	 */
 	value?: string
 	/**
-	 * The resolver's own hit name, as `resolver_name` metadata carries it.
+	 * The resolver's own hit name, as recorded in `resolver_name` metadata.
 	 */
 	resolverName?: string
 }

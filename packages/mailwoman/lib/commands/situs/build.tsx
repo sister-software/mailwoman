@@ -74,7 +74,7 @@ export const spec = {
 /**
  * Coverage-ranked (largest first, from the 2026-05-20.0 parquet probe).
  *
- * NH + HI carry zero Overture address coverage in this release, so they're absent —
+ * NH + HI have zero Overture address coverage in this release, so they're absent —
  * interpolation-only states.
  * VI (territory) included for completeness.
  * Harmless if the parser's region→slug map skips it.

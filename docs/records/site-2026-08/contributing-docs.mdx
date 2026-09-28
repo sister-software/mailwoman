@@ -8,7 +8,7 @@ owner: docs maintainers
 review-by: 2026-10-14
 ---
 
-# Contributing to the docs
+# Contribute to the docs {#contributing-to-the-docs}
 
 These rules are the contributor-facing form of the documentation-architecture policy. CI enforces the structural rules with `docs/scripts/check/docs-structure.ts`, which the Docs workflow runs on every PR that touches the site. Reviewers enforce the editorial rules. Run the check locally with `yarn workspace @mailwoman/docs lint:structure`.
 
@@ -44,12 +44,12 @@ Four concept pages answer the recurring reader questions. If your material answe
 
 A new page must answer a reader question that none of these pages covers. State that question in the PR description. Interfaces belong in Reference. An explanation that exists in two places will eventually contradict itself.
 
-## Retiring a page
+## Retire a page {#retiring-a-page}
 
 - [ ] Move its sidebar entry to the Archive section in `sidebars.ts`. Leave the file where it is, because the URL must not change. The Archive banner then marks the page as historical.
 - [ ] If a successor exists, set `status: superseded` and `superseded-by:` on the retired page.
 - [ ] Point inbound links from maintained pages at the successor.
-- [ ] Leave the page's published status unchanged. Moving a page never changes what is published. A page excluded from the build does not become public, and a public page is not unpublished, as a side effect of a move. Promoting an internal record to the public site is a separate, explicit decision for each page and needs operator sign-off. It applies only to records without internal references or security-sensitive detail that have evidentiary value, meaning a maintained page wants to cite them. Demotion corrects mistakes and does not depend on age. A page leaves the public site only if it should never have been public. Dated records keep their URLs and their point-in-time content.
+- [ ] Leave the page's published status unchanged. A move never changes what is published. A page excluded from the build does not become public, and a public page is not unpublished as a side effect of a move. An operator must explicitly approve each internal record's promotion to the public site. This applies only to records without internal references or security-sensitive detail that have evidentiary value, meaning a maintained page wants to cite them. Demotion corrects mistakes and does not depend on age. A page leaves the public site only if it should never have been public. Dated records keep their URLs and their point-in-time content.
 
 ## Editorial rules
 

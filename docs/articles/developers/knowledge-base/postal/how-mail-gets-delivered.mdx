@@ -61,7 +61,7 @@ a system built by people who found out what confident wrong answers cost.
 ## What this implies for parsing
 
 A parser sits above the first rung of that ladder, and it can imitate the ladder's discipline or
-break it. Breaking it looks like answering a bare `Springfield` with one coordinate because one of
+break it. A failure looks like answering a bare `Springfield` with one coordinate because one of
 the [92 US places by that name](./falsehoods-about-addresses.mdx) is the most populous.
 
 Mailwoman's default geocode path does exactly that, and it is worth being plain about it. A bare
@@ -82,7 +82,7 @@ mechanically repairable and leave the rest alone
 ## What it costs
 
 The escalation model is expensive for the postal service and cheap for the sender, and software
-inherits the same asymmetry pointing the other way. Surfacing uncertainty means your callers have to
+inherits the same asymmetry pointing the other way. If you surface uncertainty, callers have to
 handle it: a confidence score nobody reads is worse than useless, because it looks like diligence.
 The value arrives only when something downstream — a review queue, a second data source, a form that
 asks the user again — is wired to the low-confidence branch.
@@ -91,5 +91,5 @@ asks the user again — is wired to the low-confidence branch.
 
 - [Postcodes and ZIP Codes](./postcodes-and-zip-codes.mdx) — the routing code the first reader needs.
 - [What an address is](./what-is-an-address.mdx) — why the instruction is addressed to an organization.
-- [Addressing around the world](./addressing-around-the-world.mdx) — the same two readers, in postal
+- [Global address conventions](./addressing-around-the-world.mdx) — the same two readers, in postal
   systems that order the fields differently.

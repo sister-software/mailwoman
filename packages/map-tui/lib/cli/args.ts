@@ -71,7 +71,7 @@ export interface BrowseArgs {
 	 * Integer zoom level.
 	 *
 	 * The renderer draws whole tile-pyramid levels, so a fractional flag value is rounded here
-	 * rather than carried as a lie through the viewport.
+	 * rather than preserved as a lie through the viewport.
 	 */
 	zoom: number
 }
@@ -81,7 +81,7 @@ export type CLIArgs = { mode: "help" } | { mode: "version" } | BrowseArgs
 /**
  * A rejected command line.
  *
- * The message is user-facing: it says what was wrong and what to pass instead,
+ * The message is user-facing: it explains what was wrong and what to pass instead,
  * since the bin prints it verbatim to stderr.
  */
 export class CLIArgsError extends Error {

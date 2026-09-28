@@ -90,7 +90,7 @@ export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<re
 
 /**
  * What a source dump contributed, fingerprinted, where `rows` is the distinct normalized-postcode
- * count well below the dump's line count wherever GeoNames carries one row per (postcode, settlement).
+ * count well below the dump's line count wherever GeoNames has one row per (postcode, settlement).
  */
 export interface GeonamesPostalSourceFact {
 	country: string
@@ -99,7 +99,7 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump carried on several rows that all referred to one coordinate.
+	 * How many of those codes the dump listed on several rows that all referred to one coordinate.
 	 *
 	 * GeoNames averages that coordinate from neighbouring codes where a name match fails, so the
 	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.
@@ -301,7 +301,7 @@ const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © Geo
 /**
  * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
  *
- * A redistributor must carry the OS attribution block.
+ * A redistributor must include the OS attribution block.
  * The ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.
  */
 const GB_LICENSE_NOTE =

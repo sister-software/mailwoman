@@ -56,7 +56,7 @@ A small model is:
 
 The model is trained from scratch on Mailwoman's corpus rather than fine-tuned from a pretrained general-English model. This is an explicit choice that is currently under empirical validation as of May 2026 — the training stability experiments described in the [v0.5.0 blog post](pathname:///research/2026-05-24-v0-5-0-c-train-bisect) are testing whether this choice is correct.
 
-The argument for training from scratch: address text is unlike natural language. Street names are not sentences. Postcodes are not words. The co-occurrence statistics that a general-English BERT learns from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") are not useful for distinguishing "Saint" (street prefix) from "Saint" (part of a locality name). Training from scratch lets the model learn co-occurrence patterns that are specific to addresses.
+Address text differs from natural language, so a general-English BERT starts with co-occurrence statistics from Wikipedia and BookCorpus ("'bank' appears near 'river' and 'money'") that do not distinguish "Saint" (street prefix) from "Saint" (part of a locality name). Street names are not sentences, and postcodes are not words. A model trained from scratch can learn co-occurrence patterns specific to addresses.
 
 The argument against: a pretrained model already knows what a token IS — how characters form subwords, how subwords form words, how punctuation structures phrases. That knowledge transfers even when the domain vocabulary is different. The empirical question is whether this transfer benefit outweighs the domain-mismatch cost. The answer will come from the v0.5.0 training experiments.
 

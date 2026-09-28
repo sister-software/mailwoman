@@ -32,7 +32,7 @@ export interface BundleArtifact {
 	localPath: string
 
 	/**
-	 * Says whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
+	 * Reports whether the host publishes a `<remotePath>.md5` sidecar that `data pull` verifies against.
 	 */
 	md5Sidecar: boolean
 
@@ -76,7 +76,7 @@ export interface BundleSourceCensus {
 	column: "source"
 
 	/**
-	 * Says whether a tally counts records (`per-row`) or the single manifest
+	 * Reports whether a tally counts records (`per-row`) or the single manifest
 	 * row of each artifact (`manifest`).
 	 */
 	shape: "per-row" | "manifest"
@@ -140,8 +140,9 @@ export interface DataBundle {
 	rights: BundleRights
 
 	/**
-	 * Says where to count publisher stamps in the artifacts.
-	 * The field is absent when they carry no publisher column.
+	 * Gives the artifact field that contains publisher stamps.
+	 *
+	 * The property is absent when the artifact has no publisher column.
 	 */
 	sourceCensus?: BundleSourceCensus
 }
@@ -312,7 +313,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 		rights: {
 			publishers: ["DINUM and IGN, for Base Adresse Nationale"],
 			// Assigned from the elected half of BAN's dual grant.
-			// The lab host's copy of the artifact carries no `layer_manifest`, measured 2026-09-27.
+			// The lab host's copy of the artifact has no `layer_manifest`, measured 2026-09-27.
 			expression: "etalab-2.0",
 			terms: [
 				"Licence Ouverte 2.0, the attribution-only half of BAN's dual grant. The text as retrieved on 2026-09-21 is archived at packages/corpus/data/licenses/licence-ouverte-2.0.md.",
@@ -340,7 +341,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 				"United States Census Bureau, for the TIGER/Line interpolation databases in this bundle",
 			],
 			// Assigned from the publishers' stated terms.
-			// The lab host's per-state copies carry no `layer_manifest`, measured 2026-09-27.
+			// The lab host's per-state copies have no `layer_manifest`, measured 2026-09-27.
 			// `LicenseRef-OpenAddresses-PerSource` stands for the 119 contributing bodies' own terms.
 			// No one has resolved those per source, so the expression reads as unresolved.
 			expression: "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource",
@@ -379,7 +380,7 @@ function describeExpression(expression: string): string {
  * Format publishers, terms, conditions, unresolved rights questions
  * and the recorded expression for terminal output.
  *
- * The prose carries publisher names and conditions no manifest holds.
+ * The prose contains publisher names and conditions no manifest holds.
  * The expression line states the implication of {@link BundleRights.expression}.
  *
  * A pull uses it to decide when the artifact is not yet on disk.
@@ -397,14 +398,14 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 }
 
 /**
- * What one of a bundle's artifacts says for itself on this machine.
+ * The license data found for one bundle artifact on this machine.
  */
 export interface ArtifactTermsObservation {
 	path: string
 	/**
 	 * `absent` means the file is not on disk.
 	 *
-	 * `unmanifested` means it carries no `layer_manifest`.
+	 * `unmanifested` means it has no `layer_manifest`.
 	 * `unreadable` means opening it failed.
 	 * `recorded` means the manifest was read.
 	 */
@@ -417,12 +418,12 @@ export interface ArtifactTermsObservation {
 /**
  * Format what the bundle's artifacts on disk record, beside what the registry records.
  *
- * Artifacts are grouped by what they say, so a bundle of a hundred files prints
- * a line per distinct answer rather than per file.
+ * Artifacts are grouped by their recorded values, so a bundle of a hundred files
+ * prints a line per distinct answer rather than per file.
  * A difference between an artifact's expression and the registry's expression
  * is the finding worth surfacing.
  *
- * The artifact is authoritative for the expression it carries.
+ * The artifact is authoritative for its expression.
  */
 export function describeArtifactTerms(bundle: DataBundle, observations: readonly ArtifactTermsObservation[]): string[] {
 	const groups = new Map<string, { count: number; example: ArtifactTermsObservation }>()

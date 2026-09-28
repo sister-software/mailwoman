@@ -69,7 +69,7 @@ polygons `flood_zone_cell_area` already named for it. The whole set is compacted
 zone's uniform interior collapses to a handful of coarse cells and size concentrates on the fringe,
 where it is irreducible.
 
-## Building it
+## Build it
 
 **Prerequisite: the OSGB36 datum grid.** OSGB36 to WGS84 is accurate to a meter only through the
 OSTN15 grid; without it PROJ substitutes a ballpark offset, silently. Install it once:
@@ -151,8 +151,7 @@ Three full builds over all 813,627 polygons. Every column is from the build's ow
 The `partial` share barely moves — 99.8% to 99.4% to 97.7% across three resolutions. That is not a
 property of the index; it is the polygon size distribution showing through. 38.8% of this product's
 features are under 11 m across, so they are `partial` at every resolution a national layer could
-use, and no resolution choice can change that. **Choosing on the `partial` share would have been
-choosing on a constant.**
+use, and no resolution choice can change that. **The `partial` share would have been a constant, so it could not guide the resolution choice.**
 
 What does move is the size of the candidate list a `partial` cell hands to the ray cast: 19.7
 polygons at resolution 7, 6.4 at 8, 3.0 at 9. That is the runtime cost the two-tier design exists to

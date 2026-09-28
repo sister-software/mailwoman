@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every planetary archive carries a `mailwoman:*` block in its PMTiles metadata. The block records the body, kind,
+ *   Every planetary archive has a `mailwoman:*` block in its PMTiles metadata. The block records the body, kind,
  *   coordinate convention, source and build. The app reads the block before reading a tile.
  *   The verify step reads it
  *   back after the build writes it.
@@ -14,8 +14,8 @@ import { z } from "zod"
 /**
  * The block, validated on write and on read.
  *
- * `mailwoman:coordinate_longitude` is fixed: every artifact is east-positive
- * in −180..180, whatever the source carried.
+ * `mailwoman:coordinate_longitude` is fixed: every artifact is east-positive in
+ * −180..180, whatever the source provided.
  */
 export const PMTilesMetadataSchema = z.object({
 	"mailwoman:kind": z.enum(["planetary-basemap", "planetary-hillshade", "planetary-dem"]),

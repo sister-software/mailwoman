@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Runs the compiled CLI with an isolated empty data root, and pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
+ *   Runs the compiled CLI with an isolated empty data root. It pins the `mw` bin alias because `bin` is a manifest field no part of the build reads.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

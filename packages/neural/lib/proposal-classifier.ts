@@ -31,7 +31,7 @@ export interface NeuralProposalClassifierConfig {
 	 * Defaults to the Stage 2 tag set.
 	 *
 	 * A v0.2.0 Stage 1 model never decodes to a fine tag, so the broader default
-	 * carries no backward-compatibility risk.
+	 * creates no backward-compatibility risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/**

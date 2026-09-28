@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rendering and splicing one `/etc/fstab` line.
+ *   Render and splice one `/etc/fstab` line.
  *
  *   Kept as string functions over string input so the interesting part — that an existing entry for the same mount
  *   point is replaced rather than duplicated — is unit-testable without a privileged sandbox or a real fstab.
@@ -54,7 +54,7 @@ export function renderFstabEntry(entry: FstabEntry): string {
 /**
  * `fstab` with any existing entry for this mount point replaced by the rendered one.
  *
- * Matching uses the mount point field.
+ * The comparison uses the mount point field.
  * Re-preparing a drive gives it a new UUID.
  *
  * The mount-point match replaces its stale line instead of accumulating entries.

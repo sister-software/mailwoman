@@ -5,7 +5,7 @@
  * @file `parseMapURL` — reading a place PIN out of an expanded Google Maps URL.
  *
  *   The URLs below are real, captured from the 2026-08-23 authoring batch, because the whole risk here is reading the
- *   wrong one of two coordinate pairs and a hand-written fixture would not carry both.
+ *   wrong one of two coordinate pairs and a hand-written fixture would not include both.
  */
 
 import { parseMapURL } from "@mailwoman/geocode-oracle/sdk/map-link"
@@ -14,7 +14,8 @@ import { describe, expect, it } from "vitest"
 /**
  * Real, from the batch.
  *
- * Carries both an `@` viewport and a `!3d`/`!4d` pin, which is the point.
+ * Includes both an `@` viewport and a `!3d`/`!4d` pin.
+ * The test verifies both values.
  */
 const DONKEYS =
 	"https://www.google.com/maps/place/Donkey's+Place+Downtown/@39.9942189,-74.792132,1062m/data=!3m1!1e3!4m6!3m5!1s0x89c149851392e0e1:0x5fa9b478e2137c3b!8m2!3d39.9933298!4d-74.7902421!16s%2Fg%2F11p0564gth"
@@ -22,8 +23,8 @@ const DONKEYS =
 describe("parseMapURL", () => {
 	it("takes the PLACE PIN, not the viewport, when both are present", () => {
 		// The two differ by ~230 m here.
-		// Reading `@` instead would spend the entire tolerance budget of a rooftop case
-		// before the geocoder is even asked anything.
+		// A result that reads `@` instead would spend the entire tolerance budget of a
+		// rooftop case before the geocoder is even asked anything.
 		const row = parseMapURL("https://maps.app.goo.gl/Ze46", DONKEYS)
 
 		expect(row.resolved).toBe(true)
@@ -33,7 +34,7 @@ describe("parseMapURL", () => {
 	})
 
 	it("reads the place name Google put in the path, so a link to the WRONG place is visible", () => {
-		// A coordinate alone cannot show that a link points somewhere other than the caller believed.
+		// A coordinate by itself cannot show that a link points somewhere other than the caller believed.
 		expect(parseMapURL("https://maps.app.goo.gl/Ze46", DONKEYS).name).toBe("Donkey's Place Downtown")
 	})
 

@@ -87,7 +87,7 @@ describe("WorkerHost restart", () => {
 					command: "node out/cli/index.js eval promote --check v9.0.0-base",
 				},
 				// The job finished successfully and has a verdict on disk.
-				// Relaunching it would repeat completed work.
+				// A relaunch would repeat completed work.
 				{ job_id: "job-0", label: "check:earlier", state: "succeeded", elapsed_s: 400, command: "node earlier" },
 			],
 			JOBS_PATH

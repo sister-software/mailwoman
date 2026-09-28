@@ -39,7 +39,9 @@ export const WithLiveSearch: Story = { args: { runLiveSearch: mockLiveSearchSucc
 
 /**
  * A brand query without a brand-capable probe.
- * The QID chip renders, and the live block does not.
+ *
+ * The QID chip renders.
+ * The live block stays hidden.
  */
 export const BrandIntentOnly: Story = {
 	args: { defaultText: "chevron near Houston", loadRuntime: async () => makeBrandPOIRuntime() },

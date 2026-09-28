@@ -18,7 +18,7 @@ export const GZT_EXPORT_FILE = "gzt-current-plan.geojson"
 
 export interface DownloadZoningExportOptions {
 	/**
-	 * The Hub job's `resultUrl`, read rather than assembled because it carries a
+	 * The Hub job's `resultUrl`, read rather than assembled because it includes a
 	 * generated file id that a hard-coded URL would outlive.
 	 */
 	url: string

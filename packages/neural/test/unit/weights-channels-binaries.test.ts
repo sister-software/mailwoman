@@ -44,7 +44,7 @@ describe("packageHasBinaries", () => {
 	it("refuses a character vocabulary whose card does not declare a char encoder", async () => {
 		// A half-materialized overlay has the model and vocabulary link,
 		// but its card omits the encoder declaration.
-		// Returning `false` loads it as a Latin model.
+		// A `false` return value loads it as a Latin model.
 		// A bare kanji line then parses as one locality.
 		await using pkg = await weightsPackage({ "model.onnx": "onnx", "char-vocab.json": "{}" })
 

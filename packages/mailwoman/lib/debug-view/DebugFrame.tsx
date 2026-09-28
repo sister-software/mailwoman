@@ -45,7 +45,7 @@ export interface DebugFrameProps {
 	rows: number
 	/**
 	 * Null means static render with no focus chrome.
-	 * The footer says so instead of listing keys.
+	 * The footer reports this instead of listing keys.
 	 */
 	focused: DebugPane | null
 	/**
@@ -166,7 +166,7 @@ export interface RibbonSegment {
 
 /**
  * Tile `tree.raw` into ribbon segments for the input row, splitting each covered run at
- * {@link tagOwnership} boundaries so every chip carries exactly one tag's color.
+ * {@link tagOwnership} boundaries so every chip uses exactly one tag's color.
  */
 export function ribbonSegments(tree: AddressTree): RibbonSegment[] {
 	const owners = tagOwnership(tree)
@@ -295,8 +295,8 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 	const { line } = props
 
 	if (line.kind === "error") {
-		// `@inkjs/ui`'s StatusMessage is deliberately not used: its message `<Text>` carries no
-		// wrap mode, so a long resolver error would wrap and push a row out of a fixed-height pane.
+		// `@inkjs/ui`'s StatusMessage is deliberately not used: its message `<Text>` has no wrap
+		// mode, so a long resolver error would wrap and push a row out of a fixed-height pane.
 		return (
 			<Text color="red" wrap="truncate">
 				✖ {line.label}
@@ -317,7 +317,7 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 			<Text color={line.tag ? tagColor(line.tag) : undefined}>{`${line.label} `.padEnd(OUTPUT_LABEL_WIDTH)}</Text>
 			{line.badge ? (
 				// The badge's text is wrapped in a `<Text>` because `Badge` uppercases a plain-string child,
-				// These badges carry machine values (`address_point`, `structured_address`) that a reader copies.
+				// These badges show machine values (`address_point`, `structured_address`) that a reader copies.
 				<Badge color={line.badgeColor ?? "cyan"}>
 					<Text>{line.badge}</Text>
 				</Badge>
@@ -431,7 +431,7 @@ const MapPane = memo(function MapPane(props: {
 /**
  * The key hints, in the order a new reader needs them.
  *
- * A static capture has no keyboard and says what it is instead.
+ * A static capture has no keyboard and identifies itself instead.
  */
 const KEY_HINTS = "Tab focus   ←↑↓→ pan/scroll   +/- zoom   0 recenter   Enter re-run   q/Esc quit"
 const STATIC_HINT = "static frame — keyboard controls on a TTY"

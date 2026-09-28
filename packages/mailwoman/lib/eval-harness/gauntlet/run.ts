@@ -11,7 +11,7 @@
  *     3. held-out    — candidate-vs-prod z-test on a fresh draw. The generalization check (only with --candidate).
  *
  *   `ablation` is a measurement layer reachable only via `--layer`. It is absent from the combined verdict because
- *   its expectations come from the gazetteer at run time. Letting this measurement fail a ship would invite
+ *   its expectations come from the gazetteer at run time. A ship failure based on this measurement would invite
  *   corpus tuning instead of parser changes.
  *
  *   A thrown layer error is caught, printed and counted as a failed layer. This preserves isolated-failure semantics
@@ -83,7 +83,7 @@ export interface GauntletRunOptions {
 	 * Force `postcodeCountryCoherence` on or off for every layer.
 	 *
 	 * `undefined` grades the shipped configuration, where this option is on.
-	 * The off pin is the one that carries evidence.
+	 * The off pin is the one that provides evidence.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -92,7 +92,7 @@ export interface GauntletRunOptions {
 	 * Production-default `undefined` enables the prior.
 	 * `false` withholds it.
 	 *
-	 * Forwarding only truthy values would silently discard the off flag.
+	 * A truthy-only forward would silently discard the off flag.
 	 */
 	gazetteerPrior?: boolean
 	/**

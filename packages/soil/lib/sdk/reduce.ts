@@ -34,7 +34,7 @@ export const WEIGHT_LATTICE_DEPTH = 2
  *
  * The floor is below the lattice's 2% step, so it only removes the small shares
  * that minor components contribute.
- * Adding them to `other_share` keeps the shares summing to 1.
+ * The reducer adds them to `other_share` so all shares sum to 1.
  */
 export const CLASS_SHARE_FLOOR = 0.01
 

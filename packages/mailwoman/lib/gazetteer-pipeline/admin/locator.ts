@@ -73,7 +73,7 @@ export class AdminLocator {
 	 */
 	readonly located: number
 	/**
-	 * Places present in the admin DB whose geometry the polygon DB does not carry.
+	 * Places present in the admin DB whose geometry the polygon DB does not contain.
 	 *
 	 * Only this number separates a point outside every polygon from a containing place with no polygon.
 	 */

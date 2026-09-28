@@ -26,8 +26,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 /**
- * Adding an entry requires the defect written down first, because a row added here
- * silently converts a defect into a permanent exemption.
+ * An entry requires a written defect first, because a row added here silently
+ * converts a defect into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =
 	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
@@ -70,7 +70,8 @@ async function boardRows(): Promise<Row[]> {
 		let files: string[]
 
 		try {
-			// A country directory carries more than `regression.jsonl`, so reading only the first name undercounts the board.
+			// A country directory contains more than `regression.jsonl`, so reading
+			// only the first name undercounts the board.
 			files = await Globerator.files("jsonl", { cwd: CASES_DIR(entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue

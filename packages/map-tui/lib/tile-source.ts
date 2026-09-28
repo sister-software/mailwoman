@@ -100,7 +100,7 @@ function htmlText(html: string): string {
 /**
  * A single LRU cache slot.
  *
- * Wrapping the decoded tile in an object lets `getTile` tell "cached and known absent"
+ * The decoded tile wrapper lets `getTile` distinguish "cached and known absent"
  * (`{ tile: null }`) apart from "not yet cached" (no entry in the Map) using plain
  * presence, with no comparison against `undefined` needed.
  */

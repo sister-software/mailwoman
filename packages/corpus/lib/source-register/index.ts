@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The address-source register — which jurisdictions exist, what research has resolved for each, and what is known
+ *   The address-source register — which jurisdictions exist, what research has resolved for each and what is known
  *   about every source's terms.
  *
  *   It is a backlog made checkable. All 389 source rows are ingest-eligible on zero counts today, so ask

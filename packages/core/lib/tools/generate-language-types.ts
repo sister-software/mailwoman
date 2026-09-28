@@ -13,7 +13,7 @@
  *   The built gazetteer's `names` table contains 3,591,751 rows with /T spellings and 247 rows with /B spellings.
  *
  *   /B is not dropped: `packages/codex/lib/country/official-languages.ts` lists both forms deliberately
- *   (`DE: ["de","deu","ger"]`) and 247 real rows carry one, so the union accepts either and both map to the same
+ *   (`DE: ["de","deu","ger"]`) and 247 real rows contain one, so the union accepts either and both map to the same
  *   label and the same alpha-2.
  *
  *   `Alpha3bLanguageCode`, `Alpha3bLabelMap`, `Alpha3bToAlpha2` and the CSV's `alpha3-b` header still say "b"

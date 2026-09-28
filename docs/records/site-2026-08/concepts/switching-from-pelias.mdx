@@ -4,15 +4,15 @@ sidebar_label: Switching from Pelias
 description: A self-hosted geocoder without the Elasticsearch cluster and the import pipeline.
 ---
 
-# Switching from Pelias
+# Migrate from Pelias {#switching-from-pelias}
 
-[Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. Operating Pelias requires maintaining the cluster, importers, gigabytes of data, and an analysis chain tuned by hand.
+[Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. Pelias operators maintain the cluster, importers, gigabytes of data, and an analysis chain tuned by hand.
 
 Mailwoman keeps what Pelias offers (self-hosting, open data, and hierarchy awareness) and removes the cluster. The hierarchy lives in SQLite, in a Who's On First `ancestors` table. A calibrated neural model does the work that Pelias's analysis chain did with rules.
 
-## Mapping the move
+## Map the move {#mapping-the-move}
 
-Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. Swapping the endpoint URL alone does not work:
+Pelias has its own `/v1` response envelope, and Mailwoman does not ship a `/v1`-compatible package today. You migrate by mapping each capability to a Mailwoman package. An endpoint URL change alone does not work:
 
 | Pelias             | Mailwoman                                     |
 | ------------------ | --------------------------------------------- |
@@ -29,7 +29,7 @@ npx @mailwoman/photon serve      # autocomplete (GeoJSON)
 ## What's different
 
 - **It needs neither Elasticsearch nor an import pipeline.** One SQLite gazetteer replaces the cluster and its imports.
-- **A model replaces the analysis chain.** Parsing uses a calibrated neural tagger, so you get [a confidence you can route on](./confidence-calibration.mdx). You also get an OpenCage-style annotations block, which Pelias does not produce.
+- **A model replaces the analysis chain.** A calibrated neural tagger parses addresses and supplies [confidence you can route on](./confidence-calibration.mdx). It also supplies an OpenCage-style annotations block that Pelias does not produce.
 
 ## What's missing
 

@@ -49,7 +49,8 @@ interface ListAvailabilityDataResponseBody {
 }
 
 /**
- * Lists parsed availability files for a filing date, category, and subcategory in revision-date order.
+ * Lists parsed availability files for a filing date, category and subcategory.
+ * Results use revision-date order.
  */
 export async function retrieveAvailabilityFiles(
 	client: BDCClient,

@@ -28,7 +28,7 @@ export interface InputState {
 /**
  * Returns the UTF-16 offset one codepoint left of `index`.
  *
- * Stepping by one unit would let a backspace after an emoji leave a lone surrogate in the query.
+ * A one-unit step could let a backspace after an emoji leave a lone surrogate in the query.
  */
 function stepLeft(value: string, index: number): number {
 	if (index <= 0) return 0

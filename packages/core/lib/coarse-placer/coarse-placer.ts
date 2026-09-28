@@ -221,7 +221,7 @@ export class CoarsePlacer {
 			logits[c] = s / this.#temp
 		}
 
-		// Subtracting the largest logit keeps `Math.exp` from overflowing.
+		// The code subtracts the largest logit to keep `Math.exp` from overflowing.
 		let maxLogit = -Infinity
 
 		for (let c = 0; c < C; c++)

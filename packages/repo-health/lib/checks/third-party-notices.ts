@@ -39,14 +39,14 @@ const DERIVED_PACKAGE = "packages/core"
 /**
  * The module paths in a notice use the form `lib/tokenization/<name>.ts`.
  *
- * Matching paths makes a rename fail the check because licensees read the notice.
+ * A path match makes a rename fail the check because licensees read the notice.
  */
 function derivedModulePaths(text: string): Set<string> {
 	return new Set(text.match(/lib\/tokenization\/[A-Za-z]+\.ts/gu))
 }
 
 /**
- * The sentence a header carries to record the derivation.
+ * The sentence a header includes to record the derivation.
  *
  * Readers find it in the file header.
  * A separate notice elsewhere in the tree may not reach them.
@@ -64,7 +64,7 @@ const PERMISSION_NOTICE = "shall be included in all copies or substantial portio
  * The function strips blockquote markers and folds whitespace runs to one space.
  *
  * The repository formatter rewraps this quoted license.
- * Comparing raw text would fail after a reflow that leaves the license content unchanged.
+ * A raw-text comparison would fail after a reflow that leaves the license content unchanged.
  *
  * `@mailwoman/normalize`'s `collapseWhitespace` keeps newlines as segment separators
  * and returns an offset map for address text, so it is a different operation.
@@ -74,7 +74,7 @@ function foldQuotedProse(text: string): string {
 }
 
 /**
- * The file that has to carry {@link PERMISSION_NOTICE} in full.
+ * The file that has to include {@link PERMISSION_NOTICE} in full.
  */
 const SHIPPED_NOTICE = "packages/core/THIRD_PARTY_NOTICES.md"
 

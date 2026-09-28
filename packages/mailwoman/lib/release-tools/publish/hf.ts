@@ -91,7 +91,7 @@ export interface PublishHFOptions {
 	/**
 	 * A retired option.
 	 *
-	 * Existing invocations may still pass this option.
+	 * This option remains accepted for existing invocations.
 	 * The command ignores it.
 	 */
 	wofHot?: string

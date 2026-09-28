@@ -64,7 +64,7 @@ function normalizeVersion(version: string): string {
  * The parity checker's http client.
  *
  * Retry is on because every host this talks to rate-limits: the npm registry,
- * the demo manifest bucket, and Hugging Face.
+ * the demo manifest bucket and Hugging Face.
  * A throttled registry and a trailing release surface produce the same failure result.
  * Only a trailing surface requires release action.
  */
@@ -125,7 +125,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const checks: ParityCheck[] = []
 
 	// Two version series (see releases.mdx's "Two version series" intro).
-	// The demo serves models, so its `defaultVersion` carries the model-card lineage number.
+	// The demo serves models, so its `defaultVersion` records the model-card lineage number.
 	// The demo leg compares that against the shipped model identity in
 	// `packages/neural-weights-en-us/model-card.json#version` (the same source verify-metadata keys off).
 	// The docs matrix row stays vs npm latest, since that surface documents package releases.

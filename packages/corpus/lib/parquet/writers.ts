@@ -153,7 +153,7 @@ export async function writeParquetFile(rows: readonly ParquetRow[], path: PathBu
  *
  * The `slices` key it sits under is the wire interface the Python loader reads
  * (`manifest_files` in `corpus_files.py`, with its pre-rename fallback); every corpus
- * on disk carries it, so the key name is not the writer's to change.
+ * on disk includes it, so the key name is not the writer's to change.
  */
 export interface ParquetFileDescriptor {
 	split: SplitName
@@ -421,7 +421,8 @@ export async function writeParquetSplits(
  * @throws When a recorded file is missing or its size differs from the descriptor.
  * The writer creates a descriptor only after closing the file.
  * Either case therefore means the file changed after its run.
- * Continuing would produce a corpus whose manifest describes bytes the files no longer contain.
+ * The writer would produce a corpus whose manifest describes bytes the files
+ * no longer contain if it continued.
  */
 async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<ParquetFileDescriptor[]> {
 	if (!(await pathExists(manifestPath))) return []

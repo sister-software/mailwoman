@@ -131,7 +131,7 @@ export interface CreateBDCClientOptions {
 	 * Axios overrides, merged over this client's defaults.
 	 * Tests pass an `adapter` here.
 	 *
-	 * Replacing `headers` would drop the credential headers.
+	 * A replacement `headers` object would drop the credential headers.
 	 */
 	axios?: APIClientConfig["axios"]
 }
@@ -220,8 +220,7 @@ type UncachedBDCRequestConfig = BDCRequestConfig & {
  * Build the absolute request URL for `path`, with `params` as its query string.
  *
  * `path` is concatenated onto {@linkcode BDC_API_BASE_URL}.
- * Resolving it with `new URL(path, base)` would let an absolute `path` send
- * the credential headers to another host.
+ * An absolute `path` would let `new URL(path, base)` send the credential headers to another host.
  */
 function buildBDCURL(path: string, params: BDCQueryParams = {}): URL {
 	const url = new URL(`${BDC_API_BASE_URL}${path}`)
@@ -390,7 +389,7 @@ function formatDuration(ms: number): string {
  * Concurrent sleeps overlap, so the meter counts the wall-clock time during
  * which at least one sleep is pending.
  *
- * Summing each sleep would report more waiting than elapsed time.
+ * The sum of each sleep duration would report a longer wait than elapsed time.
  */
 function createMeteredClock(base: ClockLike): {
 	clock: ClockLike

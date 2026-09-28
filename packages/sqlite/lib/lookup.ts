@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The shared shape of a reader over one SQLite artifact.
- *   A lookup either opens the file it is given or adopts a connection the caller already holds,
+ *   A lookup either opens the file it is given or adopts a connection already held by the caller.
  *   and it closes on disposal only what it opened.
  */
 
@@ -33,7 +33,7 @@ export interface SQLiteLookupOptions<DB> {
  * A reader over one SQLite database that owns only the connection it opened.
  *
  * A subclass passes its options to `super` and reads through `this.database`.
- * It inherits the disposal that closes an opened file and leaves an adopted one alone.
+ * It inherits the disposal that closes an opened file and leaves an adopted one unchanged.
  *
  * The connection is opened read-only unless the subclass passes its own open options.
  */

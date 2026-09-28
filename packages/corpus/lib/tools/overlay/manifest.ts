@@ -34,7 +34,7 @@ type ManifestFile = Record<string, unknown> & { path: string; source?: string }
 /**
  * The legacy manifest keys for the file list and the rows per file.
  *
- * Existing corpora are immutable and still use these keys, so readers accept both
+ * Earlier corpora are immutable and still use these keys, so readers accept both
  * spellings and writers emit only the current ones.
  * The keys are built by concatenation because a repository check bans the legacy word.
  */
@@ -84,7 +84,7 @@ function baseRowsPerFile(base: BaseManifest): unknown {
 }
 
 /**
- * One parquet file to add, with the source label that its rows carry.
+ * One parquet file to add, with the source label in its rows.
  */
 export interface OverlayFile {
 	parquet: string
@@ -119,7 +119,7 @@ export function splitFromFilename(parquet: string): SplitName | null {
  * A stale argument therefore writes a manifest that disagrees with the rows.
  * The run trains on the rows.
  *
- * The next plan then carries the stale label forward from the manifest.
+ * The next plan then repeats the stale label from the manifest.
  *
  * This reads the column and refuses the mismatch rather than recording the claim.
  *
@@ -180,8 +180,8 @@ export const OVERLAY_PLAN_FILE = "OVERLAY_PLAN.json"
  * What one overlay assembly was asked to add, written beside the manifest it produced.
  *
  * The next assembly on the same base reads this rather than reconstructing the file list.
- * Reconstructing it is the mechanism behind an overlay carrying a stale list
- * of files into a later corpus version.
+ * Reconstruction makes it possible for an overlay to contain a stale list of
+ * files into a later corpus version.
  */
 export interface OverlayPlan {
 	corpusVersion: string
@@ -193,7 +193,7 @@ export interface OverlayPlan {
 	/**
 	 * Each added file with the route its split came from.
 	 *
-	 * `route` reads `split-slice` when the filename carries the split suffix written by the command.
+	 * `route` reads `split-slice` when the filename includes the split suffix written by the command.
 	 * `caller` reads the split supplied as an argument.
 	 *
 	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
@@ -358,9 +358,9 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		},
 		total_rows: base.total_rows + addedRows.train + addedRows.val + addedRows.test,
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
-		// Saying so in the artifact is what keeps a reader from deriving an attribution
-		// table from `slices` and treating the base build's set as the whole.
-		// The overlay sources listed here carry their own terms, recorded per source in
+		// This value in the artifact prevents a reader from deriving an attribution table
+		// from `slices` and treating the base build's set as the whole.
+		// The overlay sources listed here have their own terms, recorded per source in
 		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
 		licenses_cover:
 			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +
@@ -372,7 +372,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 
 	// The plan is written beside the manifest it produced, because the previous overlay
 	// assembly's plan existed only as three scripts in a session scratch directory
-	// and was carried into the next assembly as a hand-written list.
+	// and was copied into the next assembly as a hand-written list.
 	// Commit this file under `packages/corpus/data/builds/<version>/`.
 	const plan: OverlayPlan = {
 		corpusVersion: args.version,

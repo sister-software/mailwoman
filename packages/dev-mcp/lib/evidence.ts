@@ -8,7 +8,7 @@
  *   A channel is **absent** (never configured), **silent** (fed all zeros), or **fired** (fed at least one nonzero
  *   feature); absent and silent must not be collapsed, because the repairs differ: wire the mechanism vs. extend its data.
  *
- *   Counting is over `features` rather than `confidence`, because `features` are what the model reads.
+ *   `features` supplies the count because the model reads those values. `confidence` remains a separate trace field.
  */
 
 import type { NeuralParseTrace, SoftFeatureChannel, TracePriorKind } from "@mailwoman/neural"

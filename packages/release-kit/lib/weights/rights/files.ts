@@ -92,7 +92,7 @@ export interface ProvenanceDocument {
 	 * Neither states what reached the trainer.
 	 * The two differ by the country filter and source weights, a zero weight, the sampler
 	 * and every overlay merged after the corpus manifest was written.
-	 * This block carries the difference.
+	 * This block describes the difference.
 	 *
 	 * `null` means the repository holds no effective manifest for the corpus recorded by this card.
 	 * This describes the checkout rather than the model.
@@ -179,8 +179,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		questions.push(`One attribution entry names no license: ${entry.text}`)
 	}
 
-	// Training, tokenizer and evaluation contributions run together in one list, so naming
-	// the split lets a reader see which entries describe rows the model never learned from.
+	// The attribution list combines training, tokenizer and evaluation contributions.
+	// The split shows which entries describe rows the model never learned from.
 	const evaluationOnly = record.attribution.filter(
 		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
 	)

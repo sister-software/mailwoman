@@ -62,7 +62,7 @@ export interface FinalizeVerdictOptions {
  * The ledger records published versions keyed by npm semver.
  * The release-prep flow therefore runs this line with the real version.
  *
- * Appending used to rely on a person remembering it.
+ * A manual append depended on someone remembering it.
  * The ledger then froze for several versions.
  */
 export async function finalizePromotionVerdict(options: FinalizeVerdictOptions): Promise<number> {

@@ -19,9 +19,9 @@
  *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts), so the
  *   confidences match the canonical eval path.
  *
- *   Matching (`correct?`):
+ *   The `correct?` score uses these rules:
  *
- *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags OA gold carries. A
+ *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags in OA gold. A
  *       predicted tag OA can't see is unlabelable and skipped, since OA's silence is not a negative.
  *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. A predicted
  *       tag the address lacks is wrong.

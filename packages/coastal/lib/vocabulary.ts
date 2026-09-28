@@ -6,7 +6,7 @@
  *   Environment Agency NCERM vocabulary: product identity, twelve scenarios, policy and defence
  *   domains and OGL v3.0 attribution.
  *
- *   Every stored row and every reading carries its scenario, because the twelve layers answer different
+ *   Every stored row and every reading records its scenario, because the twelve layers answer different
  *   questions and must not be pooled.
  *
  *   The domains are closed. The builder throws on an unknown value because it signals a source-schema change.
@@ -66,7 +66,7 @@ export const NCERM_SERVICE_SLUG = "ncern-national-2024"
  * OGL v3.0 requires this attribution.
  * The build writes it to `layer_manifest.attribution`.
  *
- * The abstract carries a second, yearless copy that `parseAttributionStatement` in `sdk/client.ts` rejects.
+ * The abstract contains a second, yearless copy that `parseAttributionStatement` in `sdk/client.ts` rejects.
  */
 export const NCERM_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -364,7 +364,7 @@ export const NCERM_SCENARIO_TERMS: ReadonlyArray<CoastalTermDefinition> = NCERM_
 /**
  * The product limitations, quoted from the Environment Agency.
  *
- * Every reading carries them.
+ * Every reading includes them.
  * The first limitation is why this layer reports the mapped zone at a location
  * and makes no claim about an individual property.
  */

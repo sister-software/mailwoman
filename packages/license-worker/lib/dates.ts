@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Calendar dates in UTC, as the token carries them: a license runs to the end of its last day in UTC, so the arithmetic
+ *   Calendar dates in UTC, as recorded in the token: a license runs to the end of its last day in UTC, so the arithmetic
  *   is on days, never on instants. `isoDate` in `@mailwoman/core/utils/time` has the same shape and sits behind core's
- *   Node-only graph, which this worker must not reach.
+ *   Node-only graph. This worker must stay outside that graph.
  */
 
 export function calendarDateUTC(unixSeconds: number): string {

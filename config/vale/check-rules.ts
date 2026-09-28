@@ -119,6 +119,7 @@ const LEGS: StyleLeg[] = [
 		cleanFixture: "fixtures/clean.md",
 		minDirtyErrors: 67,
 		ruleChecks: [
+			"styles.IngOpeners",
 			"styles.AmbiguousShorthand",
 			"styles.Anthropomorphism",
 			"styles.BannedWords",
@@ -153,6 +154,7 @@ const LEGS: StyleLeg[] = [
 			"styles.MedicalMetaphor",
 			"styles.CommentSemicolons",
 			"styles.CommentDashJoint",
+			"styles.IngOpeners",
 			"styles.Negation",
 			"styles.Nothing",
 			"styles.Grammar.SentenceFragments",
@@ -172,6 +174,7 @@ const LEGS: StyleLeg[] = [
 		cleanFixture: "fixtures/clean-chat.md",
 		minDirtyErrors: 100,
 		ruleChecks: [
+			"styles.IngOpeners",
 			"styles.AmbiguousShorthand",
 			"styles.EmphasisCapitals",
 			"styles.ShellNoun",
@@ -214,10 +217,8 @@ const $vale = $({ cwd: VALE_DIR, nothrow: true })
 async function runVale(config: string, fixture: string): Promise<{ alerts: ValeAlert[]; exitCode: number }> {
 	const result = await $vale`${VALE.file} ${VALE.argv} --config ${config} --output=JSON ${fixture}`.quiet()
 
-	// Vale writes a config or rule-file error to stderr and leaves stdout empty.
-	// Parsing that empty string raises `Expected JSON input, got` and names neither the rule file
-	// nor the reason, so a malformed token in a style reads as a defect in this script.
-	// `did not find expected node content` is the message that was being thrown away.
+	// Vale can fail by writing details to stderr and leaving stdout empty.
+	// Handle that directly so we preserve the real rule/config error message.
 	if (!result.stdout.trim()) {
 		const detail = result.stderr.trim() || `exit ${result.exitCode ?? 0} with no output`
 
@@ -286,5 +287,32 @@ async function checkLeg(leg: StyleLeg): Promise<void> {
 for (const leg of LEGS) {
 	await checkLeg(leg)
 }
+
+const CODE_TERM_CHECKS = ["words.Nobody", "words.Named", "words.Carry", "words.Alone", "words.Rides", "words.Says"]
+
+process.stdout.write("== fixtures/dirty.ts: expect every code-term rule to warn ==\n")
+
+const dirtyCodeTerms = await runVale(".vale-code-terms.ini", "fixtures/dirty.ts")
+
+for (const check of CODE_TERM_CHECKS) {
+	if (!dirtyCodeTerms.alerts.some((alert) => alert.Check === check)) {
+		failScript(`FAIL: rule ${check} did not warn on fixtures/dirty.ts (regression)`)
+	}
+}
+
+process.stdout.write(`OK: fixtures/dirty.ts — all ${CODE_TERM_CHECKS.length} code-term rules warned\n`)
+process.stdout.write("== fixtures/clean.ts: expect zero code-term alerts ==\n")
+
+const cleanCodeTerms = await runVale(".vale-code-terms.ini", "fixtures/clean.ts")
+
+if (cleanCodeTerms.alerts.length) {
+	for (const alert of cleanCodeTerms.alerts) {
+		process.stderr.write(`  fixtures/clean.ts:${alert.Line}  ${alert.Check}  ${alert.Message}\n`)
+	}
+
+	failScript(`FAIL: fixtures/clean.ts tripped ${cleanCodeTerms.alerts.length} code-term alert(s)`)
+}
+
+process.stdout.write("OK: fixtures/clean.ts — 0 code-term alerts\n")
 
 process.stdout.write("All Vale rule fixture checks passed.\n")

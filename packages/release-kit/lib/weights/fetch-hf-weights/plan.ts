@@ -26,8 +26,8 @@ const MODEL_FILENAME = "model.onnx"
  * It is either a Hugging Face bucket object under a versioned directory or a file committed to the repo.
  *
  * Bucket objects are stored flat by basename.
- * An overlay's artifacts live under the base locale's directory, and each
- * character-path family has its own directory.
+ * An overlay's artifacts live under the base locale's directory.
+ * Each character-path family has its own directory.
  */
 export type ArtifactOrigin = { kind: "hf"; remoteName: string; base: string } | { kind: "repo"; sourcePath: string }
 
@@ -235,7 +235,7 @@ async function hfResolveRoot(repoRoot: PathBuilderLike): Promise<string> {
 /**
  * Plans every artifact that a release's weights packages declare in `files`
  * and the checkout does not track.
- * Each plan carries the artifact's origin and expected MD5.
+ * Each plan records the artifact's origin and expected MD5.
  */
 export async function planWeightsMaterialization(
 	repoRoot: PathBuilderLike,

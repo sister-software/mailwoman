@@ -53,13 +53,13 @@ const OSGB36_TO_WGS84_HELMERT = {
  */
 export interface NationalGridPoint {
 	/**
-	 * Easting in metres.
+	 * Distance east in metres.
 	 * Valid GB values run roughly from 0 to 700,000.
 	 */
 	easting: number
 
 	/**
-	 * Northing in metres.
+	 * Distance north in metres.
 	 * Valid GB values run roughly from 0 to 1,300,000.
 	 */
 	northing: number

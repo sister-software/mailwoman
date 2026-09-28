@@ -58,14 +58,14 @@ export interface SubVenueTagRule {
 /**
  * The tag rules, ordered — the first rule a feature satisfies wins.
  *
- * Order is required in exactly one place: a station platform commonly carries both
+ * Order is required in exactly one place: a station platform commonly has both
  * `public_transport=platform` and `railway=platform`, and an aerodrome terminal building
- * sometimes carries both `aeroway=terminal` and `building=terminal`.
+ * sometimes has both `aeroway=terminal` and `building=terminal`.
  * In every such case the colliding rules share a `designatorID`, so the first-wins resolution is harmless.
  * It picks the same answer either way.
  *
  * There is no pair of rules with different designators that a single real feature can satisfy,
- * because each pair requires a different value for a key a feature carries once.
+ * because each pair requires a different value for a key that appears once on a feature.
  *
  * Provenance, per rule, all documented OSM tags:
  *
@@ -92,7 +92,7 @@ export interface SubVenueTagRule {
  * are overwhelmingly unnamed geometry primitives (`indoor=room`, `indoor=corridor`),
  * and this extractor's yield is names.
  *
- * Measure the share of structures that carry a `name` tag before adding a rule.
+ * Measure the share of structures with a `name` tag before adding a rule.
  */
 export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 	{ designatorID: "terminal", tier: SubVenueTier.SubVenue, all: [["aeroway", "terminal"]] },
@@ -109,7 +109,8 @@ export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 ]
 
 /**
- * The OSM driver layers that can carry a transport structure with a name: nodes and closed ways/relations.
+ * The OSM driver layers that can contain a transport structure with a name:
+ * nodes and closed ways/relations.
  *
  * `lines` is excluded.
  * A platform mapped as an open way is an edge case whose name duplicates the node or area version.
@@ -148,7 +149,7 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
  * widen it. {@link matchSubVenueTagRule} re-checks the same table in JS before yielding any row.
  * No false positive survives even if the predicate is imprecise.
  *
- * @throws via the tag-token allowlist if `rules` carries a hostile key or value.
+ * @throws via the tag-token allowlist if `rules` contains a hostile key or value.
  */
 export function buildSubVenueSQL(layer: string, rules: readonly SubVenueTagRule[] = SUBVENUE_TAG_RULES): string {
 	assertSafeTagRules(rules, "buildSubVenueSQL")

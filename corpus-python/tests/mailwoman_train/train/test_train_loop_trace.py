@@ -78,7 +78,7 @@ def _probe_config(root: Path) -> Config:
 
     cfg = load_config(PROBE_2K)
     # The loader rejects a positive weight for a source without rows. The shipped weights list
-    # sources that this corpus lacks. Clearing them samples the two rows uniformly.
+    # sources that this corpus lacks. With those weights cleared, the loader samples the two rows uniformly.
     cfg.data.source_weights = None
     cfg.data.corpus_dir = str(corpus)
     cfg.data.char_vocab_path = str(vocab_path)

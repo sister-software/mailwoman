@@ -1,4 +1,4 @@
-# Going multi-locale starts with finding out what's  broken (2026-06-02)
+# Multi-locale coverage starts with the observed gaps (2026-06-02) {#going-multi-locale-starts-with-finding-out-whats-broken-2026-06-02}
 
 You have a parser trained on US and French addresses, and you want it to read German ones. The
 tempting move is to grab a pile of German data and retrain. Don't. Not yet. First find out what's
@@ -67,7 +67,7 @@ data fixes.
 
 Check passed. The wall is coverage, and coverage is cheap.
 
-## Teaching the order
+## Show the order {#teaching-the-order}
 
 The fix is a small supplement extract that shows the model German order, and the trick is to not
 synthesize German street names, because German morphology is hard to fake and you'll teach the model
@@ -105,7 +105,7 @@ street and house_number are the floor, the two tags that depend on order. locali
 already decent, because a city name and a five-digit number are recognizable wherever they sit. The
 extract targets the floor.
 
-The retrain itself is staged but not run as of this writing. Launching it mutates the shared
+The retrain itself is staged but not run as of this writing. A retrain run mutates the shared
 training corpus manifest, the kind of irreversible, shared-state change that deserves a human's yes
 rather than an autonomous one. Everything is one approval away: the extract is built and
 uploaded, the config is committed, the before/after harness is wired. When it runs, the test is

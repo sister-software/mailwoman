@@ -18,7 +18,7 @@ v0.4.0 shipped a `§4-only` recipe after the full §1+§3+§4 destabilized at ev
 - **Single classifier head doing both boundary discovery and type classification:** BIO labeling couples these two problems, and v0.4.0's bio_slip class (6% of postcode FN) is the symptom. A phrase-grouping layer (new Stage 2.7) decouples them, but its outputs need to flow into the classifier's conditioning, which requires a classifier retrained to use them.
 - **Stage 5 reconcile is structural-only today:** it sorts spans and attaches them via PARENT_OF. Real concordance matching (`NY-NY Steakhouse, Houston, TX`, `Paris, Texas`, `Saint Petersburg`) needs top-k from the classifier, top-k from the resolver, and concordance scoring. The classifier therefore needs to emit top-k sequences by design.
 
-Each of these three changes would require either a fresh train or a substantial runtime rewrite. Doing them together costs roughly the same as the most expensive one alone and delivers much more.
+Each of these three changes would require either a fresh train or a substantial runtime rewrite. The combined work costs roughly the same as the most expensive change alone and delivers much more.
 
 ## Scope decomposition
 
@@ -57,7 +57,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
 - **Specifics:**
   - Likely a hidden_size bump (256 → 384 or 512), paid for by rented GPU. Validate before committing.
   - Label vocabulary unchanged from v0.3.0 (21 BIO classes) unless POI taxonomy expansion is bundled in (operator decision).
-  - Training on corpus-v0.4.0 (adversarial-expanded). Tokenizer is v0.5.0.
+- Corpus-v0.4.0 (adversarial-expanded) supplies training data. Tokenizer is v0.5.0.
   - Use the lessons from v0.4.0: verdict smokes with constant-LR or long max_steps (not cosine-decay). Make one change at a time within this fresh-slate release, and do not combine §1 per-token CRF norm, §3 class weights, and phrase priors in a single run. The phrase priors are the headline change; everything else stays as-close-to-v0.3.0 as possible.
 - **Output:** new `neural-weights-en-us@v0.5.0` + `neural-weights-fr-fr@v0.5.0` packages.
 - **Blocks:** Thread D (Stage 5 needs top-k classifier output).
@@ -87,7 +87,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - Output: `Array<{ span: Section; kindHypothesis: PhraseKind; confidence: number }>`
   - PhraseKind taxonomy includes NUMERIC, STREET_PHRASE, LOCALITY_PHRASE, REGION_ABBREVIATION, POSTCODE, VENUE_PHRASE, HYPHENATED_COMPOUND
   - Rule-based version ships first as proof-of-concept; learned version is v0.5.0 stretch if time permits, otherwise v0.5.1
-- **Output:** new workspace + new stage in `runPipeline`. Existing pipeline behavior unchanged when caller does not opt in (backward-compatible).
+- **Output:** new workspace + new stage in `runPipeline`. The pipeline keeps its existing behavior when the caller does not opt in (backward-compatible).
 - **Blocks:** Thread C (classifier conditioning), Thread D (reconcile consumes proposals).
 - **Blocked by:** no item. The rule-based version can start immediately.
 
@@ -99,7 +99,7 @@ The plan has six work areas, each with its own thread. Cross-thread dependencies
   - `diagnose_regression.py` is already in tree (`corpus-python/scripts/diagnose_regression.py`). Use it for v0.5.0 eval bucketing during the run rather than after the fact.
   - The verdict-smoke framework is redesigned: **constant LR for the smoke window**, or `max_steps >= 10000` so the cosine tail does not dominate. Documented in [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx). Code enforcement: `--smoke-mode constant|long-tail` on `python -m mailwoman_train train` and `smoke` subcommands; defaults to constant for end-to-end smokes.
   - Decoder span-trim sidecar (commit `c72ab4c`, `core/decoder/build-tree.ts:58`) stays in main and covers the long tail of bio_slip cases the phrase grouper might miss.
-- **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. Documenting it keeps v0.5.0 from repeating it.
+- **Why:** v0.4.0's process meta-bug (cosine LR masking divergence) cost real iteration cycles. A record of it keeps v0.5.0 from repeating it.
 - **Output:** new [`VERDICT_SMOKES.md`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/VERDICT_SMOKES.mdx) + `--smoke-mode` CLI flag + updated TODO.md.
 
 ## Cross-thread execution order
@@ -126,7 +126,7 @@ These metrics differ from v0.4.0's "≥2 of 4 axes" frame because v0.5.0 changes
 - **Fine F1 (street / house_number / venue)**: hold v0.4.0's small wins (street ≥ 0.30, house_number ≥ 0.78, venue ≥ 0.39).
 - **Non-Latin adversarial set (new eval split)**: country F1 ≥ 0.50 (vs current ~0, because these are mostly byte-fallback empty preds). This result is measured directly.
 - **Kryptonite catalogue (new eval fixture)**: hand-curated set of 20-30 incongruent-component cases (`NY-NY Steakhouse`, etc.). Target: 80%+ resolved to the correct place via Stage 5 reconcile.
-- **Training stability**: zero divergence runs in the v0.5.0 verdict-smoke + full-train sequence. Verdict-smoke redesign should make this enforceable.
+- **Stable training**: zero divergence runs in the v0.5.0 verdict-smoke + full-train sequence. Verdict-smoke redesign should make this enforceable.
 - **Calibration**: ECE ≤ v0.3.0 baseline.
 
 ## Pre-flight
@@ -141,7 +141,7 @@ These metrics differ from v0.4.0's "≥2 of 4 axes" frame because v0.5.0 changes
 
 - New language packs beyond en-US / fr-FR. ja-JP / ko-KR / zh-CN etc. wait on either v0.6.0 or v0.5.x patch releases after the tokenizer + reconcile layer are validated in production.
 - POI taxonomy expansion (Stage 3 label vocab expansion). Stays at v0.3.0's 21 BIO classes. v0.6.0+ work.
-- Web demo redesign. Existing browser demo at `/demo` works on v0.5.0 weights as-is via onnxruntime-web.
+- Web demo redesign. The browser demo at `/demo` works on v0.5.0 weights as-is via onnxruntime-web.
 - Resolver backend changes. WOF SQLite stays primary; remote-resolver (Pelias / BAN / Nominatim) is still v0.6.0+ work.
 
 ## Wall-clock estimate (rented GPU)

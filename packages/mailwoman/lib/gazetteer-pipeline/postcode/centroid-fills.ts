@@ -62,7 +62,7 @@ export interface CentroidFillResult {
 	/**
 	 * Delivery-city name rows written from GeoNames postal.
 	 *
-	 * Zero means the database's postcodes carry no name rows.
+	 * Zero means the database's postcodes have no name rows.
 	 */
 	geonamesNames: number
 	parentBorrowFixed: number
@@ -85,7 +85,7 @@ const INSERT_CHUNK = 1000
  * GeoNames files a US territory under its own ISO code, such as `PR` for Puerto Rico
  * and `GU` for Guam, while the WOF postcode repo files all of them as `US`.
  *
- * Reading only `US` rows leaves every territory postcode unnamed and unplaced.
+ * A read limited to `US` rows leaves every territory postcode unnamed and unplaced.
  */
 const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
 	US: ["US", "PR", "VI", "GU", "MP", "AS"],
@@ -96,7 +96,7 @@ const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
  *
  * It includes the mean of its centroids and every distinct place name.
  *
- * A postcode legitimately carries several names.
+ * A postcode legitimately has several names.
  * Those names are its delivery-city aliases.
  */
 interface GeonamesPostcode {
@@ -185,7 +185,8 @@ async function readGeonamesPostal(
  * That value can differ from the geographic locality: 11201 is Brooklyn, inside New York.
  * For Queens, it is a neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
- * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
+ * The output includes these rows and therefore needs the "GeoNames (CC-BY 4.0)"
+ * attribution used by sibling modules.
  */
 async function geonamesNameFill(
 	kdb: DatabaseClient<WOFDatabase>,
@@ -209,7 +210,7 @@ async function geonamesNameFill(
 
 		if (!acc.size) continue
 
-		// One query rather than one per postcode: the US database carries 42,318 of them.
+		// One query rather than one per postcode: the US database contains 42,318 of them.
 		const byPostcode = new Map<string, number>()
 
 		for (const row of await kdb

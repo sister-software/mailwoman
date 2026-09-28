@@ -60,7 +60,7 @@ export interface SoftFeatures {
 /**
  * The lexicons, anchor lookup and settings that {@link buildSoftFeatures} uses.
  *
- * Omitting a source skips its channel.
+ * A missing source skips its channel.
  */
 export interface SoftFeatureSources {
 	postcodeAnchorLookup?: AnchorLookup

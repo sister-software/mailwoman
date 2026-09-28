@@ -27,7 +27,7 @@ positive-evidence-only rule.
    output.** This is the same principle as the [postcode anchor](../../records/engineering/QUERY_SHAPE.mdx).
    `codex`'s matchers (`matchCountry`, `matchPOBox`, the cedex pattern) change role from
    _override_ to _feature-source_.
-3. **Training covers starved closed-vocab fields** with the same negative-space recipe
+3. **The training corpus covers starved closed-vocab fields** with the same negative-space recipe
    that fixed `unit`. See [negative space](../../records/site-2026-08/concepts/negative-space-coverage.mdx).
 
 ## Why not a deterministic overlay — the reasoning
@@ -37,7 +37,7 @@ positive-evidence-only rule.
 shortcut "trailing token ⇒ country" and tagged cities and regions as countries (49 F1, 23%
 precision). A skewed training distribution caused this result, and it does not show a
 limit of the transformer+CRF architecture. Context-sensitive token classifiers (BERT+CRF,
-LUKE, BLINK) routinely resolve gazetteer homographs from local context. Tagging "Atlanta,
+LUKE, BLINK) routinely resolve gazetteer homographs from local context. A context-sensitive tagger labels "Atlanta,
 Georgia" as a region and "Tbilisi, Georgia" as a country is the _canonical_ task of a
 context-sensitive tagger.
 
@@ -134,7 +134,7 @@ _data_ improves `country`, so we can skip the feature if balanced data alone is 
 
 ## How the field handles this (prior art)
 
-Existing systems follow one of two approaches:
+Current systems follow one of two approaches:
 
 - **Parse-time structured tagging** produces an authoritative field-tagged record
   (Mailwoman, Pelias, libpostal, deepparse). Over-firing occurs in this approach.
@@ -151,7 +151,7 @@ Existing systems follow one of two approaches:
 | **Google libaddressinput** | per-ISO-country deterministic metadata                                                                                                    | validation/format engine without free-text parsing                                |
 | **Airmail**                | parserless by default; small BERT to aid malformed queries; country baked into a flat content field at index time, S2 cells for hierarchy | OSM `key=value` as a separate deterministic _index-time_ tag channel              |
 
-**Where we sit.** Existing systems fall into two groups. libpostal and deepparse learn every
+**Where we sit.** Current systems fall into two groups. libpostal and deepparse learn every
 label and carry the over-firing risk. Pelias, Nominatim and libaddressinput treat country
 deterministically, but none of them is an ML parser. Our position is to _keep the model
 authoritative for every field and feed it the gazetteer as a soft feature_. We call this

@@ -15,7 +15,7 @@ export interface PlanetaryView {
 }
 
 /**
- * Everything one body's build needs that the other's differs in.
+ * The build config lists what each body needs that differs from the other body.
  *
  * The artifact URLs pin one pipeline publish, the way Earth's resource versions pin one gazetteer build.
  * A republish moves the pin by a commit here.
@@ -36,7 +36,7 @@ export interface PlanetaryMapConfig {
 	hostname: string
 	initialView: PlanetaryView
 	/**
-	 * The latitude convention the archives carry, shown beside a coordinate
+	 * The latitude convention used by the archives, shown beside a coordinate
 	 * so a reader knows which one they read.
 	 */
 	latitudeType: "planetocentric" | "planetographic"

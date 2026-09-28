@@ -175,7 +175,7 @@ function poBox(
  * - F3 rows pair a district with its city and assert `dependent_locality`, because the
  *   defect tags the district as a street and returns the city's point.
  * - F5 rows write the postcode after the locality, as New Zealand, South Africa and Venezuela do.
- * - F7 rows carry a possessive, either as a qualifier such as `St Mary's, Oxford`
+ * - F7 rows include a possessive, either as a qualifier such as `St Mary's, Oxford`
  *   or inside a town name such as `King's Lynn`.
  * - F9 rows are parse-only Commonwealth and military PO boxes.
  *   A military row follows the synthesizer's convention: the unit line is `po_box`,
@@ -253,7 +253,7 @@ export const FAMILY_ROWS: readonly FamilyRow[] = [
 		"Caracas"
 	),
 
-	// F7 rows carry a possessive.
+	// F7 rows include a possessive.
 	possessive(
 		"GB",
 		"St Mary's, Oxford",

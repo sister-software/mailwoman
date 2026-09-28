@@ -175,8 +175,9 @@ test("GeoPoint.from: falsy and unparseable input resolves to null", () => {
 	expect(GeoPoint.from(undefined)).toBeNull()
 	expect(GeoPoint.from("")).toBeNull()
 	expect(GeoPoint.from(0)).toBeNull()
-	// A garbage string that is neither valid JSON nor a wrappable pair falls back to the
-	// default 0/0 coordinate, which the Null-Island sentinel then rejects.
+	// A garbage string that is neither valid JSON nor a wrappable pair falls
+	// back to the default 0/0 coordinate.
+	// The Null-Island sentinel rejects that coordinate.
 	expect(GeoPoint.from("not-a-coordinate")).toBeNull()
 })
 

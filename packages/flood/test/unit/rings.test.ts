@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The ring blob: round-trip, containment with holes, and the two area readings the build compares.
+ *   The ring blob: round-trip, containment with holes and the two area readings the build compares.
  */
 
 import {

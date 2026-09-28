@@ -6,9 +6,8 @@
  *
  *   `mailwoman data pull --refuse share-alike` and the `MAILWOMAN_REFUSE_OBLIGATIONS` variable name the
  *   classes of obligation an installation declines to take on. The decision reads a bundle's recorded
- *   expression, or an artifact's own manifest once the artifact is on disk, through `summarizeLicense`,
- *   and reports the identifier that carries the refused class rather than the bundle alone, because the
- *   identifier is what a reader can look up.
+ *   expression, or an artifact's manifest once the artifact is on disk, through `summarizeLicense`.
+ *   It reports the identifier with the refused class so a reader can look it up.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -19,13 +18,13 @@ import { LicenseObligation, licenseIdentifiers, summarizeLicense } from "@mailwo
  */
 export const ObligationRefusal = {
 	/**
-	 * A grant requiring a derived database to carry the same terms, as ODbL and CC-BY-SA do.
+	 * A grant requiring a derived database to use the same terms, as ODbL and CC-BY-SA do.
 	 */
 	ShareAlike: "share-alike",
 	/**
 	 * An identifier whose obligations this repository has not recorded.
 	 *
-	 * The identifier carries unknown obligations rather than none.
+	 * The repository has not recorded the identifier's obligations.
 	 */
 	Unresolved: "unresolved",
 } as const
@@ -71,7 +70,7 @@ export function parseObligationRefusals(values: readonly string[]): ObligationRe
 }
 
 /**
- * One identifier in an expression that carries a refused class.
+ * One identifier in an expression with a refused class.
  */
 export interface ObligationFinding {
 	refusal: ObligationRefusal
@@ -80,9 +79,9 @@ export interface ObligationFinding {
 }
 
 /**
- * Every identifier in `expression` that carries one of the refused classes.
+ * Every identifier in `expression` with one of the refused classes.
  *
- * An empty list means no identifier carries a refused class.
+ * An empty list means no identifier has a refused class.
  * It does not mean the expression was verified against the upstream terms.
  */
 export function obligationFindings(expression: string, refuse: readonly ObligationRefusal[]): ObligationFinding[] {

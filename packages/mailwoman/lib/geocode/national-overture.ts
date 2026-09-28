@@ -35,7 +35,7 @@ export function streetLocaleForOvertureCountry(countryCode: string): StreetLocal
  * What is known about the grant on one country's national address-point rows.
  *
  * Two documents can describe the same rows and disagree.
- * Recording the stricter reading would state an unverified grant.
+ * The stricter reading would state an unverified grant.
  *
  * An incorrect restrictive attribution is as incorrect as an incorrect permissive one.
  *
@@ -63,13 +63,13 @@ export interface OvertureCountryLicense {
 }
 
 /**
- * The grant on each country's national address-point database comes from the upstream register alone.
+ * The grant on each country's national address-point database comes only from the upstream register.
  *
  * Overture declares no identifier for the addresses theme.
  * Its attribution page gives every other theme one, `CDLA-Permissive-2.0` for places
  * and `ODbL-1.0` for divisions.
  *
- * For addresses, Overture states only that the sources carry permissive open licenses
+ * For addresses, Overture states only that the sources use permissive open licenses
  * before listing the upstream register per country.
  *
  * An expression carrying a second Overture grant would assert a grant Overture does not make.
@@ -141,7 +141,7 @@ export function overtureCountryLicense(countryCode: string): OvertureCountryLice
  * @throws When the country has no entry, or when its entry holds candidate readings
  * rather than a settled expression.
  * A build that stamped a candidate would record an unverified grant.
- * The artifact would carry that claim for as long as it exists.
+ * The artifact would preserve that claim for as long as it exists.
  */
 export function licenseForOvertureCountry(countryCode: string): string {
 	const entry = overtureCountryLicense(countryCode)

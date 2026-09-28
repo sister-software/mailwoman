@@ -58,7 +58,7 @@ const wikidataFixture = {
 				label: { value: "旅客ターミナル" },
 				kind: { value: "alt" },
 			},
-			// An untagged literal — Wikidata carries these and they name no language.
+			// An untagged literal — Wikidata includes these and they name no language.
 			{
 				item: { value: "http://www.wikidata.org/entity/Q849706" },
 				lang: { value: "" },
@@ -564,7 +564,7 @@ test("buildSubVenueLexicon: every surface points at a record that exists", () =>
 test("buildSubVenueLexicon: a harvest can only match a phrase an EARLIER stage introduced", () => {
 	// This order is required.
 	// The build derives head nouns after Wikidata and before the harvests.
-	// Reordering the steps silently empties the Japanese harvest.
+	// A different step order silently empties the Japanese harvest.
 	const table = buildSubVenueLexicon({
 		wikidata: wikidataFixture,
 		harvests: [{ rows: [{ designatorID: "terminal", name: "第1ターミナル" }], source: "osm", region: "JP" }],

@@ -33,7 +33,7 @@ const { values: args } = parseArguments({
 })
 
 /**
- * Checking rows a country is expected to hold.
+ * This report checks rows that a country is expected to hold.
  * This census only reports the shortfall against it.
  */
 const FLOOR = Number(args.floor ?? 6)

@@ -43,8 +43,10 @@ const MAX_LINEAR_GROWTH = 2.2
 
 /**
  * Token reads the locality walk may spend per start index: three head reads,
- * a `MAX_LOCALITY_PHRASE_TOKENS - 1` lookahead and two endpoint reads per proposal length total
- * 20 at the shipped cap, and four reads per cap token leaves room for that shape to change.
+ * a `MAX_LOCALITY_PHRASE_TOKENS - 1` lookahead and two endpoint reads per
+ * proposal length total 20 at the shipped cap.
+ *
+ * Four reads per cap token leave room for that shape to change.
  */
 const MAX_LOCALITY_READS_PER_TOKEN = 4 * MAX_LOCALITY_PHRASE_TOKENS
 

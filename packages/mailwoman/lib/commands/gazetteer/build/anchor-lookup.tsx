@@ -8,8 +8,8 @@
  *   (regenerate, don't edit).
  *
  *   `--include` picks the country set. It defaults to the DE/FR/US pilot. Pass
- *   `--include DE,FR,US,GB,NL,ES,IT` for the letter-containing v2 set. Widening the lookup only
- *   pays off on a run that also carries the inference-side parity fix. See the pipeline module
+ *   `--include DE,FR,US,GB,NL,ES,IT` for the letter-containing v2 set. A wider lookup only
+ *   pays off on a run that also includes the inference-side parity fix. See the pipeline module
  *   docstring.
  */
 

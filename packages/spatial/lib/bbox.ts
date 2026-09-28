@@ -496,7 +496,7 @@ export interface LatLonBounds {
 export function bboxAround(lat: number, lon: number, radiusKM: number): LatLonBounds {
 	const latDelta = radiusKM / KM_PER_DEGREE_LATITUDE
 	// cos(±90°) is 0.
-	// Dividing by it would make the longitude delta infinite and select the whole globe.
+	// A zero denominator would make the longitude delta infinite and select the whole globe.
 	// Clamp so a polar query stays a wide band rather than becoming unbounded.
 	const cosLat = Math.max(Math.cos(toRad(lat)), MIN_COS_LATITUDE)
 	const lonDelta = radiusKM / (KM_PER_DEGREE_LATITUDE * cosLat)

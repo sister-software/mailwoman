@@ -24,13 +24,13 @@ the casualty there too.)
 
 **Diversity correction (the runbook's point, measured):** an initial thin-pool extract (~16 streets, ~7
 tuples) gave an _inflated_ baseline — street_suffix read 48%, fr-prefix 70% — because the few lexemes
-were memorizable. Expanding the pools ~3× (≈100 distinct streets, 28 US / 12 FR / 10 DE tuples, ~100%
+were memorizable. The pools grew ~3× (≈100 distinct streets, 28 US / 12 FR / 10 DE tuples, ~100%
 unique rows) drops those to **40.7% / 47.7%** — the true gap on the real distribution. Exactly why
 CONTRIBUTING_MODEL_WORK checks on diversity: a thin extract teaches lexemes and a thin baseline hides the gap.
 
 ## Base-consistency (#511 lint) — the check caught a real contradiction
 
-Running the #511 base-consistency lint (`lint-corpus-extract.ts` against sampled `v0.5.0` base-stats)
+The #511 base-consistency lint (`lint-corpus-extract.ts` against sampled `v0.5.0` base-stats)
 caught two things, only one of them a true problem:
 
 - **AU content was a real contradiction → FIXED.** An earlier draft used AU/NZ/UK tuples (for an
@@ -53,7 +53,7 @@ caught two things, only one of them a true problem:
   house-number-after-street is FR-only (DE's native order is covered by `synth-german`). Net: every extract
   locality now agrees with the base — the contradiction is gone rather than deferred.
 
-## Reading
+## How to read the results {#reading}
 
 - The model is **38–51%** on the boundary-stress cases vs ~95%+ on clean canonical — a large, real gap.
 - **The street boundary is the common casualty** (38% / 46% / 43% / 49% across all four shapes): when an

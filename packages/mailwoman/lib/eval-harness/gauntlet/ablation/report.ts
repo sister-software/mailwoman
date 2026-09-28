@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rendering for the ablation map, where an unmeasured cell must never render as a zero and {@linkcode ABLATION_ABSENT} covers the three distinct absences.
+ *   The ablation map renders unmeasured cells as absent rather than zero; {@linkcode ABLATION_ABSENT} covers the three distinct absences.
  */
 
 import { toLinesText } from "@mailwoman/core/fs/writers"
@@ -50,7 +50,7 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render only the matrix.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {
@@ -152,8 +152,8 @@ export function renderAblationMarkdown(
 	lines.push(`## component × locale — broken / support (the pre-2026-08-05 anchor grading, kept for the diff)`)
 	lines.push("")
 
-	// A zero-column matrix would render as a table with an empty header, which reads as
-	// a rendering bug rather than as no locale clearing the threshold.
+	// A zero-column matrix would render as a table with an empty header.
+	// That reads as a rendering bug rather than as no locale clearing the threshold.
 	if (!wide.length) {
 		lines.push(`No locale carries ${minLocaleRows} or more measured rows — every locale is in the tail below.`)
 	} else {
@@ -181,7 +181,7 @@ export function renderAblationMarkdown(
 		const byReason = new Map<string, number>()
 
 		for (const s of meta.skips) {
-			// Reasons carry the offending value inline, so bucket by the leading clause to count classes.
+			// Reasons include the offending value inline, so bucket by the leading clause to count classes.
 			const cls = s.reason.split(":")[0]!.split(" inside")[0]!
 
 			byReason.set(cls, (byReason.get(cls) ?? 0) + 1)

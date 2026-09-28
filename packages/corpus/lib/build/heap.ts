@@ -10,7 +10,8 @@
  *
  * Both WOF adapters build a `Map` of the whole dataset and then sort its keys,
  * so peak memory is a property of the source rather than of `limit`.
- * Measured 2026-09-26: `wof-admin` alone peaks at 14,020 MiB, and both in one process peak at 14,883 MiB.
+ * Measured 2026-09-26: `wof-admin` peaks at 14,020 MiB.
+ * Both in one process peak at 14,883 MiB.
  */
 const RESIDENT_RECORD_ADAPTERS: ReadonlySet<string> = new Set(["wof-admin", "wof-postalcode"])
 
@@ -28,7 +29,7 @@ export const RESIDENT_ADAPTER_HEAP_FLOOR_BYTES = 15 * 1024 * 1024 * 1024
  *
  * The failure this replaces is a SIGABRT twelve minutes into an eight-hour build.
  * That abort reports no cause and loses the adapter phase.
- * Reading the limit at startup costs one call.
+ * A startup read of the limit costs one call.
  *
  * The `corpus build` command calls this rather than `buildCorpus`, because this package's
  * own tests run `wof-admin` against a five-kilobyte fixture at the default heap.

@@ -29,8 +29,9 @@ import type { BaseFetchOptions, FetchSummary } from "#tools/fetch/download/index
 import { downloadToFile, loadManifestEntries, writeManifest } from "#tools/fetch/download/index"
 
 /**
- * Bytes per KiB — the divisor for human-readable sizes, and the floor below
- * which a "download" is an error page rather than data.
+ * Bytes per KiB — the divisor for human-readable sizes.
+ *
+ * It is the floor below which a "download" is an error page rather than data.
  */
 
 const BASE_URL = "https://adresse.data.gouv.fr/data/ban/adresses/latest/csv"

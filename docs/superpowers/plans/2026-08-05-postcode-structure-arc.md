@@ -38,7 +38,7 @@ idea, and the name is not concordance.
   the operator's concept exactly, which is why the word came to mind. A new mechanism with this name
   would collide with both existing uses.
 
-**New work in this arc is therefore named `*Coherence` and described as joint-consistency.** Naming
+**New work in this arc is therefore named `*Coherence` and described as joint-consistency.** The name
 a mechanism `concordance` counts as a defect.
 
 ## Part A — Inventory
@@ -48,7 +48,7 @@ covers, so the design in Part C proposes only what is missing.
 
 ### A.1 Shape rules per country (direction 1)
 
-| Thing                             | Where                                                     | Role                                                                                                                     | Direction |
+| Concept                           | Where                                                     | Role                                                                                                                     | Direction |
 | --------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | --------- |
 | Per-system postcode shape + brand | `codex/{us,de,fr,ca,gb,jp,au,nz,es,it}/`                  | 10 modules, each a `Tagged` brand + `*_PATTERN` + normalizer. `codex/us/zipcode.ts:169`, `codex/gb/postcode.ts:55`, etc. | 1         |
 | `candidateSystemsForPostcode`     | `codex/postcode-systems.ts:59`                            | The shape oracle: which of 8 systems accept this string. `SYSTEM_ACCEPTS` at `:43` — `es`/`it` deliberately absent       | 1         |
@@ -185,7 +185,7 @@ shape alone vs the system, on the 110 asserted codes
    coherent countries (`postcode-country-coherence.ts:269`) instead of picking one.
 3. **The 30 Stratum B cases are a gap in the board.** Those cases contain a
    postcode-shaped span but assert no postcode, so no eval can currently tell whether the parser got
-   them right. Filling `expectComponents.postcode` on them is a corpus task worth doing before any
+   them right. The corpus can fill `expectComponents.postcode` on them before any
    exclusion bar is graded.
 
 ### M-2: does a GB outward code localize?
@@ -303,7 +303,7 @@ ZIPs, which is the pattern expected when facility-assigned codes collapse onto o
 42,319 rows carry a `census-zcta-2024` centroid stamp, and the rest have none.
 
 **Consequence for the design:** a prefix→region artifact must be built from the numbering authority
-(USPS/Census ZCTA) rather than derived from the current postcode gazetteer's parentage. Deriving it
+(USPS/Census ZCTA) rather than derived from the current postcode gazetteer's parentage. A derivation
 from `spr.parent_id` would put about 8% firm-ZIP misattribution directly into the prior.
 
 ## Part C — The design
@@ -340,8 +340,8 @@ country where present. There are three outcomes:
 
 **Artifact.** None. The mechanism needs only `codex/postcode-systems.ts` and the tree. The one codex
 change it needs is adding the four missing codex modules (IE, NL, PT, PL), so that
-`candidateSystemsForPostcode` stops returning an empty set for 10 of 110 Gauntlet codes. Adding them
-should also merge the three divergent shape tables (A.1) into the codex, since the missing modules
+`candidateSystemsForPostcode` stops returning an empty set for 10 of 110 Gauntlet codes. These modules
+should also let the codex consolidate the three divergent shape tables (A.1), since the missing modules
 are the only reason the tables diverged.
 
 **D-rule.** The mechanism is opt-in behind `postcodeShapeCoherence` and default-off. It can only
@@ -523,7 +523,7 @@ and US are separate decisions with separate evidence, because their radius profi
   the gazetteer never covered. Compare two arms: #1480's abstention (current behavior), and
   abstaining on the unit while applying the prefix prior. Bar: **≥60% of held-out units land within
   10 km**, against the abstention arm's 0% by construction, with **zero cases worse than the
-  abstention arm**. Abstaining is never worse than a wrong answer, so any regression here directly
+  abstention arm**. An abstention is never worse than a wrong answer, so any regression here directly
   violates the D-rule.
 - **B3-3 (the NI case, which is the reason this mechanism exists).** Use the 80 BT districts from
   M-2b, with no coordinates anywhere in the pipeline, and a board of NI addresses whose BT code the
@@ -582,8 +582,8 @@ the one-variable-per-run rule.
 - **A default-on promotion for any of the three.** Each needs its own evidence record, as #1477 had
   for postcode-country coherence.
 - **The three divergent shape tables.** A.1 lists them and the four missing codex modules that
-  caused them. Merging them is the right fix, and it is a codex task rather than a mechanism.
-- **Fixing the two stale docstrings** (`resolve.ts:263`, `postcode-country-coherence.ts:71-72`) and
+  caused them. Their merge is the right fix, and it is a codex task rather than a mechanism.
+- **Fix the two stale docstrings** (`resolve.ts:263`, `postcode-country-coherence.ts:71-72`) and
   the `runtime-flags.mdx:49` row. They are listed here so they are not lost. Whoever next touches
   those files should fix them.
 - **`coincident-roles`.** It was read and has no postcode relationship.

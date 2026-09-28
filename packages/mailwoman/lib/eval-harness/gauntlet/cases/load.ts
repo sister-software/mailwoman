@@ -29,7 +29,8 @@ const MALFORMED_EXCERPT_CHARS = 60
 export const CASES_DIR: PathBuilder = resolvePackageDirectory("mailwoman")("lib", "eval-harness", "gauntlet", "cases")
 
 /**
- * A malformed corpus row, identified by file and line, and by the offending path for a schema failure.
+ * A malformed corpus row, identified by file and line.
+ * Schema failures also identify the offending path.
  */
 export class CorpusRowError extends Error {
 	constructor(file: string, line: number, detail: string, options?: ErrorOptions) {

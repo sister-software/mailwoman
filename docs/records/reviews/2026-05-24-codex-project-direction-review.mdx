@@ -17,13 +17,13 @@ The docs tell a coherent lineage:
 - Pelias Parser/Mailwoman v1 took the opposite path: TypeScript rules, phrase graph, Cartesian solver, dictionary and regex classifiers. It was debuggable and deployable, but long-tail ambiguity grew without bound.
 - Mailwoman v2 is trying to keep Pelias's operational shape while replacing the brittle center: rules remain for high-precision bounded problems, while a small neural sequence model handles contextual ambiguity.
 
-That is the correct historical synthesis. Geocoding has never only been NLP and never only been database lookup. The best framing in the docs is from `CONTEXT.md`: a geocoder is a contextual parser plus a constraint solver. Mailwoman is now finally building both halves in the same package family.
+That is the correct historical synthesis. A geocoder combines NLP and database lookup. The best framing in the docs is from `CONTEXT.md`: a geocoder is a contextual parser plus a constraint solver. Mailwoman is now finally building both halves in the same package family.
 
 ## What is directionally strong
 
 ### 1. Parse/resolve split stays intact
 
-Keeping parser and resolver separate is the most important architectural decision. It avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The new `alternatives` field and `--candidates` CLI direction are especially aligned with graceful failure.
+A separate parser and resolver form the most important architectural decision. This design avoids asking the model to memorize WOF/BAN/TIGER, and it gives the resolver room to return candidates instead of pretending one answer is certain. The new `alternatives` field and `--candidates` CLI direction are especially aligned with graceful failure.
 
 This is also where Mailwoman can be meaningfully better than old geocoders: only "more correct top-1," but more direct about ambiguity. `Springfield`, `Paris`, and postalcode placeholder failures should surface as candidate sets and diagnostics.
 
@@ -110,7 +110,7 @@ The next expensive run needs predefined acceptance subsets rather than a single 
 - low-confidence graceful-failure rate
 - per-failure-class metrics from `addresses-that-break-geocoders.md`
 
-### 4. Training instability is now the central technical blocker
+### 4. Instability in training is now the central technical blocker {#training-instability-central-technical-blocker}
 
 v0.4.0 and v0.5.0 both show the same pattern: loss descends through warmup, reaches a useful basin, then climbs catastrophically under sustained peak LR. The v0.5.0 bisect ruled out learning rate alone, loss-side knobs, hidden-size bump, and phrase-prior conditioning. The remaining suspect is the A1 tokenizer / corpus-v0.4.0 pair, especially transliteration data distribution.
 

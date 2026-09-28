@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `unit` — the surfaces the recipe must attest, and the layout shares it must preserve.
+ * @file `unit` — the surfaces the recipe must attest and the layout it must preserve.
  */
 
 import { mulberry32 } from "@mailwoman/core/utils"

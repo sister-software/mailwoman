@@ -5,7 +5,7 @@
  *
  *   Feature extraction for the coarse-placer uses a fastText-style hashed character n-gram representation
  *   plus explicit Unicode-script presence tokens. The function is deterministic and pure.
- *   Training and always-resident inference share it without dependencies. A string maps to a set of active
+ *   The training and always-resident inference paths share it without dependencies. A string maps to a set of active
  *   feature indices in [0, FEATURE_DIM).
  *
  *   Script is the dominant coarse-geography signal. Char n-grams separate within a script, so a
@@ -25,8 +25,8 @@ import { hashFNV1a } from "#coarse-placer/fnv-hash"
  * The class acts as a soft prior.
  * A neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution in-region, off the global-pop attractors.
  *
- * Adding a class requires a retrain and a fresh artifact.
- * The bundled meta.json carries its own `classes` for inference, so this constant drives training.
+ * A new class requires a retrain and a fresh artifact.
+ * The bundled meta.json defines its own `classes` for inference, so this constant drives training.
  */
 export const COARSE_CLASSES = [
 	"US",

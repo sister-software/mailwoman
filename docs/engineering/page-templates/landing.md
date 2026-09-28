@@ -27,7 +27,7 @@ source-of-truth: self
 4. **One worked example.** A single concrete case, complete on this page.
 5. **Call to action.** Exactly one.
 
-## Opening move
+## Start here
 
 Define the thing in one sentence, in the reader's vocabulary rather than the codebase's, then route.
 

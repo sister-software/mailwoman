@@ -7,7 +7,7 @@
  *   It also checks that projection errors throw instead of dropping a column.
  *
  *   the embedded newline is not hypothetical. Measured on the real `IA153` export: `sacatlog.txt` holds 594
- *   newline bytes and exactly one record, because its `fgdcmetadata` column carries a 43,251-character XML
+ *   newline bytes and exactly one record, because its `fgdcmetadata` column contains a 43,251-character XML
  *   document; `mstabcol.txt` — the column dictionary itself — holds 913 newlines and 865 records. The
  *   fixtures below reproduce that shape at a size a test can hold.
  */

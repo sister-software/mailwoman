@@ -14,7 +14,7 @@
  */
 
 /**
- * The text of one component tag, or NULL when the row carries no span for it.
+ * The text of one component tag, or NULL when the row has no span for it.
  *
  * `list_position` is one-based and answers NULL for an absent tag.
  * `substr` takes a one-based start with a length, so the start is `span_starts[i] + 1`
@@ -28,8 +28,8 @@
  * so a row carrying one slices late by the number of astral characters before the span.
  *
  * In the first 40 train files of `v0.6.0-register-surface`, 6,982 of 40,000,000
- * rows (0.0175%) carry an astral character.
- * Among 11,521,648 US rows, 5,230 (0.0454%) carry one.
+ * rows (0.0175%) contain an astral character.
+ * Among 11,521,648 US rows, 5,230 (0.0454%) contain one.
  *
  * `𐍀𐍂𐍉𐍆𐌹𐌳𐌰𐌹𐌽𐍃, RHODE ISLAND` read its region as `ND`, taken from `ISLAND`.
  *
@@ -45,7 +45,7 @@ export function componentAtSpanSQL(tag: string, rawColumn = "raw"): string {
  * The same slice against a span index the caller already computed.
  *
  * A query can hoist `list_position(span_tags, …)` into a subquery column and read it by name.
- * Recomputing that expression in the projection would evaluate the search twice per row.
+ * A second evaluation in the projection would run the search twice per row.
  *
  * Every caveat on {@linkcode componentAtSpanSQL} applies here, because this is the expression it builds.
  */

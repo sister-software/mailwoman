@@ -479,7 +479,7 @@ export class AncestrieBuilder {
 	}
 
 	/**
-	 * Record (or verify) the id-carried fields of an entry.
+	 * Record (or verify) the fields of an entry that depend on its id.
 	 * The alias interface: every add of the same id must agree.
 	 */
 	private registerMeta(entry: AncestrieEntry): void {

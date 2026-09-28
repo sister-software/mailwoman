@@ -112,7 +112,7 @@ const NSUL_COLUMN_COUNT = 29
 /**
  * Column positions read from each line.
  *
- * Every other column is a statistical geography this layer does not carry.
+ * Every other column is a statistical geography this layer does not include.
  */
 const UPRN_COLUMN = 0
 const PCDS_COLUMN = 3
@@ -154,7 +154,7 @@ export const NSUL_COVERAGE_NOTE =
  * A unit postcode as nsul writes it: outward code (area letters, district digit, optional sub-district),
  * one space, inward code (sector digit, two unit letters).
  *
- * `GIR 0AA` is the one non-geographic code Code-Point Open carries.
+ * `GIR 0AA` is the one non-geographic code in Code-Point Open.
  */
 const PCDS_SHAPE = /^(?:[A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}|GIR 0AA)$/
 
@@ -200,7 +200,7 @@ export type NSULLineClass =
  * Classify one data line of an nsul region file.
  *
  * Crlf-terminated in the wild: the `\r` is stripped at the reader boundary
- * or the last column carries it into every value (the G-NAF lesson).
+ * or the last column repeats it in every value (the G-NAF lesson).
  * A line is malformed when its field count is not {@link NSUL_COLUMN_COUNT},
  * when `uprn` is not a literal digit string within the safe-integer range, or
  * when a non-empty `pcds` does not have a unit-postcode shape.
@@ -453,7 +453,7 @@ export interface BuildNSULLayerOptions {
 	 */
 	minimumPlausibleRows?: number
 	/**
-	 * Injected region sources plus the vintage they carry — the fixture path.
+	 * Injected region sources plus the vintage they record — the fixture path.
 	 *
 	 * Skips the archive entirely.
 	 * Provenance still comes from `sourceDir`'s sidecars when present.

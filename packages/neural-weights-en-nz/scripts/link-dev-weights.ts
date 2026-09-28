@@ -18,8 +18,8 @@
  *       recorded by the card under `requires.<channel>.lexicon`, the same pair the `files` array ships.
  *   - `pair-index-nz.bin`, derived from the linz-derived OpenAddresses NZ countrywide CSV through
  *       the shared `buildPairIndexOverlay`. Its freshness guard compares the format, every
- *       calibrated magnitude and the source md5, and the build is sidecar-cached because the CSV
- *       has 2.12M rows. `--delta 10` is the calibrated value and the artifact header carries it.
+ *       calibrated magnitude and the source md5. The build is sidecar-cached because the CSV
+ *       has 2.12M rows. `--delta 10` is the calibrated value and the artifact header records it.
  *       This locale ships without a `transitionBeta` because none was measured there.
  *
  *   There is no postcode binary to build, since no WOF NZ postcode extract exists and

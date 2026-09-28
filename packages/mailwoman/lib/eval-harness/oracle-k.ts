@@ -367,8 +367,8 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 			baseByTag.set(node.tag, [...(baseByTag.get(node.tag) ?? []), node.value])
 		}
 
-		// The trace must carry the same priors as the parse above: the segment decode scores
-		// spans out of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions
+		// The trace must use the same priors as the parse above: the segment decode scores spans
+		// out of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions
 		// while token@1 saw primed ones, comparing two different models and calling it a decode delta.
 		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
 

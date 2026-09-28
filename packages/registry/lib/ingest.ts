@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Column mapping and normalization are pure. Geocoding is an injected dependency, so this package never imports the neural parser, resolver, or extracts.
+ * Column mapping and normalization are pure. The caller injects geocoding, so this package never imports the neural parser, resolver, or extracts.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -47,7 +47,7 @@ export function delimiterFor(path: string): Delimiter {
  *
  * @returns The spliterator's own {@linkcode AsyncSequence}, whose `map`/`filter`
  * fuse into the same pull loop.
- * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
+ * An `async function*` wrapper would add an async frame per row and remove those operators.
  */
 export function streamRows(
 	source: PathBuilderLike,
@@ -154,7 +154,8 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
 export interface IngestOptions {
 	/**
 	 * The geocoding interface.
-	 * Without it records carry name/org but no resolved address.
+	 *
+	 * Without it records include name/org but have no resolved address.
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
@@ -224,7 +225,7 @@ export async function ingestRow(
 /**
  * Normalize tabular rows into {@link SourceRecord}s under a {@link ColumnMapping}.
  *
- * @see {@link streamRows} for the streaming path, which is the preferred way to handle multi-GB files.
+ * @see {@link streamRows} for the streaming path. It is preferred for multi-GB files.
  */
 export async function ingestRows(
 	rows: Iterable<Record<string, string>> | AsyncIterable<Record<string, string>>,
@@ -273,7 +274,7 @@ export interface RawGeocode {
 type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
 
 /**
- * What every shape of {@link geocodeAddressVia}'s dependencies carries.
+ * What every shape of {@link geocodeAddressVia}'s dependencies includes.
  */
 export interface GeocodeDepsBase {
 	/**

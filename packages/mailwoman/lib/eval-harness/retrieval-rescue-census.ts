@@ -28,7 +28,7 @@ export type RescueClass =
 
 export interface RescueRowInput {
 	/**
-	 * Truth, when the row carries a coordinate pin.
+	 * Truth, when the row includes a coordinate pin.
 	 */
 	expectLat?: number
 	expectLon?: number

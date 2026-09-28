@@ -6,9 +6,9 @@
  *   The recipe editor, including the case it must refuse.
  *
  *   The property that matters is that prose survives. `defaults.ts` is reviewed like code and its entries
- *   carry measurements — `IN` is five lines recording 189,026 sub-locality nodes at 98.6% conversion and
+ *   include measurements — `IN` is five lines recording 189,026 sub-locality nodes at 98.6% conversion and
  *   the instruction to remove IN from the Overture list in the same change. An editor that silently
- *   deleted an entry would take the reason with it, and the resulting diff would look clean.
+ *   deleting an entry would take the reason with it. The resulting diff would look clean.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

@@ -109,7 +109,7 @@ export function irreducibleFalseSelections(
  * Returns the curve points that match or beat a reference arm on both selection
  * accuracy and false-selection rate.
  *
- * The filter requires both because either one alone is easy to win.
+ * The filter requires both because either condition by itself is easy to satisfy.
  * Threshold 0 maximizes accuracy.
  * Threshold 1 minimizes false selection.
  */

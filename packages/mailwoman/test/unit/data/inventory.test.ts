@@ -67,7 +67,7 @@ describe("takeInventory — the four states stay distinct", () => {
 
 		// `db/<layer>/<file>.db` is three segments from the root.
 		// The data root's database group stores artifacts at that depth.
-		// Planting at two would pass whatever the walk's depth bound is.
+		// A depth of two would pass any walk depth bound.
 		await makeDirectories(root("db", "poi"))
 		await makeDirectories(root("db", "wof"))
 		await makeDirectories(root("pelias-rig", "deep"))
@@ -220,8 +220,8 @@ describe("buildCommandGaps — a manifest is only worth its build command", () =
 	})
 
 	it("treats a bare CLI verb as runnable rather than guessing", async () => {
-		// Verifying `mailwoman gazetteer build poi` means running the CLI.
-		// Reporting it as a gap would flood the report with the artifacts that are actually in the best shape.
+		// The check runs `mailwoman gazetteer build poi` through the CLI.
+		// A gap report would include artifacts that already have the best coverage.
 		expect(await buildCommandGaps("mailwoman gazetteer build poi", await dataRoot())).toEqual([])
 	})
 

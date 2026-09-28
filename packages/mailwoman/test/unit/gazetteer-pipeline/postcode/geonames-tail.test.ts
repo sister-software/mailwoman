@@ -124,7 +124,7 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(meta.get("license_gb")).toContain("Open Government Licence v3")
 	expect(parseJSONStrict<unknown[]>(meta.get("source_files")!)).toHaveLength(2)
 
-	// No GB in this country list, so CC-BY 4.0 alone and shipped.
+	// No GB in this country list, so CC-BY 4.0 applies by itself and is shipped.
 	using layer = new DatabaseClient<layerschemadatabase>(out, { readOnly: true })
 
 	const manifest = await readLayerManifest(layer)
@@ -140,7 +140,8 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {
 	// `ingestGeonamesPostal` allocates ids from one counter in list order,
 	// so a country's id range is its position.
-	// Appending is therefore safe, while reordering changes every id range.
+	// The rebuild preserves IDs when it appends countries.
+	// Any country reordering changes every ID range.
 	// A rebuild stays id-comparable to the frozen artifact only while these ten lead.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES].slice(0, 10)).toEqual([
 		"FI",
@@ -169,6 +170,6 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the UAE is absent — Makani codes are not postcodes", () => {
 	// GeoNames publishes AE's 10-digit Makani building geocodes in the postal dump.
 	// Makani codes identify buildings rather than postal delivery areas.
-	// Folding them would store rows under a placetype with a different meaning.
+	// A fold would store rows under a placetype with a different meaning.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES]).not.toContain("AE")
 })

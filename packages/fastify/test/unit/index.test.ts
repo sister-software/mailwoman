@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `@mailwoman/fastify` route + decorator tests. Every case injects a fake runtime pipeline via the `pipeline` option
- *   so no model weights or gazetteer data are needed — the plugin's routing, envelopes, decorator, POI filtering, and
+ *   so no model weights or gazetteer data are needed — the plugin's routing, envelopes, decorator, POI filtering and
  *   prefix encapsulation are all exercised over `fastify.inject`.
  */
 
@@ -14,7 +14,7 @@ import Fastify, { type FastifyInstance } from "fastify"
 import { describe, expect, it } from "vitest"
 
 /**
- * A minimal resolved locality node — carries a coordinate so `extractGeocodeResult`
+ * A minimal resolved locality node — includes a coordinate so `extractGeocodeResult`
  * returns lat/lon (admin tier).
  */
 function localityNode(value: string, lat: number, lon: number): AddressNode {

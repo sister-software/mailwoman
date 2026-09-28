@@ -112,7 +112,7 @@ keys the weights packages and the `--locale` flag.
 ## 5. What the prefix rule flags
 
 `packages/repo-health/lib/checks/prefix-directories.ts` treats two or more children sharing their first delimited
-segment as a family, with the sibling named for the prefix becoming the directory's `index`. Reading `_` for `-`:
+segment as a family, with the sibling named for the prefix becoming the directory's `index`. The conversion of `_` to `-` reads:
 
 | Location                 | Prefix                                                                     | Members         | Destination                                            |
 | ------------------------ | -------------------------------------------------------------------------- | --------------- | ------------------------------------------------------ |
@@ -180,7 +180,7 @@ The extension work has two pieces, both taken from projects that solved the same
 
 **`protocols.py`** declares the interfaces the swappable pieces satisfy: the encoder, a corpus builder, and a
 country's contribution. `pytorch/torchtitan` keeps these in `protocols/` (`model.py`, `model_spec.py`,
-`state_dict_adapter.py`) and the implementations in `components/`. Adding country 40 then means implementing a
+`state_dict_adapter.py`) and the implementations in `components/`. Country 40 then requires an implementation of a
 declared interface rather than reading `build_jp_slice.py` to infer the expected shape. Without it, section 4's
 scaling model would organize files but give a new country no contract to implement.
 
@@ -204,7 +204,7 @@ resolved to: None
 the Modal SDK. It works today only because `modal run corpus-python/modal/train_remote.py` executes one file as a
 script, which puts `corpus-python/modal/` on `sys.path` rather than `corpus-python/`.
 
-Splitting that file requires Modal's module mode: an `__init__.py` imports every member module so the decorated
+The split requires Modal's module mode: an `__init__.py` imports every member module so the decorated
 functions register, and the package is invoked as `modal run -m <pkg>.<mod>`. That makes the directory a real
 package on `sys.path`, and the shadowing then takes effect. The directory is therefore renamed to `launch/`, which is `OLMo-core`'s name for the same
 role.
@@ -259,9 +259,9 @@ two kebab-case files (`fit-isotonic-calibration.py`, `calibration-drift-guard.py
 
 `verify_toolchain.py` stays a standalone script. It imports only standard library modules (`importlib.metadata`,
 `re`, `sys`, `tomllib` and `pathlib`), and `.husky/pre-commit:63` and `package.json:54` invoke it with bare `python3`,
-without `uv run` or an environment. Folding it into the CLI would make the pre-commit hook depend on a synced venv.
+without `uv run` or an environment. The pre-commit hook would depend on a synced venv if the script moved into the CLI.
 
-## 9. Packaging and enforcement
+## 9. Package layout and enforcement
 
 - Add `py.typed`. `mypy --strict` runs over `src/` today, but the marker is absent, so downstream type checkers do
   not see the package's types.
@@ -272,7 +272,7 @@ without `uv run` or an environment. Folding it into the CLI would make the pre-c
 - Add a Python counterpart of `prefix-directories` to `repo-health`, so section 5 stays satisfied. No structural
   check in the repository covers the Python tree, which is why section 3's two defects went unreported.
 
-## 10. Sequencing
+## 10. Implementation sequence
 
 Each step ends green on the 983 tests, which run in 29.6 s, so every step is independently revertible.
 
@@ -314,7 +314,7 @@ Steps 1 through 7 touch no file a Modal run reads before merge. Step 8 changes e
 ## 12. Deliberately out of scope
 
 - `config.py`'s loader semantics. It moves and is not rewritten.
-- The `configs/*.yaml` recipe files. Running and queued jobs refer to them by name.
+- The `configs/*.yaml` recipe files. Active and queued jobs refer to them by name.
 - `corpus-python/` as a directory name. It appears as a string in `package.json`, `.husky/pre-commit`,
   `.github/workflows/test.yml`, `knip.json`, `oxlint.config.ts`, `.github/dependabot.yml`, `REPRODUCIBILITY.md`, and
   the R2 bucket layout that `launch/sync.py` reads.

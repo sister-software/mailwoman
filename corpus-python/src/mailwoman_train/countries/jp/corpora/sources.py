@@ -1,6 +1,6 @@
-"""Reading the two inputs: the Overture-JP parquet and KEN_ALL for the 〒 join.
+"""Read the two inputs: the Overture-JP parquet and KEN_ALL for the 〒 join.
 
-The eligibility filter lives in the iterator so both build passes see the identical row set. Applying
+    The eligibility filter lives in the iterator so both build passes see the identical row set. The iterator applies
 it only in pass 2 would desynchronize the exact-selection masks.
 """
 
@@ -31,7 +31,7 @@ _AZA_PREFIX = re.compile(r"^(大字|字)")
 class KenAllIndex:
     """The 〒 join: TOWN-level first, municipality catch-all only as the fallback.
 
-    KEN_ALL carries the town (``大字``/``町``) in column 4. Overture writes the ōaza prefix
+    KEN_ALL lists the town (``大字``/``町``) in column 4. Overture writes the ōaza prefix
     (``字崎枝``, ``大字上田``) that KEN_ALL omits, so an exact town match is retried with a leading
     ``字``/``大字`` stripped before falling back to the municipality catch-all.
     """
@@ -90,7 +90,7 @@ def iter_source_rows(
 
     - both address levels present and the prefecture in the canonical 47;
     - at least one of street/number non-empty;
-    - the number carries no comma. A comma marks an MLIT parcel aggregation
+    - the number contains no comma. A comma marks an MLIT parcel aggregation
       (``岡山町1154,1153,1155,…``). That row renders as one ``house_number`` span sixty parcels long;
     - the field total fits ``max_field_chars``. This is the structural guard behind the semantic one:
       the char path runs at S=96 units and ``encode_row_units`` truncates silently, so a row that

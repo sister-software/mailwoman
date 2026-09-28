@@ -86,7 +86,7 @@ const SELF = "packages/repo-health/lib/checks/debt.ts"
 const PRODUCTION_FILE_LINE_CEILING = 1000
 
 /**
- * Lines of a source file that carry code. {@link PRODUCTION_FILE_LINE_CEILING} bounds this count.
+ * Lines of a source file that contain code. {@link PRODUCTION_FILE_LINE_CEILING} bounds this count.
  *
  * A raw line count measures comment layout as much as file size.
  * This repository sets comments one sentence per line (`config/oxlint/comment-reflow`),
@@ -95,7 +95,7 @@ const PRODUCTION_FILE_LINE_CEILING = 1000
  *
  * That file documents 164 Census feature-class codes in 167 lines of code.
  *
- * Block-comment state carries across lines, so a continuation line counts as comment however it begins.
+ * Block-comment state persists across lines, so a continuation line counts as comment however it begins.
  * A `//` or block marker inside a string literal counts as a comment here.
  * This undercounts a file containing one.
  *

@@ -30,7 +30,7 @@ python3 corpus-python/scripts/fit-isotonic-calibration.py
 | `isotonic-en-us-v4.0.0.json` | ✅              | The deliverable: the 20-bin lookup table the decoder calibrator loads.                                                     |
 | `confidences.jsonl`          | ❌ (gitignored) | Purely derivable from the set + the model (stage 2). 3 MB.                                                                 |
 
-## Using the table
+## Read the table
 
 The table is OPT-IN. The default decode path is byte-stable. Build a calibrator and pass it via
 `ParseOpts.calibrate` (neural) / `BuildTreeOpts.calibrate` (decoder):

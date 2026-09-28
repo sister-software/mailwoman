@@ -15,7 +15,7 @@
  * Its `signature` describes what a re-typed copy looks like in the AST: a `method-chain` lists
  * the outermost call's methods innermost-first, matched as a suffix with optional literal arguments,
  * a `numeric-literal` or `string-literal` rule matches a literal a copy cannot avoid.
- * A `descending-swap-loop` rule detects a control shape that carries no distinctive literal.
+ * A `descending-swap-loop` rule detects a control shape with no distinctive literal.
  *
  * A `template-properties` entry lists the components a template interpolates in order.
  */

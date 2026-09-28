@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The per-locale releases manifest stores the version pointer beside versioned asset directories. It is the one place
- *   its wire keys are read. Every spelling a published manifest has ever carried stays readable here, because a wire
+ *   its wire keys are read. Every spelling a published manifest has used stays readable here, because a wire
  *   key is a string interface and a reader that drops one turns a release's gazetteer off with no error.
  */
 
@@ -52,7 +52,7 @@ export interface WireReleaseEntry extends Omit<ReleaseInfo, "hasFST" | "hasWOFDB
 	// oxlint-disable-next-line sister-software/no-title-case-acronym -- legacy wire key published before whole-acronym casing
 	hasWofDb?: boolean
 	/**
-	 * The spelling the live 2026-08-11 manifest actually carries (WOF caps, lowercase b).
+	 * The spelling the live 2026-08-11 manifest actually uses (WOF caps, lowercase b).
 	 *
 	 * A wire key is a string interface.
 	 * Every spelling ever published must stay readable here.
@@ -82,9 +82,8 @@ export interface WireReleasesManifest {
  * Every release read `undefined`, silently disabling the demo's WOF cascade and the FST
  * for three days (zero console errors; "no WOF hits" was the only symptom).
  *
- * The fix is not to freeze the wire keys but to migrate them deliberately:
- * the publisher now writes house-cased keys, this normalizer accepts both generations
- * (old HF mirrors still carry the legacy keys).
+ * The fix is not to freeze the wire keys but to migrate them deliberately: the publisher now writes
+ * house-cased keys, this normalizer accepts both generations (old HF mirrors still use the legacy keys).
  * The interface test pins all three parties.
  */
 export function normalizeReleasesManifest(raw: WireReleasesManifest): ReleasesManifest {

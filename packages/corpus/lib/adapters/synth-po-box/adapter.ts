@@ -33,7 +33,9 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
  */
 export const PO_BOX_ADAPTER_ID = defaultRecipeSource("synth-po-box")
 /**
- * License for the synthetic PO-box rows, which inherit the terms of the real tuples they are derived from.
+ * License for synthetic PO-box rows.
+ *
+ * They inherit the terms of the real tuples used to derive them.
  */
 export const SYNTH_PO_BOX_LICENSE = "Synthetic — derived from CC-BY / public-domain input tuples"
 

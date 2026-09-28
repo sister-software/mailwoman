@@ -7,8 +7,8 @@
  *   builds in one process — the FR and US passes — used to pay the scan twice. measured 2026-08-02
  *   that pair was 236.9s of a 253s CI leg.
  *
- *   The invalidation key is deliberately (mtimeMs, size) and not path alone: the WOF admin DB is a
- *   sealed readonly artifact that a rebuild replaces, and a path-only memo would serve the old scan
+ *   The invalidation key is deliberately (mtimeMs, size) and not the path by itself: the WOF admin DB is a
+ *   sealed readonly artifact that a rebuild replaces. A path-only memo would serve the old scan
  *   against the new file for the life of the process.
  */
 

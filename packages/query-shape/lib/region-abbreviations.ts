@@ -51,14 +51,14 @@ export function detectRegionAbbreviations(
 
 	// Single pass over both arrays, relying on two properties of the caller's output:
 	// `tokens` and `segments` are each sorted by `span.start`, and segments do not overlap.
-	// Pairing them with a nested scan is quadratic in input length, since both
-	// grow with it, and this runs on every parse.
+	// A nested scan over both arrays is quadratic in input length, since both grow with it.
+	// This runs on every parse.
 	let t = 0
 
 	for (const seg of segments) {
 		// Advance on every segment rather than just the comma ones below.
 		// A non-comma segment between two comma segments still contains tokens.
-		// Leaving the pointer behind it desyncs the walk.
+		// The walk desynchronizes if the pointer stays behind it.
 		while (t < tokens.length && tokens[t]!.span.start < seg.span.start) {
 			t++
 		}

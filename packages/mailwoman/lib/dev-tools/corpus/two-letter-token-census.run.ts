@@ -111,7 +111,7 @@ for (const row of reader.getRowObjects()) {
 }
 
 /**
- * Returns the fraction of a token's spans that carry its most common tag.
+ * Returns the fraction of a token's spans that have its most common tag.
  */
 function dominance(entry: TokenCensus): number {
 	return entry.total === 0 ? 0 : Math.max(...entry.byTag.values()) / entry.total

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Framework-neutral command metadata and the small `node:util.parseArgs` adapter behind Mailwoman's lazy
- * CLI. Parsing never imports the help renderer. `@isaacs/cliui` is reached only from
+ * CLI. This module never imports the help renderer. `@isaacs/cliui` is reached only from
  * {@link renderCommandHelp}.
  */
 
@@ -25,7 +25,7 @@ interface OptionSpecBase {
 	 * The flag this option used to be spelled as, kept working with a notice on stderr
 	 * and never shown in help.
 	 *
-	 * Passing both spellings is a usage error rather than a precedence rule.
+	 * The command treats both spellings as a usage error.
 	 */
 	deprecatedName?: string
 }
@@ -234,7 +234,7 @@ export function parseCommand(spec: CommandSpec, args: readonly string[]): Parsed
 			...(option.default !== undefined && option.type !== "number" ? { default: option.default } : {}),
 		}
 
-		// The retired spelling parses and carries no default.
+		// The retired spelling parses and sets no default.
 		// Otherwise, the alias would look supplied on every run and shadow the current flag's value.
 		if (option.deprecatedName) {
 			definitions[option.deprecatedName] = {

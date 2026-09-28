@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The stamp carries no licensee or key ID. It works offline by design.
+ *   The stamp contains no licensee or key ID. It works offline by design.
  *   The well-known register supplies the doctor's freshness check, so each process makes no network call.
  */
 
@@ -25,7 +25,7 @@ const NOTICE_OBLIGATION = "modified or network-served copies must offer their so
 const NOTICE_REMEDY = "A commercial license waives that obligation"
 
 /**
- * The wire shape every stamped output carries, keyed in snake case.
+ * The wire shape every stamped output uses, keyed in snake case.
  */
 export interface EngineStamp {
 	name: "mailwoman"

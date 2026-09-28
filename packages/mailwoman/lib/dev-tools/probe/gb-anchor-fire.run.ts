@@ -6,7 +6,7 @@
  *   Reports whether the GB postcode-anchor binary fires on the gb-golden board and by which route,
  *   replaying the `collectMatches` shaped recognizer that `parse` uses. Each register is reported
  *   separately. It reports three failure modes: no shaped span, a span whose key the lookup
- *   does not carry. The third is a hit through the GB outward fallback.
+ *   does not include. The third is a hit through the GB outward fallback.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
  */

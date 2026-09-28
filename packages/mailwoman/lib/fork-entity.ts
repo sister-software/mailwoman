@@ -357,7 +357,7 @@ export function probeVenueNearAnchorFolded(
 
 	if (exact) return exact
 
-	// Either side may carry the decoration, so the retry runs even when the query has no head to strip.
+	// Either side may include the decoration, so the retry runs even when the query has no head to strip.
 	const queryHead = venueHeadSegment(venueRaw) ?? venueRaw.trim()
 	const queryKey = normalizeLocalityForKey(queryHead)
 

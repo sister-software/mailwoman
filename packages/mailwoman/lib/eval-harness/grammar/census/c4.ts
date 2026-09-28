@@ -2,8 +2,8 @@
  * Threshold-free, report-only observations for decoder-grammar constraint C4.
  *
  * A phrase proposal is evidence rather than a constraint.
- * Overlapping proposals are retained verbatim and this module never turns their
- * presence into a binary violation.
+ * The census retains overlaps verbatim.
+ * It never treats their presence as a binary violation.
  *
  * It records every adjacent decoded span boundary and the structural evidence available at that boundary
  * so a census can measure which combinations distinguish wrong splits from legal component edges.

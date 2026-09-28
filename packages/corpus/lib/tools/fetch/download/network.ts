@@ -85,7 +85,7 @@ export interface SourceManifest {
  * A status worth retrying: rate limiting or a server-side failure.
  */
 /**
- * An http failure that carries its status, so callers branch on `error.status`
+ * An HTTP failure that includes its status, so callers branch on `error.status`
  * rather than on message prose.
  *
  * The prose route shipped a real flake: a caller classified "not published upstream"

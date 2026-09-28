@@ -60,8 +60,8 @@ export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: stri
 /**
  * Options for {@link resolveWeights}.
  *
- * Passing `cacheRoot` confines resolution to that cache.
- * Passing `modelPath` with a tokenizer or character vocabulary skips package lookup.
+ * The `cacheRoot` option confines resolution to that cache.
+ * A supplied `modelPath` with a tokenizer or character vocabulary skips package lookup.
  */
 export interface ResolveWeightsOpts {
 	/**

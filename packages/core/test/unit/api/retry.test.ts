@@ -71,7 +71,7 @@ describe("isRetryableStatus", () => {
 	})
 
 	it("NEVER treats a 403 as retryable", () => {
-		// Retrying cannot fix a rejected credential.
+		// Retries cannot restore a rejected credential.
 		expect(isRetryableStatus(403)).toBe(false)
 	})
 })

@@ -135,9 +135,9 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 	})
 
 	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
-		// The board row: the walk answered "University of Chichester, Bognor Regis" to
-		// its unit postcode, 80 m from the campus, and the only entity with the same
-		// name in the metro was the other campus, 9.87 km away.
+		// The board row: the walk answered "University of Chichester, Bognor Regis"
+		// to its unit postcode, 80 m from the campus.
+		// It is the only entity with the same name in the metro was the other campus, 9.87 km away.
 		// Under the locality reach that entity is locally unique and replaces a better answer.
 		const bognor = { lat: 50.7876, lon: -0.6717 }
 		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])

@@ -61,7 +61,7 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 
 			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input,
 			// the spans BIO gold was built from.
-			// Pinning it here keeps runtime and trainer on one convention.
+			// This fixture keeps runtime and trainer on one convention.
 			// Do not "fix" this back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)

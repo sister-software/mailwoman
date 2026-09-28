@@ -1,4 +1,4 @@
-"""Turning a harvested surface into a labeled row.
+"""This module converts a harvested surface into a labeled row.
 
 Each renderer builds `raw` by joining pieces. It builds the character offsets by advancing a cursor
 over those same pieces. The two can disagree without anything downstream noticing. The character

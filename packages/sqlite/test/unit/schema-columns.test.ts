@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The shared column runs are pinned by the stored column order they produce, because that order is part of what a
- *   sealed layer artifact carries and what its readers see.
+ *   sealed layer artifact contains and what its readers see.
  */
 
 import { DatabaseClient } from "@mailwoman/sqlite/client"

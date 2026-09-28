@@ -53,9 +53,9 @@ describe("usesStatedIn", () => {
 	})
 
 	it("reads an entry describing only an evaluation set as evaluation", () => {
-		// `en-us` carries two of these.
-		// Reading them as training attribution says the model learned from rows it never saw.
-		// Dropping them loses attribution the source still requires.
+		// `en-us` has two of these.
+		// A training-attribution reading implies the model learned from rows it never saw.
+		// Their removal loses attribution the source still requires.
 		expect(
 			usesStatedIn("OpenAddresses SI — GURS (CC-BY per OA source): oa-si coord eval set (free-rider validation)")
 		).toEqual(["evaluation"])
@@ -70,8 +70,8 @@ describe("usesStatedIn", () => {
 	})
 
 	it("reads an entry that states no use as unstated rather than as training", () => {
-		// Defaulting to training would turn every entry whose wording this does not
-		// recognize into a claim about what the model learned from.
+		// A default training classification would turn every entry whose wording this does
+		// not recognize into a claim about what the model learned from.
 		expect(
 			usesStatedIn("See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.")
 		).toEqual(["unstated"])
@@ -81,9 +81,9 @@ describe("usesStatedIn", () => {
 describe("roleForArtifact", () => {
 	it("gives each shipped filename the lineage class it carries", () => {
 		// One `files` array holds artifacts with unrelated provenance.
-		// The model graph carries a training corpus.
-		// The tokenizer carries the text it was fitted on.
-		// A pair index carries one selected register.
+		// The model graph records a training corpus.
+		// The tokenizer records the text used for fitting.
+		// A pair index stores one selected register.
 		expect(roleForArtifact("model.onnx")).toBe("model-graph")
 		expect(roleForArtifact("tokenizer.model")).toBe("tokenizer")
 		expect(roleForArtifact("char-vocab.json")).toBe("character-vocabulary")
@@ -317,7 +317,7 @@ describe("readWeightsRightsRecords", () => {
 			expect(records[1]!.baseWeights).toBe("@mailwoman/neural-weights-graph")
 
 			// The overlay's own number.
-			// Reading the graph's 9.1.0 here would state that this package ships the suffix-boundary model.
+			// The graph's 9.1.0 here would state that this package ships the suffix-boundary model.
 			expect(renderProvenance(records[1]!).model_card_version).toBe("6.5.0")
 		} finally {
 			await tree.dispose()
@@ -378,7 +378,7 @@ describe("the records this repository holds today", () => {
 		expect(records).toHaveLength(12)
 
 		// `pair-index-gb.bin` ships here with its OGL v3.0 attribution, so a consumer who
-		// installs the overlay alone receives the attribution with the artifact.
+		// installs only the overlay receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
 		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])

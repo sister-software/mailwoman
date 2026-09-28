@@ -127,7 +127,7 @@ def test_ewc_penalty_grows_with_distance_and_scales_with_lambda(tmp_path: Path) 
 
 
 def _fisher_weighted_drift(fisher_path: Path, base: torch.nn.Module, tuned: torch.nn.Module) -> float:
-    """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher says the base had curvature.
+    """Σ F_i·(θ_i − θ*_i)² — drift measured where the Fisher information records base curvature.
 
     EWC only promises protection ALONG high-Fisher directions. low-curvature directions drift
     freely by design (that freedom is what lets the fine-tune learn). An unweighted drift metric

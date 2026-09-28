@@ -12,7 +12,8 @@ import { registerSW } from "virtual:pwa-register"
 import { App } from "./App.tsx"
 
 // In a bundled build, MapLibre's default worker URL points at a file that Vite never emits.
-// The SPA fallback serves index.html for it, and the worker then fails silently.
+// The SPA fallback serves index.html for it.
+// The worker then fails silently.
 // Without the worker, vector tiles and labels never render.
 // The `?worker&url` import makes Vite emit the worker and return its URL.
 setWorkerUrl(maplibreWorkerURL)

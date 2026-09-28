@@ -34,8 +34,8 @@ describe("openDuckDB", () => {
 
 	it("admits four concurrent instances within host memory, which the previous default did not", () => {
 		// The default exists to bound the host rather than one query.
-		// Two instances at half the host exceed it together, and that is the case
-		// that took the machine down on 2026-09-28.
+		// Two instances at half the host exceed it together.
+		// That is the case that took the machine down on 2026-09-28.
 		expect(DUCKDB_MEMORY_SHARE * 4).toBeLessThanOrEqual(1)
 	})
 

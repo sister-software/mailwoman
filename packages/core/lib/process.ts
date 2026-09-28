@@ -65,7 +65,7 @@ export interface ProcessOutput {
  * The rejection {@linkcode runFile} answers for a command that started
  * but did not exit 0: the builtin's error.
  *
- * That error carries the streams and the exit code or the signal that ended it.
+ * That error includes the streams and the exit code or signal that ended it.
  */
 export interface ProcessError extends Error, ProcessOutput {
 	code?: number | string
@@ -157,7 +157,7 @@ export type SpawnProcessOptions = Omit<SpawnOptions, "cwd"> & { cwd?: PathBuilde
  * Start a command and hand its {@linkcode ChildProcess} to the caller,
  * who owns the streams, the exit event and the kill.
  *
- * Without a `stdio` option every stream is a pipe and the return type says so.
+ * Without a `stdio` option every stream is a pipe, as the return type specifies.
  */
 export function spawnProcess(
 	file: PathBuilderLike,

@@ -227,7 +227,7 @@ export function renderThresholdDecisions(decisions: readonly ThresholdDecision[]
 /**
  * Renders up to `limit` rows that the baseline got right and Mailwoman got wrong.
  *
- * The table shows each row's query, gold, both selections, and Mailwoman's mechanism
+ * The table shows each row's query, gold, both selections and Mailwoman's mechanism
  * so a reader can audit the losses.
  */
 export function renderLosses(

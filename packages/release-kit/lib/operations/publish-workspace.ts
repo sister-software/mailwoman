@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one npm write. Plan → execute: `--plan <file>` names a plan `release.plan --json` wrote, and the operation
+ *   The one npm write. Plan → execute: `--plan <file>` names a plan written by `release.plan --json`. The operation
  *   refuses when head is dirty, head moved, or the recomputed digest differs. release-it's per-workspace
  *   `publishCommand` hook has no plan to hand over, so `--allow-unplanned` keeps that path runnable — loudly.
  */

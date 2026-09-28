@@ -7,7 +7,7 @@
  *
  * Input is a semicolon-separated CSV dump from `adresse.data.gouv.fr`. The adapter reads `numero`
  * as `house_number`, `rep` as a repetition index appended to it, `nom_voie` as `street`,
- * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN carries no region and no
+ * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN has no region and no
  * country. The adapter stamps `country: "FR"` on every row and leaves region to the
  * wof-postalcode and wof-admin cross-reference at corpus build time.
  *
@@ -38,7 +38,7 @@ export const BAN_ADAPTER_ID = "ban"
  * Subset of BAN CSV columns the adapter consults.
  *
  * Everything else is ignored.
- * Declaring the shape explicitly catches column-name drift early if BAN evolves its schema.
+ * The explicit shape catches column-name drift early if BAN evolves its schema.
  */
 interface BanRow {
 	id: string

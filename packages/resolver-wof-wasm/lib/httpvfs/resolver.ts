@@ -399,8 +399,8 @@ interface CandidateCodeMaps {
  * Implements the browser place lookup over the byte-range candidate table,
  * resolving each query with one B-tree probe on `name_key` and no FTS or join.
  *
- * Keys must be normalized with {@link normalizeLocalityForKey}, the same function the build
- * uses, and a parsed region's bbox filters the locality probe by candidate centroid.
+ * Keys must be normalized with {@link normalizeLocalityForKey}, the same function the build uses.
+ * A parsed region's bbox filters the locality probe by candidate centroid.
  */
 export class WOFCandidateTableLookup implements MailwomanLookupLike {
 	#worker: HTTPVFSWorker

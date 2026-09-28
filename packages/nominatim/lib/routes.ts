@@ -5,7 +5,7 @@
  *
  *   Route definitions and handlers for the Nominatim-compatible surface. The OpenAPI document is
  *   emitted from these definitions with no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view, and the zod query schemas drive only the emitted document.
+ *   `legacyQuery` express-shaped view. The zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -223,7 +223,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 
-		// jsonv2 answers a bare array by protocol, so the stamp rides on each result.
+		// jsonv2 answers a bare array by protocol, so each result includes the stamp.
 		return c.json(
 			results.map((result) => withEngineStamp(result, stamp)),
 			200

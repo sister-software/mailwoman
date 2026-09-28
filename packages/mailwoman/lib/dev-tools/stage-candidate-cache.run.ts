@@ -38,7 +38,7 @@ if (!(await pathExists(modelPath))) {
 
 /**
  * The base package every overlay reaches through `mailwoman.baseWeights`,
- * and the only one that carries a model.
+ * and the only one that contains a model.
  */
 const BASE_LOCALE = "en-us"
 

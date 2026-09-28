@@ -10,7 +10,7 @@
  *   reports what the deletion cost per (component, locale), never joining the combined verdict or blocking a ship.
  *
  *   Each ablation variant is graded against a per-row graceful-degradation ladder rather than the undeleted anchor, so
- *   coarsening to a rung the surviving components still justify passes. Abstaining under untenable ambiguity passes. The check also
+ *   coarsening to a rung the surviving components still justify passes. The ladder accepts abstention under untenable ambiguity. The check also
  *   a substitution fails at every rung. See `eval-harness/gauntlet/ablation-expectation.ts`.
  */
 

@@ -2,17 +2,17 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `source` identifiers that recipe outputs carry, under their retired and current spellings.
+ * @file The `source` identifiers that recipe outputs write, under their retired and current spellings.
  *
  *   A recipe-output `source` is a wire identifier rather than prose. It is the literal value of the `source` column on
  *   every row of every built corpus, the key a training config's `source_weights`, `source_reps`,
  *   `augment_exclude_sources` and `required_corpus_receipts[].source` address this value. `overlay-manifest` records
- *   the `--source` label per file. Published model cards also quote the string. Renaming it requires a data migration
+ *   the `--source` label per file. Published model cards also quote the string. A rename requires a data migration
  *   across every corpus that stores it. This table retains both spellings while an archived corpus or historical
- *   config carries the older one.
+ *   config records the older one.
  *
  *   The retired spelling is `synth-<tail>`. It was read as "synthetic", and most of the rows it labels are real
- *   published records written in a layout: `synth-german` carries `register: openaddresses` and `surface: composed`.
+ *   published records written in a layout: `synth-german` stores `register: openaddresses` and `surface: composed`.
  *   The current spelling is `<operation>-<tail>`, where the operation states what the recipe did to attested data.
  *   The tail is kept byte-for-byte, so the mapping is a prefix swap in either direction.
  *
@@ -75,11 +75,12 @@ export interface RecipeSource {
 	current: string
 	operation: SourceOperation
 	/**
-	 * The file that writes the rows, relative to `packages/corpus/lib/` unless it says otherwise.
+	 * The file that writes the rows, relative to `packages/corpus/lib/`
+	 * unless the value specifies another root.
 	 */
 	producer: string
 	/**
-	 * Why the placement is what it is, where the producer alone does not settle it.
+	 * Why the producer's path does not fully explain the placement.
 	 */
 	note?: string
 }
@@ -144,10 +145,10 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 	// Its producer already sits in `de/recipes/`, and a reader comparing `rendered-de`
 	// against `rendered-fr` and `rendered-es` sees one shape for all three.
 	//
-	// The table keeps every other tail byte-for-byte, so three conventions for where a locale sits
-	// in a tail survive: the locale alone (`rendered-fr`), the locale first (`invented-no-street`).
+	// The table keeps every other tail byte-for-byte, so three conventions for where a locale sits in a
+	// tail survive: the locale by itself (`rendered-fr`), the locale first (`invented-no-street`).
 	// The locale comes last (`spliced-trailing-region-us`).
-	// Normalizing those requires a second migration over the rows each entry names.
+	// A second migration over the rows each entry names would be required to normalize those tails.
 	// This migration preserves them.
 	{
 		retired: "synth-german",
@@ -155,7 +156,7 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		operation: SourceOperation.Rendered,
 		producer: "de/recipes/locale.ts",
 	},
-	// Three tails carry the word `fragment` themselves.
+	// Three tails include the word `fragment` themselves.
 	// It folds into the prefix instead of repeating.
 	{
 		retired: "synth-fragment",
@@ -238,7 +239,7 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 /**
  * Overlay sources that are not recipe outputs and keep their spelling.
  *
- * Each is either a register's own name, carried by an adapter or a builder that reads one
+ * Each is either a register's own name, used by an adapter or builder that reads that
  * register by construction, or an adversarial set whose producer chose the name.
  * They are listed so a check over training configs can tell a source that
  * exists from one that a sweep invented.
@@ -319,7 +320,7 @@ export function defaultRecipeSource(retired: string): string {
  * Whether a recipe writes the operation spelling or the retired one.
  *
  * True since 2026-09-28, because the rewrite has run.
- * `v0.7.0-overlay-staging` carries 43 distinct sources, every one of them under an operation prefix.
+ * `v0.7.0-overlay-staging` records 43 distinct sources, each under an operation prefix.
  *
  * Its `source-names.json` records the mapping applied per file with the row count
  * and the ordered-`source_id` digest verified on both sides.
@@ -339,21 +340,21 @@ export const WRITE_CURRENT_SOURCE_NAMES = true
  * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling.
  * Both refuse a source they do not record.
  *
- * A corpus rewritten to the current spelling would therefore make each of
- * them throw on every row it carries.
+ * A corpus rewritten to the current spelling would therefore make each of them
+ * throw on every row in the corpus.
  *
  * Callers of those two tables resolve the key through this, so a lookup answers under
  * either spelling and a genuinely unknown source still refuses.
  *
  * The value is returned unchanged for a source outside the table — an adapter id,
- * or a carried overlay name — because those tables are keyed by whatever the producer emits.
+ * or an overlay source id — because those tables are keyed by whatever the producer emits.
  */
 export function retiredSourceName(source: string): string {
 	return BY_CURRENT.get(source)?.retired ?? source
 }
 
 /**
- * Every recipe-output and carried source spelling this table knows.
+ * Every recipe-output spelling and adapter source id this table knows.
  *
  * Adapter ids are not here.
  * They are declared by each adapter as `<NAME>_ADAPTER_ID`, and a reader that needs

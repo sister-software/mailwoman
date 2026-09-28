@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build poi-coverage` — build a POI layer whose `layer_coverage` rows carry an
+ *   `mailwoman gazetteer build poi-coverage` — build a POI layer whose `layer_coverage` rows include an
  *   exclusion-grade basis: one class in one specified administrative region, completeness measured rather
  *   than asserted.
  *
  *   This is the one path to `basis: surveyed`. It requires a second, independent inventory of the
  *   same class in the same region — the class is extracted from a Geofabrik `.osm.pbf`, read out of an
  *   already-sealed reference layer and matched under a pre-registered protocol grid. The command is
- *   parameterized so the claim can be re-run and audited. Running it in more places leaves coverage
- *   where it was: a completeness estimate from two sources bounds sampling error only and cannot see the
+ *   parameterized so the claim can be re-run and audited. Additional runs cannot change coverage:
+ *   an estimate from two sources bounds sampling error only and cannot see the
  *   dependence between them. Dependence can turn a data gap into confident negative evidence.
  *
  *   Tier is `build-local`, always: the subject inventory is OSM, so the built artifact is a Derived
@@ -126,7 +126,7 @@ const GazetteerBuildPOICoverage: CommandComponent<typeof spec> = ({ options }) =
 		const rows: POISourceRow[] = []
 
 		for await (const row of extractOSMPOIs(pbf, [tagRuleFromOSMTag(options.category, category.osmTag)])) {
-			// A bare OSM feature carries no country property.
+			// A bare OSM feature has no country property.
 			rows.push({ ...row, country })
 		}
 

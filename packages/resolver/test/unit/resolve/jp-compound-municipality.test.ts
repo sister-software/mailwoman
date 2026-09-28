@@ -149,7 +149,7 @@ describe("compound JP municipality — the scoped pair", () => {
 			answered: "tail",
 		})
 
-		// The tail probe carried the city as its parent.
+		// The tail probe identified the city as its parent.
 		// No unscoped probe of the bare ward was made.
 		const wardProbes = backend.calls.filter((call) => call.text === "西区")
 

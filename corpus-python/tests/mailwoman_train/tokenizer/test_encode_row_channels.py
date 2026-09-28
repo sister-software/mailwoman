@@ -21,7 +21,7 @@ from mailwoman_train.types import PieceSpan
 REFERENCE = Path(__file__).parent / "encode-row-channels-reference.json"
 
 #: The row every case encodes, one hit per channel so a channel that stops painting shows as zeros.
-#: The postcode carries no trailing punctuation: the anchor's lookup key is the span's raw surface
+#: The postcode has no trailing punctuation: the anchor's lookup key is the span's raw surface
 #: space-stripped and uppercased.
 RAW = "12 Market St, Burlington, VT 05401 USA"
 TOKENS = ["12", "Market", "St,", "Burlington,", "VT", "05401", "USA"]

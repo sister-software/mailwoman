@@ -7,7 +7,7 @@
  *   the out-dir. It checks each number against the eval spec's floors and enforces the fp32↔int8 delta
  *   cap. It writes `verdict.json`; `failed: false` means every floor was met.
  *
- *   Parsing interface: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
+ *   The verdict parser reads scorer output tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
  *   changes, this file is the single place the check's parsing breaks, loudly (a floor whose number
  *   cannot be found is a `fail`, and never a skip).
@@ -67,11 +67,11 @@ function tableCells(line: string): string[] {
  *
  * The table shape is not stable across the arena's own history.
  * `summarize-arenas.ts` emits the neural-only shape (`| arena | n | neural | fail | tree-valid |`),
- * and an earlier shape carried the v0 comparison columns (`| arena | n | v0 | neural | both | … |`).
+ * and an earlier shape included the v0 comparison columns (`| arena | n | v0 | neural | both | … |`).
  *
  * A fixed column offset silently reads the wrong cell across that boundary.
  *
- * Locating the column from the header row is robust to both shapes (and any future column addition).
+ * A header-row lookup works for both shapes and any future column addition.
  */
 export function arenaColumn(md: string, arena: string, column: string): number | undefined {
 	const m = tableCell(md, /^\|\s*arena\s*\|/, column, arena)?.match(/([\d.]+)%/)
@@ -141,7 +141,8 @@ export interface PromotionVerdict {
 	 * `weights-cache` is its own value because a package-shaped cache's `model.onnx` is whatever
 	 * the package ships (int8, in every shipped weights package), and calling that "fp32"
 	 * invites the confound described in `baselines.json`'s `$precision_comparability` field.
-	 * A reader may diff two verdicts, see fp32-vs-int8, and attribute a quantization delta to the model.
+	 * A reader may diff two verdicts and see fp32-vs-int8.
+	 * They may then attribute a quantization delta to the model.
 	 */
 	graded_artifact: "int8" | "fp32" | "weights-cache"
 	verdict: "PASS" | "FAIL"
@@ -285,7 +286,7 @@ export async function assemblePromotionVerdict(
 	// A floor missing from a report looks like a floor that did not run.
 	// Enforcement stays with the leg.
 	// This only completes the record, from the sidecar the leg already writes.
-	// Reaching this function at all means the leg passed, since it returns non-zero otherwise.
+	// The leg passed before it reached this function because it returns non-zero otherwise.
 	const legSidecars: Record<string, { file: string; rate: string }> = {
 		"fr.bare_street_intact": { file: "fr-bare-street.json", rate: "bare_rate" },
 	}

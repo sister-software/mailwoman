@@ -51,7 +51,7 @@ export interface FamilyRollupMember {
 	/**
 	 * How strongly this member's membership is evidenced.
 	 *
-	 * Carried even though `source` is present because `edgar-exhibit-21` writes an authoritative edge
+	 * Retained even though `source` is present because `edgar-exhibit-21` writes an authoritative edge
 	 * and an inferred corroboration in the same build, so one source name spans both grades.
 	 */
 	assertion: string
@@ -64,7 +64,7 @@ export interface FamilyRollupMember {
 
 /**
  * {@linkcode familyRollup}'s per-family result shape, the inverse of `filer-lookup.ts`'s
- * `FilerLookupFamily`: it carries no `cluster_id`-shaped key and keeps `relationship`
+ * `FilerLookupFamily`: it has no `cluster_id`-shaped key and keeps `relationship`
  * per-member because it answers who belongs to this family.
  *
  * `distinct_member_count` is `members` deduped by `node_id`, while `members` itself

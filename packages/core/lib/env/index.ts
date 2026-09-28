@@ -27,7 +27,7 @@ try {
 	process.loadEnvFile()
 } catch {
 	// No `.env` beside the working directory.
-	// `process.env` alone is the environment.
+	// The process environment comes from `process.env` only.
 }
 
 /**

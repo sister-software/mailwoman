@@ -32,8 +32,8 @@ export interface OutputLine {
 	 */
 	badge?: string
 	/**
-	 * Badge background, carried here rather than derived at render time because only
-	 * this module knows an `admin` tier is a weaker answer than a rooftop.
+	 * Badge background, stored here rather than derived at render time because only this
+	 * module knows an `admin` tier is a weaker answer than a rooftop.
 	 */
 	badgeColor?: string
 }
@@ -41,7 +41,7 @@ export interface OutputLine {
 /**
  * Six decimals ≈ 0.1 m, finer than any tier's uncertainty.
  *
- * Trailing zeros are trimmed so a four-decimal centroid still prints as four.
+ * The formatter trims trailing zeroes so a four-decimal centroid still prints as four.
  */
 function formatCoordinate(lat: number | null | undefined, lon: number | null | undefined): string {
 	if (lat == null || lon == null) return "unresolved"
@@ -157,7 +157,7 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		}
 	}
 
-	// Advisories, never a second opinion about the answer, carried on the result
+	// Advisories, never a second opinion about the answer, included in the result
 	// so they survive even when there is no kind verdict above them.
 	for (const marker of result.intent_markers ?? []) {
 		lines.push({ kind: "field", label: `  ${marker.code}`, value: marker.mechanism, detail: marker.message })

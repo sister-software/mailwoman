@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Wall-time attribution for one OA resolver run, written beside the run rather than into it.
  *
- *   The promotion comparator reads every file under a promotion output directory byte-for-byte. Timing differs
+ *   The promotion comparator reads every file under a promotion output directory byte-for-byte. A timing difference
  *   between runs of the same artifact, so a profile path must point outside that directory. A run without a path
  *   writes no file.
  */

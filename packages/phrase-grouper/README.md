@@ -25,7 +25,7 @@ const groups = groupPhrases(normalizedInput, queryShape, localeHint)
 | --------------------- | ----------------------------------------------------------- |
 | `street_phrase`       | Number + capitalized words, hyphenated street names         |
 | `locality_phrase`     | Capitalized word sequence after comma, near region/postcode |
-| `venue_phrase`        | Leading capitalized word sequence before a street phrase    |
+| `venue_phrase`        | Capitalized word sequence at the start of a street phrase   |
 | `postcode`            | Known postcode format (ZIP5, UK outward, etc.)              |
 | `region_abbreviation` | US state / CA province / AU state abbreviations             |
 | `numeric`             | Standalone number (potential house number)                  |

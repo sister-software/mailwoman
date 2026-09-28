@@ -91,7 +91,7 @@ export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string,
 
 		const entry: BANExtracts = {}
 
-		// Keying requires a registered street locale and an on-disk extract.
+		// Street-key generation requires a registered street locale and an on-disk extract.
 		if (supportedBANCountries().includes(cc)) {
 			const locale = streetLocaleForBANCountry(cc)
 			const path = this.#addressPointsPath(cc).toString()

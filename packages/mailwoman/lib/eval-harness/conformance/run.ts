@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Running a conformance-law suite through the same pipeline the Gauntlet runs, with both sides observed every time and `undecidable` counted as a violation.
+ *   This suite runs conformance laws through the Gauntlet pipeline, observes both sides every time and counts `undecidable` as a violation.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

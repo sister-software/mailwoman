@@ -121,7 +121,7 @@ export {
  * | neighbourhood | 348,323   | 86.2%           | 0.57   | 2.44    |
  * | microhood     | 1,696     | 8.0%            | 0.69   | 1.76    |
  *
- * Missing placetypes have no floor.
+ * Placetype omissions have no floor.
  */
 export const RUNG_RADIUS_FLOOR_KM: Readonly<Record<string, number>> = {
 	country: 2614,
@@ -302,7 +302,7 @@ export interface AblationGazetteerProbe {
 	 */
 	lineage(id: number): AblationPlace[]
 	/**
-	 * Containing admin chain for a coordinate (deepest first).
+	 * The admin chain containing a coordinate (deepest first).
 	 */
 	containingChain(lat: number, lon: number): AblationPlace[]
 	/**
@@ -348,7 +348,7 @@ export function overrideToExpectedRung(pin: string, ladder: AblationLadder): Exp
 }
 
 /**
- * Surviving components after one deletion.
+ * Components that remain after one deletion.
  */
 export type RemainingComponents = Readonly<Record<string, string>>
 
@@ -582,7 +582,7 @@ export function gradeAgainstLadder(input: {
 	/**
 	 * The rung the undeleted case reached.
 	 *
-	 * Grading treats it as the floor.
+	 * The grader treats it as the floor.
 	 * `null` means the undeleted answer is off-ladder (`ungraded`).
 	 */
 	anchorRungDepth: number | null

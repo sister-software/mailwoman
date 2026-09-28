@@ -64,7 +64,7 @@ export interface EncodeResult {
  * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset.
  *
  * The returned array is indexed by byte offset.
- * A hole at a non-boundary index carries the containing character's start,
+ * A hole at a non-boundary index points to the containing character's start,
  * so a lookup cannot land outside the string.
  */
 function buildByteToUTF16Map(text: string): number[] {

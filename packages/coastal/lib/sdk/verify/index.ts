@@ -24,7 +24,7 @@
  *
  *   The distance measures to the edge rather than to the nearest vertex. A point a centimetre from a long edge can be
  *   metres from every vertex. In one flood-verify near-miss, vertex distance was 1.58 m and edge distance was 0.009 m.
- *   The vertex measurement overstated distance by 175 times. Using vertices would make the boundary tolerance
+ *   The vertex measurement overstated distance by 175 times. Vertex-only measurements would make the boundary tolerance
  *   stricter than its stated value and report a rendering difference as a conversion defect.
  */
 
@@ -64,7 +64,7 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Every row carries this distance.
+	 * Every row includes this distance.
 	 * It separates a real defect from a difference caused by the two channels
 	 * rendering the same edge differently.
 	 *

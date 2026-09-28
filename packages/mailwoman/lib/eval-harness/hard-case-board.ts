@@ -8,7 +8,7 @@
  *   in a state where a soft gazetteer bias changes the argmax. Each row therefore exercises that bias with a bare
  *   toponym, comma-free fragment, or namesake confound.
  *
- *   {@linkcode HardCase.fstReach} says whether the row's expected place is inside the locale-scoped
+ *   {@linkcode HardCase.fstReach} reports whether the row's expected place is inside the locale-scoped
  *   `fst-<locale>.bin` the arm loads. `in` means bias can push the parse toward the answer. `out` means the
  *   country falls outside the FST scope, where the gazetteer can only pull toward a wrong place. The comparison
  *   reports those rows separately as its hijack-risk population.
@@ -201,7 +201,7 @@ export const HardCaseSchema = zod
 /**
  * Checks that {@linkcode HardCase} and {@linkcode HardCaseSchema} have the same fields.
  *
- * Adding a field to only one makes `tsc` report an error here.
+ * A field added to only one makes `tsc` report an error here.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
@@ -215,7 +215,7 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 
 // Probe the directory rather than the board file.
 // The builder resolves this constant before the board exists.
-// Probing the file would send the first build to the compiled-tree fallback.
+// A file probe would send the first build to the compiled-tree fallback.
 /**
  * Resolves the committed board from the package root.
  * `tsc` does not emit `.jsonl` files into `out/`.

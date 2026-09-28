@@ -51,8 +51,8 @@ export interface PostcodeShape {
  * Every postcode shape, in priority order.
  *
  * Compiled once at module load.
- * Each `RegExp` carries the `g` flag so callers scan a whole line.
- * Rows that declare Unicode matching also carry the `u` flag.
+ * Each `RegExp` has the `g` flag so callers scan a whole line.
+ * Rows that declare Unicode matching also have the `u` flag.
  */
 export const POSTCODE_SHAPES: readonly PostcodeShape[] = postcodeShapeData.shapes.map((shape) => ({
 	label: shape.label,

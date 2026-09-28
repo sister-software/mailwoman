@@ -14,7 +14,7 @@
  *   reached through a symlink. The audit distinguishes these cases instead of counting paths. Only independent copies
  *   can diverge. If one copy is pulled and the other remains unchanged, filesystem enumeration order decides which
  *   value is ingested. `verifyAdmin` tests floors and cannot detect that conflict. A symlink alias points to one
- *   physical copy, so it cannot diverge. Combining aliases and separate checkouts would misstate the risk.
+ *   physical copy, so it cannot diverge. A risk estimate that combines aliases and separate checkouts would be wrong.
  */
 
 import { entryLeadsToDirectory, pathExists, realPath } from "@mailwoman/core/fs/readers"
@@ -91,7 +91,7 @@ export interface ReposAudit {
 const REPO_NAME = /^whosonfirst-(?:data|external)-(?<theme>[a-z]+(?:-[a-z]+)*?)-(?<country>[a-z]{2})$/
 
 /**
- * Split a repo name into its theme and country, when it carries one.
+ * Split a repo name into its theme and country, when it includes one.
  */
 export function parseRepoName(name: string): { theme?: string; country?: string } {
 	const match = REPO_NAME.exec(name)
@@ -120,7 +120,7 @@ function headOf(dir: PathBuilder): string | undefined {
  *
  * The audit examines two levels because repositories use two layouts:
  * directly under the root or under an owner directory.
- * Anything deeper is a repo's own contents.
+ * Paths below that level belong to a repo's own contents.
  */
 export async function auditReposRoot(
 	root: PathBuilderLike,
@@ -136,7 +136,7 @@ export async function auditReposRoot(
 		existing.layouts.push(layout)
 
 		// `realpath` is what separates a second checkout from a second path to the first.
-		// Comparing directory listings cannot: both shapes look identical from `ls`.
+		// Directory listings cannot distinguish the cases because both shapes look identical from `ls`.
 		try {
 			realPaths.set(name, [...(realPaths.get(name) ?? []), await realPath(dir)])
 		} catch {
@@ -213,7 +213,7 @@ export async function auditReposRoot(
 }
 
 /**
- * Which countries the repos root would contribute to a build, whatever any list says.
+ * Which countries the repos root would contribute to a build, regardless of any list.
  */
 export function clonedCountries(audit: ReposAudit): string[] {
 	return [...new Set(audit.repos.flatMap((repo) => (repo.country ? [repo.country] : [])))].toSorted()

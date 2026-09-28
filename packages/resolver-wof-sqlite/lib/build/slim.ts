@@ -152,7 +152,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			}
 		}
 
-		// The copied schemas carry the primary keys.
+		// The copied schemas define the primary keys.
 		// This index on `names.id` helps the per-id insert select.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
@@ -238,7 +238,8 @@ async function copyFromSource(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// Declaring `src.spr` etc. in `BuildSchema` lets Kysely column-check the cross-schema select.
+		// The `src.spr` declaration and its peers in `BuildSchema` let Kysely
+		// column-check the cross-schema select.
 		// SQLite reads the dotted identifier as a schema qualifier.
 
 		progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
@@ -315,7 +316,7 @@ async function copyFromSource(
 		}
 
 		// `ancestors` is intentionally not copied, so the derived `coincident_roles`
-		// table is carried and filtered to surviving spr ids.
+		// table is copied and filtered to surviving spr ids.
 		const relationSchema = out
 			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
 			.get() as { sql?: string } | undefined

@@ -1,4 +1,4 @@
-"""Streaming parquet → encoded tensors data pipeline for Phase 2 training.
+"""Stream parquet rows into encoded tensors for Phase 2 training.
 
 Reads ``corpus-v0.1.0`` parquet files with PyArrow's lazy, memory-stable row-group iterator.
 Filters and weights rows according to the YAML config. Encodes rows through SentencePiece with
@@ -22,11 +22,11 @@ Per Phase 2 §2:
 - Tokenizer alignment verification: re-tokenize a sample and assert the stored ``tokens``
   match (see ``verify_tokenizer_alignment``).
 
-v0.5.0 char-offset labels (#519): parquet files whose schema carries
+v0.5.0 char-offset labels (#519): parquet files whose schema has
 ``span_starts``/``span_ends``/``span_tags`` stream the triple end-to-end — through the
 augmentations (which re-target it. see ``augment.py``) and the #511 relabel pass (char
 arithmetic. see ``relabel.py``) into ``encode_row``, which builds the per-char label array from
-the spans. Frozen pre-v0.5.0 files carry no span columns and ride the legacy token path. A
+the spans. Frozen pre-v0.5.0 files have no span columns and use the legacy token path. A
 file with a partial column set, or a null span value in a span-schema file, is corrupt and
 raises loudly — never a silent fallback.
 
@@ -38,7 +38,7 @@ The modules, in the order a row travels them:
 - `stream.py` — the shuffle buffer plus the train-only policy and augmentation step.
 - `encode.py` — one row to one `EncodedExample`, through SentencePiece or the char path.
 - `batch.py` — stacking examples into the batch the trainer feeds the model.
-- `example.py` — what an encoded row carries.
+- `example.py` — the fields of an encoded row.
 - `anchors.py` — the postcode→anchor lookup reader.
 - `verify.py` — the corpus/tokenizer compatibility check a run makes before it starts.
 

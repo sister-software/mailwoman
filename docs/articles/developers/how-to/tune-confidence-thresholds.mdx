@@ -130,8 +130,8 @@ those accepted spans were right.
 | 0.95      | 91.74%              | 98.82%                | 8.26%    |
 | 0.97      | 84.52%              | 99.10%                | 15.48%   |
 
-Read it as a price list. Moving from 0.90 to 0.95 provides 0.31 points of precision and costs 7.5 points of
-coverage — you review ten times the spans for a third of a point. Moving to 0.97 provides another 0.28
+Read it as a price list. At 0.95, precision rises by 0.31 points and coverage falls by 7.5 points
+from the 0.90 baseline — you review ten times the spans for a third of a point. At 0.97, precision rises another 0.28
 and costs 7.2 more.
 
 **Start at 0.90.** It is where the curve is still nearly free: 99.23% of spans accepted at 98.51%
@@ -184,7 +184,7 @@ thr   rows-accepted  clean-reviewed  broken-reviewed  spans-below
 
 At 0.90 the rule catches all three broken rows and sends no clean row to review. At 0.97 it catches the
 same three and sends fifteen of twenty clean rows with them — because 22% of spans fall below 0.97, and
-a six-component row only has to lose one of them. Routing on the weakest span multiplies the span-level
+a six-component row only has to lose one of them. A route based on the weakest span multiplies the span-level
 review rate by roughly the component count, so a threshold that looks cheap per span can be expensive per row.
 
 The routing itself:

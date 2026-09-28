@@ -117,7 +117,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 
 	// Check before the WOF ingest rather than at `fold-overture`.
 	// A pruned pin is a one-request question.
-	// Discovering it after 2.9M records would look like a network fault rather than an expired pin.
+	// A release check after 2.9M records could look like a network fault instead of an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
 	phase("preflight", releaseCheck.message)

@@ -21,8 +21,8 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> Any:
     """Parse and dispatch. Answers the chosen command's exit code."""
     # The math sdpa kernel is the only one that runs stably on Radeon 780M — flash and
-    # mem-efficient hang. Importing torch lazily keeps a help-only invocation fast.
-    # Torch may be absent in a lint-only environment.
+    # mem-efficient hang. A lazy Torch import keeps a help-only invocation fast.
+    # A lint-only environment may omit Torch.
     try:
         from ..nn.encoder import force_math_sdpa
 

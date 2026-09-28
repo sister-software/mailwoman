@@ -17,8 +17,9 @@ import { haversineKm } from "#distance"
 /**
  * Clamp a fraction into `[0, 1]`.
  *
- * NaN passes through, which is deliberate: an interpolation whose inputs were not numbers should
- * produce NaN coordinates a caller can detect rather than silently snap to a segment's start.
+ * NaN passes through deliberately.
+ * An interpolation whose inputs were not numbers should produce NaN coordinates a
+ * caller can detect rather than silently snap to a segment's start.
  */
 export function clampFraction(t: number): number {
 	return t < 0 ? 0 : Math.min(1, t)

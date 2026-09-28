@@ -50,7 +50,7 @@ const SP_NEAR = {
 // ~6 km from PC
 
 /**
- * A backend that filters the given places by name substring, placetype, and country.
+ * A backend that filters the given places by name substring, placetype and country.
  */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {

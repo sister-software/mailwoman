@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `bare-postcode` — the postcode standing alone. The interface worth pinning is that every surface
+ * @file `bare-postcode` — a postcode without another address component. The interface worth pinning is that every surface
  *   the recipe renders is one `known-formats.ts` reads as a postcode over its whole span, because a surface
  *   the detector refuses would train the model on a string the query-shape prior cannot then support.
  */
@@ -107,7 +107,7 @@ describe("bare-postcode capability reservation", () => {
 })
 
 describe("the rendering agrees with known-formats", () => {
-	// One code per carried country, in the publisher's own spelling.
+	// One code per included country, in the publisher's own spelling.
 	const SAMPLES: Array<[string, string]> = [
 		["CZ", "11900"],
 		["CZ", "60200"],
@@ -131,8 +131,8 @@ describe("the rendering agrees with known-formats", () => {
 	}
 
 	it("refuses a surface the detector reads as something else", () => {
-		// The guard's own polarity: a four-digit group alone is not a postcode shape any pattern
-		// claims over its whole span, so the recipe would refuse it rather than emit it.
+		// The guard's own polarity: a four-digit group by itself is not a postcode shape any
+		// pattern claims over its whole span, so the recipe would refuse it rather than emit it.
 		expect(detectedAsPostcode("1012")).toBe(false)
 		expect(detectedAsPostcode("119 000")).toBe(false)
 	})

@@ -29,7 +29,7 @@ describe("mapUnitProfile", () => {
 
 	it("normalizes by the weight actually present rather than assuming the percentages sum to 100", () => {
 		// A national build cannot assume percentages sum to 100.
-		// Dividing by 100 would silently under-report every share.
+		// A division by 100 would silently under-report every share.
 		const profile = mapUnitProfile({ no_mapping: 0 }, [component(30, "Series", "2"), component(30, "Series", "3")])
 
 		expect(profile.classShares.get("2")).toBeCloseTo(0.5, 6)

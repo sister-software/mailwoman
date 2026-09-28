@@ -54,8 +54,9 @@ function difference(left: readonly string[], right: readonly string[]): string[]
 }
 
 /**
- * Checks that `scope.config.json` matches the `SCOPE.mdx` tier table, that every shipping locale
- * is tiered or has a stated reason, and that the reason lists hold no empty or stale entries.
+ * Checks that `scope.config.json` matches the `SCOPE.mdx` tier table, that every
+ * shipping locale is tiered or has a stated reason.
+ * The reason lists must contain no empty or stale entries.
  */
 export const localeScopeCheck: RepoCheck = {
 	id: "locale-scope",

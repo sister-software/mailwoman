@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The opening zoom against correctly ordered hierarchies. `GeocodeResult.hierarchy` is most specific first.
- *   Reading from the other end is a defect this test catches: every returned value is a legal zoom and the map
+ *   A lookup from the other end is a defect this test catches: every returned value is a legal zoom and the map
  *   still renders. The only symptom is that a resolved city opens on a view of the continent.
  */
 

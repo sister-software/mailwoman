@@ -13,7 +13,7 @@ tags:
   - international
 ---
 
-# Onboarding a country's evidence layer (pair-index overlay)
+# Onboard a country's evidence layer (pair-index overlay)
 
 This is the repeatable recipe for giving a new country a **retrieval-augmented decode prior** — a
 gazetteer-backed emission bias that resurrects a dead or starved place-hierarchy tag at decode
@@ -28,11 +28,10 @@ The two worked cases this page distills:
   no β), including the repeated-name identity-pair convention.
 
 Both ship on the same v385 base model. The training-side resurrection lineage that preceded this
-capability closed at **five falsified mechanisms and three stop-rule executions** — the decode-side
-answer is what shipped. Read that history so you don't re-run it: the en-GB postmortem
-(`docs/records/evals/2026-07-22-night-en-gb-postmortem.md`) and
-[the placetype-pair ship-prep scorecard](../../records/evals/2026-07-23-placetype-pair-scorecard.md) (its
-three postscripts are the arc's actual ending).
+capability closed after five mechanisms were falsified and three stop rules ran. The decode-side
+answer shipped in v385. See the
+[placetype-pair ship-prep scorecard](../../records/evals/2026-07-23-placetype-pair-scorecard.md)
+for the evaluation results.
 
 The doctrine this sits inside is
 [registry-backed structured prediction](./registry-backed-structured-prediction.mdx): the registry
@@ -93,7 +92,7 @@ with `NUMBER,STREET,CITY,DISTRICT,REGION,POSTCODE`). The register catalogue is
 **Fold rules.** Child and parent are folded through `normalizeFSTToken` (NFKC-lower,
 punctuation-strip) at build time — the same fold the decode prior applies to input windows, so the
 two ends can never drift. The header records `foldVersion` so a consumer detects a stale index if
-the fold ever changes. Folding is also where punctuation-variant duplicates merge: GB's raw census
+the fold ever changes. The fold also merges punctuation-variant duplicates: GB's raw census
 had 19,431 lines that folded to 19,209 distinct pairs (`St Helens` and `St. Helens` collapse to one
 key — the 221-merge-group receipt is in `mailwoman/commands/gazetteer/pair-index.tsx`'s
 `EXPECTED_GB_PAIR_COUNT` doc comment). Dedupe is a **build** concern: `serializePairIndex` throws

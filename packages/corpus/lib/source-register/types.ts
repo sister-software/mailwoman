@@ -87,14 +87,14 @@ export const SourceStatus = {
 	 */
 	VerifiedAuthority: "verified-authority",
 	/**
-	 * A row carried forward from the earlier memo without a recheck.
+	 * A row retained from the earlier memo without a recheck.
 	 * These rows lack a publisher and a URL.
 	 */
 	RetainedOriginal: "retained-original",
 	/**
 	 * Research confirmed that a bulk corpus is reachable.
 	 *
-	 * This state alone does not make a source eligible for ingest.
+	 * This state by itself does not make a source eligible for ingest.
 	 */
 	VerifiedCorpus: "verified-corpus",
 	/**
@@ -140,7 +140,7 @@ export const REGISTER_SECTORS = [
 export type RegisterSector = (typeof REGISTER_SECTORS)[number]
 
 /**
- * Whether a source carries coordinates; `Unresolved` differs from `Absent`.
+ * Whether a source provides coordinates; `Unresolved` differs from `Absent`.
  */
 export const SourceGeometry = {
 	Present: "present",
@@ -230,31 +230,31 @@ export interface UncheckedLicense {
  */
 export const SourceOperation = {
 	/**
-	 * Copying the published dataset in bulk into `$MAILWOMAN_DATA_ROOT`.
+	 * Bulk copy of the published dataset into `$MAILWOMAN_DATA_ROOT`.
 	 */
 	Fetch: "fetch",
 	/**
-	 * Reading postal addresses out of the copied file.
+	 * Postal-address extraction from the copied file.
 	 */
 	Extract: "extract",
 	/**
-	 * Relabeling extracted rows into a token and tag corpus.
+	 * Transformation of extracted rows into a token and tag corpus.
 	 */
 	Transform: "transform",
 	/**
-	 * Training a model on the transformed rows.
+	 * Model fitting on the transformed rows.
 	 */
 	Train: "train",
 	/**
-	 * Republishing the rows, raw or transformed, as a database, lexicon or index.
+	 * Redistribution of raw or transformed rows as a database, lexicon or index.
 	 */
 	RedistributeData: "redistribute-data",
 	/**
-	 * Publishing weights trained on the rows.
+	 * Redistribution of weights trained on the rows.
 	 */
 	RedistributeModel: "redistribute-model",
 	/**
-	 * Selling a commercial license over the result.
+	 * Commercial sublicensing of the result.
 	 */
 	CommercialSublicense: "commercial-sublicense",
 } as const
@@ -265,7 +265,7 @@ export const SourceOperation = {
 export type SourceOperation = (typeof SourceOperation)[keyof typeof SourceOperation]
 
 /**
- * What a grant says about one operation.
+ * What a grant permits for one operation.
  *
  * `unreviewed` means the terms lack an operation-specific review.
  * Eligibility checks treat it as blocking.
@@ -381,7 +381,7 @@ export interface JurisdictionRecord {
 	 */
 	bestPath: string
 	/**
-	 * The research pass's free-text list of propositions it expected sources to carry.
+	 * The research pass's free-text list of propositions it expected sources to support.
 	 *
 	 * The text is kept verbatim because it does not map onto the `AssertedProposition` vocabulary.
 	 */

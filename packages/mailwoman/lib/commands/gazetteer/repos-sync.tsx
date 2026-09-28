@@ -94,12 +94,12 @@ const GazetteerReposSync: CommandComponent<typeof spec> = ({ options }) => {
 						await runFile("git", ["-C", plan.directory, "merge", "--ff-only", "origin/HEAD"])
 						performed.push(`fast-forwarded ${plan.repo}`)
 					} else if (plan.action === SyncAction.RepointRequired && options.repoint) {
-						// Losing the fork's address would make the next upstream sync a guess.
+						// The next upstream sync would need a guess without the fork's address.
 						await runFile("git", ["-C", plan.directory, "remote", "rename", "origin", "upstream"])
 						await runFile("git", ["-C", plan.directory, "remote", "add", "origin", plan.origin.url])
 						await runFile("git", ["-C", plan.directory, "fetch", "--quiet", "origin"])
 
-						// The rename carried `branch.<name>.remote`, so without re-pointing tracking the
+						// The rename preserved `branch.<name>.remote`, so without re-pointing tracking the
 						// next `git pull` here pulls upstream over the corrections this command preserves.
 						const branch = (
 							await runFile("git", ["-C", plan.directory, "rev-parse", "--abbrev-ref", "HEAD"])

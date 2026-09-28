@@ -53,7 +53,7 @@ export interface EmOptions {
 	 */
 	tolerance?: number
 	/**
-	 * Starting prior match rate.
+	 * The prior match rate at the start.
 	 *
 	 * Defaults to the model's `lambda`.
 	 */

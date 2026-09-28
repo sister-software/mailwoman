@@ -49,7 +49,7 @@ export interface CanonicalizeOptions {
 	 * ISO 3166-1 alpha-2 country code for the organization's jurisdiction.
 	 *
 	 * Its country pack adds that jurisdiction's legal forms to the strip set.
-	 * Matching is case-insensitive.
+	 * The comparison ignores case.
 	 * Unknown codes add no pack.
 	 */
 	jurisdiction?: string

@@ -23,7 +23,7 @@ import { recordFixture } from "mailwoman/eval-harness/same-data/record"
 import { describe, expect, it } from "vitest"
 
 /**
- * Troyes as the gazetteer carries it: a concorded `locality`, a `localadmin` twin 0.6
+ * Troyes as the gazetteer records it: a concorded `locality`, a `localadmin` twin 0.6
  * km away, plus a real namesake far enough away to be a different place.
  */
 const TROYES: ResolvedPlace[] = [
@@ -92,7 +92,7 @@ describe("the same-data recorder's withholding rule", () => {
 		const ids = await recordedIDs(false)
 
 		expect(ids.has("101750981")).toBe(false) // the concorded gold
-		// The defect v1 carries: one settlement, two rows, one link.
+		// The defect v1 represents: one settlement, two rows, one link.
 		// The `localadmin` survives the filter and an arm returning it was graded as inventing a place.
 		expect(ids.has("404405659")).toBe(true)
 		expect(ids.has("999")).toBe(true)
@@ -109,7 +109,7 @@ describe("the same-data recorder's withholding rule", () => {
 		const ids = await recordedIDs(true)
 
 		// `Troyes` QC folds equal and sits thousands of km away.
-		// Withholding it would remove a candidate the stratum is entitled to offer.
+		// The stratum is entitled to offer this candidate.
 		// `Batāla` has the same fold, but lies 1,421 km away.
 		expect(ids.has("999")).toBe(true)
 	})

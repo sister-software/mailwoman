@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The shape a repairable check takes, and the line between the two registries.
+ * @file The shape a repairable check takes and the line between the two registries.
  *
  * A `RepoFix` answers one check's diagnostics with a list of module moves and cannot write anything, because only
  * `#move/apply` performs the apply.

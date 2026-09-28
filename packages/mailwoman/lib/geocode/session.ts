@@ -116,7 +116,7 @@ export interface GeocodeSessionOptions {
 
 	/**
 	 * Whether to record a {@link GeocodeTrace} per input.
-	 * Recording it costs one extra decode per input.
+	 * This setting costs one extra decode per input.
 	 */
 	trace?: boolean
 
@@ -167,7 +167,7 @@ export interface GeocodeTrace {
 /**
  * One address's geocode result and the {@link AddressTree} it was resolved from.
  *
- * The tree's nodes carry character offsets for span rendering.
+ * The tree's nodes store character offsets for span rendering.
  */
 export interface GeocodeRun {
 	result: GeocodeResult

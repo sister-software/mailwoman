@@ -94,7 +94,7 @@ export function toDerivedFactID(id: string): DerivedFactID {
 
 /**
  * The concept kinds.
- * Adding a kind requires a reviewed schema revision.
+ * A new kind requires a reviewed schema revision.
  */
 export const ConceptKind = {
 	/**
@@ -106,7 +106,7 @@ export const ConceptKind = {
 	 */
 	Establishment: "establishment",
 	/**
-	 * Something a person does, such as `obtain_medication`.
+	 * A kind of activity, such as `obtain_medication`.
 	 */
 	Activity: "activity",
 } as const
@@ -318,7 +318,7 @@ export interface ExternalMappingRecord {
  * A proposition stated by an identified external source, expressed in this model's vocabulary.
  *
  * Observations stay out of the concept table.
- * Turning one into an authored assertion requires an explicit curation decision with its own provenance.
+ * An authored assertion requires an explicit curation decision with its own provenance.
  */
 export interface SourceObservationRecord {
 	id: ObservationID

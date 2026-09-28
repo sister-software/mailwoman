@@ -43,7 +43,7 @@ export interface PostcodeLocalityTable {
 /**
  * Provenance / license / build-statistics key-value pairs.
  *
- * Every database carries one.
+ * Every database has one.
  * Its contents are specific to the builder.
  */
 export interface PostcodeLocalityMetaTable {
@@ -66,7 +66,7 @@ export interface PostcodeLocalityDatabase {
 export type PostcodeLocalitySchemaHandle = Pick<Kysely<PostcodeLocalityDatabase>, "schema">
 
 /**
- * Whether the statement carries `if not exists`.
+ * Whether the statement includes `if not exists`.
  *
  * Required rather than defaulted: the databases divide into accumulative builds,
  * where one shared database is filled country by country in successive runs.

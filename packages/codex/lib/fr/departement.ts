@@ -148,7 +148,7 @@ export type DepartementCode = keyof typeof FR_DEPARTEMENTS
  */
 // Use `unknown` to accept any input.
 // This function returns null for anything that is not a departement code,
-// and its callers hand it values off a CSV row or a JSON body.
+// Callers pass values from CSV rows or JSON bodies.
 // A narrower parameter did not make those callers safer — it made the guard
 // test assert its way past the signature.
 export function departementInfo(code: unknown): DepartementInfo | null {

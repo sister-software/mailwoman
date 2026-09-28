@@ -34,7 +34,7 @@ file read. A browser build runs the same stages through `@mailwoman/neural/web-l
 
 This design has three consequences:
 
-- **There is no service to go down.** Parsing has no upstream dependency. If your process is
+- **There is no service to go down.** The parser has no upstream dependency. If your process is
   running, the parser is running. A network outage cannot affect a parse, because a parse makes no
   network connection to us.
 - **There is no meter.** You are not billed per address. Re-parsing the same string a thousand times
@@ -60,14 +60,14 @@ where that address is. It cannot tell you that somebody lives there.
 ## What it costs
 
 You store the data. The model file sits on your disk, and geocoding needs a gazetteer database that
-you download once and keep. Running without a server means you manage those files instead of us.
+you download once and keep. Without a server, you manage those files yourself.
 
 Coverage matches what open data covers, and it varies by country.
 [What ships today](../status.mdx) gives the per-locale details, including the locales with weak
 coverage.
 
-The two jobs also become available separately. Parsing works as soon as `npm install` finishes.
-Geocoding works only after the gazetteer is on disk.
+The two jobs become available separately. The parser works as soon as `npm install` finishes.
+The geocoder works after you put the gazetteer on disk.
 
 ## Related
 

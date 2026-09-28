@@ -117,7 +117,8 @@ export class UPRNLookup implements Disposable {
 		const seenCells = new Set<string>()
 		let best: UPRNNearestHit | null = null
 
-		// The loop terminates because the break bound is at most radiusM, which the RangeError above caps.
+		// The loop terminates because the break bound is at most `radiusM`.
+		// The RangeError above caps that value.
 		for (let ring = 0; ; ring++) {
 			// Once this bound exceeds the best hit so far, or the radius, further rings cannot improve the answer.
 			const closestPossibleM = ring * RES9_CENTER_SPACING_FLOOR_M - RES9_CELL_RADIUS_CEILING_M

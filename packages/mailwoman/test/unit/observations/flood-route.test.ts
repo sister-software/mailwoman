@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests the authority-designation route through `geocodeAddress` with mock dependencies and a fixture flood
- *   layer. Attaching the route must add at most one marker and leave the rest of the result unchanged.
+ *   layer. The route must add at most one marker and leave the rest of the result unchanged.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -68,7 +68,7 @@ const INPUT = "Testtown"
 /**
  * The query kind the mock classifier reports.
  *
- * A designation marker carries the verdict's top kind because a designation has no kind of its own.
+ * A designation marker includes the verdict's top kind because a designation has no kind of its own.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
@@ -81,7 +81,7 @@ const INSIDE_ZONE = {
 }
 
 /**
- * A point inside the authority footprint and outside every polygon, which reads as Zone 1.
+ * A point inside the authority footprint and outside every polygon reads as Zone 1.
  */
 const DESIGNATED_ABSENCE = { latitude: FIXTURE_ORIGIN.lat + 0.2, longitude: FIXTURE_ORIGIN.lon + 0.2 }
 

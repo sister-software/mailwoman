@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Stripe SDK on the Workers runtime: the fetch http client instead of Node's, and a pinned API version so a Stripe
+ *   The Stripe SDK on the Workers runtime uses the fetch HTTP client instead of Node's. It pins an API version so a Stripe
  *   upgrade is a deliberate change here, never a drift. The SubtleCrypto provider for webhook signatures lives beside
  *   the verifier in `webhook.ts`.
  */

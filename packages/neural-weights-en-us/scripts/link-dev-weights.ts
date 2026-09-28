@@ -4,7 +4,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-us overlay's dev artifacts, the base package that carries the model and
+ *   Materialize the en-us overlay's dev artifacts, the base package that contains the model and
  *   tokenizer every other overlay inherits, the soft-feed lexicons, the US postcode binary, the
  *   FSTs and the US placetype-pair index.
  *

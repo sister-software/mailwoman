@@ -22,7 +22,7 @@ Jyllandsgade 75, 9000 Aalborg
 
 They are different places, 650 meters apart.
 
-A string-similarity matcher scores the first pair, the _same_ place, low because of different punctuation, "Street" vs "St", and a reordered unit. It scores the second pair, _different_ places, at 0.96 because they differ by one character. The usual tool gets both pairs wrong. Adjusting the threshold cannot fix this, because string similarity measures the wrong thing.
+A string-similarity matcher scores the first pair, the _same_ place, low because of different punctuation, "Street" vs "St", and a reordered unit. It scores the second pair, _different_ places, at 0.96 because they differ by one character. The usual tool gets both pairs wrong. A threshold change cannot fix this, because string similarity measures the wrong thing.
 
 {/* truncate */}
 
@@ -40,7 +40,7 @@ We therefore stopped matching on the written form. [Mailwoman](https://mailwoman
 
 Three things change as a result.
 
-**Blocking becomes a partition rather than a search cluster.** The expensive part of matching a million records is finding the pairs worth scoring without comparing all 500 billion of them, and scoring each pair is cheap by comparison. The textbook approach is a search cluster: stand up Elasticsearch, index everything, and query for candidates. Geocode-first replaces that infrastructure with a single pass through the data. Two records in the same ~5 km cell are candidates, and every other pair is skipped. The geocoder has already done the partitioning. We measured the matcher resolving half a million records in about a minute in one Node process on commodity hardware. The baseline requires a search index, while this approach needs no server, Docker, or long-running process. The architecture matters more than the exact timing.
+**Geocode-first blocking partitions records into cells.** The expensive part of matching a million records is finding the pairs worth scoring without comparing all 500 billion of them, and scoring each pair is cheap by comparison. The textbook approach is a search cluster: stand up Elasticsearch, index everything, and query for candidates. Geocode-first replaces that infrastructure with a single pass through the data. Two records in the same ~5 km cell are candidates, and every other pair is skipped. The geocoder has already done the partitioning. We measured the matcher resolving half a million records in about a minute in one Node process on commodity hardware. The baseline requires a search index, while this approach needs no server, Docker, or long-running process. The architecture matters more than the exact timing.
 
 **Distance becomes a feature you can calibrate.** Records for the same building are typically ~30 meters apart, and records on the same block ~300 meters. The geocoder knows its own error. Rooftop points are tight, interpolated points are looser, and centroids are looser still, so distance evidence can be weighted by placement quality. A string matcher has no equivalent. It can report that two street names are spelled similarly, but it cannot tell whether they refer to the same building.
 
@@ -58,9 +58,9 @@ Once the records are joined, you can ask which entities appear in the eligibilit
 
 That result needs careful interpretation. We produce the reconciliation, and the analyst draws the conclusion. An entity in the "eligible rather than enrolled" set is a candidate for review and does not imply wrongdoing. A gap can mean the entity did not apply, applied under a name we did not resolve, is not eligible, or has some other ordinary explanation. The tool resolves public records into an analyzable shape and surfaces candidates. The analyst decides what a correlation means.
 
-## The number was lying too
+## The ground truth changed the score {#the-number-was-lying-too}
 
-To measure deduplication within the registry we needed ground truth. The registry provides a stable, government-issued ID on every provider. Grading clusters against it and counting disagreements looks objective.
+To measure deduplication within the registry we needed ground truth. The registry provides a stable, government-issued ID on every provider. A cluster score against that ID appears objective.
 
 That ground truth is wrong, and it makes the matcher look worse than it is. The ID is a registration number, and one organization can hold several. One hospital system holds a separate registration for every billing subpart. Baylor College of Medicine appears four times at a single address. When the matcher correctly merges those four records into one entity, the registration-number ground truth scores those pairs as over-merges. A better matcher therefore gets a lower score.
 
@@ -70,15 +70,15 @@ We graded the identical cluster output, from the same model, against a ground tr
 
 We froze the hardest cases (co-located records with near-identical names that the registration ID separates) and adjudicated them one at a time: **120 of 120 were the same real-world organization.** None were two unrelated organizations merged by mistake. The class we had logged as our largest source of error was almost entirely the matcher being correct and the ground truth being too literal.
 
-Believing the first number cost us work. We built corroboration features to reduce the apparent over-merging, and they did not change precision, because the over-merging did not exist.
+We trusted the first number and spent time building corroboration features to reduce apparent over-merging. Those features left precision unchanged because the over-merging did not exist.
 
 A matching F1 is uninterpretable unless it states its truth grain. Report the ground truth next to the number every time. When the number is low, check the ground truth before blaming the model.
 
 At 68.1%, F1 is still mediocre. The ground-truth analysis explains part of the low number, but it does not make the number good. The matcher still misclusters. Rural route addresses and PO boxes defeat the geocoder: a shared box at a post office resolves to the same rooftop coordinate for every resident, so the distance feature carries no information. Rooftop interpolation can place a strip-mall suite on the wrong unit. The performance table includes those rows, and we are working on them.
 
-## Why pure Node matters
+## Why a single Node process matters {#why-pure-node-matters}
 
-Combining a geocoder with a record-linkage library would give you some of this. It would not give you the integration: the same calibrated geocoder drives the blocking, weights the distance evidence, and runs in one process without an external service.
+A geocoder and a record-linkage library could provide some of this. The integration comes from using the same calibrated geocoder for blocking and distance weights, all in one process without an external service.
 
 That integration is an architectural property. Geo-blocking is what lets candidate generation run in-process. A string matcher needs a search cluster because it cannot partition the problem cheaply, and geocode-first removes that need. The whole pipeline (parse, geocode, block, score, and cluster) installs with `npm install` and runs as a function call, without Elasticsearch, Docker, or a long-running server. For a compliance team with a folder of CSVs and no infrastructure budget, that makes the work an afternoon's task instead of a project.
 

@@ -24,7 +24,7 @@ attribution:
   `ban:fr`, and the resolver should display
   _"© les contributeurs de la Base Adresse Nationale (adresse.data.gouv.fr)"_.
 
-## Building the database
+## Build the database
 
 BAN's per-département dumps land under `$MAILWOMAN_DATA_ROOT/…/ban/` (or the corpus source dir). The build
 streams them without an external CLI or DuckDB, so it has few dependencies and does not run out of memory

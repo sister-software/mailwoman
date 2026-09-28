@@ -10,9 +10,9 @@
  *   (`mailwoman/gazetteer-pipeline/poi/build-poi.ts:341`) — DuckDB bypassed entirely (decision 3).
  *   Mirrors `extract.ts`'s process-spawn + GeoJSONSeq-over-stdout idiom exactly. the two differences
  *   are the predicate (telecom tags rather than `addr:housenumber`) and the match fan-out (a feature can only
- *   satisfy the first rule in table order — `man_made` alone appears in four rules and `telecom` in
+ *   satisfy the first rule in table order — `man_made` appears as a key in four rules and `telecom` in
  *   two. Every rule sharing a key requires a different value, so a real feature
- *   carries one value per key, can satisfy at most one rule regardless of table order).
+ *   has one value per key, can satisfy at most one rule regardless of table order).
  *
  *   Tag disjunctions/conjunctions live here rather than in the taxonomy (decision 2): `CategoryRecord.osmTag`
  *   is a single scalar the Overpass emitter consumes (`poi-taxonomy/overpass.ts` hard-splits on one
@@ -26,7 +26,7 @@
  *   and drops each promoted key from that layer's `other_tags` hstore. `name` and `man_made` are on
  *   both lists; `amenity`, `shop` and `building` are on `multipolygons` only. Keys on neither list
  *   (`telecom`, `street_cabinet`, `tower:type`) are read via `hstore_get_value`, exactly as
- *   `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} carries both lists, because reading a
+ *   `extract.ts` reads `addr:*`. {@link PROMOTED_KEYS_BY_LAYER} stores both lists, because reading a
  *   promoted key through `hstore_get_value` returns NULL for every feature of that layer — a silent
  *   empty result rather than an error. A custom `OSM_CONFIG_FILE` that un-promotes a key on either
  *   list would break the bare-column assumption. not a concern for the shipped default.
@@ -96,9 +96,9 @@ export interface OSMPOITagRule {
  * - `data_center` ← `man_made=data_center` or `telecom=data_center`
  *
  * Rule order only matters in that the first matching rule wins per feature;
- * `man_made` alone appears in four rules and `telecom` in two, but every rule sharing
- * a key requires a different value for it, so a real-world feature — which carries
- * one value per key — can match at most one rule regardless of order.
+ * `man_made` appears as a key in four rules and `telecom` in two, but every rule
+ * sharing a key requires a different value for it, so a real-world feature —
+ * which has one value per key — can match at most one rule regardless of order.
  */
 export const TELECOM_TAG_RULES: OSMPOITagRule[] = [
 	{ categoryID: "telecom_exchange", all: [["man_made", "telephone_exchange"]] },
@@ -139,7 +139,7 @@ export function tagRuleFromOSMTag(categoryID: string, osmTag: string): OSMPOITag
 }
 
 /**
- * The OSM driver layers that can carry telecom infrastructure: nodes and building-ish ways/relations.
+ * The OSM driver layers that can contain telecom infrastructure: nodes and building-ish ways/relations.
  *
  * Mirrors `extract.ts`'s `ADDR_LAYERS`.
  */
@@ -235,7 +235,7 @@ export function buildTelecomPOISQL(layer: string, rules: readonly OSMPOITagRule[
  * fully satisfied by `tags` wins, `null` when none match.
  *
  * `tags` is a plain key -> value dict (a decoded feature's promoted-column/`other_tags` values).
- * No OGR/ogr2ogr involved, so this is unit-testable over synthetic dicts alone.
+ * No OGR/ogr2ogr involved, so unit tests can use synthetic dictionaries.
  */
 export function matchOSMPOITagRule(
 	tags: Readonly<Record<string, string | undefined>>,
@@ -252,7 +252,7 @@ export function matchOSMPOITagRule(
 
 /**
  * Decode one ogr2ogr GeoJSONSeq feature into a {@link POISourceRow}, or `null`
- * when it satisfies none of `rules` (the JS-side re-check) or carries no usable geometry.
+ * when it satisfies none of `rules` (the JS-side re-check) or has no usable geometry.
  */
 function toPOISourceRow(
 	feature: { properties?: Record<string, unknown>; geometry?: { type?: string; coordinates?: unknown } },
@@ -323,7 +323,7 @@ async function* runPOILayer(
  * from a PBF extract's `points` + `multipolygons` layers, geometry reduced to a
  * representative coordinate (centroid for polygons).
  *
- * `confidence` is fixed at `1` and `gersID`/`brandWikidata` are always `null` — OSM rows carry neither.
+ * `confidence` is fixed at `1` and `gersID`/`brandWikidata` are always `null` — OSM rows have neither.
  * See the module docstring for the `country` caveat.
  */
 export async function* extractOSMPOIs(

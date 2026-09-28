@@ -10,7 +10,7 @@
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals (Utrecht,
  *   Groningen), and Shanghai. When an address surfaces only the admin role because the parser
  *   dropped the locality span, the resolver has no locality to place. The hierarchy-completion step
- *   consults this relation. The table carries the gazetteer's own structure, so the runtime is an
+ *   consults this relation. The table preserves the gazetteer's own structure, so the runtime is an
  *   O(1) membership lookup with no distance math.
  *
  *   V1 is region-tier only (admin.placetype = `region`), the ~124 places matching the census across

@@ -16,7 +16,7 @@ The lab has two symptoms with one cause.
 fallback. This was observed on 2026-08-17 while building the dev-MCP worktree arm. The setup step that fixes
 it is ten copy-pasted scripts totalling 2,001 lines, ranging from 24 to 586 lines each.
 
-**A built artifact cannot say what built it.** Probing every database over 1 MB in the data root:
+**A built artifact cannot say what built it.** A scan of every database over 1 MB in the data root found:
 
 ```
 databases probed: 60 ; carrying layer_manifest: 8
@@ -100,7 +100,7 @@ The design left three questions open. This section resolves them.
      en-gb/    model.onnx → the SAME source file, postcode-gb.bin, pair-index-gb.bin, …
    ```
 
-   A `base/` directory would have held one copy and had every locale link into it. Linking straight to the recipe's
+   A `base/` directory would have held one copy and had every locale link into it. A direct link to the recipe's
    source also holds one copy (the source itself), with one fewer indirection and no second record of which model
    is in use. `base/` would have provided a self-contained overlay that survives deletion of the training output.
    That benefit does not justify a 40 MB copy while the recipe remains the authority and the writer is idempotent.
@@ -109,7 +109,7 @@ The design left three questions open. This section resolves them.
    `existsSync` follows the link. Symlinks are safe _here_ because their publish hazard (`YN0035`, a tarball
    refusing symlinks) applies only to package directories, and no packaging step tars the data root.
 
-2. **`copy-weights.ts` keeps reading the data root directly.** Pointing it at the overlay would make the
+2. **`copy-weights.ts` keeps reading the data root directly.** An overlay path would make the
    release ship exactly the bytes dev ran. That is useful but outside phase 0. Revisit it at phase 3, when
    artifacts have manifests and the claim can be checked rather than asserted.
 
@@ -143,7 +143,7 @@ facts above directly: `pelias-rig` is a third of the disk and external, and `can
 whose target is a real choice.
 
 **Acceptance:** the command lists every artifact, classifies each as provenanced / unprovenanced /
-not-ours, and prints one number. Running it twice on an unchanged root prints the same number.
+not-ours, and prints one number. Two runs on an unchanged root print the same number.
 
 ## Phase 2 — `country-plan` — DONE
 
@@ -192,7 +192,7 @@ had moved. Phase 1 found that defect.
 covered the two layer shapes that existed when it was written: a cellular one and an id-joined one.
 `address_point` and `street_segment` carry none of the three. They are probed on
 `(postcode | locality, street_norm, number)`. A first draft declared `addressID: "address_id"`, a column
-that does not exist. Reading the table rather than the schema module caught the mistake. `street` is
+that does not exist. The table caught the mistake that the schema module missed. `street` is
 additive, and existing layers are unaffected.
 
 **The number does not move until each artifact is rebuilt.** Artifacts are rebuilt, never patched, so the
@@ -207,7 +207,7 @@ resolution path a geocode takes. The resolver reads `candidate.db`, and the post
 the candidate build rather than databases it reads at query time. They are worth stamping, but the
 acceptance criterion did not require them.
 
-## Standing invariants
+## Invariants to preserve
 
 These rules come from the repo's own documents. They are restated here because every phase can violate one.
 

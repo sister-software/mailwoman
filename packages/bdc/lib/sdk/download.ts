@@ -29,8 +29,8 @@ import { BDCFilingDataType, type BDCFile } from "#sdk/common"
  * `BDCClient.getArrayBuffer` therefore disables the client's response cache.
  *
  * The `existsSync`-equivalent check above detects cache hits.
- * Sending a multi-hundred-megabyte archive through a JSON-validating disk cache would
- * write a second, unreadable copy of a file already on disk.
+ * A JSON-validating disk cache would write a second, unreadable copy of a
+ * multi-hundred-megabyte archive that already exists on disk.
  *
  * @returns The path of the extracted (and now cached) CSV file.
  */

@@ -7,7 +7,7 @@
  * addresses, coordinates and identifiers are invented.
  *
  * The interface is an async iterable because controlled-file terms can forbid holding the entire file in memory.
- * Streaming also lets a run stop before materializing all licensed rows. The controlled adapter belongs with its
+ * A stream lets a run stop before it materializes all licensed rows. The controlled adapter belongs with its
  * provider because its file format is provider-specific and remains unknown.
  *
  * Everything below is synthetic. The identifiers use the reserved 0-prefixed range from the
@@ -71,7 +71,7 @@ const SYNTHETIC_ADMIN_LON = -0.1
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * Substring of the normalized query the provider keys on.
+	 * The normalized-query substring used as the provider key.
 	 *
 	 * Unique per case, because the fixture answers with the first rule that hits,
 	 * so an overlapping key silently reassigns another case's answer.

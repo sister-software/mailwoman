@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The predicate is exported rather than exercised through the fold, which streams the Overture divisions theme remotely with no local fixture.
+ *   The predicate is exported for direct tests. The fold streams the Overture divisions theme remotely with no local fixture.
  */
 
 import { isDivisionName } from "mailwoman/gazetteer-pipeline/admin/fold/overture"

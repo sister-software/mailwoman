@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Training metrics page — full-page layout with the TrainingCharts dashboard. Mirrors the demo page
+ *   The training metrics page uses a full-page layout with the TrainingCharts dashboard. It mirrors the demo page
  *   pattern: a Layout header and a BrowserOnly boundary. It also has a build-commit footer.
  */
 

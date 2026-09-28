@@ -11,8 +11,8 @@
  *   holds the passes as pins and reports the targets as tracked.
  *
  *   The shape is the regression runner's own loop (`regression.ts`): route the row's overlay country, geocode through
- *   the shared deps, project through `runOne`, grade through `checkCase`. Sharing the function rather than the shape is
- *   what keeps a board builder's verdict equal to the runner's.
+ *   the shared deps, project through `runOne`, grade through `checkCase`. A shared function rather than the shape
+ *   keeps a board builder's verdict equal to the runner's.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -103,7 +103,7 @@ export async function writeSeedCaseFile(cases: readonly SeedCase[], path: PathBu
 
 /**
  * How many failing rows a per-group read prints.
- * The file carries every row's status.
+ * The file records every row's status.
  */
 export const ISSUES_SHOWN_PER_GROUP = 12
 

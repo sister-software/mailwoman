@@ -252,7 +252,7 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 				tally.admittedUnresolved++
 			}
 
-			// Eligibility runs before augmentation: a synthetic row carries its ancestor's `source`,
+			// Eligibility runs before augmentation: a synthetic row inherits its ancestor's `source`,
 			// so refusing the ancestor here refuses everything fanned from it.
 			const ineligible = ineligibility.read(row)
 

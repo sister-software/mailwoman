@@ -29,7 +29,7 @@ describe("surfaceForSource", () => {
 	})
 
 	it("refuses a source nobody has classified rather than defaulting", () => {
-		// A default would write a guess onto every row of an unclassified output,
+		// A default would write a guess onto every row of an unclassified output.
 		// which is the failure the three columns replaced.
 		expect(() => surfaceForSource("synth-unclassified")).toThrow(/No surface recorded/)
 	})
@@ -50,9 +50,9 @@ describe("migrateRecipeOutput", () => {
 		expect(row.recipe).toBe("intersection")
 		expect(row.base_source_id).toBeNull()
 		expect(row.surface).toBe("invented")
-		// The weaker claim a migrated row carries: the rows are real and their upstream is unrecorded.
+		// The weaker claim for a migrated row: the rows are real and their upstream is unrecorded.
 		expect(row.register).toBe("mailwoman-derived-tuples")
-		// The old spellings are gone rather than carried alongside.
+		// The old spellings are gone rather than retained alongside.
 		expect(row.synth_method).toBeUndefined()
 		expect(row.synth_base_id).toBeUndefined()
 	})

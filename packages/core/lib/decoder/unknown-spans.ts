@@ -6,7 +6,7 @@
  *   This module provides a lossless decomposition into typed unknown spans.
  *   Every input byte belongs to one segment: a span covered by a node or an `unknown` run the model left all-O.
  *   `decodeAsJSON` drops those all-O runs.
- *   Surfacing them lets a consumer route them to fallback logic, display them, or aggregate them.
+ *   Consumers can route them to fallback logic, display them, or aggregate them.
  *
  *   This is the pure primitive: it reads `tree.raw` and node `[start,end)` ranges and returns the complement,
  *   mutating no state and changing no serializer.

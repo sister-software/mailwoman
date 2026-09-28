@@ -33,13 +33,13 @@ for (const m of matches) {
 }
 ```
 
-## Loading strategies
+## Load strategies
 
 `loadSlimWofDatabase` currently fetches the whole DB and opens it in memory via `sqlite3_deserialize`. For the ~35 MB default slim build that's a one-RTT transfer + a one-shot in-memory open — typically sub-second on broadband, and after that every query is in-process WASM.
 
 For larger DBs or low-bandwidth users, the future path is to swap the loader for an HTTP-VFS implementation (à la `sql.js-httpvfs`) so SQLite pages get fetched lazily via byte-range. The `WofWasmPlaceLookup` class is loader-agnostic — only the loader changes.
 
-## Bundling
+## Bundle the package
 
 This package ships compiled TypeScript only. The `@sqlite.org/sqlite-wasm` runtime (`.wasm` + worker JS) is a peer asset your bundler needs to serve. For Vite:
 
@@ -55,13 +55,13 @@ For webpack: use `asset/resource` rules on the `.wasm` extension and pass the re
 
 One rung is not the demo's to decide: where a **postcode** sits against the locality. That has a single answer, it comes from `@mailwoman/codex`, and both routes to it are read here exactly as the Node ladder reads them — an exact hit on a unit-grade code (`isUnitGradePostcodeHit`), or an address system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`).
 
-Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below `locality` alone. Ranking it between them pinned the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those — `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, which is why the tier has three members and not one.
+Otherwise an area-grade postcode ranks **below the whole locality tier**, `{locality, borough, localadmin}`, not below `locality` alone. A rank between them placed the postcode where the CLI returns the town on 20.2% of a US panel, and the town was closer on 65.6% of those — `344 East Sheldon Rd, Sheldon, VT 05450` read 10.73 km from its ZIP centroid and 1.49 km from Sheldon. New England civil towns are `localadmin` in Who's On First, which is why the tier has three members and not one.
 
 If you change this table, change it against the Node ladder. The two sides agreed on constants for a whole release once while the formula underneath them diverged.
 
 ## Why not extend `WOFSQLitePlaceLookup`?
 
-`WOFSQLitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). Subclassing across the Node/WASM line means dragging Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
+`WOFSQLitePlaceLookup` is hard-bound to `node:sqlite` (the Node 22+ built-in). A subclass across the Node/WASM line would drag Node-only types into a browser package. We chose composition over inheritance: both classes implement the same `PlaceLookup` interface and (v0.2.0+) call the same shared query builder, but stay independently importable.
 
 ## License
 

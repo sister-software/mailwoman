@@ -7,7 +7,7 @@
  *   Claude Code Stop hook: run the assistant's finished reply through the Mailwoman Vale rules and
  *   hand the findings back, so the agent revises the reply instead of letting the jargon stand.
  *   The lint policy — rule set, severity split, finding format — lives in `vale-check-core.ts`,
- *   shared with the Codex adapter. this file owns only the Claude payload shape, the loop guard,
+ *   shared with the Codex adapter. This file owns only the Claude payload shape and the loop guard.
  *   and the output JSON.
  *
  *   Error-severity findings return `decision: "block"`, which sends the reason back for one

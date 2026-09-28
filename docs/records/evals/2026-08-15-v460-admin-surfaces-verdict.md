@@ -95,7 +95,7 @@ reason, per the no-silent-check-drift rule.
 ### The `us.street_prefix` regression is exactly one row
 
 Reproduced identically across two independent control runs: v4.4.0 scores 24 tp / 0 fp / **1** fn on
-n=25; v4.6.0 scores 23 / 0 / **2**. Diffing the two encoders over the fixture names it:
+n=25; v4.6.0 scores 23 / 0 / **2**. A comparison of the two encoders over the fixture names showed:
 
 ```
 10 South Dearborn, Chicago, IL 60603
@@ -224,10 +224,10 @@ failed hypothesis about the trailing-region extract.
    +11.0 pp shows — but the weight is the change, and the next attempt should carry a pre-registered
    watch on the bare-toponym board rows, per the #513 adjacent-class rule.
 5. **The measurement lesson.** The board's counted pass/fail header prints above the promote-flag
-   block. Reading the tail alone shows the flips and hides the breakage. Read `counted cases pass`
+   block. The tail alone shows the flips and hides the breakage. Use `counted cases pass`
    first, every time.
 
-## Standing caveat
+## Caveat that still applies {#standing-caveat}
 
 > **STRUCK 2026-08-19 — no longer true, and it was true only for one more day after this was written.**
 > `gazetteerPrior` became default-ON in the harness on **2026-08-16** (`harness.ts`'s `priorDepsFor`:

@@ -84,7 +84,7 @@ describe("the session-start prose-rule listing", () => {
 	})
 
 	it("reads a swap key that contains a colon as one pair", () => {
-		// `Terms` carries `'(?:^|[^-\w])text search': forward geocoding`, so splitting on
+		// `Terms` includes `'(?:^|[^-\w])text search': forward geocoding`, so splitting on
 		// the first colon would print a broken pattern beside the wrong replacement.
 		const terms = rules.find((rule) => rule.name === "Terms")
 		const entry = terms?.swap.find(([from]) => from.includes("text search"))

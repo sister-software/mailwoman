@@ -139,7 +139,8 @@ describe("Resolver-interior trace", () => {
 
 	it("diagnoseUnreachable records the other bands a missed value resolves in", async () => {
 		// The stub ignores placetype, so a placetype-aware one is needed.
-		// The locality lookup must miss for the probe to run, and the probe must find the value at another band.
+		// The locality lookup must miss for the probe to run.
+		// The probe must find the value at another band.
 		class BandedBackend extends StubBackend {
 			override async findPlace(query: Parameters<ResolverBackend["findPlace"]>[0]): Promise<ResolvedPlace[]> {
 				const hits = await super.findPlace(query)

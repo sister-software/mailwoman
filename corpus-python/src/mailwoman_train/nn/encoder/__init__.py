@@ -1,6 +1,6 @@
 """The Stage 1 coarse token-classification encoder.
 
-One class across several modules, split by what each part owns rather than by size alone:
+One class across several modules, split by what each part owns rather than by size:
 
 - `model.py` — `MailwomanCoarseEncoder` itself: construction, `forward`, and the predict paths.
 - `state.py` — what construction establishes, declared once for every part that reads it.

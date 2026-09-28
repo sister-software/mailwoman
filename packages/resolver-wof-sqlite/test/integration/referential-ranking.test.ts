@@ -16,7 +16,7 @@
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
  *   A geocoder that ranked on it would answer a bare "Saint-Denis" with the wrong hamlet. The
- *   fixture below carries both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
+ *   fixture below stores both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
  *   column isn't withheld and asserts the suburb still wins.
  *
  *   The suburb wins because referential likelihood is what the ranking reads.
@@ -85,7 +85,7 @@ const SAINT_DENIS: FixturePlace[] = [
 /**
  * Build the fixture gazetteer.
  *
- * `withEncyclopedic` decides whether `place_importance` carries the two-score split's columns at all.
+ * `withEncyclopedic` decides whether `place_importance` includes the two-score split's columns.
  * The pre-split state (no table) and the post-split state (both columns),
  * which is the pair the zero-delta measurement compares.
  */
@@ -276,7 +276,7 @@ describe("D-rule — carrying the encyclopedic score moves no rank", () => {
 
 	it("holds when the encyclopedic order is the exact reverse of the referential one", async () => {
 		// The adversarial shape: encyclopedic scores assigned in strict inverse-population order.
-		// If the carry leaked into ranking anywhere, this fixture inverts the result.
+		// If the score leaked into ranking anywhere, this fixture inverts the result.
 		const inverted: FixturePlace[] = [
 			{ ...SAINT_DENIS[0]!, encyclopedic: 0.01 },
 			{ ...SAINT_DENIS[1]!, encyclopedic: 0.99 },

@@ -38,7 +38,7 @@ Every locale uses these six.
 
 | Tag                      | Meaning                                          | Example     |
 | ------------------------ | ------------------------------------------------ | ----------- |
-| `house_number`           | Building number on a street                      | `221B`      |
+| `house_number`           | Number assigned to a building on a street        | `221B`      |
 | `street`                 | The street name proper, without prefix or suffix | `Baker`     |
 | `street_prefix`          | Directional or descriptive prefix                | `SE`        |
 | `street_prefix_particle` | Grammatical particle inside a street name        | `de la`     |
@@ -100,7 +100,7 @@ in the model card as `architecture.num_labels`.
 | The Japanese character model           | 47     | 23   | The Latin set plus the seven Japanese tags. Not shipped                                    |
 
 Nine tags are in the schema and outside the shipped Latin head: `street_prefix_particle`, `attention`,
-and the seven Japanese tags. A parse from the shipped model never returns them. Reading them from a
+and the seven Japanese tags. A parse from the shipped model never returns them. Callers can read them from a
 response means you are running a different head rather than that the input lacked them.
 
 `@mailwoman/neural-weights-en-us` is the base model, and the `fr-fr`, `en-gb`, `en-nz`, `de-de`,

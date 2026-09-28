@@ -5,7 +5,7 @@
  *
  *   Path homes: the repo root, the data root, the package roots.
  *
- *   Extracted from `core/utils` (2026-09): these two modules carried 366 of
+ *   Extracted from `core/utils` (2026-09): these two modules contained 366 of
  *   ~540 consumer references through that door — 68% of everything `@mailwoman/core/utils` was asked for.
  *   `repo` and `data-root` reference each other. That was the shelf's only internal edge.
  */
@@ -122,7 +122,7 @@ export const workspacePath = createPathResolver<RepoRootAlias>(PackagesAbsoluteP
  *
  * Two levels up in both trees — `core/lib/utils/repo.ts` and `core/out/utils/repo.js`
  * both sit under a direct child of `core/` — which is why this takes a fixed `".."` pair
- * rather than the mode-dependent third segment it used to carry.
+ * rather than the mode-dependent third segment it used to include.
  * See the note on {@link RepoRootAbsolutePath} for why that branch is gone.
  *
  * Used to locate package-bundled assets (dictionary data) that live under the workspace root

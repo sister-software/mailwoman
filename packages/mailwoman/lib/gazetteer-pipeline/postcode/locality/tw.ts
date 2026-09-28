@@ -78,7 +78,7 @@ export function normEn(s: string): string {
 			.normalize("NFKD")
 			.replaceAll(/\p{M}/gu, "")
 			.toLowerCase()
-			// WOF sometimes carries romanized suffixes 區, 鄉, 鎮. One example is "Zhongzheng Qu".
+			// WOF sometimes includes romanized suffixes 區, 鄉, 鎮. One example is "Zhongzheng Qu".
 			.replaceAll(/\s+(district|township|city|county|village|islands?|qu|xiang|zhen)$/g, "")
 			.replaceAll(/[\s'’-]/g, "")
 	)

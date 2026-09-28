@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Measures, checks, and updates the regression-corpus pins in `load.test.ts` without loading a model or gazetteer.
+ *   Measures and checks the regression-corpus pins in `load.test.ts`. It updates those pins without loading a model or gazetteer.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

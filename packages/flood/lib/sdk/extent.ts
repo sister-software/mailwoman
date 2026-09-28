@@ -16,7 +16,7 @@
  *
  *   The clip is conservative. `interiorCoverageCellSet` keeps only cells that lie wholly inside the outline.
  *   England–Wales and England–Scotland border strips receive no coverage row. A point there reads unknown
- *   because the EA's statement may not cover it. Marking a cell as interior would claim that the authority
+ *   because the EA's statement may not cover it. An interior cell classification would claim that the authority
  *   determined coverage for a location it did not assess.
  */
 

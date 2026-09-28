@@ -36,8 +36,8 @@ export interface CandidateTable {
 	/**
 	 * `-log10(population + 1)`.
 	 *
-	 * Ascending order puts the highest population first.
-	 * Postcodes carry `0`.
+	 * The sort uses ascending order to put the highest population first.
+	 * Postcodes use `0`.
 	 */
 	neg_rank: number
 	/**
@@ -101,7 +101,7 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	country_codes: CountryCodeTable
 	placetype_codes: PlacetypeCodeTable
 	/**
-	 * The capital-status reference carried in-artifact.
+	 * The capital-status reference stored in the artifact.
 	 * See capital-schema.ts.
 	 */
 	capital: CapitalTable

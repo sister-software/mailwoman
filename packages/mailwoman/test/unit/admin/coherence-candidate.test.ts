@@ -8,7 +8,7 @@
  *   admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult` reads them.
  *   The sidecar moves the Weimar-class winner's `region` verdict from `unverifiable` to a decided
  *   verdict, while the ranking itself stays untouched. The wrong winner still wins and the verdict
- *   now says so.
+ *   now reports that result.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"

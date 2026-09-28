@@ -18,7 +18,7 @@
  *   4. Assemble the deepest place's ancestor chain through the same walk forward resolution uses,
  *      so consumers get a symmetric tree.
  *
- *   Reverse quality is country-dependent, because polygon coverage is. `containment` says so per
+ *   Reverse quality is country-dependent, because polygon coverage is. `containment` records this per
  *   result.
  */
 
@@ -74,7 +74,7 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`).
 	 *
-	 * It must carry `spr`, `ancestors`, and the package-built `place_bbox`
+	 * It must include `spr`, `ancestors`, and the package-built `place_bbox`
 	 * R*Tree (`mailwoman gazetteer build fts`).
 	 *
 	 * Mutually exclusive with `adminDatabase`.
@@ -103,7 +103,7 @@ export interface ReverseGeocodeOpts {
 	/**
 	 * Restrict the hierarchy to these placetypes (both the bbox candidates and the descent tiers).
 	 *
-	 * Default: every admin placetype the gazetteer carries.
+	 * Default: every admin placetype in the gazetteer.
 	 * E.g.
 	 *
 	 * `["region", "county", "locality"]` to skip the neighbourhood grain.

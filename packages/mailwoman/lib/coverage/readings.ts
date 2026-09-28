@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What a jurisdiction's coverage row says, as a value rather than as a formatted string.
+ * @file What a jurisdiction's coverage row records, as a value rather than as a formatted string.
  *
  *   The classification lives here and the phrasing stays with each caller, so a reading added here fails
  *   to compile at every caller that does not handle it.

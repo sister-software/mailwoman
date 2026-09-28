@@ -2,7 +2,7 @@
 
 Pins the loader-side interface:
 
-1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` carries it,
+1. Rows from a span-schema parquet file stream the triple end-to-end — ``iter_rows`` returns it,
    ``iter_encoded`` hands it to ``encode_row``. The encoder trains from the spans.
 2. Frozen pre-v0.5.0 files (no span columns) ride the legacy token path: no span keys appear.
 3. Corruption is loud, never a silent fallback: a file with a partial span-column set raises,

@@ -178,7 +178,7 @@ it gets measured rather than assumed.
 
 ### Leg B — candidate gazetteer, `--default-country US` pinned
 
-Isolating the one variable: same panel, `--candidate-db candidate.db --default-country US`.
+Leg B changes one variable on the same panel: `--candidate-db candidate.db --default-country US`.
 
 Identical to Leg A except three rows, all of which resolve to the extract set rather than the mechanism:
 

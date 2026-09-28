@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The `workspace:*` closure of a set of seed packages, computed from the manifests rather than copied into a
- *   list, and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use
+ *   list and the pack step that turns a closure into `file:` tarball dependencies. Both clean-install smokes use
  *   these, so a fix to how a closure is walked or packed lands in one place.
  */
 

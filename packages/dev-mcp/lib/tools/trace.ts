@@ -39,9 +39,9 @@ export const traceTool = ({ registry }: DevToolDeps): DevTool => ({
 		const inputs = args["inputs"] as string[]
 		const config = (args["config"] as EngineConfig | undefined) ?? {}
 		const fullParseTrace = args["full_parse_trace"] === true
-		// Tracing is forced on because this surface exists to explain one row,
-		// The band probe runs with tracing.
-		// Neither diagnostic changes the answer.
+		// This surface enables tracing to explain each row.
+		// The band probe also runs with tracing.
+		// Neither diagnostic changes the parse result.
 		const engine = await registry.acquire({ ...config, trace: true, diagnose_unreachable: true })
 
 		const set = await resolveInputSet({

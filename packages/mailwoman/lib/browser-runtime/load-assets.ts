@@ -133,7 +133,7 @@ export async function loadReleaseAssets(
 
 	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
 	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
-	// Reporting the small ones too would send the bar backwards each time one started.
+	// Each smaller asset would move the bar backwards if the loader reported it when loading began.
 	const reportBytes = progress.setByteFraction
 
 	const modelFetch = reportBytes

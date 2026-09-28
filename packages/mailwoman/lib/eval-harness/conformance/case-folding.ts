@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Case-folding invariance suite, which asserts that case-only variants of an address parse equivalently.
+ *   Case-folding invariance suite. It asserts that case-only variants of an address parse equivalently.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -18,7 +18,7 @@ import {
 } from "#eval-harness/conformance/fixture"
 
 /**
- * Law identifier that every suite row carries.
+ * Law identifier included in every suite row.
  */
 export const CASE_FOLDING_LAW = "case-folding-invariance"
 
@@ -63,7 +63,8 @@ export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: 
 
 /**
  * Returns a case-insensitive key.
- * Uppercasing first applies expansions such as `ß` to `SS`.
+ *
+ * The first uppercase conversion applies expansions such as `ß` to `SS`.
  */
 export function caseFoldKey(text: string): string {
 	return text.toUpperCase().toLowerCase()

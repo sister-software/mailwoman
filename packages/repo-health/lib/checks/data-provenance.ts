@@ -49,7 +49,7 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
 }
 
 /**
- * Reads every package's `data` directory that already carries a `PROVENANCE.md`
+ * Reads every package's `data` directory that already contains a `PROVENANCE.md`
  * and reports each artifact the file does not name.
  */
 export const dataProvenanceCheck: RepoCheck = {

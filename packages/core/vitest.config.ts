@@ -16,7 +16,7 @@
  */
 
 import { resolvePath } from "path-ts"
-// `defineConfig` from "vitest/config" (not "vite"): vitest's overload carries the `test` field.
+// `defineConfig` from "vitest/config" (not "vite"): vitest's overload includes the `test` field.
 // Vite 8 (pulled in by docs/ Storybook) no longer applies the `vitest/config` type augmentation
 // to vite's own `defineConfig`, so importing from "vite" makes `test` a type error under vite 8.
 import { defineConfig } from "vitest/config"
@@ -37,7 +37,7 @@ export default defineConfig({
 			// Every other @mailwoman/core/<subpath> resolves to the index.ts of the matching subdir.
 			{ find: /^@mailwoman\/core\/(.+)$/, replacement: resolvePath(here, "$1/index.ts") },
 			{ find: /^@mailwoman\/core$/, replacement: resolvePath(here, "index.ts") },
-			// Sibling workspaces.
+			// Aliases for other workspaces.
 			{ find: /^@mailwoman\/corpus\/(.+)$/, replacement: resolvePath(here, "../corpus/src/$1.ts") },
 			{ find: /^@mailwoman\/corpus$/, replacement: resolvePath(here, "../corpus/src/index.ts") },
 			// The root `mailwoman` package — test-kit imports it (transitively re-exports core + classifiers).

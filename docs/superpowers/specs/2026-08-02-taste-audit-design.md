@@ -35,7 +35,7 @@ Probes run 2026-08-02 against `origin/main` @ `9b46c82e`.
 
 ### Probe — great-circle distance
 
-`AGENTS.md` calls `@mailwoman/spatial` "the math home — haversine, bbox, projection". Grepping for
+`AGENTS.md` calls `@mailwoman/spatial` "the math home — haversine, bbox, projection". A search for
 lat/lon trigonometry outside `spatial/` returns hits in seven files across three workspaces:
 
 ```
@@ -45,7 +45,7 @@ resolver-wof-sqlite/street-centroid.ts
 match/distance.ts
 ```
 
-Reading `match/distance.ts:25` shows that it is a documented adapter
+The code at `match/distance.ts:25` shows that this is a documented adapter
 from `match`'s `LatLon` shape onto `greatCircleKm` in `spatial`, and its docstring says so. It does not reimplement the formula. Grep
 alone would have produced a false finding from its first candidate.
 
@@ -94,7 +94,7 @@ already exists.
   async-into-sync walls, and the sync-by-interface resolver readers. These are documented decisions with
   stated reasons, and migrating any of them would make it worse. The audit treats the list as an allowlist rather than a backlog.
 
-## Ranking
+## Order
 
 Each cluster gets two independent scores, reported separately rather than combined:
 

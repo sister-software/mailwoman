@@ -24,7 +24,7 @@ async function isWorkspaceDirectory(repoRoot: PathBuilderLike, directory: string
 
 export interface ReadWorkspaceDirectoriesOptions {
 	/**
-	 * Skip a literal entry whose directory carries no manifest instead of failing,
+	 * Skip a literal entry whose directory has no manifest instead of failing,
 	 * for reading a checkout at an older ref that predates a workspace the field names.
 	 *
 	 * @default false
@@ -36,7 +36,7 @@ export interface ReadWorkspaceDirectoriesOptions {
  * Returns repo-relative workspace directories in the field's order.
  *
  * A literal entry stays where it is.
- * A `parent/*` entry expands to child directories that carry a `package.json`, sorted by name.
+ * A `parent/*` entry expands to child directories that contain a `package.json`, sorted by name.
  */
 export async function readWorkspaceDirectories(
 	repoRoot: PathBuilderLike,
@@ -108,7 +108,7 @@ export async function isRegisteredWorkspace(repoRoot: PathBuilderLike, directory
 }
 
 /**
- * Directories under a `parent/*` pattern that carry no `package.json`, the complement
+ * Directories under a `parent/*` pattern that contain no `package.json`, the complement
  * of {@link readWorkspaceDirectories}: a directory with no manifest is no workspace,
  * but a retired workspace's compiled `out/` remains.
  */

@@ -20,8 +20,8 @@ export type { BrandMatch } from "#brands/lookup-core"
 /**
  * Finds the brands whose name or alias equals `text`, ignoring case and surrounding whitespace.
  *
- * Each brand appears once with confidence 1, and the matches are sorted by `rows`
- * descending with ties broken by Wikidata ID.
+ * Each brand appears once with confidence 1.
+ * The matches are sorted by `rows` descending with ties broken by Wikidata ID.
  */
 export function lookupPOIBrand(text: string) {
 	return CORE.lookupPOIBrand(text)

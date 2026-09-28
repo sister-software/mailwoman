@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The score side of the candidate build: load a WOF admin database's `place_importance` into a
- *   lookup the candidate builder probes per place, so every candidate row can carry the
+ *   lookup the candidate builder probes per place, so every candidate row can include the
  *   toponym-fame prior a bare city name is decided on.
  *
  *   The join key is `(name_key, country, placetype)`, the same {@link normalizeLocalityForKey} the
@@ -13,8 +13,8 @@
  *   admin source are different snapshots whose ids disagree. An id join silently drops rows and
  *   leaves the ranking inert on the queries the prior exists for.
  *
- *   The key alone is not enough. `(warwick, US, locality)` covers eleven different places.
- *   Taking the group's max would give every Warwick in America the fame of Warwick, Rhode Island.
+ *   The key by itself is not enough. `(warwick, US, locality)` covers eleven different places.
+ *   The group's maximum would give every Warwick in America the fame of Warwick, Rhode Island.
  *   The join picks the nearest centroid when it falls within {@link IMPORTANCE_JOIN_RADIUS_KM}.
  *   Two artifacts describing the same settlement put its centroid
  *   in almost the same place. Two towns with the same name in one country do not.
@@ -47,7 +47,7 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * Ten kilometers separates the two populations.
  *
  * That distance matches the join's purpose.
- * Widening the radius past the floor starts handing one town's fame to another.
+ * A radius above the floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
@@ -63,7 +63,7 @@ interface ScoredPlace {
 /**
  * What {@link loadImportanceIndex} measured while reading the source.
  *
- * Reported by the builder so a run says how much of the gazetteer it actually scored,
+ * Reported by the builder so a run reports how much of the gazetteer it actually scored,
  * rather than leaving the caller to infer it from a column full of nulls.
  */
 export interface ImportanceIndexStats {
@@ -85,7 +85,7 @@ export interface ImportanceIndexStats {
 /**
  * `(name_key, country, placetype)` → the scored places under it.
  *
- * The separator is U+0000, a character no WOF name carries and no fold can produce,
+ * The separator is U+0000, a character no WOF name contains and no fold can produce,
  * so the three fields cannot smear into one another.
  */
 function groupKey(nameKey: string, country: string | null, placetype: string | null): string {
@@ -128,7 +128,7 @@ export class ImportanceIndex {
 	 * Keep the value null.
 	 * Do not substitute zero or a population-derived value here.
 	 *
-	 * The source column already carries a population-derived fallback where one exists.
+	 * The source column already contains a population-derived fallback where one exists.
 	 * A second fallback would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
@@ -171,7 +171,7 @@ export class ImportanceIndex {
  * These fields populate an {@link ImportanceIndex}.
  *
  * Only current, non-deprecated places are indexed.
- * A superseded row's score belongs to a place the gazetteer no longer carries.
+ * A superseded row's score belongs to a place the gazetteer no longer contains.
  *
  * If that row won the nearest-centroid contest, a live place would inherit the superseded place's fame.
  *

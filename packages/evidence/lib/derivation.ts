@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Project the constraints, evidence, and contributions behind an answer. This function performs no I/O or
+ * @file Project the constraints, evidence and contributions behind an answer. This function performs no I/O or
  *   ranking and preserves the answer's epistemic status alongside its constraints.
  */
 

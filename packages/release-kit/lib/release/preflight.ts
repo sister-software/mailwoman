@@ -67,8 +67,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	await using resources = new AsyncDisposableStack()
 
 	// The caller's `--staging` root is written into and never removed.
-	// A scratch root this operation makes is its own, and `--keep` withholds its removal
-	// so the staged tree survives for inspection.
+	// A scratch root this operation makes belongs to this operation.
+	// `--keep` withholds its removal so the staged tree survives for inspection.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {

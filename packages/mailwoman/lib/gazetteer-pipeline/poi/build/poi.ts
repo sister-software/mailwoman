@@ -160,7 +160,7 @@ export function bboxCoverageCells(
 /**
  * The manifest fields each POI source contributes, absent its obligations.
  *
- * Whether a license carries share-alike is derived from the expression through
+ * Whether a license includes share-alike is derived from the expression through
  * `assertTierMatchesLicense` rather than recorded here.
  * A separate boolean can disagree with the license expression.
  * `assertTierMatchesLicense` catches that disagreement.

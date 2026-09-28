@@ -30,8 +30,8 @@ import { groupPredicateFromMap, scorePairwiseGrouping, type PairwiseGroupingScor
 import { renderLinkageEvalReport } from "#tools/linkage/report"
 
 /**
- * Fixing these provenance values rather than taking the current date makes a re-run on
- * another day build identical `filer_edge` and `filer_family` provenance columns.
+ * Fixed provenance values make a re-run on another day build identical `filer_edge`
+ * and `filer_family` provenance columns.
  */
 const EVAL_SOURCE_VINTAGE = "2026-eval-v1"
 const EVAL_VALID_FROM = "2026-01-01"
@@ -51,7 +51,7 @@ const EVAL_BUILD_SHA = "filer-linkage-eval"
 export interface LeakageCensus {
 	holdingCompanyNodes: number
 	/**
-	 * The prediction reads only `filer_family`, so an ownership edge alone does not change a score.
+	 * The prediction reads only `filer_family`, so an ownership edge by itself does not change a score.
 	 */
 	ownershipEdges: number
 	/**

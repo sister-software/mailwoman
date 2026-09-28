@@ -81,8 +81,8 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			})
 		}
 
-		// Multi-role completion: a dual-role region carries extra roles (e.g. `locality`)
-		// as interpretations on the same node rather than separate children.
+		// Multi-role completion: a dual-role region has extra roles (e.g. `locality`) as
+		// interpretations on the same node rather than separate children.
 		// Surface each resolved interpretation as its own Resolved so the eval finds the
 		// completed locality (placetype/coord/name come from the interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{
@@ -140,7 +140,7 @@ export function mostSpecific(rs: Resolved[]): Resolved | null {
 }
 
 /**
- * True when the tree carries both a street and a house number.
+ * True when the tree contains both a street and a house number.
  *
  * The precondition the street-level tiers need before a miss can be read as a
  * database gap rather than a parse gap.

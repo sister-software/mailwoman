@@ -209,7 +209,7 @@ export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
  * It writes the same `spr`, `names`, `place_population`, and `concordances` tables as
  * the WOF path, with synthetic IDs from {@link assignSyntheticIDs}.
  * A division whose parent was not ingested gets parent ID -1.
- * Every row carries `spr.country` for country scoping.
+ * Every row includes `spr.country` for country scoping.
  *
  * The native `@duckdb/node-api` dependency is imported lazily so the module loads without it.
  *

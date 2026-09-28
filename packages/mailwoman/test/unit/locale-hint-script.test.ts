@@ -5,7 +5,7 @@
  * @file Tests the locale hint's `script` and `locale` fields over committed Korean, Chinese and Japanese sets.
  *
  *   Korean addresses report `locale: "ja-JP"` because Japanese, Korean and Chinese share one character-path
- *   weights family. The `script` field reports Hangul for them, and `locale` must stay unchanged so that
+ *   weights family. The `script` field reports Hangul for them. `locale` must stay unchanged so that
  *   consumers mapping it to a weights package keep working.
  *
  *   `script` is a ranked list. Many Chinese rows put Latin first because a romanized province and country
@@ -61,7 +61,7 @@ beforeAll(async () => {
 
 describe("the Korean reference set", () => {
 	it("reports Hangul on every row, while locale reports Japanese on every row", () => {
-		// Changing `locale` to `ko-KR` would break consumers that map it to a weights package.
+		// A `ko-KR` locale would break consumers that map it to a weights package.
 		expect(koreanRows).toHaveLength(20)
 		expect(koreanRows.map(topScript)).toEqual(Array.from({ length: 20 }, () => "Hang"))
 		expect([...new Set(koreanRows.map((row) => hintFor(row).locale))]).toEqual(["ja-JP"])

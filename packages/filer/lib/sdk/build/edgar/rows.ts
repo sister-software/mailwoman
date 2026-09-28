@@ -2,7 +2,7 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file One edgar Exhibit 21 subsidiary disclosure, and the two edges it can produce.
+ * @file One EDGAR Exhibit 21 subsidiary disclosure and the two edges it can produce.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -107,8 +107,8 @@ export function processEdgarSubsidiaryRow(
 		stringifyJSON({ subsidiaryName: row.subsidiaryName, legalNameOfCarrier: matched.legalName, cik: row.cik })
 	)
 
-	// A `filer_edge` row alone is invisible to `familyRollup`/`filerLookup.families`,
-	// which answer membership from `filer_family` alone.
+	// A `filer_edge` row by itself is invisible to `familyRollup`/`filerLookup.families`,
+	// which answer membership using only `filer_family`.
 	insFamily.run(
 		matchedFRNNodeID,
 		cikNodeID,

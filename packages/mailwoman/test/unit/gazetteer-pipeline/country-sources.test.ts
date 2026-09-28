@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The check must distinguish a measured two-source trade from an accidental third source: refusing all
- *   multi-source countries would refuse the trade. Accepting all would never catch the accident.
+ *   A blanket ban on multi-source countries would refuse the trade. A blanket allowance would miss the accident.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -139,8 +139,8 @@ describe("planCountryMove", () => {
 	const census = (over: number, geo: number, wof = 0) => ({ country: "TR", wof, overture: over, geonames: geo })
 
 	it("writes BOTH halves of a move — add to the target, remove from the source", () => {
-		// Removing the country from whichever list serves it today is the half no check
-		// enforced, because the build ships either way.
+		// The plan removes the country from whichever list serves it today, the half
+		// no check enforced, because the build ships either way.
 		const plan = planCountryMove({
 			country: "tr",
 			target: AdminSource.WOF,

@@ -10,13 +10,13 @@
  * 	 `release.verify-metadata` becomes `release_verify_metadata`
  *   and its description opens with `[read]`, `[local-write]` or `[external-write]`, the effect the registry declares
  *   rather than anything inferred here. A local-write tool gains a `dry_run` argument the operation's own schema does
- *   not carry, because the context flag is the adapter's to thread.
+ *   does not provide, because the context flag is the adapter's to thread.
  *
  *   the two publishing operations are off BY default. An MCP session that receives this server must not thereby receive
  *   npm authority — the same posture `@mailwoman/dev-mcp` states for itself. `publish-workspace` and `bless-package` are
  *   registered only when the server is started with `--allow-external-write`, and even then they run the plan → execute
  *   interface the operations enforce themselves: a plan file whose digest must match a recomputed one on a clean,
- *   unmoved head. This table does not bypass those checks. It carries no release logic of its own.
+ *   unmoved head. This table does not bypass those checks. It contains no release logic of its own.
  */
 
 import { OperationEffect, type ReleaseContext, type ReleaseOperation } from "@mailwoman/release-kit"

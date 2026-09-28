@@ -121,7 +121,8 @@ describe("enforceWordConsistency confidence checks (#727 conditional variant)", 
 
 	it("splitOnPunctuation lets the halves of a slash compound keep different tags", () => {
 		// `12/345` = one SentencePiece word, two components (unit 12 / house number 345).
-		// With the slash as a separator each half votes alone → already-consistent halves stay byte-identical.
+		// With the slash as a separator each half votes independently → already-consistent
+		// halves stay byte-identical.
 		const pieces = [{ piece: "▁1" }, { piece: "2" }, { piece: "/" }, { piece: "3" }, { piece: "45" }]
 		const emissions = [peak(1, 8), peak(1, 8), peak(0, 8), peak(3, 8), peak(3, 8)]
 		const labelIndices = [1, 2, 0, 3, 4] // B-loc I-loc O B-reg I-reg (stand-ins for unit/house_number)

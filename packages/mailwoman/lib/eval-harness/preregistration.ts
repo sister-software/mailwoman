@@ -78,7 +78,7 @@ export interface LoadFrozenDefinitionOptions<T> {
 	 */
 	label: string
 	/**
-	 * The identity field that both the definition and the freeze record carry, such as `"probeID"`.
+	 * The identity field included in both the definition and the freeze record, such as `"probeID"`.
 	 */
 	idField: keyof T & string
 	/**
@@ -263,7 +263,8 @@ export interface PreregisteredArtifactIdentity extends WeightsIdentity {
 	poiDatabasePath: string
 	/**
 	 * The database's `layer_manifest` row.
-	 * When it is missing, `poiLayerManifestNote` says why.
+	 *
+	 * When it is missing, `poiLayerManifestNote` records the reason.
 	 */
 	poiLayerManifest?: LayerManifest
 	poiLayerManifestNote?: string

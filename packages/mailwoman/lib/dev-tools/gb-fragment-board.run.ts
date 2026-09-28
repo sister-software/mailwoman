@@ -5,7 +5,7 @@
  *
  *   A GB board in the fragment register, the one register that can see the Option-A evidence bundle.
  *
- *   Restoring the evidence channels to the en-gb overlay (ROAD_TO_V9 §1 A4) is a default-on change, so
+ *   The evidence-channel restore to the en-gb overlay (ROAD_TO_V9 §1 A4) is a default-on change, so
  *   the D-rule wants a before/after on GB. Every gb-golden row is a full address, the kind classifier
  *   calls it `formatted`, and the register check (Decision A, `classifier.ts`'s `evidenceOn`) withholds
  *   both evidence channels in that register by design. A board over those rows is blind to the change
@@ -14,7 +14,7 @@
  *   Two fragment shapes per row, both drawn from the row's own gold components so the grading stays
  *   exact-match:
  *
- *   - `street`: the street line alone (`components.street`, house number prefixed when the row has one).
+ *   - `street`: only the street line (`components.street`, house number prefixed when the row has one).
  *     The street-type channel's own register.
  *   - `place`: `dependent_locality, locality`. This is the locality-surface channel's register.
  *     The shipped bundle's homonym wins were measured in this register.

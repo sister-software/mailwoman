@@ -28,7 +28,7 @@ def test_a_target_of_five_lands_at_five_reps_per_row():
 
 
 def test_two_targets_hold_together():
-    # `tiger` carries a fixed weight, so it cannot also take a reps target.
+    # `tiger` has a fixed weight, so it cannot also take a reps target.
     with pytest.raises(ValueError, match="both a weight and a reps target"):
         derive_source_weights(FIXED, {"tiger": 3.0}, ROWS, SAMPLES)
 

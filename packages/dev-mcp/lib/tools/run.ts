@@ -27,7 +27,7 @@ const RUN_ROW_FIELDS = [
 	"components",
 	"lat",
 	"lon",
-	// Haversine kilometres from the row's truth point where the set carries one.
+	// Haversine kilometres from the row's truth point where the set provides one.
 	// `null` on a row with no truth and on a row that resolved no coordinate.
 	// Those are different facts, so read it beside `lat`.
 	"km",
@@ -119,7 +119,7 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					tier: run.result.resolution_tier,
 					admin_coherence: run.result.admin_coherence ?? null,
 					// The resolved winner identities (name + placeID per rung), which coordinate
-					// diffs alone cannot see a wrong-instance win without.
+					// diffs by themselves cannot reveal a wrong-instance win without.
 					hierarchy: run.result.hierarchy ?? null,
 					timing_ms: run.timing,
 				}

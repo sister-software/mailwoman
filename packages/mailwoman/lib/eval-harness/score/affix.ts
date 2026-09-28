@@ -76,7 +76,7 @@ export interface ScoreAffixOptions {
 }
 
 /**
- * One tag's exact-match counts and rates, as the JSON sidecar carries them.
+ * One tag's exact-match counts and rates, as recorded in the JSON sidecar.
  */
 export interface ScoreAffixTag {
 	p: number

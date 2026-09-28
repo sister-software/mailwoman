@@ -7,7 +7,7 @@
  *
  *   The distinction under test is duplicated versus diverged. Both copies of a repo at the same commit
  *   cost read time and disk. two copies at different commits make the ingested value depend on FastGlob's
- *   enumeration order, because `spr` is written `insert or replace` and last writer wins. Reporting them
+ *   enumeration order, because `spr` is written `insert or replace` and last writer wins. A report that treats them
  *   as the same thing would either raise an alarm about wasted disk or bury a correctness hazard —
  *   and `verifyAdmin` cannot catch the second, since it tests floors.
  */
@@ -43,7 +43,9 @@ async function reposRoot(): Promise<PathBuilder> {
  * same-content clones only hash identically when both commits land in the same wall-clock second.
  * Fast local runs always did.
  *
- * A loaded CI runner sometimes straddled the boundary, and the "duplicated" fixture read as diverged.
+ * A loaded CI runner sometimes straddled the boundary.
+ * The "duplicated" fixture then read as diverged.
+ *
  * A flake that surfaced twice on 2026-08-18 before the mechanism was pinned.
  *
  * With the dates fixed, identical content ⇒ identical hash, always.
@@ -194,7 +196,7 @@ describe("reposSentence", () => {
 describe("auditReposRoot — an alias is not a duplicate", () => {
 	it("reports a symlinked second path as ALIASED, not as a second checkout", async () => {
 		// The lab's nested `whosonfirst-data-admin-us` is a symlink to the flat one.
-		// Comparing `ls` output calls that a duplicate and it is not — a directory cannot diverge from itself.
+		// An `ls` comparison calls that a duplicate even though a directory cannot diverge from itself.
 		// `ingestWOF` does not follow directory symlinks.
 		// The audit still records both layouts so an operator can see the alias
 		// rather than mistaking it for two independent clones.
@@ -215,7 +217,7 @@ describe("auditReposRoot — an alias is not a duplicate", () => {
 	})
 
 	it("traverses a symlinked entry at all — Dirent.isDirectory() is false for one", async () => {
-		// The bug this pins: a walk keyed on isDirectory() alone skipped the link entirely
+		// The bug this pins: a walk keyed only on isDirectory() skipped the link entirely
 		// and reported the repo as single-layout, hiding the alias from the operator.
 		const root = await reposRoot()
 

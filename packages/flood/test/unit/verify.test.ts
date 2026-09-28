@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The check compares two verdicts rather than a file against itself, and its negative half must fail an
+ *   The check compares two verdicts from distinct files. Its negative half must fail an
  *   artifact that would answer Zone 1 outside England.
  */
 
@@ -107,7 +107,7 @@ describe("verifyFloodDatabase", () => {
 
 		expect(result.disagreed).toBe(1)
 		expect(result.boundaryTolerance).toBe(0)
-		// The distance rides on the row even though it was not acted on, because triage starts from it.
+		// The distance appears on the row even though it was not acted on, because triage starts from it.
 		expect(result.agreement[0]!.nearestEdgeMetres).toBeGreaterThan(0)
 	})
 
@@ -124,7 +124,7 @@ describe("verifyFloodDatabase", () => {
 	})
 
 	it("reports a containing polygon with no zone label as service_unlabelled, never as agreement", async () => {
-		// Reading a containing, unlabelled polygon as `null` would let it agree with an
+		// A `null` value for a containing, unlabelled polygon would let it agree with an
 		// absence reading elsewhere — the manufactured Zone 1 the interface forbids.
 		const result = await verifyFloodDatabase({
 			databasePath,

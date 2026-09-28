@@ -15,7 +15,7 @@ ASSAY TOOLING: if the assay confirms the data change, the production recipe grad
 holdout is written as JSONL (fragment-dev) for the read-out — NEVER into the trained rows.
 
 `push` stamps every row with the same provenance block and a running `source_id`, so the ORDER
-these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. Adding
+    these blocks run in is baked into the ids and into the 10% holdout the final shuffle separates. The builder adds
 a block in the middle renumbers everything after it.
 """
 
@@ -52,7 +52,7 @@ from .sources import (
 )
 
 #: How a block adds one row: the rendered fields, the row's country, its locale, its licence note.
-#: Every block takes this rather than a list, because the id `push` stamps carries the row's INDEX —
+#: Every block takes this rather than a list, because the id `push` stamps stores the row's INDEX —
 #: a block that appended to its own list and merged later would renumber everything after it.
 Push = Callable[[dict[str, Any], str, str, str], None]
 
@@ -108,7 +108,7 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
             push(render_unit(unit, number, street), country, locale, license_note)
 
         # Fragment recipe v4: comma-free context rows (the census headline class — 71/143 street misses were
-        # unpunctuated street<->admin boundaries). Alternate rows carry the English country name.
+        # unpunctuated street<->admin boundaries). Alternate rows include the English country name.
         for index, (street, number, city) in enumerate(triples):
             push(
                 render_context(street, number, city, country, trailing, with_country=index % 2 == 0),
@@ -268,7 +268,7 @@ def push_country_counterweight_rows(
     country_rows = 0
 
     # US localities: the NAD admin pairs (English city names), not corpus_localities — the wof-admin
-    # locality harvest carries alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
+    # locality harvest includes alternate-language surfaces ("Сельма"/"п'єдмонт"), which would teach a
     # nonsense "English-street cyrillic-city USA" tail. ascii-filter as a safety net for any locale.
     country_localities: dict[str, list[str]] = {"US": [loc for loc, _ in admin_pairs]}
 
@@ -314,7 +314,7 @@ def push_country_counterweight_rows(
     # v2.9.2 (#1104): weight the leading surfaces to the multi-word forms ("United States of America",
     # "United States"). The v291 probe pinned the residual exactly there: short leading forms ("USA, AZ,
     # …" → country=USA) already parse. only the long form fails ("United States of America, …" → the
-    # 4-token phrase reads as a street). Rotating all 6 surfaces gave the long form only ~1/6 of leading
+    # 4-token phrase reads as a street). The builder rotates all 6 surfaces, giving the long form only ~1/6 of leading
     # rows. Bias to the multi-word forms so the model gets enough signal to stop reading them as street.
     leading_surfaces = [s for s in us_surfaces if len(s.split()) >= 2] or us_surfaces
     leading_rows = 0

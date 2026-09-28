@@ -17,7 +17,7 @@ This document inventories what already exists, reports four measurements that si
 pre-registers three mechanisms with their bars. **This document implements no mechanism.** Bars are
 fixed before results, as in the PIX1 preregistration.
 
-## Naming
+## Names {#naming}
 
 This work sits between three vocabularies that already exist in the repo, and a name from the wrong
 one would collide.
@@ -50,7 +50,7 @@ Every row exists today. The last column says what the suggestion layer would hav
 
 ### A.1 The round trip — the canonicalizer nobody has diffed
 
-| Thing                   | Where                                       | Role                                                                                                                             |
+| Concept                 | Where                                       | Role                                                                                                                             |
 | ----------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `formatAddress`         | `formatter/format.ts:153`                   | `(components: ComponentDict, country: string, opts) => string`. Takes a flat dict rather than an `AddressTree`                   |
 | `toOpenCageComponents`  | `formatter/format.ts:299`                   | The slot mapping. `venue → house`, `locality → city`, `dependent_locality → suburb`/`quarter`/`place` per country                |
@@ -76,7 +76,7 @@ reader. It shows `formatAddress(components: ClassificationMap, opts?)` and descr
 
 ### A.2 The confidence and abstention substrate
 
-| Thing                               | Where                                                                                         | State                                                                                                                   |
+| Concept                             | Where                                                                                         | State                                                                                                                   |
 | ----------------------------------- | --------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Per-token softmax confidence        | `neural/classifier.ts:1084`, `:1093`                                                          | `probs[idx]`, or the word-consistency vote's mean when a word was healed                                                |
 | Span confidence                     | `core/decoder/types.ts:74`, aggregated `build-tree.ts:98-100`                                 | Mean over the span's tokens, optionally via a `Calibrator` (`core/decoder/calibration.ts:9-49`) that no caller supplies |
@@ -161,7 +161,7 @@ corpus, so a single-record path must either ship a prebuilt table or drop the ad
 | The 2026-08-05 operator set | `cases/regression.ts:2475-3506`, `source: "operator:2026-08-05"`           | 55        | Same                                                                                                       |
 | Venue-year-as-postcode      | `cases/regression.ts:880-896`, `venue-bar-1802-pascal`                     | 1         | `improvement_target`. The pipeline emits `postcode="1802"` — the venue's YEAR                              |
 | Degenerate duplicate venue  | `cases/regression.ts:3214-3224`, `us-op3-island-lake-duplicate-degenerate` | 1         | `improvement_target`, and its note records the schema gap: the table cannot express "expect no coordinate" |
-| Metamorphic DIR             | `gauntlet/metamorphic.ts:420-434`, bases `:67-81`                          | **3**     | Dropping a 5-digit postcode must land within 5 km of the with-postcode anchor                              |
+| Metamorphic DIR             | `gauntlet/metamorphic.ts:420-434`, bases `:67-81`                          | **3**     | The removal of a 5-digit postcode must land within 5 km of the with-postcode anchor                        |
 
 The mailfail fixture's commit message says it was committed "so these cases can become a check".
 Nobody built that check. The repo has no `mailfail-board.ts` beside `digit-board.ts` /
@@ -235,7 +235,7 @@ the 39 non-identical rows under the shipped default, re-split by cause:
 2. **`appendCountry` is a policy choice, and neither default is right.** With it off, 13 rows lose
    only the country line the user typed. With it on, 50 rows gain a country line the user did not
    type. A suggestion layer must set the flag based on whether the input carried a country at all.
-   Grading either setting alone measures the flag rather than the layer.
+   A grade for either setting alone measures the flag rather than the layer.
 3. **The canonicalization class is real and small (7 rows), and the fold hid a parse defect in one
    of the seven.** Six rows insert a comma the input omitted. Five insert it between locality and
    region (`4900 Airport Pkwy, Addison TX 75001` → `…, Addison, TX 75001`), and one between locality
@@ -310,7 +310,7 @@ Per locale, which is the ablation map's first row:
 > weight artifacts. The S-2 worktree had neither `pair-index-gb` nor `fst-en-gb`, so GB was graded
 > through the bare base package. The other locales reproduce byte-for-byte under the full
 > environment. The corrected GB numbers are **26/47 (55.3%) within 5 km, 17/47 (36.2%) over 100 km,
-> p50 1.97 km**. Finding 1's "roughly four times" becomes **roughly 2.5×**. The direction is
+> p50 1.97 km**. The "roughly four times" estimate in Finding 1 becomes **roughly 2.5×**. The direction is
 > unchanged and the magnitude is smaller. The table is left as measured, and the ablation map's GB
 > cells hold the current numbers.
 
@@ -329,8 +329,8 @@ Per locale, which is the ablation map's first row:
 
 **Three findings. The third one tests the completion nudge.**
 
-1. **The postcode's value depends strongly on locale.** Deleting a US ZIP leaves 81.8% of rows
-   inside 5 km. Deleting a GB postcode leaves 48.9% inside 5 km and sends 42.6% more than 100 km
+1. **The postcode's value depends strongly on locale.** A US ZIP removal leaves 81.8% of rows
+   inside 5 km. A GB postcode removal leaves 48.9% inside 5 km and sends 42.6% more than 100 km
    away. On this board, the postcode-completion nudge is worth roughly four times as much in GB as in
    the US. The ablation map is meant to produce this per-(component, locale) ranking, and S-2 is its
    first cell.
@@ -339,7 +339,7 @@ Per locale, which is the ablation map's first row:
    6,240 km), and two of them drop from rooftop to admin. The postcode is the only evidence #42's
    coherence pass can use to override a wrong country prior, so deleting it removes the override. A
    completion nudge is therefore worth most where the country prior is least trustworthy.
-3. **Deleting a postcode does not leave the postcode slot empty.** 16 of 139 rows emit a different
+3. **Postcode removal does not leave the postcode slot empty.** 16 of 139 rows emit a different
    token as the postcode, and 0 of 139 recover the deleted one. The substitutes:
 
 ```
@@ -629,7 +629,7 @@ this board.
   to a Sheffield-adjacent unit has reproduced the defect #1480 fixed.
 - **B2-3 (never worse than abstaining).** Run both arms, without and with completion, on the
   same board. Bar: **zero rows where the completed code moves the assembled coordinate further from
-  ground truth than the no-completion arm.** Abstaining is never worse than a wrong answer, so any
+  ground truth than the no-completion arm.** An abstention is never worse than a wrong answer, so any
   regression here violates the D-rule.
 - **B2-4 (the slot is not already wrongly filled).** The 16 S-2 substitution rows. Bar: **on ≥ 14 of
   16, the layer emits a `replace` op identifying the substitution or abstains with
@@ -702,7 +702,7 @@ Three additive changes, cheapest first:
    drop it. With this field, the layer can say "we read `Antioch` as `Nashville` because the
    postal-city index says they share 37013" instead of showing a name the user never typed.
 3. **A render-side slot report from the formatter.** `formatAddress` knows which
-   `toOpenCageComponents` slots it populated and which the template ignored. Returning that set lets
+   `toOpenCageComponents` slots it populated and which the template ignored. The returned set lets
    the layer attribute a drop to a missing template slot instead of inferring it. This is the only
    change of the three that adds computation, and it is a set difference over at most fifteen keys.
 
@@ -770,7 +770,7 @@ any cell with `support: 0` rather than treating it as zero value. It refuses to 
 a component whose `substitutedCount / support` exceeds the mechanism's own guard, which is B2-4
 expressed as data instead of as a board.
 
-Reading the map in the other direction benefits the ablation runner and is out of scope here. A
+The reverse map benefits the ablation runner and is out of scope here. A
 component with high `support` and near-zero `brokenCount` in a locale is one the resolver is not
 using. It is either a correct redundancy or a dead channel, and the two are worth telling apart.
 
@@ -788,7 +788,7 @@ Two model-adjacent items are listed here so that nobody mistakes them for part o
 - The `Calibrator` boundary (`core/decoder/calibration.ts:9-49`) exists, but no caller supplies a bin
   table. Every confidence threshold in this document is therefore a threshold on a raw
   mean-of-softmax, and the 2026-08-04 review's caveat about the 0.918–0.945 band still applies.
-  Fitting a calibrator would make the thresholds portable across locales. Because none is fitted,
+  A fitted calibrator would make the thresholds portable across locales. Because none is fitted,
   B1-1 and B1-5 are graded per board rather than against one global number.
 
 ## Part D — Sequencing
@@ -823,10 +823,10 @@ Mechanism 1 of this document can still ship, because the format nudge needs no g
 
 - **Any default-on promotion.** All three mechanisms are opt-in. A promotion is a separate decision
   with its own evidence record, as #1477 had.
-- **Fixing the parse defects S-1b found.** `MR & MRS CRAB` → locality `MR` is a real defect and a
+- **Fix the parse defects S-1b found.** `MR & MRS CRAB` → locality `MR` is a real defect and a
   corpus task. It is listed here so readers understand the diff's noise floor and do not count the
   fix as this arc's work.
-- **Calibrating span confidence.** The `Calibrator` boundary is empty. Filling it needs its own
+- **Span confidence calibration.** The `Calibrator` boundary is empty. A useful implementation needs its own
   preregistration with its own held-out set.
 - **`formatter/README.md`'s wrong signatures.** A.1 records them so they are not lost. Whoever next
   works on that package should fix them.
@@ -834,7 +834,7 @@ Mechanism 1 of this document can still ship, because the format nudge needs no g
   `us-op3-island-lake-duplicate-degenerate` describes the schema gap in its own note
   (`cases/regression.ts:3223`). B3-1 needs the column, and adding it is a runner change rather than a
   mechanism.
-- **A `suggestions` field on `GeocodeResult`.** The suggestion layer is a separate call. Adding it to
+- **A `suggestions` field on `GeocodeResult`.** The suggestion layer is a separate call. That change would put it in
   the geocode result would put an advisory surface inside a resolution interface.
   `postcode_country_scope` is the precedent for how narrow that channel should stay.
 

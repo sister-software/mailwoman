@@ -139,7 +139,7 @@ describe("renderLocaleRow order option (order-robustness)", () => {
 		expect(row).not.toBeNull()
 		expect(row.raw.indexOf("27")).toBeLessThan(row.raw.indexOf("Straußstraße")) // house before street
 		expect(row.raw.indexOf("12623")).toBeGreaterThan(row.raw.indexOf("Berlin")) // postcode after city
-		expect(row.components.region).toBe("Berlin") // region carried for international (dropped for native)
+		expect(row.components.region).toBe("Berlin") // region included for international (dropped for native)
 	})
 
 	it("region tail renders with a DISTINCT region (City, Region Postcode)", () => {
@@ -183,7 +183,7 @@ describe("renderLocaleRow order option (order-robustness)", () => {
 })
 
 describe("NZ dependent_locality (suburb below city)", () => {
-	// NZ envelopes carry both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland".
+	// NZ envelopes include both a suburb and a city: "31 Rawene Road, Birkenhead, Auckland".
 	// The OA district column holds the city (Auckland), city the suburb (Birkenhead) —
 	// see `readTuples` districtAsLocality.
 	const AUCKLAND: LocaleBaseTuple = {

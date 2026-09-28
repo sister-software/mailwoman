@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_constraints` tool definition — the description an agent reads, the input schema, and the handler
- *   wiring. The measurement lives in `../constraint-census.ts`.
+ *   The `mwdev_constraints` tool definition provides the description and input schema an agent reads.
+ *   It also wires the handler. The measurement lives in `../constraint-census.ts`.
  */
 
 import { z } from "zod"

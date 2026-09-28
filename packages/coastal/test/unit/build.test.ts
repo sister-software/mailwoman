@@ -128,7 +128,7 @@ describe("the sealed artifact", () => {
 			frontage_id: number
 		}>
 
-		// Every fixture feature carries frontage 1000.
+		// Every fixture feature has frontage 1000.
 		// The real product repeats a frontage ID within one layer.
 		// A build keyed on it would collapse five rows into one.
 		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))

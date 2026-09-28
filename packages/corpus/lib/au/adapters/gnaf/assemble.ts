@@ -12,7 +12,7 @@
  * The two lookup tables load as Maps. ADDRESS_DETAIL streams once and is reservoir-sampled, so
  * memory stays bounded.
  *
- * No coordinates. The output feeds the parser, which needs the address string and its component
+ * No coordinates. The output feeds the parser. The parser needs the address string and its component
  * labels. Output is component tuples as jsonl. An optional held-out eval set is excluded by
  * (street, locality, postcode) so the training corpus never overlaps the benchmark.
  */
@@ -86,7 +86,7 @@ async function loadMap<V>(paths: string[], keyCol: string, pick: (r: Row) => V):
 }
 
 /**
- * Build the held-out key set from an eval jsonl whose rows carry a `components` object.
+ * Build the held-out key set from an eval jsonl whose rows contain a `components` object.
  */
 async function loadHoldout(path: string): Promise<Set<string>> {
 	const keys = new Set<string>()

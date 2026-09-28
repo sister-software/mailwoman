@@ -109,8 +109,9 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		)
 	})
 
-	// The `model` block is `readModelCard`'s only observable, and deterministic in a checkout
-	// without dev weights linked, because the card is committed while the binaries are not.
+	// The `model` block is `readModelCard`'s only observable.
+	// It is deterministic in a checkout without dev weights linked, because the
+	// card is committed while the binaries are not.
 	test("GET /health: the model block comes from the resolved weights package's card", async () => {
 		const res = await app.request("/health")
 		const body = (await res.json()) as { model: { name?: unknown; locale?: unknown; labels?: unknown } | null }

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman eval parity`: the rescued v1 parity corpus scored against a checkpoint,
- *   parse-only. Carries the plan-2 pre-registered floors (house_number/postcode ≥ 0.97, street
+ *   parse-only. Includes the plan-2 pre-registered floors (house_number/postcode ≥ 0.97, street
  *   family ≥ 0.90). A non-zero exit means the checkpoint does not yet clear the bar the held
  *   plan-2 production swaps re-run against. Per-country full-agreement table gauges the accent-
  *   mangle + fragment campaign's progress.
@@ -34,7 +34,7 @@ export const spec = {
 		"weights-cache": { type: "string", description: "Package-shaped candidate weights directory" },
 		"street-morphology": { type: "boolean", default: false, description: "Enable street-morphology emission bias" },
 		// The runner reads `gazetteerPrior !== false`, so the prior is on unless a caller
-		// forces it off and `false` is the only value this flag can usefully carry.
+		// forces it off and `false` is the only useful value for this flag.
 		// The flag label matches the property it binds to.
 		"gazetteer-prior-off": {
 			type: "boolean",

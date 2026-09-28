@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `publishGazetteer` reads the candidate's own `layer_manifest` before staging a byte. A `build-local`
- *   tier refuses, an absent manifest refuses, and each refusal says what would lift it.
+ *   tier refuses and an absent manifest refuses. Each refusal explains what would lift it.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -33,7 +33,7 @@ test("a build-local candidate is refused by name before staging", async () => {
 		db.exec("CREATE TABLE spr (id INTEGER PRIMARY KEY)")
 	}
 
-	// The manifest the lab host's candidate.db carries, measured 2026-09-27.
+	// The manifest in the lab host's candidate.db, measured 2026-09-27.
 	await stampLayerManifest(
 		candidateDB,
 		foldLayerManifest({

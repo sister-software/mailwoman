@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A license as four separate facts, where one string used to carry all of them.
+ * @file A license as four separate facts, where one string used to combine them.
  *
  *   A corpus row's `license` column holds whichever of these the writer had to hand. Measured over
  *   `v0.7.0-de-holdout` on 2026-09-26: 71 distinct values across 703,835,753 rows, of which 4 are SPDX
@@ -70,14 +70,14 @@ export interface LicenseRecord {
 	 */
 	expression: string | null
 	/**
-	 * The credit the grant requires, where the value carries it.
+	 * The credit the grant requires, recorded as a value.
 	 */
 	attribution: string | null
 	/**
 	 * Licence identifiers the raw text mentions, whether or not each is the grant on the row.
 	 *
 	 * A row rendered from an attested record can mention the upstream register's licence
-	 * in its provenance prose while the row carries a different grant.
+	 * in its provenance prose while the row records a different grant.
 	 * This field records those mentions separately so callers do not treat them as the grant.
 	 */
 	mentions: string[]
@@ -95,7 +95,7 @@ export interface LicenseRecord {
  * A value absent from this map and from SPDX resolves to `unresolved` rather than to a guess.
  */
 const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
-	// These values appear on 478,632,849 corpus rows. U.S. federal works carry no copyright under
+	// These values appear on 478,632,849 corpus rows. U.S. federal works have no copyright under
 	// 17 U.S.C. § 105. SPDX has no identifier for that status, so this repository defines a `LicenseRef`.
 	["Public Domain", "LicenseRef-USGov-Public-Domain"],
 	["public domain", "LicenseRef-USGov-Public-Domain"],
@@ -110,7 +110,7 @@ const EXPRESSION_ALIASES: ReadonlyMap<string, string> = new Map([
 	["Open Government Licence v3.0", "OGL-UK-3.0"],
 	["Open Government Licence v.3.0", "OGL-UK-3.0"],
 	// The `meta.license` value in `postalcode-geonames-tail.db`, measured 2026-09-27.
-	// GB rows in that database also carry OGL-UK-3.0.
+	// GB rows in that database also list OGL-UK-3.0.
 	// Its `meta.license_gb` field states this value.
 	// The builder's manifest records it too.
 	["CC-BY 4.0 (GeoNames) — attribution required on redistribution", "CC-BY-4.0"],
@@ -216,7 +216,7 @@ export function mentionsShareAlike(record: LicenseRecord): boolean {
 /**
  * Returns the attribution entries a model card records, from whichever field holds them.
  *
- * Published cards carry the list under `training.data_attribution` or under a top-level
+ * Published cards include the list under `training.data_attribution` or under a top-level
  * `attribution`, and a published card cannot change, so both spellings have to be read.
  * The first candidate holding at least one string wins.
  * Candidates that are not arrays of strings are skipped.
@@ -255,7 +255,7 @@ const LICENSE_FAMILY_WORDS =
  *
  * `LINZ-derived OpenAddresses NZ (CC-BY 4.0): …` yields `CC-BY 4.0`.
  * The text is returned as written rather than resolved to an identifier, because a
- * caller reporting on a published card has to quote what the card says.
+ * caller reporting on a published card has to quote the card's recorded value.
  *
  * Returns `null` when no parenthetical holds a license.
  * Some entries state their terms outside a parenthetical, so `null` describes what this
@@ -269,7 +269,7 @@ export function licenseNamedIn(entry: string): string | null {
 	for (const match of entry.matchAll(/\(([^()]{1,120})\)/gu)) {
 		const inner = match[1]!.trim()
 
-		// A parenthetical states a license when it carries a version number or a license family word.
+		// A parenthetical states a license when it includes a version number or a license family word.
 		if (/\d/u.test(inner) || LICENSE_FAMILY_WORDS.test(inner)) return inner
 	}
 

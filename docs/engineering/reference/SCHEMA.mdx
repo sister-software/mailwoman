@@ -25,7 +25,7 @@ This document defines the canonical `ComponentTag` union. Where another document
 
 | Tag                      | Description                                    | Example                            |
 | ------------------------ | ---------------------------------------------- | ---------------------------------- |
-| `house_number`           | Building number on a street                    | `6220`, `12bis`                    |
+| `house_number`           | Number on a street building                    | `6220`, `12bis`                    |
 | `street`                 | Street name proper, without its type           | `Salmon`, `République`             |
 | `street_prefix`          | Directional or descriptive prefix (Anglophone) | `SE`, `North`                      |
 | `street_prefix_particle` | Non-English grammatical particle (FR)          | `de la`, `du`, `des`               |
@@ -199,10 +199,10 @@ A `LocaleProfile.componentsSupported` array must be a subset of `COMPONENT_TAGS`
 
 **Why `dependent_locality` and not `neighborhood` or `borough`?** WOF and ISO use `dependent_locality` for the general concept. Names like `borough` are locale-specific. Pick the umbrella term.
 
-**Why split `street_prefix` from `street_prefix_particle`?** English `SE` and French `de la` are grammatically different and synthesis pipelines need to treat them differently. Conflating them produces worse training data.
+**Why split `street_prefix` from `street_prefix_particle`?** English `SE` and French `de la` are grammatically different, so synthesis pipelines need to treat them differently. A combined field produces worse training data.
 
-**Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). Modeling it explicitly is better than forcing it into `region` or `locality`.
+**Why expose `subregion` if it's optional?** Some US addresses include county (rare in display but common in government data). An explicit `subregion` field is better than forcing the value into `region` or `locality`.
 
-**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction rather than a postcode. Treating it as one corrupts FR postcode statistics.
+**Why `cedex` is FR-specific and not subsumed by `postcode`?** A CEDEX designation is a postal routing instruction rather than a postcode. FR postcode statistics become inaccurate if a model classifies it as a postcode.
 
 **Why were the JP tags listed years-of-phases before activation?** The declarations forced the Phase-0 type design to handle them. As a result, activation at CJK Phase 2 required no changes to core types, as the schema-first principle intended.

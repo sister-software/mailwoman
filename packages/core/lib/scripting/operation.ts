@@ -8,7 +8,7 @@
  *   It accepts typed input and returns typed output.
  *   Its `run` function performs the operation.
  *   An adapter such as the private `mwops` CLI or an MCP server views a registry of operations.
- *   The adapter carries no separate logic.
+ *   The adapter adds no separate logic.
  *
  *   An operation family chooses its effect union and context.
  *   Release operations are one example. Storage and shop are two others.
@@ -79,7 +79,7 @@ export type OperationDefiner<TEffect extends string, TContext extends OperationC
  * A definer that took the family's types beside the operation's would make each
  * call site spell out its input and output types.
  *
- * Binding the family first leaves only the two the schemas already carry.
+ * The family binding leaves only the two values already in the schemas.
  */
 export function operationDefiner<TEffect extends string, TContext extends OperationContext>(): OperationDefiner<
 	TEffect,

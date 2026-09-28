@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Registers the corpus source fetchers, which download raw files and manifests for the adapters to read.
+ * Registers the corpus source fetchers. They download raw files and manifests for the adapters to read.
  */
 
 import { fetchBan } from "#fr/tools/fetch/ban"

@@ -7,7 +7,7 @@
 import { applyNFC } from "@mailwoman/normalize/nfc"
 import { expect, test } from "vitest"
 
-// Combining acute accent (U+0301) and the composed forms, by codepoint.
+// The test covers the combining acute accent (U+0301) and composed forms by codepoint.
 // So the test's intent doesn't depend on how this file's literal characters happen to be normalized on disk.
 const COMBINING_ACUTE = "́"
 const E_ACUTE = "é"

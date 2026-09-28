@@ -114,8 +114,8 @@ export function readLocalJSONFile<_T = Record<string, unknown>>(path: `${string}
 /**
  * Read a local JSON file.
  *
- * Parsing is strict: a file that is not JSON throws here rather than answering
- * `undefined` several frames later.
+ * This parser is strict: a file that is not JSON throws here rather than
+ * returning `undefined` several frames later.
  *
  * @category Files
  * @runtime node
@@ -137,7 +137,8 @@ export function readLocalJSONFile<
 /**
  * Read a local JSON file, answering `null` when the file does not exist.
  *
- * Parsing is strict: a file that is not JSON throws here rather than answering `null` several frames later.
+ * This parser is strict: a file that is not JSON throws here rather than
+ * returning `null` several frames later.
  *
  * @category Files
  * @runtime node
@@ -180,7 +181,7 @@ export function readLocalBuffer<S extends Array<PathBuilderLike | URL>>(...pathS
  * The readers above accept paths.
  *
  * `fsPromises.readFile` also requires a path.
- * Streaming the descriptor provides asynchronous reads.
+ * The descriptor stream provides asynchronous reads.
  *
  * This helper keeps callers from reimplementing that operation.
  */

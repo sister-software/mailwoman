@@ -26,7 +26,7 @@ export interface RerankCandidate<T = unknown> {
 	 */
 	tree: AddressTree
 	/**
-	 * Opaque caller payload carried through to the result (the segmentation, a surface string, …).
+	 * Opaque caller payload passed through to the result (the segmentation, a surface string, …).
 	 */
 	payload?: T
 }
@@ -89,8 +89,8 @@ export interface RerankOpts {
  * Rerank a k-best parse list on resolution evidence: resolve up to `maxResolve`
  * candidates in model order and return the first plausible one.
  *
- * Candidates beyond `maxResolve` are never resolved and never vetoed, and
- * when every resolved candidate is implausible the model's rank-1 wins.
+ * Candidates beyond `maxResolve` are never resolved or vetoed. when every resolved
+ * candidate is implausible the model's rank-1 wins.
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Converts semantic observations, coverage-qualified absences and layer designations into `QueryIntentMarker`s.
- *   Markers add evidence without changing the winning answer. Each marker carries a kind that the verdict holds as
+ *   Markers add evidence without changing the winning answer. Each marker includes a kind that the verdict holds as
  *   its top kind or an alternative.
  */
 
@@ -67,7 +67,7 @@ export const ZONING_DESIGNATION_MECHANISM = "layer:zoning"
 const POI_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["poi_query", "poi_category"])
 
 /**
- * Returns the POI kind that the verdict carries as its top kind or an alternative, or `null`.
+ * Returns the POI kind that the verdict records as its top kind or an alternative, or `null`.
  */
 export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
 	if (POI_KINDS.has(verdict.kind)) return verdict.kind

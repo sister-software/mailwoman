@@ -92,7 +92,8 @@ export interface CapabilityManifestOptions {
 }
 
 /**
- * Serving tiers and their channel feed, expressed as overrides against the model-card ship-config.
+ * The manifest expresses each serving tier and its channel feed as overrides
+ * against the model-card ship-config.
  */
 const TIERS: Record<string, ScorerOverrides> = {
 	// Production default: anchor and gazetteer both fed (no override needed, createScorer's defaults).

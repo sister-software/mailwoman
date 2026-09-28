@@ -83,7 +83,8 @@ describe("gradeRow", () => {
 
 	it("grades by issue COUNT, so swapping one wrong value for another is neutral", () => {
 		// A text diff would call this a change.
-		// The grade is unmoved, and the grade is what a verdict rests on.
+		// The grade stays unchanged.
+		// The verdict rests on this grade.
 		const graded = gradeRow(
 			seed({ expectComponents: { locality: "Paris" } }),
 			result({ locality: "Lyon" }),

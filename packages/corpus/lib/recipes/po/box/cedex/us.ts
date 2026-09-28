@@ -2,8 +2,8 @@
  * @copyright Sister Software
  */
 
-/* oxlint-disable mailwoman/prefer-home -- this module is the US arm of the cedex recipe, identified by its path, and its
-   sibling arms carry the other countries. A layout call would answer the same string for the only country that reaches
+/* oxlint-disable mailwoman/prefer-home -- this module is the US arm of the cedex recipe, identified by its path. Its
+ sibling arms cover the other countries. A layout call would answer the same string for the only country that reaches
    it. */
 
 import { sample } from "@mailwoman/core/random"

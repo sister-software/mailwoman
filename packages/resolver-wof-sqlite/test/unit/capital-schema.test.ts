@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Round-trip tests for the `capital` table. A pre-table artifact answers NULL rather than an
- *   empty list, and malformed rows are skipped rather than crashing a session open.
+ *   empty list. Malformed rows are skipped rather than crashing a session open.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

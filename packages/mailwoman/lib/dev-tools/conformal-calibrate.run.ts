@@ -118,7 +118,7 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
  * The published conformal thresholds were selected under it.
  * `@mailwoman/core/utils`' `makeLcg` uses different constants.
  *
- * Swapping streams re-splits calibration and test and silently moves Q̂.
+ * A stream swap re-splits calibration and test and silently moves Q̂.
  */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
@@ -153,7 +153,7 @@ interface StreetHit {
  *
  * This walk also needs the stamped `resolution_tier` and the interpolation
  * `uncertainty_m` to price the claimed radius.
- * The shared readers carry neither.
+ * The shared readers include neither.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {

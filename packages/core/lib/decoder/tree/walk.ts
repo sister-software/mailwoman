@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file This module defines the tree walk and slot order used by result projections.
  *   It stays a leaf module because `serialize-json`, `serialize-tuples`, `unknown-spans`, and `tree-shape` all read it.
- *   Placing the walk beside `tree-shape`'s reporters would create a cycle through `serialize-tuples`.
+ *   The walk would create a cycle through `serialize-tuples` if it sat beside `tree-shape`'s reporters.
  */
 
 import type { AddressNode } from "#decoder/types"
@@ -12,7 +12,7 @@ import type { AddressNode } from "#decoder/types"
 /**
  * Every node of a forest in document order: parent before children, siblings by their position in the input.
  *
- * The function accepts any node shape that carries `children`.
+ * The function accepts any node shape that has `children`.
  * The eval harness's flat nodes and admin-coherence tree use it like decoder nodes do.
  *
  * The order determines which of two same-tag spans becomes a result slot when `find` walks the nodes.
@@ -50,10 +50,10 @@ export function collectNodes(roots: readonly AddressNode[], predicate: (node: Ad
 }
 
 /**
- * A node the resolver grounded: it carries a coordinate, a place identifier,
+ * A node the resolver grounded: it has a coordinate, a place identifier,
  * or a resolution-tier stamp from the street tiers.
  *
- * Grounding is what a result may claim about a span.
+ * A result may claim only the information grounded in a span.
  * An ungrounded span is text the parser labeled and no more.
  */
 export function isGroundedNode(node: AddressNode): boolean {

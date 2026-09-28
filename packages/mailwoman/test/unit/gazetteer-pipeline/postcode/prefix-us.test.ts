@@ -16,7 +16,7 @@ import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode/
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Arbitrary but distinct, with one above 2^32, because the format carries ids as `f64`
+ * Arbitrary but distinct, with one above 2^32, because the format stores ids as `f64`
  * and a real US region id is 8 digits while NI synthetic postcode ids run to 9.8e12.
  */
 const US_COUNTRY_ID = 85_633_793
@@ -52,8 +52,8 @@ beforeAll(async () => {
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
-	// Deliberately no `meta` table: the real database has none, and the coordinate-tier
-	// rule must not read a declaration out of its absence.
+	// Deliberately no `meta` table: the real database has none.
+	// The coordinate-tier rule must not read a declaration out of its absence.
 	source.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, latitude REAL, longitude REAL

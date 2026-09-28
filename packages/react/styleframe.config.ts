@@ -133,7 +133,7 @@ const fontWeightSemibold = variable("font-weight-semibold", "600")
 
 /**
  * The spacing scale, in seven steps on a 2px grid.
- * Padding, margins and gaps should use these steps.
+ * Use these steps for padding, margins and gaps.
  */
 const space0 = variable("space-0", "0.125rem")
 const space1 = variable("space-1", "0.25rem")

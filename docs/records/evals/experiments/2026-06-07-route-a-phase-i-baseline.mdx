@@ -36,7 +36,7 @@ Latency is a non-issue: p50 is unchanged across the board and p99 sits at 1.5–
 
 ## What this means for the plan
 
-- **JUST-FLIP is dead.** Flipping `forceJointReconcile` to default today would tank locality accuracy on three of six locales by 15–25 points. No telemetry check survives that.
+- **JUST-FLIP is dead.** A default change for `forceJointReconcile` would tank locality accuracy on three of six locales by 15–25 points. No telemetry check survives that.
 - **The dual-role / multi-role work was the right call.** The city-state recovery it ships (Berlin → 80.9% PIP) is exactly the +25pp that joint-decode also delivers — but the Resolve-stage relation completion delivers it _without_ the multi-word collateral. That mechanism stays.
 - **FULL Route A hinges entirely on Phase II ([#425](https://github.com/sister-software/mailwoman/issues/425)) — maturing the phrase grouper to propose multi-word spans reliably.** Until the phrase grouper covers `Reggio nell'Emilia` as one span, joint decoding cannot be the default. This A/B is the re-check: after #425, re-run it; flip only if the native-order regression drops under the bar.
 

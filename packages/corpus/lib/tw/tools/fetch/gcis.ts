@@ -11,7 +11,7 @@
  *   (營業地址) as free text.
  *
  *   The ministry issues the company number, so the identifier is an `identity` assertion. Both address
- *   columns are `observation`s — a person typed them — and they carry different roles on the same row:
+ *   columns are `observation`s — a person typed them — and they serve different roles on the same row:
  *   公司地址 is the entity's `registered-office`, 營業地址 the `facility` it operates from. An adapter that
  *   reads the file must set `addressRole` per column, or it teaches the premise parser registered-office
  *   grammar.
@@ -19,7 +19,7 @@
  *   License: 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0). The platform's
  *   own dialog states the condition that binds: attribution in the form it prescribes, or the grant is
  *   void from the start ("未盡顯名標示義務者，視為自始未取得開放資料之授權"). The manifest records the
- *   prescribed wording per file so the corpus build and the model card can carry it.
+ *   prescribed wording per file so the corpus build and the model card can include it.
  *
  *   Invoke via `mailwoman corpus fetch gcis-tw --out-root <path>`.
  */
@@ -60,7 +60,7 @@ interface Dataset {
 }
 
 /**
- * A file name a shell and a manifest can carry: the title with its punctuation folded to underscores.
+ * A file name a shell and a manifest can use: the title with its punctuation folded to underscores.
  */
 function filenameFor(title: string): string {
 	return `${title

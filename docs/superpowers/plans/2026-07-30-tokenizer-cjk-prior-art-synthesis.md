@@ -75,7 +75,7 @@ records every required finding. Verdicts come first and receipts after.
 ## Found bugs / gaps in our own code (filed)
 
 - `normalize/cjk.ts` folds only U+FF01–FF5E. **Half-width katakana (U+FF66–FF9F) passes through
-  unfolded** (篠ﾉ井). Folding ﾃﾞ→デ changes string length, so the offset map must handle it. The
+  unfolded** (篠ﾉ井). The ﾃﾞ→デ fold changes string length, so the offset map must handle it. The
   hyphen class folds only U+FF0D, so **U+2212 (IME minus), U+30FC (prolonged-sound mark typed as
   a hyphen) and U+2010/2015/FE63/FF70 all survive** in real JP input. The normalizer needs a
   hyphen-equivalence class.

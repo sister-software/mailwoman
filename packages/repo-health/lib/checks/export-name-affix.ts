@@ -13,7 +13,7 @@
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
  *   longer one could have imported.
  *
- *   A pair that stays says why, on the line above the longer declaration:
+ *   A pair that stays records why, on the line above the longer declaration:
  *
  *       // repo-health-ignore export-name-affix -- <reason>
  */
@@ -31,7 +31,7 @@ import { trackedSourcePaths } from "#tracked-sources"
 export const AFFIX_IGNORE_MARKER = "repo-health-ignore export-name-affix --"
 
 /**
- * How many camelCase components a shared run must carry.
+ * How many camelCase components a shared run must include.
  *
  * One-component runs are the vocabulary of the tree — `read`, `build`, `file` —
  * so a floor of one reports nearly every name against nearly every other.
@@ -132,7 +132,8 @@ function packageOf(file: string): string {
  */
 export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file directly under `lib/`.
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by
+		// itself skips a file directly under `lib/`.
 		globs: ["packages/*/lib/*.ts", "packages/*/lib/**/*.ts"],
 		existingOnly: true,
 	})

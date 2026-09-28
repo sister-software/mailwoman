@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Side panel over the map with a heading, close button, and Escape dismissal.
+ *   Side panel over the map with a heading, close button and Escape dismissal.
  */
 
 import { type ReactNode, useEffect } from "react"

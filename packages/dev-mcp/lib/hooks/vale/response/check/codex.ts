@@ -6,7 +6,7 @@
  *
  *   Codex Stop hook: the Codex twin of `vale-response-check.ts`. The lint policy — rule set,
  *   severity split, finding format — lives in `vale-check-core.ts`; this file owns the Codex
- *   payload shape, loop guard, and output JSON. Codex's hook interface
+ *   payload shape, loop guard and output JSON. Codex's hook interface
  *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses.
  *   `Stop` fires when a turn completes. The payload includes `last_assistant_message`.
  *   The output is `decision: "block"` + `reason` or the non-blocking `systemMessage`.

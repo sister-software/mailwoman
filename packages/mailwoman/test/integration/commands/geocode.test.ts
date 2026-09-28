@@ -36,7 +36,7 @@ const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget, which must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
@@ -76,7 +76,7 @@ describe("geocode argument validation", () => {
 			threw = true
 			const execErr = error as { stdout?: string; stderr?: string; code?: number }
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
-			// The promisified spawn carries the exit code in `.code`.
+			// The promisified spawn stores the exit code in `.code`.
 			status = execErr.code
 		}
 

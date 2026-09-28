@@ -154,7 +154,7 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
-				// Board rows carry their country explicitly even though the directory also encodes one.
+ // Board rows include their country explicitly even though the directory also encodes one.
 				// Those values can disagree.
 				expect((await readBoardCoverage(root("cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
@@ -181,7 +181,7 @@ const CORPUS = dataRootPath(
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
 	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
-				// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's
+ // `getCursor(["country", "labels"])` returns only `{country}` on the v0.17.0-era writer's
 				// databases, so a dropped label column must not read as "this country has no street rows".
 												const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 

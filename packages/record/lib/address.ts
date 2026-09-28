@@ -96,7 +96,7 @@ export interface ToPostalAddressOptions {
 	raw?: string
 
 	/**
-	 * Says whether to compute the `formatted` string.
+	 * Indicates whether to compute the `formatted` string.
 	 * It defaults to `true`.
 	 */
 	format?: boolean

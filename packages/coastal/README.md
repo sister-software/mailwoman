@@ -30,7 +30,7 @@ passed every structural check.
 
 `layer_coverage` therefore carries `basis = source_present` on every row. Both ends check this
 condition in code. The build refuses to write a row that would support an exclusion, and the reader
-refuses to open an artifact that carries one. Moving this layer to a stronger basis requires a
+refuses to open an artifact that carries one. A stronger basis for this layer requires a
 deliberate edit at a guard that states the reason.
 
 **A probe must specify its scenario.** NCERM publishes twelve erosion-zone layers because the answer
@@ -285,7 +285,7 @@ product "considers the predominant risk at the coast" and generally excludes for
 NCERM answer makes no statement about flooding. The 87 anomalous rows carry blank policy and defence fields
 with `published = 0`, and the Environment Agency documents no policy or defence fields for those rows.
 
-## Building it
+## Build it
 
 ```bash
 # Fixtures — no network, no GDAL.

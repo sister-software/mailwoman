@@ -56,7 +56,7 @@ different keys (operator correction, 2026-08-11 handoff §4):
 - **Scope coverage** answers "was this layer's namespace surveyed at all?", which is the question an
   unresolved lookup asks. `Stanmore Bay` has no candidate row, so it has no coordinate and
   no H3 cell. A per-cell table therefore cannot tell the resolver that the NZ locality namespace
-  was never surveyed. Giving an H3 cell a country-wide meaning is forbidden, so the two
+  was never surveyed. An H3 cell cannot represent an entire country, so the two
   kinds of coverage stay in separate tables.
 
 ### Cell coverage (`layer_coverage`, per resolved geometry)
@@ -132,7 +132,7 @@ readable through `@mailwoman/core/layers` beside the existing manifest.
 Phase 1 excludes everything generative:
 
 - Naming-family mining. Falsifier 2 measured 19.5% of localities carrying a
-  detectable family. The families are real but a minority, and numbered grids dominate them. Mining keys off the same per-locality
+  detectable family. The families are real but a minority, and numbered grids dominate them. Key mining uses the same per-locality
   street sets the register indexes, so it waits until the register exists.
 - Terrain/plant exclusion.
 - Any `inferred` result emission.

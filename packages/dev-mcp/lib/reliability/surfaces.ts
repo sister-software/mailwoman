@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Where a graded confidence comes from: the surfaces `reliability.ts` curves. Each reports what it could not grade,
- * because a curve over part of a set and a curve over all of it differ in ways the ECE alone cannot tell apart.
+ * because a curve over part of a set and a curve over all of it differ in ways the ECE by itself cannot distinguish.
  */
 
 import type { DecoderToken } from "@mailwoman/core/decoder"
@@ -18,7 +18,7 @@ import type { Observation } from "#reliability/index"
 
 /**
  * What to do with a produced component the truth row never mentions; `exclude`
- * counts it separately, correct on the partial truth every wired corpus carries,
+ * counts it separately, correct on the partial truth every wired corpus provides,
  * while `wrong` grades it as an error that measures the corpus rather than the model.
  */
 export const UnassertedPolicy = {
@@ -72,7 +72,7 @@ export interface UnassertedCohort {
 export interface SurfaceSample {
 	observations: Observation[]
 	/**
-	 * Rows the surface could not grade, and why.
+	 * Rows the surface could not grade, plus the reason for each row.
 	 * Reported rather than deducted in silence.
 	 */
 	excluded: ExcludedRows[]
@@ -222,7 +222,7 @@ export async function decodeReliabilitySample(
  *
  * The default corpus is the held-out `test` split, held out from both the training set
  * and the `val` split the temperature was fit on.
- * Pointing this at `val` or `train` destroys that property without any other symptom.
+ * A `val` or `train` value destroys that property without any other symptom.
  */
 export async function coarsePlacerReliabilitySample(corpusPath: string): Promise<SurfaceSample> {
 	if (!(await pathExists(corpusPath))) {

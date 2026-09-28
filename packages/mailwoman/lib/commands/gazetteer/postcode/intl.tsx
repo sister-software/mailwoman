@@ -13,7 +13,7 @@
  *   alongside `postalcode-intl.db` with no other change.
  *
  *   GeoNames postal is CC-BY 4.0 — any DB shipping these coordinates must attribute "GeoNames
- *   (CC-BY 4.0)". These records carry no WOF id and get synthetic ids that can never collide with one.
+ *   (CC-BY 4.0)". These records have no WOF id and get synthetic ids that can never collide with one.
  *
  *   A postcode is stored under both its written forms so the candidate name_key matches whichever form
  *   the parse emits — PL writes "26-300" (hyphen) while CZ writes "58001" though GeoNames stores
@@ -273,7 +273,7 @@ async function foldIntoCandidate(
 	if (!ptRow) throw new Error("candidate DB has no 'postalcode' placetype_code")
 	const pcPtid = ptRow.id
 
-	// country code → id, inserting any code the candidate DB doesn't already carry.
+	// country code → id, inserting any code the candidate DB does not already contain.
 	const ccCache = new Map<string, number>()
 	const getCc = out.prepare("SELECT id FROM country_codes WHERE code=?")
 	const maxCc = getRow<{ m: number }>(out.prepare("SELECT COALESCE(MAX(id),0) m FROM country_codes"))!

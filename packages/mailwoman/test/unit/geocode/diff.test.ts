@@ -52,7 +52,7 @@ const INPUT = "27 Minories, London EC3N 1DE"
 describe("diffGeocode", () => {
 	it("attributes a move to the PARSE when the parse changed", () => {
 		// The resolver was asked a different question.
-		// Retrieval is not the suspect and a distance delta alone would have pointed at it.
+		// Retrieval is not the suspect and a distance delta by itself would have pointed at it.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 3]),
 			lat: 51.5,
@@ -101,7 +101,7 @@ describe("diffGeocode", () => {
 	it("attributes a move to the TIER when parse and places both held", () => {
 		// The same components fell through to a coarser rung because a rooftop lookup missed.
 		// Model changes cannot affect this.
-		// Reporting it as a regression against the model wastes a training run.
+		// A model-regression report would waste a training run.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5074, -0.1278, 2])
 		const before: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "address_point", uncertaintyM: 5 }
 		const after: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "admin", uncertaintyM: 4000 }
@@ -114,7 +114,7 @@ describe("diffGeocode", () => {
 
 	it("keeps a LOST coordinate distinct from a zero-kilometre move", () => {
 		// Undefined distance and zero distance are different events.
-		// Collapsing them is the meaning-of-zero mistake.
+		// A collapsed value would confuse an unknown distance with a measured zero.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5, -0.12, 2])
 
 		const diff = diffGeocode(

@@ -21,7 +21,7 @@
 
 // The exterior and hole ring builders live in `@mailwoman/spatial`.
 // Ring winding is a geometry convention owned by `@mailwoman/spatial`.
-// Reimplementing it here would create another place for a hole to be lost.
+// A local implementation would create another place for a hole to be lost.
 import { rectangleRing, reversedRing as holeRing, ringAreaReadings, type MultiPolygonRings } from "@mailwoman/spatial"
 
 import type { FloodFeatureSource, FloodSourceFeature } from "#sdk/ingest/index"

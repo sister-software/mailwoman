@@ -70,7 +70,8 @@ export type NZDeliveryServiceTypeName = (typeof NZ_DELIVERY_SERVICE_TYPES)[numbe
 /**
  * Metadata for "Private Box", a colloquial alias for a PO Box that ADV358 does not list.
  *
- * The parser recognizes it, and synthesis should avoid it.
+ * The parser recognizes it.
+ * Synthesis should avoid it.
  */
 export const NZ_PRIVATE_BOX_ALIAS = {
 	/**

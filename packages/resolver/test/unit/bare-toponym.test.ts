@@ -321,7 +321,8 @@ describe("importance key in the admin walk (#17)", () => {
 
 	it("stands down when a postcode anchor already pinned the country", async () => {
 		// Fame is the prior of last resort.
-		// An anchor posterior is derived from the address's own postcode, and evidence outranks a prior.
+		// An anchor posterior is derived from the address's own postcode.
+		// Evidence outranks a prior.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
 		const out = await walk(withScores, { anchorPosterior: { CA: 1 } })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
@@ -356,9 +357,9 @@ describe("importance key in the admin walk (#17)", () => {
 })
 
 /**
- * The bare-country class: a lone bare locality-tagged country name also races the
- * `country` placetype, and an inferred scope is withheld from `country`-placetype lookups
- * while an explicit scope stays supreme.
+ * The bare-country class: a lone bare locality-tagged country name also races the `country` placetype.
+ *
+ * An inferred scope is withheld from `country`-placetype lookups while an explicit scope stays supreme.
  */
 describe("bare-country class", () => {
 	const WORLD: ResolvedPlace[] = [

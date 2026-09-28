@@ -163,7 +163,7 @@ describe("ablationVariants — one variant per attributable component", () => {
 		])
 	})
 
-	// Deleting `York` out of `New York` would report a two-component deletion under the locality's name.
+	// A deletion of `York` from `New York` would report two components under the locality's name.
 	it("refuses a value nested inside another asserted component", () => {
 		const { variants, skips } = ablationVariants("350 5th Ave, New York, NY", {
 			locality: "New York",
@@ -291,7 +291,7 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		unresolved: false,
 		slot: "absent",
 		emitted: null,
-		// Omitting these would let `aggregateCells` count an undefined grade and grow an unused histogram bucket.
+		// An omitted value would let `aggregateCells` count an undefined grade and grow an unused histogram bucket.
 		expectedRung: "base",
 		expectedRungDepth: 0,
 		expectedWhy: "fixture",
@@ -398,7 +398,8 @@ describe("the support-0-is-absence rendering rule", () => {
 		expect(md).toContain(`\`${ABLATION_ABSENT}\` means NOT MEASURED`)
 	})
 
-	// Folding is only acceptable because the thin locales are printed.
+	// The report prints thin locales.
+	// That output makes folding acceptable.
 	// A zero-column matrix must say why it is empty rather than emit a headerless table.
 	it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
 		const md = renderAblationMarkdown(aggregateCells([row({})], meta), [], {

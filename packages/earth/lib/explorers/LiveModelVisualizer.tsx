@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A classifier bundle that predates the trace hook says so instead of rendering an empty visualizer.
+ *   A classifier bundle that predates the trace hook reports that fact instead of rendering an empty visualizer.
  */
 
 import type { ParseTraceLike } from "mailwoman/browser-runtime/types"

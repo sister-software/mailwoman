@@ -17,12 +17,12 @@ The claim: the model calls `39A` a postcode because its corpus says digit-contai
 postcodes.
 
 The first count said the opposite (`P(house_number | bare digit) = 0.810` vs `postcode 0.101`) and
-was **unusable anyway**: it read one synthetic extract (`fragment-v8`) off disk, unweighted. Training
+was **unusable anyway**: it read one synthetic extract (`fragment-v8`) off disk, unweighted. The training run
 draws from a weighted multinomial over ~700 extract refs (`source_weights`), after a country filter, a
 coarse filter, and five augmentations.
 
 `digit_prior` re-counts through `iter_rows` — the same entry point `train.py` calls, with the
-config's own weights. Reimplementing the sampler is how the first count went wrong, so this one
+config's own weights. A second sampler implementation would repeat the error behind the first count, so this one
 doesn't.
 
 |                                | house_number |   postcode |
@@ -132,7 +132,7 @@ The one variable that moves with the failures is the **street token**, and the e
 - Recognized streets (`Main St`, `Broad St`) → house_number **14/16**. Unrecognized (`Epleskogen`,
   `Kájovská`) → **1/16**.
 - But it is not a clean law: `Tindvegen 44B` → house_number while `Tindvegen nedre 44B` → postcode.
-  Adding one word flipped it.
+  One added word flipped it.
 - Position is refuted: `14 Main St` → hn and `Main St 14` → hn, but `14 Epleskogen` → pc while
   `Epleskogen 14` → hn — opposite directions.
 

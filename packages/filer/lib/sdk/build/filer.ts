@@ -271,7 +271,7 @@ export async function buildFilerDatabase(options: BuildFilerOptions): Promise<Bu
 			stageAttribute(form499NodeID, "dc_agent_email_address", row.dcAgentEmailAddress, "form-499", lastFiledAt)
 			stageAttribute(form499NodeID, "dc_agent_address", row.dcAgentAddress, "form-499", lastFiledAt)
 
-			// Only workbook input carries lifecycle notes.
+			// Only workbook input includes lifecycle notes.
 			// The 17-column TSV lacks them.
 			const relationshipValidTo = processForm499Lifecycle(insNode, insEdge, stageAttribute, lifecycleTotals, {
 				lifecycle: row.lifecycle,

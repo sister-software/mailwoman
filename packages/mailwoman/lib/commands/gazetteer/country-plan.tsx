@@ -8,7 +8,7 @@
  *   This command performs no clone, edit or build. Its read-only behavior comes from its implementation.
  *   The separate `--apply` command clones hundreds of megabytes and edits a file reviewed like code.
  *
- *   Everything it reports is computed from the artifact rather than the lists: `defaults.ts` is a
+ *   This command reports values computed from the artifact rather than the lists: `defaults.ts` is a
  *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled.
  *
  *   Output goes through {@linkcode writeRawStdout} because an Ink frame as tall as the viewport emits

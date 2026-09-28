@@ -63,7 +63,7 @@ const LONG_OPAQUE_VALUE = /[A-Za-z0-9_-]{40,}/gu
 const REASON_LENGTH = 200
 
 /**
- * An error as the report carries it: the message with anything shaped like an address
+ * An error as the report records it: the message with anything shaped like an address
  * or a token or secret struck, since the report is logged.
  */
 export function failureReason(error: unknown): string {
@@ -167,7 +167,7 @@ export async function reconcileLedger(
 
 /**
  * Mints one listed invoice unless the ledger already holds its token.
- * A failure is this invoice's alone.
+ * The failure belongs to this invoice only.
  */
 async function mintIfUnminted(
 	env: LicenseWorkerEnv,
@@ -219,9 +219,10 @@ async function fullyRefunded(stripe: Stripe, invoiceID: string): Promise<boolean
 
 /**
  * The state Stripe's current records say a license should hold: a full refund is
- * read from the charge rather than the subscription, which a refund leaves `active`,
- * and a dispute Stripe ruled `won` returns the license to its subscription's state
- * while any other dispute outcome leaves it revoked.
+ * read from the charge rather than the subscription.
+ *
+ * A refund leaves the subscription `active`, and a dispute Stripe ruled `won` returns the
+ * license to its subscription's state while any other dispute outcome leaves it revoked.
  */
 async function stateStripeSays(
 	stripe: Stripe,

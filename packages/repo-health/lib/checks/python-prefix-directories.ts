@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   `prefix-directories.ts` for the Python tree: a repeated underscore prefix among a directory's children
- *   encodes hierarchy in names. Keeping that boundary as a directory lets imports and file listings
+ *   encodes hierarchy in names. A directory boundary lets imports and file listings
  *   show the same structure as the editor tree.
  *
  *   The rule matches the TypeScript check and uses `_` as its delimiter instead of `-`.
- *   It needs no workspace exclusion because no Python directory carries a published npm-name interface.
+ *   It needs no workspace exclusion because no Python directory defines a published npm-name interface.
  *   It also skips `__init__.py` and `__main__.py`, which Python reserves as module names.
  *
  *   Scoped to `corpus-python/`, the one Python tree in the repository. The check reports rather than fixes, because
@@ -81,7 +81,7 @@ function isSource(file: string): boolean {
 
 /**
  * Every directory-with-children view of the Python tree as one member list per parent directory,
- * admitting a directory child only when it carries a tracked `.py` file beneath it
+ * admitting a directory child only when it contains a tracked `.py` file beneath it
  * so a data directory mirroring someone else's names stays out.
  */
 function directoryChildren(trackedFiles: readonly string[]): Map<string, PythonPrefixMember[]> {

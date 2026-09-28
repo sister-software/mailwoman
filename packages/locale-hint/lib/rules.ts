@@ -11,7 +11,7 @@ import type { QueryShapeFormatsView } from "@mailwoman/query-shape"
 /**
  * Confidence at or above which a known-format hit counts as unambiguous.
  *
- * Ambiguous hits — a bare 5-digit run, which reads as US, FR and DE alike —
+ * Ambiguous hits — a bare 5-digit run that US, French and German parsers can all accept —
  * arrive at 0.6, so this cleanly separates them.
  */
 const UNAMBIGUOUS_FORMAT_CONFIDENCE = 0.9

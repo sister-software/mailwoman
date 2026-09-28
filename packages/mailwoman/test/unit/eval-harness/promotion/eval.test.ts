@@ -52,7 +52,8 @@ function filesGlobMatches(pattern: string, path: string): boolean {
 /**
  * Matches one path segment against one glob segment.
  *
- * `*` matches any run of characters, and all other characters are literal.
+ * `*` matches any run of characters.
+ * All other characters are literal.
  */
 function segmentMatches(glob: string, segment: string): boolean {
 	const pieces = glob.split("*")

@@ -125,7 +125,7 @@ async function main() {
 					const pc = ((row.components?.postcode ?? row.components?.postal_code ?? "") as string).toString().trim()
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
 
-					// findPlace candidates carry lat/lon fields, unlike a ResolvedPlace's latitude/longitude.
+					// findPlace candidates have lat/lon fields, unlike a ResolvedPlace's latitude/longitude.
 					const dists = dis
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))

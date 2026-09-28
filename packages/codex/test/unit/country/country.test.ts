@@ -65,7 +65,7 @@ test("formatAsCountryISO2 normalizes an explicit code and rejects other input", 
 test("isAlpha2CodeShape admits the two codes the corpus keys on that ISO does not list", () => {
 	// This is why it exists beside `formatAsCountryISO2`, which rejects both.
 	// `XK` is Kosovo, in the source register and the `operational-non-iso-codes` regime.
-	// `ZZ` is what a corpus fragment row carries when its country is undetermined.
+	// `ZZ` is what a corpus fragment row stores when its country is undetermined.
 	expect(isAlpha2CodeShape("XK")).toBe(true)
 	expect(isAlpha2CodeShape("ZZ")).toBe(true)
 	expect(() => formatAsCountryISO2("XK")).toThrow(/ISO 3166-1 alpha-2/)
@@ -73,8 +73,8 @@ test("isAlpha2CodeShape admits the two codes the corpus keys on that ISO does no
 })
 
 test("isAlpha2CodeShape refuses a case or length a country filter would match nothing with", () => {
-	// `Nl` is what WOF record 1141959953 publishes, and a filter comparing it
-	// against a row's `NL` selects zero rows.
+	// WOF record 1141959953 publishes `Nl`.
+	// A filter comparing it against a row's `NL` selects zero rows.
 	expect(isAlpha2CodeShape("Nl")).toBe(false)
 	expect(isAlpha2CodeShape("nl")).toBe(false)
 	expect(isAlpha2CodeShape("NLD")).toBe(false)

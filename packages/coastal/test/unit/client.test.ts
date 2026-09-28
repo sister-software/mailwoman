@@ -5,7 +5,7 @@
  *
  *   The attribution parse, pinned against the record's own malformed text.
  *
- *   This test covers a measured case. The 2024 record's abstract carries the attribution statement twice.
+ *   This test covers a measured case. The 2024 record's abstract contains the attribution statement twice.
  *   The first copy, inherited from the superseded 2018–2021 record, has no year. OGL v3.0 makes the statement
  *   a licence condition. A parser taking the first match would state that condition incorrectly.
  *   The fixture below is the real text from the Environment Agency's CSW.

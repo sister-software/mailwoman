@@ -81,11 +81,11 @@ export const PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = {
 }
 ```
 
-Reading the rule for `street`: a street tries to nest under
+For `street`, the builder tries to nest under
 `dependent_locality` first, then `locality`, then `subregion`, then
 `region`. The tree builder walks this list and parents the street to the
 first listed tag that has a labeled span in this address.
-Missing tags fall through.
+The builder skips tags without a labeled span.
 
 ## The tree-building walk
 

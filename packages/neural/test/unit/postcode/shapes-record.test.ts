@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The postcode-shape record is data authored once in `@mailwoman/codex`; the Python trainer cannot
- *   import that package, so it carries a byte-identical copy that this test checks against the
+ *   import that package, so it includes a byte-identical copy that this test checks against the
  *   authored one.
  *
  *   It lives in this package rather than codex because codex is deliberately zero-dependency and the

@@ -78,7 +78,7 @@ const EVIDENCE_TAGS: ReadonlyArray<[keyof AuthoritativeEvidence, ComponentTag]> 
 /**
  * Builds the provider query from the assembled result's components.
  *
- * Spans are deliberately absent, both because the flat result no longer carries them
+ * Spans are deliberately absent, both because the flat result no longer includes them
  * and because the interface marks them optional for exactly this assembly.
  */
 export function authoritativeQueryFrom(

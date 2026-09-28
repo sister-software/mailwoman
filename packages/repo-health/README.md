@@ -42,7 +42,7 @@ changing code.
 | `exports`                     | every export is used, apart from the reviewed compatibility aliases                                                                                                                                           | knip    |
 | `typecheck-tests`             | every workspace's `tsconfig.test.json` under `tsc --noEmit`                                                                                                                                                   | tsc     |
 
-`debt` reports a counter that grew as an error and a counter that fell as a warning. Recording the new reading is a
+`debt` reports a counter that grew as an error and a counter that fell as a warning. The new reading is a
 mutation, so no check does it. `mwops health baseline debt` rewrites `baseline.json` through `lib/baseline.ts`, which
 the registry does not list.
 
@@ -70,7 +70,7 @@ A move cannot see a path assembled from segments. `resolvePackagePath("@mailwoma
 "vale-response-check.ts")` contains no path to match. `yarn test` detects those cases, and no text sweep finds them. A
 specifier that already resolved nowhere before the move is left unchanged.
 
-The fix runs to a fixpoint. Moving `build-outlier-oa.ts` into `build/` leaves `outlier-oa.ts` beside two siblings that
+The fix runs to a fixpoint. When `build-outlier-oa.ts` moves into `build/`, `outlier-oa.ts` remains beside two siblings that
 now share `outlier-`, so `mwops health fix` recomputes the plan until the check reports no findings.
 
 Build output is excluded from resolution intentionally. Every subpath map lists `types` first, so a stale

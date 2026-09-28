@@ -33,7 +33,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
         tb["anchor_confidence"] = perturb_anchor_confidence(tb["anchor_confidence"], step, cfg.train.max_steps)
     if "gazetteer_confidence" in tb and getattr(cfg.train, "gazetteer_curriculum", False):
         tb["gazetteer_confidence"] = perturb_gazetteer_confidence(tb["gazetteer_confidence"], step, cfg.train.max_steps)
-    # Per-channel independent draws, so the model also sees each channel alone.
+    # Per-channel independent draws, so the model also sees each channel separately.
     if getattr(cfg.train, "evidence_curriculum", False):
         # False-evidence noise is drawn first. The absence zero-out then draws over the noised
         # batch.
@@ -131,7 +131,7 @@ def run_training_loop(
                     out = model(**tb)
             else:
                 out = model(**tb)
-            # EWC penalty rides the loss inside the accum division so effective-batch scaling
+            # EWC penalty is added to the loss inside the accumulation division so effective-batch scaling
             # matches the data loss.
             ewc = regularizers.ewc
             loss_total = out.loss if ewc is None else out.loss + ewc.penalty(model)
@@ -141,7 +141,7 @@ def run_training_loop(
             if not is_accum_boundary:
                 continue
             # Fisher capture reads the accumulated gradient before clipping. The empirical
-            # Fisher is defined on the unclipped ∂L/∂θ. Clipping understates curvature
+            # Fisher uses the unclipped ∂L/∂θ. Gradient clipping understates curvature
             # exactly where it is largest. Read-only.
             if (
                 regularizers.fisher_acc is not None

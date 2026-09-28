@@ -12,7 +12,7 @@
  *   The bytes do not migrate. The shipped artifacts are `FST\0` v1 to v5 (`fst-serialize.ts`), and
  *   ancestrie's entries are id-keyed with one record per id. An FST place row is per-(surface,
  *   place), because `crossCountryBranches` is a property of the surface, so the same wofID
- *   legitimately carries different values under different aliases, so it cannot use IDs as keys.
+ *   legitimately has different values under different aliases, so it cannot use IDs as keys.
  *   The matcher, both deserializers and serializer stay here. The algorithm is the
  *   half that migrated.
  */
@@ -44,12 +44,12 @@ export interface AutocompleteSuggestion {
 	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
 	 *
 	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything else.
-	 * Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic}
+	 * Encyclopedic importance appears in {@link AutocompleteSuggestion.encyclopedic}
 	 * for display and never enters the order.
 	 */
 	referential: number
 	/**
-	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place.
+	 * Encyclopedic (Wikipedia) importance, when the FST artifact stores one for this place.
 	 *
 	 * `undefined` means no article, or a pre-v5 binary.
 	 * It is never 0.
@@ -97,7 +97,7 @@ function topByReferential(entries: readonly PlaceEntry[], k: number): PlaceEntry
 /**
  * {@link FSTMatcher} presented through ancestrie's storage interface.
  *
- * Records carry the {@link PlaceEntry} itself as the payload, so the entry that wins the
+ * Records store the {@link PlaceEntry} itself as the payload, so the entry that wins the
  * algorithm's shallowest-depth rule is the entry whose fields the suggestion reports.
  * A side lookup keyed on id could pick a different surface's row
  * (`crossCountryBranches` differs per surface).
@@ -175,7 +175,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		normalizedTokens,
 		depth: result.depth,
 		suggestions: result.suggestions.map((s) => {
-			// Every record this adapter serves carries its entry, so the non-null assertion holds.
+			// Every record this adapter serves includes its entry, so the non-null assertion holds.
 			const entry = s.payload!
 
 			return {

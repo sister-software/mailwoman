@@ -20,7 +20,7 @@ import type {
  * One stage crash that the coordinator caught and degraded past.
  *
  * `runPipeline` still resolves.
- * `tree` carries whatever the remaining stages could prove.
+ * `tree` contains whatever the remaining stages could prove.
  */
 export interface PipelineFault {
 	stage: PipelineFaultStage

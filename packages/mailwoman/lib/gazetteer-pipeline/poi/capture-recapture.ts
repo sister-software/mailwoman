@@ -236,7 +236,7 @@ export interface CoverageCompleteness {
  * Runs every protocol in the grid and reports the smallest completeness lower bound.
  * A `surveyed` cell records that value.
  *
- * Using the minimum keeps the choice of matching thresholds from inflating the claim.
+ * The minimum prevents the choice of matching thresholds from inflating the claim.
  */
 export function completenessAcrossProtocols(
 	first: readonly CaptureRow[],

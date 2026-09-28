@@ -20,7 +20,7 @@
  *   learns to trust unambiguous long and code forms strongly. It trusts ambiguous forms weakly,
  *   preserving recall on phrases such as "Republic of Georgia".
  *
- *   The gazetteer's own `country` slot already carries these surfaces. The shipped model consumes them.
+ *   The gazetteer's own `country` slot already contains these surfaces. The shipped model consumes them.
  *   The WOF-admin case still fails. That slot shares one projection with region, po_box, cedex and homograph.
  *   `suppressGazetteerNearPostcode` zeroes the slot next to a postcode, including in "…12345 USA".
  *   A separate channel

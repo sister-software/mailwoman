@@ -37,7 +37,7 @@ import { latLngToCell } from "h3-js"
  *
  * The same place geocoded a few metres apart (situs vs interpolation, geocode jitter)
  * lands in the same cell, so the key is stable.
- * The address hash carries the precise identity.
+ * The address hash encodes the precise identity.
  *
  * Self-contained here (not via `@mailwoman/spatial`. It isn't a published package).
  *

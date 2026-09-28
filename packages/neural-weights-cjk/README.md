@@ -24,7 +24,7 @@ The manifest lists `model.onnx`, which `mwops release copy-weights` materializes
 - **No FST autocomplete artifact.** `fst-ja-jp.bin` / `fst-zh-cn.bin` ship in the `@mailwoman/neural-weights-ja-jp` and
   `-zh-cn` overlays, data-only packages over this base.
 
-## Loading it today
+## Load it today
 
 ```ts
 import { NeuralAddressClassifier } from "@mailwoman/neural/classifier"

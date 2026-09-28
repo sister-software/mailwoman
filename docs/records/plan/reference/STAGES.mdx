@@ -557,9 +557,9 @@ function canShortCircuit(kind: QueryKindResult, shape: QueryShape, opts?: Pipeli
 
 ⚠ **Fast paths are advisory.** A `postcode_only` shortcut returns a single ambiguous-when-no-location result (the postcode resolved against the gazetteer). If the consumer wanted to disambiguate via additional input (mid-typed autocomplete), they pass `forceFullPipeline: true`. See [`QUERY_SHAPE.md`](../../engineering/QUERY_SHAPE.mdx#3-known-format-detection) for the broader rationale.
 
-## Packaging map
+## Package map
 
-Each stage lives in its own workspace where possible. Existing workspaces extend; new ones are net-new.
+Each stage lives in its own workspace where possible. Current workspaces extend; new ones are net-new.
 
 | Stage                          | Workspace                                                         | Status                           |
 | ------------------------------ | ----------------------------------------------------------------- | -------------------------------- |
@@ -577,22 +577,22 @@ Each stage lives in its own workspace where possible. Existing workspaces extend
 
 The packaging is intentional: a consumer can pull just `@mailwoman/core` + `@mailwoman/normalize` + `@mailwoman/query-shape` for cheap parsing without the neural runtime. Browser-side, the `locale-hint` weights and the kind-classifier together should fit under 1 MB so a fast-path-only deployment is feasible.
 
-## Versioning rules
+## Version rules
 
 - **Stage interfaces** (this file): semver-major bump on any breaking change. The `Components` shape change from flat dict to typed `{ value, confidence, span, … }` will be a breaking change.
 - **Stage implementations**: independently versioned per workspace. Weights packages get major bumps on label-vocabulary changes (Tier 1 → Tier 2 was the v2 → v3 bump).
 - **Pipeline coordinator**: lives in `@mailwoman/core`; semver-major on any change to `PipelineResult` shape.
-- **Adding a new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then an interface test in `@mailwoman/core` proving the new stage composes with the existing ones.
-- **Removing a stage**: requires the operator's written sign-off in `DECISIONS.md`, and should be avoided.
+- **A new stage**: requires editing this file with new interface + Today/Future block + failure classes + open questions, then an interface test in `@mailwoman/core` proving the new stage composes with the existing ones.
+- **A stage removal**: requires the operator's written sign-off in `DECISIONS.md`, and should be avoided.
 
 ## Open questions across the pipeline
 
 These don't belong to one stage; they affect composition.
 
 1. **Cancellation.** Every stage accepts an `AbortSignal`. Should partial results be returned on abort, or just `undefined`? Recommend: partial results (a normalized + locale-detected + kind-classified input is useful even if classification was cancelled).
-2. **Caching.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator; configurable size.
+2. **Cache.** `QueryShape` and `LocaleHint` are cheap but not free. Should they be cached keyed by `(raw, locale)`? Recommend: yes, in-memory LRU at the coordinator; configurable size.
 3. **Telemetry.** `PipelineTiming` is per-call. Should we also expose per-stage success rates and per-stage error counters? Recommend: yes, but as a plug-in observability hook rather than baked into the core interface.
-4. **Streaming.** Today the pipeline is request/response. For autocomplete workflows, would a streaming variant ever ship? Recommend: not in v1. The fast path covers most of the autocomplete case via cheap repeated calls.
+4. **Stream.** Today the pipeline is request/response. For autocomplete workflows, would a streaming variant ever ship? Recommend: not in v1. The fast path covers most of the autocomplete case via cheap repeated calls.
 5. **Server vs browser parity.** Every stage must run in both. The `locale-hint` and kind classifier should be small enough to bundle; the encoder is already isomorphic. Document each stage's bundle-size budget when implementations land.
 
 ## How this relates to existing files

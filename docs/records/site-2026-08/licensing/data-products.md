@@ -284,7 +284,7 @@ These packages are the parser itself, distributed as data-only npm packages that
 
 **Model.** Version 7.0.0, the base trained from scratch. It is ONNX int8, dynamically quantized from fp32, with opset 17, max sequence 128, six layers at hidden size 384, vocabulary 73,143, and roughly 29M parameters. It is **37.6 MB int8** (146.6 MB fp32). The en-US package README prints older size and vocabulary figures. `model-card.json` is the authoritative source.
 
-**Training data.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
+**Corpus sources.** The corpus is compiled only from permissive sources by construction. The corpus build filters share-alike rows through `SHARE_ALIKE_PATTERN` (`--exclude-share-alike`). The model card's attribution list names HM Land Registry PPD (OGL v3.0), LINZ-derived OpenAddresses NZ (CC-BY 4.0), BAN (Licence Ouverte 2.0), Overture Addresses (CDLA-Permissive-2.0), and several per-country OpenAddresses sets. **No ODbL source appears.** The CC-BY and OGL sources carry real attribution obligations, which travel with the model card.
 
 :::danger[Correction, 2026-09-27: the filter cited above never ran]
 
@@ -308,7 +308,7 @@ country instead, so those rows carry the register's terms. The model card now re
 
 **Tier:** shipped, on two backends that must agree. npm hosts the packages, and the public Hugging Face bucket `sister-software/mailwoman` hosts the binaries that the CI publish job downloads.
 
-**Cadence.** No cadence is committed. Versions are lockstep: every workspace, including the weights, shares one version per release. A weights package version therefore tracks the release number rather than the model's own lineage. Most releases change only code. Promoting a newly trained model to the default is a deliberate, larger operation. The model's own identity is recorded in `model_lineage` on the card.
+**Cadence.** No cadence is committed. Versions are lockstep: every workspace, including the weights, shares one version per release. A weights package version therefore tracks the release number rather than the model's own lineage. Most releases change only code. The team promotes a newly trained model to the default in a separate, larger operation. The model's own identity is recorded in `model_lineage` on the card.
 
 **Note on card drift.** The overlay model cards are not bumped automatically at release, so their `version` fields lag the base. Read `model_lineage` and `files_md5` rather than the overlay card's version number.
 
@@ -324,7 +324,7 @@ country instead, so those rows carry the register's terms. The model card now re
 
 **Intended tier.** Candidate for shipped. The open problem is size, because the public-domain source leaves no licensing question. A nationwide fixed-broadband vintage has on the order of 10⁸ rows. The likely result is a shipped pilot-state subset with build-local for the rest, following the POI layer's approach of piloting before scaling.
 
-**Intended cadence.** `versioned-refresh`: re-issued under the same name for each BDC vintage, with each issue sealed. The `as_of_date` would be carried as `source_vintage` and reported on every answer. Filing data is always valid only as of a specific vintage.
+**Intended cadence.** `versioned-refresh`: re-issued under the same name for each BDC vintage, with each issue sealed. The `as_of_date` would appear as `source_vintage` on every answer. Each filing record applies to one specific vintage.
 
 **The fixed boundary.** The CostQuest Fabric, the licensed map from BSL id to a precise rooftop point, is **never ingested, shipped, or used to derive data**. All spatial work happens at public block granularity plus the address spine we already own.
 
@@ -339,7 +339,7 @@ country instead, so those rows carry the register's terms. The model card now re
 ## See also
 
 - [Data licensing & provenance](./data-provenance.md): the per-source license table, the ODbL boundary, and what counsel still needs to confirm.
-- [Pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
+- [Engine tiers and OEM pricing](../../../articles/pricing.mdx): the engine's tiers and the OEM band for shipping Mailwoman inside a product you license to others.
 - [Spatial-layer interface](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/layer-interface.mdx): the schema every layer database embeds, and the source of the tier vocabulary on this page.
 - [POI layer runbook](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/poi-layer-runbook.mdx): the worked build/verify/publish example.
 - [Data, locales, and coverage](../concepts/data-locales-and-coverage.mdx): the same layers, described by what they can and cannot resolve.

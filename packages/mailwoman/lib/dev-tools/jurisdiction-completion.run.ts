@@ -66,7 +66,7 @@ interface JurisdictionRow {
 	corpusStreetRows: number
 	/**
 	 * True when `country_weights` admits it and the corpus holds rows for it.
-	 * Either one alone trains no model.
+	 * Either one by itself trains no model.
 	 */
 	trains: boolean
 	gazetteerPlaces: number
@@ -111,7 +111,7 @@ function rowFor(code: string, joinsTo: string, subJurisdiction: boolean): Jurisd
 		layout: layoutForCountry(joinsTo) !== null,
 		conventions: hasConventions(joinsTo),
 		// A sub-jurisdiction has no register of its own.
-		// Zero here says "no separate reading exists", because reporting its
+		// Zero here means "no separate reading exists", because reporting its
 		// parent's numbers would double-count.
 		corpusRows: subJurisdiction ? 0 : (c?.corpusRows ?? 0),
 		corpusStreetRows: subJurisdiction ? 0 : (c?.corpusStreetRows ?? 0),
@@ -137,7 +137,7 @@ const DIMENSIONS: ReadonlyArray<{ name: string; held: (r: JurisdictionRow) => bo
 	{ name: "parses — trains on corpus rows", held: (r) => r.trains },
 	// Admission is part of the predicate.
 	// Street rows excluded by config train no model.
-	// Reporting them as held would put this row above its prerequisite.
+	// A held label would put this row above its prerequisite.
 	{ name: "parses streets — street-labeled rows", held: (r) => r.trains && r.corpusStreetRows > 0 },
 	{ name: "measured — board rows > 0", held: (r) => r.boardRows > 0 },
 	{ name: "rooftop — obtainable outside the repo", held: (r) => r.geocodeTier === "rooftop-published" },

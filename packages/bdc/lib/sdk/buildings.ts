@@ -48,7 +48,7 @@ export const BuildingTypeCode = {
 	 */
 	Enterprise: "E",
 	/**
-	 * Building type not covered by the above categories.
+	 * Other building types fall outside the categories above.
 	 *
 	 * @title Other
 	 */

@@ -1,11 +1,10 @@
 # @mailwoman/api-kit
 
-Plumbing for [Mailwoman](https://mailwoman.ai)'s HTTP surfaces — a node `serve` wrapper and
+This package provides [Mailwoman](https://mailwoman.ai)'s HTTP plumbing: a node `serve` wrapper and
 OpenAPI emit helpers shared by the drop-in packages ([`@mailwoman/libpostal`](../libpostal),
 [`@mailwoman/photon`](../photon), [`@mailwoman/nominatim`](../nominatim)).
 
-**Plumbing only.** Domain schemas, routes, and wire interfaces live with the package that owns them — this
-package never grows a `ParseRequestSchema` or a `/parse` handler of its own.
+**The package supplies shared HTTP helpers.** Domain schemas, routes, and wire interfaces live with the package that owns them, so this package has no `ParseRequestSchema` or `/parse` handler.
 
 ```ts
 import { attachOpenAPIDocs, serveNode } from "@mailwoman/api-kit"

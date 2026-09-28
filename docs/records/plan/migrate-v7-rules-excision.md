@@ -1,4 +1,4 @@
-# Migrating to v7.0.0 — the legacy rules-parser excision
+# Migration to v7.0.0 — the legacy rules-parser excision
 
 v7.0.0 removes the legacy rule-based parser and its shared substrate. The neural sequence
 labeler has been the primary parse path since v3; v7 deletes the dead rules engine that sat

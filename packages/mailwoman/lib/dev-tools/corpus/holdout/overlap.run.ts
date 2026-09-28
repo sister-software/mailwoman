@@ -5,7 +5,7 @@
  *
  *   Count, per country and split, the held-out `source_id`s that also appear in train.
  *
- *   `holdout-leakage.run.ts` counts train rows the holdout policy says belong in val or test. This report checks
+ *   `holdout-leakage.run.ts` counts train rows the holdout policy assigns to val or test. This report checks
  *   the other direction: a row can sit in val and share its `source_id` with a train row. This happens when a
  *   file's split was chosen by hand rather than by `splitForRow`. Zero is the expected value.
  *
@@ -57,8 +57,8 @@ const globFor = (split: string) => escapeSQLString(join(corpus, split, "*.parque
 
 using db = await openDuckDB()
 
-// The row order of this report's intermediate tables carries no information.
-// Holding it costs memory from the query's bounded allocation.
+// The row order of this report's intermediate tables provides no information.
+// Insertion-order preservation costs memory from the query's bounded allocation.
 // This is the setting DuckDB's own out-of-memory message names first.
 await db.run("SET preserve_insertion_order=false")
 
@@ -67,9 +67,9 @@ const rows: Overlap[] = []
 for (const split of ["val", "test"] as const) {
 	// The held-out side is small — DE's val split holds 3,987 distinct ids —
 	// and the train side is the corpus.
-	// Materializing the small side first and then streaming train through a join against
+	// The query builds the small side first, then streams train through a join against
 	// it keeps the hash table at the size of the held-out set.
-	// Aggregating both sides in one statement instead makes DuckDB build a distinct set over every train row.
+	// A single statement for both sides makes DuckDB build a distinct set over every train row.
 	// That exhausts the memory limit and reports an out-of-memory error naming a 32 KiB allocation.
 	await db.run(
 		`CREATE OR REPLACE TEMP TABLE held AS SELECT DISTINCT country, source_id, raw FROM read_parquet('${globFor(split)}')`

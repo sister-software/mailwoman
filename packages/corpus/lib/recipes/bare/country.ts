@@ -7,15 +7,16 @@ import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
 /**
- * Resolved once, because `source_id` carries the source as its prefix and a pair that
- * disagreed would name a source no row of this output declares.
+ * Resolved once, because `source_id` includes the source as its prefix and a pair
+ * that disagreed would name a source no row of this output declares.
  */
 const BARE_COUNTRY_SOURCE = defaultRecipeSource("synth-bare-country")
 
 const BARE_COUNTRY_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
-	// The codex table is the record, and its rows carry no `source_id` of their own.
+	// The codex table is the record.
+	// Its rows have no `source_id` of their own.
 	baseSourceID: null,
 }
 
@@ -43,7 +44,7 @@ function* bareCountrySurfaces(): Generator<{ surface: string; iso2: string }> {
 }
 
 /**
- * Generates queries that consist of a country name alone, drawn from ISO names
+ * Generates queries that consist only of a country name, drawn from ISO names
  * and curated surface forms of at least four characters, with no country codes.
  */
 export const bareCountryRecipe: CorpusRecipe = {

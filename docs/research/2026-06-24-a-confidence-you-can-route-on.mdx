@@ -20,7 +20,7 @@ We fixed that part first (it's [its own story](https://github.com/sister-softwar
 
 A calibrated number per _span_ still isn't a number you can act on per _answer_, though. So we carried it the last step, to the resolved coordinate.
 
-## Dialing precision
+## Set a precision threshold {#dialing-precision}
 
 Here's the move that makes it pay rent. mailwoman returns a coordinate and a confidence you can put a threshold on. Set a bar (call it τ) and accept only the answers the model is at least that sure about; route everything below it to review.
 

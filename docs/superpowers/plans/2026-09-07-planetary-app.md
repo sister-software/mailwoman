@@ -63,7 +63,7 @@ packages/cartographer/package.json                 exports "./planetary"
 
 **Interfaces:**
 
-- Produces: `StyleSpecificationComposition` gains `baseLayers?: LayerSpecification[]` (default `BaseLayers`), `hillshadeSource?: SourceSpecification | null` (default `createTerrainDEMSource()`; `null` adds none), `sprite?: string | null` (default the Protomaps v4 sprite; `null` omits the key), `glyphs?: string` (default the Protomaps font host). Existing callers pass none and get today's style byte for byte.
+- Produces: `StyleSpecificationComposition` gains `baseLayers?: LayerSpecification[]` (default `BaseLayers`), `hillshadeSource?: SourceSpecification | null` (default `createTerrainDEMSource()`; `null` adds none), `sprite?: string | null` (default the Protomaps v4 sprite; `null` omits the key), `glyphs?: string` (default the Protomaps font host). Current callers pass none and get today's style byte for byte.
 
 - [ ] **Step 1: The test first**
 

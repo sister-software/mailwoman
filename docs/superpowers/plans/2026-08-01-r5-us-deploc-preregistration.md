@@ -68,7 +68,7 @@ venue words ("Park Slope", "Midtown", "Riverside", "Fairview"). No release ships
   bias by default, where today they take none. Measure and report what that does to the GB and
   bare-name boards; it is a packaging consequence rather than a bug, but it must be stated before ship.
 
-Failing B-R5.1 or B-R5.2 stops the ship regardless of how good B-R5.3 looks.
+A failure of B-R5.1 or B-R5.2 stops the ship regardless of how good B-R5.3 looks.
 
 ## The readings — all four bars
 
@@ -88,7 +88,7 @@ against the same artifacts removed.
   Disclosure: every row's pair is necessarily IN the index, so this measures the mechanism's
   efficacy where the gazetteer has data — not generalization to unknown surfaces. Retrieval-augmented
   by design; an unknown pair gets no bias and falls back to today's behaviour.
-- **D-R5.4 disclosed, and it is clean.** Shipping a US index means the browser's
+- **D-R5.4 disclosed, and it is clean.** A US index means the browser's
   `detectPairIndexCountry` fallback routes bare Latin postcode-less queries to `us`, where they take
   US pair bias instead of none. Probed against the GB canonical set — Shoreditch/London,
   Nine Elms/London, Clapham/London, Camden/London, Didsbury/Manchester — the US index **misses all
@@ -101,7 +101,7 @@ the diagnosis above, the `us` entry in the pair-index command's `PROBE_PAIRS_BY_
 correctly refused to build a US index without one), and both boards as reusable instruments under
 `$MAILWOMAN_DATA_ROOT/scratch-r5-us/`.
 
-**Shipping `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
+**The choice to ship `pair-index-us.bin` inside `@mailwoman/neural-weights-en-us` is left as an operator
 decision rather than taken here.** The bars were the technical check and they passed; what they do not
 settle is that this changes DEFAULT parse output for the flagship package — every US address with a
 neighborhood or borough line starts emitting `dependent_locality` where it previously emitted
@@ -123,7 +123,7 @@ training-conditional column and into the same decode-time lane R2–R4b already 
 ## R5 follow-on — the other projections, and a three-way split
 
 Prompted by the operator's note that the projection table covers far more than boroughs and that
-probe set 2 was built to exercise it. Measuring the rest of the table splits the campaign's targets
+probe set 2 was built to exercise it. The remaining table measurements split the campaign's targets
 into three classes that want three different mechanisms — the useful generalization of R5's finding.
 
 **Class 1 — enumerable administrative (`borough`, `neighbourhood`, `macrohood`, `microhood` →
@@ -202,7 +202,7 @@ cases (`us-r5-park-slope-brooklyn`, `us-r5-astoria-no-parent-unchanged`).
    place, silently, with every later test in the run grading against the corrupt file. Same
    write-through-the-symlink hazard AGENTS.md documents for `fs.copyFile` in the publish path.
 
-**Remaining, operator-side:** stage the artifact to Hugging Face before dispatching the release
+**Operator task remaining:** stage the artifact to Hugging Face before dispatching the release
 (`mailwoman release hf … --pair-indexes neural-weights-en-us/pair-index-us.bin,…`) — CI fetches it
 from the bucket and the preflight now names it, so an unstaged file fails loud rather than
 publishing an empty package. The demo repoint (`STAGED_PAIR_INDEX_COUNTRIES`, `stagePairIndexes`)

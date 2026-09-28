@@ -58,7 +58,7 @@ export interface ONNXRunnerOpts {
 	 * It defaults to `["cpu"]`.
 	 *
 	 * The runner appends `cpu` when it is missing.
-	 * GPU providers throw when they fail to initialize, so the runner then retries on CPU alone.
+	 * GPU providers throw when they fail to initialize, so the runner then retries using only the CPU.
 	 */
 	executionProviders?: string[]
 
@@ -156,7 +156,8 @@ export class ONNXRunner {
 	}
 
 	/**
-	 * Creates the session on the configured providers and retries on CPU alone if they fail to initialize.
+	 * Creates the session on the configured providers and retries using only the
+	 * CPU if they fail to initialize.
 	 */
 	private async createSession(bytes: Uint8Array): Promise<ort.InferenceSession> {
 		try {

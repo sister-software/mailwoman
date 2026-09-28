@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Carry an overlay parquet onto the current row schema, without its recipe output.
+ * @file Convert an overlay parquet to the current row schema, without its recipe output.
  *   `mailwoman-derived-tuples` wherever the upstream was not recorded.
  */
 
@@ -132,7 +132,7 @@ export function registerForSource(source: string): string | null {
 
 /**
  * Rewrite one overlay parquet onto the current row schema, staged through
- * {@linkcode jsonlToParquet} so it carries the same column list as every other overlay.
+ * {@linkcode jsonlToParquet} so it has the same column list as every other overlay.
  */
 export async function migrateOverlayParquet(
 	input: PathBuilderLike,

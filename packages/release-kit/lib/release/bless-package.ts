@@ -124,8 +124,8 @@ async function runNPMWrite(proc: ProcessPromise, log: (line: string) => void): P
  * The registry accepts a trust config for any workflow file name without checking that the file exists.
  * A wrong name then fails every CI publish with a bare `E404 Not Found - PUT`.
  *
- * Repairing a stored config requires reading it and revoking it. npm requires an
- * interactive 2FA approval for each operation.
+ * A stored config must be read and revoked for repair. npm requires an interactive
+ * 2FA approval for each operation.
  */
 async function assertWorkflowExists(options: BlessPackageOptions): Promise<void> {
 	if (options.provider !== "github") return
@@ -244,8 +244,8 @@ async function trust(dir: string, options: BlessPackageOptions): Promise<boolean
 	log(`• ${pkg.name}: configuring trusted publisher…`)
 	log(`    npm ${args.join(" ")}`)
 
-	// Checking for an existing config with `npm trust list` would need its own
-	// second factor, so the write runs unconditionally.
+	// An existing-config check with `npm trust list` would need its own second factor,
+	// so the write runs unconditionally.
 	// A failure does not block the remaining publishes.
 	// Npm has already printed the reason, so the log adds only the retry command.
 	try {

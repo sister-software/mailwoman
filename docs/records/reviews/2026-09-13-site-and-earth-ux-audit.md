@@ -67,7 +67,7 @@ Reported symptom: Safari force-reloads the Earth tab with a memory warning. Caus
 appeared nowhere in the repository.
 
 An ONNX `InferenceSession` keeps its weights and arenas in the WASM heap, or on the GPU — memory the
-JavaScript collector does not own. Dropping the last reference to a loaded bundle freed the wrapper and
+JavaScript collector does not own. The runtime freed the wrapper when the last reference to a loaded bundle disappeared and
 left the model resident. `useReleaseRuntime` rebuilds the bundle whenever the version or the backend
 force changes (`useReleaseRuntime.ts:289`, deps `[selectedVersion, forceWASM]`), so every model-version
 pick, every Force WASM toggle and every compare-mode entry added a model's worth of native memory that
@@ -130,7 +130,7 @@ is the second confident wrong answer about this one symptom, and this record not
 arithmetic, and an interpolated hit flies to z15, inside the Protomaps source's `maxzoom: 15`.
 
 **Fact, observed.** The viewport is black for roughly twenty seconds, then paints
-with no interaction. Scrolling appeared to fix it because any interaction forces a repaint of tiles
+with no interaction. A scroll appeared to fix it because any interaction forces a repaint of tiles
 that had by then arrived.
 
 **The withdrawn claim** was that MapLibre never requested a tile at all, evidenced by
@@ -189,7 +189,7 @@ with no result on screen:
 
 | Failure                           | Where                                                                                   | What the user sees                                                                                                                                 |
 | --------------------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. Pressing it again performs no work, forever.                                                                                  |
+| Geolocation permission denied     | `packages/earth/lib/runtime/use/geo-bias.ts:46` — `() => setActive(false),`             | Chip flips back off. A second press performs no work, forever.                                                                                     |
 | IP-geolocate fetch fails          | `packages/earth/lib/runtime/use/browser-geolocation.ts:44` — `.catch(() => fallback())` | Silently centred on the US.                                                                                                                        |
 | Autocomplete throws               | `packages/earth/lib/runtime/use/geocoder-runtime.ts:467` — `} catch { return [] }`      | Indistinguishable from "no matches"; `packages/react/lib/map/PlaceAutocomplete.tsx:63` returns `null` on empty, so there is no empty state at all. |
 | Street tier (rooftop) unavailable | `geocoder-runtime.ts:314` — `console.warn(...)`                                         | Console only. User gets a city centroid with no precision downgrade notice.                                                                        |
@@ -216,7 +216,7 @@ and an empty chart reading "No data points". The config already admits the place
 
 Either hold it behind the Resources door until it has real data, or drop the footer link.
 
-### 4. Pricing and licensing do not connect
+### 4. Prices and licenses remain separate {#pricing-and-licensing-do-not-connect}
 
 The two halves of the money path never reference each other:
 
@@ -244,7 +244,7 @@ column. Then decide whether `PricingTiers` gets mounted on `/docs/pricing` or de
 
 `/license`, `/license/terms/commercial-2026-10` and `/license/issued` are `src/pages` routes, so they get
 no sub-header band, breadcrumb, or sidebar. `DocsSubHeader` only mounts for pages whose sidebar is one
-of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). Moving from `/docs/pricing` to
+of `DOCS_SECTIONS` (`docs/src/components/DocsSubHeader/index.tsx:27`). A move from `/docs/pricing` to
 `/license` drops the band and **shifts the whole page up by its height**. That jump is a large part of
 what reads as disjointed.
 
@@ -312,7 +312,7 @@ Minor, same file: the proportional font's bucket path is misspelled — `/fonts/
 
 - `packages/earth/lib/App.tsx:78` — `defaultAddress={query ?? DEFAULT_ADDRESS}` pre-fills the field with
   the full White House address. There is **no `autoFocus`, no `onFocus`, no `.select()`** anywhere in
-  `packages/earth/lib` or `packages/react/lib`. Clicking the field drops a caret mid-string: typing an
+  `packages/earth/lib` or `packages/react/lib`. The caret starts mid-string when a user clicks the field: typing an
   address produces `1600 Pennsylvania Ave NW, W<your text>ashington, DC 20500`, which is exactly what
   happened on the first run of this audit. Select-on-focus, or ship the field empty with the address as
   placeholder only.
@@ -447,7 +447,7 @@ seen from different widths: two surfaces over one map, neither of which owned th
 | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Weird gap at the top                          | FIXED. The grip bar took a 2.5rem minimum whether or not it held anything; on a desktop with no result it held no content. Its height is now its contents. |
 | Overlap with the pills                        | FIXED. The search and the control rail no longer share a row at any width — the panel is a left column, the rail stays at the right.                       |
-| Magnifying glass too small                    | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
+| Search icon too small                         | FIXED. Drawn as a path (`SearchGlyph`) rather than typed as `⌕`, which the glyph face draws at the weight of a punctuation mark.                           |
 | Mobile layout gets stuck with the box open    | FIXED. The drawer detents: drag the grabber down and the result goes, leaving the search field and the examples.                                           |
 | Search box shares its width with the controls | FIXED. The search is inside the panel, so it spans the panel.                                                                                              |
 
@@ -508,7 +508,7 @@ browser suites need Playwright browsers that VM has no egress to fetch.
 | Was                                                                 | Count                                      | Now                                                                         |
 | ------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------------- |
 | Confidence tier colours as raw hex, in **two disagreeing palettes** | 5 rule groups + 9 more in `VersionCompare` | `--color-confidence-{high,mid,low}` and their tints, over the state palette |
-| Padding / margin / gap values picked by eye                         | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
+| Values picked by eye                                                | 19 distinct, 171 declarations              | `--space-0` … `--space-6`, seven steps on a 2px grid                        |
 | Raw pixel `border-radius`                                           | 6 values (2/3/4/6/8/10) + `999px` ×4       | `--radius-tick`, `--radius-tight`, and the three steps that existed         |
 | Pixel lengths that should scale with type                           | 7 (`720px`, `320px`, `480px`, …)           | rem                                                                         |
 | Stage hues on the timing bar, raw hex                               | 3                                          | `--color-stage-{shape,classify,resolve}`                                    |
@@ -544,7 +544,7 @@ real hardware. Four were mine, and one of them was a rule I had argued myself ou
 **The ref written during render.** The permalink race — `?q=` answering "Classifier not ready" on a page
 whose classifier had loaded — came from mirroring `rt.assets` into a ref in an EFFECT: React runs effects
 child-first, so the descendant that reacts to `ready` flipping true read the mirror before the parent wrote
-it. Moving the write into render closed that window and broke a different rule, and `react(refs)` was right
+it. A render-time write closed that window and broke a different rule, and `react(refs)` was right
 to say so: a value written during render is one React is entitled to discard.
 
 The fix is neither mirror. The callbacks that parse with a bundle now DEPEND on the bundle — `rt.assets`,

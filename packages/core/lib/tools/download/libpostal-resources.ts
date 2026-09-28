@@ -10,7 +10,7 @@
  *   It sorts each dictionary file in place and copies the `dictionaries/` tree beside this script.
  *
  *   Replaces the bash `resources-download.sh`. `git clone` runs through zx's `$` (no clean native
- *   equivalent); everything else is `node:fs` / `node:os`. Sorting is done in-process with a plain
+ *   equivalent); everything else is `node:fs` / `node:os`. The script sorts in-process with a plain
  *   code-point `Array.sort()`, which matches `LC_ALL=C sort` byte order — deterministic and free of
  *   the shell `sort`'s locale dependency (the original relied on the ambient locale).
  *

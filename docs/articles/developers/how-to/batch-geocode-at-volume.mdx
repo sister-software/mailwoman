@@ -279,7 +279,7 @@ default-thread runs at four workers spread 10%.
 The throughput is bought with latency, and the receipt is in the source. `DEFAULT_INTRA_OP_THREADS`'s
 docstring (`neural/onnx-runner.ts`) records the curve it was chosen from: over 120 warm parses of
 short addresses on a 16-core box, one thread costs **18.3 ms/parse**, two cost 12.5, and four cost
-**9.2**. Dropping to one thread therefore nearly doubles the time any single parse takes. On a batch
+**9.2**. One thread therefore nearly doubles the time any single parse takes. On a batch
 that is invisible — you are measuring rows per second, and the rows queue anyway. On a request path
 it is the only number the caller feels. So `intraOpNumThreads: 1` belongs in a batch worker and
 nowhere near an interactive server.
@@ -340,9 +340,9 @@ you can run today.
 - **This is CPU inference.** The browser runtime (`@mailwoman/neural/web-onnx-runner`) has a WebGPU
   path; the Node runtime does not, and no amount of pool tuning substitutes for that. See
   [Parse in the browser](../tutorials/parse-in-the-browser.mdx).
-- **Batching inside one session was measured and does not pay.** Re-exported so the graph could accept
+- **A batch inside one session did not pay in the measured run.** The model was re-exported so the graph could accept
   a batch at all, throughput peaked at 1.12× for a batch of 4 and went backwards past 8 — 0.62× at 64.
-  Batching raises arithmetic intensity, which helps when cores are idle waiting on memory, and a single
+  A batch raises arithmetic intensity, which helps when cores are idle waiting on memory, and a single
   batch=1 inference here already occupies 8.02 cores. The receipts, including the flat 1.00× concurrency
   table this page's step 2 reproduces, are in
   [`performance.mdx`](https://github.com/sister-software/mailwoman/blob/main/docs/engineering/reference/performance.mdx).

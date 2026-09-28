@@ -78,7 +78,7 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 			expect(text).toContain(heading)
 		}
 
-		// Timing is measured rather than defaulted, so a zero here would mean the session handed over a placeholder.
+		// The renderer reports measured timing, so zero would show that the session supplied a placeholder.
 		expect(text).toMatch(/parse\s+\d+\.\d ms/u)
 
 		expect(text).toContain("static frame")

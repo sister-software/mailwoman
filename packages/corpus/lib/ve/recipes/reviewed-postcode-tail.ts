@@ -197,8 +197,8 @@ export const reviewedPostcodeTailRecipe: CorpusRecipe = {
 
 				if (
 					alignAndWrite(write, canonical, "reviewed-postcode-tail", {
-						// A person read these facts from their publishers, and the data file
-						// records the publisher of each tuple.
+						// A person read these facts from their publishers.
+						// The data file records the publisher of each tuple.
 						// No upstream bulk file exists.
 						register: SourceRegister.ReviewedByHand,
 						surface: SurfaceOrigin.Composed,

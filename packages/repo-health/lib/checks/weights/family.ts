@@ -74,8 +74,8 @@ export const weightsFamilyCheck: RepoCheck = {
 			)
 		}
 
-		// A locale claimed twice makes the router's family order decide the answer, so report
-		// the pair rather than the second one alone, since either declaration could be wrong.
+		// A locale claimed twice makes the router's family order decide the answer, so report the
+		// pair rather than the second one by itself, since either declaration could be wrong.
 		const claimedBy = new Map<string, string[]>()
 
 		for (const family of FAMILIES) {

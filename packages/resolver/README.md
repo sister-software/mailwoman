@@ -64,7 +64,7 @@ Membership in those tiers is earned by measurement, never by shape alone. Canada
 
 ## Coherence passes
 
-Ranking a span in isolation gets Portland, Maine to Messina, Italy. These run over the whole tree:
+A span ranked in isolation gets Portland, Maine to Messina, Italy. These checks run over the whole tree:
 
 | Pass                         | Question                                                                       |
 | ---------------------------- | ------------------------------------------------------------------------------ |

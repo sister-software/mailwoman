@@ -39,7 +39,7 @@ export type ClaimEvent =
 export const CLAIM_INTERVAL_MS = 3000
 
 /**
- * How long the page keeps asking before it says the email will arrive on its own.
+ * How long the page keeps asking before it reports that the email will arrive on its own.
  */
 export const CLAIM_DEADLINE_MS = 120_000
 
@@ -50,8 +50,8 @@ export function claimURL(sessionID: string): string {
 }
 
 /**
- * Polling, with no start time yet: the deadline counts from the first event,
- * so a render is pure and the clock is the events'.
+ * Before polling starts, the deadline counts from the first event, so a render is pure
+ * and the clock is the events'.
  */
 export function initialClaimState(): ClaimState {
 	return { phase: "polling", attempts: 0 }

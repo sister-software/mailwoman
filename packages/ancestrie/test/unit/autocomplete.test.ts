@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests partial last-token completion, complete-token shadowing, per-branch caps, deduplication,
- *   containment chains, and the robustness interface.
+ *   containment chains. It also tests the robustness interface.
  */
 
 import { autocomplete } from "@mailwoman/ancestrie/autocomplete"

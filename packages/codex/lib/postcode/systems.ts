@@ -14,7 +14,7 @@
  *
  *   This is a shape test rather than a gazetteer-membership test: a bare `68161` matches the US,
  *   German, French, Spanish and Italian 5-digit shapes, so it returns `["us", "de", "fr", "es", "it"]`
- *   and the shape alone cannot split the numeric-postcode systems. The anchor uses real gazetteer
+ *   and the shape by itself cannot split the numeric-postcode systems. The anchor uses real gazetteer
  *   membership for the finer call.
  */
 
@@ -101,7 +101,7 @@ export function candidateSystemsForPostcode(postcode: string): SystemCode[] {
  * A rural LDU serves a delivery route with similar granularity.
  * The `[1-9]` in the pattern below excludes those codes.
  *
- * Averaging the two populations would hide it behind a single pooled number.
+ * A pooled average would hide the difference between the two populations.
  *
  * Lives in codex (per-address-system postal reference) so the Node result assembly
  * (`mailwoman/geocode-core`) and the demo's pin ranking consume one tier definition.
@@ -111,7 +111,7 @@ export const UNIT_GRADE_POSTCODE: ReadonlyArray<RegExp> = [
 	// Restated from `@mailwoman/codex/gb`'s UK_POSTCODE_PATTERN so this module stays dependency-free
 	// within the package (the address-system modules import this, never the reverse).
 	/^[A-Z]{1,2}\d[A-Z\d]?\s?\d[A-Z]{2}$/i,
-	// Rural forward sortation areas carry a `0` in second position.
+	// Rural forward sortation areas have a `0` in second position.
 	// `[1-9]` excludes them.
 	/^[A-Z][1-9][A-Z]\s?\d[A-Z]\d$/i,
 ]

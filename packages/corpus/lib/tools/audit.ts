@@ -7,7 +7,7 @@
  *
  *   Reads a corpus dir's manifest.json (or scans the parquet files directly), counts files per
  *   source, optionally loads a training config to pair the counts with the configured
- *   source_weights, and reports the estimated sampled-row distribution at training time.
+ *   source_weights. It reports the estimated sampled-row distribution at training time.
  *
  *   Would have caught v0.3.0's "NAD = 411/674 train files × 2.0 weight = ~75% of sampled mix"
  *   finding before the v0.3.0 retrospective surfaced it.
@@ -143,7 +143,7 @@ function inferSourceFromFilename(filename: string): string {
  * Known source name prefixes.
  *
  * Corpus-v0.3.0 uses these as `source_id` prefixes.
- * Matching against the longest prefix that fits a given `first_source_id`
+ * The parser matches the longest prefix that fits a given `first_source_id`
  * recovers the canonical source name.
  *
  * Order matters: longer prefixes must be tried first so `usgov-nad-...` matches
@@ -195,7 +195,7 @@ function sourceFromID(sourceID: string, knownPrefixes: readonly string[]): strin
  * Note: corpus-v0.3.0 files can mix sources (see `last_source_id` differing from `first_source_id`).
  * The first-row source is an approximation.
  *
- * Reading the parquet's full source column would be authoritative but requires a parquet dep.
+ * A full read of the parquet source column would be authoritative but requires a parquet dependency.
  *
  * For audit purposes the first-row approximation is accurate within ~5% for the
  * corpus-v0.3.0 shape (most files are >95% one source).

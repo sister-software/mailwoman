@@ -23,8 +23,8 @@ import { identityMap } from "#offset-map"
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
 /**
- * Trailing noise trimmed off the end of the input, whitespace plus the sentence
- * punctuation a user commonly appends.
+ * The function trims trailing noise from the input, including whitespace
+ * and the sentence punctuation a user commonly appends.
  *
  * It applies to the trailing end only because a leading token is required.
  * and excludes quotes, brackets and parentheses.

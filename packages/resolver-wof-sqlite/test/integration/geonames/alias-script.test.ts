@@ -129,7 +129,7 @@ test("the DISPLAY name stays Latin — reachability is not rendering", () => {
 test("packing noise is still refused, in every script", () => {
 	expect(namesFor("(( Noise Town ))")).toHaveLength(0)
 	expect(namesFor("Noise Town [old]")).toHaveLength(0)
-	// Admitting a script must not admit packing noise: the clean Han name on the same row still lands.
+	// A script allowlist must also exclude packing noise: the clean Han name on the same row still lands.
 	expect(namesFor("噪音鎮")).toHaveLength(1)
 })
 

@@ -15,7 +15,7 @@ import type { CreateTableBuilder, Kysely } from "kysely"
 export type SchemaHandle<DB> = Pick<Kysely<DB>, "schema">
 
 /**
- * The precomputed bounding box every polygon table carries — truth tables
+ * The precomputed bounding box every polygon table includes — truth tables
  * and extent tables alike — in the order the sealed artifacts store it.
  */
 export function addBoundingBoxColumns<TB extends string, C extends string>(
@@ -29,7 +29,7 @@ export function addBoundingBoxColumns<TB extends string, C extends string>(
 }
 
 /**
- * The unsimplified ring blob a polygon truth table carries, separate from
+ * The unsimplified ring blob a polygon truth table stores, separate from
  * {@link addBoundingBoxColumns} because one layer's stored column order between the box
  * and the blob is part of what sealed-artifact readers see.
  *
@@ -43,7 +43,7 @@ export function addRingsColumn<TB extends string, C extends string>(
 }
 
 /**
- * The precomputed bounding box plus the unsimplified ring blob every polygon truth table carries:
+ * The precomputed bounding box plus the unsimplified ring blob every polygon truth table includes:
  * {@link addBoundingBoxColumns} then {@link addRingsColumn}, with no columns between them.
  */
 export function addRingGeometryColumns<TB extends string, C extends string>(
@@ -53,8 +53,8 @@ export function addRingGeometryColumns<TB extends string, C extends string>(
 }
 
 /**
- * The cell-index columns every polygon summary tier carries: the 48-bit short cell,
- * the resolution it was captured at, the key columns the row names, and its containment.
+ * The cell-index columns every polygon summary tier includes: the 48-bit short cell,
+ * the resolution it was captured at, the key columns the row names and its containment.
  *
  * Small fixed-width rows probed by their exact primary key are the `without rowid`
  * shape. the caller adds its own primary-key constraint and the raw `without rowid`

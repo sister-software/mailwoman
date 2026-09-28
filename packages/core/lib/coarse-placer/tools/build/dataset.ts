@@ -54,7 +54,7 @@ const TEST_FRAC = 0.1
 /**
  * Formats an Overture address in one of four layouts chosen by `t`.
  *
- * Varying the layout makes the classifier learn from address content instead of one fixed template.
+ * Different layouts make the classifier learn from address content instead of one fixed template.
  */
 function formatEU(street: unknown, number: unknown, postcode: unknown, loc: string, t: number): string {
 	const s = String(street).trim()
@@ -217,7 +217,7 @@ export async function buildDataset(
 	]
 
 	for (const [name, rows] of splits) {
-		// Sorting by hash interleaves the countries deterministically.
+		// Hash sorting interleaves the countries deterministically.
 		rows.sort((a, b) => hashFNV1a(a.raw + a.country) - hashFNV1a(b.raw + b.country))
 		const p = resolvePath(OUT_DIR, `${name}.jsonl`)
 

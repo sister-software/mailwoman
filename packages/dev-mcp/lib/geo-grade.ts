@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Grading two arms against a truth coordinate, the only axis a cross-engine comparison has: `grade.ts`'s
+ *   The function grades two arms against a truth coordinate, the only axis a cross-engine comparison has: `grade.ts`'s
  *   component, place-id and tier expectations do not survive an arm answering from a foreign vocabulary, so this module
  *   owns one metric — haversine distance from the top-1 result to the truth point, thresholded at 1 / 5 / 25 km, with a
  *   no-result a miss at every threshold.
@@ -100,7 +100,7 @@ export interface ThresholdReading {
 }
 
 /**
- * Hit counts for both arms at every threshold, over the rows that carry a truth coordinate.
+ * Hit counts for both arms at every threshold, over the rows that include a truth coordinate.
  */
 export function thresholdTable(
 	rows: Array<{ distanceKmA: number | null; distanceKmB: number | null }>,
@@ -153,7 +153,7 @@ function wilsonHalfWidth(successes: number, n: number): number {
 }
 
 /**
- * Failing an equivalence test does not mean the arms differ: an estimate already outside the bound
+ * An equivalence-test failure does not mean the arms differ: an estimate already outside the bound
  * is a difference, while a small difference with too wide an interval is an underpowered run.
  */
 function equivalence(

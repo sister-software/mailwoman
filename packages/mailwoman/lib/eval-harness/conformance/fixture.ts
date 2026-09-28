@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Schema and validation for conformance-law fixtures. Each row compares base and variant queries under one fixed
- *   context, using a named comparator and expected relation. Comparator, relation, and status vocabularies are closed;
+ *   context, using a comparator identified by name and an expected relation. Comparator, relation, and status vocabularies are closed;
  *   invalid rows fail loading rather than being skipped or defaulted.
  */
 
@@ -121,7 +121,7 @@ export interface ConformanceFixture {
 	 */
 	toleranceM?: number
 	/**
-	 * Authoring note, not graded.
+	 * A note for the fixture author; the suite does not grade it.
 	 */
 	note?: string
 }

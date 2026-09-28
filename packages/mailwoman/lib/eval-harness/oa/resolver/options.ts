@@ -135,8 +135,8 @@ export interface OAResolverEvalOptions {
 	/**
 	 * A span-rescore sub-span may drop context but never a word of the name.
 	 *
-	 * Default-off in the library until a measurement carries it, so an unset pin
-	 * leaves this eval byte-identical.
+	 * Default-off in the library until a measurement supports it, so an unset
+	 * pin leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**

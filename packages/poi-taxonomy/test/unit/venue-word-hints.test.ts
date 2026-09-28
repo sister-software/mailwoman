@@ -5,7 +5,7 @@
  *
  *   The venue-word hint table's integrity check. The table is mined, so the committed artifact — not
  *   the generator — is what ships. these tests hold the committed rows to the bars the provenance
- *   block declares, and pin the exclusion families the composed measure exists to kill. A regenerate
+ *   block declares and pin the exclusion families the composed measure exists to kill. A regenerate
  *   that widens a bar or leaks a toponym fails here rather than in a consumer.
  */
 
@@ -47,7 +47,7 @@ describe("venue-word-hints table integrity", () => {
 	})
 
 	it("the toponym family the composed measure exists to kill stays out", () => {
-		// Venue-frequency alone admits famous place names (the f6 saturation finding:
+		// Venue-frequency by itself admits famous place names (the f6 saturation finding:
 		// 'paris' out-ratios 'comer'); the place-rate suppressor is what keeps them out.
 		// The street-fork family is the falsifier's listed false positives.
 		for (const toponym of ["paris", "mexico", "augusta", "catherine", "savile", "alvear", "paulista"]) {

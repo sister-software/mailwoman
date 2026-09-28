@@ -109,7 +109,7 @@ export function fixtureFeatures(): CoastalSourceFeature[] {
 		],
 	]
 
-	// About 5.5 m across — narrower than a res-11 cell, let alone a res-9 one.
+	// About 5.5 m across — narrower than both a res-11 cell and a res-9 cell.
 	// `polygonToCells` returns no cells for a shape this size, so this fixture proves
 	// the index takes cell-touches-polygon rather than centre-in-polygon.
 	const sliver = rectangleRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)

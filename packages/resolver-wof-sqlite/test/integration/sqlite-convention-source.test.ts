@@ -82,9 +82,9 @@ describe("convention-asset auto-detect → dispatch", () => {
 	})
 
 	it("an attached convention asset that drops postcode_area_resolution reroutes dispatch", async () => {
-		// The convention asset lives in the same (main) schema, and the lookup auto-detects
-		// address_convention and queries it by the DE country WOF id (90).
-		// Dropping postcode_area_resolution means the typo no longer recovers Plauen,
+		// The convention asset lives in the same (main) schema.
+		// The lookup auto-detects address_convention and queries it by the DE country WOF id (90).
+		// The absence of postcode_area_resolution means the typo no longer recovers Plauen,
 		// showing the asset drives findPlace without an opts.conventions injection.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),

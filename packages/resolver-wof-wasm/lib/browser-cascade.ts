@@ -203,7 +203,7 @@ export async function runCascade(
 	const backend = new CandidateResolverBackend(lookup)
 	const resolver = createWOFResolver(backend)
 
-	// adminCoherence carries the convergence and no defaultCountry is deliberate, because the demo ranks globally.
+	// adminCoherence performs the convergence and no defaultCountry is deliberate, because the demo ranks globally.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),

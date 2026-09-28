@@ -60,7 +60,7 @@ describe("applyCjkNormalization", () => {
 	})
 
 	it("leaves kanji numerals alone (place names carry them — 三田, 四谷)", () => {
-		const r = applyCjkNormalization("三田") // Mita, which must not become "3田"
+		const r = applyCjkNormalization("三田") // Mita must remain "三田" after CJK normalization.
 		expect(r.text).toBe("三田")
 		expect(r.folded).toBe(0)
 		expect(r.stripped).toBe(0)

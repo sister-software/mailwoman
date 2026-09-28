@@ -151,8 +151,8 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 	})
 
 	it("corroborates every candidate, not only the top-scoring one", async () => {
-		// Scoring alone would stop at the top name match, which is uncorroborated,
-		// while a lower-scoring candidate is the real carrier.
+		// A score-only choice would stop at the top name match.
+		// The match is uncorroborated, while a lower-scoring candidate is the real carrier.
 		const tickers: CompanyTickerEntry[] = [
 			{ cik: WIDEPOINT, ticker: "WYY", title: "Cable One Holdings" },
 			{ cik: CABLE_ONE, ticker: "CABO", title: "Cable One, Inc." },
@@ -187,7 +187,7 @@ describe("collectEdgarSubsidiaryRows — the check cannot be bypassed", () => {
 
 		const { rows, report } = await collectEdgarSubsidiaryRows(client, ["American Broadband"], tickers)
 
-		// Picking one here would relocate the false-identity-link decision rather than avoid it.
+		// A single choice here would relocate the false-identity-link decision rather than avoid it.
 		expect(rows).toHaveLength(0)
 		expect(report.skipped[EdgarSkipReason.AmbiguousCIK]).toBe(1)
 	})

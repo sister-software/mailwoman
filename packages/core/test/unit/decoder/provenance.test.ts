@@ -127,7 +127,7 @@ describe("Phase 4.1 source provenance", () => {
 			const xml = decodeAsXML(tree)
 			expect(xml).toContain(`<region`)
 			expect(xml).toContain(`<locality`)
-			// Both region and locality carry the same neural attribution.
+			// Both region and locality include the same neural attribution.
 			const matches = [...xml.matchAll(/src="neural:neural-v0\.3\.1-en-us"/g)]
 			expect(matches.length).toBeGreaterThanOrEqual(2)
 		})

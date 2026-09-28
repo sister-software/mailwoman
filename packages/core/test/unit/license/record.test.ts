@@ -91,7 +91,7 @@ describe("readLicenseRecord", () => {
 		const grant = readLicenseRecord("ODbL-1.0")
 
 		// The prose row's grant is unknown.
-		// The record cannot establish whether the row carries share-alike.
+		// The record cannot establish whether the row imposes share-alike.
 		// It also cannot establish that the row is free of share-alike.
 		// That distinction is the whole point of two predicates.
 		expect(carriesShareAlike(prose)).toBe(false)
@@ -102,7 +102,7 @@ describe("readLicenseRecord", () => {
 	})
 
 	it("reads a null or empty value as unresolved rather than as unobliged", () => {
-		// 50,000 rows of v0.7.0-de-holdout carry `license: null`.
+		// 50,000 rows of v0.7.0-de-holdout have `license: null`.
 		for (const value of [null, undefined, ""]) {
 			const record = readLicenseRecord(value)
 
@@ -122,7 +122,7 @@ describe("readLicenseRecord", () => {
 
 	it("treats ODC-By as attribution rather than share-alike", () => {
 		// 34,660 rows read "…ancestor pairs from WOF (CC0/ODC-By per source)".
-		// ODC-By is the Open Data Commons Attribution License and carries no share-alike term,
+		// ODC-By is the Open Data Commons Attribution License and has no share-alike term,
 		// so it belongs in neither bucket.
 		const record = readLicenseRecord(
 			"Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)"
@@ -176,7 +176,7 @@ describe("licenseNamedIn", () => {
 	})
 
 	it("reads a later parenthetical when the first states no license", () => {
-		// A dataset's own name carries a parenthetical ahead of the grant's,
+		// A dataset's own name includes a parenthetical ahead of the grant's,
 		// so a reader taking only the first finds the name.
 		// This is the case the `publish-hf.ts` copy of this reader got wrong.
 		expect(licenseNamedIn("Overture Maps (the Places theme) (CDLA-Permissive-2.0): names")).toBe("CDLA-Permissive-2.0")
@@ -194,7 +194,7 @@ describe("licenseNamedIn", () => {
 		// The OA PL entry.
 		// `public` states that the download costs no fee.
 		// It does not identify a license.
-		// Treating it as a license would turn the missing grant into an answer.
+		// The parser would report a grant that the entry does not contain if it classified this as a license.
 		expect(licenseNamedIn("OpenAddresses PL — GUGiK / PRG (public, BDOT-derived): tokenizer-splice text")).toBeNull()
 	})
 

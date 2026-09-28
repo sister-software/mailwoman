@@ -74,7 +74,8 @@ export interface CountryCoverage {
 
 /**
  * Reports whether a country trains.
- * Training requires admission and at least one corpus row.
+ *
+ * A country trains only when it is admitted and has at least one corpus row.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
 	return c.admitted && c.corpusRows > 0
@@ -107,7 +108,7 @@ export interface CoverageMismatches {
 }
 
 /**
- * The codes a corpus row may carry that name no jurisdiction.
+ * The codes a corpus row may contain that identify no jurisdiction.
  */
 const COUNTRY_LESS_CODES = ["ZZ", "??"] as const
 
@@ -125,14 +126,14 @@ const COUNTRY_LESS_READINGS: Readonly<Record<string, string>> = {
 }
 
 /**
- * One code the corpus carries that names no jurisdiction.
+ * One code the corpus contains that identifies no jurisdiction.
  *
  * `ZZ` is the ISO 3166-1 user-assigned range and `??` marks a row whose `country` is empty.
  * The per-country table drops both, because a reader counting its rows would report
  * a jurisdiction the register does not enumerate.
  *
- * Dropping them without reporting them makes 4,765 rows of `v0.6.0-register-surface`
- * invisible, so they are reported here instead.
+ * An unreported drop makes 4,765 rows of `v0.6.0-register-surface` invisible,
+ * so they are reported here instead.
  */
 export interface CountryLessRows {
 	code: string
@@ -150,9 +151,9 @@ export interface CountryLessRows {
 export interface CoverageReport {
 	countries: CountryCoverage[]
 	/**
-	 * Rows the corpus carries under a code that names no jurisdiction, excluded from `countries`.
+ * Rows the corpus contains under a code that identifies no jurisdiction, excluded from `countries`.
 	 *
-	 * Empty where the counted corpus carries no such row.
+ * Empty where the counted corpus contains no such row.
 	 */
 	countryLess: CountryLessRows[]
 	mismatches: CoverageMismatches

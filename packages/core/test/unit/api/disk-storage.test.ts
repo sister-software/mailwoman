@@ -241,7 +241,7 @@ describe("buildDiskStorage: a failed cache write is a cache miss, not a request 
 	/**
 	 * Make `directory.path` unwritable and report whether it took, because running
 	 * as root defeats mode bits and a test that silently passes without reproducing
-	 * the condition is worse than one that says so.
+	 * the condition is worse than one that reports it.
 	 */
 	async function makeUnwritable(): Promise<boolean> {
 		await changeMode(directory.path, 0o500)

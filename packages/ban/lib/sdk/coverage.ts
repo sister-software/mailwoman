@@ -25,13 +25,13 @@ export interface CoveragePoint {
 	lat: number
 	lon: number
 	/**
-	 * The commune key (`code_insee`), or null for a point that carries none.
+	 * The commune key (`code_insee`), or null when a point has none.
 	 */
 	adminCode: string | null
 }
 
 /**
- * Which communes the register declares whole: every point carries `certified = 1`, and a commune
+ * Which communes the register declares whole: every point has `certified = 1`, and a commune
  * with a null flag anywhere is not whole, because an absent statement is not a statement.
  *
  * @param flags Per commune, the minimum of its points' `certified` values with null treated as the minimum.

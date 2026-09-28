@@ -144,7 +144,7 @@ export function createEAFloodClient(options: CreateFloodClientOptions = {}): EAF
 /**
  * The ONS Open Geography boundary service supplies the outline of England.
  *
- * The EA says its mapping covers all of England but publishes no outline.
+ * The EA states that its mapping covers all of England but publishes no outline.
  * The build records the ONS boundary it used in `flood_map_extent`.
  */
 export const ONS_BOUNDARY_BASE_URL =

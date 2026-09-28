@@ -101,6 +101,7 @@ test("a brand subject with a brand-capable probe threads the QID into the live s
 
 	await userEvent.click(button)
 	await vi.waitFor(() => expect(container.querySelector(".live")?.textContent).toBe("success"))
-	// The mock probe echoes the QID it received, which shows that `usePOISearch` passed `brandWikidata`.
+	// The mock probe echoes the QID it received.
+	// This shows that `usePOISearch` passed `brandWikidata`.
 	expect(container.querySelector(".hit")?.textContent).toContain("Q319642")
 })

@@ -31,9 +31,9 @@ mailwoman parse "2119 SE Belmont St Apt 3, Portland, OR 97214"
 }
 ```
 
-## Parsing as labeling
+## Parse as labels
 
-A rule parser asks "which of my patterns does this string match?" Mailwoman asks a smaller question, several times: "which component does this piece of the string belong to?" Every character span in the input gets a label — `house_number`, `street`, `locality`, `postcode` — or no label at all. The parse above is eight labeled spans. Assigning a label to every position in a sequence is what the NLP literature calls sequence labeling, the same task family as named-entity recognition. That's the entire framing; everything below is the implementation that makes the labels come out right.
+A rule parser asks "which of my patterns does this string match?" Mailwoman asks a smaller question, several times: "which component does this piece of the string belong to?" Every character span in the input gets a label — `house_number`, `street`, `locality`, `postcode` — or no label at all. The parse above is eight labeled spans. NLP literature calls this task sequence labeling: a label for every position in a sequence, in the same task family as named-entity recognition. That's the entire framing; everything below is the implementation that makes the labels come out right.
 
 ## The string becomes pieces
 
@@ -47,7 +47,7 @@ The `▁` marks "starts a new word." Common address words are single pieces (`�
 
 One distinction matters more than the segmentation itself: every piece carries character offsets into your original string (`▁Belmont` covers characters 8 through 15). When the parse is assembled, each component's value is taken from the raw input by those offsets — never reassembled from pieces. Pieces are internal bookkeeping. You always get your own bytes back, spacing and casing intact.
 
-## Scoring every piece
+## Score every piece
 
 A hand-written rule encodes context: "a number followed by a street name is a house number." The learned version of that rule is the encoder — a small transformer (six layers, 384 wide, about 29M parameters in the current weights; one model rather than one per locale) in which every piece attends to every other piece. `2119` is scored in view of the `Belmont St` after it and the `97214` at the end; context runs in both directions.
 
@@ -71,11 +71,11 @@ There is also one hard constraint: when the detected addressing system forbids a
 
 The split is consistent throughout: the facts (a gazetteer row, a postcode table, a conventions entry) are deterministic and inspectable; the judgment about how much to trust them in a given string is learned.
 
-## Decoding a valid sequence and building the tree
+## Decode a valid sequence and build the tree
 
-Reading off each piece's highest-scoring label can produce nonsense: a continuation label with no beginning, or a span that switches tags mid-word. A rule parser prevents this with ordering heuristics. Mailwoman prevents it with a validity table and a best-path search: `I-X` may only follow `B-X` or `I-X`, no sequence may open with a continuation, everything else is permitted. The [Viterbi algorithm](./viterbi-and-bio-validity.mdx) then finds the highest-scoring label sequence that obeys the table — considering the whole sequence at once, so a weak label at one position can be overruled by what fits its neighbors.
+Each piece's highest-scoring label can produce nonsense: a continuation label with no beginning, or a span that switches tags mid-word. A rule parser prevents this with ordering heuristics. Mailwoman prevents it with a validity table and a best-path search: `I-X` may only follow `B-X` or `I-X`, no sequence may open with a continuation, everything else is permitted. The [Viterbi algorithm](./viterbi-and-bio-validity.mdx) then finds the highest-scoring label sequence that obeys the table — considering the whole sequence at once, so a weak label at one position can be overruled by what fits its neighbors.
 
-What ships is narrower than the textbook version: the validity table is hand-coded structure rather than learned. Training scores each piece's label on its own, so no label-to-label preferences are learned, and none ship with the model. The model card's `crf_at_inference: true` refers to this Viterbi pass over the structural constraints — which is already a strict improvement over per-piece argmax, because orphan continuations ("Saint Petersburg" losing its "Saint") can't survive it.
+What ships is narrower than the textbook version: the validity table is hand-coded structure rather than learned. The training objective scores each piece's label on its own, so no label-to-label preferences are learned, and none ship with the model. The model card's `crf_at_inference: true` refers to this Viterbi pass over the structural constraints — which is already a strict improvement over per-piece argmax, because orphan continuations ("Saint Petersburg" losing its "Saint") can't survive it.
 
 Valid labels become spans, and spans become a tree. Each component attaches to the nearest span whose tag can contain it, per a fixed containment table: postcode under locality, house number under street, street under locality. Nearest rather than most-recent — in `75004 Paris` the postcode attaches to the locality even though it appears first, so the tree is independent of source ordering. Span edges are trimmed of stray punctuation, and each node keeps its character offsets and a confidence (the model's probability for the chosen labels; a calibrated version is available opt-in). The same parse as a tree:
 

@@ -146,7 +146,7 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 /**
  * Format one banner line per artifact, naming the terms it records.
  *
- * The operator running the server is the one the publisher's conditions bind, and
+ * The operator running the server is the one the publisher's conditions bind.
  * until now the only place those terms appeared was the `/status` response.
  * An artifact whose `layer_manifest` records no expression prints that its obligations
  * are unrecorded, because an omitted line would read as an artifact with none.
@@ -202,8 +202,8 @@ export interface DropInCLI {
 	/**
 	 * Boot the listener and resolve once it is bound.
 	 *
-	 * The engine stamp is the process's, resolved here so every drop-in carries it the same way
-	 * and the license notice prints after the listening banner.
+	 * The engine stamp is the process's, resolved here so every drop-in includes it the
+	 * same way and the license notice prints after the listening banner.
 	 */
 	serve: (engineStamp: ResolvedEngineStamp) => Promise<void>
 	openapi: () => void | Promise<void>

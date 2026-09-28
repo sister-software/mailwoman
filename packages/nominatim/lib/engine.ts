@@ -106,7 +106,7 @@ export interface NominatimLookupParams {
 export type NominatimManifestState = "present" | "absent" | "unreadable"
 
 /**
- * One database this deployment serves and what it says about itself.
+ * One database this deployment serves and its self-reported metadata.
  *
  * The wire surface owns its own doc-accuracy types, so the CLI assigns the reader's report
  * straight into this shape and a drift is a compile error rather than a different response body.
@@ -140,7 +140,7 @@ export interface NominatimStatusArtifact {
 	 * Left out when the row holds none.
 	 * An absent expression states that the build did not record the obligations.
 	 *
-	 * It does not mean the artifact carries none, so a client must not read its absence as permissive.
+	 * The artifact may still contain a manifest, so a client must not read its absence as permissive.
 	 */
 	license?: string
 	/**
@@ -152,12 +152,12 @@ export interface NominatimStatusArtifact {
 /**
  * The native provenance block.
  *
- * A Nominatim client ignores unknown keys, so this rides alongside the compatible
+ * A Nominatim client ignores unknown keys, so this appears beside the compatible
  * `data_updated` without breaking one.
  */
 export interface NominatimStatusExtension {
 	/**
-	 * Every artifact this process opened, including the ones that carry no manifest.
+	 * Every artifact this process opened, including those with no manifest.
 	 *
 	 * An unstamped artifact reports its own absence rather than being omitted,
 	 * because an omission cannot be told apart from an unopened artifact.
@@ -174,7 +174,7 @@ export interface NominatimStatus {
 	/**
 	 * The newest build epoch across the artifacts this deployment opened.
 	 *
-	 * Left out when none of them carries a manifest.
+	 * Left out when none of them has a manifest.
 	 * A boot time or a file mtime would answer a question the process cannot answer.
 	 */
 	data_updated?: string
@@ -196,7 +196,7 @@ export interface NominatimFreshnessReport {
  * A function prevents the CLI and response test from holding separate copies of the mapping.
  * The mapped field is omitted under a condition, so both callers need the same logic.
  *
- * `data_updated` is dropped when no artifact carried a build date,
+ * `data_updated` is dropped when no artifact recorded a build date,
  * since Nominatim declares the field optional.
  * A boot time or a file mtime would look measured and answer a question the process cannot.
  */

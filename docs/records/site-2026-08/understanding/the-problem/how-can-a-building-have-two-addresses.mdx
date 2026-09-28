@@ -18,7 +18,7 @@ A single physical building can have multiple valid addresses. For commercial bui
 
 An address is a **social protocol** for directing a courier rather than a geographic fact — different couriers use different protocols, and the same building can participate in several at once.
 
-### Mailing address vs. 911 address
+### Postal and 911 addresses {#mailing-address-vs-911-address}
 
 | System                 | Address for 350 Fifth Avenue, Manhattan |
 | ---------------------- | --------------------------------------- |
@@ -33,7 +33,7 @@ The ZIP codes differ (10118 vs 10001) because USPS assigns delivery-specific ZIP
 | ----------------------------- | --------------------------------------- |
 | USPS                          | 350 5th Ave, New York, NY 10118         |
 | Con Edison (electric utility) | 350 5th Ave, New York, NY 10001-0001    |
-| Building management           | Empire State Building, 350 Fifth Avenue |
+| Property management           | Empire State Building, 350 Fifth Avenue |
 
 The utility company uses its own ZIP+4 extension (the `-0001` suffix). The building management uses the building's brand name as the primary identifier. A delivery driver looking for "350 5th Ave" will find the building. A tourist looking for "Empire State Building" will also find it. But a geocoder that only indexes the USPS form will not match the tourist's query, even though the building is in its database under a different label.
 

@@ -71,7 +71,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	precisionBar?: number
 	/**
-	 * Training date stamped into the meta.
+	 * The training date stored in the metadata.
 	 *
 	 * Default today.
 	 */

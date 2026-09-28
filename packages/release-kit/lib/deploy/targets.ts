@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file Lists the Cloudflare Workers this repository deploys and which targets a change reaches.
- *   The table records each target's build, wrangler invocation, and receipt URL. The deploy workflow reads it through
+ *   The table records each target's build, wrangler invocation and receipt URL. The deploy workflow reads it through
  *   `release.deploy-targets` as a job matrix, so a new Worker is one row here and no YAML.
  *
  *   A target is affected when a changed file lies in a workspace inside its dependency closure, or in a root file

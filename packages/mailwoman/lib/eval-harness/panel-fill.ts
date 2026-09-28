@@ -11,7 +11,7 @@
  *   hole as a panel choice.
  *
  *   Each stratum decides whether a row is gradeable. Under the same-data homograph rule, gold alternates between
- *   two bearers. Checking only the iterated row would refuse rows whose actual gold is valid.
+ *   two bearers. A check of only the iterated row would refuse rows whose actual gold is valid.
  */
 
 import { SeededRandom } from "@mailwoman/core/random"
@@ -35,7 +35,7 @@ export interface StratumFillCensus {
 	/**
 	 * Rows skipped because the identity join produced no coherent gold set.
 	 *
-	 * The gold reader's own census says which part of the guard refused them.
+	 * The gold reader's own census identifies which part of the guard refused them.
 	 */
 	droppedUngradeableGold: number
 	/**
@@ -123,7 +123,7 @@ export function fillStratum<Item, Row>(
 }
 
 /**
- * The zero-padded ordinal a row id carries, so ids sort in draw order.
+ * The zero-padded ordinal included in a row id, so ids sort in draw order.
  */
 export function padRowIndex(index: number): string {
 	return String(index + 1).padStart(3, "0")
@@ -155,7 +155,7 @@ export interface PanelSubject {
  * Build this grouping once and pass it down.
  * Each candidate row needs a lookup.
  *
- * Rebuilding the groups for each row would walk the whole register repeatedly.
+ * A group rebuild for each row would walk the whole register repeatedly.
  */
 export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {
 	const byName = new Map<string, Subject[]>()
@@ -194,7 +194,7 @@ export function uniqueNameEligible<Subject extends PanelSubject>(options: {
 }
 
 /**
- * The gold a panel row carries: the register's own entity and coordinate,
+ * The gold a panel row records: the register's own entity and coordinate,
  * plus the identity set the concordance reached.
  *
  * Every benchmark here grades against this shape, so it is written once.

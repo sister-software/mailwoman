@@ -6,7 +6,7 @@
  *   Australian postcodes: four digits, written at the end of the last address line after the locality
  *   and state (`sydney NSW 2000`). Sources (accessed 2026-06-11):
  *
- *   - Australia Post's Correct Addressing brochure (SAP 8833878, Nov 2022) — every example carries a
+ *   - Australia Post's Correct Addressing brochure (SAP 8833878, Nov 2022) — every example includes a
  *       4-digit postcode and the brochure references envelopes "with preprinted four postcode
  *       squares".
  *   - The barcode addressing booklet documents the coarse first-digit → state prior: "if the Postcode

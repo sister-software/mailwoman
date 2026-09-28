@@ -25,7 +25,7 @@
  *   The build sums the manifest and compares it with the parsed rows.
  *   A truncated CSV or skipped area file then fails the build instead of producing a short database.
  *   {@link parseCodePointMetadata} reads the manifest and {@link ExtractCodePointResult}
- *   carries it forward. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
+ *   preserves it. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
  *   hold exactly 1,747,841 rows.
  *
  *   Extraction is to disk rather than streamed in memory because the dated acquisition directory is the
@@ -155,7 +155,7 @@ export interface ExtractCodePointResult {
 	/**
 	 * `Doc/licence.txt` verbatim. The database provenance therefore quotes OS's own words.
 	 *
-	 * Decode the file as **Latin-1**. The archive declares no encoding. Its only non-ASCII byte is `0xA9`, which Latin-1 maps to `©` and UTF-8 cannot decode alone. UTF-8 decoding turns each copyright symbol into U+fffd. The first build therefore stored `Contains Ordnance Survey data � Crown copyright` in the database's `meta`. Mojibake in a decorative string is cosmetic. The attribution text is legally required for redistribution, so corrupted text there prevents accurate attribution.
+	 * Decode the file as **Latin-1**. The archive declares no encoding. Its only non-ASCII byte is `0xA9`, which Latin-1 maps to `©` and which UTF-8 cannot decode by itself. UTF-8 decoding turns each copyright symbol into U+fffd. The first build therefore stored `Contains Ordnance Survey data � Crown copyright` in the database's `meta`. Mojibake in a decorative string is cosmetic. The attribution text is legally required for redistribution, so corrupted text there prevents accurate attribution.
 	 */
 	licenseText: string
 	totalBytes: number

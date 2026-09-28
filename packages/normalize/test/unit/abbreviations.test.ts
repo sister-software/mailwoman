@@ -112,8 +112,8 @@ describe("expandAbbreviations — the Av collision across locales", () => {
 	// The locale-unknown set is what the geocode path uses
 	// (`normalize(input, { locale: "und" })` in mailwoman/geocode-core.ts),
 	// because Stage 1 runs before the parse that would establish the locale.
-	// `Av` is in that set on the claim that it "reads Avenue in both" — true of en/fr,
-	// false of es/pt, which is how Spanish input acquires an English street type.
+	// `Av` is in that set on the claim that it "reads Avenue in both" — true of en/fr, false of es/pt.
+	// That is how Spanish input acquires an English street type.
 	// It cannot simply be dropped here: the gauntlet row fr-op3-halles-market-bonneuil is
 	// a `pass` that asserts street "Avenue de la Convention" and an address_point tier,
 	// so removing the entry needs a resolver-gauntlet run rather than a table edit.

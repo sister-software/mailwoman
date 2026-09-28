@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The two host-configuration writes the storage operations depend on, as operations rather than a
- *   shell script: they take typed input, declare their effect, and are reachable from the same
+ *   shell script: they take typed input, declare their effect and are reachable from the same
  *   registry as everything else.
  */
 

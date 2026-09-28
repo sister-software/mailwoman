@@ -17,7 +17,7 @@ export interface ByteFormatterOptions {
 	 * Prefix an explicit `+` on a positive value.
 	 *
 	 * For a delta, where the sign is the information.
-	 * A negative always carries its own sign.
+	 * A negative value always includes its sign.
 	 */
 	signed?: boolean
 	/**
@@ -39,9 +39,9 @@ export interface ByteFormatterOptions {
  *   file size on disk, buffer length.
  * - {@linkcode ByteFormatter.formatSI} for a size a vendor reports.
  *   Disk capacity, download sizes and GitHub's own API are quoted in powers of ten.
- *   Rendering GitHub's `41.3 GB` as `38.5 GiB` is correct arithmetic and the wrong answer.
+ *   The conversion from GitHub's `41.3 GB` to `38.5 GiB` is correct arithmetic and the wrong answer.
  *
- * Rendering goes through `Intl.NumberFormat`, so the unit and the decimal separator follow the locale.
+ * The formatter uses `Intl.NumberFormat`, so the unit and decimal separator follow the locale.
  * Pass an explicit locale when a caller needs a stable string — a test asserting
  * an exact rendering rather than a line printed for a human.
  */

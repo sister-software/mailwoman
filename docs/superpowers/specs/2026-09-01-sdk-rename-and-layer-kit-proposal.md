@@ -152,7 +152,7 @@ The same-named files also differ in size:
 
 **The four packages share a vocabulary rather than an implementation.** The 2.1× size difference in
 `ingest.ts` between `coastal` and `flood` does not come from two copies of one function that drifted. They
-are two different ingests given the same filename because they perform the same stage. Extracting
+are two different ingests given the same filename because they perform the same stage. A separate
 `layer-kit` would therefore remove almost no code. It would require inventing an abstraction general
 enough to cover all four, and the line counts show that no such abstraction exists yet.
 
@@ -230,19 +230,19 @@ each one could mislead the next vocabulary removal:
    replacement word while still reporting a falling number, and it stayed green throughout. The counter is
    now named neutrally, its term lives in one constant, and `scripts/repo-health.ts` excludes itself.
    Without that exclusion the count could never reach zero, because the pattern has to spell what it bans.
-3. **Scanning only `.ts`/`.tsx` under-reports substantially.** The first zero left **125** occurrences in
+3. **The TypeScript-only scan under-reports substantially.** The first zero left **125** occurrences in
    prose, config, dictionaries and eval rows, including three sentences in `AGENTS.md` that told the next
    agent the retired names were current. Agents reproduce the vocabulary they read.
 
 The word deliberately remains in three places. The Vale rules that refuse it must spell what they ban.
 `AGENTS.md` keeps it for the same reason. Content also keeps it: transliterated place names in the capitals
 gazetteer, real surnames and given names in the libpostal dictionaries, and dated notes inside committed
-board rows. Renaming any of those would corrupt data to satisfy a style rule.
+board rows. A rename would corrupt data to satisfy a style rule.
 
 One item is open. Those board-row notes are inside `SEED_CASE_KEY_ORDER`, so they are part of the pinned
-corpus content hash. Editing one requires a deliberate re-pin, so a sweep must not change them.
+corpus content hash. Each edit requires a deliberate re-pin, so a sweep must preserve them.
 
-## 7. Reproducing every number here
+## 7. How to reproduce each number
 
 ```bash
 cd /home/lab/Projects/mailwoman

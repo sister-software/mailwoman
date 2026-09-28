@@ -27,7 +27,7 @@ test("ComponentTable renders a row per node with a tiered confidence bar", () =>
 
 	// High confidence → green tier.
 	// Low → red tier.
-	// Missing → dash.
+	// Empty cells show a dash.
 	expect(container.querySelector(".mw-conf__bar--high")).toBeTruthy()
 	expect(container.querySelector(".mw-conf__bar--low")).toBeTruthy()
 	expect(container.querySelector(".mw-conf__dash")).toBeTruthy()

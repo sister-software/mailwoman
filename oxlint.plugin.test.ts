@@ -200,7 +200,7 @@ function forLoop(options: {
 }
 
 /**
- * `base[index]`, whose `property` carries its `type` because the rule reads it.
+ * `base[index]`, whose `property` contains its `type` because the rule reads it.
  */
 function indexRead(base: string, index: string): TestNode {
 	return {

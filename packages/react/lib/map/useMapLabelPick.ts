@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Clicking a place label on the map searches for its own name, with the layer list resolved once per style and the hover query throttled to one per animation frame.
+ *   A place-label click searches for its own name. The hook resolves the layer list once per style and throttles the hover query to one per animation frame.
  */
 
 import { useEffect, useEffectEvent } from "react"
@@ -89,7 +89,7 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 				const canvas = map.getCanvas()
 
 				// The drag cursor belongs to the pan gesture.
-				// Overriding it mid-drag would fight the map for the pointer.
+				// An override mid-drag would fight the map for the pointer.
 				if (canvas.style.cursor === "grabbing") return
 
 				canvas.style.cursor = labelNameAt(map, event.point, layers) ? "pointer" : ""

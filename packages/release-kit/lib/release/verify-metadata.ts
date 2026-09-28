@@ -25,7 +25,7 @@ import { type PathBuilderLike, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
- * Cells a markdown table row needs before it carries a version/date/status triple.
+ * Cells a markdown table row needs before it includes a version/date/status triple.
  */
 const MIN_TABLE_CELLS = 3
 
@@ -94,7 +94,8 @@ export interface SurfaceResult {
 	/**
 	 * On OK a one-line summary.
 	 *
-	 * On failure the actionable remediation, which may be multi-line.
+	 * On failure, this is the actionable remediation.
+	 * It may be multi-line.
 	 */
 	message: string
 }

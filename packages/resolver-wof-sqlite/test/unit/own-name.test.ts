@@ -34,7 +34,7 @@ describe("isOwnNameVariant — the measured census contests", () => {
 	})
 
 	it("answers no-verdict — never a stamp — on an uncovered script", () => {
-		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only,
+		// Arabic-script primary (Abadan, Iran): the romanizer covers Cyrillic only.
 		// and absence of a verdict must not read as "different name".
 		expect(ownNameSimilarity("آبادان", "abadan")).toBeNull()
 		expect(isOwnNameVariant("آبادان", "abadan")).toBe(false)

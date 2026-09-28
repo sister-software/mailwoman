@@ -151,7 +151,7 @@ describe("profiles", () => {
 
 	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
 		// The summed-BIO stand-in and the learned span decode are different numbers on the same weights.
-		// Collapsing them would make every span-head claim uninterpretable.
+		// A combined number would make every span-head claim uninterpretable.
 		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
 		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 

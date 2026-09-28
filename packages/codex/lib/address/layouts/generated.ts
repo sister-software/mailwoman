@@ -14,7 +14,7 @@
  *   checked against real addresses on a board, because a generated skeleton is a starting point rather than a verdict.
  *
  *   The Latin table below is the exception to that split. A hand-authored entry states one order per country, so a
- *   country whose two scripts disagree cannot carry its second order there — Hong Kong's hand-authored layout is the
+ *   country whose two scripts disagree cannot represent its second order there — Hong Kong's hand-authored layout is the
  *   Latin one. The Chinese order then has nowhere to live in that layout. The code therefore generates Latin
  *   skeletons for every country that has one, including countries with hand-authored layouts.
  */

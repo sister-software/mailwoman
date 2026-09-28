@@ -11,12 +11,12 @@
  *
  *   Both sides are expressed in libpostal's label vocabulary using the drop-in's own converter,
  *   `treeToParseMatches` + `toLibpostalComponents`, and that map is many-to-one — `neighbourhood` and
- *   `dependent_locality` both become `suburb` — so label agreement is not tag agreement and the mailwoman side carries
+ *   `dependent_locality` both become `suburb` — so label agreement is not tag agreement and the mailwoman side retains
  *   its original tag.
  *
  *   Values are compared case-folded because libpostal lowercases its output and mailwoman preserves the input's case.
  *
- *   No winner is declared. Two parsers disagreeing says where to look. Grading libpostal against mailwoman's tag
+ *   No winner is declared. A disagreement between two parsers shows where to look. A libpostal score against mailwoman's tag
  *   vocabulary would apply the lossy map in the direction that loses.
  */
 
@@ -36,7 +36,7 @@ export interface LabelledSpan {
 	/**
 	 * Mailwoman's own `ComponentTag` before the mapping.
 	 *
-	 * The label alone cannot say which tag produced it, since several collapse onto one.
+	 * The label by itself cannot identify which tag produced it, since several collapse onto one.
 	 */
 	tag?: string
 }
@@ -106,7 +106,7 @@ export function mailwomanSpans(tree: AddressTree): LabelledSpan[] {
 
 	// Positional pairing: `toLibpostalComponents` is a `map`, so index i of its
 	// output is index i of its input.
-	// Reading the tag back by matching values would mispair a row carrying the same value under two tags.
+	// A tag lookup by value would mispair a row with the same value under two tags.
 	return mapped.map((component, index) => ({
 		label: component.label,
 		value: component.value,

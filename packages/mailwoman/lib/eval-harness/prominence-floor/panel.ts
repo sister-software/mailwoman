@@ -12,7 +12,7 @@
  *   band's rows. The record reports each band separately.
  *
  *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is
- *   to reach below 15,000. The dumps carry the same columns, so `readCities` parses them unchanged.
+ *   to reach below 15,000. The dumps have the same columns, so `readCities` parses them unchanged.
  */
 
 import {
@@ -51,7 +51,7 @@ export interface ProminencePanelResult {
 }
 
 /**
- * The provenance every row carries.
+ * The provenance included in every row.
  *
  * The register is the per-country dump rather than a single filtered table,
  * so the row records which country's file it came from.

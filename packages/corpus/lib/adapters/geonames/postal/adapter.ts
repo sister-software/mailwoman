@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row carries its place and
+ *   Reads a per-country GeoNames postal dump and emits postcode-first locality rows. Each dump row includes its place and
  *   region names inline.
  */
 
@@ -26,7 +26,8 @@ export const GEONAMES_POSTAL_DEFAULT_LICENSE = "CC-BY-4.0"
 /**
  * Zero-based column indices in a GeoNames postal dump.
  *
- * The coordinates locate the postcode, which may differ from the locality's position.
+ * The coordinates locate the postcode.
+ * That position may differ from the locality's position.
  */
 export const GEONAMES_POSTAL_COLUMNS = {
 	country: 0,

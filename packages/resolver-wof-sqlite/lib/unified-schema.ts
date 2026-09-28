@@ -46,7 +46,7 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
-	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) or GeoNames'
+	// `privateuse` represents WOF's x_<variant> kind (preferred | variant) or GeoNames'
 	// isPreferredName ("preferred" | "").
 	// `official` is the ingest bit.
 	// It is 1 when the row's language is an official language of the place's country

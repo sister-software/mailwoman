@@ -33,8 +33,9 @@ const ANNEXE_C_GRID = { easting: 651_409.903, northing: 313_177.27 }
 const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 4.5177) }
 
 /**
- * OS's Annexe D worked example for the seven-parameter Helmert, carried from ETRS89
- * geodetic to National Grid E/N, which pins the datum shift.
+ * OS's Annexe D worked example for the seven-parameter Helmert, converted from
+ * ETRS89 geodetic to National Grid E/N.
+ * This pins the datum shift.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
 const ANNEXE_D_OSGB36 = { latitude: dms(53, 36, 42.2972), longitude: -dms(1, 39, 46.5416) }
@@ -85,7 +86,7 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 		expect(offsetMeters(got, { latitude, longitude }), id).toBeLessThan(5)
 	}
 
-	// Pinning the mainland residual keeps a regression from hiding under an offshore-sized budget.
+	// The mainland residual catches regressions that an offshore-sized budget could hide.
 	const bristol = OSTN15_POINTS.find((p) => p.id === "TP08")!
 
 	expect(offsetMeters(osgb36ToWGS84(bristol), bristol)).toBeLessThan(1)

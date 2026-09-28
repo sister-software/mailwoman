@@ -78,7 +78,7 @@ informs; it never overrides.
 
 ## Intended use
 
-Parsing free-text postal addresses into structured components
+The model parses free-text postal addresses into structured components
 (country, region, locality, dependent_locality, postcode, subregion, cedex,
 venue, street, house_number, street_prefix, street_suffix, unit, po_box,
 intersection) for **geocoding** — resolving a parsed address to coordinates via
@@ -88,7 +88,7 @@ standalone geocoder.
 ## Ship-config requirement (read before using)
 
 This model was **trained with the soft anchor + gazetteer channels fed**, and it
-expects them at inference. Running it with those channels off is
+expects them at inference. A run with those channels off is
 out-of-distribution and silently collapses the admin tags
 (country/region/locality/postcode). The bundled `model-card.json` declares the
 required channels in its `requires` block:
@@ -169,7 +169,7 @@ right about 60% of the time. Held-out ECE: 0.067 raw → 0.0035 calibrated. The
 `@mailwoman/core`'s `createCalibrator`; default parse output is byte-stable when
 they are omitted.
 
-## Training
+## Train
 
 From-scratch (no pretrained base), 40000 steps on an NVIDIA A100 (Modal cloud),
 CE loss only (the dual CRF loss diverged and was retired; CRF is inference-only

@@ -49,7 +49,7 @@ async function help(cliPath: string, args: string[]): Promise<string> {
 /**
  * Escape troff-significant characters.
  *
- * Leading dots/quotes control troff.
+ * Dots or quotes at the start control troff.
  * Hyphens in option names must be literal `\-` so `man` renders ascii hyphens (grep-able flags).
  */
 function troffEscape(line: string): string {

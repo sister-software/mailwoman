@@ -1,5 +1,5 @@
 /**
- * @file Page object for geocoder input, result read-back, and controls for themes and examples.
+ * @file Page object for geocoder input, result read-back and controls for themes and examples.
  * Assertions live in the spec files. This class performs actions and reads state.
  */
 

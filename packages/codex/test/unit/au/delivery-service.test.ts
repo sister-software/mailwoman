@@ -17,8 +17,8 @@ describe("AU_DELIVERY_SERVICE_DESIGNATORS", () => {
 		expect(AU_DELIVERY_SERVICE_DESIGNATORS).toHaveLength(14)
 		const noNumber = AU_DELIVERY_SERVICE_DESIGNATORS.filter((d) => !d.requiresNumber).map((d) => d.name)
 
-		// "With the exception of Care of Post Office, Community Mail Agent, Community Postal Agent,
-		// and Community Mail Bag, all Postal Delivery Types must have an associated number."
+		// `"With the exception of Care of Post Office, Community Mail Agent and Community Postal Agent,
+		// and Community Mail Bag, all Postal Delivery Types must have an associated number."`
 		expect(noNumber.toSorted()).toEqual(
 			[
 				"CARE OF POST OFFICE",

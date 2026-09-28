@@ -35,7 +35,7 @@ export interface ResolvedRingRoles {
 	nestedHoles: number
 	/**
 	 * Holes no exterior contains a majority of, placed under the smallest exterior
-	 * of the same feature and counted here: they are carried rather than dropped,
+	 * of the same feature and counted here: they are preserved rather than dropped,
 	 * because dropping one would add ground the plan carved out.
 	 */
 	adjacentHoles: number
@@ -95,8 +95,8 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
 /**
  * Resolve one feature's hole roles from ring orientation.
  *
- * @param featureID Included in every refusal, so a build log says which feature failed.
- * @throws {Error} When the feature carries no ring at all, the one case with no reading.
+ * @param featureID Included in every refusal, so a build log identifies the failing feature.
+ * @throws {Error} When the feature has no ring at all, the one case with no reading.
  */
 export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string): ResolvedRingRoles {
 	const rings = flattenRings(polygons)
@@ -155,7 +155,7 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 	}
 
 	// Smallest containing exterior, so a hole inside an island inside a hole lands on the island.
-	// Sorting once makes the choice deterministic on a tie.
+	// A single sort makes the choice deterministic on a tie.
 	const bySize = [...exteriors].toSorted((left, right) => left.area - right.area)
 
 	let nestedHoles = 0
@@ -173,7 +173,7 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 		}
 
 		// A hole no exterior contains a majority of sits on its parent's boundary and goes to the smallest
-		// exterior of the same feature, so a receipt can carry the number rather than imply it is zero.
+		// exterior of the same feature, so a receipt can record the number rather than imply it is zero.
 		bySize[0]!.holes.push(hole)
 
 		adjacentHoles++

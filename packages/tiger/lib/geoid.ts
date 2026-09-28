@@ -260,7 +260,7 @@ export const GeoIDPart = {
 export type GeoIDPart = (typeof GeoIDPart)[keyof typeof GeoIDPart]
 
 /**
- * Mapping of GeoID parts to their respective FIPS codes types.
+ * This interface maps each `GeoID` part to its corresponding FIPS code type.
  *
  * @internal
  */

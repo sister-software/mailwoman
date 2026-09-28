@@ -7,7 +7,7 @@
  *   resolved locality, keyed by its WOF id.
  *
  *   The exactly-one rule is the abstention: a locality contained by several postcodes (any real city) gets
- *   no postcode, and a machine without the DBs degrades to no enrichment.
+ *   no postcode. A machine without the DBs degrades to no enrichment.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -33,7 +33,7 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 		try {
 			const db = new DatabaseClient<PostcodeLocalityDatabase>(path, { readOnly: true })
 
-			// No `is_containing` filter: villages routinely carry 0, so the exactly-one
+			// No `is_containing` filter: villages routinely have 0, so the exactly-one
 			// distinct rule below is the entire ambiguity guard.
 			statements.set(
 				suffix,

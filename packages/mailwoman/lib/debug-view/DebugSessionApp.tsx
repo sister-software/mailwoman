@@ -84,7 +84,7 @@ const PAN_STEP_PIXELS = 12
 /**
  * Web-Mercator's latitude cutoff.
  *
- * Panning past it returns a non-finite world pixel, so the center is clamped.
+ * A pan beyond it produces a non-finite world pixel, so the code clamps the center.
  */
 const MAX_MERCATOR_LATITUDE = 85.05112878
 
@@ -173,7 +173,7 @@ function closeResources(resources: Resources | null): void {
 
 /* oxlint-disable react-hooks/exhaustive-deps -- The mount effect runs once by interface. It opens the
 	 session, the tile archive and the first geocode. Its cleanup is the only code that closes them.
-	 Tracking `options`/`initialInput` would re-open every handle on any identity change. A fresh options object
+	 A dependency on `options`/`initialInput` would re-open every handle on any identity change. A fresh options object
 	 per render is enough. The empty deps array is the point, same as `useCommandTask`. */
 
 export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps): React.ReactElement | null {
@@ -272,8 +272,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [stdout])
 
-	// Exiting with the error rather than rendering it: Ink restores the primary buffer
-	// and rejects `waitUntilExit()`, where `command.tsx` prints the message.
+	// The effect passes the error through `waitUntilExit()` rather than rendering it: Ink restores
+	// the primary buffer and rejects `waitUntilExit()`, where `command.tsx` prints the message.
 	useEffect(() => {
 		if (phase !== "fatal") return
 
@@ -472,7 +472,7 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	)
 
 	// Memoized because `DebugFrame`'s panes are memoized.
-	// The scroll offset deliberately rides its own prop so scrolling leaves `data` identical.
+	// The scroll offset uses its own prop so scrolling leaves `data` identical.
 	const data = useMemo<DebugData | null>(
 		() =>
 			run

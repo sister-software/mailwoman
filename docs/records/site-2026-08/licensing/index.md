@@ -5,7 +5,7 @@ sidebar_position: 0
 hide_footer: true
 ---
 
-# Licensing Overview
+# License overview {#licensing-overview}
 
 ## Ownership
 

@@ -37,8 +37,8 @@ export interface Phase2Verdict {
 	/**
 	 * `partial` whenever any registered lane is blocked.
 	 *
-	 * Always stated: a verdict over three of four lanes is a different claim from a verdict
-	 * over all of them, and only one of the two is what this run produced.
+	 * Always stated: a verdict over three of four lanes is a different claim from a verdict over all of them.
+	 * This run produced only one of the two.
 	 */
 	coverage: "complete" | "partial"
 	blockedLanes: string[]

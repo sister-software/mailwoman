@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Derived from `tokenization/normalizer.js` in Pelias Parser, MIT, copyright (c) 2019 Pelias
- *   Contributors. `THIRD_PARTY_NOTICES.md` in this package carries the MIT notice that covers it.
+ *   Contributors. `THIRD_PARTY_NOTICES.md` in this package contains the MIT notice that covers it.
  */
 
 import regenerate from "regenerate"
@@ -15,14 +15,14 @@ import regenerate from "regenerate"
  */
 const CombiningDiacriticalPattern = regenerate()
 	.add(0x20_0d) // zero WIDTH JOINER (U+200D)
-	.addRange(0x03_00, 0x03_6f) // Combining Diacritical Marks
-	.addRange(0x1a_b0, 0x1a_ff) // Combining Diacritical Marks Extended
-	.addRange(0x1d_c0, 0x1d_ff) // Combining Diacritical Marks Supplement
-	.addRange(0x20_d0, 0x20_ff) // Combining Diacritical Marks for Symbols
+	.addRange(0x03_00, 0x03_6f) // Unicode block: `Combining Diacritical Marks`
+	.addRange(0x1a_b0, 0x1a_ff) // Unicode block: `Combining Diacritical Marks Extended`
+	.addRange(0x1d_c0, 0x1d_ff) // Unicode block: `Combining Diacritical Marks Supplement`
+	.addRange(0x20_d0, 0x20_ff) // Unicode block: `Combining Diacritical Marks for Symbols`
 	.addRange(0xfe_00, 0xfe_0f) // Variation Selectors
-	.addRange(0xfe_20, 0xfe_2f) // Combining Half Marks
-	.add(0x30_99) // Combining Dakuten
-	.add(0x30_9a) // Combining Handakuten
+	.addRange(0xfe_20, 0xfe_2f) // Unicode block: `Combining Half Marks`
+	.add(0x30_99) // Unicode mark: `Combining Dakuten`
+	.add(0x30_9a) // Unicode mark: `Combining Handakuten`
 	.toRegExp("g")
 
 export interface TextNormalizerReplaceClause {

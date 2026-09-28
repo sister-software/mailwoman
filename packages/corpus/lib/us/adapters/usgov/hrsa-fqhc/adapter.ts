@@ -7,7 +7,7 @@
  *
  *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs.
  *   They self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
- *   includes the site name, postal-formatted street address, locality, region, and postcode.
+ *   includes the site name, postal-formatted street address, locality, region and postcode.
  *   Each facility name is a human-typed venue string. Multiple people have edited each address.
  *   That editing introduces abbreviation drift and suite designators absent from gazetteer data.
  *
@@ -43,7 +43,7 @@ import { lookupStateAbbreviation } from "#us/fips-state"
  */
 export const USGOV_HRSA_FQHC_ADAPTER_ID = "usgov-hrsa-fqhc"
 /**
- * License carried by this source (Public Domain), attached to each row so downstream
+ * License assigned by this source (Public Domain), attached to each row so downstream
  * consumers inherit the terms rather than having to look them up.
  */
 export const USGOV_HRSA_FQHC_DEFAULT_LICENSE = "Public Domain"
@@ -81,7 +81,7 @@ interface HRSASiteRow {
  * The address formatter has no clean slot for it.
  * HRSA addresses also keep the suite in the street column.
  *
- * Leaving the surface form intact in `street` keeps the adversarial training signal
+ * The intact surface form in `street` keeps the adversarial training signal
  * (the model learns that a trailing "Suite 4" is part of the road line in this distribution).
  */
 

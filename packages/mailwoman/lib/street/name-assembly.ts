@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reassemble the full parsed street name from a street node's subtree. `street.value` alone is
+ *   Reassemble the full parsed street name from a street node's subtree. `street.value` by itself is
  *   the bare base ("Sheldon" for "East Sheldon Rd"), so the result surface rebuilds the name from
  *   every name-containing tag, ordered by span offset.
  */
@@ -14,8 +14,8 @@ import { collectNodes } from "@mailwoman/core/decoder"
 /**
  * Street-name component tags.
  *
- * The name-containing subtree of a `street` node, where `street.value` alone is
- * the bare base ("Sheldon" for "East Sheldon Rd").
+ * The name-containing subtree of a `street` node, where `street.value` by itself
+ * is the bare base ("Sheldon" for "East Sheldon Rd").
  *
  * Mirrors the resolver's `assembleStreetValue` and surfaces the full parsed street on the result,
  * so a house-grade forward consumer renders "Boulevard du Palais" rather than just "Palais".

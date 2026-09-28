@@ -6,7 +6,7 @@
  *   The interface census's denominators.
  *
  *   The tally itself is arithmetic. What is easy to get wrong is what a zero is allowed to mean: a strict dependent
- *   with no stranding count because it is never stranded, and one with no stranding count because no parse ever
+ *   with no stranding count because it is never stranded. The second has no stranding count because no parse ever
  *   produced it, are the same number and opposite facts. These pin that they stay distinguishable.
  */
 
@@ -70,7 +70,7 @@ describe("censusTrees", () => {
 
 	it("counts a tag once per row however many nodes carry it", () => {
 		// Two stranded units on one row is one row that produced `unit`.
-		// Counting nodes would let a single pathological row report broad coverage of a tag.
+		// A node count would let one pathological row report broad coverage of a tag.
 		const census = censusTrees([row("two", "Apt 1 Apt 2", [node("unit", "Apt 1"), node("unit", "Apt 2")])])
 
 		expect(census.stranding.find((entry) => entry.tag === "unit")?.produced_on_rows).toBe(1)

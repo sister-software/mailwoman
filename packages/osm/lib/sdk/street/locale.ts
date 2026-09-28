@@ -6,7 +6,7 @@
  *   Country → street-normalization-locale routing for the OSM rooftop build. The normalizer itself
  *   lives in `@mailwoman/resolver-wof-sqlite/street-normalize` (the one-function discipline — the
  *   reader on the resolver side and the builder here must call the identical function). This module
- *   only maps an ISO-3166 country code to the locale that selects the right per-locale rules, and
+ *   only maps an ISO-3166 country code to the locale that selects the right per-locale rules.
  *   re-exports the normalizer so the OSM SDK is a self-contained surface.
  */
 
@@ -16,8 +16,8 @@ import { createStreetLocaleRegistry, type StreetLocale } from "@mailwoman/resolv
  * ISO-3166 alpha-2 (lowercase) → the street-normalization locale.
  *
  * Deliberately small: only the countries we actually ship an OSM rooftop extract for.
- * Adding a country is a one-line entry plus the matching per-locale branch in
- * `normalizeStreetForKeyLocale` — keep them in lockstep.
+ * Each supported country needs a one-line entry and a matching per-locale branch
+ * in `normalizeStreetForKeyLocale` — keep them in lockstep.
  */
 const COUNTRY_TO_STREET_LOCALE = new Map<string, StreetLocale>([
 	["gb", "en"],

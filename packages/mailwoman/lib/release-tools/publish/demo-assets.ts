@@ -29,7 +29,7 @@ const MUTABLE_FILES = new Set(["releases.json"])
 const VERSIONED_DIRECTORIES = new Set(["pair-index"])
 
 /**
- * A versioned object path contains its directory, generation, and filename.
+ * A versioned object path contains its directory, generation and filename.
  */
 const VERSIONED_PATH_SEGMENTS = 3
 

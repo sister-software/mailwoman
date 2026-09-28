@@ -59,7 +59,7 @@ REGION_ALIASES: dict[str, str] = {
 class LabelRow:
     region: str
     sigungu: str
-    # The 읍/면 the road address itself carries between the 시군구 and the road (읍면동구분 0), else empty: a 동 is
+    # The 읍/면 present in the road address between the 시군구 and the road (읍면동구분 0), else empty: a 동 is
     # never written in the road form, it goes in the parenthetical.
     eupmyeon: str
     dong: str

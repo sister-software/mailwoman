@@ -78,7 +78,7 @@ function memberKey(members: ts.NodeArray<ts.TypeElement>, source: ts.SourceFile)
 }
 
 /**
- * The type parameters and heritage clauses a declaration carries, so `Foo<T>` and `Foo` stay apart.
+ * The type parameters and heritage clauses on a declaration, so `Foo<T>` and `Foo` stay apart.
  */
 function headerKey(node: ts.InterfaceDeclaration | ts.TypeAliasDeclaration, source: ts.SourceFile): string {
 	const parameters = node.typeParameters?.map((parameter) => normalized(parameter, source)).join(", ") ?? ""
@@ -163,7 +163,7 @@ export function shapeSites(file: string, text: string): ShapeSite[] {
  */
 export async function findDuplicateShapes(context: RepoContext): Promise<DuplicateShape[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by itself skips a file
 		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
 		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
 		existingOnly: true,

@@ -45,7 +45,7 @@ interface StampSpec {
 }
 
 /**
- * A backend whose locality candidates carry containment stamps only when the query
+ * A backend whose locality candidates include containment stamps only when the query
  * asked (`regionQualifier` present), while region lookups miss.
  */
 async function makeBackend(
@@ -195,7 +195,7 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 
 	it("MUTATION CHECK: with the containment stamps inverted, the same input flips to the namesake", async () => {
 		// The test must fail under an inverted containment term.
-		// Inverting the stamps here is the walk-level image of inverting `intervalContains` in the backend.
+		// The test inverts the stamps to mirror an inverted `intervalContains` term in the backend.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: true },
@@ -216,7 +216,8 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 			{ adminContainmentRerank: true }
 		)
 
-		// Fame decides as today — the setting changed no pick, and says so.
+		// Fame decides as today — the setting changed no pick.
+		// The assertion checks that result.
 		expect(locality.placeID).toBe("wof:1")
 		expect(locality.metadata?.["admin_containment"]).toBe("no_contained_candidate")
 	})

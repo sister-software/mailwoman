@@ -3,14 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The heavy, threaded half of the parallel-ingest split: geocode a stream of normalized records across worker
- * threads (`spliterator.parallelMapWorkers`), composed after `@mailwoman/registry`'s `normalizeCSV`. Each worker
- * rebuilds the classifier, WOF lookup, resolver and databases from {@link GeocodeStreamConfig} at startup. It
- * records arrive in completion order. Concurrency is low on purpose. Geocoding is latency- and memory-bound.
- * a measured NPPES sweep peaked at 2 workers (~1.4x) and degraded past that, because the shared DB plus memory
- * bandwidth is the ceiling rather than the core count. Threads are the only change available because
- * `onnxruntime-node`'s `session.run()` blocks the JS thread and `node:sqlite` reads are synchronous, so a
- * separate runtime per row — a worker — is what provides concurrency.
+ * This module geocodes normalized records across worker threads using `spliterator.parallelMapWorkers`.
+ * The pipeline composes it after `@mailwoman/registry`'s `normalizeCSV`. Each worker rebuilds the
+ * classifier, WOF lookup, resolver and databases from {@link GeocodeStreamConfig} at startup. Workers
+ * return records in completion order. The work is latency- and memory-bound, so concurrency stays low.
+ * A measured NPPES sweep peaked at 2 workers (~1.4x) and degraded at higher counts because the shared
+ * database and memory bandwidth set the limit. Threads provide the available concurrency because
+ * `onnxruntime-node`'s `session.run()` blocks the JS thread and `node:sqlite` reads are synchronous.
  */
 
 import { availableParallelism } from "@mailwoman/core/utils/system"

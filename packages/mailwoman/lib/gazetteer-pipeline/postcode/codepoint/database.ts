@@ -47,15 +47,15 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 
 /**
  * The year the attribution block names, taken from OS's own `copyright date` rather than the build clock,
- * with the build clock standing in only when the archive's metadata carries no date.
+ * with the build clock standing in only when the archive's metadata has no date.
  */
 function attributionYear(metadata: CodePointMetadata, now: Date): number {
 	return Number(metadata.copyrightDate.slice(0, 4)) || now.getUTCFullYear()
 }
 
 /**
- * Compose the artifact's `layer_manifest` from the release it reproduces, at the
- * `shipped` tier because OGL v3 carries attribution and no share-alike term.
+ * Compose the artifact's `layer_manifest` from the release it reproduces, at the `shipped` tier
+ * because OGL v3 requires attribution and has no share-alike term.
  */
 export function codePointLayerManifest(input: {
 	osVersion: string
@@ -315,7 +315,7 @@ export async function buildPostcodeCodePoint(
 /**
  * Compare per-area parsed counts against the archive's `Doc/metadata.txt` manifest, where the
  * identity is `manifest[area] === parsed[area] + noCoordinateDrops[area]` and the tolerance is
- * the no-coordinate drops alone so a malformed row cannot widen the slack it is meant to catch.
+ * only the no-coordinate drops so a malformed row cannot widen the slack it is meant to catch.
  */
 function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointParseStats): string[] {
 	const mismatches: string[] = []

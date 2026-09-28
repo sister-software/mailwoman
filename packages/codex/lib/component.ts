@@ -45,7 +45,7 @@ export const COMPONENT_TAGS = [
 	"sub_block",
 	"building_number",
 	"building_name",
-	// CN-specific: the organizational ladder China's rural addresses carry below the head
+	// CN-specific: the organizational ladder used below the head in China's rural addresses
 	// unit settlement, with one contiguous span holding the whole ordinal chain.
 	"locality_unit",
 ] as const
@@ -66,7 +66,7 @@ export const BIO_LABELS = ["O", ...COMPONENT_TAGS.flatMap((tag) => [`B-${tag}`, 
 export type BIOLabel = (typeof BIO_LABELS)[number]
 
 /**
- * The tag carried by a BIO label after removing its `B-` or `I-` prefix.
+ * The tag in a BIO label after removing its `B-` or `I-` prefix.
  * The function returns `O` unchanged.
  */
 export function bareBIOTag(label: string): string {

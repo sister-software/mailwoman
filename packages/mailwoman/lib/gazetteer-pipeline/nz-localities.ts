@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `localities-nz-linz.db`, the NZ suburb/locality database. The candidate gazetteer carries
+ *   Build `localities-nz-linz.db`, the NZ suburb/locality database. The candidate gazetteer contains
  *   NZ's region and major-locality tiers but no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland
  *   suburb) has no row and the resolver can only mis-answer or abstain.
  *
@@ -107,7 +107,7 @@ function cleanName(raw: string | undefined): string {
  * This copy uses the ceil-based nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ
  * label points were computed with, where core floors (`floor(p/100 · n)`).
  *
- * Swapping conventions moves a percentile by up to one member row and with it every derived label point.
+ * A convention change moves a percentile by up to one member row and also moves every derived label point.
  *
  * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank
  * the shipped NZ label points were computed with.
@@ -254,7 +254,7 @@ export async function buildNZLocalitiesDatabase(
 		foldLayerManifest({
 			name: "localities-nz-linz",
 			version: isoDate(now),
-			// CC-BY 4.0 carries attribution and no share-alike term, so the artifact is published.
+			// CC-BY 4.0 requires attribution and has no share-alike term, so the artifact is published.
 			tier: LayerTier.Shipped,
 			license: NZ_LOCALITIES_LICENSE,
 			attribution: "Land Information New Zealand",

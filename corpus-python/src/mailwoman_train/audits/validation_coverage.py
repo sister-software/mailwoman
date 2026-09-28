@@ -11,7 +11,7 @@ Every other country holds zero by construction. A street row without `region` ca
 regardless of the holdout values.
 
 Read a per-locale validation metric with its denominator beside it: a `macro_f1` computed over a split
-holding no GB row makes no statement about GB. `cross_pollution`'s per-locale readings carry the same
+holding no GB row makes no statement about GB. `cross_pollution`'s per-locale readings share the same
 limit.
 
 Scans the parquet directly rather than the loader, because the question is which rows the split
@@ -31,8 +31,8 @@ import pyarrow.dataset as ds
 from ..config import ValidationCoverageConfig, load_config
 from ..data.loader import _parquet_paths
 
-#: Tags whose presence makes a row street-level. A validation row carrying neither measures the
-#: admin hierarchy alone. That differs from parsing an address.
+#: Tags whose presence makes a row street-level. A validation row with neither measures only the
+#: admin hierarchy. That differs from parsing an address.
 STREET_TAGS = frozenset({"street", "house_number"})
 
 #: Columns the scan projects. Everything else in the row is irrelevant to the counts and reading it
@@ -127,8 +127,8 @@ def failing_requirements(
 ) -> list[dict[str, Any]]:
     """Each declared coverage floor the measured splits do not meet, with both numbers beside it.
 
-    A country absent from a split is reported as observing zero rather than skipped. Skipping it
-    would make the strongest failure. A locale the split holds no rows for is the one case the
+    A country absent from a split is reported with an observed count of zero. The audit includes it
+    The checker would report its strongest failure. A locale the split holds no rows for is the one case the
     check makes no statement about.
     """
     failures: list[dict[str, Any]] = []

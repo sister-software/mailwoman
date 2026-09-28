@@ -13,7 +13,7 @@ import { nomenclatureTokens } from "@mailwoman/astrogeology/search/tokens"
 import { z } from "zod"
 
 /**
- * What a hit carries: enough to place and name the feature without a second lookup.
+ * What a hit includes: enough to place and name the feature without a second lookup.
  */
 export interface SearchHit {
 	id: string
@@ -26,8 +26,8 @@ export interface SearchHit {
 	/**
 	 * What the camera needs to choose a zoom.
 	 *
-	 * Absent for a feature the gazetteer gives no diameter, which a caller must
-	 * read as unknown rather than as zero.
+	 * Absent for a feature when the gazetteer gives no diameter.
+	 * A caller must read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number

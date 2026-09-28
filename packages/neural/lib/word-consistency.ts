@@ -10,7 +10,7 @@ import { softmax } from "#viterbi"
 /**
  * Limits which words {@link enforceWordConsistency} relabels.
  *
- * Omitting the options relabels every word whose pieces disagree on entity type.
+ * The default options relabel every word whose pieces disagree on entity type.
  */
 export interface WordConsistencyOpts {
 	/**
@@ -18,7 +18,7 @@ export interface WordConsistencyOpts {
 	 * pieces falls below this floor; `0` or unset never skips.
 	 *
 	 * A low-confidence vote marks rows where per-piece confidence is unreliable.
-	 * Relabelling those rows amplifies noise.
+	 * A relabelled row would amplify noise.
 	 */
 	minMeanConfidence?: number
 
@@ -37,7 +37,7 @@ export interface WordConsistencyOpts {
 	 * Otherwise a continuation piece such as the `,` in `Ave,` joins the word.
 	 * Its `O` label can outvote a real span.
 	 *
-	 * Splitting also lets the halves of a slash compound such as `12/345` vote independently.
+	 * The halves of a slash compound such as `12/345` can also vote independently.
 	 */
 	splitOnPunctuation?: boolean
 }
@@ -101,7 +101,7 @@ function labelType(label: string): string {
 }
 
 /**
- * Relabels SentencePiece pieces so that each `▁`-delimited word carries a single entity type,
+ * Relabels SentencePiece pieces so that each `▁`-delimited word has a single entity type,
  * chosen by a vote over the softmaxed `emissions` of its pieces.
  *
  * The word's first piece gets the `B-` label and the rest get `I-`,

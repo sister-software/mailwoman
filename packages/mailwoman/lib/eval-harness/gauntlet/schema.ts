@@ -139,7 +139,7 @@ export interface GauntletCaseTable {
 	 * without falling through to a world-fuzzy candidate.
 	 *
 	 * The abstain pin is the interface.
-	 * Lands are re-pinned to real coordinates once coverage arrives (the row's note says which artifact).
+	 * Lands are re-pinned to real coordinates once coverage arrives (the row's note identifies the artifact).
 	 */
 	expect_abstain: number | null
 }

@@ -13,7 +13,7 @@
  *
  *   Like a Canadian province code, a US state's two-letter abbreviation is a posted surface rather than only a
  *   resolver key — `ca/province.ts` states the contrast with Germany and France in its own header — so this module
- *   carries the name→abbreviation direction too.
+ *   includes the name→abbreviation direction too.
  */
 
 import { foldName } from "#normalize"

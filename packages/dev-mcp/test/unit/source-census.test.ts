@@ -24,8 +24,8 @@ let root: TemporaryDirectory
 /**
  * One planted extract's path, resolved through the same builder `gazetteerArtifacts` uses.
  *
- * Composing `wof` against the root by hand could make the fixture and reader
- * disagree about the data root's database group.
+ * A hand-composed `wof` path could make the fixture and reader disagree about
+ * the data root's database group.
  * The reader would then report the planted extracts absent.
  */
 function extract(name: string): string {

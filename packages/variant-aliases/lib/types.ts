@@ -72,7 +72,8 @@ export interface VariantAliasTable {
  * - `unscoped` — the record declares no locales and answers under any.
  * - `exact` — the query's locale tag is one the record declares.
  * - `language` — only the language subtag agrees.
- *   Weaker on purpose: a regional phrasing reached through its language alone is a guess about the region.
+ *   Weaker on purpose: a regional phrasing reached through its language by
+ *   itself is a guess about the region.
  */
 export type LocaleScope = "unscoped" | "exact" | "language"
 

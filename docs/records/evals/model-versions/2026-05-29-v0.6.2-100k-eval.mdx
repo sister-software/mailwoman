@@ -15,7 +15,7 @@ addresses the only remaining regression.
 ## Setup
 
 - **Model:** v0.6.2 step 100K (`model.onnx` from `/data/output-v062/checkpoints/step-100000`)
-- **Training:** A100 80GB PCIe, ~16 steps/s, ~104 min wall-clock for 100K steps. No NaN.
+- **Run setup:** A100 80GB PCIe, ~16 steps/s, ~104 min wall-clock for 100K steps. No NaN.
 - **Corpus changes from v0.6.0:** synth-street weight 2.0 → 0.5, synth-no-street extract added
   at weight 1.0 (122K rows: 112K US + 10K DE/GB, 35% venue-adversarial)
 - **Tokenizer:** v0.6.0-a0 (unchanged)
@@ -41,7 +41,7 @@ addresses the only remaining regression.
 | `venue` recall                      | 29.0%           | 29.4%           | 29.3% (-)                                        |
 | Harness pass rate (415 assertions)  | 14.4%           | 13.7%           | 14.0% (-0.4pp)                                   |
 
-## Training curves
+## Model-fit curves {#training-curves}
 
 The val_loss and macro_f1 over training steps (v0.6.2 full-weight run alongside
 the v0.6.2b half-weight parallel). The val_loss bouncing was per-batch noise rather than a structural overconfidence pattern — macro_f1 stayed remarkably flat.
@@ -144,7 +144,7 @@ Per the decision tree DeepSeek turn 7 / 8 established:
 | Pass       | ≤ 14.4%      | hold (sidegrade not release) |
 | **Fail**   | **any**      | **HOLD**                     |
 
-**v0.6.2 falls in row 4: HOLD.** Reasoning: the check failure is structural (house_number
+**v0.6.2 falls in row 4: HOLD.** The check failure is structural (house_number
 regression at 5pp, well above the 2pp threshold), and even though several tags improved,
 shipping with a 5pp drop on a high-baseline tag would surface as a real quality regression
 to downstream users.
@@ -153,7 +153,7 @@ to downstream users.
 
 v0.6.3 is the targeted fix. Its yaml `v0_6_3-house-venue.yaml` is on the Modal volume; its
 parquet extracts (`part-no-street-v063.parquet`, `part-house-venue-v063.parquet`) are too;
-MANIFEST is updated. Launching it took one `modal run` command.
+MANIFEST is updated. One `modal run` command launched it.
 
 Expected v0.6.3 outcome:
 
@@ -166,7 +166,7 @@ but doesn't move the harness needle, it ships as experimental. If the house_numb
 doesn't materialize, the linter design (see `project-corpus-poisoning-vulnerability` memory)
 becomes the priority — we need preventative checks before the next synth extract goes in.
 
-## Reproducing
+## Reproduce the evaluation {#reproducing}
 
 ```bash
 ./scripts/eval-v062-checkpoint.sh 100000

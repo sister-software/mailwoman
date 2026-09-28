@@ -16,7 +16,7 @@ export interface WordToken {
 	 */
 	text: string
 	/**
-	 * Leading whitespace before this word.
+	 * Whitespace before this word.
 	 */
 	whitespace: string
 	/**

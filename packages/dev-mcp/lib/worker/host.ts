@@ -61,7 +61,7 @@ export interface WorkerHostOptions {
 	 * Where the child's stdout/stderr are drained.
 	 *
 	 * The default is the host process's stderr.
-	 * On the shim, stdout carries the MCP channel.
+	 * On the shim, stdout contains the MCP channel.
 	 */
 	log?: NodeJS.WritableStream
 }

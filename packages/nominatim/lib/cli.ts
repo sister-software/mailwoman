@@ -9,7 +9,7 @@
  *
  *   Wires the real engine: `/search` over `geocodeAddress` and `/reverse` over
  *   `WOFReverseGeocoder` (point-in-polygon over WOF admin polygons), reusing the resolver-backend
- *   selector `GeocodeRouter` uses. Results carry the OpenCage-style `annotations` block composed
+ *   selector `GeocodeRouter` uses. Results include the OpenCage-style `annotations` block composed
  *   from the `@mailwoman/*` annotators.
  */
 
@@ -110,13 +110,14 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	// A no-op when the extract is not on disk, so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
-	// The annotation fallback carries no country constraint for the geocode.
-	// The default-on placer already routes the query's country, and `defaultCountry` is a hard
-	// override that beats it, so forcing "US" would resolve every non-US query to its US namesake.
+	// The annotation fallback adds no country constraint to the geocode.
+	// The default-on placer already routes the query's country.
+	// `defaultCountry` is a hard override that beats it, so forcing "US" would
+	// resolve every non-US query to its US namesake.
 	// The fallback only annotates the flag, currency and calling code when the
 	// resolved hierarchy omits the country tag.
 	// US-centric data without a candidate DB omits it for US results, where "US" is
-	// the right guess, while non-US results carry the country tag.
+	// the right guess, while non-US results include the country tag.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
@@ -171,7 +172,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			// A house-grade resolution tier (`address_point`, `interpolated` or `plus_code`) is tagged
 			// `class: place` and `type: house`, upstream Nominatim's own class and type for a house,
 			// so a client that keys on those fields treats it as a building rather than an untyped admin hit.
-			// The admin tier carries no class here.
+			// The admin tier has no class here.
 			if (
 				result.resolution_tier === "address_point" ||
 				result.resolution_tier === "interpolated" ||
@@ -181,7 +182,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				resolved.type = "house"
 			}
 
-			// The geocode result already carries the parse's street spans, so no second parse.
+			// The geocode result already includes the parse's street spans, so no second parse.
 			if (result.house_number) {
 				resolved.address.house_number = result.house_number
 			}
@@ -294,7 +295,7 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				console.error(line)
 			}
 
-			// The terms come from the same `layer_manifest` rows the `/status` payload carries,
+			// The terms come from the same `layer_manifest` rows the `/status` payload includes,
 			// so the operator reads them at boot rather than by querying the endpoint they just started.
 			for (const line of rightsBannerLines(status.mailwoman ?? { artifacts: [] })) {
 				console.error(line)

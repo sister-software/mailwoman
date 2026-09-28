@@ -53,7 +53,7 @@ class CharMode:
 class Lexicons:
     """Every channel input, loaded once before the row loop and passed to each `encode_row`.
 
-    Loading one per row would re-read a 1.3 GB anchor table for every address.
+    One table load per row would reread a 1.3 GB anchor table for every address.
     """
 
     anchor: dict[str, tuple[dict[str, float], float, float]] | None = None
@@ -137,7 +137,7 @@ def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> Enco
     raw = row["raw"]
     char_labels = char_label_array_from_spans(raw, starts, ends, tags)
     if char.mode == "char":
-        # One unit per character (D3): unit index == char offset, whitespace units carry O.
+        # One unit per character (D3): unit index == char offset, whitespace units receive O.
         unit_spans = [(i, i + 1) for i in range(len(raw))]
     else:
         unit_spans = whitespace_spans(raw, row["tokens"])
@@ -211,7 +211,7 @@ def iter_encoded(
         # units, but this consumer (char_label_array_from_spans + SentencePiece pieces) is code-point-
         # native. For astral-plane rows (~0.06% — exotic-script country-name variants like Gothic), a
         # UTF-16 span end can exceed the code-point len(raw) and encode_row would raise
-        # span-out-of-bounds. Skip + count rather than crash a multi-hour training run. Lasting fix:
+        # span-out-of-bounds. The loader counts and skips the row rather than crashing a multi-hour training run. Durable fix:
         # emit code-point offsets in the TS build and re-align (corpus-v0.5.1). 2026-06-12.
         _se = row.get("span_ends")
         if _se and max(_se) > len(row["raw"]):
@@ -251,7 +251,7 @@ def iter_encoded(
         # Drop rows whose non-padding length exceeds max_length (length filter §2).
         non_pad = sum(enc["attention_mask"])
         if non_pad >= cfg_data.max_length:
-            # Even at exactly max_length we keep — the spec says drop tokens > 128. equality is fine.
+            # Even at exactly max_length we keep — the spec drops tokens > 128. Equality is valid.
             # But hand-curated coarse rows almost never hit this. Track via downstream metrics.
             pass
         yield EncodedExample(

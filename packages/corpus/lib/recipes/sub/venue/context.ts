@@ -107,7 +107,7 @@ export interface StreetNegatives {
 }
 
 /**
- * Shortest token that can carry a `-gate` street suffix and still be a name rather than the bare word:
+ * Shortest token that can take a `-gate` street suffix and still be a name rather than the bare word:
  * `gate` itself is four characters, so the class starts at five (`Highgate`, `Moorgate`, `Stonegate`).
  */
 const MIN_GATE_SUFFIX_TOKEN_LENGTH = 5

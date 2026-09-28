@@ -67,7 +67,7 @@ Decision packages posted, no build: #1998, #1999, #2048, and step 4 (#1684 exp 1
 
 - Four commits were refused by the pre-commit lint or the CI prose rule for things a local run would
   have caught first (`selfPackageImports`, an unused export, a control escape in a regex, a banned
-  word in a comment). Running `yarn health:debt`, `node scripts/verify-exports.ts` and
+  word in a comment). The checks `yarn health:debt`, `node scripts/verify-exports.ts` and
   `yarn lint:prose:code` before pushing costs a minute and would have saved four CI rounds.
 - The first local docs rebuild replayed the old module graph from `docs/node_modules/.cache/webpack`
   and emitted a byte-identical CSS bundle; a manifest change needs that cache cleared before the

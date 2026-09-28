@@ -5,7 +5,7 @@
  * @file A scripted stub Axios adapter for testing {@linkcode APIClient} subclasses.
  *   It also provides the Axios-shaped error builder for rejected requests.
  *   Its sibling `./test-clocks.ts` makes time deterministic. This module makes the network deterministic.
- *   Pacing tests use both modules.
+ *   The pacing tests use both modules.
  *
  *   The code came from `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`.
  *   Those files had near-identical copies.

@@ -15,8 +15,8 @@
  *   classifiers refuse punctuation-only pairs. A failing arm here therefore cannot be a row from either of the
  *   other suites. Neither suite can absorb a punctuation failure.
  *
- *   Every exclusion uses a real committed board row. One venue's name carries a point. The bare GB unit code
- *   carries no punctuation. Two rows have an asserted span with the abbreviation point their comparator grades.
+ *   Every exclusion uses a real committed board row. One venue's name includes a point. The bare GB unit code
+ *   has no punctuation. Two rows have an asserted span with the abbreviation point their comparator grades.
  */
 
 import { classifyCaseTransformation } from "mailwoman/eval-harness/conformance/case-folding"
@@ -348,8 +348,7 @@ describe("a seeded punctuation regression", () => {
 	 * The pipeline stand-in that fails only on the comma-removed arm: with the separators
 	 * gone, the dependent locality joins the street span.
 	 *
-	 * Seeding the regression rather than waiting for one is what proves the failure
-	 * line carries enough to diagnose from.
+	 * A seeded regression shows whether the failure line includes enough detail to diagnose the cause.
 	 */
 	const observe: ConformanceObserver = async (query) => {
 		const commaless = !query.includes(",")

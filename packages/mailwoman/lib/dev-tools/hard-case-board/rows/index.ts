@@ -9,7 +9,7 @@
  *   They also change at different rates. The builder reads a WOF point and walks two FST binaries.
  *   It emits JSONL.
  *   This file holds editorial content: the inputs that pin each discrimination case and the reasons.
- *   A row here carries no coordinates or bias numbers. The build measures those from primary data.
+ *   A row here includes no coordinates or bias numbers. The build measures those from primary data.
  *   A curator can get the choice wrong. Review choices when changing the board.
  *
  *   `comma_free` is the register the FST prior was designed for: a two-toponym fragment with no

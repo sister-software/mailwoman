@@ -6,7 +6,7 @@ structure whose states/entries encode the containment hierarchy (so one prefix w
 lexical continuations and admin ancestors/descendants) novel, or does it have a name?
 
 Tags: **[S]** = search-verified this session (source in the register at the end). **[M]** = from
-memory / training knowledge rather than re-verified. Anything published after 2025 is flagged inline.
+memory / training knowledge rather than re-verified. Publications from 2025 onward are flagged inline.
 
 ---
 
@@ -20,7 +20,7 @@ into the index entry so a hit returns its ancestry without joins. Foursquare's t
 nearly matches our `chain [u32;8]`: it stores a `parentIDs: list<i64>` on every serving feature and
 uses it at autocomplete time to render "Rego Park, Queens, NY" [S]. Pelias, Photon, WOF, Overture,
 and GeoNames all denormalize the chain at index or build time [S]. The encoding itself has textbook
-names: materialized path and Dewey labels [S]. Embedding non-lexical structure _in the trie nodes_
+names: materialized path and Dewey labels [S]. Non-lexical structure _in the trie nodes_
 so the walk prunes on it also has an academic name. Roy & Chakrabarti's **"materialized trie"**
 (SIGMOD 2011) puts spatial summaries in trie nodes [S], but that structure holds geometry rather
 than an admin graph. I could not find, under any name, a completion automaton treated as the
@@ -283,7 +283,7 @@ an actual open design choice; see "What to borrow."
   omitted prefectures when a city name is ambiguous across prefectures [S]. Mozc-lineage IMEs put
   the whole reading→surface dictionary in LOUDS tries [S]. Role-conditioning on script/position
   (都 as suffix of 東京都) is done by rule inside these parsers, never modeled in a gazetteer index.
-- **Folding hazards**: ICU folding (UTR#30) is deliberately locale-blind; Turkic I/ı needs
+- **Hazards from folding**: ICU folding (UTR#30) is deliberately locale-blind; Turkic I/ı needs
   Turkish-specific case mapping (`foldTurkic` exists separately in ICU) — ES/OpenSearch docs and
   CirrusSearch carve Turkish out by hand [S]. Carmen's per-key 128-bit language bitmask with
   cross-language penalties [S] is the only autocomplete-index-level language lens found — key-level rather than role-level.

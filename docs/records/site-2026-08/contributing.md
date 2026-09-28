@@ -1,16 +1,16 @@
 ---
-sidebar_title: Contributing
-title: Contributing & feedback
+sidebar_title: Contribute
+title: Contribute and send feedback
 hide_footer: true
 ---
 
-# Contributing & feedback
+# Contribute and send feedback {#contributing-feedback}
 
 This page covers how to obtain Mailwoman, how to report bugs or request enhancements, and what a
 contribution needs to be accepted. It mirrors the repository's `CONTRIBUTING.md`; where the two
 differ, the repository copy governs code contributions and this page will be corrected.
 
-## Obtaining Mailwoman
+## Get Mailwoman {#obtaining-mailwoman}
 
 - **Install from npm:** `npm install mailwoman` (the CLI + library), or any of the scoped
   packages at https://www.npmjs.com/org/mailwoman. Model weights ship as data-only packages
@@ -32,7 +32,7 @@ differ, the repository copy governs code contributions and this page will be cor
 - A useful bug report for a parser/geocoder is small: one address in, one wrong answer out.
   Reports like that routinely become permanent regression tests within days.
 
-## Contributing
+## Contribute {#contributing}
 
 For anything larger than a typo or an obvious fix, get in touch first so we can agree on the
 approach before you spend the time. Model-layer work (training, corpus extracts, evals) has its
@@ -50,7 +50,7 @@ own checks and runbook: [Contributing model work](https://github.com/sister-soft
    and the commercial license — plus a patent license on AGPL §11 terms. Corporate CLA needed
    instead? Email teffen@sister.software. The complete legal text lives in the repository's
    `CONTRIBUTING.md`.
-2. **Coding standard.** TypeScript throughout; linting and formatting are enforced by
+2. **Code standard.** The codebase uses TypeScript throughout; linting and formatting are enforced by
    **oxlint + oxfmt** (`yarn lint` must pass — the pre-commit hook runs it on staged files and
    CI runs it repo-wide). Source runs directly under Node (erasable-syntax-only TypeScript: no
    `enum`, no parameter properties); relative imports carry explicit `.ts` extensions. House

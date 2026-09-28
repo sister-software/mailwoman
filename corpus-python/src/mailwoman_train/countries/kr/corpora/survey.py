@@ -2,7 +2,7 @@
 
 Neither draws from the RNG and neither writes a row. Pass 1 reads the register to count eligible
 rows per 시도 and to BUILD THE KEY INDEX. Pass 2 reads the permits after the index exists.
-It averages permit coordinates per 시군구. The two records below carry the measurements used for selection.
+It averages permit coordinates per 시군구. The two records below contain the measurements used for selection.
 
 `transform_coordinates` is reached through the `registers` module rather than bound by name, so a
 test that stands in for `gdaltransform` patches one function and both callers see it.

@@ -7,7 +7,7 @@
  *   A failure here could still produce a well-formed artifact.
  *
  *   A chunk represents one scenario. Every scenario covers the same coast, so a coverage cell appears in
- *   twelve chunks and the counts must be added. Taking the last chunk's value would report one scenario's
+ *   twelve chunks and the counts must be added. The last chunk's value would report one scenario's
  *   polygons as the full cell value. That is one twelfth of the actual count and could look plausible on a receipt.
  */
 
@@ -104,7 +104,7 @@ describe("aggregateChunks", () => {
 		])
 
 		// The two spellings stay apart in the census: the fold is what the domain check compares.
-		// Folding the receipt too would hide the source's own inconsistency from the reader who has to see it.
+		// A folded receipt would hide the source's own inconsistency from the reader who has to see it.
 		expect(result.defenceTypeCounts).toEqual([
 			["Sheet piles", 1350],
 			["Sheet Piles", 270],

@@ -22,7 +22,7 @@
  *
  *   The arms geocode in place rather than through a written panel. `readCoordPanel` keys on (country, region,
  *   locality). The grid's arms differ only in the postcode, so routing them through a panel file collapses each
- *   pair of arms into one row. Reading the panel once and rendering each arm from the same rows avoids the key.
+ *   pair of arms into one row. One panel read supplies the same rows to both rendered arms and avoids the key.
  *
  *   Usage:
  *
@@ -63,8 +63,7 @@ const subjectCount = Number(values.subjects)
 const { localities } = await readCoordPanel(values.eval!, { country: values.country })
 
 /**
- * One real postcode per region, so a crossed row carries a code that exists even
- * though its pairing does not.
+ * One real postcode per region, so a crossed row uses a code that exists even though its pairing does not.
  */
 const postcodeOf = new Map<string, string>()
 
@@ -82,7 +81,7 @@ const regionsPresent = new Set(localities.map((place) => place.region))
  * An absent region yields an empty arm.
  * It reports 0%, the same value as a measured zero.
  *
- * The default coordinate panel's 2,000 rows carry 7 of the 50 states and DC
+ * The default coordinate panel's 2,000 rows cover 7 of the 50 states and DC
  * (CA, DC, IL, SD, MT, IA, VT), so most regions hit this path.
  */
 function byRegion(region: string): typeof localities {
@@ -97,7 +96,7 @@ function byRegion(region: string): typeof localities {
 }
 
 /**
- * One arm carries a name plus the region and postcode used for it.
+ * One arm includes a name plus the region and postcode used for it.
  * It also identifies the arm.
  */
 interface Arm {
@@ -151,7 +150,7 @@ console.log(`| --- | --: | --: |`)
  * How many recovered rows to print under the table.
  *
  * The list shows what the arms render.
- * The table carries the rate.
+ * The table records the rate.
  */
 const RESCUED_EXAMPLES = 8
 

@@ -46,7 +46,7 @@ function carriesFamilyScript(shape: QueryShape): boolean {
 /**
  * Returns the number of expected components the parse matched and the number expected.
  *
- * Grading uses `decodeAsJSON` because the board's `expectComponents` is written against that projection.
+ * The grader uses `decodeAsJSON` because the board's `expectComponents` is written against that projection.
  */
 function agreement(tree: AddressTree, want: Record<string, string> | undefined): [number, number] {
 	if (!want) return [0, 0]

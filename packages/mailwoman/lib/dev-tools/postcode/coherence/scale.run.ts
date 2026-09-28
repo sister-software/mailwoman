@@ -61,7 +61,7 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 /**
  * It has no ISO-3166 assignment, so no codex address system can claim it.
  *
- * Step 1 therefore fails, isolating what the alternative countries alone decide.
+ * Step 1 therefore fails, isolating what the alternative countries decide by themselves.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 
@@ -80,8 +80,8 @@ if (!panel || (backendName !== "fts" && backendName !== "candidate")) {
 const limit = limitArg ? Number(limitArg) : Infinity
 
 /**
- * The two roots the pass reads: it keys on the postcode string the caller passes plus the first locality
- * node, so the street node a real tree carries is never consulted and the minimal pair is faithful.
+ * The two roots the pass reads: it keys on the postcode string the caller passes plus the first
+ * locality node, so the street node in a real tree is never consulted and the minimal pair is faithful.
  */
 function rootsFor(pair: Pair): AddressNode[] {
 	return [

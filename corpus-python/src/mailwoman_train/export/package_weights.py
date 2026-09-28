@@ -198,7 +198,7 @@ def render_package_json(locale: str, *, package_version: str = "0.1.0") -> dict[
 
 
 # Per-component F1 floors. Coarse targets are the original Phase 2 §6 0.95 interface.
-# Stage 2 fine labels carry the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
+# Stage 2 fine labels must meet the v0.3.0 issue-spec floors: 0.6 venue, 0.7 street,
 # 0.8 house_number (issue #57 "per-iteration success metric"). Tags absent from
 # ACTIVE_TAGS are silently skipped at status-line time.
 _F1_TARGETS: dict[str, float] = {

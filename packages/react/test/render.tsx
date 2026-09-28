@@ -18,7 +18,7 @@ import { createRoot, type Root } from "react-dom/client"
  * Catches the trailing `setState` a test leaves in flight: an autocomplete debounce
  * (10 ms) scheduled by the final pick, a secondary parse/runtime promise that lands just
  * after the last assertion resolved.
- * Draining these in an act scope is what keeps them from logging "not wrapped in act(...)" in the window
+ * These callbacks must run in an act scope to avoid logging "not wrapped in act(...)" in the window
  * between a test returning and this `afterEach` running. 25 ms clears the 10 ms debounce with margin.
  *
  * The clipboard reset (1500 ms) is instead cleared by `useClipboard`'s unmount effect,

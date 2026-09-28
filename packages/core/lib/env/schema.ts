@@ -80,7 +80,7 @@ const LicenseEnvSchema = z.object({
 /**
  * Non-secret operational config core reads, exposed via `$public`.
  *
- * Anything not listed is stripped from `process.env` on parse.
+ * The schema strips any other key from `process.env` during parsing.
  */
 export const PublicEnvSchema = z
 	.object({

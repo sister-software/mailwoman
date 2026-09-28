@@ -96,7 +96,7 @@ label list says which mark may follow which — "continues the street" is legal 
 here" and after itself, and after no other mark — and the decoder searches for the highest-scoring
 reading that stays inside those rules. A continuation with no beginning is not fixed up after the
 fact; it never appears, because no legal reading contains one.
-[Decoding and the best path](./decoding-and-viterbi.mdx) has the mechanism.
+[How the decoder chooses a path](./decoding-and-viterbi.mdx) has the mechanism.
 
 Here is the reading that came out for our line, captured from a direct classifier call with the
 gazetteer index wired, one row per piece:
@@ -181,7 +181,7 @@ pick a threshold.
 
 - [Tokens and labels](./tokens-and-labels.mdx) — what a piece is, and how per-piece labels become spans.
 - [The gazetteer prior](./the-gazetteer-prior.mdx) — the place lookup, made additive.
-- [Decoding and the best path](./decoding-and-viterbi.mdx) — how a reading gets chosen.
+- [How the decoder chooses a path](./decoding-and-viterbi.mdx) — how a reading gets chosen.
 - [Understand a parse](../../tutorials/understand-a-parse.mdx) — the same walk, as something you run.
 - [Component tags](../../reference/component-tags.mdx) — the 26 tags a parse can carry, and the 16
   this model emits.

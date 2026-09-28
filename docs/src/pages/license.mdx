@@ -55,7 +55,7 @@ made under it. The template is where a negotiated agreement starts.
 Section 2 of the agreement limits the grant to the code and model artifacts Sister Software authors.
 It does not extend to third-party components distributed with Mailwoman, which stay under their own
 licenses, and any attribution or share-alike obligation attaching to those components continues to
-apply. Buying a commercial license does not waive or relicense them.
+apply. A commercial license does not waive or relicense them.
 [`THIRD_PARTY_NOTICES.md`](https://github.com/sister-software/mailwoman/blob/main/THIRD_PARTY_NOTICES.md)
 lists the components we distribute and the terms each one carries. Reference data an operator
 downloads separately carries the terms of whoever published it, and the next section says what those
@@ -65,7 +65,7 @@ terms are for each bundle we host.
 
 The resolver needs a gazetteer, and no npm package carries one. Four bundles are published for
 download (`candidate`, `poi`, `fr` and `us`), and each one contains rows another party published.
-Taking a copy engages that publisher's terms:
+Each copy engages that publisher's terms:
 
 <BundleRightsTable />
 
@@ -92,7 +92,7 @@ with us, and their attribution and share-alike conditions apply to you whichever
 
 ## What a pretrained package already carries
 
-A model's inputs are fixed when it is trained. Installing `@mailwoman/neural-weights-en-us` without
+A model's inputs are fixed when it is trained. If you install `@mailwoman/neural-weights-en-us` without
 pulling a single bundle still gives you artifacts built from the sources that package records, and
 skipping a runtime download leaves them unchanged. To use different inputs, install a different
 package.
@@ -122,7 +122,7 @@ data you pulled separately, and whether a recorded entry is the whole of what th
 For enterprise terms, seats, or a negotiated agreement,
 [email us about a license](mailto:teffen@sister.software?subject=Mailwoman%20licensing).
 
-## Configuring and checking a key
+## Configure and check a key
 
 A key is a signed token verified offline against the public keys each release ships.
 
@@ -137,7 +137,7 @@ mailwoman.ai still lists the key id as active and, for a self-service license, w
 still stands. `doctor` reports the branch that applies and the obligations it carries. With a valid
 key the notice is silent and `engine.license` reads `LicenseRef-Commercial`.
 
-## Keeping the key current
+## Keep the key current
 
 A self-service license renews with its subscription, and each renewal issues a new key whose date is
 the paid period's end plus 14 days. The purchase page and the first email carry a refresh secret.

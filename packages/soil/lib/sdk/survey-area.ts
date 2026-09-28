@@ -59,9 +59,9 @@ export interface SurveyAreaAttributes {
 /**
  * Read one survey area's tabular export.
  *
- * @throws {Error} When the metadata's use constraints no longer carry the public-information
- * sentence, when a `Choice` column holds a value outside the authority's own declared
- * domain, or when the export declares no legend row.
+ * @throws {Error} When the metadata's use constraints no longer include the
+ * public-information sentence, when a `Choice` column holds a value outside the
+ * authority's own declared domain, or when the export declares no legend row.
  */
 export async function readSurveyAreaAttributes(
 	tabularDirectory: PathBuilderLike,
@@ -235,7 +235,7 @@ function nullable(value: string | undefined): string | null {
 /**
  * The nccpi v3.0 overall index per component.
  *
- * Sub-rules at greater depths are submodels this layer does not carry.
+ * Sub-rules at greater depths are submodels this layer does not include.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -264,7 +264,7 @@ async function readNCCPI(
 }
 
 /**
- * What the shipped fgdc metadata says about this survey area's dates and its licence.
+ * What the shipped FGDC metadata records about this survey area's dates and its licence.
  */
 export interface FGDCMetadata {
 	/**
@@ -282,8 +282,8 @@ export interface FGDCMetadata {
 /**
  * Read the metadata nrcs ships inside the archive.
  *
- * @throws {Error} When the metadata carries no publication date, or its use
- * constraints no longer carry the public-information sentence.
+ * @throws {Error} When the metadata has no publication date, or its use constraints
+ * no longer include the public-information sentence.
  */
 export function readFGDCMetadata(xml: string, areaSymbol: string): FGDCMetadata {
 	const useConstraints = elementText(xml, "useconst")
@@ -320,7 +320,8 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 	const citations: Array<{ date: string; title: string; scale: number | null }> = []
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
-		// `caldate` for a single date, `begdate` for a range, whose beginning is the date this layer carries.
+		// `caldate` stores a single date.
+		// `begdate` stores a range's start date in this layer.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 
 		if (!date) continue
@@ -338,7 +339,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 }
 
 /**
- * The text of the first `<name>` element, whitespace left alone.
+ * The text of the first `<name>` element, with whitespace preserved.
  *
  * Two `indexOf` calls avoid the polynomial backtracking a regex takes on a document
  * whose opening tag has no closing partner.
@@ -396,7 +397,7 @@ function normalizeFGDCDate(value: string): string {
  * Read the survey area's own outline shapefile as a GeoJSON geometry.
  *
  * @throws {Error} When the shapefile holds anything other than exactly one feature.
- * Taking the first of several would silently choose which ground the coverage claim is about.
+ * The function would silently choose which ground the coverage claim describes if it took the first feature.
  */
 export async function readSurveyAreaOutline(shapefilePath: PathBuilderLike): Promise<ParsedGeometry> {
 	const { stdout } = await runFile("ogr2ogr", ["-f", "GeoJSON", "/vsistdout/", "-t_srs", "EPSG:4326", shapefilePath], {

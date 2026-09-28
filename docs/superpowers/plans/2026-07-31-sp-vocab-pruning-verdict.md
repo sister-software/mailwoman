@@ -26,7 +26,7 @@ distinct texts fired 13,348 ids.
 The pre-registered keep rule (fired ∪ eval-fired ∪ specials/byte-fallback ∪ single-codepoint)
 keeps 63,608 pieces (86.96%). The prunable remainder is **9,535 rows = 3.7 MB** of the 28.1 MB
 int8 embedding table, or 9.4% of the 39.4 MB artifact. A riskier extension that also prunes the
-14,252 "weak" pieces fired 1–99 times would save another 5.5 MB. Training does use that band,
+14,252 "weak" pieces fired 1–99 times would save another 5.5 MB. The training run uses that band,
 so pruning it has a cost.
 
 ## Verdict
@@ -42,7 +42,7 @@ ceiling 24%)". The research agent did not commit the raw measurement behind it, 
 audited. It likely came from a small sample, or from the 48k base vocab rather than the full
 73,143-piece spliced vocab measured against the full feed. The shipped-eval 6.7% figure is
 directionally consistent with our narrower fixture-only sweep, but the "ceiling" figure is not.
-**Standing lesson: re-derive a survey number from primary data before a task that depends on it
+**Lesson: re-derive a survey number from primary data before a task that depends on it
 spends real effort. This probe did that as its first step, so it cost about 1 hour instead of a
 build.**
 

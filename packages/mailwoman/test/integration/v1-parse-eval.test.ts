@@ -9,7 +9,7 @@
  *
  *   The v1 rules parser has been deleted, so the rules baseline is read from the phase-0 frozen
  *   capture in `legacy-golden/parity-raw.jsonl` and rebuilt into an `AddressTree` with
- *   `v0RecordToTree`. The coordinate comparison is identical to the live arm, and only the source
+ *   `v0RecordToTree`. The coordinate comparison is identical to the live arm. Only the source
  *   of the rules parse changed.
  *
  *   Skips when the neural weights or the WOF gazetteer are absent (CI).
@@ -138,7 +138,7 @@ interface Measured {
 	delta: number | null
 	implausible: boolean
 	/**
-	 * Per-label parse-tag agreement (informational): true/false when the fixture carries that label.
+	 * Per-label parse-tag agreement (informational): true/false when the fixture includes that label.
 	 */
 	agree: Partial<Record<string, boolean>>
 }

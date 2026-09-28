@@ -14,6 +14,8 @@
 // Here it is: `the gate` and `a seam`.
 // The loader reads each row, which validates the fields and records the result,
 // so the report can compare runs.
+// Parsing the manifest before validation hides which row failed.
+// Following the redirect, the client retries the request.
 
 // A dosage is not a metric; describe the measured rows.
 // Anchored, not bare.
@@ -40,6 +42,8 @@
 
 // `CommaNo.yml` and `NamesVerb.yml` must each fire on this line: the build runs in
 // one process, no server, and the flag names the output file.
+
+// Nobody named the field; the row carries one value alone, the decoder rides that value, and the report says it passed.
 
 /**
  * Anchors the fixture as a module.

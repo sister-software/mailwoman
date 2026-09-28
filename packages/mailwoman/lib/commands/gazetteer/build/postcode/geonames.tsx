@@ -7,7 +7,7 @@
  *   coverage for countries with no `whosonfirst-data-postalcode-<cc>` repo, GB included.
  *
  *   It writes to a new dated path and swaps no artifact. Promotion over the shipped database is a
- *   separate, deliberate step. GeoNames postal is CC-BY 4.0 and the GB rows carry an additional OGL v3
+ *   separate, deliberate step. GeoNames postal is CC-BY 4.0 and the GB rows have an additional OGL v3
  *   / Crown-copyright obligation from Ordnance Survey Code-Point Open — both ride in the artifact's
  *   `meta` table.
  */

@@ -258,7 +258,8 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 
 /**
  * Compact a cell set that spans several resolutions by grouping its cells first.
- * Pooling cells from different resolutions makes h3 throw.
+ *
+ * Cells from different resolutions cause h3 to throw when pooled.
  */
 export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 	const compacted: string[] = []

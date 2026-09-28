@@ -45,9 +45,9 @@ const SOURCE_STEM = /\.(?:m|c)?[jt]sx?$/u
 /**
  * Every tracked `package.json`, read as a manifest.
  *
- * Reading the file rather than importing it is the rule this repository enforces elsewhere for a
- * different reason — a JSON import lands in `out/` and rewrites the package scope of the compiled
- * tree — and it is the only form available here anyway, since the set is discovered at runtime.
+ * The repository requires a file read rather than an import for a different reason —
+ * a JSON import lands in `out/` and rewrites the package scope of the compiled tree —
+ * and it is the only form available here anyway, since the set is discovered at runtime.
  */
 export async function readPackageManifests(context: RepoContext): Promise<PackageManifest[]> {
 	const files = context.trackedFiles.filter((file) => file.endsWith("/package.json") && !file.includes("node_modules/"))

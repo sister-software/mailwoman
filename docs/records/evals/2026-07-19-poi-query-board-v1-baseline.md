@@ -146,7 +146,7 @@ category set each register as a breach.
   independent of this board; worth a look under `resolver-wof-sqlite`'s bm25 tiering rather than
   logged as a poi-board failure because no fixture encodes an expectation against it.
 
-## Standing update — 2026-07-20 (after #1206 / #1208 / #1209)
+## Current status — 2026-07-20 (after #1206 / #1208 / #1209) {#standing-update-2026-07-20-after-1206-1208-1209}
 
 Three changes since the v1.1 promotion battery moved the board: #1206 fanned category
 queries out from the curated seed id to its Overture leaves, #1208 switched brand searches to

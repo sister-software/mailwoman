@@ -40,7 +40,8 @@ const PATTERNS: ReadonlyArray<FormatPattern> = [
 	{ format: "nl_postcode", pattern: /^\d{4} [A-Z]{2}$/i, tokenSpan: 2, confidence: 0.9 },
 	{ format: "nl_postcode", pattern: /^\d{4}[A-Z]{2}$/i, tokenSpan: 1, confidence: 0.9 },
 	// Five digits are ambiguous between the US, France and Germany.
-	// Every matching format is reported at reduced confidence, and the caller chooses by locale.
+	// Every matching format is reported at reduced confidence.
+	// The caller chooses by locale.
 	{ format: "us_zip", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "fr_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },
 	{ format: "de_postcode", pattern: /^\d{5}$/, tokenSpan: 1, confidence: 0.6 },

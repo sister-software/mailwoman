@@ -48,8 +48,8 @@ async function loadRealUsZips(path: PathBuilderLike): Promise<string[]> {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behaviour it exercises.
+ * See `description` below for the generated surface form.
  */
 export const anchorAbsorptionRecipe: CorpusRecipe = {
 	name: "anchor-absorption",

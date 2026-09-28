@@ -93,7 +93,7 @@ def test_a_pre_rename_overlay_resolves_its_base_and_not_just_its_own_file(tmp_pa
 
 
 def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: Path) -> None:
-    """Reading the old key adds no protection if the guard behind it does not fire: an overlay's base files sit at the volume's paths, so on any other host they are unresolvable and the corpus is broken."""
+    """The old key adds no protection when the guard fails: an overlay's base files use volume paths, so another host cannot resolve them and the corpus breaks."""
     corpus = tmp_path / "corpus"
     (corpus / "train").mkdir(parents=True)
     present = corpus / "train" / "part-0000.parquet"
@@ -143,7 +143,7 @@ def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
 def test_a_base_part_never_resolves_to_the_overlays_same_numbered_one(tmp_path: Path) -> None:
     """Resolve part files using their position in the filename.
 
-    The base corpus and its overlay can both contain `val/part-0000.parquet`. Re-rooting by the filename tail alone would resolve the overlay's file and report the base as read. The resolver must raise when the base file is absent.
+    The base corpus and its overlay can both contain `val/part-0000.parquet`. Re-rooting by the filename tail would resolve the overlay's file even when the base should be read. The resolver must raise when the base file is absent.
     """
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"

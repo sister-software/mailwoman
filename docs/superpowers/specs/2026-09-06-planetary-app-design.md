@@ -7,7 +7,7 @@ name `planetary` is the conventional umbrella term in planetary cartography and 
 `@mailwoman/react/map`) and `2026-09-06-astrogeology-pipeline-design.md` (the archives it renders).
 **Supersedes:** the application half of the uploaded "Planetary Maps for Mailwoman" proposal.
 **Receipt:** PR #2209 opened 2026-09-08 over the archives published as moon `20260907-109dfab8` and mars
-`20260907-e60bcc6a`. Creating the two Workers Builds projects is the dashboard step, and the public bucket's CORS rule
+`20260907-e60bcc6a`. The dashboard setup creates the two Workers Builds projects, and the public bucket's CORS rule
 already admits both production origins. The preview serves on port 7770, the one local origin that rule admits.
 
 ## The problem
@@ -69,7 +69,7 @@ built body at startup, and a mismatch renders an error page rather than the wron
 Two Workers Builds projects, `mailwoman-moon` and `mailwoman-mars`, with identical settings except the
 build variable and the custom domain:
 
-| Setting        | Value                                                                                                |
+| Parameter      | Value                                                                                                |
 | -------------- | ---------------------------------------------------------------------------------------------------- |
 | Root directory | `packages/planetary`                                                                                 |
 | Build command  | `yarn build`                                                                                         |
@@ -151,7 +151,7 @@ The attribution is generated from the pipeline manifest: USGS Astrogeology, the 
 Planetary System Nomenclature, the NASA mission and instrument for each terrain product, and MapLibre. It
 is always visible.
 
-### Testing
+### Test plan
 
 - Unit: body config selection from `PLANETARY_BODY`, `moon.mailwoman.ai` and `mars.mailwoman.ai`
   mapping to their bodies, an unknown production host failing explicitly, and route parsing for

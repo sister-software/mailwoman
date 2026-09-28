@@ -183,7 +183,7 @@ for (const file of await Globerator.files("json", {
 
 	// The Latin skeleton is emitted for a hand-authored country too, because the
 	// hand-authored table states one order per country and a country whose two scripts
-	// disagree has no way to carry the second there.
+	// disagree has no way to represent the second there.
 	if (metadata.lfmt && metadata.fmt && metadata.lfmt !== metadata.fmt) {
 		const latin = layoutSource(metadata.lfmt, code, order, usedSlots)
 		const local = layoutSource(metadata.fmt, code, order, usedSlots, true)

@@ -13,7 +13,7 @@
  *
  *   The dumps need the ZIP64 support in the path-based readers.
  *   A member above 4 GB puts `0xFFFFFFFF` in the 32-bit size and offset slots.
- *   The entry's extra field carries the actual values.
+ *   The entry's extra field stores the actual values.
  */
 
 import { pipeline } from "node:stream/promises"
@@ -60,8 +60,8 @@ async function openStreamingArchive(
  * A publisher writing CP949, Shift_JIS, or GBK names produces bytes that decode
  * to mojibake and match no selector.
  *
- * Naming an encoding decodes the raw bytes directly.
- * Recoding mojibake back through CP437 is a different operation.
+ * A specified encoding decodes the raw bytes directly.
+ * A mojibake repair through CP437 is a different operation.
  *
  * That round trip needs a 256-entry table.
  * It silently mangles any byte CP437 maps to a character it cannot invert.
@@ -286,7 +286,7 @@ export interface ExtractZipEntriesOptions {
 	 * Write each member under its basename rather than its archive-internal path,
 	 * flattening the tree — `unzip -j`.
 	 *
-	 * The shapefile archives this option serves carry their siblings in one directory.
+	 * The shapefile archives this option serves store their siblings in one directory.
 	 * Downstream readers expect those files at the archive root.
 	 */
 	flatten?: boolean

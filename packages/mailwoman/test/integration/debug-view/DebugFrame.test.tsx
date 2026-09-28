@@ -158,8 +158,8 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// The rows keep their place and each says it has no evidence rather than a
-		// fabricated system, an empty token list, or a zeroed channel.
+		// The rows keep their place and each reports that it has no evidence rather than
+		// a fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")

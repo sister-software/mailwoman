@@ -9,7 +9,7 @@
  *   see how old the measurement is. `BundleSize` and `BundleFileCount` render one bundle's figure inline for the prose
  *   around the tables.
  *
- *   A page that asks for a bundle the registry does not carry fails the build here rather than rendering a blank.
+ *   A page that asks for a bundle absent from the registry fails the build here rather than rendering a blank.
  *
  *   Usage in MDX:
  *
@@ -155,7 +155,7 @@ export const ServedBundlesTable: React.FC = () => {
  * The rights table on `/license`: who published each bundle's rows, the SPDX expression
  * this repository records for it, along with the terms each publisher uses.
  *
- * The page carried these three columns as hand-typed markdown.
+ * The page previously included these three columns as hand-typed markdown.
  * The registry is the source for each publisher and license expression.
  *
  * `mailwoman data bom` serializes that record for each artifact.

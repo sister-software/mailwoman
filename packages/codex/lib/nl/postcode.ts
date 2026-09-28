@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Dutch postcodes: four digits then two letters (`1012 LG`), the PC6 level CBS publishes a polygon
- *   for. The surface may carry the space or omit it. Both spellings are attested.
+ *   for. The surface may include the space or omit it. Both spellings are attested.
  *
  *   This module holds the key form — compact and upper-case — because that is what a gazetteer row,
  *   an anchor-lookup key and a corpus recipe compare against. A spaced or lower-case value silently

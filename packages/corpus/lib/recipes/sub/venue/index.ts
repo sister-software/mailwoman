@@ -85,9 +85,9 @@ export interface SubVenueLeg {
 /**
  * The locale legs and their shares.
  *
- * The English legs carry the largest shares because only English has the modifier form
+ * The English legs account for the largest shares because only English has the modifier form
  * and most eval confound rows are GB or US addresses.
- * The en-US leg carries the largest negative share because its confound pool is the largest.
+ * The en-US leg accounts for the largest negative share because its confound pool is the largest.
  *
  * The JP corpus builder processes Japanese sub-venue rows.
  * It uses a different label set.
@@ -546,7 +546,7 @@ function emitPositives(
 const NEGATIVE_WITH_STREET_SHARE = 0.75
 
 /**
- * Emits one leg's negative rows, none of which carries a `unit` span.
+ * Emits one leg's negative rows, none of which includes a `unit` span.
  */
 function emitNegatives(
 	context: EmitContext,

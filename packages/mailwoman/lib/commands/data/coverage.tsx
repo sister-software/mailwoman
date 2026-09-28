@@ -25,7 +25,7 @@ export const spec = {
 		config: {
 			type: "string",
 			description:
-				"Training config whose country_weights decides admission. Defaults to the config scope.config.json records for the Latin family's shipped graph.",
+				"Config that controls country admission through country_weights. Defaults to the config scope.config.json records for the Latin family's shipped graph.",
 		},
 		refresh: {
 			type: "boolean",

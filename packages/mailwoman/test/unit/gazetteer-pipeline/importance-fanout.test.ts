@@ -34,8 +34,8 @@ const Q18125 = [
 /**
  * Q1794 is Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
  *
- * Beyond the coincidence radius, so the more populous place wins, which also keeps the
- * two from carrying identical importance and blurring the placetype signal.
+ * Beyond the coincidence radius, the more populous place wins.
+ * This also keeps the two from carrying identical importance and blurring the placetype signal.
  */
 const Q1794 = [
 	{ id: 101_913_837, placetype: "locality", lat: 50.1155, lon: 8.6842, population: 763_380 },
@@ -83,8 +83,8 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("drops on a population TIE between distant candidates", () => {
-		// A tie carries no evidence.
-		// Picking the first would be picking by row order.
+		// A tie provides no evidence.
+		// The first row would win only because of its position.
 		const tied = [
 			{ id: 1, placetype: "locality", lat: 0, lon: 0, population: 1000 },
 			{ id: 2, placetype: "locality", lat: 10, lon: 10, population: 1000 },

@@ -48,7 +48,7 @@ export async function buildUNLocodeDB(csvPath: string, dbPath: string): Promise<
 	for await (const r of records) {
 		rows++
 
-		if (!r.Country || !r.Location) continue // header/country rows carry no Location
+		if (!r.Country || !r.Location) continue // header/country rows have no Location
 		const coords = r.Coordinates ? parseUNLocodeCoords(r.Coordinates) : null
 
 		if (coords) {

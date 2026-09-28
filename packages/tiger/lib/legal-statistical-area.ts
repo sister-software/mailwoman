@@ -36,7 +36,7 @@ export const LegalStatisticalAreaDescription = {
 	 * - State or Equivalent Feature
 	 * - Tribal Subdivision
 	 * - Unified School District
-	 * - Voting District
+	 * - A Voting District
 	 */
 	Other: "00",
 	/**

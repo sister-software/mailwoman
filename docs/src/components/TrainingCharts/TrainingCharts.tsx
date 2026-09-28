@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   TrainingCharts is an interactive training metrics dashboard that reads from the Trackio API.
- *   It renders train_loss, val_loss, and val_macro_f1 as SVG line charts.
+ *   It renders `train_loss`, `val_loss`, and `val_macro_f1` as SVG line charts. Each chart uses an SVG line.
  *   Hover tooltips show per-component F1 scores.
  *
  *   Usage in MDX:

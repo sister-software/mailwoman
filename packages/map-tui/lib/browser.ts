@@ -91,7 +91,7 @@ interface DragAnchor {
 }
 
 /**
- * Counting code points keeps `slice` from splitting a surrogate pair.
+ * Code-point counts keep `slice` from splitting a surrogate pair.
  */
 function clipToCells(text: string, cells: number): string {
 	const codePoints = Array.from(text)
@@ -126,7 +126,7 @@ export class MapBrowser {
 	private resolveExit: ((code: number) => void) | null = null
 
 	/**
-	 * Trailing bytes of an incomplete escape sequence, carried to the next `decodeInputChunk`
+	 * The next `decodeInputChunk` call receives trailing bytes from an incomplete escape sequence
 	 * so a mouse report split across reads does not decode as an Esc keypress.
 	 */
 	private pendingInput = ""
@@ -436,7 +436,7 @@ export class MapBrowser {
 		try {
 			const frame = await this.renderer.renderFrame(viewport)
 
-			// Writing after a restore would draw over the user's shell.
+			// A write after restore would draw over the user's shell.
 			if (this.restored) return
 
 			// A resize during the render makes this frame the wrong shape and schedules its own render.

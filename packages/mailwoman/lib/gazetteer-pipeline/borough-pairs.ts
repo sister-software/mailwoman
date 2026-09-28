@@ -49,15 +49,15 @@ export interface BoroughPair {
 	 * Those types do not project to the same tag (`locality`/`localadmin` → `locality`;
 	 * `borough` → `dependent_locality`).
 	 *
-	 * Deriving it from the child's tag instead — the pre-PIX2 containment approach — cannot represent
-	 * the borough-parent relationship at all: `WESTERN_PARENT_OF` gives `dependent_locality`
+	 * The child's tag cannot represent the borough-parent relationship under the pre-PIX2 containment
+	 * approach. the borough-parent relationship at all: `WESTERN_PARENT_OF` gives `dependent_locality`
 	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
 	 */
 	parentTag: ComponentTag
 }
 
 /**
- * Project a WOF parent placetype onto the `ComponentTag` the parent span carries.
+ * Project a WOF parent placetype onto the `ComponentTag` assigned to the parent span.
  *
  * @throws Rather than defaulting: every placetype this module can select is in {@link PLACETYPE_PROJECTION}
  * by construction (the SQL's parent list is drawn from `PAIR_PLACETYPES_BY_COUNTRY`),
@@ -102,13 +102,13 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	// India is the one country where parent aliases are enabled.
 	// The team measured the behavior there.
-	// Indian cities carry official renames that WOF has not promoted: it stores Bangalore
-	// while an address today says Bengaluru (renamed 2014, present as an `eng` variant).
+	// Indian cities have official renames that WOF has not promoted: it stores Bangalore
+	// while addresses today use Bengaluru (renamed 2014, present as an `eng` variant).
 	// Without expansion the pair exists and never fires — "12 MG Road, Indiranagar,
 	// Bengaluru" emitted no dependent locality at all.
 	//
 	// Not enabled globally, deliberately.
-	// Applying it everywhere took the US index from 47,878 to 101,560 — more than double,
+	// Global application took the US index from 47,878 to 101,560 — more than double,
 	// on surfaces no board has ever graded.
 	// Every other increment in this campaign cleared a venue-confound board before shipping.
 	// A 2× expansion of the flagship locale warrants its own board rather than
@@ -155,9 +155,9 @@ const MIN_ALIAS_LENGTH = 3
 
 /**
  * A surface this Latin-script model could actually read: letters (including accented and extended Latin),
- * digits, spaces and the punctuation place names carry.
+ * digits, spaces and the punctuation found in place names.
  *
- * Anything with a character outside that range is a non-Latin rendering of the same place
+ * A string with a character outside that range is a non-Latin rendering of the same place
  * and costs artifact bytes for a form no input will ever contain.
  */
 const LATIN_SURFACE_PATTERN = /^[\p{Script=Latin}\p{Mark}0-9 '\-.,()/]+$/u
@@ -200,14 +200,14 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 		// Parent alias expansion.
 		// A writer uses the name they know.
 		// It may differ from WOF's preferred one: WOF stores Bangalore,
-		// while an Indian address today almost always says Bengaluru
-		// (renamed 2014. WOF carries it as an `eng` variant rather than the preferred name).
+		// while an Indian address today almost always uses Bengaluru
+		// (renamed 2014. WOF lists it as an `eng` variant rather than the preferred name).
 		// Without this the pair exists and never fires.
 		//
 		// Scoped to `eng` deliberately.
-		// The names table is exhaustively multilingual — Bangalore alone carries ~100
-		// language rows — and folding all of them in would bloat the artifact with scripts
-		// this Latin model never sees and surfaces no English-written address uses.
+		// The names table is exhaustively multilingual — Bangalore has ~100 language rows —
+		// and folding all of them in would bloat the artifact with scripts this Latin
+		// model never sees and surfaces no English-written address uses.
 		// The existing surface-expansion probe (`pair-index-hierarchy-probe.ts`) checks
 		// on `official = 1`; that is right for name-exactness checks but too strict here,
 		// because it is exactly the rows a rename leaves behind.
@@ -237,7 +237,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			// WOF's preferred name is often neither.
 			// It stores `Rome` (eng) for a city Italians write `Roma` (ita),
 			// and `Bangalore` for one Indians write `Bengaluru`.
-			// Restricting on `eng` alone, as this did when India motivated it,
+			// A query restricted to `eng`, as this was when India motivated it,
 			// misses every Italian and Spanish form.
 			//
 			// `isOfficialLanguage` is the codex table the WOF ingest already consults for exactly
@@ -246,7 +246,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			if (language !== "eng" && !isOfficialLanguage(country, language)) continue
 
 			// latin script only.
-			// India has 22 official languages and WOF carries Devanagari, Tamil and Bengali names for its cities.
+			// India has 22 official languages and WOF lists Devanagari, Tamil and Bengali names for its cities.
 			// This model never sees those scripts, so indexing them is pure artifact weight.
 			// The check is on the alias rather than the language tag, because a language
 			// can be written in more than one script.
@@ -276,7 +276,7 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 
 				if (seen.has(aliasKey) || child === alias) continue
 
-				// An alias is a second surface for the same parent row, so it carries that
+				// An alias is a second surface for the same parent row, so it has that
 				// row's placetype and therefore the same tag.
 				// The alias query is scoped to the same parent placetype list.
 				seen.add(aliasKey)

@@ -5,7 +5,7 @@
  *
  *   Ask every bundle's own artifacts whether publication is allowed. Report each refusal.
  *
- *   `BUNDLES` says what `mailwoman data pull` fetches. Each artifact is a sealed database carrying a
+ *   `BUNDLES` defines what `mailwoman data pull` fetches. Each artifact is a sealed database containing a
  *   `layer_manifest` whose `tier` states whether this project publishes it. No earlier reader compared those values.
  *   `candidate.db` ships as the `candidate` bundle while its manifest records
  *   `tier = build-local`, which `LayerTier` defines as the tier a share-alike source requires.

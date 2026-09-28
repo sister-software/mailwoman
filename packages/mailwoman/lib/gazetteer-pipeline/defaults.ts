@@ -22,7 +22,7 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"ES",
 	"FR",
 	"GB",
-	// `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes, converting
+	// `whosonfirst-data-admin-in` contains 189,026 sub-locality nodes, converting
 	// at 98.6% into 186,469 (child, parent) pairs.
 	// IN stays out of DEFAULT_OVERTURE_COUNTRIES, because a country served by both would double up its admin.
 	"IN",
@@ -307,7 +307,7 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
 /**
- * Staging suffix for admin rebuilds.
+ * The suffix used to stage admin rebuilds.
  *
  * Build here, verify, then swap over the live name (releasing.md).
  */

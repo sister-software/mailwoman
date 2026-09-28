@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Publishing a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from (`nexus-assets` →
- *   https://tiles.mailwoman.ai/...), as functions the `tiles publish` command and the planetary pipeline both call.
+ *   This module publishes a PMTiles archive to the Cloudflare R2 bucket the tile worker serves from (`nexus-assets` →
+ *   https://tiles.mailwoman.ai/...). The `tiles publish` command and planetary pipeline both call these functions.
  *   The worker reads the key `<prefix>/<tileset>.pmtiles` (prefix `tiles` per its wrangler config) and exposes
  *   `https://tiles.mailwoman.ai/<tileset>.json` and `/<tileset>/{z}/{x}/{y}.{ext}`.
  *
@@ -31,7 +31,7 @@ import { CommandError } from "@mailwoman/core/scripting/command"
  * The planetary pipeline uploads through wrangler.
  * It uses the account's API token.
  *
- * All transports use the same key layout, size report, and served-at line.
+ * All transports use the same key layout, size report and served-at line.
  */
 export type UploadTransport = (target: { file: string; bucket: string; key: string }) => Promise<void>
 

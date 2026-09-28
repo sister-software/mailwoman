@@ -55,7 +55,7 @@ const METRIC_LABEL: Record<keyof ModuleSurface, string> = {
 /**
  * Count declarations directly owned by a source file.
  *
- * Nested callbacks, local constants, and declarations inside a namespace do not
+ * Nested callbacks, local constants and declarations inside a namespace do not
  * add to the module's public reading surface.
  */
 export function moduleSurface(sourceFile: ts.SourceFile): ModuleSurface {

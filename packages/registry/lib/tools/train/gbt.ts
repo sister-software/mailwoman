@@ -95,7 +95,7 @@ export interface TrainDedupGBTOptions {
 	 */
 	cost?: number
 	/**
-	 * Training date stamped into the meta (overridable for reproducible commits).
+	 * The training date stored in the metadata (overridable for reproducible commits).
 	 *
 	 * Default today.
 	 */

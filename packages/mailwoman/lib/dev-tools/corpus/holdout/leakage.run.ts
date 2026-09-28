@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Count the train-split rows of a built corpus that the holdout policy says belong in val or test.
+ *   Count the train-split rows of a built corpus that the holdout policy assigns to val or test.
  *
  *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild. An overlay
  *   never passes through the align loop that applies it. This reads what a finished corpus holds and
@@ -52,7 +52,7 @@ const clauses: string[] = []
 /**
  * One predicate per country, kept so an offending row can be read back after the count.
  *
- * A count says how many rows the policy names.
+ * A count reports how many rows the policy names.
  * It does not say which rows matched.
  *
  * The cases differ: a row whose `region` span holds a holdout name is the policy
@@ -119,8 +119,8 @@ console.log(
  * astral character slices 1 unit late per such character: `𐍀𐍂𐍉𐍆𐌹𐌳𐌰𐌹𐌽𐍃, RHODE ISLAND`
  * read its region as `ND`, taken from `ISLAND`, and matched North Dakota.
  *
- * Reading each flagged row through `holdoutComponents` and `splitForRow` settles
- * it with the same functions the corpus writer used.
+ * A row-by-row check through `holdoutComponents` and `splitForRow` settles it
+ * with the same functions the corpus writer used.
  */
 const CONFIRM_LIMIT = 10_000
 

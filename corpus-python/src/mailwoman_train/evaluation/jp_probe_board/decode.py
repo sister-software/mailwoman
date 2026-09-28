@@ -1,4 +1,4 @@
-"""Turning a per-character label sequence back into the surfaces a row claims.
+"""Turn a per-character label sequence back into the surfaces a row claims.
 
 This is the pre-registered span reconstruction and no other rule: contiguous B/I runs of the same
 tag over the char sequence. It imports no torch, so the scoring above it is testable without a
@@ -51,19 +51,19 @@ def decode_runs(raw: str, label_ids: Sequence[int], id_to_label: Mapping[int, st
 
 def decode_all_spans(raw: str, label_ids: Sequence[int], id_to_label: Mapping[int, str]) -> dict[str, list[str]]:
     """Every contiguous B/I run per tag over the char sequence, in reading order -> concatenated
-    surfaces, plus the surface of each group of same-tag runs that only whitespace separates.
+        surfaces, plus the surface of each group of same-tag runs that only whitespace separates.
 
-    A tag can legitimately occur more than once in one row: the KR ladder puts 읍/면 and the 리
-    below it, or the road-form's parenthetical 동, on the same ``dependent_locality`` tag
-    (``신림면 구학리``), and ``수원시 장안구`` is two ``subregion`` spans. The per-tag read scores each
-    gold span against this full list. Collapsing to one span per tag would miss every such row,
-    whatever the model emitted.
+        A tag can legitimately occur more than once in one row: the KR ladder puts 읍/면 and the 리
+        below it, or the road-form's parenthetical 동, on the same ``dependent_locality`` tag
+        (``신림면 구학리``), and ``수원시 장안구`` is two ``subregion`` spans. The per-tag read scores each
+        gold span against this full list. Collapsing to one span per tag would miss every such row,
+        whatever the model emitted.
 
-    The whitespace-joined surfaces are there for the multi-token spans the typed registries carry:
-    the permit register's ``1층 141호`` is one ``unit`` field. The model labels every non-space character
-    ``unit`` and labels the space ``O``. The served projection joins adjacent
-    same-tag runs with the raw's own whitespace and reports ``unit: "1층 141호"``, so the read does
-    the same.
+    The whitespace-joined surfaces are there for the multi-token spans the typed registries define:
+        the permit register's ``1층 141호`` is one ``unit`` field. The model labels every non-space character
+        ``unit`` and labels the space ``O``. The served projection joins adjacent
+        same-tag runs with the raw's own whitespace and reports ``unit: "1층 141호"``, so the read does
+        the same.
     """
     runs = decode_runs(raw, label_ids, id_to_label)
     spans: dict[str, list[str]] = {}

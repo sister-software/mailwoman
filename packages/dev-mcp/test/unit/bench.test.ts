@@ -32,7 +32,8 @@ describe("summarizeLatency", () => {
 	})
 
 	it("reports an empty sample as nulls rather than zeros", () => {
-		// A latency of 0ms and no measurement are different claims, and only one of them is flattering.
+		// A latency of 0ms and no measurement are different claims.
+		// Only one of them is flattering.
 		const reading = summarizeLatency([])
 
 		expect(reading).toMatchObject({ n: 0, p50_ms: null, max_ms: null, throughput_per_s: null })

@@ -11,7 +11,7 @@
  *
  *   On top of the upstream data model this wrapper:
  *
- *   - Requires every term to carry a non-empty `tags` array whose keys are registered in
+ *   - Requires every term to include a non-empty `tags` array whose keys are registered in
  *     `docs/tags.yml` (build error otherwise — same spirit as the docs `onInlineTags: "throw"`).
  *   - Emits `tagMeta`: the tags.yml entries actually used by glossary terms, in declaration order,
  *     with per-tag term counts. The page renders these as filter toggles + category sections.

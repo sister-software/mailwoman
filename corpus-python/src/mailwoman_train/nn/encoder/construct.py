@@ -1,10 +1,10 @@
-"""Building the input layer, the soft-feed channels and the transformer body.
+"""Build the input layer, soft-feed channels and transformer body.
 
-Construction order is an interface: `_init_weights` walks `self.parameters()`, which yields them in
-registration order and draws from the global RNG for each, so the three builders must be called from
-`__init__` in the order they appear below and no line inside one may be reordered. A loaded
-checkpoint is unaffected — `load_state_dict` overwrites — but a from-scratch run started after a
-reorder no longer reproduces one started before it.
+Construction order affects initialization. `_init_weights` walks `self.parameters()` in registration
+order and draws from the global RNG once for each parameter. Call the three builders from `__init__` in
+the order shown below. Preserve the order of operations inside each builder. A loaded checkpoint is
+unaffected because `load_state_dict` overwrites the initialized values. A from-scratch run after a
+reorder does not reproduce a run started before it.
 """
 
 from __future__ import annotations
@@ -22,10 +22,10 @@ from .state import CoarseEncoderState
 def resolve_label_map(id_to_label: dict[int, str] | None, num_labels: int) -> dict[int, str]:
     """This model's index → BIO label map.
 
-    `None` takes the module-global STAGE3 map truncated to `num_labels`, which is what every
-    checkpoint before the 47-label head carries. A head WIDER than the global map has no defensible
-    default and must pass its own. `serialization` writes the resolved map into the saved config and
-    reads it back, so a checkpoint always knows its own labels.
+        `None` takes the module-global STAGE3 map truncated to `num_labels`, which is what every
+    checkpoint before the 47-label head can use it. A head WIDER than the global map has no defensible
+        default and must pass its own. `serialization` writes the resolved map into the saved config and
+        reads it back, so a checkpoint always knows its own labels.
     """
     if id_to_label is not None:
         resolved = dict(id_to_label)

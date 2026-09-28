@@ -53,7 +53,7 @@ export interface DerivedFormAttestation {
 export interface RegionalRegisterAttestation {
 	kind: "regional-register"
 	/**
-	 * The committed record that carries the register split, e.g. a `@mailwoman/poi-taxonomy` synonym phrase.
+	 * The committed record that stores the register split, e.g. a `@mailwoman/poi-taxonomy` synonym phrase.
 	 */
 	reference: string
 	/**
@@ -100,7 +100,7 @@ export type ActivityPhraseAttestation =
 export interface ActivityPhraseEntry {
 	/**
 	 * The text a person types.
-	 * Matching compares normalized forms.
+	 * The comparison uses normalized forms.
 	 */
 	phrase: string
 	/**

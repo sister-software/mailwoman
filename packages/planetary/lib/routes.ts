@@ -42,7 +42,7 @@ export function pathForRoute(route: PlanetaryRoute): string {
 }
 
 /**
- * A viewport carried in the query as `?lon=&lat=&z=`, or null unless all three are present and finite.
+ * A viewport encoded in the query as `?lon=&lat=&z=`, or null unless all three are present and finite.
  */
 export function viewportFromSearch(search: string): PlanetaryView | null {
 	const params = new URLSearchParams(search)

@@ -5,7 +5,7 @@
  *
  * The tool table — the tested interface; `server.ts` only adapts it to the SDK's envelope.
  *
- * Two rules bind every result: a number never travels without its denominator, and absence is reported as absence — no
+ * Two rules bind every result: a number never travels without its denominator. Absence is reported as absence — no
  * line here fills in a value the pipeline did not produce.
  */
 

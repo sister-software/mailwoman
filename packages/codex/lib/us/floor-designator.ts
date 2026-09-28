@@ -15,7 +15,7 @@
  *   C2.
  *
  *   Appendix C2 explicitly marks floor, basement as requiring a secondary number (alongside APT,
- *   bldg, etc.) while penthouse and lobby may stand alone. PH and lbby are kept here (not just in
+ *   bldg, etc.) while penthouse and lobby may appear without another designator. PH and lbby are kept here (not just in
  *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints.
  *   "Lobby" and "PH" identify specific floor analogs. The prior map routes `LEVEL_PHRASE` to `unit`.
  *   The schema has no separate `level` tag.
@@ -32,7 +32,7 @@
  *
  * `requiresNumber` mirrors the Appendix C2 classification: floor and basement
  * must be followed by a secondary number.
- * Penthouse and lobby may stand alone.
+ * Penthouse and lobby may appear without another designator.
  */
 export interface USFloorDesignator {
 	/**

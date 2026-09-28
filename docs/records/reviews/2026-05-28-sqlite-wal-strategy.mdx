@@ -97,7 +97,7 @@ PHASE 3: FREEZE
 
 Keep the phases separate. Do not interleave them.
 
-- **Don't invent a `geojson`-only schema.** Existing resolver code expects WOF-style tables.
+- **Keep the `geojson`-only schema out.** Resolver code expects WOF-style tables.
 - **Don't create secondary indexes before bulk insert.** Every row insert updates every index. Defer.
 - **Don't hold the SQLite writer lock while reading files or parsing JSON.** Parse first, then `BEGIN IMMEDIATE`, then insert.
 - **Don't flip `journal_mode = DELETE` while workers might still be open.** It returns `wal` when the switch did not happen.
@@ -385,7 +385,7 @@ Reviewed with DeepSeek, grounded in existing codebase behavior and downstream co
 
 The `geojson.body` column is the only way to extract `wof:population` (used by `build-importance.ts` population fallback and `fts.ts::buildPlaceSearchFts` population aux table). After extraction into `place_population`, the table is dropped. The frozen artifact never contains raw GeoJSON text.
 
-### 3. Extracting
+### 3. Extract data {#extract-data}
 
 **Build both. Per-country extracts are canonical, and the monolith is a convenience.**
 
@@ -395,7 +395,7 @@ The resolver already supports multi-extract ATTACH (`extract routing.ts`, `multi
 
 **Skip.**
 
-The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID. They are useful for cartography but irrelevant for address parsing. Including them would add duplicate rows or clobber the primary lat/lon/bbox via INSERT OR REPLACE.
+The existing builder already excludes `-alt-*` GeoJSON files. Alt geometries are alternate polygon representations for the same WOF ID. They are useful for cartography but irrelevant for address parsing. If included with INSERT OR REPLACE, the `-alt-*` geometries would add duplicate rows or replace the primary lat/lon/bbox.
 
 ### 5. Resumability
 
@@ -428,12 +428,12 @@ This design fixes the database lock bug that blocked the current `wof/prepare` c
 
 ## 9. Definition of done
 
-- Existing WOF resolver tests still pass, especially FTS, extract routing, population, proximity, and slim-build tests.
+- WOF resolver tests still pass, especially FTS, extract routing, population, proximity, and slim-build tests.
 - Artifact exposes the expected WOF-compatible tables for the chosen feature set.
 - `PRAGMA journal_mode` on the frozen file returns `delete`.
 - `PRAGMA integrity_check` returns `ok`.
 - No `.db-wal` / `.db-shm` sidecars remain for the frozen file.
-- Opening with `new DatabaseSync(path, { readOnly: true })` works.
+- The reader accepts `new DatabaseSync(path, { readOnly: true })`.
 - `PRAGMA query_only = ON` works for consumers.
 - Representative resolver queries return expected rows:
   - ID lookup via `spr.id`.

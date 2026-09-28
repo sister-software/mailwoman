@@ -60,9 +60,9 @@ These Terms apply to services operated by Sister Software, which may include:
 
 Some browser applications or demonstrations may download Mailwoman software, models, datasets, maps, or other assets from our infrastructure while performing the substantive processing locally.
 
-We also host reference-data bundles for download by the `mailwoman data` commands. Operating that catalog is a service covered by these Terms. What a bundle's rows permit is decided by the publisher of those rows rather than by these Terms, and Section 9 addresses that.
+We also host reference-data bundles for download by the `mailwoman data` commands. The service includes catalog operations and falls under these Terms. Each bundle's publisher decides what its rows permit. Section 9 addresses that.
 
-These Terms reach the services listed in this section. Installing Mailwoman from a package registry and operating it on your own infrastructure engages no service in this list, and no provision of these Terms adds a condition to rights an applicable software license grants you.
+These Terms reach the services listed in this section. A Mailwoman installation from a package registry and its operation on your own infrastructure engage no service in this list, and no provision of these Terms adds a condition to rights an applicable software license grants you.
 
 Unless we expressly state otherwise, free websites, demonstrations, previews, or experimental services may be changed, suspended, or discontinued without an availability commitment.
 
@@ -197,19 +197,19 @@ That responsibility covers what you do with the material. It does not shift to y
 
 Reference-data bundles are separate materials. Each one is rows a third party published, and its original license, notices, and conditions govern that material. Neither a Mailwoman software license nor a commercial license waives them, and the publishers of those rows are not licensors of anything Sister Software offers.
 
-Choosing at runtime which bundles to download is your decision about your installation. It is a separate question from the permissions we need to prepackage, host, and distribute a bundle, and your choice neither grants nor limits those.
+Your runtime choice of bundles to download applies to your installation. The permissions we need to prepackage, host, and distribute a bundle are separate, and your choice neither grants nor limits those permissions.
 
 `mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, terms, conditions, and open questions before any transfer begins.
 
 ### Pretrained artifacts
 
-A pretrained package's inputs are fixed when the model is trained, including inputs inherited from a base package whose model graph a data-only overlay decodes through. Installing a package without downloading any reference-data bundle does not change that lineage and does not remove a notice attached to it.
+A pretrained package's inputs are fixed when the model is trained, including inputs inherited from a base package whose model graph a data-only overlay decodes through. If you install a package without downloading a reference-data bundle, the installation does not change that lineage or remove a notice attached to it.
 
 Each published `@mailwoman/neural-weights-*` package carries a `PROVENANCE.json` recording, per artifact, what we hold about its inputs and which questions we have not answered. It records gaps as gaps: a package whose model card names no training sources reads as recording none, which is a different statement from having none. No artifact is recorded there as cleared for any particular use, and a generated notice explains what we hold rather than granting a right we lack.
 
 ## 10. Confidential information
 
-During a commercial, support, pilot, or design-partner engagement, either party may receive non-public technical, commercial, operational, or business information from the other.
+Either party may receive non-public technical, commercial, operational, or business information from the other during a commercial, support, pilot, or design-partner engagement.
 
 Each party will use reasonable care to guard information that:
 
@@ -272,7 +272,7 @@ Fees are stated on the applicable:
 
 Unless stated otherwise, prices exclude applicable VAT, sales tax, and similar taxes.
 
-Recurring subscriptions continue according to the billing terms accepted when purchased.
+Each subscription renews under the billing terms accepted at purchase.
 
 Promotional pricing, credits, discounts, pilots, and design-partner pricing apply only for their stated scope and duration.
 
@@ -301,7 +301,7 @@ Mailwoman software is subject to the warranty terms of the software license unde
 
 To the maximum extent permitted by law, Sister Software disclaims implied warranties relating to services covered by these Terms, including warranties of merchantability, fitness for a particular purpose, and non-infringement.
 
-Geocoding, address interpretation, geographic inference, and source datasets may contain errors, omissions, outdated information, or ambiguity.
+The geocoding, address interpretation, geographic inference, and source datasets may contain errors, omissions, outdated information, or ambiguity.
 
 Mailwoman results should not be treated as authoritative where an incorrect result could create material safety, legal, financial, or other consequences without appropriate independent verification.
 
@@ -367,7 +367,7 @@ A change in the entity operating Sister Software's services does not by itself t
 
 Nirrus LLC may assign agreements relating to the services covered by these Terms to a successor or affiliated entity as part of a merger, reorganisation, financing, sale, or transfer of the relevant business, subject to applicable law and any separate contractual restrictions.
 
-## 20. Governing law
+## 20. Applicable law {#governing-law}
 
 Unless a separate written agreement states otherwise, these Terms and services operated by Nirrus LLC are governed by the laws of the State of Delaware, United States, without regard to conflict-of-law principles.
 

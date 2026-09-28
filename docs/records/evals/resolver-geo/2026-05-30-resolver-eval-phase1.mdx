@@ -61,10 +61,10 @@ Fixes (both production keepers):
 
 ## Conclusions
 
-1. **The resolver was the bottleneck rather than parser routing.** Fixing country + abbreviation
+1. **The resolver was the bottleneck rather than parser routing.** Country + abbreviation
    coverage took the stack from broken (~10%) to 68.9% Acc@1 / 0 km median. Ship
    **neural→resolver** as the geocoding stack.
-2. **Routing is a real but modest lift** (+3.1pp overall, +4.7pp noisy). Worth building as
+2. **The route adds +3.1pp overall and +4.7pp on noisy inputs.** Build it as
    the **banded** version (cheap lexical router → arbiter only on the noisy/ambiguous band),
    so the dual-parse cost is spent only where it pays and clean inputs stay on neural.
 3. **The biggest remaining change is resolver coverage** rather than the parser: more aliases/

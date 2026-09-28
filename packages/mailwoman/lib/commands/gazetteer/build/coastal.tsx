@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build coastal` — acquire the Environment Agency's National Coastal Erosion Risk
- *   Mapping (England, 2024) and build the sealed `coastal-england.db` layer. Thin wiring only: catalogue read
+ *   `mailwoman gazetteer build coastal` — acquire the Environment Agency's `Mapping (England, 2024)` dataset
+ *   for National Coastal Erosion Risk and build the sealed `coastal-england.db` layer. Thin wiring only: catalogue read
  *   → download → build → verify all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
  *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
  *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
- *   Running the measurement costs a full pass over the chosen scenarios per candidate and produces a table
+ *   The measurement costs a full pass over the chosen scenarios per candidate and produces a table
  *   instead of an artifact. The table reports each scenario separately. Twelve layers cover the same
  *   frontages with different extents. A pooled share would average a
  *   present-day designation together with a 2105 projection and describe neither.
  *
- *   `--scenarios` selects the smoke rung. `--limit` narrows it further. Building one scenario over a real
+ *   `--scenarios` selects the smoke rung. `--limit` narrows it further. A one-scenario build over a real
  *   prefix of the source exercises the field names, the per-layer distance column, the value domains, the
  *   projection and the seal. Fixtures cannot exercise those source-dependent checks.
  */

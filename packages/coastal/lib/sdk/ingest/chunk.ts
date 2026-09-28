@@ -11,7 +11,8 @@
  *   fragmentation happens to stay low is not reproducible.
  *
  *   The domain checks run here and throw: an unknown policy, policy interpretation or defence type is a
- *   source-schema change. Coercing it to a nearest neighbour or null converts "the source changed" into
+ *   source-schema change. The ingest step must reject it instead of mapping it to a nearest neighbour or null,
+ *   which would convert "the source changed" into
  *   "there is no data here". The defence check compares case-folded and stores the source's own string for the
  *   source's inconsistent capitalization.
  *
@@ -43,7 +44,7 @@ import {
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table because its rows carry a blob.
+ * Chosen for the geometry table because its rows contain a blob.
  * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
@@ -82,7 +83,7 @@ export interface CoastalChunkResult {
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
-	 * The defence types this chunk saw, with counts — a census carried on the receipt
+	 * The defence types this chunk saw, with counts — a census recorded on the receipt
 	 * rather than only checked, because the authority publishes no list for the domain
 	 * and the counts are how a reader sees it move.
 	 */
@@ -251,7 +252,7 @@ export async function ingestCoastalChunk(
 			)
 
 			// Ground instability is a different hazard and has no cell rows.
-			// Leaving it out of the index keeps it from reaching an erosion probe.
+			// The index excludes it, so the erosion probe cannot query it.
 			instabilityFeatures++
 
 			batch.rowWritten()

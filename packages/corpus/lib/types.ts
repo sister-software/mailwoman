@@ -88,7 +88,7 @@ export function addressRoleOf(row: Pick<CanonicalRow, "addressRole">): AddressRo
  */
 export const SurfaceOrigin = {
 	/**
-	 * The publisher's own string, carried through unchanged.
+	 * The publisher's own string, preserved unchanged.
 	 */
 	Attested: "attested",
 	/**
@@ -129,7 +129,7 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
 }
 
 /**
- * Provenance fields that every corpus row carries.
+ * Provenance fields present on every corpus row.
  *
  * Two related facts are recorded per source rather than per row.
  * `createIneligibilityReader` in `build/eligibility.ts` joins `source` against the
@@ -138,7 +138,7 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
  *
  * A per-row eligibility field would copy a per-source decision onto every row
  * and would disagree with the register after a review changed a license's state.
- * Whether a row reached a checkpoint is a property of a run rather than of the corpus,
+ * Whether a row reached a checkpoint is a property of a run rather than of the corpus.
  * and the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
  * records it per source from a config and an `audit_epoch_mixture` output.
  */
@@ -217,7 +217,7 @@ export interface CanonicalRow extends SourceProvenance {
 	 * The role of this address.
 	 *
 	 * The runner stamps the adapter's `addressRole` on rows that omit it.
-	 * An adapter sets it per row only when one source carries several roles.
+	 * An adapter sets it per row only when one source has several roles.
 	 * Read it with {@link addressRoleOf}.
 	 */
 	addressRole?: AddressRole
@@ -321,7 +321,7 @@ export interface AdapterOptions {
 	limit?: number
 
 	/**
-	 * The fraction of rows that carry an explicit `country` component.
+	 * The fraction of rows that include an explicit `country` component.
 	 *
 	 * A source without country tokens teaches the model that country tokens are rare.
 	 * That lowers `country` recall.

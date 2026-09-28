@@ -6,7 +6,7 @@
  *   Census a downloaded bundle's own publisher stamps, so the terms recorded in `data/bundles.ts` can be checked
  *   against the bytes an operator holds rather than against prose written once and left to drift.
  *
- *   A bundle whose artifacts carry no publisher column reports `none-recorded-in-the-artifacts` rather than an
+ *   A bundle whose artifacts have no publisher column reports `none-recorded-in-the-artifacts` rather than an
  *   empty census. An artifact that is not on disk is reported as absent rather than contributing zero rows.
  */
 
@@ -18,9 +18,9 @@ import { bundleArtifactPath, type BundleSourceCensus, type DataBundle, resolveBu
 import { readReleaseManifest } from "#data/release"
 
 /**
- * The two shapes a bundle's artifacts carry a publisher stamp in, as one schema.
+ * The two shapes in which a bundle's artifacts store a publisher stamp, as one schema.
  *
- * Naming both tables `BundleSourceCensus.table` can hold makes the table a member of
+ * The two table names that `BundleSourceCensus.table` can hold make the table a member of
  * `keyof CensusSchema`, so Kysely checks the query without a cast and adding an artifact
  * shape to `BundleSourceCensus` is a compile error here until it is added too.
  * Only the stamp column is declared on each.
@@ -31,7 +31,7 @@ interface CensusSchema {
 }
 
 /**
- * One publisher stamp and how many rows carry it.
+ * One publisher stamp and how many rows have it.
  */
 interface SourceTally {
 	source: string
@@ -44,7 +44,7 @@ interface SourceTally {
 export interface BundleSourceCensusResult {
 	bundle: string
 	/**
-	 * Absent when the bundle declares no {@link BundleSourceCensus}: its artifacts carry
+	 * Absent when the bundle declares no {@link BundleSourceCensus}: its artifacts have
 	 * no publisher column rather than a census finding no column.
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
@@ -72,7 +72,7 @@ export interface BundleSourceCensusResult {
 /**
  * The stamps in one artifact, or a message saying why it could not be read.
  *
- * A `layer_manifest` carries one row, so its `count(*)` is 1 and the tally reports one manifest row
+ * A `layer_manifest` has one row, so its `count(*)` is 1 and the tally reports one manifest row
  * rather than a row count; {@link BundleSourceCensus.shape} tells a caller which it is holding.
  */
 async function tallyArtifact(

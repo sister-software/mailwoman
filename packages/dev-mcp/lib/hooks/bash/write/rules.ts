@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Decides from the command text alone whether a Bash command may run.
+ *   Decides from the command text by itself whether a Bash command may run.
  *
  *   The symbol precheck hook runs only on the Write and Edit tools, so this guard steers file edits
  *   away from Bash. It also refuses Modal launches that a shell signal could cancel. The guard is an
@@ -19,7 +19,7 @@ import { isAbsolute, resolvePath } from "path-ts"
  * Commands that may run anywhere.
  *
  * None of them takes file content from the agent as an argument.
- * Anything they write, they derive.
+ * Each admitted command creates only output derived from its arguments.
  */
 const ADMITTED = new Set([
 	"awk",
@@ -100,7 +100,7 @@ const ADMITTED = new Set([
  * Commands that write to the paths in their arguments.
  *
  * Each is admitted only when no written path lands inside the repository.
- * The value says whether every operand is written or only the last one.
+ * The value indicates whether every operand is written or only the last one.
  */
 const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
 	chmod: "all",
@@ -123,8 +123,8 @@ const PATH_WRITERS: Readonly<Record<string, "all" | "last">> = {
  * `.yarn/` is excluded because it holds the tracked yarn binary.
  *
  * Only {@link REMOVER} gets this exemption.
- * Removing derived output is safe, but a hand-written file such as `out/<subpath>.d.ts`
- * would stand in for source that does not exist.
+ * The hook can remove derived output safely, but a hand-written file such as
+ * `out/<subpath>.d.ts` would stand in for source that does not exist.
  */
 const DERIVED_PATH = /(?:^|\/)(?:out|dist|node_modules)(?:\/|$)|\.tsbuildinfo$/u
 
@@ -329,7 +329,7 @@ function commandSegments(stripped: string): Array<{ head: string; segment: strin
 
 		let words = segment.split(/\s+/u).filter((word) => word.length)
 
-		// Leading assignments, `!` and control-flow keywords precede the command word.
+		// Assignments, `!`, and control-flow keywords can precede the command word.
 		while (
 			words.length &&
 			(/^[A-Za-z_][A-Za-z0-9_]*=/u.test(words[0]!) || words[0] === "!" || CONTROL_FLOW_WORDS.has(words[0]!))

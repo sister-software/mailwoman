@@ -23,7 +23,7 @@ import {
 } from "#street/normalize"
 
 /**
- * The weighted centroid, extent, and provenance an aggregate probe returns;
+ * The weighted centroid, extent and provenance an aggregate probe returns;
  * `lat` is null when no row matched.
  */
 interface AggRow {

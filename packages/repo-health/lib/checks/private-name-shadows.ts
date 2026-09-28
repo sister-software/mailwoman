@@ -8,7 +8,7 @@
  *   pairs across `packages/*\/lib`: two were true copies (`percentile` with the percentile as a fraction, a second
  *   `pyRound`), the rest thin wrappers, deliberate dependency-free copies, or same-name-different-thing.
  *
- *   A copy that stays says why, on the line above it:
+ *   A copy that stays explains why, on the line above it:
  *
  *       // repo-health-ignore private-name-shadows-export -- <reason>
  *
@@ -115,11 +115,11 @@ function functionSites(file: string, text: string): FunctionSite[] {
 
 /**
  * Every module-private top-level function in `packages/*\/lib` whose name another module
- * exports, excluding generic names, short names, and copies with a reasoned ignore marker.
+ * exports, excluding generic names, short names and copies with a reasoned ignore marker.
  */
 export async function findPrivateNameShadows(context: RepoContext): Promise<PrivateNameShadow[]> {
 	const paths = await trackedSourcePaths(context, {
-		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` alone skips a file
+		// Both depths: git's fnmatch reads `**` as two stars, so `lib/**/*.ts` by itself skips a file
 		// directly under `lib/` (`lib/index.ts`), the same quirk `tracked-sources.ts` documents.
 		globs: ["packages/*/lib/*.ts", "packages/*/lib/*.tsx", "packages/*/lib/**/*.ts", "packages/*/lib/**/*.tsx"],
 		existingOnly: true,

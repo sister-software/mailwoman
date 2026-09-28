@@ -122,7 +122,7 @@ describe("tostEquivalence — the degenerate sample", () => {
 	})
 
 	it("never calls a total wipeout equivalent, which is the other way to reach a zero standard error", () => {
-		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as they can be. An equivalence test that keys on the standard error alone declares parity here.
+		// pA = 1 and pB = 0 both sit at the edge. Therefore, the pooled variance is zero while the arms are as far apart as they can be. An equivalence test that keys only on the standard error declares parity here.
 		const reading = tostEquivalence(50, 0, 50)
 
 		expect(reading.delta_pp).toBe(-100)

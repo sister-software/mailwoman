@@ -88,7 +88,7 @@ export const KNOWN_WEIGHTS_PACKAGES: readonly string[] = [
 
 /**
  * One installed package's provenance record, or `null` when the package is not installed:
- * a package that resolves but carries no `PROVENANCE.json` is reported absent
+ * a package that resolves but has no `PROVENANCE.json` is reported absent
  * rather than as installed with no declaration to make.
  */
 async function readInstalled(packageName: string): Promise<PackageProvenance | null> {
@@ -108,7 +108,7 @@ async function readInstalled(packageName: string): Promise<PackageProvenance | n
 }
 
 /**
- * Build the report for the packages this installation carries.
+ * Build the report for the packages in this installation.
  */
 export async function attributionReport(
 	engineLicense: string,

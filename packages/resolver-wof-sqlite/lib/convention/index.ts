@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Defines resolution conventions, which are per-polygon profiles merged along a place's ancestor chain.
+ * @file Defines resolution conventions as per-polygon profiles merged along a place's ancestor chain.
  *
  *   The strategy implementations live in `lookup.ts` and are registered by name.
  */

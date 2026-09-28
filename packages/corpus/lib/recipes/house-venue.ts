@@ -5,7 +5,7 @@
  *
  *   `house-venue` recipe — synthetic house_number+venue+street co-occurrence rows: tuples →
  *   {@link synthesizeHouseVenueRow} → aligned LabeledRow. The v0.6.3 corrective companion to the
- *   no-street recipe: every row carries both house_number and venue, restoring the house_number
+ *   no-street recipe: every row includes both house_number and venue, restoring the house_number
  *   signal that no-street's distributional shift cost the model. Ported from the root build script
  *   it replaced.
  */
@@ -39,8 +39,8 @@ const HOUSE_VENUE_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behaviour it exercises.
+ * See `description` below for the generated surface form.
  */
 export const houseVenueRecipe: CorpusRecipe = {
 	name: "house-venue",

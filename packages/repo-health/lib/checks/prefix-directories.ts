@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   A repeated hyphen prefix among a directory's children is a directory hierarchy encoded in names.
- *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. Keeping that boundary
+ *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. This directory boundary
  *   as a directory makes imports, file listings and editor trees show the same hierarchy.
  *
  *   A group contains two or more children that share their first hyphen-delimited segment. A sibling whose full name
@@ -142,7 +142,7 @@ export function findPrefixGroups(
 
 		// A sibling whose full name is the prefix belongs to the family it heads:
 		// `reliability.ts` beside `reliability-report.ts` is the family's own module.
-		// Leaving it out splits the family across two levels.
+		// Its omission splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 
@@ -178,8 +178,8 @@ export function findPrefixGroups(
 export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: readonly string[]): ModuleMove[] {
 	const moves: ModuleMove[] = []
 
-	// A directory that is itself moving carries its contents with it, so a group inside
-	// one would claim the same file twice with two destinations.
+	// A directory that is itself moving includes its contents, so a group inside one
+	// would claim the same file twice with two destinations.
 	// `lib/cli-native/command-router.ts` is both a `cli-` member through its directory
 	// and a `command-` member in its own right.
 	// The outer move wins this pass and the check re-reads afterwards.

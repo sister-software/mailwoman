@@ -28,7 +28,7 @@ import { containmentFor } from "#decoder/containment"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * Tags that cannot stand alone.
+ * Tags that require another tag.
  *
  * Each is a sub-component of a structural anchor such as street, locality, venue, or postcode.
  *

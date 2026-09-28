@@ -121,11 +121,11 @@ it unchecked. This applies the runbook's closing recommendation, "promote the wa
 - The layered config file from `scratchpad/config-file-plan.md`. This design supersedes it (see "Why not a
   config file").
 - Any change to `resolveFromPackageDir`'s sibling list or resolution order.
-- Removing the `publish-workspace.ts` symlink dereference net.
+- Removal of the `publish-workspace.ts` symlink dereference net.
 - Phases 1–3 of the reproducibility sequence (`mw data inventory`, `mw data pull country`, manifest
   retrofit). Each gets its own spec.
 
-## Testing
+## Tests
 
 Unit, against a temporary data root and a fake package directory:
 
@@ -158,7 +158,7 @@ Regression:
    `mailwoman.baseWeights` relationship the resolver already implements. The current preference is a shared
    directory. This needs a decision before implementation because it fixes the on-disk layout.
 2. **Does `copy-weights.ts` read the overlay or the data root directly?** Today it reads the data root
-   through `release.config.json`, and that works. Leaving it alone is the smaller change. Pointing it at the
+   through `release.config.json`, and that works. The smaller change is to leave it alone. A change to point it at the
    overlay would make the release ship exactly the bytes dev ran. The current preference is to leave it
    alone for phase 0 and revisit when phase 3 gives artifacts manifests.
 3. **What populates the overlay on a machine that has never trained?** The recipe gives a path under

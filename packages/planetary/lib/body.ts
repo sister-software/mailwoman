@@ -51,7 +51,7 @@ export function bodyForHostname(hostname: string): PlanetaryBody | null {
  * Any other host may serve either body.
  * The check fires only for the two production hostnames.
  *
- * The error names both sides so the misconfigured project is identifiable from the message alone.
+ * The error identifies both sides so the message identifies the misconfigured project without other context.
  */
 export function assertHostMatchesBody(hostname: string, body: PlanetaryBody): void {
 	const expected = bodyForHostname(hostname)

@@ -30,7 +30,7 @@ const { values, positionals } = parseArguments({
 
 /**
  * The arms, by the artifact each is: `pop` fell back to population because its source DB
- * has no `place_importance` table, while `imp` carries the real Wikipedia join.
+ * has no `place_importance` table, while `imp` contains the real Wikipedia join.
  */
 const ARMS: Record<string, PathBuilder> = {
 	pop: wofDatabasePath("fst-per-locale"),

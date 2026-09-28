@@ -32,7 +32,7 @@ Same call you already had. It now resolves against a rooftop-level result on you
 
 ## One `docker run` for the server
 
-The container installs the published packages and bakes the model weights in, so a fresh pull parses addresses with no data at all. Geocoding needs a gazetteer, which stays out of the image and mounts at `/data`:
+The container installs the published packages and bakes the model weights in, so a fresh pull parses addresses with no data at all. The container needs a gazetteer at runtime, so it mounts one at `/data`:
 
 ```bash
 docker run --rm -p 8080:8080 \

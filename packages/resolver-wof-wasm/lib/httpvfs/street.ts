@@ -32,7 +32,8 @@ export interface HTTPVFSDB {
 
 /**
  * Inline a string literal for SQL.
- * Inlining avoids param marshaling over Comlink.
+ *
+ * An inline implementation avoids parameter marshaling over Comlink.
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
@@ -51,7 +52,7 @@ export interface StreetPointHit {
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `address_point`,
+	 * One memoized round trip to confirm the extract includes `address_point`,
 	 * graceful on a tableless extract.
 	 */
 	readonly #hasTable: () => Promise<boolean>
@@ -136,7 +137,7 @@ export interface StreetInterpHit {
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `street_segment`.
+	 * One memoized round trip to confirm the extract includes `street_segment`.
 	 */
 	readonly #hasTable: () => Promise<boolean>
 
@@ -213,7 +214,7 @@ export class HTTPVFSInterpolator {
 }
 
 /**
- * A street-level coordinate, the tier that produced it, and an uncertainty radius.
+ * A street-level coordinate, its producing tier and an uncertainty radius.
  */
 export interface StreetResolution {
 	lat: number

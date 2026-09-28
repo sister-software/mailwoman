@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 /**
  * Three GeoNames-shaped rows.
  *
- * The middle row carries a `"` in its place name, as real dumps do.
+ * The middle row contains a `"` in its place name, as real dumps do.
  * `Ovrag Kyzylak"on` appears on line 394 of Turkmenistan's dump.
  * The quote-aware reader swallowed every row after it.
  */

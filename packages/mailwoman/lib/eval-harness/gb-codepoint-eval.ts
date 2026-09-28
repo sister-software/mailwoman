@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   GB postcode-resolution evaluation against OS Code-Point Open, whose centroids are also the GB gazetteer source,
+ *   GB postcode-resolution evaluation against OS Code-Point Open. Its centroids are also the GB gazetteer source,
  *   so this measures the parse → retrieval → resolution pipeline at postcode scale rather than independent coordinate accuracy.
  *
  *   Contains OS data © Crown copyright and database right 2026 (Code-Point Open, OGL v3).

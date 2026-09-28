@@ -50,7 +50,7 @@ const LogLevelColors = {
  * Where diagnostics are written: under Node, a `Console` whose streams are both stderr,
  * because `console.debug`, `console.info` and `console.log` write to stdout there.
  *
- * Those messages would interrupt any command whose stdout carries data.
+ * Those messages would interrupt any command that writes data to stdout.
  * A browser uses its one console.
  */
 function diagnosticsSink(): Console {

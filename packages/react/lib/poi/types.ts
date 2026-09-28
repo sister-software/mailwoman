@@ -22,7 +22,7 @@ export type TaxonomyLookup = ReturnType<typeof createPOITaxonomyLookup>
 export type CategoryRecord = NonNullable<ReturnType<TaxonomyLookup["getPOICategory"]>>
 
 /**
- * The lazily loaded POI runtime, which holds the taxonomy lookup, the lexicon and the kind classifier.
+ * The lazily loaded POI runtime holds the taxonomy lookup, the lexicon and the kind classifier.
  */
 export interface POIRuntime {
 	lookup: TaxonomyLookup
@@ -119,7 +119,7 @@ export type POILiveSearchResult =
  * categories and the anchor text.
  * The explorer runs intent-only when this function is absent.
  *
- * For a brand subject, `brandWikidata` carries the QID and the probe fetches by it.
+ * For a brand subject, `brandWikidata` contains the QID and the probe fetches by it.
  * In that case `categoryID` holds the brand name and `overtureCategoryIDs` is empty.
  *
  * A probe that cannot serve brands should leave `usePOISearch`'s `brandLiveSearch` option unset.

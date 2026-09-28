@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Reading a delimited file whose `"` is an ordinary character.
+ * @file Reads a delimited file whose `"` is an ordinary character.
  *
  *   `CSVSpliteratorInit.enableQuoteHandling` defaults to true.
  *   A quote-aware reader over unquoted input still returns rows.
@@ -10,7 +10,7 @@
  *   The caller then sees a shorter file and reads a smaller dataset.
  *   Downstream counts cannot distinguish this result from a small source file.
  *
- *   The GeoNames country dumps are unquoted TSV and carry `"` in place names (`Ovrag Kyzylak"on`).
+ *   The GeoNames country dumps are unquoted TSV and contain `"` in place names (`Ovrag Kyzylak"on`).
  */
 
 import { createReadStream } from "node:fs"
@@ -98,7 +98,8 @@ export const ZSTD_EXTENSION = ".zst"
  * That lets {@linkcode readUnquotedTSVChecked} count a file and then read it.
  *
  * A compressed file becomes a single stream.
- * Reusing that stream across two passes yields the rows once and no rows the second time.
+ * The reader cannot reuse that stream across two passes: it yields the rows once
+ * and no rows the second time.
  *
  * A compressed source is not seekable, so it cannot be segmented for parallel readers.
  * Every reader in this repository consumes a corpus part file as one stream.

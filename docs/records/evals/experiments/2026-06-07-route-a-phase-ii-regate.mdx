@@ -21,7 +21,7 @@ These are the numbers after the residual tail was chased down (see "Closing the 
 
 ## Why — three fixes, one root cause
 
-The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to single-token spans when proposals don't cover the multi-word component." That was half right. Maturing the phrase grouper to _propose_ multi-word spans (`Reggio nell'Emilia`, `Las Palmas de Gran Canaria`) was necessary, but on its own it barely moved the aggregate — the proposals existed and the reconciler still fragmented. Digging into the live beam turned up two more mechanisms behind the same symptom, and all three had to land together.
+The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to single-token spans when proposals don't cover the multi-word component." That was half right. The phrase grouper had to _propose_ multi-word spans (`Reggio nell'Emilia`, `Las Palmas de Gran Canaria`), but that change alone barely moved the aggregate — the proposals existed and the reconciler still fragmented. A live-beam inspection exposed two more mechanisms behind the same symptom, and all three fixes had to land together.
 
 1. **The phrase grouper couldn't see multi-word localities.** `scoreLocalityPhrase` walked a run of capitalized tokens and stopped dead at the first lowercase one, so place-name connectives (`de`, `in`, `nell'Emilia`, `aan den`) ended the span. Worse, in OpenAddresses' all-caps international data every short place word — `SAN`, `DI`, `DEL` — matches the 2-3-uppercase region-abbreviation shape, so the head of `SAN NAZARIO` got skipped as if it were a US state. The walk now bridges a bounded set of place-name particles and apostrophe-fused names, and a region-abbreviation-shaped token that heads a multi-word place is allowed to start a locality.
 
@@ -31,15 +31,15 @@ The Phase I post-mortem blamed proposal coverage: "the reconciler falls back to 
 
 The through-line: the joint path was being asked to type spans the rule layer couldn't describe and the model hadn't seen, and the audit was papering over both with its most confident-looking guess. Give the grouper the vocabulary and let the audit defer to the model, and the fragmentation evaporates.
 
-## Closing the tail
+## The remaining cases {#closing-the-tail}
 
-The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%, above the check. Dumping those rows showed two more shapes, and a fourth structural fix per shape took every locale under 0.5%.
+The three fixes above cleared the catastrophe but left IT at 1.3% and ES at 2.8%, above the check. The row dump showed two more shapes, and a fourth structural fix per shape took every locale under 0.5%.
 
 4. **The audit injected a _second_ locality.** On a Romance street like `Via Francesca Nord`, the OOD model itself mistypes the street-name word `Francesca` as a locality; the reconciler orphans it and the audit — correctly deferring to the model now — injects `locality="Francesca"`. The real trailing city was still in the tree, but `decodeAsJSON` reads the earlier-positioned spurious one. The audit now refuses to inject a second singleton-tag node (`locality`/`region`/`postcode`/`country`) when the reconciler already produced one. Joint-path only; the argmax default stays byte-stable. This is what carried IT to 99.8%.
 
-5. **The model tags a trailing city as a postcode.** Facing the postcode-then-city order, the model puts `Toulouse` (postcode:0.77, locality:0.06) and `Sena` (postcode:0.53) in the postcode slot, so the locality drops entirely. But `Toulouse` has no digit, and postcodes contain a digit in every locale we handle — so the span-logit aggregation now drops the `postcode` and `house_number` candidates for any digit-less span, and the reconciler picks the real component. That alone recovered eight French cities and most of the Spanish tail.
+5. **The model tags a trailing city as a postcode.** In postcode-then-city order, the model puts `Toulouse` (postcode:0.77, locality:0.06) and `Sena` (postcode:0.53) in the postcode slot, so the locality drops entirely. But `Toulouse` has no digit, and postcodes contain a digit in every locale we handle — so the span-logit aggregation now drops the `postcode` and `house_number` candidates for any digit-less span, and the reconciler picks the real component. That alone recovered eight French cities and most of the Spanish tail.
 
-6. **Accented capitals weren't proper nouns.** `startsCapitalized` tested `/^[A-Z]/`, so `Évellys` and `Étagnac` — leading `É` — were invisible to the grouper, never proposed, never recovered. Making it Unicode-aware (`\p{Lu}`) brought FR to a clean 100%. The lone holdout is `La Florida`, where the model's `Florida → region` prior is strong enough to win the slot outright; one row, and a model problem rather than a rule one.
+6. **Accented capitals weren't proper nouns.** `startsCapitalized` tested `/^[A-Z]/`, so `Évellys` and `Étagnac` — leading `É` — were invisible to the grouper, never proposed, never recovered. A Unicode-aware `startsCapitalized` check (`\p{Lu}`) brought FR to a clean 100%. The lone holdout is `La Florida`, where the model's `Florida → region` prior is strong enough to win the slot outright; one row, and a model problem rather than a rule one.
 
 ## What this means for the plan
 

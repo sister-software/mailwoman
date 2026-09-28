@@ -6,7 +6,7 @@
  *   Fixture-scale check for the NI OSM postcode database. The name law holds and the medoid lands on a member point.
  *   A malformed tag value is dropped and reported. The provenance `meta` reaches the sealed artifact.
  *
- *   The fixture is a synthetic Overpass response in the real envelope shape, because a node carries `lat`/`lon` and a way carries `center`, and a parser that handles only one still passes tests written against the other.
+ *   The fixture is a synthetic Overpass response in the real envelope shape, because a node has `lat`/`lon` and a way has `center`; a parser that handles only one still passes tests written against the other.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -29,8 +29,8 @@ function node(id: number, postcode: string, lat: number, lon: number): Record<st
 }
 
 /**
- * A way element under `out center` carries its coordinate as `center`,
- * the shape a reader that only handles nodes silently drops.
+ * A way element under `out center` stores its coordinate in `center`, the shape
+ * a reader that only handles nodes silently drops.
  */
 function way(id: number, postcode: string, lat: number, lon: number): Record<string, unknown> {
 	return { type: "way", id, center: { lat, lon }, tags: { "addr:postcode": postcode, building: "yes" } }
@@ -91,7 +91,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// The reported value says which value was dropped; `"BT36 4RU,"` is a typo rather than a bug.
+	// The reported value identifies which value was dropped; `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways are not a footnote: 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })
@@ -147,7 +147,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const country = db.prepare("SELECT DISTINCT country FROM spr").all() as Array<{ country: string }>
 	expect(country).toEqual([{ country: "GB" }])
 
-	// The artifact carries the licence obligation, tier and coverage record as provenance.
+	// The artifact records the licence obligation, tier and coverage as provenance.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,

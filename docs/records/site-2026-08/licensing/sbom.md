@@ -52,7 +52,7 @@ $ cyclonedx-cli validate --input-file docs/static/sbom/mailwoman-5.10.1.cdx.json
 BOM validated successfully.
 ```
 
-## Regenerating
+## Regenerate the SBOM
 
 A single script produces and normalizes both files:
 

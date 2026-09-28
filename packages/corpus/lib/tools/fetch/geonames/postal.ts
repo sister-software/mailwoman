@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch the GeoNames per-country postal-code exports — the only source in this family that carries a
+ *   Fetch the GeoNames per-country postal-code exports — the only source in this family that includes a
  *   `(postcode, locality, region)` triple with the names inline.
  *
  *   Source : https://download.geonames.org/export/zip/<CC>.zip
@@ -78,7 +78,7 @@ interface GeonamesPostalManifest {
 
 /**
  * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/` with
- * a sibling `manifest.json`; a country the source does not carry is counted as failed
+ * a sibling `manifest.json`; a country the source does not cover is counted as failed
  * and recorded in `failedCodes` without stopping the rest.
  */
 export async function fetchGeonamesPostal(

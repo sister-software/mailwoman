@@ -23,7 +23,7 @@ import { Globerator } from "spliterator/node/fs"
  *
  * Each generating source module is paired with its compiled counterpart
  * because the build spawns the compiled CLI.
- * Hashing source alone lets a stale compile compute the fixed key and build with the broken code.
+ * A source-only hash lets a stale compile compute the fixed key and build with the broken code.
  *
  * Transitive compiled imports are deliberately excluded, or the store would
  * invalidate on every unrelated commit.
@@ -85,7 +85,9 @@ async function postcodePipelinePaths(): Promise<string[]> {
 export interface DerivedWeightsInput {
 	/**
 	 * Repo-relative identity of the input.
-	 * Hashed, and it must not vary by checkout location.
+	 *
+	 * Hashed.
+	 * The value must not vary by checkout location.
 	 */
 	name: string
 	/**
@@ -167,7 +169,7 @@ export function derivedWeightsDir(key: string): string {
  */
 /**
  * Magic (4) + u32 recordCount (4) + u8 countryCount (1) — the PCB1 prefix the serve check reads.
- * Anything shorter cannot carry a record count at all.
+ * No shorter value can represent a record count.
  */
 const PCB1_HEADER_BYTES = 9
 

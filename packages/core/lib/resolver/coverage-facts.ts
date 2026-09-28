@@ -52,7 +52,7 @@ export interface CountryCoverageFact {
 }
 
 /**
- * One country's coarse guard-B bounding box, as carried by the gazetteer artifact's `country_bbox` table.
+ * One country's coarse guard-B bounding box, as recorded in the gazetteer artifact's `country_bbox` table.
  */
 export interface CountryBBoxFact {
 	/**
@@ -72,7 +72,7 @@ export interface CountryBBoxFact {
 /**
  * Facts a loaded gazetteer artifact declares about itself.
  *
- * Read from the artifact's own manifest tables at open time, carried on the
+ * Read from the artifact's own manifest tables at open time, stored on the
  * {@link ResolverBackend}/{@link Resolver} handle so consumers read the facts from
  * the artifact they are actually resolving against.
  *
@@ -96,7 +96,7 @@ export interface GazetteerArtifactCoverage {
 	/**
 	 * Derived at load.
 	 *
-	 * The countries whose fact says `hardFilterSafe`, the artifact's hard-country safelist.
+	 * The countries whose fact sets `hardFilterSafe`, the artifact's hard-country safelist.
 	 */
 	hardCountrySafelist: ReadonlySet<string>
 }

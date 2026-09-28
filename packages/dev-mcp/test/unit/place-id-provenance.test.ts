@@ -38,8 +38,8 @@ describe("placeIDProvenance", () => {
 	})
 
 	it("puts each boundary in the band that starts at it, with no gap", () => {
-		// A ladder written with the wrong comparison misclassifies exactly these boundary ids,
-		// which is why they are asserted rather than sampled.
+		// A ladder with the wrong comparison misclassifies these boundary ids.
+		// The test asserts them rather than sampling.
 		expect(placeIDProvenance(OVERTURE_ID_BASE).id_source).toBe(PlaceIDSource.Overture)
 		expect(placeIDProvenance(OVERTURE_ID_BASE - 1).id_source).toBe(PlaceIDSource.WOF)
 		expect(placeIDProvenance(GEONAMES_ID_BASE - 1).id_source).toBe(PlaceIDSource.Overture)

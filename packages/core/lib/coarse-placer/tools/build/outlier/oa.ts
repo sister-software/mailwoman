@@ -88,7 +88,7 @@ const IN_MAP = new Set<string>(COUNTRIES)
 /**
  * Language/region families for the leave-one-family-out split.
  *
- * Off-map countries OA's europe+asia zips plausibly carry.
+ * Off-map countries that may appear in OA's europe+asia zips.
  * The actual train/heldout set is intersected with what's on disk at runtime.
  *
  * Heldout families are the generalization probe, so the model never sees a row from them.

@@ -36,7 +36,7 @@ At the default decision threshold (abstain 0.5):
 
 ## The abstention threshold is the real change (DeepSeek-confirmed)
 
-Sweeping the threshold on the OA retrain trades in-map accuracy for off-map handling — a clean Pareto curve:
+The OA retrain's threshold sweep trades in-map accuracy for off-map handling — a clean Pareto curve:
 
 | abstain | in-map accuracy | off-map heldout handled |
 | ------: | --------------: | ----------------------: |

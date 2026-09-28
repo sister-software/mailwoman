@@ -120,7 +120,7 @@ export interface ResolverBackend {
 		fuzzyCountry?: string
 		parentID?: number | string
 		/**
-		 * Sibling postcode, if present.
+		 * The postcode of a sibling, when present.
 		 */
 		postcode?: string
 		/**
@@ -161,7 +161,7 @@ export interface ResolverBackend {
 
 export interface BackendCapabilityGap {
 	/**
-	 * Missing backend capability.
+	 * A backend capability that is absent.
 	 */
 	capability: "ancestors" | "coincidentLocalitiesFor"
 	/**
@@ -204,7 +204,7 @@ export interface CoincidentLocality extends ResolvedPlace {
 }
 
 /**
- * Reading used for weak-resolution span-rescore behavior.
+ * A reading used for weak-resolution span-rescore behavior.
  */
 export type WeakResolutionReading = "score" | "containment" | "either"
 

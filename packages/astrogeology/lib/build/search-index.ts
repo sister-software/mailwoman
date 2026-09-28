@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The search artifact: one `@mailwoman/ancestrie` entry per feature name, one more per alias, ranked by diameter so
- *   a larger feature sorts first at an equal prefix. The trie carries no ancestry (nomenclature has no containment
+ *   a larger feature sorts first at an equal prefix. The trie stores no ancestry (nomenclature has no containment
  *   graph); what it gives the app is a prefix walk over the names with the feature's id and position as cargo.
  *
  *   The tokenizer lives in `#search/tokens`, the platform-free half an app bundles. the build calls the same one.
@@ -38,7 +38,7 @@ export async function buildSearchIndex(
 			centerLon: feature.centerLon,
 			centerLat: feature.centerLat,
 			// Include a diameter only when the gazetteer has one.
-			// Writing 0 for an absent diameter would tell a camera the feature is a point.
+			// A zero diameter would tell a camera that a feature with no diameter is a point.
 			...(feature.featureTypeCode ? { featureTypeCode: feature.featureTypeCode } : {}),
 			...(feature.diameterKm === undefined ? {} : { diameterKm: feature.diameterKm }),
 		}

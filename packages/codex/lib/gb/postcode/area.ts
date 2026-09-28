@@ -72,7 +72,7 @@ const WALES_AREAS = [
  *
  * England is intentionally absent: it is the default (the great majority of UK areas are English),
  * so listing it would be both enormous and a maintenance trap.
- * Keeping only the non-England set makes the default transparent.
+ * The non-England set makes the default transparent.
  * All other postcode areas fall in England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {

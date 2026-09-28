@@ -57,7 +57,7 @@ the caller multiplies variants over: `LIBPOSTAL_NORMALIZE_TOKEN_REPLACE_HYPHENS`
 ([src/libpostal.h](https://github.com/openvenues/libpostal/blob/master/src/libpostal.h)) —
 i.e. for _matching_, libpostal's answer is "emit every variant," not "pick the right one."
 
-**Training data.** Generated from OSM/OpenAddresses via the OpenCage address-formatting
+**Dataset generation.** The dataset comes from OSM/OpenAddresses via the OpenCage address-formatting
 templates, which include each country's native separators; the stated goal was that the parser
 should handle input "potentially without the commas"
 ([Inside Libpostal](https://www.mapzen.com/research/inside-libpostal/)). The parser trains on
@@ -403,7 +403,7 @@ sanitizers doing exactly this; Photon's analyzers are the same bet; Pelias's API
 before parsing for the same reason.
 **vs Stage 2.7 doc:** This is outside that doc's scope, which is parser-side. The two are complementary and do not conflict.
 
-### Sequencing note
+### Sequence {#sequence}
 
 M2 + M3 are one build (the Stage 2.7 proposer with three cue families: designators, paired
 delimiters, numeric punctuation) and need no retrain. M4's lookup folds are partially

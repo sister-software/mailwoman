@@ -1,18 +1,18 @@
 # Resolver backend parity — FTS vs candidate table (2026-08-03)
 
 **TL;DR.** The candidate-table backend is **at parity or ahead of FTS everywhere I measured**, and
-the stale `46/51` in circulation is dead: on current main the POI board reads **FTS 51/51, candidate
-50/51**. But the A/B that motivated this investigation measures the wrong thing. Selecting the
-candidate backend also silently drops the locale-derived country filter, so
+the stale `46/51` result is obsolete: on current main the POI board reads **FTS 51/51, candidate
+50/51**. But the A/B that motivated this investigation measures the wrong thing. Candidate-backend
+selection also silently drops the locale-derived country filter, so
 `12 Rue de Rivoli, 75001 Paris` resolving to Paris TX on FTS and Paris FR on candidate is **entirely
 the country filter rather than the backend** — FTS with `--default-country none` returns Paris FR, and
-candidate with `--default-country US` returns Dallas TX. Isolating the two: on 40 gold rows the
+candidate with `--default-country US` returns Dallas TX. On the same 40 gold rows, the
 country filter is worth **+10 cases**, the backend **+1**. At scale on 1050 real international
 addresses the candidate backend fixes 66 gross errors and breaks 16 (net **+4.8pp** inside 25 km);
 on 1200 US addresses it is better at every distance threshold with a **10× better p99** (259 km →
 25.7 km) at identical locality-match. Across 2382 graded cases the candidate backend loses no
 country, no placetype and no query shape — its only reproducible loss is a single POI-anchor case.
-Defaulting candidate on is safe. Defaulting the country filter off is the larger,
+The candidate backend can safely become the default. The country filter needs a separate,
 riskier, separate decision — see the companion diagnosis in
 [`2026-08-03-postcode-locality-scoping.md`](./2026-08-03-postcode-locality-scoping.md).
 
@@ -222,7 +222,7 @@ ratio.
 
 The name-based `locality-match` metric disagrees with the coordinate metric, and the coordinate
 metric is the one that matters. Per-country locality-match puts the candidate "loss" mostly in
-PL (99.3% → 90.7%), PT (94.0 → 90.7) and CZ (73.3 → 70.7). Pulling the 13 PL rows apart:
+PL (99.3% → 90.7%), PT (94.0 → 90.7) and CZ (73.3 → 70.7). We inspected the 13 PL rows individually:
 
 - **12 of the 13 still land within 25 km** of the true address point, most within 1–7 km. Candidate
   returned a coarser or differently-named admin unit (the gmina rather than the locality) whose
@@ -305,7 +305,7 @@ policy:
 | oa-resolver intl (`dc=none`, ≤25 km)   |  1050 |    882 |   **934** |
 | oa-resolver US (≤25 km)                |  1200 |   1167 |  **1185** |
 
-**Defaulting the candidate backend on is safe.** It costs one known POI-anchor case (`Ottawa ON`
+**The candidate backend can safely become the default.** It costs one known POI-anchor case (`Ottawa ON`
 without a comma) and provides the exonym class plus a materially shorter error tail on both US and
 international data. There is no country, no placetype, and no query shape where it loses
 systematically. The one loss is a reproducible singleton with a clear owner, and the fine-precision
@@ -340,7 +340,7 @@ prerequisite for shipping either independently.
   largest (12.16M rows / 7.71M distinct places, against 10.20M / 10.14M / 8.97M for
   `-920`, `-coverage-admin`, `-20j`). No cross-version comparison was run.
 
-## Reproducing
+## Reproduce the comparison {#reproducing}
 
 Instruments B, D and E use shipped tooling:
 

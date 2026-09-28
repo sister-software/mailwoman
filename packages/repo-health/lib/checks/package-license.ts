@@ -72,7 +72,7 @@ export const packageLicenseCheck: RepoCheck = {
 
 		if (typeof rootDeclared !== "string") {
 			// Without the root's expression, the check has no basis for comparison.
-			// Reporting one failure per workspace would bury the root error that must be fixed first.
+			// One failure per workspace would bury the root error that must be fixed first.
 			return [rootDeclared]
 		}
 

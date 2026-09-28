@@ -60,7 +60,7 @@ const NAMED_PROBES_BY_COUNTRY: Readonly<Record<string, readonly NamedProbe[]>> =
 		{ child: "Springfield", parent: "Ontario", expect: "absent" },
 	],
 	fr: [
-		// Commune under its région (WOF macroregion, official name "Bretagne" — spr says "Brittany").
+		// Commune under its région (WOF macroregion, official name "Bretagne" — spr records "Brittany").
 		{ child: "Rennes", parent: "Bretagne", expect: "present" },
 		// Same commune under its département (WOF region).
 		{ child: "Rennes", parent: "Ille-et-Vilaine", expect: "present" },
@@ -97,7 +97,7 @@ function expectedPairSet(
 ): Map<string, [string, string]> {
 	// Explicitly numbered placeholders throughout: `?1` (country) and `?2..?N`
 	// (parent placetypes) are reused across clauses.
-	// Mixing `?1` with anonymous `?` silently mis-numbers the anonymous ones past the bound arguments.
+	// Anonymous `?` parameters receive incorrect indices when the query also uses `?1`.
 	const parentPlaceholder = parentPlacetypes.map((_, i) => `?${i + 2}`).join(",")
 	const wofCountry = country.toUpperCase()
 

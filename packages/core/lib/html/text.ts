@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reading an html fragment as text, on `htmlparser2` — one rule, read two ways.
+ *   This module reads an HTML fragment as text through `htmlparser2`, using one rule in two ways.
  *
  *   `stripHTMLToText` (`@mailwoman/core/trust-policies`) decodes entities, survives a `<` inside an attribute
  *   value and leaves source whitespace runs intact, but `textContent` inserts no separator at an element boundary,

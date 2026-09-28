@@ -134,7 +134,7 @@ describe("routeFamilyWithLeadingRun", () => {
 
 	it("skips a leading token carrying no script rather than letting it decide", () => {
 		// `Zyyy` is the class for a house number or a postal mark.
-		// Letting the first token decide would make `〒150-0001` select a route.
+		// A first-token decision would make `〒150-0001` select a route.
 		// The postal mark belongs to no family's script set.
 		expect(routeFamilyWithLeadingRun("〒150-0001 東京都渋谷区").family).toBe("cjk")
 	})

@@ -21,7 +21,7 @@ import type { CanonicalRow } from "#types"
  * A per-test scratch directory.
  *
  * `path` exists only inside a test body.
- * Reading it before `beforeEach` or after `afterEach` throws.
+ * A read before `beforeEach` or after `afterEach` throws.
  */
 export interface ScratchDir {
 	readonly path: PathBuilder

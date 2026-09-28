@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Framework-free country-scope policy shared by parse, geocode, and registry commands.
+ * Framework-free country-scope policy shared by parse, geocode and registry commands.
  */
 
 /**

@@ -10,7 +10,7 @@
  *
  *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by
  *   postcode proximity and name match → pick. It supplies the coordinate candidate that a name
- *   match alone cannot generate when a small town is not well indexed.
+ *   match by itself cannot generate when a small town is not well indexed.
  *
  *   Locality polygons come from the whosonfirst-data-admin-<cc> GeoJSON repos and postcode centroids
  *   from our own custom-built postalcode-intl.db.
@@ -264,7 +264,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 		foldLayerManifest({
 			name: "postcode-locality",
 			version: isoDate(now),
-			// The recorded grant carries attribution and no share-alike term, so the artifact is published.
+			// The recorded grant requires attribution and has no share-alike term, so the artifact is published.
 			tier: LayerTier.Shipped,
 			license: POSTCODE_LOCALITY_LICENSE,
 			attribution: "Contains data from Who's On First, © Who's On First contributors, CC-BY 4.0",

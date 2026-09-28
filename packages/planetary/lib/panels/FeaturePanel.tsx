@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The selected feature as a definition list: what the archive says about it, in the archive's own terms, with the
+ *   The selected feature as a definition list: what the archive records about it, in the archive's own terms, with the
  *   source identifier. Semantic html so a screen reader gets the same record a sighted reader does.
  *
- *   It rides `<MapSheet>` rather than carrying its own panel. The glass, the position beside the control column, the
- *   phone treatment and the close button were all copied here once, and a copy of a material drifts from it the first
+ *   It appears in `<MapSheet>` and does not create a separate panel. The glass, the position beside the control column, the
+ *   phone treatment and the close button were all copied here once. A copy of a material drifts from it the first
  *   time the material changes.
  */
 

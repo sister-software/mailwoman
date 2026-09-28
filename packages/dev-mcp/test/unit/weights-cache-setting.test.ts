@@ -27,7 +27,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * `declared` becomes the card's `files_md5`, the only record of which siblings the bundle is meant to carry.
+ * `declared` becomes the card's `files_md5`, the only record of which siblings
+ * the bundle is meant to include.
  */
 async function stageCache(
 	stage: "wrong-shape" | "under-staged" | "ok",

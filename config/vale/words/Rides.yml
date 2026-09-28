@@ -1,0 +1,7 @@
+## Flag rides in comments and docstrings for review.
+extends: existence
+message: "'%s' may obscure which component performs the action; name the component and behavior."
+level: warning
+ignorecase: true
+tokens:
+  - '\brides\b'

@@ -103,8 +103,8 @@ describe("the family registry", () => {
 	})
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
-		// Reading an undeclared locale as the Latin family would decode its rows on
-		// a graph no family declares for them.
+		// A Latin-family interpretation of an undeclared locale would decode its rows
+		// on a graph no family declares for them.
 		expect(familyForLocale("pt-br")).toBeUndefined()
 		expect(familyForScript("Cyrl")).toBeUndefined()
 	})
