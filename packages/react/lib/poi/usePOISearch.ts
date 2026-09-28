@@ -68,8 +68,7 @@ export interface UsePOISearch {
 	result: POIExplorerResult | null
 
 	/**
-	 * The live-search state for the current debounced text.
-	 * It stays `idle` until a search runs.
+	 * The live-search state for the current debounced text, `idle` until a search runs.
 	 */
 	liveSearch: LiveSearchState
 
@@ -79,8 +78,7 @@ export interface UsePOISearch {
 	canSearchLive: boolean
 
 	/**
-	 * Starts a live search for the current subject.
-	 * It starts no search when `canSearchLive` is false.
+	 * Starts a live search for the current subject; it starts no search when `canSearchLive` is false.
 	 */
 	searchLive: () => Promise<void>
 }
@@ -110,13 +108,9 @@ function buildOverpass(
 }
 
 /**
- * Classifies debounced query text as a POI category or brand request and runs live searches on demand.
- *
- * Each result is keyed to the query that produced it, so the hook never shows a stale result for newer text.
- * Live search requires a non-empty anchor.
- *
- * It is unavailable for categories that need a locally built layer.
- * It is available for brands only when `brandLiveSearch` is set and the brand has a Wikidata ID.
+ * Classifies debounced query text as a POI category or brand request and runs live searches on demand; each
+ * result is keyed to the query that produced it, live search requires a non-empty anchor, and brands need
+ * `brandLiveSearch` plus a Wikidata ID.
  */
 export function usePOISearch({
 	text,

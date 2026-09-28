@@ -5,14 +5,10 @@
  *
  *   Write each published weights workspace's `LICENSE.md` and `PROVENANCE.json` from its manifest and model card.
  *
- *   The files are committed rather than materialized at pack time, unlike the weights binaries. A binary is
- *   gitignored because it is large and moves with a training run. These are small, they change only when a manifest or
- *   a card changes, and a reviewer has to be able to see a rights statement move in a diff. Committing them also lets
- *   the `weights-rights` repository check hold the tree equal to what this writer produces, so a card edit that
- *   changes an attribution cannot land with the published statement left behind.
- *
- *   Private weights workspaces are skipped. `neural-weights-base-latn` publishes no package and ships no model card, so a
- *   rights file there would state terms for a tarball that never reaches anyone.
+ *   The files are committed rather than materialized at pack time: they change only when a manifest or card
+ *   changes, a reviewer has to see a rights statement move in a diff, and the `weights-rights` check holds the
+ *   tree equal to this writer's output. Private weights workspaces are skipped, because a rights file there would
+ *   state terms for a tarball that never publishes.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -38,9 +34,9 @@ export interface RightsFileState {
 /**
  * Every published `neural-weights-*` workspace, in the order `readWorkspaceDirectories` lists them.
  *
- * Read from the root workspace list rather than from `.release-it.json`, because a
- * weights workspace held out of the release still publishes the moment it is added back,
- * and a rights file that only appears at that point is one nobody reviewed.
+ * Read from the root workspace list rather than `.release-it.json`, because a weights workspace held
+ * out of the release still publishes the moment it is added back, and a rights file that only
+ * appears then is one nobody reviewed.
  */
 export async function publishedWeightsWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const workspaces = await readWorkspaceDirectories(repoRoot)
@@ -67,9 +63,8 @@ export async function weightsRightsRecords(repoRoot: PathBuilderLike): Promise<W
 }
 
 /**
- * Whether the committed file at `path` already holds `expected`.
- *
- * A missing or unreadable file reads as different rather than as equal, so a first run writes it.
+ * Whether the committed file at `path` already holds `expected`; a missing or unreadable file reads
+ * as different, so a first run writes it.
  */
 async function licenseDiffers(repoRoot: PathBuilderLike, workspace: string, expected: string): Promise<boolean> {
 	try {

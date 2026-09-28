@@ -41,12 +41,10 @@ export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 /**
  * The kind of an artifact, which determines which sources it derives from.
  *
- * The files in one package have unrelated provenance.
- * `model.onnx` derives from the training corpus, `tokenizer.model` from the tokenizer text,
- * and a pair index or postcode binary from one named register.
- *
- * {@link roleForArtifact} derives the role from the file name.
- * An unrecognized name maps to `other`.
+ * The files in one package have unrelated provenance: `model.onnx` derives from the training corpus,
+ * `tokenizer.model` from the tokenizer text, and a pair index or postcode binary from one named
+ * register. {@link roleForArtifact} derives the role from the file name, and an unrecognized name
+ * maps to `other`.
  */
 export const ArtifactRole = {
 	ModelGraph: "model-graph",
@@ -128,11 +126,9 @@ export const SourceUse = {
 export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
 
 /**
- * Returns the uses that one attribution entry states in its prose.
- *
- * It returns `unstated` when no pattern matches.
- * It never defaults to `training`, because that default would claim the model
- * learned from every unrecognized source.
+ * Returns the uses that one attribution entry states in its prose, or `unstated` when no pattern
+ * matches; it never defaults to `training`, which would claim the model learned from every
+ * unrecognized source.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -158,28 +154,23 @@ export function usesStatedIn(entry: string): SourceUse[] {
  */
 export interface AttributionRecord {
 	/**
-	 * The verbatim entry.
-	 *
-	 * The record keeps the exact wording because a paraphrased rights statement is a different statement.
+	 * The verbatim entry; a paraphrased rights statement is a different statement.
 	 */
 	text: string
 	/**
-	 * The license that the entry states in a parenthetical.
-	 * It is `null` when the reader finds none.
+	 * The license that the entry states in a parenthetical, or `null` when the reader finds none.
 	 */
 	licenseNamed: string | null
 	/**
-	 * The uses that the entry states.
-	 * It is `["unstated"]` when the entry states none.
+	 * The uses that the entry states, or `["unstated"]` when it states none.
 	 */
 	uses: SourceUse[]
 }
 
 /**
- * The attribution that an overlay inherits from the package that owns its model graph.
- *
- * The record repeats the base's attribution so a consumer of the overlay alone can read it.
- * The record labels it as the base's because the overlay's own artifacts did not contribute to that model.
+ * The attribution that an overlay inherits from the package that owns its model graph, repeated so a
+ * consumer of the overlay alone can read it and labeled as the base's because the overlay's own
+ * artifacts did not contribute to that model.
  */
 export interface InheritedLineage {
 	package: string
@@ -383,12 +374,11 @@ export async function readWeightsRightsRecords(
 }
 
 /**
- * Follows `mailwoman.baseWeights` from an overlay to the package that owns the
- * model graph and returns that package's attribution.
+ * Follows `mailwoman.baseWeights` from an overlay to the package that owns the model graph and
+ * returns that package's attribution.
  *
- * The walk follows every hop because a base may declare its own base.
- * A cycle or a base outside the set stops the walk and sets `unresolved`,
- * which keeps an unresolved lineage distinct from an empty one.
+ * The walk follows every hop because a base may declare its own base; a cycle or a base outside the
+ * set stops it and sets `unresolved`, keeping an unresolved lineage distinct from an empty one.
  */
 function resolveInherited(
 	record: WeightsRightsRecord,

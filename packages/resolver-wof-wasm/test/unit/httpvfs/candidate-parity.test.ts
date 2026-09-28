@@ -3,14 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node↔browser candidate-reader parity over the real artifact (the #861 server↔demo interface, run
- *   for the 2026-08-11 staging repoint): the same probes through the Node `WOFCandidateTableLookup`
- *   (`@mailwoman/resolver-wof-sqlite`) and the browser twin (`httpvfs/resolver.ts` over a
- *   node:sqlite-backed stub worker), asserting the same top answer — id, coordinate, exact-tier flag,
- *   and the #28 importance carry.
- *
- *   Skipped byte-for-byte when the data-root artifact is absent (CI runners don't mount it); the
- *   staging receipt records the run against the exact artifact md5 it graded.
+ *   Node↔browser candidate-reader parity over the real artifact, asserting the same top candidate and skipped when the artifact is absent.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -26,15 +19,6 @@ import { stubWorker } from "./stub-worker.ts"
 const CANDIDATE_DB = wofDatabasePath("candidate.db")
 const present = await pathExists(CANDIDATE_DB)
 
-/**
- * The bare-name panel: every primary-preference contest the ranker's docstring names,
- * the Zabiče production case the staging repoint exists for, and the Moscow exact-tier
- * rows (both readers must agree even where the answer is a known defect).
- *
- * "NYC" is deliberately not here: the artifact carries no `nyc` key, so Node answers
- * from its trigram fuzzy tier — which the browser reader does not implement —
- * and that one structural divergence has its own test below.
- */
 const PANEL = [
 	"Cancun",
 	"Los Angeles",
@@ -72,9 +56,7 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 		expect(b.lat).toBeCloseTo(n.lat, 6)
 		expect(b.lon).toBeCloseTo(n.lon, 6)
 		expect(b.exactMatch ?? false).toBe(n.exactMatch ?? false)
-		// The #28 fame prior: both readers either carry it (same value) or both leave it absent.
 		expect(b.importance).toBe(n.importance)
-		// The two-score split's referential carry agrees too.
 		expect(b.referential).toBe(n.referential)
 	})
 
@@ -82,10 +64,6 @@ describe.skipIf(!present)("Node↔browser candidate parity over the real artifac
 		const nodeHits = await node!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 		const browserHits = await browser!.findPlace({ text: "NYC", placetype: "locality", limit: 5 })
 
-		// The artifact carries no `nyc` key: every Node hit is a typo-corrector row
-		// (exactMatch=false), and the browser — which has no fuzzy tier — returns no hit.
-		// If this test starts failing with browser hits, the browser gained a fuzzy tier:
-		// extend the parity panel to cover it.
 		expect(nodeHits.every((h) => h.exactMatch !== true)).toBe(true)
 		expect(browserHits).toEqual([])
 	})

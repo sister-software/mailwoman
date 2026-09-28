@@ -26,12 +26,7 @@ import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 
 /**
- * The kinds of answer the layer gives for a coordinate.
- *
- * A caller must keep `DesignatedNoRating` and `Unknown` apart.
- * The first means the survey mapped the location and assigned no rating.
- *
- * The second means the layer has no survey data for the location.
+ * The kinds of answer the layer gives for a coordinate, where `DesignatedNoRating` and `Unknown` must stay apart.
  */
 export const SoilReadingKind = {
 	/**
@@ -39,13 +34,11 @@ export const SoilReadingKind = {
 	 */
 	Designated: "designated",
 	/**
-	 * The survey mapped this location and assigned no rating.
-	 * Every share is an absence share.
+	 * The survey mapped this location, assigned no rating, and reports every share as an absence share.
 	 */
 	DesignatedNoRating: "designated_no_rating",
 	/**
-	 * The layer has no coverage for this location.
-	 * This kind never implies low capability.
+	 * The layer has no coverage for this location, which never implies low capability.
 	 */
 	Unknown: "unknown",
 } as const
@@ -76,22 +69,15 @@ export interface SoilCapabilityDistribution {
 	 */
 	noDataShare: number
 	/**
-	 * The share of the truncated minority classes.
-	 *
-	 * The class shares and the four other shares sum to 1.
+	 * The share of the truncated minority classes; the class shares and the four other shares sum to 1.
 	 */
 	otherShare: number
 	/**
-	 * The fraction of the cell that any delineation covers.
-	 * It is below 1 at a survey-area edge.
+	 * The fraction of the cell that any delineation covers, which is below 1 at a survey-area edge.
 	 */
 	mappedShare: number
 	/**
-	 * The class with the largest share, and that share.
-	 *
-	 * Both fields are absent when the cell has no class.
-	 * A caller that reads `topClass` should also report `topClassShare`,
-	 * because the top class can hold a small plurality.
+	 * The class with the largest share, absent when the cell has no class; a caller that reads `topClass` should also report `topClassShare`, because the top class can hold a small plurality.
 	 */
 	topClass?: string
 	topClassShare?: number
@@ -130,9 +116,7 @@ export interface SoilSurveyAreaRecord {
 export interface SoilCapabilityReading {
 	kind: SoilReadingKind
 	/**
-	 * The cell's distribution.
-	 *
-	 * It is present on both designated kinds and absent on `unknown`.
+	 * The cell's distribution, present on both designated kinds and absent on `unknown`.
 	 */
 	distribution?: SoilCapabilityDistribution
 	/**
@@ -152,10 +136,7 @@ export interface SoilCapabilityReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statements of what the product does not cover.
-	 *
-	 * Every reading includes them because the survey supports planning only
-	 * and does not replace onsite study.
+	 * The authority's own statements of what the product does not cover; every reading includes them because the survey supports planning only and does not replace onsite study.
 	 */
 	limits: ReadonlyArray<string>
 }
@@ -190,11 +171,7 @@ export interface SoilCapabilityLookupOptions {
 }
 
 /**
- * Reads a sealed `soil.db`.
- *
- * The constructor throws on a manifest for a different product, an empty coverage table, an empty
- * class vocabulary or a missing share weighting. Each of these would otherwise make every lookup
- * return `unknown`, which looks the same as a region the authority has not surveyed.
+ * Reads a sealed `soil.db`, throwing at construction on a manifest for a different product, an empty coverage table, an empty class vocabulary, or a missing share weighting.
  */
 export class SoilCapabilityLookup implements Disposable {
 	readonly identity: SoilLayerIdentity
@@ -264,9 +241,7 @@ export class SoilCapabilityLookup implements Disposable {
 			| undefined
 
 		if (!row) {
-			// This happens at a survey-area edge, where the coarser coverage cell is covered
-			// and this index cell has no delineation.
-			// The location may be outside the survey, so the answer is unknown.
+			// At a survey-area edge the coarser coverage cell is covered and this index cell has no delineation, so the location may be outside the survey.
 			return {
 				kind: SoilReadingKind.Unknown,
 				coverage,
@@ -306,21 +281,12 @@ export class SoilCapabilityLookup implements Disposable {
 		this.#database.destroy()
 	}
 
-	/**
-	 * Returns the coverage row for the index cell's parent at the coverage resolution.
-	 */
 	#readCoverage(indexCell: H3Cell): (CoverageCell & { h3CellIndex: string; resolution: number }) | undefined {
 		return readCoverageAt(this.#selectCoverage, indexCell, this.identity.coverageResolution)
 	}
 
 	/**
-	 * Returns the first survey area whose bounding rectangle contains the coordinate.
-	 *
-	 * Neighbouring areas' rectangles can overlap, so the result may be the wrong area near a corner.
-	 * This affects only the `surveyArea` label, because the distribution comes from the cell row.
-	 *
-	 * The search is a linear scan.
-	 * A build with thousands of survey areas would need a spatial index.
+	 * Returns the first survey area whose bounding rectangle contains the coordinate; overlapping rectangles may give the wrong area near a corner, affecting only the `surveyArea` label, and the linear scan would need a spatial index for thousands of areas.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {
@@ -338,9 +304,6 @@ export class SoilCapabilityLookup implements Disposable {
 	}
 }
 
-/**
- * Reads the layer's identity and throws if it is unusable.
- */
 function readIdentity(
 	database: DatabaseClient<SoilDatabase>,
 	databasePath: PathBuilderLike
@@ -353,8 +316,7 @@ function readIdentity(
 		Record<string, string | number | null>
 	>
 
-	// The layer name ends with the region that the build covers, so the reader checks only the prefix.
-	// It does its own check instead of using `parseManifestRows`, which compares whole names.
+	// The layer name ends with the region the build covers, so the reader checks only the prefix rather than `parseManifestRows`, which compares whole names.
 	const row = singleManifestRow(manifestRows, `soil reader: ${databasePath}`)
 	const name = String(row.name)
 

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a selector for the available model versions. The host owns loading and selection.
+ *   Renders a selector for the available model versions; the host owns loading and selection.
  */
 
 import type { ReactNode } from "react"
@@ -14,17 +14,8 @@ import type { VersionOption } from "#map/types"
  * Props for {@link VersionPicker}.
  */
 export interface VersionPickerProps {
-	/**
-	 * The selectable model versions.
-	 */
 	versions: ReadonlyArray<VersionOption>
-	/**
-	 * The selected version tag.
-	 */
 	selected: string | null
-	/**
-	 * Called with the chosen version tag.
-	 */
 	onSelect: (version: string) => void
 	/**
 	 * Disables the control, for example while a parse runs.
