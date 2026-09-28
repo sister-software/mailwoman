@@ -3,25 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `fr-lieudit` recipe — FR lieu-dit (hamlet/place) `dependent_locality` coverage
- *   (`.superpowers/sdd/deploc-world-survey.md`, FR section, 2026-07-22). Streams every BAN
- *   `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
- *   `extractBANAddrPoints`, which now surfaces a cleaned `lieuDit` per record (junk/dup filtering
- *   lives in `ban/sdk/extract.ts`'s `cleanLieuDit`, not duplicated here). Only rows carrying a clean
- *   lieu-dit survive into the pool. the existing `ban`/`synth-fr` sources and their emitted rows are
- *   untouched. This recipe reads the same raw CSVs but emits under its own source name.
+ * `fr-lieudit` recipe: FR lieu-dit (hamlet/place) `dependent_locality` coverage.
  *
- *   Mapping: lieu-dit → `dependent_locality`, commune → `locality`. Rendered to match the formatter's
- *   FR `place`-slot convention (`fix(formatter): render dependent_locality for neither-slot templates`,
- *   b1edc1b7, verified via a `formatAddress` smoke call): house+street on line 1, the lieu-dit alone on
- *   line 2, postcode+commune on line 3 — French postal convention (La Poste's line 5).
+ * Streams every BAN `adresses-<dept>.csv` dump under `--ban-dir` through `@mailwoman/ban/sdk`'s
+ * `extractBANAddrPoints`, which surfaces a cleaned `lieuDit` per record. Only rows carrying a clean
+ * lieu-dit survive into the pool.
  *
- *   ~1.69M clean rows survive the filter nationally (26M total BAN rows, 1.81M raw `nom_ld` fills, ~6.6%
- *   junk/dup). The pool is read in full (small string tuples only — no coordinates needed) and
- *   Fisher-Yates shuffled with the seeded prng before slicing to `--count`, rather than sampled with
- *   replacement — at a `--count` a sizeable fraction of the pool, with-replacement draws would produce a
- *   large duplicate rate (birthday-paradox math: ~190k expected collisions at count=800k over a 1.69M
- *   pool).
+ * Mapping: lieu-dit to `dependent_locality`, commune to `locality`. Rendered to match the
+ * formatter's FR `place`-slot convention. House and street on line 1, the lieu-dit alone on line 2,
+ * postcode and commune on line 3, which is French postal convention (La Poste's line 5).
+ *
+ * The pool is read in full and Fisher-Yates shuffled with the seeded prng before slicing to
+ * `--count`. With-replacement draws at a large `--count` would produce a large duplicate rate.
  */
 
 import { extractBANAddrPoints } from "@mailwoman/ban/sdk"
@@ -62,11 +55,8 @@ interface LieuDitTuple {
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
  *
- * Excludes the `merged`/`france` aggregates (they duplicate the per-département rows)
- * and, when both a `.csv` and a `.csv.gz` exist for the same dept
- * (observed on disk for 13/2A/48/69/75 — a stale re-fetch artifact), prefers the
- * uncompressed `.csv` — mirrors `packages/ban/lib/scripts/build/address-point-database.ts`'s
- * `departementFiles`, which hit and fixed this exact double-count trap first.
+ * Excludes the `merged` and `france` aggregates, which duplicate the per-département rows. When
+ * both a `.csv` and a `.csv.gz` exist for the same department, the uncompressed `.csv` wins.
  */
 async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
 	const directory = PathBuilder.from(banDir)
@@ -146,9 +136,6 @@ function composeHouseNumber(numero: string, rep: string | null): string {
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const frLieuditRecipe: CorpusRecipe = {
 	name: "fr-lieudit",
@@ -181,9 +168,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 			throw new Error(`No clean lieu-dit rows found under ${banDir} — see ban/sdk/extract.ts's cleanLieuDit filter.`)
 		}
 
-		// `random` is threaded in rather than constructed here: the recipe shares one
-		// mulberry32 stream between this shuffle and the country-fraction draw below,
-		// so a fresh generator would move every later draw and the committed rows with it.
+		// The recipe shares one mulberry32 stream between this shuffle and the country-fraction
+		// draw below, so a fresh generator here would move every later draw and the committed rows.
 		shuffleWith(pool, random)
 
 		const selected = pool.slice(0, Math.min(count, pool.length))
@@ -214,8 +200,8 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form: house+street line, the lieu-dit alone on its own line, postcode+commune line.
-			// That is La Poste's line 5, and it is what `FR`'s layout prints — this recipe used to restate it.
+			// The envelope form is the house and street line, the lieu-dit alone on its own line,
+			// then the postcode and commune line. That is La Poste's line 5.
 			let raw = formatAddress(components, "FR")
 
 			if (!raw) {
@@ -224,13 +210,11 @@ export const frLieuditRecipe: CorpusRecipe = {
 				continue
 			}
 
-			// Country-append (the fr-admin-split #728 pattern, generalized):
-			// ~`countryFraction` of the time append an explicit "France" surface form onto
-			// the trailing (postcode+commune) line + a `country` component.
-			// The model relearns to emit country when present without over-firing it
-			// on the (still-majority) country-less rows.
-			// `countryFraction <= 0` (the default) never draws from `random`,
-			// so the byte-stream is unaffected when the flag is unset.
+			// Country-append: ~`countryFraction` of the time, append an explicit "France" surface
+			// form onto the trailing (postcode+commune) line plus a `country` component. The model
+			// relearns to emit country when present without over-firing it on the country-less
+			// rows. `countryFraction <= 0` (the default) never draws from `random`, so the
+			// byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms = COUNTRY_SURFACE_FORMS.FR
 				const form = sample(forms, random)

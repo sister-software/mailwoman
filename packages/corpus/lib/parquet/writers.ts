@@ -28,9 +28,7 @@
  *   digest computed by re-reading the file once after close — cheap against the cost of writing it.
  *
  *   A part is closed by its row count and never by a source boundary, so one part may hold the tail of one source and
- *   the head of the next. A reader must therefore take a file's sources from all of its rows: the training loader's
- *   `_index_by_source` once read the first row's source as the whole file's, and two sources that opened no file of
- *   their own trained at another source's weight (#2318).
+ *   the head of the next. A reader must therefore take a file's sources from all of its rows.
  */
 
 import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
@@ -223,10 +221,8 @@ export interface WriteParquetSplitsOptions {
  * Pre-partitioned labeled-row streams, one per split.
  *
  * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow` and route
- * rows to the matching stream, eliminating the prior `Map<source_id, SplitName>` O(n) lookup table.
- *
- * Splits with no rows can be omitted (or passed as an empty iterable);
- * {@linkcode writeParquetSplits} skips them.
+ * rows to the matching stream. Splits with no rows can be omitted, or passed as an empty iterable,
+ * and {@linkcode writeParquetSplits} skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>
 
