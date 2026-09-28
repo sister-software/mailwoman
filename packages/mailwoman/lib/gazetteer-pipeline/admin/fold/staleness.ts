@@ -5,12 +5,10 @@
  * @file Whether a GeoNames fold output predates the admin database it was folded from.
  *
  *   A fold output (`<admin>-geonames.db`) is a copy of the admin database with the alias fold applied, and a candidate
- *   table built from it inherits every coordinate the copy carried. When the admin database is later rebuilt or
- *   adjudicated in place (the #1905 label-point pass moved 222 localities), the standing fold keeps the old points, and
- *   a build that reads the fold directly reproduces them — silently, because the fold is a valid admin database. A
- *   rebuild on 2026-09-06 did exactly that: `Frankfurt` answered its pre-adjudication geometric centroid, 10.4 km from
- *   the city, and only a board compare against production noticed. The staleness is a fact of two mtimes, so it is
- *   refused here rather than left to a compare.
+ *   table built from it inherits every coordinate the copy carried. A later admin rebuild leaves the standing fold
+ *   holding the old points, and a build that reads the fold directly reproduces them, silently, because the fold is a
+ *   valid admin database. The staleness is a fact of two mtimes, so this module refuses it rather than leaving it to a
+ *   board compare.
  */
 
 import type { PathBuilderLike } from "path-ts"

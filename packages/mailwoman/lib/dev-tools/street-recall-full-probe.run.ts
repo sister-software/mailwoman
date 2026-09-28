@@ -3,15 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #375 street-recall-on-full-addresses probe — DeepSeek's blind-spot guard (consult 2026-06-18) for
- *   the v1.7.0 balanced extract. Emphasizing `bare-locality` ("City, state" with no street) risks the
- *   model over-emitting locality and eating the street's leading tokens on full addresses — a
- *   regression moderate enough to clear the coarse `us.street` floor while breaking the
- *   highest-traffic case. This measures street exact-match on the held-out US golden subset where
- *   gold has both a street and a locality span, compares a baseline (v1.5.1) to a candidate, and
- *   tallies how often a street regression coincides with the gold street's leading token landing in
- *   the candidate's locality (the "eat" mechanism). The v1.7.0 eval aborts/flags if the candidate
- *   drops >1pp below v1.5.1 here.
+ *   Measures street exact-match on the held-out US golden subset where gold has both a street and a
+ *   locality span, compares a baseline to a candidate, and tallies how often a street regression
+ *   coincides with the gold street's leading token landing in the candidate's locality (the "eat"
+ *   mechanism). The guard refuses a candidate more than one percentage point below the baseline.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/street-recall-full-probe.run.ts\
  *   --baseline $MAILWOMAN_DATA_ROOT/models/quantized/model-v151-step-40000-int8.onnx\
@@ -42,7 +37,6 @@ for (const row of rows) {
 
 	if (!gs || !gl) continue
 
-	// full-address rows only: gold has both street and locality
 	full++
 	const bp = (await base.parseJSON(row.raw)) as Record<string, string>
 	const cp = (await cand.parseJSON(row.raw)) as Record<string, string>
@@ -60,15 +54,13 @@ for (const row of rows) {
 	if (bOk && !cOk) {
 		regr++
 
-		// the "eat" mechanism: the gold street's leading token landed in the candidate's locality span
 		if (wordIncludes(norm(cp.locality), gs.split(" ")[0]!)) {
 			eaten++
 		}
 	}
 }
 
-// formatPercent renders an empty panel as "—" where the old local printed "NaN%"; every non-empty
-// panel renders byte-identically (and every other line here already divides by `full`).
+// formatPercent renders an empty panel as an em dash. Every non-empty panel renders byte-identically.
 const pct = (n: number) => formatPercent(n, full, 1)
 
 console.log(

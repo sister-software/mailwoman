@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman placer build-dataset` — assemble the coarse placer (#244) training dataset: the
+ *   `mailwoman placer build-dataset` — assemble the coarse placer training dataset: the
  *   stratified per-country corpus/Overture sample (plain run), or `--outliers
  *   <exposure|latin|oa>` to append other-class outlier-exposure rows (WOF non-Latin scripts,
- *   Overture Latin off-map, or OpenAddresses leave-one-family-out). Run the plain build first. the
+ *   Overture Latin off-map, or OpenAddresses leave-one-family-out). Run the plain build first. The
  *   outlier builders append to its splits.
  */
 

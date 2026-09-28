@@ -3,20 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #727 stage-2 phase 4c — the SQLite backend for {@link StreetLocalityEvidence}.
+ *   The SQLite backend for {@link StreetLocalityEvidence}.
  *
- *   Reads a street-name index (the FR instance = BAN `street-centroids-fr.db`, a `street_centroid`
+ *   Reads a street-name index (the FR instance is BAN `street-centroids-fr.db`, a `street_centroid`
  *   table of `street_norm × locality_base × postcode` rows) and answers "does this street surface
- *   exist as a name" for the k-best rerank. Sync-by-interface, `readOnly`, prepared statements,
- *   graceful-degrade on a tableless extract — the same reader discipline as `AddressPointSqliteLookup`.
+ *   exist as a name" for the k-best rerank. It is sync-by-interface and read-only, uses prepared
+ *   statements, and degrades gracefully on a tableless extract, the same reader discipline as
+ *   `AddressPointSqliteLookup`.
  *
  *   The fold interface: the surface is folded with {@link foldStreetSurface} (the shared function),
- *   and the DB's `street_norm` column must have been built with that same fold or every hyphenated /
- *   apostrophe'd street silently misses. The current `street-centroids-fr.db` predates the interface
- *   fold (it folded without hyphen/apostrophe normalization); it must be rebuilt with
- *   `foldStreetSurface` + a `street_norm` index before this backend is wired in production. Until
- *   then this class is correct-by-construction against a fixture built with the interface fold, and
- *   the production rebuild is a tracked BAN-sdk follow-up.
+ *   so the DB's `street_norm` column must have been built with that same fold or every hyphenated
+ *   or apostrophe'd street silently misses. The column also needs a `street_norm` index before this
+ *   backend is wired in production.
  */
 
 import { foldStreetSurface, type StreetEvidenceScope, type StreetLocalityEvidence } from "@mailwoman/resolver"
@@ -59,13 +57,12 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
 		const table = opts.table ?? "street_centroid"
 
-		// Degrade gracefully on an empty/tableless extract.
-		// A no-op miss, never a crash (#568 discipline).
+		// Degrade gracefully on an empty or tableless extract. A no-op miss, never a crash.
 		if (hasTable(this.database, table)) {
-			// Prefer the #727 phase-4c `name_key` column
-			// (foldStreetSurface, indexed by `idx_sc_name` for a direct seek); fall back to
-			// `street_norm` on a pre-rebuild extract (a skip-scan, but correct).
-			// The fold used to build `name_key` must match `foldStreetSurface` here (the fold-parity interface).
+			// Prefer the `name_key` column (built with `foldStreetSurface` and indexed by
+			// `idx_sc_name` for a direct seek). Fall back to `street_norm` on a pre-rebuild extract,
+			// which is a skip-scan but correct. The fold that built `name_key` must match
+			// `foldStreetSurface` here, which is the fold-parity interface.
 			const keyCol = hasColumn(this.database, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.database.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 
@@ -87,7 +84,7 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 
 		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode.
 		// A scoped miss falls back to the unscoped probe (index incompleteness in the scope
-		// column is not evidence of absence — positive-evidence rule).
+		// column is not evidence of absence, which is the positive-evidence rule).
 		if (
 			scope?.locality &&
 			this.#byNameLocality &&

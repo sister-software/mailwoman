@@ -3,37 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #511 base-consistency lint, generalized + country-scoped (v2) — any synthetic recipe output vs
- *   the base.
+ * Base-consistency lint: a synthetic recipe output must not label a token a tag the base dominantly labels
+ * something else, or training gets conflicting gradients on the same token and the minority (the recipe output)
+ * loses. This reads a recipe output's own (token -> tag) and checks each token against the base.
  *
- *   Ported from the Python original (pyarrow → @duckdb/node-api); behavior preserved
- *   byte-for-byte (same flags, same stdout, same verdicts). The base-root default routes through
- *   `dataRootPath` so the lab `$MAILWOMAN_DATA_ROOT` literal stays in its one home
- *   (core/utils/data-root.ts) and `$MAILWOMAN_DATA_ROOT` is honored. with the env unset it equals
- *   the Python default.
- *
- *   The #511 lesson: a synthetic recipe output must not label a token a tag the base dominantly
- *   labels something else, or training gets conflicting gradients on the same token and the minority
- *   (the recipe output) loses. This reads a recipe output's own (token -> tag) and checks each token
- *   against the base.
- *
- *   Why v2 is country-scoped + full-count (the night-2026-06-18 lesson, learned the hard way over
- *   three tries): a token's correct tag is country-specific — "Paris" is locality in FR data and
- *   street in US "Paris Ave"; "Marion" is a US town and many US "Marion" streets. So:
- *
- *   1. A cross-country aggregate mis-judges any country-specific token (v1 uniform and a proportional
- *        retry both false-flagged FR cities as "street" from US street-contexts).
- *   2. A small sample is street-biased regardless, because the street sources (tiger 39 + nad 378 parts)
- *        dwarf the locality sources (a small US-scoped spot-check read Indianapolis 54% street vs
- *        its true 219700:29 locality). The fix: tally each recipe-output token's base tag scoped to
- *        the country the recipe output uses it in (the base has a `country` column), over a
- *        large/full scan (`fraction`, default 1.0). Pure-numeric tokens excluded (house_number/postcode
- *        are context-determined). An affix-split flag (recipe output street_suffix/_prefix vs base
- *        "street") is expected — the loader's affix-relabel handles it. weigh those separately.
- *
- *   Usage: mailwoman dev lint slice-vocab --slice <recipe-output.parquet>
- *   [--base-version v0.5.0] [--base-root <dir>] [--fraction 1.0] [--threshold 0.7] [--min-count
- *   50]
+ * The check is country-scoped and full-count, because a token's correct tag is country-specific: "Paris" is a
+ * locality in FR data and a street in US "Paris Ave". A cross-country aggregate mis-judges any country-specific
+ * token, and a small sample is street-biased because the street sources dwarf the locality sources. Each
+ * recipe-output token's base tag is therefore tallied scoped to the country the output uses it in, over a large
+ * scan. Pure-numeric tokens are excluded because house_number and postcode are context-determined. An
+ * affix-split flag (recipe output street_suffix/_prefix against base "street") is expected, because the loader's
+ * affix-relabel handles it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -63,11 +43,9 @@ function stripBIO(label: string): string {
 }
 
 /**
- * Python `str.isdigit()`: non-empty and every character a Unicode digit.
- *
- * Pure-numeric tokens (house_number / postcode) are context-determined
- * rather than lexical vocab, so they're excluded.
- * `\p{Nd}` covers the decimal digits these address corpora actually contain.
+ * Python `str.isdigit()`: non-empty and every character a Unicode digit. Pure-numeric tokens (house_number and
+ * postcode) are context-determined rather than lexical vocab, so they are excluded. `\p{Nd}` covers the decimal
+ * digits these address corpora actually contain.
  */
 function isDigit(token: string): boolean {
 	return token.length > 0 && /^\p{Nd}+$/u.test(token)
@@ -81,10 +59,9 @@ function pct(frac: number): string {
 }
 
 /**
- * Format a float the way a Python f-string renders it: integer-valued floats keep one
- * decimal (1.0 -> "1.0"), everything else is its shortest decimal (0.5 -> "0.5").
- *
- * Used for the `fraction` echo so the banner matches the Python print.
+ * Format a float the way a Python f-string renders it: integer-valued floats keep one decimal (1.0 -> "1.0"),
+ * everything else is its shortest decimal (0.5 -> "0.5"). Used for the `fraction` echo so the banner matches
+ * the Python print.
  */
 function formatPyFloat(n: number): string {
 	return Number.isInteger(n) ? n.toFixed(1) : String(n)
@@ -98,10 +75,8 @@ function pad(value: string, width: number): string {
 }
 
 /**
- * The dominant tag of a counter: (tag, total, fraction).
- *
- * Empty counter -> ("", 0, 0.0).
- * Ties go to the first-inserted tag, mirroring `Counter.most_common(1)` (stable on equal counts).
+ * The dominant tag of a counter as (tag, total, fraction). An empty counter yields ("", 0, 0.0), and ties go to
+ * the first-inserted tag, mirroring `Counter.most_common(1)`.
  */
 function dominant(counter: Map<string, number>): [string, number, number] {
 	let total = 0
@@ -137,10 +112,9 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 }
 
 /**
- * Read a corpus parquet into rows, projecting only tokens/labels/country.
- *
- * The list columns ride out as JSON text (DuckDB `to_json`) — the same trick the gazetteer
- * builders use for nested columns — and parse back to string arrays here.
+ * Read a corpus parquet into rows, projecting only tokens, labels, and country. The list columns ride out as
+ * JSON text (DuckDB `to_json`), the same trick the gazetteer builders use for nested columns, and parse back
+ * to string arrays here.
  */
 async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(
@@ -167,7 +141,7 @@ async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[
 }
 
 /**
- * Read just the first row's `source` value — used to group base parts for a proportional sample.
+ * Read just the first row's `source` value, used to group base parts for a proportional sample.
  */
 async function readSource(con: DuckDBConnection, path: string): Promise<string> {
 	const result = await con.runAndReadAll(`SELECT source FROM read_parquet('${path}') LIMIT 1`)
@@ -185,33 +159,23 @@ export interface LintRecipeVocabOptions {
 	 */
 	recipeOutputPath: string
 	/**
-	 * Base corpus version.
-	 *
-	 * Default `v0.5.0`.
+	 * Base corpus version. Default `v0.5.0`.
 	 */
 	baseVersion?: string
 	/**
-	 * Base corpus root.
-	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
+	 * Base corpus root. Default `$MAILWOMAN_DATA_ROOT/corpus/versioned`.
 	 */
 	baseRoot?: string
 	/**
-	 * Base-majority confidence floor for a contradiction.
-	 *
-	 * Default 0.7.
+	 * Base-majority confidence floor for a contradiction. Default 0.7.
 	 */
 	threshold?: number
 	/**
-	 * Minimum base support to judge a token.
-	 *
-	 * Default 50.
+	 * Minimum base support to judge a token. Default 50.
 	 */
 	minCount?: number
 	/**
-	 * Fraction of base parts to scan (proportional per-source sample below 1.0).
-	 *
-	 * Default 1.0.
+	 * Fraction of base parts to scan, a proportional per-source sample below 1.0. Default 1.0.
 	 */
 	fraction?: number
 }
@@ -248,7 +212,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	using con = await openDuckDB()
 
-	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)
 	const outputTags = new Map<string, Map<string, number>>()
 	const outputCountries = new Map<string, Set<string | null>>()
@@ -260,7 +223,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 			const w = tokens[i]!
 			const l = labels[i]!
 
-			if (isDigit(w)) continue // numbers are context-determined (house_number/postcode), not lexical vocab
+			if (isDigit(w)) continue
 			bump(outputTags, w, stripBIO(l))
 			let set = outputCountries.get(w)
 
@@ -277,7 +240,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
-	// 2. base parts — full by default. fraction<1 takes a proportional per-source sample (still big)
 	const trainDir = baseRoot(baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
@@ -323,7 +285,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		`base ${baseVersion}: scanning ${parts.length} parts (fraction=${formatPyFloat(fraction)}), COUNTRY-scoped`
 	)
 
-	// 3. tally each recipe-output token's base tag, scoped to the country the recipe output uses it in
 	const baseTags = new Map<string, Map<string, number>>()
 
 	for (let i = 0; i < parts.length; i++) {
@@ -346,8 +307,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		}
 	}
 
-	// 4. compare.
-	//    Flag contradictions (affix-split is expected — surfaced but tagged)
 	const flagged: VocabRow[] = []
 	const affix: VocabRow[] = []
 

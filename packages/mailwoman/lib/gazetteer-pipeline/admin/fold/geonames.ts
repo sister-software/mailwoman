@@ -3,19 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The GeoNames alias fold for the admin gazetteer: the bilingual/alt-name tail (#743/#193 — the
- *   Karjaa↔Karis class, ids @ 9e12). Thin composition over the canonical
- *   `@mailwoman/resolver-wof-sqlite` ingest functions. directory defaults go through `dataRootPath` —
- *   the previous script hardcoded an absolute lab path for the dump dir, which the data-root rule
- *   forbids in shipped code.
+ *   The GeoNames alias fold for the admin gazetteer. Thin composition over the canonical
+ *   `@mailwoman/resolver-wof-sqlite` ingest functions. Directory defaults go through `dataRootPath`,
+ *   because the data-root rule forbids a hardcoded lab path in shipped code.
  *
- *   Not the postal fold. This file carried `postalCountries`/`postalDir` passthroughs to
- *   `ingestGeonamesPostal` from 2026-07 to 2026-08-05 with no caller anywhere in the tree: #1027
- *   deleted `build-unified-wof`'s Phase 2d (the only invocation) and moved its parameters here
- *   instead of its behaviour, leaving a signature that pointed readers hunting the
- *   `postalcode-geonames-tail.db` builder at the wrong module. Deleted. The postal tail's real home
- *   is `gazetteer-pipeline/postcode/geonames-tail.ts` (`mailwoman gazetteer build postcode-geonames`),
- *   which builds a standalone database — the admin gazetteer never wanted postcode rows folded into it.
+ *   The postal tail lives in `gazetteer-pipeline/postcode/geonames-tail.ts`
+ *   (`mailwoman gazetteer build postcode-geonames`), which builds a standalone database. The admin
+ *   gazetteer never wanted postcode rows folded into it.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -41,12 +35,12 @@ export interface FoldGeonamesOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * #267/#1026: countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
+	 * Countries for which to also fold the GeoNames A-class admin (pcli country + ADM1 regions) and link
 	 * locality ancestry.
 	 *
-	 * Pass only zero-coverage locales (no WOF/Overture admin) — see `geonamesAdminGapCountries()`.
+	 * Pass only zero-coverage locales (no WOF/Overture admin). See `geonamesAdminGapCountries()`.
 	 *
-	 * Omitting this is what flattened 95 countries' nodes (#1026).
+	 * Omitting this leaves a zero-coverage locale's nodes without the A-class admin fold.
 	 */
 	adminForCountries?: ReadonlySet<string>
 }

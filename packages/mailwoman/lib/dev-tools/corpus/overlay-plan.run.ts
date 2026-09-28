@@ -8,11 +8,9 @@
  *   An overlay is a parquet file added to a built corpus after the base build, carrying rows a recipe
  *   produced rather than an adapter. The previous corpus's manifest records every one of them with its
  *   `source` label and the split it entered, so the list of overlays to carry forward is readable
- *   rather than maintained by hand. The last two assemblies maintained it by hand and both placed a
- *   `synth-german` file into val by a list a person wrote, which put 770 of its 3,987 `source_id`s
- *   into train as well (#2359).
+ *   rather than maintained by hand.
  *
- *   Each overlay is named for its unsplit original. A manifest entry ending `.train.parquet`,
+ *   Each overlay groups under its unsplit original. A manifest entry ending `.train.parquet`,
  *   `.val.parquet` or `.test.parquet` is one output of `corpus split-slice`, so several entries
  *   collapse to one original. This groups them and reports the original each came from.
  *
@@ -286,7 +284,6 @@ if (renamed.length) {
  *
  * The lists are positional: `overlay-manifest` zips `--parquet`, `--source` and `--split` by index,
  * so a transposition between two of them is a file recorded under another file's source and split.
- * The last assembly typed 66 entries per list by hand.
  *
  * These are derived, and the source comes from the plan's current spelling
  * rather than from the previous manifest's.
@@ -309,7 +306,7 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 	for (const name of names) {
 		// The label comes from the file's own `source` column rather than from its filename.
 		// A filename is what an assembly step chose to call the file, and `corpus merge-source`
-		// names its output `<stem>-00000.parquet` whatever `--out` asked for, so a stem
+		// writes its output as `<stem>-00000.parquet` whatever `--out` asked for, so a stem
 		// that matched an original before the merge does not match after it.
 		// The column is what the loader groups by, so reading it is the only attribution
 		// that cannot disagree with the rows.

@@ -3,23 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `si-bare-village` — the Slovenian no-street counter-recipe (#901 run-2). Slovenia's rural
- *   addressing has no street line: the village name is the street-level token and repeats as the
- *   locality ("Zabiče 8, 6250 Zabiče"). The v1.9.8 check falsified the fr-bare-street recipe alone on
- *   exactly this class (SI resolve −3.4pp; "Apače 108" split into street "Apače 10" + house "8") —
- *   the bare-street boundary finding applies across settings onto a form where the leading name must keep its
- *   number whole and the trailing mention must stay locality-bound. This recipe is the paired
- *   counter-distribution: same lesson ("name before number, comma, then admin"), opposite polarity
- *   on the trailing mention.
+ *   `si-bare-village`, the Slovenian no-street counter-recipe. Slovenia's rural addressing has no
+ *   street line, so the village name is the street-level token and repeats as the locality
+ *   ("Zabiče 8, 6250 Zabiče"). The leading name must keep its number whole, and the trailing mention
+ *   must stay locality-bound. This recipe is the paired counter-distribution, with the same lesson
+ *   ("name before number, comma, then admin") and the opposite polarity on the trailing mention.
  *
  *   Three real-order templates cycle per tuple (mirrors the coord-golden orders so the eval and the
  *   training distribution agree):
  *
  *   1. canonical  "«V» «n», «pc» «V»"
- *   2. bare       "«V» «n», «V»"        (no postcode — the anchor-free form, the fr-bare lesson)
+ *   2. bare       "«V» «n», «V»"        (no postcode, the anchor-free form)
  *   3. pc-first   "«pc» «V», «V» «n»"
  *
- *   Gold spans: leading «V» = street (matches OA ground truth — the village is the address line),
+ *   Gold spans: leading «V» = street (matches OA ground truth, the village is the address line),
  *   «n» = house_number (never split mid-digits), «pc» = postcode (never swallowing the neighbor),
  *   trailing «V» = locality (the binding the resolver needs).
  */

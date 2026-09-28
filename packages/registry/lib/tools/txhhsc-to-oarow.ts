@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #619: convert the TX hhsc nursing-facilities source (which ships an authoritative `Geo Location`
- *   = `lat,lon` per facility) into the OaRow jsonl the resolver eval consumes — so our geocoder can
- *   be graded against the provided coordinates on real facility addresses (great-circle delta, tier
- *   breakdown via `oa-resolver-eval --address-points`).
+ *   Convert the TX hhsc nursing-facilities source into the OaRow jsonl the resolver eval consumes.
+ *   The source ships an authoritative `Geo Location` = `lat,lon` per facility, so the geocoder is
+ *   graded against the provided coordinates on real facility addresses. `oa-resolver-eval
+ *   --address-points` reports a great-circle delta and a tier breakdown.
  *
- *   Neutral scope: this measures geocoder accuracy on real public addresses. it makes no claim about
+ *   Neutral scope: this measures geocoder accuracy on real public addresses and makes no claim about
  *   the facilities themselves.
  *
  *   Run: `mailwoman registry convert tx-hhsc [--src <tsv>] [--out /tmp/txhhsc-oarow.jsonl]`
@@ -56,8 +56,8 @@ export async function convertTXHHSC(
 	const records: string[] = []
 	let skipped = 0
 
-	// Column indices, captured from the first non-blank row.
-	// `header: false` keeps that row in the stream so the blank-row guard below applies to it too.
+	// Column indices come from the first non-blank row. `header: false` keeps that row in the stream,
+	// so the blank-row guard below applies to it.
 	let cAddr = -1
 	let cCity = -1
 	let cZip = -1

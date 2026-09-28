@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Held-out fresh-draw Gauntlet — the generalization check (DeepSeek 019f1144: "the only layer that
- *   measures the tail. when it conflicts with the curated suite, it wins"). Each run draws a fresh random
- *   sample with truth coordinates (BAN for FR), so the model can't memorize it, and runs both the candidate
- *   and the current production model on the same draw. It checks on a two-proportion z-test: ship only if the
- *   candidate is not statistically worse than production at the locality tolerance. Absolute accuracy is not
- *   the check. The candidate-vs-prod delta is (this controls for data drift + coverage gaps).
+ *   Held-out fresh-draw Gauntlet. It is the generalization check. Each run draws a fresh random
+ *   sample with truth coordinates (BAN for FR), so the model cannot memorize it, and runs both the
+ *   candidate and the current production model on the same draw. It checks on a two-proportion
+ *   z-test, and it ships only when the candidate is at least as good as production at the locality
+ *   tolerance. Absolute accuracy is not the check, and the candidate-against-production delta
+ *   controls for data drift and coverage gaps.
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
@@ -23,9 +23,6 @@ import { buildGauntletDeps, type GauntletDeps, type GauntletResolverPins } from 
 
 /**
  * Two-sided 95% critical value of the standard normal.
- *
- * The check blocks only on a significant regression, so a candidate that is ahead or within noise passes.
- * This is the noise boundary.
  */
 const Z_CRITICAL_95_TWO_SIDED = -1.96
 
@@ -34,7 +31,7 @@ const Z_CRITICAL_95_TWO_SIDED = -1.96
  */
 export interface HoldoutLayerOptions {
 	/**
-	 * Candidate ONNX (required — the layer is candidate-vs-prod).
+	 * Candidate ONNX (required, since the layer compares a candidate against production).
 	 */
 	candidate?: string
 	/**
@@ -50,12 +47,9 @@ export interface HoldoutLayerOptions {
 	 */
 	source?: string
 	/**
-	 * A tokenizer-splice candidate (#444/#884/#912) ships a new vocab.
-	 *
-	 * Grading it needs the candidate tokenizer (+ card) paired with the candidate model.
-	 *
-	 * Production is then also run through the shipped trio (createScorer both sides)
-	 * so the only variables are the ONNX + the vocab.
+	 * A tokenizer-splice candidate ships a new vocab. Grading it needs the candidate tokenizer
+	 * (and card) paired with the candidate model. Production then also runs through the shipped
+	 * trio (createScorer on both sides), so the only variables are the ONNX and the vocab.
 	 * Omit for a model-only bump.
 	 */
 	tokenizer?: string
@@ -64,33 +58,32 @@ export interface HoldoutLayerOptions {
 	 */
 	card?: string
 	/**
-	 * Package-shaped candidate weights dir — the #718-safe path
-	 * (see {@link GauntletLayerOptions.weightsCacheRoot}).
+	 * Package-shaped candidate weights dir (see {@link GauntletLayerOptions.weightsCacheRoot}).
 	 *
-	 * Like a splice candidate it carries its own vocab, so production also runs
-	 * through the shipped trio to keep the z-test clean.
+	 * Like a splice candidate it carries its own vocab, so production also runs through the
+	 * shipped trio to keep the z-test clean.
 	 */
 	weightsCacheRoot?: string
 	/**
-	 * Resolver-side pin pins, applied to both arms.
+	 * Resolver-side pins, applied to both arms.
 	 *
-	 * A resolver pin is a property of the configuration rather than of the model under test,
-	 * so pinning it on one side would confound the z-test with the very thing the layer holds constant.
+	 * A resolver pin is a property of the configuration, so pinning it on one side would confound
+	 * the z-test with the very thing the layer holds constant.
 	 */
 	pins?: GauntletResolverPins
 }
 
 /**
- * Rooftop / street / locality (km)
+ * Rooftop, street and locality tolerances in km.
  */
 const TOLS = [0.1, 0.5, 5] as const
 /**
- * The z-test runs at the locality bucket (the dominant resolvable tier)
+ * The z-test runs at the locality bucket, the dominant resolvable tier.
  */
 const THRESHOLD_TOL = 5
 
 /**
- * One drawn row — a bare-form query and the truth coordinate it came with.
+ * One drawn row, a bare-form query and the truth coordinate it came with.
  */
 export interface Sample {
 	query: string
@@ -99,15 +92,15 @@ export interface Sample {
 }
 
 /**
- * Held-out truth sources — fresh-draw rather than in mailwoman's training corpus,
- * so they measure generalization.
+ * Held-out truth sources, drawn fresh from outside mailwoman's training corpus, so they measure
+ * generalization.
  *
- * Each parses a semicolon row of its staging file into a bare-form query
- * (no postcode — the hard case the tail exercises) + truth coord.
+ * Each parses a semicolon row of its staging file into a bare-form query (no postcode, the hard
+ * case the tail exercises) and a truth coordinate.
  * FR/BAN streams the 5 GB file.
  * The smaller pools (US/fdic, ~77k) are the fast draw.
  *
- * Add a source by dropping a staging file + a parser here.
+ * Add a source by dropping a staging file and a parser here.
  */
 export interface SourceDef {
 	file: PathBuilder
@@ -154,15 +147,14 @@ export function holdoutSources(): Record<string, SourceDef> {
 }
 
 /**
- * Reservoir-sample N rows with truth coords from the selected source — a genuinely fresh draw each run.
+ * Reservoir-sample N rows with truth coords from the selected source, a fresh draw each run.
  *
- * `random` is injectable so a caller that must be able to re-draw the same sample can seed it.
- * The layer itself never passes one: an unseeded draw is what makes this the only
- * check the model cannot have memorized, and a seeded default would quietly turn
- * the generalization measure into a fixed set.
+ * `random` is injectable so a caller that must re-draw the same sample can seed it. The layer
+ * itself never passes one, since an unseeded draw is what makes this the only check the model
+ * cannot have memorized. A seeded default would turn the generalization measure into a fixed set.
  *
- * It also returns `drawnFrom`, the count of parseable rows the reservoir saw,
- * because the sample size alone does not say what it was drawn out of.
+ * It also returns `drawnFrom`, the count of parseable rows the reservoir saw, since the sample
+ * size alone does not say what it was drawn out of.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,
@@ -173,9 +165,8 @@ export async function drawHoldoutSample(
 	let seen = 0
 	let line = 0
 
-	// Semicolon-delimited CSV (not jsonl) → TextSpliterator for the line layer, keep the `.split(";")`.
-	// Crlf: the staging files are LF today, but the final column (the truth coord) would
-	// otherwise carry a stray \r on a crlf source and fail to parse.
+	// The staging files are LF, but the final column (the truth coord) would otherwise carry a
+	// stray \r on a crlf source and fail to parse.
 	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
 		const s = src.parse(raw.split(";"))
@@ -221,8 +212,7 @@ async function score(deps: GauntletDeps, sample: Sample[]): Promise<{ hits: numb
 }
 
 /**
- * Two-proportion z (candidate − prod).
- * Z < −1.96 → candidate significantly worse (block).
+ * Two-proportion z score for a candidate against production.
  */
 function zStat(cand: number, prod: number, n: number): number {
 	const pc = cand / n
@@ -234,10 +224,10 @@ function zStat(cand: number, prod: number, n: number): number {
 }
 
 /**
- * Run the held-out candidate-vs-prod layer.
+ * Run the held-out layer.
  *
- * `exitCode` is 0 for `pass` and 1 when the candidate significantly worse,
- * 2 = usage error (missing candidate / unknown source).
+ * `exitCode` is 0 for `pass`, 1 when the candidate is significantly worse, and 2 for a usage
+ * error (missing candidate or unknown source).
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {
 	const N = options.n ?? 300
@@ -318,8 +308,6 @@ export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promis
 	console.log(`  resolved      ${String(prod.resolved).padStart(8)}     ${String(cand.resolved).padStart(8)}`)
 	console.log(`\n  z (candidate − production) @ ≤${THRESHOLD_TOL}km: ${z.toFixed(2)}`)
 
-	// Block only on a significant regression.
-	// Candidate ahead or within noise → pass.
 	const pass = z >= Z_CRITICAL_95_TWO_SIDED
 
 	console.log(

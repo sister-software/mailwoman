@@ -45,9 +45,6 @@ describe("a literal input set carrying truth", () => {
 	})
 
 	it("reports a MIXED set against its own denominator, not against n", async () => {
-		// The failure this guards: reading "1 of 2 resolved" as a rate over the graded rows
-		// when only one row has truth at all.
-		// The note has to name both numbers.
 		const set = await resolveInputSet({
 			kind: "literal",
 			why: WHY,
@@ -59,8 +56,6 @@ describe("a literal input set carrying truth", () => {
 	})
 
 	it("keys the digest on the TRUTH as well as the input, so two pins cannot collide on one setID", async () => {
-		// Same string, different asserted point.
-		// A different measurement, and it must not read as a re-run.
 		const a = await resolveInputSet({
 			kind: "literal",
 			why: WHY,
@@ -89,10 +84,6 @@ describe("mwdev_inputs `matching` — class size", () => {
 		const expression = new RegExp("#\\s?\\d", "iu")
 		const matched = set.inputs.filter((row) => expression.test(row.input))
 
-		// Two match the pattern.
-		// Only one is a unit.
-		// That is the point of returning the rows and not just the count.
-		// `Coffee#1` is a brand name, and a bare count would have reported a class size of 2.
 		expect(matched.map((row) => row.input)).toEqual(["462 Queen St #101, Southington CT", "Coffee#1 Yeovil"])
 	})
 })

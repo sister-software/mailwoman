@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data benchmark's baseline resolver and its scorer (#2261).
+ *   The same-data benchmark's baseline resolver and its scorer.
  *
- *   The baseline has to be able to win, or the benchmark measures its blindness rather than the mechanism.
- *   The first two cases pin that a country qualifier resolved inside the pool flips the selection, using
- *   only facts the production arm also received.
+ *   The baseline has to be able to win, or the benchmark measures its blindness rather than the
+ *   mechanism. The first two cases pin that a country qualifier resolved inside the pool flips the
+ *   selection, using only facts the production arm also received.
  *
- *   `mcnemarExactP` builds its terms by ratio rather than forming a factorial, so the cases check it against
- *   the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does not reject, and 12/3 is
- *   2 × (1 + 15 + 105 + 455) / 2¹⁵.
+ *   `mcnemarExactP` builds its terms by ratio rather than forming a factorial, so the cases check it
+ *   against the binomial directly: a 6/0 split is 2 × 2⁻⁶, a 5/0 split is 2 × 2⁻⁵ and does not
+ *   reject, and 12/3 is 2 × (1 + 15 + 105 + 455) / 2¹⁵.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -80,7 +80,8 @@ describe("same-data baseline (#2261)", () => {
 			pool
 		)
 
-		// Unqualified, the tie breaks on the pool's canonical order — the baseline ranks on no fame term at all.
+		// Unqualified, the tie breaks on the pool's canonical order, since the baseline ranks on no
+		// fame term at all.
 		expect(unqualified.placeID).toBe("101")
 		expect(qualified.placeID).toBe("202")
 		expect(qualified.components?.countryQualifier).toBe(1)

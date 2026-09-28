@@ -2,10 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The char path through the runtime (#2164): the card's `encoder` block, weights resolution without a tokenizer,
- *   the char feed packer, and a classifier that encodes per code point, feeds `inferChars`, and skips the SentencePiece
- *   word-consistency repair — the repair that folded `東京都千代田区丸の内1丁目9-1` into one municipality span on the first
- *   served parse, because a Japanese address has no whitespace and so is one "word".
+ * @file The char path through the runtime: the card's `encoder` block, weights resolution without a
+ *   tokenizer, the char feed packer, and a classifier that encodes per code point, feeds
+ *   `inferChars`, and skips the SentencePiece word-consistency repair that folds a whitespace-free
+ *   Japanese address into one municipality span.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

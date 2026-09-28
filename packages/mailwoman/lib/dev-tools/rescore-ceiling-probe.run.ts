@@ -2,18 +2,18 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 /**
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
- *   #370 rescore-ceiling probe — sizes how much of the unresolved tail a parse<->resolve rescoring
- *   loop could recover, vs a true gazetteer coverage gap. For each coord-golden row: parse (the shipped
- *   v4.13.0 model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold locality is
- *   in the gazetteer (findPlace) and what the model emitted, and bucket the failure:
- *     - swap     : gold is in the gazetteer and the model emitted a different (wrong) locality token
- *                  -> a constrained rescore that swaps in the gold token recovers it. The clearest #370 win.
- *     - needsK   : gold is in the gazetteer and the model emitted no locality -> only a K-best decode
- *                  that surfaces the gold token could recover it (harder).
- *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve -> a resolver
- *                  ranking/country-filter issue rather than a rescore opportunity.
- *     - covGap   : gold not in the gazetteer -> rescoring can't help. it's a coverage gap.
- *   recoverable = swap + needsK = #370's ceiling. Same resolver for baseline + gold-check (consistent).
+ *   Rescore-ceiling probe: sizes how much of the unresolved tail a parse and resolve rescoring
+ *   loop could recover, against a true gazetteer coverage gap. For each coord-golden row: parse
+ *   (the shipped model) -> resolveTree -> resolved? For each unresolved row, ask whether the gold
+ *   locality is in the gazetteer (findPlace) and what the model emitted, and bucket the failure:
+ *     - swap     : gold is in the gazetteer and the model emitted a different locality token,
+ *                  so a constrained rescore that swaps in the gold token recovers it.
+ *     - needsK   : gold is in the gazetteer and the model emitted no locality, so only a K-best
+ *                  decode that surfaces the gold token could recover it.
+ *     - emitUnres: model emitted the gold locality but resolveTree still didn't resolve, which
+ *                  points at resolver ranking or a country filter.
+ *     - covGap   : gold not in the gazetteer, so rescoring can't help.
+ *   recoverable = swap + needsK. Same resolver for baseline and gold-check.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/rescore-ceiling-probe.run.ts [--model out/v191/model.onnx] [--n 150]
  */
@@ -27,7 +27,7 @@ import { haversineKm } from "@mailwoman/spatial"
 import { resolvePath } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
+// Loose scan: unknown flags are tolerated.
 const { values: rawValues } = parseArguments({
 	options: { model: { type: "string" }, n: { type: "string" } },
 	allowPositionals: true,
@@ -113,11 +113,11 @@ async function main() {
 			} else if (emitted && emitted.toLowerCase() !== gold.toLowerCase()) {
 				s.swap++
 
-				// falsifier: resolve the gold locality with the row's postcode
+				// Falsifier: resolve the gold locality with the row's postcode
 				// (what the rescore keeps as an anchor) and measure great-circle to truth.
-				// p50 < 10km → the swap recovers a real coordinate.
-				// Scatter → the gold name resolves to a same-name collision (a label-F1 mirage, the #685 trap).
-				// (0,0) placeholders are dropped — WOF ships them on some rows.
+				// p50 < 10km means the swap recovers a real coordinate.
+				// Scatter means the gold name resolves to a same-name collision.
+				// (0,0) placeholders are dropped, since WOF ships them on some rows.
 				const tLat = Number(row.lat),
 					tLon = Number(row.lon)
 
@@ -125,7 +125,7 @@ async function main() {
 					const pc = ((row.components?.postcode ?? row.components?.postal_code ?? "") as string).toString().trim()
 					const dis = pc ? await lookup.findPlace({ text: gold, country: cc, postcode: pc, limit: 5 }) : goldCands
 
-					// findPlace candidates carry lat/lon (not the ResolvedPlace latitude/longitude).
+					// findPlace candidates carry lat/lon fields, unlike a ResolvedPlace's latitude/longitude.
 					const dists = dis
 						.filter((c) => Number.isFinite(c.lat) && Number.isFinite(c.lon) && (c.lat !== 0 || c.lon !== 0))
 						.map((c) => haversineKm(tLat, tLon, c.lat, c.lon))
@@ -168,7 +168,7 @@ async function main() {
 			`              coverage-gap (rescore can't help)      = ${T.cov} (${((100 * T.cov) / Math.max(T.unres, 1)).toFixed(0)}%)`
 	)
 
-	// falsifier verdict (DeepSeek-specified): does the gold-locality swap recover a real coordinate?
+	// Falsifier verdict: does the gold-locality swap recover a real coordinate?
 	const t1p50 = percentile(swapTop1, 50) ?? Number.NaN,
 		t1p90 = percentile(swapTop1, 90) ?? Number.NaN,
 		b5p50 = percentile(swapBest5, 50) ?? Number.NaN,

@@ -3,12 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The resolver type interface — `ResolverBackend`, `Resolver`, `ResolveOpts`, `ResolvedPlace`, the
- *   lookup interfaces, the placetype map. Pure types + tiny helpers. no implementation, so `core`
- *   stays a dependency-free leaf and `core/pipeline` can compose the resolver structurally without
- *   a cycle. The implementation (`createWOFResolver`, `RemoteResolver`, span-rescore) lives in
- *   `@mailwoman/resolver` (#215), which depends on this + `@mailwoman/spatial` +
- *   `@mailwoman/codex`.
+ *   The resolver type interface. This module holds the lookup interfaces, the placetype map, and
+ *   tiny helpers.
+ *
+ *   Keeping the implementation out of `core` leaves it a dependency-free leaf, so `core/pipeline`
+ *   can compose the resolver structurally without a cycle. The implementation (`createWOFResolver`,
+ *   `RemoteResolver`, span-rescore) lives in `@mailwoman/resolver`, which depends on this module
+ *   plus `@mailwoman/spatial` and `@mailwoman/codex`.
  */
 
 export {

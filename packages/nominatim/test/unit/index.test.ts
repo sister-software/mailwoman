@@ -38,16 +38,11 @@ test("toFeatureCollection: wraps results as a GeoJSON FeatureCollection (geometr
 	const fc = toFeatureCollection([r, { ...r, lat: "", lon: "" }])
 
 	expect(fc.type).toBe("FeatureCollection")
-	// the row without a coordinate is dropped.
-	// A Feature needs a geometry.
 	expect(fc.features).toHaveLength(1)
 	const f = fc.features[0]!
 	expect(f.type).toBe("Feature")
 	expect(f.geometry).toEqual({ type: "Point", coordinates: [-77.0365, 38.8977] })
-	// boundingbox [south, north, west, east] → GeoJSON bbox [west, south, east, north]
 	expect(f.bbox).toEqual([-77.04, 38.89, -77.03, 38.9])
-	// the coordinate + boundingbox move OUT of properties.
-	// The rest stays.
 	expect(f.properties["display_name"]).toBeDefined()
 	expect(f.properties["lat"]).toBeUndefined()
 	expect(f.properties["boundingbox"]).toBeUndefined()
@@ -91,8 +86,6 @@ test("toNominatimResult: carries class/type/importance/boundingbox when present"
 	expect(r.boundingbox).toEqual(["38.89", "38.90", "-77.04", "-77.03"])
 })
 
-// #1052 — schema.org Place/PostalAddress/GeoCoordinates JSON-LD as an alternate output format (`format=jsonld`).
-
 test("nominatimResultToSchemaOrg: projects a result's address into a schema.org Place (#1052)", () => {
 	const place = nominatimResultToSchemaOrg(toNominatimResult(dc, { addressdetails: true }))
 
@@ -104,10 +97,10 @@ test("nominatimResultToSchemaOrg: projects a result's address into a schema.org 
 	expect(place.address?.addressLocality).toBe("Washington")
 	expect(place.address?.addressRegion).toBe("DC")
 	expect(place.address?.postalCode).toBe("20500")
-	expect(place.address?.addressCountry).toBe("US") // country_code "us" → uppercased alpha-2
+	expect(place.address?.addressCountry).toBe("US")
 })
 
-// Echoes params.addressdetails into the result so the route test also proves the router forces it for jsonld.
+// Echoes `params.addressdetails` into the result so the route test also covers the router forcing it for jsonld.
 const jsonldEngine: NominatimEngine = {
 	search: async (params) => [toNominatimResult(dc, { addressdetails: params.addressdetails })],
 	reverse: async (params) => toNominatimResult(dc, { addressdetails: params.addressdetails }),
@@ -121,7 +114,6 @@ test("route: /search?format=jsonld returns schema.org Place[] and forces address
 	expect(Array.isArray(body)).toBe(true)
 	const place = body[0]!
 	expect(place["@type"]).toBe("Place")
-	// jsonld forced addressdetails on (the client did not pass it), so the PostalAddress is fully populated.
 	expect(place.address?.streetAddress).toBe("1600 Pennsylvania Ave NW")
 	expect(place.address?.addressLocality).toBe("Washington")
 	expect(place.address?.addressCountry).toBe("US")
@@ -172,11 +164,9 @@ test("root: GET / serves a friendly HTML banner, not a bare 404 (#1022)", async 
 	expect(res.headers.get("content-type")).toContain("text/html")
 	const body = await res.text()
 	expect(body).toContain("@mailwoman/nominatim")
-	expect(body).toContain("/search?q=") // a clickable example query
-	expect(body).toContain("what-mailwoman-is") // docs pointer
+	expect(body).toContain("/search?q=")
+	expect(body).toContain("what-mailwoman-is")
 })
-
-// Pinning tests — the four nominatim wrinkles (wire interface) + the parsing/error-envelope guarantees.
 
 test("/status without an engine method answers 200 OK, not 501 (the one non-501 absent-method default)", async () => {
 	const app = createNominatimApp({})
@@ -325,8 +315,6 @@ test("GET /openapi.json serves the emitted 3.1 document with all five paths", as
 	expect(doc.openapi).toBe("3.1.0")
 	expect(Object.keys(doc.paths)).toEqual(expect.arrayContaining(["/", "/search", "/reverse", "/lookup", "/status"]))
 })
-
-// MARK: engine stamp
 
 const stamp = buildEngineStamp({ version: "9.2.0", expression: "AGPL-3.0-only OR LicenseRef-Commercial" })
 

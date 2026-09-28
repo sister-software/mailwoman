@@ -3,15 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Whitespace collapse — a run of inline whitespace (`[ \t]`) becomes one ascii space AT every RUN
- *   length, so a lone tab normalizes exactly as a doubled one does. Newlines (`\n`/`\r`) are preserved:
- *   QueryShape's segmentation grammar reads one as a segment separator on a par with a comma, and it
- *   reads a RAW tab the same way — folding every tab here is what keeps a tab-separated export from
- *   re-segmenting the query. The trailing trim also drops trailing sentence-punctuation noise (#829 tail): a
- *   trailing `.`/`,`/`;`/`:` (e.g. `…Washington DC.`) glues onto the last token and drops the street
- *   tier (`address_point`→`admin`). Trailing only + a conservative set — leading punctuation and
- *   quotes/brackets are never touched (they can be meaningful). Offset-map-correct via the same substring
- *   step as the whitespace trim, so span alignment survives.
+ *   Whitespace collapse, where a run of inline whitespace (`[ \t]`) becomes one ascii space at every
+ *   run length so a lone tab normalizes exactly as a doubled one does. Newlines (`\n`/`\r`) are
+ *   preserved because QueryShape's segmentation grammar reads one as a segment separator on a par
+ *   with a comma, and it reads a raw tab the same way, so folding every tab here keeps a
+ *   tab-separated export from re-segmenting the query.
+ *
+ *   The trailing trim drops trailing sentence-punctuation noise, since a trailing full stop, comma,
+ *   semicolon or colon glues onto the last token and drops the street tier (`address_point` to
+ *   `admin`). Trailing punctuation only, and a conservative set, because leading punctuation and
+ *   quotes or brackets can be meaningful.
+ *
+ *   Offset-map-correct via the same substring step as the whitespace trim, so span alignment
+ *   survives.
  */
 
 import { identityMap } from "#offset-map"
@@ -19,10 +23,11 @@ import { identityMap } from "#offset-map"
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
 /**
- * Trailing noise trimmed off the end of the input: whitespace + the
- * sentence-punctuation that a user commonly appends.
+ * Trailing noise trimmed off the end of the input, whitespace plus the sentence punctuation a user
+ * commonly appends.
  *
- * Not leading (a leading token is required) and not quotes/brackets/parens.
+ * It applies to the trailing end only, since a leading token is required, and excludes quotes,
+ * brackets and parentheses.
  */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 
@@ -50,7 +55,6 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 		const ch = input[i]!
 
 		if (ch === "\n" || ch === "\r") {
-			// Preserve newlines as segment separators.
 			out.push(ch)
 			map.push(i)
 			i += 1
@@ -68,10 +72,10 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an ascii space:
-			// the tab→space rewrite emitted above is a real edit, and `changed` is what decides
-			// whether the caller ever receives it.
-			// The early return below hands back the untouched input otherwise.
+			// A one-character run counts too when the character is not already an ascii space,
+			// since the tab-to-space rewrite emitted above is a real edit and `changed` decides
+			// whether the caller receives it. The early return below otherwise hands back the
+			// untouched input.
 			if (i - start > 1 || ch !== " ") {
 				changed = true
 				runs += 1
@@ -85,7 +89,6 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 		i += 1
 	}
 
-	// Trim leading whitespace, and trailing whitespace + sentence-punctuation noise (#829 tail).
 	let lead = 0
 
 	while (lead < out.length && ANY_SPACE.test(out[lead]!)) {

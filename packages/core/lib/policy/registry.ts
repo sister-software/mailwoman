@@ -6,8 +6,8 @@
  *   In-memory `PolicyRegistry`. Stores per-(component, locale) policy entries and applies them to a
  *   flat list of `ClassificationProposal`s.
  *
- *   Mutation API (`set`, `remove`) lives here so that locale profiles (#6 §LocaleProfile) can install
- *   per-locale overrides at startup. Look-up and `apply` are pure.
+ *   The mutation API (`set`, `remove`) lives here so that locale profiles can install per-locale
+ *   overrides at startup. Look-up and `apply` are pure.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -34,8 +34,8 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	/**
 	 * Build a registry pre-loaded with `mode` for every component (default `neural_only`).
 	 *
-	 * The input-shape router (#478) passes a shape-derived default so the whole
-	 * table starts from the routed prior.
+	 * The input-shape router passes a shape-derived default so the whole table starts from the routed
+	 * prior.
 	 */
 	static withDefaults(mode: PolicyMode = "neural_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()

@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #267 — `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin (pcli country
- *   + ADM1 regions) alongside the P-class localities and links the locality→region→country ancestry, so
- *   `parentID` scoping and adminCoherence reach the gap countries ("Tbilisi, GE" can resolve).
+ * `ingestGeonamesAliases({ includeAdmin: true })` folds the GeoNames A-class admin (pcli country
+ * and ADM1 regions) alongside the P-class localities and links the locality to region to country
+ * ancestry, so `parentID` scoping and adminCoherence reach the gap countries.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -16,7 +16,7 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterAll, beforeAll, expect, test } from "vitest"
 
 /**
- * A loose SQLite row shape for the test's column probes (avoids `any` — oxlint no-explicit-any).
+ * A loose SQLite row shape for the test's column probes, which avoids an explicit `any`.
  */
 type Row = Record<string, string | number | null>
 
@@ -99,8 +99,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	const region = db.prepare("SELECT id FROM spr WHERE placetype='region' AND country='GE'").get() as Row
 	const country = db.prepare("SELECT id FROM spr WHERE placetype='country' AND country='GE'").get() as Row
 
-	// Locality is parented to its region.
-	// The ancestor chain carries both region and country.
+	// The locality is parented to its region, and the ancestor chain carries both region and country.
 	expect(loc.parent_id).toBe(region.id)
 
 	const ancestorIDs = db
@@ -111,7 +110,7 @@ test("links the locality → region → country ancestry so parentID scoping rea
 	expect(ancestorIDs).toContain(region.id)
 	expect(ancestorIDs).toContain(country.id)
 
-	// The region itself ancestors to the country (so a region→country query works too).
+	// The region itself ancestors to the country, so a region-to-country query works too.
 	const regionAnc = db
 		.prepare("SELECT ancestor_id FROM ancestors WHERE id = ?")
 		.all(region.id!)
@@ -137,10 +136,8 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
-	// No linkage — the point of the admin check.
-	// The self row is not linkage: `populateAncestors` writes one for every spr row,
-	// so withholding it just made the fold-on-copy path disagree with a full build
-	// by exactly the non-gap localities (#1514).
+	// No linkage. The single ancestor row is the self row that `populateAncestors` writes for
+	// every spr row, so the admin check counts linkage separately.
 	expect(
 		(db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE ancestor_placetype IN ('country','region')").get() as Row).n
 	).toBe(0)
@@ -185,8 +182,7 @@ test("recognizes a PCLS special-administrative-region as the country (HK/MO/PS)"
 	hk.exec(`CREATE TABLE place_population (id INTEGER PRIMARY KEY, population INTEGER)`)
 	await ingestGeonamesAliases(hk, ["HK"], d, () => {}, { adminForCountries: new Set(["HK"]) })
 
-	// pcls is a country-level code.
-	// The fold must seat Hong Kong as the country (not skip it like pre-PCL*).
+	// pcls is a country-level code, so the fold must seat Hong Kong as the country.
 	expect((hk.prepare("SELECT name FROM spr WHERE placetype='country' AND country='HK'").get() as Row)?.name).toBe(
 		"Hong Kong"
 	)

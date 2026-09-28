@@ -3,12 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The per-locale street abbreviation tables: en-US suffixes and directionals, fr-FR and es-* street
- *   types, and a locale-unknown set for the geocode path, which expands before the parse that would
- *   establish the locale.
- *
- *   `@mailwoman/normalize` applies these tables in its expansion pass, and the metamorphic gauntlet
- *   inverts them to generate `Avenue` → `Ave` perturbations. Both read this one copy.
+ *   The per-locale street abbreviation tables for en-US, fr-FR, es-ES and the locale-unknown geocode path.
  */
 
 export interface AbbreviationEntry {
@@ -23,7 +18,6 @@ export interface AbbreviationEntry {
 }
 
 const EN_US_DICT: ReadonlyArray<AbbreviationEntry> = [
-	// Directional prefixes / suffixes
 	{ from: "N", to: "North" },
 	{ from: "S", to: "South" },
 	{ from: "E", to: "East" },
@@ -32,7 +26,7 @@ const EN_US_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "NW", to: "Northwest" },
 	{ from: "SE", to: "Southeast" },
 	{ from: "SW", to: "Southwest" },
-	// Street suffixes
+
 	{ from: "St", to: "Street" },
 	{ from: "Ave", to: "Avenue" },
 	{ from: "Blvd", to: "Boulevard" },
@@ -59,8 +53,6 @@ const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
 
 /**
  * `Av` reads Avenue in French and Avenida in Spanish, so the Spanish entries cannot join a shared set.
- *
- * Only the locale decides which word the three letters stand for.
  */
 const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Av", to: "Avenida" },
@@ -69,20 +61,9 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * The entries safe to apply before the input's locale is known (#1002).
- *
- * Safe means multi-character, collision-free across the locale tables,
- * and never a plausible standalone token in another locale.
- * The FR single letters are excluded because `R` would fire on Washington DC's literal "R St",
- * and the EN suffixes are excluded because `St` and `Dr` are ambiguous with Saint and Doctor.
- *
- * `Av` violates the criterion and stays: it reads Avenida in es and pt, so Spanish
- * input through the geocode path acquires an English street type.
- * Removing it changes a passing gauntlet row (`fr-op3-halles-market-bonneuil` asserts
- * "Avenue de la Convention"), so the removal has to be measured on a resolver-gauntlet run.
- *
- * The upstream repair is locale detection for Spanish, which `@mailwoman/locale-hint`
- * cannot do while a 5-digit ES/MX postcode is indistinguishable from a US ZIP.
+ * The entries safe to apply before the input's locale is known, which are multi-character and
+ * collision-free across the locale tables. `Av` is a known exception whose removal needs a
+ * resolver-gauntlet measurement.
  */
 const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Bd", to: "Boulevard" },
@@ -93,11 +74,8 @@ const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * The abbreviation table for a locale.
- *
- * BCP-47 `und` selects the locale-unknown set.
- * An `fr-*` or `es-*` locale selects its language's table.
- * Every other value, including `undefined`, selects en-US.
+ * The abbreviation table for a locale, where `und` selects the locale-unknown set and an
+ * unrecognized value selects en-US.
  */
 export function abbreviationDictionary(locale?: string): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()

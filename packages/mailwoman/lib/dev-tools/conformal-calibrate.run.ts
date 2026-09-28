@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Split-conformal confidence wrapper for the street-level coordinate tier (#374, heuristic-radius
- *   variant). The interpolation tier stamps an `uncertainty_m` radius on each hit (half the matched
- *   tiger segment length) and the exact address-point tier stamps no radius — it is a real situs
- *   point, assigned a fixed 10 m floor (building-centroid precision).
+ *   Split-conformal confidence wrapper for the street-level coordinate tier (heuristic-radius variant).
+ *   The interpolation tier stamps an `uncertainty_m` radius on each hit (half the matched tiger segment
+ *   length) and the exact address-point tier stamps no radius, since it is a real situs point assigned
+ *   a fixed 10 m floor (building-centroid precision).
  *
- *   The heuristic radius is a prior rather than a guarantee. This script turns it into a provably-calibrated
- *   interval: the conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now
- *   have a 90% coverage guarantee on held-out data."
+ *   The heuristic radius is a prior. This script turns it into a provably-calibrated interval: the
+ *   conformal threshold Q̂ tells you "multiply the claimed radius by Q̂ and you now have a 90% coverage
+ *   guarantee on held-out data."
  *
- *   recipe (DeepSeek scope, #374):
+ *   Recipe:
  *
  *   1. Run the full cascade (parser → resolver with situs + interp extracts) on a holdout set. For each
  *        resolved street-level row capture: (a) coordinate error in meters (haversine to the true
@@ -22,7 +22,7 @@
  *   3. Conformal threshold Q̂ = the ⌈(n_cal + 1) × 0.9⌉ / n_cal empirical quantile of {s_i} over a
  *        calibration split (split the holdout ≈50/50, deterministic seed).
  *   4. Calibrated 90% interval at inference = claimed_radius × Q̂.
- *   5. validate on the test split: empirical coverage = fraction where error_m ≤ calibrated_radius.
+ *   5. Validate on the test split: empirical coverage = fraction where error_m ≤ calibrated_radius.
  *        Target ≈ 90%.
  *
  *   calibration data (pre-built, Texas E-911 Travis County):
@@ -34,7 +34,7 @@
  *   output: threshold Q̂, empirical 90% coverage, median calibrated radius per tier, plus a 3-line
  *   calibration summary.
  *
- *   Run (no pre-compile needed — : node packages/mailwoman/lib/dev-tools/conformal-calibrate.run.ts\
+ *   Run (no pre-compile needed): node packages/mailwoman/lib/dev-tools/conformal-calibrate.run.ts\
  *   [--holdout /tmp/ood-truth.jsonl]\
  *   [--address-points /tmp/tx-situs.db]\
  *   [--interpolation /tmp/tx-metro-interp.db]\
@@ -66,7 +66,7 @@ import { JSONSpliterator, TextSpliterator } from "spliterator"
 const COVERAGE_TOLERANCE = 0.03
 
 /**
- * Interval-width ratio above which the calibrated radius is reported as inflated rather than tight.
+ * Interval-width ratio above which the calibrated radius is reported as inflated.
  */
 const INFLATED_INTERVAL_RATIO = 1.1
 
@@ -100,12 +100,6 @@ const values = rawValues as {
 	wof?: string
 }
 
-// #region CLI helpers
-
-// #endregion
-
-// #region Conformal quantile
-
 function conformalThreshold(calScores: number[], targetCoverage: number): number {
 	const n = calScores.length
 
@@ -118,32 +112,23 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 	return [...calScores].toSorted((a, b) => a - b)[rank - 1]!
 }
 
-// #endregion
-
-// #region Seeded deterministic shuffle — a reproducibility PIN
-
 /**
- * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
- * selected under it, and `@mailwoman/core/utils`' `makeLcg` uses different constants —
- * swapping streams re-splits calibration/test and silently moves Q̂.
+ * Keep this exact glibc-constant LCG stream: the published conformal thresholds were selected under
+ * it, and `@mailwoman/core/utils`' `makeLcg` uses different constants. Swapping streams re-splits
+ * calibration and test and silently moves Q̂.
  */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// The sampler takes the raw state modulo the bound rather than scaling a float,
-	// which is why this reaches for `shuffleBy` and not `shuffleWith`.
-	// Both are the same walk.
-	// The published conformal thresholds were selected under this sampler, so it stays exactly as it is.
+	// The sampler takes the raw state modulo the bound. This is why it reaches for `shuffleBy`.
+	// The published conformal thresholds were selected under this sampler, so it stays exactly as it
+	// is.
 	shuffleBy(out, (bound) => step() % bound)
 
 	return out
 }
-
-// #endregion
-
-// #region Tree walkers — read STAMPED metadata, never alter resolution
 
 /**
  * Fixed floor for an exact situs point (building-centroid precision).
@@ -161,10 +146,9 @@ interface StreetHit {
 }
 
 /**
- * Kept local rather than tree-hits' `findAddressPointHit` / `findInterpolatedHit`:
- * those answer only a coordinate, and this walk also needs the stamped `resolution_tier`
- * and the interpolation `uncertainty_m` to price the claimed radius.
- * Neither of which the shared readers carry.
+ * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit` answer only a
+ * coordinate, and this walk also needs the stamped `resolution_tier` and the interpolation
+ * `uncertainty_m` to price the claimed radius. The shared readers carry neither.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -193,10 +177,6 @@ function findStreetHit(tree: AddressTree): StreetHit | null {
 	return null
 }
 
-// #endregion
-
-// #region Holdout row type (matches /tmp/ood-truth.jsonl)
-
 interface HoldoutRow {
 	input: string
 	lat: number
@@ -204,10 +184,6 @@ interface HoldoutRow {
 	expected?: { locality?: string; region?: string; postcode?: string }
 	state?: string
 }
-
-// #endregion
-
-// #region Main
 
 /**
  * Build the parse → resolve cascade this calibration measures.
@@ -268,7 +244,6 @@ async function main(): Promise<void> {
 	const alpha = Number(values["alpha"] || "0.9") // target coverage level
 	const seed = Number(values["seed"] || "20260614")
 
-	// Load the held-out rows before running the calibration cascade.
 	const rows: HoldoutRow[] = await JSONSpliterator.fromAsync<HoldoutRow>(holdoutPath).toArray()
 
 	console.error(`[conformal-calibrate] ${rows.length} holdout rows from ${holdoutPath}`)
@@ -284,7 +259,6 @@ async function main(): Promise<void> {
 		interpolationDB,
 	})
 
-	// Run the resolver cascade over every held-out row.
 	interface Row {
 		errorM: number
 		claimedRadiusM: number
@@ -339,17 +313,14 @@ async function main(): Promise<void> {
 		process.exit(1)
 	}
 
-	// Deterministically split resolved rows into calibration and test sets.
 	const shuffled = seededShuffle(resolved, seed)
 	const nCal = Math.floor(shuffled.length * calFrac)
 	const calRows = shuffled.slice(0, nCal)
 	const testRows = shuffled.slice(nCal)
 
-	// Compute calibration nonconformity scores.
 	const calScores = calRows.map((r) => r.errorM / r.claimedRadiusM)
 	const Q = conformalThreshold(calScores, alpha)
 
-	// Measure empirical coverage on the held-out test set.
 	const testScores = testRows.map((r) => r.errorM / r.claimedRadiusM)
 	const covered = testScores.filter((s) => s <= Q).length
 	const coverage = covered / Math.max(1, testScores.length)
@@ -363,16 +334,12 @@ async function main(): Promise<void> {
 		byTier[r.tier].push(r)
 	}
 
-	// Median calibrated radius = median(claimedRadiusM) × Q per tier on all resolved rows
 	const tierStats = tiers.map((t) => {
 		const innerRows = byTier[t]
 
 		if (!innerRows.length)
 			return { tier: t, n: 0, medianClaimedM: Number.NaN, medianCalibratedM: Number.NaN, medianErrorM: Number.NaN }
 
-		// innerRows rather than the outer holdout `rows`.
-		// The previous lax scripts tsconfig let the wrong array through and the per-tier medians silently printed
-		// NaN (the headline Q/coverage were computed on the correct splits. Only this breakdown was dead).
 		const claimedMeds = median(innerRows.map((r) => r.claimedRadiusM)) ?? Number.NaN
 		const errMeds = median(innerRows.map((r) => r.errorM)) ?? Number.NaN
 
@@ -385,13 +352,9 @@ async function main(): Promise<void> {
 		}
 	})
 
-	// Uncalibrated coverage: fraction where error_m ≤ claimed_radius_m (threshold=1)
 	const uncalCovered = resolved.filter((r) => r.errorM <= r.claimedRadiusM).length
 	const uncalCoverage = uncalCovered / Math.max(1, resolved.length)
 
-	// Compute conformal thresholds for each resolution tier.
-	// Split each tier's rows independently: shuffled order is fixed, just filter by tier.
-	// "Too few rows" warning fires when rank > n_cal (conformal_threshold returns ∞).
 	const tierConformal = tiers.map((t) => {
 		const allRows = byTier[t]
 		// Maintain the same shuffle order as the overall split for reproducibility.
@@ -421,7 +384,6 @@ async function main(): Promise<void> {
 		}
 	})
 
-	// Print the complete calibration report.
 	const hr = "─".repeat(72)
 
 	console.log("")
@@ -481,8 +443,6 @@ async function main(): Promise<void> {
 	console.log("")
 	console.log(hr)
 
-	// Print the concise three-line calibration summary.
-	// Characterise the dominant tier (address_point here. Interp may lack sufficient rows).
 	const situsTC = tierConformal.find((x) => x.tier === "address_point")!
 	const interpTC = tierConformal.find((x) => x.tier === "interpolated")!
 
@@ -490,7 +450,6 @@ async function main(): Promise<void> {
 	console.log("CALIBRATION SUMMARY")
 	console.log("")
 
-	// Line 1: overall verdict on the heuristic prior
 	if (!Number.isFinite(Q)) {
 		console.log(
 			`  The combined conformal threshold is ∞ — not enough calibration data to guarantee ${(alpha * 100).toFixed(0)}% coverage.`
@@ -498,7 +457,7 @@ async function main(): Promise<void> {
 		console.log(`  Collect more holdout rows or lower the target α.`)
 		console.log(`  Uncalibrated (Q̂=1) coverage is ${(uncalCoverage * 100).toFixed(1)}%.`)
 	} else if (Q < 1) {
-		// The heuristic is conservative — can shrink and still cover
+		// The heuristic is conservative, so it can shrink and still cover
 		const situsVerdict = Number.isFinite(situsTC.Q)
 			? `situs floor (${SITUS_FLOOR_M} m) is ${(1 / situsTC.Q).toFixed(0)}× too large`
 			: "situs tier: insufficient rows for per-tier threshold"
@@ -527,7 +486,7 @@ async function main(): Promise<void> {
 		)
 		console.log(`  Use Q̂ × claimed_radius as the reported interval at inference.`)
 	} else {
-		// Q near 1 — well-calibrated
+		// Q near 1, so the prior is well calibrated
 		console.log(`  Combined Q̂ ≈ ${Q.toFixed(4)} (near 1): the heuristic radius is WELL-CALIBRATED as-is.`)
 		console.log(
 			`  Empirical coverage ${(coverage * 100).toFixed(1)}% on the test split is within 3pp of the ${(alpha * 100).toFixed(0)}% target; no correction needed.`
@@ -539,5 +498,3 @@ async function main(): Promise<void> {
 }
 
 runIfScript(import.meta, main)
-
-// #endregion

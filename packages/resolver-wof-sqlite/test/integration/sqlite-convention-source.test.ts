@@ -7,18 +7,14 @@ import { SqliteConventionSource } from "@mailwoman/resolver-wof-sqlite/sqlite-co
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `SqliteConventionSource` + the convention-asset auto-detect wiring (#290, Direction E). Proves
- *   the build-from-source asset path end-to-end: a `address_convention` table on an attached extract
- *   is auto-detected, queried on demand by WOF id, and the resolved convention reroutes `findPlace`
- *   dispatch — the same reroute the in-memory `opts.conventions` path gives, but through the
- *   asset.
+ * Tests for `SqliteConventionSource` and the convention-asset auto-detect wiring.
  */
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 /**
- * A minimal WOF fixture (DE country #90 + Plauen) with an attached `address_convention`
- * table in the same schema, so the lookup auto-detects it.
+ * A minimal WOF fixture (DE country 90 and Plauen) with an attached `address_convention` table in
+ * the same schema, so the lookup auto-detects it.
  */
 function buildDB(conventions: Array<{ wof_id: number; convention: object }> = []): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -86,10 +82,10 @@ describe("convention-asset auto-detect → dispatch", () => {
 	})
 
 	it("an attached convention asset that drops postcode_area_resolution reroutes dispatch", async () => {
-		// The convention asset lives in the same (main) schema.
-		// The lookup auto-detects address_convention and queries it by the DE country WOF id (90).
-		// Dropping postcode_area_resolution means the typo no longer recovers Plauen —
-		// proof the asset drives findPlace with no opts.conventions injection.
+		// The convention asset lives in the same (main) schema, and the lookup auto-detects
+		// address_convention and queries it by the DE country WOF id (90). Dropping
+		// postcode_area_resolution means the typo no longer recovers Plauen, showing the asset
+		// drives findPlace without an opts.conventions injection.
 		using lookup = new WOFSQLitePlaceLookup({
 			database: buildDB([{ wof_id: 90, convention: { candidateStrategies: ["fallback_fuzzy_name_match"] } }]),
 			buildFTS: true,
@@ -109,7 +105,6 @@ describe("convention-asset auto-detect → dispatch", () => {
 			buildFTS: true,
 		})
 
-		// First query warns about the unknown strategy and falls through to the known one.
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })
 		await lookup.findPlace({ text: "Plauen", placetype: "locality", country: "DE" })
 		expect(warn).toHaveBeenCalledTimes(1) // once per name rather than once per query

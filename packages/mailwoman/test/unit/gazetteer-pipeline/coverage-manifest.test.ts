@@ -3,16 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the coverage-manifest drawer (survey candidate #2). Three obligations:
- *
- *   1. byte-identity of the measured record vs the code constants it supersedes — the safelist
- *        derived from {@link MEASURED_COUNTRY_COVERAGE} must equal `HARD_PLACE_COUNTRY_SAFELIST`, and
- *        {@link MEASURED_COUNTRY_BBOXES} must equal `COUNTRY_BBOX`, so a rebuilt artifact behaves
- *        exactly like the constants until a promote deliberately grows the record.
- *   2. round-trip through a real candidate build: emit → read → `WOFCandidateTableLookup` exposes
- *        `artifactCoverage`; a legacy DB (no manifest) reads `undefined` (the constant-fallback signal).
- *   3. meaning-OF-zero: measured-and-failed (FI) is a present row, distinguishable from
- *        never-measured (absent).
+ *   Tests for the coverage-manifest drawer. The derived safelist and bboxes must match the code
+ *   constants they supersede, so a rebuilt artifact behaves exactly like the constants until a
+ *   promote grows the record. A round trip through a real candidate build exposes `artifactCoverage`,
+ *   while a legacy database without manifest tables reads `undefined`, the constant-fallback signal.
+ *   A measured-and-failed country is a present row that stays distinguishable from a never-measured
+ *   one.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -115,19 +111,16 @@ describe("emit → read round-trip through a real candidate build", () => {
 		expect(manifest).toBeDefined()
 		expect([...manifest!.hardCountrySafelist].toSorted()).toEqual([...HARD_PLACE_COUNTRY_SAFELIST].toSorted())
 
-		// Provenance survives: the GB row carries its panel size + receipt.
 		const gb = manifest!.countryCoverage.get("GB")
 		expect(gb?.hardFilterSafe).toBe(true)
 		expect(gb?.hardResolveRate).toBeCloseTo(0.977, 3)
 		expect(gb?.sampleSize).toBe(300)
 		expect(gb?.source).toContain("#928")
 
-		// AU recorded a verdict without a single-rate number — nullable columns round-trip as absent.
 		const au = manifest!.countryCoverage.get("AU")
 		expect(au?.hardFilterSafe).toBe(true)
 		expect(au?.hardResolveRate).toBeUndefined()
 
-		// Bboxes round-trip against the constant.
 		expect(manifest!.countryBBoxes.size).toBe(Object.keys(COUNTRY_BBOX).length)
 		const us = manifest!.countryBBoxes.get("US")
 		expect([us?.latMin, us?.latMax, us?.lonMin, us?.lonMax]).toEqual([...COUNTRY_BBOX["US"]!])
@@ -141,14 +134,14 @@ describe("emit → read round-trip through a real candidate build", () => {
 
 		const manifest = readGazetteerCoverageManifest(db)!
 
-		// FI: measured and failed the check — a first-class negative result, off the safelist.
+		// FI is measured and failed the check, so it is a present row that stays off the safelist.
 		const fi = manifest.countryCoverage.get("FI")
 		expect(fi).toBeDefined()
 		expect(fi?.hardFilterSafe).toBe(false)
 		expect(fi?.hardResolveRate).toBeCloseTo(0.695, 3)
 		expect(manifest.hardCountrySafelist.has("FI")).toBe(false)
 
-		// NZ: never measured — absent rather than "failed".
+		// NZ is never measured, so it is absent rather than failed.
 		// The two states must be distinguishable.
 		expect(manifest.countryCoverage.has("NZ")).toBe(false)
 		expect(manifest.countryCoverage.has("FI")).not.toBe(manifest.countryCoverage.has("NZ"))

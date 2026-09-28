@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The panel builder for the prominence-floor benchmark (#2264). It executes the frozen selection rules and
+ *   The panel builder for the prominence-floor benchmark. It executes the frozen selection rules and
  *   contains no judgement of its own: the bands, the eligibility rule, the fill order and the seed all come
  *   from `benchmark-definition.json`, committed before any row was inspected.
  *
  *   Two strata per band, and the band is what this benchmark adds. The same-data panel drew every gold above
- *   one population floor, so a floor arm admitted all of it by construction. here a stratum is filled once per
+ *   one population floor, so a floor arm admitted all of it by construction. Here a stratum is filled once per
  *   band, from that band's own rows, and the record reports each band separately.
  *
  *   Rows are drawn from the per-country main-table dumps rather than `cities15000.txt`, because the point is
@@ -54,7 +54,7 @@ export interface ProminencePanelResult {
  * The provenance every row carries.
  *
  * The register is the per-country dump rather than a single filtered table,
- * so the row names which country's file it came from.
+ * so the row records which country's file it came from.
  */
 function panelProvenance(definition: ProminenceFloorDefinition): SameDataPanelRow["source"] {
 	return {

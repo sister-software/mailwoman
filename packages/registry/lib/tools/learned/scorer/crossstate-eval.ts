@@ -3,19 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Learned-scorer cross-state generalization (#603 Tier 2, the next axis after the held-out-NPI A/B
- *   in `learned-scorer-clustering-eval.ts`). The held-out-NPI A/B showed the GBT beats the FS
- *   baseline on clustering by +5.2pp — but the GBT was trained and evaluated within one state (TX).
- *   The production question is whether that +5.2pp generalizes: train on one state, evaluate the dedup
- *   clustering F1 on a different state the model never saw. If it holds, the GBM is
- *   production-worthy. if it collapses, the scorer is fitting state-specific structure and needs
- *   per-state training (a finding either way).
+ *   Learned-scorer cross-state generalization, the next axis after the held-out-NPI A/B. The
+ *   within-state A/B showed the GBT beats the FS baseline on clustering, so this trains on one state and
+ *   evaluates clustering F1 on a different state the model never saw.
  *
- *   One registry pass builds the global address-frequency table + a train-state sample + an
- *   eval-state sample (the shared multi-state sample builder). both are geocoded. the GBT + LR are
- *   trained on the train state's pairs and used to cluster the eval state's records through the
- *   same `resolveEntities` pipeline (FS baseline / GBT scorer / LR scorer), best F1 over a fine
- *   per-scorer threshold sweep. The metric is the dedup benchmark's clustering F1.
+ *   One registry pass builds the global address-frequency table plus a train-state sample and an
+ *   eval-state sample, and both are geocoded. The GBT and LR train on the train state's pairs and
+ *   cluster the eval state's records through the same `resolveEntities` pipeline, with best F1 over a
+ *   fine per-scorer threshold sweep.
  *
  *   Run: `mailwoman registry scorer-eval cross-state [--train-state TX] [--eval-state CA]
  *   [--npis 2000] [--out-md <md>]`
@@ -55,7 +50,7 @@ import {
  */
 export interface ScorerCrossStateEvalOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -89,9 +84,7 @@ export interface ScorerCrossStateEvalOptions {
 }
 
 /**
- * Learned-scorer cross-state generalization (#603 Tier 2) — see the module doc.
- *
- * Emits the report to stdout.
+ * Train on one state, cluster a different state's records, and emit the report to stdout.
  */
 export async function scorerCrossStateEval(
 	options: ScorerCrossStateEvalOptions,
@@ -106,8 +99,6 @@ export async function scorerCrossStateEval(
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// One registry pass fills both state buckets (the shared multi-state sample builder):
-	// the global address-frequency table + a train-state sample + an eval-state sample.
 	const { byState, addressFrequency } = await buildNPPESStateSamples(
 		{
 			registryPath: REGISTRY,
@@ -124,9 +115,8 @@ export async function scorerCrossStateEval(
 	report?.("[C] geocoding both states…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth`/`taxonomy` ride as attributes so the shared featurizer's #625 roll-up
-	// features can read the authorized official.
-	// The FS arm ignores them (no discriminators configured).
+	// `auth` and `taxonomy` ride as attributes so the shared featurizer's roll-up features can read
+	// the authorized official. The FS arm ignores them, since no discriminators are configured.
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -140,8 +130,8 @@ export async function scorerCrossStateEval(
 	const evalRecords = await ingestRows(evalSample.rows, mapping, { geocodeAddress: geocoder.geocodeAddress })
 	geocoder[Symbol.dispose]()
 
-	// Feature basis: the shared production featurizer (train ≡ eval ≡ inference, one definition)
-	// over the collapsed-spatial + address-frequency comparison set (the baseline).
+	// The shared production featurizer keeps train, eval and inference on one definition, over the
+	// collapsed-spatial and address-frequency comparison set.
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
@@ -154,7 +144,7 @@ export async function scorerCrossStateEval(
 	const dim = trainX[0]?.length ?? 0
 	const gbt = trainGBT(trainX, trainY, trainW, { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 })
 
-	// LR (batch GD, class-balanced) — the shared trainer.
+	// LR (batch GD, class-balanced) through the shared trainer.
 	const lrSc = trainLogisticRegression(trainX, trainY, trainW, dim)
 
 	const gbtScorer = (a: SourceRecord, b: SourceRecord) => gbtScore(gbt, featurize(a, b))
@@ -176,8 +166,8 @@ export async function scorerCrossStateEval(
 
 	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
-		// learnedScorer:false — the FS baseline is the baseline
-		// (the learned scorer is now default-on, so without this the "FS arm" would silently be the GBT).
+		// learnedScorer false keeps the FS baseline. The learned scorer is default-on, so without
+		// this the FS arm would silently be the GBT.
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 
@@ -195,10 +185,8 @@ export async function scorerCrossStateEval(
 		threshold: t,
 	}))
 
-	// The shipped model (the default-on candidate): the bundled DEDUP_GBT_MODEL
-	// rather than a fresh per-run TX fit.
-	// This is the arm that justifies flipping `learnedScorer` default-on.
-	// The actual artifact every caller would get, evaluated on a state it never trained on.
+	// The bundled DEDUP_GBT_MODEL is the shipped artifact every caller receives, evaluated here on a
+	// state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	const bundledArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({

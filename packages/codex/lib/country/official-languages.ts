@@ -3,13 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   generated — do not edit by hand. Official languages per ISO 3166-1 territory, derived from
- *   Unicode CLDR 47.0.0 supplemental territoryInfo (`_officialStatus`). `official` merges
- *   CLDR's `official` + `de_facto_official`; `regional` is `official_regional` (kept separate —
- *   the #936 probe showed it pulls in cross-border quirks like Korean-in-CN, so consumers opt in).
- *   Every language appears under each ISO-639 spelling CLDR aliases to it (fi and fin) so WOF
- *   639-3 tags, Overture BCP-47 keys, and GeoNames codes all match without mapping.
- *   Regenerate with: mailwoman dev generate official-languages
+ *   Generated, so do not edit by hand. Official languages per ISO 3166-1 territory, derived from
+ *   Unicode CLDR 47.0.0 supplemental territoryInfo and listed under every ISO-639 spelling CLDR
+ *   aliases. Regenerate with: mailwoman dev generate official-languages
  */
 
 /**
@@ -21,7 +17,7 @@ export interface OfficialLanguageEntry {
 	 */
 	official: readonly string[]
 	/**
-	 * CLDR `official_regional` (e.g. Catalan in ES) — opt-in for consumers.
+	 * CLDR `official_regional` (e.g. Catalan in ES), opt-in for consumers.
 	 */
 	regional?: readonly string[]
 }
@@ -392,10 +388,8 @@ export const OFFICIAL_LANGUAGES: Record<string, OfficialLanguageEntry> = {
 }
 
 /**
- * Is `language` (any ISO-639 spelling: "sv", "swe", …) an official language
- * of `country` (ISO 3166-1 alpha-2)?
- *
- * Regional-official languages count only with `includeRegional`.
+ * Report whether `language` is an official language of `country`, counting regional-official
+ * languages only with `includeRegional`.
  */
 export function isOfficialLanguage(country: string, language: string, includeRegional = false): boolean {
 	const entry = OFFICIAL_LANGUAGES[country.toUpperCase()]

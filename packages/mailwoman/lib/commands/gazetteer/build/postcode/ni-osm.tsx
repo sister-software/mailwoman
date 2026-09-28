@@ -12,8 +12,8 @@
  *   `DEFAULT_POSTCODE_DATABASES` is `existsSync`-filtered on the machine that built it.
  *
  *   Coverage is partial by construction — roughly 9.5 % of live NI postcodes — and that is the point of
- *   shipping it: since #1480 an unknown postcode abstains, so every code the database carries is a new
- *   answer and every code it lacks behaves exactly as it did before.
+ *   shipping it: an unknown postcode abstains, so every code the database carries is a new answer and
+ *   every code it lacks behaves exactly as it did before.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.

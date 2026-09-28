@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the #244 coarse-placer: a multinomial logistic-regression over the hashed char-n-gram +
- *   script features ({@link featurize}), via plain SGD. CPU-only, a few minutes — no GPU/Modal.
- *   After training, fits a single temperature on val (NLL minimization) for calibrated confidence.
- *   Writes a `meta.json` + `weights.bin` (Float32, row-major [class][feature]) artifact.
+ *   Train the coarse-placer: a multinomial logistic-regression over the hashed char-n-gram and
+ *   script features ({@link featurize}), via plain SGD. CPU-only, a few minutes, with no GPU or
+ *   Modal dependency. After training, fits a single temperature on val (NLL minimization) for
+ *   calibrated confidence. Writes a `meta.json` and `weights.bin` (Float32, row-major
+ *   [class][feature]) artifact.
  *
  *   Run: `mailwoman placer train [--epochs 12] [--lr 0.1] [--l2 1e-6] [--out
  *   $MAILWOMAN_DATA_ROOT/coarse-placer/model]`
@@ -89,7 +90,7 @@ export interface TrainCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer SGD trainer — see the module doc.
+ * Coarse-placer SGD trainer. See the module doc.
  */
 export async function trainCoarsePlacer(
 	options: TrainCoarsePlacerOptions = {},
@@ -106,7 +107,6 @@ export async function trainCoarsePlacer(
 	const classIdx = new Map<string, number>(COARSE_CLASSES.map((c, i): [string, number] => [c, i]))
 
 	async function load(split: string): Promise<Sample[]> {
-		// Precompute features once: Int32Array of active indices + label id per row.
 		const out: Sample[] = []
 
 		for await (const r of JSONSpliterator.fromAsync<{ raw: string; country: string }>(
@@ -130,10 +130,9 @@ export async function trainCoarsePlacer(
 	const b = new Float32Array(C)
 
 	// Deterministic, so a rerun splits the same way.
-	// The stream is the INT32 glibc LCG and not mulberry32, because every shipped model
-	// was trained on the order it produces; `makeGlibcLcgFloat64` shares its constants
-	// and is a different sequence, so the two are not interchangeable.
-	// Swapping either for mulberry32 is a retrain rather than a refactor.
+	// The stream is the INT32 glibc LCG, because every shipped model was trained on the order
+	// it produces. `makeGlibcLcgFloat64` shares its constants and is a different sequence, so
+	// the two are not interchangeable. Swapping either for mulberry32 is a retrain.
 	const step = makeGlibcLcgInt32(1_234_567)
 	const rand = (): number => step() / 0x7f_ff_ff_ff
 	const shuffle = (arr: Sample[]): void => shuffleWith(arr, rand)
@@ -180,7 +179,6 @@ export async function trainCoarsePlacer(
 		shuffle(train)
 		const lr = lr0 / (1 + 0.5 * ep)
 
-		// simple decay
 		for (const { x, y } of train) {
 			forward(x)
 
@@ -203,7 +201,6 @@ export async function trainCoarsePlacer(
 		)
 	}
 
-	// Calibrate temperature by minimizing validation NLL through coarse and fine one-dimensional search.
 	function valNLL(T: number): number {
 		let nll = 0
 

@@ -3,27 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OpenAddresses Latin-off-map outlier exposure for the #244 coarse-placer (milestone 3, breadth).
- *   The successor to build-outlier-latin.ts (Overture): Overture's alpha addresses theme only
- *   carries real rows for ~7 off-map countries, so a model trained on them memorized rather than
- *   learned an "off-map" boundary (night-15 finding). OpenAddresses covers far more countries —
- *   this assembles address strings from OA's per-country CSVs and appends them as `country:
- *   "other"`.
+ *   OpenAddresses Latin-off-map outlier exposure for the coarse-placer. OpenAddresses covers far
+ *   more countries than the Overture addresses theme, so this assembles address strings from OA's
+ *   per-country CSVs and appends them as `country: "other"`.
  *
- *   Discipline (per the #244 scoping note + DeepSeek consult):
+ *   Discipline:
  *
- *   - leave-one-language-family-OUT rather than random: whole families are held out (Nordic, Baltic, …) so a
- *       trained sibling's shared n-grams can't rescue the generalization metric. train families
- *       feed train/val/test(indist); heldout families go only to the dedicated test file.
+ *   - hold out whole language families (Nordic, Baltic, …) so a trained sibling's shared n-grams
+ *       cannot rescue the generalization metric. Train families feed train/val/test(indist).
+ *       Heldout families go only to the dedicated test file.
  *   - Schema variance: read via DuckDB read_csv_auto(..., union_by_name) so differing per-source OA
- *       schemas align. assemble to the same format the in-map rows use (build-outlier-latin's
+ *       schemas align. Assemble to the same format the in-map rows use (build-outlier-latin's
  *       assemble).
- *   - Dedup (per country) + per-country CAP (downsample): PL/CZ dwarf others, so cap so `other` isn't
- *       "mostly Polish".
- *   - Country filter: only off-MAP countries (never the 11 in-map); the in-map test.jsonl is untouched.
+ *   - Dedup (per country) plus per-country CAP (downsample): PL/CZ dwarf others, so cap so `other`
+ *       keeps a mixed country profile.
+ *   - Country filter: only off-map countries (never the 11 in-map). The in-map test.jsonl is
+ *       untouched.
  *
- *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: rewrites the
- *   dedicated test file and appends fresh `other` rows — rebuild train/val before re-running.
+ *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
+ *   dedicated test file and appends fresh `other` rows. Rebuild train/val before re-running.
  *
  *   Run: `mailwoman placer build-dataset --outliers oa --oa-dir <extracted-OA-root> [--per-country
  *   6000]`
@@ -93,9 +91,7 @@ const IN_MAP = new Set<string>(COUNTRIES)
  * Off-map countries OA's europe+asia zips plausibly carry.
  * The actual train/heldout set is intersected with what's on disk at runtime.
  *
- * Heldout families are the generalization probe (the model never sees a single row from them).
- * Off-map families, intersected at runtime with what OA's europe+asia zips actually carry
- * (verified on disk: ae at au be cz dk ee fi gr il is kw kz lt lu lv nc nz pl pt qa ro sa se sg si sk).
+ * Heldout families are the generalization probe, so the model never sees a row from them.
  */
 const FAMILIES: Record<string, string[]> = {
 	slavic_latin: ["PL", "CZ", "SK", "SI"],
@@ -111,8 +107,9 @@ const FAMILIES: Record<string, string[]> = {
 }
 
 /**
- * Leave-one-language-family-out probe (DeepSeek): hold out whole families the model never sees a row
- * from — Baltic (Latin, distinct), Oceania (English-Latin, distinct), Middle-East (romanized non-Latin).
+ * Leave-one-language-family-out probe: hold out whole families the model never sees a row from.
+ * Baltic is Latin and distinct, Oceania is English-Latin and distinct, and the Middle East is
+ * romanized non-Latin.
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
@@ -122,7 +119,7 @@ const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 const oaLocality = (r: Record<string, unknown>): string => (r.city ?? "").toString().trim()
 
 /**
- * Coarse-placer OpenAddresses Latin-off-map outlier builder — see the module doc.
+ * Coarse-placer OpenAddresses Latin-off-map outlier builder. See the module doc.
  */
 export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},

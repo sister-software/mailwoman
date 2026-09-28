@@ -4,23 +4,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-gb overlay's dev artifacts. The steps live in
- *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest plus the one step no manifest
- *   expresses, the card-conditional GB postcode binary.
+ *   Materialize the en-gb overlay's dev artifacts, plus the one step no manifest expresses, the
+ *   card-conditional GB postcode binary.
  *
- *   A single multilingual model serves both en-us and en-gb (byte-identical artifact. en-gb carries its own retrieval
- *   data on top), so this overlay links the same pair the base does and holds it to en-us's `model-card.json`
- *   `files_md5` — one truth for the one artifact (en-gb's own card carries no `files_md5` block).
+ *   A single multilingual model serves both en-us and en-gb, and en-gb carries its own retrieval
+ *   data on top. This overlay links the same pair the base does and holds it to en-us's
+ *   `model-card.json` `files_md5`, since en-gb's own card carries no `files_md5` block.
  *
- *   The evidence lexicons (`street_type`, `locality_surface`, #1511) are linked by the generation this overlay's card
- *   names under `requires.<channel>.lexicon`: the card claims its `requires` block is a verbatim copy of the base's,
- *   and the base model is trained with both channels, so an overlay without them runs a GB parse with the channels
- *   off on a model that expects them.
+ *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation this
+ *   overlay's card records under `requires.<channel>.lexicon`. The card claims its `requires`
+ *   block is a verbatim copy of the base's, and the base model is trained with both channels, so
+ *   an overlay without them runs a GB parse with the channels off on a model that expects them.
  *
- *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV + the WOF admin DB + three checked-in pairs
- *   JSONLs, through the shared `buildPairIndexOverlay`, whose freshness guard compares the format, every calibrated
- *   magnitude, and every source md5 (sidecar-cached — the PPD CSV is ~25.6M rows and a cold build is ~4–5 min, while
- *   `weights.test.ts` invokes this script on every `yarn test`). The shipped bundle's δ is 10 (#1269).
+ *   `pair-index-gb.bin` is derived from the HM Land Registry PPD tuples CSV, the WOF admin DB and
+ *   three checked-in pairs JSONLs through the shared `buildPairIndexOverlay`. Its freshness guard
+ *   compares the format, every calibrated magnitude and every source md5. The build is
+ *   sidecar-cached because the PPD CSV is ~25.6M rows, and `weights.test.ts` invokes this script
+ *   on every `yarn test`. The shipped bundle's delta is 10.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -38,31 +38,30 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Secondary pair sources (campaign R2/R3/R4b).
+ * Secondary pair sources.
  *
- * Named here rather than inline at the call site because the freshness guard has to md5 the same files
- * the build reads — when those two lists drift apart the guard silently blesses a stale artifact.
+ * Declared here rather than inline at the call site, because the freshness guard md5s the same
+ * files the build reads and two lists that drift apart let the guard bless a stale artifact.
  */
 const PPD_SOURCE_CSV = dataRootPath("ppd", "2026-07-22", "gb-tuples.csv")
 const BOROUGH_DB = wofDatabasePath("admin-global-priority.db")
 const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pairs-v2.jsonl")
 /**
- * Northern Ireland neighbourhood pairs (campaign R7).
+ * Northern Ireland neighbourhood pairs.
  *
- * A separate file rather than merged into the London one, so each source keeps its own
- * provenance md5 in the header and the freshness guard can tell which of them moved.
+ * A separate file rather than merged into the London one, so each source keeps its own provenance
+ * md5 in the header and the freshness guard can tell which one moved.
  */
 const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jsonl")
 /**
- * Scotland + Wales + England neighbourhood pairs (campaign R8) — the rest of Great Britain,
- * after London (R3/R4b) and Northern Ireland (R7).
+ * Scotland, Wales and England neighbourhood pairs, the rest of Great Britain after London and
+ * Northern Ireland.
  */
 const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
 
-// Hierarchy campaign R2+R3: the WOF borough pairs + the checked-in onspd London ward pairs join the build.
-// Without these flags a dev rebuild would silently drop them.
-// The `sources` list is what the shared freshness guard md5s, in the order the
-// build records them (CSV, borough DB, pairs JSONLs).
+// The `sources` list is what the shared freshness guard md5s, in the order the build records the
+// entries (CSV, borough DB, pairs JSONLs). A dev rebuild whose list drifts from the build's lets
+// the guard bless a stale artifact.
 const softFeed = await committedSoftFeedLinks()
 
 const overlay = await materializeDevOverlay({
@@ -92,15 +91,12 @@ const overlay = await materializeDevOverlay({
 
 // Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
 //
-// This binary helps only models trained with shaped (letter-containing) GB anchor lookups.
-// For older models it is a measured regression, and stale bins from old checkouts
-// can silently re-enable that regression if left in place.
+// It helps only a model trained with shaped (letter-containing) GB anchor lookups. On an older
+// model it is a measured regression, and a stale bin from an old checkout can re-enable it.
 //
 // Policy:
 // - `span_mode: "shaped"` -> build the binary
 // - otherwise -> remove any existing binary
-//
-// The model card is used by both this script and the loader.
 
 /**
  * Where the GB anchor binary lives when the card warrants it.
@@ -108,22 +104,20 @@ const overlay = await materializeDevOverlay({
 const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 
 /**
- * The licence-clean GB postcode source: Ordnance Survey Code-Point Open (OGL v3.0),
- * 1,746,976 units, every one placed.
+ * The licence-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0), carrying
+ * 1,746,976 units with every one placed.
  *
- * The retired GeoNames-lineage `postalcode-gb.db` is not it.
- * Coverage gap, measured: zero Northern Ireland (`BT`) codes.
- *
- * The shaped keyer's outward fallback is what carries those rows.
+ * The measured coverage gap is zero Northern Ireland (`BT`) codes, and the shaped keyer's outward
+ * fallback carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 
 /**
- * Keys the built binary must carry (1,746,976 units + 2,863 outward districts) —
- * the GB half of the training lookup `pilot-anchor-lookup-v2` verbatim.
+ * Keys the built binary must carry (1,746,976 units and 2,863 outward districts), the GB half of
+ * the training lookup `pilot-anchor-lookup-v2` verbatim.
  *
- * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it,
- * so this number is documentation rather than a second check.
+ * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so this number is
+ * documentation rather than a second check.
  */
 const GB_POSTCODE_BIN_KEYS = 1_749_839
 

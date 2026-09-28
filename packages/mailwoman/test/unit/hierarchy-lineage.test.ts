@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1731 pins. The field is tri-state and the absent states are the interface: a missing sidecar or a place-less entry
- *   must stay ungraded — `false` is a measured contradiction, never a default.
+ *   The field is tri-state, and the absent states are the interface. A missing sidecar or a place-less
+ *   entry must stay ungraded, because `false` is a measured contradiction and never a default.
  */
 
 import * as HIERARCHY_LINEAGE from "mailwoman/hierarchy-lineage"
@@ -22,8 +22,6 @@ function entry(placeID?: string): HierarchyLineageEntry {
 
 describe("annotateHierarchyLineage (#1731)", () => {
 	it("marks the recorded Astoria chimera: the out-of-lineage region grades false, the winner true", () => {
-		// The pre-fix shape: locality resolved to Astoria oregon (wof:101715747, chain Clatsop → Oregon → US)
-		// while the parsed region resolved independently to New York (wof:85688543).
 		const locality = entry("wof:101715747")
 		const region = entry("wof:85688543")
 
@@ -72,13 +70,12 @@ describe("annotateHierarchyLineage (#1731)", () => {
 
 	it("anchors at the DEEPEST resolved admin node — a descendant is never flagged by its ancestor's chain", () => {
 		const { lineageAnchorNode } = HIERARCHY_LINEAGE
-		// Tree order resolves the region first (the 1600-Pennsylvania shape); the locality must anchor.
+		// Tree order resolves the region first (the 1600-Pennsylvania shape), so the locality must anchor.
 		const region = { tag: "region", value: "DC", placeID: "wof:85688741" }
 		const locality = { tag: "locality", value: "Washington", placeID: "wof:85931779" }
 
 		expect(lineageAnchorNode([region, locality])?.placeID).toBe("wof:85931779")
 
-		// With the locality anchoring, the region grades true through the locality's own chain.
 		const entries = [
 			{ placeID: "wof:85931779" } as HierarchyLineageEntry,
 			{ placeID: "wof:85688741" } as HierarchyLineageEntry,

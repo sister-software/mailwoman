@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `/status` over the real freshness reader (#997) — the boundary between the artifacts on disk and the wire.
+ *   `/status` over the real freshness reader, the boundary between the artifacts on disk and the
+ *   wire.
  *
- *   The reader's own states are covered next door, in `mailwoman`'s `freshness.test.ts`. What is under test
- *   here is the one thing only this side can get wrong: `data_updated` must be omitted when no artifact
- *   carried a build date, and the artifacts must still be listed when it is. A response that filled the
- *   field with a boot time would look exactly like a dated deployment to every client that reads it, which
- *   is the trust question the endpoint exists to answer.
+ *   The reader's own states are covered next door in `mailwoman`'s `freshness.test.ts`. What is
+ *   under test here is the one thing only this side can get wrong: `data_updated` must be omitted
+ *   when no artifact carried a build date, and the artifacts must still be listed when it is. A
+ *   response that filled the field with a boot time would look exactly like a dated deployment to
+ *   every client that reads it, which is the trust question the endpoint exists to answer.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -60,7 +61,7 @@ async function stamped(path: PathBuilder, createdAt: string): Promise<PathBuilde
 }
 
 /**
- * A built database with no manifest — every gazetteer built before the layer interface.
+ * A built database with no manifest, every gazetteer built before the layer interface.
  */
 function bare(path: PathBuilder): PathBuilder {
 	using db = new DatabaseClient<FreshnessFixtureDatabase>(path)
@@ -108,8 +109,6 @@ test("/status omits data_updated when nothing is stamped, and still names the ar
 	expect(body.data_updated).toBeUndefined()
 	expect("data_updated" in body).toBe(false)
 
-	// The artifacts are still listed.
-	// An omitted entry cannot be told apart from one nobody opened.
 	expect(body.mailwoman?.artifacts.map((artifact) => artifact.manifest)).toEqual(["absent", "absent"])
 	expect(body.mailwoman?.artifacts.map((artifact) => artifact.name)).toEqual(["gazetteer", "reverse-admin"])
 })

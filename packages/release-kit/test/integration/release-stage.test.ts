@@ -2,11 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #1894 preflight's regression fixtures — one per v9.2.0 publish failure, plus the release-list identity.
- *
- *   The four dispatches that published v9.2.0 died on: a materialization destination that lost its `packages/` prefix, a
- *   parity-test selector left empty by a moved file, an exports target no build produces (the `@mailwoman/corpus`
- *   class), and declared files never materialized (the `@mailwoman/neural-weights-en-au` class). Each is pinned here.
+ * @file Regression fixtures for the release preflight and the release-list identity.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -48,8 +44,8 @@ describe("checkReleaseListIdentity", () => {
 
 		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
-		// A workspace the field names must carry a manifest.
-		// The reader refuses a literal that does not.
+		// Every workspace in the field must carry a manifest. The reader refuses a literal without
+		// one.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(root(workspace))
 			await writeLocalJSONFile({ name: workspace }, root(workspace, "package.json"))
@@ -64,8 +60,8 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// The en-au class: a workspace outside the release list with no stated reason is frozen,
-		// and the failure must carry its name rather than "expected 3, found 2".
+		// A workspace outside the release list with no stated reason is frozen, and the failure
+		// reports its name.
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
 	})
@@ -98,8 +94,8 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 	/**
 	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships.
 	 *
-	 * No yarn project needed — the audit reads the archive, and these fixtures pin
-	 * its refusals without packing a real workspace.
+	 * The audit reads the archive, so no yarn project is needed and these fixtures pin its refusals
+	 * without packing a real workspace.
 	 */
 	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<PathBuilder> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path
@@ -188,9 +184,7 @@ describe("the Hugging Face materialization plan", () => {
 	}
 
 	it("puts every destination under packages/ — the lost-prefix class", async () => {
-		// The v9.2.0 release's first dispatch died on `cp … "$ws/street-type-lexicon-v3.json"`
-		// after every workspace moved under `packages/`.
-		// Destinations are now derived from one prefix in one function, and this pins it.
+		// Destinations are derived from one prefix in one function.
 		const plans = await planWeightsMaterialization(repoRoot)
 
 		expect(plans.length).toBeGreaterThan(0)
@@ -198,9 +192,8 @@ describe("the Hugging Face materialization plan", () => {
 	})
 
 	it("accounts for every declared artifact a checkout cannot supply — the en-au class", async () => {
-		// What this proves: no literal `files` entry of a release weights package is both untracked and unplanned. That is precisely the state `verify-tarball.ts` refuses at publish time, and precisely what
-		// @mailwoman/neural-weights-en-au was in when the audit stopped v9.2.0 after 49 of 51 packages had
-		// published. The manifests and the git listing are read here independently of the recipe, so a planner rewritten around a hand-kept list fails this the first time a manifest gains an entry.
+		// The manifests and the git listing are read here independently of the recipe, so a planner
+		// rewritten around a hand-kept list fails this the first time a manifest gains an entry.
 		const tracked = trackedPaths()
 
 		const planned = new Set(
@@ -240,11 +233,7 @@ describe("the Hugging Face materialization plan", () => {
 
 describe("the pair-index parity selector", () => {
 	it("still matches a test file — the empty-selection class", async () => {
-		// The v9.2.0 release's second dispatch died because publish.yml named the parity
-		// test's pre-regroup path and Vitest matched zero files.
-		// The workflow now calls a package script whose filter is the test's name,
-		// and this asserts the filter is not empty-handed.
-		// The same answer a dispatch would return several minutes in.
+		// The workflow calls a package script whose filter is the test's name.
 		const repoRoot = repoRootPath()
 
 		const manifest = await readPackageJSON(repoRootPath("package.json"))

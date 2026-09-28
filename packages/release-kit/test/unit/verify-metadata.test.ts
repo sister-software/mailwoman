@@ -3,11 +3,6 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The release-metadata surfaces over a planted tree, and the constraint that keeps the status page published.
- *
- *   The defect this pins (#2259): the check verified that A file cites the shipped model, never that the file is
- *   the one the site publishes, so it read the archived August copy and passed for four releases while
- *   https://mailwoman.ai said release 8.6.0 and model 7.0.0. A target that can move out from under a check while
- *   still resolving reports success from the wrong place.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -88,8 +83,7 @@ describe("verifyReleaseMetadata", () => {
 	it("refuses a status page outside the tree the site publishes", async () => {
 		const repoRoot = await plant({ status: "docs/records/site-2026-08/status.mdx" })
 
-		// The archived copy cites the shipped model, so without the constraint this run would pass,
-		// which is exactly how the live page went four releases without being read.
+		// The archived copy cites the shipped model, so without the constraint this run would pass.
 		await expect(
 			verifyReleaseMetadata({ repoRoot, status: "docs/records/site-2026-08/status.mdx", log: () => {} })
 		).rejects.toThrow(/must be a page the site publishes/u)

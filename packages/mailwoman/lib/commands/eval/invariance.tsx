@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval invariance` — the invariance mini-suite: a standing, seconds-cheap
+ *   `mailwoman eval invariance`: the invariance mini-suite, a standing, seconds-cheap
  *   metamorphic-invariance check (comma-drop / abbreviation-swap / case-fold / lowercase /
  *   whitespace-jitter / trailing-punct / idempotence) over `eval-harness/invariance/suite.jsonl`, meant
  *   to run in every probe grade so distribution-shift collateral surfaces at 2k-probe cost instead of
- *   ship-prep cost. Compares decoded parse components only (no resolver) — cheap by construction. Parses
+ *   ship-prep cost. Compares decoded parse components only (no resolver). Cheap by construction. Parses
  *   run through the production runtime pipeline (`createRuntimePipeline`), per-row locale from each
- *   fixture row's country, weights-package FST auto-loaded (#1516). Exit nonzero on any `lost` pair, or
+ *   fixture row's country, weights-package FST auto-loaded. Exit nonzero on any `lost` pair, or
  *   when the degraded count exceeds `--max-degraded`. `--baseline` switches to regression mode: a
  *   violation the baseline also exhibits on the same pair is reported but doesn't fail the check. The
  *   shape probe grading uses to diff a candidate against v385. Two more regression-mode classes never
@@ -46,7 +46,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// The runner narrates its own report + verdict lines, so no `json` — rendering anything here would duplicate it.
+// The runner narrates its own report + verdict lines, so no `json`. Rendering anything here would duplicate it.
 const EvalInvariance = harnessCommand(
 	spec,
 	async (options) => {

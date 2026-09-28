@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildBDCDatabase} — the stage/materialize/seal build of `bdc.db`.
- *   Feeds the loader a synthetic row source directly (an injected `Iterable<BDCAvailabilityRow>`), so
- *   the suite exercises the whole build without touching the filesystem CSV path or a real tiger
- *   database — matches `build-poi.test.ts`'s injected-row convention.
- *
- *   Fixture: 5 raw rows over 3 known geoids (San Francisco, Los Angeles, New York — far enough apart
- *   to land in distinct res-9 and res-6 H3 cells) plus 1 unknown geoid absent from the
- *   `blockCentroids` fixture map. Row 2 is an exact duplicate of row 1 on the natural key
- *   `(geoid, provider_id, technology_code, location_id)`.
+ *   Tests for {@linkcode buildBDCDatabase}, the stage, materialize and seal build of `bdc.db`.
  */
 
 import type { BDCDatabase } from "@mailwoman/bdc/schema"
@@ -58,11 +50,6 @@ function blockCentroids(geoid: string): { lat: number; lon: number } | undefined
 	return CENTROIDS[geoid]
 }
 
-/**
- * 5 raw rows: row 1 + its exact duplicate (row 2) share the natural key
- * `(geoid, provider_id, technology_code, location_id)`; row 5's geoid is
- * deliberately absent from {@link centroids}.
- */
 function fixtureRows(): BDCAvailabilityRow[] {
 	return [
 		{
@@ -76,7 +63,6 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			business_residential_code: "R",
 		},
 		{
-			// Exact duplicate of the row above — must be deduped by the staging pass.
 			geoid: GEOID_SF,
 			provider_id: 130_077,
 			technology_code: 50,
@@ -107,7 +93,6 @@ function fixtureRows(): BDCAvailabilityRow[] {
 			business_residential_code: "X",
 		},
 		{
-			// Unknown geoid — must be skipped and counted, never guessed at a cell.
 			geoid: GEOID_UNKNOWN,
 			provider_id: 130_080,
 			technology_code: 40,
@@ -146,7 +131,7 @@ describe("buildBDCDatabase", () => {
 	it("(a) builds a sealed file at `out`", async () => {
 		expect(await pathExists(out)).toBe(true)
 		expect((await statPath(out)).mode & 0o222).toBe(0)
-		// The `.building` temp path and any aside copy must not survive the swap.
+		// The swap removes the `.building` temp path and any aside copy.
 		expect(await pathExists(`${out}.building`)).toBe(false)
 		expect(await pathExists(`${out}.prev`)).toBe(false)
 	})
@@ -157,7 +142,7 @@ describe("buildBDCDatabase", () => {
 
 	it("(c) skips + counts the unknown geoid without ever guessing a cell", async () => {
 		expect(result.unknownGeoids).toBe(1)
-		// 5 raw rows - 1 deduped - 1 unknown-geoid skip = 3 materialized.
+
 		expect(result.rows).toBe(3)
 		expect(result.providers).toBe(2)
 		expect(result.coverageCells).toBe(3)
@@ -298,8 +283,6 @@ describe("buildBDCDatabase", () => {
 	})
 
 	it("moves an existing artifact aside before the new build takes its place", async () => {
-		// Build once more against the same `out`.
-		// The file already exists from the outer `beforeEach`.
 		const second = await buildBDCDatabase({
 			rows: fixtureRows(),
 			out,
@@ -319,15 +302,8 @@ describe("buildBDCDatabase", () => {
 
 describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	/**
-	 * 3 rows sharing the same (geoid, provider_id, technology_code, speeds, low_latency,
-	 * business_residential_code) triple — only `location_id` differs, exactly the shape a real FCC
-	 * per-provider CSV produces for a block carrying multiple Broadband Serviceable Locations.
-	 *
-	 * The staging pass's natural key includes `location_id`, so all 3 survive staging as
-	 * distinct rows (this is not the exact-duplicate case `fixtureRows` covers).
-	 * The materialize step must then collapse them to exactly 1 row in the default mode,
-	 * never inflating `result.rows`/ `layer_coverage.observed_rows` by the BSL count,
-	 * while keeping all 3 distinct when `includeLocationIDs: true`.
+	 * Three rows that differ only on `location_id` exercise the materialize collapse, which keeps one
+	 * row unless `includeLocationIDs` is true.
 	 */
 	function multiBSLRows(): BDCAvailabilityRow[] {
 		return ["2000000001", "2000000002", "2000000003"].map((locationID) => ({
@@ -354,8 +330,7 @@ describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 		})
 
 		expect(result.rows).toBe(1)
-		// No exact duplicates here — all 3 rows differ on location_id, so the staging natural-key
-		// dedup (a separate mechanism from this materialize-time collapse) removes none of them.
+		// The rows differ on `location_id`, so the staging dedup removes none of them.
 		expect(result.deduped).toBe(0)
 		expect(result.coverageCells).toBe(1)
 
@@ -408,17 +383,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	}
 
 	/**
-	 * `provider_id` 700001 carries two FRN edges — the decision 6 cardinality `bdc_provider` cannot express.
-	 *
-	 * FRN_LATE's own most recent form-499 filing (2026-05-20) postdates FRN_EARLY's
-	 * (2026-01-15), so FRN_LATE must win the primary-FRN pick.
-	 * `provider_id` 700002 carries exactly one FRN (FRN_SOLO).
-	 * No filer.db query is needed to resolve its primary FRN.
-	 *
-	 * Also seeds `provider_id` 700001's two conflicting `holding_company_name` edges.
-	 * The same cardinality problem `frn` has, proving both discarded values stay
-	 * recoverable from filer.db even though `bdc_provider.holding_company` can only
-	 * hold one (here: neither, since they conflict).
+	 * Seeds `provider_id` 700001 with two FRN edges whose later filing must win the pick, and two
+	 * conflicting holding-company edges.
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -433,8 +399,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				// 2 rather than 1 — filerLookup refuses a manifest reporting a schema_version
-				// that predates filer_family, which this fixture now also creates above.
+				// filerLookup refuses a manifest whose schema_version predates filer_family, which this
+				// fixture creates above.
 				schema_version: 2,
 				source: "form-499,bdc-provider-list",
 				source_vintage: "2026-Q2",
@@ -476,7 +442,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await db
 			.insertInto("filer_edge")
 			.values([
-				// The provider_id carries two FRN edges — decision 6's cardinality `bdc_provider` cannot express.
+				// The provider carries two FRN edges, more than `bdc_provider` can hold.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: FRN_EARLY_NODE,
@@ -501,9 +467,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// and two conflicting holding_company_name edges.
-				// The identical cardinality problem, unresolved by decision 6,
-				// so bdc_provider.holding_company stays NULL and both stay recoverable here.
+				// Two conflicting holding-company edges leave `bdc_provider.holding_company` NULL while
+				// both stay recoverable here.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_NODE,
@@ -528,8 +493,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// Each FRN's own most recent form-499 filing.
-				// FRN_LATE's is the later filing date.
+				// Each FRN's most recent form-499 filing, with FRN_LATE's the later date.
 				{
 					from_node_id: FRN_EARLY_NODE,
 					to_node_id: FORM_EARLY,
@@ -563,9 +527,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			{ providerID: 700_001, frn: FRN_EARLY, holdingCompany: "Alpha Holdco" },
 			{ providerID: 700_001, frn: FRN_LATE, holdingCompany: "Alpha Holdco Renamed" },
 			{ providerID: 700_002, frn: FRN_SOLO, holdingCompany: "Solo Broadband" },
-			// Two rows, same frn and same holding_company — proves the single-distinct-value
-			// shortcut looks at the distinct set across every row rather than just "there
-			// happened to be one row" (700002's trivial case above).
+			// Two rows with the same frn and holding company exercise the distinct-set shortcut.
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 			{ providerID: 700_004, frn: FRN_SOLO, holdingCompany: "Repeat Holdco" },
 		]
@@ -597,9 +559,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_001)
 			.executeTakeFirstOrThrow()
 
-		// The lossy pick: bdc_provider can only hold one FRN, and decision 6 says the later-filed one wins.
-		// Its two holding_company values genuinely conflict ("Alpha Holdco" vs "Alpha Holdco Renamed").
-		// No rule resolves that , so it stays NULL, same as brand_name.
+		// `bdc_provider` holds one FRN, and the later-filed one wins. Its two holding-company values
+		// conflict, so the column stays NULL.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
 		expect(multiFRNProvider.holding_company).toBeNull()
@@ -610,9 +571,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_002)
 			.executeTakeFirstOrThrow()
 
-		// No filer.db query was needed for this one.
-		// Its lone FRN is primary by construction, and its single unambiguous holding_company
-		// populates directly (the "no conflict ⇒ no rule needed" shortcut).
+		// Its lone FRN is primary, and its single holding-company value populates directly.
 		expect(singleFRNProvider.frn).toBe(FRN_SOLO)
 		expect(singleFRNProvider.brand_name).toBeNull()
 		expect(singleFRNProvider.holding_company).toBe("Solo Broadband")
@@ -623,16 +582,12 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_004)
 			.executeTakeFirstOrThrow()
 
-		// Two rows, but the same holding_company on both — one distinct value
-		// rather than two rows worth of ambiguity — still populates.
-		// Proves the shortcut compares the distinct SET rather than just "was there only one row".
+		// The same holding-company value on two rows counts as one distinct value and populates.
 		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
 		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
-		// The discarded FRN (FRN_EARLY) is not lost — decision 6's whole premise is that
-		// filer.db, untouched by this build, still retains every edge.
-		// Recover it back out through the public reader, `filerLookup`.
-		// Same for the two conflicting holding_company values `bdc_provider` couldn't keep either.
+		// The discarded FRN and holding-company values stay in `filer.db`, recoverable through
+		// `filerLookup` and `filer_edge`.
 		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
 
 		const frnValues = crosswalk.identifiers
@@ -643,10 +598,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
 
-		// filerLookup's `identifiers` is relationship: same_entity only now.
-		// A HoldingCompanyName edge never surfaces there regardless of retention, so "not lost"
-		// is proven directly against filer_edge instead (this fixture predates filer_family
-		// and never populates it, so `families` isn't the right recovery channel here either).
+		// `filerLookup` returns only `same_entity` relationships, so the holding-company retention is
+		// checked against `filer_edge`.
 		const holdingCompanyValues = (
 			await filerDB
 				.selectFrom("filer_edge")
@@ -676,7 +629,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			})
 		).rejects.toThrow(/700001/)
 
-		// Loud rather than partial: no sealed artifact from a build that couldn't resolve a required primary FRN.
+		// A build that cannot resolve a required primary FRN leaves no sealed artifact.
 		expect(await pathExists(providerOut)).toBe(false)
 	})
 
@@ -688,8 +641,7 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		await createFilerClusterTable(filerDB)
 		await createFilerFamilyTable(filerDB)
 		await createFilerManifestTable(filerDB)
-		// No filer_edge rows at all.
-		// Neither FRN has a form-499 filing edge to rank by.
+		// No `filer_edge` rows, so neither FRN has a filing to rank by.
 
 		const providerOut = scratch.path("bdc-providers-no-candidates.db")
 
@@ -755,14 +707,8 @@ describe("peekProviderID", () => {
 })
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
-	// `peekProviderID` needs a finiteness guard rather than a bare `Number.parseInt(...) as ProviderID`.
-	// A non-numeric provider_id field parses to NaN, which binds to `bdc_stage.provider_id`
-	// (integer not NULL) as SQLite NULL.
-	// `insert or ignore` then silently drops every row of the file, miscounted as ordinary
-	// `deduped` rows rather than surfaced as the malformed-file error it actually is.
-	// This test goes through `csvPaths` (the real filesystem-reading production path
-	// `readAvailabilityRowsFromCSVPaths` uses), not the `rows:` test injection point,
-	// so the test checks that malformed CSV input is rejected from disk onward.
+	// A non-numeric `provider_id` parses to NaN, which binds as SQLite NULL and lets `insert or ignore`
+	// drop every row of the file while the build counts them as deduped.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(
 			"@mailwoman/bdc",
@@ -788,8 +734,7 @@ describe("buildBDCDatabase — malformed provider_id via csvPaths (the productio
 		expect((caught as Error).message).toMatch(/provider_id/)
 		expect((caught as Error).message).toContain(malformedCSVPath)
 
-		// The rejection must be loud rather than partial: no sealed artifact from a file whose
-		// rows were all rejected, never silently materialized/counted as "deduped".
+		// A file whose rows were all rejected leaves no sealed artifact.
 		expect(await pathExists(out)).toBe(false)
 	})
 })
@@ -833,9 +778,7 @@ describe("geometryCentroid", () => {
 
 		const centroid = geometryCentroid(multiPolygon)
 		expect(centroid).toBeDefined()
-		// Area-weighted (shoelace): the square's true geometric center, immune to the
-		// repeated closing vertex that dragged the retired vertex-average to (0.8, 0.8) —
-		// the tradeoff the 118k-block tiger measurement falsified (#1375).
+		// Area-weighted by the shoelace formula, which is immune to the repeated closing vertex.
 		expect(centroid!.lon).toBeCloseTo(1, 5)
 		expect(centroid!.lat).toBeCloseTo(1, 5)
 	})

@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman release merge-admin` — the one sanctioned `gh pr merge --admin` route (#1895). The
- *   bypass stays available for the nights the lab fleet is slow, but it runs the sub-second guards
- *   the skipped checks would have, synchronously, and refuses to merge over a failure.
+ *   `mailwoman release merge-admin`: the one sanctioned `gh pr merge --admin` route. It runs the
+ *   sub-second guards the skipped checks would have, synchronously, and refuses to merge over a
+ *   failure.
  *
- *   Interface: the local checkout must be at the PR's head commit — the guards measure the tree they
- *   run in, and measuring a different tree than the one being merged answers a question nobody
- *   asked. The command verifies the SHA and refuses with the checkout command otherwise.
+ *   The local checkout must be at the PR's head commit, because the guards measure the tree they run
+ *   in. The command verifies the SHA and refuses with the checkout command otherwise.
  */
 
 import { gitHead } from "@mailwoman/core/git"

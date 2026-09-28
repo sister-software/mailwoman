@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `capital` table (#1880's distribution home): the capital-status reference carried inside
- *   `candidate.db`, so an npm consumer who pulled the artifact can run `capital_tier` without the
- *   repo's `data/gazetteer/capitals-v1.json` — which published packages do not ship. One row per
- *   reference entry (241 national capitals + 3,463 admin-1 seats at the 2026-08-24 build); the
- *   loader reads the whole table once into a `CapitalIndex` at session construction, so there is no
- *   per-probe query and no index beyond the rowid.
+ *   The `capital` table: the capital-status reference carried inside `candidate.db`, so an npm
+ *   consumer who pulled the artifact can run `capital_tier` without the repo's
+ *   `data/gazetteer/capitals-v1.json`, which published packages do not ship. One row per reference
+ *   entry. The loader reads the whole table once into a `CapitalIndex` at session construction, so
+ *   there is no per-probe query and no index beyond the rowid.
  *
- *   `keys` holds the entry's folded name set as a JSON array. The name-membership conjunct that
- *   keeps the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
+ *   `keys` holds the entry's folded name set as a JSON array, the name-membership conjunct that keeps
+ *   the coordinate radius from promoting a capital's same-name neighbours (`capitals.ts`).
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -22,16 +21,16 @@ import type { CapitalPoint } from "#capitals"
 import { hasTable } from "#sqlite-utils"
 
 /**
- * The table name the builder writes and the reader probes — one word, singular,
- * matching the artifact's other reference tables (`candidate`, `country_codes`).
+ * The table name the builder writes and the reader probes, one word and singular, matching the
+ * artifact's other reference tables (`candidate`, `country_codes`).
  */
 export const CAPITAL_TABLE = "capital"
 
 /**
  * One reference entry as the artifact stores it.
  *
- * `level` is the reference vocabulary (`national` | `admin1`) kept as text —
- * the reader validates on load rather than trusting bytes.
+ * `level` is the reference vocabulary (`national` | `admin1`) kept as text, and the reader validates
+ * on load rather than trusting bytes.
  */
 export interface CapitalTable {
 	country: string
@@ -47,8 +46,8 @@ export interface CapitalTable {
 /**
  * Create the table on a build in progress.
  *
- * Async because Kysely's schema-builder is.
- * Called from the candidate build's DDL phase alongside the other typed builders.
+ * Async because Kysely's schema-builder is. Called from the candidate build's DDL phase alongside
+ * the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
 	await db.schema

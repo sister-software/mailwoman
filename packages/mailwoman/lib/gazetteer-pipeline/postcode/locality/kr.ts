@@ -3,39 +3,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a KR postcode → WOF locality table by point-primary match (#293, Direction E / CJK arena).
+ *   Build a KR postcode → WOF locality table by point-primary match.
  *
  *   This is the South-Korea sibling of `build-postcode-locality-cjk.ts` (Japan). It emits the same
  *   `postcode_locality` table, so the existing `postcode_area_resolution` resolver strategy
- *   consumes it unchanged — that is the whole point of the CJK arena: one strategy, many builds.
- *   But KR's data shape is the inverse of Japan's, so the build is inverted too:
+ *   consumes it unchanged. KR's data shape is the inverse of Japan's, so the build is inverted too.
  *
- *   Japan (name-primary): postcode --KEN_ALL--> municipality name (romaji) ; GeoNames --> point ;
- *   match name (+ proximity tiebreak) against romanized `spr.name`. -> 94.9% Korea (point-primary):
- *   GeoNames postal file already carries postcode -> (place_name, admin1, lat, lon) in one source.
- *   `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor` + Hangul-containing
- *   `und`) variants. So we resolve by nearest locality point (always available, sub-km dense) and
- *   use the Hangul name as an authoritative confirmation signal where it exists.
+ *   Japan is name-primary: KEN_ALL supplies the municipality name, GeoNames supplies the point, and
+ *   the name is matched with a proximity tiebreak against romanized `spr.name`. Korea is
+ *   point-primary: the GeoNames postal file already carries postcode to (place_name, admin1, lat,
+ *   lon) in one source. `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor`
+ *   plus Hangul-containing `und`) variants, so the nearest locality point resolves the postcode and
+ *   the Hangul name confirms it where it exists.
  *
- *   Tiering (same schema/semantics as the JP builder):
+ *   Tiering (same schema and semantics as the JP builder):
  *
- *   - Is_containing=1 : Hangul name-confirmed locality (the precise tier. correct granularity)
- *   - Is_containing=0 : point-nearest fallback (province + coordinate right. the unit may be finer)
+ *   - Is_containing=1 : Hangul name-confirmed locality, the precise tier
+ *   - Is_containing=0 : point-nearest fallback, with the province and coordinate correct
  *
- *   The province (admin1 -> WOF region, Hangul-exact, 100%) is recorded in `meta` as the reliable
- *   coarse anchor. Build-from-source: GeoNames postal KR + our custom WOF admin-kr.db (built from
- *   the whosonfirst-data-admin-kr repo, never a prebuilt geocode.earth dump).
+ *   The province (admin1 to WOF region, Hangul-exact) is recorded in `meta` as the reliable coarse
+ *   anchor. The build uses GeoNames postal KR plus our custom WOF admin-kr.db from the
+ *   whosonfirst-data-admin-kr repo.
  *
  *   Usage: node scripts/build-postcode-locality-kr.ts\
  *   --geonames $MAILWOMAN_DATA_ROOT/geonames/KR.txt\
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
  *
- *   port note (from scripts/build-postcode-locality-kr.py): faithful TypeScript port. No polygons, so
- *   no PIP. Matching is point-nearest via `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python)
- *   with proximity-constrained Hangul name confirmation. The output is written directly to
- *   `--output` (the Python `drop table …` then `create table` full single-country rebuild),
- *   preserving behavior.
+ *   With no polygons there is no point-in-polygon step. Matching is point-nearest through
+ *   `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python), with
+ *   proximity-constrained Hangul name confirmation. The output is written directly to
+ *   `--output` as a full single-country rebuild.
  */
 
 import { pyRound } from "@mailwoman/core/numeric"
@@ -67,7 +65,7 @@ const HANGUL = /[가-힣]/
 const SUFFIX = /(특별자치도|특별자치시|광역시|특별시|면|동|읍|시|군|구|리)$/
 
 /**
- * Python `str(float)` — integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`).
+ * Python `str(float)`: integer-valued floats render with a trailing `.0` (e.g. `1.0`, `0.0`).
  */
 function pyStrFloat(x: number): string {
 	return Number.isInteger(x) ? `${x}.0` : String(x)
@@ -90,7 +88,7 @@ export interface PostcodeLocalityKROptions {
 export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): Promise<void> {
 	using admin = new DatabaseClient<PostcodeLocalityDatabase>(args.adminDB)
 
-	// Locality point index + id->name (romanized spr.name, for the human-readable row label).
+	// Romanized `spr.name` for the human-readable row label.
 	const loc = admin
 		.prepare("SELECT id,name,latitude,longitude FROM spr WHERE placetype='locality' AND (latitude!=0 OR longitude!=0)")
 		.all() as Array<{ id: number; name: string; latitude: number; longitude: number }>
@@ -110,7 +108,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 		grid.add({ pid: id, la: latitude, lo: longitude })
 	}
 
-	// Hangul locality-name index (kor + Hangul-containing und): bare-stem -> set(ids).
+	// Hangul locality-name index: kor plus Hangul-containing und, bare-stem to set of ids.
 	const nameIdx = new Map<string, Set<number>>()
 
 	for (const lang of ["kor", "und"]) {
@@ -151,9 +149,9 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
 	 *
-	 * Korean place names repeat heavily across the country (homonymous villages),
-	 * so a Hangul name-match must be constrained to nearby candidates — matching globally
-	 * then taking the nearest homonym lands hundreds of km away.
+	 * Many Korean localities share a name across the country, so a Hangul name match must be
+	 * constrained to nearby candidates. Matching globally and then taking the nearest homonym
+	 * lands hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))
@@ -161,9 +159,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	// GeoNames postal KR: group by postcode (first row wins. Multi-row postcodes cluster tightly).
 	const postal = new Map<string, [string, string, number, number]>()
 
-	// Streamed — `args.geonames` is a caller-supplied national dump.
+	// `args.geonames` is a caller-supplied national dump, so the rows are streamed.
 	for await (const row of geonamesPostalRows(args.geonames)) {
-		// pc -> (place, admin1, lat, lon)
 		if (!postal.has(row.postcode)) {
 			postal.set(row.postcode, [row.placeName, row.admin1, row.latitude, row.longitude])
 		}
@@ -190,16 +187,15 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 			if (!nb.length) continue
 
 			resolved++
-			const { d: d0, pid: pid0 } = nb[0]! // point-nearest
+			const { d: d0, pid: pid0 } = nb[0]!
 			dists.push(d0)
 
 			if (regionIdx.has(norm(admin1)) || regionIdx.has(bare(admin1))) {
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is also nearby
-			// (two signals agreeing — the same proximity-constrained match the JP builder uses).
-			// is_containing=1 marks the precise tier.
+			// Hangul name confirmation: a name-matched locality that is also nearby, the same
+			// proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))
 
@@ -208,7 +204,6 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				rows.push([pc, "KR", named.pid, sprName.get(named.pid) ?? "", place, pyRound(named.d, 3), 1])
 
 				if (named.pid !== pid0) {
-					// keep the point-nearest as a weak alternate
 					rows.push([pc, "KR", pid0, sprName.get(pid0) ?? "", place, pyRound(d0, 3), 0])
 				}
 			} else {

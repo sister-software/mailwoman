@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev generate country-population` — regenerate `codex/country/population.ts` (the
- *   per-country population table, #1650's prominence-race fallback) from GeoNames countryInfo.txt.
- *   Network codegen. the output is committed for provenance.
+ *   `mailwoman dev generate country-population` regenerates `codex/country/population.ts`, the
+ *   per-country population table, from GeoNames countryInfo.txt. This is network codegen and the
+ *   output is committed for provenance.
  */
 
 import { Text } from "ink"

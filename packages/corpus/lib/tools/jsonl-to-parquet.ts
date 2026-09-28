@@ -3,30 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Convert a jsonl of LabeledRow objects to a Parquet file matching the v0.5.0 schema.
+ * Convert a jsonl of LabeledRow objects to a Parquet file matching the schema the corpus writes.
  *
- *   Ported faithfully from scripts/jsonl-to-parquet.py. The Python original wrote Parquet through
- *   PyArrow. this writes it through DuckDB (`@duckdb/node-api`) — `read_json` with an explicit
- *   `columns` type map projects the validated rows to the v0.5.0 schema, then `copy … TO … (format
- *   parquet, compression snappy, ROW_GROUP_SIZE …)` emits the file. DuckDB reproduces the exact
- *   logical schema PyArrow did — `varchar` (UTF8) scalars, `varchar[]` (list<UTF8>) for the string
- *   arrays, and `integer[]` (list<INT32>) for the span offsets — in the exact column order below.
- *   Verified field-for-field against the PyArrow original (same column order, same logical types,
- *   same `list<element: …>` child naming, same values), so a PyArrow reader sees an identical
- *   table. The trainer in any case reads parquet files by column name (`pq.read_table(...).to_pylist()`),
- *   which is blind to physical layout. INT32 matches the corpus's native TS writer
- *   (`@mailwoman/corpus` `LABELED_ROW_SCHEMA`), which already writes the base files this overlay
- *   rides alongside.
+ * DuckDB reproduces the same logical schema as the PyArrow original in the same column order, so a PyArrow
+ * reader sees an identical table. The trainer reads parquet by column name, which is blind to physical layout.
  *
- *   Schema: `PARQUET_COLUMNS` from `#parquet/schema`, which is the same list the native writer uses.
+ * Schema: `PARQUET_COLUMNS` from `#parquet/schema`, the same list the native writer uses.
  *
- *   The span triple (#519, v0.5.0 char-offset labels) is required on every row: `alignRow` emits it
- *   on every labeled row, so a row arriving without it came from a producer that hasn't migrated —
- *   writing it would silently drop the v0.5.0 labels from the file. Loud failure, naming the row
- *   number, instead.
- *
- *   Usage: mailwoman dev jsonl-to-parquet --input /tmp/po-box-labeled.jsonl --output
- *   /tmp/part-po-box.parquet
+ * The span triple is required on every row: a row arriving without it came from a producer that has not
+ * migrated, and writing it would silently drop the char-offset labels. Fail loudly and report the row number.
  */
 
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
@@ -42,17 +27,11 @@ import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 /**
  * The columns this converter writes, and the DuckDB type each is written as.
  *
- * Both come from `#parquet/schema`, which is the one definition the native writer,
- * the reader and the manifest already share.
- * This file restated them, and the restatement went stale the moment `synth_method` became
- * `recipe`, `register` and `surface`: an overlay converted here would have been written
- * without the three columns the base files carry, and the loader reads by column name
- * rather than by position, so the rows would have arrived declaring no surface at all.
+ * Both come from `#parquet/schema`, the one definition the native writer, the reader and the manifest share.
  *
- * The span offsets are INT32 (#519): parallel arrays over `raw`
- * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping).
- * `raw` is a short address string, so INT32 round-trips as a plain integer
- * where INT64 would surface as bigint.
+ * The span offsets are INT32: parallel arrays over `raw` (UTF-16 code units, `[start, end)` exclusive-end,
+ * sorted, non-overlapping). `raw` is a short address string, so INT32 round-trips as a plain integer where
+ * INT64 would surface as bigint.
  */
 const REQUIRED_COLUMNS = PARQUET_COLUMNS
 const COLUMN_TYPES = PARQUET_COLUMN_TYPES
@@ -89,9 +68,8 @@ export interface JSONLToParquetSummary {
 }
 
 /**
- * Enforce the #519 span interface per row: all three present, parallel lengths.
- *
- * A row with span_starts but no span_tags is a corrupt row, never a silent fallback.
+ * Enforce the span interface per row: all three present, parallel lengths. A row with span_starts but no
+ * span_tags is a corrupt row, never a silent fallback.
  */
 function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	const present = SPAN_COLUMNS.filter((c) => row[c] != null)
@@ -129,8 +107,7 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
-	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column into memory first).
+	// Streaming keeps memory O(1) on the Node side.
 	// The staging directory owns the write stream, so it is closed before the directory
 	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
@@ -151,7 +128,6 @@ export async function jsonlToParquet(
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)
 		assertSpanTriple(row, lineNo)
-		// Write the validated line verbatim.
 		// DuckDB's `read_json` projects to the explicit `columns` map below
 		// (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 		stage.write(line + "\n")

@@ -5,8 +5,8 @@ import { normalize } from "@mailwoman/normalize/compute"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   CJK input normalization (#291): the postal-mark strip + full-width fold, and its composition into
- *   the `normalize()` pipeline (including the offset map back to raw).
+ *   CJK input normalization: the postal-mark strip, the full-width fold and the composition into
+ *   the `normalize()` pipeline including the offset map back to raw.
  */
 import { describe, expect, it } from "vitest"
 
@@ -15,7 +15,6 @@ describe("applyCjkNormalization", () => {
 		const r = applyCjkNormalization("〒104-0061")
 		expect(r.text).toBe("104-0061")
 		expect(r.stripped).toBe(1)
-		// every surviving char maps back to its original index (〒 was at 0)
 		expect(r.map).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
 	})
 
@@ -61,7 +60,7 @@ describe("applyCjkNormalization", () => {
 	})
 
 	it("leaves kanji numerals alone (place names carry them — 三田, 四谷)", () => {
-		const r = applyCjkNormalization("三田") // Mita — must not become "3田"
+		const r = applyCjkNormalization("三田") // Mita, which must not become "3田"
 		expect(r.text).toBe("三田")
 		expect(r.folded).toBe(0)
 		expect(r.stripped).toBe(0)
@@ -88,7 +87,6 @@ describe("normalize() integration", () => {
 		const raw = "〒104東京"
 		const out = normalize(raw)
 		expect(out.normalized).toBe("104東京")
-		// normalized[0]='1' came from raw[1]; the run is contiguous after the stripped 〒 at raw[0]
 		expect(out.offsetMap[0]).toBe(1)
 		expect(raw[out.offsetMap[0]!]).toBe("1")
 		expect(raw[out.offsetMap[out.normalized.length - 1]!]).toBe("京")

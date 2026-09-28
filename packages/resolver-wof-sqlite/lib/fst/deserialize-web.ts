@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Browser-compatible FST deserializer. Uses DataView + TextDecoder instead of Node's Buffer so the
- *   same binary format can be loaded in the browser via fetch(url).then(r => r.arrayBuffer()).
+ *   same binary format loads in the browser through fetch(url).then(r => r.arrayBuffer()).
  *
- *   This is a read-only counterpart to fst-serialize.ts — serialization stays Node-only (it's a
- *   build-time operation).
+ *   This is a read-only counterpart to fst-serialize.ts. Serialization stays Node-only because it is
+ *   a build-time operation.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -56,7 +56,7 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	const isV2 = version >= 2
 	const isSplit = version >= VERSION_TWO_SCORE_SPLIT
-	// flags bit0 (survey #4, mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
+	// flags bit0 (mirrors fst-serialize.ts): place rows carry surface-ambiguity data.
 	const hasAmbiguity = (view.getUint16(6, true) & 1) === 1
 
 	const stateCount = view.getUint32(8, true)
@@ -67,7 +67,6 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	let pos = HEADER_SIZE
 
-	// Decode the interned string table.
 	const strOffsets = new Uint32Array(stringCount + 1)
 
 	for (let i = 0; i <= stringCount; i++) {
@@ -86,7 +85,6 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 
 	pos += stringBytes
 
-	// Decode the state table and its transitions.
 	const stateEntrySize = version >= VERSION_WIDE_STATE_COUNTERS ? WIDE_STATE_ENTRY_SIZE : NARROW_STATE_ENTRY_SIZE
 	// v5 grew the place entry by the encyclopedic float. v4-and-below files are read at the old stride.
 	const placeEntrySize = isSplit ? SPLIT_PLACE_ENTRY_SIZE : LEGACY_PLACE_ENTRY_SIZE
@@ -127,9 +125,8 @@ export function deserializeFSTWeb(input: ArrayBuffer | Uint8Array): FSTMatcher {
 				parentChain.push(view.getUint32(pp + 24 + ci * 4, true))
 			}
 
-			// v1 stored a raw population u32 here. v2-v4 the conflated `importance`
-			// float. v5 the referential score.
-			// See the Node deserializer for why a v1 value is genuinely referential.
+			// v1 stored a raw population u32 here, v2-v4 the conflated `importance` float, and v5 the
+			// referential score. The Node deserializer explains why a v1 value is genuinely referential.
 			const referential = isV2
 				? view.getFloat32(pp + 12, true)
 				: Math.min(1, Math.log2(1 + view.getUint32(pp + 12, true) / 1000) / 14)

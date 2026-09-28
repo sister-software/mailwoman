@@ -3,25 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a CJK postcode → WOF locality table by authoritative name-match (#292, Direction E).
+ *   Build a CJK postcode → WOF locality table by authoritative name match.
  *
- *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level. There
- *   are no municipality polygons — so the European point-in-polygon coordinate-first build
- *   (build-postcode-locality.ts) is structurally inapplicable. This is the CJK substitute:
+ *   WOF admin geometry in CJK (JP/KR/TW) is point-based at the municipality/locality level, so the
+ *   European coordinate-first point-in-polygon build in build-postcode-locality.ts does not apply.
+ *   This is the CJK substitute:
  *
  *   Postcode --(national postal authority)--> municipality name (romanized) postcode --(GeoNames)-->
  *   point municipality name + point --(cross-placetype name+proximity match)--> WOF place id
  *
  *   The match searches all the municipality-ish WOF placetypes (locality + county + localadmin +
  *   borough), because CJK municipalities are split across them (regular cities → locality, wards →
- *   county/localadmin, Tokyo special wards → borough). Matching a single placetype was the 52/60%
- *   trap. cross-placetype is 94.3%.
+ *   county/localadmin, Tokyo special wards → borough).
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
- *   Build-from-source: the authoritative names come from the national postal file (JP = KEN_ALL,
- *   Japan Post), points from GeoNames (already an in-project source for DE/ES/IT/NL); both are
- *   source material rather than prebuilt dumps.
+ *   The authoritative name data comes from the national postal file (JP = KEN_ALL, Japan Post), and
+ *   points from GeoNames. Both are source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\
  *   --postal-names $MAILWOMAN_DATA_ROOT/KEN_ALL_ROME/KEN_ALL_ROME.CSV\
@@ -29,11 +27,9 @@
  *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db\
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-jp.db
  *
- *   port note (from scripts/build-postcode-locality-cjk.py): faithful TypeScript port. No polygons
- *   here, so there is no PIP — matching is name + haversine proximity, via `@mailwoman/spatial`'s
- *   `haversineKm` (asin form, matching Python). The output is written directly to `--output` (the Python
- *   `drop table …` + `create table` full single-country rebuild), preserving the original's
- *   behavior.
+ *   With no polygons there is no point-in-polygon step, so matching is name plus haversine
+ *   proximity through `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python). The
+ *   output is written directly to `--output` as a full single-country rebuild.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -57,12 +53,6 @@ import {
 	type PostcodeLocalityInsertValues,
 } from "#gazetteer-pipeline/postcode/locality/schema"
 
-/**
- * Digit at which a fractional remainder is exactly half.
- *
- * Above it the value rounds up.
- * At it the tie is broken toward even, which is what keeps repeated centroid rounding unbiased.
- */
 /**
  * Columns a Japan Post KEN_ALL row needs before it is usable.
  */
@@ -101,15 +91,12 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
-	// `cp932` through iconv rather than `TextDecoder("shift_jis")`.
-	// Japan Post ships CP932, and Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte
-	// sequences differently — silently, since most yield a different character rather than a replacement.
-	// Measured on the 2026 edition: the file contains zero of those 801,
-	// in any column, so this changes no value today.
-	// It is here because the file is reissued monthly and the next edition is not measured.
+	// `cp932` through iconv rather than `TextDecoder("shift_jis")`. Japan Post ships CP932, and
+	// Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte sequences differently, most
+	// yielding a different character rather than a replacement. The file is reissued monthly, so
+	// this must stay exact.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
-	// Decode CP932 once, then let the CSV reader handle quoted fields and crlf.
 	// KEN_ALL has no header row.
 	for (const f of CSVSpliterator.from<string[]>(text, { header: false })) {
 		if (f.length >= MIN_KEN_ALL_COLUMNS && f[0]!.length === JIS_CODE_LENGTH && /^[0-9]+$/.test(f[0]!)) {
@@ -126,7 +113,7 @@ async function loadKenall(path: string): Promise<Map<string, string>> {
 async function loadGeonamesPoints(path: string): Promise<Map<string, [number, number]>> {
 	const out = new Map<string, [number, number]>()
 
-	// Streamed — `path` is a caller-supplied national dump (JP's is 12 MB).
+	// `path` is a caller-supplied national dump, so the rows are streamed.
 	for await (const row of geonamesPostalRows(path)) {
 		out.set(row.postcode, [row.latitude, row.longitude])
 	}
@@ -206,7 +193,6 @@ export async function buildPostcodeLocalityJP(args: PostcodeLocalityJPOptions): 
 					}
 				}
 			} else {
-				// no authoritative name match nearby → nearest place as a weak candidate
 				const c0 = cands[0]!
 				rows.push([pc, args.country, c0.pid, c0.nm, muni, pyRound(c0.d, 3), 0])
 			}

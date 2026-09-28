@@ -1,10 +1,9 @@
-// National US rooftop rollout (#735) check: with the 50-state situs/interp
-// extracts hosted, an address in a newly-rolled state must resolve to its building
-// (the situs `address_point` coord), not the WOF admin city-centroid (km away).
-// Each case is a real row pulled from that state's situs extract, so the truth coord is the extract's coord.
-// We grade the assembled coordinate within ~500 m (tight enough to distinguish rooftop
-// from a centroid fallback, loose enough for any normalization).
-// Representative spread: TX/GA/WA urban + MT rural.
+// National US rooftop check. With the 50-state situs/interp extracts hosted, an address in a
+// newly-rolled state must resolve to its building coordinate (the situs `address_point` coord)
+// rather than the WOF admin city centroid kilometres away. Each case is a real row pulled from
+// that state's situs extract, so the truth coordinate is the extract's coordinate. The tolerance
+// is tight enough to distinguish a rooftop from a centroid fallback and loose enough for any
+// normalization. The cases span TX, GA and WA urban rows plus a MT rural row.
 import { expect, test } from "../../e2e/index.ts"
 
 const TOL = 0.006

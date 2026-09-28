@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the production learned-scorer model (#603). Builds the same NPI-keyed record set the dedup
- *   benchmark + the clustering A/B use (the shared `buildNPPESSample`: real registry + name-drift +
- *   address-variation), geocodes it, blocks → candidate pairs, featurizes each pair with the shared
- *   `createMatchFeaturizer` (so train ≡ inference), labels by held-out NPI, and fits the
- *   gradient-boosted-tree model. Writes the model as a committed TS module
- *   (`registry/models/dedup-gbt-en-us.ts`) that ships in the package.
+ *   Train the production learned-scorer model. Builds the same NPI-keyed record set the dedup
+ *   benchmark and the clustering A/B use (the shared `buildNPPESSample` with the real registry,
+ *   name drift and address variation), geocodes it, blocks it into candidate pairs, featurizes each
+ *   pair with the shared `createMatchFeaturizer`, labels by NPI, and fits the gradient-boosted-tree
+ *   model. It writes the model as a committed TS module (`registry/models/dedup-gbt-en-us.ts`) that
+ *   ships in the package.
  *
- *   Unlike the eval, this trains on all sampled NPIs (no held-out split) — the held-out F1 is the
- *   eval's job. this produces the shipped artifact. The eval (`learned-scorer-clustering-eval.ts`)
- *   then re-measures generalization against the FS baseline.
+ *   Unlike the eval, this trains on all sampled NPIs with no held-out split, since the held-out F1
+ *   is the eval's job.
  *
  *   Run: `mailwoman registry train-scorer gbt [--state TX] [--npis 3000] [--wof <admin.db>]
  *   [--data-root <dir>] [--out registry/models/dedup-gbt-en-us.ts]`
@@ -51,7 +50,7 @@ const FIT_SPLIT_FRACTION = 0.8
  */
 export interface TrainDedupGBTOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -85,11 +84,10 @@ export interface TrainDedupGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Cost-sensitive training (#625): up-weight the negative (distinct-pair) class by this
-	 * factor so the model is more conservative about merging — directly trades recall for
-	 * precision to reduce over-merge. 1 = the symmetric class-balanced default;
-	 *
-	 * > 1 penalizes a false merge more than a missed one.
+	 * Cost-sensitive training: up-weight the negative (distinct-pair) class by this factor so the
+	 * model is more conservative about merging. It trades recall for precision to reduce over-merge.
+	 * `1` is the symmetric class-balanced default, and a value above 1 penalizes a false merge more
+	 * than a missed one.
 	 */
 	cost?: number
 	/**
@@ -101,7 +99,7 @@ export interface TrainDedupGBTOptions {
 }
 
 /**
- * Train + emit the production dedup GBT — see the module doc.
+ * Train and emit the production dedup GBT.
  */
 export async function trainDedupGBT(
 	options: TrainDedupGBTOptions,
@@ -113,25 +111,21 @@ export async function trainDedupGBT(
 	const OUT = options.out || "packages/registry/lib/models/dedup-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
 	const COST = options.cost ?? 1
-	const TRAIN_DATE = options.date || isoDate() // overridable for reproducible commits
+	const TRAIN_DATE = options.date || isoDate()
 
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OTHER_NAMES = `${SOURCES}/nppes_other-names_20260607.tsv`
 
-	// Build the variation-rich sample and corpus-wide address-frequency table.
-	// Sample builder — the same records the dedup benchmark and the learned-scorer evals see). ---
 	const { rows, keptNpis, addressFrequency } = await buildNPPESSample(
 		{ registryPath: REGISTRY, otherNamesPath: OTHER_NAMES, state: STATE, maxNpis: NPIS },
 		report
 	)
 
-	// Geocode and ingest records, carrying the NPI in record.id as the label.
-	// Injected (see ./eval-geocoder.ts).
-	// The registry package never imports the runtime. ---
+	// The geocoder is injected, since the registry package never imports the runtime.
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// mapping.id = "npi" → record.id is the NPI label (multiple records share an NPI, the ground truth).
+	// `record.id` is the NPI label, and multiple records share an NPI as the ground truth.
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -148,7 +142,6 @@ export async function trainDedupGBT(
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records, ${geocoded} geocoded`)
 
-	// Block records, generate shared features, then assign labels.
 	report?.("[D] blocking + featurizing…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -156,20 +149,17 @@ export async function trainDedupGBT(
 	const X = pairs.map(([a, b]) => featurize(a, b))
 	const Y = pairs.map(([a, b]) => (a.id === b.id ? 1 : 0))
 	const posRate = Y.reduce<number>((s, v) => s + v, 0) / Math.max(1, Y.length)
-	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST)) // class-balanced. COST up-weights negatives
+	const W = Y.map((y) => (y === 1 ? 1 - posRate : posRate * COST))
 	const hyperparams = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
 	if (COST !== 1) {
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold.
-	// The GBT logit is not in FS-weight units.
-	// Trained with class-balanced weights, so logit 0 (the balanced boundary)
-	// ignores the ~1% match base rate and over-merges.
-	// Split the NPIs 80/20, fit a calibration GBT on the 80%, and sweep the clustering
-	// threshold on the held-out 20% (the metric resolveEntities actually optimizes) for F1-max.
-	// The shipped full-data model has near-identical logit calibration, so the threshold transfers. ---
+	// Calibrate the default link threshold. The GBT logit is not in FS-weight units, and with
+	// class-balanced weights logit 0 ignores the roughly 1% match base rate and over-merges. The
+	// threshold is swept on a held-out 20% of the NPIs, and the shipped full-data model has
+	// near-identical logit calibration, so the threshold transfers.
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = makeLcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()
@@ -215,13 +205,12 @@ export async function trainDedupGBT(
 		`    recommended link threshold ${recommendedThreshold.toFixed(3)} (held-out clustering F1 ${(100 * bestF1).toFixed(1)}%)`
 	)
 
-	// Train the shipped model on every available pair.
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, hyperparams)
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
-	// Emit the model as a committed TypeScript module with a prettier-stable literal.
-	// Retrain produces a clean one-line diff rather than a thousand reformatted lines. ---
+	// Emit the model as a committed TypeScript module with a prettier-stable literal, so a retrain
+	// produces a clean one-line diff.
 	const meta = {
 		version: "1.0.0",
 		locale: LOCALE,
@@ -231,9 +220,8 @@ export async function trainDedupGBT(
 		records: records.length,
 		pairs: pairs.length,
 		posRate: Number(posRate.toFixed(4)),
-		costNegative: COST, // cost-sensitive negative-class up-weight (1 = symmetric class-balanced)
+		costNegative: COST,
 		hyperparams,
-		// F1-max link threshold (held-out); resolveEntities' default when learnedScorer is active
 		recommendedThreshold: Number(recommendedThreshold.toFixed(4)),
 		features: X[0]?.length ?? 0,
 		addressFrequencyDistinct: addressFrequency.distinct,

@@ -3,31 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   XML projection — nested mixed-content with attributes.
- *
- *   Each component is one element. The element's _direct text node_ is the component's own value
- *   (e.g. `<locality>Paris…</locality>` — "Paris" is the locality's text). Children are nested as
- *   sub-elements representing geographic / structural containment.
+ *   XML projection of an address tree. Each component is one element. The element's direct text node
+ *   holds the component's own value, and children nest as sub-elements for geographic or structural
+ *   containment.
  *
  *   Attributes:
  *
- *   - `conf` — aggregated confidence in [0, 1], two decimal places.
- *   - `start` / `end` — character offsets in the raw input. Preserves source order alongside the
- *       containment-derived element order.
- *   - `src` — provenance for the assertion. Formatted as `<source>:<sourceID>` when both fields are
- *       present on the node, `<source>` when only the broad category is set, omitted when neither
- *       is. Phase 4.1 surfaces classifier provenance (`rule:whos_on_first`, `neural:v0.3.1-en-us`);
- *       Phase 4.3 overlays resolver provenance (`resolver:wof-admin:101751119`).
- *   - `lat` / `lon` — resolver-supplied centroid (Phase 4.3). Emitted only when both are set.
- *   - `place` — resolver-supplied normalized place URI like `wof:101751119` (Phase 4.3). Emitted only
- *       when `node.placeID` is set. distinct from `src` so callers that want the bare place id
- *       without the vendor prefix have a direct attribute to read.
- *   - Root `<address>` carries `raw` — the full input string for round-trip.
+ *   - `conf` holds the aggregated confidence in [0, 1] with two decimal places.
+ *   - `start` / `end` hold character offsets in the raw input, which preserve source order beside
+ *       the containment-derived element order.
+ *   - `src` holds provenance for the assertion. The format is `<source>:<sourceID>` when both fields
+ *       are present, `<source>` when only the broad category is set, and omitted when neither is.
+ *   - `lat` / `lon` hold the resolver-supplied centroid. Emitted only when both are set.
+ *   - `place` holds the resolver-supplied normalized place URI such as `wof:101751119`. Emitted only
+ *       when `node.placeID` is set. Callers that want the bare place id without the vendor prefix
+ *       read this attribute directly.
+ *   - Root `<address>` carries `raw`, the full input string for round-trip.
  *
- *   ⚠ DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of all
- *   descendant text (parent value + children values). Use `Array.from(el.childNodes).filter(n =>
- *   n.nodeType === 3).map(n => n.nodeValue).join('').trim()` or XPath `text()` to get just the
- *   parent's own value. Documented in the package readme.
+ *   DOM failure mode: `element.textContent` on a mixed-content node returns the concatenation of
+ *   all descendant text. Use `Array.from(el.childNodes).filter(n => n.nodeType === 3).map(n =>
+ *   n.nodeValue).join('').trim()` or XPath `text()` to get just the parent's own value.
  */
 
 import type { AddressNode, AddressTree } from "#decoder/types"
@@ -73,27 +68,28 @@ export interface SerializeXMLOpts {
 	/**
 	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node.
 	 *
-	 * When set + node.alternatives is populated, each runner-up is emitted as a self-closing
+	 * When set and `node.alternatives` is populated, each runner-up is emitted as a self-closing
 	 * element with `place`, `name`, `lat`, `lon`, `score` attributes.
-	 * Default false — keeps output libpostal-compat when not explicitly requested
-	 * (Springfield-class disambiguation surfaces only when the caller asks).
+	 * Default false, which keeps the output libpostal-compat unless the caller asks.
 	 */
 	includeAlternatives?: boolean
 	/**
-	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers —
-	 * the input the model left unclassified (#493 lossless decomposition).
+	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers, which is the
+	 * input the model left unclassified.
 	 *
-	 * Interleaved with the root components in source order, so the `<address>`
-	 * children tile the raw input exactly.
-	 * Default false — keeps output libpostal-compat / the existing shape when not
-	 * explicitly requested (same posture as {@link includeAlternatives}).
+	 * Interleaved with the root components in source order, so the `<address>` children tile the raw
+	 * input exactly.
+	 * Default false, which keeps the output libpostal-compat unless the caller asks, the same
+	 * posture as {@link includeAlternatives}.
 	 */
 	includeUnknown?: boolean
 }
 
 /**
- * Deliberately not `escapeHTML` (`#strings/escape`): every attribute this serializer emits is
- * double-quoted, so `'` needs no escape, and adding `&#39;` would change shipped serialization bytes.
+ * Escape XML metacharacters for double-quoted attribute values.
+ *
+ * Every attribute this serializer emits is double-quoted, so `'` needs no escape. `escapeHTML`
+ * (`#strings/escape`) would escape the apostrophe, which changes shipped serialization bytes.
  */
 function escapeXml(s: string): string {
 	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
@@ -110,8 +106,8 @@ function srcAttrValue(node: AddressNode): string | null {
 }
 
 /**
- * Centroid precision for resolver-supplied lat/lon. 6 decimal places is ~11 cm at the equator —
- * more than enough for any postal-address resolver and short enough to stay readable.
+ * Centroid precision for resolver-supplied lat/lon. Six decimal places is about 11 cm at the
+ * equator, more than enough for a postal-address resolver and short enough to stay readable.
  */
 const GEO_PRECISION = 6
 
@@ -134,8 +130,8 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		}
 	}
 
-	// Emit lat + lon together — a centroid is meaningless with only one coordinate.
-	// Resolvers that can produce one but not the other shouldn't decorate the node at all.
+	// Emit lat + lon together. A centroid is meaningless with only one coordinate, so a resolver
+	// that produces one coordinate leaves both off the node.
 	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
@@ -144,9 +140,8 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`place="${escapeXml(node.placeID)}"`)
 	}
 
-	// Multi-role node (#413): a city-state span tagged `region` that also plays `locality`
-	// lists every role it holds, primary first — `roles="region locality"`.
-	// Emitted only when extra roles exist.
+	// A span that holds several roles lists every role it holds, primary first, for example
+	// `roles="region locality"`. Emitted only when extra roles exist.
 	if (node.interpretations && node.interpretations.length) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)

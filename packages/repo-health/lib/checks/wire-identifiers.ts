@@ -4,12 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Every source id a training config addresses is one some adapter, recipe or carried overlay has emitted.
  *
- *   A `source_weights` key refers to a string stored inside a built corpus, never to a symbol in the checkout. Two
- *   vocabulary sweeps renamed one by hand (#2355 turned `state-ia-contractors` into `state-ia-builders` across 178
- *   configs, and #2352 rewrote a generated register), and the loader refused every run against the corpus that still
- *   stored the old string. Both were commits answering a prose finding rather than Vale rewriting anything, so a Vale
- *   exemption would not have stopped them. This check reads the configs as data and asks whether each key is a name
- *   something in the checkout emits.
+ *   A `source_weights` key refers to a string stored inside a built corpus. This check reads the
+ *   configs as data and asks whether each key is a string something in the checkout emits.
  *
  *   What it catches: a key in `source_weights`, `source_reps`, `augment_exclude_sources` or
  *   `required_corpus_receipts[].source` that no adapter declares as its `<NAME>_ADAPTER_ID`, no Python corpus builder

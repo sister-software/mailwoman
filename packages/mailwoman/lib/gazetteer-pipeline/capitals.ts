@@ -3,18 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `data/gazetteer/capitals-v1.json` — the capital-status reference (#1880): every national
+ *   Build `data/gazetteer/capitals-v1.json`, the capital-status reference: every national
  *   capital (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
  *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
- *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country +
- *   proximity + name membership — all three conjuncts, because the first board run matched on
- *   coordinates alone and promoted capital-adjacent namesakes (North Salt Lake beside the Utah
- *   seat) instead of capitals. the alternate names are what keep exonym rows ("Vienna" for Wien)
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country,
+ *   proximity, and name membership, all three conjuncts together, so a capital-adjacent namesake
+ *   cannot stand in for the capital. The alternate names keep exonym rows ("Vienna" for Wien)
  *   matching without a hand-kept exonym list.
  *
  *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `pplch` (historical
- *   capital) stay out. `countryInfo.txt` — the same source's own catalog — grades the extraction:
- *   a catalog country whose dump yields no `pplc` row, and a catalog capital name that matches none
+ *   capital) stay out. `countryInfo.txt`, the same source's own catalog, grades the extraction: a
+ *   catalog country whose dump yields no `pplc` row, and a catalog capital name that matches none
  *   of the extracted rows' names, are both recorded in the coverage block rather than silently
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
@@ -34,12 +33,12 @@ import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
  */
 export interface CapitalReferenceEntry {
 	/**
-	 * GeoNames `geonameid` — provenance back-pointer, never a join key.
+	 * GeoNames `geonameid`, a provenance back-pointer and never a join key.
 	 */
 	id: number
 	name: string
 	/**
-	 * ISO alpha-2, uppercase — from the dump row's own country column.
+	 * ISO alpha-2, uppercase, from the dump row's own country column.
 	 */
 	country: string
 	latitude: number
@@ -67,7 +66,7 @@ export interface CapitalsReference {
 		national: number
 		admin1: number
 		/**
-		 * Catalog countries with no dump file on disk — countries this reference could not measure.
+		 * Catalog countries with no dump file on disk, which this reference could not measure.
 		 */
 		missing_dumps: string[]
 		/**
@@ -79,12 +78,12 @@ export interface CapitalsReference {
 		 */
 		wrong_format: string[]
 		/**
-		 * Scanned catalog countries whose dump carries no `pplc` row — a fact about the source.
+		 * Scanned catalog countries whose dump carries no `pplc` row, a fact about the source.
 		 */
 		missing_national: string[]
 		/**
-		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country —
-		 * worth a read rather than a failure: multi-capital countries and spelling drift land here.
+		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country.
+		 * These are worth a read rather than a failure: multi-capital countries and spelling drift land here.
 		 */
 		capital_name_mismatches: string[]
 	}
@@ -94,7 +93,7 @@ export interface CapitalsReference {
 /**
  * Feature codes admitted, mapped to the reference level.
  *
- * Exact codes only — `startsWith("ppla")` would admit the county-seat tiers
+ * Exact codes only. `startsWith("ppla")` would admit the county-seat tiers
  * this reference exists to exclude.
  */
 const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {

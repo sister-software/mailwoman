@@ -3,24 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The injected-geocoder interface for the record-matcher tools. The registry package deliberately
- *   never imports the heavy runtime (neural parser, WOF resolver, per-state extracts) — `mailwoman`
- *   depends on `@mailwoman/registry`, so the reverse import would cycle the workspace graph. Instead
- *   each tool takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from
- *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`), mirroring the matcher's own
- *   `GeocodeAddress` interface philosophy: ingest never pins the runtime, the caller wires it.
+ *   The injected-geocoder interface for the record-matcher tools. The registry package never imports
+ *   the heavy runtime (neural parser, WOF resolver, per-state extracts), since `mailwoman` depends on
+ *   `@mailwoman/registry` and the reverse import would cycle the workspace graph. Each tool instead
+ *   takes an {@linkcode EvalGeocoderFactory} the CLI command constructs from
+ *   `mailwoman/geocode-core` (see `mailwoman/commands/registry/run.tsx`).
  */
 
 import type { ColumnMapping, GeocodeAddress, SourceRecord } from "#index"
 
 /**
- * The raw single-address geocode surface (the probe tools) — mirrors `mailwoman/geocode-core`'s wire shape.
+ * The raw single-address geocode surface used by the probe tools, mirroring
+ * `mailwoman/geocode-core`'s wire shape.
  */
 export interface EvalGeocodeResult {
 	lat: number | null
 	lon: number | null
 	/**
-	 * Wire key — mirrors `GeocodeResult.resolution_tier`.
+	 * Wire key that mirrors `GeocodeResult.resolution_tier`.
 	 */
 	resolution_tier?: string | null
 }
@@ -30,11 +30,11 @@ export interface EvalGeocodeResult {
  */
 export interface EvalGeocoder extends Disposable {
 	/**
-	 * The matcher's ingest interface (parse + geocode → `PostalAddress`), built via `geocodeAddressVia`.
+	 * The matcher's ingest interface (parse and geocode to `PostalAddress`), built through `geocodeAddressVia`.
 	 */
 	geocodeAddress: GeocodeAddress
 	/**
-	 * Raw single-address geocode — lat/lon + resolution tier.
+	 * Raw single-address geocode returning lat, lon and resolution tier.
 	 */
 	geocode: (address: string) => Promise<EvalGeocodeResult>
 	/**
@@ -47,20 +47,19 @@ export interface EvalGeocoder extends Disposable {
  */
 export interface EvalGeocoderInit {
 	/**
-	 * #690 all-caps case normalization. Default on; `nppes-benchmark --legacy-join` turns it off for the A/B.
+	 * All-caps case normalization. Default on. `nppes-benchmark --legacy-join` turns it off for the A/B.
 	 */
 	normalizeCase?: boolean
 }
 
 /**
- * Build a geocoder on demand — tools construct late and dispose it as soon as geocoding is done.
+ * Build a geocoder on demand. Tools construct it late and dispose it as soon as geocoding is done.
  */
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 
 /**
- * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface)
- * for `nppes-dedup-benchmark --parallel-geocode`.
- * Yields enriched records in completion order.
+ * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface) for
+ * `nppes-dedup-benchmark --parallel-geocode`. It yields enriched records in completion order.
  */
 export type EvalGeocodeStream = (
 	records: SourceRecord[],

@@ -5,22 +5,16 @@
  *
  *   Reduce the saved Overpass response to one point per `BT` unit postcode.
  *
- *   The response is a flat list of OSM elements that each claim a postcode on an address. the database needs one
- *   coordinate per postcode. So this module does three things and counts everything it drops:
+ *   The response is a flat list of OSM elements that each claim a postcode on an address, and the
+ *   database needs one coordinate per postcode. This module does three things and counts everything
+ *   it drops:
  *
- *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, and this
- *      acquisition contains exactly one value that is not a postcode (`"BT36 4RU,"` — a trailing comma).
- *      One in 12,327 is not a reason to skip validation. it is the reason to have it, because the failure
- *      mode of accepting it is a searchable place named after a typo.
- *   2. **Normalize** under the #920 name law — uppercase, single-space display form, and the
- *      space-stripped form as the lookup name. See `normalizePostcodeName`.
- *   3. **Collapse** the members of each postcode to the medoid point (`medoidPoint`), never the mean.
- *
- *   ## Measured against the 2026-08-05 acquisition
- *
- *   12,327 elements (2,752 nodes · 9,458 ways · 117 relations), every one of them carrying both an
- *   `addr:postcode` and a coordinate — so `skippedNoCoordinate` is a measured zero here rather than an untested
- *   path. 1 malformed value. 4,757 distinct valid unit postcodes across 80 districts and 250 sectors.
+ *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, so a
+ *      format check is what keeps a typo from becoming a searchable place.
+ *   2. **Normalize** to the uppercase single-space display form, with the space-stripped form as the
+ *      lookup name. See `normalizePostcodeName`.
+ *   3. **Collapse** the members of each postcode to the medoid point (`medoidPoint`) rather than the
+ *      mean.
  */
 
 import { medoidPoint, normalizePostcodeName, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -31,21 +25,20 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
 /**
  * A Northern Ireland unit postcode.
  *
- * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`) with the
- * area pinned to `BT`: loose about the outward code's second character, because `BT1`
- * and `BT47` are both legal and differ structurally, and strict about the inward code,
- * which is invariant across the whole system.
- * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
- * and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the national
- * one — narrowing it would encode a fact about today's district list into a format check.
+ * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`) with the area
+ * pinned to `BT`: loose about the outward code's second character, because `BT1` and `BT47` are
+ * both legal and differ structurally, and strict about the inward code, which is invariant across
+ * the whole system. The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`,
+ * all-numeric), and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the
+ * national one. Narrowing it would encode a fact about today's district list into a format check.
  */
 export const NI_UNIT_POSTCODE = /^BT[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
  * What a parse run read and dropped, and why.
  *
- * Counters rather than booleans so the database's provenance can state the meaning of
- * each zero — "measured, none" is a different claim from "never looked".
+ * Counters rather than booleans so the database's provenance can state the meaning of each zero.
+ * "Measured, none" is a different claim from "never looked".
  */
 export interface NIOSMParseStats {
 	/**
@@ -59,8 +52,8 @@ export interface NIOSMParseStats {
 	 */
 	tagged: number
 	/**
-	 * Elements dropped for having no usable coordinate — neither a node `lat`/`lon`
-	 * nor an `out center` centre.
+	 * Elements dropped for having no usable coordinate: neither a node `lat`/`lon` nor an
+	 * `out center` centre.
 	 */
 	skippedNoCoordinate: number
 	/**
@@ -70,8 +63,7 @@ export interface NIOSMParseStats {
 	/**
 	 * The distinct malformed values, with their element counts.
 	 *
-	 * Kept verbatim (capped) because a drop counter tells you something broke and this tells you what.
-	 * `"BT36 4RU,"` is a typo, a sudden thousand `"BT"`s would be a filter bug.
+	 * Kept verbatim and capped so the dropped values stay visible in the database's `meta`.
 	 */
 	malformedValues: Record<string, number>
 	/**
@@ -97,11 +89,11 @@ const MALFORMED_SAMPLE_LIMIT = 50
  */
 export interface NIPostcodeRecord {
 	/**
-	 * The single-space display form, e.g. `BT3 9QQ` — an alt `names` row on the built place.
+	 * The single-space display form, e.g. `BT3 9QQ`. This is an alt `names` row on the built place.
 	 */
 	display: string
 	/**
-	 * The #920 lookup form, e.g. `BT39QQ` — `spr.name`.
+	 * The lookup form, e.g. `BT39QQ`, stored as `spr.name`.
 	 */
 	name: string
 	latitude: number
@@ -114,11 +106,11 @@ export interface NIPostcodeRecord {
 	 */
 	attestations: number
 	/**
-	 * Postcode district, e.g. `BT3` — the outward code.
+	 * Postcode district, e.g. `BT3`, the outward code.
 	 */
 	district: string
 	/**
-	 * Postcode sector, e.g. `BT3 9` — outward code plus the first inward digit.
+	 * Postcode sector, e.g. `BT3 9`: the outward code plus the first inward digit.
 	 */
 	sector: string
 }
@@ -141,7 +133,7 @@ export function createNIOSMParseStats(): NIOSMParseStats {
 /**
  * Normalize an OSM `addr:postcode` value to the single-space display form.
  *
- * Non-breaking spaces occur in hand-typed tags and are invisible in an editor;
+ * Non-breaking spaces occur in hand-typed tags and are invisible in an editor.
  * {@link normalizePostcodeDisplay} folds them too.
  */
 export function normalizeOSMPostcode(raw: string): string {
@@ -169,11 +161,10 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * Group the response's elements into one {@link NIPostcodeRecord} per distinct
  * unit postcode, mutating `stats`.
  *
- * Records come back sorted by lookup `name`.
- * Insertion order would also be deterministic given a fixed response file,
- * but it is deterministic through the file's element order — sorting makes the
- * database's synthetic ids a function of the postcode set alone, so a rebuild of OSM
- * that adds one building does not renumber every place after it.
+ * Records come back sorted by lookup `name`. Insertion order would also be deterministic given a
+ * fixed response file, but it would be deterministic through the file's element order. Sorting makes
+ * the database's synthetic ids a function of the postcode set alone, so a rebuild of OSM that adds
+ * one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {
 	const groups = new Map<string, { display: string; points: PostcodePoint[] }>()

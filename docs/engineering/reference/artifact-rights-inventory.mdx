@@ -318,7 +318,7 @@ corpus rows are most `wof-*`, are not measured here.
 Measured 2026-09-27 against commit `dc65605f0`: `--exclude-share-alike` appeared 12 times across 8
 TypeScript files and in 7 Markdown files, and it was never a flag on `mw corpus build` or on any other
 command. `excludeLicenses` was reachable only from `buildCorpus`, whose sole caller was
-`packages/corpus/lib/build.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
+`packages/corpus/lib/build/index.test.ts`, so the mechanism had no operator surface. `mw corpus build` now
 carries `--license-policy` and `--exclude-licenses`, and the corpus manifest records which policy ran,
 how many rows each refusal class removed, and how many admitted rows carry a license value resolving to
 no SPDX expression.

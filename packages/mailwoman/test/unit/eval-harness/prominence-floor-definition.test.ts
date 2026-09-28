@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The prominence-floor ruler's audit (#2264). Every case here is a definition a runner could not execute, and
- *   the audit's job is to say which one rather than to run and produce a number nobody can read.
+ *   The prominence-floor ruler's audit. Every case here is a definition a runner could not execute,
+ *   and the audit's job is to say which one.
  *
- *   The band cases carry the weight. This benchmark exists because the same-data panel's gold all sat above one
- *   floor, so the band edges are the measurement: bands that overlap would count a row twice under a claim
- *   stated per band, and a row with no recorded population bucketed at zero would invent a band member the
- *   register never counted.
+ *   The band cases carry the weight. The band edges are the measurement, so bands that overlap
+ *   would count a row twice under a claim stated per band, and a row with no recorded population
+ *   bucketed at zero would invent a band member the register never counted.
  */
 
 import {
@@ -149,7 +148,7 @@ describe("prominence-floor ruler (#2264)", () => {
 		expect(bandFor(bands, 49_999)?.id).toBe("pop_15k_49999")
 		expect(bandFor(bands, 9_000_000)?.id).toBe("pop_50k_up")
 
-		// Absence of a count is not a count of zero: neither reaches a band, and the smallest band starts at 1.
+		// An absent count and a zero count both reach no band, and the smallest band starts at 1.
 		expect(bandFor(bands, undefined)).toBeNull()
 		expect(bandFor(bands, 0)).toBeNull()
 	})

@@ -3,17 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `no-street-led` recipe's board split (#901 family / Track B, 2026-07-16).
+ * Tests for the `no-street-led` recipe's board split.
  *
- *   This recipe existed for a year before it could train on anything — the YAML Norway problem
- *   (`no:` -> boolean false) dropped every Norwegian row (#1145). Now that it can train, it must not
- *   train on its own eval set. The one invariant that is not "nice to have":
- *
- *   the diacritic split. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`).
- *   fr-fragment's normalizer strips them. If this recipe had reused fr-fragment's `norm`, the recipe
- *   would fold `Tømmerlien` -> `tommerlien`, never match the board's reserved `tømmerlien`, and leak
- *   the surface into training while every check reported success. That failure is invisible
- *   downstream. The board just reads high. So it gets a test with a diacritic surface specifically.
+ * The recipe must not train on its own eval set, and the diacritic split is the invariant that
+ * matters. The Norwegian digit board keeps diacritics in its surface key (`tømmerlien`) while
+ * fr-fragment's normalizer strips them. Reusing fr-fragment's `norm` would fold `Tømmerlien` to
+ * `tommerlien`, never match the reserved `tømmerlien`, and leak the surface into training while
+ * every check reported success. `tømmerlien` therefore gets a test with a diacritic surface.
  */
 
 import { writeLocalTextFile } from "@mailwoman/core/fs/writers"
@@ -58,8 +54,6 @@ describe("no-street-led board split", () => {
 	})
 
 	it("skips a reserved surface — KEEPING diacritics (the whole hazard)", async () => {
-		// The board writes lowercased-NFC surfaces.
-		// `tømmerlien` with the ø intact.
 		const { stats, rows } = await run(TUPLES, ["tømmerlien"])
 
 		expect(stats.contaminated).toBe(1)
@@ -70,9 +64,6 @@ describe("no-street-led board split", () => {
 	})
 
 	it("does NOT skip when the reserved surface differs only by a stripped diacritic", async () => {
-		// If this recipe ever regresses to fr-fragment's diacritic-stripping norm,
-		// `tommerlien` (no ø) would match `Tømmerlien` and this row would be wrongly excluded.
-		// It must not be.
 		const { stats } = await run(TUPLES, ["tommerlien"])
 
 		expect(stats.contaminated).toBe(0)

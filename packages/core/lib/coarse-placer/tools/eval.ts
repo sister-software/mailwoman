@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Evaluate the #244 coarse-placer: in-distribution accuracy + per-class + calibration (ECE) on the
- *   held-out test split, and the abstention story on the multi-script set — off-map scripts
- *   (Cyrillic, Arabic, Thai, …, none of them in the 11 trained countries) should draw low
- *   confidence → abstain, which is the "probably off my loaded map" behavior the design wants.
+ *   Evaluate the coarse-placer: in-distribution accuracy, per-class results, and calibration (ECE)
+ *   on the held-out test split, plus the abstention story on the multi-script set. Off-map scripts
+ *   (Cyrillic, Arabic, Thai, …) should draw low confidence and abstain, the "probably off my loaded
+ *   map" behavior the design wants.
  *
  *   Run: `mailwoman placer eval in-distribution [--model <dir>] [--abstain 0.5]`
  */
@@ -82,7 +82,7 @@ export interface EvalCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer in-distribution eval — see the module doc.
+ * Coarse-placer in-distribution eval. See the module doc.
  *
  * Emits the report to stdout.
  */
@@ -94,14 +94,12 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 	const meta = await readLocalJSONFile<CoarsePlacerMeta>(resolvePath(modelDir, "meta.json"))
 	const placer = await CoarsePlacer.fromArtifactDir(resolvePath(modelDir), { abstainBelow: abstain })
 
-	// Measure in-distribution accuracy, per-class results, and ECE.
 	let testN = 0
 	let correct = 0
 	const perClass: Record<string, { n: number; ok: number }> = {} // country → {n, ok}
 	const confusion: Record<string, Record<string, number>> = {} // true → {pred → n}
 	const buckets = Array.from({ length: 10 }, () => ({ n: 0, ok: 0 }))
 
-	// ECE deciles.
 	// The split streams: every figure below is an accumulator, so the rows never all need to be resident.
 	for await (const r of JSONSpliterator.fromAsync<TestRow>(resolvePath(dataDir, "test.jsonl"))) {
 		testN++
@@ -154,7 +152,6 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 
 	console.log(`  ECE (10-bucket): ${ece.toFixed(4)}`)
 
-	// Top confusions
 	const confLines: string[] = []
 
 	for (const t of meta.classes) {
@@ -170,7 +167,6 @@ export async function evalCoarsePlacer(options: EvalCoarsePlacerOptions = {}): P
 		console.log(confLines.toSorted().join("\n"))
 	}
 
-	// Measure abstention for multi-script inputs outside the map.
 	const msPath = repoRootPath("data", "eval", "multi-script", "v0.5.0-a0.jsonl")
 
 	try {

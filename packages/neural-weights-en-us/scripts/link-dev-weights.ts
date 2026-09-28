@@ -4,23 +4,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-us overlay's dev artifacts — the base package: the model + tokenizer every other overlay
- *   inherits, the soft-feed lexicons, the US postcode binary, the FSTs, and the US placetype-pair index. The steps
- *   themselves live in `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
+ *   Materialize the en-us overlay's dev artifacts, the base package that carries the model and
+ *   tokenizer every other overlay inherits, the soft-feed lexicons, the US postcode binary, the
+ *   FSTs and the US placetype-pair index.
  *
- *   `neural/test/integration/weights.test.ts` runs this on every `yarn test`, so the model pair is held to this
- *   package's `model-card.json` `files_md5` (the #397 drift guard): the linked default bytes must match the digests the
- *   release re-verifies against the published tarball, and a mismatch fails loud instead of grading an eval shift
- *   against the wrong weights. on ship, bump `release.config.json`'s `weights.model` / `weights.tokenizer` and the
- *   card's `files_md5` in lockstep — a path bumped without the card, or the reverse, fails here.
+ *   `neural/test/integration/weights.test.ts` runs this on every `yarn test`, so the model pair is
+ *   held to this package's `model-card.json` `files_md5`. The linked default bytes must match the
+ *   digests the release re-verifies against the published tarball, and a mismatch fails loud rather
+ *   than grade an eval shift against the wrong weights. On ship, bump `release.config.json`'s
+ *   `weights.model` and `weights.tokenizer` and the card's `files_md5` in lockstep, since a path
+ *   bumped without the card or the reverse fails here.
  *
- *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card names rather than by a
- *   literal in this file, so a card bump moves the artifact with it. `postcode-us.bin` is derived from the WOF US
- *   postcode extract and built skip-if-present. without it a fresh worktree parses anchor-off ("Paris, TX" resolving
- *   to Paris, France on a fresh checkout was this gap). The pair index has no source CSV. The US has no postal register
- *   carrying dependent localities (USPS routes city/state/ZIP), so every pair comes from the shared WOF admin database
- *   — and `PAIR_INDEX_PARENT_DELTA` is the whole-edge parent bias (#46), default-on for US. receipt
- *   `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
+ *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card
+ *   records rather than by a literal in this file, so a card bump moves the artifact with it.
+ *   `postcode-us.bin` is derived from the WOF US postcode extract and built skip-if-present, and a
+ *   fresh worktree without it parses anchor-off. The pair index has no source CSV, since the US has
+ *   no postal register carrying dependent localities (USPS routes city, state and ZIP), so every
+ *   pair comes from the shared WOF admin database. `PAIR_INDEX_PARENT_DELTA` is the whole-edge
+ *   parent bias, default-on for US.
  */
 
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"

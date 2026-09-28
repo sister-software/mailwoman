@@ -2,15 +2,14 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The corpus parquet schema — the column list, its logical types, and the projection from a `LabeledRow`.
+ * @file The corpus parquet schema, meaning the column list, its logical types, and the projection from a `LabeledRow`.
  *
  *   Every file in this family agrees on this one definition. A column added here and nowhere else fails to compile
- *   against {@linkcode ParquetRow}, which is the property that keeps the writer, the reader and the manifest's
- *   `schema` key from drifting apart.
+ *   against {@linkcode ParquetRow}, which keeps the writer, the reader and the manifest's `schema` key from drifting
+ *   apart.
  *
- *   Compression is `snappy` throughout. The Phase 1.5 plan specified `zstd`; parquet-wasm supports snappy, which is
- *   also PyArrow's default and the standard ML-corpus codec. Therefore, a reader outside this repository opens the files
- *   without configuration.
+ *   Compression is `snappy` throughout, which is also PyArrow's default and the standard ML-corpus codec. A reader
+ *   outside this repository therefore opens the files without configuration.
  */
 
 import type { LabeledRow } from "#types"
@@ -125,16 +124,15 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
    and the rule has no way to tell the two apart. */
 
 /**
- * Parquet schema for `LabeledRow` per #18 §4.
+ * Parquet schema for `LabeledRow`.
  *
- * Optional fields use `optional: true`; repeated UTF8 columns capture tokens/labels arrays.
- * Compression is per-column snappy.
+ * Optional fields carry `optional: true`. Repeated UTF8 columns capture the tokens and labels arrays.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
 	tokens: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
 	labels: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
-	// v0.5.0 char-offset label spans (#519): parallel arrays over `raw` (UTF-16 code units, [start, end) exclusive-end, sorted, non-overlapping). INT32 — raw is a short address string, and INT32 round-trips as `number` where parquetjs INT64 would surface bigint.
+	// Char-offset label spans, meaning parallel arrays over `raw` in UTF-16 code units. Each span is [start, end) with an exclusive end, sorted and non-overlapping. INT32 holds a short address string and round-trips as `number` where parquetjs INT64 would surface bigint.
 	span_starts: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_ends: { type: "INT32", repeated: true, compression: PARQUET_COMPRESSION },
 	span_tags: { type: "UTF8", repeated: true, compression: PARQUET_COMPRESSION },
@@ -155,10 +153,9 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is required here (#519): `alignRow` emits it on every labeled row, so a row
- * arriving without it came from a producer that hasn't migrated — writing it would silently
- * drop the v0.5.0 labels from the file (the "builders before parquet = silent loss" hazard).
- * Loud failure, naming the row, instead.
+ * The span triple is required because `alignRow` emits it on every labeled row. A row arriving without it came from
+ * a producer that has not migrated, and writing it would drop the labels from the file. A thrown error identifies
+ * the row instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row

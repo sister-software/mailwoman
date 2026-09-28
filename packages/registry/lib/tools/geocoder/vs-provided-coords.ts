@@ -3,18 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Geocoder validation against provided coordinates (#619) — a free, honest, real-world accuracy
- *   eval.
+ *   Geocoder validation against provided coordinates. TX HHSC's nursing-facilities registry ships
+ *   a `Geo Location` (`lat,lon`) per facility alongside its physical address. Geocode the address
+ *   with mailwoman's parser and resolver, then measure the great-circle delta to the provided point,
+ *   broken down by resolution tier.
  *
- *   TX hhsc's nursing-facilities registry ships a `Geo Location` (`lat,lon`) per facility alongside
- *   its physical address. We geocode the address with mailwoman's real parser + resolver and
- *   measure the great-circle delta to the provided point — p50 / p90, broken down by the resolution
- *   tier we assign (address_point / interpolated / admin). This is an independent check of the
- *   geocoder on real facility addresses. it does not touch the matcher.
- *
- *   The provided coordinate is treated as ground truth for _this_ eval, with the honest caveat that
- *   it is itself a third-party geocode of unknown provenance. A large delta is a discrepancy to
- *   inspect rather than automatically our error.
+ *   The provided coordinate is treated as ground truth for this eval, with the caveat that it is
+ *   itself a third-party geocode of unknown provenance. A large delta is a discrepancy to inspect
+ *   rather than automatically our error.
  *
  *   Run: `mailwoman registry scorer-eval vs-provided-coords [--max 1176] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md docs/articles/evals/resolver-geo/<date>-...md]`
@@ -46,7 +42,7 @@ const MAX_ABS_LONGITUDE = 180
  */
 export interface GeocoderVsProvidedCoordsOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -68,23 +64,18 @@ export interface GeocoderVsProvidedCoordsOptions {
 }
 
 /**
- * Parse a `lat,lon` string into a coordinate, or null if malformed / out of range.
+ * Parse a `lat,lon` string into a coordinate, or null if malformed or out of range.
  *
- * Deliberately strict, and deliberately not `GeoPoint.from()`.
- * The provided coordinate is this eval's ground truth, so a row we cannot read exactly has
- * to be _dropped_ (counted in `noCoord`) rather than repaired into something plausible —
- * a silently repaired coordinate lands in the delta distribution as geocoder error.
+ * Deliberately strict and deliberately not `GeoPoint.from()`. The provided coordinate is this
+ * eval's ground truth, so a row that cannot be read exactly is dropped (counted in `noCoord`) rather
+ * than repaired into something plausible. A silently repaired coordinate lands in the delta
+ * distribution as geocoder error.
  *
- * Two of the three divergences that originally justified this parser were defects in `GeoPoint`
- * and were fixed on 2026-08-05: it no longer guesses axis order from the magnitudes, and an
- * out-of-range value is now rejected instead of accepted (`200,-97.74` used to become a point).
- * What remains is not a defect and not negotiable.
- *
- * This source writes `latitude,longitude`; `GeoPoint` reads GeoJSON `[longitude, latitude]`,
- * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there, and `GeoPoint.from`
- * maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped bucket.
- * The report below attributes part of its p99/max tail to malformed provided coordinates,
- * so those rows have to stay rejected or measured as-is, never rewritten.
+ * This source writes `latitude,longitude`, while `GeoPoint` reads GeoJSON `[longitude, latitude]`,
+ * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there. `GeoPoint.from` also
+ * maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped
+ * bucket. The report attributes part of its p99/max tail to malformed provided coordinates, so those
+ * rows have to stay rejected or measured as-is, never rewritten.
  *
  * Strictness is the measurement rather than an unfinished migration.
  */
@@ -99,14 +90,13 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 	return { latitude: a!, longitude: b! }
 }
 
-// The core nearest-rank `percentile` (q in [0,100]) replaces the retired local `quantile(sorted, q)` —
-// byte-identical semantics (floor index, clamped); `?? NaN` keeps empty-sample behavior.
+// The core nearest-rank `percentile` (q in [0,100]) uses a floor index and clamping, and `?? NaN`
+// keeps the empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**
- * Geocoder validation against provided coordinates (#619) — see the module doc.
- *
- * Emits the report to stdout.
+ * Geocode each facility's physical address and measure the delta to its provided coordinate, then
+ * emit the report to stdout.
  */
 export async function geocoderVsProvidedCoords(
 	options: GeocoderVsProvidedCoordsOptions,
@@ -163,7 +153,6 @@ export async function geocoderVsProvidedCoords(
 
 	geocoder[Symbol.dispose]()
 
-	// Overall + per-tier percentiles.
 	const all = results.map((r) => r.deltaM).toSorted((a, b) => a - b)
 	const byTier = new Map<string, number[]>()
 

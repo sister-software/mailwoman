@@ -3,29 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Parity pin for the #1728 phase-2 migration: `fst-autocomplete.ts` now delegates the #587
- *   algorithm to `@mailwoman/ancestrie`, and this suite proves the delegated implementation is
- *   observationally identical to the algorithm it replaced — same suggestions, same order, same
- *   fields, on the same artifacts.
- *
- *   the frozen copy is the point. `legacyAutocomplete` below is the pre-migration implementation,
- *   verbatim. It exists only here, as the reference the adapter is measured against. The shipped
- *   code path is the ancestrie-backed one. If a deliberate behavior change ever lands in ancestrie's
- *   `autocomplete`, this suite fails and the change must be RE-ratified by updating the frozen copy
- *   in the same commit, which is what makes drift between the two homes visible (the #861 rule: the
- *   function is shared. this is the regression check proving it stays shared).
- *
- *   Two legs:
- *
- *   - Synthetic (always runs): a hand-built trie covering the behavior matrix — referential ties,
- *       states denser than the per-branch cap, encyclopedic present/absent (the two-score split),
- *       per-surface `crossCountryBranches`, deep parent chains, one id reachable at several depths,
- *       the complete+partial shadowing case — pushed through a serialize→deserialize round trip so
- *       the bytes path is exercised too.
- *   - Shipped artifacts (skips when absent): the real `fst-per-locale` binaries for en-gb, es-es and
- *       it-it, queried over a battery derived deterministically from each artifact's own root plus
- *       curated locale surfaces. Format v5 is asserted so the leg cannot silently pin against a
- *       stale-format file.
+ * Parity pin for the ancestrie migration. `legacyAutocomplete` below is the frozen pre-migration
+ * implementation, kept verbatim as the reference the shipped adapter is measured against. A
+ * deliberate behavior change in ancestrie's `autocomplete` fails this suite and must be re-ratified
+ * by updating the frozen copy in the same commit.
  */
 
 import { readLocalBuffer, pathExists } from "@mailwoman/core/fs/readers"
@@ -47,8 +28,6 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/fst"
 import { wofDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import { describe, expect, it } from "vitest"
-
-// MARK: The frozen pre-migration implementation, verbatim
 
 interface BfsItem {
 	stateID: number
@@ -177,10 +156,8 @@ function legacyDedupeByName(suggestions: AutocompleteSuggestion[]): Autocomplete
 	return out
 }
 
-// MARK: The comparison harness.
-
 /**
- * Option sets every query runs under — defaults, dedupe, a tight suggestion cap, a shallow expansion.
+ * Option sets every query runs under.
  */
 const OPTION_SETS: readonly AutocompleteOpts[] = [
 	{},
@@ -201,8 +178,6 @@ function expectParity(matcher: FSTMatcher, queries: readonly string[]): void {
 	}
 }
 
-// MARK: Synthetic leg — always runs.
-
 describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 	const place = (
 		wofID: number,
@@ -221,13 +196,10 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 		...extra,
 	})
 
-	// Root: new, san, chic, chicago, springfield.
-	// Behavior matrix in the states:
-	//  - "new london": referential TIE between city and county (tie order = insertion order).
-	//  - "springfield": SIX entries at one state — denser than PER_BRANCH, forcing the top-4 limit.
-	//  - "new york": encyclopedic present + crossCountryBranches + a deep parent chain.
-	//  - wofID 4 reachable at both "san francisco" (depth 2) and "chic …" BFS (the shallowest-depth rule).
-	//  - "chic" is a complete edge and a prefix of "chicago" (the #587 shadowing case).
+	// Synthetic trie: new, san, chic, chicago, springfield.
+	// The behavior matrix covers a referential tie, a state denser than PER_BRANCH,
+	// encyclopedic present and absent, crossCountryBranches, a deep parent chain, one
+	// wofID reachable at several depths, and a complete edge that is also a prefix.
 	const nodesMatcher = deserializeThroughBytes([
 		{
 			edges: new Map([
@@ -305,15 +277,12 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 })
 
 /**
- * Round the synthetic trie through the real serializer so parity is measured on entries as
- * the bytes deliver them (f32 referential, flag-restricted encyclopedic and ambiguity reads),
- * not on the hand-built object graph.
+ * Round the synthetic trie through the real serializer so parity is measured on the entries
+ * the bytes deliver (f32 referential, flag-restricted encyclopedic and ambiguity reads).
  */
 function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>[0]): FSTMatcher {
 	return deserializeFST(serializeFST(new FSTMatcher(nodes)))
 }
-
-// MARK: Shipped-artifact leg — skips when the data root lacks them
 
 /**
  * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals,
@@ -333,7 +302,7 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 		it("answers identically across the derived + curated battery", async () => {
 			const stamp = await peekFSTStampFields(artifactPath)
 
-			// v5 = the two-score split. A stale-format artifact would pin parity against bytes production no longer ships — fail loudly instead.
+			// v5 is the two-score split, asserted so the leg cannot pin against a stale-format file.
 			expect(stamp?.formatVersion).toBe(5)
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))

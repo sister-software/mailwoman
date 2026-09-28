@@ -3,26 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The own-name variant predicate (#1882): is an alias surface the holder's own primary name in
- *   another orthography — a romanization (`Брэст` → `brest`), a spacing/diacritic variant
- *   (`George Town` → `georgetown`), an abbreviation expansion (`St. George's` → `Saint George's`)
- *   — rather than a different name that merely shares the folded key?
+ *   The own-name variant predicate: is an alias surface the holder's own primary name in another
+ *   orthography, whether a romanization (`Брэст` → `brest`), a spacing or diacritic variant
+ *   (`George Town` → `georgetown`), or an abbreviation expansion (`St. George's` → `Saint George's`)?
+ *   The alternative is a different name that merely shares the folded key.
  *
- *   The comparator is `levenshteinSimilarity`, not Jaro-Winkler: JW's common-prefix bonus scores
- *   the required negative case (`chanchun` vs `cancun`, 0.925) above real positives
- *   (`saint george s` vs `st georges` expanded, 0.914), so no JW threshold separates them.
- *   Measured on the #1882 census contests, edit similarity separates every case with margin:
+ *   The comparator is `levenshteinSimilarity`. Jaro-Winkler's common-prefix bonus scores the required
+ *   negative case (`chanchun` against `cancun`, 0.925) above real positives (`saint george s` against
+ *   `st georges` expanded, 0.914), so no JW threshold separates them. Edit similarity separates every
+ *   measured case with margin.
  *
- *   - IN: `brest`/`brest` 1.0 · `george town`/`georgetown` 0.909 · `saint george s`/`saint georges`
- *       0.929 · `adamovka`/`adamowka` 0.875
- *   - OUT: `lievin`/`levin` 0.833 (Liévin FR vs Levin NZ — different places with near-identical
- *       names. the panel's `41 Weraroa Road, Levin` row needs this side) · `chanchun`/`cancun` 0.75 ·
- *       `augsburg`/`augusta` 0.375 · `west bay`/`west end` 0.625 · `derry`/`londonderry` 0.455
- *       (Derry/Londonderry is a dual name rather than a variant — its own follow-up on #1882)
- *
- *   An unhandled script (Arabic, Hebrew, CJK — the romanizer covers Cyrillic only) answers NULL,
- *   never "different name": absence of a verdict must not stamp anything (the meaning-of-zero rule).
- *   The #1882 census counted 396 demoted Arabic/Hebrew-primary aliases left unclassified by this.
+ *   An unhandled script (Arabic, Hebrew, CJK, since the romanizer covers Cyrillic only) answers NULL,
+ *   never "different name". Absence of a verdict must not stamp anything.
  */
 
 import { levenshteinSimilarity } from "@mailwoman/match/comparators"
@@ -84,10 +76,10 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 }
 
 /**
- * Leading-word abbreviations expanded before comparison, so `st georges` meets
- * `saint george s` inside the edit threshold.
+ * Leading-word abbreviations expanded before comparison, so `st georges` meets `saint george s`
+ * inside the edit threshold.
  *
- * Whole-word only — `st` inside `stanley` never expands.
+ * Whole-word only, so `st` inside `stanley` never expands.
  */
 const NAME_ABBREVIATIONS: ReadonlyArray<[RegExp, string]> = [
 	[/\bst\b/g, "saint"],
@@ -97,7 +89,7 @@ const NAME_ABBREVIATIONS: ReadonlyArray<[RegExp, string]> = [
 ]
 
 /**
- * Expand the whole-word abbreviations above.
+ * Expand the whole-word abbreviations above in a name key.
  */
 export function expandNameAbbreviations(key: string): string {
 	let out = key
@@ -112,8 +104,7 @@ export function expandNameAbbreviations(key: string): string {
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet.
  *
- * `null` when characters outside the covered scripts remain.
- * An unhandled script is no verdict rather than a mismatch.
+ * `null` when characters outside the covered scripts remain. An unhandled script is no verdict.
  */
 export function romanizeNameKey(key: string): string | null {
 	let out = ""
@@ -132,8 +123,8 @@ export function romanizeNameKey(key: string): string | null {
 }
 
 /**
- * Edit similarity between a holder's primary name key and one of its alias keys,
- * both romanized and abbreviation-expanded.
+ * Edit similarity between a holder's primary name key and one of its alias keys, both romanized and
+ * abbreviation-expanded.
  *
  * `null` when either side's script is uncovered.
  */

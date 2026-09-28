@@ -69,7 +69,7 @@ describe("inferMapping", () => {
 })
 
 describe("ingestRows", () => {
-	// A stub geocoder — the real one is injected at the CLI boundary.
+	// A stub geocoder. The real one is injected at the CLI boundary.
 	const stubGeocode: GeocodeAddress = (raw) => ({
 		components: {},
 		canonicalKey: raw
@@ -107,23 +107,20 @@ describe("ingestRows", () => {
 		expect(a!.organization?.canonical).toBe("acme health")
 		expect(a!.organization?.designations).toEqual(["llc"])
 		expect(a!.phone).toBe("503-555-0100")
-		expect(a!.email).toBe("bob@acme.org") // lowercased
+		expect(a!.email).toBe("bob@acme.org")
 		expect(a!.address?.geocode?.tier).toBe("address_point")
-		// The address column-join feeds the geocoder (comma-joined by default; #694 flip).
 		expect(a!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
 
 		expect(b!.name).toEqual({ given: "Maria", family: "Garcia" })
-		expect(b!.organization).toBeUndefined() // empty org column
+		expect(b!.organization).toBeUndefined()
 		expect(b!.phone).toBeUndefined()
 	})
 
 	it("comma-joins a multi-column address by default, space when overridden (#694 flip)", async () => {
 		const [dflt] = await ingestRows(streamRows(csvPath), mapping, { geocodeAddress: stubGeocode })
-		// default: comma-join (#694, validated)
 		expect(dflt!.address?.formatted).toBe("123 Main St, Portland, OR, 97201")
 		const spaced = { geocodeAddress: stubGeocode, addressSeparator: " " }
 		const [space] = await ingestRows(streamRows(csvPath), mapping, spaced)
-		// override → legacy space-join (byte-stable A/B)
 		expect(space!.address?.formatted).toBe("123 Main St Portland OR 97201")
 	})
 
@@ -178,11 +175,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
-		// The regression spliterator 3.1.0's column tokenizer failed: a row with consecutive
-		// empties must keep every column, or every value after the empty run shifts left
-		// (a 330-col NPPES row collapses to ~40 + misaligns).
-		// Fixed upstream in 3.2.0.
-		// Pinned here because it's fatal if it regresses.
+		// A row with consecutive empties must keep every column, or every value after the empty run
+		// shifts left.
 		const file = (await tmp())("f.tsv")
 		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
 		const rows: Record<string, string>[] = []
@@ -196,8 +190,6 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("parses quoted fields — embedded delimiters, embedded newlines, doubled quotes (NPPES-style quoting)", async () => {
-		// New with spliterator 3.2.0's end-to-end quote handling.
-		// The previous manual-split implementation assumed unquoted files.
 		const file = (await tmp())("f.csv")
 		await writeLocalTextFile('npi,org,city\n123,"Acme, LLC",Portland\n456,"Multi\nLine ""Quoted"" Org",Seattle\n', file)
 		const rows: Record<string, string>[] = []
@@ -231,11 +223,10 @@ describe("streamRows (lazy delimited ingest)", () => {
 		for await (const _ of streamRows(file)) {
 			count++
 
-			if (count === 1) break // abandon the generator early → finally must close the handle
+			if (count === 1) break
 		}
 
 		expect(count).toBe(1)
-		// Re-stream the same file fully — succeeds because the prior handle was released.
 		const all: Record<string, string>[] = []
 
 		for await (const r of streamRows(file)) {

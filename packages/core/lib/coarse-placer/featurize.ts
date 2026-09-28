@@ -3,44 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Feature extraction for the #244 coarse-placer — a fastText-style hashed char-n-gram
- *   representation plus explicit Unicode-script presence tokens. Deterministic + pure (shared by
- *   training and the always-resident inference), zero deps. A string → a set of active feature
- *   indices in [0, FEATURE_DIM).
+ *   Feature extraction for the coarse-placer. A fastText-style hashed char-n-gram representation
+ *   plus explicit Unicode-script presence tokens. Deterministic and pure, shared by training and
+ *   the always-resident inference, with zero dependencies. A string maps to a set of active
+ *   feature indices in [0, FEATURE_DIM).
  *
- *   Why these features: script is the dominant coarse-geography signal (CJK→East Asia,
- *   Cyrillic→Eastern Europe, Arabic→mena), and char n-grams separate within a script (Hangul→KR vs
- *   kana→JP vs Han-only→CN, or Dutch "straat" vs French "rue" within Latin). A linear model over
- *   both is a few hundred KB and runs in microseconds — the "always-resident, places the planet
- *   coarsely" tier.
+ *   Script is the dominant coarse-geography signal. Char n-grams separate within a script, so a
+ *   linear model over both stays a few hundred KB and runs in microseconds.
  */
 
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 
 /**
- * The trained classes: the well-represented corpus countries, the #743 Overture-sourced
- * EU expansion, and `other` — the explicit off-map class (milestone 2) trained on
- * non-Latin/non-CJK scripts via outlier exposure, so the model learns the edge of its competence
- * and routes "probably off my loaded map" instead of a confident mis-placement.
+ * The trained classes: the well-represented corpus countries, the Overture-sourced EU expansion,
+ * and `other`, the explicit off-map class trained on non-Latin and non-CJK scripts via outlier
+ * exposure, so the model learns the edge of its competence.
  *
  * Index order is the label id.
  *
- * The first 11 are the original v0.5.0-corpus countries.
- * The next 16 (#743) are EU locales the placer previously couldn't emit —
- * ambiguous names there (FI "Helsinki", PL "Rybnik") landed off-continent in the
- * population-first candidate gazetteer because no country prior pinned them.
+ * It acts as a soft prior, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution
+ * in-region, off the global-pop attractors.
  *
- * They're trained from the Overture per-country addresses theme (`build-dataset.mjs`),
- * and they're pulled out of the Latin off-map `other` outlier set (`build-outlier-latin.mjs`)
- * that used to teach PL/PT/CZ → other.
- * Widening the class set is the soft-prior change.
- *
- * It never hard-filters, so a neighbour confusion (DK↔no, EE↔LT↔LV) still keeps
- * resolution in-region, off the global-pop attractors.
- *
- * Adding a class requires a retrain + a fresh artifact.
- * The bundled meta.json carries its own `classes`, so this constant only drives
- * training (`train.mjs`), not inference.
+ * Adding a class requires a retrain and a fresh artifact.
+ * The bundled meta.json carries its own `classes` for inference, so this constant drives training.
  */
 export const COARSE_CLASSES = [
 	"US",
@@ -70,17 +55,12 @@ export const COARSE_CLASSES = [
 	"PT",
 	"SI",
 	"SK",
-	// #244/#928 AU expansion (2026-07-06): AU was unrepresentable (not in-map) and its 4-digit postcode is format-ambiguous, so no #928 format-prior change applies. The placer is AU's only country signal. Trained from the v0.9.2 G-NAF corpus extract (150k real Australian addresses).
 	"AU",
 	"OTHER",
 ] as const
 
 /**
  * Hashed-feature dimensionality (2^16).
- *
- * Keeps the weight matrix small (28×65536 ≈ 1.8 MB int8) while collisions stay
- * tolerable for a linear bag-of-features model.
- * The discriminative n-grams are few.
  */
 export const FEATURE_DIM = 1 << 16
 
@@ -175,7 +155,6 @@ export function featurize(text: string): number[] {
 
 	active.add(bucket(`__dom_${dominant}`, 2))
 
-	// Char n-grams (3,4,5) over the boundary-marked string.
 	const marked = `^${norm}$`
 
 	for (const n of [3, 4, 5]) {

@@ -3,14 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The committed node-census baseline for `verifyAdmin` (#1026). Generated 2026-07-07 from the live
- *   `admin-global-priority.db` union the 95 countries the 2026-07-07 rebuild flattened (their country
- *   nodes are required so the next rebuild must restore them — see #1023/#1026), with `region` added
- *   for GE (the #1023 trigger) and the 11 WOF-priority countries.
+ *   The committed node-census baseline for `verifyAdmin`.
  *
  *   update deliberately: regenerate with `generateBaseline` (verify.ts) against a verified-good DB,
  *   re-apply the required-restore unions, and review the diff like code. A lagging baseline fails
- *   loudly. a hand-loosened one ships the next #1026.
+ *   loudly, and a hand-loosened one ships the next regression.
  */
 
 import type { VerifyBaseline } from "#gazetteer-pipeline/verify/index"

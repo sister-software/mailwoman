@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The CLDR-derived official-language table (#936 ingest bit). The cases pin the classifications
- *   the risk probe's verdict depends on: bilingual FI (the Åbo row), de-facto English in the US,
- *   and the regional tier staying opt-in (Catalan in ES. Korean-in-CN was the probe's cautionary
- *   example).
+ *   Tests for the CLDR-derived official-language table.
  */
 
 import { isOfficialLanguage, OFFICIAL_LANGUAGES } from "@mailwoman/codex/country"

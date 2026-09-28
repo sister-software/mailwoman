@@ -3,27 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The default coarse-placer (#244) for the user-facing geocoding surfaces. As of the M2 misrouting
- *   check (0 misroutes across 2 000 in-map addresses, 10 countries — see
- *   docs/articles/evals/resolver-geo/2026-06-14-coarse-placer-inmap-misroute.md) the soft country prior runs
- *   **on by default**: `geocodeAddress` and `createRuntimePipeline` load this bundled placer unless
- *   the caller passes their own `placeCountry` or opts out with `placeCountry: false`.
+ *   The default coarse-placer for the user-facing geocoding surfaces. The soft country prior runs by
+ *   default: `geocodeAddress` and `createRuntimePipeline` load this bundled placer unless the caller
+ *   passes their own `placeCountry` or opts out with `placeCountry: false`.
  *
- *   Loaded lazily + cached once per process: the int8 model is ~0.79 MB and `predict` is
- *   microseconds, but the bundled-artifact read is async, so callers `await` it the first time and
- *   reuse the cached promise after. Returns `null` (no prior, graceful) when the bundled model
- *   can't be resolved — a stripped-down install, a missing `data/` dir — so a default-on consumer
- *   degrades to plain resolution instead of throwing.
+ *   Loaded lazily and cached once per process, because the bundled-artifact read is async. Returns
+ *   `null` (no prior, graceful) when the bundled model can't be resolved, so a default-on consumer
+ *   degrades to plain resolution and does not throw.
  */
 
 /**
- * Structural shape of a place-country predictor — matches `RuntimePipelineStages["placeCountry"]`.
+ * Structural shape of a place-country predictor, matching `RuntimePipelineStages["placeCountry"]`.
  */
 export type PlaceCountryFn = (normalizedText: string) => {
 	country: string | null
 	confidence: number
 	/**
-	 * Full per-in-map-country distribution (#244 residual).
+	 * Full per-in-map-country distribution.
 	 *
 	 * When set it is the `anchorPosterior`.
 	 */
@@ -31,18 +27,15 @@ export type PlaceCountryFn = (normalizedText: string) => {
 }
 
 /**
- * Abstention threshold for the default prior — the open-set rule's flat-optimum operating point (#244 M2).
+ * Abstention threshold for the default prior, the open-set rule's flat-optimum operating point.
  */
 const DEFAULT_ABSTAIN_BELOW = 0.9
 
 let cached: Promise<PlaceCountryFn | null> | null = null
 
 /**
- * Lazy-load + cache the coarse-placer bundled in `@mailwoman/core` as a place-country
- * fn (the M2 open-set rule at the 0.9 operating point).
- *
- * The result is cached for the process; `null` means the model couldn't be loaded
- * and the caller should proceed with no prior.
+ * Lazy-load and cache the coarse-placer bundled in `@mailwoman/core` as a place-country function,
+ * returning `null` when the model could not be loaded so the caller proceeds with no prior.
  */
 export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 	if (!cached) {
@@ -53,9 +46,9 @@ export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 
 				return (text: string) => {
 					const p = placer.predict(text)
-					// Hand the resolver the full in-map distribution (#244 residual):
-					// it boosts every plausible country and breaks ambiguous ties with its
-					// own evidence, instead of the lossy one-hot argmax.
+					// Hand the resolver the full in-map distribution. It boosts every plausible country
+					// and breaks ambiguous ties with its own evidence. The lossy one-hot argmax would
+					// lose that.
 					const posterior = inMapPosterior(p)
 
 					return { country: p.country, confidence: p.confidence, ...(posterior ? { posterior } : {}) }

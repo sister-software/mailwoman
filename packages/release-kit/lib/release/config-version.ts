@@ -5,16 +5,17 @@ import { stringifyJSON } from "@mailwoman/core/json"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `release.config.json` version bump as a purely textual replacement (#1891). The file is
- *   oxfmt-formatted — single-line arrays, an order the generic parse-then-stringify write path would
- *   reformat wholesale — and its `weights` block is the model identity a code-only release must
- *   never touch. So the bump edits exactly one line, and refuses anything it cannot do exactly.
+ *   The `release.config.json` version bump as a purely textual replacement. The file is
+ *   oxfmt-formatted, with single-line arrays and an order the generic parse-then-stringify write
+ *   path would reformat wholesale. Its `weights` block is the model identity a code-only release
+ *   must never touch. So the bump edits exactly one line, and refuses anything it cannot do
+ *   exactly.
  */
 
 /**
  * Replace the top-level `"version"` line, requiring exactly one match of the current value.
  *
- * @throws When the line is absent (a reformatted or hand-edited file — bump it by hand
+ * @throws When the line is absent (a reformatted or hand-edited file, so bump it by hand
  * and fix the formatter drift) or when the current version does not match
  * (the sync check's job, restated here so a caller cannot skip it).
  */

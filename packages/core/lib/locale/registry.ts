@@ -5,8 +5,7 @@
  *
  *   In-memory `LocaleRegistry`. Validates that every `LocaleProfile.componentsSupported` entry is a
  *   known `ComponentTag`, and that each policy override targets a component inside
- *   `componentsSupported`. Fails loudly at registration when either the required relationship fails (#6
- *   §LocaleProfile validation rule).
+ *   `componentsSupported`. Fails loudly at registration when either relationship fails.
  */
 
 import { COMPONENT_TAGS, type ComponentTag } from "@mailwoman/codex/component"

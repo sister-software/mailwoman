@@ -3,31 +3,29 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The locale fragment board — targeted failure classes with confidence intervals (#727 stage-2,
- *   Tier 1c). The second of the two standing boards. the first is the global parity floor
- *   (`parity-corpus.ts`, broad, "do no harm").
+ *   The locale fragment board: targeted failure classes with confidence intervals. This is the second
+ *   of the two standing boards, the first being the global parity floor (`parity-corpus.ts`, broad,
+ *   "do no harm").
  *
- *   A change ships when board 1 holds and board 2 moves. Neither is a verdict alone. The span-head
- *   arc is the cautionary tale: +23.8pp on its target class and ~+0 net overall, which a single
- *   blended number turns into "inside noise, ship it" — hiding both the +23.8pp and the classes that paid for it.
+ *   A change ships when board 1 holds and board 2 moves, and neither is a verdict alone. A single
+ *   blended number can hide both a large gain on one class and the classes that paid for it.
  *
- *   why intervals. The Paris fixture (n=63) reports cells like 3/15. That has a 95% Wilson interval
- *   of roughly 4–48%: not a measurement, an anecdote with a decimal point. This board samples BAN
- *   (Tier A — clean, national, street-name complete) at ~400/class so a cell means something, and
- *   prints the interval next to every number so nobody has to remember that.
+ *   Intervals matter because a small fixture (n=63) reports cells like 3/15, whose 95% Wilson
+ *   interval is roughly 4 to 48%. This board samples BAN (Tier A: clean, national, street-name
+ *   complete) at roughly 400 per class so a cell means something, and prints the interval next to
+ *   every number.
  *
- *   the negative class is the point. `bare-locality` rows carry `expect_no_street`, and the board
+ *   The negative class is the point. `bare-locality` rows carry `expect_no_street`, and the board
  *   scores whether the parser emits a street anyway. Every other street harness in the repo filters
- *   to rows carrying `expect.street`, which makes a hallucinated street invisible BY construction —
- *   and that is exactly where T1a caught the span decode failing (12/54 shipped vs 19/54). A board
- *   that cannot score the failure cannot grade the fix.
+ *   to rows carrying `expect.street`, which makes a hallucinated street invisible by construction.
+ *   A board that cannot score the failure cannot grade the fix.
  *
- *   label policy: the full street phrase is `street` — designator, particle, elision, hyphenated
- *   compound, and date material included. `12 bis Rue X` ⇒ house_number "12 bis", street "Rue X".
+ *   Label policy: the full street phrase is `street`, with designator, particle, elision, hyphenated
+ *   compound and date material included. `12 bis Rue X` gives house_number "12 bis" and street "Rue X".
  *
- *   split: the fixture's street surfaces are reserved in `ban-fragments-fr.surfaces.txt`. A training
- *   database must exclude them — source-disjoint by normalized street surface, never by record row.
- *   Row-disjoint leaks the surface across the boundary and measures memorization.
+ *   Split: the fixture's street surfaces are reserved in `ban-fragments-fr.surfaces.txt`. A training
+ *   database must exclude them by normalized street surface, since a row-level split leaks the surface
+ *   across the boundary and measures memorization.
  */
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
@@ -43,7 +41,7 @@ import {
 export { wilson } from "#eval-harness/span-board"
 
 /**
- * Fixture set backing the fragment board — bare-street and partial-address probes.
+ * Fixture set backing the fragment board, with bare-street and partial-address probes.
  */
 export const FRAGMENT_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/ban-fragments-fr.jsonl"
 
@@ -72,7 +70,6 @@ export async function runFragmentBoard(options: FragmentBoardOptions = {}): Prom
 				`\nFR locale fragment board — ${fixtureCount} fixtures, BAN (Tier A), production config`,
 				`95% Wilson intervals. bare-locality scores the ABSENCE of a street (the hallucination class).\n`,
 			],
-			// hit = the scored assertion held. For positive classes that is street exact-match. For the negative class it is the absence of a street.
 			grade: (fixture, nodes) => {
 				const street = nodes
 					.filter((node) => STREET_TAGS.has(node.tag))

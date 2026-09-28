@@ -4,31 +4,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Materialize the en-nz overlay's dev artifacts. The steps live in
- *   `@mailwoman/resolver-wof-sqlite/weights-overlay-linker`; this file is the manifest.
+ *   Materialize the en-nz overlay's dev artifacts.
  *
- *   #1179 overlay form: en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so
- *   `resolveWeights` falls through to the en-us package for `model.onnx` / `tokenizer.model`. This overlay links no
- *   model or tokenizer — it removes any leftover local pair so the base fallback engages (a stale local file would
- *   shadow the base fallback and silently serve outdated bytes. the fr-fr manifest's header records the incident).
+ *   en-nz declares `mailwoman.baseWeights: "@mailwoman/neural-weights-en-us"`, so `resolveWeights`
+ *   falls through to the en-us package for `model.onnx` and `tokenizer.model`. This overlay links
+ *   no model or tokenizer and instead removes any leftover local pair, because a stale local file
+ *   would shadow the base fallback and silently serve outdated bytes.
  *
- *   What en-nz owns locally (`resolveFromPackageDir` resolves these from the overlay dir with no base fallback):
+ *   `resolveFromPackageDir` resolves these locally from the overlay dir with no base fallback:
  *
- *   - `anchor-lexicon-v1.json` / `country-surface-lexicon-v1.json` — checked-in repo files.
- *   - `street-type-lexicon-v*.json` / `locality-surface-lexicon-v*.json` — the evidence lexicons, by the generation
- *       the card names under `requires.<channel>.lexicon`, the same pair the `files` array ships.
- *   - `pair-index-nz.bin` (NZ arc, #1277) — no committed source (derived from the linz-derived OpenAddresses NZ
- *       countrywide CSV, the same register `synth-nz-v2` was built from), built through the shared
- *       `buildPairIndexOverlay` (whose freshness guard compares the format, every calibrated magnitude, and the
- *       source md5. sidecar-cached — the CSV is 2.12M rows). `--delta 10` is the NZ-sweep-calibrated value (saturates
- *       at δ=10, identical to 12/15, 0/54 golden-FP throughout) baked into the artifact's header. This locale
- *       deliberately ships without a `transitionBeta` (unmeasured there); the parent-bias δ=5 is measured — NZ's own
- *       shipped board moved 230/246 → 246/246 whole-edge, identical at δ 4/6/8/20 — see
- *       `docs/records/evals/2026-08-04-pix1-whole-edge-verdict.md`.
+ *   - `anchor-lexicon-v1.json` and `country-surface-lexicon-v1.json`, checked-in repo files.
+ *   - `street-type-lexicon-v*.json` and `locality-surface-lexicon-v*.json`, the evidence lexicons
+ *       recorded by the card under `requires.<channel>.lexicon`, the same pair the `files` array ships.
+ *   - `pair-index-nz.bin`, derived from the linz-derived OpenAddresses NZ countrywide CSV through
+ *       the shared `buildPairIndexOverlay`. Its freshness guard compares the format, every
+ *       calibrated magnitude and the source md5, and the build is sidecar-cached because the CSV
+ *       has 2.12M rows. `--delta 10` is the calibrated value and the artifact header carries it.
+ *       This locale ships without a `transitionBeta` because none was measured there.
  *
- *   Unlike en-gb there is no postcode binary to build: no WOF NZ postcode extract exists (release.config.json's
- *   softFeed.postcodeDBByCountry has no `nz` entry), so the anchor channel resolves off for en-nz until that extract
- *   is built — the tracked follow-up in this package's model-card.json (`nz_artifacts.no_postcode_bin`).
+ *   There is no postcode binary to build, since no WOF NZ postcode extract exists and
+ *   `release.config.json`'s `softFeed.postcodeDBByCountry` has no `nz` entry, so the anchor channel
+ *   resolves off for en-nz until that extract is built.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -40,7 +36,7 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * The linz-derived OpenAddresses NZ countrywide CSV — the build's one source, md5-recorded in the header.
+ * The linz-derived OpenAddresses NZ countrywide CSV, the build's one source, md5-recorded in the header.
  */
 const NZ_SOURCE_CSV = dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv")
 

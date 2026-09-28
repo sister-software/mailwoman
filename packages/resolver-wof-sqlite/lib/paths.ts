@@ -79,9 +79,10 @@ export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("n
  *
  * Includes the global admin-priority extract plus postcode extracts.
  * Routing in `pickExtractForPlacetype` sends each postcode query to the extract
- * that claims that country (#920).
+ * that claims that country.
  *
- * All paths are under `dataRoot` (default: `$MAILWOMAN_DATA_ROOT`; callers may pass `--data-root`).
+ * All paths are under `dataRoot`. It defaults to `$MAILWOMAN_DATA_ROOT`, and callers may pass
+ * `--data-root`.
  * Returns a fresh array each call.
  *
  * Callers usually filter with `existsSync`, so missing files are skipped.
@@ -105,7 +106,7 @@ export function wofExtractPaths(dataRoot: PathBuilderLike = dataRootPath()): str
  */
 export interface WOFExtractPaths {
 	/**
-	 * The global admin-priority extract — every admin lookup starts here.
+	 * The global admin-priority extract, where every admin lookup starts.
 	 */
 	adminGlobalPriority: string
 	/**
@@ -121,18 +122,19 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeIntl: string
 	/**
-	 * The NL PC6 full-postcode extract (CBS via pdok; `scripts/build-postalcode-nl-pc6.ts`) — the data
-	 * the lookup's NL PC6 ladder ("1012 LG" → joined "1012LG" → 4-digit stem) resolves against (#977).
+	 * The NL PC6 full-postcode extract from CBS via pdok (`scripts/build-postalcode-nl-pc6.ts`), the
+	 * data the lookup's NL PC6 ladder (`"1012 LG"` → joined `"1012LG"` → 4-digit stem) resolves
+	 * against.
 	 */
 	postalcodeNLPC6: string
 	/**
-	 * Northern Ireland (BT) from OpenStreetMap — 4,757 of 50,032 live NI postcodes (9.5 %),
-	 * the only coverage that exists for the hole Code-Point Open leaves.
+	 * Northern Ireland (BT) from OpenStreetMap, 4,757 of 50,032 live NI postcodes (9.5 %). It is
+	 * the only coverage for the hole Code-Point Open leaves.
 	 *
 	 * ODbL, build-local, 2.5 MB.
-	 * A miss on a BT code means not attested IN OSM.
+	 * A miss on a BT code means not attested in OSM.
 	 *
-	 * An unknown postcode abstains (#1480), so the extract is strictly additive.
+	 * An unknown postcode abstains, so the extract is strictly additive.
 	 * Rebuild: `mailwoman gazetteer build postcode-ni-osm`.
 	 */
 	postalcodeNIOSM: string

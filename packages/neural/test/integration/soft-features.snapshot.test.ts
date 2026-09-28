@@ -3,15 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Golden snapshot of the soft-feature choreography (#718). `buildSoftFeatures` is the single pure
- *   home for the anchor + gazetteer feed that used to live inline in
- *   `NeuralAddressClassifier.#decode` — this pins the byte-stable extraction: known addresses →
- *   known feature tensors. If the choreography drifts (channel wiring, near-postcode suppression
- *   window), these fail.
+ *   Golden snapshot of the soft-feature choreography: known addresses produce known feature tensors.
+ *   A drift in the channel wiring or the near-postcode suppression window makes these fail.
  *
- *   Uses small inline fixtures (2-3 entries), not the production lookup/lexicon — mirrors the style
- *   of `anchor-inference.test.ts` / `gazetteer-inference.test.ts`. The piece offsets are hand-built
- *   so the anchor/gazetteer land on exactly the expected pieces.
+ *   The file uses small inline fixtures (2-3 entries) rather than the production lookup and lexicon,
+ *   and the piece offsets are hand-built so the anchor and gazetteer land on the expected pieces.
  */
 
 import { ANCHOR_FEATURE_DIM, anchorFeatureVector, type AnchorLookup } from "@mailwoman/neural/anchor-inference"
@@ -37,7 +33,7 @@ const LEXICON = parseGazetteerLexicon({
 const ZERO_GAZ = [0, 0, 0, 0, 0]
 
 describe("buildSoftFeatures — US postcode anchor hit", () => {
-	// "100 Main St 30301" — the postcode "30301" is chars [12, 17).
+	// "100 Main St 30301", where the postcode "30301" is chars [12, 17).
 	const TEXT = "100 Main St 30301"
 
 	const PIECES = [
@@ -67,7 +63,7 @@ describe("buildSoftFeatures — US postcode anchor hit", () => {
 })
 
 describe("buildSoftFeatures — homograph gazetteer hit", () => {
-	// "Atlanta Georgia" — "Georgia" is the homograph. Chars [8, 15).
+	// "Atlanta Georgia", where "Georgia" is the homograph at chars [8, 15).
 	const TEXT = "Atlanta Georgia"
 	const PIECES = [piece("▁Atlanta", 0, 7), piece("▁Geo", 8, 11), piece("rgia", 11, 15)]
 
@@ -76,23 +72,23 @@ describe("buildSoftFeatures — homograph gazetteer hit", () => {
 		expect(soft.anchor).toBeUndefined()
 		expect(soft.gazetteer).toBeDefined()
 		const homo = [1, 1, 0, 0, 1] // country | region | homograph
-		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ) // Atlanta — no clue
-		expect(soft.gazetteer!.features[1]).toEqual(homo) // Geo
-		expect(soft.gazetteer!.features[2]).toEqual(homo) // rgia
+		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ)
+		expect(soft.gazetteer!.features[1]).toEqual(homo)
+		expect(soft.gazetteer!.features[2]).toEqual(homo)
 		expect(soft.gazetteer!.confidence).toEqual([0, 1, 1])
 	})
 })
 
 describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)", () => {
-	// "GA 30301" — region code "GA" (chars [0,2)) sits one piece before the postcode "30301". The gazetteer fires `region` on GA. The anchor fires on the postcode. With suppression on, the GA clue is zeroed (it's within window=1 of the anchor hit) — the #464 v0.9.13 postcode fix.
+	// The region code "GA" sits one piece before the postcode, so suppression clears its clue.
 	const TEXT = "GA 30301"
 	const PIECES = [piece("▁GA", 0, 2), piece("▁303", 3, 6), piece("01", 6, 8)]
 	const LOOKUP: AnchorLookup = new Map([["30301", { posterior: { US: 1 }, lat: 33.749, lon: -84.388 }]])
 
 	it("WITHOUT suppression: the GA region clue fires", () => {
 		const soft = buildSoftFeatures(TEXT, PIECES, { postcodeAnchorLookup: LOOKUP, gazetteerLexicon: LEXICON })
-		expect(soft.anchor!.confidence).toEqual([0, 1, 1]) // postcode pieces
-		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0]) // GA → region bit
+		expect(soft.anchor!.confidence).toEqual([0, 1, 1])
+		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0])
 		expect(soft.gazetteer!.confidence).toEqual([1, 0, 0])
 	})
 
@@ -103,10 +99,8 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 			suppressGazetteerNearPostcode: true,
 		})
 
-		// GA (piece 0) is within window=1 of the anchor hit at piece 1 → cleared.
 		expect(soft.gazetteer!.features[0]).toEqual(ZERO_GAZ)
 		expect(soft.gazetteer!.confidence[0]).toBe(0)
-		// The anchor channel itself is untouched.
 		expect(soft.anchor!.confidence).toEqual([0, 1, 1])
 	})
 
@@ -117,6 +111,6 @@ describe("buildSoftFeatures — suppress gazetteer near postcode (choreography)"
 		})
 
 		expect(soft.anchor).toBeUndefined()
-		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0]) // GA clue intact
+		expect(soft.gazetteer!.features[0]).toEqual([0, 1, 0, 0, 0])
 	})
 })

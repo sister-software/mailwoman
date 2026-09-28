@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Route definitions + handlers for the Photon-compatible surface. The OpenAPI document is
- *   emitted from these definitions — no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view. the zod query schemas drive only the emitted document.
+ *   emitted from these definitions, so no handwritten spec exists. Handlers parse params from
+ *   the `legacyQuery` express-shaped view. The zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -16,24 +16,12 @@ import type { PhotonEngine, PhotonFeatureCollection, PhotonReverseParams, Photon
 import { photonToSchemaOrg } from "#projection"
 import { PhotonMessageCollectionSchema, PhotonResponseSchema, reverseQueryParams, searchQueryParams } from "#schema"
 
-/**
- * Southern limit of latitude in WGS-84 degrees.
- */
 const MIN_LATITUDE = -90
 
-/**
- * Northern limit of latitude in WGS-84 degrees.
- */
 const MAX_LATITUDE = 90
 
-/**
- * Western limit of longitude in WGS-84 degrees.
- */
 const MIN_LONGITUDE = -180
 
-/**
- * Eastern limit of longitude in WGS-84 degrees.
- */
 const MAX_LONGITUDE = 180
 
 const DEFAULT_LIMIT = 15
@@ -48,14 +36,10 @@ function asStringArray(raw: unknown): string[] | undefined {
 }
 
 /**
- * A friendly html landing page for `GET /` (#1022).
+ * A friendly html landing page for `GET /`.
  *
- * Upstream komoot/photon serves no root page, so there's no wire interface to match.
- * This is pure courtesy: a browser visitor (or an evaluator kicking the tires) who
- * pastes the bare host in gets a one-glance orientation with clickable example queries
- * instead of Express's `Cannot GET /` 404, which reads as "the service is broken".
- *
- * Relative example URLs so they resolve against whatever host/port serves this.
+ * Upstream komoot/photon serves no root page, so there is no wire interface to match.
+ * Relative example URLs resolve against whatever host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -158,7 +142,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, sta
 
 		const collection = await engine.search(params)
 
-		// #1052: `format=jsonld` re-serializes the same FeatureCollection as schema.org `Place[]` JSON-LD.
+		// `format=jsonld` re-serializes the FeatureCollection as schema.org `Place[]` JSON-LD.
 		if (asString(q["format"]) === "jsonld") {
 			return c.json(photonToSchemaOrg(collection), 200)
 		}
@@ -190,7 +174,7 @@ export function registerPhotonRoutes(app: OpenAPIHono, engine: PhotonEngine, sta
 
 		const collection = await engine.reverse(params)
 
-		// #1052: `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD.
+		// `format=jsonld` re-serializes the reverse FeatureCollection as schema.org `Place[]` JSON-LD.
 		if (asString(q["format"]) === "jsonld") {
 			return c.json(photonToSchemaOrg(collection), 200)
 		}

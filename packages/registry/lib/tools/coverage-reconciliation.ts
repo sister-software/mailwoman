@@ -3,27 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Coverage reconciliation (#621) — the product output: what replaces inspecting the map by eye.
+ *   Coverage reconciliation, the product output that replaces inspecting the map by eye.
  *
- *   Over the entities resolved across sources (#618), classify each by which kind of source its
- *   records come from:
+ *   Each resolved entity is classified by the kind of source its records come from. An eligibility
+ *   source holds providers and facilities, such as NPPES org NPIs or TX HHSC nursing facilities. A
+ *   funding source holds entities enrolled in a funding program, such as FCC Rural Health Care
+ *   filings.
  *
- *   - **eligibility** sources — entities that exist as providers / facilities: NPPES org NPIs, TX hhsc
- *       nursing facilities.
- *   - **funding** source — entities enrolled in a funding program: FCC Rural Health Care filings.
+ *   The buckets are enrolled (both an eligibility and a funding record), eligible rather than
+ *   enrolled (an eligibility record with no funding record resolving to it), and funded rather than
+ *   in the eligibility set (a funding record with no eligibility record resolving to it).
  *
- *   Three buckets fall out:
- *
- *   - **enrolled** — resolves to both an eligibility and a funding record.
- *   - **eligible rather than enrolled** — an eligibility record with no funding record resolving to it (the
- *       anti-join: the set you currently find by eye).
- *   - **funded rather than in the eligibility set** — a funding record with no eligibility record resolving to
- *       it.
- *
- *   Output: GeoJSON (drops on the same map) + a table, each entity tagged with its bucket + source
- *   memberships. We produce the reconciled join. what a gap means — and whether it's real or a
- *   sampling artifact — is the consumer's call rather than ours. This is strictly a set-membership
- *   reconciliation, never an allegation.
+ *   This is strictly a set-membership reconciliation, never an allegation.
  *
  *   Run: `mailwoman registry scorer-eval coverage-reconciliation [--cap 2000] [--wof <admin.db>]
  *   [--data-root <dir>] [--out-md <md>] [--out-geojson <geojson>]`
@@ -51,7 +42,7 @@ import { buildSpecs, stateOption } from "#tools/shared"
  */
 export interface CoverageReconciliationOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -89,8 +80,7 @@ const ELIGIBILITY = new Set(["nppes", "txhhsc-nursing"])
 const FUNDING = new Set(["fcc-rhc"])
 
 /**
- * Coverage reconciliation (#621) — see the module doc.
- * Emits the markdown report to stdout.
+ * Reconcile eligibility and funding sources, and emit the markdown report to stdout.
  */
 export async function coverageReconciliation(
 	options: CoverageReconciliationOptions,
@@ -103,7 +93,6 @@ export async function coverageReconciliation(
 	const OUT_GEOJSON = options.outGeojson || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)
 
-	// Ingest every source into one combined, geo-resolved record set.
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
@@ -127,7 +116,6 @@ export async function coverageReconciliation(
 	let geo = 0
 	let total = 0
 
-	// Count placements at the boundary (parity with the retired in-script counter).
 	const geocodeForIngest: GeocodeAddress = async (raw) => {
 		const g = await geocoder.geocodeAddress(raw)
 
@@ -157,14 +145,12 @@ export async function coverageReconciliation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
-	// learnedScorer:false — reconciliation joins eligibility ↔ funding across datasets
-	// (recall-oriented): the same facility under different operational names is the signal we want,
-	// which the dedup-calibrated GBT default rejects (measured: "enrolled" overlap 22→6).
-	// Use the FS baseline for this cross-dataset join.
+	// Use the Fellegi-Sunter baseline for this cross-dataset join. It is recall-oriented, because the
+	// same facility under a different operational name is the signal, which the dedup-calibrated GBT
+	// default rejects.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
-	// Reconcile sources through the shared @mailwoman/registry code path.
-	// `mailwoman registry --reconcile`, so the script and the CLI can't drift. ---
+	// Reconcile through the shared @mailwoman/registry code path, so the script and the CLI agree.
 	const config: ReconcileConfig = { eligibilitySources: [...ELIGIBILITY], fundingSources: [...FUNDING] }
 	const result = reconcileCoverage(entities, config)
 	const geojson = reconciliationGeoJSON(result)

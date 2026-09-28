@@ -8,8 +8,8 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The opt-in `unknown` surface across the three serializers (#493). Default-off everywhere — the existing
- *   shapes (libpostal-compat JSON, tag-only tuples, the XML elements) are byte-stable unless asked.
+ *   The opt-in `unknown` surface across the three serializers. The existing shapes (libpostal-compat
+ *   JSON, tag-only tuples, the XML elements) are byte-stable unless the caller asks for the report.
  */
 import { describe, expect, it } from "vitest"
 
@@ -17,7 +17,7 @@ function node(tag: ComponentTag, start: number, end: number, value: string, chil
 	return { tag, value, start, end, confidence: 1, children }
 }
 
-// "A, B" — locality "A" [0,1), locality "B" [3,4); the ", " [1,3) is the unknown gap.
+// "A, B": locality "A" [0,1), locality "B" [3,4), and the unknown gap is ", " [1,3).
 const tree: AddressTree = { raw: "A, B", roots: [node("locality", 0, 1, "A"), node("locality", 3, 4, "B")] }
 const noGap: AddressTree = { raw: "Berlin", roots: [node("locality", 0, 6, "Berlin")] }
 

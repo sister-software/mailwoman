@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The coordinate tiers a run grades — which lookups to open, and the postcode-anchor reads that sit between the
- *   admin centroid and the street-level point.
+ * @file The coordinate tiers a run grades: which lookups to open, and the postcode-anchor reads that
+ *   sit between the admin centroid and the street-level point.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -16,7 +16,7 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 /**
  * The postcode database reader the anchor extractor probes.
  *
- * The WOF postcode lookup's structural interface, named here so the eval never has
+ * The WOF postcode lookup's structural interface, declared here so the eval never has
  * to import the SQLite class it only ever holds by reference.
  */
 export interface PostcodeCentroidLookup extends Disposable {
@@ -39,13 +39,13 @@ export type ExtractPostcodeAnchors = typeof import("@mailwoman/neural/postcode")
 export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// Postcode-anchor fusion (opt-in via `--postcode-anchor`).
 	// The resolver supplies the admin/place identity, but its coordinate is the place
-	// centroid — legitimately tens of km from edge addresses.
+	// centroid, legitimately tens of km from edge addresses.
 	// The postcode anchor supplies the postcode's own centroid, the finer tier
 	// between admin-centroid and street.
 	// The `neural+anchor` row keeps neural's admin match but takes the coordinate from the anchor
 	// when it has a placed candidate for the eval's country, else falls back to the resolver coord.
 	// So the row isolates exactly what the anchor sharpens: where rather than which place.
-	// `--address-points <db>` (#476): the street-level exact-point tier.
+	// `--address-points <db>`: the street-level exact-point tier.
 	// Adds `addressPoints` to resolveOpts.
 	// The `neural+addrpt` row keeps neural's admin flags but takes the coordinate from the
 	// address-point hit when present (the tier's whole contribution is "where", street-level).
@@ -57,11 +57,11 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		addressPoints = new AddressPointSqliteLookup(addressPointsDB)
 	}
 
-	// `--interpolation <segments-db>` (#483): the house-number interpolation tier
+	// `--interpolation <segments-db>`: the house-number interpolation tier
 	// (StreetInterpolator, tiger-range).
 	// Adds `interpolation` to resolveOpts.
 	// The `neural+interp` row takes the coordinate from the exact point when present, else the
-	// interpolated estimate, else the admin centroid — the full street-level coordinate cascade.
+	// interpolated estimate, else the admin centroid, the full street-level coordinate cascade.
 	// The delta vs `neural+addrpt` is interpolation's lift on the long tail of
 	// valid-but-unlisted numbers the exact tier misses.
 	const interpolationDB = options.interpolation || ""
@@ -72,15 +72,12 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		interpolation = new StreetInterpolator({ dbPath: interpolationDB })
 	}
 
-	// `--cascade` (#718 situs-eval): grade the production coordinate path (mailwoman/geocode-core.ts) —
-	// per-row, per-state situs + interpolation databases via RegionDatabaseProvider —
+	// `--cascade` grades the production coordinate path (mailwoman/geocode-core.ts),
+	// per-row, per-state situs and interpolation databases via RegionDatabaseProvider,
 	// so the eval reports the shipped coordinate (address_point > interpolated > admin)
 	// across all states rather than the admin centroid the neural headline alone reports.
-	// The diagnostic that motivated this: the headline read 3.3 km p50 / 10 km p90
-	// (admin centroid) while the production cascade over the same rows is ~0 m p50 / 1 km p90,
-	// 85.9% within 100 m — the eval simply wasn't grading what ships.
-	// The single-state --address-points/--interpolation flags still work for a one-state run;
-	// --cascade supersedes them with multi-state per-row selection. --data-root locates
+	// The single-state --address-points/--interpolation flags still work for a one-state run,
+	// and --cascade supersedes them with multi-state per-row selection. --data-root locates
 	// the databases (<root>/address-points/, <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
 	const dataRoot = options.dataRoot || dataRootPath()
@@ -97,7 +94,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	const runAddrPt = !!addressPoints || cascadeOn
 	const runInterp = !!interpolation || cascadeOn
 	const useAnchor = options.postcodeAnchor ?? false
-	// `--anchor-rerank` (#369 S8): feed the postcode anchor's country posterior into
+	// `--anchor-rerank`: feed the postcode anchor's country posterior into
 	// the resolver's locality re-rank (`ResolveOpts.anchorPosterior`), to measure
 	// whether the merged re-ranker pulls resolves into the right country's polygon
 	// when no `@mailwoman/locale-check` stage is set (`--default-country none`).
@@ -135,12 +132,12 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 /**
  * The postcode-anchor reads' inputs.
  *
- * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's:
- * a penalized house-number span scores ~0.2 (single-country times the house-number penalty)
- * while a genuinely ambiguous real code scores at least 0.52 (valid in three countries or fewer),
- * so a 0.5 floor keeps the latter and rejects the former.
+ * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the
+ * resolver's. A penalized house-number span scores ~0.2 (single-country times the house-number
+ * penalty), while a genuinely ambiguous real code scores at least 0.52 (valid in three countries
+ * or fewer), so a 0.5 floor keeps the latter and rejects the former.
  * A span the position prior reads as a house number falls back to the resolver's coordinate
- * (the right city centroid) instead of placing the address at a far-away same-shaped ZIP.
+ * (the right city centroid) rather than placing the address at a far-away same-shaped ZIP.
  */
 export interface AnchorSources {
 	postcodeLookup: PostcodeCentroidLookup | null
@@ -188,7 +185,7 @@ export function anchorCoordinateFor(input: string, sources: AnchorSources): { la
 
 /**
  * The postcode anchor's country posterior for a raw address (highest-confidence placed anchor),
- * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior` (#369 S8).
+ * fed into the resolver's locality re-rank via `ResolveOpts.anchorPosterior`.
  */
 export function anchorCountryPosteriorFor(input: string, sources: AnchorSources): Record<string, number> | undefined {
 	const { postcodeLookup, extractAnchors } = sources

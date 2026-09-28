@@ -3,26 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Node reader for `poi.db` (spec §3.4) — the res-9 k-ring reader over the clustered `poi`
- *   `without rowid` B-tree `poi-schema.ts` builds. Three search modes share one
- *   artifact:
+ *   Node reader for `poi.db` (spec §3.4), the res-9 k-ring reader over the clustered `poi`
+ *   `without rowid` B-tree `poi-schema.ts` builds. Category, brand and name searches share one
+ *   artifact, and each path's own method carries its details.
  *
- *   - **Category**: `latLngToCell(center, 9)` → `gridDisk` ring-by-ring expansion, probing each
- *     cell's clustered `(h3_cell, category_id, neg_rank, …)` range. Rings accumulate until `limit`
- *     rows are on hand after a completed ring, or `maxRings` is exhausted. the pool is sorted by
- *     haversine distance from `center` after every ring.
- *   - **Brand**: not a k-ring walk. Brand rows are globally sparse (~0.31% of poi.db. median nearest
- *     tagged instance ~110 km), so ring expansion could never reach them. Instead a single brand-wide
- *     indexed fetch on `brand_wikidata` (the partial `poi_brand_wikidata` index) pulls every row for
- *     the QID — category unconstrained — then haversine-sorts from `center` and takes the nearest
- *     `limit`, bounded by a `BRAND_MAX_DISTANCE_KM` sanity radius.
- *   - **Name**: FTS5 `match` against the `poi_search` virtual table, hydrated back to full rows by
- *     `name_key`. No center required. if one is given, hits are still distance-sorted.
- *
- *   `latLngToCell`/`gridDisk` come from `h3-js`; the 48-bit short-cell packing that turns a raw H3
- *   cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`. That math
- *   is never reimplemented here (see agents.md on `@mailwoman/spatial` being the one true home for
- *   it).
+ *   `latLngToCell` and `gridDisk` come from `h3-js`. The 48-bit short-cell packing that turns a raw
+ *   H3 cell into the integer `poi.h3_cell` stores is `@mailwoman/spatial`'s `shortCellToInt`, and
+ *   that math is never reimplemented here.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -33,37 +20,27 @@ import { gridDisk, latLngToCell } from "h3-js"
 
 import type { POICategoryCodeTable, POIDatabase, POITable } from "#poi/schema"
 /**
- * Resolution the `poi` table's `h3_cell` column is keyed at — matches the builder (spec §3.4).
+ * Resolution the `poi` table's `h3_cell` column is keyed at, matching the builder (spec §3.4).
  */
 export const POI_H3_RESOLUTION = 9
 
 /**
- * Ring budget default: 16 res-9 k-rings ≈ ~5.4 km (corner) / ~4.3 km worst-case.
+ * Ring budget default: 16 res-9 k-rings, about 5.4 km at the corner and 4.3 km worst-case.
  *
- * Category path only — the brand path ignores rings entirely.
- *
- * Raised from 12 (≈4 km) after nm-04 ("hiking trail near Marseille") exposed a boundary
- * miss for sparse categories: the nearest `trail` instance sits at 3.90 km, but the
- * res-9 disk of radius 11 (maxRings 12) reaches only ~3.16 km in its worst direction —
- * the cell holding that trail isn't covered until ring 13 (maxRings 14).
- * Dense categories are unaffected: the loop breaks the ring it accumulates `limit` rows
- * (cafe@Paris fills 20 by ring 2), so this ceiling never enters their probe budget.
- *
- * Only sparse-but-present categories that never reach `limit` scan the fuller budget.
- * A cold, one-shot `mailwoman poi` path rather than per-keystroke. 16 (not the bare threshold 14)
- * leaves ~2 rings of margin so the radius is stable against small db rebuilds, while staying ~4x
- * tighter than the board's 25 km "roughly right place" window (no wrong-city false positives).
- *
- * The browser reader passes its own smaller `maxRings` and is untouched.
+ * Category path only, since the brand path ignores rings entirely. Dense categories never reach
+ * this ceiling, because the loop breaks once a ring accumulates `limit` rows. Only
+ * sparse-but-present categories that never reach `limit` scan the fuller budget, and the extra
+ * rings keep the radius stable against small db rebuilds. The browser reader passes its own smaller
+ * `maxRings`.
  */
 const DEFAULT_MAX_RINGS = 16
 
 /**
- * Brand sanity radius (km): the brand-wide fetch returns the global nearest at any
- * distance, so this drops hits far enough to be certainly the wrong continent —
- * "Applebee's near Marseille" comes back empty rather than with a 5,700 km hit.
+ * Brand sanity radius (km). The brand-wide fetch returns the global nearest at any distance, so
+ * this drops hits far enough away to be certainly on another continent. "Applebee's near Marseille"
+ * comes back empty instead of with a 5,700 km hit.
  *
- * A product bound rather than a reach cap (the index already makes the fetch cheap regardless of distance).
+ * This is a product bound, since the index already makes the fetch cheap regardless of distance.
  */
 const BRAND_MAX_DISTANCE_KM = 500
 
@@ -76,19 +53,19 @@ export interface POISearchQuery {
 	/**
 	 * Poi-taxonomy category id (string side of the dictionary).
 	 *
-	 * Ignored when `brandWikidata` is also set — brand wins.
+	 * Ignored when `brandWikidata` is also set, since brand wins.
 	 */
 	categoryID?: string
 	/**
-	 * Fan-out category ids — the Overture `taxonomy.primary` leaves a single canonical category
-	 * rolls up into (e.g. `supermarket` → `grocery_store`, `organic_grocery_store`, …).
+	 * Fan-out category ids that a single canonical Overture `taxonomy.primary` category rolls up
+	 * into, as in `supermarket` → `grocery_store`, `organic_grocery_store`, ….
 	 *
 	 * When set, the k-ring walk probes every resolvable leaf per cell and unions the rows.
 	 * Unknown leaves are skipped.
 	 *
 	 * Supersedes `categoryID` (which is treated as a one-element list `[categoryID]` when this is absent).
 	 *
-	 * Ignored when `brandWikidata` is set — brand wins.
+	 * Ignored when `brandWikidata` is set, since brand wins.
 	 */
 	categoryIDs?: string[]
 	/**
@@ -123,7 +100,7 @@ export interface POISearchHit {
 	country: string
 	confidence: number
 	/**
-	 * Overture gers id — nullable metadata only, never a key (the #470 rule. See `POITable.gers_id`).
+	 * Overture gers id. Nullable metadata, never a key. See `POITable.gers_id`.
 	 */
 	gersID: string | null
 	distanceM?: number
@@ -138,7 +115,7 @@ export interface POISearchHit {
 export type POILookupOpts<DB extends POIDatabase = POIDatabase> = SQLiteLookupOptions<DB>
 
 /**
- * The `poi` columns every search mode hydrates — a typed projection of the shared {@link POITable}.
+ * The `poi` columns every search mode hydrates, a typed projection of the shared {@link POITable}.
  */
 type POIRow = Pick<
 	POITable,
@@ -165,8 +142,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 	 */
 	readonly #categoryCellProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
-	 * `brand_wikidata` → all of a brand's rows globally (partial-index range-scan);
-	 * distance-sorted in JS rather than SQL.
+	 * `brand_wikidata` → all of a brand's rows globally (partial-index range-scan).
+	 * The sort happens in JS.
 	 */
 	readonly #brandProbe: ReturnType<DatabaseClient["prepare"]>
 	/**
@@ -177,8 +154,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 	constructor(opts: POILookupOpts<DB>) {
 		super(opts)
 
-		// The category dictionary is tiny (poi-taxonomy's category count) — load it once
-		// at construction so `search` never round-trips to it.
+		// The category dictionary is tiny (poi-taxonomy's category count), so load it once at
+		// construction and keep `search` from round-tripping to it.
 		for (const r of allRows<POICategoryCodeTable>(
 			this.database.prepare("SELECT id, category FROM poi_category_codes")
 		)) {
@@ -211,9 +188,6 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 				throw new Error("POILookup.search: category/brand search requires a `center`")
 			}
 
-			// brandWikidata wins over categoryID(s) when both are set — see POISearchQuery.categoryID.
-			// The brand path is a brand-wide indexed fetch rather than a k-ring walk
-			// (brand rows are too sparse for ring expansion to reach).
 			if (query.brandWikidata) {
 				return this.#searchBrand(query.brandWikidata, query.center, limit)
 			}
@@ -225,13 +199,11 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 	}
 
 	/**
-	 * Brand path: a single brand-wide indexed fetch — no k-ring.
+	 * Brand path: a single brand-wide indexed fetch and no k-ring.
 	 *
-	 * Fetch every row for the QID (the partial `poi_brand_wikidata` index makes this a range-scan
-	 * rather than a 13.68M full scan), haversine-sort from `center`, drop anything past
-	 * the {@link BRAND_MAX_DISTANCE_KM} sanity radius, and take the nearest `limit`.
-	 * Returns the true nearest at any distance.
-	 * The reach ceiling k-ring hits on sparse brand rows is gone.
+	 * The partial `poi_brand_wikidata` index turns the QID fetch into a range-scan instead of a
+	 * 13.68M full scan. Rows are haversine-sorted from `center`, anything past
+	 * {@link BRAND_MAX_DISTANCE_KM} is dropped, and the nearest `limit` is returned.
 	 */
 	#searchBrand(brandWikidata: string, center: { latitude: number; longitude: number }, limit: number): POISearchHit[] {
 		const rows = allRows<POIRow>(this.#brandProbe, brandWikidata)
@@ -252,9 +224,9 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 		const maxRings = query.maxRings ?? DEFAULT_MAX_RINGS
 		const categoryIDs: number[] = []
 
-		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`; either way,
-		// resolve each id through the dictionary and drop the ones the db doesn't carry
-		// (Overture-taxonomy drift, or an identity id with no rows).
+		// `categoryIDs` (the fan-out list) supersedes the single `categoryID`. Each id resolves
+		// through the dictionary and unresolved ones are dropped, which covers Overture-taxonomy
+		// drift and identity ids with no rows.
 		const seedIDs = query.categoryIDs?.length ? query.categoryIDs : query.categoryID ? [query.categoryID] : []
 
 		for (const id of seedIDs) {
@@ -265,7 +237,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 			}
 		}
 
-		// No resolvable leaf (every id unknown to the dictionary) can't have rows — a clean miss rather than a throw.
+		// No resolvable leaf can have rows, since every id is unknown to the dictionary. This is a
+		// clean miss instead of a throw.
 		if (!categoryIDs.length) return []
 
 		const origin = latLngToCell(center.latitude, center.longitude, POI_H3_RESOLUTION) as H3Cell
@@ -274,8 +247,8 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 
 		// `ring` starts at 0 (the origin cell itself), so this loop's k reaches `maxRings - 1`.
 		for (let ring = 0; ring < maxRings; ring++) {
-			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against
-			// what's already been probed derives just this ring's new cells.
+			// gridDisk(origin, ring) returns the whole disk out to `ring`, so diffing against the
+			// already-probed set derives just this ring's new cells.
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells = diskCells.filter((cell) => !seenCells.has(cell))
 
@@ -283,9 +256,6 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 				seenCells.add(cell)
 				const shortCell = shortCellToInt(cell as H3Cell)
 
-				// Fan-out: probe every resolved Overture leaf for this canonical category, unioning the rows.
-				// The post-ring distance sort + `slice(0, limit)` below dedupes the
-				// pool down to the nearest `limit`.
 				for (const categoryID of categoryIDs) {
 					rows.push(...allRows<POIRow>(this.#categoryCellProbe, shortCell, categoryID, limit))
 				}
@@ -302,12 +272,10 @@ export class POILookup<DB extends POIDatabase = POIDatabase> extends SQLiteLooku
 	/**
 	 * Name path: FTS5 match → hydrate by name_key.
 	 *
-	 * No center required.
-	 * Distance-sorts if one is given anyway.
+	 * No center is required. Hits are distance-sorted when one is given.
 	 *
-	 * Hydration is one batched `where name_key IN (...)` query over the FTS hits' unique `name_key`s
-	 * rather than a per-hit probe, with up to `limit` FTS hits, a per-hit probe was up to
-	 * `limit` full table scans before `createPOINameKeyIndex` (poi-schema.ts) + this batching.
+	 * Hydration is one batched `where name_key IN (...)` query over the unique `name_key`s of the
+	 * FTS hits, since a per-hit probe would be up to `limit` full table scans.
 	 */
 	#searchByName(name: string, limit: number, center?: { latitude: number; longitude: number }): POISearchHit[] {
 		const matchQuery = sanitizePOINameQuery(name)
@@ -402,10 +370,10 @@ function toHit(
  * read as syntax (`"` phrase delimiters, `*` prefix wildcards, `:` column-filter separators),
  * then phrase-quote each whitespace-separated token (and-joined).
  *
- * `resolver-wof-sqlite` already has this discipline — `lookup.ts`'s `sanitizeFTSQuery` — but that
- * function is module-private there (not re-exported from `fts.ts` or the package's `index.ts`),
- * so this replicates the same discipline locally rather than reaching across
- * the module boundary for a private helper.
+ * `lookup.ts` already has this discipline in `sanitizeFTSQuery`, but that function is
+ * module-private there and is not re-exported from `fts.ts` or the package's `index.ts`. This
+ * replicates the discipline locally rather than reach across the module boundary for a private
+ * helper.
  */
 function sanitizePOINameQuery(text: string): string {
 	return text

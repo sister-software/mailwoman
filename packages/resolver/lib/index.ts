@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `@mailwoman/resolver` — the address resolver implementation, lifted out of `@mailwoman/core`
- *   (#215) so it can depend on `@mailwoman/spatial` (haversine) + `@mailwoman/codex` (USPS
- *   directionals) instead of reinventing them. The type interface stays in
- *   `@mailwoman/core/resolver` (so the `core/pipeline` composes the resolver structurally without a
- *   package cycle); this barrel re-exports it, so `@mailwoman/resolver` is a complete drop-in for
- *   what used to be `@mailwoman/core/resolver`.
+ *   `@mailwoman/resolver` is the address resolver implementation. It depends on
+ *   `@mailwoman/spatial` (haversine) and `@mailwoman/codex` (USPS directionals) instead of
+ *   reinventing them. The type interface stays in `@mailwoman/core/resolver`, so `core/pipeline`
+ *   composes the resolver structurally without a package cycle. This barrel re-exports it, so
+ *   `@mailwoman/resolver` is a complete drop-in for `@mailwoman/core/resolver`.
  */
 
 export { RemoteResolver, serializableResolveOpts } from "#remote-resolver"

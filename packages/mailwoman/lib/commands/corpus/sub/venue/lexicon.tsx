@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus sub-venue-lexicon` — regenerate the sub-venue designator lexicon (#35) from the
- *   fetched sources. Deterministic: same inputs, byte-identical output. Run `oxfmt` over the result
- *   before committing.
+ *   `mailwoman corpus sub-venue-lexicon` regenerates the sub-venue designator lexicon from the
+ *   fetched sources. The output is deterministic, so the same inputs produce byte-identical output.
+ *   Run `oxfmt` over the result before committing.
  *
  *   ```sh
  *   mailwoman corpus fetch wikidata-subvenue --out-root $MAILWOMAN_DATA_ROOT/sub-venue/sources

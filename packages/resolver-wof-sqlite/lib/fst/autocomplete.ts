@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   FST-based autocomplete — mailwoman vocabulary over `@mailwoman/ancestrie`'s generic algorithm
- *   (#1728 phase 2). The #587 behavior — prefix walk + BFS expansion, partial-last-token completion,
- *   per-branch capping, dedupe — lives in ancestrie's `autocomplete`; this module contributes only
- *   the storage adapter ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to
- *   mailwoman's suggestion shape (name, placetype, referential/encyclopedic, WOF ids).
+ *   FST-based autocomplete, mailwoman vocabulary over `@mailwoman/ancestrie`'s generic algorithm.
+ *   The prefix walk, BFS expansion, partial-last-token completion, per-branch capping, and dedupe
+ *   live in ancestrie's `autocomplete`. This module contributes only the storage adapter
+ *   ({@link FSTMatcher} → `AncestrieReaderLike`) and the mapping back to mailwoman's suggestion
+ *   shape (name, placetype, referential and encyclopedic scores, WOF ids).
  *
- *   the bytes do not migrate. The shipped artifacts are `FST\0` v1–v5 (`fst-serialize.ts`), not
- *   ancestrie's `anct`: ancestrie entries are id-keyed with one record per id, while an FST place row
- *   is per-(surface, place) — `crossCountryBranches` is a property of the surface, so the same wofID
- *   legitimately carries different values under different aliases and cannot be represented id-keyed.
- *   The matcher, both deserializers, and the serializer therefore stay here. what migrated is the
- *   algorithm, which is the half that drifts (the #861 share-the-function rule).
+ *   The bytes do not migrate. The shipped artifacts are `FST\0` v1 to v5 (`fst-serialize.ts`), and
+ *   ancestrie's entries are id-keyed with one record per id. An FST place row is per-(surface,
+ *   place), because `crossCountryBranches` is a property of the surface, so the same wofID
+ *   legitimately carries different values under different aliases and cannot be represented
+ *   id-keyed. The matcher, both deserializers, and the serializer stay here. The algorithm is the
+ *   half that migrated.
  */
 
 import type {
@@ -43,15 +43,15 @@ export interface AutocompleteSuggestion {
 	/**
 	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
 	 *
-	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything else.
-	 * Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic}
-	 * for display and never enters the order.
+	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything
+	 * else. Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic} for
+	 * display and never enters the order.
 	 */
 	referential: number
 	/**
 	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place.
 	 *
-	 * `undefined` = no article, or a pre-v5 binary — never 0.
+	 * `undefined` means no article, or a pre-v5 binary. It is never 0.
 	 */
 	encyclopedic?: number
 	wofID: number
@@ -66,15 +66,15 @@ export interface AutocompleteOpts {
 	/**
 	 * Collapse same-name suggestions to the single highest-referential one.
 	 *
-	 * Off by default (the CLI surfaces distinct same-name places — New York the city vs the county);
-	 * a typeahead wants it on so the dropdown isn't four "New London"s.
-	 * (#587)
+	 * Off by default, because the CLI surfaces distinct same-name places such as New York the city
+	 * and New York the county. A typeahead wants it on so the dropdown does not show four
+	 * "New London"s.
 	 */
 	dedupeByName?: boolean
 }
 
 /**
- * Max accepting entries collected per BFS branch — keeps one dense branch from starving the search.
+ * Max accepting entries collected per BFS branch, keeping one dense branch from starving the search.
  */
 const PER_BRANCH = 4
 
@@ -121,7 +121,7 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	}
 
 	continuations(stateID: number): AncestrieContinuation[] {
-		// Insertion order, verbatim — BFS visit order under the suggestion budget depends on it.
+		// Insertion order, verbatim. BFS visit order under the suggestion budget depends on it.
 		return this.#fst.continuations(stateID).map((c) => ({
 			token: c.token,
 			targetState: c.targetState,
@@ -162,9 +162,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		...(opts.maxSuggestions === undefined ? {} : { maxSuggestions: opts.maxSuggestions }),
 		...(opts.maxExpansionDepth === undefined ? {} : { maxExpansionDepth: opts.maxExpansionDepth }),
 		perBranchLimit: PER_BRANCH,
-		// The dedupe key is the display name rather than the token path:
-		// two surfaces of one name must still collapse.
-		// (#587)
+		// The dedupe key is the display name, so two surfaces of one name still collapse.
 		...(opts.dedupeByName ? { dedupe: (s: AncestrieSuggestion<PlaceEntry>) => s.payload!.name.toLowerCase() } : {}),
 	})
 
@@ -173,8 +171,7 @@ export function autocomplete(fst: FSTMatcher, query: string, opts: AutocompleteO
 		normalizedTokens,
 		depth: result.depth,
 		suggestions: result.suggestions.map((s) => {
-			// Every record this adapter serves carries its entry.
-			// The assertion documents the invariant.
+			// Every record this adapter serves carries its entry, so the non-null assertion holds.
 			const entry = s.payload!
 
 			return {

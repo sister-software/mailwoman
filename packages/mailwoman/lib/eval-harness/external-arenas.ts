@@ -3,18 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   External-arenas.ts — run the three unbiased capability arenas through harness-neural.
+ *   Run the three unbiased capability arenas through harness-neural.
  *
  *   Our own 376-assertion suite is a Pelias/addressit port (the retired rules parser's lineage), so
  *   it over-represents that lineage's cases. These three arenas come from outside it and together
- *   map the capability surface (formerly v0-vs-neural. the v7 excision #1151 deleted the rules arm,
- *   so the arenas now grade neural alone — pass rates stay comparable, the harness's neural
- *   semantics are unchanged):
+ *   map the capability surface:
  *
- *   1. Libpostal — statistical parser's hand-curated adversarial cases (clean, canonical)
- *   2. Perturbation — golden v0.1.2 with rule-defeating transforms (noisy, degraded)
- *   3. Postal-standards — postal-authority example addresses, edge formats by class (military APO/FPO,
- *        PO-box variety, secondary-unit, intl)
+ *   1. Libpostal, the statistical parser's hand-curated adversarial cases (clean, canonical)
+ *   2. Perturbation, golden v0.1.2 with rule-defeating transforms (noisy, degraded)
+ *   3. Postal-standards, postal-authority example addresses with edge formats by class (military
+ *        APO/FPO, PO-box variety, secondary-unit, intl)
  *
  *   All three are scored with --postcode-repair.
  *
@@ -24,18 +22,18 @@
  *   modelcard=/path/model-card.json node packages/mailwoman/lib/dev-tools/external-arenas.run.ts
  *
  *   Emits per-arena three-bucket tables (neural-only / both / v0-only / both-fail) and, for the
- *   postal arena, a breakdown by edge_class. Run `yarn compile` first — the harness resolves
- * @mailwoman/neural to its compiled out/ tree.
+ *   postal arena, a breakdown by edge_class. Run `yarn compile` first, since the harness resolves
+ *   @mailwoman/neural to its compiled out/ tree.
  *
  *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process (when the spec floors
- *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md` — the file
+ *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md`, the file
  *   the verdict assembler column-reads for `arena.perturb`. A throw here is what the child's
  *   non-zero exit was, and the check aborts on it exactly as before.
  *
- *   scope note (de-shell): the three inner probes this still spawns as child processes —
- *   `perturb-golden.run.ts`, `harness-neural.run.ts` (×3) and `summarize-arenas.run.ts` — are
- *   `lib/dev-tools/` residents rather than eval legs, and de-shelling them is a separate job. `zx`
- *   therefore survives here while it is gone from `promotion-eval.ts`.
+ *   Scope note (de-shell): the three inner probes this still spawns as child processes are
+ *   `perturb-golden.run.ts`, `harness-neural.run.ts` (three times) and `summarize-arenas.run.ts`.
+ *   They are `lib/dev-tools/` residents rather than eval legs, and de-shelling them is a separate
+ *   job. `zx` therefore survives here while it is gone from `promotion-eval.ts`.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -46,15 +44,15 @@ import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 /**
- * The three child processes, located from the package root so the same file is
- * named from the source tree and from `out/`.
+ * The three child processes, located from the package root so the same file resolves from the
+ * source tree and from `out/`.
  */
 const PERTURB_GOLDEN_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "perturb-golden.run.ts")
 const HARNESS_NEURAL_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "harness-neural.run.ts")
 const SUMMARIZE_ARENAS_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "summarize-arenas.run.ts")
 
 /**
- * Options for {@linkcode externalArenas} — one field per flag the check used to serialize into argv.
+ * Options for {@linkcode externalArenas}, one field per flag the check used to serialize into argv.
  */
 export interface ExternalArenasOptions {
 	/**
@@ -74,13 +72,13 @@ export interface ExternalArenasOptions {
 	tokenizer?: PathBuilderLike
 	modelCard?: string
 	/**
-	 * Gaz-trained models (v4.2.0+): feed the ship config — zero-filled clues depress
+	 * Gaz-trained models (v4.2.0+): feed the ship config, since zero-filled clues depress
 	 * country recall and fake an affix crash.
 	 */
 	gazetteerLexicon?: string
 	anchorLookup?: PathBuilderLike
 	/**
-	 * Conventions mask (#511 Tier A): `auto` for v4.3.0+ ship config.
+	 * Conventions mask: `auto` for v4.3.0+ ship config.
 	 */
 	conventions?: string
 	/**
@@ -95,7 +93,7 @@ export interface ExternalArenasOptions {
  * Narration splits across `report`/`reportError` the way the child process's stdout/stderr did,
  * because the check concatenates them in that order into `arenas.md`.
  *
- * @throws On a failed inner probe — the in-process spelling of the non-zero exit the check treats as fatal.
+ * @throws On a failed inner probe, the in-process spelling of the non-zero exit the check treats as fatal.
  */
 export async function externalArenas(
 	options: ExternalArenasOptions = {},
@@ -163,8 +161,6 @@ export async function externalArenas(
 	await copyFileTo("data/eval/external/libpostal-cases.jsonl", outDir("libpostal", "libpostal-cases.jsonl"))
 	await copyFileTo("data/eval/external/postal-cases.jsonl", outDir("postal", "postal-cases.jsonl"))
 
-	// Harness writes its progress to <name>.stderr.
-	// We tail the last 40 summary lines off stdout.
 	const runArena = async (name: string): Promise<void> => {
 		report(`== arena: ${name} ==`)
 

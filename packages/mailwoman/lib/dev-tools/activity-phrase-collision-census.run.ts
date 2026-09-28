@@ -1,24 +1,23 @@
 /**
- * Report-only phrase-collision census for `@mailwoman/activity-lexicon` (#1962).
+ * Report-only phrase-collision census for `@mailwoman/activity-lexicon`.
  *
  * Not a release check.
  *
- * Runs every declared surface form — and every candidate subject `matchPOISubject` would
- * meet it through — against the committed POI category lexicon and the POI name lexicon in a
- * sealed `poi.db`, and classifies each colliding venue name as query-shaped or legitimate.
- * The committed report is `packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json`;
- * regenerate it whenever the lexicon or the database moves.
+ * Runs every declared surface form, and every candidate subject `matchPOISubject` would meet it
+ * through, against the committed POI category lexicon and the POI name lexicon in a sealed `poi.db`,
+ * and classifies each colliding venue name as query-shaped or legitimate. The committed report is
+ * `packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json`. Regenerate it
+ * whenever the lexicon or the database moves.
  *
  * ```bash
  * node packages/mailwoman/lib/dev-tools/activity-phrase-collision-census.run.ts \ --out packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json
  * ```
  *
- * Expect roughly eleven minutes on the shipped `poi.db`.
- * The venue read is a `like` over every `name_key`, which no index can answer,
- * and the cost scales with probes × rows: 19 probes over 13.68M names.
+ * Expect roughly eleven minutes on the shipped `poi.db`. The venue read is a `like` over every
+ * `name_key`, which no index can answer, and the cost scales with probes and rows: 19 probes over
+ * 13.68M names.
  *
- * Reaching for a ranked FTS read instead is what makes it fast and what makes
- * it wrong — see `CensusPOIReader`.
+ * Reaching for a ranked FTS read instead makes it fast and makes it wrong. See `CensusPOIReader`.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -42,12 +41,10 @@ using database = new DatabaseClient<POIDatabase>(databasePath, { readOnly: true 
 using lookup = new POILookup({ database })
 const shippedRung = createPOINameLookup(lookup)
 
-// A complete key scan rather than a ranked read.
-// See `CensusPOIReader` for the measurement that made the ranked one inadmissible.
-// `like` is a superset filter.
-// The census applies whole-token containment to what comes back.
-// One scan for the whole probe set: the predicate is unindexable either way,
-// so the cost is the 13.68M-row pass rather than the number of terms in it.
+// A complete key scan. See `CensusPOIReader` for why the ranked read is inadmissible.
+// `like` is a superset filter, and the census applies whole-token containment to what comes back.
+// One scan covers the whole probe set, because the predicate is unindexable either way, so the cost
+// is the 13.68M-row pass.
 function candidates(probes: ReadonlyArray<string>): CensusVenue[] {
 	if (!probes.length) return []
 

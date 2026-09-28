@@ -1,8 +1,8 @@
 /**
- * Cross-language parity for the gazetteer-anchor matcher (#464).
+ * Cross-language parity for the gazetteer-anchor matcher.
  *
- * These assertions mirror corpus-python's test_gazetteer_anchor.py — if the TS matcher drifts
- * from the Python one, the model sees different clues at inference than it trained on.
+ * These assertions mirror corpus-python's test_gazetteer_anchor.py, so a drift in the TS matcher
+ * would show the model different clues at inference than it trained on.
  * The inline lexicon matches the Python fixture exactly.
  */
 
@@ -113,8 +113,8 @@ describe("gazetteer matcher parity", () => {
 		const { features, confidence } = buildGazetteerFeatures(raw, pieces, LEXICON)
 		expect(features[0]).toEqual([0, 0, 0, 0, 0])
 		expect(confidence[0]).toBe(0)
-		expect(features[1]).toEqual([0, 0, 0, 0, 0]) // ", " → first non-ws is "," (stripped)
-		expect(features[2]).toEqual([1, 1, 0, 0, 1]) // Georgia homograph
+		expect(features[1]).toEqual([0, 0, 0, 0, 0])
+		expect(features[2]).toEqual([1, 1, 0, 0, 1])
 		expect(features[3]).toEqual([1, 1, 0, 0, 1])
 		expect(confidence[2]).toBe(1)
 	})

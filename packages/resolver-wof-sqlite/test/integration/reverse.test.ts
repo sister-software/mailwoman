@@ -3,17 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the reverse geocoder (#484): the ray-cast PIP primitives, the bbox→PIP→descent walk
- *   over an inline fixture gazetteer, and an env-restricted integration pass against the real production
- *   DBs.
- *
- *   The integration suite skips unless both env vars point at real artifacts (so CI stays green
- *   without them — same pattern as `resolver-wof-wasm/hot-db.test.ts`):
- *
- *   - `MAILWOMAN_WOF_ADMIN_DB` — the admin gazetteer with the package-built `place_bbox` R*Tree, e.g.
- *       `$MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db`.
- *   - `MAILWOMAN_WOF_POLYGONS_DB` — the polygon sidecar, e.g.
- *       `/tmp/v440-stage/en-us/v4.4.0/wof-polygons.db` (staged by build-demo-assets).
+ * Tests for the reverse geocoder: the ray-cast PIP primitives, the bbox-to-PIP descent walk over an
+ * inline fixture gazetteer, and an env-restricted integration pass against the real production DBs.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -42,8 +33,8 @@ describe("point-in-polygon primitives", () => {
 
 	test("pointInPolygon — a hole excludes, an island within the hole includes again", () => {
 		const rings = [square(0, 0, 10, 10), square(4, 4, 6, 6)]
-		expect(pointInPolygon(2, 2, rings)).toBe(true) // solid part
-		expect(pointInPolygon(5, 5, rings)).toBe(false) // inside the hole
+		expect(pointInPolygon(2, 2, rings)).toBe(true)
+		expect(pointInPolygon(5, 5, rings)).toBe(false)
 		// Even-odd: an island ring nested inside the hole flips back to inside.
 		expect(pointInPolygon(5, 5, [...rings, square(4.8, 4.8, 5.2, 5.2)])).toBe(true)
 	})
@@ -66,12 +57,12 @@ describe("point-in-polygon primitives", () => {
 })
 
 /**
- * Fixture gazetteer — a miniature Vermont-like geography around (44.0, -72.0):
+ * Fixture gazetteer, a miniature Vermont-like geography around (44.0, -72.0):
  *
- * Country US (1) ⊃ region (2) ⊃ county A (3, polygon) + county B
- * (6, bbox overlaps A but polygon rejects — the bbox-false-positive case) ⊃ localadmin town
- * (4, point geometry, centroid near the query point) ⊃ locality village (5, point geometry,
- * degenerate bbox — reachable only via the ancestors-table descent, never via the R*Tree).
+ * Country US (1), region (2), county A (3, polygon), county B (6, bbox overlaps A while its polygon
+ * rejects the point, since DP-simplified bboxes can lie), localadmin town (4, point geometry,
+ * centroid near the query point), and locality village (5, point geometry, degenerate bbox, reachable
+ * only through the ancestors-table descent rather than the R*Tree).
  */
 function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
 	const admin = DatabaseClient.temp<WOFDatabase>()
@@ -115,11 +106,8 @@ function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: Databas
 	const polygons = DatabaseClient.temp<WOFDatabase>()
 	polygons.exec(`CREATE TABLE polygons (id INTEGER PRIMARY KEY, geom TEXT NOT NULL);`)
 	const insert = polygons.prepare(`INSERT INTO polygons (id, geom) VALUES (?, ?)`)
-	// Region polygon: the whole fixture area.
 	insert.run(2, stringifyJSON({ type: "Polygon", coordinates: [square(-73.5, 42.7, -71.4, 45)] }))
-	// County A polygon contains the query point (44.0, -72.0)…
 	insert.run(3, stringifyJSON({ type: "Polygon", coordinates: [square(-72.5, 43.8, -71.8, 44.3)] }))
-	// …county B's polygon does not (its bbox row lies — DP-simplified bboxes overlap).
 	insert.run(6, stringifyJSON({ type: "Polygon", coordinates: [square(-72.45, 43.85, -71.85, 43.95)] }))
 
 	return { admin, polygons }
@@ -131,7 +119,6 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
 		const result = await rg.reverseGeocode(44, -72)
 
-		// Deepest = the locality village (descent: county A → town → village), approximate.
 		expect(result.containment).toBe("approximate")
 
 		expect(result.hierarchy.map((p) => p.name)).toEqual([
@@ -142,17 +129,13 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 			"United States",
 		])
 
-		// The bbox false positive (county B) must never appear.
 		expect(result.hierarchy.some((p) => p.id === 6)).toBe(false)
-		// The approximate winner carries its centroid distance.
 		expect(result.hierarchy[0]?.distanceKm).toBeGreaterThan(0)
 	})
 
 	test("polygon containment is reported when the deepest place IS polygon-confirmed", async () => {
 		const { admin, polygons } = buildFixture()
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
-		// Restrict to the polygon-containing tiers.
-		// The deepest is then county A, PIP-confirmed.
 		const result = await rg.reverseGeocode(44, -72, { placetypes: ["country", "region", "county"] })
 		expect(result.containment).toBe("polygon")
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
@@ -163,9 +146,8 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin })
 		const result = await rg.reverseGeocode(44, -72)
 		expect(result.containment).toBe("approximate")
-		// Bbox false positives can't be vetoed without polygons.
-		// The smallest containing bbox (a county) still anchors the walk
-		// and the descent still reaches the village.
+		// Bbox false positives cannot be vetoed without polygons, so the smallest containing bbox,
+		// a county, still anchors the walk and the descent reaches the village.
 		expect(result.hierarchy[0]?.name).toBe("Middlewich Village")
 	})
 
@@ -180,7 +162,6 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 	test("approximate steps respect maxApproximateKm", async () => {
 		const { admin, polygons } = buildFixture()
 		using rg = new WOFReverseGeocoder({ adminDatabase: admin, polygonDatabase: polygons })
-		// Tiny cap: the town centroid (~2 km away) is out of reach → walk stops at county A.
 		const result = await rg.reverseGeocode(44, -72, { maxApproximateKm: 0.5 })
 		expect(result.hierarchy[0]).toMatchObject({ id: 3, placetype: "county" })
 		expect(result.containment).toBe("polygon")
@@ -193,8 +174,6 @@ describe("WOFReverseGeocoder over the fixture gazetteer", () => {
 		await expect(rg.reverseGeocode(0, 181)).rejects.toThrow(RangeError)
 	})
 })
-
-// These cases require the real artifacts named in the file header.
 
 const ADMIN_DB = $public.MAILWOMAN_WOF_ADMIN_DB
 const POLYGONS_DB = $public.MAILWOMAN_WOF_POLYGONS_DB
@@ -219,8 +198,8 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 			expect(names).toContain("Chicago")
 			expect(names).toContain("Illinois")
 			expect(names).toContain("United States")
-			// The deepest node is a point-geometry neighbourhood (Hyde Park) → approximate by
-			// honest convention, even though the Chicago locality above it is polygon-confirmed.
+			// The deepest node is a point-geometry neighbourhood (Hyde Park), so the result is
+			// approximate by convention, even though the Chicago locality above it is polygon-confirmed.
 			expect(result.hierarchy[0]?.placetype).toBe("neighbourhood")
 			expect(result.containment).toBe("approximate")
 		})

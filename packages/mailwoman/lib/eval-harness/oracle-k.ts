@@ -3,23 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Oracle-recall@k over segment-level k-best decodes (#727 stage-2 instrumentation).
+ *   Oracle-recall@k over segment-level k-best decodes (stage-2 instrumentation).
  *
- *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible —
- *   the instrument-blindness the 2026-07-15 stage-2 plan names. This eval measures the k-best
- *   headroom directly: a semi-Markov Viterbi over the current model's post-prior emissions (span
- *   score = summed B-/I- log-probs over word-aligned segments, smoothed empirical segment-type
- *   transition bigrams from the golden dev gold orderings), returning the top-k whole segmentations.
- *   `oracle@k` = the gold value appears in any of the top-k hypotheses' extractions.
+ *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible.
+ *   This eval measures the k-best headroom directly: a semi-Markov Viterbi over the current model's
+ *   post-prior emissions (span score = summed B-/I- log-probs over word-aligned segments, smoothed
+ *   empirical segment-type transition bigrams from the golden dev gold orderings), returning the
+ *   top-k whole segmentations. `oracle@k` = the gold value appears in any of the top-k hypotheses'
+ *   extractions.
  *
- *   Baselines are registered rather than restated here — see `baselines.json` (profiles `v264`, `v301`)
- *   and pass `--assert-baseline <profile>` to make this harness refuse to print when its
- *   instruments read wrong. The night-3 read: the naive re-decode is worse at rank 1 than the token
- *   decode (a trained span scorer is necessary) while the correct reading exists in the top-10 ~75%
- *   of the time.
+ *   Baselines are registered rather than restated here. See `baselines.json` (profiles `v264`,
+ *   `v301`), and pass `--assert-baseline <profile>` to make this harness refuse to print when its
+ *   instruments read wrong.
  *
  *   This decoder is deliberately the same shape the stage-2 JS/wasm post-processing decode will
- *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph); when the trained span
+ *   take (span enumeration + pruning + k-way Viterbi outside the ONNX graph). When the trained span
  *   head lands, its scores replace the summed BIO log-probs here and this eval's oracle@k becomes
  *   the rerank ceiling tracker.
  */
@@ -62,7 +60,7 @@ export interface OracleKOptions {
 	 * Registered baseline profile to check this run's street readings against (`v264`, `v301`).
 	 *
 	 * When set, the harness refuses to print a report if any reading deviates from
-	 * its row — the Tier-0 instrument check.
+	 * its row, the Tier-0 instrument check.
 	 * Omit for an unregistered candidate.
 	 */
 	assertBaseline?: string
@@ -144,9 +142,9 @@ interface SegmentDecodeResult {
 /**
  * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions.
  *
- * Word-aligned spans (a `▁`-delimited word never splits); pure-punctuation pieces are
- * unit `O` words that no typed segment may cross; `O` words are unit length.
- * State = (word index, last non-O segment type); scores share one normalization per input,
+ * Word-aligned spans (a `▁`-delimited word never splits). Pure-punctuation pieces are
+ * unit `O` words that no typed segment may cross, and `O` words are unit length.
+ * State = (word index, last non-O segment type). Scores share one normalization per input,
  * so the k hypotheses' scores are directly comparable.
  */
 export function segmentDecodeKBest(
@@ -333,7 +331,7 @@ function extractSurface(
  * Run the oracle-recall@k eval.
  * Narrates the per-floor table on stdout.
  *
- * Informational — always exits 0.
+ * Informational, and always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
@@ -355,11 +353,9 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		options.fixturesPath ?? PARITY_FIXTURES_PATH
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
-		// Production config parity (#1146): every path production parses on feeds
-		// the query-shape emission prior.
-		// `safeClassify` in the runtime pipeline, and `geocode-core` since #981
-		// (which fixed this same divergence for the drop-in servers).
-		// This harness was the last surface still grading a starved parse.
+		// Production config parity: every path production parses on feeds
+		// the query-shape emission prior (`safeClassify` in the runtime pipeline, and
+		// `geocode-core`).
 		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 
@@ -371,7 +367,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 
 		// The trace must carry the same priors as the parse above: the segment decode scores
 		// spans out of `trace.emissions`, so a bare trace would grade seg@1 on unprimed emissions
-		// while token@1 saw primed ones — comparing two different models and calling it a decode delta.
+		// while token@1 saw primed ones, comparing two different models and calling it a decode delta.
 		const trace = await classifier.traceParse(fixture.input, productionParseOptions(fixture.input))
 
 		const { hypotheses, words } = segmentDecodeKBest(trace, k, logTransition)
@@ -411,7 +407,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 
 	// Tier-0 instrument check, before anything prints.
 	// A report from a harness reading this far off its registered baseline is worse
-	// than no report — Phase 1 and Phase 4a both shipped one.
+	// than no report.
 	if (options.assertBaseline) {
 		const readings: Record<string, number> = {}
 

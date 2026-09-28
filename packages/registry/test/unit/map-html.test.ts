@@ -9,11 +9,6 @@ import type { EntityGeoData } from "@mailwoman/registry/types"
 import type { GeoFeatureCollection, PointLiteral } from "@mailwoman/spatial"
 import { describe, expect, it } from "vitest"
 
-// The collection shape `toMapHTML` consumes.
-// Its properties are EntityGeoData rather than an open record — typing them loosely
-// meant every call site in this file was passing something toMapHTML rejects.
-// Was a dead `GeoJsonFeatureCollection` import from ./types.ts (never exported there);
-// repointed to the real @mailwoman/spatial type as part of the #875 casing sweep.
 type EntityFeatureCollection = GeoFeatureCollection<PointLiteral, EntityGeoData>
 
 function fc(features: EntityFeatureCollection["features"]): EntityFeatureCollection {
@@ -32,13 +27,10 @@ describe("toMapHTML", () => {
 
 		expect(html.startsWith("<!doctype html>")).toBe(true)
 		expect(html.trimEnd().endsWith("</html>")).toBe(true)
-		// MapLibre GL rather than Leaflet, pinned with SRI.
 		expect(html).toContain("maplibre-gl@5.24.0/dist/maplibre-gl.js")
 		expect(html).toContain('integrity="sha384-')
 		expect(html).not.toMatch(/leaflet/i)
-		// The house Protomaps basemap-v4 vector source (cors-aware tile-worker), not a raster tile URL.
 		expect(html).toContain("https://tiles.mailwoman.ai/basemap-v4.json")
-		// Glyphs + sprite from the cors-enabled upstream Protomaps assets (house mirror isn't cors-routed).
 		expect(html).toContain("protomaps.github.io/basemaps-assets/fonts")
 		expect(html).toContain("protomaps.github.io/basemaps-assets/sprites/v4/light")
 		expect(html).not.toMatch(/tile\.openstreetmap\.org|raster/)
@@ -47,7 +39,6 @@ describe("toMapHTML", () => {
 
 	it("inlines a real Protomaps basemap (many generated layers) plus the entity circle layer", () => {
 		const html = toMapHTML(fc([point(0, 0, { entityID: "e1", recordCount: 1, sources: ["x"], name: null })]))
-		// @protomaps/basemaps generates ~70 layer specs. they + our layer are inlined in the style.
 		expect(html).toContain('"id":"mw-entities"')
 		expect(html).toContain('"id":"earth"')
 		expect(html).toContain('"basemap-v4"')
@@ -56,7 +47,7 @@ describe("toMapHTML", () => {
 	it("renders an empty collection as a friendly empty state, not a broken map", () => {
 		const html = toMapHTML(fc([]))
 		expect(html).toContain("No geocoded entities")
-		expect(html).toContain("var BBOX = null") // no features → null bbox → page keeps its default view
+		expect(html).toContain("var BBOX = null")
 	})
 
 	it("escapes `</script>` inside record values so a string can't break out of the inlined data", () => {
@@ -76,10 +67,8 @@ describe("toMapHTML", () => {
 			])
 		)
 
-		// Bucket labels render verbatim in the legend (neutral — straight from the data).
 		expect(withBuckets).toContain("enrolled")
 		expect(withBuckets).toContain("eligible-not-enrolled")
-		// Each feature gets a precomputed `_color`.
 		expect(withBuckets).toContain('"_color"')
 
 		const noBuckets = toMapHTML(fc([point(0, 0, { entityID: "a", recordCount: 1, sources: ["x", "y"], name: null })]))
@@ -93,7 +82,6 @@ describe("toMapHTML", () => {
 		})
 
 		expect(html).toContain("<title>Coverage reconciliation</title>")
-		// A dark Protomaps flavor produces a dark background fill in the inlined style.
 		expect(html).toMatch(/"background"/)
 	})
 

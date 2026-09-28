@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Type surface of the committed `sentencepiece.mjs` artifact — google/sentencepiece **v0.2.2**
- *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`, task #26). Rebuilt only
- *   by `build.sh`; bump the tag there and note it here.
+ *   Type surface of the committed `sentencepiece.mjs` artifact, google/sentencepiece **v0.2.2**
+ *   compiled to wasm with the native-offsets embind wrapper (`binding.cpp`). Rebuilt only by
+ *   `build.sh`. Bump the tag there and note it here.
  */
 
 /**
@@ -46,15 +46,15 @@ export declare class SentencePieceProcessor {
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
 	decodeIDs(ids: IntVector): string
 	/**
-	 * Embind object lifetime: the processor owns wasm-heap memory — call
-	 * when done (long-lived singletons in practice never do).
+	 * Embind object lifetime. The processor owns wasm-heap memory, so call `delete()` when done.
+	 * Long-lived singletons in practice never do.
 	 */
 	delete(): void
 }
 
 /**
- * Embind-registered `std::vector<int>` — build with `module.IntVector`,
- * `push_back` ids, and `delete()` after use.
+ * Embind-registered `std::vector<int>`. Build with `module.IntVector`, call `push_back` for ids,
+ * and call `delete()` after use.
  */
 export declare class IntVector {
 	constructor()
@@ -70,7 +70,7 @@ export interface SentencePieceModule {
 }
 
 /**
- * The emscripten modularize factory — resolves once the embedded wasm is instantiated.
+ * The emscripten modularize factory. It resolves once the embedded wasm is instantiated.
  */
 declare function createSentencePiece(): Promise<SentencePieceModule>
 

@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file The per-place record every candidate-staging pass writes its rows from.
  *
- *   Pass 1 reduces each current `spr` row to one {@link PlaceAttrs}; every later pass (alias bags,
+ *   Pass 1 reduces each current `spr` row to one {@link PlaceAttrs}. Every later pass (alias bags,
  *   region abbreviations, country display names, the currency backfill, the extract folds) discovers
  *   additional name keys for a place already in that map and stages a row against the same record.
- *   That is what keeps each candidate row denormalized without re-reading the source, and it is why
- *   a pass needs exactly four things to stage: the key it found, the place, the id the row hangs on,
- *   and whether the key is the place's canonical name.
+ *   That keeps each candidate row denormalized without re-reading the source. A pass therefore needs
+ *   exactly four things to stage: the key it found, the place, the id the row hangs on, and whether
+ *   the key is the place's canonical name.
  */
 
 export interface PlaceAttrs {
@@ -26,18 +26,14 @@ export interface PlaceAttrs {
 	/**
 	 * The place's recorded population, or null when the gazetteer never measured one.
 	 *
-	 * NULL rather than zero.
-	 * `place_population` holds no zero — its minimum over 1,520,369 rows is 1 —
-	 * so an absent row is the only way a place has no number, and 3,275,445 of the
-	 * gazetteer's 4,770,674 current places are absent from it.
-	 *
-	 * A zero written for those would be a count nobody made, and the meaning-of-zero rule reads it as one.
+	 * NULL rather than zero. `place_population` holds no zero, so an absent row is the only way a
+	 * place has no number. A zero written for those would be a count nobody made.
 	 */
 	pop: number | null
 	neg: number
 	pkey: string
 	/**
-	 * The place's toponym-fame score, or null when the score source has no measurement for it (#28).
+	 * The place's toponym-fame score, or null when the score source has no measurement for it.
 	 *
 	 * A property of the place, so it rides {@link StageRow} onto the alias and abbrev rows too.
 	 * That is how a bare `Moscow` reaches Москва's score through the alias row that carries the key.

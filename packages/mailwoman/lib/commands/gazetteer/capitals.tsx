@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer capitals` — build the capital-status reference (#1880) from the GeoNames
+ *   `mailwoman gazetteer capitals` — build the capital-status reference from the GeoNames
  *   gazetteer dumps (`mailwoman corpus fetch geonames-dump`). See
  *   `gazetteer-pipeline/capitals.ts` for what the reference is and how the resolver consumes it.
  *

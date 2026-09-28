@@ -8,12 +8,8 @@
  *   split. This scores the unfolded `decodeAsJSON` output against split ground truth: exact-match
  *   (case-insensitive) P/R/F1 per tag.
  *
- *   `promotion-eval.ts` calls this SIX times per battery — the affix set, `unit-real-designators`,
- *   `po-box-cedex-val`, `intersection-real`, and the two watch lenses (`intersection-golden-vt`,
- *   `glue-rows-perturb`) — capturing each report into its own `.md` and the machine-readable sidecar
- *   into its own `.json`. Every printed line goes through the `report` sink, one call per line, so
- *   the captured markdown is byte-identical to the child-process stdout it replaced.
- *   `packages/mailwoman/lib/dev-tools/score/affix.run.ts` is the thin CLI that keeps standalone invocation working.
+ *   Every printed line goes through the `report` sink, one call per line, so a caller can capture the
+ *   report as markdown.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -28,15 +24,13 @@ import {
 } from "#eval-harness/per/tag-f1"
 
 /**
- * Options for {@linkcode scoreAffix} — one field per flag the check used to serialize into argv.
+ * Options for {@linkcode scoreAffix}.
  */
 export interface ScoreAffixOptions {
 	/**
 	 * ONNX artifact to grade.
 	 *
-	 * Empty/omitted is legal alongside {@linkcode ScoreAffixOptions.weightsCache}.
-	 * The value also feeds the report header verbatim (its last two path segments),
-	 * so an empty string renders the same empty slot the child process did.
+	 * Empty or omitted is legal alongside {@linkcode ScoreAffixOptions.weightsCache}.
 	 */
 	model?: string
 	/**
@@ -53,18 +47,15 @@ export interface ScoreAffixOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here.
-	 * The interface the check verdict reads.
-	 *
-	 * The markdown is presentation.
+	 * Write the machine-readable sidecar here. The check verdict reads this file.
 	 */
 	json?: string
 	/**
-	 * #511 Tier A: `auto` | `<system>` enables the address-system conventions mask.
+	 * `auto` or `<system>` enables the address-system conventions mask.
 	 */
 	conventions?: string
 	/**
-	 * V4.4.0 corrective: merge same-tag spans split at unlabeled punctuation.
+	 * Merge same-tag spans split at unlabeled punctuation.
 	 */
 	bridgeGaps?: boolean
 	/**
@@ -73,7 +64,7 @@ export interface ScoreAffixOptions {
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
+	 * Package-shaped `<root>` loads model + tokenizer + card + all soft
 	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights`.
 	 *
 	 * The only in-distribution grade for a country-channel model (v6.2.0+).
@@ -124,8 +115,7 @@ const TAGS = [
 /**
  * Score one eval file's unfolded per-tag P/R/F1.
  *
- * Every narration line goes through `report`, one call per line, so the check's captured
- * markdown matches the child-process stdout it replaced byte-for-byte.
+ * Every narration line goes through `report`, one call per line.
  */
 export async function scoreAffix(
 	options: ScoreAffixOptions = {},

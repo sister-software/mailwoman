@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build nz-localities` — the NZ suburb/locality database (#1564, #1585's data
- *   half) from the linz-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution linz).
+ *   `mailwoman gazetteer build nz-localities` builds the NZ suburb/locality database from the
+ *   linz-derived OpenAddresses countrywide extract (CC-BY 4.0, attribution linz).
  *   Sealed 0444. The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.
  */

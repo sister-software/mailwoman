@@ -1,15 +1,14 @@
 /**
- * Cross-language parity for the country-lexicon matcher (#1104).
+ * Cross-language parity for the country-lexicon matcher.
  *
- * These assertions mirror corpus-python's test_country_lexicon.py — if the TS matcher drifts
- * from the Python one, the model sees different clues at inference than it trained on.
+ * These assertions mirror corpus-python's test_country_lexicon.py, so a drift in the TS matcher
+ * would show the model different clues at inference than it trained on.
  * The inline lexicon matches the Python fixture exactly.
  *
- * The critical properties: the long leading form ("united states of america") paints every word as an
- * unambiguous country surface (the whole point — this is the WOF-admin case the tagger reads as a street);
- * homographs ("georgia", "CA") fire `country_surface` and `country_ambiguous` symmetrically
- * (the model disambiguates via context); short codes match uppercase-only ("us" the word ≠ "US");
- * and the char→piece projection mirrors the anchor's first-non-ws rule.
+ * The critical properties: the long leading form ("united states of america") paints every word as
+ * an unambiguous country surface, homographs ("georgia", "CA") fire `country_surface` and
+ * `country_ambiguous` symmetrically, short codes match uppercase only ("us" the word differs from
+ * "US"), and the char to piece projection mirrors the anchor's first-non-ws rule.
  */
 
 import {
@@ -24,8 +23,6 @@ import { describe, expect, it } from "vitest"
 
 const S = COUNTRY_SURFACE_BIT // 1
 const A = COUNTRY_AMBIGUOUS_BIT
-
-// 2
 
 const LEXICON = parseCountryLexicon({
 	feature_dim: 2,
@@ -72,13 +69,13 @@ function paintedWords(raw: string): Record<string, number> {
 
 describe("country matcher parity", () => {
 	it("the long leading form paints every word as an unambiguous country surface", () => {
-		// The #1104 WOF-admin case: the 4-token phrase the learned tagger reads as a leading street.
+		// The WOF-admin case: the 4-token phrase the learned tagger reads as a leading street.
 		const w = paintedWords("United States of America, Wyoming, Cheyenne")
 		expect(w["United"]).toBe(S)
 		expect(w["States"]).toBe(S)
 		expect(w["of"]).toBe(S)
-		expect(w["America"]).toBe(S) // inside the phrase → not the standalone ambiguous "america"
-		expect(w["Wyoming"]).toBe(0) // a US region rather than a country surface
+		expect(w["America"]).toBe(S)
+		expect(w["Wyoming"]).toBe(0)
 		expect(w["Cheyenne"]).toBe(0)
 	})
 
@@ -96,7 +93,7 @@ describe("country matcher parity", () => {
 	it("short codes match uppercase only ('us' the word ≠ 'US')", () => {
 		expect(paintedWords("New York, NY 10001, USA")["USA"]).toBe(S)
 		expect(paintedWords("meet us there")["us"]).toBe(0)
-		expect(paintedWords("Toronto, ON, CA")["CA"]).toBe(S | A) // Canada / California homograph
+		expect(paintedWords("Toronto, ON, CA")["CA"]).toBe(S | A)
 		expect(paintedWords("Paris, FR")["FR"]).toBe(S)
 	})
 
@@ -123,10 +120,10 @@ describe("country matcher parity", () => {
 		]
 
 		const { features, confidence } = buildCountryFeatures(raw, pieces, LEXICON)
-		expect(features[0]).toEqual([0, 0]) // Tbilisi: no clue
+		expect(features[0]).toEqual([0, 0])
 		expect(confidence[0]).toBe(0)
-		expect(features[1]).toEqual([0, 0]) // ", " → first non-ws is "," (stripped)
-		expect(features[2]).toEqual([1, 1]) // Georgia: surface + ambiguous
+		expect(features[1]).toEqual([0, 0])
+		expect(features[2]).toEqual([1, 1])
 		expect(features[3]).toEqual([1, 1])
 		expect(confidence[2]).toBe(1)
 	})

@@ -503,7 +503,6 @@ describe("registry + defaults", () => {
 		})
 
 		const out = Array.from(synthesizeRow(row))
-		// Case-upper + case-lower + drop-commas + double-space + state-expand all apply
 		const methods = out.map((r) => r.recipe?.recipe)
 		expect(methods).toContain("case-upper")
 		expect(methods).toContain("case-lower")
@@ -525,15 +524,11 @@ describe("registry + defaults", () => {
 	})
 })
 
-// Raw-surface punctuation survival.
-//
-// Every augmentation transforms `raw` by direct string splicing (replace/case-map on the raw
-// itself — never a rebuild from a token list), and the build pipeline re-runs `alignRow`
-// on each augmented copy, deriving the char-offset span triple from the augmented raw.
-// These probes pin the property v0.5.0 makes essential: intra-span punctuation
-// (the dotted `P.O. Box` is the canonical case) survives onto the augmented copy,
-// and every span addresses the new raw exactly.
-// A future refactor that rebuilds raw from tokens would fail these.
+// Every augmentation transforms `raw` by direct string splicing (replace or case-map on the raw
+// itself). The build pipeline re-runs `alignRow` on each augmented copy, deriving the char-offset
+// span triple from the augmented raw. These probes pin intra-span punctuation (the dotted
+// `P.O. Box` is the canonical case) surviving onto the augmented copy, with every span addressing
+// the new raw exactly.
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
 	/**
@@ -714,7 +709,6 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("place-name venue: shared 'Buffalo' token stays labeled venue, not locality", () => {
-		// Kryptonite case #1 from context.md / issue #22.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "NY", postcode: "14201" },
@@ -730,10 +724,8 @@ describe("composeAdversarialRow", () => {
 		if (result.kind !== "labeled") return
 
 		expect(result.row.raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
-		// The venue prefix: three tokens, all venue-labeled.
 		expect(result.row.tokens.slice(0, 3)).toEqual(["Buffalo", "Health", "Clinic"])
 		expect(result.row.labels.slice(0, 3)).toEqual(["B-venue", "I-venue", "I-venue"])
-		// The address half: the second "Buffalo" must be the locality rather than venue.
 		const buffaloIndices = result.row.tokens.map((t, i) => (t === "Buffalo" ? i : -1)).filter((i) => i >= 0)
 		expect(buffaloIndices).toHaveLength(2)
 		expect(result.row.labels[buffaloIndices[0]!]).toBe("B-venue")
@@ -741,7 +733,6 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("place-shaped venue: embedded multi-token place-shaped substring stays venue-labeled", () => {
-		// Kryptonite case #2: venue contains a substring that looks like a complete address.
 		const address = baseRow({
 			raw: "Las Vegas, NV 89109",
 			components: { locality: "Las Vegas", region: "NV", postcode: "89109" },
@@ -757,10 +748,8 @@ describe("composeAdversarialRow", () => {
 		if (result.kind !== "labeled") return
 
 		expect(result.row.raw).toBe("New York, New York Steakhouse, Las Vegas, NV 89109")
-		// The venue is 5 tokens: New York New York Steakhouse — all venue.
 		expect(result.row.tokens.slice(0, 5)).toEqual(["New", "York", "New", "York", "Steakhouse"])
 		expect(result.row.labels.slice(0, 5)).toEqual(["B-venue", "I-venue", "I-venue", "I-venue", "I-venue"])
-		// The address half: "Las" + "Vegas" → B-locality + I-locality.
 		const lasIdx = result.row.tokens.indexOf("Las")
 		expect(lasIdx).toBeGreaterThan(0)
 		expect(result.row.labels[lasIdx]).toBe("B-locality")
@@ -768,9 +757,6 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("particle-honorific ambiguity: apostrophe + St. tokens land under venue", () => {
-		// Kryptonite case #3: apostrophe + St./Saint ambiguity.
-		// "P'tit" and "St." are inside the venue surface form rather than a street_prefix
-		// or honorific in the address.
 		const address = baseRow({
 			raw: "Montreal, QC H2X 1Y4",
 			country: "CA",
@@ -790,8 +776,6 @@ describe("composeAdversarialRow", () => {
 		// Café (period is a separator, apostrophe joins, accented chars are word chars).
 		expect(result.row.tokens[0]).toBe("P'tit")
 		expect(result.row.tokens[1]).toBe("St")
-		// Every venue token gets the venue label.
-		// The embedded "St" is venue rather than street_prefix.
 		const venueTokenCount = 5
 
 		for (let i = 0; i < venueTokenCount; i++) {
@@ -912,7 +896,6 @@ describe("composeAdversarialRow", () => {
 	})
 
 	it("address that fails alignment quarantines with the propagated reason", () => {
-		// region "qqqqqq" can't be located in the raw and is too far from any window to match under default edit distance — alignment quarantines it.
 		const address = baseRow({
 			raw: "Buffalo, NY 14201",
 			components: { locality: "Buffalo", region: "QQQQQQ", postcode: "14201" },
@@ -947,14 +930,11 @@ describe("composeAdversarialRow", () => {
 
 		const { raw, span_starts, span_ends, span_tags } = result.row
 		expect(raw).toBe("Buffalo Health Clinic, Buffalo, NY 14201")
-		// One venue span over the whole venue, then the address spans shifted by venue + separator.
 		expect(span_tags).toEqual(["venue", "locality", "region", "postcode"])
 		expect(span_starts).toEqual([0, 23, 32, 35])
 		expect(span_ends).toEqual([21, 30, 34, 40])
-		// Every span reconstructs its component surface verbatim off the composed raw.
 		const surfaces = span_tags!.map((_, i) => raw.slice(span_starts![i]!, span_ends![i]!))
 		expect(surfaces).toEqual(["Buffalo Health Clinic", "Buffalo", "NY", "14201"])
-		// The separator comma + space sit outside every span (deliberately unlabeled).
 		expect(span_ends![0]!).toBeLessThanOrEqual(21)
 		expect(span_starts![1]!).toBeGreaterThanOrEqual(23)
 	})
@@ -1004,7 +984,6 @@ describe("composeAdversarialRow", () => {
 		expect(result.kind).toBe("labeled")
 
 		if (result.kind !== "labeled") return
-		// The whole venue — apostrophe, period, accent included — is one span.
 		expect(result.row.span_tags![0]).toBe("venue")
 
 		expect(result.row.raw.slice(result.row.span_starts![0]!, result.row.span_ends![0]!)).toBe(
@@ -1066,9 +1045,7 @@ describe("typoInject (#530)", () => {
 		const tag = changed[0]!
 		expect(tag).not.toBe("house_number")
 		expect(tag).not.toBe("postcode")
-		// substring interface: the typo'd value is present in the new raw
 		expect(out!.raw).toContain(out!.components[tag]!)
-		// changed, and same length (a transpose or a single-char substitution)
 		expect(out!.components[tag]).not.toBe(row.components[tag])
 		expect(out!.components[tag]!).toHaveLength(row.components[tag]!.length)
 	})

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the activity-phrase collision census (#1962): the probe enumeration, the venue-name
+ *   Tests for the activity-phrase collision census: the probe enumeration, the venue-name
  *   classification, and the committed report's agreement with the committed lexicon.
  *
- *   No database. The census takes its POI reader injected, so the `Somewhere` collision is reproduced from a
- *   synthetic one — the case matters enough to be pinned somewhere a run without `poi.db` still executes it.
+ *   No database is required. The census takes its POI reader injected, so the `Somewhere` collision
+ *   is reproduced from a synthetic reader.
  */
 
 import { readActivityLexicon } from "@mailwoman/activity-lexicon"
@@ -136,7 +136,7 @@ describe("the census over a synthetic reader", async () => {
 		expect(report.nameLexicon.counts.exactQueryShaped).toBe(1)
 		expect(report.nameLexicon.counts.exactLegitimate).toBe(0)
 
-		// Probe order, which is code-point ascending — `prescription` before `somewhere`.
+		// Probe order is code-point ascending, so `prescription` comes before `somewhere`.
 		expect(report.nameLexicon.containment.map((row) => row.name)).toEqual([
 			"Prescription Shoppe",
 			"Somewhere Else Pub & Grill",

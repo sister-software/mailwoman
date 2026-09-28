@@ -3,18 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fetch GeoNames per-country gazetteer dumps — the 19-column `<CC>.txt` files under
- *   `https://download.geonames.org/export/dump/` (not the postal exports. those are `export/zip/` and
- *   `geonames-postal.ts`'s job). The dumps carry feature classes and codes (column 8: `pplc` national capital,
- *   `ppla` first-order administrative seat), which is what the capitals reference build consumes (#1880).
+ *   Fetch GeoNames per-country gazetteer dumps. These are the 19-column `<CC>.txt` files under
+ *   `https://download.geonames.org/export/dump/`, the export directory rather than the postal export
+ *   at `export/zip/` that `geonames-postal.ts` handles. The dumps carry feature classes and codes
+ *   (column 8: `pplc` national capital, `ppla` first-order administrative seat), which is what the
+ *   capitals reference build consumes.
  *
- *   The catalog question is answered by the source rather than by an ISO list: `countryInfo.txt` in the same directory
- *   enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and also names each country's
- *   capital — the cross-check the capitals build grades its `pplc` extraction against. Fetch that first. derive
- *   the country set from it. then a dump absent from disk is a measured gap against the source's own catalog
- *   rather than a silent hole. The dump directory may hold files this tool did not fetch: present files are never
- *   overwritten, and a present `<CC>.txt` that is not a 19-column gazetteer dump (GeoNames' postal exports share
- *   the basename) is reported as `wrong_format_present`, never counted as coverage.
+ *   The catalog question is answered by the source rather than by an ISO list. `countryInfo.txt` in
+ *   the same directory enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and
+ *   also carries each country's capital, the cross-check the capitals build grades its `pplc`
+ *   extraction against. Fetch that first and derive the country set from it, so a dump absent from
+ *   disk is a measured gap against the source's own catalog. The dump directory may hold files this
+ *   tool did not fetch. Present files are never overwritten, and a present `<CC>.txt` that is not a
+ *   19-column gazetteer dump (GeoNames' postal exports share the basename) is reported as
+ *   `wrong_format_present` rather than counted as coverage.
  */
 
 import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -87,12 +89,11 @@ export interface GeonamesDumpManifest {
 	 */
 	unavailable: string[]
 	/**
-	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps — GeoNames' postal
-	 * exports share the same basename, and seven tier-1 postal files sat at these paths
-	 * reading as "present" until the capitals build found them capital-less.
+	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps. GeoNames' postal exports share
+	 * the same basename.
 	 *
-	 * Left in place (this tool never overwrites data it did not fetch);
-	 * the fix is to move the file to its own home and rerun.
+	 * Left in place (this tool never overwrites data it did not fetch).
+	 * The fix is to move the file to its own home and rerun.
 	 */
 	wrong_format_present: string[]
 }
@@ -235,8 +236,8 @@ export async function fetchGeonamesDumps(
 
 			const message = error instanceof Error ? error.message : String(error)
 
-			// Branch on the typed status (the geonames-postal lesson): message prose
-			// contains the URL, and a URL can contain any substring.
+			// Branch on the typed status. Message prose contains the URL, and a URL can contain any
+			// substring.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)
 				unavailable.push(country)

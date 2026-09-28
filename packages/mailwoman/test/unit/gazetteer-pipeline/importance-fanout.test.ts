@@ -3,20 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale cover for the Wikidata concordance fan-out guard (#1497).
- *
- *   The four named fixtures are the real groups the 2026-08-05 survey pulled out of
- *   `admin-global-priority.db`, coordinates and populations included — one per branch of the rule, so
- *   a change to the rule that fails a real input fails a test rather than a rebuild.
+ *   Fixture-scale cover for the Wikidata concordance fan-out guard. The four fixtures are one per
+ *   branch of the rule, so a change to the rule that fails a real input fails a test rather than a
+ *   rebuild.
  */
 
 import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "mailwoman/gazetteer-pipeline/importance-fanout"
 import { describe, expect, it } from "vitest"
 
 /**
- * Q61 — Washington DC as WOF models it: one place carrying three placetypes at one point.
- *
- * Not an error, and the reason the guard cannot simply drop every fanned-out id.
+ * Q61 is Washington DC as WOF models it, one place carrying three placetypes at one point. Each role
+ * is real, so every member is kept.
  */
 const Q61 = [
 	{ id: 85_688_741, placetype: "region", lat: 38.9047, lon: -77.0163, population: 678_972 },
@@ -25,9 +22,7 @@ const Q61 = [
 ]
 
 /**
- * Q18125 — Manchester, England, also attached to two American villages.
- *
- * Population is decisive.
+ * Q18125 is Manchester, England, also attached to two American villages. Population decides.
  */
 const Q18125 = [
 	{ id: 101_717_233, placetype: "locality", lat: 40.0614, lon: -76.7191, population: 2788 },
@@ -36,11 +31,9 @@ const Q18125 = [
 ]
 
 /**
- * Q1794 — Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
- *
- * Beyond the coincidence radius, so population decides.
- * The city wins, which is also what stops the two from carrying identical importance
- * and blurring the placetype signal.
+ * Q1794 is Frankfurt am Main, attached to both the city and a neighbourhood 12 km out. Beyond the
+ * coincidence radius, so the more populous place wins, which also keeps the two from carrying
+ * identical importance and blurring the placetype signal.
  */
 const Q1794 = [
 	{ id: 101_913_837, placetype: "locality", lat: 50.1155, lon: 8.6842, population: 763_380 },
@@ -48,9 +41,8 @@ const Q1794 = [
 ]
 
 /**
- * Q340 — Montréal, canada, attached to two French communes 182 km apart, neither with a population row.
- *
- * No evidence to pick between them and both are wrong, so the id is dropped whole.
+ * Q340 is Montréal, Canada, attached to two French communes 182 km apart, neither with a population
+ * row. No evidence picks between them and both are wrong, so the id is dropped whole.
  */
 const Q340 = [
 	{ id: 102_068_207, placetype: "county", lat: 43.9361, lon: 0.1972, population: 0 },
@@ -88,7 +80,7 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("drops on a population TIE between distant candidates", () => {
-		// A tie is not evidence.
+		// A tie carries no evidence.
 		// Picking the first would be picking by row order.
 		const tied = [
 			{ id: 1, placetype: "locality", lat: 0, lon: 0, population: 1000 },
@@ -111,7 +103,7 @@ describe("resolveConcordanceFanout", () => {
 
 	it("uses coincidence BEFORE population, so a dual-role group survives a population gap", () => {
 		// Same point, different populations (WOF does not always populate every role's row).
-		// The coincidence branch must win — otherwise the region/county rows of a real city get dropped.
+		// The coincidence branch must win, otherwise the region and county rows of a real city get dropped.
 		const rolesWithGap = [
 			{ id: 1, placetype: "region", lat: 50, lon: 8, population: 0 },
 			{ id: 2, placetype: "locality", lat: 50, lon: 8, population: 763_380 },
@@ -124,9 +116,6 @@ describe("resolveConcordanceFanout", () => {
 	})
 
 	it("measures spread across the WHOLE group, not just the first pair", () => {
-		// First two are coincident.
-		// The third is 6,000 km away.
-		// A pairwise-first implementation would call this coincident and keep the outlier.
 		const straggler = [
 			{ id: 1, placetype: "locality", lat: 50, lon: 8, population: 100 },
 			{ id: 2, placetype: "locality", lat: 50, lon: 8, population: 900 },

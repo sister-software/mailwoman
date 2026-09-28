@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Measure the #244 coarse-placer's handling of the Latin-script off-map residual (milestone 3). A
- *   Latin off-map address is handled when the model routes it to `other` or abstains — anything else
- *   is a confident mis-placement onto a wrong (trained) country. Reports handled-rate overall, by
- *   group (indist = held-out rows of trained-other countries. heldout = countries never trained),
- *   and by source country, plus where the misses land. Run baseline (current model) and the M3
- *   retrain through this to read the before/after.
+ *   Measure the coarse-placer's handling of the Latin-script off-map residual. A Latin off-map
+ *   address is handled when the model routes it to `other` or abstains. Anything else is a
+ *   confident mis-placement onto a wrong trained country. Reports handled-rate overall, by group
+ *   (indist is held-out rows of trained-other countries, heldout is countries never trained), and
+ *   by source country, plus where the misses land.
  *
  *   Run: `mailwoman placer eval latin-offmap --model <dir> [--abstain 0.5]`
  */
@@ -64,7 +63,7 @@ export interface EvalLatinOffmapResult {
 }
 
 /**
- * Coarse-placer Latin off-map handling eval — see the module doc.
+ * Coarse-placer Latin off-map handling eval. See the module doc.
  *
  * Emits the report to stdout.
  */

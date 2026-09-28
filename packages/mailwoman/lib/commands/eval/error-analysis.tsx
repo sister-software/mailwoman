@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval error-analysis` — categorized failure report over the golden eval set (the
- *   pre-publish 2pp promote eval. night-shift skill). Builds the classifier via `createScorer` in
- *   strict ship-config mode so a `--model` candidate is graded in-distribution (#566/#685 trap);
- *   `--no-strict` warns-and-continues for legacy pre-anchor models.
+ *   `mailwoman eval error-analysis` is the categorized failure report over the golden eval set, the
+ *   pre-publish 2pp promote eval. It builds the classifier via `createScorer` in strict ship-config
+ *   mode so a `--model` candidate is graded in-distribution, and `--no-strict`
+ *   warns-and-continues for legacy pre-anchor models.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

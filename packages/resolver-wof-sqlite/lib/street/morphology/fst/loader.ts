@@ -3,22 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unified runtime loader for the street-morphology FST — the #1315 street-context check's signal
- *   source, previously rebuilt from the libpostal dictionaries per process at three duplicate call
- *   sites (runtime pipeline / parity eval / neural harness). The sealed artifact
- *   (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`) replaces
- *   those per-process builds. this loader is the one resolution ladder every node call site shares:
+ *   Runtime loader for the street-morphology FST. The sealed artifact
+ *   (`fst-street-morphology.bin`, built by `mailwoman gazetteer build street-morphology`) is the one
+ *   resolution ladder every node call site shares.
  *
- *   1. An explicit `artifactPath` (e.g. the weights-package sibling surfaced by
- *      `NeuralAddressClassifier.streetMorphologyPath`). When given, it is the only artifact probed.
+ *   1. An explicit `artifactPath`, e.g. the weights-package sibling surfaced by
+ *      `NeuralAddressClassifier.streetMorphologyPath`. When given, it is the only artifact probed.
  *   2. Otherwise the staged sealed artifact at `$MAILWOMAN_DATA_ROOT/db/wof/fst-street-morphology.bin`.
- *   3. Build-from-dictionaries fallback: `buildStreetMorphologyFST` over core's bundled libpostal
- *      `street_types.txt` files — the pre-artifact behavior, kept so a missing artifact degrades to
- *      a per-process build rather than a crash.
+ *   3. A build-from-dictionaries fallback: `buildStreetMorphologyFST` over core's bundled libpostal
+ *      `street_types.txt` files, kept so a missing artifact degrades to a per-process build instead
+ *      of a crash.
  *
  *   A present-but-unreadable artifact reports through `onWarn` and falls through to the build rung.
- *   Browsers can't take the fallback (no fs) — they deserialize the same artifact via
- *   `fst-deserialize-web.ts` (see the docs demo loader).
+ *   Browsers cannot take the fallback, because there is no fs, and they deserialize the same
+ *   artifact through `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -32,8 +30,8 @@ import { wofDatabasePath } from "#paths"
 import { buildStreetMorphologyFST } from "#street/morphology/fst/builder"
 
 /**
- * The sealed artifact's canonical filename — identical in the data-root staging dir
- * and as a weights-package sibling.
+ * The sealed artifact's canonical filename, identical in the data-root staging dir and as a
+ * weights-package sibling.
  */
 export const STREET_MORPHOLOGY_ARTIFACT_FILENAME = "fst-street-morphology.bin"
 
@@ -48,8 +46,8 @@ export interface LoadStreetMorphologyFSTOpts {
 	/**
 	 * Explicit artifact path (e.g. A weights-package sibling).
 	 *
-	 * When given it is the only artifact probed — missing or unreadable degrades
-	 * straight to the dictionary build, never a throw.
+	 * When given it is the only artifact probed, and a missing or unreadable one degrades straight
+	 * to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike
 	/**
@@ -77,7 +75,7 @@ export interface LoadedStreetMorphologyFST {
 	 */
 	path?: PathBuilderLike
 	/**
-	 * Build provenance — read from the artifact trailer, or carried fresh off the fallback build.
+	 * Build provenance, read from the artifact trailer or carried fresh off the fallback build.
 	 */
 	provenance?: FSTProvenance
 }

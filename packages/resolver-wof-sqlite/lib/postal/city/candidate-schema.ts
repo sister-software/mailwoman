@@ -3,18 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for the postal-city candidate side-index (#741 / #475) — a small `(name_key,
- *   postcode) → geo-locality` table that lives alongside the byte-range `candidate` table so the
- *   candidate-backend resolver (the demo/CLI default) can do what the FTS coordinate-first scorer
- *   does: resolve a user-typed postal city ("Antioch", 37013) to the geographic locality the
- *   postcode sits in ("Nashville").
+ *   Typed schema for the postal-city candidate side-index, a small `(name_key, postcode)` →
+ *   geo-locality table alongside the byte-range `candidate` table. The candidate-backend resolver
+ *   (the demo and CLI default) can then do what the FTS coordinate-first scorer does, which is
+ *   resolve a user-typed postal city ("Antioch", 37013) to the geographic locality the postcode
+ *   sits in ("Nashville").
  *
- *   Why a side-index rather than cloned `candidate` rows: the `candidate` B-tree is keyed `(name_key,
- *   country_id, region_id, placetype_id, …)` and ranked population-first — it has no postcode
- *   dimension. A cloned alias row was tested (#741) and falsified: a sentinel rank is
- *   bare-name-safe but then loses to any in-region homonym, and there is no single rank that is
- *   both. The fix is an exact `(name_key, postcode)` probe that bypasses population/region ranking
- *   entirely — consulted only when the query carries a postcode, so the common no-postcode path is
+ *   The `candidate` B-tree is keyed `(name_key, country_id, region_id, placetype_id, …)` and ranked
+ *   population-first, so it has no postcode dimension. A cloned alias row cannot satisfy both
+ *   purposes, because a sentinel rank is bare-name-safe and then loses to any in-region homonym.
+ *   The exact `(name_key, postcode)` probe bypasses population and region ranking entirely, and it
+ *   is consulted only when the query carries a postcode, so the common no-postcode path is
  *   untouched.
  */
 
@@ -30,7 +29,7 @@ import type { NameKey } from "#street/normalize"
  */
 export interface PostalCityCandidateTable {
 	/**
-	 * {@link normalizeLocalityForKey} of the postal-city name — the build/query-consistent probe key.
+	 * {@link normalizeLocalityForKey} of the postal-city name, the build/query-consistent probe key.
 	 */
 	name_key: NameKey
 	/**
@@ -74,12 +73,12 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the side-index — a clustered `without rowid` B-tree on `(name_key, postcode)`
- * so the resolve is a single exact probe.
+ * Create the side-index, a clustered `without rowid` B-tree on `(name_key, postcode)` so the
+ * resolve is a single exact probe.
  *
- * Idempotent (`if not exists`); pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
- * The Kysely schema-builder is the house idiom for table creation.
- * See `agents.md` (inline-SQL → Kysely).
+ * Idempotent (`if not exists`). Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate
+ * DB. The Kysely schema-builder is the house idiom for table creation. See `agents.md` on inline
+ * SQL and Kysely.
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema

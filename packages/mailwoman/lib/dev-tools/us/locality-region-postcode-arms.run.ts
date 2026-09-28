@@ -1,34 +1,26 @@
 /**
- * The four surfaces #2303 is decided on, over the same US localities, through the production path.
+ * The four surfaces the locality-region-postcode decision rests on, over the same US localities,
+ * through the production path.
  *
  * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003`
- * does, and the corpus reason is that no US recipe ever put a locality in front of
- * a region code and a postcode without a street ahead of it.
- * This renders one set of real localities four ways and reports the locality-match rate of each,
- * so the three-arm table on the issue and the reverse risk are one measurement rather than two.
+ * does, and the corpus reason is that no US recipe ever put a locality in front of a region code and
+ * a postcode without a street ahead of it. This renders one set of real localities four ways and
+ * reports the locality-match rate of each, so the three-arm table and the reverse risk are one
+ * measurement rather than two.
  *
- * Teaching `«locality», «region» «postcode»` risks the inverse: a genuine street
- * before a region code read as a locality.
- * The reverse arm measures it by putting a street in that position and counting
- * how often it comes back tagged `locality`.
+ * Teaching `«locality», «region» «postcode»` risks the inverse, where a genuine street before a
+ * region code is read as a locality. The reverse arm measures it by putting a street in that
+ * position and counting how often it comes back tagged `locality`. A row whose locality is null
+ * there is correct.
  *
- * A row whose locality is null there is correct.
+ * Three of the four arms render through `formatAddress` and the codex layouts and differ only in
+ * which components the dict carries. `street_only` cannot, because it puts a street name where a
+ * locality belongs, and a renderer that produces well-formed addresses cannot express a deliberate
+ * malformation.
  *
- * The panel is derived from the US coordinate set, one row per distinct locality, and the
- * street arm reuses that row's own street so no arm invents an address that does not exist.
- *
- * Three of the four arms render through `formatAddress` and the codex layouts (#2313)
- * and differ only in which components the dict carries.
- * `street_only` is the one that cannot: it puts a street name where a locality belongs,
- * and a renderer that produces well-formed addresses cannot express a deliberate malformation.
- *
- * That arm keeps its literal and says so in place.
- *
- * Each arm's rate ships with a per-name-shape and a per-tail-word table beside it,
- * because one rate hides the split this panel exists to show.
- * Read the per-word table for its row counts first: 24 of the 34 tail words carry one
- * or two panel rows, and `park` alone carries 11 of the bare arm's 31 suffix-bucket misses,
- * so a per-word rate here is a pointer to a question rather than an answer.
+ * Each arm's rate ships with a per-name-shape and a per-tail-word table beside it, because one rate
+ * hides the split this panel exists to show. Read the per-word table for its row counts first, since
+ * a per-word rate here is a pointer to a question rather than an answer.
  *
  * `--out-json` carries every row's outcome for the same reason.
  *
@@ -62,7 +54,6 @@ const { values } = parseArguments({
 		// `locality_only` is the verdict the postcode-removal arm was observed to produce,
 		// so forcing it here separates "the verdict limits the decode" from "removing
 		// the postcode changes the model's evidence".
-		// The two the removal arm could not tell apart.
 		"force-kind": { type: "string" },
 		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
 		// Which codex layout the three well-formed arms are written through.
@@ -101,9 +92,8 @@ const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
  * where the row's own input carries one.
  *
  * The street is optional because only the reverse arm needs it, and a panel drawn
- * from a postcode export has no streets at all.
- * Requiring one dropped every row of such a panel and reported all four arms as `0/0` with a zero exit.
- * An empty read that looks exactly like a measured zero.
+ * from a postcode export has no streets at all. Requiring one would report every arm
+ * as `0/0` with a zero exit, an empty read that looks exactly like a measured zero.
  *
  * The three forward arms take every row.
  * `street_only` takes the rows that carry a street and says how many that was.
@@ -171,10 +161,10 @@ interface RowOutcome {
 	arm: string
 	input: string
 	/**
-	 * The locality the panel names, and the one the run answered.
+	 * The locality the panel carries, and the one the run answered.
 	 *
 	 * Both are localities, so neither is `locality` alone.
-	 * A field named for the tag says which tag, never which side of the comparison.
+	 * A field whose label is the tag says which tag, never which side of the comparison.
 	 */
 	expected: string
 	answered: string | null

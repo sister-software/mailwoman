@@ -3,12 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The OSM rooftop extract provider — the injection point the geocode cascade consults for the opt-in
- *   international precision tier (#247). Given a data root, it opens `osm/address-points-<cc>-<cc>.db`
- *   with the country's street-normalization locale (so probe-side keying matches the extract the builder
- *   wrote) and caches the open handle per country. Wire its bound `for` into `GeocodeDeps.osmExtracts`.
+ *   The OSM rooftop extract provider, the injection point the geocode cascade consults for the opt-in
+ *   international precision tier. Given a data root, it opens `osm/address-points-<cc>-<cc>.db`
+ *   with the country's street-normalization locale, so probe-side keying matches the extract the
+ *   builder wrote, and caches the open handle per country. Wire its bound `for` into
+ *   `GeocodeDeps.osmExtracts`.
  *
- *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/readme.md` for the
+ *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases. See `osm/readme.md` for the
  *   distribution boundary and the counsel sign-off required before shipping any of them.
  */
 
@@ -21,24 +22,21 @@ import { osmDatabaseRoot } from "#paths"
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street/locale"
 
 /**
- * The member of {@link RegionDatabases} an OSM extract supplies.
- *
- * It narrows to the SQLite class that opened it, because the provider disposes the handle.
+ * The member of {@link RegionDatabases} an OSM extract supplies, narrowed to the SQLite class that
+ * opened it so the provider can dispose the handle.
  */
 export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
 	addressPoints?: AddressPointSqliteLookup
 }
 
 /**
- * Opens + caches per-country OSM rooftop lookups.
- *
- * A non-US geocode consults `for(country)`; the first hit for a country opens its
- * extract (with the matching street locale) once, subsequent calls reuse it.
+ * Opens and caches per-country OSM rooftop lookups.
  *
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
- * per call: {@linkcode warm} awaits `pathExists` for every supported country's extract
- * and records what exists; `for` consults that map.
- * Prefer {@linkcode OSMRegionDatabaseProvider.create}, which constructs and warms before answering.
+ * per call. {@linkcode warm} awaits `pathExists` for every supported country's extract
+ * and records what exists, and `for` consults that record.
+ * Prefer {@linkcode OSMRegionDatabaseProvider.create}. It constructs the provider and warms it
+ * before answering.
  *
  * A provider constructed directly must be warmed before its first `for`,
  * or it answers `{}` for every country.
@@ -47,7 +45,7 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	readonly #dataRoot: PathBuilder
 	readonly #cache = new Map<string, OSMExtracts>()
 	/**
-	 * Extract paths {@linkcode warm} observed on disk — the synchronous existence source `for` consults.
+	 * Extract paths {@linkcode warm} observed on disk, the synchronous existence source `for` consults.
 	 */
 	readonly #onDisk = new Set<string>()
 	#warmPromise?: Promise<void>
@@ -59,7 +57,6 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	/**
 	 * Construct a provider and warm its existence map before answering.
 	 *
-	 * The constructor cannot await the probe, so this static factory does.
 	 * A caller that constructs directly must {@linkcode warm} before the first `for`.
 	 */
 	static async create(dataRoot: PathBuilder): Promise<OSMRegionDatabaseProvider> {
@@ -77,8 +74,6 @@ export class OSMRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	/**
 	 * Preload extract existence for every country the provider may be asked for.
 	 *
-	 * Awaits `pathExists` for each supported country's rooftop extract, recording the
-	 * paths that exist so `for` never touches the filesystem.
 	 * Safe to call more than once: the probe promise is cached, so every caller
 	 * (and {@linkcode OSMRegionDatabaseProvider.create}) shares one pass.
 	 */

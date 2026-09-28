@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Autocomplete behaviors ported from mailwoman's `fst-autocomplete` (#587): partial-last-token
- *   completion, the complete-token-must-not-shadow rule, the per-branch cap, dedupe, and the
- *   robustness interface (never throw, [] over garbage). Plus the parts the FST could not answer:
- *   every suggestion's containment chain.
+ *   Autocomplete coverage: partial last-token completion, the complete-token shadow rule, the
+ *   per-branch cap, dedupe, containment chains, and the robustness interface.
  */
 
 import { autocomplete } from "@mailwoman/ancestrie/autocomplete"
@@ -25,10 +23,6 @@ function seal(entries: readonly AncestrieEntry[]): Ancestrie {
 	return Ancestrie.from(builder.seal())
 }
 
-// The synthetic trie the FST suite used: root
-// --new--> [york → New York. London → New London ×2 (city 2 + county 3)]
-//        --san--> [francisco → San Francisco]
-//        --chicago--> Chicago
 const CITIES = seal([
 	{ tokens: ["new", "york"], id: 1, parentIDs: [], rank: 0.9, payload: { name: "New York" } },
 	{ tokens: ["new", "london"], id: 2, parentIDs: [], rank: 0.5, payload: { name: "New London" } },
@@ -53,9 +47,8 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The live FST artifact held a place literally named "Chic".
-		// The typed prefix is both a complete edge and a partial of "chicago", and letting
-		// the successful walk short-circuit silently dropped every longer completion.
+		// The typed prefix is both a complete edge and a partial of "chicago". The walk must
+		// continue past the exact match to keep every longer completion.
 		const shadowed = seal([
 			{ tokens: ["chic"], id: 10, parentIDs: [], rank: 0.1 },
 			{ tokens: ["chicago"], id: 11, parentIDs: [], rank: 0.85 },
@@ -98,9 +91,8 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a dense branch does not starve a high-rank sibling (#587 per-branch cap)", () => {
-		// "go" → "diego" (12 low-rank entries) + "tham" (one high-rank Gotham).
-		// Without the cap the 12 fill the budget before "tham" is visited,
-		// and the entry a user most likely wants drops.
+		// The per-branch cap keeps a dense low-rank branch from consuming the budget
+		// before a high-rank sibling is visited.
 		const dense = seal([
 			...Array.from({ length: 12 }, (_, i): AncestrieEntry => {
 				return { tokens: ["go", "diego"], id: 100 + i, parentIDs: [], rank: 0.1 }
@@ -130,7 +122,6 @@ describe("dedupe", () => {
 	})
 
 	it("dedupe accepts a caller-supplied key function", () => {
-		// Collapse by payload name — the literal dedupeByName the FST shipped.
 		const r = autocomplete(CITIES, ["new", "london"], {
 			dedupe: (s) => ((s.payload as { name: string }).name ?? "").toLowerCase(),
 		})
@@ -179,15 +170,12 @@ describe("the normalizeToken boundary", () => {
 		const trie = Ancestrie.from(builder.seal())
 
 		expect(autocomplete(trie, ["NEW", "YOR"], { normalizeToken: fold }).suggestions.map((s) => s.id)).toEqual([1])
-		// Without the query-side normalizer the cased query misses.
-		// The normalization boundary is the caller's interface.
+		// The normalization boundary is the caller's interface, so both sides need the same normalizer.
 		expect(autocomplete(trie, ["NEW", "YOR"]).suggestions).toEqual([])
 	})
 })
 
 describe("New-York-style fixture: same surface, different entries, chains attached", () => {
-	// US (100) ⊃ New York State (10) ⊃ New York County (21) ⊃ New York City (11).
-	// State, county, and city all accept at the surface "new york"; "nyc" aliases the city.
 	const nyTrie = seal([
 		{ tokens: ["united", "states"], id: 100, parentIDs: [], rank: 0.95 },
 		{ tokens: ["new", "york"], id: 10, parentIDs: [100], rank: 0.7, payload: { kind: "region" } },

@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins for the shared dev-weights freshness implementation (#1734). The sidecar interface is the part worth pinning: a
- *   fresh sidecar is trusted (that is the whole point — never re-hash a multi-gigabyte source per linker run), a stale
- *   or malformed one recomputes and rewrites, and the rewrite self-heals the cache.
+ * Tests for `md5FileWithSidecar`, the shared dev-weights freshness sidecar.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -54,7 +52,7 @@ describe("md5FileWithSidecar (#1734)", () => {
 		const fake = "deadbeefdeadbeefdeadbeefdeadbeef"
 
 		await writeLocalTextFile(`${fake}  source.bin\n`, `${path}.md5`)
-		// Sidecar mtime strictly before the source's — the state after a source swap that forgot the sidecar.
+		// Sidecar mtime strictly before the source's, the state after a source swap that forgot the sidecar.
 		await setTimestamps(`${path}.md5`, new Date(0), new Date(0))
 
 		const hash = await md5FileWithSidecar(path)

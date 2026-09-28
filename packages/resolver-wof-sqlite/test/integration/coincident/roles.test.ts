@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the coincident-roles relation builder (#403, epic #402). Builds an in-memory fixture
- *   gazetteer (spr + ancestors + place_population) covering the city-state, capital-seat, and
- *   too-far (excluded) cases, then asserts the derived relation + the in-memory loader.
+ * Tests for the coincident-roles relation builder.
  */
 
 import {
@@ -36,7 +34,7 @@ interface FixtureRow {
 
 // Region/locality pairs. A locality is made a descendant of a region via the `ancestors` table below.
 const FIXTURE: FixtureRow[] = [
-	// Berlin — city-state: region + locality centroids coincide (dist 0), small bbox.
+	// Berlin, city-state: region and locality centroids coincide (dist 0), small bbox.
 	{ id: 10, name: "Berlin", placetype: "region", country: "DE", lat: 52.52, lon: 13.4, d: 0.3 },
 	{
 		id: 11,
@@ -48,7 +46,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.2,
 		population: 3_600_000,
 	},
-	// Milano — capital-seat: large province bbox, comune ~5 km from the province centroid.
+	// Milano, capital-seat: large province bbox, comune ~5 km from the province centroid.
 	{ id: 20, name: "Milano", placetype: "region", country: "IT", lat: 45.5, lon: 9.2, d: 0.6 },
 	{
 		id: 21,
@@ -60,9 +58,8 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.2,
 		population: 1_350_000,
 	},
-	// Brandenburg — not dual-role: same-name town ~75 km W of the region centroid →
-	// beyond the relative tolerance (region bbox ⌀ ~313 km → 15 % ≈ 47 km).
-	// Mirrors the real gazetteer, where Brandenburg is correctly absent from the 128.
+	// Brandenburg, beyond the relative tolerance: same-name town ~75 km W of the region
+	// centroid (region bbox ⌀ ~313 km, 15 % ≈ 47 km).
 	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13, d: 1.2 },
 	{
 		id: 31,
@@ -74,7 +71,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.1,
 		population: 72_000,
 	},
-	// Bayern region + München locality (different name) → never matched.
+	// Bayern region and München locality (different name) are never matched.
 	{ id: 40, name: "Bayern", placetype: "region", country: "DE", lat: 48.9, lon: 11.4, d: 1.5 },
 	{
 		id: 41,
@@ -86,7 +83,7 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.2,
 		population: 1_500_000,
 	},
-	// County-tier same-name pair (a French-canton analogue) → excluded (v1 is region-tier only).
+	// County-tier same-name pair (a French-canton analogue), excluded because v1 is region-tier only.
 	{ id: 50, name: "Casteljaloux", placetype: "county", country: "FR", lat: 44.3, lon: 0.09, d: 0.4 },
 	{
 		id: 51,
@@ -98,13 +95,13 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.05,
 		population: 5000,
 	},
-	// Ambiguous region: two same-name coincident localities → relation records both (resolver disambiguates).
+	// Ambiguous region: two same-name coincident localities, and the relation records both.
 	{ id: 60, name: "Padova", placetype: "region", country: "IT", lat: 45.4, lon: 11.87, d: 0.5 },
 	{ id: 61, name: "Padova", placetype: "locality", country: "IT", lat: 45.41, lon: 11.88, d: 0.1, population: 200_000 },
 	{ id: 62, name: "Padova", placetype: "locality", country: "IT", lat: 45.45, lon: 11.95, d: 0.1, population: 20 },
 ]
 
-// (locality id → its region ancestor id)
+// locality id to its region ancestor id
 const ANCESTRY: Array<[number, number]> = [
 	[11, 10],
 	[21, 20],

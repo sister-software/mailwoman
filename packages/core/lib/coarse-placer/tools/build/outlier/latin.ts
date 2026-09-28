@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Latin-script off-map outlier exposure for the #244 coarse-placer (milestone 3). M2's `other` class
- *   was trained on NON-Latin/non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map
- *   countries written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained
- *   Latin country (the "Latin-off-map residual"). The fix is real off-map addresses (not synthetic
- *   name variants — see #564: synthetic mass fits its own quirks): assemble address strings from
- *   the Overture per-country address parquet and append them as `country: "other"`.
+ *   Latin-script off-map outlier exposure for the coarse-placer. The `other` class is trained on
+ *   non-Latin and non-CJK scripts (Cyrillic, Arabic, …) from WOF names, so off-map countries
+ *   written in Latin script (Poland, Brazil, Mexico, …) still mis-place to a trained Latin country,
+ *   the "Latin-off-map residual". The fix assembles real off-map addresses from the Overture
+ *   per-country address parquet and appends them as `country: "other"`.
  *
  *   Discipline: countries split into train (their rows feed train/val `other`) and heldout (rows go
- *   only to the dedicated test file), so we can measure generalization to off-map countries the
- *   model never saw — not just memorization. The in-map test.jsonl is left untouched so the
- *   before/after in-map regression check stays clean. the Latin metric lives in its own file.
+ *   only to the dedicated test file), so generalization to off-map countries the model never saw
+ *   stays measurable. The in-map test.jsonl is left untouched so the before/after in-map regression
+ *   check stays clean. The Latin metric lives in its own file.
  *
  *   Run after build-dataset + the exposure outliers (it appends). Re-runnable: it rewrites the
  *   dedicated test file and appends fresh `other` rows (so don't run it twice onto the same splits
@@ -79,16 +78,8 @@ export interface BuildOutlierLatinResult {
  * Train feeds the `other` class.
  * Heldout is test-only.
  *
- * The generalization probe (unseen off-map countries should still route `other`).
- * #743: PL/PT/CZ moved from `other` to first-class in-map countries
- * (they're now in COARSE_CLASSES), so they're removed here — keeping them would feed
- * contradictory gold (the same address labelled both PL and `other`).
- *
- * That leaves BR/MX as the Latin off-map train exposure and CA/LI as the heldout probe
- * (the hard near-twins of in-map US/DE — an honest worst case).
- * The in-map expansion itself shrinks the off-map Latin surface, and the bulk `other` exposure
- * is non-Latin (build- outlier-exposure.ts), so the thinner Latin train set is acceptable.
- * Watch other-Latin recall in the openset eval.
+ * BR/MX are the Latin off-map train exposure and CA/LI are the heldout probe, the hard near-twins
+ * of in-map US/DE. Watch other-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
@@ -125,7 +116,7 @@ function overtureLocality(r: Record<string, unknown>): string {
 }
 
 /**
- * Coarse-placer Overture Latin-off-map outlier builder — see the module doc.
+ * Coarse-placer Overture Latin-off-map outlier builder. See the module doc.
  */
 export async function buildOutlierLatin(
 	options: BuildOutlierLatinOptions = {},
@@ -160,8 +151,6 @@ export async function buildOutlierLatin(
 	const trainAppend: string[] = []
 	const valAppend: string[] = []
 	const testRows: LatinTestRow[] = []
-
-	// dedicated Latin off-map test: {raw, country:"other", group, srcCountry}
 
 	for (const cc of TRAIN_COUNTRIES) {
 		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
@@ -198,8 +187,6 @@ export async function buildOutlierLatin(
 
 	;(duck as { disconnect?: () => void }).disconnect?.()
 
-	// Append `other` rows to train/val.
-	// Write the dedicated Latin off-map test file.
 	await appendLocalTextFile(otherRowsJSONL(trainAppend), resolvePath(dataDir, "train.jsonl"))
 	await appendLocalTextFile(otherRowsJSONL(valAppend), resolvePath(dataDir, "val.jsonl"))
 

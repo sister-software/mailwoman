@@ -2,15 +2,17 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What `AddressNode.script` says on the four inputs #2282 was opened with.
+ * @file What `AddressNode.script` says on four inputs, each a row class the folded `CharacterClass`
+ *   answers wrongly.
  *
- *   The four are not arbitrary: each one is a row class the folded `CharacterClass` answers wrongly, and the assertion
- *   that matters in every case is about a span rather than the input. `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority
- *   Latin, so anything reading the input's script cannot find the Han venue — which is the span a router wants.
+ *   The assertion that matters in every case is about a span rather than the input.
+ *   `金龍酒家, 12 Gerrard Street, London WC2H 7JS` is majority Latin, so anything reading the input's
+ *   script cannot find the Han venue, which is the span a router wants.
  *
- *   The trees here are hand-built rather than parsed. A parse needs the ~9 GB database set and an ONNX bundle, and what
- *   is under test is the stamp: given spans and the text they index, which script each one answers. A test that ran the
- *   model would grade the model's tagging too, and fail for the wrong reason whenever that moved.
+ *   The trees here are hand-built rather than parsed. A parse needs the ~9 GB database set and an
+ *   ONNX bundle, and what is under test is the stamp: given spans and the text they index, which
+ *   script each one answers. A test that ran the model would grade the model's tagging too, and
+ *   fail for the wrong reason whenever that moved.
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"

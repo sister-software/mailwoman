@@ -3,15 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The canonical admin-gazetteer coverage recipe — the durable replacement for reconstruct-from-artifact
- *   (#1015: the manifest lagged the live DB by 71 Overture + 161 GeoNames countries, and the recipe had to
- *   be recovered from the artifact's synthetic-id ranges). The recipe now lives here, reviewed like code;
- *   `data/gazetteer/wof-build-manifest.json` is a build LOG (what ran, when, md5), not a recipe store.
+ *   The canonical admin-gazetteer coverage recipe. It lives here, reviewed like code, while
+ *   `data/gazetteer/wof-build-manifest.json` is a build log recording what ran, when, and the md5.
  *
- *   Provenance of the lists: reconstructed 2026-07-07 from the live `admin-global-priority.db` — WOF rows
- *   (`id < 2e9`) → the priority countries. Overture divisions (`8e12 ≤ id < 9e12`) → the 86. the GeoNames
- *   alias fold (`id ≥ 9e12`) → the 161. See releasing.md "Rebuilding + swapping the canonical admin
- *   gazetteer" and the #1021 PR.
+ *   The lists map id ranges to sources: WOF rows (`id < 2e9`) are the priority countries, Overture
+ *   divisions (`8e12 ≤ id < 9e12`) are the 86, and the GeoNames alias fold (`id ≥ 9e12`) is the 161.
+ *   See releasing.md "Rebuilding + swapping the canonical admin gazetteer".
  *
  * 	 TODO: Move most of this to JSON configuration files.
  */
@@ -25,13 +22,9 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"ES",
 	"FR",
 	"GB",
-	// Added 2026-08-02 after the granularity probe.
-	// `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes — more than Germany's
-	// 67,162, the richest tier shipped before this — converting at 98.6% into 186,469
-	// (child, parent) pairs, against Overture-IN's 74,920 nodes.
-	// That is 6× the shipped GB pair index, which took eight campaign rungs to assemble.
-	// IN moves OUT of DEFAULT_OVERTURE_COUNTRIES in the same change: a country served
-	// by both would double up its admin (the #267 warning).
+	// `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes, converting at 98.6% into
+	// 186,469 (child, parent) pairs. IN stays out of DEFAULT_OVERTURE_COUNTRIES, because a country
+	// served by both would double up its admin.
 	"IN",
 	"IT",
 	"JP",
@@ -42,7 +35,7 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 ] as const
 
 /**
- * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) — the zero-WOF-repo locales.
+ * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) for the zero-WOF-repo locales.
  */
 export const DEFAULT_OVERTURE_COUNTRIES = [
 	"AE",
@@ -82,7 +75,7 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 	"ID",
 	"IE",
 	"IL",
-	// "IN" moved to DEFAULT_WOF_PRIORITY_COUNTRIES 2026-08-02 — see the note there.
+	// "IN" lives in DEFAULT_WOF_PRIORITY_COUNTRIES.
 	"IQ",
 	"IR",
 	"IS",
@@ -134,7 +127,7 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 ] as const
 
 /**
- * GeoNames alias-fold tail (synthetic ids @ 9e12) — bilingual/alt-name coverage for the remaining locales.
+ * GeoNames alias-fold tail (synthetic ids @ 9e12): bilingual/alt-name coverage for the remaining locales.
  */
 export const DEFAULT_GEONAMES_COUNTRIES = [
 	"AD",
@@ -301,32 +294,28 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 ] as const
 
 /**
- * Pinned Overture release for the divisions theme (rows churn between monthly releases. Never mix two).
+ * Pinned Overture release for the divisions theme. Rows churn between monthly releases, and two
+ * vintages must never mix inside one artifact.
  *
- * Overture deletes old releases.
- * The bucket held exactly two when this was last checked, so a pin survives on the order
- * of a month and then the build fails with `No files found that match the pattern`.
+ * Overture deletes old releases, so a pin survives on the order of a month and then the build fails
+ * with `No files found that match the pattern`.
  *
- * Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`: two pins drifting apart
- * is what left this one on a pruned release while POI moved, and mixing two vintages
- * inside one artifact is the thing the line above forbids.
+ * Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`.
  */
 export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
 /**
- * Staging suffix for admin rebuilds — build here, verify, then swap over the live name (releasing.md).
+ * Staging suffix for admin rebuilds. Build here, verify, then swap over the live name (releasing.md).
  */
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
 /**
- * The zero-coverage gap set — GeoNames-alias locales carrying no WOF or Overture admin.
+ * The zero-coverage gap set: GeoNames-alias locales carrying no WOF or Overture admin.
  *
- * These are the `adminForCountries` targets for the GeoNames fold (#267): without the A-class
- * fold (pcli country + ADM1 regions + locality ancestry linking), their localities are orphans
- * and "City, Country" scoping breaks (#1023/#1026 — the canonical recipe silently omitted this
- * until 2026-07-07. The country nodes had come from coverage-expansion runs outside the recipe).
- * Countries with WOF/Overture admin are excluded by construction — folding their
- * GeoNames admin would double up (the #267 warning).
+ * These are the `adminForCountries` targets for the GeoNames fold. Without the A-class fold
+ * (pcli country + ADM1 regions + locality ancestry linking), their localities are orphans and
+ * "City, Country" scoping breaks. Countries with WOF/Overture admin are excluded by construction,
+ * because folding their GeoNames admin would double up.
  */
 export function geonamesAdminGapCountries(): string[] {
 	const covered = new Set<string>([...DEFAULT_OVERTURE_COUNTRIES, ...DEFAULT_WOF_PRIORITY_COUNTRIES])
@@ -339,7 +328,7 @@ export function geonamesAdminGapCountries(): string[] {
  *
  * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
  * because the fold rewrites its whole id range, and a narrower list re-folds the front of
- * that range while leaving every other country's names attached to the wrong places.
+ * that range while other countries' name rows stay attached to the wrong places.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 
@@ -354,53 +343,25 @@ export const DEFAULT_CANDIDATE_OUT = "candidate-global.db"
 export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
 
 /**
- * The conventional source of the `importance` column (#28) — a WOF admin database
- * carrying `place_importance`, built by `mailwoman gazetteer importance`.
+ * The conventional source of the `importance` column, a WOF admin database carrying
+ * `place_importance`, built by `mailwoman gazetteer importance`.
  *
  * Deliberately a separate artifact from {@link DEFAULT_ADMIN_DB}: the scores are expensive to derive
- * and change on their own cadence, so the shipped admin DB has never carried the table,
- * and the candidate build joins them in by name rather than assuming one file holds both.
+ * and change on their own cadence, so the candidate build joins them in by name rather than
+ * assuming one file holds both.
  */
 export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 
 /**
- * The frozen artifact's ten countries, IN its ingest order
- * (recovered from its per-country `spr.id` ranges: FI @ 9500000000000 … GB @ 9500000056075).
- *
- * The first nine are the #920 namesake-tail set the original `--geonames-postal-countries` flag carried.
- * GB was appended in a later pass from the `GB_full` dump and is 97 % of the
- * artifact (1,839,678 of 1,895,753 rows, ~946 MB).
- *
- * Keep the order: it is what makes a rebuild id-comparable to the frozen database.
- */
-
-/**
  * The tail database's country set, in the frozen artifact's ingest order.
  *
- * GB moved to Code-Point Open on 2026-08-05.
- * Belgium was added on 2026-08-12 (the eu-mixed lane).
+ * Any change here re-freezes the artifact: rebuild, run the parity check against the previous
+ * database, and rotate via the .prev workflow. The first ten entries are order-critical and every
+ * later country must be appended, because ids are positional in ingest order and inserting a country
+ * shifts every following id. The parity check validates ids as well as counts for this reason.
  *
- * Any change here re-freezes the artifact: rebuild, run the parity check against
- * the previous database, and rotate via the .prev workflow.
- *
- * The first ten entries are order-critical.
- * All later countries must be appended.
- *
- * Ids are positional in ingest order, so inserting a country shifts every following id.
- *
- * The parity check validates ids as well as counts for this reason.
- *
- * Historically this tail started as ten countries from #920.
- * GeoNames publishes 121 countries, while the gazetteer had a postcode tier for 28.
- * The appended set adds the 93 with on-disk data and no tier.
- *
- * On rebuild this changed coverage from 10 to 103 countries and from 57,221 to 505,784 codes,
- * with no code loss and no id movement in the original ten.
- *
- * Prefer counts at resolver granularity.
- * GeoNames postal publishes one row per (postcode, settlement) and duplicates some
- * hyphenated formats, so raw row totals overstate distinct codes.
- * Across the appended 93, 938,543 rows fold to 448,563 codes.
+ * Prefer counts at resolver granularity. GeoNames postal publishes one row per (postcode, settlement)
+ * and duplicates some hyphenated formats, so raw row totals overstate distinct codes.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"FI",
@@ -414,22 +375,15 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"SE",
 	"BE",
 	"AD",
-	// AE is deliberately absent and is the largest single country GeoNames publishes here:
-	// 178,171 rows, more than RU + RO + KR combined.
-	// Every one is a `nnnnn nnnnn` pair at Dubai-area coordinates (lat 24.63–25.32, lon 54.91–56.20) —
-	// Makani building codes rather than postcodes.
-	// The United Arab Emirates has no postal code system.
-	// Mail goes to PO boxes.
-	// Ingesting them as `placetype = 'postalcode'` would claim 178,171 postcodes for a country
-	// with none, and every coverage figure taken from that tier would inherit the claim.
+	// AE is deliberately absent. GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn`
+	// pair at Dubai-area coordinates, and those are Makani building codes rather than postcodes.
+	// The United Arab Emirates has no postal code system and mail goes to PO boxes, so ingesting
+	// these as `placetype = 'postalcode'` would claim 178,171 postcodes for a country with none and
+	// every coverage figure taken from that tier would inherit the claim.
 	//
-	// The lookup would have worked, which is why this would have shipped unnoticed:
-	// the #920 name law strips non-alphanumerics.
-	// Therefore, `28119 95762` keys as `2811995762` and matches a query typed the same way.
-	// Correct behaviour under a wrong placetype is the hardest kind of wrong to see.
-	//
-	// These belong in a building tier rather than being dropped.
-	// Makani is a rooftop-grade geocode with a coordinate per building (#2300).
+	// The lookup itself would match, because the name law strips non-alphanumerics, so `28119 95762`
+	// keys as `2811995762`. These belong in a building tier, a rooftop-grade geocode with a
+	// coordinate per building.
 	"AI",
 	"AL",
 	"AR",
@@ -526,11 +480,9 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 /**
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
- * This is the weakest number in the design and is deliberately a parameter.
- * GB — the one country with a validated reading — sits around 33%, so 5% is far
- * below the only calibration point we have.
+ * This is the weakest number in the design and is deliberately a parameter. GB is the one country
+ * with a validated reading at around 33%, so 5% sits far below that calibration point.
  *
  * It is set low on purpose, to catch thin-but-real tiers rather than to certify them.
- * A second calibration point should harden it.
  */
 export const DEFAULT_COVERAGE_FLOOR = 0.05

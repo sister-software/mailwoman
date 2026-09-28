@@ -3,18 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #822 placer-frontier probe (night 2026-06-28, Phase A) — for the placer-recoverable countries (a
- *   country hint resolves them, so growing the placer is what would recover them), measure whether the deployed
- *   coarse placer can actually emit that country. Per query (`<City>, <Country>` from cities15000):
+ *   Placer-frontier probe. For the placer-recoverable countries (a country hint resolves them, so
+ *   growing the placer is what would recover them), measure whether the deployed coarse placer can
+ *   emit that country. Per query (`<City>, <Country>` from cities15000):
  *
- *   - `in_class_set`  — is the true country even in the placer's class set? (a class the model can't
- *                       represent can't be recovered by any threshold change — that's a data gap)
- *   - `top1_correct`  — did the placer's argmax land on the true country?
- *   - `prob_1`        — the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
+ *   - `in_class_set`  - is the true country even in the placer's class set? A class the model
+ *                       cannot represent cannot be recovered by any threshold change, which is a
+ *                       data gap.
+ *   - `top1_correct`  - did the placer's argmax land on the true country?
+ *   - `prob_1`        - the calibrated top-class confidence (vs `HARD_PLACE_COUNTRY_MIN_CONF` = 0.9)
  *
- *   Branch (plan Phase 2): `in_class_set` false >5% → data GAP, defer to a class-set-widening retrain.
- *   in-set + top1>80% + median prob_1 < 0.9 → under-confident, M2 mass-rule fix. in-set + top1<80% →
- *   low-quality signal, defer. The probe is a linear model (no ONNX), so it is heat-safe.
+ *   Branch: `in_class_set` false above 5% is a data gap, so defer to a class-set-widening retrain.
+ *   In-set and top1 above 80% with median prob_1 below 0.9 is under-confident signal. In-set and
+ *   top1 below 80% is low-quality signal, so defer. The probe is a linear model, so it is
+ *   heat-safe.
  *
  *   Run: `mailwoman placer probe-frontier [--model <dir>] [--n 2000] [--out <md>]`
  */
@@ -80,7 +82,7 @@ export interface ProbeFrontierResult {
 const HARD_PLACE_COUNTRY_MIN_CONF = 0.9
 
 /**
- * The placer-recoverable tranche from the 2026-06-26 frontier diagnostic (a country hint resolves them).
+ * The placer-recoverable countries, where a country hint resolves them.
  */
 const RECOVERABLE = [
 	"AO",
@@ -122,7 +124,7 @@ const RECOVERABLE = [
 ]
 
 /**
- * Coarse-placer frontier probe (#822) — see the module doc.
+ * Coarse-placer frontier probe. See the module doc.
  *
  * Emits the report head to stdout.
  */
@@ -142,7 +144,6 @@ export async function probeFrontier(
 	const placer = await CoarsePlacer.fromArtifactDir(modelDir, { abstainBelow: 0 })
 	const classSet = new Set(meta.classes)
 
-	// Build `<City>, <Country>` queries from cities15000 for the recoverable set, shortest first.
 	const CITIES = dataRootPath("geonames", "cities15000.txt")
 	const want = new Set(RECOVERABLE)
 

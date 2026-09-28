@@ -3,23 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #375 boundary-stress eval — the promote/no-promote verdict for the v1.6.0 boundary-instability
- *   retrain. Same four stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded
- *   against the recipe's PRE-registered targets + the shared street-span floor. Emits a per-shape
- *   table and a single promote / no-promote line. exit 0 = all targets met, exit 1 = any miss.
+ *   Boundary-stress eval: the promote/no-promote verdict for a boundary-instability retrain. Same four
+ *   stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded against the recipe's
+ *   pre-registered targets and the shared street-span floor. Emits a per-shape table and a single
+ *   promote / no-promote line. Exit 0 = all targets met, exit 1 = any miss.
  *
- *   Unlike the baseline (which hard-codes the dev weights), this accepts an explicit model so it can
- *   grade a freshly-trained checkpoint without touching the neural-weights symlink (which yarn test
- *   re-creates). The classifier is built via the canonical `createScorer`
- *   (`@mailwoman/neural/scorer`, #718) in strict mode, so the model is fed the full ship-config it
- *   was trained against — anchor + gazetteer + conventions, per the model-card's `requires` block —
- *   and the eval fails closed if a declared channel can't be fed. This closes the #566/#685 trap
- *   the eval previously walked into: it built the classifier via `loadFromWeights` with no
- *   anchor/gazetteer/conventions, so the anchor-trained STAGE3 model was scored anchor-off
- *   (out-of-distribution on exactly the admin- adjacent boundary shapes this eval measures). The
- *   model-card is therefore required for a custom model (`createScorer` reads its label vocab and
- *   `requires`); without it the eval now throws rather than silently mis-decoding the 33-label
- *   STAGE3 model.
+ *   Unlike the baseline, this accepts an explicit model so it can grade a freshly-trained checkpoint
+ *   without touching the neural-weights symlink (which yarn test re-creates). The classifier is built
+ *   via the canonical `createScorer` in strict mode, so the model is fed the full ship-config it was
+ *   trained against (anchor, gazetteer, and conventions, per the model-card's `requires` block), and
+ *   the eval fails closed if a declared channel can't be fed. A custom model therefore requires the
+ *   model-card, since `createScorer` reads its label vocab and `requires`.
  *
  *   Run (baseline, dev weights): node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts
  *   Run (a fetched v1.6.0 bundle): node
@@ -53,14 +47,11 @@ const N = Number(args.n)
 /**
  * The pre-registered eval (v1.6.0-boundary-stress.yaml).
  *
- * Per shape: the stress tag it teaches, the re-baselined "before" number,
- * and the target the retrain must clear.
- * Plus the shared street-span floor (≥65 on all four shapes).
+ * Per shape: the stress tag it teaches, the re-baselined "before" number, and the target the retrain
+ * must clear. Plus the shared street-span floor (≥65 on all four shapes).
  *
- * The street is the common casualty across every shape.
- * Partial: this v1.6.0-era eval has pre-registered baselines only for the original 4 templates.
- *
- * The 2 added 2026-06-18 ("bare-locality", "house-number-before-street") have no measured baseline here.
+ * Partial: this eval has pre-registered baselines only for the original four templates. The
+ * "bare-locality" and "house-number-before-street" templates have no measured baseline here.
  */
 const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: number; target: number }>> = {
 	"street-eats-affix": { tag: "street_suffix", baseline: 41.7, target: 55 },
@@ -71,19 +62,13 @@ const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: n
 
 const STREET_SPAN_FLOOR = 65
 
-// Route through the canonical ProductionScorer (#718): feed the model the full ship-config it
-// was trained against (anchor + gazetteer + conventions, per the model-card's `requires` block).
-// The prior loadFromWeights construction fed no anchor/gazetteer/conventions, so this anchor-trained
-// STAGE3 model was scored anchor-off — out-of-distribution on exactly the admin-adjacent
-// boundary shapes this eval measures (the #566/#685 trap). createScorer in `strict` mode fails
-// closed if a declared channel can't actually be fed, so a silent OOD re-grade can't recur.
 if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when --model is passed")
 
 if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
 // Dev-weights default (no --model): resolve the en-us package paths so the scorer gets
-// concrete model/tokenizer/model-card paths instead of the symlink auto-resolve.
+// concrete model/tokenizer/model-card paths and does not fall back to the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: await resolveWeights({ locale: "en-us" })

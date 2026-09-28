@@ -3,23 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `pk-register` and `bd-register` recipes — the typed forms of Pakistan and Bangladesh the country templates do
- *   not render, over the OpenStreetMap corpus jsonl the `osm` adapter reads (#1744, the F8 family). The adapter's own
- *   rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`; `24 Road 104, Dhaka - 1207`); these two carry
- *   the register:
+ *   `pk-register` and `bd-register` recipes, the typed forms of Pakistan and Bangladesh the country
+ *   templates do not render, over the OpenStreetMap corpus jsonl the `osm` adapter reads. The
+ *   adapter's own rows carry the template shape (`4 38th Street, DHA Phase 6, Karachi`) and
+ *   (`24 Road 104, Dhaka - 1207`). These two carry the register:
  *
- *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara, Dhaka 1230` —
- *     `House` in front of the number (untagged, the same rule as Singapore's `Blk`), the numbered street, the scheme or
- *     sector as the dependent locality, the city;
- *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205` — what a person types,
- *     where the template writes `Dhaka - 1205`.
+ *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara,
+ *     Dhaka 1230`, with `House` in front of the number (untagged, the same rule as Singapore's `Blk`),
+ *     the numbered street, the scheme or sector as the dependent locality, and the city
+ *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205`, which
+ *     is what a person types where the template writes `Dhaka - 1205`
  *
- *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value: the register carries them on a handful
- *   of rows, mostly inside `addr:city` (`F7/2 Islamabad`), so a row whose city is Islamabad and whose scheme is unknown
- *   draws one from the capital's grid. Every other value is the row's own. The components are the `osm` adapter's
- *   mapping (`componentsForOSMRow`), so the two surfaces cannot disagree about what a field means.
+ *   Islamabad's sector codes (`F-7/2`, `G-10/3`) are the one synthesized value. The register carries
+ *   them on a handful of rows, mostly inside `addr:city` (`F7/2 Islamabad`), so a row whose city is
+ *   Islamabad and whose scheme is unknown draws one from the capital's grid. Every other value is the
+ *   row's own. The components are the `osm` adapter's mapping (`componentsForOSMRow`), so the two
+ *   surfaces cannot disagree about what a field means.
  *
- *   ⚠ ODbL: the rows inherit OpenStreetMap's share-alike license, and a corpus build run under
+ *   ODbL: the rows inherit OpenStreetMap's share-alike license, and a corpus build run under
  *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
  *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S

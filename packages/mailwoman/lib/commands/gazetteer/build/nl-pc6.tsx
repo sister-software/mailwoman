@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build nl-pc6` — the NL full-postcode (PC6) database (#977 tier 2) from the CBS
+ *   `mailwoman gazetteer build nl-pc6`: the NL full-postcode (PC6) database (tier 2) from the CBS
  *   Postcode6 centroid CSV (CC-BY 4.0). Sealed 0444. The pipeline module is lazy-imported so `--help`
  *   never faults without the optional `@mailwoman/resolver-wof-sqlite` peer.
  */

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Read-only inspection of a resolved `AddressTree` — the coordinate tiers a node carries, the
+ * @file Read-only inspection of a resolved `AddressTree`: the coordinate tiers a node carries, the
  *   resolver-attributed places under it, and the tag presence the eval's preconditions test.
  */
 
@@ -32,7 +32,7 @@ export interface Resolved {
 }
 
 /**
- * Pull the #476 address-point hit (street-node metadata) out of a resolved tree, if any.
+ * Pull the address-point hit (street-node metadata) out of a resolved tree, if any.
  */
 export function findAddressPointHit(tree: AddressTree): { lat: number; lon: number } | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -45,7 +45,7 @@ export function findAddressPointHit(tree: AddressTree): { lat: number; lon: numb
 }
 
 /**
- * Pull the #483 interpolated estimate (street-node metadata) out of a resolved tree, if any.
+ * Pull the interpolated estimate (street-node metadata) out of a resolved tree, if any.
  */
 export function findInterpolatedHit(tree: AddressTree): { lat: number; lon: number } | null {
 	for (const n of walkNodes(tree.roots)) {
@@ -80,7 +80,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			})
 		}
 
-		// Multi-role completion (#415/#416): a dual-role region carries extra roles
+		// Multi-role completion: a dual-role region carries extra roles
 		// (e.g. `locality`) as interpretations on the same node rather than separate children.
 		// Surface each resolved interpretation as its own Resolved so the eval finds the
 		// completed locality (placetype/coord/name come from the interpretation).
@@ -123,7 +123,7 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 }
 
 /**
- * The deepest resolved place in the set — the one whose coordinate the eval grades.
+ * The deepest resolved place in the set, the one whose coordinate the eval grades.
  *
  * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns.
  * A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality,
@@ -171,7 +171,7 @@ export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 }
 
 /**
- * The first non-empty street / house-number / postcode values in the tree — the interpolation
+ * The first non-empty street / house-number / postcode values in the tree, the interpolation
  * tier's precondition triple, and the text a diagnostic miss line reproduces.
  */
 export function findInterpolationSpans(tree: AddressTree): {

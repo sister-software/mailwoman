@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `treeToProposals` (#478 inc 3) — the inverse of `proposalsToTree`, used to bring the whole-text
- *   neural parse into the arbitration layer's proposal currency.
+ *   `treeToProposals`, the inverse of `proposalsToTree`, used to bring the whole-text neural parse
+ *   into the arbitration layer's proposal currency.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

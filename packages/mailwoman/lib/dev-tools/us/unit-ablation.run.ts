@@ -34,7 +34,7 @@ const UNIT_ROWS: ReadonlyArray<{ input: string; expectUnit: string | null; note:
 ]
 
 /**
- * `PMB 123` must keep resolving to `po_box`, which a change that fixes `PMB #123` can break.
+ * `PMB 123` must keep resolving to `po_box`, since a change that fixes the sigil form can break it.
  */
 const PMB_ROWS: ReadonlyArray<{ input: string; expectPOBox: string }> = [
 	{ input: "PMB 123, 4400 Ashton Dr, Sarasota, FL 34233", expectPOBox: "PMB 123" },
@@ -68,8 +68,8 @@ for (const row of UNIT_ROWS) {
 
 for (const row of PMB_ROWS) {
 	const result = await deps.geocode(row.input, { defaultCountry: "US" })
-	// `components`, not the flat projection: the result promotes a subset of tags
-	// to top-level fields and `po_box` is not among them.
+	// Read `components` because the result promotes a subset of tags to top-level
+	// fields and leaves `po_box` out.
 	const poBox = result.components?.po_box ?? null
 
 	pmbReport.push({

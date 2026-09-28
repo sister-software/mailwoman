@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Release-train version-parity check (#894, the structural fix for #203's class).
+ *   Release-train version-parity check.
  *
- *   The demo repoint is deliberately a separate step from the npm publish (mailwoman-release
- *   Step 5), so demo-vs-npm drift is structural rather than accidental — which is why this check must be
- *   structural too. #203 (demo silently two model versions behind npm) was fixed as an instance.
- *   this operation fails the day the drift reappears, anywhere it can appear:
+ *   The demo repoint is a separate step from the npm publish (mailwoman-release Step 5), so
+ *   demo-vs-npm drift is structural. This check is structural too. It fails when a surface trails
+ *   npm, anywhere it can appear:
  *
- *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket — the
- *      exact URL the demo fetches) vs the latest published npm version.
- *   2. The docs release matrix (`docs/engineering/releases.mdx` "(current)" row) vs the same npm
- *      version — the row went stale twice (v4.11.0 era, then again within hours of v5.1.0).
+ *   1. The demo's live manifest (`releases.json` `defaultVersion` on the public R2 bucket, the
+ *      exact URL the demo fetches) against the latest published npm version.
+ *   2. The docs release matrix (`docs/engineering/releases.mdx` "(current)" row) against the same
+ *      npm version.
  *
- *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), after its install step —
- *   this module reaches `@mailwoman/core` plus the shared releases-matrix parser in
+ *   Run by `.github/workflows/version-parity.yml` (daily + manual dispatch), after its install step.
+ *   This module reaches `@mailwoman/core` plus the shared releases-matrix parser in
  *   `verify-metadata.ts`. `warnOnly` downgrades mismatches to warnings (useful mid-release, before
  *   the repoint lands).
  */
@@ -31,8 +30,6 @@ const NPM_REGISTRY_URL = "https://registry.npmjs.org/mailwoman"
 /**
  * The browser runtime's own fetch path (`mailwoman/browser-runtime/manifest`,
  * mounted by docs/src/contexts/RuntimeEmbed.tsx and the Earth app).
- *
- * Check what the runtime actually reads rather than what the publisher believes it wrote.
  */
 const DEMO_MANIFEST_URL = "https://public.mailwoman.ai/mailwoman/en-us/releases.json"
 
@@ -41,7 +38,7 @@ export interface ParityCheck {
 	value: string
 	ok: boolean
 	/**
-	 * What the value was compared against — printed on failure.
+	 * What the value was compared against, printed on failure.
 	 */
 	expected: string
 }
@@ -127,12 +124,11 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const npmLatest = await readNPMLatest()
 	const checks: ParityCheck[] = []
 
-	// Two version series (see releases.mdx's "Two version series" intro): the demo serves models,
-	// so its `defaultVersion` carries the model-card lineage number rather than the npm package number —
-	// comparing it against npm latest went permanently red the moment a code-only release shipped.
-	// The demo leg compares against the shipped model identity:
-	// `packages/neural-weights-en-us/model-card.json#version` (the same source verify-metadata keys off).
-	// The docs matrix row stays vs npm latest — that surface documents package releases.
+	// Two version series (see releases.mdx's "Two version series" intro). The demo serves models, so
+	// its `defaultVersion` carries the model-card lineage number. The demo leg compares that against
+	// the shipped model identity in `packages/neural-weights-en-us/model-card.json#version` (the same
+	// source verify-metadata keys off). The docs matrix row stays vs npm latest, since that surface
+	// documents package releases.
 	const localCard = await readLocalJSONFile<{
 		version: string
 		files_md5?: Record<string, string>
@@ -142,15 +138,12 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	const demoDefault = await readDemoDefaultVersion()
 
-	// The demo's parity interface is model bytes rather than the bundle number.
-	// Bundle revisions that change only decode-side artifacts move the card
-	// version with zero model.onnx change.
-	// The demo serving the previous bundle serves the identical model, and can't even use
-	// the new artifacts until the web loader grows pair-prior wiring (#1278).
-	// So a trailing defaultVersion passes IFF the trailing version's shipped
-	// card records the same `files_md5["model.onnx"]` as the current card
-	// (fetched from the HF bucket — the same store the demo loads from).
-	// Different bytes = real drift = fail.
+	// The demo's parity interface is model bytes. Bundle revisions that change only decode-side
+	// artifacts move the card version with zero model.onnx change. The demo serving the previous
+	// bundle serves the identical model and cannot use the new artifacts until the web loader grows
+	// pair-prior wiring. So a trailing defaultVersion passes when the trailing version's shipped
+	// card records the same `files_md5["model.onnx"]` as the current card, fetched from the HF
+	// bucket (the same store the demo loads from). Different bytes means real drift.
 	let demoOK = demoDefault === cardModelVersion
 	let demoNote = `${cardModelVersion} (model-card version)`
 
@@ -171,7 +164,7 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 				)
 			}
 		} catch {
-			// Fetch failure → keep the strict verdict rather than silently passing.
+			// A fetch failure keeps the strict verdict.
 		}
 	}
 

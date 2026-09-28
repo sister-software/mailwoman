@@ -5,16 +5,12 @@
  *
  *   Does the comma-free register still find the locality? A rate rather than an anecdote.
  *
- *   Built for the v4.2.0-base-anchor-v2 (Run B) triage. The invariance suite reported one new comma-drop
- *   loss (`fr-montmartre`, `street: "Montmartre" -> "Montmartre Paris"`), while the metamorphic layer
- *   reported the same transform on the same shape newly passing (`181 Rue du Chevaleret, Paris`). One row
- *   each way is churn rather than a capability claim, and neither number can settle the other. This walks every
- *   fixture row that carries both a `street` and a `locality`, drops the commas, and asks whether the gold
- *   locality still lands in the locality slot — so "the comma-free register regressed" becomes a
- *   measurement with a denominator.
+ *   This walks every fixture row that carries both a `street` and a `locality`, drops the commas, and asks
+ *   whether the gold locality still lands in the locality slot, so the question becomes a measurement with
+ *   a denominator.
  *
- *   Runs the RAW classifier (`--raw`, what `eval-harness/invariance/runner.ts` grades) or the production
- *   runtime pipeline (default). The two disagree: the raw path never runs `@mailwoman/normalize`, so #690
+ *   Runs the raw classifier (`--raw`, what `eval-harness/invariance/runner.ts` grades) or the production
+ *   runtime pipeline (default). The two disagree: the raw path never runs `@mailwoman/normalize`, so
  *   case normalization is absent and the register legs see different text.
  *
  *   Usage:

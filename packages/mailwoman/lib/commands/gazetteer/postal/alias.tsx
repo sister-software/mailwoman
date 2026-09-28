@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer postal-alias` — build the postal-city alias table (#475) from the
+ *   `mailwoman gazetteer postal-alias` — build the postal-city alias table from the
  *   pinned-release Overture US Parquet: per-address ground truth for the
  *   postal-city/geographic-city split that the resolver's coordinate-first soft-scorer currently
  *   approximates geometrically.
  *
  *   The signal: 45.9M US rows carry both `postal_city` (what the postal system calls the place — USPS
- *   "acceptable city names", vanity cities) and a geographic locality (`address_levels[2]`); 16.0M
+ *   "acceptable city names", vanity cities) and a geographic locality (`address_levels[2]`). 16.0M
  *   of them (34.9%) diverge. Aggregated per `(postcode, postal_city, geo_locality)` with observed
  *   counts, that divergence is the alias evidence: "postcode 10954's mail says Nanuet. the polygon
  *   says Clarkstown".
@@ -19,10 +19,9 @@
  *   count floor drops typo noise. everything kept is observed-in-the-wild N times, with N
  *   recorded.
  *
- *   Writes the output DB directly (deletes any prior file, then builds in place) — same behavior as
- *   the original `scripts/build-postal-city-alias.ts`. Progress streams to stderr. the final
- *   summary is on stdout. @duckdb/node-api is an optional peer, imported dynamically inside the
- *   build.
+ *   Writes the output DB directly (deletes any prior file, then builds in place). Progress streams
+ *   to stderr. The final summary is on stdout. @duckdb/node-api is an optional peer, imported
+ *   dynamically inside the build.
  */
 
 import { removePathIfPresent, makeDirectories } from "@mailwoman/core/fs/writers"
@@ -63,7 +62,7 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		await makeDirectories(dirname(out))
 		await removePathIfPresent(out)
 
-		// @duckdb/node-api is an optional peer dep — import it dynamically so merely loading this
+		// @duckdb/node-api is an optional peer dep. Import it dynamically so merely loading this
 		// command (e.g. `mailwoman --help`, which eagerly imports every command) doesn't fault when the peer isn't installed.
 		const { DuckDBInstance } = await import("@duckdb/node-api")
 
@@ -97,10 +96,8 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 
 		using kdb = new DatabaseClient<PostalCityAliasDatabase>(out)
 		kdb.exec("PRAGMA journal_mode = WAL;")
-		// DDL via the shared createPostalCityAliasTable builder.
-		// The exact table the reader + tests use, so this producer can't drift from postal-city-alias-schema.ts.
-		// DuckDB above is the raw parquet reader.
-		// The hot insert below stays on the raw `db` handle.
+		// The shared builder creates the exact table the reader and tests use, so this producer
+		// cannot drift from postal-city-alias-schema.ts.
 		const { createPostalCityAliasTable } = await import("@mailwoman/resolver-wof-sqlite/postal")
 
 		await createPostalCityAliasTable(kdb)
@@ -120,8 +117,6 @@ const GazetteerPostalAlias: CommandComponent<typeof spec> = ({ options }) => {
 		}
 
 		kdb.exec("COMMIT")
-		// Indexes were created by createPostalCityAliasTable above.
-		// Just checkpoint + compact.
 		kdb.exec("PRAGMA wal_checkpoint(TRUNCATE); VACUUM;")
 
 		return [

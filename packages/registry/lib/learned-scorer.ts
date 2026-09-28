@@ -3,24 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The learned scorer (#603) — the production wiring for the gradient-boosted-tree model behind
- *   {@link ResolveConfig.scorer}. Two pieces:
+ *   The learned scorer, the production wiring for the gradient-boosted-tree model behind
+ *   {@link ResolveConfig.scorer}.
  *
- *   1. {@link createMatchFeaturizer} — the one feature extractor for a candidate pair, used identically
- *        at train time (`registry/tools/train-gbt.ts`), eval time (the learned-scorer
- *        evals), and inference time (here). A pair → one-hot of each comparison's agreement level +
- *        the over-merge interaction terms (co-located × name/org disagreement) + address
- *        crowdedness.
- *   2. {@link createGBTScorer} — wraps a trained {@link GBT} + the featurizer into the `(a, b) => number`
- *        the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
- *        Fellegi-Sunter weight it replaces).
+ *   {@link createMatchFeaturizer} is the one feature extractor for a candidate pair, used
+ *   identically at train time (`registry/tools/train-gbt.ts`), eval time, and inference time.
+ *   {@link createGBTScorer} wraps a trained {@link GBT} and the featurizer into the `(a, b) => number`
+ *   the resolve pipeline's `scorer` hook expects (a logit, threshold-comparable with the
+ *   Fellegi-Sunter weight it replaces).
  *
- *   Both take the comparison set as input (rather than importing {@link buildDefaultModel}) so this
- *   module has no dependency cycle with `resolve.ts`. The interface that keeps train ≡ inference:
- *   feed the comparisons from `buildDefaultModel({ collapseSpatial: true, addressFrequency })` —
- *   the model's structure (and thus the feature layout) is fixed by that config. only the frequency
- *   values differ between the training corpus and the matched set, which is the point (the model
- *   generalizes, as the cross-state eval showed).
+ *   Both take the comparison set as input rather than importing {@link buildDefaultModel}, so this
+ *   module has no dependency cycle with `resolve.ts`. Feed the comparisons from
+ *   `buildDefaultModel({ collapseSpatial: true, addressFrequency })`, since that config fixes the
+ *   feature layout.
  */
 
 import {
@@ -38,7 +33,6 @@ import type { SourceRecord } from "#types"
  * Similarity at which two official names count as the same organisation.
  *
  * Set high because the feature is a near-exact agreement signal rather than a fuzzy one.
- * The fuzzy comparison is a separate feature and this one exists to distinguish it.
  */
 const OFFICIAL_NAME_AGREEMENT = 0.93
 
@@ -47,12 +41,12 @@ const OFFICIAL_NAME_AGREEMENT = 0.93
  */
 export interface LearnedFeatureConfig {
 	/**
-	 * The comparison set the features are built over — must be
+	 * The comparison set the features are built over. It must be
 	 * `buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons`
 	 * so the feature layout matches the trained model.
 	 *
-	 * (`usePhone` / `discriminators` are not part of the learned feature model —
-	 * the GBT replaces the FS weight wholesale and owns its own feature vector.)
+	 * `usePhone` and `discriminators` are not part of the learned feature model, since the GBT
+	 * replaces the Fellegi-Sunter weight wholesale and owns its feature vector.
 	 */
 	comparisons: Comparison<SourceRecord>[]
 	/**
@@ -65,9 +59,9 @@ export interface LearnedFeatureConfig {
  * Build the per-pair feature extractor.
  *
  * The vector is: one-hot of each comparison's agreement level, then the two over-merge
- * interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree —
- * the "same place, different names" signature that drives co-located over-merges),
- * then address crowdedness scaled into [0, 1].
+ * interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree, the
+ * "same place, different names" signature that drives co-located over-merges), then address
+ * crowdedness scaled into [0, 1].
  * Deterministic and EM-independent, so it is identical across train / eval / inference.
  */
 export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceRecord, b: SourceRecord) => number[] {
@@ -92,7 +86,6 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 			}
 		}
 
-		// Interaction: co-located (spatial exact = level 0) and names/org disagree (catch-all level).
 		const spatialExact = spatialI !== undefined && pat[spatialI] === 0 ? 1 : 0
 
 		const nameDisagree =
@@ -104,22 +97,21 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 				: 0
 
 		const orgDisagree = orgI !== undefined && pat[orgI] === lastLevel(orgI) ? 1 : 0
-		f.push(spatialExact * nameDisagree) // the over-merge signature: same place, names disagree
+		f.push(spatialExact * nameDisagree)
 		f.push(spatialExact * orgDisagree)
-		// Address crowdedness (how shared this address is) — high → "same address" is weak evidence.
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
 		f.push(Math.min(1, freq * 1000))
-		// #625 roll-up signature (2026-07-06 adjudication): every genuine over-merge in the adjudicated packet was a management-company roll-up — differently-branded operating entities at a shared corporate/billing address where the authorized official also agrees (the operator signs everything). The official is not in the comparison set (discriminators are excluded from the learned feature model), so the GBT could never see — let alone learn — that officialAgree in the presence of orgDisagree is anti-identity evidence. These three appended features express it directly from `attributes.authorizedOfficial`; appended at the END so models trained without them (the cross-source GBT) keep scoring unchanged (trailing features are ignored).
+		// Roll-up signature: a shared corporate address can host differently-branded operating
+		// entities whose authorized official also agrees. The official is not in the comparison
+		// set, so these three features express that evidence directly. They are appended at the
+		// end, so models trained without them keep scoring unchanged.
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0
 		f.push(officialAgree)
-		f.push(officialAgree * orgDisagree) // the roll-up core: same signer, different brand
+		f.push(officialAgree * orgDisagree)
 		f.push(officialAgree * orgDisagree * spatialExact)
 
-		// …at the same place
-
-		// scale into a usable range
 		return f
 	}
 }

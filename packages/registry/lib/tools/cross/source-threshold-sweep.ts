@@ -3,25 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #655 measurement — can a RE-thresholded dedup GBT beat the FS baseline on the cross-source link
- *   discovery objective? The dedup GBT (#603) is pinned off for cross-dataset flows because its
- *   over-merge features (`spatial-exact × name/org-disagree`) push true "same facility, different
- *   operational name across sources" pairs negative — and the GBT logit replaces the FS weight, so
- *   a threshold can't trivially separate them. This quantifies that.
- *
- *   Geocode the three sources once (NPPES + FCC-RHC + TX hhsc, TX-scoped), then resolve repeatedly:
- *   the FS baseline (the recall-correct baseline) and the bundled GBT at a fine threshold sweep.
- *   For each arm, report cross-source links (entities spanning ≥2 sources), triple-source entities,
- *   total entities (an over-merge proxy — fewer = more collapsing), and a label-free precision
- *   proxy: phone corroboration — the fraction of cross-source entities in which two records from
- *   different sources carry the same phone number (strong same-facility evidence the scorer didn't
- *   directly use as the join key).
- *
- *   Verdict logic: if some GBT threshold matches FS's cross-source link count at ≥ FS phone-corrob,
- *   the threshold fix (option 1) works → ship a cross-source threshold. If matching FS link count
- *   only comes with collapsing total entities and a lower phone-corrob (junk over-merges), the
- *   threshold is insufficient by construction → FS stays pinned / a cross-objective retrain (#655
- *   option 2) is the only change.
+ *   Cross-source threshold sweep. Resolve the sources once, then compare the Fellegi-Sunter
+ *   baseline against the bundled GBT over a fine threshold sweep, scoring each arm on cross-source
+ *   links, triple-source entities, total entities and phone corroboration.
  *
  *   Run: `mailwoman registry scorer-eval threshold-sweep [--cap 2000] [--state TX]
  *   [--wof <admin.db>] [--data-root <dir>] [--out-md <md>]`
@@ -60,7 +44,7 @@ const MIN_CROSS_SOURCE_AGREEMENT = 3
  */
 export interface CrossSourceThresholdSweepOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -82,8 +66,8 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	state?: string
 	/**
-	 * #655 option 2: a trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third arm
-	 * at its recommended threshold — the model `registry train-scorer cross-gbt` emits.
+	 * A trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third
+	 * arm at its recommended threshold. This is the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
 	/**
@@ -92,20 +76,16 @@ export interface CrossSourceThresholdSweepOptions {
 	outMd?: string
 }
 
-/**
- * Distinct provenance labels an entity's records span.
- */
 const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the same phone
- * in records from two different sources?
+ * Label-free precision proxy: does this cross-source entity carry the same phone in records from
+ * two different sources?
  *
- * (Phone isn't the join key, so a match is independent corroboration of same-facility.)
- * Entities where no two cross-source records both have a phone are "unknown".
- *
- * We only count corroborated / contradicted among those that can be checked.
+ * Phone is not the join key, so a match is independent corroboration of one facility. Entities
+ * where no two cross-source records both carry a phone are unknown, and only checkable entities
+ * count.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
 	const bySource = new Map<string, Set<string>>()
@@ -194,7 +174,8 @@ async function measure(label: string, threshold: number | null, entities: Resolv
 }
 
 /**
- * #655 cross-source threshold sweep — see the module doc. Emits the markdown report to stdout.
+ * Compare the FS baseline against the bundled GBT over a threshold sweep, and emit the markdown
+ * report to stdout.
  */
 export async function crossSourceThresholdSweep(
 	options: CrossSourceThresholdSweepOptions,
@@ -207,7 +188,6 @@ export async function crossSourceThresholdSweep(
 	const CANDIDATE = options.candidate || ""
 	const SPECS = buildSpecs(`${SOURCES}`, STATE)
 
-	// Ingest and geocode each source once before sweeping thresholds.
 	const rawBySource = new Map<string, Record<string, string>[]>()
 
 	for (const spec of SPECS) {
@@ -246,7 +226,6 @@ export async function crossSourceThresholdSweep(
 	const geocoded = records.filter((r) => r.address?.geocode).length
 	report?.(`    ${records.length} records; geocoded ${geocoded}`)
 
-	// Score with the bundled GBT over the input-scoped address-frequency basis.
 	const addrCounts = new Map<string, number>()
 	let addrTotal = 0
 
@@ -266,7 +245,6 @@ export async function crossSourceThresholdSweep(
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const gbtScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
-	// Evaluate the FS recall-correct baseline.
 	report?.("[D] resolving — FS baseline baseline…")
 
 	const fs = await measure(
@@ -275,8 +253,6 @@ export async function crossSourceThresholdSweep(
 		resolveEntities(records, { trainEM: true, collapseSpatial: true, addressFrequency, learnedScorer: false }).entities
 	)
 
-	// Evaluate the bundled GBT over a fine threshold sweep.
-	// Cross-source pairs sit at strongly negative logits). ---
 	const SWEEP = [-8, -6, -5, -4, -3, -2, -1, 0, 1, 2, DEDUP_GBT_META.recommendedThreshold]
 	const gbtArms: ArmMetrics[] = []
 
@@ -293,12 +269,10 @@ export async function crossSourceThresholdSweep(
 		gbtArms.push(await measure(`GBT @ ${t.toFixed(2)}`, t, entities))
 	}
 
-	// The threshold fix passes only when a GBT arm dominates FS.
-	// Cross-source links at ≥ FS phone-corroboration without over-merging
-	// (entity count must not collapse below ~90% of FS, else the "links" are giant-blob artifacts).
-	// Otherwise FS is on the frontier and threshold alone is insufficient. ---
+	// A GBT arm dominates only when it matches FS cross-source links at no lower phone
+	// corroboration and keeps at least 90% of FS entities, since a collapse means giant-blob
+	// artifacts rather than links.
 	const pct = (n: number, d: number) => formatPercent(n, d, 0)
-	// Evaluate the cross-source-trained GBT at its recommended threshold.
 	const candidateArms: ArmMetrics[] = []
 
 	if (CANDIDATE) {
@@ -343,14 +317,11 @@ export async function crossSourceThresholdSweep(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
 
-	// The candidate (#655 option-2 models) gets its own verdict scan.
-	// The hardcoded option-1 verdict below is about the dedup GBT and must not
-	// silently absorb (or ignore) a candidate arm.
+	// The candidate gets its own verdict scan, separate from the option-1 verdict for the dedup GBT.
 	const candidateDominating = candidateArms.find(
 		(a) => a.crossSource >= fs.crossSource && rate(a) >= fsCorrobRate && a.entities >= minEntities
 	)
 
-	// Best cross-source rate among arms that still retain enough entities to be meaningful.
 	let candidateBest: ArmMetrics | null = null
 
 	for (const arm of candidateArms) {

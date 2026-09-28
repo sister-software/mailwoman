@@ -3,19 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The capital-status reference index (#1880) — answers, for one resolved candidate, "is this
- *   place the national capital or an admin-1 seat of its country?". The consumer is the resolver's
+ *   The capital-status reference index, which answers for one resolved candidate whether the place
+ *   is the national capital or an admin-1 seat of its country. The consumer is the resolver's
  *   bounded capital promotion (`@mailwoman/resolver`'s `promoteCapitals`, applied after the fame
- *   key on the bare-toponym class); this module only matches, it never ranks. Pure and
- *   platform-free (the #861 parity discipline).
+ *   key on the bare-toponym class). This module only matches and never ranks. It is pure and
+ *   platform-free.
  *
- *   Matching is an identity test with three conjuncts: same country, within
+ *   Matching is an identity test with three required conjuncts: same country, within
  *   {@link CAPITAL_MATCH_RADIUS_KM} of the reference point, and the candidate's own folded name a
  *   member of the reference entry's folded name set (name + romanization + the source's alternate
- *   names, so exonym rows — "Vienna" for Wien — still match). All three are required. The
- *   iteration-1 board run matched on country + coordinate alone, and the 25 km radius promoted
- *   capital-adjacent namesakes instead of capitals: North Salt Lake beside the Utah seat, a Gujarat
- *   Indiranagar beside Gandhinagar, Via delle Parti beside Perugia. The name set is what makes the
+ *   names, so exonym rows such as "Vienna" for Wien still match). The name set is what makes the
  *   radius a centroid-drift allowance rather than a catchment.
  */
 
@@ -39,8 +36,8 @@ export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
 /**
  * How far a candidate row may sit from the reference point and still read as the same place.
  *
- * A centroid-convention allowance (GeoNames point vs WOF centroid on a metro-scale city),
- * not a catchment: the name-membership conjunct is what excludes neighbours inside the radius.
+ * A centroid-convention allowance for a GeoNames point against a WOF centroid on a metro-scale
+ * city. The name-membership conjunct excludes neighbours inside the radius.
  */
 export const CAPITAL_MATCH_RADIUS_KM = 25
 
@@ -108,8 +105,8 @@ export class CapitalIndex {
 	/**
 	 * The highest capital level whose entry passes all three conjuncts for this place.
 	 *
-	 * `none` — never a throw — for a missing name, country, or coordinate,
-	 * an unknown country, or no matching entry.
+	 * `none`, never a throw, for a missing name, country, or coordinate, an unknown country, or no
+	 * matching entry.
 	 */
 	levelOfPlace(
 		name: string | null | undefined,

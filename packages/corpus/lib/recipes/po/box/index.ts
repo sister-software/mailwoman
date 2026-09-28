@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `po-box` recipe — synthetic PO box rows: tuples → {@link synthesizePoBoxRow} → aligned
- *   LabeledRow, plus optional self-contained US military/diplomatic rows (#517) at
- *   `--military-ratio`. Region is required except region-less locales (NZ). Ported from the root
- *   build script it replaced.
+ *   `po-box` recipe, synthetic PO box rows: tuples → {@link synthesizePoBoxRow} → aligned
+ *   LabeledRow, plus optional self-contained US military/diplomatic rows at `--military-ratio`.
+ *   Region is required except for region-less locales (NZ).
  */
 
 import { makeLcg } from "@mailwoman/core/utils"
@@ -24,8 +23,8 @@ import { SurfaceOrigin } from "#types"
 /**
  * The box number is drawn rather than read, so no register asserts that this box exists.
  *
- * The locality, region and postcode around it come from the `--input` tuples,
- * but the row as a whole names no published record and the register field says so.
+ * The locality, region and postcode around it come from the `--input` tuples. The row as a whole
+ * identifies no published record, and the register field carries null for that reason.
  */
 const PO_BOX_PROVENANCE = {
 	register: null,
@@ -51,10 +50,10 @@ export const poBoxRecipe: CorpusRecipe = {
 		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
-		// `--source-name` so an output built for one class carries its own source label
-		// and its own reps per row.
-		// A military-only output (`--variants 0 --military-ratio 1`) is otherwise indistinguishable from
-		// the leader-template rows in the mixture, and the two are weighted for different reasons (#517).
+		// `--source-name` gives an output built for one class its own source label and its own
+		// reps per row. A military-only output (`--variants 0 --military-ratio 1`) would
+		// otherwise be indistinguishable from the leader-template rows in the mixture, and the
+		// two classes carry different weights.
 		const source = opts.sourceName ?? "synth-po-box"
 		let read = 0
 		let emitted = 0
@@ -62,7 +61,7 @@ export const poBoxRecipe: CorpusRecipe = {
 
 		for await (const tuple of readTuples(opts.input)) {
 			read++
-			// Region required except region-less locales (NZ: "Private Bag 12, Auckland 1010", #517).
+			// Region is required except for region-less locales (NZ: "Private Bag 12, Auckland 1010").
 			const regionOptional = ["NZ", "NZL", "NEW ZEALAND"].includes(String(tuple.country || "").toUpperCase())
 
 			if (!tuple.locality || !tuple.postcode || !tuple.country || (!tuple.region && !regionOptional)) {
@@ -105,9 +104,9 @@ export const poBoxRecipe: CorpusRecipe = {
 				}
 			}
 
-			// US military/diplomatic rows (#517): self-contained, one per input line at --military-ratio.
-			// Default 0 → byte-stable (random() not called when off).
-			// US-only.
+			// US military/diplomatic rows, self-contained, one per input line at --military-ratio.
+			// The default of 0 keeps the output byte-stable, because random() is not called when the
+			// ratio is 0. US-only.
 			if (militaryRatio > 0 && random() < militaryRatio) {
 				const mil = synthesizeMilitaryPoBoxRow({ random })
 

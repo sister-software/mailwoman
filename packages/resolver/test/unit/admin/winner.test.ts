@@ -4,10 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The two shapes of one ordering must agree.
  *
- *   Result assembly walks a TAG ladder. the eval harnesses sort resolved nodes by placetype. Both are expressing the
- *   same claim about where a postcode sits, and #1773 is what it cost when they drifted: each harness froze one arm of
- *   a conditional as a constant, so every grader was right on one half of the data and wrong on the other,
- *   unconditionally. The binding assertions below are the ones a constant cannot satisfy.
+ *   Result assembly walks a TAG ladder. The eval harnesses sort resolved nodes by placetype. Both order
+ *   a postcode the same way. The binding assertions below are the ones a constant cannot satisfy.
  */
 
 import { AREA_POSTCODE_FINER_THAN_LOCALITY } from "@mailwoman/codex"
@@ -26,11 +24,11 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * A GB unit postcode the resolver answered with the full code — the #22 case.
+ * A GB unit postcode the resolver answered with the full code.
  */
 const GB_UNIT = { value: "N7 0BT", resolverName: "n70bt" }
 /**
- * The same span, coarsened by the resolver to the outward district — area-class.
+ * The same span, coarsened by the resolver to the outward district, so it is area-class.
  */
 const GB_OUTWARD = { value: "N7 0BT", resolverName: "n7" }
 /**
@@ -79,7 +77,7 @@ describe("adminLadderFor", () => {
 		}
 	})
 
-	// #1780. The second route to postcode-first: the code is ordinary, the address system is not.
+	// The second route to postcode-first. The code is ordinary and the address system is not.
 	it("leads with an area-grade postcode for a country whose codes outrank its localities", () => {
 		expect(adminLadderFor({ ...DE_PLZ, country: "DE" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
 		expect(adminLadderFor({ ...DE_PLZ, country: "de" })).toBe(ADMIN_LADDER_POSTCODE_FIRST)
@@ -188,8 +186,6 @@ describe("resolvedSpecificity", () => {
 })
 
 describe("the ladder and the scale agree", () => {
-	// The binding assertion.
-	// A grader that froze one arm passes each half in isolation and fails here.
 	it("orders postcode against locality the same way, on both arms", () => {
 		for (const hit of [
 			GB_UNIT,

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval oa-resolver` — the OpenAddresses real-point resolver eval (the non-circular
+ *   `mailwoman eval oa-resolver`: the OpenAddresses real-point resolver eval (the non-circular
  *   accuracy track + the neural-vs-Pelias head-to-head). Markdown report on stdout. self-emits via
  *   `--out-md` (eval figures are never hand-typed into docs). See the eval-harness module docstring
  *   for the two-tier metric and every arm's rationale.
@@ -93,7 +93,7 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		// rather than in the eval's own interface.
 		...(adminFst ? { adminFST: adminFst } : {}),
 		// Same derivation, and the same rename.
-		// `--postcode-max-move-km` names #2301's cap, whose option spells the pass it caps.
+		// `--postcode-max-move-km` is the postcode-move cap, whose option spells the pass it caps.
 		// Spreading the derived name instead reaches no field, so the cap is accepted and never applied.
 		...(postcodeMaxMoveKM === undefined ? {} : { postcodeConsistencyMaxMoveKm: postcodeMaxMoveKM }),
 	})

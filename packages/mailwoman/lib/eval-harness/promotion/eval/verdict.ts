@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verdict assembler for promotion-eval.ts (#479). Parses the battery outputs the runner teed into
+ *   Verdict assembler for promotion-eval.ts. Parses the battery outputs the runner teed into
  *   the out-dir, checks every number against the eval spec's floors, enforces the fp32↔int8 delta
  *   cap, and writes verdict.json. `failed: false` = all floors met.
  *
  *   Parsing interface: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
- *   changes, this file is the single place the check's parsing breaks — loudly (a floor whose number
- *   can't be found is a `fail`, never a skip).
+ *   changes, this file is the single place the check's parsing breaks, loudly (a floor whose number
+ *   cannot be found is a `fail`, and never a skip).
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -36,7 +36,7 @@ export interface PromotionVerdictOptions {
 	 */
 	withInt8?: boolean
 	/**
-	 * Overrides the derived label — pass `weights-cache` when the floors were
+	 * Overrides the derived label. Pass `weights-cache` when the floors were
 	 * read from a package-shaped cache.
 	 */
 	gradedArtifact?: "int8" | "fp32" | "weights-cache"
@@ -62,17 +62,14 @@ function tableCells(line: string): string[] {
 }
 
 /**
- * Read a named column for a named arena row from the arena summary pipe-table,
+ * Read one column for one arena row from the arena summary pipe-table,
  * by header, never a fixed offset.
  *
- * The table shape is not stable across the arena's own history: before the
- * #1151 rules-parser deletion the summary carried the v0 comparison columns
- * (`| arena | n | v0 | neural | both | … |`); after it, `summarize-arenas.ts` emits
- * the neural-only shape (`| arena | n | neural | fail | tree-valid |`).
- * A fixed column offset silently reads the wrong cell across that boundary.
- *
- * The pre-#1151 offset for `neural` lands on `fail` in the new table,
- * turning an 80% neural pass into a phantom 20% fail.
+ * The table shape is not stable across the arena's own history. `summarize-arenas.ts`
+ * emits the neural-only shape (`| arena | n | neural | fail | tree-valid |`), and an
+ * earlier shape carried the v0 comparison columns
+ * (`| arena | n | v0 | neural | both | … |`). A fixed column offset silently reads the
+ * wrong cell across that boundary.
  *
  * Locating the column from the header row is robust to both shapes (and any future column addition).
  */
@@ -83,25 +80,25 @@ export function arenaColumn(md: string, arena: string, column: string): number |
 }
 
 /**
- * Pull the per-locale table's per-tag percentage for one locale, by header —
+ * Pull the per-locale table's per-tag percentage for one locale, by header,
  * the same discipline as {@linkcode arenaColumn}.
  *
  * `per-locale-f1` emits `| Tag | <locale> … | Δ |` with one column per answer-key file,
  * so a locale is found by its column name.
  * A reordered or added locale column then cannot swap one locale's number for another's.
  *
- * A missing table, tag or column reads `undefined`, and so does an empty (`—`) cell.
+ * A missing table, tag or column reads `undefined`, and so does an empty cell.
  */
 function perLocale(md: string, tag: string, locale: string): number | undefined {
 	return Number(tableCell(md, /^\|\s*Tag\s*\|/, locale, tag)?.replace("%", "")) || undefined
 }
 
 /**
- * One cell of a markdown pipe-table, located by header column name and first-column row name
+ * One cell of a markdown pipe-table, located by header column and first-column row text
  * in a single pull over the lines: the header must come first, and the row is searched only
  * after it, so a row can only belong to the table its header opened.
  *
- * A missing table, column or row reads `undefined`; the caller parses the cell text.
+ * A missing table, column or row reads `undefined`, and the caller parses the cell text.
  */
 function tableCell(md: string, headerPattern: RegExp, column: string, row: string): string | undefined {
 	const rowPattern = new RegExp(`^\\|\\s*${row}\\s*\\|`)
@@ -125,13 +122,7 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
 }
 
 /**
- * Sidecar-first reads (the scorers emit JSON beside the markdown since night-11.
- * The regex fallback keeps old out-dirs replayable).
- *
- * A sidecar that exists but can't parse is a loud throw, never a silent fallback to presentation parsing.
- */
-/**
- * Parsed scorer sidecar JSON — only the fields this check reads are modeled.
+ * Parsed scorer sidecar JSON, with only the fields this check reads modeled.
  */
 interface ScorerSidecar {
 	tags?: Record<string, { f1?: number } | undefined>
@@ -150,7 +141,6 @@ export interface PromotionVerdict {
 	 * the package ships (int8, in every shipped weights package), and calling that "fp32"
 	 * invites exactly the confound `baselines.json`'s $precision_comparability documents:
 	 * someone diffs two verdicts, sees fp32-vs-int8, and attributes a quantization delta to the model.
-	 * It said "fp32" for a verifiably int8 cache on 2026-07-16.
 	 */
 	graded_artifact: "int8" | "fp32" | "weights-cache"
 	verdict: "PASS" | "FAIL"
@@ -163,7 +153,7 @@ export interface PromotionVerdict {
  * Assemble the verdict from the out-dir's battery outputs, write `verdict.json`,
  * and report the per-floor lines.
  *
- * @returns `failed` (any floor missed) — the caller owns the exit code.
+ * @returns `failed` (any floor missed). The caller owns the exit code.
  */
 export async function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
@@ -264,14 +254,13 @@ export async function assemblePromotionVerdict(
 				: intersection
 					? Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
 					: undefined,
-			// Arena leg runs once on the ship artifact (int8); the fp32 pass reads undefined
+			// Arena leg runs once on the ship artifact (int8). The fp32 pass reads undefined
 			// and the delta loop skips it.
-			// The `neural` column of the `perturb` row, located by header — the column order changed
-			// when #1151 dropped the v0 comparison (see arenaColumn).
+			// The `neural` column of the `perturb` row, located by header (see arenaColumn).
 			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
-			// Demo-cascade smoke pass rate (#524) — whole-stack parse→reconcile→resolve against the slim hot DB.
-			// Like the arena leg it runs once on the ship artifact (no fp32/int8 split);
-			// sidecar only (the leg is new, so there are no pre-sidecar out-dirs to replay).
+			// Demo-cascade smoke pass rate: whole-stack parse→reconcile→resolve against the slim hot DB.
+			// Like the arena leg it runs once on the ship artifact (no fp32/int8 split),
+			// and sidecar only (the leg is new, so there are no pre-sidecar out-dirs to replay).
 			// Absent sidecar (DB not staged / runner errored) reads undefined → a floored
 			// spec fails loudly, an unfloored spec ignores it.
 			"cascade.demo_smoke": cascadeJ?.summary?.pass_rate_pct,
@@ -285,15 +274,14 @@ export async function assemblePromotionVerdict(
 	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`).
 	// That leg runs the check and exits non-zero on failure, so the per-tag aggregator
 	// here must skip them or it spuriously reports "not found" for a floor that
-	// already passed (#949's fr.bare_street_intact).
+	// already passed.
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
 
 	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 	let failed = false
 
-	// A leg-handled floor is enforced by its leg but was absent from `results` entirely,
-	// so a reader counting floors here saw 17 where the spec declares 18, and a floor
-	// that is missing from a report reads as a floor that did not run.
+	// A leg-handled floor is enforced by its leg but would otherwise be absent from `results`
+	// entirely, and a floor missing from a report reads as a floor that did not run.
 	// Enforcement stays with the leg.
 	// This only completes the record, from the sidecar the leg already writes.
 	// Reaching this function at all means the leg passed, since it returns non-zero otherwise.
