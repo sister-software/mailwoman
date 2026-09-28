@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Australian postcodes: four digits, written at the end of the last address line after the locality
- *   and state (`sydney NSW 2000`). Sourcing (accessed 2026-06-11):
+ *   and state (`sydney NSW 2000`). Sources (accessed 2026-06-11):
  *
  *   - Australia Post's Correct Addressing brochure (SAP 8833878, Nov 2022) — every example carries a
  *       4-digit postcode and the brochure references envelopes "with preprinted four postcode
@@ -17,7 +17,8 @@
  *       the geographic prior is the gazetteer's job.
  *
  *   Note the shape collides with New Zealand's (also 4 digits) — `candidateSystemsForPostcode`
- *   returns both. The ambiguity is deliberate because this is a shape test, not a membership test.
+ *   returns both. The function tests 4-digit shape. Both systems share that shape, so the function does
+ *   not test membership.
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/Barcode_hints_tips.pdf Australia Post barcode addressing booklet}
  */
