@@ -24,6 +24,19 @@ import { $private } from "#env"
 const DEFAULT_BUCKET = "mailwoman-assets"
 
 /**
+ * Retry counts for every transfer here, above rclone's defaults of 10 low-level and 3 high-level.
+ *
+ * R2 returns an intermittent 501 that succeeds on a retry, and `push_artifact` in
+ * `corpus-python/launch/artifacts.py` already rides it with these two values.
+ * At the defaults a single 501 ends the job, and a 74 GiB corpus over a mobile link meets enough
+ * of them to matter: one lost transfer costs the whole remaining file rather than the request.
+ *
+ * `rclone sync` compares size and modification time, so a re-run after any failure skips
+ * the files that landed and re-sends only a file it was mid-way through.
+ */
+const R2_RETRIES = ["--low-level-retries", "30", "--retries", "8"]
+
+/**
  * Native command-line interface consumed by the filesystem command router.
  */
 export const spec = {
@@ -327,7 +340,10 @@ const CorpusUpload: CommandComponent<typeof spec> = ({ options }) => {
 			update(index, { status: "running" })
 
 			try {
-				await $({ env })`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} --stats-one-line`.quiet()
+				await $({
+					env,
+				})`rclone sync ${job.source.toString()} ${job.dest} ${job.extra} ${dry} ${R2_RETRIES} --stats-one-line`.quiet()
+
 				update(index, { status: "done", detail: options.dryRun ? "would sync" : "synced" })
 			} catch (error: unknown) {
 				const e = error as Record<string, unknown>
