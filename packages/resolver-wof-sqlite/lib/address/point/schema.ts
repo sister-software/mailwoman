@@ -58,21 +58,12 @@ export interface AddressPointDatabase {
 }
 
 /**
- * The subset of a Kysely handle the `address_point` DDL touches.
- * The parameter type its builders take.
- *
- * Kysely is invariant in its schema parameter (the incompatibility is in `transaction()`),
- * so an extract that extends `AddressPointTable` — OSM adds `h3_cell` — cannot pass
- * its own handle to a `Kysely<AddressPointDatabase>` parameter.
- * Naming only `schema` lets it, and the DDL below needs no other member.
+ * The subset of a Kysely handle the DDL touches, narrowed to `schema` because Kysely is invariant in its schema parameter.
  */
 export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
 
 /**
- * The `address_point` columns in insert order.
- *
- * The builder's positional prepared statement derives its placeholder list from this,
- * so the positional order can't drift from the DDL / the reader.
+ * The `address_point` columns in insert order, from which the builder derives its positional placeholders.
  */
 export const ADDRESS_POINT_COLUMNS = [
 	"street_norm",
@@ -97,7 +88,7 @@ export async function createAddressPointTable(db: AddressPointSchemaHandle): Pro
 	await db.schema
 		.createTable("address_point")
 		.addColumn("street_norm", "text", (c) => c.notNull())
-		// `street_key` = canonicalizeRouteKey(street_norm): the route-fold key (#483 Method 2).
+
 		.addColumn("street_key", "text", (c) => c.notNull())
 		.addColumn("number", "text", (c) => c.notNull())
 		.addColumn("unit", "text")
@@ -130,9 +121,6 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 		.execute()
 
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
-	// Street-first index for the bbox scope (#247): OSM points often carry no postcode/locality, so the
-	// reader scopes a `(street_norm, number)` probe by the resolved locality's bbox (lat/lon between).
-	// The postcode/locality indexes lead with their scope column and can't serve this.
-	// US situs never probes by bbox so it simply carries one extra (cheap) index on a future rebuild.
+	// Street-first index for the bbox scope: OSM points often carry no postcode or locality, so the reader scopes a `(street_norm, number)` probe by the resolved locality's bbox.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }

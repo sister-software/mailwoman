@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Query shaping for the FTS5 lookup: placetype normalization and the match-expression sanitizer.
- *   Both turn a caller's loose input into something SQLite's FTS5 parser accepts without throwing —
- *   an unescaped quote or a bare `*` is a syntax error rather than an empty result.
+ * Query shaping for the FTS5 lookup: placetype normalization and the match-expression sanitizer.
  */
 
 import type { FindPlaceQuery, WOFPlacetype } from "#types"
@@ -18,30 +16,6 @@ export function normalizePlacetypes(p: FindPlaceQuery["placetype"]): WOFPlacetyp
 
 /**
  * Make an arbitrary user-typed string safe for FTS5 match.
- *
- * FTS5 has its own query syntax (`"phrase"`, `term1 or term2`, `prefix*`, near/N, etc.).
- * Letting raw user input through means a user typing `Paris's` or `St. (Petersburg)` causes a syntax error.
- *
- * Per-token rules:
- *
- * - Strip all punctuation except trailing `*` from each whitespace-separated token.
- * - **Trailing `*`** is preserved as FTS5 **prefix syntax** — `627*` becomes the literal `627*` (unquoted).
- *   The caller signaled they want a prefix.
- *   Respect that.
- * - All other tokens are wrapped in `"..."` as a single-word phrase.
- *   Conservative — handles apostrophes, parens, accented input, etc. safely.
- * - Multiple tokens join with implicit `and`.
- *
- * Examples:
- *
- * - `"Paris"` → `"Paris"` (phrase)
- * - `"627*"` → `627*` (prefix)
- * - `"St. (Petersburg)"` → `"St" "Petersburg"` (two phrases, and-joined)
- * - `"Thiron-Gardais"` → `"Thiron" "Gardais"` (intra-token punctuation splits — #945. Fusing to
- *   `ThironGardais` matched no document because the FTS doc tokenizes the hyphenated name as two terms)
- * - `"110 00"` with `fuseTokens` (postcode-typed) → `"110" "00"` per-token fused — the #920 name law
- * - `"Pari* TX"` → `Pari* "TX"` (mixed prefix + phrase)
- * - `"*"` alone → `""` (no body → drop)
  */
 export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }): string {
 	const out: string[] = []
@@ -52,7 +26,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 		if (!trimmed) continue
 		const hasPrefixStar = trimmed.endsWith("*")
 
-		// #920 name law (postcode-typed queries only): delete intra-token punctuation and fuse the remainder — postal names are stored in this collapsed shape ("SW1A" stays one term).
+		// Fused mode deletes intra-token punctuation because postal names are stored in that collapsed shape.
 		if (opts?.fuseTokens) {
 			const body = trimmed.replaceAll(/[^\p{L}\p{N}]/gu, "")
 
@@ -62,12 +36,6 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 			continue
 		}
 
-		// Everything else splits on intra-token punctuation — the behavior the docstring
-		// always promised ("St. (Petersburg)" → two phrases).
-		// The old code deleted punctuation instead, fusing "Thiron-Gardais" into the
-		// unmatchable single term `ThironGardais` while the FTS doc holds two terms
-		// (#945 — the entire hyphenated-name class missed at the raw lookup. Masked for years
-		// because pre-splice tokenizers never emitted hyphen-preserved values).
 		const parts = trimmed.split(/[^\p{L}\p{N}]+/u).filter((part) => part.length)
 
 		if (!parts.length) continue
@@ -76,7 +44,7 @@ export function sanitizeFTSQuery(text: string, opts?: { fuseTokens?: boolean }):
 			const body = parts[i]!.replaceAll("*", "")
 
 			if (!body) continue
-			// The caller's trailing `*` applies to the final part ("Thiron-Gard*" → "Thiron" Gard*).
+			// The caller's trailing `*` applies only to the final part.
 			out.push(hasPrefixStar && i === parts.length - 1 ? `${body}*` : `"${body.replaceAll('"', '""')}"`)
 		}
 	}
