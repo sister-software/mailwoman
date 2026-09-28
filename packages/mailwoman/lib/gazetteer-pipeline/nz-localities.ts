@@ -3,23 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build `localities-nz-linz.db` — the NZ suburb/locality database (#1564, the NZ lane's coverage
- *   gap; #1585's data half). The candidate gazetteer carries NZ's region + major-locality tiers but
- *   no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland suburb) has no row and the resolver
- *   can only mis-answer or abstain.
+ *   Build `localities-nz-linz.db`, the NZ suburb/locality database. The candidate gazetteer carries
+ *   NZ's region and major-locality tiers but no suburb tier, so `Stanmore Bay` (a ~6k-person Auckland
+ *   suburb) has no row and the resolver can only mis-answer or abstain.
  *
- *   source + LICENSE: the linz-derived OpenAddresses NZ countrywide extract
- *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`) — upstream is linz "NZ Street
- *   Address" via OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the
- *   same lane the country-evidence runbook already ships pair-index data from). Not derived from
- *   any Nominatim import — the ODbL comparison arm stays a comparison arm. The build refuses to run
- *   unless the source's md5 sidecar matches, and stamps source md5 + vintage into the database's
+ *   Source and license: the LINZ-derived OpenAddresses NZ countrywide extract
+ *   (`<data-root>/openaddresses/extracted/nz/countrywide.csv`), upstream LINZ "NZ Street Address" via
+ *   OpenAddresses, CC-BY 4.0 with attribution to Land Information New Zealand (the same lane the
+ *   country-evidence runbook already ships pair-index data from). It is not derived from any
+ *   Nominatim import, so the ODbL comparison arm stays a comparison arm. The build refuses to run
+ *   unless the source's md5 sidecar matches, and stamps source md5 and vintage into the database's
  *   `database_meta` table so provenance travels with the artifact.
  *
- *   shape: one `spr` row per (city, district) group — the city column is the address's
+ *   Shape: one `spr` row per (city, district) group. The city column is the address's
  *   suburb/locality line, and 49 names span more than one district (`Hillsborough` is both an
  *   Auckland and a Christchurch suburb), so the group key is the pair. Coordinates are the median
- *   address point (robust against depot-coded outliers); the bbox is the group's p5–p95 envelope.
+ *   address point (robust against depot-coded outliers), and the bbox is the group's p5–p95 envelope.
  *   Placetype is `locality`: that is the tier NZ addressing puts the suburb on, and the tier a bare
  *   parsed toponym queries. A `neighbourhood` row would be invisible to the locality filter group,
  *   and widening that group is a global ranking change this database must not smuggle in. Population
@@ -48,7 +47,7 @@ import { CSVSpliterator } from "spliterator"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
 /**
- * The grant the artifact records, as its `database_meta` table has stated it since the first build.
+ * The license grant the artifact records.
  */
 const NZ_LOCALITIES_LICENSE = "CC-BY-4.0, attribution Land Information New Zealand"
 
@@ -66,7 +65,7 @@ const NZ_LOCALITIES_SOURCE_VINTAGE = "2021-10-21 (extract mtime); md5-sidecar ve
 const MIN_GROUP_POINTS = 5
 
 /**
- * NZ geographic sanity envelope, WGS-84 — generous around the mainland plus the Chathams
+ * NZ geographic sanity envelope, WGS-84, generous around the mainland plus the Chathams
  * (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
  *
  * A point outside it is source noise (a wrong-hemisphere or null-island row), not a New Zealand address.
@@ -92,7 +91,7 @@ export interface BuildNZLocalitiesOptions {
 }
 
 /**
- * Title-case comparison surface for the CSV's already-title-cased city values — the database stores
+ * Title-case comparison surface for the CSV's already-title-cased city values. The database stores
  * the display form verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
@@ -102,9 +101,9 @@ function cleanName(raw: string | undefined): string {
 /**
  * The p-th percentile of a sorted numeric array (nearest-rank, p in [0, 100]).
  *
- * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`: this copy uses the ceil-based
+ * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`. This copy uses the ceil-based
  * nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with,
- * where core floors (`floor(p/100 · n)`) — swapping conventions moves a percentile
+ * where core floors (`floor(p/100 · n)`). Swapping conventions moves a percentile
  * by up to one member row and with it every derived label point.
  *
  * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank
@@ -120,7 +119,7 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 /**
  * Build the sealed NZ locality database.
  *
- * Not re-exported from a barrel — the command lazy-imports it
+ * Not re-exported from a barrel. The command lazy-imports it
  * (optional-peer discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
@@ -142,8 +141,7 @@ export async function buildNZLocalitiesDatabase(
 		throw new Error(`source md5 mismatch: computed ${sourceMD5}, sidecar ${sidecar} — re-verify the extract`)
 	}
 
-	// Pass 1 — aggregate (city, district) → coordinate lists. ~2.1M rows.
-	// Two float arrays per group.
+	// Pass 1: aggregate (city, district) to coordinate lists. ~2.1M rows.
 	const groups = new Map<string, { city: string; district: string; lats: number[]; lons: number[] }>()
 	let header: string[] | undefined
 
@@ -185,7 +183,7 @@ export async function buildNZLocalitiesDatabase(
 	db.exec("PRAGMA synchronous = OFF")
 	await createUnifiedSchema(db)
 
-	// Provenance stamp — travels with the artifact (the coverage register's basis/vintage discipline).
+	// Provenance stamp, which travels with the artifact (the coverage register's basis/vintage discipline).
 	db.exec(`CREATE TABLE database_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL) WITHOUT ROWID`)
 	const meta = db.prepare(`INSERT INTO database_meta VALUES (?, ?)`)
 	meta.run("source", "LINZ NZ Street Address via OpenAddresses (nz/countrywide)")

@@ -3,25 +3,23 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1731 — per-node lineage provenance for the result `hierarchy`.
+ *   Per-node lineage provenance for the result `hierarchy`.
  *
- *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region resolves on its own
- *   and contributes its entry beside the locality winner, whether or not any place on earth has that containment chain.
- *   The recorded instance: `24 37 42nd St, Astoria, NY 11103` shipped a hierarchy of Astoria-the-oregon-locality under
- *   New-York-the-region — two correct-looking fragments composing a chain that exists nowhere. Silently mixing the
- *   winner's lineage with independently resolved fragments is the defect. this module makes the mixing explicit.
+ *   The `hierarchy` array is assembled from independently resolved parse nodes: the parsed region
+ *   resolves on its own and contributes its entry beside the locality winner, whether or not any
+ *   place on earth has that containment chain. Silently mixing the winner's lineage with
+ *   independently resolved fragments is the defect, and this module makes the mixing explicit.
  *
  *   Each entry gains a tri-state `in_winner_lineage`:
  *
- *   - `true` — the winner's own ancestors sidecar vouches for this entry (or the entry is the winner).
- *   - `false` — the entry resolved independently to a place outside the winner's containment chain: the chimera
- *     fragment, and the statement the #1722 account layer reads as "parsed region resolved independently to X. winner
- *     sits in Y".
- *   - absent — no sidecar to ask (the backend/artifact carries no `ancestors()`), or the entry has no place identity.
- *     Absence is "unverifiable", never "false" (the meaning-of-zero rule).
+ *   - `true`: the winner's own ancestors sidecar vouches for this entry, or the entry is the winner.
+ *   - `false`: the entry resolved independently to a place outside the winner's containment chain.
+ *   - absent: no sidecar to ask (the backend or artifact carries no `ancestors()`), or the entry has
+ *     no place identity. Absence reads as "unverifiable" rather than "false", per the meaning-of-zero
+ *     rule.
  *
- *   The winner-chain-AS-hierarchy representation (the issue's other sanctioned close) belongs to the #1717 stage-2
- *   containment re-rank, where the winner's chain becomes the natural assembly. until then the shipped shape keeps its
+ *   The winner-chain-as-hierarchy representation belongs to the stage-2 containment re-rank, where
+ *   the winner's chain becomes the natural assembly. Until then the shipped shape keeps its
  *   parse-anchored entries and states each one's standing.
  */
 
@@ -36,8 +34,8 @@ interface LineageAncestor {
 }
 
 /**
- * The subset of a resolved-tree node the assembly reads — structurally satisfied
- * by the decorated `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads, structurally satisfied by the decorated
+ * `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string
@@ -79,15 +77,10 @@ const HIERARCHY_TAGS = [
 ]
 
 /**
- * The most-specific resolved admin node — the lineage anchor for tiers without
- * an admin-ladder pick (#1731 follow-up).
+ * The most-specific resolved admin node, the lineage anchor for tiers without an admin-ladder pick.
  *
- * The first live `mwdev_diagnose` run caught the defect this fixes: on an address-point result
- * the fallback anchor was the first resolved admin node in tree order — often the region —
- * and an ancestor chain never contains its own descendants, so `1600 Pennsylvania Ave…`
- * graded its correctly-resolved `Washington` locality `in_winner_lineage: false`.
- * Anchoring at the deepest resolved entry grades ancestors (which its chain does contain)
- * and can never false-flag a descendant.
+ * Anchoring at the deepest resolved entry grades ancestors, which its chain does contain, and can
+ * never falsely flag a descendant.
  */
 export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
 	for (const tag of HIERARCHY_TAGS) {
@@ -103,10 +96,9 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
  * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each
  * entry's lineage standing against `anchor` (see {@link annotateHierarchyLineage}).
  *
- * `streetLocality` is the #1058 register commune: on a street-tier result with no
- * locality entry it fills the locality slot, because a street-tier `city` must come
- * from the register, never from a token of the street name.
- * It carries no place identity, so it is never lineage-graded.
+ * `streetLocality` is the register commune: on a street-tier result with no locality entry it
+ * fills the locality slot, because a street-tier `city` must come from the register rather than
+ * a token of the street name. It carries no place identity, so it is never lineage-graded.
  */
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
@@ -119,9 +111,9 @@ export function assembleHierarchy(
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
-			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`;
-			// fall back to the raw parsed span when a node resolved without one. #1014:
-			// consumers should display this rather than `value`.
+			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`, and
+			// this falls back to the raw parsed span when a node resolved without one. Consumers should
+			// display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
@@ -158,11 +150,11 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`), never by name.
- * A name match across instances is exactly the confusion the field exists to expose.
+ * Grading is by place identity (`wof:<id>`) rather than name. A name match across instances is
+ * exactly the confusion the field exists to expose.
  *
- * Without a sidecar only the anchor's own entry can be vouched for.
- * Every other entry stays ungraded rather than guessed.
+ * Without a sidecar only the anchor's own entry can be vouched for. Every other entry stays
+ * ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],

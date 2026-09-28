@@ -34,12 +34,12 @@ export interface RescueRowInput {
 	expectLon?: number
 	expectToleranceM?: number
 	/**
-	 * The delivered answer (post entity tiers — production behavior).
+	 * The delivered answer (post entity tiers, production behavior).
 	 */
 	lat: number | null
 	lon: number | null
 	/**
-	 * True when the delivered result includes `entity` — the #1585 wire fired under the current check.
+	 * True when the delivered result includes `entity`, meaning the wire fired under the current check.
 	 */
 	entityFired: boolean
 	/**
@@ -70,7 +70,7 @@ export interface RescueRowReport {
 	 */
 	rescueRank?: number
 	/**
-	 * The row is correct as delivered while an unconditional entity hit exists —
+	 * The row is correct as delivered while an unconditional entity hit exists,
 	 * the set a check loosening puts at risk.
 	 *
 	 * Reported beside the classification, never instead of it.

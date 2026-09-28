@@ -26,6 +26,7 @@
  *   Split: the fixture's street surfaces are reserved in `ban-fragments-fr.surfaces.txt`. A training
  *   database must exclude them by normalized street surface, since a row-level split leaks the surface
  *   across the boundary and measures memorization.
+ */
 
 import { STREET_FAMILY_TAGS } from "@mailwoman/codex/component"
 import { foldCaseWhitespace } from "@mailwoman/normalize/fold"

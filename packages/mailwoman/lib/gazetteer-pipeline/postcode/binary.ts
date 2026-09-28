@@ -4,11 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   PCB1 postcode-binary derivation.
- *   Extracted from `mailwoman/commands/gazetteer/postcode-binary.tsx`
- *   so it can be tested without DB/terminal dependencies (#1509).
  *
- *   GB outward keys are derived by postcode shape (not by splitting on spaces),
- *   so both spaced and unspaced GB datasets work.
+ *   GB outward keys come from the postcode shape, so both spaced and unspaced GB datasets work.
  *
  *   Empty or badly degraded builds are rejected by {@linkcode keyFloorViolation}.
  *
@@ -26,7 +23,7 @@ import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * GB inward code length (`\d[A-Z]{2}`); outward is everything before it.
+ * GB inward code length (`\d[A-Z]{2}`). The outward code is everything before it.
  */
 const GB_INWARD_LENGTH = 3
 
@@ -207,7 +204,7 @@ export function buildPostcodeBinaryEntries(
 }
 
 /**
- * Per-country key floors used to detect collapsed builds (#1509).
+ * Per-country key floors used to detect collapsed builds.
  *
  * A floor is a coarse threshold: it states the count the build must clear, and any larger count passes.
  * Unknown countries default to a floor of 1 (see {@linkcode keyFloorFor}).

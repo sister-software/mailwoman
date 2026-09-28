@@ -35,7 +35,7 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 ] as const
 
 /**
- * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) — the zero-WOF-repo locales.
+ * Overture `divisions`-theme backfill set (synthetic ids @ 8e12) for the zero-WOF-repo locales.
  */
 export const DEFAULT_OVERTURE_COUNTRIES = [
 	"AE",
@@ -127,7 +127,7 @@ export const DEFAULT_OVERTURE_COUNTRIES = [
 ] as const
 
 /**
- * GeoNames alias-fold tail (synthetic ids @ 9e12) — bilingual/alt-name coverage for the remaining locales.
+ * GeoNames alias-fold tail (synthetic ids @ 9e12): bilingual/alt-name coverage for the remaining locales.
  */
 export const DEFAULT_GEONAMES_COUNTRIES = [
 	"AD",
@@ -328,7 +328,7 @@ export function geonamesAdminGapCountries(): string[] {
  *
  * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
  * because the fold rewrites its whole id range, and a narrower list re-folds the front of
- * that range while leaving every other country's names attached to the wrong places.
+ * that range while other countries' name rows stay attached to the wrong places.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 

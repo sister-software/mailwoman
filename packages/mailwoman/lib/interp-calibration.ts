@@ -3,19 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-region split-conformal multipliers for the interpolation tier's `uncertainty_m` radius
- *   (#374). Multiply the raw claimed radius (half the matched tiger segment length) by the region's
- *   factor to get a calibrated ~90%-coverage interval.
+ *   Per-region split-conformal multipliers for the interpolation tier's `uncertainty_m` radius.
+ *   Multiply the raw claimed radius (half the matched tiger segment length) by the region's factor
+ *   to get a calibrated ~90%-coverage interval.
  *
- *   #569 shipped a single 1.70 measured on Texas. the multi-region recalibration (#584) found the
- *   factor is regional — Q̂ rises monotonically with rurality, 1.44 (DC, densest) → 3.12 (AZ,
- *   sprawl). This wires the per-region selection the seed table anticipated.
+ *   The factor is regional, rising with rurality, so the region selects its own multiplier rather
+ *   than using one global value.
  *
- *   source OF record: `data/calibration/interp-radius-conformal.json` (the eval artifact + rationale,
- *   `docs/articles/evals/calibration/2026-06-14-interp-multiregion-recalibration.md`). Embedded here as a
- *   constant so the published package + the server ship it without a runtime data-file dependency.
- *   **Keep the two in sync** — when the full 50-state sweep (followups in the JSON) fills in,
- *   update both.
+ *   Source of record: `data/calibration/interp-radius-conformal.json` (the eval artifact and
+ *   rationale). Embedded here as a constant so the published package and the server ship it without
+ *   a runtime data-file dependency. **Keep the two in sync** when the full 50-state sweep fills in,
+ *   and update both.
  */
 
 export interface InterpCalibrationTable {
@@ -33,9 +31,9 @@ export interface InterpCalibrationTable {
 }
 
 /**
- * Measured 12-state seed table (a partial sweep. The full 50 was abandoned at the >85 °C heat ceiling).
+ * The measured 12-state seed table, a partial sweep.
  *
- * Mirrors `data/calibration/interp-radius-conformal.json` (#584).
+ * Mirrors `data/calibration/interp-radius-conformal.json`.
  */
 export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 	byRegion: {
@@ -58,7 +56,7 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 /**
  * The conformal multiplier for a parsed region.
  *
- * `stateSlug` is the lowercase 2-letter slug from {@link regionToStateSlug} (e.g. `"tx"`);
+ * `stateSlug` is the lowercase 2-letter slug from {@link regionToStateSlug} (e.g. `"tx"`), and
  * falls back to the table's conservative `default` for an unmeasured or absent region.
  */
 export function interpCalibrationForRegion(
