@@ -3,34 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The streaming pass — every feature into `zoning_area` and into `zoning_cell` — as a unit of work that can
- *   run over part of the source.
- *
- *   why this is A chunk rather than the whole file. h3's wasm heap cannot be reset from JavaScript, and it
- *   does not survive an unbounded number of polyfill calls: over a sibling product, runs died after roughly
- *   510,000 and 798,000 features on geometry that classifies in milliseconds in a fresh process. A build that
- *   completes only when fragmentation happens to stay low is not a reproducible build, so the classification
- *   is bounded BY construction — one process per range of the authority's own feature ids. This product's
- *   85,330 features fit inside the default bound. the bound ships anyway, because determinism by construction
- *   is not the same fact as determinism by luck.
- *
- *   the vocabulary is A census rather than A check. The declared generic-type domain is closed and the source
- *   already breaks it — `N/A` appears on 4 rows and in no domain — so an undeclared value is recorded as
- *   observed-but-undeclared rather than throwing. That is the opposite of the sibling layers' rule and it is
- *   the publisher's own doing: refusing here would refuse the Department's own data. What does throw is a
- *   blank local code, because the local code is the claim.
- *
- *   the crosswalk pairs are counted here because they are the argument FOR the schema. If a local code
- *   determined a generic type, the mapping could ship as an edge table and the local column would be
- *   redundant. It does not: measured nationally, 52 of 795 (authority, local code) pairs take more than one
- *   generic type. The chunk reports the pairs it saw and the build refuses to write an edge table while any
- *   such pair exists, so the empty `zoning_crosswalk_edge` is a checked consequence rather than an omission.
- *
- *   the chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
- *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer
- *   and no locking to reason about. The jurisdiction, plan and vocabulary rows are returned rather than
- *   written: they are per-chunk partials that have to be merged before insertion, and 30 authorities, 63
- *   plans and about 880 vocabulary rows cross a process boundary for no gain.
+ * The streaming pass, bounded to one process per range of the authority's own feature ids because h3's wasm heap cannot be reset from JavaScript and a build that completes only by luck is not reproducible.
  */
 
 import {
@@ -49,16 +22,11 @@ import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index
 import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction.
- *
- * Chosen for the geometry table, whose rows carry a blob: a larger transaction
- * grows the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction, chosen for the geometry table whose rows carry a blob because a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
-/**
- * Features between progress reports.
- */
+
 const PROGRESS_STRIDE = 5000
 
 /**
@@ -73,9 +41,7 @@ export type ObservedTerm = [scheme: string, code: string, label: string, rows: n
 export type CrosswalkPair = [authorityCode: string, localCode: string, crosswalkCodes: string[]]
 
 /**
- * What one chunk produced.
- *
- * Every field is JSON-serializable, because a chunk normally reports across a process boundary.
+ * What one chunk produced, every field JSON-serializable because a chunk normally reports across a process boundary.
  */
 export interface ZoningChunkResult {
 	features: number
@@ -94,10 +60,7 @@ export interface ZoningChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres.
-	 *
-	 * `signed` is the raw ring sum as published; `nested` is the per-polygon hole-aware reading;
-	 * `allExterior` is what the same rings say read without their holes.
+	 * Square metres, with `signed` the raw ring sum as published, `nested` the per-polygon hole-aware reading, and `allExterior` what the same rings say read without their holes.
 	 */
 	area: { signedM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -110,10 +73,7 @@ export interface ZoningChunkResult {
 		nestedHoles: number
 		adjacentHoles: number
 		/**
-		 * Features whose exterior was chosen by magnitude because no ring read as one
-		 * by orientation — measured at one of 85,330.
-		 *
-		 * See `ResolvedRingRoles.exteriorByMagnitude`.
+		 * Features whose exterior was chosen by magnitude because no ring read as one by orientation.
 		 */
 		exteriorByMagnitude: number
 	}
@@ -121,9 +81,7 @@ export interface ZoningChunkResult {
 	 * The authorities this chunk saw, by their own code.
 	 */
 	jurisdictions: Array<[code: string, name: string]>
-	/**
-	 * The plans this chunk saw.
-	 */
+
 	plans: Array<{
 		planID: string
 		authorityCode: string
@@ -168,11 +126,7 @@ export async function ingestZoningChunk(
 	const jurisdictions = new Map<string, string>()
 	const plans = new Map<string, ZoningChunkResult["plans"][number]>()
 
-	// keyed on A NUL-joined pair and never split back apart.
-	// A local code is free text that routinely contains spaces — `Special Policy Area`,
-	// `RA - Rural Area` — so a key a reader had to re-split would mangle exactly the
-	// vocabulary this layer exists to carry verbatim.
-	// The parts ride on the value instead.
+	// Keyed on a NUL-joined pair and never split back apart, because a local code is free text that routinely contains spaces and a key a reader had to re-split would mangle the vocabulary this layer carries verbatim.
 	const vocabulary = new Map<string, { scheme: string; code: string; label: string; rows: number }>()
 	const crosswalkPairs = new Map<string, { authorityCode: string; localCode: string; codes: Set<string> }>()
 
@@ -191,10 +145,7 @@ export async function ingestZoningChunk(
 	let adjacentHoles = 0
 
 	/**
-	 * Record one observed vocabulary value.
-	 *
-	 * The first label wins, because a later row's description is the publisher's word for the same code
-	 * and choosing between them would be this package editing the publisher's vocabulary.
+	 * Record one observed vocabulary value, letting the first label win so no later row's description edits the publisher's vocabulary.
 	 */
 	const observe = (scheme: string, code: string, label: string): void => {
 		const key = `${scheme}\u0000${code}`
@@ -237,10 +188,7 @@ export async function ingestZoningChunk(
 				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
-				// one grade PER claim.
-				// Every row of this artifact is `authoritative` — a government department republishing local
-				// authorities' adopted plans — and an observed land-use layer is a different database
-				// with a different `layer_manifest.name`, never a row with a second grade in this table.
+				// One grade per claim: every row of this artifact is `authoritative`, and an observed land-use layer is a different database with a different `layer_manifest.name` rather than a row with a second grade in this table.
 				GZT_PROVENANCE_GRADE,
 				bbox.minLat,
 				bbox.minLon,
@@ -272,11 +220,7 @@ export async function ingestZoningChunk(
 				}
 			}
 
-			// coverage is derived from the uncompacted classification rather than from the stored rows.
-			// A compacted parent spans several coverage cells and `addCoverageCells` handles that,
-			// but the fringe is where this product's cells almost all are.
-			// So counting off the stored rows and counting off the classification agree here,
-			// and the classification is the one that cannot be changed by a compaction decision.
+			// Coverage is derived from the uncompacted classification rather than the stored rows, since the classification is the one compaction cannot change.
 			const coverageCells = new Set<number>()
 
 			for (const cell of classified.whole) {
@@ -305,8 +249,7 @@ export async function ingestZoningChunk(
 				})
 			}
 
-			// The local vocabulary is per authority, because the codes collide across them:
-			// `Residential` means one thing in Cork County Council's plan and another in Westmeath's.
+			// The local vocabulary is per authority, because codes collide across them.
 			observe(localSchemeFor(feature.authorityCode), feature.localCode, feature.localDescription ?? feature.localCode)
 
 			if (feature.crosswalkCode !== null) {
