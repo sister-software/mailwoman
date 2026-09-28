@@ -6,7 +6,6 @@
 
 export * from "#collections"
 export * from "#decoder/index"
-export * from "#strings/case"
 export * from "#strings/escape"
 export * from "#strings/compare"
 export * from "#strings/regexp"

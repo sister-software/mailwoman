@@ -29,8 +29,8 @@
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { normalizeInputCase } from "@mailwoman/core/strings/case"
 import { PostcodeBinaryResolver, collectMatches } from "@mailwoman/neural/postcode"
+import { normalizeInputCase } from "@mailwoman/normalize/case"
 import { JSONSpliterator } from "spliterator"
 
 /**

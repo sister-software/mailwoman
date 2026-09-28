@@ -10,8 +10,8 @@
 import { dataRootPath } from "@mailwoman/core/data-root"
 import { stringifyJSON } from "@mailwoman/core/json"
 import { sample } from "@mailwoman/core/random"
-import { upperFirst } from "@mailwoman/core/strings/case"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
+import { upperFirst } from "@mailwoman/normalize/case"
 import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 

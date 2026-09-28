@@ -52,13 +52,13 @@ test("a build-local candidate is refused by name before staging", async () => {
 
 	const stageDir = root.path("stage")
 
-	await expect(
-		publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })
-	).rejects.toThrow(/tier is build-local, and only shipped permits publication/)
+	await expect(publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })).rejects.toThrow(
+		/tier is build-local, and only shipped permits publication/
+	)
 
-	await expect(
-		publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })
-	).rejects.toThrow(/Pass --override-refusals/)
+	await expect(publishGazetteer({ candidateDB, version: "2026-09-27a", stageDir, dryRun: true })).rejects.toThrow(
+		/Pass --override-refusals/
+	)
 
 	// Refused before the staging link existed.
 	expect(await pathExists(stageDir("gazetteer", "2026-09-27a", "candidate.db"))).toBe(false)

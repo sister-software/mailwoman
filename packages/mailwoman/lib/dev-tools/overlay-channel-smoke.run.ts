@@ -19,10 +19,10 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
-import { normalizeInputCase } from "@mailwoman/core/strings/case"
 import { NeuralAddressClassifier } from "@mailwoman/neural"
 import { buildSoftFeatures } from "@mailwoman/neural/soft-features"
 import { resolveWeights } from "@mailwoman/neural/weights"
+import { normalizeInputCase } from "@mailwoman/normalize/case"
 
 const { values } = parseArguments({
 	options: {

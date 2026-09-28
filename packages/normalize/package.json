@@ -44,6 +44,11 @@
 			"node": "./lib/abbreviations.ts",
 			"default": "./out/abbreviations.js"
 		},
+		"./case": {
+			"types": "./out/case.d.ts",
+			"node": "./lib/case.ts",
+			"default": "./out/case.js"
+		},
 		"./cjk": {
 			"types": "./out/cjk.d.ts",
 			"node": "./lib/cjk.ts",
@@ -87,5 +92,8 @@
 	},
 	"publishConfig": {
 		"access": "public"
+	},
+	"dependencies": {
+		"spliterator": "^8.1.0"
 	}
 }

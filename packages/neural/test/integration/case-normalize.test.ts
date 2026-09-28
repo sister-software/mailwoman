@@ -14,7 +14,7 @@ import {
 	normalizeInputCase,
 	restoreLowerInput,
 	titleCaseInput,
-} from "@mailwoman/core/strings/case"
+} from "@mailwoman/normalize/case"
 import { describe, expect, it } from "vitest"
 
 describe("isAllCapsInput", () => {

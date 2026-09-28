@@ -14,6 +14,7 @@
  */
 
 export * from "#abbreviations"
+export * from "#case"
 export * from "#cjk"
 export * from "#compute"
 export * from "#fold"

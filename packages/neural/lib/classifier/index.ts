@@ -20,7 +20,7 @@ import {
 	type UnknownSpan,
 } from "@mailwoman/core/decoder"
 import { proposeSpans, type ProposedSpan, WORD_CONSISTENCY_SHIP_DEFAULT } from "@mailwoman/core/pipeline"
-import { normalizeInputCase } from "@mailwoman/core/strings/case"
+import { normalizeInputCase } from "@mailwoman/normalize/case"
 import type { PathBuilderLike } from "path-ts"
 
 import { confidentLocaleCountry, LOCALE_COUNTRIES, resolveSystemVerdict } from "#address-system"

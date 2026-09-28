@@ -161,7 +161,7 @@ const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
  *
  * Folding `[a-z]` in place cannot change length, and every character the
  * alphanumeric patterns care about is ascii anyway.
- * Same reasoning, and the same guard, as `normalizeInputCase` in `@mailwoman/core/strings/case`.
+ * Same reasoning, and the same guard, as `normalizeInputCase` in `@mailwoman/normalize/case`.
  *
  * Why the fold is on detection only.
  * The KEY was always uppercased (`span.replaceAll(" ", "").toUpperCase()`, the train

@@ -10,7 +10,7 @@ import {
 	normalizeInputCase,
 	restoreLowerInput,
 	titleCaseInput,
-} from "@mailwoman/core/strings/case"
+} from "@mailwoman/normalize/case"
 import { expect, test } from "vitest"
 
 test("isAllCapsInput: a pure-ASCII shouting address qualifies", () => {

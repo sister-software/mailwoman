@@ -6586,6 +6586,7 @@ __metadata:
     "@mailwoman/codex": "workspace:*"
     "@mailwoman/core": "workspace:*"
     "@mailwoman/locale-hint": "workspace:*"
+    "@mailwoman/normalize": "workspace:*"
     "@mailwoman/query-shape": "workspace:*"
     "@mailwoman/sentencepiece-wasm": "workspace:*"
     esbuild: "npm:0.28.2"
@@ -6638,6 +6639,8 @@ __metadata:
 "@mailwoman/normalize@workspace:*, @mailwoman/normalize@workspace:packages/normalize":
   version: 0.0.0-use.local
   resolution: "@mailwoman/normalize@workspace:packages/normalize"
+  dependencies:
+    spliterator: "npm:^8.1.0"
   languageName: unknown
   linkType: soft
 
