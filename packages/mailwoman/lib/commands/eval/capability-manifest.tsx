@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval capability-manifest` — the capability-manifest generator (#718/#719): measures
- *   the per-tier × address-system × tag mask-off/mask-on F1 block the `createScorer` load-time
- *   delta check consults. Dry run prints the block; `--write` surgically inserts it into the model
- *   card (refusing if a `capabilities` block already exists).
+ *   `mailwoman eval capability-manifest` is the capability-manifest generator. It measures the
+ *   per-tier × address-system × tag mask-off/mask-on F1 block the `createScorer` load-time delta
+ *   check consults. A dry run prints the block, and `--write` inserts it into the model card,
+ *   refusing if a `capabilities` block already exists.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

@@ -3,14 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman dev lint slice-vocab --parquet <recipe-output.parquet>` — the #511 base-consistency lint,
- *   country-scoped (v2): flags any token a synthetic recipe output labels one tag while the base corpus
- *   dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix vs base
- *   "street") are surfaced separately — the loader's affix-relabel handles them. Exits 1 on any real
- *   contradiction.
+ *   `mailwoman dev lint slice-vocab --parquet <recipe-output.parquet>` is the base-consistency lint,
+ *   country-scoped (v2). It flags any token a synthetic recipe output labels one tag while the base
+ *   corpus dominantly labels it another. Affix-split rows (the recipe output's street_suffix/_prefix
+ *   against the base "street") are surfaced separately, and the loader's affix-relabel handles them.
+ *   It exits 1 on any real contradiction.
  *
- *   The command keeps its name: the router resolves a command by its file path, and a renamed command has no
- *   `deprecatedName` the way a flag does, so the scripts and runbooks that type it would break silently.
+ *   The command keeps its name because the router resolves a command by its file path, and a renamed
+ *   command has no `deprecatedName` the way a flag does, so the scripts and runbooks that type it
+ *   would break silently.
  */
 
 import { Text } from "ink"

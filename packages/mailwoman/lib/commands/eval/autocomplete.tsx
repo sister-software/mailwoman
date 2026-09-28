@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval autocomplete` — the autocomplete ladder (#2154): every board row truncated at every prefix
- *   boundary and graded at each rung against the row's own truth, on the parse → resolve arm and the FST
- *   autocomplete arm. Report-only: a non-zero exit means the harness broke, never a rung missing.
+ *   `mailwoman eval autocomplete` is the autocomplete ladder. Every board row is truncated at every
+ *   prefix boundary and graded at each rung against the row's own truth, on the parse and resolve arm
+ *   and the FST autocomplete arm. The command is report-only, so a non-zero exit means the harness
+ *   broke rather than a rung missing.
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
