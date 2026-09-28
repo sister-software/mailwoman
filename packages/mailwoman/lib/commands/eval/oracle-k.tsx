@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval oracle-k` — oracle-recall@k over segment-level k-best decodes (#727 stage-2
+ *   `mailwoman eval oracle-k`: oracle-recall@k over segment-level k-best decodes (stage-2
  *   instrumentation). Measures the k-best rerank headroom the top-1 checks can't see: how often the
  *   gold value appears anywhere in the top-k whole-segmentation hypotheses decoded from the current
- *   model's emissions. Informational (always exits 0) — the standing floors stay on `eval parity`.
+ *   model's emissions. Informational (always exits 0). The standing floors stay on `eval parity`.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

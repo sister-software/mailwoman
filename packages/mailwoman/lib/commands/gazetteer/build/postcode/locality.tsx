@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build postcode-locality --recipe base|jp|kr|tw` — the postcode →
- *   containing-locality tables (Direction E / #274/#292/#293/#473), ported from the four standalone
- *   builders. Per-recipe options:
+ *   containing-locality tables, ported from the four standalone builders. Per-recipe options:
  *
  *   - `base` — PIP-containment from a WOF admin repo: `--country --admin-repo --postcode-db --output`
  *     (+ `--radius-km`, `--max-candidates`); `--finalize` freezes an accumulated multi-country table.

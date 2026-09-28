@@ -3,20 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman registry <csv>` — the geocode-first record matcher, end to end (#613).
+ *   `mailwoman registry <csv>`: the geocode-first record matcher, end to end.
  *
- *   This is the integration that runs `@mailwoman/registry`'s cascade on real data: it constructs the
- *   heavy geocoder (neural parser + WOF resolver + per-state situs/interp databases — the same wiring
- *   as `geocode`) and injects it into the matcher's `GeocodeAddress` interface, so the registry package
- *   itself never imports the runtime. Then:
+ *   Constructs the heavy geocoder (neural parser, WOF resolver, and per-state situs/interp databases)
+ *   and injects it into the matcher's `GeocodeAddress` interface, so `@mailwoman/registry` never
+ *   imports the runtime.
  *
- *   CSV → ingest (column-map + normalize) → geocode (the injected step) → resolveEntities (block →
- *   Fellegi-Sunter score, EM-trained label-free → cluster) → GeoJSON.
- *
- *   The thesis it grades: two rows reading `123 Main St` and `123 Main Street Apt 2` — different
- *   strings — collapse to one entity because they resolve to the same place. Blocking is
- *   geographic rather than textual. Needs the weights + databases in hand, so the real run is
- *   operator-verifiable (not CI).
+ *   Blocking uses geography, so textual variants of the same place land in one block. The real run
+ *   needs the weights and databases in hand, so it is operator-verifiable.
  */
 
 import { Spinner } from "@inkjs/ui"
@@ -48,8 +42,6 @@ import type { RegionDatabaseResolver } from "#geocode/regions"
  * Bare `mailwoman registry <csv>` stays the end-to-end matcher now that `registry/` hosts subcommands.
  */
 export const isDefault = true
-
-// #region CLI interface — args + options
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -84,17 +76,8 @@ export const spec = {
 
 type Options = OptionsOf<typeof spec>
 
-// #endregion
-
-// #region Column mapping
-
 /**
  * Built-in best-effort mapping for tidy contact/org CSVs.
- *
- * Multi-column fields are joined (so a CSV that splits the address across columns composes one string).
- * Real datasets with bespoke headers (e.g. NPPES "Provider First Line Business Practice Location Address")
- * pass an explicit --mapping.
- * Inferring it from the header is the #603 fast-follow.
  */
 export const DEFAULT_MAPPING: ColumnMapping = {
 	id: "id",
@@ -140,11 +123,10 @@ async function resolveWOFPath(options: Options): Promise<string> {
 }
 
 /**
- * Construct the heavy geocoder once (neural parser + WOF resolver + per-state databases)
- * and wire it into the matcher's {@link GeocodeAddress} interface.
+ * Construct the heavy geocoder once (neural parser, WOF resolver, and per-state databases) and wire it
+ * into the matcher's {@link GeocodeAddress} interface.
  *
  * @returns it plus a disposal hook for the database handles.
- * Shared by the single-CSV and multi-source paths.
  */
 async function buildGeocoder(options: Options): Promise<{ geocodeAddress: GeocodeAddress } & Disposable> {
 	const { decodeAsJSON } = await import("@mailwoman/core/decoder")
@@ -244,13 +226,9 @@ export interface EvalGeocoderFlags {
 }
 
 /**
- * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take.
- *
- * This is the eval scripts' historical construction, preserved exactly: a plain `WOFSQLitePlaceLookup`
- * over an explicit WOF path (not the candidate-table backend {@link buildGeocoder} uses),
- * `defaultCountry: "US"`, `placeCountry: false`, and `postcodeRepair: true` at the parse —
- * so migrated evals reproduce the retired scripts' numbers.
- * Shared by the `registry train-scorer` and `registry scorer-eval` commands.
+ * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take,
+ * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`, and
+ * `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
@@ -319,7 +297,8 @@ interface MultiSourceSpec {
 	 */
 	role?: "eligibility" | "funding"
 	/**
-	 * Read at most this many rows (the head of the file) — sampling a huge source without pre-filtering.
+	 * Read at most this many rows (the head of the file), so a huge source can be sampled without
+	 * pre-filtering.
 	 */
 	limit?: number
 }
@@ -343,11 +322,10 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
 }
 
 /**
- * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map),
- * returning the lines to append to the run summary.
+ * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map).
  *
- * @returns `null` when neither is set — the signal to dump GeoJSON to stdout (the original default).
- * Shared by both pipeline paths.
+ * @returns the lines to append to the run summary, or `null` when neither is set, the signal to dump
+ * GeoJSON to stdout (the original default).
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -376,12 +354,10 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode (#618): stream each dataset under its own mapping + provenance
- * label into one combined record set, geocode, resolve, and report the entities
- * that span ≥2 sources — the cross-dataset links.
+ * Multi-source mode: stream each dataset under its own mapping and provenance label into one combined
+ * record set, geocode, resolve, and report the entities that span two or more sources.
  *
- * No shared key required.
- * Geography is the join.
+ * No shared key required. Geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
 	const {
@@ -423,16 +399,14 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 			record.id = `${label}:${record.id}`
 		}
 
-		// namespace ids so cross-source ids never collide
 		records.push(...recs)
 		perSource.push(`${label} ${recs.length}`)
 	}
 
-	// learnedScorer:false — multi-source is cross-dataset link discovery (recall-oriented):
-	// the same facility under different operational names across sources is the signal we want.
-	// The default GBT is dedup-calibrated and rejects exactly that
-	// (it learned "same place + name drift = distinct"), so the cross-dataset path uses the FS spine.
-	// (Single-CSV dedup below keeps the GBT default.)
+	// learnedScorer is false because multi-source is cross-dataset link discovery. The same facility
+	// under different operational names across sources is the signal. The default GBT scorer is
+	// dedup-calibrated and rejects that pattern, so this path uses the Fellegi-Sunter spine while
+	// single-CSV dedup keeps the GBT default.
 	const result = resolveEntities(records, {
 		trainEM: options.trainEm,
 		threshold: options.threshold,
@@ -442,8 +416,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
-	// Reconciliation mode (#621): classify entities by eligibility/funding role membership,
-	// via the same @mailwoman/registry library as `registry scorer-eval coverage-reconciliation`.
+	// Reconciliation mode: classify entities by eligibility and funding role membership through the
+	// same `@mailwoman/registry` library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
@@ -490,10 +464,6 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-// #endregion
-
-// #region Core
-
 async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	const { inferMapping, ingestRows, streamRows, resolveEntities, toGeoJSON } = await import("@mailwoman/registry")
 
@@ -505,9 +475,6 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	}
 
 	const rows = await Array.fromAsync(streamRows(csvPath))
-	// --infer-mapping reads the header (the first row's keys) and guesses the mapping.
-	// An explicit --mapping still merges on top of it.
-	// Otherwise the base is the built-in default.
 	const base = options.inferMapping && rows[0] ? inferMapping(Object.keys(rows[0])) : DEFAULT_MAPPING
 	const mapping = await loadMapping(options.mapping, options.source, base)
 	using geocoder = await buildGeocoder(options)
@@ -535,13 +502,9 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 	return written === null ? prettyJSON(geojson) : `${summary}\n${written}`
 }
 
-// #endregion
-
-// #region React command component
-
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		// `loadSources` can throw on a malformed config — the hook routes its error to the same handler.
+		// `loadSources` can throw on a malformed config. The hook routes its error to the same handler.
 		if (options.sources) {
 			return await runMultiSource(await loadSources(options.sources), options)
 		}
@@ -564,5 +527,3 @@ const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => 
 }
 
 export default RegistryCommand
-
-// #endregion
