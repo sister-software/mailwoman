@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the SQLite-backed postcode lookup (#240). Seeds throwaway `spr` extracts in tmp dirs (the
- *   real `postalcode-*.db` artifacts live on the data volume rather than in CI), then asserts exact-match,
- *   the `is_current` filter, coordinate-less membership, and the cross-extract union.
+ * Tests for the SQLite-backed postcode lookup.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -47,14 +45,14 @@ beforeAll(async () => {
 
 	seedExtract(intl, [
 		[1, "75008", "postalcode", "FR", 48.873, 2.313, 1],
-		[2, "18540", "postalcode", "DE", 53.093, 14.259, 1], // backfilled centroid
-		[3, "80144", "postalcode", "IT", 0, 0, 1], // coord-less membership
-		[4, "13579", "postalcode", "FR", 1, 1, 0], // not current → filtered
-		[5, "Zippendorf", "postalcode", "DE", 0, 0, 0], // deprecated place-name junk → filtered
+		[2, "18540", "postalcode", "DE", 53.093, 14.259, 1],
+		[3, "80144", "postalcode", "IT", 0, 0, 1], // Zero coordinates still count as membership.
+		[4, "13579", "postalcode", "FR", 1, 1, 0],
+		[5, "Zippendorf", "postalcode", "DE", 0, 0, 0],
 	])
 
 	seedExtract(us, [
-		[10, "75008", "postalcode", "US", 35.9, -90.7, 1], // collides with FR 75008
+		[10, "75008", "postalcode", "US", 35.9, -90.7, 1],
 		[11, "94105", "postalcode", "US", 37.789, -122.396, 1],
 	])
 
