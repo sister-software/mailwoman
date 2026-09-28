@@ -147,7 +147,9 @@ When the claim depends on an evaluation, name its conditions and metric. Separat
 
 ```ts
 /** Creates a session. */
-function createSession() { /* ... */ }
+function createSession() {
+	/* ... */
+}
 ```
 
 Add behavior, inputs, outputs, constraints, side effects, or caller guidance that the symbol itself does not express. Remove empty JSDoc blocks and comments that add no information.

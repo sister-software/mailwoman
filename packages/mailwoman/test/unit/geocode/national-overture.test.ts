@@ -58,11 +58,13 @@ describe("OvertureNationalDatabaseProvider", () => {
 		expect(() => licenseForOvertureCountry("kr")).toThrow(/COUNTRY_LICENSES/)
 	})
 
-	it("refuses Taiwan's grant, because two documents name different licenses over the same rows", () => {
-		// Two documents name different licenses over the same municipal 門牌 rows,
-		// so recording the stricter one would state an unverified grant.
-		expect(() => licenseForOvertureCountry("tw")).toThrow(/unsettled: CC-BY-4\.0 or OGDL-Taiwan-1\.0/)
-		expect(() => licenseForOvertureCountry("tw")).toThrow(/counsel-dossier/)
+	it("stamps Taiwan's grant as the conjunction, because a row through Overture is bound by both", () => {
+		// Two documents describe two grants over the same municipal 門牌 rows rather than
+		// disagreeing about one: Overture states the terms it redistributes under,
+		// and the counsel dossier reads the originating agencies' own grant.
+		// Each carries Attribution alone, so the conjunction adds no obligation either lacks,
+		// and naming one alone would drop the other's conditions (#2369).
+		expect(licenseForOvertureCountry("tw")).toBe("CC-BY-4.0 AND OGDL-Taiwan-1.0")
 	})
 
 	it("reports Taiwan's evidence beside its expression, so a reader sees which document gave which grant", () => {

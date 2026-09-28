@@ -81,13 +81,19 @@ const COUNTRY_LICENSES = new Map<string, OvertureCountryLicense>([
 	[
 		"tw",
 		{
-			// Two documents describe the same municipal 門牌 rows and name different grants.
-			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies.
-			// The counsel dossier reads OGDL-Taiwan-1.0.
-			// Its attribution failure voids the grant ab initio.
-			// Section 5.2 permits an agency to withdraw data.
-			// Recording either one asserts an unreviewed reading.
-			candidates: ["CC-BY-4.0", "OGDL-Taiwan-1.0"],
+			// Two documents describe the same municipal 門牌 rows, and they describe two grants
+			// rather than disagreeing about one.
+			// Overture's attribution page gives CC-BY-4.0 for each of the 18 Civil Affairs bodies,
+			// which are the terms Overture redistributes under.
+			// The counsel dossier reads OGDL-Taiwan-1.0, which is the originating agencies' own grant.
+			//
+			// A consumer of a row that came through Overture is bound by both,
+			// so the conjunction is the settled reading.
+			// Each identifier carries Attribution alone in `KNOWN_OBLIGATIONS`, so the
+			// conjunction adds no obligation either lacks, while naming one alone would drop the
+			// other's conditions: OGDL-Taiwan-1.0 §5.2 permits an agency to withdraw its data,
+			// and an attribution failure voids that grant ab initio.
+			expression: "CC-BY-4.0 AND OGDL-Taiwan-1.0",
 			evidence: [
 				"Overture attribution page, Taiwan section, read 2026-09-25: CC BY 4.0 on all 18 entries — the terms Overture redistributes under",
 				"docs/superpowers/plans/counsel-dossier.md §6: OGDL-Taiwan-1.0 over the municipal 門牌 data — the originating agencies' own grant",

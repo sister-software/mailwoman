@@ -8,6 +8,7 @@ import {
 	CLIUsageError,
 	type CommandSpec,
 	isCLIUsageError,
+	isCorpusDirectory,
 	isCorpusVersion,
 	isLocaleTag,
 	parseCommand,
@@ -202,6 +203,35 @@ describe("isCorpusVersion", () => {
 
 	test("refuses an empty value", () => {
 		expect(isCorpusVersion("")).toBe(false)
+	})
+})
+
+describe("isCorpusDirectory", () => {
+	test("accepts every entry name under corpus/versioned, including the three that carry a label", () => {
+		// `corpus upload --corpus-directory` and `corpus("…")` in `launch/corpora.py` pass the same string,
+		// and an operator supplies it through `corpus build --out`, so no code derives its shape.
+		expect(isCorpusDirectory("v0.7.0-de-holdout")).toBe(true)
+		expect(isCorpusDirectory("v0.6.0-register-surface")).toBe(true)
+		expect(isCorpusDirectory("v8-cjk-2026-09-05")).toBe(true)
+		expect(isCorpusDirectory("v0.7.0-overlay-staging.pre-rename")).toBe(true)
+		expect(isCorpusDirectory("board-hk")).toBe(true)
+		expect(isCorpusDirectory("smoke-schema")).toBe(true)
+	})
+
+	test("accepts a corpus version too, since three entries are written without the `v`", () => {
+		expect(isCorpusDirectory("0.7.0-de-holdout")).toBe(true)
+	})
+
+	test("refuses the nested directory name, which would address corpus-corpus-v0.7.0-de-holdout", () => {
+		expect(isCorpusDirectory("corpus-v0.7.0-de-holdout")).toBe(false)
+	})
+
+	test("refuses a value that would escape the entry or the R2 key", () => {
+		expect(isCorpusDirectory("v0.7.0-de-holdout/train")).toBe(false)
+		expect(isCorpusDirectory("../v0.7.0-de-holdout")).toBe(false)
+		expect(isCorpusDirectory("v0.7.0 de-holdout")).toBe(false)
+		expect(isCorpusDirectory(".hidden")).toBe(false)
+		expect(isCorpusDirectory("")).toBe(false)
 	})
 })
 
