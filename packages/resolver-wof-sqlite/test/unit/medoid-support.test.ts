@@ -2,10 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #920 medoid law under duplicate points. GeoNames postal coordinates are frequently computed — matched from
- *   place names and admin divisions, averaged from neighbours where the match fails — so rows sharing a coordinate to
- *   the digit carry one value rather than N. The collapse must leave the scattered case untouched: those are the rows the law
- *   was measured on.
+ * @file Tests for the medoid law under duplicate points. Rows sharing a coordinate to the digit carry one
+ *   value rather than N, and the scattered case stays untouched.
  */
 
 import { medoidPoint, medoidWithSupport, type PostcodePoint } from "@mailwoman/resolver-wof-sqlite/geonames"
@@ -46,7 +44,6 @@ describe("medoidPoint", () => {
 	})
 
 	it("stays on a member rather than the mean", () => {
-		// The mean of these three is 50.1 / 14.2, which is no member.
 		const members: PostcodePoint[] = [
 			[50, 14],
 			[50.1, 14.2],
