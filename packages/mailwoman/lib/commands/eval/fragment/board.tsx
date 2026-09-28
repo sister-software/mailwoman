@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval fragment-board` — the locale fragment board (#727 stage-2, Tier 1c). Targeted
+ *   `mailwoman eval fragment-board`: the locale fragment board (Tier 1c). Targeted
  *   failure classes with confidence intervals, sampled from BAN (Tier A). The second of the two
- *   standing boards; `eval parity` is the first (the global "do no harm" floor).
+ *   standing boards. `eval parity` is the first (the global "do no harm" floor).
  *
  *   A change ships when the `eval parity` floors still pass and this board's failure-class rates
  *   improve. Neither is a verdict alone.
- *   Informational (always exits 0) — the standing floors stay on `eval parity`.
+ *   Informational (always exits 0). The standing floors stay on `eval parity`.
  */
 
 import { type CommandSpec, harnessCommand } from "#cli-kit"

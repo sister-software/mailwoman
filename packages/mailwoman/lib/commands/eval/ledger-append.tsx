@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval ledger-append` — turn a promotion-eval out-dir into one row of
- *   `evals/scores-by-version.json` (#885). `eval promote` prints this command pre-filled on every
+ *   `mailwoman eval ledger-append`: turn a promotion-eval out-dir into one row of
+ *   `evals/scores-by-version.json`. `eval promote` prints this command pre-filled on every
  *   `pass`. Refuses duplicates without `--replace` and refuses un-excepted `fail` verdicts. exit codes
  *   mirror the retired script (0 appended, 1 refused, 2 usage).
  */

@@ -212,7 +212,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	using con = await openDuckDB()
 
-	// 1. the recipe output's own (token -> dominant tag) + the countries it uses each token in
 	const outputRows = await readRows(con, options.recipeOutputPath)
 	const outputTags = new Map<string, Map<string, number>>()
 	const outputCountries = new Map<string, Set<string | null>>()
@@ -224,7 +223,7 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 			const w = tokens[i]!
 			const l = labels[i]!
 
-			if (isDigit(w)) continue // numbers are context-determined (house_number/postcode), not lexical vocab
+			if (isDigit(w)) continue
 			bump(outputTags, w, stripBIO(l))
 			let set = outputCountries.get(w)
 
@@ -241,7 +240,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 
 	console.log(`recipe output: ${outputRows.length} rows, ${outputVocab.size} unique tokens`)
 
-	// 2. base parts — full by default. fraction<1 takes a proportional per-source sample (still big)
 	const trainDir = baseRoot(baseVersion, `corpus-${baseVersion}`, "train")
 
 	let parts = (
@@ -287,7 +285,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		`base ${baseVersion}: scanning ${parts.length} parts (fraction=${formatPyFloat(fraction)}), COUNTRY-scoped`
 	)
 
-	// 3. tally each recipe-output token's base tag, scoped to the country the recipe output uses it in
 	const baseTags = new Map<string, Map<string, number>>()
 
 	for (let i = 0; i < parts.length; i++) {
@@ -310,8 +307,6 @@ export async function lintRecipeVocab(options: LintRecipeVocabOptions): Promise<
 		}
 	}
 
-	// 4. compare.
-	//    Flag contradictions (affix-split is expected — surfaced but tagged)
 	const flagged: VocabRow[] = []
 	const affix: VocabRow[] = []
 
