@@ -3,31 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for `uprn.db` — the OS Open uprn spatial layer: every GB Unique Property Reference
- *   Number with its WGS84 point, so mailwoman results can carry uprn as an interoperability key
- *   beside our own `@mailwoman/address-id`. One rowid table keyed `uprn integer primary KEY` (the
- *   rowid alias — the optimal shape for an integer-PK point table; `without rowid` adds no benefit
- *   here), plus a secondary res-9 `h3_cell` index for the bounded nearest-point probe.
- *
- *   ## Coordinates are OS's own WGS84 columns
- *
- *   The source CSV publishes both coordinate systems per row — OSGB36 eastings/northings and WGS84
- *   `latitude`/`longitude`. This layer stores OS's own lat/lon verbatim and never reconverts from
- *   eastings: `@mailwoman/spatial`'s `osgb36ToWGS84` is a 7-parameter Helmert with a measured p95 of
- *   4.18 m, and re-deriving what the publisher already computed (with OSTN15, exactly) would replace
- *   their answer with a strictly worse one.
- *
- *   ## Why `h3_cell` exists at all
- *
- *   The layer interface requires every domain row to be addressable by at least one spine key —
- *   `writeLayerManifest` throws on a manifest that declares none — and uprn is its own id space rather than
- *   H3/WOF/address-id/street. The res-9 short cell (`shortCellToInt`, the same packing as poi.db and
- *   the OSM situs extracts) is the spine that fits a point table, and its index doubles as the
- *   `nearestUPRN` ring probe.
- *
- *   The DB also embeds the layer-interface tables from `@mailwoman/core/layers`; the builder
- *   (`packages/mailwoman/lib/gazetteer-pipeline/uprn-layer.ts`) writes the manifest and per-res-6-cell
- *   coverage.
+ * Typed schema for `uprn.db`, storing OS's own WGS84 latitude/longitude verbatim rather than reconverting from the source's eastings.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -36,20 +12,17 @@ import { latLngToCell } from "h3-js"
 import type { Kysely } from "kysely"
 
 /**
- * Resolution the `uprn` table's `h3_cell` column is keyed at — the shared layer-spine
- * resolution (poi.db, the OSM situs extracts).
+ * Resolution the `uprn` table's `h3_cell` column is keyed at, shared with the other layer spines.
  */
 export const UPRN_H3_RESOLUTION = 9
 
 /**
- * Resolution of the layer's `layer_coverage` cells — coarse, per the interface (matches poi.db).
+ * Resolution of the layer's `layer_coverage` cells, coarse per the layer interface and shared with the other spines.
  */
 export const UPRN_COVERAGE_H3_RESOLUTION = 6
 
 /**
- * One uprn point.
- *
- * `uprn` is the rowid alias, so the primary probe (`coordinateOf`) is a rowid B-tree hit.
+ * One uprn point whose `uprn` is a rowid alias, making the primary probe a rowid B-tree hit.
  */
 export interface UPRNTable {
 	/**
@@ -57,7 +30,7 @@ export interface UPRNTable {
 	 */
 	uprn: number
 	/**
-	 * WGS84 latitude, as OS published it (never reconverted from eastings — see the module docstring).
+	 * WGS84 latitude, as OS published it, never reconverted from eastings.
 	 */
 	lat: number
 	/**
@@ -65,16 +38,13 @@ export interface UPRNTable {
 	 */
 	lon: number
 	/**
-	 * 48-bit short H3 cell at {@link UPRN_H3_RESOLUTION} (`uprnH3Cell`) —
-	 * the layer-interface spine key and the `nearestUPRN` probe index.
+	 * 48-bit short H3 cell at {@link UPRN_H3_RESOLUTION} — the layer-interface spine key and the `nearestUPRN` probe index.
 	 */
 	h3_cell: number
 }
 
 /**
- * Build-provenance key/value pairs the fixed `layer_manifest` columns have no room for:
- * quality-drop counts, the header as found, the upstream licence text verbatim
- * (the Code-Point provenance discipline).
+ * Build-provenance key/value pairs the fixed `layer_manifest` columns have no room for, including the upstream licence text verbatim.
  */
 export interface UPRNMetaTable {
 	key: string
@@ -87,18 +57,14 @@ export interface UPRNDatabase extends layerschemadatabase {
 }
 
 /**
- * The full res-9 cell for a uprn point.
- *
- * The one derivation both the builder and every consumer share, so a fixture built by a test
- * and a row built by the real ingest can never disagree on which cell a coordinate keys to.
+ * The full res-9 cell for a uprn point, and the one derivation the builder and its consumers share so their cells cannot disagree.
  */
 export function uprnFullCell(latitude: number, longitude: number): H3Cell {
 	return latLngToCell(latitude, longitude, UPRN_H3_RESOLUTION) as H3Cell
 }
 
 /**
- * The `h3_cell` column value for a uprn point: {@link uprnFullCell} packed to
- * the shared 48-bit short-cell integer.
+ * The `h3_cell` column value for a uprn point, packing {@link uprnFullCell} to the shared 48-bit short-cell integer.
  */
 export function uprnH3Cell(latitude: number, longitude: number): number {
 	return shortCellToInt(uprnFullCell(latitude, longitude))
@@ -123,9 +89,7 @@ export async function createUPRNMetaTable(db: Kysely<UPRNDatabase>): Promise<voi
 }
 
 /**
- * Secondary index for the `nearestUPRN` ring probe.
- *
- * Builders call this after the bulk load (index-after-load).
+ * Secondary index for the `nearestUPRN` ring probe, created after the bulk load.
  */
 export async function createUPRNIndexes(db: Kysely<UPRNDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_h3_cell").on("uprn").column("h3_cell").execute()

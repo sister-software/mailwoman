@@ -2,25 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Making TRIM work before the filesystem is written, which on a USB-attached SSD is not a given.
- *
- *   The Samsung T7 Shield reports `LBPU=1` (the UNMAP command is supported) and `LBPWS=0` (WRITE SAME with the unmap
- *   bit is not). The kernel's default `provisioning_mode` of `full` wants the latter, so it publishes a discard limit
- *   of zero and `blkdiscard` silently has no effect. A drive that arrives full of someone else's filesystem then has
- *   no free erase blocks, and every write becomes read-modify-write.
- *
- *   Measured on this drive: 2.1 MB/s with 636 ms write latency at the raw block device, against 755 MB/s once the
- *   mode was corrected and the device trimmed. That symptom reads as a failing disk, so `prepare` checks both the
- *   kernel's limit and the device's own claim before it formats anything.
  */
 
 import { $ } from "zx"
 
 export interface DiscardSupport {
 	/**
-	 * The kernel's published maximum discard bytes.
-	 * Zero means `blkdiscard` will make no change.
+	 * The kernel's published maximum discard bytes; zero means `blkdiscard` will make no change.
 	 */
 	maxBytes: number
 	/**
@@ -37,9 +25,6 @@ export interface DiscardSupport {
 	provisioningModePath?: string
 }
 
-/**
- * The bare device name for a path like `/dev/sda`.
- */
 function deviceName(device: string): string {
 	return device.replace(/^\/dev\//, "")
 }
@@ -77,7 +62,6 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 /**
  * Switch a device whose bridge supports UNMAP but whose kernel mode disables discard.
  *
- * Returns whether anything changed.
  * The write does not survive a replug, so a caller that wants it permanent installs a udev rule as well.
  */
 export async function enableUnmap(support: DiscardSupport): Promise<boolean> {

@@ -78,7 +78,7 @@ export interface RaceDotsResult {
 }
 
 /**
- * The eight P2 categories (columns in pl_block) that partition each block's population.
+ * The P2 categories (columns in `pl_block`) that partition each block's population.
  */
 const CATEGORIES = ["hispanic", "white", "black", "asian", "aian", "nhpi", "other", "multi"] as const
 
@@ -114,7 +114,7 @@ function bbox(rings: PolygonCoords): [number, number, number, number] {
 }
 
 /**
- * Race-by-dot-density ndjson builder — see the module doc.
+ * Race-by-dot-density ndjson builder.
  */
 export async function raceDots(
 	options: RaceDotsOptions = {},
@@ -122,15 +122,13 @@ export async function raceDots(
 ): Promise<RaceDotsResult> {
 	const DB = options.db || dataRootPath("tiger", "tiger-oc.db")
 	const OUT = options.out || tempRootPath("race-dots.ndjson")
-	const PER = options.per ?? 10 // people represented by one dot
+	const PER = options.per ?? 10
 	const LAYER = options.layer || "dots"
 
 	// Heavy dep, lazy-imported so loading the tools barrel stays cheap.
 	const { default: booleanContains } = await import("@turf/boolean-contains")
 
-	// A block geometry is one or more polygons.
-	// Pick a sub-polygon weighted by bbox area, then rejection-sample inside it with
-	// a turf containment test (handles holes + winding correctly).
+	// Pick a bbox-area-weighted sub-polygon, then rejection-sample inside it; turf handles holes and winding.
 	function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
 		let r = Math.random() * totalArea
 		let pick = 0

@@ -2,19 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The index resolution is a measurement this layer takes rather than a number argued to.
- *
- *   one stream, every resolution. Re-reading a survey area's shapefile per candidate adds no information. The
- *   classification is per delineation, so every candidate index folds the same delineation in turn. The cost
- *   is memory: each resolution holds its own cell sets, and the finest candidate dominates.
- *
- *   this instrument reports the first OF the two numbers §4.7 names — the `partial` cell share, plus the mean
- *   delineations per cell that drives it. The second number, the share of cells whose top class holds less
- *   than half the cell, is not measurable here: it needs the attribute join and the area weighting, which
- *   are the build. So it comes off the shipping artifact instead — {@linkcode buildSoilDatabase} counts it
- *   while it writes the rows, and the build receipt reports it. That is the flood layer's lesson applied:
- *   the number that describes the artifact is the one taken from the artifact.
  */
 
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
@@ -27,9 +14,7 @@ export interface MeasureSoilResolutionsOptions extends SoilIngestOptions, Resolu
 export interface SoilResolutionReport {
 	delineations: number
 	/**
-	 * The count the shapefile declares for itself.
-	 *
-	 * A run whose streamed total differs read a truncated file.
+	 * The count the shapefile declares for itself; a streamed total that differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: SoilCellIndexMeasurement[]

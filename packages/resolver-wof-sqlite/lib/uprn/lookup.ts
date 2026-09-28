@@ -119,8 +119,6 @@ export class UPRNLookup implements Disposable {
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
 
-			// gridDisk(origin, ring) returns the whole disk out to `ring`; diffing against what's
-			// already been probed derives just this ring's new cells (the POILookup pattern).
 			const diskCells = gridDisk(origin, ring) as string[]
 			const newCells: number[] = []
 
@@ -135,7 +133,6 @@ export class UPRNLookup implements Disposable {
 				const chunk = newCells.slice(i, i + CELL_PROBE_CHUNK)
 				const placeholders = chunk.map(() => "?").join(", ")
 
-				// Prepared fresh per chunk arity — a cold, per-call path, same posture as POILookup's batched hydration.
 				const rows = allRows<UPRNRow>(
 					this.#db.prepare(`SELECT uprn, lat, lon FROM uprn WHERE h3_cell IN (${placeholders})`),
 					...chunk
