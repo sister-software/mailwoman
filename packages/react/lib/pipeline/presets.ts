@@ -44,6 +44,6 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	// omitted, since a trailing "Porirua 5026" folds "porirua 5026" in segment mode and misses
 	// the index's bare "porirua" key.
 	// The `country: "nz"` pin is required, since locale-hint cannot structurally detect NZ
-	// (a 4-digit postcode is not distinctive), so only the pin selects the nz index.
+	// (a 4-digit postcode is not distinctive). Only the pin selects the nz index.
 	{ label: "Plimmerton (NZ dependent_locality)", value: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
