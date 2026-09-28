@@ -56,7 +56,8 @@ export interface FetchTIGEROptions {
 	/**
 	 * The TIGER vintage year.
 	 *
-	 * The default is 2020 for blocks, which matches the 2020 redistricting data, and 2024 for other levels.
+	 * The default is 2020 for blocks to match redistricting data.
+	 * Other levels default to 2024.
 	 */
 	vintage?: number
 

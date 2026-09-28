@@ -7,10 +7,10 @@
  *   wire.
  *
  *   The reader's own states are covered next door in `mailwoman`'s `freshness.test.ts`. What is
- *   under test here is the one thing only this side can get wrong: `data_updated` must be omitted
- *   when no artifact carried a build date, and the artifacts must still be listed when it is. A
- *   response that filled the field with a boot time would look exactly like a dated deployment to
- *   every client that reads it, which is the trust question the endpoint exists to answer.
+ *   The test checks that `data_updated` is omitted when no artifact has a build date.
+ *   The endpoint still lists artifacts that have a build date.
+ *   A response that uses boot time would look like a dated deployment to every client.
+ *   The endpoint exists to let clients distinguish those cases.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

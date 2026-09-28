@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Smoke-test application routes, query prefill, fake-runtime results, and static deployment assets without loading model data.
+ *   Smoke-test application routes, query prefill, and fake-runtime results.
+ *   Also check static deployment assets.
+ *   The tests do not load model data.
  */
 
 import { expect, test } from "@playwright/test"
@@ -70,7 +72,8 @@ test.describe("Mailwoman Earth shell", () => {
 		expect(info.revision.length).toBeGreaterThanOrEqual(7)
 		expect(info.buildTime.endsWith("Z")).toBe(true)
 
-		// The commit is the full hash, and the revision is its abbreviation.
+		// The commit contains the full hash.
+		// The revision contains its abbreviation.
 		expect(info.commit).toHaveLength(40)
 		expect(info.commit.startsWith(info.revision)).toBe(true)
 

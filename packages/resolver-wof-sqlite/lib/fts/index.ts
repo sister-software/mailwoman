@@ -13,8 +13,8 @@ import { tableExists } from "@mailwoman/sqlite/introspection"
 export const PLACE_SEARCH_TABLE = "place_search"
 
 /**
- * The separator between aliases in the `alt_names` bag, which stops a phrase
- * query from matching across two aliases.
+ * The separator between aliases in the `alt_names` bag.
+ * It stops a phrase query from matching across two aliases.
  *
  * FTS5 assigns positions only to tokens.
  * Spaces and punctuation are not tokens and would leave the aliases adjacent,
@@ -41,9 +41,9 @@ export function foldQueryText(input: string): string {
  * Returns whether any alias in an `alt_names` bag exactly equals the folded query.
  *
  * A bag without {@link ALIAS_SEPARATOR} is a legacy space-joined bag without alias boundaries.
- * For such a bag the
- * function checks word-bounded containment, and only when no candidate matched strictly, because containment alone
- * would promote fragments such as "York" inside "New York City".
+ * For such a bag, the function checks word-bounded containment only when no candidate matched strictly.
+ *
+ * Containment alone would promote fragments such as "York" inside "New York City".
  *
  * @param altNames The `alt_names` bag from `place_search`, or null when the row has no aliases.
  * @param normalizedQuery The query folded by {@link foldQueryText}.
@@ -68,7 +68,9 @@ export function aliasBagExactMatch(altNames: string | null, normalizedQuery: str
 export const PLACE_BBOX_TABLE = "place_bbox"
 
 /**
- * The name of the sparse table of `wof:population` per place, which drives the population ranking boost.
+ * The name of the sparse table that stores `wof:population` per place.
+ *
+ * The lookup uses this value to apply the population ranking boost.
  *
  * A place without a row gets no boost and no penalty.
  */

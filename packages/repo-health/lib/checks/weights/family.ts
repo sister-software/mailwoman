@@ -2,17 +2,17 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Every shipping weights package belongs to exactly one declared family, and every family's graph package ships
- *   the artifacts its encoder needs.
+ * @file Every shipping weights package belongs to exactly one declared family.
+ *   Each family's graph package ships the artifacts its encoder needs.
  *
- *   `@mailwoman/neural`'s `FAMILIES` declares which model graphs exist and which locales each serves, and the
- *   `neural-weights-*` workspaces are the artifacts that claim must describe. The two can disagree in four ways, each
- *   silent at compile time because a package manifest is data — a locale package assigned to no family, a locale assigned to
- *   two families, a family whose graph package ships no `model.onnx`, and a family whose graph package ships the wrong
- *   vocabulary artifact.
+ *   `@mailwoman/neural`'s `FAMILIES` declares the model graphs and the locales each graph serves.
+ *   The `neural-weights-*` workspaces are the artifacts that claim must describe.
+ *   The two sources can disagree in four ways. A locale package can be assigned to no family or
+ *   assigned to two families. A family graph package can omit `model.onnx` or ship the wrong
+ *   vocabulary artifact. Package manifests are data, so the compiler does not catch these cases.
  *
- *   The check reads manifests rather than the filesystem, because `model.onnx` and `tokenizer.model` are not in git
- *   and the `files` array is where a package states what it publishes.
+ *   The check reads manifests because `model.onnx` and `tokenizer.model` are not in git.
+ *   A package's `files` array states what it publishes.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -32,9 +32,10 @@ interface WeightsManifest {
 }
 
 /**
- * The locale a `neural-weights-*` directory name carries, such as `en-gb` from
- * `neural-weights-en-gb`, and the same string `resolveWeights` takes as its locale,
- * which is why the family registry keys on it.
+ * The locale encoded in a `neural-weights-*` directory name, such as `en-gb` in `neural-weights-en-gb`.
+ *
+ * `resolveWeights` takes the same string as its locale.
+ * The family registry uses this string as its key.
  */
 function localeForDirectory(directory: string): string {
 	return directory.replace(/^neural-weights-/u, "")

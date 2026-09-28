@@ -9,9 +9,9 @@
  *
  *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings, the
  *   same numbers the promote decision used). Run metadata (corpus, steps, hardware) defaults from
- *   the model-card, and everything is overridable by option. Rows follow the file's practiced shape
- *   (the v4.4.0 row): the strict schema wants 64-hex digests for corpus and eval-set, but the
- *   populated rows use free-text pointers. This tool warns on that drift, and does not fail.
+ *   the model-card. Options can override every metadata value. Rows follow the file's practiced shape
+ *   (the v4.4.0 row). The strict schema expects 64-hex digests for corpus and eval-set.
+ *   Populated rows use free-text pointers. This tool warns about that drift and continues.
  *
  *   Refuses to append a duplicate (same model_version and run_id) unless `replace`, and always
  *   checks that the result is parseable JSON before writing (write-to-temp, then rename).

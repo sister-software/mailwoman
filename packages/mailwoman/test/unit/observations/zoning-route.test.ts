@@ -5,9 +5,12 @@
  *
  *   The zoning route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
  *
- *   The first test is the one that matters: with the layer absent the geocode result must be identical to a run with the field never built, which is what makes rollback removing the argument.
+ *   The first test checks the rollback contract. With the layer absent, the geocode result must match a run where the field was never built.
+ *   Rollback satisfies that contract by removing the argument.
  *
- *   A designation becomes one additive marker naming the verdict's own top kind, with the authority's own code in the sentence and the generic type beside it, and a location with no zoning polygon raises no marker — the hardest case of the meaning-of-zero rule, since the publisher states `UNZ - Unzoned` as a positive value where it means it.
+ *   A designation becomes one additive marker with the verdict's top kind, authority code, plus generic type.
+ *   A location with no zoning polygon produces no marker.
+ *   The publisher records `UNZ - Unzoned` as a positive value, so the route must distinguish that designation from missing coverage.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"

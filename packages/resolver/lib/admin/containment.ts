@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one ordering function both deciding sites call: the candidate backend partitions its row set
- *   before the limit window, and the resolver walk partitions again after its fame/anchor re-ranks.
+ *   Both decision sites call this ordering function.
+ *   The candidate backend partitions rows before the limit window. The resolver walk partitions again after fame and anchor re-ranking.
  */
 
 import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
@@ -20,8 +20,8 @@ export function firstRegionQualifier(roots: readonly AddressNode[]): string | un
 
 /**
  * Stable, tier-safe, positive-evidence-only partition: within each match tier,
- * candidates the containment source vouched for (`isContained`) move ahead of the rest,
- * and both groups keep their incoming relative order.
+ * candidates vouched for by the containment source (`isContained`) move ahead of the others.
+ * Both groups keep their incoming relative order.
  */
 export function partitionByContainment<T>(
 	rows: readonly T[],

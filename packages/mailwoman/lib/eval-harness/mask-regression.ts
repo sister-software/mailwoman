@@ -12,7 +12,7 @@
  *   - The load-time delta check (createScorer) is reactive and coarse. It consults the model card's
  *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
  *       certifies, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on explicitly-forbidden
- *       tags, and only against pre-recorded numbers, so it cannot see a tag the mask harms indirectly
+ *       tags. It checks only pre-recorded numbers, so it cannot see a tag the mask harms indirectly
  *       (for example forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
  *       regression on a tag no `forbiddenTags` row lists.
  *   - This check is proactive and fine-grained. It re-runs the model (mask-off against mask-auto/on)
@@ -26,7 +26,7 @@
  *
  *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer` (so
  *   the channel feed matches the ship config) with `overrides.conventions`
- *   toggling mask off against auto, and the unfolded exact-match per-tag F1 from `score-affix.ts`
+ *   toggling mask off against auto, plus the unfolded exact-match per-tag F1 from `score-affix.ts`
  *   (street parts split, so an affix regression is visible, unlike the folded `per-locale-f1.ts`).
  *   The difference from the manifest generator: that one records `maskOnF1` only for
  *   codex-forbidden tags (the only tags the load-time check reads), while this check computes the delta
@@ -166,8 +166,9 @@ export async function maskRegressionCheck(
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
 		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades.
-		// The rows are formatted postal addresses, and on those the production pipeline derives
-		// `formatted` and runs the evidence-bundle channels off as a declared ablation.
+		// The rows are formatted postal addresses.
+		// On those, the production pipeline derives `formatted` and runs the
+		// evidence-bundle channels off as a declared ablation.
 		// Grading them in the bare-library default measures a path production never takes on these inputs.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,

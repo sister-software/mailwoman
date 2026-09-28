@@ -17,9 +17,10 @@ import type { FloodDatabase } from "#schema"
  * some inside the footprint and outside every polygon.
  *
  * Both kinds are required.
- * A sample drawn only from inside polygons never exercises the designated-absence reading,
- * which is the reading this product's Zone-1-as-absence design turns on, and an artifact that
- * answered `unknown` everywhere except inside a polygon would pass a polygon-only sample.
+ * A sample drawn only from inside polygons never exercises designated absence.
+ *
+ * This product's Zone-1-as-absence design relies on that reading.
+ * An artifact that answered `unknown` everywhere outside polygons would pass a polygon-only sample.
  *
  * The stride discipline — keys chosen before any geometry is read, deterministic
  * rather than random — is `strideSampleInteriorPoints`'s.
@@ -61,8 +62,10 @@ export function sampleAgreementPoints(
 		}
 	)
 
-	// A designated absence is a coverage cell the authority determined and no polygon reaches —
-	// exactly the cells whose `observed_rows` is zero, which is the storable form of a Zone 1 designation.
+	// A designated absence is a coverage cell the authority determined.
+	// No polygon reaches it.
+	// Those cells have `observed_rows` equal to zero.
+	// That is the storable form of a Zone 1 designation.
 	const emptyCount = (
 		database.prepare("SELECT count(*) AS n FROM layer_coverage WHERE observed_rows = 0").get() as { n: number }
 	).n

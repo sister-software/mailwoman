@@ -7,12 +7,12 @@
  *   of the two standing boards, the first being the global parity floor (`parity-corpus.ts`, broad,
  *   "do no harm").
  *
- *   A change ships when board 1 holds and board 2 moves, and neither is a verdict alone. A single
+ *   A change ships when board 1 holds and board 2 moves. Neither board is a verdict alone. A single
  *   blended number can hide both a large gain on one class and the classes that paid for it.
  *
- *   Intervals matter because a small fixture (n=63) reports cells like 3/15, whose 95% Wilson
- *   interval is roughly 4 to 48%. This board samples BAN (Tier A: clean, national, street-name
- *   complete) at roughly 400 per class so a cell means something, and prints the interval next to
+ *   Intervals matter because a small fixture (n=63) reports cells like 3/15. The 95% Wilson
+ *   interval for 3/15 is roughly 4 to 48%. This board samples BAN (Tier A: clean, national, street-name
+ *   complete) at roughly 400 per class so a cell means something. It prints the interval next to
  *   every number.
  *
  *   The negative class is the point. `bare-locality` rows carry `expect_no_street`, and the board

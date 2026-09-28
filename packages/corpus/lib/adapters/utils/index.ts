@@ -242,9 +242,12 @@ export async function loadLibpostalDictionary(language: string, filename: string
  * That does not make the corpus deduplicated across adapters: `runAdapter` holds its key store as a local
  * and discards it when the adapter returns, so each adapter is deduplicated against itself alone.
  *
- * A cross-adapter pass would have to hold every adapter's keys at once and would change which
- * adapter's copy of an address survives, which decides that row's `source`, `license` and `register`.
- * That is a corpus-level decision rather than a runner detail, and no code makes it today.
+ * A cross-adapter pass would hold keys from every adapter at once.
+ * It would choose which adapter's address copy survives.
+ *
+ * That choice determines the row's `source`, `license` and `register`.
+ * This is a corpus-level decision.
+ * The runner does not make it today.
  *
  * An augmented row is never deduplicated against the row it was fanned from: `recipe.recipe`
  * is folded into the key when present, so each augmentation variant survives.

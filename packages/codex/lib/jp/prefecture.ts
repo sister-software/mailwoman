@@ -6,9 +6,9 @@
  *   The 47 Japanese prefectures (都道府県, todōfuken), keyed by their ISO 3166-2:JP code — the two-digit
  *   numeric string `"01"`..`"47"` standing in for `JP-01`..`JP-47`.
  *
- *   Compared to `fr/region.ts`, `de/bundesland.ts`, and `us/state.ts`,
- * 	 this is a more complex case because the top-level admin unit comes in four legally distinct flavours,
- *   and the prefecture name is written on the address line (not inferred from postcode).
+ *   This case differs from `fr/region.ts`, `de/bundesland.ts` and `us/state.ts`.
+ *   Japan's top-level admin unit has four legally distinct forms.
+ *   Addresses write the prefecture name directly instead of deriving it from the postcode.
  *
  *   "都道府県" is four kanji because the top-level admin unit comes in four legally distinct flavours,
  *   even though all 47 are peers in practice:
@@ -58,8 +58,8 @@ export interface JapanesePrefectureInfo {
 /**
  * ISO 3166-2:JP numeric code → info, for all 47 prefectures.
  *
- * Ordered by code, which is also the conventional north-to-south-ish ordering
- * (Hokkaido `01` at the top, Okinawa `47` at the bottom).
+ * Ordered by code, following the conventional north-to-south order.
+ * Hokkaido (`01`) comes first and Okinawa (`47`) comes last.
  */
 export const JP_PREFECTURES = {
 	"01": { code: "01", kanji: "北海道", romaji: "Hokkaido", type: "do" },

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The Canadian address system (Canada Post / ISO 3166-2:CA): bilingual street types, alphanumeric
- *   postcodes, and the provinces and territories.
+ *   postcodes, plus provinces and territories.
  */
 
 export * from "#ca/postal-code"

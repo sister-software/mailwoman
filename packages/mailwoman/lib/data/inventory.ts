@@ -87,9 +87,12 @@ export interface LayerManifest {
 	/**
 	 * JSON object of publisher name to the record count that publisher supplied to the build.
 	 *
-	 * A row written before the column existed, and a build that recorded no count, both leave it undefined.
-	 * The count is of the build's input rather than of the rows the artifact kept, and it cannot
-	 * be recovered afterwards because Overture removes a release from its bucket once a newer one lands.
+	 * A row written before the column existed leaves it undefined.
+	 * A build that recorded no count also leaves it undefined.
+	 *
+	 * The count is of the build's input rather than the rows the artifact kept.
+	 * It cannot be recovered afterwards because Overture removes a release from
+	 * its bucket once a newer one lands.
 	 */
 	source_records?: string
 }
@@ -365,8 +368,8 @@ export function licenseHint(entry: InventoryEntry): string | null {
  *
  * Returns `null` when the artifact records no count at all, so the caller omits
  * the line rather than printing a zero.
- * An artifact built before the `source_records` column exists is in that state,
- * and so is one whose build did not count its inputs.
+ * An artifact built before the `source_records` column exists is in that state.
+ * So is an artifact whose build did not count its inputs.
  */
 export function sourceRecordsHint(entry: InventoryEntry): string | null {
 	if (entry.provenance !== Provenance.Manifested) return null

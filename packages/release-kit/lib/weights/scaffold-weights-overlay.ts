@@ -70,7 +70,9 @@ export async function scaffoldWeightsOverlay(
 	/**
 	 * BCP-47 in, lowercase slug out: `es-ES` → `es-es`.
 	 *
-	 * The slug is used for directories, package names, and registrations.
+	 * The slug is used for directories and package names.
+	 * Registry entries also use the slug.
+	 *
 	 * Original casing is kept only in `model-card.json` (`locale`).
 	 */
 	const localeTag = options.locale
@@ -108,8 +110,9 @@ export async function scaffoldWeightsOverlay(
 				directory: `packages/neural-weights-${slug}`,
 			},
 			// `!scripts/**` keeps the dev linker out of the tarball.
-			// It imports the shared builder by relative path, which fails after unpacking,
-			// and a data-only overlay has no use for a dev script anyway.
+			// It imports the shared builder by relative path.
+			// That path fails after unpacking.
+			// A data-only overlay has no use for a dev script.
 			files: [
 				"model-card.json",
 				artifact,

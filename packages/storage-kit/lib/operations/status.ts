@@ -5,9 +5,10 @@
  *
  *   `storage.status` — capacity and the compression ratio the volume is actually achieving.
  *
- *   The ratio decides whether a 2 TB drive holds 2 TB or 4 TB, and it drifts as the mix of text and
- *   already-compressed artifacts changes. Reported as logical bytes over bytes btrfs has allocated, which is the
- *   arithmetic `df` leaves out.
+ *   The compression ratio changes a 2 TB drive's effective capacity between 2 TB and 4 TB.
+ *   The ratio shifts as the mix of text and already-compressed artifacts changes.
+ *   Report logical bytes divided by bytes Btrfs has allocated.
+ *   `df` omits that allocation figure.
  */
 
 import { z } from "zod"
@@ -36,7 +37,7 @@ function parseDataUsed(raw: string): number | null {
 }
 
 /**
- * `storage.status` — how much of the volume is used, and the compression ratio it is achieving.
+ * `storage.status` — volume usage and the achieved compression ratio.
  */
 export const statusOperation = defineOperation({
 	id: "storage.status",

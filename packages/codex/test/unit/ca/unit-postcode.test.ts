@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The CA urban/rural split, which the code carries in its second character.
+ * @file The CA urban/rural split is encoded in the postcode's second character.
  *
  *   Canada Post puts a `0` in the second position of a rural forward sortation area. The two populations measure a
  *   granularity apart — urban 78 m p50, rural 2.08 km — so admitting CA wholesale would have claimed a tier for half
@@ -38,7 +38,8 @@ describe("CA urban LDU", () => {
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j1a8")).toBe(true)
 		expect(isUnitGradePostcodeHit("M1J 1A8", "M1J1A8")).toBe(true)
 		// The resolver answered with the FSA.
-		// Area-class, and promoting it is the trade the epoch convention forbids.
+		// The resolver returned the area class.
+		// Promoting it is the trade the epoch convention forbids.
 		expect(isUnitGradePostcodeHit("M1J 1A8", "m1j")).toBe(false)
 		expect(isUnitGradePostcodeHit("M1J 1A8", undefined)).toBe(false)
 	})

@@ -4,21 +4,21 @@
  * @author Teffen Ellis, et al.
  * @file What reached the trainer, as distinct from what the corpus holds.
  *
- *   `freezeTrainingManifest` records the sources that contributed rows to a corpus. A run then reads that
- *   corpus through a config, and four stages between the two remove rows: `country_weights` rejects a row
- *   whose country it does not name, `source_weights` draws only the sources it lists, a source set to `0.0`
- *   is drawn zero times, and `augment_exclude_sources` withholds a source from augmentation. A model card
+ *   `freezeTrainingManifest` records the sources that contributed rows to a corpus. A run reads that
+ *   corpus through a config. Four stages between them remove rows: `country_weights` rejects a row
+ *   whose country it does not list. `source_weights` draws only the sources it lists. A source set to `0.0`
+ *   is drawn zero times. `augment_exclude_sources` withholds a source from augmentation. A model card
  *   quoting the corpus manifest therefore attributes sources the checkpoint never saw.
  *
  *   Measured over `v0.6.0-register-surface` with `v6.0.0-register-surface-60k.yaml` on 2026-09-28: the corpus's
- *   frozen manifest names 11 sources, 9 of which the audited epoch emitted, and the epoch emitted 48 sources
- *   in total. The config admits 136 countries and 40 of them drew rows, so 96 admitted countries drew zero of
+ *   frozen manifest names 11 sources. The audited epoch emitted 9 of those sources and 48 sources
+ *   in total. The config admits 136 countries. Forty countries drew rows, so 96 admitted countries drew zero of
  *   the 1,000,000 rows the epoch emitted.
  *
- *   **What this establishes and what it does not.** The counts come from one audited epoch at one seed, so a
- *   source drawn zero times here is one the sampler did not reach in that epoch rather than one no epoch can
- *   reach. The audit reports its seed and draw count, and this record carries both. A source the corpus holds
- *   and the config omits is excluded by construction and reported as such rather than as a zero draw.
+ *   **What this establishes and what it does not.** The counts come from one audited epoch at one seed.
+ *   A source drawn zero times here is one the sampler did not reach in that epoch. The measurement does not show
+ *   that no epoch can reach it. The audit reports its seed and draw count. This record carries both. A source the corpus holds
+ *   and the config omits is excluded by construction. The record reports that exclusion instead of a zero draw.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -31,10 +31,11 @@ import type { TrainingManifest } from "#source-register/training-manifest"
 /**
  * Where an `audit_epoch_mixture --json` output for one config is looked for.
  *
- * Under the data root rather than committed, because the file is a measurement of
- * one corpus at one seed and takes about ten minutes to produce.
- * Named by the config so two training arms' audits stay apart, which is the mismatch
- * {@linkcode deriveEffectiveTrainingManifest} refuses.
+ * Under the data root rather than committed because the file is a measurement of one
+ * corpus at one seed and takes about ten minutes to produce.
+ * The config determines the filename so two training arms' audits stay apart.
+ *
+ * This avoids the mismatch {@linkcode deriveEffectiveTrainingManifest} refuses.
  */
 export function epochMixtureAuditPath(configPath: string): PathBuilder {
 	const name =
@@ -117,8 +118,8 @@ export interface EffectiveTrainingManifest {
 	schemaVersion: 1
 
 	/**
-	 * The corpus the rows came from, and the digest of its own frozen manifest,
-	 * so a reader can tell which record this was derived from.
+	 * The corpus the rows came from and the digest of its frozen manifest.
+	 * A reader can identify which record this was derived from.
 	 */
 	corpusVersion: string
 	corpusManifestDigest: string
@@ -137,7 +138,7 @@ export interface EffectiveTrainingManifest {
 	drawsRealized: number
 
 	/**
-	 * Countries `country_weights` admits, and how many of them drew a row.
+	 * Number of countries `country_weights` admits and number that drew a row.
 	 */
 	admittedCountries: number
 	countriesDrawingRows: number
@@ -153,7 +154,8 @@ export interface EffectiveTrainingManifest {
 	sources: EffectiveSourceRecord[]
 
 	/**
-	 * Sources that reached the trainer, which is the set a model card may attribute as training data.
+	 * Sources that reached the trainer.
+	 * A model card may attribute this set as training data.
 	 */
 	trainingSources: string[]
 
@@ -184,13 +186,16 @@ export interface EffectiveTrainingManifest {
 	 * The three stages a source passes through, for each source in {@linkcode emittedButUnrecorded}.
 	 *
 	 * The entries above give the emitted rows alone.
-	 * These give the rows the corpus holds, the rows the epoch drew, and the rows it emitted
-	 * after augmentation, so a reader can tell a source present in the corpus
-	 * and drawn heavily from one present and barely drawn.
+	 * These give the rows the corpus holds, the rows the epoch drew and the rows
+	 * it emitted after augmentation.
 	 *
-	 * `corpusRows` comes from `draw_level.per_source`, which counts the corpus files.
-	 * A source outside the frozen manifest has a corpus row count nowhere else, and `-1`
-	 * records that the audit reported none rather than that the corpus holds no such row.
+	 * A reader can distinguish a source drawn heavily from one drawn barely.
+	 *
+	 * `corpusRows` comes from `draw_level.per_source`.
+	 * That field counts the corpus files.
+	 *
+	 * A source outside the frozen manifest has a corpus row count nowhere else.
+	 * `-1` records that the audit reported none rather than that the corpus holds no such row.
 	 */
 	unrecordedSourceStages: Record<string, { corpusRows: number; drawnRows: number; emittedRows: number }>
 
@@ -235,17 +240,19 @@ export interface EffectiveConfigView {
 /**
  * Read `data.source_weights` and `data.augment_exclude_sources` from a training config.
  *
- * A line scanner rather than a YAML parse, which is the reading `corpus audit`
- * and the `wire-identifiers` check already apply to the same blocks.
- * The configs are written by hand in a small subset: two-space indentation,
- * one entry per line, `#` comments, and without flow syntax.
+ * A line scanner instead of a YAML parse.
+ * `corpus audit` already reads these blocks this way.
  *
- * YAML 1.1 coerces the bare key `NO` to boolean false, and Norway is a
- * `country_weights` key, so a parser would drop it.
+ * The `wire-identifiers` check uses the same approach.
+ * The configs use a small hand-written subset: two-space indentation, one entry per line and `#` comments.
+ * They contain no flow syntax.
+ *
+ * YAML 1.1 coerces the bare key `NO` to boolean false.
+ * Norway is a `country_weights` key, so a parser would drop it.
  *
  * @throws When the text carries no `source_weights` block.
- * That map decides which sources the sampler considers, and a config without one is
- * a truncated file rather than a config drawing from every source.
+ * That map decides which sources the sampler considers.
+ * A config without one is a truncated file rather than a config drawing from every source.
  */
 export function readConfigView(text: string): EffectiveConfigView {
 	const sourceWeights: Record<string, number> = {}
@@ -317,11 +324,11 @@ export function effectiveManifestDigest(manifest: EffectiveTrainingManifest): st
 }
 
 /**
- * Derive what reached the trainer from the corpus's frozen manifest, one audited epoch, and the config.
+ * Derive what reached the trainer from the corpus's frozen manifest, one audited epoch and the config.
  *
  * @throws When the audit carries no `emitted_level.totals`.
- * That field is what answers the question, and an audit without it is either
- * a different report or a truncated one.
+ * That field answers the question.
+ * An audit without it is either a different report or a truncated one.
  * Deriving from `draw_level` alone would attribute rows augmentation removed.
  * @throws When the audit ran under a different config file than the one supplied, because the two are
  * two training arms and one record over both would report a source one of them never weighted.
@@ -406,7 +413,8 @@ export function deriveEffectiveTrainingManifest(input: {
 
 			unrecordedSourceStages[source] = {
 				// `-1` records that the audit reported no corpus row count for this source.
-				// A 0 would read as a source the corpus holds no row of, which contradicts its emitted rows.
+				// A 0 would say the corpus holds no row for this source.
+				// That contradicts its emitted rows.
 				corpusRows: perSource[source]?.rows ?? -1,
 				drawnRows: drawn[source] ?? 0,
 				emittedRows: rows,
@@ -439,10 +447,13 @@ export function deriveEffectiveTrainingManifest(input: {
 }
 
 /**
- * Sources a record declares as training data that the audited epoch never reached, and the reverse.
+ * Sources a record declares as training data that the audited epoch never reached,
+ * plus the reverse mismatch.
  *
- * A release reads both directions: a declared source the checkpoint never saw overstates what the model
- * learned from, and an emitted source the record omits is an attribution a consumer never receives.
+ * A release reads both directions.
+ * A declared source the checkpoint never saw overstates what the model learned from.
+ *
+ * An emitted source the record omits is an attribution a consumer never receives.
  */
 export function provenanceDisagreement(
 	manifest: EffectiveTrainingManifest,
@@ -460,9 +471,11 @@ export function provenanceDisagreement(
 /**
  * Why a release may not assert that a model's declared provenance equals what trained it.
  *
- * An empty array is the only value a caller may read as agreement, and it is reachable only
- * when the effective manifest covers every emitted source.
- * A `null` manifest means no release read one at all, which is reported rather than passed.
+ * An empty array is the only value a caller may read as agreement.
+ * It is reachable only when the effective manifest covers every emitted source.
+ *
+ * A `null` manifest means no release read one at all.
+ * The function reports it rather than passing it.
  *
  * `declared` is a list of corpus source ids.
  * A caller holding a model card's attribution entries passes `null`.

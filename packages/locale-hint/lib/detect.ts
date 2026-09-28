@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `detectLocale` — Stage 2 entry point: synchronous and pure, and when `opts.hint` is provided it wins at confidence 1.0 with `source="caller"` while the rules still run to populate `alternatives`.
+ * `detectLocale` — Stage 2 entry point. It is synchronous and pure.
+ * When `opts.hint` is provided, it wins with confidence 1.0 and `source="caller"`.
+ * The rules still run to populate `alternatives`.
  */
 
 import type { LocaleHint } from "@mailwoman/core/pipeline"
@@ -75,8 +77,8 @@ export function detectLocale(shape: QueryShapeFormatsView, opts: DetectLocaleOpt
 	const machineLocale = opts.machinePreferences?.locale
 
 	// Machine locale may replace only the explicit no-input-evidence fallback.
-	// Scripts and postal formats continue to win, and the timezone is reported
-	// independently and never converted to language.
+	// Scripts and postal formats continue to win.
+	// The timezone is reported independently and never converted to language.
 	if (top.reason === "fallback" && machineLocale) {
 		return {
 			locale: machineLocale,

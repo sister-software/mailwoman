@@ -139,8 +139,8 @@ export async function downloadPinned(
 		)
 	}
 
-	// Re-read before writing: a transfer runs for minutes, and a lock read before it
-	// started would write back over every pin another fetch recorded meanwhile.
+	// Re-read the lock before writing because a transfer can run for minutes.
+	// An earlier read could overwrite pins another fetch recorded meanwhile.
 	await writeLock({
 		...(await readLock()),
 		[source.id]: { url: source.url, bytes, sha256, fetchedAt: isoSeconds(), ...(snapshot ? { snapshot } : {}) },

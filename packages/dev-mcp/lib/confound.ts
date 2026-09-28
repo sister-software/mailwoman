@@ -10,10 +10,13 @@ import { runFileSync } from "@mailwoman/core/process"
 import { effectiveKeyFor } from "#engine/registry"
 
 /**
- * Enumerates how cleanly a two-arm comparison isolates its declared configuration variables:
- * `clean` means only declared keys moved, `ambiguous` means undeclared keys moved too,
- * `no_variable` means no key moved, and `cross_engine` means the arms are different
- * systems and no delta can be attributed to a pin.
+ * Enumerates how cleanly a two-arm comparison isolates its declared configuration
+ * variables: `clean` means only declared keys moved.
+ *
+ * `ambiguous` means undeclared keys also moved.
+ * `no_variable` means no key moved.
+ *
+ * `cross_engine` means the arms use different systems, so the delta cannot be attributed to a pin.
  */
 export const VariableIsolation = {
 	Clean: "clean",
@@ -31,8 +34,9 @@ export const VariableIsolation = {
 export type VariableIsolation = (typeof VariableIsolation)[keyof typeof VariableIsolation]
 
 /**
- * Reports which effective configuration keys differ between two comparison arms, how they
- * compare with the declared keys, and the warnings a reader needs before attributing the delta.
+ * Reports the effective configuration keys that differ between two comparison arms.
+ *
+ * It compares those keys with the declared keys and records warnings for delta attribution.
  */
 export interface ConfoundReading {
 	variable_isolation: VariableIsolation

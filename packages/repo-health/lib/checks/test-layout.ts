@@ -19,9 +19,13 @@ const testPattern = /\.(?:test|spec)\.(?:ts|tsx)$/u
 const vitestSuites = new Set(["full", "integration", "unit"])
 const COLOCATED_TEST_WORKSPACES = new Set(["packages/corpus"])
 /**
- * A workspace that carries a `playwright.config.ts` runs Playwright suites too,
- * and those live beside the vitest ones: `browser` for page specs, `build` for a
- * build-health project, `e2e` for the fixtures they share.
+ * A workspace with `playwright.config.ts` also runs Playwright suites.
+ *
+ * These suites live beside the Vitest suites.
+ * `browser` holds page specs.
+ *
+ * `build` holds a build-health project.
+ * `e2e` holds shared fixtures.
  *
  * Vitest's root configs exclude those directories, so the two runners never collect each other's files.
  */
@@ -73,11 +77,11 @@ export const testLayoutCheck: RepoCheck = {
 				const sourceFile = ts.createSourceFile(filePath, sourceText, ts.ScriptTarget.Latest, true)
 
 				// Type-only specifiers count here: tests are consumers of the package interface, types included.
-				// A relative specifier that stays inside `test/` names a test helper,
-				// which has no interface to bypass.
-				// One that leaves `test/` reaches the package's source by location,
-				// and the `#` map is refused in tests by `mailwoman/no-private-import-in-test`,
-				// so the module needs an `exports` entry instead.
+				// A relative specifier that stays inside `test/` names a test helper.
+				// That helper has no package interface to bypass.
+				// A relative specifier that leaves `test/` reaches package source by location.
+				// `mailwoman/no-private-import-in-test` refuses the `#` map in tests.
+				// The module therefore needs an `exports` entry.
 				const testRoot = resolvePath(workspaceRoot, "test")
 
 				for (const specifier of moduleSpecifiers(sourceFile, { includeTypeOnly: true })) {

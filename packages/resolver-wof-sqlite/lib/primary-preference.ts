@@ -39,7 +39,8 @@ export type RankedRow<R> = R & {
 	/**
 	 * `neg_rank` plus any cross-country alias penalty.
 	 *
-	 * Rows are ordered by this value, and the emitted `prominence` derives from it.
+	 * Rows are ordered by this value.
+	 * The emitted `prominence` derives from it.
 	 *
 	 * The raw `neg_rank` stays on the row for the resolver's minimum winning score.
 	 */
@@ -56,7 +57,8 @@ export type RankedRow<R> = R & {
 	demoted: boolean
 
 	/**
-	 * True when this row came from the typo-correction fallback, which runs only after the exact probes miss.
+	 * True when this row came from the typo-correction fallback.
+	 * The fallback runs only after the exact probes miss.
 	 *
 	 * The row is still returned and ranked, but it never claims `exactMatch`.
 	 */
@@ -78,11 +80,13 @@ export type RankedRow<R> = R & {
 }
 
 /**
- * Re-ranks population-ordered candidate rows so a cross-country alias must beat the top
- * primary by `delta` in log10 population, and returns the top `limit` rows.
+ * Re-ranks population-ordered candidate rows.
  *
- * When `placetypes` is given, an exact tie prefers a populated `locality`,
- * which orders a seat town ahead of a district with the same name and population.
+ * A cross-country alias must beat the top primary by `delta` in log10 population.
+ * The function returns the top `limit` rows.
+ *
+ * When `placetypes` is given, an exact tie prefers a populated `locality`.
+ * This places a seat town ahead of a district with the same name and population.
  */
 export function rankByPrimaryPreference<R extends PrimaryPreferenceRow>(
 	rows: readonly R[],

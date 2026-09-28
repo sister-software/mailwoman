@@ -9,12 +9,17 @@
  *   different concern and lives in `resources/git.ts`.
  */
 
+import { repoRootPathBuilder } from "@mailwoman/core/paths"
 import type { PathBuilderLike } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 import { runFile } from "#process"
 
-async function git(repoRoot: PathBuilderLike, args: string[], maxBuffer?: number): Promise<string> {
+async function git(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	args: string[],
+	maxBuffer?: number
+): Promise<string> {
 	const { stdout } = await runFile("git", args, { cwd: repoRoot.toString(), encoding: "utf8", maxBuffer })
 
 	return stdout
@@ -23,7 +28,10 @@ async function git(repoRoot: PathBuilderLike, args: string[], maxBuffer?: number
 /**
  * The commit head names, as a full SHA (or the short form the `--short` flag abbreviates to).
  */
-export async function gitHead(repoRoot: PathBuilderLike, options: { short?: boolean } = {}): Promise<string> {
+export async function gitHead(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	options: { short?: boolean } = {}
+): Promise<string> {
 	const args = options.short ? ["rev-parse", "--short", "HEAD"] : ["rev-parse", "HEAD"]
 
 	return (await git(repoRoot, args)).trim()
@@ -32,7 +40,7 @@ export async function gitHead(repoRoot: PathBuilderLike, options: { short?: bool
 /**
  * The checked-out branch name, or `head` when the tree is detached.
  */
-export async function currentBranch(repoRoot: PathBuilderLike): Promise<string> {
+export async function currentBranch(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<string> {
 	return (await git(repoRoot, ["rev-parse", "--abbrev-ref", "HEAD"])).trim()
 }
 
@@ -44,7 +52,10 @@ export async function currentBranch(repoRoot: PathBuilderLike): Promise<string> 
  * A publish path creates both before publishing.
  * Pathspecs narrow the reading to caller-supplied paths.
  */
-export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+export async function dirtyTrackedFiles(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	pathspecs: string[] = []
+): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", "--untracked-files=no", ...scope])
 
@@ -65,7 +76,10 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
  * A key built from the narrower reading goes stale after a staged edit or a new file.
  * and a stale index reports that a helper written an hour ago does not exist.
  */
-export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+export async function workingTreeStatus(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	pathspecs: string[] = []
+): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
 	const output = await git(repoRoot, ["status", "--porcelain", ...scope])
 
@@ -82,7 +96,11 @@ export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: st
  * Both commits must be present in the checkout: a shallow clone that lacks `base` fails
  * here with git's own message rather than answering an empty list.
  */
-export async function changedFiles(repoRoot: PathBuilderLike, base: string, head: string): Promise<string[]> {
+export async function changedFiles(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	base: string,
+	head: string
+): Promise<string[]> {
 	const output = await git(repoRoot, ["diff", "--name-only", "-z", base, head], 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
@@ -94,7 +112,10 @@ export async function changedFiles(repoRoot: PathBuilderLike, base: string, head
  * Read NUL-delimited so a path with a newline or a non-ascii byte survives.
  * The 64 MiB buffer covers this repository's listing several times over.
  */
-export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+export async function trackedFiles(
+	repoRoot: PathBuilderLike = repoRootPathBuilder,
+	pathspecs: string[] = []
+): Promise<string[]> {
 	const output = await git(repoRoot, ["ls-files", "-z", ...pathspecs], 64 * 1024 * 1024)
 
 	return output.split("\0").filter((path) => path.length)
@@ -111,7 +132,10 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
  * `--exclude-standard` applies `.gitignore`, so a build output stays out
  * and only a file somebody intends to commit comes in.
  */
-export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
+export async function workingTreeFiles(
+	pathspecs: string[] = [],
+	repoRoot: PathBuilderLike = repoRootPathBuilder
+): Promise<string[]> {
 	const output = await git(
 		repoRoot,
 		["ls-files", "-z", "--cached", "--others", "--exclude-standard", ...pathspecs],
@@ -140,7 +164,7 @@ export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: str
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
  * against 11,483 for the reading that answers the wrong set.
  */
-export async function movedAwayPaths(repoRoot: PathBuilderLike): Promise<Set<string>> {
+export async function movedAwayPaths(repoRoot: PathBuilderLike = repoRootPathBuilder): Promise<Set<string>> {
 	const output = await git(
 		repoRoot,
 		["log", "--all", "--no-renames", "--diff-filter=D", "--name-only", "--format="],

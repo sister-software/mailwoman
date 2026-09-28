@@ -85,10 +85,12 @@ export interface SubVenueTagRule {
  *   so treat these rows as the weakest in the table.
  *
  * Not here, deliberately: `indoor=*` (Simple Indoor Tagging).
- * `wof-osm-placetype-map.mdx` establishes that concourses and wings live in OSM's indoor scheme
- * rather than its place scheme, which makes it the natural home for the `concourse`/`wing`
- * designators, but indoor features are overwhelmingly unnamed geometry primitives
- * (`indoor=room`, `indoor=corridor`), and this extractor's yield is names.
+ * `wof-osm-placetype-map.mdx` establishes that concourses and wings live in OSM's
+ * indoor scheme rather than its place scheme.
+ *
+ * That makes it the natural home for the `concourse`/`wing` designators, but indoor features
+ * are overwhelmingly unnamed geometry primitives (`indoor=room`, `indoor=corridor`),
+ * and this extractor's yield is names.
  *
  * Measure the share of structures that carry a `name` tag before adding a rule.
  */
@@ -137,13 +139,14 @@ export function distinctSubVenueTagKeys(rules: readonly SubVenueTagRule[]): stri
 /**
  * Build the ogrsql select+where for one layer.
  *
- * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`),
- * every key the rule table references, and `other_tags` wholesale for the `name:<lang>` harvest.
+ * Selects `name` and `ref` (the identifier half of `Gate A12` lives in `ref` far more reliably than in `name`).
+ * It selects every key the rule table references and `other_tags` wholesale for the `name:<lang>` harvest.
+ *
  * The where is an `or` of the table's and-groups, pushed down so gdal scans rather than this process.
  *
- * The pushdown is an optimization only: a gdal dialect quirk could narrow what it matches
- * but never widen it, and {@link matchSubVenueTagRule} re-checks the same table in JS
- * before any row is yielded, so no false positive survives even if the predicate were imprecise.
+ * The pushdown is an optimization only: a gdal dialect quirk could narrow what it matches but never
+ * widen it. {@link matchSubVenueTagRule} re-checks the same table in JS before yielding any row.
+ * No false positive survives even if the predicate is imprecise.
  *
  * @throws via the tag-token allowlist if `rules` carries a hostile key or value.
  */

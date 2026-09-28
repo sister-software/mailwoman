@@ -15,12 +15,14 @@ import { isoDate } from "@mailwoman/core/utils"
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
 /**
- * The ArcGIS Online sharing API, where the item's licence and attribution fields are readable.
+ * The ArcGIS Online sharing API.
+ *
+ * The item's licence and attribution fields are available there.
  */
 export const ARCGIS_ITEM_API_BASE_URL = "https://www.arcgis.com/sharing/rest/content/items"
 
 /**
- * The Hub download API, which is how the whole layer is exported in one file.
+ * The Hub download API exports the whole layer as one file.
  */
 export const HUB_DOWNLOAD_API_BASE_URL = "https://hub.arcgis.com/api/download/v1/items"
 
@@ -45,7 +47,8 @@ export interface ZoningItemRecord {
 	itemID: string
 	title: string
 	/**
-	 * The item's `modified` timestamp as an ISO date — the product vintage, and the freshness signal.
+	 * The item's `modified` timestamp as an ISO date.
+	 * It records product vintage and signals freshness.
 	 */
 	modifiedDate: string
 	/**
@@ -162,8 +165,9 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The sum of the Department's own `Shape__Area` column in square metres, which has
-	 * to come from the service because the bulk export drops the column.
+	 * The sum of the Department's `Shape__Area` column in square metres.
+	 *
+	 * The service must provide this value because the bulk export omits the column.
 	 */
 	public async readShapeAreaSum(): Promise<number> {
 		const { data } = await this.fetch<{ features?: Array<{ attributes?: Record<string, number> }> }>({

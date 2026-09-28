@@ -40,7 +40,7 @@ async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> 
 }
 
 /**
- * Main resolver fixture: Nashville, the geographic city 37013 sits in, and a far Antioch distractor.
+ * Main resolver fixture: Nashville contains geographic city 37013, with a distant Antioch distractor.
  */
 function buildMainDB(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
@@ -64,7 +64,8 @@ function buildMainDB(): DatabaseClient<WOFDatabase> {
 	// Antioch, CA: a distractor with the same name about 3000 km away that the bare name-match would otherwise select.
 	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
-	// 37013's centroid sits in Nashville as the containing locality, and the parsed name "Antioch" does not match it.
+	// 37013's centroid falls in Nashville, its containing locality.
+	// The parsed name "Antioch" does not match it.
 	db.prepare(`INSERT INTO postcode_locality VALUES (?,?,?,?,?,?,?)`).run("37013", "US", 1, "Nashville", "", 0, 1)
 
 	return db

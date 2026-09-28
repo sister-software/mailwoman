@@ -5,11 +5,12 @@
  *
  *   The punctuation law against the live pipeline — the leg that actually geocodes.
  *
- *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs, with
- *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
+ *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs,
+ *   with `MAILWOMAN_DATA_ROOT` set and the weights materialized. The fast leg is portable by construction. A
  *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
- *   `weightsPresent()` idiom the other integration suites use: ASK the resolver for the model the loader will
- *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
+ *   `weightsPresent()` idiom the other integration suites use: ask the resolver for the model the loader will
+ *   open, never a path literal. A skip guard that stops matching does not fail — it skips.
+ *   The suite then disappears from the run reporting success.
  *   suite disappears from the run reporting success.
  *
  *   this LEG cannot GO RED on A known defect. `runConformanceCommand` blocks on `status: pass` rows and
@@ -18,8 +19,8 @@
  *   forever. What it does fail on is a new violation on a row that held, or a suite that stopped stating this
  *   law.
  *
- *   The suite path is pinned rather than defaulted: a default run covers every committed law, and this file
- *   is the punctuation leg.
+ *   The suite path is pinned rather than defaulted. A default run covers every committed law.
+ *   This file is the punctuation leg.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -32,7 +33,8 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver — see the module docstring, and `v1-parse-eval.test.ts`, which carries the incident.
+		// Ask the resolver.
+		// See the module docstring and `v1-parse-eval.test.ts` for the incident.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false

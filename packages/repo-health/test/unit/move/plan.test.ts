@@ -2,12 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A module move over a scratch workspace that reproduces the shapes a corpus recipe move meets: a package
- *   whose `imports` map answers `#recipes/*`, an `exports` map a test file reaches through, a relative import from a
- *   third file, and a relative import inside a moved file, whose depth changes under it.
+ * @file A module-move fixture that covers the path shapes in a corpus recipe move.
+ *   The fixture includes an `imports` map for `#recipes/*` and an `exports` map used by a test file.
+ *   A third file contains a relative import. The moved file also contains a relative import.
+ *   Its depth changes after the move.
  *
- *   The workspace is a real git checkout because `applyModuleMoves` renames with `git mv`, and a rename the index
- *   knows about is the difference between a reviewer reading a moved file and reading a deletion beside an addition.
+ *   The workspace is a real git checkout because `applyModuleMoves` renames files with `git mv`.
+ *   The index records each rename, so reviewers see moved files instead of a deletion beside an addition.
  */
 
 import { readLocalTextFile, realPath } from "@mailwoman/core/fs/readers"
@@ -70,8 +71,9 @@ const FILES: Record<string, string> = {
 
 async function fixture() {
 	const directory = await temporaryDirectory("move-plan-")
-	// The temp root itself can be a symlink, and TypeScript answers a resolved module by its real path.
-	// So the context's root must be the real one or no module it resolves looks like a tracked file.
+	// The temp root itself can be a symlink.
+	// TypeScript resolves modules to their real paths.
+	// The context must use the real root so resolved modules match tracked file paths.
 	const repoRoot = await realPath(directory.path)
 
 	for (const [file, content] of Object.entries(FILES)) {

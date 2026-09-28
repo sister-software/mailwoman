@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `trace: true` session, against the real classifier: what it records, and — the required half — that
- *   recording it changes no answer. The debug view is an inspection surface. the moment its extra decode could move a
- *   coordinate, every reading taken through it would be about a different pipeline than the one that ships.
+ *   This test checks a `trace: true` session against the real classifier.
+ *   It checks the recorded data and confirms that tracing leaves the answer unchanged.
+ *   The debug view exists for inspection. If its extra decode moved a coordinate, the view would measure a different pipeline.
  *
  *   Guarded on the same prerequisites as `static.test.ts` (weights + a WOF admin distribution), and skipping for the
  *   same reasons, so the two suites run and skip together.
@@ -82,7 +82,8 @@ describe.skipIf(!(hasWOFDB && hasWeights))("geocode session tracing", () => {
 				expect(trace.kind?.kind).toBe("structured_address")
 				expect(trace.locale).toBe(options.locale)
 
-				// Timing is measured on both paths, and the traced one accounts for its extra decode.
+				// Timing is measured on both paths.
+				// The traced path includes its extra decode.
 				expect(withTrace.timing.total).toBeGreaterThan(0)
 				expect(withTrace.timing.trace).toBeGreaterThan(0)
 				expect(without.timing.trace).toBeUndefined()

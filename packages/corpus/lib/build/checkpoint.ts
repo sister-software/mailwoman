@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The align phase's resume point: which adapters have been aligned, how long each output was at that
- *   moment, and every accumulator the manifest is computed from.
+ * @file The align phase's resume point. It records aligned adapters and each output's length at that moment.
+ *   It also records every accumulator used to compute the manifest.
  *
  *   The adapter phase recovers from its per-adapter `MANIFEST.json`. Align, split and parquet ran 6 h 35 min
  *   of the 8 h 27 min `v0.7.0-de-holdout` build with no recovery point, because the four labeled streams are
@@ -82,8 +82,8 @@ export interface AlignCheckpoint {
  *
  * @throws When the checkpoint describes different settings, or an adapter order
  * the current run does not begin with.
- * Both cases would append this run's rows to a file written under other rules,
- * and the resulting corpus would report a row count every later reader accepts.
+ * Both cases would append this run's rows to a file written under different rules.
+ * The resulting corpus could report a row count that later readers accept.
  */
 export async function readAlignCheckpoint(
 	path: PathBuilderLike,

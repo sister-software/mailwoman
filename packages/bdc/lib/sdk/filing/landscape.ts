@@ -6,7 +6,7 @@
  *   Reads the `filing_landscape` summary from a BDC database.
  *
  *   A queried block counts as surveyed only when its res-6 parent cell appears in `layer_coverage`;
- *   anything else is unknown, which is different from a surveyed block with zero filings. A GEOID
+ *   anything else is unknown. A surveyed block with zero filings is a different result. A GEOID
  *   query takes each block's res-9 cell from its `bdc_availability` rows, so a GEOID without rows is
  *   unknown. An `h3Cells` query supplies the cell, so a covered cell with no rows reports as
  *   surveyed with zero filings.

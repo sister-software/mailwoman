@@ -38,8 +38,9 @@ export interface RunnerProgress {
 /**
  * Base-2 logarithm of the fingerprint table's slot count.
  *
- * 2^27 slots hold 93,952,409 keys before the load limit, against the largest measured
- * adapter's 57,570,829 distinct keys, and occupy 2.0 GiB outside the V8 heap.
+ * 2^27 slots hold 93,952,409 keys before the load limit.
+ * The largest measured adapter has 57,570,829 distinct keys.
+ * The table occupies 2.0 GiB outside the V8 heap.
  */
 export const DEFAULT_DEDUP_SLOTS_LOG2 = 27
 
@@ -78,8 +79,10 @@ export interface RunAdapterOptions {
 	 * Hold dedup keys in a V8 `Set` capped at this many, rather than in a fingerprint table.
 	 *
 	 * The cap is what the fingerprint table replaces.
-	 * A run that sets this reproduces the pre-2026-09-28 behavior: past the cap the runner still
-	 * drops a duplicate of a key it holds, and writes a duplicate of a key first seen after the cap.
+	 * A run that sets this reproduces the pre-2026-09-28 behavior.
+	 *
+	 * Past the cap, the runner still drops a duplicate of a key it holds
+	 * and writes a duplicate of a key first seen after the cap.
 	 *
 	 * Over `v0.7.0-de-holdout` that wrote 1,490,992 duplicate rows across three adapters.
 	 * A test sets it low to reach exhaustion in a few rows.
@@ -195,10 +198,10 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const stream = openWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
 
-	// The `Set` path exists for a caller that cannot accept a fingerprint collision dropping
-	// a legitimate row, and for the test that reaches the capped behavior in three rows.
-	// Every other run takes the table, whose entry count is bounded by the array it sized
-	// rather than by V8's `Set` limit.
+	// The `Set` path serves callers that cannot accept a fingerprint collision dropping a legitimate row.
+	// A test also uses it to reach the capped behavior in three rows.
+	// Every other run takes the table.
+	// Its entry count is bounded by the array it sized rather than by V8's `Set` limit.
 	const capped = opts.dedupMaxSize !== undefined
 	const seen = capped ? new Set<string>() : null
 	const fingerprints = capped ? null : new FingerprintSet(opts.dedupSlotsLog2 ?? DEFAULT_DEDUP_SLOTS_LOG2)

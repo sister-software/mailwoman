@@ -30,8 +30,10 @@ const INSERT_TRANSACTION_ROWS = 5000
 const PROGRESS_STRIDE = 5000
 
 /**
- * One observed vocabulary value: which scheme, which code, the publisher's own
- * label for it, and how many rows carry it.
+ * One observed vocabulary value.
+ *
+ * It records the scheme and code.
+ * It also records the publisher's label and row count.
  */
 export type ObservedTerm = [scheme: string, code: string, label: string, rows: number]
 
@@ -61,8 +63,12 @@ export interface ZoningChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres, with `signed` the raw ring sum as published, `nested` the per-polygon
-	 * hole-aware reading, and `allExterior` what the same rings say read without their holes.
+	 * Square-metre area readings from the polygon rings.
+	 *
+	 * `signed` is the raw ring sum as published.
+	 * `nested` accounts for holes in each polygon.
+	 *
+	 * `allExterior` reads the same rings as exterior boundaries without holes.
 	 */
 	area: { signedM2: number; nestedM2: number; allExteriorM2: number }
 	/**

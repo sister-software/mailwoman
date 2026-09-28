@@ -19,8 +19,8 @@ import { SurfaceOrigin } from "#types"
 /**
  * The order-cycle slot for the street-less form (`«city» «pc», Česko`).
  *
- * This is the surface of the `cz-full-praha-100-00` board row, which the
- * street-containing orders do not cover.
+ * This is the surface of the `cz-full-praha-100-00` board row.
+ * The street-containing orders do not cover it.
  */
 const STREETLESS_ORDER = 3
 
@@ -59,7 +59,8 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			const order = read % 4
 			// The official Czech rendering spaces the PSČ as `NNN NN` ('512 44')
 			// while OpenAddresses stores it unspaced ('51244').
-			// Alternate the two renderings so both orthographies are attested, and label the postcode either way.
+			// Alternate the two renderings so both orthographies are attested.
+			// Label the postcode in either form.
 			const spaced = read % 2 === 0 && /^\d{5}$/.test(postcode)
 			const postcodeSurface = spaced ? `${postcode.slice(0, 3)} ${postcode.slice(3)}` : postcode
 			let raw: string
@@ -105,8 +106,8 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 			}
 
 			// Per row, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none,
-			// and `null` says the recipe had no id to forward.
+			// A tuples file written before `sourceID` existed carries none.
+			// `null` says the recipe had no id to forward.
 			if (
 				alignAndWrite(write, canonical, "cz-pcfirst-preposition", {
 					...CZ_PCFIRST_PROVENANCE,

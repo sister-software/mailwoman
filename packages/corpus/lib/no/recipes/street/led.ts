@@ -5,9 +5,9 @@
  *
  * `no-street-led`: the Norwegian street-led recipe.
  *
- * Street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a larger residual than the pc-first
- * form, and the diacritic street head (…vegen/…veien with ø/å/æ) is a leading-name-before-comma
- * boundary. All three real orders cycle per tuple so the polarity stays balanced.
+ * Street-led forms ("Tangavegen 40, 5620 Tørvikbygd") have a larger residual than the pc-first form.
+ * A diacritic street head (…vegen/…veien with ø/å/æ) creates a leading-name-before-comma boundary.
+ * The recipe cycles each tuple through all three real orders to balance polarity.
  *
  * 1. canonical  "«st» «n», «pc» «city»"   (the larger residual class)
  * 2. city-first "«city», «pc», «st» «n»"
@@ -135,8 +135,8 @@ export const noStreetLedRecipe: CorpusRecipe = {
 			}
 
 			// Per row, because the id names this tuple's record.
-			// A tuples file written before `sourceID` existed carries none,
-			// and `null` says the recipe had no id to forward.
+			// Tuple files created before `sourceID` have no identifier to forward.
+			// A `null` base ID preserves that absence.
 			if (
 				alignAndWrite(write, canonical, "no-street-led", {
 					...NO_STREET_LED_PROVENANCE,

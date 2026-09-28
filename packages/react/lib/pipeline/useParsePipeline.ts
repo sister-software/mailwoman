@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The headless core of the pipeline explorer: owns the query text, busy/stage flags, result, and candidate
- *   selection, and delegates parse+resolve to the injected {@link PipelineRuntime}.
+ *   The headless core of the pipeline explorer. It owns query text, busy/stage flags, result, and candidate selection.
+ *   It delegates parse and resolve to the injected {@link PipelineRuntime}.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"

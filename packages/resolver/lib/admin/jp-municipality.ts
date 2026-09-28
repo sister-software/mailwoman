@@ -4,12 +4,14 @@
  * @author Teffen Ellis, et al.
  * @file A compound Japanese municipality split into the two units the gazetteer keys separately.
  *
- *   The JP model tags `神戸市西区` (city + ward) and `猿島郡五霞町` (county + town) as one `municipality` span, which is
- *   the postal form, and WOF keys the city, the ward and the town — never the compound. Probed whole, the span misses
- *   and the coordinate falls to the prefecture centroid (25–52 km on the JP board). Probed as its trailing unit
- *   unscoped it does worse: a bare `西区` resolves a namesake ward in another city (Kobe's answered Fukuoka's, 407 km.
- *   251 of 300 rows against 271 whole). The split is therefore consumed by the resolver walk as a scoped pair: the
- *   head resolves first, the tail probes as its child, and a namesake outside the head is not admissible.
+ *   The JP model tags `神戸市西区` (city plus ward) and `猿島郡五霞町` (county plus town) as one
+ *   `municipality` span. This matches the postal form. WOF keys the city, ward and town separately.
+ *   A whole-span probe misses, so the coordinate falls to the prefecture centroid. The JP board records
+ *   errors of 25–52 km. An unscoped probe of the trailing unit performs worse. A bare `西区` resolves to a
+ *   namesake ward in another city. In the test, Kobe's query resolves to Fukuoka, 407 km away.
+ *   The split scores 251 of 300 rows, compared with 271 for the whole-span probe. The resolver uses the
+ *   head and tail as a scoped pair. It resolves the head first, then probes the tail as its child.
+ *   Candidate matching stays within the head scope.
  */
 
 export interface CompoundMunicipality {

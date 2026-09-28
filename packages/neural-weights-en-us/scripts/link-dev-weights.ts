@@ -10,14 +10,16 @@
  *
  *   `neural/test/integration/weights.test.ts` runs this on every `yarn test`, so the model pair is
  *   held to this package's `model-card.json` `files_md5`. The linked default bytes must match the
- *   digests the release re-verifies against the published tarball, and a mismatch fails loud rather
- *   than grade an eval shift against the wrong weights. On ship, bump `release.config.json`'s
+ *   digests the release re-verifies against the published tarball.
+ *   A mismatch fails loudly and prevents grading an eval shift against the wrong weights.
+ *   On release, bump `release.config.json`'s
  *   `weights.model` and `weights.tokenizer` and the card's `files_md5` in lockstep, since a path
  *   bumped without the card or the reverse fails here.
  *
  *   The evidence lexicons (`street_type`, `locality_surface`) are linked by the generation the card
  *   records rather than by a literal in this file, so a card bump moves the artifact with it.
- *   `postcode-us.bin` is derived from the WOF US postcode extract and built skip-if-present, and a
+ *   `postcode-us.bin` is derived from the WOF US postcode extract and built skip-if-present.
+ *   A
  *   fresh worktree without it parses anchor-off. The pair index has no source CSV, since the US has
  *   no postal register carrying dependent localities (USPS routes city, state and ZIP), so every
  *   pair comes from the shared WOF admin database. `PAIR_INDEX_PARENT_DELTA` is the whole-edge

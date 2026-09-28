@@ -5,10 +5,8 @@
  *
  *   Every flag in the runtime-flag register must be touched by at least one test.
  *
- *   Operator ruling: **a flag no test touches is either up for removal, or an indication of missing testing.** Both
- *   readings are actionable and neither is "leave it"; what is not acceptable is not knowing which one applies, and
- *   this check makes the question impossible to skip because the sweep that answers it by hand rots the day after it
- *   runs.
+ *   Operator ruling: **a flag with no test is either up for removal or needs a test.**
+ *   Both cases require action. This check prevents the question from going unanswered because a manual sweep becomes stale.
  *
  *   Matching is deliberately loose: a flag name appearing anywhere in a test file counts, including in prose, because
  *   the job is to catch a flag with no connection to the suite at all rather than to grade the quality of the coverage
@@ -54,8 +52,8 @@ export function registerFlags(markdown: string): string[] {
 /**
  * Flags with no test, each with the reason it is allowed to have none.
  *
- * An entry is a debt with a name rather than an exemption, and the list stays
- * short enough that every line carries who owes what.
+ * Each entry identifies an outstanding task.
+ * Keep the list short and identify the owner and task on every line.
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 

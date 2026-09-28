@@ -2,8 +2,8 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file BDC file metadata model — dictionaries for the FCC's `bdc_file` listing rows, the
- *   raw-to-parsed record shape, and file-ordering comparators.
+ * @file BDC file metadata model. It defines dictionaries for FCC `bdc_file` listing rows.
+ *   It also defines the raw-to-parsed record shape and file-ordering comparators.
  */
 
 import type { Tagged } from "type-fest"
@@ -221,7 +221,7 @@ export interface BDCFile {
 	vintage: Date
 
 	/**
-	 * The date the file was was downloaded, parsed, and stored in the database.
+	 * The date the file was downloaded, parsed and stored in the database.
 	 */
 	synchronizedAt?: Date
 

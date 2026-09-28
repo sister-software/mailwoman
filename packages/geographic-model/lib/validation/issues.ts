@@ -5,10 +5,9 @@
  *
  * The issue vocabulary and the primitive field readers `./validate.ts` is built from.
  *
- * Every reader appends to the issue list it is given and returns `undefined` when it could not read
- * the field, deliberately: a reader that threw would end the pass at the first defect, and one that
- * substituted a default would convert "I could not read this" into a value, which at a validation
- * boundary is the same as inventing one.
+ * Every reader appends issues to the supplied list and returns `undefined` when it cannot read a field.
+ * Throwing would end the pass at the first defect.
+ * Substituting a default would turn an unreadable field into a value and invent data at the validation boundary.
  */
 
 /**

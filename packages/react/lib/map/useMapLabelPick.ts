@@ -16,8 +16,10 @@ import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 const LABEL_LAYER = /_label|^places_/
 
 /**
- * Properties a label carries its text under, in trust order; `name` is protomaps' own,
- * and the localized variants appear on script-specific styles.
+ * Properties that may contain a label's text, in trust order.
+ *
+ * `name` comes from Protomaps.
+ * Localized variants appear in script-specific styles.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
@@ -52,8 +54,9 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
  * Routes clicks on map labels to `onPick` with the clicked label's own name.
  */
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
-	// The subscription depends on the map alone; `onPick` is fresh every render,
-	// and `useEffectEvent` reads it without becoming a reactive dependency.
+	// The subscription depends only on the map.
+	// `onPick` changes on every render.
+	// `useEffectEvent` reads the latest callback without adding it as a reactive dependency.
 	const pick = useEffectEvent((name: string) => onPick(name))
 
 	useEffect(() => {

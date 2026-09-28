@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The `mwdev_run` tool definition — the description an agent reads, the input schema, and the handler wiring over the
- * measurement in the package root.
+ * The `mwdev_run` tool definition provides the agent-facing description and input schema.
+ * Its handler runs the measurement in the package root.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -124,8 +124,9 @@ export const runTool = ({ registry }: DevToolDeps): DevTool => ({
 					timing_ms: run.timing,
 				}
 
-				// Projection filters only what is emitted, and the handler reasons over every row,
-				// so tallies count over `fullRows` and a census cannot change with a display option.
+				// Projection filters the emitted rows.
+				// The handler reasons over every row in `fullRows`.
+				// Display options therefore cannot change the census tallies.
 				fullRows.push(row)
 
 				rows.push(keep ? Object.fromEntries(RUN_ROW_FIELDS.filter((f) => keep.has(f)).map((f) => [f, row[f]])) : row)

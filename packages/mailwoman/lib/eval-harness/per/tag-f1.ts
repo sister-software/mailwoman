@@ -78,9 +78,9 @@ export interface PerTagCounts {
 /**
  * Accumulate exact-match counts per tag.
  *
- * The caller owns inference so checks can choose their precise parse options without
- * duplicating the scoring implementation, and `onRow` hands each row's predicted
- * components back for per-row diagnostics over the same parse.
+ * The caller owns inference so checks can choose their precise parse options
+ * without duplicating the scoring implementation.
+ * `onRow` hands each row's predicted components back for per-row diagnostics over the same parse.
  */
 export async function scorePerTagCounts(
 	rows: readonly PerTagEvalRow[],
@@ -250,8 +250,10 @@ export interface LocaleEvalSpec {
  * One eval spec per locale that has an eval set, shared by the capability-manifest
  * generator and the mask-regression release check.
  *
- * The eval rows carry split street parts so the affix capability (`street_prefix`/`street_suffix`)
- * is measurable, which the folded `per-locale-f1.ts` cannot see.
+ * The eval rows carry split street parts so the affix capability
+ * (`street_prefix`/`street_suffix`) is measurable.
+ * The folded `per-locale-f1.ts` cannot see it.
+ *
  * FR uses the dedicated street-prefix eval set rather than the broad golden dev set
  * because golden FR carries only ~7 `street_prefix` rows against ~1535 without it,
  * so the unfolded `street_prefix` F1 there is dominated by absent-gold rows.
@@ -281,9 +283,10 @@ export interface MaskOffOnOptions {
 	/**
 	 * The parse mode the rows are graded in.
 	 *
-	 * Both callers pass `"formatted"` — the mode production derives on these formatted postal
-	 * addresses — while omitting it grades the bare-library default (`fragmented`) that production
-	 * does not take here, and the option stays so a caller can measure that path on purpose.
+	 * Both callers pass `"formatted"` — the mode production derives on these
+	 * formatted postal addresses — while omitting it grades the bare-library default
+	 * (`fragmented`) that production does not take here.
+	 * The option stays so a caller can measure that path on purpose.
 	 */
 	inputMode?: "formatted"
 }

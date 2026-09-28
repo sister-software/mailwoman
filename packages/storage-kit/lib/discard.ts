@@ -17,7 +17,7 @@ export interface DiscardSupport {
 	 */
 	unmapSupported: boolean
 	/**
-	 * The `scsi_disk` provisioning mode, which USB and SCSI devices carry and NVMe leaves absent.
+	 * The `scsi_disk` provisioning mode, present on USB and SCSI devices and absent on NVMe devices.
 	 */
 	provisioningMode?: string
 	/**
@@ -39,7 +39,8 @@ export async function inspectDiscard(device: string): Promise<DiscardSupport> {
 	const max = await $({ nothrow: true, quiet: true })`cat /sys/block/${name}/queue/discard_max_bytes`
 	const maxBytes = max.exitCode === 0 ? Number(max.stdout.trim()) || 0 : 0
 
-	// `sg_vpd` reads the device's own claim, which is what makes a zero kernel limit correctable.
+	// `sg_vpd` reads the device's own claim.
+	// That lets us correct a zero kernel limit.
 	const vpd = await $({ nothrow: true, quiet: true })`sg_vpd -p lbpv ${device}`
 	const unmapSupported = vpd.exitCode === 0 && /LBPU\)?:\s*1/.test(vpd.stdout)
 

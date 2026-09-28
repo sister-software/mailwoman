@@ -6,9 +6,9 @@
  *
  *   A commune whose every point is certified is `designated` — the authority declared it whole, so a
  *   miss inside it is evidence of absence. A commune with one uncertified point, or with no flag at
- *   all, is `source_present`: rows exist and no statement has been made about what is missing. The
- *   basis is the commune's own total, never inferred from a share, and the cell inherits the weakest
- *   basis of the communes whose points fall in it.
+ *   all, is `source_present`: rows exist without a statement about omissions. Use the commune's own
+ *   total as the basis. Do not infer it from a share. A cell inherits the weakest coverage basis
+ *   among communes represented by its points.
  */
 
 import type { CoverageCell } from "@mailwoman/core/layers"
@@ -52,9 +52,10 @@ export function wholeCommunes(flags: ReadonlyMap<string, number | null>): Readon
  * Fold the register's points into coverage cells.
  *
  * A cell is `designated` only when every point in it belongs to a whole commune.
- * One point from a partial or unflagged commune makes it `source_present`,
- * because a designated basis licenses an exclusion, and one uncertified street inside
- * the cell is exactly the address such an exclusion would deny.
+ * One point from a partial or unflagged commune makes the cell `source_present`.
+ *
+ * A designated basis authorizes an exclusion.
+ * One uncertified street in the cell is an address that exclusion would deny.
  */
 export function certifiedCoverageCells(points: Iterable<CoveragePoint>, whole: ReadonlySet<string>): CoverageCell[] {
 	const cells = new Map<number, { observedRows: number; allWhole: boolean }>()

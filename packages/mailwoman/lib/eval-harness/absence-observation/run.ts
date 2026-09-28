@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the absence-observation probe: no route is injected into the runtime pipeline, which
- *   answers first, and the absence route then reads the finished answer.
+ *   The live half of the absence-observation probe does not inject a route into the runtime pipeline.
+ *   The pipeline answers first. The absence route reads the finished answer afterward.
  */
 
 import { repoRootPath } from "@mailwoman/core/paths"

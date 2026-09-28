@@ -6,11 +6,11 @@
  *   `release.config.json`'s `weights` + `softFeed` blocks, resolved to absolute paths — the one reader of
  *   the dev/release weights recipe.
  *
- *   The base directory is per key, and no field in the JSON marks which is which: the model and tokenizer
- *   resolve against the data root, three of the four lexicons against the repo because they are generated
- *   and committed, `localitySurfaceLexicon` against the data root because it is built, and the postcode
- *   databases against the data root's `wof/`. A reader that guessed one rule would silently resolve four
- *   of seven artifact classes to paths that do not exist.
+ *   Each key has its own base directory. The JSON does not record that choice. The model and tokenizer
+ *   resolve against the data root. Three of the four lexicons resolve against the repo. They are
+ *   generated and committed. `localitySurfaceLexicon` resolves against the data root because it is built.
+ *   The postcode databases resolve under the data root's `wof/`. A reader that guessed one rule would
+ *   silently resolve four of the seven artifact classes to nonexistent paths.
  */
 
 import { readReleaseConfig, repoCommittedSoftFeedSources, type SoftFeedRecipe } from "@mailwoman/core/release-config"
@@ -32,9 +32,10 @@ export interface LinkableArtifact {
 /**
  * An artifact the recipe names that must be built rather than copied.
  *
- * Kept separate from {@link LinkableArtifact} because a consumer that treated
- * it as linkable would place a database where the resolver expects a binary,
- * and the resolver would then report it missing rather than wrong.
+ * This type stays separate from {@link LinkableArtifact}.
+ * A consumer that treated it as linkable would place a database where the resolver expects a binary.
+ *
+ * The resolver would then report the database as missing instead of reporting its wrong type.
  */
 export interface BuildableArtifact {
 	shippedName: string

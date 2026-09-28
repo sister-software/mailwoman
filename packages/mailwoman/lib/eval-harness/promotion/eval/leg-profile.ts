@@ -5,7 +5,7 @@
  * @file Per-leg wall time for one promotion run, written beside the run rather than into it.
  *
  *   The path must name somewhere outside the promotion output directory: `comparePromotionOutputs`
- *   reads every file under it byte-for-byte, and a wall time differs between two runs of the same
+ *   reads every file under it byte-for-byte. Wall time differs between two runs of the same
  *   artifact.
  */
 
@@ -36,14 +36,16 @@ export class LegProfile implements AsyncDisposable {
 
 	/**
 	 * @param path Where to write the ledger.
-	 * An empty path writes none, and a non-empty one must sit outside the battery's output directory.
+	 * An empty path writes no ledger.
+	 * A non-empty path must sit outside the battery's output directory.
 	 */
 	constructor(path: string) {
 		this.#path = path
 	}
 
 	/**
-	 * Run `work`, record its wall time, and hand back whatever it returned.
+	 * Run `work` and record its wall time.
+	 * Return whatever it produced.
 	 *
 	 * A leg that throws is still recorded, because the time it spent
 	 * before failing is the number a reader wants.

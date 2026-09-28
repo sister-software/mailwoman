@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The three arms of the same-data benchmark, each reading one frozen fixture row and answering
- *   with a selection, a confidence, and a machine-readable reason.
+ *   The three arms of the same-data benchmark each read one frozen fixture row.
+ *   Each answers with a selection, a confidence and a machine-readable reason.
  *
  *   `observeEvidence` runs before the arm resolves and its receipt travels with the result, so the equality
  *   check covers what each arm consumed rather than the file it was handed. A validator reading only the
  *   file cannot catch an arm that filtered the pool on its way in.
  *
  *   All three report confidence the same way: the winner's margin over the runner-up within that arm's own
- *   considered set, normalized into [0, 1], and 1 when there was no runner-up. The arms score on different
- *   scales, so bins are not comparable between them, and calibration asks whether an arm's confidence
+ *   considered set, normalized into [0, 1], and is 1 when there was no runner-up. The arms score on different
+ *   scales, so bins are not comparable between them. Calibration asks whether an arm's confidence
  *   tracks its own accuracy.
  *
  *   `picked: null` on every trace, or no admin node carrying a `placeID`, is recorded as an abstention with
@@ -81,7 +81,8 @@ export interface ArmRowResult {
 	/**
 	 * The deciding check or refusal condition, in the arm's own vocabulary.
 	 *
-	 * Null when the arm produced none, which the mechanism-coverage metric counts.
+	 * Null when the arm produced none.
+	 * The mechanism-coverage metric counts these cases.
 	 */
 	mechanism: string | null
 	evidence: ArmEvidenceObservation

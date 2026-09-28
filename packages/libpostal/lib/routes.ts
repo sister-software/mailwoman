@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Route definitions and handlers for the libpostal-compatible surface. The OpenAPI document is
- *   emitted from these definitions rather than a handwritten spec, and the wire shapes are the
+ *   emitted from these definitions instead of a handwritten spec. The wire shapes are the
  *   vendor interface. See `schema.ts`.
  */
 
@@ -227,8 +227,8 @@ const canonicalizeJSONBody: MiddlewareHandler = async (c, next) => {
  * The zod-openapi auto query validator rejects array-valued repeated params
  * (`?query=a&query=b`) with its own error shape before the handlers run.
  *
- * Keep only the first value of each interface param, which is the value `c.req.query()`
- * reads anyway, so query validation can never fail either.
+ * Keep only the first value of each interface parameter.
+ * `c.req.query()` reads that value, so query validation cannot fail on repeated values.
  */
 const canonicalizeQueryParams: MiddlewareHandler = async (c, next) => {
 	if (c.req.method === "GET") {

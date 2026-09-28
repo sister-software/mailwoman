@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A signing pair minted per test run, and an env whose secret and kid match it. The pair is never in the shipped
- *   register, which is the property the signing self-test refuses on: a route test that needs a minted token injects
+ *   A signing pair minted per test run and an environment whose secret and `kid` match it.
+ *   The shipped register excludes this pair, as the signing self-test requires.
+ *   A route test that needs a minted token injects
  *   `signingStatus: () => "ok"` through the app's dependencies and verifies against `publicKeyPEM` here.
  */
 

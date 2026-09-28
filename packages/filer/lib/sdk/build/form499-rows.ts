@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file One Form 499 row's lifecycle, edge and family membership writes.
  *
- *   Form 499 is an annual filing, so a row's administrative `lastFiledAt` and the FCC's operational `ceasedAt` are two
- *   different clocks that no field orders; {@linkcode closeableCessationDate} resolves that, and its abstention is why
- *   `valid_to` is sometimes left open on a filer known to have ceased.
+ *   Form 499 is an annual filing. A row's administrative `lastFiledAt` and the FCC's operational `ceasedAt` are separate dates.
+ *   No field orders those dates. {@linkcode closeableCessationDate} resolves them when possible.
+ *   Its abstention leaves `valid_to` open for some filers known to have ceased.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -49,8 +49,10 @@ export interface Form499LifecycleTotals {
 }
 
 /**
- * One 499 row's lifecycle writes: a `ceased_at` attribute, one `cessation_reason` attribute
- * per recognized reason, and a `SupersededBy` edge when the FCC designated a successor filer.
+ * Writes lifecycle data for one Form 499 row: a `ceased_at` attribute
+ * and one `cessation_reason` attribute per recognized reason.
+ *
+ * It also writes a `SupersededBy` edge when the FCC designated a successor filer.
  *
  * Returns the `valid_to` the caller should stamp on that row's relationship edges,
  * or `null` when {@linkcode closeableCessationDate} abstains.

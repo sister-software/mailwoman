@@ -5,10 +5,11 @@
  *
  *   Postal regimes whose addressing does not follow their ISO 3166-1 country code.
  *
- *   Most code keys addressing behavior by country. The regimes here are exceptions: one code with several postal
- *   systems, routing codes shaped like geography, postcodes that cross borders, and addresses written as
- *   landmark directions. Each record states how much of the regime this repository models, which keeps known
- *   gaps visible. The table records regimes only and defines no layouts. The seven families come from section 7
+ *   Most code keys addressing behavior by country. This table records exceptions to that model.
+ *   Examples include one code shared across postal systems, routing codes shaped like geography,
+ *   postcodes that cross borders and landmark-direction addresses.
+ *   Each record states how much of the regime this repository models. The record keeps known gaps visible.
+ *   The table describes regimes and defines no layouts. Its seven families come from section 7
  *   of the global address corpus specification.
  */
 

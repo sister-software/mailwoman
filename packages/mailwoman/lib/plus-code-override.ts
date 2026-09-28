@@ -27,8 +27,8 @@ const PLUS_CODE_TOKEN = /(?:^|[\s,])([23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJ
  * Plus-code override: when the query carries an Open Location Code,
  * the code is the user's most precise claim.
  *
- * Google prints these on every place card, and in sparse-addressing countries
- * they are the address (the Nicaraguan board rows).
+ * Google prints these on every place card.
+ * They serve as addresses in sparse-addressing countries, including the Nicaraguan board rows.
  *
  * A full code decodes directly.
  * A short code recovers against the coordinate the rest of the address resolved to
@@ -51,12 +51,12 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 	if (!token) return
 	const upper = token.toUpperCase()
 
-	// The short-code reference must be locality-grade: recovery needs a point within
-	// half a prefix-resolution (0.5 degrees for the common 4-digit short form)
-	// of the true cell, and the blended result coordinate can be poisoned by a
-	// ZIP-lookalike postcode ('Managua 11001' answered a Floral Park NY point)
-	// or a coarse admin centroid (Ulaanbaatar's reference arrived ~2 degrees off) —
-	// both measured recovering into the wrong degree cell with perfect fractions.
+	// The short-code reference must be locality-grade: recovery needs a point within half a
+	// prefix-resolution (0.5 degrees for the common 4-digit short form) of the true cell.
+	// The blended result coordinate can be poisoned by a ZIP-lookalike postcode
+	// ('Managua 11001' answered a Floral Park NY point) or a coarse admin centroid
+	// (Ulaanbaatar's reference arrived ~2 degrees off) — both measured recovering
+	// into the wrong degree cell with perfect fractions.
 	// The resolved locality node is the reference the code was shortened against.
 	const referenceNode = firstNodeWhere(
 		resolved.roots,

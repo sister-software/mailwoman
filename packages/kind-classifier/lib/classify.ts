@@ -41,9 +41,9 @@ const SCORERS: ReadonlyArray<KindScorer> = [
 	{ kind: "postcode_only", score: scorePostcodeOnly },
 	{ kind: "locality_only", score: scoreLocalityOnly },
 	{ kind: "structured_address", score: scoreStructuredAddress },
-	// Intent is vocabulary rather than a stage, and the sort below is what decides,
-	// so `bare_toponym` and `route_pair` sit here cosmetically and are scored under
-	// `locality_only` on purpose (see `intent-rules.ts`).
+	// Intent is vocabulary rather than a stage.
+	// The sort below decides, so `bare_toponym` and `route_pair` sit here cosmetically
+	// and are scored under `locality_only` on purpose (see `intent-rules.ts`).
 	{ kind: "bare_toponym", score: scoreBareToponym },
 	{ kind: "route_pair", score: scoreRoutePair },
 	{ kind: "near_me", score: scoreNearMe },
@@ -122,9 +122,11 @@ export async function classifyKind(
  */
 export interface KindClassifierOpts {
 	/**
-	 * POI phrase lexicon (spec §3.1); when present the `poi_query` and `poi_category` scorers
-	 * join the rule set, injected rather than imported so this package stays dictionary-free,
-	 * and when absent the returned classifier is behaviorally identical to {@link classifyKind}.
+	 * POI phrase lexicon (spec §3.1); when present the `poi_query`
+	 * and `poi_category` scorers join the rule set.
+	 *
+	 * They are injected rather than imported so this package stays dictionary-free.
+	 * When absent, the returned classifier behaves identically to {@link classifyKind}.
 	 */
 	poiLexicon?: POIPhraseLookup
 }
@@ -149,9 +151,10 @@ export function createKindClassifier(
 
 		if (poiConfidence <= 0 && categoryConfidence <= 0) return base
 
-		// Re-ranking over the union rather than special-casing whether POI beat the base
-		// preserves the base's own alternatives, which keeps `bare_toponym`/`route_pair`
-		// visible to the marker builder even when a POI kind takes the top slot.
+		// Re-ranking over the union rather than special-casing whether POI beat the
+		// base preserves the base's own alternatives.
+		// Those keep `bare_toponym`/`route_pair` visible to the marker builder even
+		// when a POI kind takes the top slot.
 		const merged: Array<{ kind: QueryKind; confidence: number }> = [
 			{ kind: base.kind, confidence: base.confidence },
 			...base.alternatives,

@@ -84,7 +84,8 @@ const REPORT_KEY_ALLOWLIST: ReadonlySet<string> = new Set<string>([
 ])
 
 /**
- * Matches a house number followed by a word, which is the shape of a street address.
+ * Matches a house number followed by a word.
+ * That is the shape of a street address.
  */
 const ADDRESS_SHAPE = /\d+\s+\p{L}/u
 
@@ -170,8 +171,8 @@ export interface PremiseLinkagePreflightInput {
 }
 
 /**
- * Removes per-class cells and coordinate rows measured over fewer than `minCellSize` rows,
- * and records the count in `suppressedCells`.
+ * Removes per-class cells and coordinate rows measured over fewer than `minCellSize` rows.
+ * It records their count in `suppressedCells`.
  *
  * A per-class cell's size is `refusedOverAll.of`, because that rate is the one
  * measured over every row of the class.
@@ -224,7 +225,8 @@ function checkRows(rows: readonly PremiseLinkageResultRow[]): void {
 }
 
 /**
- * Suppresses small cells, checks the result, and returns the report that may be published.
+ * Suppresses small cells and checks the result.
+ * It returns the report that may be published.
  *
  * @throws PremiseLinkageRedactionError when the run is too small or any check fails.
  */

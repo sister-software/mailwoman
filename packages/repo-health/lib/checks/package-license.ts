@@ -6,15 +6,15 @@
  *   Refuse a workspace manifest whose `license` field is not the repository's expression in an admissible SPDX
  *   form.
  *
- *   The `license` field is the published statement of the terms a release ships under, and two failure classes reach
- *   consumers through it without breaking a build: a deprecated identifier such as `AGPL-3.0` states less than it
- *   appears to (neither `-only` nor `-or-later`, and `summarizeLicense` reports it `recognized: false` with an
- *   empty obligation list), and a workspace omitting the commercial branch contradicts the public license page.
+ *   The `license` field states the terms shipped in a release. Two failure classes reach consumers
+ *   through this field without breaking a build. A deprecated identifier such as `AGPL-3.0` omits
+ *   `-only` or `-or-later`. `summarizeLicense` reports it as `recognized: false` with an empty
+ *   obligation list. A workspace that omits the commercial branch contradicts the public license page.
  *
- *   The root manifest is the reference rather than a constant here, and its own field is checked for admissibility
- *   before it is used. A workspace that needs different terms is a rights question that belongs in
- *   `docs/engineering/reference/artifact-rights-inventory.mdx` and the manifests it governs, never an exception list
- *   here.
+ *   The root manifest provides the reference expression. The check validates its own field for
+ *   admissibility before using it. A workspace that needs different terms raises a rights question.
+ *   Record that decision in `docs/engineering/reference/artifact-rights-inventory.mdx` and the
+ *   manifests it governs instead of adding an exception here.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -71,8 +71,8 @@ export const packageLicenseCheck: RepoCheck = {
 		const rootDeclared = await readDeclaredLicense(context.repoRoot, "package.json")
 
 		if (typeof rootDeclared !== "string") {
-			// Without the root's expression there is no basis for comparison, and one failure
-			// per workspace would bury the one that has to be fixed first.
+			// Without the root's expression, the check has no basis for comparison.
+			// Reporting one failure per workspace would bury the root error that must be fixed first.
 			return [rootDeclared]
 		}
 

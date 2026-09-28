@@ -115,7 +115,7 @@ export interface BuildSubVenueLexiconInput {
 	 */
 	sources: readonly SubVenueLexiconSource[]
 	/**
-	 * The curation decisions, which default to {@link SUBVENUE_PROMOTIONS}.
+	 * Defaults to {@link SUBVENUE_PROMOTIONS}.
 	 *
 	 * An empty array builds the uncurated table.
 	 */
@@ -309,7 +309,8 @@ export interface GenerateSubVenueLexiconOptions {
 	 */
 	overtureRows?: readonly (SubVenueHarvestRow & { country: string })[]
 	/**
-	 * The `poi.db` layer vintage, which is used only when `overtureRows` is non-empty.
+	 * The `poi.db` layer vintage.
+	 * The builder uses it only when `overtureRows` is non-empty.
 	 */
 	overtureVintage?: string
 	/**

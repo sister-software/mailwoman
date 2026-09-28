@@ -9,8 +9,8 @@
  *   This used to pass `--no-neural`, which did not skip the load: `parse.tsx` declared both `neural`
  *   and `noNeural`, Commander derived `--no-neural` from the former (its `attributeName()` is
  *   `neural`), and `options.noNeural` was therefore never settable from the command line. The
- *   benchmark reported `classifier: loaded (en-US)` throughout. `noNeural` is gone; `--degraded` is
- *   the flag that skips the encoder, and the benchmark path now honours it.
+ *   The benchmark reported `classifier: loaded (en-US)` throughout.
+ *   `--degraded` skips the encoder. The benchmark path now honours this flag.
  */
 
 import { runFile } from "@mailwoman/core/process"
@@ -60,7 +60,8 @@ describe("npx mailwoman parse --benchmark <N> --degraded '<input>'", () => {
 		expect(stdout).toContain("iterations + 5 warmup")
 		expect(stdout).toContain("stage")
 		// The regression guard for the flag this file used to pass: if the encoder loads,
-		// the header says so, and the run is neither deterministic nor fast.
+		// the header reports that state.
+		// The run is then neither deterministic nor fast.
 		expect(stdout).toContain("classifier: none")
 		expect(stdout).toContain("p50")
 		expect(stdout).toContain("TOTAL")

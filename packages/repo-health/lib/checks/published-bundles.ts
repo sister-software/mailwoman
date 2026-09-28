@@ -4,12 +4,13 @@
  * @author Teffen Ellis, et al.
  * @file The registry of published data bundles agrees with the committed measurement of the bucket.
  *
- *   `BUNDLES` in `mailwoman/data` records each artifact's `approxBytes` by hand, and `data status` compares a local
- *   file against that figure exactly. `packages/mailwoman/data/published-bundles.json` records the `content-length`
- *   the bucket reported for the same artifacts on a stated date. The two drifted apart once without any check
- *   noticing, and the docs site restated the stale figure to customers. This check reports an artifact the snapshot
- *   does not cover, an artifact the registry no longer names, a size the snapshot could not read, and a size the two
- *   disagree on.
+ *   `BUNDLES` in `mailwoman/data` records each artifact's `approxBytes` by hand.
+ *   `data status` compares a local file against that figure exactly.
+ *   `packages/mailwoman/data/published-bundles.json` records the bucket's `content-length`
+ *   for those artifacts on a stated date. The two sources drifted apart once without a check noticing.
+ *   The docs site then restated the stale figure to customers. This check reports an artifact
+ *   the snapshot does not cover, an artifact the registry no longer names, and a size the snapshot could
+ *   not read. It also reports a size mismatch between the registry and snapshot.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"

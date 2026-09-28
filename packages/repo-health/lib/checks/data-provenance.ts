@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  * @file Every committed data artifact in a `data/` directory is listed in that directory's `PROVENANCE.md`.
  *
- *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone, and no automated
- *   pass inspects them: a JSON file looks the same whether a generator produced it or somebody typed it.
+ *   A `data/` directory holds build artifacts that humans should leave unchanged.
+ *   No automated pass can tell whether a JSON file came from a generator or a person.
  *
  *   `PROVENANCE.md` records per artifact what wrote it and how a reader checks it. The check requires the record to
- *   name every artifact, and does not verify the artifact's contents.
+ *   name every artifact. It does not verify artifact contents.
  *
  *   Coverage names every artifact file directly in the directory and every immediate subdirectory, because each of
  *   core's four data directories is one level down and a file-only rule reports no finding about any of them.

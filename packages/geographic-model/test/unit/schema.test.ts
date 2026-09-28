@@ -155,8 +155,10 @@ const minimalDocument: GeographicModelDocument = {
 }
 
 /**
- * The whole first record set: the concepts, the mapping into the external vocabulary,
- * one source observation, and one derived fact naming every record its derivation read.
+ * The first record set contains concepts and their mapping into the external vocabulary.
+ *
+ * It also contains one source observation.
+ * It also contains one derived fact that lists every record its derivation read.
  */
 const pharmacyDocument: GeographicModelDocument = {
 	...minimalDocument,
@@ -672,7 +674,7 @@ describe("reporting every violation at once", () => {
 		const issues = refusalOf(ninefoldDefect())
 		const rendered = formatValidationIssues(issues)
 
-		// oxlint-disable-next-line mailwoman/prefer-spliterator -- an in-memory string of one line per issue, and the line count is the assertion.
+		// oxlint-disable-next-line mailwoman/prefer-spliterator -- this in-memory string has one line per issue. The line count is the assertion.
 		expect(rendered.split("\n")).toHaveLength(issues.length)
 	})
 })

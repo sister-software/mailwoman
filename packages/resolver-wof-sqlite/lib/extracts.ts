@@ -6,8 +6,8 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-extract support for `WOFSQLitePlaceLookup`: open multiple WOF SQLite distributions on one
- *   connection via `attach database`, and route queries to the right extract based on placetype.
+ *   Multi-extract support for `WOFSQLitePlaceLookup`. It opens multiple WOF SQLite distributions
+ *   on one connection with `attach database`. It routes queries by placetype.
  *
  *   SQLite parses a schema-qualified table on the left of `match` as "column place_search of table
  *   pc", so the working form is schema-qualified in `from` and a bare table name in `match`:
@@ -110,7 +110,7 @@ function isPathBuilderLike(value: unknown): value is PathBuilderLike {
  * Normalize the user-provided `databasePath` opt (which may be a single string, an array
  * of strings, or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
  *
- * The first extract becomes `main` regardless of its derived schema name, the SQLite convention.
+ * The first extract becomes `main` regardless of its derived schema name, following SQLite convention.
  * Subsequent extracts keep their derived or overridden schema name.
  */
 export function resolveExtracts(
@@ -136,7 +136,8 @@ export function resolveExtracts(
 			)
 		}
 
-		// The first extract is always main per SQLite semantics, and its derived name is informational only.
+		// SQLite always treats the first extract as main.
+		// Its derived name is informational only.
 		// Subsequent extracts must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
 
@@ -205,10 +206,10 @@ export function pickExtractsForPlacetype(
  * 3. Otherwise, fall back to `main`.
  *
  * This deliberately does not union across extracts.
- * BM25 scores are not comparable across separately indexed corpora, and the typical
- * mailwoman query has a single placetype anyway.
+ * BM25 scores are not comparable across separately indexed corpora.
+ * A typical mailwoman query has one placetype.
  *
- * If a caller needs cross-extract results they can issue two `findPlace` calls.
+ * Callers that need cross-extract results can issue two `findPlace` calls.
  */
 export function pickExtractForPlacetype(
 	extracts: ResolvedExtract[],
@@ -217,8 +218,9 @@ export function pickExtractForPlacetype(
 		/**
 		 * The query's country constraint, when the caller has one.
 		 *
-		 * When `country` is given and a matching extract's probed country set contains it,
-		 * that extract wins, and extracts without the country are skipped.
+		 * When `country` is given and a matching extract's probed country set contains it, that extract wins.
+		 * Extracts without the country are skipped.
+		 *
 		 * The placetype-match order remains the tiebreak when no extract claims
 		 * the country (or none was probed).
 		 */

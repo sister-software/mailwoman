@@ -21,7 +21,8 @@ import type { SoilDatabase } from "#schema"
 import type { SoilDataAccessClient } from "#sdk/client"
 
 /**
- * One point, both verdicts, and whether they agree.
+ * One comparison row for a point.
+ * It records both verdicts and whether they agree.
  */
 export interface SoilAgreementRow {
 	label: string
@@ -203,8 +204,9 @@ function candidateDelineations(
 }
 
 /**
- * Which map unit the artifact's own geometry puts at a point, and the distance
- * to that delineation's nearest edge.
+ * The map unit that the artifact's geometry places at a point.
+ *
+ * Also records the distance to that delineation's nearest edge.
  */
 function localDelineationAt(
 	database: DatabaseClient<SoilDatabase>,
@@ -277,8 +279,8 @@ export function sampleAgreementPoints(
 	const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
 	const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
 
-	// One offset probe per sample point rather than a materialized key list,
-	// which would hold every primary key to keep sixty.
+	// Use one offset probe per sample point instead of materializing a key list.
+	// That list would retain every primary key to select sixty points.
 	const selectByOffset = database.prepare(
 		"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
 	)

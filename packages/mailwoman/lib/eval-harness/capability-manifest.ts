@@ -149,12 +149,13 @@ async function buildManifest(paths: ResolvedPaths): Promise<Capabilities> {
 
 			console.error(`\n[${tier}/${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-			// The generator constructs its scorers while the card's `capabilities` block may not
-			// yet exist, and the loader's delta check is a no-op until the block is written.
-			// After a `--write`, regenerating uses the already-written block, but mask-off construction never
-			// trips the check (it fires only for a forbidden certified tag, and mask-off forbids none).
-			// `inputMode: "formatted"` because certification probes are formatted postal addresses,
-			// whose production path disables evidence-bundle channels.
+			// The generator constructs its scorers while the card's `capabilities` block may not yet exist.
+			// The loader's delta check is a no-op until the block is written.
+			// After a `--write`, regenerating uses the already-written block.
+			// The check fires only for a forbidden certified tag.
+			// Mask-off forbids none, so its construction passes.
+			// `inputMode: "formatted"` because certification probes are formatted postal addresses.
+			// Their production path disables evidence-bundle channels.
 			// The mask-regression check grades the same mode, so the two report one number for one row.
 			const { off, on } = await scoreConventionsMaskOffOn(
 				rows,

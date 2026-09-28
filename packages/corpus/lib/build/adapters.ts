@@ -38,12 +38,13 @@ export interface AdapterPhaseResult {
  * Reuse a finished adapter run, or return `null` when this build has to drive the adapter.
  *
  * @throws When the cached manifest and the file on disk disagree on the byte count.
- * The manifest is written after the canonical file is flushed, so its presence establishes that
- * the writer reached the end of its own run, and describes the file only as of that moment.
+ * The writer flushes the canonical file before writing the manifest.
+ * Manifest presence establishes that the writer reached the end of its run.
+ * The manifest describes the file as of that moment.
  * A truncated copy, an interrupted move or a partial transfer leaves the
  * manifest intact beside a shorter file.
- * Comparing the recorded byte count is what separates those, and a resumed build reusing
- * a short file produces a corpus whose row count every later reader accepts.
+ * The recorded byte count distinguishes those cases.
+ * A resumed build that reuses a short file can produce a corpus whose row count later readers accept.
  */
 async function reusableRun(adapterID: string, adapterDir: PathBuilder): Promise<AdapterRunManifest | null> {
 	if ($public.MAILWOMAN_RESUME !== "1") return null

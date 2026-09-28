@@ -46,8 +46,8 @@ function resolved(
 }
 
 function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwomanArmDeps {
-	// Typed throwing stubs rather than a cast: the arm under test drives `runOne`, so the gauntlet's own
-	// geocode/diagnoseParse must never be reached, and reaching one should fail the test loudly.
+	// The arm under test drives `runOne`, so the gauntlet's own geocode/diagnoseParse must not run.
+	// Typed throwing stubs make the test fail if either method runs.
 	const gauntlet: GauntletDeps = {
 		geocode: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.geocode")
@@ -55,8 +55,8 @@ function fakeDeps(overrides: Partial<RoutedMailwomanArmDeps> = {}): RoutedMailwo
 		geocodeTraced: vi.fn(async () => {
 			throw new Error("routed-arm tests drive runOne, never deps.geocodeTraced")
 		}),
-		// Every overlay loaded, which is what a stub with no weights cache should claim:
-		// the arm under test makes no promote suggestion.
+		// Every overlay loaded.
+		// The arm under test makes no promote suggestion.
 		// Therefore, a truthful `false` keeps the stub from implying a degraded instrument.
 		gradedBaseOnly: vi.fn(() => false),
 		diagnoseParse: vi.fn(async () => {

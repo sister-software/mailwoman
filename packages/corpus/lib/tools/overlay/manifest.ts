@@ -193,11 +193,12 @@ export interface OverlayPlan {
 	/**
 	 * Each added file with the route its split came from.
 	 *
-	 * `route` reads `split-slice` where the filename carries the split suffix that command
-	 * writes, and `caller` where the split was supplied as an argument.
+	 * `route` reads `split-slice` when the filename carries the split suffix written by the command.
+	 * `caller` reads the split supplied as an argument.
+	 *
 	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
-	 * and put 770 of DE's 3,987 validation `source_id`s in train, and the filename
-	 * was the only place that showed it (#2359).
+	 * and put 770 of DE's 3,987 validation `source_id`s in train.
+	 * The filename was the only place that showed this (#2359).
 	 */
 	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
 }
@@ -359,7 +360,7 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		// An overlay corpus's manifest reads no row's `license` column, so it states no license set.
 		// Saying so in the artifact is what keeps a reader from deriving an attribution
 		// table from `slices` and treating the base build's set as the whole.
-		// The overlay sources named here carry their own terms, recorded per source in
+		// The overlay sources listed here carry their own terms, recorded per source in
 		// `packages/corpus/lib/recipes/sources.ts` and per row in the `license` column itself.
 		licenses_cover:
 			`no license set is measured here. The base build's MANIFEST.json covers the rows it aligned, and ` +

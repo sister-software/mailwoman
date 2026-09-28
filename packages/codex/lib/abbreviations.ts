@@ -61,8 +61,9 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * The entries safe to apply before the input's locale is known, which are multi-character
- * and collision-free across the locale tables.
+ * Entries safe to apply before the input's locale is known.
+ *
+ * Each entry is multi-character and collision-free across locale tables.
  *
  * `Av` is a known exception whose removal needs a resolver-gauntlet measurement.
  */

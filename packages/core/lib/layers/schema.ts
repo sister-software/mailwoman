@@ -88,8 +88,8 @@ export interface LayerManifestTable {
 	/**
 	 * JSON object of publisher name to input record count, or NULL when the build recorded none.
 	 *
-	 * NULL and `{}` are different readings: the first says the build did not count,
-	 * and the second says it counted and found no publisher.
+	 * `NULL` means the build did not record a count.
+	 * `{}` means the build counted records and found no publishers.
 	 * See `LayerManifest.sourceRecords` in `manifest.ts`.
 	 */
 	source_records?: string | null
@@ -173,9 +173,9 @@ export async function createLayerManifestTable(db: layerschemahandle): Promise<v
 		.addColumn("freshness_policy", "text", (c) => c.notNull())
 		.addColumn("spine_keys", "text", (c) => c.notNull())
 		.addColumn("created_at", "text", (c) => c.notNull())
-		// Nullable on purpose: an artifact built before this column reads back NULL, and `readLayerManifest`
-		// leaves `sourceRecords` absent for it rather than reporting an empty count. A build that counted and
-		// found no publisher writes `{}`, which is a different reading.
+		// Keep the column nullable for artifacts built before it existed.
+		// Those artifacts read NULL. `readLayerManifest` leaves `sourceRecords` absent.
+		// A build that counted records and found no publishers writes `{}`.
 		.addColumn("source_records", "text")
 		.execute()
 }

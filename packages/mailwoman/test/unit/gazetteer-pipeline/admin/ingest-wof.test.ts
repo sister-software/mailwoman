@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The WOF ingest prefers the label centroid over the math centroid and never mixes the two. The
- *   math centroid lands off the mainland for a multipolygon that spans overseas territories, which
- *   is where a point matters most.
+ *   The WOF ingest prefers the label centroid over the math centroid and keeps the two separate.
+ *   For a multipolygon spanning overseas territories, the math centroid can land off the mainland.
+ *   Those cases are where a useful point matters most.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -161,8 +161,9 @@ describe("ingestWOF adjudication scope (#1905)", () => {
 
 		await makeDirectories(dataDir)
 
-		// Modeled on wof:85688753 (Texas), with lbl at the label placement and geom at the polygon centroid.
-		// The GeoNames admin1 record sits near the centroid, which inverts the anchor premise.
+		// Modeled on wof:85688753 (Texas).
+		// `lbl` is at the label placement and `geom` is at the polygon centroid.
+		// The GeoNames admin1 record sits near the centroid and reverses the anchor premise.
 		await writeLocalFile(
 			feature(8, {
 				"wof:placetype": "region",

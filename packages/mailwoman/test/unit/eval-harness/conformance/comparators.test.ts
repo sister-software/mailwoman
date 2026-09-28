@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   An identity law must report `diverges` for two different places 90 metres apart, and a comparator whose axis is absent on both sides must report `undecidable` rather than `equivalent`.
+ *   An identity law must report `diverges` for two different places 90 metres apart.
+ *   A comparator with its axis absent on both sides must report `undecidable`, not `equivalent`.
  */
 
 import type { ResolveNodeTrace } from "@mailwoman/core/resolver"
@@ -50,8 +51,8 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 /**
- * Only a hand-built fixture that skips the loader can reach a comparator with
- * an unknown name, which is the path under test.
+ * Only a hand-built fixture that skips the loader can reach a comparator with an unknown name.
+ * This test exercises that path.
  */
 function comparatorName(value: string): ConformanceFixture["outcomeComparator"] {
 	return value as ConformanceFixture["outcomeComparator"]

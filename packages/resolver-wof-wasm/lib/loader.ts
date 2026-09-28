@@ -7,9 +7,9 @@
  *
  *   V1 strategy: fetch the whole file (~35 MB for the default top-1k US slim) and open it via the OO1
  *   API's "opfs"-flavored constructor in transient mode. The full-fetch approach is fine for a
- *   bundle this size. The slim DB is what the browser holds in RAM for the duration of the session
- *   anyway, and http/2 + gzip make the 35 MB transfer pay one RTT + transfer time rather than the
- *   "hundreds of byte-range requests" cost a http-VFS approach would incur.
+ *   bundle this size. The browser holds the slim database in RAM for the session.
+ *   HTTP/2 and gzip reduce the 35 MB transfer to one RTT plus transfer time.
+ *   A VFS approach would require hundreds of byte-range requests.
  *
  *   When we eventually want incremental loading (Phase B.x), this is the point to swap — keep
  *   `WOFWasmPlaceLookup` unchanged and replace the loader with a `sql.js-httpvfs`-style VFS.
@@ -30,8 +30,8 @@ export interface LoadSlimOpts {
 	/**
 	 * Where the sqlite-wasm runtime can find its .wasm asset.
 	 *
-	 * Required in browser builds because the default URL is resolved relative to
-	 * the worker script, which bundlers usually rewrite.
+	 * Required in browser builds because the default URL is relative to the worker script.
+	 * Bundlers usually rewrite that script URL.
 	 *
 	 * Most bundlers will let you
 	 * do `new URL("../node_modules/@sqlite.org/sqlite-wasm/sqlite-wasm/jswasm/sqlite3.wasm", import.meta.url).href`.
@@ -104,8 +104,9 @@ export async function loadSlimWOFDatabase(opts: LoadSlimOpts): Promise<{ db: Dat
 }
 
 /**
- * The lifecycle boundary for sqlite-wasm, whose database exposes `close()`
- * rather than explicit resource management.
+ * The lifecycle boundary for sqlite-wasm.
+ *
+ * Its database exposes `close()` and does not use explicit resource management.
  */
 export function disposeSlimWOFDatabase(db: Database): void {
 	db.close()

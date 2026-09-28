@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@link stampNameRoles} — pass 3c of the candidate build, whose two detectors decide
- *   which alias rows carry a `name_role`.
+ *   Tests {@link stampNameRoles}, pass 3c of the candidate build.
+ *   Its two detectors decide which alias rows receive a `name_role`.
  *
  *   Each case is one of the checks the detectors are made of, because the failure mode is a check
  *   quietly widening: `gloss` is an anomaly signal that must never reach a place with measured

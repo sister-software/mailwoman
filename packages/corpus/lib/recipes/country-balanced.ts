@@ -25,7 +25,8 @@ import { alignRow } from "#utils"
 
 // Country names are drawn without regard to the address's own country.
 const COUNTRY_FORM_POOL = (() => {
-	// `surface` holds curated endonyms and abbreviations, and `names` holds canonical English names.
+	// `surface` holds curated endonyms and abbreviations.
+	// `names` holds canonical English names.
 	const surface = Object.values(COUNTRY_SURFACE_FORMS).flat()
 	const names = [...CountryNames]
 
@@ -159,8 +160,9 @@ function pickCountry(random: () => number): string | null {
 	return sample(pool, random)
 }
 
-// A draw below FULL_CUTOFF gives a comma before the country, a draw below FULL_NEWLINE_CUTOFF
-// gives a newline, and any higher draw gives the bare form without region or postcode.
+// A draw below `FULL_CUTOFF` selects the comma form.
+// A draw below `FULL_NEWLINE_CUTOFF` selects the newline form.
+// A higher draw selects the bare form without region or postcode.
 const FULL_CUTOFF = 0.8
 const FULL_NEWLINE_CUTOFF = 0.92
 

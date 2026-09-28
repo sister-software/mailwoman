@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The release-metadata surfaces over a planted tree, and the constraint that keeps the status page published.
+ * @file Tests release-metadata surfaces over a planted tree and the constraint that keeps the status page published.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -32,8 +32,8 @@ const statusPage = (version: string) =>
 	].join("\n")
 
 /**
- * The version matrix, in the shape `checkReleases` reads: newest first, `(current)`
- * on the first column, and the third column carrying the model lineage.
+ * The version matrix, in the shape `checkReleases` reads: newest first, `(current)` on the first column.
+ * The third column contains the model lineage.
  */
 const releasesPage = (version: string) =>
 	[

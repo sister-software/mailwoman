@@ -65,7 +65,9 @@ export function isAllLowerInput(text: string): boolean {
  * Titlecase each Latin run longer than an abbreviation and keep the abbreviations as typed.
  *
  * `palestine` becomes `Palestine` and `honorÉ` becomes `Honoré`.
- * On all-caps input the abbreviations are already shouting, which is the form the model reads them in.
+ * On all-caps input, abbreviations remain uppercase.
+ *
+ * The model reads them in that form.
  * Length-preserving, so token offsets never move.
  */
 export function titleCaseInput(text: string): string {
@@ -90,8 +92,9 @@ export function restoreLowerInput(text: string): string {
  * Normalize a shouting or whispering input to canonical mixed case before the model.
  *
  * Mixed-case and accented or non-Latin input pass through byte-identically.
- * All-caps registry and compliance data (`214 JONES RD, ELKHART, TX 75839`) is partly
- * out-of-domain for a model trained on mixed-case text, and drops or mis-bounds tokens.
+ * All-caps registry and compliance data (`214 JONES RD, ELKHART, TX 75839`) is
+ * partly out-of-domain for a model trained on mixed-case text.
+ * It causes dropped or mis-bounded tokens.
  *
  * Titlecasing first recovers it.
  * Fully-lowercase input is as out-of-domain, since it fragments the street and drops the state code.

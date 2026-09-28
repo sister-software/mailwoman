@@ -20,8 +20,9 @@ const REPO_ROOT = repoRootPathBuilder()
 /**
  * Roughly 2,500 tokens at four bytes each.
  *
- * The signature digest this replaces measured near 88,000 tokens for the same tree,
- * and would not survive a compaction.
+ * The signature digest measured near 88,000 tokens for the same tree.
+ * That output would not survive a compaction.
+ *
  * If the listing grows past this, drop the per-workspace subpath limit rather than the budget.
  */
 const BYTE_BUDGET = 10_000
@@ -49,7 +50,8 @@ describe("orientationListing", () => {
 
 	it("counts the remainder rather than listing a large package in full", () => {
 		// `@mailwoman/core` exports around a hundred subpaths.
-		// The listing is an index of where to look, and the rest of them are what `mwdev_symbol` answers.
+		// The listing indexes where to look.
+		// `mwdev_symbol` answers questions about the remaining subpaths.
 		expect(listing).toMatch(/@mailwoman\/core: \. .* \+\d+ more/u)
 	})
 

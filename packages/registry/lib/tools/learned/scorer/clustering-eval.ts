@@ -100,7 +100,8 @@ export interface ScorerClusteringEvalOptions {
 }
 
 /**
- * Cluster the eval records with the FS baseline, the GBT and the LR, and emit the markdown report to stdout.
+ * Cluster the eval records with the FS baseline, GBT and LR.
+ * Emit the markdown report to stdout.
  */
 export async function scorerClusteringEval(
 	options: ScorerClusteringEvalOptions,
@@ -147,8 +148,8 @@ export async function scorerClusteringEval(
 	geocoder[Symbol.dispose]()
 
 	// The collapsed-spatial and address-frequency comparison set is the benchmark feature basis.
-	// The shared production featurizer keeps train, eval and inference on one definition, and the
-	// agreement pattern is EM-independent so the same features are consistent at train and inference time.
+	// The shared production featurizer keeps train, eval and inference on one definition.
+	// The agreement pattern is independent of EM, so features stay consistent at train and inference time.
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
@@ -168,8 +169,8 @@ export async function scorerClusteringEval(
 	 * the eval records three ways through the same `resolveEntities` pipeline,
 	 * sweeping the link threshold for each and taking best F1.
 	 *
-	 * The geocode is shared across seeds, and only the split, the trained scorers
-	 * and the eval subset move with the seed.
+	 * The geocode is shared across seeds.
+	 * Only the split, trained scorers and the eval subset move with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
 		const rnd = makeLcg(seed || 1)

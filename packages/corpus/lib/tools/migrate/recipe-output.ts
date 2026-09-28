@@ -67,7 +67,8 @@ export const RECIPE_SURFACES: Record<string, SurfaceOrigin> = {
 	"overture-latam": SurfaceOrigin.Attested,
 	gnaf: SurfaceOrigin.Attested,
 	osm: SurfaceOrigin.Attested,
-	// Written from this repository's own tables, which publish the string verbatim.
+	// Written from this repository's own tables.
+	// They publish the string verbatim.
 	"synth-bare-country": SurfaceOrigin.Attested,
 	"synth-bare-postcode": SurfaceOrigin.Attested,
 	// Drawn rather than read: the box number, the anchor and the venue are the recipe's.
@@ -89,8 +90,9 @@ export interface MigrationSummary {
  */
 export function surfaceForSource(source: string): SurfaceOrigin {
 	// The table keys on the retired spelling.
-	// A corpus rewritten to the current spelling would otherwise refuse on every row it carries,
-	// which reads as an unrecorded surface rather than a renamed source.
+	// A corpus that uses the current spelling needs the retired key for this lookup.
+	// Otherwise each row fails as though it had no surface.
+	// That failure misstates a renamed source as an unrecorded one.
 	const surface = RECIPE_SURFACES[retiredSourceName(source)]
 
 	if (!surface) {

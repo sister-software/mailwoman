@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   The plan → execute interface for external writes. `computeReleasePlan` describes what a release of
- *   this checkout would publish — head, the version, every release workspace at its manifest version,
- *   every weights artifact a checkout does not carry, and the destinations — and seals it under a
- *   digest. An external-write operation takes the plan file back, recomputes the plan from the
- *   checkout it is about to publish, and refuses when head is dirty, head moved, or the digest
+ *   this checkout would publish — head, version, each release workspace's manifest version,
+ *   weights artifacts the checkout does not contain, plus destinations — then seals it under a
+ *   digest. An external-write operation reads the plan file and recomputes the plan from its checkout.
+ *   It refuses when head is dirty, head moved, or the digest
  *   differs: the tree being published is then not the tree that was planned.
  *
  *   The digest covers everything but itself, over canonical JSON (sorted keys), so two checkouts of

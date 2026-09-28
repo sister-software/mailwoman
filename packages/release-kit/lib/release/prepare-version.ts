@@ -15,8 +15,10 @@ import { bumpReleaseConfigVersion } from "#release/config-version"
 import { releaseWorkspaces } from "#release/stage"
 
 /**
- * Options for {@link prepareReleaseVersion}; `version` is `patch`, `minor`, `major`
- * or an explicit semver, and `checkOnly` validates without writing.
+ * Options for {@link prepareReleaseVersion}.
+ *
+ * `version` is `patch`, `minor`, `major`, or an explicit semver.
+ * `checkOnly` validates without writing.
  */
 export interface PrepareReleaseVersionOptions {
 	repoRoot: string
@@ -26,8 +28,8 @@ export interface PrepareReleaseVersionOptions {
 }
 
 /**
- * The version before and after a {@link prepareReleaseVersion} run, and how many
- * files it wrote (zero in check-only mode).
+ * The version before and after a {@link prepareReleaseVersion} run and the number of files it wrote.
+ * The count is zero in check-only mode.
  */
 export interface PrepareReleaseVersionReport {
 	currentVersion: string

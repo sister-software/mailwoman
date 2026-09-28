@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, the shape, normalization, and the
+ *   Japanese postcodes (郵便番号, yūbin-bangō): the branded type, shape, and normalization, plus the
  *   first-digit → coarse-region prior.
  *
  *   This file is the far end of a spectrum whose other end is `us/zipcode.ts`. A US address leans on

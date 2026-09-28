@@ -75,7 +75,9 @@ export const OVERLAY_REGISTERS: Record<string, string | null> = {
 /**
  * Read an INT64 span offset back as a plain number.
  *
- * DuckDB returns an INT64 as a BigInt, which `stringifyJSON` refuses.
+ * DuckDB returns INT64 values as `BigInt`.
+ * `stringifyJSON` refuses `BigInt` values.
+ *
  * The current schema declares the span triple INT32 because `raw` is a short
  * address string, so every in-range value is lossless.
  *
@@ -112,8 +114,9 @@ export interface OverlayMigrationSummary {
  */
 export function registerForSource(source: string): string | null {
 	// The map keys on the retired spelling.
-	// A corpus rewritten to the current spelling would otherwise refuse on every row it carries,
-	// which reads as an unrecorded register rather than a renamed source.
+	// A corpus that uses the current spelling needs the retired key for this lookup.
+	// Otherwise each row fails as though it had no register.
+	// That failure misstates a renamed source as an unrecorded one.
 	const key = retiredSourceName(source)
 
 	if (!(key in OVERLAY_REGISTERS)) {

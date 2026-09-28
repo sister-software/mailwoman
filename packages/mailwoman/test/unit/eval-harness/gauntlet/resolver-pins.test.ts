@@ -159,7 +159,8 @@ describe("gazetteerPrior pin (#1497)", () => {
 	})
 
 	it("announces an OFF pin, now that the production default is ON", () => {
-		// The production default is ON, which makes `false` a real pin rather than the incumbent behaviour.
+		// The production default is ON.
+		// `false` therefore sets a real pin.
 		expect(describeResolverPins({ gazetteerPrior: false })).toContain("gazetteerPrior=OFF")
 	})
 
@@ -185,8 +186,9 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 })
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
-	// Two-sided from day one: a one-sided forwarding compiles, passes every other test,
-	// and produces an off-labelled log that graded the default arm.
+	// The pin must flow through both paths.
+	// One-sided forwarding compiles and passes every other test.
+	// It also produces an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})

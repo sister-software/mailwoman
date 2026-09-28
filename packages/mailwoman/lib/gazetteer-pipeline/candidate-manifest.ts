@@ -70,8 +70,8 @@ export interface CandidateManifestInput {
 	/**
 	 * Each fold's rows and places on the table this build wrote, from {@linkcode censusFolds}.
 	 *
-	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes,
-	 * because a later reader cannot tell a fold that contributed zero rows from a census nobody ran.
+	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes, because a
+	 * later reader cannot tell a fold that contributed zero rows from a census that the build skipped.
 	 */
 	foldCensus?: readonly FoldCensusRow[]
 }
@@ -137,8 +137,10 @@ export interface FoldCensusRow {
  *
  * A fold's share of a published artifact is recoverable from the artifact alone only
  * while the upstream release is still served.
- * Overture prunes a release from its bucket, and the per-country register behind an
- * Overture row is then unreadable, so the count belongs in the manifest at build time.
+ * Overture prunes a release from its bucket.
+ *
+ * The per-country register behind an Overture row is then unreadable,
+ * so the count belongs in the manifest at build time.
  *
  * The bounds come from `SYNTHETIC_ID_RANGES`, the same registry each builder mints its
  * place ids from, so a range added there reaches this census without a second list.
@@ -169,8 +171,9 @@ export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
 			.get(bound.low, bound.high) as { rows: number; places: number } | undefined
 
 		// A range holding zero rows is left out rather than recorded at zero.
-		// The registry lists every range any builder may mint from, and one artifact folds a handful,
-		// so the zeroes would outnumber the counts and read as folds this build refused.
+		// The registry lists every range any builder may mint from.
+		// One artifact folds only a handful, so zeroes would outnumber the counts
+		// and read as folds this build refused.
 		if (row?.rows) {
 			counted.push({ fold: bound.fold, rows: row.rows, places: row.places })
 		}

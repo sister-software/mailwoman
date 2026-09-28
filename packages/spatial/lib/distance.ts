@@ -137,8 +137,8 @@ export function haversineKm(aLat: number, aLon: number, bLat: number, bLon: numb
 /**
  * Metres per degree of latitude.
  *
- * The scale {@link segmentDistanceMetres} reports in, and the constant the
- * bounding-box estimates in `#h3/polygon-cells` are built on.
+ * The scale used by {@link segmentDistanceMetres}.
+ * It is also the constant the bounding-box estimates in `#h3/polygon-cells` are built on.
  */
 export const METRES_PER_DEGREE = 111_320
 

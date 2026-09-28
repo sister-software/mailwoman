@@ -65,8 +65,8 @@ interface PlaceRow {
  * The GeoJSON adapters' in-memory analogue is `buildAncestorNameIndex` (`#utils`), and the two stay
  * separate because this one's rows come from SQLite and a chain can leave the preloaded country set.
  *
- * That analogue keeps the nearest ancestor's name per tag rather than the chain,
- * which this function cannot do: its caller reads a `PlaceRow` per level.
+ * That analogue stores the nearest ancestor's name for each tag.
+ * This function receives one `PlaceRow` per level and reads the chain directly.
  */
 function chainOf(
 	byID: Map<number, PlaceRow>,
@@ -137,8 +137,8 @@ export function synthesizeJpAddress(
 /**
  * Build the JP adapter.
  *
- * Reads from the unified global WOF SQLite, walks admin chains starting from
- * neighbourhoods, and yields canonical rows.
+ * Reads from the unified global WOF SQLite and walks admin chains from neighbourhoods.
+ * Yields canonical rows.
  */
 export function createWOFAdminJpAdapter(): CorpusAdapter {
 	return {

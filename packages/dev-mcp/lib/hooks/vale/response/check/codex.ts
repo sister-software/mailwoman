@@ -5,18 +5,18 @@
  * @author Teffen Ellis, et al.
  *
  *   Codex Stop hook: the Codex twin of `vale-response-check.ts`. The lint policy — rule set,
- *   severity split, finding format — lives in `vale-check-core.ts`; this file owns only the Codex
- *   payload shape, the loop guard, and the output JSON. Codex's hook interface
- *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses:
- *   `Stop` fires when a turn completes, the payload carries `last_assistant_message`, and the
- *   output is `decision: "block"` + `reason` or the non-blocking `systemMessage`. Codex's
- *   Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
+ *   severity split, finding format — lives in `vale-check-core.ts`; this file owns the Codex
+ *   payload shape, loop guard, and output JSON. Codex's hook interface
+ *   (https://learn.chatgpt.com/docs/hooks) matches Claude Code's on the parts this hook uses.
+ *   `Stop` fires when a turn completes. The payload includes `last_assistant_message`.
+ *   The output is `decision: "block"` + `reason` or the non-blocking `systemMessage`.
+ *   The Stop-output schema rejects `hookSpecificOutput` because Stop cannot inject additional context.
  *
  *   Two deliberate differences from the Claude adapter:
  *
- *   - Codex has no `stop_hook_active` field and no built-in loop prevention, so the one-pass guard
- *     is a session-keyed marker file in the OS temp dir: a block writes the marker, and the next
- *     Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
+ *   - Codex has no `stop_hook_active` field or built-in loop prevention. The one-pass guard
+ *     uses a session-keyed marker file in the OS temp dir. A block writes the marker.
+ *     The next Stop in that session consumes it and passes unchecked. That approximates Claude's semantics
  *     — the reply after a block goes unlinted whatever produced it — and caps a false positive at
  *     one corrective turn.
  *   - There is no transcript fallback: Codex's `transcript_path` is nullable and its transcript

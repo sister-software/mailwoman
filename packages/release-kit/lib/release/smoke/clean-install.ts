@@ -322,8 +322,8 @@ export interface SmokeCleanInstallOptions {
 }
 
 /**
- * Summarizes a passing {@link smokeCleanInstall} run: how many workspaces were packed,
- * how many tools the MCP server listed, and which standalone packages were installed alone.
+ * Summarizes a passing {@link smokeCleanInstall} run with workspace and MCP tool counts.
+ * It also lists standalone packages installed by themselves.
  */
 export interface SmokeCleanInstallReport {
 	packed: number
@@ -332,8 +332,9 @@ export interface SmokeCleanInstallReport {
 }
 
 /**
- * Packs the published workspaces, installs them into a throwaway project, and runs the CLI,
- * the MCP server and every import probe against the installed copy.
+ * Packs published workspaces and installs them into a throwaway project.
+ *
+ * It runs the CLI, MCP server, and every import probe against the installed copy.
  *
  * @throws On the first failure, with the failing command's stdout and stderr attached to the message.
  */

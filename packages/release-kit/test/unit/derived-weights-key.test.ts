@@ -6,8 +6,9 @@
  *   The derived-weights store's content key.
  *
  *   The 2026-08-02 currency-filter incident is why this has its own test: the workflow cache key
- *   hashed `release.config.json` + `data/gazetteer/*` only, so a change to the extractor produced new
- *   artifacts while the cache served the old ones, and the pair-index↔card parity guard failed with
+ *   hashed only `release.config.json` and `data/gazetteer/*`.
+ *   An extractor change produced new artifacts while the cache served old ones.
+ *   The pair-index↔card parity guard then failed with
  *   `expected 47878 to be 49033`. A key that omits the code generating the cached thing is a
  *   stale-artifact machine.
  */
@@ -115,10 +116,10 @@ describe("derivedWeightsKeyFrom", () => {
 
 	it("is INVARIANT to checkout location — the whole point of a shared store", async () => {
 		// The first version hashed absolute paths.
-		// Every runner checks out to its own work directory, so lab-1, lab-2, lab-3
-		// and a local worktree each computed a different key over byte-identical inputs and none
-		// ever saw another's work: four store directories holding the same eleven artifacts,
-		// and a 41s pair-index-nz.bin rebuild on a runner that already had the file.
+		// Every runner checks out to its own work directory, so lab-1, lab-2, lab-3 Each
+		// local worktree computed a different key for byte-identical inputs.
+		// Four store directories held the same eleven artifacts.
+		// A runner rebuilt pair-index-nz.bin in 41 seconds despite having the file.
 		const checkoutA = scratch.path("runner-1", "_work", "mailwoman")
 		const checkoutB = scratch.path("runner-2", "_work", "mailwoman")
 

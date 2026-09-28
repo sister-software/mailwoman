@@ -1,8 +1,8 @@
 /**
  * Graceful-degradation expectation model for gauntlet ablations.
  *
- * Builds a ladder from the asserted coordinate, derives expected depth from surviving
- * evidence, and grades relative to the undeleted answer.
+ * Builds a ladder from the asserted coordinate and derives expected depth from surviving evidence.
+ * Grades each result relative to the undeleted answer.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -400,7 +400,8 @@ export function deriveExpectedRung(
 		: []
 
 	// Evidence this model cannot evaluate.
-	// The case keeps whatever the model answered, and abstention stays unforced.
+	// The case keeps the model's answer.
+	// The test does not force abstention.
 	const unevaluable = [
 		remaining["venue"]?.trim(),
 		remaining["street"]?.trim(),

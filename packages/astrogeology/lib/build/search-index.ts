@@ -37,8 +37,8 @@ export async function buildSearchIndex(
 			featureType: feature.featureType,
 			centerLon: feature.centerLon,
 			centerLat: feature.centerLat,
-			// Only when the gazetteer has them: an absent diameter is a real reading,
-			// and writing 0 would tell a camera the feature is a point.
+			// Include a diameter only when the gazetteer has one.
+			// Writing 0 for an absent diameter would tell a camera the feature is a point.
 			...(feature.featureTypeCode ? { featureTypeCode: feature.featureTypeCode } : {}),
 			...(feature.diameterKm === undefined ? {} : { diameterKm: feature.diameterKm }),
 		}

@@ -25,9 +25,9 @@ export const APIErrorSchema = z
 /**
  * Respond with the native error envelope.
  *
- * `status` stays generic so the returned `TypedResponse` keeps the caller's literal
- * status (e.g. `503`) rather than widening to the `ContentfulStatusCode` union,
- * which `app.openapi(route, handler)` requires to match a route's declared response branch.
+ * `status` stays generic so the returned `TypedResponse` keeps the caller's literal status (e.g. `503`).
+ * Widening to `ContentfulStatusCode` would fail the response type required by
+ * `app.openapi(route, handler)` because it must match the route's declared response branch.
  */
 export function errorResponse<S extends ContentfulStatusCode>(c: Context, status: S, error: string, detail?: string) {
 	return c.json(detail === undefined ? { error } : { error, detail }, status)

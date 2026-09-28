@@ -11,7 +11,7 @@
  *
  *   allow-list rather than deny-list, on purpose. A deny-list is wrong by default: the day someone adds
  *   `mw gazetteer nuke`, a deny-list permits it and an allow-list does not. The cost is that a new read-only verb has
- *   to be added here before it can be used, which is the correct direction for the mistake to point.
+ *   to be added here before it can be used. This makes an omitted entry fail closed.
  */
 
 /**
@@ -35,8 +35,9 @@ const ALLOWED_PREFIXES: readonly string[][] = [
  *
  * `eval ledger-append` is the one that matters and the reason this list exists at all: it is
  * nested under an allowed verb and it writes `evals/scores-by-version.json`, the score ledger.
- * `mwdev_promotion_eval` deliberately reports that command rather than running it,
- * and this stops the passthrough from becoming the back door around that decision.
+ * `mwdev_promotion_eval` reports that command for an operator to run at promote time.
+ *
+ * The deny rule keeps the passthrough from bypassing that decision.
  */
 const DENIED_PREFIXES: readonly string[][] = [
 	["eval", "ledger-append"],

@@ -103,7 +103,8 @@ export function collapseCoincident(places: readonly AblationPlace[]): AblationPl
 const NAME_PROBE_LIMIT = 2000
 
 /**
- * The two-database probe, constructed once per run, whose disposal releases both handles.
+ * A two-database probe constructed once per run.
+ * Disposing it releases both handles.
  */
 export class AblationGazetteer implements AblationGazetteerProbe {
 	readonly available: boolean
@@ -234,8 +235,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 					lat: row.latitude,
 					lon: row.longitude,
 					bbox: bboxOf(row.min_latitude, row.max_latitude, row.min_longitude, row.max_longitude),
-					// `spr` carries no population column, and a lineage place's rank is never read
-					// because the ranking margin is taken over candidate-table rows.
+					// `spr` has no population column.
+					// Ranking never reads a lineage place's rank because the margin uses candidate-table rows.
 					negRank: 0,
 					population: null,
 				}

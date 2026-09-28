@@ -2,7 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Which cached OpenAddresses extracts the `unit` recipe reads, and the held-out one it never trains on.
+ * @file Lists the cached OpenAddresses extracts read by the `unit` recipe.
+ *   It also identifies the held-out extract excluded from training.
  *
  */
 
@@ -10,7 +11,9 @@ import { dataRootPath } from "@mailwoman/core/data-root"
 import type { PathBuilderLike } from "path-ts"
 
 /**
- * A cached OpenAddresses extract: the zip, the CSV member, and the implied (file-level) region.
+ * A cached OpenAddresses extract.
+ *
+ * Its fields identify the ZIP, CSV member and implied file-level region.
  */
 export interface UnitSource {
 	zip: PathBuilderLike

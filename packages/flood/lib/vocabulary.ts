@@ -45,16 +45,16 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 /**
  * The declared domain as a membership set.
  *
- * An unknown `flood_zone` value is a source-schema change, and coercing it to a
- * nearest neighbour or null would report no data instead.
+ * An unknown `flood_zone` value indicates a source-schema change.
+ * Coercing it to a nearest neighbour or null would report that the source has no data.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
  * Zone 1.
  *
- * The product represents this zone by absence rather than a polygon, and it is carried
- * so a designated-absence answer can quote the definition it rests on.
+ * The product represents this zone by absence instead of a polygon.
+ * The value lets a designated-absence answer quote the definition it uses.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",

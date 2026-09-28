@@ -40,8 +40,8 @@ const TEST_FILE = /\.(?:test|spec)\.(?:ts|tsx)$/u
  * A closed section-divider comment in either rule character, ascii
  * or box-drawing has a label between its two rules.
  *
- * Both runs are two characters or longer, and a comment whose text continues on the
- * next line carries no trailing run and is not a divider.
+ * Both runs are at least two characters long.
+ * A comment whose text continues on the next line has no trailing run and does not form a divider.
  */
 const SECTION_DIVIDER = /^\s*\/\/\s*[-─]{2,}\s+[^\n]+[-─]{2,}\s*$/gmu
 

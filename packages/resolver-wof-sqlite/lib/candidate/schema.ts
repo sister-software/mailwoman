@@ -11,8 +11,10 @@ import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One candidate row; `name_key` plus the four small int keys, `neg_rank` and `spr_id` form
- * the clustered primary key, and the rest is denormalized so a resolve is one probe.
+ * One candidate row.
+ *
+ * `name_key`, four small integer keys, `neg_rank`, and `spr_id` form the clustered primary key.
+ * The remaining fields are denormalized so a resolve needs one probe.
  */
 export interface CandidateTable {
 	/**
@@ -32,7 +34,10 @@ export interface CandidateTable {
 	 */
 	placetype_id: number
 	/**
-	 * `-log10(population + 1)`; ASC order puts the highest population first, and postcodes carry 0.
+	 * `-log10(population + 1)`.
+	 *
+	 * Ascending order puts the highest population first.
+	 * Postcodes carry `0`.
 	 */
 	neg_rank: number
 	/**
@@ -168,8 +173,9 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the clustered `without rowid` lookup table, whose first six columns form
- * the primary key (population-ranked via `neg_rank`).
+ * Create the clustered `without rowid` lookup table.
+ *
+ * Its first six columns form the primary key, ranked by population through `neg_rank`.
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema

@@ -6,11 +6,11 @@
  *   Demo-cascade smoke eval, the whole-stack lens the per-layer eval battery lacks.
  *
  *   Runs each row of `data/eval/external/demo-cascade-smoke.jsonl` through the full stack exactly the
- *   way the demo (and any real consumer) composes it: neural parse with the ship config (gazetteer
+ *   way the demo and real consumers compose it: neural parse with the ship config (gazetteer
  *   lexicon, postcode anchor, conventions mask, span bridge and FST), then `runPipeline` and grouper
  *   audit, then the demo's `runCascade` (the shared `resolveTree` over the lookup, with the demo's pin
  *   extraction) against the slim `wof-hot.db` the demo serves. Each row asserts the resolved WOF place
- *   ID of the top hit. See the row readme (`data/eval/external/demo-cascade-smoke.readme.md`) for the
+ *   ID of the top hit. The row readme (`data/eval/external/demo-cascade-smoke.readme.md`) documents the
  *   convention.
  *
  *   Usage (after `yarn compile`):
@@ -24,9 +24,9 @@
  *   ```
  *
  *   Defaults point at the staged demo release dir (`--stage-dir`, the byte-copies of what the live
- *   demo serves). `MAILWOMAN_WOF_HOT_DB` overrides the DB path, the same env the integration tests
- *   use. Exit 0 means the run completed (row failures are reported in the table and sidecar, and the
- *   promotion-eval verdict enforces any floor). Exit 2 means missing artifacts or malformed rows.
+ *   demo serves). `MAILWOMAN_WOF_HOT_DB` overrides the database path, as in integration tests.
+ *   Exit 0 means the run completed. Row failures appear in the table and sidecar.
+ *   The promotion-eval verdict enforces configured floors. Exit 2 means artifacts are missing or rows are malformed.
  *
  *   Measurement only: this script changes no pipeline or resolver behavior.
  *
@@ -109,7 +109,7 @@ export interface DemoCascadeSmokeResult {
 }
 
 /**
- * One graded row: what the cascade's top hit was, and whether it matched the asserted WOF place id.
+ * One graded row records the cascade's top hit and whether it matched the asserted WOF place ID.
  */
 interface RowResult {
 	input: string

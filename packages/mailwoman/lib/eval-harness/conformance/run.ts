@@ -81,7 +81,7 @@ export async function runConformanceFixtures(
 export interface ConformanceSummary {
 	/**
 	 * Findings from `status: pass` rows that were violated.
-	 * These, and only these, decide {@linkcode pass}.
+	 * Only these findings decide {@linkcode pass}.
 	 */
 	failures: ConformanceFinding[]
 	/**
@@ -106,8 +106,8 @@ export interface ConformanceSummary {
 }
 
 /**
- * Splits a run by row status, mirroring the Gauntlet regression layer,
- * and reports `pass: false` when no enforcing row was decided.
+ * Splits a run by row status, mirroring the Gauntlet regression layer.
+ * Reports `pass: false` when no enforcing row was decided.
  */
 export function summarizeConformanceRun(findings: readonly ConformanceFinding[]): ConformanceSummary {
 	const failures: ConformanceFinding[] = []

@@ -5,8 +5,8 @@
  *
  *   `@mailwoman/fastify` — a Fastify plugin that mounts mailwoman's local pipeline as http routes.
  *
- *   Install this package to get geocoding, address parsing, and POI search in a Fastify app without
- *   standing up a separate geocoding service. Register the plugin and you have `post /parse`,
+ *   Install this package to add geocoding and address parsing to a Fastify app. It also adds POI search.
+ *   The plugin runs in the app without a separate geocoding service. Register it to expose `post /parse`,
  *   `post /geocode`, `post /poi`, and `GET /health`, plus a `fastify.mailwoman` decorator that
  *   exposes the same three operations programmatically.
  *
@@ -179,8 +179,10 @@ async function loadHelpers(): Promise<PipelineHelpers> {
  * Build the runtime pipeline lazily from the plugin options.
  * The path taken when no `pipeline` was injected.
  *
- * Loads the neural classifier via `@mailwoman/neural`'s standard weight resolution, opens a WOF resolver
- * when `resolveDatabasePath` is set, and wires POI execution when `poiDatabasePath` is set.
+ * Loads the neural classifier through `@mailwoman/neural`'s standard weight resolution.
+ * Opens a WOF resolver when `resolveDatabasePath` is set.
+ *
+ * Wires POI execution when `poiDatabasePath` is set.
  * All imports are dynamic so a consumer who injects their own pipeline never pulls this closure.
  */
 async function buildPipeline(opts: MailwomanFastifyOptions, locale: string): Promise<RuntimePipeline> {

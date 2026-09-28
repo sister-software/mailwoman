@@ -46,17 +46,19 @@ export function recordAnswers(rows: GeoRow[], side: "a" | "b"): RecordedAnswer[]
 export const ARM_SEPARATION_THRESHOLD_KM = DISTANCE_THRESHOLDS_KM[0]!
 
 /**
- * Compare verdicts when truth exists, and arm separation when it does not.
+ * Compare verdicts against truth when truth exists.
+ * Compare arm separation when truth is absent.
  */
 /**
  * Whether the two arms differ at the coordinate level.
  *
  * With truth: the arms land on opposite sides of a protocol threshold (1 / 5 / 25 km),
  * or, when the row states its own tolerance, on opposite sides of that.
- * The protocol thresholds alone graded a rooftop row at kilometre scale: a 100 m-tolerance
- * row whose answer moved from the rooftop (0 m) to an interpolated point 198 m away
- * was inside 1 km on both arms and read as no difference, and the regression was found
- * two hours later by an instrument that read the row's tolerance.
+ * The protocol thresholds alone graded a rooftop row at kilometre scale: a 100 m-tolerance One 100
+ * m-tolerance row moved from its rooftop coordinate (0 m) to an interpolated point 198 m away.
+ *
+ * Both answers fell within 1 km, so the protocol reported no difference.
+ * An instrument that read the row's tolerance found the regression two hours later.
  *
  * Without truth: exactly one arm answered, or both answered more than the separation threshold apart.
  */

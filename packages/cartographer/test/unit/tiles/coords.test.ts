@@ -24,7 +24,8 @@ test("pointToTileFraction: lon 0 sits at the horizontal centre (x = z2/2)", () =
 })
 
 test("pointToTileFraction: lon +180 wraps back onto the left edge (x = 0)", () => {
-	// z2·(180/360 + 0.5) = z2, and z2 % z2 = 0 — the antimeridian wraps to the same column as −180.
+	// z2·(180/360 + 0.5) = z2.
+	// Then z2 % z2 = 0, so the antimeridian wraps to the column for −180.
 	expect(pointToTileFraction(0, 180, 0)[1]).toBe(0)
 	expect(pointToTileFraction(3, 180, 0)[1]).toBe(0)
 })

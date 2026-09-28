@@ -26,9 +26,8 @@ describe("checkConfounds", () => {
 	})
 
 	it("catches the documented backend/country-scope confound", () => {
-		// resolver-backends.mdx: under --country-scope auto, switching backend also switches
-		// country scoping, and its own table shows the same Paris address landing in Texas
-		// or France depending which variable actually moved.
+		// resolver-backends.mdx: under --country-scope auto, switching backend also switches country scoping.
+		// Its table shows the same Paris address landing in Texas or France, depending on which variable moved.
 		const reading = checkConfounds(
 			{ backend: "fts", countryScope: "locale" },
 			{ backend: "candidate", countryScope: "none" },
@@ -81,8 +80,8 @@ describe("assertComparableField", () => {
 
 describe("the declared vocabulary", () => {
 	it("grades a correctly-declared single change CLEAN, not ambiguous", () => {
-		// The defect this closes, found 2026-08-16 by running a real A/B: `variable: ["place_country"]` is
-		// the spelling the tool schema documents, and the effective configs differ at `placeCountry`.
+		// The tool schema documents `variable: ["place_country"]`.
+		// The effective configs differ at `placeCountry`.
 		// Compared raw, the same change was counted twice under two spellings —
 		// once as declared-but-unmoved, once as moved-but-undeclared — so every honest
 		// single-change comparison reported attribution ambiguous.

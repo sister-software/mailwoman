@@ -9,8 +9,10 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import type { ResolveOpts, Resolver } from "@mailwoman/core/resolver"
 
 /**
- * Describes the `ResolveOpts` sent over the wire, which omit the live `addressPoints`
- * and `interpolation` lookup handles because they cannot be serialized.
+ * Describes the `ResolveOpts` sent over the wire.
+ *
+ * The options omit live `addressPoints` and `interpolation` lookup handles
+ * because they cannot be serialized.
  */
 export type SerializableResolveOpts = Omit<ResolveOpts, "addressPoints" | "interpolation">
 
@@ -55,8 +57,9 @@ export interface RemoteResolverOpts {
 	timeoutMs?: number
 
 	/**
-	 * Adds request headers, such as auth or tracing, which are merged over the
-	 * default `Content-Type: application/json`.
+	 * Adds request headers such as auth or tracing.
+	 *
+	 * The resolver merges them over the default `Content-Type: application/json`.
 	 */
 	headers?: Record<string, string>
 }

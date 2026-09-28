@@ -31,13 +31,16 @@ export type DisposableDuckDB = import("@duckdb/node-api").DuckDBConnection & Dis
  * A `COUNT(DISTINCT …)` over `v0.6.0-register-surface`'s 697,675,170 train rows did
  * that twice on 2026-09-28, with a second corpus tool running beside it.
  *
- * A quarter rather than a half, because the default has to bound the host rather than one query:
- * two instances at half the host exceed it together, which is the case that took the machine down.
+ * The default is a quarter because it has to bound the host rather than one query.
+ * Two instances at half the host exceed it together.
+ *
+ * That case took the machine down.
  * A quarter admits four concurrent instances and still leaves room for the page cache the
  * parquet reads run through and for the Node heap of each process holding a connection.
  *
- * Past its limit DuckDB spills to `temp_directory` and the query finishes slower,
- * which is the failure to prefer.
+ * Past its limit DuckDB spills to `temp_directory`.
+ * The query finishes slower.
+ * That is the failure to prefer.
  *
  * A caller that knows it holds the host alone passes a larger `memoryLimitBytes`.
  */
@@ -81,9 +84,10 @@ export interface DuckDBLimits {
  *
  * An open connection holds the native instance for the life of the process.
  * A connection opened per file in a loop holds one instance per file.
-* Every connection carries a memory limit.
- * It is set here rather than at each call site because the failure it prevents is the host
- * running out of memory, which reaches every process rather than the query that caused it.
+ *
+ * Every connection carries a memory limit.
+ * It is set here rather than at each call site because host memory exhaustion affects
+ * every process, including processes unrelated to the query that caused it.
  */
 export async function openDuckDB(limits: DuckDBLimits = {}): Promise<DisposableDuckDB> {
 	const { DuckDBInstance } = await import("@duckdb/node-api")

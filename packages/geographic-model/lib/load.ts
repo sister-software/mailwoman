@@ -5,8 +5,8 @@
  *
  *   Loads a directory of JSON files into one {@link GeographicModelDocument}.
  *
- *   The file layout has no meaning. Any file may hold any subset of the tables, and only `model.json`
- *   may declare the document's `version`.
+ *   File layout does not assign meaning to a file. Any file may hold any subset of the tables.
+ *   Only `model.json` may declare the document's `version`.
  *
  *   The loader sorts files by path before reading them, so directory enumeration order never affects
  *   the output. It records the source file of every record and maps each validation issue back to that
@@ -90,7 +90,7 @@ export interface SourcedIssue {
 }
 
 /**
- * One source file's path, relative to the model directory, and its text.
+ * A source file's path relative to the model directory, plus its text.
  */
 export interface GeographicModelSourceFile {
 	path: string

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The bodies this pipeline builds. A body is explicit in every record and artifact, and no code
- *   here treats Earth as the reference.
+ *   The bodies this pipeline builds. Every record and artifact states its body explicitly.
+ *   Each pipeline stage uses the selected body as its reference.
  */
 
 import { BODY_RADII_KM, type PlanetaryBodyID } from "@mailwoman/spatial"
@@ -24,7 +24,9 @@ export interface PlanetaryBody {
 	meanRadiusKm: number
 	shape: "sphere" | "ellipsoid"
 	/**
-	 * The hillshade's vertical scale, and the only place a degree becomes a length in this package.
+	 * The hillshade's vertical scale.
+	 *
+	 * This is the only place this package converts degrees to length.
 	 */
 	metresPerDegree: number
 	coordinates: PlanetaryCoordinateMetadata

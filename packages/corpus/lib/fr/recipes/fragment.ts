@@ -5,7 +5,8 @@
  *
  *   Generates French street fragments without a postcode from BAN tuples.
  *
- *   The output mixes designator-led streets, some with a house number, and bare commune names as counterexamples.
+ *   The output mixes designator-led streets with bare commune names as counterexamples.
+ *   Some streets include a house number.
  *   `--exclude-surfaces` is required so that streets on the fragment evaluation board stay out of training. Training on
  *   these rows needs the French `street_prefix` loss mask disabled.
  */
@@ -34,8 +35,9 @@ const FR_FRAGMENT_SOURCE = defaultRecipeSource("synth-fr-fragment")
 const FR_FRAGMENT_PROVENANCE = {
 	register: SourceRegister.BaseAdresseNationale,
 	surface: SurfaceOrigin.Composed,
-	// The BAN record behind each row exists, and the tuples file this reads carries no `sourceID` to name it.
-	// Populating this needs the extraction to emit one (#2359).
+	// The BAN record behind each row exists.
+	// The tuple file has no `sourceID` to identify it.
+	// The extraction must emit that ID to populate this field (#2359).
 	baseSourceID: null,
 }
 

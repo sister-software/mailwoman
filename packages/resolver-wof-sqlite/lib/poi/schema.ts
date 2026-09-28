@@ -4,13 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for poi.db, the first spatial layer (spec §3.4). One clustered `without rowid`
- *   B-tree keyed `(h3_cell, category_id, neg_rank, rowid_key)`, so everything near a res-9 cell is
- *   a contiguous key range. This is the byte-range and httpvfs access pattern, the same discipline
- *   as the candidate gazetteer. Rows carry denormalized name, brand and coordinates. Category ids
- *   are small ints through the `poi_category_codes` dictionary, and poi-taxonomy category ids are
- *   the string side. The DB also embeds the layer-interface tables from `@mailwoman/core/layers`,
- *   and the builder writes the manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell
- *   coverage.
+ *   B-tree uses `(h3_cell, category_id, neg_rank, rowid_key)` as its key. All rows near a res-9 cell
+ *   occupy a contiguous key range. This matches byte-range and httpvfs access and follows the
+ *   candidate gazetteer's layout. Rows carry denormalized name, brand and coordinates.
+ *   The `poi_category_codes` dictionary stores category ids as small integers. POI-taxonomy category
+ *   ids remain strings. The database embeds the layer-interface tables from `@mailwoman/core/layers`.
+ *   The builder writes a manifest with tier `shipped` and spine `h3` res 9. It also writes per-res-6-cell coverage.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -45,9 +44,10 @@ export interface POITable {
 	/**
 	 * Probe key for exact name lookups, minted by {@link normalizeLocalityForKey} at build and at query.
 	 *
-	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`:
-	 * it binds to the parameter, returns fewer rows, and the shortfall reads as a
-	 * coverage gap in the data rather than a defect in the probe.
+	 * Branded because a `toLowerCase()` approximation of the fold is still a `string`.
+	 * That approximation binds to the parameter and returns fewer rows.
+	 *
+	 * The shortfall looks like a data coverage gap instead of a probe defect.
 	 */
 	name_key: NameKey | null
 	brand_wikidata: string | null
@@ -72,7 +72,8 @@ export interface POITable {
  * Staging mirror.
  * Every column is nullable except the coords.
  *
- * The loader fills positionally, and the materialize select enforces completeness.
+ * The loader fills this table positionally.
+ * The materialize select enforces completeness.
  */
 export interface POIStageTable {
 	h3_cell: number | null

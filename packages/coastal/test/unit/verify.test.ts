@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path comparison's own logic, against a scripted service reader: a point the service also places
- *   inside agrees, a point far from any service edge disagrees, and a point a few centimetres from an edge is
- *   `boundary_tolerance` because the two channels publish six and nine decimals and render the same edge
- *   differently. Inland English points must read `unknown` with no designation.
+ *   Tests the two-path comparison using a scripted service reader.
+ *   A point inside a service area agrees. A point far from every service edge disagrees.
+ *   A point a few centimetres from an edge receives `boundary_tolerance` because the two channels
+ *   publish six and nine decimal places. Those precisions render the same edge differently.
+ *   Inland English points must read `unknown` without a designation.
  */
 
 import { buildCoastalDatabase } from "@mailwoman/coastal/sdk/build-coastal"
@@ -147,7 +148,7 @@ describe("the positive half", () => {
 
 		const row = result.agreement[0]!
 
-		// The distance rides on every row, tolerated or otherwise, and is measured to the edge.
+		// Every row records distance to the edge, including tolerated rows.
 		expect(row.nearestEdgeMetres).toBeDefined()
 		expect(row.nearestEdgeMetres!).toBeLessThan(BOUNDARY_TOLERANCE_METRES)
 		expect(row.outcome).not.toBe("disagree")

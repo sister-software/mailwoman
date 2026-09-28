@@ -10,10 +10,11 @@
  *   `@mailwoman/neural-weights-en-us` — every `workspace:` dependency, walked from the manifests), `npm install` the
  *   tarballs into a project outside the repo tree, then run the pages' commands verbatim and assert their claims.
  *
- *   Two legs, split on whether the step needs network beyond npm's own registry fetch. Always on: the
- *   install-and-first-parse script, `mailwoman doctor` cold against an absent data root, and the shell parse. Behind
- *   `full`: a real `mailwoman data pull candidate` (~2.88 GB) and the two `mailwoman geocode` calls of the ten-minute
- *   trial's step 5, against a data root the caller may supply so the pull is not repeated.
+ *   The smoke test has two legs, split by whether a step needs network access beyond npm's registry fetch.
+ *   The default leg runs the install-and-first-parse script and runs `mailwoman doctor` against an absent
+ *   data root. It also checks the shell parse. The `full` leg runs `mailwoman data pull candidate` (~2.88 GB)
+ *   and the two `mailwoman geocode` calls from step 5 of the ten-minute trial. The caller may supply a
+ *   data root to avoid repeating the pull.
  *
  *   Pages this proves: `docs/articles/developers/get-started/install-and-first-parse.mdx`,
  *   `docs/articles/developers/get-started/ten-minute-trial.mdx`.
@@ -126,7 +127,8 @@ function assertNeedles(output: string, needles: readonly string[], page: string)
 }
 
 /**
- * Pack the seeds' closure, install it into a throwaway project, and run the two pages' transcripts.
+ * Pack the seeds' closure and install it into a throwaway project.
+ * Then run the two pages' transcripts.
  *
  * @throws On the first claim that no longer holds, naming the page.
  */
@@ -170,7 +172,8 @@ export async function smokeGetStarted(options: SmokeGetStartedOptions): Promise<
 	try {
 		doctor = run("node", [cli, "doctor"], project, { MAILWOMAN_DATA_ROOT: doctorRoot })
 	} catch (error) {
-		// doctor exits non-zero when a check fails, which is the cold state the page shows.
+		// doctor exits non-zero when a check fails.
+		// That is the cold state the page shows.
 		// The transcript is what counts.
 		doctor = error instanceof Error && "stdout" in error ? String((error as { stdout: unknown }).stdout) : String(error)
 	}

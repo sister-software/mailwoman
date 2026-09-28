@@ -67,8 +67,8 @@ function testRegister(): AddressSourceRegister {
 	return {
 		registerID: "test",
 		version: "0.0.0-test",
-		// A hand-built fixture carries no digest, and the funnel is given this object directly
-		// rather than through the digest-checking reader.
+		// This hand-built fixture has no digest.
+		// The funnel receives it directly, without the digest-checking reader.
 		contentDigest: "",
 		provenance: { source: "test", sourceVersion: "test", authoredAt: "2026-09-20", notes: "" },
 		unresolved: [],
@@ -158,8 +158,9 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("carries all three ingest conditions, so no one of them reads as the bottleneck", async () => {
-		// `ingestEligibilityProblems` refuses on an unchecked licence, an unresolved address role
-		// and unmeasured coverage alike, which is the state of all 389 committed sources.
+		// `ingestEligibilityProblems` refuses an unchecked licence, an unresolved
+		// address role, or unmeasured coverage.
+		// All 389 committed sources have those conditions.
 		const report = await funnel()
 		const kenya = report.rows.find((row) => row.iso2 === "KE")
 

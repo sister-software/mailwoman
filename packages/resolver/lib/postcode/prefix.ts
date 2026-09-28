@@ -10,8 +10,8 @@ import type { PostcodePrefixIndexLike, PostcodePrefixNode, ResolvedPlace } from 
  * Describes a resolved place whose coordinate may be absent, such as a
  * postcode-prefix hit with ancestry only.
  *
- * A missing coordinate must stay `undefined` rather than become an invented centroid,
- * which would place the postcode somewhere it is not.
+ * A missing coordinate stays `undefined`.
+ * An invented centroid would place the postcode at a point the data does not support.
  */
 export type CoordinateOptionalPlace = Omit<ResolvedPlace, "lat" | "lon"> & { lat?: number; lon?: number }
 
@@ -51,7 +51,9 @@ export interface PostcodePrefixProbeResult {
 	prefix: string
 
 	/**
-	 * The matched index node, whose ancestors and optional centroid and radius supply the prior.
+	 * The matched index node.
+	 *
+	 * Its ancestors and optional centroid and radius supply the prior.
 	 */
 	node: PostcodePrefixNode
 }

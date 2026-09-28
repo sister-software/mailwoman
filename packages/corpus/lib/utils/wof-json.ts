@@ -220,7 +220,8 @@ export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
 /**
  * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
  *
- * A tag with no ancestor carries no key, which is the state `ancestry.find(…) === undefined` used to express.
+ * A tag with no ancestor carries no key.
+ * `ancestry.find(…) === undefined` expresses that state.
  */
 export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>
 
@@ -229,12 +230,14 @@ export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], 
  *
  * The predecessor index held one array of record references per record, so a run over the 13,274,691
  * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
- * This holds at most three strings per record instead, and each string is the same object the
- * ancestor already holds, so the index costs one small object per record without copying a name.
+ * This holds at most three strings per record instead.
+ *
+ * Each string is the same object the ancestor already holds, so the index costs
+ * one small object per record without copying a name.
  *
  * The adapter's second pass reads only this.
- * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry
- * resolves, and it can release them once this index is built.
+ * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry resolves.
+ * It can release them once this index is built.
  *
  * Nearest wins: the walk goes upward from the record's parent and the first ancestor
  * carrying a tag sets it, matching the `ancestry.find` the builders used.
@@ -249,7 +252,8 @@ export type AncestorNameIndex = Map<number, AncestorNames>
  * It is a parameter because `placetypeToTag` lives with the adapters and this module does not import them.
  *
  * The walk stops at the first `parent_id` absent from `byID`, and a cycle guard halts at any re-visit.
- * WOF data is acyclic by construction, and the guard keeps a corrupt fixture from looping the adapter.
+ * WOF data is acyclic by construction.
+ * The guard keeps a corrupt fixture from looping the adapter.
  *
  * A record whose ancestors are absent resolves the tags it can reach rather than failing.
  */

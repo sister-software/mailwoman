@@ -29,8 +29,8 @@ test.describe("Demo — resolution cascade", () => {
 	})
 
 	test("German address — postcode 10115 country-restricts into Berlin rather than New York", async ({ demo }) => {
-		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode
-		// and a New York US ZIP, and the gazetteer now carries US + DE/FR/EU postcodes.
+		// Regression for the candidate-table cascade: 10115 is both a Berlin DE postcode and a New York US ZIP.
+		// The gazetteer now carries US + DE/FR/EU postcodes.
 		// The locality must resolve first (Berlin → DE by population) and country-restrict the
 		// postcode, so it resolves to the DE 10115 point — IN Berlin — never the NYC ZIP.
 		// Grade the coordinate (postcode-precise now): Berlin ≈ 52.5, 13.4 rather than Manhattan ≈ 40.8, -74.0.
@@ -46,8 +46,9 @@ test.describe("Demo — resolution cascade", () => {
 	test("Canadian address — postcode M5H 2N2 resolves into Toronto (the -20f CA coverage)", async ({ demo }) => {
 		// -20f folds Canada's Overture divisions into the admin gazetteer
 		// (Toronto, Montréal, … — absent before) plus 843k CA postcode centroids.
-		// So "Toronto" resolves to Ontario (top by population), the cascade country-restricts
-		// to CA, and the CA postcode is reachable.
+		// "Toronto" resolves to Ontario (top by population).
+		// The cascade restricts the country to CA.
+		// The CA postcode is then reachable.
 		// Grade the coordinate: downtown Toronto ≈ 43.6, -79.4 rather than Toronto,
 		// Ohio (40.46), where it landed pre-CA-admin.
 		await demo.goto("100 Queen Street West, Toronto, ON M5H 2N2")
@@ -63,8 +64,8 @@ test.describe("Demo — resolution cascade", () => {
 		demo,
 	}) => {
 		// -20g folds ~70 countries' Overture divisions + GeoNames population + multilingual aliases.
-		// So the English "Moscow" (an alias of Москва) resolves, and the 10.4M-pop
-		// RU city outranks the 26k-pop US homonym.
+		// The English "Moscow" (an alias of Москва) resolves.
+		// The 10.4M-pop RU city outranks the 26k-pop US homonym.
 		// Grade the coordinate: Moscow ≈ 55.7, 37.6 rather than Idaho (46.7, -117).
 		await demo.goto("Moscow, Russia")
 		await demo.submit()

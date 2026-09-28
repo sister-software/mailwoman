@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Jaro-Winkler is the default record-linkage comparator for names, and {@link nameSimilarity} adds
+ *   Jaro-Winkler is the default record-linkage comparator for names. {@link nameSimilarity} adds
  *   the literature's token/edit fallback because J-W scores a compound surname's second half near zero.
  */
 
@@ -121,9 +121,11 @@ export function levenshteinSimilarity(a: string, b: string): number {
 }
 
 /**
- * Name-aware similarity in [0, 1] that floors the score at 0.9 when one name's tokens
- * are a strict subset of the other's, and otherwise returns the better of Jaro-Winkler
- * and normalized edit similarity, case- and whitespace-insensitively.
+ * Name-aware similarity in [0, 1] that floors the score at 0.9 when one name's
+ * tokens are a strict subset of the other's.
+ *
+ * In other cases, it returns the better of Jaro-Winkler and normalized edit
+ * similarity without case or whitespace sensitivity.
  */
 export function nameSimilarity(a: string, b: string): number {
 	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")

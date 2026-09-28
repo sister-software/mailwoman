@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Train the organization-level cross-source link scorer. The practitioner cross-source GBT does
- *   not transfer to organization records (its person-name features go dark), so the org-level
- *   cross-dataset flows pin the FS baseline. The anchor is CMS Provider of Services, which joins
- *   Care Compare by CCN: the same facility in two separately maintained CMS systems, each with
- *   independently entered name and address.
+ *   not transfer to organization records because its person-name features go dark. The organization
+ *   cross-dataset flows therefore pin the FS baseline. CMS Provider of Services joins Care Compare
+ *   by CCN. Each system represents the same facility and maintains its name and address separately.
  *
  *   The pipeline runs a national CCN join into one record per source per facility, then the shared
- *   `trainCrossSourceModel` geocodes, blocks the union, keeps only cross-source pairs, featurizes
- *   with the shared featurizer, labels by CCN, calibrates on held-out CCNs, and emits
- *   `registry/models/org-crosssource-gbt-en-us.ts`.
+ *   `trainCrossSourceModel` geocodes the rows and blocks the union. It keeps cross-source pairs.
+ *   It featurizes them with the shared featurizer and labels them by CCN.
+ *   Calibration uses held-out CCNs.
+ *   The function emits `registry/models/org-crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, direct CSVs):
  *
@@ -81,8 +81,8 @@ export interface TrainOrgCrossSourceGBTOptions {
 /**
  * Train and emit the org-level cross-source link GBT.
  *
- * The CCN is the cross-system facility key, and it rides {@link CrossSourceRow.npi}
- * to `record.id` as the held-out label.
+ * The CCN is the cross-system facility key.
+ * It is stored in {@link CrossSourceRow.npi} and copied to `record.id` as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,

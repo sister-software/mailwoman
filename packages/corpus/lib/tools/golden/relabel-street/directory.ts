@@ -115,8 +115,9 @@ const EMPTY_COUNTS = (): GoldenRelabelCounts => ({
 })
 
 /**
- * Classes that are left folded but still belong in the deck, because the operator asked to see
- * them by name: a street that is entirely one suffix word, and a bare post-directional tail.
+ * Classes that remain folded and still belong in the deck for operator review.
+ *
+ * They include a street made entirely from one suffix word and a bare post-directional tail.
  */
 const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 	"suffix-only-street",
@@ -125,8 +126,10 @@ const DECK_WORTHY_UNCHANGED: ReadonlySet<GoldenRelabelClass> = new Set([
 ])
 
 /**
- * Relabel every `.jsonl` in a golden version dir, writing a new version dir plus a review deck
- * and a manifest that records the convention, the parent, and the counts.
+ * Relabel every `.jsonl` file in a golden-version directory.
+ *
+ * Write a new version directory with a review deck and manifest.
+ * The manifest records the convention, parent and counts.
  *
  * Non-jsonl siblings (readme, split manifests) are copied forward so the new version is self-contained.
  * Nested split dirs (`dev/`, `test/`) are relabelled recursively.

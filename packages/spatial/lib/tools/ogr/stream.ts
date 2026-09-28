@@ -19,9 +19,9 @@ export interface OGRProcess {
 	 * Resolves on a clean exit.
 	 * Rejects with the exit code and the stderr tail otherwise.
 	 *
-	 * A truncated stream reads as a short but well-formed feature list, which is exactly
-	 * the partial result that must throw rather than be reported as a smaller extract .
-	 * Therefore, consume the stream fully, then await this.
+	 * A truncated stream can look like a shorter, valid feature list.
+	 * That partial result must raise an error instead of looking like a smaller extract.
+	 * Consume the stream fully, then await this promise.
 	 */
 	settled: Promise<void>
 	/**
@@ -58,10 +58,9 @@ export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string):
 		})
 	})
 
-	// A failed spawn rejects `settled` before any consumer awaits it — the consumer is still
-	// draining the stream on a later tick, and a consumer that abandons the stream never awaits
-	// it at all — so an unobserved rejection would trip the process's unhandled-rejection hook.
-	// Observed at birth instead.
+	// A failed spawn can reject `settled` before a consumer awaits it.
+	// A consumer may still be draining stdout on a later tick or may abandon the stream.
+	// Attach a handler at birth to prevent an unhandled-rejection event.
 	// Every consumer still awaits the real verdict.
 	settled.catch(() => undefined)
 
@@ -80,8 +79,10 @@ export function spawnOGR2OGR(args: readonly PathBuilderLike[], context: string):
  * Stream a GeoJSONSeq extraction as parsed features.
  *
  * Strips the RFC-8142 record separator (U+001E) gdal may prefix records with.
- * `.trim()` does not remove it (not whitespace), so an RS-framed record would fail to parse
- * and be silently skipped, all of them, and an empty extract would read as a real absence.
+ * `.trim()` leaves U+001E intact.
+ *
+ * The parser strips it first because `tryParsingJSON` would otherwise skip each RS-prefixed record.
+ * Skipping every record would make an empty extract look like a real absence.
  *
  * A malformed record is tolerated (skipped) rather than thrown.
  * A non-zero exit throws after the stream drains.

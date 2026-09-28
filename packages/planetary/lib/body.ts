@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which body this build is for. The value is compiled into the client at build time, so a running app never reads
- *   configuration to learn its body, and a production host serving the wrong body's build fails at startup rather
- *   than showing the other world.
+ *   Identifies the body for this build. The build compiles this value into the client.
+ *   A running app does not read configuration to identify its body.
+ *   A production host serving the wrong body's build fails at startup instead of showing the other world.
  */
 
 /**
@@ -48,9 +48,10 @@ export function bodyForHostname(hostname: string): PlanetaryBody | null {
 /**
  * A production host must serve its own body's build.
  *
- * Any other host serves either, so the check only fires when the hostname is one
- * of the two production names, and the error names both sides so the misconfigured
- * project is identifiable from the message alone.
+ * Any other host may serve either body.
+ * The check fires only for the two production hostnames.
+ *
+ * The error names both sides so the misconfigured project is identifiable from the message alone.
  */
 export function assertHostMatchesBody(hostname: string, body: PlanetaryBody): void {
 	const expected = bodyForHostname(hostname)

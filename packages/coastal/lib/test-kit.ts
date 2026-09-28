@@ -82,8 +82,10 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture erosion set: two adjacent bands in the no-intervention scenario (one holed), one band in
- * the with-plan scenario over the same ground as the first, and one band narrower than a res-9 cell.
+ * The fixture erosion set has two adjacent bands in the no-intervention scenario, one with a hole.
+ *
+ * The with-plan scenario has one band over the same ground as the first.
+ * A final band is narrower than a res-9 cell.
  *
  * The overlap between scenarios is what proves the twelve layers stay separable rather than pooled.
  */

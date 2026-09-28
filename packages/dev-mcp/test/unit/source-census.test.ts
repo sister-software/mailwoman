@@ -24,8 +24,9 @@ let root: TemporaryDirectory
 /**
  * One planted extract's path, resolved through the same builder `gazetteerArtifacts` uses.
  *
- * Composing `wof` against the root by hand would let the fixture and the reader disagree about
- * the data root's database group, and the reader would then report the planted extracts absent.
+ * Composing `wof` against the root by hand could make the fixture and reader
+ * disagree about the data root's database group.
+ * The reader would then report the planted extracts absent.
  */
 function extract(name: string): string {
 	return wofDatabaseRoot(root.path)(name).toString()
@@ -54,7 +55,9 @@ function writeJoinable(path: string, rows: ReadonlyArray<[string, number]>): voi
 }
 
 /**
- * `spr` only, and every `parent_id` is the -1 sentinel — countable but neither joinable nor walkable.
+ * `spr` only.
+ *
+ * Every `parent_id` is the -1 sentinel, so rows can be counted but cannot be joined or walked.
  */
 function writeCountOnly(path: string, country: string, n: number): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
@@ -110,7 +113,8 @@ describe("censusArtifact", () => {
 
 	it("reports a country asked for and ABSENT as a zero, not a missing key", async () => {
 		// A missing key reads as "not measured".
-		// The caller is deciding whether to go and acquire data, and those are opposite conclusions.
+		// The caller uses this value to decide whether to acquire data.
+		// The two conclusions are opposite.
 		const row = await censusArtifact(extract("postalcode-intl.db"), ["FR", "VE"])
 
 		expect(row.countries).toEqual({ FR: 3, VE: 0 })

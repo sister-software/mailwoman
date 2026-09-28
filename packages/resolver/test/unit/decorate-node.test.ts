@@ -2,12 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `0,0` is the gazetteer's unlocated sentinel, and a node must express it as absence.
+ * @file `0,0` is the gazetteer's unlocated sentinel. A node must represent that value as absence.
  *
- *   The shipped extracts carry a great deal of it — 48,216 of 142,604 JP postcodes, 86,377 GB, 9,708 intl, 414 US — and
- *   a stamped `0,0` answers "yes" to every `lat != null` guard downstream, including the admin ladder's in
- *   `extractGeocodeResult`. `51349` is the worked case: a real Iowa ZIP the extract cannot place, which graded 10,450 km
- *   from its own address because the Gulf of Guinea passed a null check.
+ *   The shipped extracts contain many `0,0` sentinels. They occur in 48,216 of 142,604 JP postcodes,
+ *   86,377 GB postcodes, 9,708 international postcodes and 414 US postcodes. A stamped `0,0` passes
+ *   every downstream `lat != null` check, including the admin ladder in `extractGeocodeResult`.
+ *   ZIP `51349` is the worked case. The extract cannot place this real Iowa ZIP. The null check accepts
+ *   the Gulf of Guinea coordinate. That point lies 10,450 km from the ZIP's address.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -75,8 +76,8 @@ describe("decorateNode and the unlocated sentinel", () => {
 	it("treats a 0 on ONE axis as a real coordinate", () => {
 		// The sentinel is the pair.
 		// Null Island is one point.
-		// The equator and the prime meridian are not, and Accra, Greenwich
-		// and Libreville all sit near one of them.
+		// The equator and prime meridian each contain real locations.
+		// Accra, Greenwich and Libreville sit near one of them.
 		for (const coord of [
 			{ lat: 0, lon: -0.0005 },
 			{ lat: 5.55, lon: 0 },

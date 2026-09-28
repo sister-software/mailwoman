@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The health route: the report's five words, the no-store header, and the email word turning on a failure that has
- *   outlived the hour rather than on a fresh one.
+ *   Tests the health route's five report fields and `no-store` header.
+ *   It checks that the email field reports a failure after one hour and stays clear for a fresh failure.
  */
 
 import { createLicenseWorkerApp } from "@mailwoman/license-worker/app"
@@ -24,7 +24,8 @@ beforeAll(async () => {
 })
 
 function app(now: () => number = () => NOW) {
-	// Pinned rather than read from the sandbox vars, which flip with the deployment.
+	// Pin the time.
+	// Sandbox variables change with the deployment.
 	return createLicenseWorkerApp(readEnv({ ...env, ISSUANCE_ENABLED: "false" }), {
 		signingStatus: () => "unchecked",
 		ledger: openLedger(env.LICENSE_LEDGER),

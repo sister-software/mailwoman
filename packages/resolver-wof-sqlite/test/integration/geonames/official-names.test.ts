@@ -70,7 +70,7 @@ beforeAll(async () => {
 	dir = await temporaryDirectory("geonames-official-")
 	altDir = await temporaryDirectory("geonames-official-alt-")
 
-	// Turku: alternates carry the Swedish official name, a Greek transliteration, and a historic form.
+	// Turku alternates include the Swedish official name, Greek transliteration, and historic form.
 	await writeLocalFile(
 		mainRow({
 			0: "633679",
@@ -125,7 +125,8 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })
 	// The historic evidence lives on a different row than the language tag.
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
-	// The primary-name mirror row stays untagged, and spr.name already is the name-exact tier.
+	// The primary-name mirror row stays untagged.
+	// `spr.name` is already the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
 })
 

@@ -34,10 +34,11 @@ export interface BuildInfo {
 /**
  * `https://github.com/sister-software/mailwoman/commit/<sha>` for a build's own revision.
  *
- * Takes the sha rather than the record so it is the `commitHref` shape
- * `@mailwoman/react`'s `<AppIdentity>` asks for.
- * That prop is injected because `@mailwoman/react` publishes to npm and this package is private, and
- * when the argument was the record instead, both apps wrapped this function in the same one-line adapter.
+ * Takes the sha rather than the record so it is the `commitHref` shape Provides the
+ * value requested by `@mailwoman/react`'s `<AppIdentity>`.
+ * The caller injects that prop because `@mailwoman/react` publishes to npm and this package is private.
+ *
+ * Passing the record instead made both apps add the same one-line adapter.
  */
 export function commitURL(commit: BuildInfo["commit"]): string {
 	return `https://github.com/sister-software/mailwoman/commit/${commit}`

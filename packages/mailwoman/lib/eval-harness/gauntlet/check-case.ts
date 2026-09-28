@@ -167,14 +167,15 @@ function resolvedPlace(r: GauntletResult): GauntletResult["hierarchy"][number] |
 /**
  * Assert one assembled result against its stored case, returning the mismatches (empty = the case passes).
  *
- * Every check is opt-in per row, and components are checked last because a corrupt
- * `expect_components` JSON short-circuits its own check while the place check must still have run.
+ * Every check is opt-in per row.
+ * Components are checked last because corrupt `expect_components` JSON short-circuits
+ * its own check while the place check must still have run.
  */
 export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 	const issues: string[] = []
 
-	// Abstain inverts the grade: any resolved coordinate fails, and a row that also pins a
-	// coordinate is an authoring bug that throws rather than a precedence question.
+	// Abstain inverts the grade: any resolved coordinate fails.
+	// A row that also pins a coordinate is an authoring bug that throws rather than a precedence question.
 	if (c.expect_abstain) {
 		if (c.expect_lat != null || c.expect_lon != null) {
 			throw new Error(`case ${c.id}: expect_abstain and expect_lat/expect_lon are mutually exclusive`)

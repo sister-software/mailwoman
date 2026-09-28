@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   The FST binary-format constants, shared by the Node serializer/deserializer (`fst-serialize.ts`)
- *   and the browser deserializer (`fst-deserialize-web.ts`). Platform-free by design — no Buffer at
- *   module scope. both runtimes convert {@link FST_MAGIC_BYTES} themselves.
+ *   and the browser deserializer (`fst-deserialize-web.ts`). This module stays platform-free.
+ *   It uses no Buffer at module scope. Both runtimes convert {@link FST_MAGIC_BYTES} themselves.
  */
 
 import type { PlacetypeID } from "#fst/types"
@@ -16,17 +16,21 @@ import type { PlacetypeID } from "#fst/types"
  * (mirrors `REQUIRED_PAIR_INDEX_SCHEMA`'s role for PIX1 — see `fst-freshness.ts`).
  *
  * One constant for the writer and both readers, deliberately.
- * The browser reader's acceptance criterion was a separate `MAX_VERSION` number from
- * the layout branches, and it drifted twice: left stale at 2 when the v4 wide-state
- * layout shipped (rejecting every real artifact), and stale again at 4 through
- * the v5 two-score split until the line moved by hand.
+ * The browser reader once kept a separate `MAX_VERSION` from the layout branches.
+ *
+ * It drifted twice.
+ * It stayed at 2 after the v4 wide-state layout shipped and rejected every real artifact.
+ *
+ * It later stayed at 4 through the v5 two-score split until someone updated it by hand.
  *
  * A check that is the writer's version cannot drift from it.
  */
 export const FST_FORMAT_VERSION = 5
 
 /**
- * Fixed header size in bytes: magic, version, and the section offsets that follow it.
+ * Fixed header size in bytes.
+ *
+ * It stores the magic and version, followed by section offsets.
  */
 export const HEADER_SIZE = 32
 
@@ -101,9 +105,9 @@ export const FST_MAGIC_BYTES: readonly number[] = [0x46, 0x53, 0x54, 0x00]
 /**
  * Placetypes in hierarchy order, largest first.
  *
- * The index into this array is what gets written into a place entry,
- * so Reordering it invalidates every existing file.
- * Append instead, and bump the version.
+ * The writer stores each placetype's index in a place entry.
+ * Reordering this array invalidates every existing file.
+ * Append entries and bump the version.
  */
 export const PLACETYPE_ORDER: readonly PlacetypeID[] = [
 	"country",

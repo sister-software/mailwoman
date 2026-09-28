@@ -13,7 +13,8 @@ import { TileSetSourceID } from "#styles/sources"
  */
 export const TIGERTractsTileSetID = TileSetSourceID("tiger-tracts")
 /**
- * Tile set id for US Census block polygons — finer than tracts, and correspondingly heavier.
+ * Tile set ID for US Census block polygons.
+ * Blocks are finer than tracts and require more data.
  */
 export const TIGERBlocksTileSetID = TileSetSourceID("tiger-blocks")
 

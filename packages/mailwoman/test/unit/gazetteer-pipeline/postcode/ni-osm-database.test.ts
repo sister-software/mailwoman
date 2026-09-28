@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale check for the NI OSM postcode database: the name law holds, the medoid lands on a member point, a malformed tag value is dropped and reported, and the provenance `meta` reaches the sealed artifact.
+ *   Fixture-scale check for the NI OSM postcode database. The name law holds and the medoid lands on a member point.
+ *   A malformed tag value is dropped and reported. The provenance `meta` reaches the sealed artifact.
  *
  *   The fixture is a synthetic Overpass response in the real envelope shape, because a node carries `lat`/`lon` and a way carries `center`, and a parser that handles only one still passes tests written against the other.
  */
@@ -82,8 +83,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	})
 
 	// Two postcodes survive.
-	// The malformed value and the coordinate-less relation are dropped,
-	// and the untagged node never counts as tagged.
+	// The malformed value and the coordinate-less relation are dropped.
+	// The untagged node never counts as tagged.
 	expect(result.inserted).toBe(2)
 	expect(result.stats.elements).toBe(8)
 	expect(result.stats.tagged).toBe(7)
@@ -146,7 +147,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const country = db.prepare("SELECT DISTINCT country FROM spr").all() as Array<{ country: string }>
 	expect(country).toEqual([{ country: "GB" }])
 
-	// Provenance travels in the artifact: the licence obligation, the tier, and the coverage record.
+	// The artifact carries the licence obligation, tier and coverage record as provenance.
 	const meta = new Map(
 		(db.prepare("SELECT key, value FROM meta").all() as Array<{ key: string; value: string }>).map((r) => [
 			r.key,

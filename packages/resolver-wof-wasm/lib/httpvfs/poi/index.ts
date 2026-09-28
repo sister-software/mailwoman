@@ -66,7 +66,8 @@ export interface POISearchOpts {
 	 * The Overture `taxonomy.primary` leaf ids that the canonical category rolls up,
 	 * such as those from `resolveOvertureCategories`.
 	 *
-	 * Every known leaf is probed per cell and the rows are unioned, and unknown leaves are skipped.
+	 * Probes every known leaf per cell and unions the rows.
+	 * Skips unknown leaves.
 	 */
 	categoryIDs?: string[]
 	center: { lat: number; lon: number }

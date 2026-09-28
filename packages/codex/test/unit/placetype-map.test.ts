@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Pins the two rules a placetype filter rests on: which rows a request reaches, and whether reaching one counts as
- *   an exact answer or a widened one. Both are consulted per candidate on the resolver's hot path, and neither had
- *   direct coverage — `expandPlacetypeFilter` was exercised only incidentally through a resolver walk.
+ *   Tests which rows a placetype filter returns for a request.
+ *   It also verifies whether a returned row counts as an exact answer or a widened one.
+ *   The resolver consults both rules for each candidate. Direct test coverage was absent because
+ *   `expandPlacetypeFilter` ran only as part of a resolver walk.
  */
 
 import {

@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Write the effective training manifest: which of a corpus's sources one config's audited epoch reached,
- *   and why each of the rest did not.
+ *   Write the effective training manifest. It records which of a corpus's sources one config's audited epoch reached
+ *   and why each remaining source did not reach the trainer.
  *
- *   The corpus's own `TRAINING_SOURCES.json` records what the corpus holds. A run then reads it through a
- *   config, and `country_weights`, `source_weights`, a `0.0` weight and `augment_exclude_sources` each remove
+ *   The corpus's own `TRAINING_SOURCES.json` records what the corpus holds. A run reads it through a
+ *   config. `country_weights`, `source_weights`, a `0.0` weight and `augment_exclude_sources` each remove
  *   rows between the two. A model card quoting the corpus manifest attributes sources the checkpoint never
- *   saw, which is what this separates.
+ *   saw. This report separates the records.
  *
  *   Run `audit_epoch_mixture` first; `coverage-funnel.run.ts` names the command and the path it looks in.
  *

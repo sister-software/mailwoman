@@ -3,11 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Webhook verification: the official constructor over the untouched raw body, with the SubtleCrypto provider the
- *   Workers runtime has, a five-minute timestamp tolerance, and two checks the SDK does not make. That the event is one
- *   this worker acts on, and that its Stripe mode is this environment's. The two refusals differ in kind: a signature
- *   that does not verify is a request to reject, and a verified event this worker does not act on is one to
- *   acknowledge and log, because Stripe retries every non-2xx answer for three days and a retry cannot change either.
+ *   Webhook verification uses the official constructor with the untouched raw body and Workers' SubtleCrypto provider.
+ *   It allows a five-minute timestamp tolerance and checks two conditions the SDK does not check.
+ *   The event must be one this worker handles. Its Stripe mode must match this environment.
+ *   The refusals have different outcomes. Reject an invalid signature.
+ *   Acknowledge and log a verified event this worker does not handle. Stripe retries each non-2xx answer for three days.
+ *   A retry cannot change either refusal.
  */
 
 import Stripe from "stripe"

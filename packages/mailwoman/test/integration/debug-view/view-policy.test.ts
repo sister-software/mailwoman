@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The opening zoom, against correctly-ordered hierarchies. `GeocodeResult.hierarchy` is most specific first, and
- *   reading the other end is a silent defect of exactly this shape: every value it returns is a legal zoom, the map
- *   still renders, and the only symptom is that a resolved city opens on a view of the continent.
+ *   The opening zoom against correctly ordered hierarchies. `GeocodeResult.hierarchy` is most specific first.
+ *   Reading from the other end is a defect this test catches: every returned value is a legal zoom and the map
+ *   still renders. The only symptom is that a resolved city opens on a view of the continent.
  */
 
 import { initialZoomForTier } from "mailwoman/debug-view/view-policy"
@@ -33,7 +33,8 @@ describe("initialZoomForTier", () => {
 		expect(initialZoomForTier(resultOf("admin", ["locality", "region", "country"]))).toBe(11)
 		expect(initialZoomForTier(resultOf("admin", ["dependent_locality", "locality", "region", "country"]))).toBe(11)
 
-		// A region-only answer stays wider, and a country-only answer widest.
+		// A region-only answer stays wider.
+		// A country-only answer is widest.
 		expect(initialZoomForTier(resultOf("admin", ["region", "country"]))).toBe(6)
 		expect(initialZoomForTier(resultOf("admin", ["country"]))).toBe(4)
 	})

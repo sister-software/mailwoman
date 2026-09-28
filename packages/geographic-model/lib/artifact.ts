@@ -8,9 +8,9 @@
  *   Runtime consumers read the artifact instead of the authored records. The artifact includes the
  *   materialized `isA` closure so that consumers never traverse `concepts[].isA` at query time.
  *
- *   The serialization is deterministic. Object keys appear in code-point order at every depth, and the
- *   compiler sorts each table by identifier in code-point order. Arrays inside a record keep their
- *   authored order. The artifact records no build time, so two builds of one document are byte-identical.
+ *   Serialization is deterministic. Object keys use code-point order at every depth.
+ *   The compiler sorts each table by identifier in code-point order. Arrays inside a record keep authored order.
+ *   The artifact records no build time. Two builds of one document are byte-identical.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -99,7 +99,8 @@ function canonicalize(value: unknown): unknown {
  * Serializes the artifact as tab-indented JSON with a trailing newline and sorted keys.
  *
  * The committed copy also passes through `oxfmt`, which inlines short arrays.
- * A freshness check therefore compares parsed values, and only a comparison of two compiles compares bytes.
+ * A freshness check compares parsed values.
+ * A byte comparison applies only to two compiler outputs.
  */
 export function serializeCompiledModel(model: CompiledGeographicModel): string {
 	return prettyJSON(canonicalize(model))

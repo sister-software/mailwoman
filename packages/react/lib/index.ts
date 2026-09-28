@@ -12,12 +12,13 @@
  */
 export * from "#common/index"
 /**
- * Re-exports `POIExplorer`, a POI-intent tester that needs no weights or network, and its parts.
+ * Re-exports `POIExplorer`, a POI-intent tester that needs no weights or network, with its related exports.
  */
 export * from "#poi/index"
 /**
- * Re-exports `PipelineExplorer`, a parse-and-resolve tester whose model
- * and gazetteer access the host injects, and its parts.
+ * Re-exports `PipelineExplorer`, a parse-and-resolve tester with model
+ * and gazetteer access injected by the host.
+ * It also exports the explorer's related declarations.
  */
 export * from "#pipeline/index"
 /**

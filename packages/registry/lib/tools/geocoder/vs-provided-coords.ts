@@ -76,8 +76,9 @@ export interface GeocoderVsProvidedCoordsOptions {
  *
  * This source writes `latitude,longitude`, while `GeoPoint` reads GeoJSON `[longitude, latitude]`,
  * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there.
- * `GeoPoint.from` also maps 0,0 to null, which moves Null Island out of the
- * measured outliers and into the skipped bucket.
+ * `GeoPoint.from` also maps 0,0 to null.
+ *
+ * This moves Null Island out of the measured outliers and into the skipped bucket.
  *
  * The report attributes part of its p99/max tail to malformed provided coordinates,
  * so those rows have to stay rejected or measured as-is, never rewritten.
@@ -95,8 +96,8 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 	return { latitude: a!, longitude: b! }
 }
 
-// The core nearest-rank `percentile` (q in [0,100]) uses a floor index and clamping,
-// and `?? NaN` keeps the empty-sample behavior.
+// The core nearest-rank `percentile` (q in [0,100]) uses a floor index and clamping.
+// `?? NaN` returns NaN when the percentile helper returns null for an empty sample.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**

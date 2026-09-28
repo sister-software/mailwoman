@@ -8,9 +8,9 @@
  *
  *   A bare hash of the input would be reversible in practice: the address space a provider grants
  *   access to is enumerable, so anyone holding the register can hash every row and read the published
- *   identifiers straight back. The salt is what breaks that, and it has to be run-specific rather than
+ *   identifiers straight back. The salt breaks that. It has to be run-specific rather than
  *   repository-wide. Two reports under one salt can be joined row-for-row into a longer record of the
- *   same premises, which is the linkage the identifier exists to prevent.
+ *   same premises. That is the linkage the identifier prevents.
  */
 
 import { sha256Hex } from "@mailwoman/core/hash"
@@ -26,8 +26,9 @@ const CASE_ID_LENGTH = 16
 /**
  * The shortest salt this harness will run with.
  *
- * Below this a salt is enumerable, and an enumerable salt is no salt: the holder of the
- * register recovers every published case identifier by trying them all.
+ * Below this a salt is enumerable.
+ * An enumerable salt offers no protection: the holder of the register recovers
+ * every published case identifier by trying them all.
  */
 const MINIMUM_SALT_LENGTH = 16
 

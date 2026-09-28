@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Autocomplete coverage: partial last-token completion, the complete-token shadow rule, the
- *   per-branch cap, dedupe, containment chains, and the robustness interface.
+ *   Tests partial last-token completion, complete-token shadowing, per-branch caps, deduplication,
+ *   containment chains, and the robustness interface.
  */
 
 import { autocomplete } from "@mailwoman/ancestrie/autocomplete"

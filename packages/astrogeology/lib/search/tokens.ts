@@ -13,15 +13,16 @@ import type { BuildableBodyID } from "#bodies"
 /**
  * What a suggestion carries back: enough to place and frame the feature without a second lookup.
  *
- * `diameterKm` is what a camera needs to choose a zoom, and its absence is not a neutral gap:
- * a framing function given no diameter falls to its smallest-feature branch, so every search
- * result and every deep link framed a 4,000 km canyon exactly as tightly as a 3 km crater.
+ * `diameterKm` lets a camera choose a zoom.
+ * When it is absent, the framing function uses its smallest-feature branch.
+ *
+ * Every search result and deep link then frames a 4,000 km canyon as tightly as a 3 km crater.
  * `featureTypeCode` rides along for the same reason.
  *
  * A reader that has the feature should not need the tile to describe it.
  *
- * Both are optional because the IAU gazetteer leaves them unset for some features,
- * and an absent diameter is a real reading rather than a zero.
+ * Both fields are optional because the IAU gazetteer leaves them unset for some features.
+ * An absent diameter represents missing data, while zero represents a measured value.
  *
  * A type alias rather than an interface: the trie builder takes a `JSONValue`, and only an
  * alias carries the implicit index signature that makes an optional property assignable to one.

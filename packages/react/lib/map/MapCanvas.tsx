@@ -5,7 +5,7 @@
  *
  *   `<MapCanvas>` — the declarative map shell for the geocoder demo, over `react-map-gl/maplibre` (v8).
  *   Phase 1 is the shell only: a `<Map>` that takes a host-composed `mapStyle`, an initial (or
- *   controlled) view state, and a `children` slot for the overlays/markers that land in later phases.
+ *   controlled) view state and a `children` slot for overlays/markers from later phases.
  *   No overlay/marker/camera logic lives here yet.
  *
  *   node-import safety: this module imports `react-map-gl/maplibre` (which pulls `maplibre-gl` — WebGL
@@ -70,7 +70,7 @@ export interface MapCanvasProps {
 	 */
 	mapRef?: Ref<MapRef>
 	/**
-	 * Overlays, markers, and controls — rendered as `<Map>` children.
+	 * Overlays, markers and controls — rendered as `<Map>` children.
 	 *
 	 * Empty in phase 1.
 	 */
@@ -94,8 +94,9 @@ const FILL: CSSProperties = { width: "100%", height: "100%" }
 /**
  * The controlled-viewport map shell.
  *
- * Renders a sized wrapper around a `react-map-gl/maplibre` `<Map>`; everything host-specific
- * (the composed `mapStyle`, the initial center) is injected, and overlays ride in as `children`.
+ * Renders a sized wrapper around a `react-map-gl/maplibre` `<Map>`; everything
+ * host-specific (the composed `mapStyle`, the initial center) is injected.
+ * Overlays arrive as `children`.
  */
 export function MapCanvas({
 	mapStyle,

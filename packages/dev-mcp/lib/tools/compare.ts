@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The `mwdev_compare` tool definition — the description an agent reads, the input schema, and the handler wiring.
- *   The measurement itself lives in the package root. this file is the interface, and the description is the
- *   required half of it.
+ *   The `mwdev_compare` tool definition provides the agent-facing description and input schema.
+ *   Its handler calls the comparison in the package root.
  */
 
 import { z } from "zod"

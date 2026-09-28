@@ -71,7 +71,7 @@ const ASCII_A = 65
 const ASCII_Z = 90
 
 /**
- * Returns whether ICU echoed the code back, which means it does not know the region.
+ * Returns true when ICU echoes the code, indicating that it has no display name for the region.
  */
 function isEcho(code: string, rendered: string | undefined): boolean {
 	return !rendered || rendered === code

@@ -56,7 +56,7 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	nm.run(13, "DC")
 	nm.run(14, "PR")
 
-	// Ancestry rows (self, county, region, and country) as backfill-ancestors-from-hierarchy restores them.
+	// `backfill-ancestors-from-hierarchy` restores ancestry rows for the place, county, region, plus country.
 	const anc = db.prepare(
 		`INSERT INTO ancestors (id, ancestor_id, ancestor_placetype, lastmodified) VALUES (?, ?, ?, 0)`
 	)
@@ -108,7 +108,8 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 	})
 
 	it("the constraint reaches a place whose direct parent is a county, not the region (the ancestry-backfill case)", async () => {
-		// Sheldon, VT has Franklin County (20) as its direct parent, and Vermont (10) is only an ancestor.
+		// Sheldon, VT has Franklin County (20) as its direct parent.
+		// Vermont (10) appears only in its ancestor chain.
 		// The constraint reaches it through the `ancestors` table, the linkage the backfill
 		// restores for multi-parent or ambiguous-parent places such as NYC (parent_id=-4).
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })

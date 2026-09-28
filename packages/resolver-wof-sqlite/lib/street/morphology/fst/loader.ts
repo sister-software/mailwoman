@@ -15,7 +15,7 @@
  *      of a crash.
  *
  *   A present-but-unreadable artifact reports through `onWarn` and falls through to the build rung.
- *   Browsers cannot take the fallback, because there is no fs, and they deserialize the same
+ *   Browsers cannot take the fallback because they have no filesystem API. They deserialize the same
  *   artifact through `fst-deserialize-web.ts` (see the docs demo loader).
  */
 
@@ -46,8 +46,8 @@ export interface LoadStreetMorphologyFSTOpts {
 	/**
 	 * Explicit artifact path (e.g. A weights-package sibling).
 	 *
-	 * When given it is the only artifact probed, and a missing or unreadable one
-	 * degrades straight to the dictionary build, never a throw.
+	 * When given, it is the only artifact probed.
+	 * A missing or unreadable artifact degrades straight to the dictionary build, never a throw.
 	 */
 	artifactPath?: PathBuilderLike
 	/**

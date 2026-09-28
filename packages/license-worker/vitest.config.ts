@@ -4,16 +4,17 @@
  * @author Teffen Ellis, et al.
  *
  *   The worker's tests run under the Workers runtime through Miniflare, with the sandbox config's bindings and a
- *   fresh D1 per test file. Secrets are placeholders here. a `wrangler dev` run reads `.dev.vars` instead. The root
- *   vitest sweep excludes this workspace, and CI runs it as its own step.
+ *   fresh D1 per test file. Secrets are placeholders here.
+ *   A `wrangler dev` run reads `.dev.vars` instead.
+ *   The root Vitest sweep excludes this workspace. CI runs it as its own step.
  */
 
 import { cloudflareTest, readD1Migrations } from "@cloudflare/vitest-pool-workers"
 import { defineConfig } from "vitest/config"
 
-// The migrations are read here, on the Node side, and handed to the runtime as a binding the tests apply.
-// Anchored on this file rather than the working directory: knip and the root
-// tooling load this config from the repo root.
+// Node reads the migrations here and passes them to the runtime as a binding that tests apply.
+// Resolve the path from this file rather than the working directory. knip
+// and the root tooling load this config from the repo root.
 const migrations = await readD1Migrations(`${import.meta.dirname}/migrations`)
 
 export default defineConfig({

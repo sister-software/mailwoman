@@ -16,9 +16,9 @@
  *
  *   Appendix C2 explicitly marks floor, basement as requiring a secondary number (alongside APT,
  *   bldg, etc.) while penthouse and lobby may stand alone. PH and lbby are kept here (not just in
- *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints —
- *   "lobby" and "PH" name a specific floor-analog rather than a numbered unit, and the prior map routes
- *   `LEVEL_PHRASE` → `unit` (the schema carries no separate `level` tag).
+ *   {@link ./unit-designator.ts}) because the span proposer treats them as level-class hints.
+ *   "Lobby" and "PH" identify specific floor analogs. The prior map routes `LEVEL_PHRASE` to `unit`.
+ *   The schema has no separate `level` tag.
  *
  *   This table drives the `levelDesignators` set in the span-proposer lexicon. The full
  *   secondary-unit designators (APT, STE, RM, …) remain in {@link ./unit-designator.ts}.
@@ -102,7 +102,8 @@ export const US_FLOOR_DESIGNATOR_LOOKUP: ReadonlyMap<string, USFloorDesignatorNa
  * All lowercase surface tokens for the floor-class designators — the set the span proposer
  * populates `levelDesignators` with when wiring the US codex address system.
  *
- * Includes canonical names, approved abbreviations, and Appendix C2 variants.
+ * Includes canonical names and approved abbreviations.
+ * It also includes Appendix C2 variants.
  */
 export const US_FLOOR_DESIGNATOR_TOKENS: ReadonlySet<string> = new Set(US_FLOOR_DESIGNATOR_LOOKUP.keys())
 

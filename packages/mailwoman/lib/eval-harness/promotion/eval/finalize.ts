@@ -5,8 +5,8 @@
  * @file The battery's last step: fold both promotion locks into one exit code, then narrate the ledger append.
  *
  *   Separate from `verdict.ts` because the two answer different questions. The assembler there reads the battery's
- *   artifacts and decides whether every floor was met. this file decides what the process returns, which also depends
- *   on the mask-regression check the runner ran outside the assembler's view.
+ *   artifacts and decides whether every floor was met. This file decides what the process returns.
+ *   The result also depends on the mask-regression check. The runner runs that check outside the assembler's view.
  */
 
 import { isoDate } from "@mailwoman/core/utils"
@@ -57,11 +57,13 @@ export interface FinalizeVerdictOptions {
  * Either miss fails the evaluation.
  *
  * On a pass, print the ledger-append command with everything pre-filled.
- * It is printed rather than executed: the battery runs on candidates that may
- * never publish, and the ledger records published versions keyed by npm semver,
- * so the release-prep flow runs this line with the real version.
+ * It is printed rather than executed: the battery runs on candidates that may never publish.
  *
- * Appending used to rely on a person remembering it, and the ledger froze for several versions.
+ * The ledger records published versions keyed by npm semver.
+ * The release-prep flow therefore runs this line with the real version.
+ *
+ * Appending used to rely on a person remembering it.
+ * The ledger then froze for several versions.
  */
 export async function finalizePromotionVerdict(options: FinalizeVerdictOptions): Promise<number> {
 	let verdictStatus: number

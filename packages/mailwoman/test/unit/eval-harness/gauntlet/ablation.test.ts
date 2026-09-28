@@ -3,7 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Everything here is pure because the layer's own run needs the ~9 GB database set and a loaded ONNX, and each of variant generation, slot classification and cell aggregation fails silently rather than throwing.
+ *   Everything here is pure because the layer's own run needs the ~9 GB database set and a loaded ONNX.
+ *   Variant generation, slot classification and cell aggregation can each fail silently rather than throwing.
  */
 
 import {
@@ -375,7 +376,8 @@ describe("the support-0-is-absence rendering rule", () => {
 	it("renders a measured cell as broken/support — including a genuine zero BROKEN count", () => {
 		const [cell] = aggregateCells([row({ broken: false }), row({ caseID: "b", broken: false })], meta)
 
-		// 0 of 2 broken is a measurement, and it must not read like the unmeasured cell above.
+		// 0 of 2 broken is a measurement.
+		// It must not read like the unmeasured cell above.
 		expect(formatAblationCell(cell)).toBe("0/2")
 		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
 	})
@@ -396,8 +398,8 @@ describe("the support-0-is-absence rendering rule", () => {
 		expect(md).toContain(`\`${ABLATION_ABSENT}\` means NOT MEASURED`)
 	})
 
-	// Folding is only acceptable because the thin locales are printed, and a zero-column
-	// matrix must say why it is empty rather than emit a headerless table.
+	// Folding is only acceptable because the thin locales are printed.
+	// A zero-column matrix must say why it is empty rather than emit a headerless table.
 	it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
 		const md = renderAblationMarkdown(aggregateCells([row({})], meta), [], {
 			...meta,

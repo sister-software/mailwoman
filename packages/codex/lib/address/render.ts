@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a component dict through an address layout into tagged pieces; `formatAddress` joins the pieces into
- *   a string, and the connector rules are described in `layout.ts`.
+ *   Renders a component dictionary through an address layout into tagged pieces.
+ *   `formatAddress` joins the pieces into a string. `layout.ts` describes connector rules.
  */
 
 import { isAlternation, isConnector, isLayout, isSlot, type AddressAtom, type AddressLayout } from "#address/layout"

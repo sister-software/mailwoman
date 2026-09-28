@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Asks the gazetteer which of a corpus file's non-ISO country rows it can attribute to a country, and
- *   reports the count it cannot.
+ *   Asks the gazetteer which non-ISO country rows in a corpus file it can attribute to a country.
+ *   Reports how many rows remain unattributed.
  *
  *   `v0.6.0-register-surface` carries 4,765 rows whose `country` reads `ZZ`, the ISO 3166-1 user-assigned
  *   range rather than a country, every one with `locale: und` and `source: synth-fragment`. The recipe that
- *   wrote them is no longer in the tree, so the rows cannot be rebuilt with countries attached. The three
- *   ways to close that are to attribute them, declare them, or drop them at the next base rebuild, and
- *   each needs the count the gazetteer can settle.
+ *   wrote them is no longer in the tree, so the rows cannot be rebuilt with countries attached.
+ *   The options are to attribute them, declare them, or drop them at the next base rebuild.
+ *   Each option requires the count the gazetteer can settle.
  *
  *   The gazetteer is asked through `WOFCandidateTableLookup.findPlace`, the reader the resolver itself
  *   calls, so a row this reports as unattributable is one the request path would also fail to place. A row

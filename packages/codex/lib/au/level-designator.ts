@@ -5,9 +5,10 @@
  *
  *   Australian floor designators such as `Level 3`, `L 12`, `Ground Floor` and `Mezzanine`.
  *
- *   The codes come from the level-type table in AS 4590.1-2017, which is also the vocabulary of the GNAF
- *   `LEVEL_TYPE_CODE` column. Australia Post AMAS approves `L` as the abbreviation for `Level`. Informal
- *   variants such as `LVL` come from OpenAddresses data, and the parser recognizes them.
+ *   AS 4590.1-2017 defines these codes in its level-type table.
+ *   GNAF uses the same vocabulary in its `LEVEL_TYPE_CODE` column.
+ *   Australia Post AMAS approves `L` as the abbreviation for `Level`.
+ *   OpenAddresses data contributes informal variants such as `LVL`. The parser recognizes them.
  *
  * @see {@link https://auspost.com.au/sending/guidelines/addressing-guidelines Australia Post addressing guidelines}
  * @see {@link https://auspost.com.au/content/dam/auspost_corp/media/documents/correct-addressing.pdf Australia Post Correct Addressing brochure (Nov 2022)}

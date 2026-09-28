@@ -79,7 +79,8 @@ async function parse(): Promise<BuildArgs> {
 	})
 
 	const country = (values.country ?? "fr").toLowerCase()
-	// This call throws for an unsupported country, which would otherwise get the wrong street keys.
+	// This call throws for an unsupported country.
+	// Continuing would select incorrect street keys.
 	streetLocaleForBANCountry(country)
 	const source = resolvePath(values.source ?? banDatabasePath(`address-points-${country}.db`))
 

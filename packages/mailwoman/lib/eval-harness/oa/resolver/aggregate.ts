@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Per-arm tallies for the OpenAddresses resolver eval, and the JSON shape a run dumps them in.
+ * @file Per-arm tallies for the OpenAddresses resolver eval and the JSON shape a run writes.
  */
 
 import { percentile } from "@mailwoman/core/stats"
@@ -107,8 +107,9 @@ export function recordInto(pair: AggPair, state: string | undefined, outcome: Ar
 /**
  * The `--out-json` shape for one arm.
  *
- * `errs` is replaced by its length: the raw list is the eval's working set rather than
- * a figure anyone reads, and a full run's would dwarf the rest of the dump.
+ * The dump replaces `errs` with its length.
+ * The eval uses the raw list as its working set.
+ * A full raw list would dwarf the rest of the dump.
  */
 export function dumpAggPair(g: AggPair): Record<string, unknown> {
 	return {

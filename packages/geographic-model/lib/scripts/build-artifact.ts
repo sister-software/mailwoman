@@ -53,7 +53,8 @@ export async function packagedModelPaths(): Promise<{ source: string; artifact: 
  * Load the authored records and compile them.
  * No partial result is returned.
  *
- * @throws with every violation if they do not load, and with every reason if they load but do not compile.
+ * @throws with every validation violation when the authored tables fail to load.
+ * @throws with every compilation issue when loading succeeds but compilation fails.
  */
 export async function compileAuthoredGeographicModel(): Promise<CompiledGeographicModel> {
 	const { source } = await packagedModelPaths()
@@ -64,8 +65,8 @@ export async function compileAuthoredGeographicModel(): Promise<CompiledGeograph
 /**
  * Read the committed artifact.
  *
- * The format version is checked, and the records are not re-validated
- * because they were validated on the way in.
+ * The reader checks the format version.
+ * It trusts the records because the loader validated them on input.
  */
 export async function readCompiledGeographicModel(): Promise<CompiledGeographicModel> {
 	const text = await readLocalTextFile((await packagedModelPaths()).artifact)

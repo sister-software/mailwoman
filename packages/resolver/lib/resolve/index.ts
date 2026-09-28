@@ -77,7 +77,8 @@ export function createWOFResolver(backend: ResolverBackend): Resolver {
 /**
  * Return an explicit country scope from the tree when it is unambiguous.
  *
- * Only one country node is allowed, and subdivision-like names are ignored.
+ * The tree must contain one country node.
+ * Subdivision-like names are ignored.
  */
 function explicitCountryScope(roots: readonly AddressNode[]): string | null {
 	const countryNodes = collectNodes(roots, (node) => node.tag === "country" && node.value.trim())
@@ -413,7 +414,7 @@ class WOFResolver implements Resolver {
 			limit: state.candidatesPerLookup,
 		}
 
-		// Optional proximity bias, which reorders candidates and leaves the candidate set intact.
+		// Optional proximity bias reorders candidates without changing the candidate set.
 		if (state.bias && state.bias.length) {
 			query.bias = state.bias
 		}
@@ -612,7 +613,7 @@ class WOFResolver implements Resolver {
 			rec.stage("anchor", ranked)
 		}
 
-		// Optional locale-country soft prior, which adds to a candidate's score and keeps every candidate.
+		// Optional locale-country soft prior adds to candidate scores while retaining every candidate.
 		// Disabled when default country or anchor posterior is present.
 		if (state.localeCountryPrior && !state.defaultCountry && !state.anchorPosterior && anchorEligible) {
 			ranked = rankByCountryPrior(ranked, state.localeCountryPrior, state.localeCountryPriorWeight)

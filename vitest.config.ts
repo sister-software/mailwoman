@@ -121,13 +121,14 @@ export default defineConfig({
 			"**/packages/*/test/e2e/**",
 			"**/docs/test/build/**",
 			"**/docs/test/e2e/**",
-			// A worktree holds a full repository copy, whose tests this run has already collected once.
+			// A worktree holds a full repository copy.
+			// This run has already collected those tests.
 			"**/.claude/worktrees/**",
-			// Also exclude manually created worktrees, whose tests could run against this checkout's source.
+			// Manual worktrees may run tests against this checkout's source.
 			"**/.worktrees/**",
 			// Python virtualenvs can contain unrelated JavaScript tests that Vitest may collect.
 			"**/.venv/**",
-			// A scratchpad holds copied or generated files, which belong to a session rather than this checkout.
+			// A scratchpad holds files copied or generated for a session.
 			"**/scratchpad/**",
 			// React tests require Vitest browser mode and run separately in CI.
 			"**/react/**/*.test.{ts,tsx}",

@@ -65,8 +65,8 @@ function normalizeVersion(version: string): string {
  *
  * Retry is on because every host this talks to rate-limits: the npm registry,
  * the demo manifest bucket, and Hugging Face.
- * A release check that fails because a registry throttled it reads exactly like a release check
- * that failed because a surface trails, and the second one is the only kind anybody should act on.
+ * A throttled registry and a trailing release surface produce the same failure result.
+ * Only a trailing surface requires release action.
  */
 function createParityClient(): APIClient {
 	return new APIClient({

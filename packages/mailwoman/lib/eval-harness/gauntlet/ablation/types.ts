@@ -78,7 +78,7 @@ export interface AblationCell {
 	 */
 	toleranceKm: number
 	/**
-	 * Which board this was measured on, and when.
+	 * Which board this was measured on and when.
 	 * A cell without both is not a measurement.
 	 */
 	boardID: string
@@ -176,18 +176,22 @@ export interface AblationRowOutcome {
 	 */
 	expectedSource: "derived" | "override" | "no-ladder"
 	/**
-	 * What rung 0 of the ladder is: the corpus's asserted coordinate, or the pipeline's
-	 * undeleted answer for a row that asserts none; `null` when there is no ladder.
+	 * What rung 0 of the ladder represents.
+	 *
+	 * It uses the corpus's asserted coordinate, or the pipeline's undeleted answer when a row asserts none.
+	 * The value is `null` when no ladder exists.
 	 */
 	ladderAnchor: "corpus-expected" | "pipeline-anchor" | null
 	/**
-	 * The rung the undeleted answer reached; `null` means the anchor is off its
-	 * own ladder, which makes the row `ungraded`.
+	 * The rung the undeleted answer reached.
+	 *
+	 * The value is `null` when the anchor is off its own ladder.
+	 * Such rows are `ungraded`.
 	 */
 	anchorRungDepth: number | null
 	/**
-	 * The deepest rung the ablated answer actually landed in, and its depth; `null`
-	 * when it abstained or landed outside every rung.
+	 * The deepest rung the ablated answer actually landed in and its depth.
+	 * `null` when it abstained or landed outside every rung.
 	 */
 	achievedRung: string | null
 	achievedRungDepth: number | null

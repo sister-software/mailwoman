@@ -42,11 +42,16 @@ export function reportError(error: unknown): void {
 }
 
 /**
+ * A callback representing a CLI command.
+ *
+ * @returns a direct or Promise-wrapped exit code
+ */
+export type CommandCallback = () => number | undefined | Promise<number | undefined>
+
+/**
  * Run a CLI command with one consistent stderr and exit-code boundary.
  */
-export function runCLICommand(
-	command: () => number | undefined | Promise<number | undefined>
-): Promise<number | undefined> {
+export function runCLICommand(command: CommandCallback): Promise<number | undefined> {
 	return Promise.resolve()
 		.then(command)
 		.catch((error: unknown) => {

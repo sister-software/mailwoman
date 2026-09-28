@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Display and log build, model, and runtime details for bug reports.
+ *   Display and log build, model and runtime details for bug reports.
  *   Report the actual execution backend because successful loading does not imply WebGPU ran.
  */
 
@@ -17,13 +17,16 @@ export interface DebugInfoProps {
 	 */
 	activeBackend?: string
 	/**
-	 * Whether the CPU/wasm backend is currently forced, which explains a `wasm`
-	 * backend that would otherwise be a WebGPU failure.
+	 * Whether the CPU/wasm backend is currently forced.
+	 *
+	 * This explains a `wasm` backend that would otherwise indicate a WebGPU failure.
 	 */
 	forceWASM?: boolean
 	/**
 	 * The model version the runtime loaded.
-	 * The training series, which is not the npm version.
+	 *
+	 * The training series.
+	 * It differs from the npm version.
 	 */
 	selectedVersion?: string | null
 	/**

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Builds per-postcode centroids from an Overture addresses parquet into a WOF-shaped `spr` database that
- *   `WOFPostcodeLookup` can query.
+ *   Builds per-postcode centroids from an Overture addresses parquet into a WOF-shaped `spr` database.
+ *   `WOFPostcodeLookup` queries the resulting database.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -27,7 +27,8 @@ export interface ESPostcodeCentroidsOptions {
 	 * Width to which numeric postcodes are left-padded with zeros, such as 5 for ES,
 	 * DE, FR, IT and NL, or 4 for AT, CH and DK.
 	 *
-	 * The value `0` keeps the raw Overture form, which non-numeric formats need.
+	 * The value `0` keeps the raw Overture form.
+	 * Non-numeric formats need that form.
 	 * It defaults to 5.
 	 */
 	pcLen?: number
@@ -43,8 +44,9 @@ export interface ESPostcodeCentroidsOptions {
 	 * It defaults to `$MAILWOMAN_DATA_ROOT/db/wof/postalcode-<cc>-overture.db`.
 	 *
 	 * The filename must start with `postalcode-`.
-	 * `deriveSchemaName` turns the filename into the attached schema name, and `pickExtractsForPlacetype`
-	 * routes queries by matching that name against the `postalcode` placetype.
+	 * `deriveSchemaName` turns the filename into the attached schema name.
+	 *
+	 * `pickExtractsForPlacetype` routes queries by matching that name against the `postalcode` placetype.
 	 */
 	out?: string
 }
@@ -69,7 +71,8 @@ export async function buildESPostcodeCentroids(options: ESPostcodeCentroidsOptio
 	const instance = await DuckDBInstance.create()
 	const conn = await instance.connect()
 
-	// The query below expects `lat` and `lon` columns, which the ingest derives from the geometry.
+	// The query below expects `lat` and `lon` columns.
+	// The ingest derives them from the geometry.
 	const desc = await conn.runAndReadAll(`DESCRIBE SELECT * FROM read_parquet('${PARQUET}') LIMIT 1`)
 
 	console.error(

@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Tests for `rerankByStreetEvidence`. Drives real k-best hypotheses through a hand-built grammar
- *   and spanScores, a mock classifier trace, and a mock evidence provider, covering the byte-stable
- *   no-span-head fallback, the G1-skip move correction, and the tree re-materialization on a move.
+ *   and spanScores plus a mock classifier trace and mock evidence provider.
+ *   The tests cover the byte-stable no-span-head fallback, the G1-skip move correction and tree re-materialization on a move.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -31,7 +31,8 @@ const grammar = (): SemiCRFTransitions => {
 /**
  * A trace over "Rue Corsier" (2 tokens).
  *
- * `spanScores` is optional, and omitting it exercises the fallback.
+ * `spanScores` is optional.
+ * Omitting it exercises the fallback.
  */
 const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 	({

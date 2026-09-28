@@ -5,12 +5,11 @@
  *
  *   `usgov-hrsa-fqhc`: HRSA "Health Center Service Delivery Site Locations" CSV consumer.
  *
- *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs that
- *   self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
- *   carries the site name, the postal-formatted street address, and the locality/region/postcode
- *   quad. The source warrants its place on adversarial-value-per-row: every facility name is a
- *   human-typed venue string and the addresses pass through enough hands to accumulate the
- *   abbreviation drift + suite designator chaos that pure gazetteer data does not.
+ *   Federally Qualified Health Centers (FQHCs) are HRSA-funded community health programs.
+ *   They self-report site addresses to the HRSA Data Warehouse. The published CSV (`data.hrsa.gov`)
+ *   includes the site name, postal-formatted street address, locality, region, and postcode.
+ *   Each facility name is a human-typed venue string. Multiple people have edited each address.
+ *   That editing introduces abbreviation drift and suite designators absent from gazetteer data.
  *
  *   The adapter consumes a CSV file the operator pre-downloads. The HRSA data is published as a
  *   single national CSV (~10K rows), small enough that the operator can re-fetch on every corpus
@@ -77,8 +76,10 @@ interface HRSASiteRow {
  * and a hyphenated form (`"40-12 Bell Blvd"`); anything else falls back to street-only.
  *
  * Suite / Apt / Unit designators stay on `street`.
- * Mailwoman's `unit` component exists but the address-formatter does not have a clean
- * slot for it, and HRSA addresses do not separate the suite into its own column.
+ * Mailwoman's `unit` component exists.
+ *
+ * The address formatter has no clean slot for it.
+ * HRSA addresses also keep the suite in the street column.
  *
  * Leaving the surface form intact in `street` keeps the adversarial training signal
  * (the model learns that a trailing "Suite 4" is part of the road line in this distribution).

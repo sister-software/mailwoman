@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman corpus migrate-source-names` — rewrite each named parquet's `source` column from the retired
+ *   `mailwoman corpus migrate-source-names` — rewrite the `source` column in each parquet file from the retired
  *   `synth-*` spelling to the operation spelling `RECIPE_SOURCES` gives it.
  *
  *   Run this over an assembly's routed staging files before `corpus overlay-manifest`, so the manifest's

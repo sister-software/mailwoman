@@ -93,7 +93,8 @@ export const nsulDatabasePath: PathBuilder = databaseRootPath(dataRootPath())("n
  * - `postalcode-geonames-tail.db` now contains FI/CZ/SK/SI/DK/no/HR/PL/SE.
  * - `postalcode-ni-osm.db` is build-local (ODbL, OSM `addr:postcode`) and may be absent.
  *   A missing file is filtered out.
- *   It is the only GB-claiming extract here, and Code-Point Open is not in this list.
+ *   This is the only GB-claiming extract in the list.
+ *   Code-Point Open is absent.
  */
 export function wofExtractPaths(dataRoot: PathBuilderLike = dataRootPath()): string[] {
 	return Object.values(wofExtractPathsByName(dataRoot))
@@ -117,7 +118,8 @@ export interface WOFExtractPaths {
 	 */
 	postalcodeGeonamesTail: string
 	/**
-	 * The international postcode extract (FR/DE/ES/IT/NL, and the others `pickExtractForPlacetype` routes here).
+	 * The international postcode extract (FR/DE/ES/IT/NL and the other countries
+	 * routed here by `pickExtractForPlacetype`).
 	 */
 	postalcodeIntl: string
 	/**

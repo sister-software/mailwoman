@@ -15,8 +15,9 @@ import { resolvePath } from "path-ts"
 import type { ModuleMove, PathLiteralRewrite } from "#move/types"
 
 /**
- * Path prefixes of dated records, which the sweep leaves unchanged because their
- * paths describe the tree on their date.
+ * Path prefixes of dated records.
+ *
+ * The sweep leaves them unchanged because their paths describe the tree as it existed on their date.
  */
 export const DATED_RECORDS: readonly string[] = [
 	"docs/superpowers/plans/",
@@ -28,8 +29,10 @@ export const DATED_RECORDS: readonly string[] = [
 /**
  * Derives the directory renames implied by a set of file moves.
  *
- * Configs usually refer to directories or globs, which no moved file path matches as a substring.
- * The function trims the trailing segments that the old and new paths share,
+ * Configs refer to directories or globs.
+ * No moved file path matches them as a substring.
+ *
+ * The function trims trailing segments that the old and new paths share,
  * leaving the directory part that moved.
  */
 export function directoryMoves(moves: readonly ModuleMove[]): ModuleMove[] {
@@ -65,8 +68,10 @@ const SOURCE_EXTENSION = /\.tsx?$/u
  * Derives the moves of the `.js`, `.d.ts` and `.js.map` outputs for each moved `lib/`
  * or `src/` TypeScript source.
  *
- * Tests, workflows and docstrings refer to `out/` paths, and a sweep over
- * source paths alone would miss them.
+ * Tests and workflows refer to `out/` paths.
+ * Docstrings refer to them too.
+ *
+ * A sweep over source paths alone would miss these references.
  */
 export function emittedMoves(moves: readonly ModuleMove[]): ModuleMove[] {
 	const emitted: ModuleMove[] = []

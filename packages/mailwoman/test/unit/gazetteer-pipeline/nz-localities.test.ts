@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the NZ locality database: the thin-group floor, the sealed artifact, and the
- *   terms the artifact records about itself in both `database_meta` and `layer_manifest`.
+ *   Fixture-scale checks for the NZ locality database: the thin-group floor, sealed artifact, plus license terms.
+ *   The artifact records its terms in `database_meta` and `layer_manifest`.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -56,7 +56,8 @@ test("buildNZLocalitiesDatabase: the floor holds and the artifact states its ter
 
 	const meta = db.prepare("SELECT value FROM database_meta WHERE key = 'license'").get() as { value: string }
 
-	// The prose the table has carried since the first build, which `readLicenseRecord` resolves.
+	// The table has used this license text since the first build.
+	// `readLicenseRecord` resolves it.
 	expect(meta.value).toBe("CC-BY-4.0, attribution Land Information New Zealand")
 
 	const manifest = await readLayerManifest(db)

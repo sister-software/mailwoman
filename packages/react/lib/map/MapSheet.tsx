@@ -32,7 +32,8 @@ export function SheetClose({ label, onClose, className }: SheetCloseProps): Reac
 
 export interface MapSheetProps {
 	/**
-	 * The sheet's heading, and its accessible name.
+	 * The sheet's heading.
+	 * It also supplies the accessible name.
 	 */
 	title: string
 	/**

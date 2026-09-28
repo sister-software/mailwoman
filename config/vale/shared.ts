@@ -29,7 +29,7 @@ function prependExclude<T extends string>(path: T) {
 
 export function loadValeIgnore(filePath: PathBuilder) {
 	return TextSpliterator.fromAsync(filePath)
-		.filter((line) => line.startsWith("#"))
+		.filter((line) => line.length > 0 && !line.startsWith("#"))
 		.map(prependExclude)
 		.toArray()
 }

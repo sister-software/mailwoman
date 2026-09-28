@@ -284,7 +284,8 @@ function compareComponentMap(base: ConformanceOutcome, variant: ConformanceOutco
 		}
 	}
 
-	// The invariance suite's severity reading, whose critical-tag rule this module must not re-invent.
+	// Use the invariance suite's severity reading.
+	// This module must not redefine its critical-tag rule.
 	const { verdict, diff } = compareComponents(a, b)
 	const basis = `compareComponents verdict ${verdict} · base {${aKeys.toSorted().join(", ") || "empty"}} · variant {${bKeys.toSorted().join(", ") || "empty"}}`
 
@@ -393,8 +394,8 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 /**
  * Reads a pair of outcomes on the axis specified by the fixture.
  *
- * @throws On a comparator name outside the closed set, which can only come from
- * a hand-built fixture that skipped the loader.
+ * @throws When a comparator name falls outside the closed set.
+ * Only a hand-built fixture that skipped the loader can supply one.
  */
 export function compareOutcomes(
 	fixture: ConformanceFixture,

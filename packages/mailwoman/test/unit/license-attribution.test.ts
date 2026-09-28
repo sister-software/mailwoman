@@ -2,9 +2,10 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file What `mailwoman license attribution` reports, and the three things it refuses to imply.
+ * @file Reports from `mailwoman license attribution` and three conclusions it refuses to imply.
  *
- *   Two of the three are pinned as equalities rather than as text, so a disclaimer's wording can be kept while its behavior stops matching it.
+ *   Two of the three are pinned as equalities instead of text.
+ *   This catches a disclaimer whose wording stays the same while behavior changes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -29,7 +30,8 @@ describe("attributionReport", () => {
 		if (!overlay) return
 
 		// en-au contributed none of these rows.
-		// They are its base's, and the field they arrive under says so.
+		// These rows belong to its base package.
+		// The field records that source.
 		expect(overlay.own).toEqual([])
 		expect(overlay.inherited?.package).toBe("@mailwoman/neural-weights-en-us")
 		expect(overlay.inherited?.entries.length).toBeGreaterThan(0)

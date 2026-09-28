@@ -6,8 +6,8 @@
  *   `PostalAddress` and `PostalAddressID` types so an oracle answer is directly comparable to a
  *   `SeedCase` in the gauntlet.
  *
- *   Oracle rather than truth: no result here is authoritative, and {@linkcode OracleGeocodeResult.raw}
- *   keeps the provider's untouched answer in hand whenever the component mapping made a judgement call.
+ *   Oracle results are not authoritative. {@linkcode OracleGeocodeResult.raw} preserves the provider's untouched answer.
+ *   Use that answer when component mapping requires a judgment call.
  */
 
 import type { PostalAddressID } from "@mailwoman/address-id"
@@ -49,8 +49,10 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	/**
 	 * The match as a canonical mailwoman address record.
 	 *
-	 * `geocode` is always populated: a reference geocoder that returned no coordinate is
-	 * not a match, and the clients raise rather than hand back a coordinate-less record.
+	 * `geocode` is always populated.
+	 * A reference geocoder with no coordinate does not produce a match.
+	 *
+	 * The clients raise an error instead of returning a coordinate-less record.
 	 */
 	address: PostalAddress
 	/**

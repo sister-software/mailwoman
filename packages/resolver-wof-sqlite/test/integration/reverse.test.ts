@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Tests for the reverse geocoder: the ray-cast PIP primitives, the bbox-to-PIP descent walk over an
- * inline fixture gazetteer, and an env-restricted integration pass against the real production DBs.
+ * Tests the reverse geocoder's ray-cast PIP primitives and bbox-to-PIP descent walk over an inline fixture gazetteer.
+ * It also runs an environment-restricted integration pass against the production databases.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -182,8 +182,8 @@ describe.skipIf(!ADMIN_DB || !POLYGONS_DB)(
 	"against the production gazetteer (MAILWOMAN_WOF_ADMIN_DB + MAILWOMAN_WOF_POLYGONS_DB)",
 	() => {
 		// Construct in beforeAll rather than the describe body.
-		// The body runs at collection time even when the suite is skipped,
-		// and would try to open the (absent) DBs.
+		// The body runs at collection time even when the suite is skipped.
+		// It would try to open databases that are absent in this test environment.
 		let rg: WOFReverseGeocoder
 
 		beforeAll(() => {

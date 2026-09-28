@@ -80,8 +80,8 @@ export const ZONING_REFUSALS = [
 	/**
 	 * No adopted plan in this product designates the location.
 	 *
-	 * The product cannot distinguish land outside every plan area, unzoned land inside a plan,
-	 * a jurisdiction that never zoned, and a jurisdiction that publishes no records.
+	 * The product cannot distinguish land outside every plan area from unzoned land inside a plan.
+	 * It also cannot distinguish either case from a jurisdiction that never zoned or publishes no records.
 	 */
 	"no_designation_here",
 ] as const
@@ -165,8 +165,9 @@ function toObservation(
 /**
  * Returns the clause that states what the adopted plan assigns.
  *
- * The clause gives the authority's code verbatim, the publisher's crosswalk code
- * when present, and the plan name.
+ * The clause gives the authority's code verbatim and the plan name.
+ * It also gives the publisher's crosswalk code when one exists.
+ *
  * The one-line description and the marker message share this wording.
  */
 export function zoningAssignmentClause(observation: ZoningDesignationObservation): string {

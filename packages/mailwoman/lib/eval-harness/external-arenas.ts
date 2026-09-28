@@ -27,13 +27,13 @@
  *
  *   `promotion-eval.ts` calls {@linkcode externalArenas} IN-process (when the spec floors
  *   `arena.perturb`) and captures `${report}${reportError}` into `<out-dir>/arenas.md`, the file
- *   the verdict assembler column-reads for `arena.perturb`. A throw here is what the child's
- *   non-zero exit was, and the check aborts on it exactly as before.
+ *   the verdict assembler column-reads for `arena.perturb`. A throw here produced the child's
+ *   non-zero exit. The check still aborts on that error.
  *
  *   Scope note (de-shell): the three inner probes this still spawns as child processes are
  *   `perturb-golden.run.ts`, `harness-neural.run.ts` (three times) and `summarize-arenas.run.ts`.
- *   They are `lib/dev-tools/` residents rather than eval legs, and de-shelling them is a separate
- *   job. `zx` therefore survives here while it is gone from `promotion-eval.ts`.
+ *   These probes live in `lib/dev-tools/` and run as child processes.
+ *   De-shelling them is a separate job. `zx` remains here after its removal from `promotion-eval.ts`.
  */
 
 import { tempRootPathBuilder } from "@mailwoman/core/data-root"

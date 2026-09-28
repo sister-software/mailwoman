@@ -15,7 +15,8 @@ import { type Operation, type OperationContext, operationDefiner } from "@mailwo
  */
 export const OperationEffect = {
 	/**
-	 * Reads the checkout, the data root, or a registry, and makes no change.
+	 * Reads the checkout, data root, or a registry.
+	 * It makes no changes.
 	 */
 	Read: "read",
 	/**

@@ -74,7 +74,7 @@ export interface UsePlaceAutocomplete {
 	setActiveIndex: (index: number) => void
 
 	/**
-	 * Handles input keys: arrows move the highlight, Enter picks instead of submitting, and Escape dismisses.
+	 * Handles input keys: arrows move the highlight, Enter picks instead of submitting and Escape dismisses.
 	 */
 	onInputKeyDown: (event: KeyboardEvent<HTMLInputElement>) => void
 
@@ -94,7 +94,8 @@ export interface UsePlaceAutocomplete {
 	inputProps: AutocompleteInputProps
 
 	/**
-	 * The listbox element ID, which matches `inputProps["aria-controls"]`.
+	 * The listbox element ID.
+	 * It matches `inputProps["aria-controls"]`.
 	 */
 	listboxID: string
 
@@ -115,8 +116,10 @@ function replaceSegment(current: string, name: string): string {
 }
 
 /**
- * Fetches debounced place suggestions for the text after the input's last comma. a pick
- * replaces only that segment, and a digit-leading segment never reaches `autocomplete`.
+ * Fetches debounced place suggestions for the text after the input's last comma.
+ *
+ * A pick replaces only that segment.
+ * A digit-leading segment never reaches `autocomplete`.
  */
 export function usePlaceAutocomplete({
 	text,

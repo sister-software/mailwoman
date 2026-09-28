@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ask a data source directly: does it know this string, and what does it say?
+ *   Ask a data source whether it knows this string and what value it returns.
  *
  *   A resolve returning no result has two causes that look identical from the outside — the parser never asked, or the
  *   gazetteer has no answer — so this module keeps the readings apart:
@@ -38,7 +38,8 @@ export const LookupSource = {
 	 */
 	StreetMorphology: "street_morphology",
 	/**
-	 * Stage-1 deterministic preprocessing: what the model is actually FED, which is not what the user typed.
+	 * Stage-1 deterministic preprocessing: the text the model receives after preprocessing.
+	 * The preprocessed text can differ from the user's input.
 	 */
 	Normalize: "normalize",
 	/**

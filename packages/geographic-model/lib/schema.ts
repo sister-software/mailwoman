@@ -168,7 +168,8 @@ export const RelationSemantics = {
 export type RelationSemantics = (typeof RelationSemantics)[keyof typeof RelationSemantics]
 
 /**
- * A concept's review status, which tells consumers whether to use the record.
+ * A concept's review status.
+ * It tells consumers whether to use the record.
  */
 export const ConceptStatus = {
 	/**
@@ -271,7 +272,8 @@ export interface RelationAssertion {
 	/**
 	 * ISO 3166-1 alpha-2 codes that scope the claim.
 	 *
-	 * An absent list means the claim has no country scope, which is weaker than a claim about every country.
+	 * An absent list means the claim has no country scope.
+	 * This is weaker than a claim about every country.
 	 */
 	countries?: string[]
 	provenance: SourceProvenance
@@ -364,8 +366,8 @@ export type DerivationInput =
  * A fact that an identified procedure computed from specific input records.
  *
  * The record has no provenance field.
- * Its `derivation` and `inputs` serve as provenance, and the validator rejects
- * a fact whose inputs do not resolve.
+ * Its `derivation` and `inputs` serve as provenance.
+ * The validator rejects a fact whose inputs do not resolve.
  */
 export interface DerivedFactRecord {
 	id: DerivedFactID

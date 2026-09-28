@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The autocomplete ladder over two arms — parse→resolve and FST — where every rung runs under the row's country, and a row with no country is refused rather than graded.
+ * @file The autocomplete ladder over two arms — parse→resolve and FST. Every rung runs under the row's country. The runner refuses a row with no country.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -21,8 +21,8 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms: `parse_resolve` answers one coordinate, and `fst` answers up
- * to {@link LADDER_TOP_K} suggestions.
+ * The two arms: `parse_resolve` answers one coordinate.
+ * `fst` answers up to {@link LADDER_TOP_K} suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
 
@@ -356,7 +356,8 @@ export async function runAutocompleteLadder(
 		const matcher = fstLocale ? await matcherFor(fstLocale) : null
 		const rungs = ladderRungs(row.input)
 
-		// The first request of a process pays engine construction, which is not a rung's latency.
+		// The first request of a process pays engine construction.
+		// That time is not a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true

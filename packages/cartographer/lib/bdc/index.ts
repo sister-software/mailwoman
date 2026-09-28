@@ -49,10 +49,12 @@ export type BaseBDCLayerSpecification<T> = T extends BDCLayerSpecificationInput
 /**
  * The three builders below take a spec without the source fields and return one with them filled in.
  *
- * They are not generic, and each ends with a single assertion rather than through `unknown`,
- * because TypeScript cannot verify that `Omit<T, K>` plus the omitted keys reconstitutes `T` —
- * a `<T>(…): T` builder could only reach its return type by defeating the checker,
- * covering the `id`, `minzoom` and `maxzoom` values too.
+ * These are specific assertions.
+ * Each avoids `unknown`.
+ *
+ * TypeScript cannot verify that because TypeScript cannot verify that `Omit<T, K>` plus
+ * the omitted keys reconstitutes `T` — a `<T>(…): T` builder could only reach its return
+ * type by defeating the checker, covering the `id`, `minzoom` and `maxzoom` values too.
  */
 type BDCLayerBuilderInput = BaseBDCLayerSpecification<BDCLayerSpecificationInput>
 

@@ -26,8 +26,9 @@ import { SurfaceOrigin } from "#types"
 /**
  * A venue or admin-only row asserting that no street-side component is present.
  *
- * The components come from the `--input` tuples, and the row exists to teach the absence
- * rather than to report a record, so no register asserts it.
+ * The row uses components from the `--input` tuples.
+ * It teaches the absence of a street component instead of representing a source record.
+ * No register asserts the row.
  */
 const NO_STREET_PROVENANCE = {
 	register: null,
@@ -39,8 +40,8 @@ const NO_STREET_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * The file header describes the parse behavior this recipe exercises.
+ * `description` below shows the generated surface form.
  */
 export const noStreetRecipe: CorpusRecipe = {
 	name: "no-street",

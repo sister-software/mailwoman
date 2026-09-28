@@ -53,12 +53,16 @@ export interface LayerManifest {
 	/**
 	 * How many records each input publisher supplied to this build, keyed by the publisher's own name.
 	 *
-	 * The count is of the input rather than of the rows the artifact kept, and it is recorded here
-	 * because it cannot be recovered afterwards: Overture removes a release from its bucket once a
-	 * newer one lands, and a build that filtered its input leaves no way to count what the input held.
+	 * The count is of the input rather than the rows the artifact kept.
+	 * It is recorded here because it cannot be recovered afterwards.
 	 *
-	 * Absent means the build did not record it, which is what every artifact built before this field carries.
-	 * A reader distinguishes that from a recorded zero, and never reports the two the same way.
+	 * Overture removes a release from its bucket once a newer one lands.
+	 * A build that filtered its input leaves no way to count what the input held.
+	 *
+	 * Absent means the build did not record it.
+	 * Every artifact built before this field has that state.
+	 *
+	 * A reader distinguishes that from a recorded zero and never reports the two the same way.
 	 */
 	sourceRecords?: Readonly<Record<string, number>>
 }
@@ -359,7 +363,8 @@ export async function readLayerManifest(db: layerschemahandle): Promise<LayerMan
 		freshnessPolicy: row.freshness_policy as LayerFreshnessPolicy,
 		spineKeys: parseJSONStrict<SpineKeys>(row.spine_keys),
 		createdAt: row.created_at,
-		// NULL and a missing column both mean the build recorded no count, and the key stays absent for either.
+		// NULL and a missing column both mean the build recorded no count.
+		// The key stays absent for either.
 		// Resolving them to `{}` would read as a build that counted its publishers and found none.
 		...(row.source_records === null || row.source_records === undefined
 			? {}

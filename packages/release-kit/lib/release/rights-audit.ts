@@ -150,8 +150,10 @@ export interface TrainingRecordAudit {
 	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
 	 *
 	 * The frozen manifest states what the corpus holds.
-	 * This states what reached the trainer, and the two differ by the country filter, the source weights,
-	 * a zero weight, the sampler and every overlay merged after the frozen manifest was written.
+	 * This states what reached the trainer.
+	 *
+	 * The two differ because of the country filter, source weights, zero weights,
+	 * the sampler and every overlay merged after the frozen manifest was written.
 	 */
 	effective: {
 		config: string
@@ -159,7 +161,7 @@ export interface TrainingRecordAudit {
 		trainingSources: number
 		excludedSources: number
 		/**
-		 * Sources the epoch emitted that the frozen manifest does not name, and their row total.
+		 * Sources the epoch emitted that the frozen manifest does not record, plus their row totals.
 		 *
 		 * A non-zero count means the frozen manifest covers part of what trained the model.
 		 */
@@ -175,8 +177,10 @@ export interface TrainingRecordAudit {
 	 * Why a release may not assert that this package's declared provenance equals what trained it.
 	 *
 	 * An empty array does not state agreement.
-	 * A model card's attribution entries are prose naming publishers, and an effective
-	 * manifest's entries are corpus source ids, so no field joins the two.
+	 * A model card's attribution entries are prose that identifies publishers.
+	 *
+	 * An effective manifest's entries are corpus source IDs.
+	 * No field joins the two.
 	 *
 	 * The refusals below are the ones measurable without that join: no effective manifest
 	 * was read, or the one read covers part of the emitted set.
@@ -187,10 +191,13 @@ export interface TrainingRecordAudit {
 /**
  * What the committed data bill of materials states about the artifacts a release can deliver.
  *
- * The register covers source terms, the weights records cover what a model shipped,
- * and the frozen manifests cover what trained it.
- * None of the three reaches a runtime database, so a release could publish a
- * bundle whose terms no audited record named.
+ * The register covers source terms.
+ * The weights records cover what a model shipped.
+ *
+ * The frozen manifests cover what trained it.
+ * None of the three reaches a runtime database.
+ *
+ * A release could publish a bundle whose terms no audited record records.
  * This is that fourth input.
  */
 export interface DataBOMAudit {
@@ -262,7 +269,8 @@ const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
 /**
  * How many of the data document's license expressions the terminal report prints.
  *
- * The count under each is what a reader compares, and the tail is a long list of one-component expressions.
+ * The count under each is what a reader compares.
+ * The tail is a long list of one-component expressions.
  * The full set is in the document the line above names.
  */
 const EXPRESSIONS_SHOWN = 8
@@ -426,7 +434,8 @@ async function auditTraining(
 				unresolved: record.inherited
 					? `ships no model graph and its card names no corpus; what trained ${record.inherited.package}'s graph is that package's row`
 					: "its model card names no corpus, so a manifest lookup has no key",
-				// An empty list reads as agreement, and a card naming no corpus supports no comparison at all.
+				// An empty list reads as agreement.
+				// A card naming no corpus supports no comparison.
 				// The inherited case points at the package that owns the graph rather than repeating its refusal.
 				provenanceRefusals: record.inherited
 					? [
@@ -629,8 +638,8 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
  *
  * The document is generated rather than hand-written, so this audit reports
  * what it says instead of re-deriving it.
- * An absent document goes into `unresolved` as a missing record, which is
- * where a release decision reads it.
+ * An absent document goes into `unresolved` as a missing record.
+ * A release decision reads that field.
  */
 async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
 	const manifest = await readPackageJSON(resolvePath(repoRoot, "packages", "mailwoman", "package.json"))

@@ -5,8 +5,8 @@
  *
  *   Count, per country and split, the held-out `source_id`s that also appear in train.
  *
- *   `holdout-leakage.run.ts` counts train rows the holdout policy says belong in val or test. This is the
- *   other direction: a row can sit in val and share its `source_id` with a train row, which happens when a
+ *   `holdout-leakage.run.ts` counts train rows the holdout policy says belong in val or test. This report checks
+ *   the other direction: a row can sit in val and share its `source_id` with a train row. This happens when a
  *   file's split was chosen by hand rather than by `splitForRow`. Zero is the expected value.
  *
  *   Measured over `v0.6.0-register-surface` on 2026-09-28, this tool's own denominators: DE's val split holds
@@ -18,7 +18,7 @@
  *   **Why the raw-string count is a lower bound.** `base_source_id` is NULL for 4,176,539 of the 4,206,561
  *   `composed` rows of that corpus, so two rows composed from one underlying address under different
  *   `source_id`s are indistinguishable from two unrelated rows. The raw column counts rows whose `raw` string
- *   is byte-equal across the splits, which misses any pair the recipe rendered differently. DE val reads 513
+ *   is byte-equal across the splits. It misses any pair the recipe rendered differently. DE val reads 513
  *   of 38,056 there.
  *
  *   Usage:
@@ -57,8 +57,8 @@ const globFor = (split: string) => escapeSQLString(join(corpus, split, "*.parque
 
 using db = await openDuckDB()
 
-// The row order of this report's own intermediate tables carries no information,
-// and holding it costs the memory the query is bounded by.
+// The row order of this report's intermediate tables carries no information.
+// Holding it costs memory from the query's bounded allocation.
 // This is the setting DuckDB's own out-of-memory message names first.
 await db.run("SET preserve_insertion_order=false")
 
@@ -69,8 +69,8 @@ for (const split of ["val", "test"] as const) {
 	// and the train side is the corpus.
 	// Materializing the small side first and then streaming train through a join against
 	// it keeps the hash table at the size of the held-out set.
-	// Aggregating both sides in one statement instead makes DuckDB build a distinct set over every train
-	// row, which exhausts the memory limit and reports an out-of-memory error naming a 32 KiB allocation.
+	// Aggregating both sides in one statement instead makes DuckDB build a distinct set over every train row.
+	// That exhausts the memory limit and reports an out-of-memory error naming a 32 KiB allocation.
 	await db.run(
 		`CREATE OR REPLACE TEMP TABLE held AS SELECT DISTINCT country, source_id, raw FROM read_parquet('${globFor(split)}')`
 	)

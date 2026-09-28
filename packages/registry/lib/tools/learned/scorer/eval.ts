@@ -77,7 +77,8 @@ export interface ScorerPairwiseEvalOptions {
  * A pair is a match when both records share an NPI.
  * The function averages ROC-AUC and best F1 over several train/test splits.
  *
- * It prints the Markdown report, writes it to `outMd` when given, and returns it.
+ * It prints and returns the Markdown report.
+ * It also writes the report to `outMd` when that option is set.
  */
 export async function scorerPairwiseEval(
 	options: ScorerPairwiseEvalOptions,

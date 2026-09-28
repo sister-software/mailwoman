@@ -35,8 +35,10 @@ interface SPARQLEnvelope {
 /**
  * Turn the Wikidata designator-label payload into surfaces.
  *
- * A row is dropped when its language tag is empty (an untagged literal, which Wikidata occasionally carries),
- * when the QID maps to no designator in {@link CONCEPT_QIDS}, or when the normalized phrase is empty.
+ * Wikidata sometimes returns an untagged literal.
+ * The builder drops that row when its language tag is empty, when the QID maps to no
+ * designator in {@link CONCEPT_QIDS}, or when the normalized phrase is empty.
+ *
  * Everything that survives lands `curated: false` — see the module docstring.
  */
 export function surfacesFromWikidata(
@@ -61,8 +63,8 @@ export function surfacesFromWikidata(
 		if (!phrase) continue
 
 		const source = binding.kind?.value === "alt" ? "wikidata:alt" : "wikidata:label"
-		// A concept can carry the same string as both a label and an alias, and across
-		// dialect subtags (`zh`, `zh-cn`, `zh-hans` all say 航站楼).
+		// A concept can use the same string as a label and an alias.
+		// Dialect subtags can also repeat a phrase (`zh`, `zh-cn`, `zh-hans` all use 航站楼).
 		// Key the dedupe on the tuple that identifies a row.
 		const key = `${phrase}\0${recordID}\0${lang}\0${source}`
 

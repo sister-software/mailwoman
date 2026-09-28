@@ -5,15 +5,17 @@
  *
  *   One real address per locale this project publishes weights for, with the surface it must render to.
  *
- *   The OpenCage templates are written for OpenStreetMap's tag vocabulary and are correct for the anglophone and
- *   German-order locales. They insert a comma into Spain's street line, drop Italy's province, reorder India's tail,
- *   and print both CJK locales backwards with commas inserted — `1-9-1, 丸の内, 千代田区, 東京都 100-0005` where the
- *   convention is `〒100-0005 東京都千代田区丸の内1-9-1`.
+ *   The OpenCage templates follow OpenStreetMap's tag vocabulary and fit anglophone and German-order locales.
+ *   They insert a comma into Spain's street line and drop Italy's province.
+ *   They reorder India's address tail. They print both CJK locales backwards with commas inserted.
+ *   For example, they produce `1-9-1, 丸の内, 千代田区, 東京都 100-0005` instead of
+ *   `〒100-0005 東京都千代田区丸の内1-9-1`.
  *
  *   Provenance for the CJK rows is this repository's own: `corpus/lib/jp/adapters/wof-admin` declares the Japanese
- *   envelope as `〒<postcode>? <region><locality><neighbourhood>?`, `mailwoman/test/unit/geocode/routed-classifier`
- *   carries `〒930-0393 富山県中新川郡上市町法音寺1` as a real parse fixture, and `corpus/lib/cn/recipes/
- *   organizational-units` decomposes `云南省临沧市孟定农场三分场二队` largest-first with no separators. The Latin rows
+ *   envelope as `〒<postcode>? <region><locality><neighbourhood>?`.
+ *   `mailwoman/test/unit/geocode/routed-classifier` includes `〒930-0393 富山県中新川郡上市町法音寺1`
+ *   as a parse fixture. `corpus/lib/cn/recipes/organizational-units` decomposes
+ *   `云南省临沧市孟定农场三分场二队` largest-first without separators. The Latin rows
  *   are the libaddressinput skeletons.
  */
 

@@ -86,8 +86,8 @@ describe("WorkerHost restart", () => {
 					elapsed_s: 41,
 					command: "node out/cli/index.js eval promote --check v9.0.0-base",
 				},
-				// A finished job is not a loss, and a caller relaunching it would re-run
-				// work that already has a verdict on disk.
+				// The job finished successfully and has a verdict on disk.
+				// Relaunching it would repeat completed work.
 				{ job_id: "job-0", label: "check:earlier", state: "succeeded", elapsed_s: 400, command: "node earlier" },
 			],
 			JOBS_PATH
@@ -114,8 +114,8 @@ describe("WorkerHost restart", () => {
 	it("says the job list could not be read rather than reporting no jobs", async () => {
 		await writeTools({ type: "object", properties: {} })
 
-		// The sidecar is absent, so the stub refuses the call the way a worker with no registry would.
-		// An empty list would tell the caller a relaunch is unnecessary, which is the one wrong answer.
+		// The sidecar is absent, so the stub refuses the call as a worker with no registry would.
+		// An empty list would incorrectly tell the caller that no relaunch is needed.
 		await using host = new WorkerHost({
 			workerPath: STUB_PATH,
 			workerArgs: [TOOLS_PATH, STUB_DIR.path("absent.json")],

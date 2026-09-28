@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Dutch postal reference. The PC6 postcode key is the whole of it: NL has no entry in
- *   `candidateSystemsForPostcode`'s table, which asks which address system's own shape a postcode
- *   fits, and registering one there would change which systems that function reports.
+ *   Dutch postal reference. The PC6 postcode is the complete key for this system.
+ *   `candidateSystemsForPostcode` checks which address-system shapes fit a postcode.
+ *   NL has no entry in that table. Adding one would change the systems that function reports.
  */
 
 export * from "#nl/postcode"

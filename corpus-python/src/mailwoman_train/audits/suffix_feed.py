@@ -11,10 +11,10 @@ from typing import Any
 from ..data.loader import _raw_row_stream
 from ..data.relabel import AffixRelabelLexicon, relabel_row
 
-# Both spellings of the one source this audit measures. `RECIPE_SOURCES` in
-# `packages/corpus/lib/recipes/sources.ts` is the authority for the pair, and a corpus stores whichever
-# spelling it was assembled under. Matching one alone makes the audit report every target cell as absent on
-# the other corpus, which reads the same as a feed that carries no target rows.
+# This audit measures both spellings of one source. `RECIPE_SOURCES` in
+# `packages/corpus/lib/recipes/sources.ts` is authoritative for the pair. A corpus records the
+# spelling used during assembly. Matching only one spelling makes the audit report every target cell
+# as absent in the other corpus. The report then resembles a feed with no target rows.
 TARGET_SOURCES = ("synth-suffix-boundary", "spliced-suffix-boundary")
 
 

@@ -35,9 +35,9 @@ describe("reliabilityCurve", () => {
 	})
 
 	it("signs the gap so overconfidence is negative", () => {
-		// The direction is the finding rather than the magnitude: a confidence above the
-		// accuracy it warrants is the failure that lets a caller trust a wrong answer,
-		// and an unsigned gap cannot tell it from the harmless direction.
+		// The sign determines whether the confidence exceeds its observed accuracy.
+		// A positive gap can lead a caller to trust a wrong answer.
+		// An unsigned gap cannot distinguish that case from a harmless negative gap.
 		const overconfident = reliabilityCurve(at(0.9, 100, 50), 10)
 		const underconfident = reliabilityCurve(at(0.5, 100, 90), 10)
 
@@ -57,8 +57,8 @@ describe("reliabilityCurve", () => {
 
 	it("KEEPS empty bins", () => {
 		// A model whose confidences never enter the low bins is itself the finding.
-		// Dropping the empty rows turns "this model is never unsure" into a table that simply
-		// starts at 0.8, which reads as a narrower measurement rather than a wider result.
+		// Dropping the empty rows turns "this model is never unsure" into a table that simply starts at 0.8.
+		// That result describes fewer bins than the full confidence range.
 		const curve = reliabilityCurve(at(0.95, 10, 9), 10)
 
 		expect(curve.bins).toHaveLength(10)

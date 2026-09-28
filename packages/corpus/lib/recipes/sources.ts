@@ -292,13 +292,15 @@ export function recipeSource(source: string): RecipeSource | null {
 /**
  * The spelling a recipe writes today, given the retired spelling it has always written.
  *
- * Every recipe's default `source` reads this rather than holding a literal, so the vocabulary
- * is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides
- * which spelling it answers with, and it has to agree with the corpus a recipe output joins.
+ * Every recipe's default `source` reads this rather than holding a literal, so the
+ * vocabulary is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES}
+ * decides which spelling it answers with.
+ * It must agree with the corpus that a recipe output joins.
  *
  * @throws When the table records no entry for `retired`.
- * A pass-through would let a typo become a source id on every row of a built corpus,
- * which is the failure `wire-identifiers` exists to catch later and this catches at the call.
+ * A pass-through would let a typo become a source ID on every row of a built corpus.
+ * `wire-identifiers` catches that failure later.
+ * This function catches it at the call.
  */
 export function defaultRecipeSource(retired: string): string {
 	const entry = BY_RETIRED.get(retired)
@@ -334,8 +336,9 @@ export const WRITE_CURRENT_SOURCE_NAMES = true
 /**
  * The retired spelling of a recipe-output source given either spelling, or the value unchanged.
  *
- * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling,
- * and both refuse a source they do not name.
+ * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling.
+ * Both refuse a source they do not record.
+ *
  * A corpus rewritten to the current spelling would therefore make each of
  * them throw on every row it carries.
  *

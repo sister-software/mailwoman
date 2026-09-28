@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   German postcodes (Postleitzahl, PLZ): the branded type, the shape, normalization, and the
- *   first-digit → Leitzone geographic prior.
+ *   German postcodes (Postleitzahl, PLZ): the branded type and shape, plus normalization rules.
+ *   The module also defines a first-digit → Leitzone geographic prior.
  *
  *   The US analog is `us/zipcode.ts`, and the contrast is the informative part. A US ZIP's first
  *   digit maps cleanly to a band of states (`StateAbbreviationZipCodePrefixRecord`). A German PLZ's
  *   first digit maps to a **Leitzone** — a postal routing region that deliberately **crosses
- *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland, and Mainz
- *   in Rheinland-Pfalz). So the PLZ prior narrows geography, but it does not narrow the state the
- *   way a US ZIP does — a lesson for any code that tries to derive a German region from a postcode
+ *   Bundesland borders** (Leitzone 6 covers Frankfurt in Hessen, Saarbrücken in Saarland and Mainz
+ *   in Rheinland-Pfalz). The PLZ prior narrows geography to a postal routing region.
+ *   It does not identify a Bundesland as a US ZIP does. Code must not derive a German region from a postcode
  *   alone.
  */
 

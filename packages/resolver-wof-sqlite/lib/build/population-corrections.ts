@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file Populations the gazetteer records at a fraction of their size, corrected against the record's own concordance.
  *
- *   A review queue. The build must not rewrite a population from a same-name-parent ratio, because
- *   the detector cannot tell a district's mis-recorded namesake city from a small village sharing
- *   the district name, and both ends are real.
+ *   This file records corrections for review. The build must not rewrite populations from a
+ *   same-name-parent ratio. The detector cannot distinguish a district's mis-recorded namesake
+ *   city from a small village with the district name. Both places are real.
  *
- *   An entry here is one row someone followed to a second source and read. The bar is the row's own
- *   `gn:id` concordance, the coordinates agreeing, and the GeoNames record naming the same place.
+ *   Each entry identifies one row that a reviewer checked against a second source.
+ *   The row's own `gn:id` must agree with the coordinates. The GeoNames record must identify the same place.
  *
  *   The correction applies to the candidate artifact rather than the admin gazetteer.
  *   `place_population` in `admin-global-priority.db` still carries the WOF figure, so a reader going
@@ -45,8 +45,10 @@ export interface PopulationCorrection {
  * WOF id → the corrected population.
  *
  * One entry, because one row has been followed.
- * Adding a second is the same work again: read the row's `gn:id`, confirm the
- * coordinates agree, and state what the second source says.
+ * Adding a second correction requires the same review.
+ *
+ * Read the row's `gn:id` and confirm the coordinates agree.
+ * Then state what the second source says.
  */
 export const POPULATION_CORRECTIONS: Readonly<Record<number, PopulationCorrection>> = {
 	102_030_887: {

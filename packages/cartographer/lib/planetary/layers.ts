@@ -113,8 +113,8 @@ export function hillshadeLayer(palette: PlanetaryPalette): HillshadeLayerSpecifi
 		type: "hillshade",
 		source: PlanetaryHillshadeSourceID,
 		paint: {
-			// Under 1: these bodies carry relief far sharper than Earth's relative to their radius,
-			// and unexaggerated shading reads as noise at globe zooms.
+			// Under 1: these bodies have relief sharper than Earth's relative to their radius.
+			// Unexaggerated shading reads as noise at globe zoom levels.
 			"hillshade-exaggeration": 0.6,
 			"hillshade-highlight-color": palette.reliefHighlight,
 			"hillshade-shadow-color": palette.reliefShadow,

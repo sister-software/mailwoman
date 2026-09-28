@@ -7,8 +7,8 @@
  *
  *   `createGeocodeSession` resolves gazetteer artifacts under `options.dataRoot`, and weights
  *   resolution is a ladder of which only the overlay rung is governed by `dataRoot`. A bogus root
- *   with a real candidate.db passes the gazetteer check. That check runs first, so the session's next stop is
- *   weights, and the bogus root must then fail.
+ *   A real candidate.db passes the gazetteer check.
+ *   The session checks the gazetteer first, then checks weights. The bogus root must fail at the weights check.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -27,7 +27,8 @@ afterAll(() => BOGUS_ROOT[Symbol.asyncDispose]())
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
 	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
-		// Weights resolution is a ladder, and only its overlay rung is governed by `dataRoot`.
+		// Weights resolution is a ladder.
+		// Only its overlay rung is governed by `dataRoot`.
 		// A checkout whose workspace packages or weights cache carry binaries
 		// (CI links them into its checkout) resolves the FST from those rungs,
 		// while a checkout without them rejects outright.

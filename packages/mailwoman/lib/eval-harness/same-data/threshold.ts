@@ -37,8 +37,8 @@ export const THRESHOLD_STEPS = [
 /**
  * Re-grades one arm's results as if it had withheld every selection with confidence below `threshold`.
  *
- * A withheld row becomes an abstention with `correct` false, null distance fields,
- * and a mechanism prefixed with `withheld:below_threshold`.
+ * A withheld row becomes an abstention with `correct` false and null distance fields.
+ * Its mechanism is prefixed with `withheld:below_threshold`.
  * Errored rows are returned unchanged.
  */
 export function applyThreshold(results: readonly ArmRowResult[], threshold: number): ArmRowResult[] {
@@ -110,7 +110,8 @@ export function irreducibleFalseSelections(
  * accuracy and false-selection rate.
  *
  * The filter requires both because either one alone is easy to win.
- * Threshold 0 maximizes accuracy, and threshold 1 minimizes false selection.
+ * Threshold 0 maximizes accuracy.
+ * Threshold 1 minimizes false selection.
  */
 export function dominatingPoints(
 	curve: readonly ThresholdPoint[],

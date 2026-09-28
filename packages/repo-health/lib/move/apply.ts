@@ -70,7 +70,7 @@ function editsByFile(plan: ModuleMovePlan): Map<string, TextEdit[]> {
 }
 
 /**
- * Removes each source directory the moves emptied, and each parent that becomes empty with it.
+ * Removes source directories emptied by the moves and their parents when those parents become empty.
  *
  * `git mv` leaves the emptied directory on disk.
  * An existence check would otherwise still find the old path.
@@ -114,8 +114,8 @@ async function rewriteFile(repoRoot: string, file: string, edits: readonly TextE
 }
 
 /**
- * Moves the files with `git mv`, rewrites the planned specifiers, manifest targets
- * and path literals, and then re-resolves each rewritten specifier.
+ * Moves files with `git mv` and rewrites planned specifiers, manifest targets, and path literals.
+ * It then resolves each rewritten specifier again.
  *
  * The function throws before touching anything when the plan has an unresolved specifier.
  * After the move, it throws when a rewritten specifier resolves elsewhere

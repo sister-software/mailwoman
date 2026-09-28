@@ -73,8 +73,9 @@ const SPRINGFIELD_CENTER = {
 	coordinates: [SPRINGFIELD.longitude, SPRINGFIELD.latitude] as [number, number],
 }
 
-// A remote center, ~280 km from Springfield — far outside even this module's 32-ring
-// (~11 km) default, and with no fixture rows anywhere nearby.
+// This center is ~280 km from Springfield.
+// The module's 32-ring default spans ~11 km.
+// The fixture has no rows near this remote point.
 // The sparse-result acceptance case.
 const REMOTE = { latitude: 41.8781, longitude: -87.6298 }
 
@@ -304,8 +305,8 @@ describe("nearestInfrastructure", () => {
 			expect(hit.coverage).toEqual({
 				h3Cell: res9ShortCellToRes6Parent(hit.h3Cell),
 				completeness: 0.75,
-				// The fixture writes no basis, so it reads back as the weakest one, which is
-				// also the reason a 0.75 here cannot license an exclusion on its own.
+				// The fixture omits `basis`, so the row reads as the weakest basis.
+				// At this basis, a 0.75 score cannot license an exclusion by itself.
 				basis: CoverageBasis.SourcePresent,
 				observedRows: 42,
 			})

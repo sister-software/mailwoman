@@ -38,8 +38,9 @@ interface BFSItem {
 	tokens: string[]
 
 	/**
-	 * Absolute token depth the item's expansion started from, which the two seeding
-	 * interpretations place one token apart.
+	 * Absolute token depth where the item's expansion started.
+	 *
+	 * The two seeding interpretations place that depth one token apart.
 	 */
 	base: number
 }

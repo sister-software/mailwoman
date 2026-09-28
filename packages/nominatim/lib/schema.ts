@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must not
- *   change, the query schemas shape only the OpenAPI document, and `routes.ts` does the parsing.
+ *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must remain stable.
+ *   Query schemas shape only the OpenAPI document. `routes.ts` parses requests.
  */
 
 import { z } from "@hono/zod-openapi"
@@ -102,7 +102,8 @@ const NominatimStatusArtifactSchema = z
 	.openapi("NominatimStatusArtifact")
 
 /**
- * The `/status` payload, whose `mailwoman` block is an extension upstream Nominatim lacks.
+ * The `/status` payload.
+ * Its `mailwoman` block extends upstream Nominatim.
  */
 export const NominatimStatusSchema = z
 	.object({

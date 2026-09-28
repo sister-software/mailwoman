@@ -102,7 +102,8 @@ export interface ExternalArmIdentity {
 	/**
 	 * Where the version came from.
 	 *
-	 * A `caller-declared` version is the caller's claim, which the endpoint did not confirm.
+	 * A `caller-declared` version comes from the caller.
+	 * The endpoint did not confirm it.
 	 */
 	version_source: "endpoint" | "caller-declared" | null
 	data_vintage: string | null
@@ -144,7 +145,10 @@ function readString(value: unknown): string | null {
 }
 
 /**
- * Reads a coordinate from a number or a numeric string, as Nominatim returns, and checks its range.
+ * Reads a coordinate from a number or numeric string.
+ *
+ * Nominatim returns numeric strings.
+ * The reader also checks the coordinate's range.
  */
 function readCoordinate(value: unknown, isValid: (candidate: number) => boolean): number | null {
 	const parsed =

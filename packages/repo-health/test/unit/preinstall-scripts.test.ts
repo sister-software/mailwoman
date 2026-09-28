@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Checks that scripts CI runs before `yarn install` import only relative paths and `node:` builtins.
  *
- *   A workspace import in these scripts resolves locally, where `node_modules` exists, and fails only on CI with
- *   `ERR_MODULE_NOT_FOUND`. Add an entry when a workflow starts running a script before its install step, and remove
- *   one when that order changes.
+ *   A workspace import in these scripts resolves locally because `node_modules` exists.
+ *   It fails on CI with `ERR_MODULE_NOT_FOUND`. Add an entry when a workflow runs a script before its install step.
+ *   Remove the entry when that order changes.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

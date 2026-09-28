@@ -7,7 +7,7 @@
  *   and `health` — through one runner that differs only in the context it builds and the exit code an output
  *   earns. Kept free of `process` so it is unit-testable.
  *
- *   `health` also performs two mutations outside the check registry, whose type admits no writer:
+ *   `health` also performs two mutations outside the check registry. Its type admits no writer:
  *   `health baseline debt` rewrites `packages/repo-health/baseline.json`, and `health fix <check>` applies a
  *   check's mechanical repair.
  */
@@ -107,8 +107,9 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * One registry as a `mwops` verb: its operations, the context each receives,
- * and how an output decides the exit code.
+ * One registry as a `mwops` verb: its operations and the context each receives.
+ *
+ * The registry also defines how an output determines the exit code.
  */
 interface OperationView<TContext extends OperationContext> {
 	verb: string

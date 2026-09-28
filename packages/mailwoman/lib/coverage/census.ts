@@ -112,7 +112,7 @@ export interface CoverageMismatches {
 const COUNTRY_LESS_CODES = ["ZZ", "??"] as const
 
 /**
- * What each country-less code stands for, and what measuring its rows established.
+ * Describes each country-less code and the measurements for its rows.
  */
 const COUNTRY_LESS_READINGS: Readonly<Record<string, string>> = {
 	ZZ:
@@ -139,7 +139,7 @@ export interface CountryLessRows {
 	rows: number
 	streetRows: number
 	/**
-	 * What the code stands for, and what is known about attributing its rows.
+	 * Describes the code and the evidence for attributing its rows.
 	 */
 	reading: string
 }

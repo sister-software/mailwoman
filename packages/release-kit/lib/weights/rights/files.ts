@@ -86,13 +86,16 @@ export interface ProvenanceDocument {
 	 * Which of the corpus's sources one config's audited epoch drew from, read from the
 	 * effective training manifest committed under `packages/corpus/data/training-manifests/`.
 	 *
-	 * `corpus_version` is the corpus a card names, and the corpus manifest states what that corpus holds.
-	 * Neither states what reached the trainer, and the two differ by the country filter, the source
-	 * weights, a zero weight, the sampler and every overlay merged after the corpus manifest was written.
+	 * `corpus_version` identifies the corpus.
+	 * The corpus manifest states what it holds.
+	 *
+	 * Neither states what reached the trainer.
+	 * The two differ by the country filter and source weights, a zero weight, the sampler
+	 * and every overlay merged after the corpus manifest was written.
 	 * This block carries the difference.
 	 *
-	 * `null` means the repository holds no effective manifest for the corpus this card names,
-	 * which is a statement about the checkout rather than about the model.
+	 * `null` means the repository holds no effective manifest for the corpus recorded by this card.
+	 * This describes the checkout rather than the model.
 	 */
 	effective_training_sources: {
 		config: string
@@ -109,10 +112,12 @@ export interface ProvenanceDocument {
 		/**
 		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
 		 *
-		 * `corpus_rows` is how many rows of the source the corpus holds, `drawn_rows` how many
-		 * the epoch sampled, and `emitted_rows` how many reached the trainer after augmentation.
-		 * A non-empty list means this block covers part of what trained the model,
-		 * because the corpus manifest records the terms of none of these sources.
+		 * `corpus_rows` counts rows of the source in the corpus.
+		 * `drawn_rows` counts rows sampled by the epoch.
+		 *
+		 * `emitted_rows` counts rows that reached the trainer after augmentation.
+		 * A non-empty list means this block covers part of the training data, because the
+		 * corpus manifest records the terms of none of these sources.
 		 *
 		 * `corpus_rows` reads `-1` when the audit reported no count for the source.
 		 */

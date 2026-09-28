@@ -7,8 +7,8 @@
  * `@mailwoman/react/map`'s geocoder consumes, injecting the browser runtime's loaders into
  * `@mailwoman/react`'s `useReleaseRuntime` orchestration and wrapping the loaded assets with the map surface.
  *
- * This is application code on purpose: `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
- * maplibre graph, and this assembly imports all three.
+ * This is application code on purpose. `@mailwoman/react` keeps its runtime hook free of the ONNX, httpvfs and
+ * maplibre graph. This assembly imports all three.
  */
 
 import { StyleSpecificationComposer, MailwomanBaseTileSetID } from "@mailwoman/cartographer/base"
@@ -153,9 +153,10 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 	)
 
 	/*
-	 * These callbacks read `rt.assets` and name it as a dependency: a callback that parses
-	 * with a bundle is not the same callback once the bundle changes, and a ref mirror lost
-	 * a child-first effect race (a ref written during render is a value React may discard).
+	 * These callbacks read `rt.assets` and name it as a dependency.
+	 *
+	 * A callback that parses with a bundle changes when the bundle changes.
+	 * A ref mirror lost a child-first effect race (a ref written during render is a value React may discard).
 	 */
 
 	const geoBias = useGeoBias()
@@ -383,7 +384,8 @@ export function useGeocoderRuntime({ config, initialCenter }: GeocoderRuntimeOpt
 			}
 
 			// Whether the resolved place doubles as another admin tier.
-			// This is best-effort, and the helper skips a synthesized street/anchor pin (`id === 0`).
+			// This is best-effort.
+			// The helper skips a synthesized street/anchor pin (`id === 0`).
 			const dualRoles = await resolveDualRoles(wofLookup, candidates[0])
 
 			return {

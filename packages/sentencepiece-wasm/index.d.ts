@@ -11,8 +11,10 @@
 /**
  * One encode result.
  *
- * `begins`/`ends` are UTF-8 byte offsets into the encoded input with the upstream invariant
- * `utf8(text).slice(begins[i], ends[i])` = the piece's surface, and contiguity between consecutive pieces.
+ * `begins` and `ends` are UTF-8 byte offsets into the encoded input.
+ * The upstream invariant is `utf8(text).slice(begins[i], ends[i])` equals the piece's surface.
+ *
+ * Consecutive pieces also occupy contiguous byte ranges.
  * The TS tokenizer layer owns byte→UTF-16 conversion.
  */
 export interface EncodeWithOffsetsResult {
@@ -36,9 +38,8 @@ export declare class SentencePieceProcessor {
 	/**
 	 * Load a `tokenizer.model` from its serialized-proto bytes.
 	 *
-	 * Takes a `Uint8Array`.
-	 * The binding deliberately does not accept a string
-	 * (embind marshals JS strings to `std::string` as UTF-8, which corrupts arbitrary binary).
+	 * Takes serialized model bytes as a `Uint8Array`.
+	 * Embind marshals JS strings to `std::string` as UTF-8, corrupting arbitrary binary bytes.
 	 *
 	 * Returns `""` on success, the sentencepiece status message on failure.
 	 */
@@ -57,7 +58,8 @@ export declare class SentencePieceProcessor {
 /**
  * Embind-registered `std::vector<int>`.
  *
- * Build with `module.IntVector`, call `push_back` for ids, and call `delete()` after use.
+ * Build with `module.IntVector` and add ids with `push_back`.
+ * Call `delete()` after use.
  */
 export declare class IntVector {
 	constructor()

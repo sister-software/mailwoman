@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The globe: the body's style over `MapCanvas`, a click on a label selecting the feature beneath it, the
- *   selection ring bound to the selected id, and the camera framing a selection by its diameter. The style is
- *   composed once per config and a selection changes only a layer filter.
+ *   Renders the body's style over `MapCanvas`.
+ *   A label click selects the feature beneath it. A ring marks the selected ID.
+ *   The camera frames a selection by its diameter.
+ *   The map composes its style once per config. A selection changes only a layer filter.
  */
 
 import {
@@ -30,9 +31,11 @@ export interface PlanetaryMapProps {
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
 	/**
-	 * The live map once react-map-gl has instantiated it, and `null` on unmount.
-	 * the chrome outside this component cannot reach the handle through `useMap()`,
-	 * so the compass reads its direction from here.
+	 * The live map after react-map-gl instantiates it.
+	 *
+	 * The value is `null` on unmount.
+	 * Chrome outside this component cannot reach the handle through `useMap()`.
+	 * The compass reads the map direction from this value.
 	 */
 	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }

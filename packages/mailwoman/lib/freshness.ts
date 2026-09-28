@@ -79,7 +79,7 @@ export interface ArtifactFreshness {
 	 * `layer_manifest.license` — the SPDX expression the build admitted, verbatim.
 	 *
 	 * A row written before the column existed leaves this undefined.
-	 * An absent expression states that nobody recorded the obligations
+	 * An absent expression states that the build recorded no obligations
 	 * rather than that the artifact carries none.
 	 *
 	 * This field makes the per-result rights record the subset of

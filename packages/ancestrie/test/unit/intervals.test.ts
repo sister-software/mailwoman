@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Containment interface: the pre/post interval truth table (ancestor / descendant / sibling / self
- *   / disjoint), descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
- *   and cycle rejection at seal.
+ *   Tests the pre/post interval truth table for ancestor, descendant, sibling, self, and disjoint cases.
+ *   It also tests descendant range scans, the DAG primary-parent rule, declared-but-absent parents,
+ *   plus cycle rejection at seal.
  */
 
 import { AncestrieBuilder } from "@mailwoman/ancestrie/builder"

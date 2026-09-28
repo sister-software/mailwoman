@@ -16,10 +16,10 @@ import { synthesizeStreetRow, type StreetBaseTuple } from "#synthesizers/street"
 import { SurfaceOrigin } from "#types"
 
 /**
- * The street name is drawn from a pool and joined to a tuple's locality, region and postcode.
+ * The recipe draws a street name from a pool and joins it to a tuple's locality, region and postcode.
  *
- * No register asserts that this street runs through this locality, which is what makes
- * the row invented rather than a rendering of a published record.
+ * No register asserts that the street runs through that locality.
+ * The row is invented rather than a rendering of a published record.
  */
 /**
  * Resolved once, because `source_id` carries the source as its prefix and a pair that
@@ -37,8 +37,8 @@ const STREET_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * The file header describes the parse behavior this recipe exercises.
+ * `description` below shows the generated surface form.
  */
 export const streetRecipe: CorpusRecipe = {
 	name: "street",

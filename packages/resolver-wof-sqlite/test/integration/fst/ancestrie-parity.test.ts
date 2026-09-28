@@ -197,9 +197,10 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 	})
 
 	// Synthetic trie: new, san, chic, chicago, springfield.
-	// The behavior matrix covers a referential tie, a state denser than PER_BRANCH,
-	// encyclopedic present and absent, crossCountryBranches, a deep parent chain,
-	// one wofID reachable at several depths, and a complete edge that is also a prefix.
+	// The behavior matrix covers a referential tie and a state denser than PER_BRANCH.
+	// It covers an encyclopedic score that is present or absent, crossCountryBranches,
+	// a deep parent chain and one wofID reachable at several depths.
+	// It also covers an edge that is both complete and a prefix.
 	const nodesMatcher = deserializeThroughBytes([
 		{
 			edges: new Map([
@@ -285,8 +286,10 @@ function deserializeThroughBytes(nodes: ConstructorParameters<typeof FSTMatcher>
 }
 
 /**
- * Locale surfaces worth pinning by name, beyond the derived battery: high-traffic capitals,
- * the multi-token and partial shapes, and (es) the Portopetro pair from the promotion battery.
+ * Locale surfaces worth pinning by name beyond the derived battery.
+ *
+ * They include high-traffic capitals and multi-token or partial shapes.
+ * For Spanish, they include the Portopetro pair from the promotion battery.
  */
 const CURATED_QUERIES: Record<string, readonly string[]> = {
 	"en-gb": ["london", "birming", "st margarets hope", "manchester", "newcastle upon", "isle of"],
@@ -307,8 +310,9 @@ for (const locale of ["en-gb", "es-es", "it-it"]) {
 
 			const matcher = deserializeFST(await readLocalBuffer(artifactPath))
 
-			// Deterministic derived battery: the artifact's first dozen root tokens (sorted), each as
-			// a bare query, a two-token walk through its own first continuation, and a partial prefix.
+			// The deterministic derived battery takes the artifact's first dozen sorted root tokens.
+			// For each token it tests a bare query and a two-token walk through the first continuation.
+			// It also tests a partial prefix.
 			const rootTokens = matcher
 				.continuations(0)
 				.map((c) => c.token)
