@@ -3,18 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Street-level (situs + interpolation) lookups over a sql.js-httpvfs worker — the browser twins of
- *   `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` (#476) and `StreetInterpolator`
- *   (#483). They run the same SQL + the same shared normalizer (`street-normalize.ts`) as the node
- *   classes, just async over the Comlink-proxied worker's `db.exec` (the demo resolves async on the
- *   main thread. see the architecture spec, 2026-06-14-client-side-geocoder-demo-spec.md). The
- *   parity preference and range scoping in `HTTPVFSInterpolator` still mirror `StreetInterpolator`
- *   by hand — keep those IN lockstep (the same interface the WOF resolvers hold). The polyline
- *   geometry no longer needs it: both now call `pointAlong` from `@mailwoman/spatial`.
- *
- *   These power the demo's street tier against byte-ranged per-state situs/interp databases: a lookup
- *   touches ~KB of a multi-GB extract (measured, see the spec), so the file size is irrelevant to
- *   query cost.
+ * Street-level (situs and interpolation) lookups over a sql.js-httpvfs worker, the browser twins of
+ * `@mailwoman/resolver-wof-sqlite`'s `AddressPointSqliteLookup` and `StreetInterpolator`. They run the
+ * same SQL and shared normalizers as the node classes, async over the Comlink-proxied worker's
+ * `db.exec`. `HTTPVFSInterpolator` must keep its parity preference and range scoping in lockstep with
+ * `StreetInterpolator`.
  */
 
 import { parseJSONStrict } from "@mailwoman/core/json"
@@ -31,14 +24,14 @@ import { clampFraction, pointAlong } from "@mailwoman/spatial"
 import { memoizeResettable, rowsFromExec, tableExists } from "#httpvfs/rows"
 
 /**
- * The minimal worker handle the lookups need — the same shape `loadHTTPVFSDatabase` returns.
+ * The minimal worker handle the lookups need, the same shape `loadHTTPVFSDatabase` returns.
  */
 export interface HTTPVFSDB {
 	db: { exec(sql: string): Promise<Array<{ columns: string[]; values: unknown[][] }>> }
 }
 
 /**
- * Inline a string literal for SQL (we inline rather than bind — avoids param marshaling over Comlink).
+ * Inline a string literal for SQL. Inlining avoids param marshaling over Comlink.
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
@@ -50,21 +43,21 @@ export interface StreetPointHit {
 }
 
 /**
- * Exact situs point — async twin of `AddressPointSqliteLookup`.
+ * Exact situs point, the async twin of `AddressPointSqliteLookup`.
  *
  * Postcode scope first, locality fallback.
  */
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `address_point`
-	 * (graceful on a tableless extract, #568).
+	 * One memoized round trip to confirm the extract carries `address_point`, graceful on a tableless
+	 * extract.
 	 */
 	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the extract's build locale (the node class's interface) — default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's interface). Default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
@@ -103,7 +96,7 @@ export class HTTPVFSAddressPointLookup {
 
 		if (!rows.length && query.locality) {
 			// FR extracts fold arrondissement communes to the base city on both sides
-			// (the node class + BAN builder discipline) — mirror it here so the twins stay in lockstep.
+			// (the node class and BAN builder discipline), so mirror it here to keep the twins in lockstep.
 			const localityKey =
 				this.#locale === "fr"
 					? stripArrondissement(normalizeLocalityForKey(query.locality))
@@ -134,10 +127,9 @@ export interface StreetInterpHit {
 }
 
 /**
- * Tiger-range interpolation — async twin of `StreetInterpolator`.
+ * Tiger-range interpolation, the async twin of `StreetInterpolator`.
  *
- * Postcode-scoped.
- * Abstains on cross-ZIP ambiguity.
+ * Postcode-scoped, abstaining on cross-ZIP ambiguity.
  */
 export class HTTPVFSInterpolator {
 	#worker: HTTPVFSDB
@@ -175,13 +167,13 @@ export class HTTPVFSInterpolator {
 				)
 			)
 
-			// No scope: a name matching ranges across several ZIPs is ambiguous — abstain.
+			// No scope: a name matching ranges across several ZIPs is ambiguous, so abstain.
 			if (new Set(rows.map((r) => String(r.postcode ?? ""))).size > 1) return null
 		}
 
 		if (!rows.length) return null
 
-		// Parity preference: exact side → 'mixed' → opposite side (flagged).
+		// Parity preference: exact side, then 'mixed', then opposite side (flagged).
 		// Mirrors StreetInterpolator.
 		const wantOdd = n % 2 === 1
 		const exact = rows.filter((r) => r.parity === (wantOdd ? "odd" : "even"))
@@ -218,17 +210,16 @@ export class HTTPVFSInterpolator {
 	}
 }
 
-// #region Street-level resolution
-
 /**
- * A street-level coordinate + which tier produced it + an honest radius.
+ * A street-level coordinate, the tier that produced it, and an uncertainty radius.
  */
 export interface StreetResolution {
 	lat: number
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters (10 m situs floor. Interp = uncertaintyM × the region factor).
+	 * Calibrated uncertainty radius in meters, 10 m on the situs floor and `uncertaintyM` times the
+	 * region factor for interpolation.
 	 */
 	uncertaintyM: number
 }
@@ -254,14 +245,13 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then tiger interpolation (honest calibrated radius),
- * else null so the caller falls back to the admin cascade ({@link runCascade}).
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (calibrated radius), else
+ * null so the caller falls back to the admin cascade ({@link runCascade}).
  *
- * Mirrors the node `geocode-core` tier order (address_point > interpolated > admin),
- * but async, on the main thread, over the demo's httpvfs handles.
- * `interpRadiusCalibration` is the per-region conformal factor
- * (#374 / data/calibration/interp-radius-conformal.json); default 1.95
- * (the conservative national default — under-coverage is the harmful error).
+ * The tier order mirrors the node `geocode-core` path (address_point, then interpolated, then admin),
+ * async on the main thread. `interpRadiusCalibration` is the per-region conformal factor
+ * (`data/calibration/interp-radius-conformal.json`) with a default of 1.95, the conservative national
+ * default where under-coverage is the harmful error.
  */
 export async function resolveStreet(
 	street: string | undefined,
@@ -276,8 +266,6 @@ export async function resolveStreet(
 	const num = (houseNumber ?? "").trim()
 
 	if (!st || !num) return null
-
-	// not a street-level query — let the admin cascade handle it
 
 	if (situs) {
 		const hit = await situs.find({ street: st, number: num, postcode, locality })
