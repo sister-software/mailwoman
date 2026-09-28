@@ -44,9 +44,10 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 	const features: NominatimFeatureCollection["features"] = []
 
 	for (const r of results) {
-		// `toNominatimResult` writes "" for a missing coordinate, never null, so emptiness is the
-		// condition that matters. A `== null` check alone lets a coordinate-less row through as
-		// Point [0, 0], a real place in the Gulf of Guinea rather than an absence.
+		// `toNominatimResult` writes "" for a missing coordinate, never null,
+		// so emptiness is the condition that matters.
+		// A `== null` check alone lets a coordinate-less row through as Point [0, 0],
+		// a real place in the Gulf of Guinea rather than an absence.
 		if (!r.lat || !r.lon) continue
 		const { lat, lon, boundingbox, geojson, ...properties } = r
 
@@ -70,8 +71,9 @@ export function toFeatureCollection(results: readonly NominatimResult[]): Nomina
 /**
  * A resolved address in a neutral shape, the input to {@link toNominatimResult}.
  *
- * The engine maps its native geocode or reverse result into this, and the formatter renders it as
- * a Nominatim result. It is the mapping boundary and stays dependency-free so it is unit-testable.
+ * The engine maps its native geocode or reverse result into this, and the
+ * formatter renders it as a Nominatim result.
+ * It is the mapping boundary and stays dependency-free so it is unit-testable.
  */
 export interface ResolvedAddress {
 	lat: number | null
@@ -111,8 +113,8 @@ function stableID(seed: string): number {
 /**
  * Render a {@link ResolvedAddress} as a Nominatim result.
  *
- * `addressdetails` selects the `address` block, matching Nominatim. The caller attaches the
- * `annotations` block.
+ * `addressdetails` selects the `address` block, matching Nominatim.
+ * The caller attaches the `annotations` block.
  */
 export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: boolean } = {}): NominatimResult {
 	const displayName =
@@ -163,8 +165,8 @@ export function toNominatimResult(r: ResolvedAddress, opts: { addressdetails?: b
  * Project a Nominatim result into a schema.org `Place` JSON-LD object for `format=jsonld`.
  *
  * It reads the result's `address` breakdown, which the router populates by forcing
- * `addressdetails` for jsonld, and re-serializes the same resolved place. `streetAddress` is the
- * house-number-first join and `addressCountry` is ISO-3166 alpha-2 uppercased.
+ * `addressdetails` for jsonld, and re-serializes the same resolved place.
+ * `streetAddress` is the house-number-first join and `addressCountry` is ISO-3166 alpha-2 uppercased.
  */
 export function nominatimResultToSchemaOrg(r: NominatimResult): SchemaOrgPlace {
 	const a = r.address ?? {}

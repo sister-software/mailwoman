@@ -107,8 +107,9 @@ const GazetteerAnchorLexicon: CommandComponent<typeof spec> = ({ options }) => {
 			entries.set(key, (entries.get(key) ?? 0) | bit)
 		}
 
-		// COUNTRY_LOOKUP already aggregates canonical names + alpha-2 + alpha-3 + curated
-		// surface forms (lowercase-keyed). Consume it directly so this builder cannot drift from codex.
+		// COUNTRY_LOOKUP already aggregates canonical names + alpha-2 + alpha-3 +
+		// curated surface forms (lowercase-keyed).
+		// Consume it directly so this builder cannot drift from codex.
 		for (const surface of COUNTRY_LOOKUP.keys()) {
 			add(surface, BIT.country)
 		}

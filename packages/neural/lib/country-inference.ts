@@ -36,8 +36,8 @@ import {
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The country feature width, which must match the lexicon JSON's `feature_dim` and the trained
- * model's `country_feature_dim`.
+ * The country feature width, which must match the lexicon JSON's `feature_dim`
+ * and the trained model's `country_feature_dim`.
  */
 export const COUNTRY_FEATURE_DIM = 2
 
@@ -51,14 +51,14 @@ export const COUNTRY_SURFACE_BIT = 1
 export const COUNTRY_AMBIGUOUS_BIT = 2
 
 /**
- * The loaded country lexicon, structurally identical to a {@linkcode GazetteerLexicon} and reused so
- * the two channels share one matcher.
+ * The loaded country lexicon, structurally identical to a {@linkcode GazetteerLexicon}
+ * and reused so the two channels share one matcher.
  */
 export type CountryLexicon = GazetteerLexicon
 
 /**
- * Parse the country lexicon JSON, which the caller has already run through `JSON.parse` so this
- * module stays browser-safe.
+ * Parse the country lexicon JSON, which the caller has already run through `JSON.parse`
+ * so this module stays browser-safe.
  */
 export function parseCountryLexicon(raw: {
 	feature_dim: number

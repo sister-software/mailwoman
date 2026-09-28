@@ -35,8 +35,9 @@ export function postalAddressID(record: SourceRecord): PostalAddressID | null {
 }
 
 /**
- * A blocking key on the {@link postalAddressID}. Records that resolve to the same
- * place with the same canonical address block together.
+ * A blocking key on the {@link postalAddressID}.
+ *
+ * Records that resolve to the same place with the same canonical address block together.
  *
  * Add it to {@link defaultBlockingKeys}'s union when an exact address join should never be missed.
  */

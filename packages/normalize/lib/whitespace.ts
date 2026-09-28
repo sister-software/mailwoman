@@ -23,11 +23,11 @@ import { identityMap } from "#offset-map"
 const INLINE_SPACE = /[ \t]/
 const ANY_SPACE = /[ \t\n\r]/
 /**
- * Trailing noise trimmed off the end of the input, whitespace plus the sentence punctuation a user
- * commonly appends.
+ * Trailing noise trimmed off the end of the input, whitespace plus the sentence
+ * punctuation a user commonly appends.
  *
- * It applies to the trailing end only, since a leading token is required, and excludes quotes,
- * brackets and parentheses.
+ * It applies to the trailing end only, since a leading token is required,
+ * and excludes quotes, brackets and parentheses.
  */
 const TRAILING_NOISE = /[ \t\n\r.,;:]/
 
@@ -72,10 +72,10 @@ export function collapseWhitespace(input: string): WhitespaceResult {
 				i += 1
 			}
 
-			// A one-character run counts too when the character is not already an ascii space,
-			// since the tab-to-space rewrite emitted above is a real edit and `changed` decides
-			// whether the caller receives it. The early return below otherwise hands back the
-			// untouched input.
+			// A one-character run counts too when the character is not already an
+			// ascii space, since the tab-to-space rewrite emitted above is a real edit
+			// and `changed` decides whether the caller receives it.
+			// The early return below otherwise hands back the untouched input.
 			if (i - start > 1 || ch !== " ") {
 				changed = true
 				runs += 1

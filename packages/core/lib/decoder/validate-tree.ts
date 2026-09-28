@@ -27,12 +27,13 @@ import { containmentFor } from "#decoder/containment"
 import type { AddressNode, AddressTree } from "#decoder/types"
 
 /**
- * Tags that cannot stand alone. Each is a sub-component of a structural anchor such as street,
- * locality, venue, or postcode.
+ * Tags that cannot stand alone.
+ *
+ * Each is a sub-component of a structural anchor such as street, locality, venue, or postcode.
  *
  * A node is an orphan fragment when none of its allowed parents appear anywhere in the tree.
- * This set is the denominator of the stranded-dependent check, so a caller counting which classes
- * fire reads it here rather than re-listing the tags.
+ * This set is the denominator of the stranded-dependent check, so a caller counting
+ * which classes fire reads it here rather than re-listing the tags.
  */
 export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag>([
 	"street_prefix",
@@ -46,9 +47,11 @@ export const STRICT_DEPENDENTS: ReadonlySet<ComponentTag> = new Set<ComponentTag
 ])
 
 /*
- * `intersection_a` and `intersection_b` are deliberately absent from `STRICT_DEPENDENTS`, for the
- * same reason the geographic containers are exempt. `Main St and 5th Ave` is a bare intersection
- * query, a valid degenerate parse with no street or locality to anchor to.
+ * `intersection_a` and `intersection_b` are deliberately absent from `STRICT_DEPENDENTS`,
+ * for the same reason the geographic containers are exempt.
+ *
+ * `Main St and 5th Ave` is a bare intersection query, a valid degenerate parse
+ * with no street or locality to anchor to.
  */
 
 export interface TreeViolation {

@@ -91,8 +91,10 @@ export interface BuildNZLocalitiesOptions {
 }
 
 /**
- * Title-case comparison surface for the CSV's already-title-cased city values. The database stores
- * the display form verbatim and lets `normalizeLocalityForKey` (at candidate-build time) own the key.
+ * Title-case comparison surface for the CSV's already-title-cased city values.
+ *
+ * The database stores the display form verbatim and lets `normalizeLocalityForKey`
+ * (at candidate-build time) own the key.
  */
 function cleanName(raw: string | undefined): string {
 	return normalizeWhitespace(raw ?? "")
@@ -101,10 +103,11 @@ function cleanName(raw: string | undefined): string {
 /**
  * The p-th percentile of a sorted numeric array (nearest-rank, p in [0, 100]).
  *
- * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`. This copy uses the ceil-based
- * nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ label points were computed with,
- * where core floors (`floor(p/100 · n)`). Swapping conventions moves a percentile
- * by up to one member row and with it every derived label point.
+ * Deliberately not `@mailwoman/core/utils`'s `percentileSorted`.
+ * This copy uses the ceil-based nearest rank (`ceil(p/100 · n) − 1`) the shipped NZ
+ * label points were computed with, where core floors (`floor(p/100 · n)`).
+ *
+ * Swapping conventions moves a percentile by up to one member row and with it every derived label point.
  *
  * Repo-health-ignore private-name-shadows-export -- the ceil-based nearest rank
  * the shipped NZ label points were computed with.
@@ -119,8 +122,8 @@ function percentileSorted(sorted: readonly number[], p: number): number {
 /**
  * Build the sealed NZ locality database.
  *
- * Not re-exported from a barrel. The command lazy-imports it
- * (optional-peer discipline, same as the NL PC6 builder).
+ * Not re-exported from a barrel.
+ * The command lazy-imports it (optional-peer discipline, same as the NL PC6 builder).
  */
 export async function buildNZLocalitiesDatabase(
 	opts: BuildNZLocalitiesOptions = {}

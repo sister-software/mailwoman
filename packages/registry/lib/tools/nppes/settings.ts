@@ -33,12 +33,13 @@ export interface Setting {
 /**
  * Build the progression against a corpus-wide address-frequency table.
  *
- * Every row sets both `collapseSpatial` and `addressFrequency` explicitly, because the proven
- * settings are default-on in `resolveEntities`. Leave either implicit and the flipped default
- * silently rides the inverse-address-frequency row, which makes the delta read as 0.
+ * Every row sets both `collapseSpatial` and `addressFrequency` explicitly,
+ * because the proven settings are default-on in `resolveEntities`.
+ * Leave either implicit and the flipped default silently rides the inverse-address-frequency
+ * row, which makes the delta read as 0.
  *
- * Every row is fed the corpus-wide table, the realistic deployment, so the zero-config default with
- * its input-scoped table has to be measured separately.
+ * Every row is fed the corpus-wide table, the realistic deployment, so the zero-config
+ * default with its input-scoped table has to be measured separately.
  */
 export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 	return [
@@ -52,8 +53,8 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 			label: "+ authorized-official discriminator (#625)",
 			config: { collapseSpatial: true, addressFrequency, discriminators: ["authorizedOfficial"] },
 		},
-		// The over-merge settings each build on the collapsed-spatial and discriminator stack, so the
-		// marginal effect of each is isolated.
+		// The over-merge settings each build on the collapsed-spatial and discriminator stack,
+		// so the marginal effect of each is isolated.
 		{
 			label: "+ require name/org corroboration (A2, #625)",
 			config: {
@@ -84,9 +85,10 @@ export function buildSettings(addressFrequency: TermFrequencyTable): Setting[] {
 				linkage: "average",
 			},
 		},
-		// The taxonomy code-set discriminator uses set-overlap agreement over the NPI's 15 taxonomy
-		// slots. Co-located distinct providers usually have disjoint sets, while an entity's own
-		// records always share theirs. It is stacked on the best prior classical config.
+		// The taxonomy code-set discriminator uses set-overlap agreement over the NPI's 15 taxonomy slots.
+		// Co-located distinct providers usually have disjoint sets, while an entity's
+		// own records always share theirs.
+		// It is stacked on the best prior classical config.
 		{
 			label: "+ taxonomy code-set discriminator (A5, #625)",
 			config: {

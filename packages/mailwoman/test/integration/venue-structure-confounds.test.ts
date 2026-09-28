@@ -35,8 +35,8 @@ interface ConfoundRow {
 	/**
 	 * Set when a row is known to fail, carrying the reason.
 	 *
-	 * The row keeps running, and the inverted assertion below turns the suite red if it ever
-	 * starts passing, so a stale exemption cannot land silently.
+	 * The row keeps running, and the inverted assertion below turns the suite red if it
+	 * ever starts passing, so a stale exemption cannot land silently.
 	 */
 	xfail?: string
 }

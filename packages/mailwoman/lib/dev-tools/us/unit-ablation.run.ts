@@ -68,8 +68,8 @@ for (const row of UNIT_ROWS) {
 
 for (const row of PMB_ROWS) {
 	const result = await deps.geocode(row.input, { defaultCountry: "US" })
-	// Read `components` because the result promotes a subset of tags to top-level
-	// fields and leaves `po_box` out.
+	// Read `components` because the result promotes a subset of tags to top-level fields
+	// and leaves `po_box` out.
 	const poBox = result.components?.po_box ?? null
 
 	pmbReport.push({

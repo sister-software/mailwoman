@@ -95,9 +95,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	// Load parent rows that might be outside the placetype filter, such as a country for a region.
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
-	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table, read in chunked `IN (…)`
-	// batches once. Ordering is county → region → country, with `id` leading so one pass groups the
-	// rows.
+	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table,
+	// read in chunked `IN (…)` batches once.
+	// Ordering is county → region → country, with `id` leading so one pass groups the rows.
 	const ancestorsByID = new Map<number, number[]>()
 
 	try {
@@ -169,12 +169,13 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return chain
 	}
 
-	// Load both scores (the two-score split). Referential is always population-anchored and never
-	// read out of a legacy `place_importance` column, because a legacy row that got a Wikipedia
-	// score overwrote whatever population would have said and the two are indistinguishable
-	// afterwards. Encyclopedic rides along for consumers and is never handed to the decoder.
-	// `loadImportanceSplit` handles all four schema generations, and the source it reports is
-	// stamped into provenance so an artifact says which one it read.
+	// Load both scores (the two-score split).
+	// Referential is always population-anchored and never read out of a legacy
+	// `place_importance` column, because a legacy row that got a Wikipedia score overwrote
+	// whatever population would have said and the two are indistinguishable afterwards.
+	// Encyclopedic rides along for consumers and is never handed to the decoder.
+	// `loadImportanceSplit` handles all four schema generations, and the source it reports
+	// is stamped into provenance so an artifact says which one it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)
 
@@ -238,9 +239,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return false
 	}
 
-	// Surface-ambiguity classes are a per-surface fact, so the entry is cloned per insertion with its
-	// accepting surface's count attached, and the same place under "nyc" and "new york city" records
-	// each surface's own ambiguity. An absent map means entries carry no count for back-compat bytes.
+	// Surface-ambiguity classes are a per-surface fact, so the entry is cloned per
+	// insertion with its accepting surface's count attached, and the same place under "nyc"
+	// and "new york city" records each surface's own ambiguity.
+	// An absent map means entries carry no count for back-compat bytes.
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
@@ -294,8 +296,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned, so a place with no Wikipedia article carries no field
-			// instead of a zero. The serializer's per-place presence bit reads `!== undefined`.
+			// Spread rather than assigned, so a place with no Wikipedia article
+			// carries no field instead of a zero.
+			// The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,
 			lon: row.longitude,
@@ -328,10 +331,12 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
 
-	// The build stamp. `sourceDB` alone cannot tell a reader whether this artifact matches the
-	// database at that path, because the admin database is sealed and replaced by a rebuild so the
-	// path is constant across every generation. `sourceIdentity` lets a caller that already knows
-	// the digest, or is building from something that is not a file at all, supply it instead.
+	// The build stamp.
+	// `sourceDB` alone cannot tell a reader whether this artifact matches the database
+	// at that path, because the admin database is sealed and replaced by a rebuild
+	// so the path is constant across every generation.
+	// `sourceIdentity` lets a caller that already knows the digest, or is building
+	// from something that is not a file at all, supply it instead.
 	progress("stamp", `Reading source identity for ${dbPath}`)
 	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(dbPath))
 

@@ -46,7 +46,8 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// The runner narrates its own report + verdict lines, so no `json`. Rendering anything here would duplicate it.
+// The runner narrates its own report + verdict lines, so no `json`.
+// Rendering anything here would duplicate it.
 const EvalInvariance = harnessCommand(
 	spec,
 	async (options) => {

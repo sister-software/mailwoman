@@ -524,11 +524,11 @@ describe("registry + defaults", () => {
 	})
 })
 
-// Every augmentation transforms `raw` by direct string splicing (replace or case-map on the raw
-// itself). The build pipeline re-runs `alignRow` on each augmented copy, deriving the char-offset
-// span triple from the augmented raw. These probes pin intra-span punctuation (the dotted
-// `P.O. Box` is the canonical case) surviving onto the augmented copy, with every span addressing
-// the new raw exactly.
+// Every augmentation transforms `raw` by direct string splicing (replace or case-map on the raw itself).
+// The build pipeline re-runs `alignRow` on each augmented copy, deriving the
+// char-offset span triple from the augmented raw.
+// These probes pin intra-span punctuation (the dotted `P.O. Box` is the canonical case)
+// surviving onto the augmented copy, with every span addressing the new raw exactly.
 
 describe("augmented copies keep intra-span punctuation (#519)", () => {
 	/**

@@ -11,9 +11,10 @@
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
  */
 
-// `@mailwoman/neural` exports no `./postcode-repair` subpath, and `collectMatches` is the
-// exact span source `buildAnchorFeatures`'s shaped mode reads. `normalizeInputCase` is what
-// the text has been through by the time the anchor sees it, and `parse` applies it by default.
+// `@mailwoman/neural` exports no `./postcode-repair` subpath, and `collectMatches` is
+// the exact span source `buildAnchorFeatures`'s shaped mode reads.
+// `normalizeInputCase` is what the text has been through by the time the anchor sees it,
+// and `parse` applies it by default.
 // These must not drift from `parse`, so this repo-local diagnostic imports the same modules.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -47,9 +48,11 @@ const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<s
 ).toArray()
 
 /**
- * `parse` builds anchors from case-normalized text. Normalization restores postcode casing, so
- * lowercase input still matches the uppercase-only shape patterns. Probe normalized text to match
- * production behavior.
+ * `parse` builds anchors from case-normalized text.
+ *
+ * Normalization restores postcode casing, so lowercase input still matches
+ * the uppercase-only shape patterns.
+ * Probe normalized text to match production behavior.
  */
 const NORMALIZE_CASE = true
 

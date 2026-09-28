@@ -62,7 +62,8 @@ export interface RescueRowReport {
 	markers: string[]
 	classification: RescueClass
 	/**
-	 * Distance from the delivered answer to truth, km. Undefined when ungraded or unresolved.
+	 * Distance from the delivered answer to truth, km.
+	 * Undefined when ungraded or unresolved.
 	 */
 	deliveredKm?: number
 	/**

@@ -15,8 +15,8 @@ export interface Preset {
 	/**
 	 * ISO country code for the placetype-pair country pin.
 	 *
-	 * A host that wires the pair prior hands this to `selectPairIndexForText` when the input
-	 * still equals this preset's text.
+	 * A host that wires the pair prior hands this to `selectPairIndexForText`
+	 * when the input still equals this preset's text.
 	 */
 	country?: string
 }

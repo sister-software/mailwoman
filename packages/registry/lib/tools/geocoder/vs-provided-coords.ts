@@ -42,7 +42,9 @@ const MAX_ABS_LONGITUDE = 180
  */
 export interface GeocoderVsProvidedCoordsOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -66,16 +68,19 @@ export interface GeocoderVsProvidedCoordsOptions {
 /**
  * Parse a `lat,lon` string into a coordinate, or null if malformed or out of range.
  *
- * Deliberately strict and deliberately not `GeoPoint.from()`. The provided coordinate is this
- * eval's ground truth, so a row that cannot be read exactly is dropped (counted in `noCoord`) rather
- * than repaired into something plausible. A silently repaired coordinate lands in the delta
- * distribution as geocoder error.
+ * Deliberately strict and deliberately not `GeoPoint.from()`.
+ * The provided coordinate is this eval's ground truth, so a row that cannot be read exactly
+ * is dropped (counted in `noCoord`) rather than repaired into something plausible.
+ *
+ * A silently repaired coordinate lands in the delta distribution as geocoder error.
  *
  * This source writes `latitude,longitude`, while `GeoPoint` reads GeoJSON `[longitude, latitude]`,
- * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there. `GeoPoint.from` also
- * maps 0,0 to null, which moves Null Island out of the measured outliers and into the skipped
- * bucket. The report attributes part of its p99/max tail to malformed provided coordinates, so those
- * rows have to stay rejected or measured as-is, never rewritten.
+ * so `31.5,-89.5` is a Mississippi row here and a South-Atlantic point there.
+ * `GeoPoint.from` also maps 0,0 to null, which moves Null Island out of the
+ * measured outliers and into the skipped bucket.
+ *
+ * The report attributes part of its p99/max tail to malformed provided coordinates,
+ * so those rows have to stay rejected or measured as-is, never rewritten.
  *
  * Strictness is the measurement rather than an unfinished migration.
  */
@@ -90,13 +95,13 @@ function parseLatLon(raw: string | undefined): { latitude: number; longitude: nu
 	return { latitude: a!, longitude: b! }
 }
 
-// The core nearest-rank `percentile` (q in [0,100]) uses a floor index and clamping, and `?? NaN`
-// keeps the empty-sample behavior.
+// The core nearest-rank `percentile` (q in [0,100]) uses a floor index and clamping,
+// and `?? NaN` keeps the empty-sample behavior.
 const quantile = (xs: number[], q: number): number => percentile(xs, q * 100) ?? Number.NaN
 
 /**
- * Geocode each facility's physical address and measure the delta to its provided coordinate, then
- * emit the report to stdout.
+ * Geocode each facility's physical address and measure the delta to its provided
+ * coordinate, then emit the report to stdout.
  */
 export async function geocoderVsProvidedCoords(
 	options: GeocoderVsProvidedCoordsOptions,

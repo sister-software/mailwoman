@@ -8,8 +8,9 @@
  *   owns resolution (`runCascade`, a street tier, an anchor fallback) and the staged progress ticks.
  */
 
-// Keep these static. A dynamic-import destructure of this barrel gets tree-shaken by webpack's
-// usedExports analysis. Static named imports are fully analyzable.
+// Keep these static.
+// A dynamic-import destructure of this barrel gets tree-shaken by webpack's usedExports analysis.
+// Static named imports are fully analyzable.
 // Do not re-dynamize.
 import { type FlatTreeNode, flattenTreeNodes } from "@mailwoman/core/decoder"
 import type { AddressTree } from "@mailwoman/core/decoder/types"
@@ -19,8 +20,8 @@ import type { DualRole, MailwomanLookupLike } from "@mailwoman/resolver-wof-wasm
 import type { FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
 /**
- * Project the cascade's hits onto the package's {@link ResolvedPlaceView}, shared by both demo
- * parse paths so the projection cannot drift.
+ * Project the cascade's hits onto the package's {@link ResolvedPlaceView},
+ * shared by both demo parse paths so the projection cannot drift.
  */
 export function projectCascadeHits(
 	hits: ReadonlyArray<{ id: number; name: string; placetype: string; lat: number; lon: number; score: number }>
@@ -43,14 +44,14 @@ export function parseStageLabelsFor(hasResolver: boolean): string[] {
 export const DEFAULT_LOCALE = "en-us"
 
 /**
- * Address the demo opens on, which exercises house number, street, directional, locality and region
- * in one line.
+ * Address the demo opens on, which exercises house number, street, directional,
+ * locality and region in one line.
  */
 export const DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
 /**
- * Demo preset addresses, each carrying its ISO country code so a locale that structural routing
- * cannot detect from text shape still fires while the input equals the preset text.
+ * Demo preset addresses, each carrying its ISO country code so a locale that structural
+ * routing cannot detect from text shape still fires while the input equals the preset text.
  */
 export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country: string }> = [
 	{ label: "White House", address: "1600 Pennsylvania Ave NW, Washington, DC 20500", country: "us" },
@@ -63,25 +64,28 @@ export const EXAMPLE_ADDRESSES: Array<{ label: string; address: string; country:
 	{ label: "Berlin (native order)", address: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", address: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", address: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// GB dependent_locality. "Henbury" flips to dependent_locality via the en-gb pair-index prior,
-	// and the `country: "gb"` pin selects it even if the user edits away the postcode.
+	// GB dependent_locality.
+	// "Henbury" flips to dependent_locality via the en-gb pair-index prior, and the
+	// `country: "gb"` pin selects it even if the user edits away the postcode.
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		address: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
 		country: "gb",
 	},
-	// NZ dependent_locality. Plimmerton is a suburb (dependent_locality) of Porirua. The postcode is
-	// deliberately omitted, because a trailing "Porirua 5026" puts the postcode in the parent's
-	// comma-field, so segment mode folds "porirua 5026" and misses the index's bare "porirua" key.
-	// The `country: "nz"` pin is required because locale-check cannot detect NZ from a 4-digit
-	// postcode, so only the preset pin selects the nz index.
+	// NZ dependent_locality.
+	// Plimmerton is a suburb (dependent_locality) of Porirua.
+	// The postcode is deliberately omitted, because a trailing "Porirua 5026" puts
+	// the postcode in the parent's comma-field, so segment mode folds "porirua 5026"
+	// and misses the index's bare "porirua" key.
+	// The `country: "nz"` pin is required because locale-check cannot detect NZ from a
+	// 4-digit postcode, so only the preset pin selects the nz index.
 	{ label: "Plimmerton (NZ dependent_locality)", address: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]
 
 /**
- * The placetype-pair country pin for one input, returning a preset's `country` when `input` still
- * exactly equals that preset's text and `undefined` otherwise so the caller lets structural
- * detection decide.
+ * The placetype-pair country pin for one input, returning a preset's `country`
+ * when `input` still exactly equals that preset's text and `undefined` otherwise
+ * so the caller lets structural detection decide.
  */
 export function pairCountryForInput(input: string): string | undefined {
 	const trimmed = input.trim()
@@ -118,10 +122,10 @@ export interface ClassifyStageResult {
 
 /**
  * Per-parse placetype-pair prior selector, the shape the web loader's
- * `LoadResult.selectPairIndexForText` exposes, which runs locale-check over the input text shape
- * (postcode format or script rather than place names) and returns the matching loaded index or
- * `undefined` when no loaded index matches, typed opaquely because the docs bundle carries no
- * neural type dependency.
+ * `LoadResult.selectPairIndexForText` exposes, which runs locale-check over the input
+ * text shape (postcode format or script rather than place names) and returns the
+ * matching loaded index or `undefined` when no loaded index matches, typed opaquely
+ * because the docs bundle carries no neural type dependency.
  */
 export type SelectPairIndex = (text: string, opts?: { country?: string }) => object | undefined
 
@@ -137,19 +141,20 @@ export interface ClassifyStageDeps {
 	/**
 	 * The optional street-morphology matcher, the signal source for the street-context check.
 	 *
-	 * The check only fires when both this and `fst` are wired (core's
-	 * `streetContextRequirementFor`), matching the node runtime pipeline's default.
-	 * `null` when the release ships no `fst-street-morphology.bin`, in which case the demo parses
-	 * with the check off.
+	 * The check only fires when both this and `fst` are wired (core's `streetContextRequirementFor`),
+	 * matching the node runtime pipeline's default.
+	 * `null` when the release ships no `fst-street-morphology.bin`, in
+	 * which case the demo parses with the check off.
 	 */
 	streetMorphology?: FSTMatcherLike | null
 	/**
 	 * The per-parse placetype-pair prior selector.
 	 *
-	 * The loaded {@link SelectPairIndex}, or `null`/omitted when no pair index was staged for this
-	 * release. When present, `runClassifyStage` calls it on the input and passes the result as the
-	 * pipeline's `placetypePair` opt. The GB/NZ dependent_locality prior fires while US/FR inputs
-	 * stay byte-stable.
+	 * The loaded {@link SelectPairIndex}, or `null`/omitted when no pair index was staged for this release.
+	 * When present, `runClassifyStage` calls it on the input and passes the result
+	 * as the pipeline's `placetypePair` opt.
+	 *
+	 * The GB/NZ dependent_locality prior fires while US/FR inputs stay byte-stable.
 	 */
 	selectPairIndex?: SelectPairIndex | null
 }
@@ -188,11 +193,11 @@ export async function runClassifyStage(
 
 	hooks.onClassifierStart?.()
 
-	// Placetype-pair prior: pick the per-parse index. A preset pins its country
-	// (pairCountryForInput), so a locale structural routing cannot detect from text still fires
-	// while the input equals the preset text. The moment the user edits, the pin drops and the code
-	// falls back to structural locale-check detection. No index or no match leaves the result
-	// byte-stable.
+	// Placetype-pair prior: pick the per-parse index.
+	// A preset pins its country (pairCountryForInput), so a locale structural routing
+	// cannot detect from text still fires while the input equals the preset text.
+	// The moment the user edits, the pin drops and the code falls back to structural locale-check detection.
+	// No index or no match leaves the result byte-stable.
 	const pinnedCountry = pairCountryForInput(input)
 	const placetypePair = deps.selectPairIndex?.(input, pinnedCountry ? { country: pinnedCountry } : undefined)
 
@@ -221,9 +226,9 @@ export async function runClassifyStage(
 }
 
 /**
- * Dual-role resolution shared by both parse paths, which reports whether the resolved pin doubles
- * as another admin tier and returns `undefined` for a placeless pin (`id === 0`), a lookup with no
- * `coincidentRolesFor`, an empty relation or a failed query.
+ * Dual-role resolution shared by both parse paths, which reports whether the resolved pin
+ * doubles as another admin tier and returns `undefined` for a placeless pin (`id === 0`),
+ * a lookup with no `coincidentRolesFor`, an empty relation or a failed query.
  */
 export async function resolveDualRoles(
 	lookup: MailwomanLookupLike,

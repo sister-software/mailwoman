@@ -30,7 +30,8 @@ export interface EvalGeocodeResult {
  */
 export interface EvalGeocoder extends Disposable {
 	/**
-	 * The matcher's ingest interface (parse and geocode to `PostalAddress`), built through `geocodeAddressVia`.
+	 * The matcher's ingest interface (parse and geocode to `PostalAddress`),
+	 * built through `geocodeAddressVia`.
 	 */
 	geocodeAddress: GeocodeAddress
 	/**
@@ -47,19 +48,25 @@ export interface EvalGeocoder extends Disposable {
  */
 export interface EvalGeocoderInit {
 	/**
-	 * All-caps case normalization. Default on. `nppes-benchmark --legacy-join` turns it off for the A/B.
+	 * All-caps case normalization.
+	 *
+	 * Default on.
+	 * `nppes-benchmark --legacy-join` turns it off for the A/B.
 	 */
 	normalizeCase?: boolean
 }
 
 /**
- * Build a geocoder on demand. Tools construct it late and dispose it as soon as geocoding is done.
+ * Build a geocoder on demand.
+ *
+ * Tools construct it late and dispose it as soon as geocoding is done.
  */
 export type EvalGeocoderFactory = (init?: EvalGeocoderInit) => Promise<EvalGeocoder>
 
 /**
- * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface) for
- * `nppes-dedup-benchmark --parallel-geocode`. It yields enriched records in completion order.
+ * The threaded geocode surface (`mailwoman/geocode-stream` behind the interface)
+ * for `nppes-dedup-benchmark --parallel-geocode`.
+ * It yields enriched records in completion order.
  */
 export type EvalGeocodeStream = (
 	records: SourceRecord[],

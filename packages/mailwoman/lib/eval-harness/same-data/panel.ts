@@ -77,8 +77,9 @@ export interface GeoNamesCity {
 /**
  * Parse a GeoNames main-table dump.
  *
- * `header: false` matches the headerless dump, and a spliterator that assumed a header would eat the
- * first row. A per-country dump (`FR.txt`) carries the same columns and parses here unchanged.
+ * `header: false` matches the headerless dump, and a spliterator that assumed
+ * a header would eat the first row.
+ * A per-country dump (`FR.txt`) carries the same columns and parses here unchanged.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
 	const rows: GeoNamesCity[] = []
@@ -124,8 +125,9 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * Taking the first makes the choice a property of the source instead of a second seeded draw
- * nobody registered. The file carries 1.8 million rows, so it is streamed and only the index is held.
+ * Taking the first makes the choice a property of the source instead of a
+ * second seeded draw nobody registered.
+ * The file carries 1.8 million rows, so it is streamed and only the index is held.
  */
 export async function readPostcodeByAdmin(path: string): Promise<Map<string, string>> {
 	const byAdmin = new Map<string, string>()
@@ -186,7 +188,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const census: PanelBuildCensus[] = []
 
 	/**
-	 * Rows whose name is borne exactly once with a population above the floor. Three strata share this pool.
+	 * Rows whose name is borne exactly once with a population above the floor.
+	 * Three strata share this pool.
 	 */
 	const uniqueEligible = (): GeoNamesCity[] =>
 		uniqueNameEligible({

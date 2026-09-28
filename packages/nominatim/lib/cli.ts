@@ -67,8 +67,10 @@ const PLACETYPE_TO_KEY: Record<string, keyof NominatimAddressDetails> = {
 }
 
 /**
- * A real address fits comfortably and anything longer is malformed input that would exceed the
- * model's input window. Cap defensively so a giant query returns no results instead of faulting.
+ * A real address fits comfortably and anything longer is malformed input that
+ * would exceed the model's input window.
+ *
+ * Cap defensively so a giant query returns no results instead of faulting.
  */
 const MAX_QUERY_LEN = 512
 
@@ -103,16 +105,17 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const backend = await createResolverBackend(resolverMod, { wofPaths, candidateDB })
 	const resolver = createWOFResolver(backend)
 	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
-	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse. A no-op
-	// when the extract is not on disk, so the endpoint degrades cleanly.
+	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse.
+	// A no-op when the extract is not on disk, so the endpoint degrades cleanly.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
-	// The annotation fallback carries no country constraint for the geocode. The default-on placer
-	// already routes the query's country, and `defaultCountry` is a hard override that beats it, so
-	// forcing "US" would resolve every non-US query to its US namesake. The fallback only annotates
-	// the flag, currency and calling code when the resolved hierarchy omits the country tag.
-	// US-centric data without a candidate DB omits it for US results, where "US" is the right guess,
-	// while non-US results carry the country tag.
+	// The annotation fallback carries no country constraint for the geocode.
+	// The default-on placer already routes the query's country, and `defaultCountry` is a hard
+	// override that beats it, so forcing "US" would resolve every non-US query to its US namesake.
+	// The fallback only annotates the flag, currency and calling code when the
+	// resolved hierarchy omits the country tag.
+	// US-centric data without a candidate DB omits it for US results, where "US" is
+	// the right guess, while non-US results carry the country tag.
 	const annotationCountryFallback = candidateDB ? undefined : "US"
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
 	const annotators = [coordinateFormatAnnotator, countryReferenceAnnotator]
@@ -136,8 +139,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 
 	const annotate = composeAnnotators(annotators)
 
-	// Read once at boot from the artifacts themselves, so this describes what the endpoint serves
-	// from for as long as it serves. Every artifact appears, including one carrying no manifest.
+	// Read once at boot from the artifacts themselves, so this describes what the
+	// endpoint serves from for as long as it serves.
+	// Every artifact appears, including one carrying no manifest.
 	const status = nominatimStatus(await gazetteerFreshness(gazetteer))
 
 	const engine: NominatimEngine = {
@@ -147,8 +151,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			)?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return []
-			// A caller-supplied `countrycodes` is an explicit hard restriction in Nominatim
-			// semantics, so it is honored as the country constraint even to the point of no result.
+			// A caller-supplied `countrycodes` is an explicit hard restriction in Nominatim semantics,
+			// so it is honored as the country constraint even to the point of no result.
 			// For a list we apply the first, the common geopy case.
 			const userCountry = params.countrycodes?.[0]?.toUpperCase()
 
@@ -164,9 +168,9 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const resolved = forwardToResolved(result)
 
 			// A house-grade resolution tier (`address_point`, `interpolated` or `plus_code`) is tagged
-			// `class: place` and `type: house`, upstream Nominatim's own class and type for a house, so
-			// a client that keys on those fields treats it as a building rather than an untyped admin
-			// hit. The admin tier carries no class here.
+			// `class: place` and `type: house`, upstream Nominatim's own class and type for a house,
+			// so a client that keys on those fields treats it as a building rather than an untyped admin hit.
+			// The admin tier carries no class here.
 			if (
 				result.resolution_tier === "address_point" ||
 				result.resolution_tier === "interpolated" ||
@@ -186,8 +190,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			}
 
 			// The country tag is not always in the hierarchy, since US admin results omit it.
-			// Backfill from the US-centric-data default so the address, display name, flag, currency
-			// and calling code agree.
+			// Backfill from the US-centric-data default so the address, display name,
+			// flag, currency and calling code agree.
 			const countryName = result.hierarchy.find((h) => h.tag === "country")?.value ?? annotationCountryFallback
 			const country = matchCountry(countryName)
 

@@ -101,8 +101,8 @@ export interface OpenaddressesAdapterOptions {
 	 *
 	 * The default is `true`.
 	 * `buildCorpus({ licensePolicy })` and `mw corpus build --license-policy share-alike-free`
-	 * express a refusal at build level, which reads the obligations of every adapter's rows under
-	 * one policy and records what it refused.
+	 * express a refusal at build level, which reads the obligations of every adapter's
+	 * rows under one policy and records what it refused.
 	 *
 	 * Pass `false` only for an adapter-scoped drop, such as a fixture that must carry one license.
 	 */

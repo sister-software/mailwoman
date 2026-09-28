@@ -36,8 +36,8 @@ export type CapitalLevel = (typeof CAPITAL_LEVEL)[keyof typeof CAPITAL_LEVEL]
 /**
  * How far a candidate row may sit from the reference point and still read as the same place.
  *
- * A centroid-convention allowance for a GeoNames point against a WOF centroid on a metro-scale
- * city. The name-membership conjunct excludes neighbours inside the radius.
+ * A centroid-convention allowance for a GeoNames point against a WOF centroid on a metro-scale city.
+ * The name-membership conjunct excludes neighbours inside the radius.
  */
 export const CAPITAL_MATCH_RADIUS_KM = 25
 
@@ -105,8 +105,8 @@ export class CapitalIndex {
 	/**
 	 * The highest capital level whose entry passes all three conjuncts for this place.
 	 *
-	 * `none`, never a throw, for a missing name, country, or coordinate, an unknown country, or no
-	 * matching entry.
+	 * `none`, never a throw, for a missing name, country, or coordinate,
+	 * an unknown country, or no matching entry.
 	 */
 	levelOfPlace(
 		name: string | null | undefined,

@@ -24,21 +24,21 @@ import type { TokenLike } from "#query-shape-prior"
 export const WINDOW_MAX_WORDS = 3
 
 /**
- * Anchored mode's child-window word cap, wider than {@link WINDOW_MAX_WORDS} because the anchored
- * geometry already excludes a venue phrase immediately left of the post-town anchor and the
- * observed register max was 5 words with a real 4-word class.
+ * Anchored mode's child-window word cap, wider than {@link WINDOW_MAX_WORDS} because the
+ * anchored geometry already excludes a venue phrase immediately left of the post-town anchor
+ * and the observed register max was 5 words with a real 4-word class.
  */
 export const ANCHORED_CHILD_MAX_WORDS = 4
 
 /**
- * Bias magnitude used when neither the index nor the caller supplies one, since real usage always
- * has the artifact header's `index.delta`.
+ * Bias magnitude used when neither the index nor the caller supplies one,
+ * since real usage always has the artifact header's `index.delta`.
  */
 export const DEFAULT_DELTA = 1
 
 /**
- * Structural-marker words, where a candidate window immediately followed by one of these is the
- * head of a street or venue name rather than a standalone place reference.
+ * Structural-marker words, where a candidate window immediately followed by one of these
+ * is the head of a street or venue name rather than a standalone place reference.
  *
  * The set is deliberately partial.
  * Add an entry with its own rationale line, don't silently grow the set.
@@ -46,21 +46,20 @@ export const DEFAULT_DELTA = 1
 export const STRUCTURAL_MARKER_WORDS: ReadonlySet<string> = new Set(["house", "road", "street", "flat", "court"])
 
 /**
- * A bare house-number shape ("5", "12a", "104b"), where a window followed by this shape reads as a
- * numbered-street head rather than a place name.
+ * A bare house-number shape ("5", "12a", "104b"), where a window followed by this
+ * shape reads as a numbered-street head rather than a place name.
  */
 export function looksLikeHouseNumber(token: string): boolean {
 	return /^\d+[a-z]?$/.test(token)
 }
 
 /**
- * Venue-title prepositions, where a word-group immediately preceding the child window that folds
- * to one of these withholds the transition adjustment for that hit while the emission bias stays
- * as-is.
+ * Venue-title prepositions, where a word-group immediately preceding the child window that folds to
+ * one of these withholds the transition adjustment for that hit while the emission bias stays as-is.
  *
- * An immediately preceding "at" or "of" marks a lexicalized venue title whose embedded place name
- * belongs to the venue's own name rather than an address field, and address syntax introduces
- * dependent localities positionally rather than prepositionally.
+ * An immediately preceding "at" or "of" marks a lexicalized venue title whose embedded
+ * place name belongs to the venue's own name rather than an address field, and address
+ * syntax introduces dependent localities positionally rather than prepositionally.
  *
  * Interior place-name prepositions ("Barrow upon Soar", "Knott End on Sea") are unaffected.
  * List growth requires a per-word rationale line.
@@ -97,12 +96,12 @@ export interface CandidateWindow {
 	endPos: number
 	pieceIndices: number[]
 	/**
-	 * The pieces the probe key covers when that range is narrower than {@link pieceIndices}, as for
-	 * a segment whose key had a same-field postcode stripped.
+	 * The pieces the probe key covers when that range is narrower than {@link pieceIndices},
+	 * as for a segment whose key had a same-field postcode stripped.
 	 * Absent when the two coincide.
 	 *
-	 * The whole-edge parent write ({@link applyParentTagBias}) reads this field, while the child
-	 * write spans the whole segment.
+	 * The whole-edge parent write ({@link applyParentTagBias}) reads this field,
+	 * while the child write spans the whole segment.
 	 */
 	keyPieceIndices?: number[]
 }
@@ -135,8 +134,8 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * Compute the segment index of every entry in `nonEmptyGroups`, by counting literal `,` and newline
  * characters in `inputText` that fall strictly before each group's first piece's start offset.
  *
- * Counting offsets rather than piece text is unaffected by how the tokenizer attaches a
- * piece to its neighbouring word group.
+ * Counting offsets rather than piece text is unaffected by how the tokenizer
+ * attaches a piece to its neighbouring word group.
  * Without `inputText`, every group falls in segment 0.
  */
 export function computeGroupSegments(
@@ -148,16 +147,16 @@ export function computeGroupSegments(
 
 	if (inputText) {
 		for (let i = 0; i < inputText.length; i++) {
-			// A newline counts alongside the comma, because a postal address may put the locality on
-			// its own line.
+			// A newline counts alongside the comma, because a postal address may put
+			// the locality on its own line.
 			if (inputText[i] === "," || inputText[i] === "\n") {
 				boundaryOffsets.push(i)
 			}
 		}
 	}
 
-	// boundaryOffsets is built in ascending order, so `boundaryIdx` only ever advances in one linear
-	// pass across both.
+	// boundaryOffsets is built in ascending order, so `boundaryIdx` only ever
+	// advances in one linear pass across both.
 	let boundaryIdx = 0
 
 	return nonEmptyGroups.map((group) => {
@@ -173,16 +172,17 @@ export function computeGroupSegments(
 
 /**
  * Most trailing word-groups a segment-parent postcode strip removes.
+ *
  * A GB postcode is at most two space-split word-groups and an NZ postcode is one.
  */
 export const MAX_TRAILING_POSTCODE_WORDS = 2
 
 /**
- * Per-country postcode shape used by the segment path's trailing-postcode strip, keyed by the pair
- * index header's lowercase ISO country.
+ * Per-country postcode shape used by the segment path's trailing-postcode strip,
+ * keyed by the pair index header's lowercase ISO country.
  *
- * Each entry is the same anchored shape `@mailwoman/codex/<system>` owns, so the strip and the
- * postcode-repair and postcode-anchor passes never drift on what a GB or NZ postcode is.
+ * Each entry is the same anchored shape `@mailwoman/codex/<system>` owns, so the strip
+ * and the postcode-repair and postcode-anchor passes never drift on what a GB or NZ postcode is.
  * A header country with no entry here produces no strip.
  *
  * Grow this map only with a real codex shape for the added country.
@@ -197,14 +197,14 @@ export const SEGMENT_PARENT_POSTCODE_SHAPES: ReadonlyMap<string, RegExp> = new M
 ])
 
 /**
- * Countries whose postal convention writes the postcode before the locality on the same line
- * ("12210 Montpeyroux") rather than after it ("Macclesfield SK11 9PD").
+ * Countries whose postal convention writes the postcode before the locality on the same
+ * line ("12210 Montpeyroux") rather than after it ("Macclesfield SK11 9PD").
  *
- * Membership is earned by a codex postcode shape plus a confound board rather than by the country
- * merely writing the postcode first.
+ * Membership is earned by a codex postcode shape plus a confound board
+ * rather than by the country merely writing the postcode first.
  *
- * A country absent from this set is deliberate: en-IN is absent because the PIN goes last, so the
- * trailing-postcode strip already folds its parent segment correctly.
+ * A country absent from this set is deliberate: en-IN is absent because the PIN goes last,
+ * so the trailing-postcode strip already folds its parent segment correctly.
  */
 export const LEADING_POSTCODE_COUNTRIES: ReadonlySet<string> = new Set(["fr", "de", "es", "it"])
 
@@ -216,12 +216,11 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
 }
 
 /**
- * Drop a trailing postcode-shaped run from a segment's fold tokens before it becomes a
- * parent-candidate key.
+ * Drop a trailing postcode-shaped run from a segment's fold tokens before it becomes a parent-candidate key.
  *
- * The guards: only a trailing run, the longest suffix of at most {@link MAX_TRAILING_POSTCODE_WORDS}
- * tokens whose bare concatenation full-matches `shape` (longest-first so a two-token GB postcode
- * strips whole), never the entire segment, and only when `shape` is defined.
+ * The guards: only a trailing run, the longest suffix of at most {@link MAX_TRAILING_POSTCODE_WORDS} tokens
+ * whose bare concatenation full-matches `shape` (longest-first so a two-token GB postcode strips whole),
+ * never the entire segment, and only when `shape` is defined.
  */
 export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
 	if (shape === undefined || tokens.length < 2) return 0
@@ -239,8 +238,7 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * Strip a leading postcode-shaped run from a segment's parent-candidate key, mirroring
  * {@link trailingSegmentPostcodeTake} for countries that write the postcode before the locality.
  *
- * The anchored full-match against the country shape means only a postcode for that country is
- * removed.
+ * The anchored full-match against the country shape means only a postcode for that country is removed.
  * Only the probe key changes, and the segment itself and every emitted span are untouched.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
@@ -258,13 +256,12 @@ export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: Reg
 /**
  * Build one candidate per comma-delimited segment of the input.
  *
- * Groups sharing a segment index are contiguous in `nonEmptyGroups`, so a single forward pass over
- * the precomputed `groupSegments` suffices.
+ * Groups sharing a segment index are contiguous in `nonEmptyGroups`, so a single
+ * forward pass over the precomputed `groupSegments` suffices.
  *
- * `parentPostcodeShape` strips a trailing postcode from the segment's key forms only, while
- * `startPos`, `endPos` and `pieceIndices` still span the whole segment.
- * The stripped range is recorded as {@link CandidateWindow.keyPieceIndices} for the whole-edge
- * parent write.
+ * `parentPostcodeShape` strips a trailing postcode from the segment's key forms only,
+ * while `startPos`, `endPos` and `pieceIndices` still span the whole segment.
+ * The stripped range is recorded as {@link CandidateWindow.keyPieceIndices} for the whole-edge parent write.
  */
 export function buildSegmentWindows(
 	nonEmptyGroups: readonly WordGroup[],
@@ -284,8 +281,8 @@ export function buildSegmentWindows(
 
 			// Both ends, because the postcode's position relative to the locality is a per-country
 			// convention: "Macclesfield SK11 9PD" writes it last and "12210 Montpeyroux" writes it first.
-			// Each strip is an anchored full-match against the country's own shape, so a country that only
-			// writes one form is unaffected by the other pass.
+			// Each strip is an anchored full-match against the country's own shape,
+			// so a country that only writes one form is unaffected by the other pass.
 			const tokens = groups.map((g) => g.fstToken)
 			const trailTake = trailingSegmentPostcodeTake(tokens, parentPostcodeShape)
 			const leadTake = leadingSegmentPostcodeTake(tokens.slice(0, tokens.length - trailTake), leadingPostcodeShape)
@@ -309,19 +306,18 @@ export function buildSegmentWindows(
 }
 
 /**
- * Whether two windows' word-group position ranges do not overlap, which also excludes a window
- * from itself.
+ * Whether two windows' word-group position ranges do not overlap, which also excludes a window from itself.
  */
 export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.endPos < b.startPos || b.endPos < a.startPos
 }
 
 /**
- * Whether two candidates fold to an identical key under any of their fold forms, which is the
- * identity test behind the repeated-name convention.
+ * Whether two candidates fold to an identical key under any of their fold forms,
+ * which is the identity test behind the repeated-name convention.
  *
- * Two different places collide here only when their folds collide, since the same name
- * text folds the same way.
+ * Two different places collide here only when their folds collide,
+ * since the same name text folds the same way.
  */
 export function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.key === b.key || a.key === b.concatKey || a.concatKey === b.key || a.concatKey === b.concatKey

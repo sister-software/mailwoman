@@ -61,9 +61,10 @@ const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * The entries safe to apply before the input's locale is known, which are multi-character and
- * collision-free across the locale tables. `Av` is a known exception whose removal needs a
- * resolver-gauntlet measurement.
+ * The entries safe to apply before the input's locale is known, which are multi-character
+ * and collision-free across the locale tables.
+ *
+ * `Av` is a known exception whose removal needs a resolver-gauntlet measurement.
  */
 const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 	{ from: "Bd", to: "Boulevard" },
@@ -74,8 +75,8 @@ const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
 ]
 
 /**
- * The abbreviation table for a locale, where `und` selects the locale-unknown set and an
- * unrecognized value selects en-US.
+ * The abbreviation table for a locale, where `und` selects the locale-unknown set
+ * and an unrecognized value selects en-US.
  */
 export function abbreviationDictionary(locale?: string): ReadonlyArray<AbbreviationEntry> {
 	const lc = (locale ?? "en-US").toLowerCase()

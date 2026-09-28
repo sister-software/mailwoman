@@ -24,8 +24,8 @@ import { $ } from "zx"
 /**
  * The generated surfaces, each with the generator that owns it.
  *
- * Adding a version-stamped generated document means adding a row here. The prepare job stages
- * exactly these paths.
+ * Adding a version-stamped generated document means adding a row here.
+ * The prepare job stages exactly these paths.
  */
 const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly string[] }> = [
 	{

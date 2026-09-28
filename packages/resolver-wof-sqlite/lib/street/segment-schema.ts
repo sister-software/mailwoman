@@ -23,16 +23,16 @@ import type { RouteKey } from "#street/normalize"
  * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side`
  * of a named street, with the geometry the interpolator walks.
  *
- * `min_hn`/`max_hn` are the sorted bounds the probe filters on, and `parity` is `odd`, `even` or
- * `mixed`.
+ * `min_hn`/`max_hn` are the sorted bounds the probe filters on, and `parity` is `odd`, `even` or `mixed`.
  */
 export interface StreetSegmentTable {
 	/**
 	 * `canonicalizeRouteKey(normalizeStreetForKey(street))`, the build/query-consistent probe key.
 	 *
-	 * The column name says `street_norm`, but the value carries the route fold on top of the street
-	 * fold, which is why the brand is {@link RouteKey}. Builder and probe both apply both folds, and a
-	 * plain street key bound here misses every numbered-route row.
+	 * The column name says `street_norm`, but the value carries the route fold on top
+	 * of the street fold, which is why the brand is {@link RouteKey}.
+	 * Builder and probe both apply both folds, and a plain street key bound here
+	 * misses every numbered-route row.
 	 */
 	street_norm: RouteKey
 	/**
@@ -42,7 +42,8 @@ export interface StreetSegmentTable {
 	from_hn: number
 	to_hn: number
 	/**
-	 * Sorted lower bound of `(from_hn, to_hn)`. The probe filters `min_hn <= n <= max_hn`.
+	 * Sorted lower bound of `(from_hn, to_hn)`.
+	 * The probe filters `min_hn <= n <= max_hn`.
 	 */
 	min_hn: number
 	/**
@@ -63,7 +64,8 @@ export interface StreetSegmentTable {
 	 */
 	street_raw: string
 	/**
-	 * GeoJSON LineString text without SpatiaLite. Read back with `JSON.parse`.
+	 * GeoJSON LineString text without SpatiaLite.
+	 * Read back with `JSON.parse`.
 	 */
 	geometry: string
 	/**
@@ -77,14 +79,17 @@ export interface StreetSegmentTable {
 }
 
 /**
- * The extract's single-row calibration metadata: the conformal radius multiplier is a property of
- * the calibration set the artifact was built against, so it ships in the artifact rather than in
- * caller code. See the pair-index precedent in `neural/pair-index-resolver.ts`.
+ * The extract's single-row calibration metadata: the conformal radius multiplier
+ * is a property of the calibration set the artifact was built against,
+ * so it ships in the artifact rather than in caller code.
+ *
+ * See the pair-index precedent in `neural/pair-index-resolver.ts`.
  *
  * Written once by the builder, and read at open time by {@link StreetInterpolator}.
  *
- * Extracts built before this table exists lack it. The reader degrades to `undefined`, and
- * callers fall back to the in-code per-region table. Shipped DBs are rebuilt rather than patched.
+ * Extracts built before this table exists lack it.
+ * The reader degrades to `undefined`, and callers fall back to the in-code per-region table.
+ * Shipped DBs are rebuilt rather than patched.
  */
 export interface InterpCalibrationRow {
 	/**
@@ -155,12 +160,13 @@ export async function createStreetSegmentTable(db: Kysely<StreetSegmentDatabase>
 }
 
 /**
- * Create and populate the single-row `interp_calibration` metadata table
- * (see {@link InterpCalibrationRow}). Called once by the extract builder, after the value is
- * selected from the calibration source of record.
+ * Create and populate the single-row `interp_calibration` metadata table (see {@link InterpCalibrationRow}).
  *
- * Build-time only, so async Kysely is fine here. The read side is the raw sync probe in
- * {@link StreetInterpolator}'s constructor, per the sync-by-interface doctrine.
+ * Called once by the extract builder, after the value is selected from the calibration source of record.
+ *
+ * Build-time only, so async Kysely is fine here.
+ * The read side is the raw sync probe in {@link StreetInterpolator}'s constructor,
+ * per the sync-by-interface doctrine.
  */
 export async function writeInterpCalibration(
 	db: Kysely<StreetSegmentDatabase>,

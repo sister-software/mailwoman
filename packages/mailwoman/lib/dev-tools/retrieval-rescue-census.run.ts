@@ -1,10 +1,11 @@
 /**
- * Report-only retrieval-rescue census over the committed Gauntlet corpus. This is not a release eval.
+ * Report-only retrieval-rescue census over the committed Gauntlet corpus.
+ * This is not a release eval.
  *
- * One production-routed board pass with the shipped model. For each row: the delivered answer, the
- * unconditional fork-entity probe (check 1 deliberately ignored, since that is the measurement), and
- * the resolver's ranked alternates, classified against the row's coordinate truth by
- * `retrieval-rescue-census.ts`.
+ * One production-routed board pass with the shipped model.
+ * For each row: the delivered answer, the unconditional fork-entity probe
+ * (check 1 deliberately ignored, since that is the measurement), and the resolver's ranked
+ * alternates, classified against the row's coordinate truth by `retrieval-rescue-census.ts`.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -47,8 +48,9 @@ for (const c of cases) {
 
 	const markers = result.intent_markers.map((m) => m.code)
 
-	// Unconditional: ask the entity layer whenever the fork marker rode, including when the
-	// incumbent resolved. Measuring what check 1 currently silences is the census's purpose.
+	// Unconditional: ask the entity layer whenever the fork marker rode, including
+	// when the incumbent resolved.
+	// Measuring what check 1 currently silences is the census's purpose.
 	const hit =
 		markers.includes("declared_fork") && probe.deps.poiLookup && probe.deps.isStreetGeneric
 			? probeForkEntity(c.input, {

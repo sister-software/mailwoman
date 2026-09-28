@@ -62,13 +62,15 @@ export interface POITable {
 	 */
 	confidence: number
 	/**
-	 * Gers id. Nullable metadata, never a key.
+	 * Gers id.
+	 * Nullable metadata, never a key.
 	 */
 	gers_id: string | null
 }
 
 /**
- * Staging mirror. Every column is nullable except the coords.
+ * Staging mirror.
+ * Every column is nullable except the coords.
  *
  * The loader fills positionally, and the materialize select enforces completeness.
  */
@@ -174,16 +176,16 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 }
 
 /**
- * Secondary index for the brand path, a brand-wide fetch by `brand_wikidata` with no `h3_cell`
- * prefix.
+ * Secondary index for the brand path, a brand-wide fetch by `brand_wikidata` with no `h3_cell` prefix.
  *
- * Brand rows are globally sparse, so the k-ring walk can never reach them and the reader instead
- * fetches all of a brand's rows and distance-sorts. Without this index that fetch is a full-table
- * scan, while with it the fetch is a range-scan. The partial index
- * (`where brand_wikidata is not NULL`) keeps the mostly unbranded rows out of the B-tree.
+ * Brand rows are globally sparse, so the k-ring walk can never reach them and the reader
+ * instead fetches all of a brand's rows and distance-sorts.
+ * Without this index that fetch is a full-table scan, while with it the fetch is a range-scan.
  *
- * Builders call this after the bulk materialize (index-after-load), same phase as
- * {@link createPOINameKeyIndex}.
+ * The partial index (`where brand_wikidata is not NULL`) keeps the mostly unbranded rows out of the B-tree.
+ *
+ * Builders call this after the bulk materialize (index-after-load),
+ * same phase as {@link createPOINameKeyIndex}.
  */
 export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void> {
 	await db.schema

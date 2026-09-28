@@ -177,7 +177,8 @@ export interface OpenCageAnnotations {
 }
 
 /**
- * Serialize the native set to OpenCage's `annotations` key names and casing, emitting only populated fields.
+ * Serialize the native set to OpenCage's `annotations` key names and casing,
+ * emitting only populated fields.
  */
 export function toOpenCage(set: AnnotationSet): OpenCageAnnotations {
 	const out: OpenCageAnnotations = {}
@@ -289,8 +290,8 @@ export function toNative(set: AnnotationSet): AnnotationSet {
 }
 
 /**
- * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node holding the resolved
- * coordinate, embedded under a {@link SchemaOrgPlace}'s `geo`.
+ * A schema.org [`GeoCoordinates`](https://schema.org/GeoCoordinates) node holding the
+ * resolved coordinate, embedded under a {@link SchemaOrgPlace}'s `geo`.
  */
 export interface SchemaOrgGeoCoordinates {
 	"@type": "GeoCoordinates"
@@ -299,8 +300,8 @@ export interface SchemaOrgGeoCoordinates {
 }
 
 /**
- * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node that emits only populated
- * fields and collapses the house-number, street and unit distinction into one opaque `streetAddress` line.
+ * A schema.org [`PostalAddress`](https://schema.org/PostalAddress) node that emits only populated fields
+ * and collapses the house-number, street and unit distinction into one opaque `streetAddress` line.
  */
 export interface SchemaOrgPostalAddress {
 	"@type": "PostalAddress"
@@ -316,8 +317,8 @@ export interface SchemaOrgPostalAddress {
 }
 
 /**
- * A schema.org [`Place`](https://schema.org/Place) node with an embedded `PostalAddress` and
- * `GeoCoordinates`, returned as valid linked data by {@link toSchemaOrg}.
+ * A schema.org [`Place`](https://schema.org/Place) node with an embedded `PostalAddress`
+ * and `GeoCoordinates`, returned as valid linked data by {@link toSchemaOrg}.
  */
 export interface SchemaOrgPlace {
 	"@context": "https://schema.org"
@@ -358,8 +359,8 @@ export interface SchemaOrgInput {
 }
 
 /**
- * Collapse parsed street parts into one space-joined `streetAddress` line, dropping blank parts and
- * yielding `""` for an all-empty input.
+ * Collapse parsed street parts into one space-joined `streetAddress` line,
+ * dropping blank parts and yielding `""` for an all-empty input.
  */
 export function composeStreetAddress(parts: { houseNumber?: string; street?: string; unit?: string }): string {
 	return [parts.houseNumber, parts.street, parts.unit]
@@ -369,8 +370,8 @@ export function composeStreetAddress(parts: { houseNumber?: string; street?: str
 }
 
 /**
- * Serialize a resolved address into a schema.org `Place` JSON-LD object, emitting only populated
- * fields and the `address` block only when at least one address field is present.
+ * Serialize a resolved address into a schema.org `Place` JSON-LD object, emitting only
+ * populated fields and the `address` block only when at least one address field is present.
  */
 export function toSchemaOrg(input: SchemaOrgInput): SchemaOrgPlace {
 	const place: SchemaOrgPlace = { "@context": "https://schema.org", "@type": "Place" }

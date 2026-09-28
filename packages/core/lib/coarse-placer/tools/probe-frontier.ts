@@ -124,7 +124,8 @@ const RECOVERABLE = [
 ]
 
 /**
- * Coarse-placer frontier probe. See the module doc.
+ * Coarse-placer frontier probe.
+ * See the module doc.
  *
  * Emits the report head to stdout.
  */

@@ -302,8 +302,8 @@ describe("buildBDCDatabase", () => {
 
 describe("buildBDCDatabase — multi-BSL block-grain collapse", () => {
 	/**
-	 * Three rows that differ only on `location_id` exercise the materialize collapse, which keeps one
-	 * row unless `includeLocationIDs` is true.
+	 * Three rows that differ only on `location_id` exercise the materialize collapse,
+	 * which keeps one row unless `includeLocationIDs` is true.
 	 */
 	function multiBSLRows(): BDCAvailabilityRow[] {
 		return ["2000000001", "2000000002", "2000000003"].map((locationID) => ({
@@ -383,8 +383,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 	}
 
 	/**
-	 * Seeds `provider_id` 700001 with two FRN edges whose later filing must win the pick, and two
-	 * conflicting holding-company edges.
+	 * Seeds `provider_id` 700001 with two FRN edges whose later filing must win the pick,
+	 * and two conflicting holding-company edges.
 	 */
 	async function seedTwoFRNFixture(db: DatabaseClient<FilerDatabase>): Promise<void> {
 		await createFilerNodeTable(db)
@@ -399,8 +399,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.values({
 				name: "filer",
 				version: "2026-Q2",
-				// filerLookup refuses a manifest whose schema_version predates filer_family, which this
-				// fixture creates above.
+				// filerLookup refuses a manifest whose schema_version predates filer_family,
+				// which this fixture creates above.
 				schema_version: 2,
 				source: "form-499,bdc-provider-list",
 				source_vintage: "2026-Q2",
@@ -467,8 +467,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 					match_score: null,
 					evidence: null,
 				},
-				// Two conflicting holding-company edges leave `bdc_provider.holding_company` NULL while
-				// both stay recoverable here.
+				// Two conflicting holding-company edges leave `bdc_provider.holding_company` NULL
+				// while both stay recoverable here.
 				{
 					from_node_id: PROVIDER_NODE,
 					to_node_id: HC_ALPHA_NODE,
@@ -559,8 +559,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 			.where("provider_id", "=", 700_001)
 			.executeTakeFirstOrThrow()
 
-		// `bdc_provider` holds one FRN, and the later-filed one wins. Its two holding-company values
-		// conflict, so the column stays NULL.
+		// `bdc_provider` holds one FRN, and the later-filed one wins.
+		// Its two holding-company values conflict, so the column stays NULL.
 		expect(multiFRNProvider.frn).toBe(FRN_LATE)
 		expect(multiFRNProvider.brand_name).toBeNull()
 		expect(multiFRNProvider.holding_company).toBeNull()
@@ -586,8 +586,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		expect(repeatValueProvider.frn).toBe(FRN_SOLO)
 		expect(repeatValueProvider.holding_company).toBe("Repeat Holdco")
 
-		// The discarded FRN and holding-company values stay in `filer.db`, recoverable through
-		// `filerLookup` and `filer_edge`.
+		// The discarded FRN and holding-company values stay in `filer.db`,
+		// recoverable through `filerLookup` and `filer_edge`.
 		const crosswalk = await filerLookup(filerDB, { bdcProviderID: 700_001, asOf: "2026-12-31" })
 
 		const frnValues = crosswalk.identifiers
@@ -598,8 +598,8 @@ describe("buildBDCDatabase — bdc_provider population (3a decision 6)", () => {
 		expect(frnValues).toEqual([FRN_EARLY, FRN_LATE].toSorted())
 		expect(crosswalk.primary_frn?.frn).toBe(FRN_LATE)
 
-		// `filerLookup` returns only `same_entity` relationships, so the holding-company retention is
-		// checked against `filer_edge`.
+		// `filerLookup` returns only `same_entity` relationships, so the holding-company
+		// retention is checked against `filer_edge`.
 		const holdingCompanyValues = (
 			await filerDB
 				.selectFrom("filer_edge")
@@ -707,8 +707,8 @@ describe("peekProviderID", () => {
 })
 
 describe("buildBDCDatabase — malformed provider_id via csvPaths (the production ingest path)", () => {
-	// A non-numeric `provider_id` parses to NaN, which binds as SQLite NULL and lets `insert or ignore`
-	// drop every row of the file while the build counts them as deduped.
+	// A non-numeric `provider_id` parses to NaN, which binds as SQLite NULL and lets
+	// `insert or ignore` drop every row of the file while the build counts them as deduped.
 	it("rejects the whole build, naming the malformed CSV, instead of silently absorbing its rows as deduped", async () => {
 		const malformedCSVPath = resolvePackagePath(
 			"@mailwoman/bdc",

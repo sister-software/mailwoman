@@ -69,7 +69,8 @@ describe("inferMapping", () => {
 })
 
 describe("ingestRows", () => {
-	// A stub geocoder. The real one is injected at the CLI boundary.
+	// A stub geocoder.
+	// The real one is injected at the CLI boundary.
 	const stubGeocode: GeocodeAddress = (raw) => ({
 		components: {},
 		canonicalKey: raw
@@ -175,8 +176,8 @@ describe("streamRows (lazy delimited ingest)", () => {
 	})
 
 	it("preserves empty fields — consecutive delimiters do not collapse (NPPES-style alignment)", async () => {
-		// A row with consecutive empties must keep every column, or every value after the empty run
-		// shifts left.
+		// A row with consecutive empties must keep every column, or every value
+		// after the empty run shifts left.
 		const file = (await tmp())("f.tsv")
 		await writeLocalTextFile("npi\torg\tlast\tfirst\tstate\n123\t\t\t\tNE\n", file)
 		const rows: Record<string, string>[] = []

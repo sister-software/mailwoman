@@ -108,8 +108,9 @@ const FAMILIES: Record<string, string[]> = {
 
 /**
  * Leave-one-language-family-out probe: hold out whole families the model never sees a row from.
- * Baltic is Latin and distinct, Oceania is English-Latin and distinct, and the Middle East is
- * romanized non-Latin.
+ *
+ * Baltic is Latin and distinct, Oceania is English-Latin and distinct,
+ * and the Middle East is romanized non-Latin.
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 
@@ -119,7 +120,8 @@ const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 const oaLocality = (r: Record<string, unknown>): string => (r.city ?? "").toString().trim()
 
 /**
- * Coarse-placer OpenAddresses Latin-off-map outlier builder. See the module doc.
+ * Coarse-placer OpenAddresses Latin-off-map outlier builder.
+ * See the module doc.
  */
 export async function buildOutlierOA(
 	options: BuildOutlierOAOptions = {},

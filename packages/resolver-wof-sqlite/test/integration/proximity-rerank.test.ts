@@ -30,9 +30,9 @@ describe("applyProximityRerank", () => {
 	it("reads the penalized prominence, so a demoted alias does not ride population back over a primary", () => {
 		const [primary, demoted] = contestedPair()
 		// A viewport about 10 km off the alias, the ordinary case rather than the degenerate one.
-		// At distance 0 the nearness term saturates and the two field choices agree. The field
-		// the population term reads only decides the answer at real viewport distances. The alias
-		// wins out to about 59 km on raw score and only to about 2.6 km on the penalized value.
+		// At distance 0 the nearness term saturates and the two field choices agree.
+		// The field the population term reads only decides the answer at real viewport distances.
+		// The alias wins out to about 59 km on raw score and only to about 2.6 km on the penalized value.
 		const bias = [{ lat: 40.09, lon: -83 }]
 		const rawScorePopTerm = 4 * Math.min(1, demoted!.score / 6)
 		const penalizedPopTerm = 4 * Math.min(1, demoted!.prominence! / 6)
@@ -56,8 +56,9 @@ describe("applyProximityRerank", () => {
 
 		applyProximityRerank(candidates, [{ lat: 40, lon: -83 }])
 
-		// The walk re-sorts by `prominence ?? score`. A re-rank that only returned bias order
-		// would leave these untouched and have its ordering discarded downstream.
+		// The walk re-sorts by `prominence ?? score`.
+		// A re-rank that only returned bias order would leave these untouched
+		// and have its ordering discarded downstream.
 		expect(candidates.map((c) => c.prominence)).not.toEqual(before)
 		expect(candidates.every((c) => typeof c.prominence === "number")).toBe(true)
 	})

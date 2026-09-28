@@ -63,7 +63,8 @@ export interface EvalLatinOffmapResult {
 }
 
 /**
- * Coarse-placer Latin off-map handling eval. See the module doc.
+ * Coarse-placer Latin off-map handling eval.
+ * See the module doc.
  *
  * Emits the report to stdout.
  */

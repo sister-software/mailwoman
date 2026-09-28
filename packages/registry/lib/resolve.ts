@@ -38,12 +38,13 @@ import { DEDUP_GBT_META, DEDUP_GBT_MODEL } from "#models/dedup-gbt-en-us"
 import type { ResolvedEntity, SourceRecord } from "#types"
 
 /**
- * Cheap, parse-free normalization for the address-frequency key: uppercase, collapse whitespace,
- * drop punctuation.
+ * Cheap, parse-free normalization for the address-frequency key: uppercase,
+ * collapse whitespace, drop punctuation.
  *
- * The count is over distinct entities that share an address, and it is computable over millions of
- * rows without geocoding. A crowded clinic or billing address is weak identity evidence. A lonely
- * address is strong.
+ * The count is over distinct entities that share an address, and it is computable
+ * over millions of rows without geocoding.
+ * A crowded clinic or billing address is weak identity evidence.
+ * A lonely address is strong.
  */
 export function addressFrequencyKey(raw: string): string {
 	return raw
@@ -76,11 +77,11 @@ const PHONE_LEVELS: ComparisonLevel[] = [
 
 /**
  * Exact-vs-different levels for a closed-vocabulary code set
- * ({@link DefaultModelOptions.exactDiscriminators}), such as NPPES taxonomy codes or license
- * numbers.
+ * ({@link DefaultModelOptions.exactDiscriminators}), such as NPPES taxonomy codes or license numbers.
  *
- * These are seeds only, since EM refits. `u` starts well above phone's 0.002, because two random
- * providers share a specialty far more often than a phone line.
+ * These are seeds only, since EM refits.
+ * `u` starts well above phone's 0.002, because two random providers share a
+ * specialty far more often than a phone line.
  */
 const CODE_SET_LEVELS: ComparisonLevel[] = [
 	{ label: "exact", minSimilarity: 1, m: 0.75, u: 0.08 },
@@ -101,11 +102,11 @@ function codeSetOverlap(a: string, b: string): number {
 }
 
 /**
- * Last-10-digit normalization for phone agreement, dropping country code, punctuation and
- * extensions.
+ * Last-10-digit normalization for phone agreement, dropping country code, punctuation and extensions.
  *
- * A shorter digit string is kept as-is, since partial agreement still carries weight in the
- * comparison model. `null` means no digits at all.
+ * A shorter digit string is kept as-is, since partial agreement still carries
+ * weight in the comparison model.
+ * `null` means no digits at all.
  */
 export function normalizePhone(raw: string | null | undefined): string | null {
 	if (!raw) return null
@@ -117,9 +118,9 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 /**
  * {@link normalizePhone} under the probes' stricter interface, where only a full line counts.
  *
- * The result is the last 10 digits when the input carries at least 10, and `""` otherwise, never
- * a partial digit string. Callers guard on truthiness, so `""` reads as no comparable phone
- * rather than a weaker key.
+ * The result is the last 10 digits when the input carries at least 10,
+ * and `""` otherwise, never a partial digit string.
+ * Callers guard on truthiness, so `""` reads as no comparable phone rather than a weaker key.
  */
 export function normalizePhoneStrict(raw: string | null | undefined): string {
 	const digits = normalizePhone(raw)
@@ -130,9 +131,9 @@ export function normalizePhoneStrict(raw: string | null | undefined): string {
 /**
  * The identity-corroborating comparisons: person name, organization and phone.
  *
- * At least one must positively agree before a pair may link, since a shared address alone carries
- * no identity evidence. Phone is the secondary identifier that rescues a true same-entity link
- * across name drift.
+ * At least one must positively agree before a pair may link, since a shared
+ * address alone carries no identity evidence.
+ * Phone is the secondary identifier that rescues a true same-entity link across name drift.
  */
 const CORROBORATING_FIELDS = new Set(["given", "family", "organization", "phone"])
 
@@ -143,9 +144,10 @@ const CORROBORATING_FIELDS = new Set(["given", "family", "organization", "phone"
  */
 export interface DefaultModelOptions {
 	/**
-	 * Corpus-wide address-frequency table over {@link addressFrequencyKey}, which makes the address
-	 * agreement weight inverse to how shared the address is. A building with 50 providers makes a
-	 * same-address match near-worthless evidence.
+	 * Corpus-wide address-frequency table over {@link addressFrequencyKey}, which makes
+	 * the address agreement weight inverse to how shared the address is.
+	 *
+	 * A building with 50 providers makes a same-address match near-worthless evidence.
 	 *
 	 * The table's `value` is the record's raw address string.
 	 */
@@ -154,34 +156,36 @@ export interface DefaultModelOptions {
 	 * Collapse the redundant address-key and great-circle-distance comparisons into one
 	 * {@link spatialComparison spatial-agreement} signal, an exact-key tier over distance buckets.
 	 *
-	 * Removes the double-count that over-merges co-located providers, since an exact key match
-	 * already implies distance ≈ 0.
+	 * Removes the double-count that over-merges co-located providers, since an
+	 * exact key match already implies distance ≈ 0.
 	 */
 	collapseSpatial?: boolean
 	/**
 	 * Add a normalized-phone exact-match comparison.
 	 *
-	 * A shared line is strong evidence and the secondary corroborator that lets a true same-entity
-	 * link survive name drift.
+	 * A shared line is strong evidence and the secondary corroborator that lets a
+	 * true same-entity link survive name drift.
 	 */
 	usePhone?: boolean
 	/**
-	 * Extra secondary-identifier comparisons drawn from {@link SourceRecord.attributes}, such as
-	 * `["authorizedOfficial"]`.
+	 * Extra secondary-identifier comparisons drawn from {@link SourceRecord.attributes},
+	 * such as `["authorizedOfficial"]`.
 	 *
-	 * Each becomes an `attr:<key>` comparison and counts toward corroboration. It is a more reliable
-	 * discriminator than phone where the data has one.
+	 * Each becomes an `attr:<key>` comparison and counts toward corroboration.
+	 * It is a more reliable discriminator than phone where the data has one.
 	 */
 	discriminators?: string[]
 	/**
-	 * Closed-vocabulary code-set discriminators drawn from {@link SourceRecord.attributes}, such as
-	 * NPPES taxonomy codes or license numbers.
+	 * Closed-vocabulary code-set discriminators drawn from {@link SourceRecord.attributes},
+	 * such as NPPES taxonomy codes or license numbers.
 	 *
 	 * The attribute value is a whitespace-joined set of codes, and agreement means any shared code.
-	 * This is set overlap rather than string similarity, since `207R00000X` and `207Q00000X` are
-	 * different specialties despite near-identical text. String similarity mis-scores that case.
-	 * The over-merge separator: two co-located records of one entity nearly always share a code,
-	 * while two distinct co-located providers usually do not.
+	 * This is set overlap rather than string similarity, since `207R00000X`
+	 * and `207Q00000X` are different specialties despite near-identical text.
+	 *
+	 * String similarity mis-scores that case.
+	 * The over-merge separator: two co-located records of one entity nearly always share
+	 * a code, while two distinct co-located providers usually do not.
 	 */
 	exactDiscriminators?: string[]
 }
@@ -328,8 +332,8 @@ export interface ResolveConfig {
 	 * agreement by how shared the address is. **Default-on:** when omitted, `resolveEntities`
 	 * computes the table over the input records' addresses, the right scope for a single dataset.
 	 *
-	 * Pass your own {@link TermFrequencyTable} (for example a corpus-wide one) to override, or
-	 * `false` to disable (the legacy bare baseline).
+	 * Pass your own {@link TermFrequencyTable} (for example a corpus-wide one) to override,
+	 * or `false` to disable (the legacy bare baseline).
 	 * Ignored if `model` is supplied.
 	 */
 	addressFrequency?: TermFrequencyTable | false
@@ -342,16 +346,16 @@ export interface ResolveConfig {
 	 */
 	collapseSpatial?: boolean
 	/**
-	 * Require positive name or organization corroboration ({@link CORROBORATING_FIELDS}) for a link,
-	 * so a shared address alone cannot merge two records.
+	 * Require positive name or organization corroboration ({@link CORROBORATING_FIELDS})
+	 * for a link, so a shared address alone cannot merge two records.
 	 *
 	 * Suppresses the spatial-only links that fuse distinct co-located providers.
 	 * Default false.
 	 */
 	requireCorroboration?: boolean
 	/**
-	 * Add a normalized-phone comparison to the default model, which is strong evidence and the
-	 * secondary corroborator that keeps corroboration from killing name-drift recall.
+	 * Add a normalized-phone comparison to the default model, which is strong evidence
+	 * and the secondary corroborator that keeps corroboration from killing name-drift recall.
 	 *
 	 * Ignored if `model` is supplied.
 	 */
@@ -364,16 +368,16 @@ export interface ResolveConfig {
 	 */
 	linkage?: "single" | "average"
 	/**
-	 * Extra secondary-identifier keys from {@link SourceRecord.attributes} to add as comparisons and
-	 * corroborators, for example `["authorizedOfficial"]`.
+	 * Extra secondary-identifier keys from {@link SourceRecord.attributes} to add as
+	 * comparisons and corroborators, for example `["authorizedOfficial"]`.
 	 *
 	 * Ignored if `model` is supplied.
 	 */
 	discriminators?: string[]
 	/**
-	 * Closed-vocabulary code-set discriminator keys
-	 * ({@link DefaultModelOptions.exactDiscriminators}), which use set-overlap agreement. An example
-	 * is `["taxonomy"]`.
+	 * Closed-vocabulary code-set discriminator keys ({@link DefaultModelOptions.exactDiscriminators}),
+	 * which use set-overlap agreement.
+	 * An example is `["taxonomy"]`.
 	 *
 	 * Also corroborators.
 	 * Ignored if `model` is supplied.
@@ -383,38 +387,39 @@ export interface ResolveConfig {
 	 * Override the Fellegi-Sunter link weight with a learned score.
 	 *
 	 * When set, a candidate pair's match weight is this function's return value instead of
-	 * {@link scorePair}'s, in the same threshold-comparable units as the FS weight. Default is
-	 * undefined (pure FS).
+	 * {@link scorePair}'s, in the same threshold-comparable units as the FS weight.
+	 * Default is undefined (pure FS).
 	 *
-	 * The blocking and clustering are unchanged, so a trained scorer can be A/B tested against the FS
-	 * baseline on the identical pipeline.
-	 * The function is responsible for its own feature computation, such as the agreement pattern
-	 * plus any corpus statistics it captured.
+	 * The blocking and clustering are unchanged, so a trained scorer can be A/B tested
+	 * against the FS baseline on the identical pipeline.
+	 * The function is responsible for its own feature computation, such as the
+	 * agreement pattern plus any corpus statistics it captured.
 	 *
-	 * The corroboration check is independent of the learned score and is still evaluated on the
-	 * Fellegi-Sunter `contributions`, so a learned-high pair with no positive FS name, organization or
-	 * phone agreement is still held out.
+	 * The corroboration check is independent of the learned score and is still evaluated on
+	 * the Fellegi-Sunter `contributions`, so a learned-high pair with no positive FS name,
+	 * organization or phone agreement is still held out.
 	 *
 	 * A learned scorer is normally trained to subsume corroboration, so use one or the other.
 	 * Combining them lets the FS check veto the learned score.
 	 */
 	scorer?: (a: SourceRecord, b: SourceRecord) => number
 	/**
-	 * The learned gradient-boosted-tree scorer, default-on. Omitted or `true` uses the bundled
-	 * {@link DEDUP_GBT_MODEL}, which was trained on the NPPES NPI-truth set and beats the
-	 * Fellegi-Sunter baseline by roughly +5pp dedup F1 held-out within a state and +22pp on states it
-	 * never trained on.
+	 * The learned gradient-boosted-tree scorer, default-on.
+	 *
+	 * Omitted or `true` uses the bundled {@link DEDUP_GBT_MODEL}, which was trained on
+	 * the NPPES NPI-truth set and beats the Fellegi-Sunter baseline by roughly +5pp dedup
+	 * F1 held-out within a state and +22pp on states it never trained on.
 	 *
 	 * `false` opts out to the pure FS baseline.
 	 * Pass your own {@link GBT} for a custom model.
 	 *
-	 * The scorer is built over the same collapsed-spatial and address-frequency feature model as
-	 * training, independent of this call's comparison config.
+	 * The scorer is built over the same collapsed-spatial and address-frequency feature
+	 * model as training, independent of this call's comparison config.
 	 * An explicit {@link scorer} takes precedence.
 	 *
-	 * When the bundled model is active and no {@link threshold} is set, its calibrated link threshold
-	 * ({@link DEDUP_GBT_META}.recommendedThreshold) is used, because the GBT logit is not in
-	 * FS-weight units and 0 would over-merge.
+	 * When the bundled model is active and no {@link threshold} is set,
+	 * its calibrated link threshold ({@link DEDUP_GBT_META}.recommendedThreshold) is used,
+	 * because the GBT logit is not in FS-weight units and 0 would over-merge.
 	 *
 	 * The model is NPPES/US-trained.
 	 * For a very different domain, A/B it or pass `false`.
@@ -440,8 +445,7 @@ export interface ResolveResult {
 /**
  * Resolve source records into canonical entities: block, score, cluster.
  *
- * Every record lands in exactly one entity, and a record with no confident link is its own
- * singleton entity.
+ * Every record lands in exactly one entity, and a record with no confident link is its own singleton entity.
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
 	const addressFrequency =
@@ -483,9 +487,10 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		})
 	}
 
-	// An explicit threshold wins. Otherwise the bundled model uses its calibrated threshold, because
-	// its logit is not in FS-weight units and 0 would over-merge. The FS baseline or a custom model
-	// uses 0.
+	// An explicit threshold wins.
+	// Otherwise the bundled model uses its calibrated threshold, because its logit
+	// is not in FS-weight units and 0 would over-merge.
+	// The FS baseline or a custom model uses 0.
 	const threshold = config.threshold ?? (usingBundledModel ? DEDUP_GBT_META.recommendedThreshold : 0)
 
 	const { pairs, droppedBlocks } = block(records, blockingKeys, { maxBlockSize: config.maxBlockSize })
@@ -501,8 +506,8 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 		const score = scorePair(scoringModel, a, b)
 		let weight = scorer ? scorer(a, b) : score.weight
 
-		// A link must carry positive name or organization corroboration, since a shared address alone
-		// carries no identity evidence.
+		// A link must carry positive name or organization corroboration, since a shared
+		// address alone carries no identity evidence.
 		if (config.requireCorroboration) {
 			const corroborated = score.contributions.some(
 				(c) => (CORROBORATING_FIELDS.has(c.name) || c.name.startsWith("attr:")) && c.weight > 0
@@ -518,9 +523,9 @@ export function resolveEntities(records: readonly SourceRecord[], config: Resolv
 
 	const clusters = cluster(records, links, { threshold, linkage: config.linkage })
 
-	// Cohesion is the weakest within-cluster link weight. Compute it in one pass over links with a
-	// record-to-cluster index, because filtering every link for every cluster is O(clusters x links)
-	// and dominates the resolve at scale.
+	// Cohesion is the weakest within-cluster link weight.
+	// Compute it in one pass over links with a record-to-cluster index, because filtering
+	// every link for every cluster is O(clusters x links) and dominates the resolve at scale.
 	const clusterOf = new Map<SourceRecord, number>()
 
 	clusters.forEach((group, i) => {

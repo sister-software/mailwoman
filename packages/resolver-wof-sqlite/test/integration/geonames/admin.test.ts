@@ -136,8 +136,9 @@ test("default (no includeAdmin) stays localities-only with no admin rows — byt
 
 	expect((db2.prepare("SELECT COUNT(*) n FROM spr WHERE placetype IN ('country','region')").get() as Row).n).toBe(0)
 
-	// No linkage. The single ancestor row is the self row that `populateAncestors` writes for
-	// every spr row, so the admin check counts linkage separately.
+	// No linkage.
+	// The single ancestor row is the self row that `populateAncestors` writes for every
+	// spr row, so the admin check counts linkage separately.
 	expect(
 		(db2.prepare("SELECT COUNT(*) n FROM ancestors WHERE ancestor_placetype IN ('country','region')").get() as Row).n
 	).toBe(0)

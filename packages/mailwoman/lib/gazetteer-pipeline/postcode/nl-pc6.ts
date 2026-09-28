@@ -51,8 +51,8 @@ export interface BuildNLPC6Options {
 /**
  * Build the sealed NL PC6 database.
  *
- * Not re-exported from the postcode barrel, since the command lazy-imports it under the
- * optional-peer discipline.
+ * Not re-exported from the postcode barrel, since the command lazy-imports it
+ * under the optional-peer discipline.
  */
 export async function buildNLPC6Database(
 	opts: BuildNLPC6Options = {}
@@ -86,8 +86,8 @@ export async function buildNLPC6Database(
 
 		db.exec("BEGIN")
 
-		// `header: false` so the header row arrives as data and can be checked. A silent lon/lat swap
-		// would put every Dutch postcode in Somalia.
+		// `header: false` so the header row arrives as data and can be checked.
+		// A silent lon/lat swap would put every Dutch postcode in Somalia.
 		let headerSeen = false
 
 		for await (const [pc6Raw, lonS, latS] of CSVSpliterator.fromAsync(csvPath, { header: false })) {

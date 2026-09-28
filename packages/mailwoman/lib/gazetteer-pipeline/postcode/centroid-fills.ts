@@ -76,8 +76,8 @@ export interface CentroidFillResult {
  * Rows per multi-row insert.
  *
  * SQLite binds one variable per column per row and caps the total per statement
- * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds). Eight columns at
- * this width leaves ample headroom.
+ * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds).
+ * Eight columns at this width leaves ample headroom.
  */
 const INSERT_CHUNK = 1000
 
@@ -108,10 +108,12 @@ interface GeonamesPostcode {
 /**
  * Read a country's GeoNames postal rows.
  *
- * Prefers the per-country `<CC>.txt` dump and falls back to the combined
- * `allCountries-postal.txt`, because the two layouts cover different countries on disk. The
- * per-country directory holds the locales fetched one at a time, and the combined file is the
- * one that carries the US. Without the fallback the US pass finds no file and silently no-ops.
+ * Prefers the per-country `<CC>.txt` dump and falls back to the combined `allCountries-postal.txt`,
+ * because the two layouts cover different countries on disk.
+ * The per-country directory holds the locales fetched one at a time,
+ * and the combined file is the one that carries the US.
+ *
+ * Without the fallback the US pass finds no file and silently no-ops.
  */
 const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()
 
@@ -173,11 +175,12 @@ async function readGeonamesPostal(
 /**
  * Attach each postcode's GeoNames delivery-city name(s) to the database's `names` table.
  *
- * Separate from the centroid pass because the two select different rows: a centroid is only wanted
- * where one is missing, while a name is wanted on every postcode, including one that already has a
- * Census zcta coordinate and no name at all. Rows are the USPS delivery city, which is frequently
- * not the geographic locality (11201 is Brooklyn, inside the locality New York), and for Queens is a
- * neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
+ * Separate from the centroid pass because the two select different rows: a centroid
+ * is only wanted where one is missing, while a name is wanted on every postcode,
+ * including one that already has a Census zcta coordinate and no name at all.
+ * Rows are the USPS delivery city, which is frequently not the geographic locality
+ * (11201 is Brooklyn, inside the locality New York), and for Queens is a neighbourhood name
+ * rather than the borough (Astoria, Flushing, Jamaica).
  *
  * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
  */
@@ -255,8 +258,9 @@ async function geonamesFill(
 	geonamesDir: PathBuilderLike,
 	combinedPath: PathBuilderLike
 ): Promise<number> {
-	// The GeoNames update matches on (country, name). The build only indexes placetype/country/parent,
-	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows).
+	// The GeoNames update matches on (country, name).
+	// The build only indexes placetype/country/parent, so without this the per-postcode
+	// UPDATEs scan each country's rows (minutes on 400k+ rows).
 	// `kdb` wraps `db` for the DDL.
 	// The caller owns `db`'s lifecycle, so we don't destroy it here.
 	const kdb = db

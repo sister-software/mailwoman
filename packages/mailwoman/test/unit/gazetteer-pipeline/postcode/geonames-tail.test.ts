@@ -37,8 +37,8 @@ beforeAll(async () => {
 	postalDir = root.path("geonames-postal")
 	await makeDirectories(postalDir)
 
-	// CZ: one code in the spaced display form across three settlements, which exercises both laws at
-	// once, normalization to `11000` and a medoid that must land on one of the three points.
+	// CZ: one code in the spaced display form across three settlements, which exercises both laws
+	// at once, normalization to `11000` and a medoid that must land on one of the three points.
 	await writeLocalTextFile(
 		[
 			row("CZ", "110 00", "Praha 1", 50.1, 14.1),
@@ -71,9 +71,9 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 	expect(result.missing).toEqual(["ZZ"])
 	expect(result.sources.map((s) => s.country)).toEqual(["CZ", "PL"])
 	expect(result.sources.every((s) => /^[0-9a-f]{32}$/.test(s.md5))).toBe(true)
-	// Sealed 0444, the artifact is read-only from the moment it exists. The mode bits are checked
-	// rather than accessSync, because root.path ignores the permission and would pass a W_OK probe on
-	// a sealed file.
+	// Sealed 0444, the artifact is read-only from the moment it exists.
+	// The mode bits are checked rather than accessSync, because root.path ignores the
+	// permission and would pass a W_OK probe on a sealed file.
 	expect((await statPath(out)).mode & 0o222).toBe(0)
 
 	using db = new DatabaseClient<WOFDatabase>(out, { readOnly: true })
@@ -137,9 +137,10 @@ test("buildPostcodeGeonamesTail: #920 laws survive a rebuild, and a missing dump
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its ingest order", () => {
-	// `ingestGeonamesPostal` allocates ids from one counter in list order, so a country's id range is
-	// its position. Appending is therefore safe, while reordering changes every id range. A rebuild
-	// stays id-comparable to the frozen artifact only while these ten lead.
+	// `ingestGeonamesPostal` allocates ids from one counter in list order,
+	// so a country's id range is its position.
+	// Appending is therefore safe, while reordering changes every id range.
+	// A rebuild stays id-comparable to the frozen artifact only while these ten lead.
 	expect([...DEFAULT_GEONAMES_TAIL_COUNTRIES].slice(0, 10)).toEqual([
 		"FI",
 		"CZ",
@@ -155,8 +156,9 @@ test("DEFAULT_GEONAMES_TAIL_COUNTRIES: the frozen artifact's ten lead, in its in
 })
 
 test("DEFAULT_GEONAMES_TAIL_COUNTRIES: every entry is a distinct upper-case ISO-3166 alpha-2", () => {
-	// A duplicate would ingest a country twice under two id ranges, and a lower-case entry would miss
-	// its `<CC>.txt` and be reported missing. Both failures are silent, since neither stops the build.
+	// A duplicate would ingest a country twice under two id ranges, and a lower-case
+	// entry would miss its `<CC>.txt` and be reported missing.
+	// Both failures are silent, since neither stops the build.
 	const list = [...DEFAULT_GEONAMES_TAIL_COUNTRIES]
 
 	expect(list.filter((cc) => !/^[A-Z]{2}$/.test(cc))).toEqual([])

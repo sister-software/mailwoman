@@ -22,7 +22,9 @@ import { inTXBBOX } from "#tools/shared"
  */
 export interface GeocoderNamesakeProbeOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 }

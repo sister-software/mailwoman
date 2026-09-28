@@ -25,15 +25,16 @@ export const PublicNeuralEnvSchema = z.object({
 		description: "Maximum ONNX Runtime intra-op worker threads for each Mailwoman process.",
 	}),
 	/**
-	 * PIX1 whole-edge parent bias, the δ applied to the parent window of a placetype-pair hit over
-	 * the child tag's allowed parents in `containmentFor(system)`.
+	 * PIX1 whole-edge parent bias, the δ applied to the parent window of a placetype-pair
+	 * hit over the child tag's allowed parents in `containmentFor(system)`.
 	 *
 	 * Unset (the default) gives child-only output, byte-identical to every earlier build.
 	 *
-	 * A bar-conditional toggle rather than a shipped knob. The mechanism stays off until the four
-	 * bars in `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear, and this
-	 * drives the on leg of B-1's on-vs-off comparison through `mailwoman eval gauntlet` without a
-	 * code edit between the two runs.
+	 * A bar-conditional toggle rather than a shipped knob.
+	 * The mechanism stays off until the four bars in
+	 * `docs/superpowers/plans/2026-08-04-pix1-whole-edge-preregistration.md` clear,
+	 * and this drives the on leg of B-1's on-vs-off comparison through
+	 * `mailwoman eval gauntlet` without a code edit between the two runs.
 	 */
 	MAILWOMAN_PAIR_PARENT_DELTA: blankAsAbsent(z.coerce.number().optional()).meta({
 		title: "Pair-parent delta",

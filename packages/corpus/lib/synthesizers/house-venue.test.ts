@@ -138,8 +138,8 @@ describe("synthesizeHouseVenueRow", () => {
 	})
 
 	it("leaves every non-VE country's tail exactly as it was", () => {
-		// The branch is country-restricted, and the `house-venue` recipe output carries FR and US
-		// rows only, so this addition cannot move an existing row.
+		// The branch is country-restricted, and the `house-venue` recipe output carries FR
+		// and US rows only, so this addition cannot move an existing row.
 		for (const [country, pattern] of [
 			["US", /Boston, MA 02101/],
 			["FR", /75005 Paris/],

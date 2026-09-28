@@ -6,16 +6,19 @@ import { createNewlineWriter, JSONSpliterator } from "spliterator"
  * the current align format, by running every row through `alignRow` (corpus/src/align.ts).
  *
  * Most synthetic recipe outputs are generated on demand by a recipe (parametrized by --count),
- * so re-emitting them in a new label format is a re-run. A few are fixed corpora with a
- * hand/DeepSeek-authored canonical source that is never regenerated, notably `deepseek-kryptonite`
- * (the adversarial hard-case set) and the `deepseek-translit-*` variants.
+ * so re-emitting them in a new label format is a re-run.
+ * A few are fixed corpora with a hand/DeepSeek-authored canonical source that is never regenerated,
+ * notably `deepseek-kryptonite` (the adversarial hard-case set) and the `deepseek-translit-*` variants.
  *
  * Their committed parquets carry whatever label format was current when they were first built.
  *
- * When the corpus label format changes (the char-offset span triple), those fixed corpora are aligned
- * again from their canonical source. Feed the canonical source back through the same `alignRow` the
- * from-source build uses, so the spans land in the new format with zero drift. That is what this
- * does. Canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on miss.
+ * When the corpus label format changes (the char-offset span triple), those fixed
+ * corpora are aligned again from their canonical source.
+ * Feed the canonical source back through the same `alignRow` the from-source build uses,
+ * so the spans land in the new format with zero drift.
+ *
+ * That is what this does.
+ * Canonical jsonl in → labeled jsonl out, one `alignRow` per row, quarantine on miss.
  *
  * It is the uniform counterpart to `tools/overlay/kryptonite.ts`
  * (which couples to a base manifest and writes parquet directly).

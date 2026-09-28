@@ -47,7 +47,8 @@ export interface ScoreAffixOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here. The check verdict reads this file.
+	 * Write the machine-readable sidecar here.
+	 * The check verdict reads this file.
 	 */
 	json?: string
 	/**
@@ -64,8 +65,8 @@ export interface ScoreAffixOptions {
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * Package-shaped `<root>` loads model + tokenizer + card + all soft
-	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights`.
+	 * Package-shaped `<root>` loads model + tokenizer + card + all soft channels
+	 * (anchor + gazetteer + country) from the package via `loadFromWeights`.
 	 *
 	 * The only in-distribution grade for a country-channel model (v6.2.0+).
 	 *

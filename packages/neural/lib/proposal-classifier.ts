@@ -21,8 +21,8 @@ export interface NeuralProposalClassifierConfig {
 	 */
 	id: string
 	/**
-	 * The underlying neural classifier, typed by the one method the adapter calls so a caller may
-	 * supply anything that parses.
+	 * The underlying neural classifier, typed by the one method the adapter calls
+	 * so a caller may supply anything that parses.
 	 */
 	classifier: Pick<NeuralAddressClassifier, "parse">
 	/**
@@ -30,8 +30,8 @@ export interface NeuralProposalClassifierConfig {
 	 *
 	 * Defaults to the Stage 2 tag set.
 	 *
-	 * A v0.2.0 Stage 1 model never decodes to a fine tag, so the broader default carries no
-	 * backward-compatibility risk.
+	 * A v0.2.0 Stage 1 model never decodes to a fine tag, so the broader default
+	 * carries no backward-compatibility risk.
 	 */
 	emits?: readonly ComponentTag[]
 	/**
@@ -64,8 +64,8 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 			if (emitsSet.has(node.tag)) {
 				// Avoid `Span.from(...)`, where the tokenization module would run a filesystem-bound
 				// module-init (libpostal data dir scan) on every consumer of this module.
-				// The solver and policy registry read `start`, `end` and `body` only, and a consumer
-				// needing the full Span behavior re-constructs it through `Span.from`.
+				// The solver and policy registry read `start`, `end` and `body` only, and a
+				// consumer needing the full Span behavior re-constructs it through `Span.from`.
 				const span = {
 					start: sectionOffset + node.start,
 					end: sectionOffset + node.end,

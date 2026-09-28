@@ -23,7 +23,8 @@ import type { PostcodeBinaryEntry } from "@mailwoman/neural/postcode"
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * GB inward code length (`\d[A-Z]{2}`). The outward code is everything before it.
+ * GB inward code length (`\d[A-Z]{2}`).
+ * The outward code is everything before it.
  */
 const GB_INWARD_LENGTH = 3
 
@@ -86,7 +87,8 @@ export interface PostcodeDatabaseRow {
 
 export interface BuildPostcodeBinaryOptions {
 	/**
-	 * GB key granularity. The default is `unit`, and non-GB builds ignore it.
+	 * GB key granularity.
+	 * The default is `unit`, and non-GB builds ignore it.
 	 */
 	gbGranularity?: GBGranularity
 }

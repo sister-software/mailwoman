@@ -57,9 +57,10 @@ export type PostcodePoint = readonly [number, number]
 /**
  * A medoid and the size of the group it came from.
  *
- * These two integers describe the source dump. `@mailwoman/evidence`'s `EpistemicStatus`
- * vocabulary belongs to the answering path, where `epistemicStatusFor` derives it, and naming
- * them `observed` or `derived` here would give those words a second, local meaning.
+ * These two integers describe the source dump.
+ * `@mailwoman/evidence`'s `EpistemicStatus` vocabulary belongs to the answering path,
+ * where `epistemicStatusFor` derives it, and naming them `observed` or `derived`
+ * here would give those words a second, local meaning.
  */
 export interface MedoidSupport {
 	/**
@@ -73,8 +74,9 @@ export interface MedoidSupport {
 	/**
 	 * Distinct coordinates among them.
 	 *
-	 * One means every row named the same point. In a dump whose coordinates are computed, that
-	 * is one value inherited N times rather than N sources agreeing.
+	 * One means every row named the same point.
+	 * In a dump whose coordinates are computed, that is one value inherited N times
+	 * rather than N sources agreeing.
 	 */
 	distinctPoints: number
 }
@@ -82,14 +84,14 @@ export interface MedoidSupport {
 /**
  * Collapse a group to its distinct points before any geometric consensus reads it.
  *
- * Rows sharing a coordinate to the digit are not independent measurements. GeoNames computes a
- * postal coordinate by matching the code against the names of places and admin divisions, and averages
- * neighbouring codes where the match fails, so one computed value reaches every row that matched
- * it.
+ * Rows sharing a coordinate to the digit are not independent measurements.
+ * GeoNames computes a postal coordinate by matching the code against the names of places
+ * and admin divisions, and averages neighbouring codes where the match fails,
+ * so one computed value reaches every row that matched it.
  *
- * Exact equality rather than a proximity radius. `collapseCoincident` answers a different
- * question, which ranked candidates are the same physical place within `COINCIDENT_PLACE_KM`,
- * and two surveyed settlements 200 m apart are two points here.
+ * Exact equality rather than a proximity radius.
+ * `collapseCoincident` answers a different question, which ranked candidates are the same physical
+ * place within `COINCIDENT_PLACE_KM`, and two surveyed settlements 200 m apart are two points here.
  */
 function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoint[] {
 	const seen = new Set<string>()
@@ -110,21 +112,23 @@ function collapseDuplicatePoints(points: readonly PostcodePoint[]): PostcodePoin
 /**
  * Pick the member point nearest the group's mean, never the mean itself.
  *
- * The medoid stays on a real observation, so a single-member group is exactly its own point and a
- * multi-member group is one of its members. The bound applies only while the members are distinct,
- * so duplicate points are collapsed first. Counting N rows at one coordinate separately would
- * weight that value by how many settlements inherited it.
- * {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
+ * The medoid stays on a real observation, so a single-member group is exactly its own point
+ * and a multi-member group is one of its members.
+ * The bound applies only while the members are distinct, so duplicate points are collapsed first.
  *
- * Distance is squared-Euclidean in degrees rather than haversine. At the scale a postcode spans the
- * two produce the same ranking, and this one keeps trig out of a per-group inner loop.
+ * Counting N rows at one coordinate separately would weight that value by how many settlements
+ * inherited it. {@link MedoidSupport.distinctPoints} reports how many points the answer rested on.
  *
- * Ties go to the earliest member, which makes the result a pure function of the input order, the
- * property a rebuilt extract's ids depend on.
+ * Distance is squared-Euclidean in degrees rather than haversine.
+ * At the scale a postcode spans the two produce the same ranking, and this one
+ * keeps trig out of a per-group inner loop.
  *
- * Exported rather than inlined at each ingest because every postcode source that groups member
- * points, GeoNames postal and OSM `addr:postcode`, owes the same law, and a second hand-rolled
- * copy is where they drift.
+ * Ties go to the earliest member, which makes the result a pure function of the
+ * input order, the property a rebuilt extract's ids depend on.
+ *
+ * Exported rather than inlined at each ingest because every postcode source that
+ * groups member points, GeoNames postal and OSM `addr:postcode`, owes the same law,
+ * and a second hand-rolled copy is where they drift.
  */
 export function medoidPoint(points: readonly PostcodePoint[]): PostcodePoint {
 	return medoidWithSupport(points).point
@@ -235,8 +239,8 @@ export async function ingestGeonamesPostal(
 
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
-		// The dump is headerless, so row 1 would otherwise be consumed as column headings and its
-		// postcode lost. `header: false` is required.
+		// The dump is headerless, so row 1 would otherwise be consumed as column headings and its postcode lost.
+		// `header: false` is required.
 		for await (const cols of readUnquotedTSV(file)) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue
 			const display = cols[1]!.trim()

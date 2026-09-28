@@ -58,8 +58,8 @@ const FIXTURE: FixtureRow[] = [
 		d: 0.2,
 		population: 1_350_000,
 	},
-	// Brandenburg, beyond the relative tolerance: same-name town ~75 km W of the region
-	// centroid (region bbox ⌀ ~313 km, 15 % ≈ 47 km).
+	// Brandenburg, beyond the relative tolerance: same-name town ~75 km W of the
+	// region centroid (region bbox ⌀ ~313 km, 15 % ≈ 47 km).
 	{ id: 30, name: "Brandenburg", placetype: "region", country: "DE", lat: 52.4, lon: 13, d: 1.2 },
 	{
 		id: 31,

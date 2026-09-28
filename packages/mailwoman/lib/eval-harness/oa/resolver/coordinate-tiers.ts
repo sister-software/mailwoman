@@ -16,8 +16,8 @@ import type { OAResolverEvalOptions } from "#eval-harness/oa/resolver/options"
 /**
  * The postcode database reader the anchor extractor probes.
  *
- * The WOF postcode lookup's structural interface, declared here so the eval never has
- * to import the SQLite class it only ever holds by reference.
+ * The WOF postcode lookup's structural interface, declared here so the eval never
+ * has to import the SQLite class it only ever holds by reference.
  */
 export interface PostcodeCentroidLookup extends Disposable {
 	lookup(pc: string): Array<{ country: string; lat: number; lon: number }>
@@ -57,8 +57,7 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 		addressPoints = new AddressPointSqliteLookup(addressPointsDB)
 	}
 
-	// `--interpolation <segments-db>`: the house-number interpolation tier
-	// (StreetInterpolator, tiger-range).
+	// `--interpolation <segments-db>`: the house-number interpolation tier (StreetInterpolator, tiger-range).
 	// Adds `interpolation` to resolveOpts.
 	// The `neural+interp` row takes the coordinate from the exact point when present, else the
 	// interpolated estimate, else the admin centroid, the full street-level coordinate cascade.
@@ -77,8 +76,8 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	// so the eval reports the shipped coordinate (address_point > interpolated > admin)
 	// across all states rather than the admin centroid the neural headline alone reports.
 	// The single-state --address-points/--interpolation flags still work for a one-state run,
-	// and --cascade supersedes them with multi-state per-row selection. --data-root locates
-	// the databases (<root>/address-points/, <root>/interpolation/).
+	// and --cascade supersedes them with multi-state per-row selection. --data-root
+	// locates the databases (<root>/address-points/, <root>/interpolation/).
 	const cascadeOn = options.cascade ?? false
 	const dataRoot = options.dataRoot || dataRootPath()
 	let cascadeProvider: RegionDatabaseProvider | null = null
@@ -94,8 +93,8 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 	const runAddrPt = !!addressPoints || cascadeOn
 	const runInterp = !!interpolation || cascadeOn
 	const useAnchor = options.postcodeAnchor ?? false
-	// `--anchor-rerank`: feed the postcode anchor's country posterior into
-	// the resolver's locality re-rank (`ResolveOpts.anchorPosterior`), to measure
+	// `--anchor-rerank`: feed the postcode anchor's country posterior into the
+	// resolver's locality re-rank (`ResolveOpts.anchorPosterior`), to measure
 	// whether the merged re-ranker pulls resolves into the right country's polygon
 	// when no `@mailwoman/locale-check` stage is set (`--default-country none`).
 	const anchorRerank = options.anchorRerank ?? false
@@ -132,10 +131,11 @@ export async function buildCoordinateTiers(options: OAResolverEvalOptions) {
 /**
  * The postcode-anchor reads' inputs.
  *
- * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the
- * resolver's. A penalized house-number span scores ~0.2 (single-country times the house-number
- * penalty), while a genuinely ambiguous real code scores at least 0.52 (valid in three countries
- * or fewer), so a 0.5 floor keeps the latter and rejects the former.
+ * `minConfidence` is the floor below which the anchor's coordinate is not trusted over the resolver's.
+ * A penalized house-number span scores ~0.2 (single-country times the house-number penalty),
+ * while a genuinely ambiguous real code scores at least 0.52 (valid in three countries or fewer),
+ * so a 0.5 floor keeps the latter and rejects the former.
+ *
  * A span the position prior reads as a house number falls back to the resolver's coordinate
  * (the right city centroid) rather than placing the address at a far-away same-shaped ZIP.
  */

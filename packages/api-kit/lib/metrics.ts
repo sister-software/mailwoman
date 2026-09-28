@@ -25,8 +25,8 @@ let errors = 0
 const startedAt = Date.now()
 
 /**
- * Record one completed timed operation and its wall-clock latency, with the reserved `"error"` tier
- * counting toward errors.
+ * Record one completed timed operation and its wall-clock latency, with the
+ * reserved `"error"` tier counting toward errors.
  */
 export function recordTimed(latencyMs: number, tier: string): void {
 	total++

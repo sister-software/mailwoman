@@ -155,22 +155,24 @@ export interface UnitDesignatorRangeMatch {
 	 * The secondary range/identifier token immediately following the designator, i.e. "4B" in "Apt 4B".
 	 *
 	 * Undefined when the designator appears standalone (e.g. a bare "Basement").
-	 * This module does not validate the range's own shape. Numeric, letter,
-	 * and alphanumeric ranges are all USPS-valid.
+	 * This module does not validate the range's own shape.
+	 *
+	 * Numeric, letter, and alphanumeric ranges are all USPS-valid.
 	 */
 	range: string | undefined
 	/**
 	 * Whether USPS Pub-28 Appendix C2 marks this designator as requiring a secondary
 	 * range (see {@link US_UNIT_DESIGNATOR_REQUIRES_RANGE}).
-	 * Informational only. This matcher does not enforce it.
+	 *
+	 * Informational only.
+	 * This matcher does not enforce it.
 	 */
 	requiresRange: boolean
 }
 
 /**
- * Like {@link matchLeadingDesignator}, but also captures the secondary
- * range/identifier token immediately following the designator, if present
- * ("Apt 4B" → designator "apartment", range "4B").
+ * Like {@link matchLeadingDesignator}, but also captures the secondary range/identifier token
+ * immediately following the designator, if present ("Apt 4B" → designator "apartment", range "4B").
  */
 export function matchLeadingDesignatorWithRange(unit: string): UnitDesignatorRangeMatch | null {
 	const trimmed = unit.trim()

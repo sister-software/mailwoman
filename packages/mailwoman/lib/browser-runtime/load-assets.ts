@@ -45,15 +45,15 @@ export interface ReleaseAssets {
 	/**
 	 * The street-morphology matcher, the signal source for the street-context check.
 	 *
-	 * Loaded with the FST gazetteer because the check needs both (core's
-	 * `streetContextRequirementFor` only fires when the two stages are present).
-	 * `null` when the release ships no `fst-street-morphology.bin`, in which case the demo parses
-	 * with the check off.
+	 * Loaded with the FST gazetteer because the check needs both
+	 * (core's `streetContextRequirementFor` only fires when the two stages are present).
+	 * `null` when the release ships no `fst-street-morphology.bin`, in
+	 * which case the demo parses with the check off.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
 	/**
-	 * The byte-range gazetteer lookup, `null` when the release ships no gazetteer, when the host
-	 * asked for none, or when the load failed.
+	 * The byte-range gazetteer lookup, `null` when the release ships no gazetteer,
+	 * when the host asked for none, or when the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
@@ -70,9 +70,11 @@ export interface ReleaseAssets {
 	/**
 	 * Per-parse placetype-pair prior selection.
 	 *
-	 * Runs locale-check over the input text and returns the loaded index whose header country
-	 * matches, or `undefined` for a byte-stable no-prior result. Both demo parse paths thread this
-	 * into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior.
+	 * Runs locale-check over the input text and returns the loaded index whose header
+	 * country matches, or `undefined` for a byte-stable no-prior result.
+	 * Both demo parse paths thread this into `runClassifyStage` so a GB/NZ input
+	 * gets its dependent_locality-resurrecting prior.
+	 *
 	 * `null` when no pair index was staged or loaded for this release.
 	 */
 	selectPairIndex: SelectPairIndex | null
@@ -89,9 +91,10 @@ export interface LoadReleaseAssetsOptions {
 }
 
 /**
- * Load the classifier, calibration, FST and gazetteer bundle for one release, reporting staged
- * progress through `progress`. The host owns the terminal ready/error state and reveals the
- * returned bundle atomically.
+ * Load the classifier, calibration, FST and gazetteer bundle for one release,
+ * reporting staged progress through `progress`.
+ *
+ * The host owns the terminal ready/error state and reveals the returned bundle atomically.
  *
  * @param release The selected release descriptor (drives which optional assets are fetched).
  * @param progress The host's progress and abort surface.

@@ -32,8 +32,8 @@ export interface CedexMatch {
 /**
  * Find the cedex phrase in a line, if any.
  *
- * @returns The last match, since a cedex line places the phrase terminally (NF Z 10-011) and an
- * earlier occurrence is more likely a venue name fragment.
+ * @returns The last match, since a cedex line places the phrase terminally (NF Z 10-011)
+ * and an earlier occurrence is more likely a venue name fragment.
  */
 export function matchCedex(text: string): CedexMatch | null {
 	let match: CedexMatch | null = null

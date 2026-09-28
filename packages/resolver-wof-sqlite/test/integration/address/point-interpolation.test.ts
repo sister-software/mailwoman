@@ -25,9 +25,9 @@ interface SeedPoint {
 }
 
 async function seedPoints(db: DatabaseClient<AddressPointDatabase>, points: SeedPoint[]): Promise<void> {
-	// The shared table builder is the one `mailwoman situs address-points` uses, so this fixture
-	// cannot drift from the production shape. The test owns `db`'s lifecycle and does not destroy
-	// `kdb` here.
+	// The shared table builder is the one `mailwoman situs address-points` uses,
+	// so this fixture cannot drift from the production shape.
+	// The test owns `db`'s lifecycle and does not destroy `kdb` here.
 	const kdb = db
 	await createAddressPointTable(kdb)
 
@@ -52,9 +52,9 @@ beforeAll(async () => {
 	await seedPoints(db, [
 		{ street_key: "main street", number: "100", postcode: "05601", lat: 0, lon: 0 },
 		{ street_key: "main street", number: "200", postcode: "05601", lat: 0, lon: 0.001 },
-		// Self-exclusion fixture on its own street. A point sits at the queryable number 150,
-		// deliberately far off the street line, so querying 150 must interpolate the 100/200
-		// bracket and never answer from this row.
+		// Self-exclusion fixture on its own street.
+		// A point sits at the queryable number 150, deliberately far off the street line,
+		// so querying 150 must interpolate the 100/200 bracket and never answer from this row.
 		{ street_key: "elm street", number: "100", postcode: "05601", lat: 0, lon: 0 },
 		{ street_key: "elm street", number: "150", postcode: "05601", lat: 0.5, lon: 0.5 },
 		{ street_key: "elm street", number: "200", postcode: "05601", lat: 0, lon: 0.001 },
@@ -94,8 +94,8 @@ describe("AddressPointInterpolator", () => {
 	})
 
 	it("never answers from a point at the queried number itself (non-circular by construction)", () => {
-		// A row for 150 exists off the street line at lat 0.5, so the answer must come from the
-		// 100/200 bracket. In production the exact tier owns on-file numbers.
+		// A row for 150 exists off the street line at lat 0.5, so the answer must come from the 100/200 bracket.
+		// In production the exact tier owns on-file numbers.
 		const hit = interpolator.find({ street: "Elm St", number: "150", postcode: "05601" })
 		expect(hit!.bracket).toBe("both")
 		expect(hit!.lat).toBeCloseTo(0, 9)

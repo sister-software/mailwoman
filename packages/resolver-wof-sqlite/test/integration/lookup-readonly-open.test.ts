@@ -46,12 +46,13 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
-// The root vitest config runs `isolate: false` with one shared module graph per worker, so
-// `node:sqlite` or `./lookup.ts` may already sit in the cache, evaluated with the real DatabaseSync
-// by an earlier file. The mock factory would never run for a cached module and the construction spy
-// would stay empty. Reset on the way in so the chain re-evaluates against the mock, and on the way
-// out so the next file never inherits our RecordingDatabaseSync.
-// so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
+// The root vitest config runs `isolate: false` with one shared module graph
+// per worker, so `node:sqlite` or `./lookup.ts` may already sit in the cache,
+// evaluated with the real DatabaseSync by an earlier file.
+// The mock factory would never run for a cached module and the construction spy would stay empty.
+// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// so the next file never inherits our RecordingDatabaseSync. so the next file in this
+// fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -62,7 +63,8 @@ await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
- * Seed a minimal on-disk WOF fixture (schema and one place) without the FTS index. Writable.
+ * Seed a minimal on-disk WOF fixture (schema and one place) without the FTS index.
+ * Writable.
  */
 function seedFixture(path: PathBuilder): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

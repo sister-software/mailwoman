@@ -209,8 +209,9 @@ describe("lookupCandidate", () => {
 	})
 
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
-		// The unit's own record sits under `1012lg`, so the whitespace fold must run before the
-		// qualifier strip. The runtime also folds whitespace at the top of findPlace.
+		// The unit's own record sits under `1012lg`, so the whitespace fold must run
+		// before the qualifier strip.
+		// The runtime also folds whitespace at the top of findPlace.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 

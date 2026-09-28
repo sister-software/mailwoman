@@ -11,8 +11,8 @@ import { CSVSpliterator } from "spliterator"
 import type { ProviderID } from "#sdk/common"
 
 /**
- * Column positions in the FCC's 12-column availability CSV, named so a reader can check them
- * against the header row.
+ * Column positions in the FCC's 12-column availability CSV, named so a reader
+ * can check them against the header row.
  */
 const Column = {
 	LocationID: 3,
@@ -32,8 +32,8 @@ const Column = {
 export interface BDCAvailabilityRow {
 	provider_id: number
 	/**
-	 * Kept as a string, since the FCC's `location_id` values are zero-padded 10-digit strings
-	 * whose leading zeros `parseInt` would lose.
+	 * Kept as a string, since the FCC's `location_id` values are zero-padded 10-digit
+	 * strings whose leading zeros `parseInt` would lose.
 	 */
 	location_id: string
 	technology_code: number
@@ -48,8 +48,8 @@ export interface BDCAvailabilityRow {
 }
 
 /**
- * Project one already-split CSV row onto {@linkcode BDCAvailabilityRow}, shared so the sync and
- * async readers cannot drift in what they emit.
+ * Project one already-split CSV row onto {@linkcode BDCAvailabilityRow}, shared
+ * so the sync and async readers cannot drift in what they emit.
  */
 function projectRow(columns: readonly string[], providerID: ProviderID): BDCAvailabilityRow {
 	return {

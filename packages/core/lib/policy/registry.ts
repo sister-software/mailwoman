@@ -34,8 +34,7 @@ export class InMemoryPolicyRegistry implements PolicyRegistry {
 	/**
 	 * Build a registry pre-loaded with `mode` for every component (default `neural_only`).
 	 *
-	 * The input-shape router passes a shape-derived default so the whole table starts from the routed
-	 * prior.
+	 * The input-shape router passes a shape-derived default so the whole table starts from the routed prior.
 	 */
 	static withDefaults(mode: PolicyMode = "neural_only"): InMemoryPolicyRegistry {
 		const registry = new InMemoryPolicyRegistry()

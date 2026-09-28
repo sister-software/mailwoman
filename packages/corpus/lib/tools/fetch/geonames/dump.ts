@@ -89,8 +89,8 @@ export interface GeonamesDumpManifest {
 	 */
 	unavailable: string[]
 	/**
-	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps. GeoNames' postal exports share
-	 * the same basename.
+	 * Present `<CC>.txt` files that are not 19-column gazetteer dumps.
+	 * GeoNames' postal exports share the same basename.
 	 *
 	 * Left in place (this tool never overwrites data it did not fetch).
 	 * The fix is to move the file to its own home and rerun.
@@ -236,8 +236,8 @@ export async function fetchGeonamesDumps(
 
 			const message = error instanceof Error ? error.message : String(error)
 
-			// Branch on the typed status. Message prose contains the URL, and a URL can contain any
-			// substring.
+			// Branch on the typed status.
+			// Message prose contains the URL, and a URL can contain any substring.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)
 				unavailable.push(country)

@@ -43,8 +43,8 @@ import { Globerator } from "spliterator/node/fs"
 /**
  * Approximates Python's default `csv.DictReader` dialect.
  *
- * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes
- * by, since OpenAddresses ships all-caps headers.
+ * `normalizeKeys: false` keeps the source's own header spelling, which is what the
+ * row reader indexes by, since OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -79,9 +79,9 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must open with a letter, since OA rows whose street is a bare number or a lone
- * punctuation mark are parse noise. House number `"0"` is the dump's placeholder for "no number
- * known".
+ * The street must open with a letter, since OA rows whose street is a bare number
+ * or a lone punctuation mark are parse noise.
+ * House number `"0"` is the dump's placeholder for "no number known".
  */
 function parseRow(row: CSVRecord): Address | null {
 	const num = row.NUMBER ?? ""
@@ -114,12 +114,14 @@ interface SampleOptions {
 	 */
 	target: number
 	/**
-	 * Sample each bucket uniformly across the whole stream. The default fill takes a bucket's rows from
-	 * wherever its key first appears in file order, so municipality-ordered dumps (OA CZ/PL)
-	 * concentrate every bucket on one city and under-disperse the localities the wrong-city metric
-	 * needs.
+	 * Sample each bucket uniformly across the whole stream.
 	 *
-	 * Reservoir mode costs a full pass. Selection stays deterministic per seed and input order.
+	 * The default fill takes a bucket's rows from wherever its key first appears in file order,
+	 * so municipality-ordered dumps (OA CZ/PL) concentrate every bucket on one city
+	 * and under-disperse the localities the wrong-city metric needs.
+	 *
+	 * Reservoir mode costs a full pass.
+	 * Selection stays deterministic per seed and input order.
 	 */
 	reservoir: boolean
 	rng: SeededRandom
@@ -185,8 +187,8 @@ function render(a: Address, order: Order): string {
 }
 
 /**
- * Flatten the buckets into eval rows, cycling the render order across the whole set so no region is
- * rendered in one shape.
+ * Flatten the buckets into eval rows, cycling the render order across the whole set
+ * so no region is rendered in one shape.
  */
 function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<string, unknown>[] {
 	const rows: Record<string, unknown>[] = []

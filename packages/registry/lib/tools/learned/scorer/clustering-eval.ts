@@ -52,7 +52,9 @@ import {
  */
 export interface ScorerClusteringEvalOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -98,8 +100,7 @@ export interface ScorerClusteringEvalOptions {
 }
 
 /**
- * Cluster the eval records with the FS baseline, the GBT and the LR, and emit the markdown report to
- * stdout.
+ * Cluster the eval records with the FS baseline, the GBT and the LR, and emit the markdown report to stdout.
  */
 export async function scorerClusteringEval(
 	options: ScorerClusteringEvalOptions,
@@ -127,8 +128,9 @@ export async function scorerClusteringEval(
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth` and `taxonomy` ride as attributes so the shared featurizer's roll-up features can read
-	// the authorized official. The FS arm ignores them, since no discriminators are configured.
+	// `auth` and `taxonomy` ride as attributes so the shared featurizer's roll-up
+	// features can read the authorized official.
+	// The FS arm ignores them, since no discriminators are configured.
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -144,10 +146,9 @@ export async function scorerClusteringEval(
 
 	geocoder[Symbol.dispose]()
 
-	// The collapsed-spatial and address-frequency comparison set is the benchmark feature basis. The
-	// shared production featurizer keeps train, eval and inference on one definition, and the
-	// agreement pattern is EM-independent so the same features are consistent at train and inference
-	// time.
+	// The collapsed-spatial and address-frequency comparison set is the benchmark feature basis.
+	// The shared production featurizer keeps train, eval and inference on one definition, and the
+	// agreement pattern is EM-independent so the same features are consistent at train and inference time.
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
@@ -163,10 +164,12 @@ export async function scorerClusteringEval(
 	}
 
 	/**
-	 * One held-out-NPI split: train the GBT and LR on train pairs, then cluster the eval records three
-	 * ways through the same `resolveEntities` pipeline, sweeping the link threshold for each and taking
-	 * best F1. The geocode is shared across seeds, and only the split, the trained scorers and the eval
-	 * subset move with the seed.
+	 * One held-out-NPI split: train the GBT and LR on train pairs, then cluster
+	 * the eval records three ways through the same `resolveEntities` pipeline,
+	 * sweeping the link threshold for each and taking best F1.
+	 *
+	 * The geocode is shared across seeds, and only the split, the trained scorers
+	 * and the eval subset move with the seed.
 	 */
 	function runSeed(seed: number): SeedResult {
 		const rnd = makeLcg(seed || 1)
@@ -200,14 +203,15 @@ export async function scorerClusteringEval(
 		): ArmScore =>
 			bestOver(thresholds, (t) => toArmScore(scoreEntities(resolveEntities(evalRecords, cfg(t)).entities, npiLabel, N)))
 
-		// The FS baseline uses EM-fit weights in bits over a fine grid. Each learned scorer sweeps its
-		// own eval-pair score distribution, so a coarse grid cannot understate it.
+		// The FS baseline uses EM-fit weights in bits over a fine grid.
+		// Each learned scorer sweeps its own eval-pair score distribution,
+		// so a coarse grid cannot understate it.
 		const { pairs: evalPairs } = block(evalRecords, defaultBlockingKeys())
 
 		const fs = armOver(
 			Array.from({ length: 26 }, (_, i) => i),
-			// learnedScorer false keeps the FS baseline. The learned scorer is default-on, so without
-			// this the FS arm would silently be the GBT.
+			// learnedScorer false keeps the FS baseline.
+			// The learned scorer is default-on, so without this the FS arm would silently be the GBT.
 			(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 		)
 

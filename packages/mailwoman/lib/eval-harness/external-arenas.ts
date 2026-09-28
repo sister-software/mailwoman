@@ -44,8 +44,8 @@ import { TextSpliterator } from "spliterator"
 import { $ } from "zx"
 
 /**
- * The three child processes, located from the package root so the same file resolves from the
- * source tree and from `out/`.
+ * The three child processes, located from the package root so the same file
+ * resolves from the source tree and from `out/`.
  */
 const PERTURB_GOLDEN_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "perturb-golden.run.ts")
 const HARNESS_NEURAL_PATH = resolvePackagePath("mailwoman", "lib", "dev-tools", "harness-neural.run.ts")
@@ -72,8 +72,8 @@ export interface ExternalArenasOptions {
 	tokenizer?: PathBuilderLike
 	modelCard?: string
 	/**
-	 * Gaz-trained models (v4.2.0+): feed the ship config, since zero-filled clues depress
-	 * country recall and fake an affix crash.
+	 * Gaz-trained models (v4.2.0+): feed the ship config, since zero-filled clues
+	 * depress country recall and fake an affix crash.
 	 */
 	gazetteerLexicon?: string
 	anchorLookup?: PathBuilderLike

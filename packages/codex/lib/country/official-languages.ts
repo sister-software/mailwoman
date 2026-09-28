@@ -388,8 +388,8 @@ export const OFFICIAL_LANGUAGES: Record<string, OfficialLanguageEntry> = {
 }
 
 /**
- * Report whether `language` is an official language of `country`, counting regional-official
- * languages only with `includeRegional`.
+ * Report whether `language` is an official language of `country`, counting
+ * regional-official languages only with `includeRegional`.
  */
 export function isOfficialLanguage(country: string, language: string, includeRegional = false): boolean {
 	const entry = OFFICIAL_LANGUAGES[country.toUpperCase()]

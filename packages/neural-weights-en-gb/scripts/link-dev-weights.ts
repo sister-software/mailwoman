@@ -49,19 +49,19 @@ const LONDON_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "london-pair
 /**
  * Northern Ireland neighbourhood pairs.
  *
- * A separate file rather than merged into the London one, so each source keeps its own provenance
- * md5 in the header and the freshness guard can tell which one moved.
+ * A separate file rather than merged into the London one, so each source keeps its own
+ * provenance md5 in the header and the freshness guard can tell which one moved.
  */
 const NI_PAIRS_JSONL = repoRootPathBuilder("data", "gazetteer", "ni-pairs-v1.jsonl")
 /**
- * Scotland, Wales and England neighbourhood pairs, the rest of Great Britain after London and
- * Northern Ireland.
+ * Scotland, Wales and England neighbourhood pairs, the rest of Great Britain
+ * after London and Northern Ireland.
  */
 const GB_REGIONS_JSONL = repoRootPathBuilder("data", "gazetteer", "gb-regions-v1.jsonl")
 
-// The `sources` list is what the shared freshness guard md5s, in the order the build records the
-// entries (CSV, borough DB, pairs JSONLs). A dev rebuild whose list drifts from the build's lets
-// the guard bless a stale artifact.
+// The `sources` list is what the shared freshness guard md5s, in the order the build
+// records the entries (CSV, borough DB, pairs JSONLs).
+// A dev rebuild whose list drifts from the build's lets the guard bless a stale artifact.
 const softFeed = await committedSoftFeedLinks()
 
 const overlay = await materializeDevOverlay({
@@ -91,8 +91,8 @@ const overlay = await materializeDevOverlay({
 
 // Build `postcode-gb.bin` only when the model card declares `requires.anchor.span_mode === "shaped"`.
 //
-// It helps only a model trained with shaped (letter-containing) GB anchor lookups. On an older
-// model it is a measured regression, and a stale bin from an old checkout can re-enable it.
+// It helps only a model trained with shaped (letter-containing) GB anchor lookups.
+// On an older model it is a measured regression, and a stale bin from an old checkout can re-enable it.
 //
 // Policy:
 // - `span_mode: "shaped"` -> build the binary
@@ -104,20 +104,20 @@ const overlay = await materializeDevOverlay({
 const POSTCODE_BIN_DEST = overlay.destDir("postcode-gb.bin")
 
 /**
- * The licence-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0), carrying
- * 1,746,976 units with every one placed.
+ * The licence-clean GB postcode source, Ordnance Survey Code-Point Open (OGL v3.0),
+ * carrying 1,746,976 units with every one placed.
  *
- * The measured coverage gap is zero Northern Ireland (`BT`) codes, and the shaped keyer's outward
- * fallback carries those rows.
+ * The measured coverage gap is zero Northern Ireland (`BT`) codes, and the shaped
+ * keyer's outward fallback carries those rows.
  */
 const GB_POSTCODE_EXTRACT = "postalcode-gb-codepoint.db"
 
 /**
- * Keys the built binary must carry (1,746,976 units and 2,863 outward districts), the GB half of
- * the training lookup `pilot-anchor-lookup-v2` verbatim.
+ * Keys the built binary must carry (1,746,976 units and 2,863 outward districts),
+ * the GB half of the training lookup `pilot-anchor-lookup-v2` verbatim.
  *
- * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it, so this number is
- * documentation rather than a second check.
+ * `gazetteer postcode-binary` enforces its own floor and exits nonzero below it,
+ * so this number is documentation rather than a second check.
  */
 const GB_POSTCODE_BIN_KEYS = 1_749_839
 

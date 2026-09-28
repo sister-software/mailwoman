@@ -83,9 +83,9 @@ const fold = (s: string) => s.toLowerCase().replaceAll(/\s+/g, " ").trim()
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// Ask the resolver rather than probing a package path literal directly. A skip guard that
-		// stops matching does not fail, it skips, so the suite disappears from the run while the run
-		// reports success.
+		// Ask the resolver rather than probing a package path literal directly.
+		// A skip guard that stops matching does not fail, it skips, so the suite
+		// disappears from the run while the run reports success.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
@@ -172,8 +172,8 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 					const nTree = await neural.parse(fx.input, { postcodeRepair: true })
 					const resolved = await resolver.resolveTree(nTree, opts)
 					neuralCoord = finestResolvedCoordinate(resolved)
-					// Guard A (country-centroid) plus guard B (cross-country bbox). The fixture's gold
-					// country is the expectedCountry.
+					// Guard A (country-centroid) plus guard B (cross-country bbox).
+					// The fixture's gold country is the expectedCountry.
 					implausible = isImplausibleResolution(resolved, { expectedCountry: fx.country || undefined }).implausible
 
 					for (const [label, tags] of [
@@ -193,8 +193,7 @@ describe.skipIf(!(await weightsPresent()) || !(await gazetteerPresent()))(
 
 				try {
 					// The rules parse is read from the frozen phase-0 capture and rebuilt with
-					// `v0RecordToTree` exactly as the live arm did, so the coordinate comparison is
-					// unchanged.
+					// `v0RecordToTree` exactly as the live arm did, so the coordinate comparison is unchanged.
 					const record = rulesGolden.get(fx.input) ?? {}
 					const tree = v0RecordToTree(fx.input, record).tree
 					rulesCoord = finestResolvedCoordinate(await resolver.resolveTree(tree, opts))

@@ -80,8 +80,8 @@ export function collectResolved(tree: AddressTree): Resolved[] {
 			})
 		}
 
-		// Multi-role completion: a dual-role region carries extra roles
-		// (e.g. `locality`) as interpretations on the same node rather than separate children.
+		// Multi-role completion: a dual-role region carries extra roles (e.g. `locality`)
+		// as interpretations on the same node rather than separate children.
 		// Surface each resolved interpretation as its own Resolved so the eval finds the
 		// completed locality (placetype/coord/name come from the interpretation).
 		for (const interp of (n.interpretations ?? []) as ReadonlyArray<{

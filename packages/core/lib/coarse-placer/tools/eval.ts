@@ -82,7 +82,8 @@ export interface EvalCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer in-distribution eval. See the module doc.
+ * Coarse-placer in-distribution eval.
+ * See the module doc.
  *
  * Emits the report to stdout.
  */

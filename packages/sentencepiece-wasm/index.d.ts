@@ -46,15 +46,18 @@ export declare class SentencePieceProcessor {
 	encodeWithOffsets(text: string): EncodeWithOffsetsResult
 	decodeIDs(ids: IntVector): string
 	/**
-	 * Embind object lifetime. The processor owns wasm-heap memory, so call `delete()` when done.
+	 * Embind object lifetime.
+	 *
+	 * The processor owns wasm-heap memory, so call `delete()` when done.
 	 * Long-lived singletons in practice never do.
 	 */
 	delete(): void
 }
 
 /**
- * Embind-registered `std::vector<int>`. Build with `module.IntVector`, call `push_back` for ids,
- * and call `delete()` after use.
+ * Embind-registered `std::vector<int>`.
+ *
+ * Build with `module.IntVector`, call `push_back` for ids, and call `delete()` after use.
  */
 export declare class IntVector {
 	constructor()
@@ -70,7 +73,8 @@ export interface SentencePieceModule {
 }
 
 /**
- * The emscripten modularize factory. It resolves once the embedded wasm is instantiated.
+ * The emscripten modularize factory.
+ * It resolves once the embedded wasm is instantiated.
  */
 declare function createSentencePiece(): Promise<SentencePieceModule>
 

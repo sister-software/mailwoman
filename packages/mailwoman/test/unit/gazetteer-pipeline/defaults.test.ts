@@ -12,8 +12,8 @@ import {
 import { expect, test } from "vitest"
 
 test("the canonical coverage recipe holds its reconstructed shape (see #1015/#1021)", () => {
-	// The counts are a deliberate-drift guard. Update them with the recipe, never to make a
-	// failing test pass.
+	// The counts are a deliberate-drift guard.
+	// Update them with the recipe, never to make a failing test pass.
 	expect(DEFAULT_WOF_PRIORITY_COUNTRIES).toHaveLength(12)
 	expect(DEFAULT_OVERTURE_COUNTRIES).toHaveLength(85)
 	expect(DEFAULT_GEONAMES_COUNTRIES).toHaveLength(161)

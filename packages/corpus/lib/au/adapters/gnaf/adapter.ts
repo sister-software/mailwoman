@@ -84,8 +84,7 @@ export function createGNAFAdapter(): CorpusAdapter {
 			let emitted = 0
 			let idx = 0
 
-			// TextSpliterator auto-disposes on loop completion and on an early `break`
-			// (abort / limit).
+			// TextSpliterator auto-disposes on loop completion and on an early `break` (abort / limit).
 			for await (const line of TextSpliterator.fromAsync(opts.inputPath)) {
 				if (opts.signal?.aborted) break
 
@@ -110,8 +109,8 @@ export function createGNAFAdapter(): CorpusAdapter {
 					postcode: t.postcode,
 				}
 
-				// `region` rides only the canonical render, and the postcode-leading layouts omit it
-				// so verbatim alignment never breaks.
+				// `region` rides only the canonical render, and the postcode-leading layouts
+				// omit it so verbatim alignment never breaks.
 				if (order === 0 && t.region) {
 					components.region = t.region
 				}

@@ -25,8 +25,8 @@ beforeAll(async () => {
 	using seed = new DatabaseClient<StreetCentroidDatabase>(dbPath)
 
 	// The real extract shape carries the geocoding `street_norm` and the interface-fold `name_key`.
-	// The reader must prefer `name_key`. Each row carries a deliberately wrong street_norm, so a
-	// passing lookup proves it read name_key.
+	// The reader must prefer `name_key`.
+	// Each row carries a deliberately wrong street_norm, so a passing lookup proves it read name_key.
 	seed.exec(
 		"CREATE TABLE street_centroid (street_norm TEXT NOT NULL, postcode TEXT, locality_base TEXT NOT NULL, name_key TEXT NOT NULL)"
 	)

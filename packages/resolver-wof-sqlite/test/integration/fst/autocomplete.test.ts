@@ -122,8 +122,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
-		// A complete edge can also be a prefix of a longer word, so the walker must return the
-		// partial interpretations as well and reach both surfaces.
+		// A complete edge can also be a prefix of a longer word, so the walker must return
+		// the partial interpretations as well and reach both surfaces.
 		const shadowed = new FSTMatcher([
 			{
 				edges: new Map([
@@ -168,8 +168,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a dense branch does not starve a high-importance sibling (#587 per-branch cap)", () => {
-		// A dense branch can starve a high-importance sibling, so the per-branch cap must keep
-		// the sibling within maxSuggestions.
+		// A dense branch can starve a high-importance sibling, so the per-branch cap
+		// must keep the sibling within maxSuggestions.
 		const dense = new FSTMatcher([
 			{ edges: new Map([["go", 1]]), places: [] },
 			{
@@ -190,8 +190,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
 
-	// The demo typeahead feeds raw, half-typed input on every keystroke, so the function must
-	// never throw and must return an empty list for input it cannot complete.
+	// The demo typeahead feeds raw, half-typed input on every keystroke, so the function
+	// must never throw and must return an empty list for input it cannot complete.
 	it("empty / whitespace-only query → no suggestions, depth 0", () => {
 		for (const q of ["", "   ", "\t"]) {
 			const r = autocomplete(matcher, q)

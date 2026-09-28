@@ -50,7 +50,9 @@ const FIT_SPLIT_FRACTION = 0.8
  */
 export interface TrainDedupGBTOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -84,10 +86,12 @@ export interface TrainDedupGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Cost-sensitive training: up-weight the negative (distinct-pair) class by this factor so the
-	 * model is more conservative about merging. It trades recall for precision to reduce over-merge.
-	 * `1` is the symmetric class-balanced default, and a value above 1 penalizes a false merge more
-	 * than a missed one.
+	 * Cost-sensitive training: up-weight the negative (distinct-pair) class by this factor
+	 * so the model is more conservative about merging.
+	 *
+	 * It trades recall for precision to reduce over-merge.
+	 * `1` is the symmetric class-balanced default, and a value above 1 penalizes
+	 * a false merge more than a missed one.
 	 */
 	cost?: number
 	/**
@@ -156,10 +160,11 @@ export async function trainDedupGBT(
 		report?.(`    cost-sensitive: negative class weighted ×${COST} (penalize over-merge)`)
 	}
 
-	// Calibrate the default link threshold. The GBT logit is not in FS-weight units, and with
-	// class-balanced weights logit 0 ignores the roughly 1% match base rate and over-merges. The
-	// threshold is swept on a held-out 20% of the NPIs, and the shipped full-data model has
-	// near-identical logit calibration, so the threshold transfers.
+	// Calibrate the default link threshold.
+	// The GBT logit is not in FS-weight units, and with class-balanced weights logit
+	// 0 ignores the roughly 1% match base rate and over-merges.
+	// The threshold is swept on a held-out 20% of the NPIs, and the shipped full-data
+	// model has near-identical logit calibration, so the threshold transfers.
 	report?.("[E] calibrating the default link threshold on a held-out NPI split…")
 	const rnd = makeLcg(20_260_615)
 	const split = new Map<string, "fit" | "holdout">()
@@ -209,8 +214,8 @@ export async function trainDedupGBT(
 	const model = trainGBT(X, Y, W, hyperparams)
 	report?.(`    ${pairs.length} pairs (${(100 * posRate).toFixed(1)}% positive), ${model.trees.length} trees`)
 
-	// Emit the model as a committed TypeScript module with a prettier-stable literal, so a retrain
-	// produces a clean one-line diff.
+	// Emit the model as a committed TypeScript module with a prettier-stable literal,
+	// so a retrain produces a clean one-line diff.
 	const meta = {
 		version: "1.0.0",
 		locale: LOCALE,

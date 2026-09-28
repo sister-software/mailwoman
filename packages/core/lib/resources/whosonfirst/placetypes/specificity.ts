@@ -63,8 +63,8 @@ export function placetypeSpecificity(placetype: string | null | undefined): numb
  * Is `candidate` at least as fine-grained as `reference`?
  *
  * `undefined` when either placetype is unranked, leaving the caller to decide.
- * The comparison is `>=` so an equal rung counts as covering, which is what a check for whether
- * the place is already represented wants.
+ * The comparison is `>=` so an equal rung counts as covering, which is what a check for
+ * whether the place is already represented wants.
  */
 export function isAtLeastAsSpecific(
 	candidate: string | null | undefined,
@@ -81,15 +81,15 @@ export function isAtLeastAsSpecific(
 /**
  * Is `candidate` strictly finer than `reference`, a child rung rather than the same one?
  *
- * The distinction from {@link isAtLeastAsSpecific} matters for the equal case. A check for whether
- * a live row covers a dead one wants an equal rung to count as covering, so a live `locality`
- * covers a dead `locality` of the same name.
+ * The distinction from {@link isAtLeastAsSpecific} matters for the equal case.
+ * A check for whether a live row covers a dead one wants an equal rung to count as covering,
+ * so a live `locality` covers a dead `locality` of the same name.
  *
- * Negating `isAtLeastAsSpecific(live, dead)` answers whether the live row is strictly coarser and
- * quietly drops the equal case.
+ * Negating `isAtLeastAsSpecific(live, dead)` answers whether the live row is
+ * strictly coarser and quietly drops the equal case.
  *
- * `undefined` when either placetype is unranked. A caller filtering on this should treat that as
- * not strictly finer.
+ * `undefined` when either placetype is unranked.
+ * A caller filtering on this should treat that as not strictly finer.
  */
 export function isStrictlyFiner(
 	candidate: string | null | undefined,

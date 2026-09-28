@@ -38,8 +38,10 @@ import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#i
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 /**
- * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known
- * point (`t = 2`). Past it, the two-point line carries no evidence about the query number.
+ * Extrapolation cap for a single-sided bracket: at most one pair-span beyond
+ * the nearest known point (`t = 2`).
+ *
+ * Past it, the two-point line carries no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 
@@ -67,8 +69,10 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened. A connection handed in by a caller is not in here, so
-	 * disposal cannot reach it. Ownership is membership rather than a flag a later branch checks.
+	 * Resources this instance opened.
+	 *
+	 * A connection handed in by a caller is not in here, so disposal cannot reach it.
+	 * Ownership is membership rather than a flag a later branch checks.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #fallback: StreetInterpolator | undefined
@@ -85,8 +89,8 @@ export class AddressPointInterpolator<
 
 		this.#fallback = opts.fallback
 
-		// Degrade gracefully on an extract without an `address_point` table. The tier is skipped and
-		// defers to the segment fallback rather than crashing at construction.
+		// Degrade gracefully on an extract without an `address_point` table.
+		// The tier is skipped and defers to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
 			this.#byPostcode = prepareAll(
 				this.#db,
@@ -158,7 +162,8 @@ function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 function interpolateFromNeighbors(rows: readonly PointRow[], n: number): InterpolatedHit | null {
 	const anchors = anchorsByNumber(rows)
 
-	// Nearest known number below and above the query. The rows never contain n itself.
+	// Nearest known number below and above the query.
+	// The rows never contain n itself.
 	let below: NumberAnchor | undefined
 	let above: NumberAnchor | undefined
 

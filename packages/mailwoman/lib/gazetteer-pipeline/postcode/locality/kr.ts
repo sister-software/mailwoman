@@ -149,9 +149,9 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
 	 *
-	 * Many Korean localities share a name across the country, so a Hangul name match must be
-	 * constrained to nearby candidates. Matching globally and then taking the nearest homonym
-	 * lands hundreds of km away.
+	 * Many Korean localities share a name across the country, so a Hangul name
+	 * match must be constrained to nearby candidates.
+	 * Matching globally and then taking the nearest homonym lands hundreds of km away.
 	 */
 	const nearby = (lat: number, lon: number): Array<{ d: number; pid: number }> =>
 		grid.nearby(lat, lon, MATCH_RADIUS_KM).map(({ d, entry }) => ({ d, pid: entry.pid }))

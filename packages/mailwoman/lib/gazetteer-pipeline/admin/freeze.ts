@@ -22,8 +22,8 @@ export interface FreezeAdminOptions {
 	/**
 	 * Repos root for the `wof:hierarchy` −4 backfill, which reaches NYC/London-class multi-parent orphans.
 	 *
-	 * Omit only in fixture tests. A real build without it leaves those metros unreachable by the
-	 * region-descendant filter.
+	 * Omit only in fixture tests.
+	 * A real build without it leaves those metros unreachable by the region-descendant filter.
 	 */
 	dataDir?: PathBuilderLike
 	onPhase?: (phase: string, detail?: string) => void
@@ -50,7 +50,8 @@ export async function freezeAdmin(
 	const { createUnifiedIndexes, populateAncestors } = await import("@mailwoman/resolver-wof-sqlite/unified-schema")
 	const phase = opts.onPhase ?? (() => {})
 
-	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`). Skip the freeze pragmas there.
+	// An in-memory fixture has no WAL to checkpoint (journal_mode reports `memory`).
+	// Skip the freeze pragmas there.
 	const journal = (db.prepare("PRAGMA journal_mode").get() as { journal_mode: string }).journal_mode
 
 	if (journal !== "memory") {
@@ -101,8 +102,7 @@ export async function freezeAdmin(
 		}
 	}
 
-	// The dual-role-place relation needs `ancestors`, `spr` bbox, and `place_population`,
-	// all present by now.
+	// The dual-role-place relation needs `ancestors`, `spr` bbox, and `place_population`, all present by now.
 	// It drives the resolver's hierarchy completion (on by default).
 	phase("coincident-roles")
 	const roles = buildCoincidentRoles(db)

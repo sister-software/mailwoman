@@ -17,8 +17,8 @@ import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { Kysely } from "kysely"
 
 /**
- * The address kind a case exercises, a free string deliberately extensible because the taxonomy
- * grows with the corpus (seed examples: `fr_street_bare`, `us_residential`, `us_po_box`, `de_street`).
+ * The address kind a case exercises, a free string deliberately extensible because the taxonomy grows
+ * with the corpus (seed examples: `fr_street_bare`, `us_residential`, `us_po_box`, `de_street`).
  */
 export type AddressKind = string
 
@@ -54,15 +54,17 @@ export interface GauntletCaseTable {
 	 */
 	expect_components: string | null
 	/**
-	 * Optional multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no
-	 * interface). For a listed key the grader asserts that `scriptRenderings(got)` contains every
-	 * listed rendering, case-folded, and supersedes the same key in {@linkcode expect_components}.
+	 * Optional multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface).
+	 *
+	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
+	 * rendering, case-folded, and supersedes the same key in {@linkcode expect_components}.
 	 * Every list must be non-empty, since both the seed schema and the grader refuse an empty one.
 	 */
 	expect_component_renderings: string | null
 	/**
-	 * Expected resolved place id (null = place not asserted), graded against
-	 * `hierarchy[0].placeID`. An expectation column can sit in the schema and DDL, look asserted,
+	 * Expected resolved place id (null = place not asserted), graded against `hierarchy[0].placeID`.
+	 *
+	 * An expectation column can sit in the schema and DDL, look asserted,
 	 * and assert no fact, so this is read by `check-case.ts`.
 	 */
 	expect_place_id: string | null
@@ -77,7 +79,8 @@ export interface GauntletCaseTable {
 	expect_lat: number | null
 	expect_lon: number | null
 	/**
-	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh). Null defaults at runtime.
+	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh).
+	 * Null defaults at runtime.
 	 */
 	expect_tolerance_m: number | null
 	/**
@@ -103,14 +106,14 @@ export interface GauntletCaseTable {
 	 */
 	note: string | null
 	/**
-	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation
-	 * layer's derived graceful-degradation ladder for this row (`{"country": "region"}`,
-	 * `{"region": "abstain"}`), where `rung` is `abstain`, `base`, or a WOF placetype.
+	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's
+	 * derived graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`),
+	 * where `rung` is `abstain`, `base`, or a WOF placetype.
 	 *
 	 * Absent means the derived ladder decides.
-	 * The pin exists for the two classes no threshold fixes: territories, whose ancestry is
-	 * politically shaped, and dual-role places, where one name is both a locality and its own
-	 * county and the ladder double-counts a rung.
+	 * The pin exists for the two classes no threshold fixes: territories, whose ancestry
+	 * is politically shaped, and dual-role places, where one name is both a locality
+	 * and its own county and the ladder double-counts a rung.
 	 */
 	ablation_expect: string | null
 	/**
@@ -119,32 +122,36 @@ export interface GauntletCaseTable {
 	 * The runner derives the weights overlay from its region subtag,
 	 * mirroring production's locale-hint routing.
 	 *
-	 * It is a locale hint and never a country constraint. `country` above stays the truth's
-	 * country, so `Paris` under `en-US` is an FR row run with the US overlay.
+	 * It is a locale hint and never a country constraint.
+	 * `country` above stays the truth's country, so `Paris` under `en-US` is an
+	 * FR row run with the US overlay.
 	 */
 	locale: string | null
 	/**
 	 * 1 = this row's expected outcome is no coordinate, so the resolver abstains and any
 	 * resolved coordinate fails the row.
 	 *
-	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain, without falling
-	 * through to a world-fuzzy candidate.
+	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain,
+	 * without falling through to a world-fuzzy candidate.
 	 *
-	 * The abstain pin is the interface, and lands re-pinned to real coordinates once coverage
-	 * arrives (the row's note says which artifact).
+	 * The abstain pin is the interface, and lands re-pinned to real coordinates once
+	 * coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
 
 /**
- * The build stamp, one row describing the committed corpus the DB was built from. It exists
- * because `regression.db` is a derived artifact with no link back to its source, and no record
- * in the DB could contradict a wrong build.
+ * The build stamp, one row describing the committed corpus the DB was built from.
+ *
+ * It exists because `regression.db` is a derived artifact with no link back to its source,
+ * and no record in the DB could contradict a wrong build.
  */
 export interface GauntletMetaTable {
 	/**
-	 * Always {@linkcode GAUNTLET_META_ROW_ID}. It is a one-row table pinned by its primary key, so
-	 * a second write replaces the stamp rather than appending a second, equally-authoritative one.
+	 * Always {@linkcode GAUNTLET_META_ROW_ID}.
+	 *
+	 * It is a one-row table pinned by its primary key, so a second write replaces the stamp
+	 * rather than appending a second, equally-authoritative one.
 	 */
 	id: string
 	/**

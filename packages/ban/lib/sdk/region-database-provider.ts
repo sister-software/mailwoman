@@ -16,8 +16,8 @@ import { banDatabaseRoot } from "#paths"
 import { streetLocaleForBANCountry, supportedBANCountries } from "#sdk/street-locale"
 
 /**
- * The members of {@link RegionDatabases} a BAN extract supplies, each narrowed to the SQLite class
- * that opened it so the provider can dispose the handle.
+ * The members of {@link RegionDatabases} a BAN extract supplies, each narrowed to the
+ * SQLite class that opened it so the provider can dispose the handle.
  */
 export interface BANExtracts extends Pick<RegionDatabases, "addressPoints" | "streetCentroids"> {
 	addressPoints?: AddressPointSqliteLookup
@@ -63,8 +63,8 @@ export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	}
 
 	/**
-	 * Preload extract existence for every country the provider may be asked for, caching the probe
-	 * so every caller shares one pass.
+	 * Preload extract existence for every country the provider may be asked for,
+	 * caching the probe so every caller shares one pass.
 	 */
 	readonly warm = (): Promise<void> => (this.#warmPromise ??= this.#probeExtracts())
 
@@ -79,8 +79,8 @@ export class BANRegionDatabaseProvider implements RegionDatabaseProvider<string,
 	}
 
 	/**
-	 * Resolve the BAN extracts for an ISO-3166 alpha-2 country from the map {@linkcode warm} preloaded,
-	 * answering `{}` when none is registered.
+	 * Resolve the BAN extracts for an ISO-3166 alpha-2 country from the map {@linkcode warm}
+	 * preloaded, answering `{}` when none is registered.
 	 */
 	readonly for = (country: string): BANExtracts => {
 		const cc = country.toLowerCase()

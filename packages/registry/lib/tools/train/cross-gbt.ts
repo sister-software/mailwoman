@@ -38,7 +38,9 @@ import { addr, norm, NPPES_COLUMNS as N, stateOption, trainCrossSourceModel, typ
  */
 export interface TrainCrossSourceGBTOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -72,7 +74,8 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 * Max cross-source recall subject to this held-out pairwise precision.
+	 * Default 0.95.
 	 */
 	precisionBar?: number
 	/**

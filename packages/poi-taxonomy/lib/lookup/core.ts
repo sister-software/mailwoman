@@ -271,8 +271,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Resolve a canonical seed category id to the Overture `taxonomy.primary` leaf ids
 	 * a built `poi.db` stores for it (the missing translation layer).
 	 *
-	 * @returns the category's `overtureCategories` when it declares a non-empty list, else `[seedID]`
-	 * (identity, the default for seeds whose id already equals its Overture leaf).
+	 * @returns the category's `overtureCategories` when it declares a non-empty list,
+	 * else `[seedID]` (identity, the default for seeds whose id already equals its Overture leaf).
 	 * An unknown seed id resolves to `[]`, a clean miss that mirrors `getPOICategory`'s undefined.
 	 */
 	function resolveOvertureCategories(seedID: string): string[] {

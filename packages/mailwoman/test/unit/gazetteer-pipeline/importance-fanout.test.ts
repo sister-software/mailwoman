@@ -12,8 +12,8 @@ import { FANOUT_SPREAD_EPSILON_KM, resolveConcordanceFanout } from "mailwoman/ga
 import { describe, expect, it } from "vitest"
 
 /**
- * Q61 is Washington DC as WOF models it, one place carrying three placetypes at one point. Each role
- * is real, so every member is kept.
+ * Q61 is Washington DC as WOF models it, one place carrying three placetypes at one point.
+ * Each role is real, so every member is kept.
  */
 const Q61 = [
 	{ id: 85_688_741, placetype: "region", lat: 38.9047, lon: -77.0163, population: 678_972 },
@@ -22,7 +22,8 @@ const Q61 = [
 ]
 
 /**
- * Q18125 is Manchester, England, also attached to two American villages. Population decides.
+ * Q18125 is Manchester, England, also attached to two American villages.
+ * Population decides.
  */
 const Q18125 = [
 	{ id: 101_717_233, placetype: "locality", lat: 40.0614, lon: -76.7191, population: 2788 },
@@ -31,9 +32,10 @@ const Q18125 = [
 ]
 
 /**
- * Q1794 is Frankfurt am Main, attached to both the city and a neighbourhood 12 km out. Beyond the
- * coincidence radius, so the more populous place wins, which also keeps the two from carrying
- * identical importance and blurring the placetype signal.
+ * Q1794 is Frankfurt am Main, attached to both the city and a neighbourhood 12 km out.
+ *
+ * Beyond the coincidence radius, so the more populous place wins, which also keeps the
+ * two from carrying identical importance and blurring the placetype signal.
  */
 const Q1794 = [
 	{ id: 101_913_837, placetype: "locality", lat: 50.1155, lon: 8.6842, population: 763_380 },
@@ -41,8 +43,9 @@ const Q1794 = [
 ]
 
 /**
- * Q340 is Montréal, Canada, attached to two French communes 182 km apart, neither with a population
- * row. No evidence picks between them and both are wrong, so the id is dropped whole.
+ * Q340 is Montréal, Canada, attached to two French communes 182 km apart, neither with a population row.
+ *
+ * No evidence picks between them and both are wrong, so the id is dropped whole.
  */
 const Q340 = [
 	{ id: 102_068_207, placetype: "county", lat: 43.9361, lon: 0.1972, population: 0 },

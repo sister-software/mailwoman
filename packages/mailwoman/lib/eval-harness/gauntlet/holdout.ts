@@ -47,9 +47,11 @@ export interface HoldoutLayerOptions {
 	 */
 	source?: string
 	/**
-	 * A tokenizer-splice candidate ships a new vocab. Grading it needs the candidate tokenizer
-	 * (and card) paired with the candidate model. Production then also runs through the shipped
-	 * trio (createScorer on both sides), so the only variables are the ONNX and the vocab.
+	 * A tokenizer-splice candidate ships a new vocab.
+	 *
+	 * Grading it needs the candidate tokenizer (and card) paired with the candidate model.
+	 * Production then also runs through the shipped trio (createScorer on both sides),
+	 * so the only variables are the ONNX and the vocab.
 	 * Omit for a model-only bump.
 	 */
 	tokenizer?: string
@@ -60,15 +62,15 @@ export interface HoldoutLayerOptions {
 	/**
 	 * Package-shaped candidate weights dir (see {@link GauntletLayerOptions.weightsCacheRoot}).
 	 *
-	 * Like a splice candidate it carries its own vocab, so production also runs through the
-	 * shipped trio to keep the z-test clean.
+	 * Like a splice candidate it carries its own vocab, so production also runs
+	 * through the shipped trio to keep the z-test clean.
 	 */
 	weightsCacheRoot?: string
 	/**
 	 * Resolver-side pins, applied to both arms.
 	 *
-	 * A resolver pin is a property of the configuration, so pinning it on one side would confound
-	 * the z-test with the very thing the layer holds constant.
+	 * A resolver pin is a property of the configuration, so pinning it on one side would
+	 * confound the z-test with the very thing the layer holds constant.
 	 */
 	pins?: GauntletResolverPins
 }
@@ -92,11 +94,11 @@ export interface Sample {
 }
 
 /**
- * Held-out truth sources, drawn fresh from outside mailwoman's training corpus, so they measure
- * generalization.
+ * Held-out truth sources, drawn fresh from outside mailwoman's training corpus,
+ * so they measure generalization.
  *
- * Each parses a semicolon row of its staging file into a bare-form query (no postcode, the hard
- * case the tail exercises) and a truth coordinate.
+ * Each parses a semicolon row of its staging file into a bare-form query
+ * (no postcode, the hard case the tail exercises) and a truth coordinate.
  * FR/BAN streams the 5 GB file.
  * The smaller pools (US/fdic, ~77k) are the fast draw.
  *
@@ -149,12 +151,14 @@ export function holdoutSources(): Record<string, SourceDef> {
 /**
  * Reservoir-sample N rows with truth coords from the selected source, a fresh draw each run.
  *
- * `random` is injectable so a caller that must re-draw the same sample can seed it. The layer
- * itself never passes one, since an unseeded draw is what makes this the only check the model
- * cannot have memorized. A seeded default would turn the generalization measure into a fixed set.
+ * `random` is injectable so a caller that must re-draw the same sample can seed it.
+ * The layer itself never passes one, since an unseeded draw is what makes this
+ * the only check the model cannot have memorized.
  *
- * It also returns `drawnFrom`, the count of parseable rows the reservoir saw, since the sample
- * size alone does not say what it was drawn out of.
+ * A seeded default would turn the generalization measure into a fixed set.
+ *
+ * It also returns `drawnFrom`, the count of parseable rows the reservoir saw,
+ * since the sample size alone does not say what it was drawn out of.
  */
 export async function drawHoldoutSample(
 	src: SourceDef,
@@ -165,8 +169,8 @@ export async function drawHoldoutSample(
 	let seen = 0
 	let line = 0
 
-	// The staging files are LF, but the final column (the truth coord) would otherwise carry a
-	// stray \r on a crlf source and fail to parse.
+	// The staging files are LF, but the final column (the truth coord) would otherwise
+	// carry a stray \r on a crlf source and fail to parse.
 	for await (const raw of TextSpliterator.fromAsync(src.file, { crlf: true })) {
 		if (line++ === 0) continue // header
 		const s = src.parse(raw.split(";"))
@@ -226,8 +230,8 @@ function zStat(cand: number, prod: number, n: number): number {
 /**
  * Run the held-out layer.
  *
- * `exitCode` is 0 for `pass`, 1 when the candidate is significantly worse, and 2 for a usage
- * error (missing candidate or unknown source).
+ * `exitCode` is 0 for `pass`, 1 when the candidate is significantly worse,
+ * and 2 for a usage error (missing candidate or unknown source).
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {
 	const N = options.n ?? 300

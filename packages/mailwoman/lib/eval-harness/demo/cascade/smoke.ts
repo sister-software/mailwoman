@@ -59,7 +59,8 @@ export interface DemoCascadeSmokeOptions {
 	/**
 	 * Staged demo release directory.
 	 *
-	 * Defaults beneath `$MAILWOMAN_TEMP_ROOT`. Every artifact below defaults to a sibling of it.
+	 * Defaults beneath `$MAILWOMAN_TEMP_ROOT`.
+	 * Every artifact below defaults to a sibling of it.
 	 */
 	stageDir?: string
 	/**
@@ -119,23 +120,25 @@ interface RowResult {
 }
 
 /**
- * Run every smoke row through the full stack (neural parse with the ship config, `runPipeline` and
- * grouper audit, then the demo's `runCascade` over the slim hot DB) and assert the resolved WOF place
- * ID of the top hit.
+ * Run every smoke row through the full stack (neural parse with the ship config,
+ * `runPipeline` and grouper audit, then the demo's `runCascade` over the slim hot DB)
+ * and assert the resolved WOF place ID of the top hit.
  *
- * The table goes to `report`, which the runner captures into `cascade-smoke.md`. Preflight refusals and
- * `explain` narration go to `reportError`, captured and dropped. A preflight refusal therefore leaves
- * an empty `cascade-smoke.md` and a non-zero {@linkcode DemoCascadeSmokeResult.exitCode}, which is
- * exactly what the child process produced.
+ * The table goes to `report`, which the runner captures into `cascade-smoke.md`.
+ * Preflight refusals and `explain` narration go to `reportError`, captured and dropped.
+ *
+ * A preflight refusal therefore leaves an empty `cascade-smoke.md` and a non-zero
+ * {@linkcode DemoCascadeSmokeResult.exitCode}, which is exactly what the child process produced.
  */
 export async function demoCascadeSmoke(
 	options: DemoCascadeSmokeOptions = {},
 	report: (line: string) => void = console.log,
 	reportError: (line: string) => void = console.error
 ): Promise<DemoCascadeSmokeResult> {
-	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`, and the CLI's
-	// module walk (`mailwoman --help`) loads this file in every clean install. The cascade leg is
-	// dev-only (it needs a local wof-hot.db), so the dependency loads only when the leg actually runs.
+	// Lazy, deliberately: `mailwoman` does not depend on `@mailwoman/resolver-wof-wasm`,
+	// and the CLI's module walk (`mailwoman --help`) loads this file in every clean install.
+	// The cascade leg is dev-only (it needs a local wof-hot.db), so the dependency
+	// loads only when the leg actually runs.
 	// In a clean install without the package the leg fails here, loudly, with the import in the message.
 	const { runCascade } = await import("@mailwoman/resolver-wof-wasm/browser-cascade")
 	const STAGE = PathBuilder.from(options.stageDir || wofHotStageDir())
@@ -236,9 +239,9 @@ export async function demoCascadeSmoke(
 			fst: fst as Parameters<typeof runPipeline>[1]["fst"],
 		})
 
-		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts), with the same
-		// locality filter, highest-confidence region pick and postcode find. `city`, `state` and
-		// `postal_code` are libpostal vocabulary and are not `ComponentTag`s.
+		// Node selection mirrors the demo page (docs/src/pages/demo/_runtime.ts),
+		// with the same locality filter, highest-confidence region pick and postcode find.
+		// `city`, `state` and `postal_code` are libpostal vocabulary and are not `ComponentTag`s.
 		const nodes = flattenTreeNodes(tree)
 		const localityNodes = nodes.filter((n) => n.tag === "locality")
 
@@ -248,7 +251,9 @@ export async function demoCascadeSmoke(
 
 		const postcodeNode = nodes.find((n) => n.tag === "postcode")
 
-		// runCascade takes the tree and runs the shared resolveTree (greedy walk, coherence passes and span-rescore) over the lookup, exactly as the browser composes it. The node extraction above stays for the explain output and the anchor-centroid fallback below.
+		// runCascade takes the tree and runs the shared resolveTree (greedy walk, coherence passes
+		// and span-rescore) over the lookup, exactly as the browser composes it.
+		// The node extraction above stays for the explain output and the anchor-centroid fallback below.
 		const hits = await runCascade(lookup as Parameters<typeof runCascade>[0], tree, row.input)
 
 		// The demo's anchor-centroid fallback for postcode-only dead ends

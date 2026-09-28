@@ -45,12 +45,12 @@ export interface ScoreCountryHomographOptions {
 	 *
 	 * Harmless for older models (the runner skips inputs the ONNX does not declare).
 	 *
-	 * Unlike `score-affix`, this probe defaults this path to
-	 * `data/gazetteer/anchor-lexicon-v1.json`.
+	 * Unlike `score-affix`, this probe defaults this path to `data/gazetteer/anchor-lexicon-v1.json`.
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here. The check verdict reads this file.
+	 * Write the machine-readable sidecar here.
+	 * The check verdict reads this file.
 	 */
 	json?: string
 	/**
@@ -64,13 +64,13 @@ export interface ScoreCountryHomographOptions {
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode.
 	 *
-	 * The check always passes this for the country probe, because zero-filled clues near
-	 * a postcode depress country recall.
+	 * The check always passes this for the country probe, because zero-filled clues
+	 * near a postcode depress country recall.
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * Package-shaped `<root>` loads model + tokenizer + card + all soft
-	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights`.
+	 * Package-shaped `<root>` loads model + tokenizer + card + all soft channels
+	 * (anchor + gazetteer + country) from the package via `loadFromWeights`.
 	 *
 	 * The only in-distribution grade for a country-channel model (v6.2.0+),
 	 * which is what this country probe must feed.

@@ -155,8 +155,8 @@ describe("mostSpecific", () => {
 		expect(mostSpecific([unranked])).toBe(unranked)
 	})
 
-	// The postcode rung is the one that varies by panel, so the harness needs both an area-grade and
-	// a unit-grade postcode case.
+	// The postcode rung is the one that varies by panel, so the harness needs both
+	// an area-grade and a unit-grade postcode case.
 	const areaPostcode: Resolved = {
 		id: 5,
 		name: "62701",

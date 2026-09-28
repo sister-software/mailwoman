@@ -18,8 +18,8 @@
 import streetSuffixData from "../street-suffix.json" with { type: "json" }
 
 /**
- * Canonical USPS street suffix to list of recognized variants, uppercase per the publication and
- * with the first variant the preferred abbreviation.
+ * Canonical USPS street suffix to list of recognized variants, uppercase per the publication
+ * and with the first variant the preferred abbreviation.
  */
 export const US_STREET_SUFFIX_VARIANTS = streetSuffixData.variants
 
@@ -29,8 +29,8 @@ export const US_STREET_SUFFIX_VARIANTS = streetSuffixData.variants
 export type USStreetSuffix = keyof typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * Pub-28 canonicals that also appear as ordinary head nouns in street and place names, curated
- * outside the publication from golden v0.1.3 and the OA street pool.
+ * Pub-28 canonicals that also appear as ordinary head nouns in street and place names,
+ * curated outside the publication from golden v0.1.3 and the OA street pool.
  */
 export const NAME_PRONE_US_SUFFIXES: ReadonlySet<USStreetSuffix> = new Set(
 	streetSuffixData.nameProneCanonicals as USStreetSuffix[]
@@ -47,8 +47,7 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
 		out.set(canonical.toLowerCase(), canonical)
 
 		for (const variant of US_STREET_SUFFIX_VARIANTS[canonical]) {
-			// The first canonical that claims a variant wins, so `walk` beats `walks` for the
-			// variant they share.
+			// The first canonical that claims a variant wins, so `walk` beats `walks` for the variant they share.
 			if (!out.has(variant.toLowerCase())) {
 				out.set(variant.toLowerCase(), canonical)
 			}
@@ -62,8 +61,8 @@ export const US_STREET_SUFFIX_LOOKUP: ReadonlyMap<string, USStreetSuffix> = (() 
  * Preferred USPS abbreviation per canonical (`avenue → "AVE"`, `street → "ST"`).
  */
 export const US_STREET_SUFFIX_PREFERRED_ABBR: Readonly<Record<USStreetSuffix, string>> = Object.fromEntries(
-	// Every Pub-28 canonical carries at least one variant, and the JSON import types values as
-	// `string[]`, so the head is asserted present.
+	// Every Pub-28 canonical carries at least one variant, and the JSON import types
+	// values as `string[]`, so the head is asserted present.
 	(Object.keys(US_STREET_SUFFIX_VARIANTS) as USStreetSuffix[]).map((k) => [k, US_STREET_SUFFIX_VARIANTS[k][0]!])
 ) as Readonly<Record<USStreetSuffix, string>>
 
@@ -94,7 +93,8 @@ export const StreetSuffixAbbreviationRecord = US_STREET_SUFFIX_VARIANTS
 export type StreetSuffixAbbreviationRecord = typeof US_STREET_SUFFIX_VARIANTS
 
 /**
- * A canonical USPS street suffix such as "street", "avenue" or "boulevard", aliasing {@link USStreetSuffix}.
+ * A canonical USPS street suffix such as "street", "avenue" or "boulevard",
+ * aliasing {@link USStreetSuffix}.
  */
 export type StreetSuffix = USStreetSuffix
 

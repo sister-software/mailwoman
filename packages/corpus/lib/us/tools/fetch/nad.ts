@@ -109,8 +109,8 @@ interface ChunkManifest {
 /**
  * ArcGIS paged reads.
  *
- * Retry is on: the loop walks objectid ranges to completion, since one throttled page
- * can otherwise end a multi-hour national download.
+ * Retry is on: the loop walks objectid ranges to completion, since one throttled
+ * page can otherwise end a multi-hour national download.
  * No rate budget — pages are requested one at a time and each assembles thousands of records server-side.
  */
 const nadClient = new APIClient({

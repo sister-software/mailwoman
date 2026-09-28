@@ -73,7 +73,8 @@ export interface EvalQuantCompareResult {
 }
 
 /**
- * Coarse-placer int8-vs-fp32 comparison. See the module doc.
+ * Coarse-placer int8-vs-fp32 comparison.
+ * See the module doc.
  *
  * Emits the report to stdout.
  */

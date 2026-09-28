@@ -1,8 +1,8 @@
 /**
  * Cross-language parity for the gazetteer-anchor matcher.
  *
- * These assertions mirror corpus-python's test_gazetteer_anchor.py, so a drift in the TS matcher
- * would show the model different clues at inference than it trained on.
+ * These assertions mirror corpus-python's test_gazetteer_anchor.py, so a drift in the TS
+ * matcher would show the model different clues at inference than it trained on.
  * The inline lexicon matches the Python fixture exactly.
  */
 

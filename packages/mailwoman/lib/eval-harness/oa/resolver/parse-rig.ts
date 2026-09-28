@@ -33,9 +33,10 @@ export async function buildParseRig(
 	wofPaths: string[],
 	reportError: (line: string) => void
 ) {
-	// Full ship-config via the canonical ProductionScorer: createScorer reads the model-card's
-	// `requires` block and feeds every declared channel (anchor, gazetteer, conventions=auto,
-	// suppress-gaz-near-postcode), and fails closed (strict) if a declared channel cannot be fed.
+	// Full ship-config via the canonical ProductionScorer: createScorer reads
+	// the model-card's `requires` block and feeds every declared channel
+	// (anchor, gazetteer, conventions=auto, suppress-gaz-near-postcode), and fails
+	// closed (strict) if a declared channel cannot be fed.
 	// This grades the parse the library and server actually ship rather than the
 	// hand-built anchor-only classifier this eval used before.
 	// `--model-anchor-lookup` still pins the anchor source
@@ -45,10 +46,10 @@ export async function buildParseRig(
 	const { createScorer } = await import("@mailwoman/neural/scorer")
 	const modelAnchorPath = options.modelAnchorLookup || ""
 	const ablateToAnchor = options.ablateToAnchor ?? false
-	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false`
-	// through createScorer (a loud warning rather than a throw).
-	// Replaces the old empty-anchor.json idiom, which the fail-closed check
-	// refuses (an empty lookup parses to size 0 → UnfedChannelError).
+	// `--anchor-off`: the sanctioned anchor ablation, `overrides.anchor=false` through
+	// createScorer (a loud warning rather than a throw).
+	// Replaces the old empty-anchor.json idiom, which the fail-closed check refuses
+	// (an empty lookup parses to size 0 → UnfedChannelError).
 	const anchorOff = options.anchorOff ?? false
 
 	const overrides: ScorerOverrides = {
@@ -86,8 +87,8 @@ export async function buildParseRig(
 	// This is the "CLI matches demo" check: run the eval both ways and confirm US
 	// locality/coord don't regress before defaulting the CLI to it.
 	const candidateDB = options.candidateDB || ""
-	// `--postal-city-alias-db <db>` attaches the opt-in postal-city alias scorer on
-	// the FTS path: a user-typed postal city resolves to its geographic locality.
+	// `--postal-city-alias-db <db>` attaches the opt-in postal-city alias scorer on the
+	// FTS path: a user-typed postal city resolves to its geographic locality.
 	// Run the eval with and without to measure the difference.
 	// No-op on the candidate backend (it folds aliases at build time).
 	const postalCityAliasDB = options.postalCityAliasDB || ""
@@ -215,8 +216,8 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 	const adminCoherence =
 		(options.adminCoherence ?? false) ? true : (options.noAdminCoherence ?? false) ? false : undefined
 
-	// postcodeCountryCoherence is on by default in the resolver, so the pin is a full tri-state
-	// like adminCoherence's: `--postcode-country-coherence` pins it on,
+	// postcodeCountryCoherence is on by default in the resolver, so the pin is a full
+	// tri-state like adminCoherence's: `--postcode-country-coherence` pins it on,
 	// `--postcode-country-coherence-off` pins it off, neither = the library default.
 	const postcodeCountryCoherence =
 		(options.postcodeCountryCoherence ?? false)
@@ -230,10 +231,11 @@ export function resolveOptsFrom(options: OAResolverEvalOptions, defaultCountry: 
 		...(hierarchyCompletion ? { hierarchyCompletion: true } : {}),
 		...(adminCoherence !== undefined ? { adminCoherence } : {}),
 		...(postcodeCountryCoherence !== undefined ? { postcodeCountryCoherence } : {}),
-		// The pass is on by default and the cap is unbounded by default, so neither pin set
-		// leaves this eval byte-identical. The cap is passed through at zero as well as at a
-		// distance. Zero refuses every fall, which is the arm that separates the pass's re-pick
-		// from its coordinate fallback.
+		// The pass is on by default and the cap is unbounded by default, so neither
+		// pin set leaves this eval byte-identical.
+		// The cap is passed through at zero as well as at a distance.
+		// Zero refuses every fall, which is the arm that separates the pass's
+		// re-pick from its coordinate fallback.
 		...((options.noPostcodeConsistency ?? false) ? { postcodeConsistency: false } : {}),
 		...(options.postcodeConsistencyMaxMoveKm !== undefined
 			? { postcodeConsistencyMaxMoveKm: options.postcodeConsistencyMaxMoveKm }

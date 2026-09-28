@@ -81,8 +81,9 @@ describe("isImplausibleResolution", () => {
 	})
 
 	test("guard B: a coordinate outside the expected country's bbox is implausible (the cross-country jump)", () => {
-		// A locality-tier coordinate can land far outside the expected country, and guard A
-		// (country-centroid) cannot catch it. Guard B does, given the expected country.
+		// A locality-tier coordinate can land far outside the expected country,
+		// and guard A (country-centroid) cannot catch it.
+		// Guard B does, given the expected country.
 		const t = tree(
 			[node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })],
 			"1210a IA 10 W IA"

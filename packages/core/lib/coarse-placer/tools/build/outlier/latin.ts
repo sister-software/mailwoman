@@ -78,8 +78,9 @@ export interface BuildOutlierLatinResult {
  * Train feeds the `other` class.
  * Heldout is test-only.
  *
- * BR/MX are the Latin off-map train exposure and CA/LI are the heldout probe, the hard near-twins
- * of in-map US/DE. Watch other-Latin recall in the openset eval.
+ * BR/MX are the Latin off-map train exposure and CA/LI are the heldout probe,
+ * the hard near-twins of in-map US/DE.
+ * Watch other-Latin recall in the openset eval.
  */
 const TRAIN_COUNTRIES = ["BR", "MX"]
 const HELDOUT_COUNTRIES = ["CA", "LI"]
@@ -116,7 +117,8 @@ function overtureLocality(r: Record<string, unknown>): string {
 }
 
 /**
- * Coarse-placer Overture Latin-off-map outlier builder. See the module doc.
+ * Coarse-placer Overture Latin-off-map outlier builder.
+ * See the module doc.
  */
 export async function buildOutlierLatin(
 	options: BuildOutlierLatinOptions = {},

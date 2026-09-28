@@ -220,8 +220,9 @@ export interface WriteParquetSplitsOptions {
 /**
  * Pre-partitioned labeled-row streams, one per split.
  *
- * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow` and route
- * rows to the matching stream. Splits with no rows can be omitted, or passed as an empty iterable,
+ * Callers (`buildCorpus`) decide each row's split inline at align time via `splitForRow`
+ * and route rows to the matching stream.
+ * Splits with no rows can be omitted, or passed as an empty iterable,
  * and {@linkcode writeParquetSplits} skips them.
  */
 export type PerSplitRows = Partial<Record<SplitName, AsyncIterable<LabeledRow>>>

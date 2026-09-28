@@ -45,8 +45,9 @@ export const noStreetLedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
 
-		// The split excludes every surface the digit board reserves, so a retrain grades the
-		// boundary form on unseen streets. There is no safe default, so the flag throws.
+		// The split excludes every surface the digit board reserves, so a retrain
+		// grades the boundary form on unseen streets.
+		// There is no safe default, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {

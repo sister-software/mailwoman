@@ -39,21 +39,20 @@ export interface PhotonForwardInput {
 	 */
 	places: ReadonlyArray<{ tag: string; name: string }>
 	/**
-	 * A house-grade result: set only when the resolver produced a specific
-	 * building coordinate, the `address_point` (rooftop) or `interpolated` tier rather
-	 * than an admin centroid. {@link photonForwardProperties} then re-tags the
-	 * schema `osm_key: place` / `osm_value: house` / `type: house` and surfaces the parsed
-	 * `housenumber` + `street`, matching upstream komoot/photon's bare-address-point shape.
+	 * A house-grade result: set only when the resolver produced a specific building coordinate,
+	 * the `address_point` (rooftop) or `interpolated` tier rather than an admin centroid.
+	 * {@link photonForwardProperties} then re-tags the schema `osm_key: place` /
+	 * `osm_value: house` / `type: house` and surfaces the parsed `housenumber` + `street`,
+	 * matching upstream komoot/photon's bare-address-point shape.
 	 *
 	 * Absent means the result keeps its admin-ancestry schema.
 	 */
 	house?: { number?: string | null; street?: string | null } | null
 	/**
 	 * A street-grade result: set when the street-centroid tier fired, a street-level
-	 * coordinate below rooftop/interp and above admin.
-	 * {@link photonForwardProperties} re-tags it `osm_key: highway` / `osm_value: residential`
-	 * / `type: street` with the full assembled street name in `name`, matching upstream
-	 * komoot's street results.
+	 * coordinate below rooftop/interp and above admin. {@link photonForwardProperties}
+	 * re-tags it `osm_key: highway` / `osm_value: residential` / `type: street` with the
+	 * full assembled street name in `name`, matching upstream komoot's street results.
 	 *
 	 * `house` wins when both are set, since a numbered query never street-tiers.
 	 */
@@ -74,8 +73,7 @@ const FORWARD_TAG_PROJECTION: Record<
 	house: { key: "name", osmKey: "building", osmValue: "yes", type: "house" },
 	street: { key: "street", osmKey: "highway", osmValue: "residential", type: "street" },
 	neighbourhood: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
-	// The finest tier the /reverse descent ladder (resolver-wof-sqlite `DESCENT_TIERS`)
-	// can return.
+	// The finest tier the /reverse descent ladder (resolver-wof-sqlite `DESCENT_TIERS`) can return.
 	microhood: { key: "district", osmKey: "place", osmValue: "neighbourhood", type: "district" },
 	dependent_locality: { key: "district", osmKey: "place", osmValue: "suburb", type: "district" },
 	borough: { key: "district", osmKey: "place", osmValue: "borough", type: "district" },
@@ -95,8 +93,9 @@ const FORWARD_TAG_PROJECTION: Record<
 }
 
 /**
- * Fallback OSM tags. A Photon client reads `osm_key`/`osm_value`/`type`
- * unconditionally, so they must never be absent.
+ * Fallback OSM tags.
+ *
+ * A Photon client reads `osm_key`/`osm_value`/`type` unconditionally, so they must never be absent.
  */
 const DEFAULT_OSM_TAGS = { osm_key: "place", osm_value: "yes", type: "other" } as const
 
@@ -197,8 +196,8 @@ export interface PhotonForwardResult {
 }
 
 /**
- * Assemble a Photon `FeatureCollection` honoring `limit`: the primary feature
- * first, then ranked alternatives, capped at `limit`.
+ * Assemble a Photon `FeatureCollection` honoring `limit`: the primary feature first,
+ * then ranked alternatives, capped at `limit`.
  *
  * `limit` floors to 1, since Photon always returns at least the best match.
  */
@@ -215,8 +214,8 @@ export function photonForwardCollection(result: PhotonForwardResult, limit: numb
 }
 
 /**
- * Project a Photon `Feature` into a schema.org `Place` JSON-LD object
- * (`format=jsonld`), the output-format projection.
+ * Project a Photon `Feature` into a schema.org `Place` JSON-LD object (`format=jsonld`),
+ * the output-format projection.
  *
  * Reads the feature's already-decorated {@link PhotonProperties}
  * (housenumber/street/city/state/postcode/countrycode and the coordinate), so it stays a
@@ -241,8 +240,7 @@ export function photonFeatureToSchemaOrg(feature: PhotonFeature): SchemaOrgPlace
 }
 
 /**
- * Project a whole Photon `FeatureCollection` into an array of schema.org `Place`
- * objects (`format=jsonld`).
+ * Project a whole Photon `FeatureCollection` into an array of schema.org `Place` objects (`format=jsonld`).
  */
 export function photonToSchemaOrg(collection: PhotonFeatureCollection): SchemaOrgPlace[] {
 	return collection.features.map(photonFeatureToSchemaOrg)

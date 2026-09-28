@@ -20,8 +20,7 @@ import { unknownSpans } from "#decoder/unknown-spans"
  */
 export interface SerializeTuplesOpts {
 	/**
-	 * Interleave `["unknown", value]` tuples for the all-O spans the model left
-	 * unclassified, in source order.
+	 * Interleave `["unknown", value]` tuples for the all-O spans the model left unclassified, in source order.
 	 *
 	 * Default false, which keeps the tag-only shape unless the caller asks for the gaps.
 	 */

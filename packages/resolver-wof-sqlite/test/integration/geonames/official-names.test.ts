@@ -87,9 +87,9 @@ beforeAll(async () => {
 		dir.path("FI.txt")
 	)
 
-	// "Santa Isabel" has one language-tagged unflagged row and a separate language-less row
-	// carrying the historic evidence (isHistoric and a `to` date). Historic-ness is a fact about
-	// the name, so the unflagged row must not classify official.
+	// "Santa Isabel" has one language-tagged unflagged row and a separate language-less
+	// row carrying the historic evidence (isHistoric and a `to` date).
+	// Historic-ness is a fact about the name, so the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(

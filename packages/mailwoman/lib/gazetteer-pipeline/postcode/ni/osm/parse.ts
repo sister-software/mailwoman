@@ -25,12 +25,14 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
 /**
  * A Northern Ireland unit postcode.
  *
- * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`) with the area
- * pinned to `BT`: loose about the outward code's second character, because `BT1` and `BT47` are
- * both legal and differ structurally, and strict about the inward code, which is invariant across
- * the whole system. The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`,
- * all-numeric), and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the
- * national one. Narrowing it would encode a fact about today's district list into a format check.
+ * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`) with the
+ * area pinned to `BT`: loose about the outward code's second character, because `BT1`
+ * and `BT47` are both legal and differ structurally, and strict about the inward code,
+ * which is invariant across the whole system.
+ * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
+ * and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the national one.
+ *
+ * Narrowing it would encode a fact about today's district list into a format check.
  */
 export const NI_UNIT_POSTCODE = /^BT[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
@@ -52,8 +54,8 @@ export interface NIOSMParseStats {
 	 */
 	tagged: number
 	/**
-	 * Elements dropped for having no usable coordinate: neither a node `lat`/`lon` nor an
-	 * `out center` centre.
+	 * Elements dropped for having no usable coordinate: neither a node `lat`/`lon`
+	 * nor an `out center` centre.
 	 */
 	skippedNoCoordinate: number
 	/**
@@ -89,7 +91,8 @@ const MALFORMED_SAMPLE_LIMIT = 50
  */
 export interface NIPostcodeRecord {
 	/**
-	 * The single-space display form, e.g. `BT3 9QQ`. This is an alt `names` row on the built place.
+	 * The single-space display form, e.g. `BT3 9QQ`.
+	 * This is an alt `names` row on the built place.
 	 */
 	display: string
 	/**
@@ -161,10 +164,12 @@ function elementPoint(element: OverpassElement): PostcodePoint | null {
  * Group the response's elements into one {@link NIPostcodeRecord} per distinct
  * unit postcode, mutating `stats`.
  *
- * Records come back sorted by lookup `name`. Insertion order would also be deterministic given a
- * fixed response file, but it would be deterministic through the file's element order. Sorting makes
- * the database's synthetic ids a function of the postcode set alone, so a rebuild of OSM that adds
- * one building does not renumber every place after it.
+ * Records come back sorted by lookup `name`.
+ * Insertion order would also be deterministic given a fixed response file,
+ * but it would be deterministic through the file's element order.
+ *
+ * Sorting makes the database's synthetic ids a function of the postcode set alone,
+ * so a rebuild of OSM that adds one building does not renumber every place after it.
  */
 export function parseNIPostcodes(response: OverpassResponse, stats: NIOSMParseStats): NIPostcodeRecord[] {
 	const groups = new Map<string, { display: string; points: PostcodePoint[] }>()

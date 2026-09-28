@@ -21,7 +21,8 @@ const NEURAL_ONLY = [
 	"| postal | 38 | 13% | 87% | 95% |",
 ].join("\n")
 
-// The v0 comparison shape. The v0 columns precede `neural`, so it is the second %-column after n.
+// The v0 comparison shape.
+// The v0 columns precede `neural`, so it is the second %-column after n.
 const WITH_V0 = [
 	"| arena | n | v0 | neural | both | neural-only | v0-only | both-fail | tree-valid |",
 	"| --- | --: | --: | --: | --: | --: | --: | --: | --: |",

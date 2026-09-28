@@ -36,7 +36,9 @@ import { addr, norm, trainCrossSourceModel, type CrossSourceRow } from "#tools/s
  */
 export interface TrainOrgCrossSourceGBTOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -64,7 +66,8 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * Max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 * Max cross-source recall subject to this held-out pairwise precision.
+	 * Default 0.95.
 	 */
 	precisionBar?: number
 	/**
@@ -78,8 +81,8 @@ export interface TrainOrgCrossSourceGBTOptions {
 /**
  * Train and emit the org-level cross-source link GBT.
  *
- * The CCN is the cross-system facility key, and it rides {@link CrossSourceRow.npi} to `record.id`
- * as the held-out label.
+ * The CCN is the cross-system facility key, and it rides {@link CrossSourceRow.npi}
+ * to `record.id` as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,

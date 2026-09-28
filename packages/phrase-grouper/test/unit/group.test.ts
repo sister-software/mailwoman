@@ -251,8 +251,8 @@ describe("scoreLocalityPhrase", () => {
 		expect(out.find((p) => p.span.body === "New York")).toBeDefined()
 	})
 
-	// Bridge lowercase place-name particles and apostrophe-fused names so native-order multi-word
-	// localities surface as one span.
+	// Bridge lowercase place-name particles and apostrophe-fused names so native-order
+	// multi-word localities surface as one span.
 	it("bridges a Spanish 'de' particle (Las Palmas de Gran Canaria)", () => {
 		const text = "Las Palmas de Gran Canaria"
 		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)

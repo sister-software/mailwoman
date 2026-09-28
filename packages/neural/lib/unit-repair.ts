@@ -44,9 +44,8 @@ const UNIT_DESIGNATORS =
 	"APARTMENT|APT|SUITE|STE|UNIT|ROOM|RM|FLOOR|FLR|FL|BUILDING|BLDG|DEPARTMENT|DEPT|LOT|TRAILER|TRLR|SLIP|HANGAR|PIER|FLAT|PH|PENTHOUSE"
 
 const UNIT_PATTERNS: Array<{ label: string; re: RegExp }> = [
-	// The `\b` after the designator stops "Unit" matching inside "United" and "Fl" inside
-	// "Florida", and the trailing `\b` on the identifier stops "Apt Main" capturing the "M"
-	// of "Main".
+	// The `\b` after the designator stops "Unit" matching inside "United" and "Fl" inside "Florida",
+	// and the trailing `\b` on the identifier stops "Apt Main" capturing the "M" of "Main".
 	{
 		label: "designator",
 		re: new RegExp(
@@ -66,8 +65,7 @@ const OUTSIDE = "O" as DecoderToken["label"]
  * Tags a unit span is allowed to overwrite on the ADD path.
  *
  * An explicit designator plus identifier is a unit shape, so the pass reclaims a `locality` or
- * `dependent_locality` span, while a structural tag stays off the list so a confident parse is
- * unchanged.
+ * `dependent_locality` span, while a structural tag stays off the list so a confident parse is unchanged.
  * `O` is always eligible.
  */
 const ADD_OVER_TAGS = new Set<string>(["locality", "dependent_locality"])

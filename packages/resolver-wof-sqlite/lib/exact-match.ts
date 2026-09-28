@@ -12,13 +12,15 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import { aliasBagExactMatch, foldQueryText } from "#fts/index"
 
 /**
- * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively, the
- * exact-match tier for ranking.
+ * Among `ids`, return the subset whose name or any alias equals `text` case-insensitively,
+ * the exact-match tier for ranking.
  *
- * One indexed query over `<schema>.names`. When the extract has no `names` table (a slim database
- * built with `dropNames`, or a postcode-only extract), fall back to the self-contained
- * `place_search` FTS content. Its `alt_names` column is the same alias set joined on the
- * boundary-preserving `ALIAS_SEPARATOR`, so `aliasBagExactMatch` recovers the exact alias tier
+ * One indexed query over `<schema>.names`.
+ * When the extract has no `names` table (a slim database built with `dropNames`, or a postcode-only extract),
+ * fall back to the self-contained `place_search` FTS content.
+ *
+ * Its `alt_names` column is the same alias set joined on the boundary-preserving
+ * `ALIAS_SEPARATOR`, so `aliasBagExactMatch` recovers the exact alias tier
  * ("New York City" → New York) that the dropped `names` table used to provide.
  */
 export function exactMatchIDs<DB>(
@@ -44,7 +46,8 @@ export function exactMatchIDs<DB>(
 
 		return out
 	} catch {
-		// No `names` table on this extract. Fall through to the place_search alias bag.
+		// No `names` table on this extract.
+		// Fall through to the place_search alias bag.
 	}
 
 	try {
@@ -60,12 +63,12 @@ export function exactMatchIDs<DB>(
 			}
 		}
 
-		// Alias pass via the shared bag parser. Separated bags get a true per-alias equality check,
-		// unrestricted, matching the `names`-table branch above where an alias match counts as exact
-		// regardless of other candidates. Legacy bags without a separator fall back to padded
-		// containment, conditioned on "no canonical exact in the pool" because their lost boundaries
-		// would otherwise false-promote interior fragments ("York" inside the alias "New York City")
-		// or cross-alias fragments.
+		// Alias pass via the shared bag parser.
+		// Separated bags get a true per-alias equality check, unrestricted, matching the `names`-table
+		// branch above where an alias match counts as exact regardless of other candidates.
+		// Legacy bags without a separator fall back to padded containment, conditioned on "no
+		// canonical exact in the pool" because their lost boundaries would otherwise false-promote
+		// interior fragments ("York" inside the alias "New York City") or cross-alias fragments.
 		const anyCanonicalExact = out.size > 0
 
 		for (const r of rows) {
@@ -74,20 +77,21 @@ export function exactMatchIDs<DB>(
 			}
 		}
 	} catch {
-		// Extract without place_search either, so there is no exact-match tier. The caller falls back
-		// to weighted-sum order.
+		// Extract without place_search either, so there is no exact-match tier.
+		// The caller falls back to weighted-sum order.
 	}
 
 	return out
 }
 
 /**
- * Among `ids` (already known exact matches), the subset holding `text` as an official name
- * (`names.official = 1`, the ingest bit).
+ * Among `ids` (already known exact matches), the subset holding `text` as an
+ * official name (`names.official = 1`, the ingest bit).
  *
- * Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs}, so the two probes
- * agree on what "equals the query" means. Fails soft on gazetteers built before the `official`
- * column existed, and the sub-tier then behaves exactly as if `officialNameExact` were off.
+ * Same collate nocase semantics as {@link WOFSQLitePlaceLookup.#exactMatchIDs},
+ * so the two probes agree on what "equals the query" means.
+ * Fails soft on gazetteers built before the `official` column existed, and the sub-tier
+ * then behaves exactly as if `officialNameExact` were off.
  */
 export function officialNameIDs<DB>(
 	db: DatabaseClient<DB>,

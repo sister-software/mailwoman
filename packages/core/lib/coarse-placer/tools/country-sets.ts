@@ -13,8 +13,10 @@
 export const COUNTRIES = ["US", "FR", "GB", "CN", "NL", "IT", "DE", "JP", "ES", "KR", "TW"] as const
 
 /**
- * The EU expansion. The v0.5.0 corpus carries zero rows for these locales, so they are drawn from
- * the Overture per-country addresses theme (the same source build-eu-eval-set.ts uses).
+ * The EU expansion.
+ *
+ * The v0.5.0 corpus carries zero rows for these locales, so they are drawn from the
+ * Overture per-country addresses theme (the same source build-eu-eval-set.ts uses).
  *
  * These become first-class in-map countries so the soft country prior can pin them.
  */
@@ -38,8 +40,10 @@ export const NEW_EU = [
 ] as const
 
 /**
- * The in-map dilution fix. DE/ES/IT/NL are already in countries (corpus format), but the eu-eval
- * sets and every NEW_EU country are Overture format.
+ * The in-map dilution fix.
+ *
+ * DE/ES/IT/NL are already in countries (corpus format), but the eu-eval sets
+ * and every NEW_EU country are Overture format.
  *
  * Supplement their corpus rows with an Overture sample so each owns its own format shape.
  * The format then stops being discriminative and the model falls back to the linguistic n-grams.

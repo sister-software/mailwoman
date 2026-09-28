@@ -146,11 +146,11 @@ export async function evalErrorAnalysis(options: ErrorAnalysisOptions): Promise<
 		? (repairOpts as Parameters<NeuralAddressClassifier["parse"]>[1])
 		: undefined
 
-	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer and
-	// conventions channels the model was trained against (per the model-card `requires` block)
-	// so a `--model` candidate is graded in-distribution, the same as the dev-weights default.
-	// createScorer fails closed in strict mode if a declared channel can't actually be fed, and
-	// `--no-strict` opts out.
+	// Full ship-config via the canonical ProductionScorer: feed the anchor, gazetteer
+	// and conventions channels the model was trained against (per the model-card `requires` block)
+	// so a `--model` candidate is graded in-distribution, the same as the dev-weights
+	// default. createScorer fails closed in strict mode if a declared channel can't
+	// actually be fed, and `--no-strict` opts out.
 	const resolved = options.model
 		? { modelPath: options.model, tokenizerPath: options.tokenizer!, modelCardPath: options.modelCard! }
 		: await resolveWeights({ locale: "en-us" })

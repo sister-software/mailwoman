@@ -23,8 +23,9 @@ const MIN_CASED_LETTERS = 3
 /**
  * Runs of this many Latin letters or fewer are abbreviations in address text.
  *
- * State codes NY/DC, directionals N/NW/SE, suffixes ST/RD and the NL postcode suffix LG all read
- * best uppercase. Titlecasing `NY` to `Ny` lands a region as a locality.
+ * State codes NY/DC, directionals N/NW/SE, suffixes ST/RD and the NL postcode
+ * suffix LG all read best uppercase.
+ * Titlecasing `NY` to `Ny` lands a region as a locality.
  */
 const ABBREVIATION_LENGTH = 2
 
@@ -36,24 +37,25 @@ export function upperFirst(phrase: string): string {
 }
 
 /**
- * True when `text` is Latin-script all-caps, at least three uppercase letters without a lowercase
- * or other-script cased letter.
+ * True when `text` is Latin-script all-caps, at least three uppercase letters
+ * without a lowercase or other-script cased letter.
  *
  * Diacritics are admitted, so `RUE DU FAUBOURG SAINT-HONORÉ` qualifies, while an accented
- * uppercase input otherwise reaches the model as single-character pieces. A cased letter from
- * another script disqualifies the whole input, since its case rules are locale-sensitive and can
- * change length.
+ * uppercase input otherwise reaches the model as single-character pieces.
+ * A cased letter from another script disqualifies the whole input, since its case
+ * rules are locale-sensitive and can change length.
  */
 export function isAllCapsInput(text: string): boolean {
 	return isUpperCase(text, { minimumCased: MIN_CASED_LETTERS, script: "latin" })
 }
 
 /**
- * True when `text` is pure-ASCII all-lowercase, at least three lowercase letters without an
- * uppercase letter.
+ * True when `text` is pure-ASCII all-lowercase, at least three lowercase
+ * letters without an uppercase letter.
  *
- * The mirror of {@link isAllCapsInput}. It binds to pure ASCII because a lowercase input with
- * diacritics parses as typed, so the restore has no accented population to serve.
+ * The mirror of {@link isAllCapsInput}.
+ * It binds to pure ASCII because a lowercase input with diacritics parses as typed,
+ * so the restore has no accented population to serve.
  */
 export function isAllLowerInput(text: string): boolean {
 	return isLowerCase(text, { minimumCased: MIN_CASED_LETTERS, script: "ascii" })
@@ -87,11 +89,14 @@ export function restoreLowerInput(text: string): string {
 /**
  * Normalize a shouting or whispering input to canonical mixed case before the model.
  *
- * Mixed-case and accented or non-Latin input pass through byte-identically. All-caps registry and
- * compliance data (`214 JONES RD, ELKHART, TX 75839`) is partly out-of-domain for a model trained
- * on mixed-case text, and drops or mis-bounds tokens. Titlecasing first recovers it.
- * Fully-lowercase input is as out-of-domain, since it fragments the street and drops the state
- * code. Detection is deliberately strict, so mixed-case input is never touched.
+ * Mixed-case and accented or non-Latin input pass through byte-identically.
+ * All-caps registry and compliance data (`214 JONES RD, ELKHART, TX 75839`) is partly
+ * out-of-domain for a model trained on mixed-case text, and drops or mis-bounds tokens.
+ *
+ * Titlecasing first recovers it.
+ * Fully-lowercase input is as out-of-domain, since it fragments the street and drops the state code.
+ *
+ * Detection is deliberately strict, so mixed-case input is never touched.
  */
 export function normalizeInputCase(text: string): string {
 	if (isAllCapsInput(text)) return titleCaseInput(text)

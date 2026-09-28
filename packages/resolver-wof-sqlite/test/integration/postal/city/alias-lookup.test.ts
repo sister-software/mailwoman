@@ -16,12 +16,13 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
 /**
- * A `postal_city_alias` fixture using the production DDL, holding one divergent row and one
- * non-divergent row.
+ * A `postal_city_alias` fixture using the production DDL, holding one divergent row
+ * and one non-divergent row.
  */
 async function buildAliasDB(): Promise<DatabaseClient<PostalCityAliasDatabase>> {
 	const kdb = DatabaseClient.temp<PostalCityAliasDatabase>()
-	// The caller owns this handle and destroys it after the test. This function does not.
+	// The caller owns this handle and destroys it after the test.
+	// This function does not.
 
 	await createPostalCityAliasTable(kdb)
 

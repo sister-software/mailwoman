@@ -13,16 +13,16 @@ import type { OpenCageAnnotations } from "@mailwoman/annotations"
 /**
  * Output serialization formats Nominatim supports.
  *
- * `jsonv2` is the modern default and `jsonld` is the Mailwoman extension that emits schema.org
- * `Place` JSON-LD rather than an upstream Nominatim format.
+ * `jsonv2` is the modern default and `jsonld` is the Mailwoman extension that emits
+ * schema.org `Place` JSON-LD rather than an upstream Nominatim format.
  */
 export type NominatimFormat = "jsonv2" | "json" | "geojson" | "jsonld"
 
 /**
  * The structured address breakdown returned under `address` when `addressdetails=1`.
  *
- * Keys mirror Nominatim's OSM-derived tag names, populated from Mailwoman's `ComponentTag` and
- * resolved ancestor lineage.
+ * Keys mirror Nominatim's OSM-derived tag names, populated from Mailwoman's
+ * `ComponentTag` and resolved ancestor lineage.
  */
 export type NominatimAddressDetails = Record<string, string>
 
@@ -161,17 +161,16 @@ export interface NominatimStatus {
 	/**
 	 * The newest build epoch across the artifacts this deployment opened.
 	 *
-	 * Left out when none of them carries a manifest. A boot time or a file mtime would answer a
-	 * question the process cannot answer.
+	 * Left out when none of them carries a manifest.
+	 * A boot time or a file mtime would answer a question the process cannot answer.
 	 */
 	data_updated?: string
 	mailwoman?: NominatimStatusExtension
 }
 
 /**
- * A freshness report as this surface consumes it, structurally `mailwoman/freshness`'s
- * `FreshnessReport` and declared here so the wire interface keeps no import from the engine
- * implementation.
+ * A freshness report as this surface consumes it, structurally `mailwoman/freshness`'s `FreshnessReport`
+ * and declared here so the wire interface keeps no import from the engine implementation.
  */
 export interface NominatimFreshnessReport {
 	dataUpdated?: string
@@ -181,13 +180,13 @@ export interface NominatimFreshnessReport {
 /**
  * Compose the `/status` payload from a freshness report.
  *
- * A function rather than four lines at the one call site, because the CLI and the test that
- * checks this response would otherwise hold separate copies of the same mapping, and the field
- * this mapping exists to get right is omitted under a condition.
+ * A function rather than four lines at the one call site, because the CLI and the test
+ * that checks this response would otherwise hold separate copies of the same mapping,
+ * and the field this mapping exists to get right is omitted under a condition.
  *
- * `data_updated` is dropped when no artifact carried a build date, since Nominatim declares the
- * field optional. A boot time or a file mtime would look measured and answer a question the
- * process cannot.
+ * `data_updated` is dropped when no artifact carried a build date,
+ * since Nominatim declares the field optional.
+ * A boot time or a file mtime would look measured and answer a question the process cannot.
  */
 export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimStatus {
 	return {
@@ -201,8 +200,8 @@ export function nominatimStatus(freshness: NominatimFreshnessReport): NominatimS
 /**
  * The geocoding engine the router delegates to.
  *
- * Each method is optional and a route whose method is absent answers `501 Not Implemented`. The
- * real implementation is wired by the CLI.
+ * Each method is optional and a route whose method is absent answers `501 Not Implemented`.
+ * The real implementation is wired by the CLI.
  */
 export interface NominatimEngine {
 	search?(params: NominatimSearchParams): Promise<NominatimResult[]>

@@ -91,10 +91,10 @@ function nameMatches(wofName: string, postalMuni: string): boolean {
 async function loadKenall(path: string): Promise<Map<string, string>> {
 	const out = new Map<string, string>()
 
-	// `cp932` through iconv rather than `TextDecoder("shift_jis")`. Japan Post ships CP932, and
-	// Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte sequences differently, most
-	// yielding a different character rather than a replacement. The file is reissued monthly, so
-	// this must stay exact.
+	// `cp932` through iconv rather than `TextDecoder("shift_jis")`.
+	// Japan Post ships CP932, and Node's whatwg `shift_jis` reads 801 of CP932's 20,296 two-byte
+	// sequences differently, most yielding a different character rather than a replacement.
+	// The file is reissued monthly, so this must stay exact.
 	const text = decodeBytes(await readLocalBuffer(path), "cp932")
 
 	// KEN_ALL has no header row.

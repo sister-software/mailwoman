@@ -60,9 +60,9 @@ test("normalizeInputCase: the #690 hook — title-case iff all-caps, else unchan
 })
 
 test("titleCaseInput: a run whose lowercase form changes length is kept as typed (offsets never move)", () => {
-	// U+0130 lowercases to two code units. In `caddesİ` it sits inside the lowered tail, so that
-	// run stays shouting rather than shifting every later offset, while in `İstanbul` it is the
-	// untouched first letter and the run title-cases.
+	// U+0130 lowercases to two code units.
+	// In `caddesİ` it sits inside the lowered tail, so that run stays shouting rather than shifting
+	// every later offset, while in `İstanbul` it is the untouched first letter and the run title-cases.
 	const input = "İSTANBUL CADDESİ"
 	const out = titleCaseInput(input)
 
@@ -78,8 +78,8 @@ test("isAllLowerInput: #829 — pure-ASCII whispering qualifies; one uppercase o
 })
 
 test("restoreLowerInput: #829 — title-case ≥3-letter runs, UPPERCASE ≤2-letter runs, length-preserving", () => {
-	// The two-letter rule differs from `titleCaseInput`, since a lowercase two-letter token is an
-	// abbreviation the model reads as shouting.
+	// The two-letter rule differs from `titleCaseInput`, since a lowercase two-letter
+	// token is an abbreviation the model reads as shouting.
 	expect(restoreLowerInput("washington dc")).toBe("Washington DC")
 	expect(restoreLowerInput("new york ny")).toBe("New York NY")
 	expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")

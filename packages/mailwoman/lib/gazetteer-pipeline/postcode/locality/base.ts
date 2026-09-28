@@ -58,7 +58,9 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 const POSTCODE_LOCALITY_LICENSE = "CC-BY 4.0 (Who's On First) — attribution required on redistribution"
 
 /**
- * The only unprefixed alias key. `aliasesFor` reads the `name:` and `label:` prefixes separately.
+ * The only unprefixed alias key.
+ *
+ * `aliasesFor` reads the `name:` and `label:` prefixes separately.
  */
 const ALT_NAME_KEYS = new Set(["wof:label"])
 
@@ -100,13 +102,13 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 }
 
 /**
- * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block
- * around a query coordinate, filtered by great-circle radius, and answered nearest-first under a
- * caller-owned tie-break.
+ * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from
+ * the 3×3 block around a query coordinate, filtered by great-circle radius,
+ * and answered nearest-first under a caller-owned tie-break.
  *
- * The cell keying is part of each builder's output interface (`pyRound` against `Math.round`, ×10
- * at 0.1° against ×2 at 0.5°), so it is a constructor parameter rather than a convention. A
- * builder's keying must not be aligned with a sibling's.
+ * The cell keying is part of each builder's output interface (`pyRound` against `Math.round`,
+ * ×10 at 0.1° against ×2 at 0.5°), so it is a constructor parameter rather than a convention.
+ * A builder's keying must not be aligned with a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()
@@ -354,10 +356,10 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 	console.log(`  ${locs.length} localities; ${unreadable} unreadable files skipped`)
 
-	// Two 0.1°-cell (~11km) grid indexes. `grid` keys by centroid and drives the radius
-	// candidate set. `bgrid` registers a locality in every cell its bounding box overlaps and
-	// drives the containing-PIP check, so that check reads only the localities whose bbox
-	// could cover the point.
+	// Two 0.1°-cell (~11km) grid indexes.
+	// `grid` keys by centroid and drives the radius candidate set.
+	// `bgrid` registers a locality in every cell its bounding box overlaps and drives the
+	// containing-PIP check, so that check reads only the localities whose bbox could cover the point.
 	const grid = new ProximityGrid<number>({
 		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
 		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],

@@ -408,7 +408,8 @@ function renderReport(
 }
 
 /**
- * Lint a recipe output against corpus stats and the anti-pattern rules, printing the markdown report to stdout.
+ * Lint a recipe output against corpus stats and the anti-pattern rules,
+ * printing the markdown report to stdout.
  */
 export async function lintRecipeOutput(
 	options: LintRecipeOutputOptions,

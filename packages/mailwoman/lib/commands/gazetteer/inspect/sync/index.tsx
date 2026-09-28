@@ -54,7 +54,8 @@ const CONCURRENCY = 8
 /**
  * Above this many repositories the final list is summarized instead of printed in full.
  *
- * The `▸` lines above it are complete either way. This bounds the closing frame rather than the record.
+ * The `▸` lines above it are complete either way.
+ * This bounds the closing frame rather than the record.
  */
 const MAX_LISTED_CHECKS = 25
 
@@ -130,9 +131,9 @@ const WOFSync: CommandComponent<typeof spec, [string?]> = ({ options, args }) =>
 			})
 
 			// Where each repo comes from is resolved per repo rather than assumed to be upstream.
-			// `gh repo list` enumerates the upstream org, so the discovered `url` always refers to
-			// upstream. Cloning from it would pull upstream data over the corrections our fork
-			// carries. Existing clones are not re-pointed here: `synchronizeRepo` pulls in place
+			// `gh repo list` enumerates the upstream org, so the discovered `url` always refers to upstream.
+			// Cloning from it would pull upstream data over the corrections our fork carries.
+			// Existing clones are not re-pointed here: `synchronizeRepo` pulls in place
 			// and never rewrites a remote, so this fixes new clones only.
 			// `gazetteer repos-sync` reports and re-points the existing ones.
 			const { githubForkProbe, resolveWOFRepoOrigin } = await import("#gazetteer/wof/repo-origin")

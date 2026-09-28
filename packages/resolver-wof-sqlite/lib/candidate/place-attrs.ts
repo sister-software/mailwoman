@@ -26,8 +26,9 @@ export interface PlaceAttrs {
 	/**
 	 * The place's recorded population, or null when the gazetteer never measured one.
 	 *
-	 * NULL rather than zero. `place_population` holds no zero, so an absent row is the only way a
-	 * place has no number. A zero written for those would be a count nobody made.
+	 * NULL rather than zero.
+	 * `place_population` holds no zero, so an absent row is the only way a place has no number.
+	 * A zero written for those would be a count nobody made.
 	 */
 	pop: number | null
 	neg: number

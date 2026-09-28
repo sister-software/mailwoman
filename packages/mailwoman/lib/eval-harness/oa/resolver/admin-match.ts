@@ -67,8 +67,8 @@ const normName = (s: string | undefined): string => {
 }
 
 /**
- * Resolved region names are the gazetteer's canonical full names ("California", "District of
- * Columbia"), and OA's expected.region is the USPS abbreviation ("CA", "DC").
+ * Resolved region names are the gazetteer's canonical full names ("California", "District of Columbia"),
+ * and OA's expected.region is the USPS abbreviation ("CA", "DC").
  *
  * Map full name → abbrev so region-match compares like-for-like.
  *
@@ -85,19 +85,20 @@ const STATE_NAME_TO_ABBR: Record<string, string> = Object.fromEntries(
  * Four paths, tried in order:
  *
  * 1. Verbatim: both already the same string (US `Berlin`==`Berlin`, or two identical abbrevs).
- * 2. US: the resolver returns a state's canonical full name (`California`) while OA's
- *    expected is the USPS abbrev (`CA`). Map full name → abbrev so they compare.
+ * 2. US: the resolver returns a state's canonical full name (`California`)
+ *    while OA's expected is the USPS abbrev (`CA`).
+ *    Map full name → abbrev so they compare.
  * 3. DE: the resolver returns WOF's english exonym (`Saxony`) while OA's expected
- *    is the German name (`Sachsen`). `lookupGermanState` folds code, German name
- *    and English name → one ISO 3166-2:DE code on both sides.
+ *    is the German name (`Sachsen`).
+ *    `lookupGermanState` folds code, German name and English name → one ISO 3166-2:DE code on both sides.
  *    Strict: distinct states (Bavaria vs Saxony) still miss, so this corrects the
  *    cross-language mismatch without loosening a genuine wrong-region.
  * 4. FR: `lookupFrenchRegion` folds an ISO 3166-2:FR code or a région name (accents optional) to one
  *    code on both sides, the same diacritic-insensitive fix for `Île-de-France` vs `Ile-de-France`.
  *
  * The code spaces do not overlap on real inputs (a USPS abbrev is never a German
- * or French region name, and the German and French names are disjoint), so trying all
- * of them is safe regardless of the row's country.
+ * or French region name, and the German and French names are disjoint),
+ * so trying all of them is safe regardless of the row's country.
  */
 export function regionMatches(resolvedName: string | undefined, expected: string | undefined): boolean {
 	if (!resolvedName || !expected) return false
@@ -167,16 +168,17 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 	}
 
 	// Hierarchy-aware regional-qualifier credit.
-	// OpenAddresses tags many German localities with a disambiguating district suffix WOF's
-	// canonical name drops. Gold `Plauen Vogtl`/`Chemnitz Sachs` resolve to `Plauen`/`Chemnitz`
+	// OpenAddresses tags many German localities with a disambiguating district
+	// suffix WOF's canonical name drops.
+	// Gold `Plauen Vogtl`/`Chemnitz Sachs` resolve to `Plauen`/`Chemnitz`
 	// (the point lands inside, and PIP confirms it), but a bare string compare reads a miss.
 	// Rather than a hardcoded suffix blacklist (a provenance-first violation),
 	// credit the qualifier only when it matches the resolved place's own WOF ancestry:
 	// `Vogtl`→county `Vogtland`, `Sachs`→region `Sachsen`.
 	// List-free and non-gameable.
 	// A genuinely wrong place won't carry the gold's qualifier among its ancestors.
-	// `und` and non-latin ancestor names normalize to empty under normName (Cyrillic and CJK are
-	// stripped), so the token set is latin-only without a language filter.
+	// `und` and non-latin ancestor names normalize to empty under normName
+	// (Cyrillic and CJK are stripped), so the token set is latin-only without a language filter.
 	const ancestorNamesStmt = adminDB.prepare(
 		"SELECT nm.name FROM ancestors a JOIN names nm ON nm.id = a.ancestor_id " +
 			"WHERE a.id = ? AND a.ancestor_placetype IN ('county', 'region', 'macrocounty', 'macroregion')"
@@ -211,10 +213,10 @@ export function buildLocalityMatcher(adminDatabasePath: string): LocalityMatcher
 
 		if (normName(locNode.name) === e || altNamesFor(locNode.id).has(e)) return true
 		// Gold carries the source's own parenthetical delivery marker (`Manilla (Rural)`),
-		// which normalizes to a bare trailing word. It therefore reaches the ancestry near-miss
-		// below, where no county carries the token `Rural`.
-		// Compared after the raw surfaces because a gazetteer name can carry a
-		// parenthetical too. See `../locality-qualifier.ts`.
+		// which normalizes to a bare trailing word.
+		// It therefore reaches the ancestry near-miss below, where no county carries the token `Rural`.
+		// Compared after the raw surfaces because a gazetteer name can carry a parenthetical too.
+		// See `../locality-qualifier.ts`.
 		const withoutQualifier = normName(stripParentheticalQualifier(expected))
 
 		if (

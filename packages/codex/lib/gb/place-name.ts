@@ -37,8 +37,8 @@ export const GB_PLACE_NAME_PARTICLES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Titlecase an all-caps GB place or street name, keeping {@link GB_PLACE_NAME_PARTICLES} lowercase
- * after the first word and casing apostrophe segments on their own.
+ * Titlecase an all-caps GB place or street name, keeping {@link GB_PLACE_NAME_PARTICLES}
+ * lowercase after the first word and casing apostrophe segments on their own.
  */
 export function titleCaseGB(value: string): string {
 	return titleCase(value.trim().replaceAll(/\s+/gu, " "), { particles: GB_PLACE_NAME_PARTICLES })

@@ -91,8 +91,8 @@ interface Crossing {
 /**
  * Junction forms.
  *
- * Weights favor the common connectors. The tight (unpadded) variants and leading phrases each carry
- * at least 5% of the mass.
+ * Weights favor the common connectors.
+ * The tight (unpadded) variants and leading phrases each carry at least 5% of the mass.
  */
 interface Form {
 	id: string
@@ -113,11 +113,15 @@ const FORMS: readonly Form[] = [
 ]
 
 /**
- * Tail forms. About 55% bare.
+ * Tail forms.
+ * About 55% bare.
  *
- * An always-present tail teaches the model to read post-intersection text as a locality, so the bare
- * form keeps a majority. City tails require a ZIP→city hit (Cook only). ZIP tails require the edge to
- * carry a zipl. Misses downgrade to the region tail.
+ * An always-present tail teaches the model to read post-intersection text as a locality,
+ * so the bare form keeps a majority.
+ * City tails require a ZIP→city hit (Cook only).
+ *
+ * ZIP tails require the edge to carry a zipl.
+ * Misses downgrade to the region tail.
  */
 interface Tail {
 	id: string

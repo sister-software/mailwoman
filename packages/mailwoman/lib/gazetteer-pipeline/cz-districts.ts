@@ -54,8 +54,8 @@ export interface BuildCZDistrictsOptions {
 /**
  * Build the sealed CZ-districts database.
  *
- * Not re-exported from a barrel. The command lazy-imports it
- * (optional-peer discipline, same as the NL PC6 and NZ builders).
+ * Not re-exported from a barrel.
+ * The command lazy-imports it (optional-peer discipline, same as the NL PC6 and NZ builders).
  */
 export async function buildCZDistrictsDatabase(
 	opts: BuildCZDistrictsOptions = {}

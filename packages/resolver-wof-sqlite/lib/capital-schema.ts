@@ -21,16 +21,16 @@ import type { CapitalPoint } from "#capitals"
 import { hasTable } from "#sqlite-utils"
 
 /**
- * The table name the builder writes and the reader probes, one word and singular, matching the
- * artifact's other reference tables (`candidate`, `country_codes`).
+ * The table name the builder writes and the reader probes, one word and singular,
+ * matching the artifact's other reference tables (`candidate`, `country_codes`).
  */
 export const CAPITAL_TABLE = "capital"
 
 /**
  * One reference entry as the artifact stores it.
  *
- * `level` is the reference vocabulary (`national` | `admin1`) kept as text, and the reader validates
- * on load rather than trusting bytes.
+ * `level` is the reference vocabulary (`national` | `admin1`) kept as text,
+ * and the reader validates on load rather than trusting bytes.
  */
 export interface CapitalTable {
 	country: string
@@ -46,8 +46,8 @@ export interface CapitalTable {
 /**
  * Create the table on a build in progress.
  *
- * Async because Kysely's schema-builder is. Called from the candidate build's DDL phase alongside
- * the other typed builders.
+ * Async because Kysely's schema-builder is.
+ * Called from the candidate build's DDL phase alongside the other typed builders.
  */
 export async function createCapitalTable<DB extends { capital: CapitalTable }>(db: Kysely<DB>): Promise<void> {
 	await db.schema

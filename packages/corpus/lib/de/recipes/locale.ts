@@ -47,8 +47,8 @@ interface GermanSource {
 /**
  * Each source's `region` is the Bundesland the file covers.
  *
- * OA's region column is empty for DE, so the region comes from the per-state file. The
- * international order needs it for the "City, Region Postcode" tail.
+ * OA's region column is empty for DE, so the region comes from the per-state file.
+ * The international order needs it for the "City, Region Postcode" tail.
  *
  * The Berlin file is a city-state whose region equals its locality, and the Saxony file is Sachsen.
  */
@@ -283,9 +283,9 @@ export const germanRecipe: CorpusRecipe = {
 			// (the US/feed layout), the rest in idiomatic German order.
 			// Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
-			// The two registers OA does not carry, each drawn independently of the order so every
-			// combination occurs: an Ortsteil borrowed from the tuple's own locality, and a native
-			// line with no commas.
+			// The two registers OA does not carry, each drawn independently of the order
+			// so every combination occurs: an Ortsteil borrowed from the tuple's own locality,
+			// and a native line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
 
 			const ortsteil =

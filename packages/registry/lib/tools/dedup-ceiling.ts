@@ -65,8 +65,7 @@ export interface DedupCeilingOptions {
 }
 
 /**
- * Measure the irreducible over-merge of co-located providers, and emit the markdown report to
- * stdout.
+ * Measure the irreducible over-merge of co-located providers, and emit the markdown report to stdout.
  */
 export async function dedupCeiling(
 	options: DedupCeilingOptions = {},
@@ -133,10 +132,10 @@ export async function dedupCeiling(
 		}
 	}
 
-	// The irreducible false-merge rate among co-located distinct pairs is collide/pairs. Report the
-	// collision rate directly with a precision-ceiling band: optimistic counts only `collide`, and
-	// conservative counts `collide` plus half of `mid`. Recall is not binding here, so the F1 ceiling
-	// tracks the precision ceiling.
+	// The irreducible false-merge rate among co-located distinct pairs is collide/pairs.
+	// Report the collision rate directly with a precision-ceiling band: optimistic counts
+	// only `collide`, and conservative counts `collide` plus half of `mid`.
+	// Recall is not binding here, so the F1 ceiling tracks the precision ceiling.
 	const pct = formatPercent
 
 	const lines: string[] = [

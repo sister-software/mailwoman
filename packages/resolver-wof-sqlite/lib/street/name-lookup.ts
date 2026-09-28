@@ -57,12 +57,14 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 		this.countries = new Set([...(opts.countries ?? ["FR"])].map((c) => c.toUpperCase()))
 		const table = opts.table ?? "street_centroid"
 
-		// Degrade gracefully on an empty or tableless extract. A no-op miss, never a crash.
+		// Degrade gracefully on an empty or tableless extract.
+		// A no-op miss, never a crash.
 		if (hasTable(this.database, table)) {
-			// Prefer the `name_key` column (built with `foldStreetSurface` and indexed by
-			// `idx_sc_name` for a direct seek). Fall back to `street_norm` on a pre-rebuild extract,
-			// which is a skip-scan but correct. The fold that built `name_key` must match
-			// `foldStreetSurface` here, which is the fold-parity interface.
+			// Prefer the `name_key` column (built with `foldStreetSurface`
+			// and indexed by `idx_sc_name` for a direct seek).
+			// Fall back to `street_norm` on a pre-rebuild extract, which is a skip-scan but correct.
+			// The fold that built `name_key` must match `foldStreetSurface` here,
+			// which is the fold-parity interface.
 			const keyCol = hasColumn(this.database, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.database.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 

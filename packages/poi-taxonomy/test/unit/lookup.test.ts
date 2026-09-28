@@ -181,9 +181,8 @@ describe("full Overture snapshot + curated overlay", () => {
 	})
 
 	it("recovers absorbed-leaf phrases via curated synonyms (#1209 review)", () => {
-		// The curated overlay absorbs these Overture leaves
-		// (`high_school`, `bank_credit_union`, `mountain_bike_trail`, `greengrocer`),
-		// so their leaf id-phrases are not emitted standalone.
+		// The curated overlay absorbs these Overture leaves (`high_school`, `bank_credit_union`,
+		// `mountain_bike_trail`, `greengrocer`), so their leaf id-phrases are not emitted standalone.
 		// Curated synonyms keep the direct phrases resolving to the canonical curated id.
 		expect(lookupPOICategory("high school").map((m) => m.category.id)).toEqual(["school"])
 		expect(lookupPOICategory("middle school").map((m) => m.category.id)).toEqual(["school"])
@@ -223,8 +222,8 @@ describe("full Overture snapshot + curated overlay", () => {
 		const once = prettyJSON(await generateTaxonomyTable())
 		expect(prettyJSON(await generateTaxonomyTable())).toBe(once)
 
-		// The committed taxonomy.json is the generator's output run through oxfmt, so it is compared
-		// by parsed content rather than raw bytes.
+		// The committed taxonomy.json is the generator's output run through oxfmt,
+		// so it is compared by parsed content rather than raw bytes.
 		const committed = await readLocalJSONFile(resolvePackagePath("@mailwoman/poi-taxonomy", "data", "taxonomy.json"))
 
 		expect(committed).toEqual(await generateTaxonomyTable())

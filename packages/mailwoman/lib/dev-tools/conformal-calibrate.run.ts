@@ -113,18 +113,19 @@ function conformalThreshold(calScores: number[], targetCoverage: number): number
 }
 
 /**
- * Keep this exact glibc-constant LCG stream: the published conformal thresholds were selected under
- * it, and `@mailwoman/core/utils`' `makeLcg` uses different constants. Swapping streams re-splits
- * calibration and test and silently moves Q̂.
+ * Keep this exact glibc-constant LCG stream: the published conformal thresholds were
+ * selected under it, and `@mailwoman/core/utils`' `makeLcg` uses different constants.
+ *
+ * Swapping streams re-splits calibration and test and silently moves Q̂.
  */
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
 	const out = [...arr]
 	const step = makeGlibcLcgFloat64((seed * 2_654_435_761 + 1) & 0xff_ff_ff_ff)
 
-	// The sampler takes the raw state modulo the bound. This is why it reaches for `shuffleBy`.
-	// The published conformal thresholds were selected under this sampler, so it stays exactly as it
-	// is.
+	// The sampler takes the raw state modulo the bound.
+	// This is why it reaches for `shuffleBy`.
+	// The published conformal thresholds were selected under this sampler, so it stays exactly as it is.
 	shuffleBy(out, (bound) => step() % bound)
 
 	return out
@@ -146,9 +147,10 @@ interface StreetHit {
 }
 
 /**
- * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit` answer only a
- * coordinate, and this walk also needs the stamped `resolution_tier` and the interpolation
- * `uncertainty_m` to price the claimed radius. The shared readers carry neither.
+ * Kept local because tree-hits' `findAddressPointHit` and `findInterpolatedHit`
+ * answer only a coordinate, and this walk also needs the stamped `resolution_tier`
+ * and the interpolation `uncertainty_m` to price the claimed radius.
+ * The shared readers carry neither.
  */
 function findStreetHit(tree: AddressTree): StreetHit | null {
 	for (const n of walkNodes(tree.roots)) {

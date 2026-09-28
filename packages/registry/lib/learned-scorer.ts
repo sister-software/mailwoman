@@ -41,12 +41,13 @@ const OFFICIAL_NAME_AGREEMENT = 0.93
  */
 export interface LearnedFeatureConfig {
 	/**
-	 * The comparison set the features are built over. It must be
-	 * `buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons`
+	 * The comparison set the features are built over.
+	 *
+	 * It must be `buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons`
 	 * so the feature layout matches the trained model.
 	 *
-	 * `usePhone` and `discriminators` are not part of the learned feature model, since the GBT
-	 * replaces the Fellegi-Sunter weight wholesale and owns its feature vector.
+	 * `usePhone` and `discriminators` are not part of the learned feature model,
+	 * since the GBT replaces the Fellegi-Sunter weight wholesale and owns its feature vector.
 	 */
 	comparisons: Comparison<SourceRecord>[]
 	/**
@@ -59,9 +60,9 @@ export interface LearnedFeatureConfig {
  * Build the per-pair feature extractor.
  *
  * The vector is: one-hot of each comparison's agreement level, then the two over-merge
- * interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree, the
- * "same place, different names" signature that drives co-located over-merges), then address
- * crowdedness scaled into [0, 1].
+ * interaction terms (spatial-exact × name-disagree, spatial-exact × org-disagree,
+ * the "same place, different names" signature that drives co-located over-merges),
+ * then address crowdedness scaled into [0, 1].
  * Deterministic and EM-independent, so it is identical across train / eval / inference.
  */
 export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceRecord, b: SourceRecord) => number[] {
@@ -101,10 +102,10 @@ export function createMatchFeaturizer(config: LearnedFeatureConfig): (a: SourceR
 		f.push(spatialExact * orgDisagree)
 		const freq = a.address?.raw ? addressFrequency.frequency(a.address.raw) : 0
 		f.push(Math.min(1, freq * 1000))
-		// Roll-up signature: a shared corporate address can host differently-branded operating
-		// entities whose authorized official also agrees. The official is not in the comparison
-		// set, so these three features express that evidence directly. They are appended at the
-		// end, so models trained without them keep scoring unchanged.
+		// Roll-up signature: a shared corporate address can host differently-branded
+		// operating entities whose authorized official also agrees.
+		// The official is not in the comparison set, so these three features express that evidence directly.
+		// They are appended at the end, so models trained without them keep scoring unchanged.
 		const offA = a.attributes?.["authorizedOfficial"]?.trim()
 		const offB = b.attributes?.["authorizedOfficial"]?.trim()
 		const officialAgree = offA && offB && nameSimilarity(offA, offB) >= OFFICIAL_NAME_AGREEMENT ? 1 : 0

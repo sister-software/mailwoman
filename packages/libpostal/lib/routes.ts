@@ -23,9 +23,10 @@ import {
 } from "#schema"
 
 /**
- * A friendly html landing page for `GET /`. Libpostal's own rest server has no root page, so there
- * is no wire interface to match. The example URLs are relative so they resolve against whatever
- * host and port serve this.
+ * A friendly html landing page for `GET /`.
+ *
+ * Libpostal's own rest server has no root page, so there is no wire interface to match.
+ * The example URLs are relative so they resolve against whatever host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -150,7 +151,9 @@ const expandPostRoute = createRoute({
  * A missing or malformed body is `{}` (legacy tolerance).
  *
  * The try/catch here re-guards what `canonicalizeJSONBody` already guarantees
- * (well-formed JSON, string-only interface fields). That is deliberate defense in depth.
+ * (well-formed JSON, string-only interface fields).
+ * That is deliberate defense in depth.
+ *
  * Don't drop this side's tolerance just because the middleware upstream makes it look redundant.
  * The two are meant to fail safe independently.
  */
@@ -171,8 +174,8 @@ async function readBody(c: Context): Promise<Record<string, unknown>> {
  * lower-priority param (legacy wire parity: the old handler trimmed after coalescing).
  *
  * The `typeof value === "string"` check re-guards what `canonicalizeJSONBody` already
- * guarantees (only string-typed interface fields survive). That is deliberate defense in depth
- * rather than a redundancy to simplify away.
+ * guarantees (only string-typed interface fields survive).
+ * That is deliberate defense in depth rather than a redundancy to simplify away.
  */
 const rawParam = (value: unknown): string | undefined => (typeof value === "string" ? value : undefined)
 

@@ -116,8 +116,9 @@ interface CandidateRow {
 /**
  * Derive the coincident-roles relation into `db`.
  *
- * Additive, only creating or replacing the `coincident_roles` table. It never touches `spr`,
- * `names`, or `ancestors`. Idempotent.
+ * Additive, only creating or replacing the `coincident_roles` table.
+ * It never touches `spr`, `names`, or `ancestors`.
+ * Idempotent.
  */
 export function buildCoincidentRoles(
 	db: DatabaseClient<WOFDatabase>,
@@ -137,8 +138,8 @@ export function buildCoincidentRoles(
 
 	onProgress("creating", COINCIDENT_ROLES_TABLE)
 
-	// Raw DDL by design: this is a sync builder consumed by a sync CLI and six sync unit tests, so
-	// routing one table through async Kysely would cascade async through all of them.
+	// Raw DDL by design: this is a sync builder consumed by a sync CLI and six sync unit tests,
+	// so routing one table through async Kysely would cascade async through all of them.
 	// See agents.md "Database / inline SQL".
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS ${COINCIDENT_ROLES_TABLE} (
@@ -154,10 +155,10 @@ export function buildCoincidentRoles(
 
 	onProgress("scanning")
 
-	// Admin (region or county tier) joined to a same-name descendant locality. `place_population` is
-	// optional, so the left join yields 0 when absent. The relative-tolerance filter and the
-	// relationship classification happen in JS so the SQL stays a plain join, and `spr` exposes the
-	// bbox columns the diagonal needs.
+	// Admin (region or county tier) joined to a same-name descendant locality.
+	// `place_population` is optional, so the left join yields 0 when absent.
+	// The relative-tolerance filter and the relationship classification happen in JS
+	// so the SQL stays a plain join, and `spr` exposes the bbox columns the diagonal needs.
 	const candidates = allRows<CandidateRow>(
 		db.prepare(
 			`SELECT r.id AS admin_id, r.placetype AS admin_placetype, r.country AS country, l.id AS locality_id,
@@ -231,8 +232,9 @@ export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 /**
  * Load the relation into an in-memory map keyed by `admin_id` for an O(1) runtime lookup.
  *
- * Each admin may map to multiple same-name descendants. The consumer disambiguates by minimum
- * distance, then population, then abstains. Returns an empty map when the table is absent.
+ * Each admin may map to multiple same-name descendants.
+ * The consumer disambiguates by minimum distance, then population, then abstains.
+ * Returns an empty map when the table is absent.
  */
 export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {
 	const map = new Map<number, CoincidentRole[]>()

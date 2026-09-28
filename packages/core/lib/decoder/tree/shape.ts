@@ -20,8 +20,10 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 /**
  * True when every node in the tree either carries `tag` or bears no value.
  *
- * A tag-matching node counts even when its value is empty. The guard asks whether the parser
- * emitted this shape. Any other tag with a non-empty value disqualifies.
+ * A tag-matching node counts even when its value is empty.
+ * The guard asks whether the parser emitted this shape.
+ *
+ * Any other tag with a non-empty value disqualifies.
  * False for a tree with no `tag` node at all.
  */
 export function isBareTreeOf(tree: AddressTree, tag: ComponentTag): boolean {
@@ -71,20 +73,22 @@ export interface FlatTreeNode {
 	/**
 	 * Where the assertion came from, one of `rule`, `neural`, `resolver`.
 	 *
-	 * Carried because a span that keeps its tag, its text and its confidence while its source moves
-	 * from `resolver` to `neural` has lost its gazetteer backing. A projection that drops this
-	 * reports that span as unchanged.
+	 * Carried because a span that keeps its tag, its text and its confidence while its
+	 * source moves from `resolver` to `neural` has lost its gazetteer backing.
+	 * A projection that drops this reports that span as unchanged.
 	 */
 	source?: string
 	sourceID?: string
 	/**
 	 * The resolver's answer for this span, when one won.
 	 *
-	 * Carried for the same reason `source` is. A projection that keeps only the text and the tag
-	 * cannot tell a span that resolved to a different place from one that did not move at all.
+	 * Carried for the same reason `source` is.
+	 * A projection that keeps only the text and the tag cannot tell a span that resolved
+	 * to a different place from one that did not move at all.
+	 *
 	 * `alternatives` is reduced to its length.
-	 * The retrieval breadth is what a consumer reads, and handing over the candidate objects invites
-	 * a walk this projection exists to have already done.
+	 * The retrieval breadth is what a consumer reads, and handing over the candidate
+	 * objects invites a walk this projection exists to have already done.
 	 */
 	placeID?: string
 	lat?: number
@@ -95,10 +99,12 @@ export interface FlatTreeNode {
 /**
  * Flatten a tree to its nodes in source order, sorted by `start`, the order `decodeAsTuples` means.
  *
- * A traversal-order walk is the obvious implementation and is wrong here. It coincides with source
- * order only while every parent's span precedes its children's, and the decoder does not promise
- * that. Sorting is what the tuple projection already does, so this makes a rendered span list and
- * `decodeAsTuples` agree by construction.
+ * A traversal-order walk is the obvious implementation and is wrong here.
+ * It coincides with source order only while every parent's span precedes its children's,
+ * and the decoder does not promise that.
+ *
+ * Sorting is what the tuple projection already does, so this makes a rendered span list
+ * and `decodeAsTuples` agree by construction.
  */
 export function flattenTreeNodes(tree?: AddressTree | null): FlatTreeNode[] {
 	if (!tree) return []

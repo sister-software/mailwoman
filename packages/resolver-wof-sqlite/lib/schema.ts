@@ -18,8 +18,9 @@
 /**
  * The FTS5 virtual table this package builds on first open, which is local to this repository.
  *
- * `content` is unindexed and is there so we can roundtrip the original name back to the caller
- * without a second select. The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
+ * `content` is unindexed and is there so we can roundtrip the original name
+ * back to the caller without a second select.
+ * The actual FTS rebuild happens in `fts.ts::buildPlaceSearchFTS`.
  */
 export interface PlaceSearchTable {
 	rowid: number
@@ -29,19 +30,19 @@ export interface PlaceSearchTable {
 }
 
 /**
- * `spr`, the Who's On First "Standard Places Response": a denormalized lightweight summary of one
- * row per place.
+ * `spr`, the Who's On First "Standard Places Response": a denormalized lightweight
+ * summary of one row per place.
  *
  * The resolver's main lookup table.
  *
- * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1` for
- * modern Who's On First and `is_current = 1` for the legacy Mapzen era. Only `is_current = 0`
- * means "not current".
+ * Lifecycle flags carry two conventions, both meaning "currently valid": `is_current = -1`
+ * for modern Who's On First and `is_current = 1` for the legacy Mapzen era.
+ * Only `is_current = 0` means "not current".
  *
  * Filters in `lookup.ts` and `fts.ts` use `is_current != 0 and is_deprecated = 0`.
  *
- * Lat/lon live directly on this row, so centroid resolution needs no GeoJSON extraction. `min_*`
- * and `max_*` form a bounding box if callers want one.
+ * Lat/lon live directly on this row, so centroid resolution needs no GeoJSON extraction.
+ * `min_*` and `max_*` form a bounding box if callers want one.
  */
 export interface SprTable {
 	id: number
@@ -68,14 +69,17 @@ export interface SprTable {
 /**
  * Alternate names per place, keyed by language tag subfields (BCP-47 components).
  *
- * Joins back to `spr.id` via `id`. The real WOF schema uses the same column name as the spr
- * primary key, so this is a normal join across two tables with the same FK column name.
+ * Joins back to `spr.id` via `id`.
+ * The real WOF schema uses the same column name as the spr primary key, so this is
+ * a normal join across two tables with the same FK column name.
  *
- * No `kind` column in real WOF. The FTS build concatenates all names per id.
+ * No `kind` column in real WOF.
+ * The FTS build concatenates all names per id.
  *
- * `official` marks a preferred-form name in an official language of the place's country in our
- * unified builds only, and it is absent in real WOF dumps. These are the aliases eligible to join
- * the name-exact tier. See `unified-schema.ts` for the full interface.
+ * `official` marks a preferred-form name in an official language of the place's country
+ * in our unified builds only, and it is absent in real WOF dumps.
+ * These are the aliases eligible to join the name-exact tier.
+ * See `unified-schema.ts` for the full interface.
  */
 export interface NamesTable {
 	id: number
@@ -96,9 +100,9 @@ export interface NamesTable {
 /**
  * Per-place GeoJSON blob.
  *
- * Centroid lat/lon are already exposed via `spr.{latitude,longitude}`, so the resolver does not
- * need to parse this. The table stays modeled so a caller that wants the full geometry for bbox or
- * polygon work can read it.
+ * Centroid lat/lon are already exposed via `spr.{latitude,longitude}`,
+ * so the resolver does not need to parse this.
+ * The table stays modeled so a caller that wants the full geometry for bbox or polygon work can read it.
  */
 export interface GeojsonTable {
 	id: number
@@ -165,8 +169,7 @@ export interface ConcordancesTable {
 /**
  * `coincident_roles`.
  *
- * The dual-role relation, where a place is both an admin region and a locality (Berlin the
- * city-state).
+ * The dual-role relation, where a place is both an admin region and a locality (Berlin the city-state).
  *
  * One row per (admin, locality) pair the resolver can complete a hierarchy with.
  * Surfaced by {@link MailwomanLookupLike.coincidentRolesFor}.
@@ -183,9 +186,9 @@ export interface CoincidentRolesTable {
 /**
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`.
  *
- * Tables not listed here will fail type-checked queries, by design. The reader
- * ({@link WOFSQLitePlaceLookup}) already consumes this, and the build/augment writers adopt it so a
- * column rename is a compile error on both sides.
+ * Tables not listed here will fail type-checked queries, by design.
+ * The reader ({@link WOFSQLitePlaceLookup}) already consumes this, and the build/augment
+ * writers adopt it so a column rename is a compile error on both sides.
  */
 /**
  * The provenance row every built extract carries: source fingerprints travelling with

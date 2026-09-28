@@ -142,8 +142,9 @@ interface SegmentDecodeResult {
 /**
  * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions.
  *
- * Word-aligned spans (a `▁`-delimited word never splits). Pure-punctuation pieces are
- * unit `O` words that no typed segment may cross, and `O` words are unit length.
+ * Word-aligned spans (a `▁`-delimited word never splits).
+ * Pure-punctuation pieces are unit `O` words that no typed segment may cross,
+ * and `O` words are unit length.
  * State = (word index, last non-O segment type). Scores share one normalization per input,
  * so the k hypotheses' scores are directly comparable.
  */
@@ -353,9 +354,8 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		options.fixturesPath ?? PARITY_FIXTURES_PATH
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
-		// Production config parity: every path production parses on feeds
-		// the query-shape emission prior (`safeClassify` in the runtime pipeline, and
-		// `geocode-core`).
+		// Production config parity: every path production parses on feeds the query-shape
+		// emission prior (`safeClassify` in the runtime pipeline, and `geocode-core`).
 		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 
@@ -406,8 +406,7 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 	}
 
 	// Tier-0 instrument check, before anything prints.
-	// A report from a harness reading this far off its registered baseline is worse
-	// than no report.
+	// A report from a harness reading this far off its registered baseline is worse than no report.
 	if (options.assertBaseline) {
 		const readings: Record<string, number> = {}
 

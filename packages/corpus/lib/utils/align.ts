@@ -113,7 +113,8 @@ export function alignRow(row: CanonicalRow, opts: AlignOptions = {}): AlignmentR
 	const haystack = caseInsensitive ? raw.toLowerCase() : raw
 
 	// Longest value first: a short component must not claim a word that a longer,
-	// more specific component owns. Emit order is unaffected, since spans are re-sorted by start below.
+	// more specific component owns.
+	// Emit order is unaffected, since spans are re-sorted by start below.
 	const entries = (Object.entries(components) as Array<[ComponentTag, string | undefined]>).toSorted(
 		(a, b) => (b[1]?.length ?? 0) - (a[1]?.length ?? 0)
 	)
@@ -226,8 +227,8 @@ function locateSpan(args: {
 	if (!needle.length) return undefined
 
 	// Pass 1: verbatim substring.
-	// Word-boundary-aligned matches are preferred over intra-word ones, so a short value
-	// cannot claim the inside of an earlier word.
+	// Word-boundary-aligned matches are preferred over intra-word ones, so a short
+	// value cannot claim the inside of an earlier word.
 	// Intra-word matches stay allowed as the fallback because they are essential for affix
 	// supervision (street_suffix "straße" inside "Hauptstraße" has no boundary-aligned occurrence).
 	let intraWord: { start: number; end: number } | undefined

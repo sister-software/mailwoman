@@ -10,9 +10,9 @@ import type { WOFDatabase } from "@mailwoman/resolver-wof-sqlite/schema"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
 
-// US regions with their USPS abbreviations (what add-region-abbrevs writes into `names`), two
-// same-named Sheldon towns (the Vermont one small and the Iowa one larger), and the ancestry the
-// wof:hierarchy backfill restores so the region constraint can reach the descendant town.
+// US regions with their USPS abbreviations (what add-region-abbrevs writes into `names`),
+// two same-named Sheldon towns (the Vermont one small and the Iowa one larger), and the ancestry
+// the wof:hierarchy backfill restores so the region constraint can reach the descendant town.
 function buildDB(): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
 
@@ -47,8 +47,8 @@ function buildDB(): DatabaseClient<WOFDatabase> {
 	const pop = db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`)
 	pop.run(30, 932)
 	pop.run(31, 5455) // Sheldon, IA, larger and the winner of an unconstrained population-led lookup
-	// USPS abbreviations as add-region-abbrevs.ts writes them (language='abbr').
-	// build-fts folds `names` into place_search.alt_names so findPlace can match them.
+	// USPS abbreviations as add-region-abbrevs.ts writes them (language='abbr'). build-fts
+	// folds `names` into place_search.alt_names so findPlace can match them.
 	const nm = db.prepare(`INSERT INTO names (id, language, name) VALUES (?, 'abbr', ?)`)
 	nm.run(10, "VT")
 	nm.run(11, "IA")
@@ -108,9 +108,9 @@ describe("region-abbreviation resolution (#440/#441)", () => {
 	})
 
 	it("the constraint reaches a place whose direct parent is a county, not the region (the ancestry-backfill case)", async () => {
-		// Sheldon, VT has Franklin County (20) as its direct parent, and Vermont (10) is only an
-		// ancestor. The constraint reaches it through the `ancestors` table, the linkage the
-		// backfill restores for multi-parent or ambiguous-parent places such as NYC (parent_id=-4).
+		// Sheldon, VT has Franklin County (20) as its direct parent, and Vermont (10) is only an ancestor.
+		// The constraint reaches it through the `ancestors` table, the linkage the backfill
+		// restores for multi-parent or ambiguous-parent places such as NYC (parent_id=-4).
 		const r = await lookup.findPlace({ text: "Sheldon", placetype: "locality", parentID: 10, country: "US" })
 		expect(r[0]?.id).toBe(30)
 	})

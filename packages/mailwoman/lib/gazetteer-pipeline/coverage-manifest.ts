@@ -38,16 +38,17 @@ const OA_PANEL_SOURCE = "#743 OA held-out hard-resolve panel (DeepSeek-advised c
 const OSM_PANEL_SOURCE = "#928 promote OSM panel, night 34 (2026-07-06)"
 
 /**
- * The reviewed per-country hard-filter coverage record. Every promote-eval verdict and measurement
- * that grew the hard-country safelist appears here, and a country deliberately kept off it appears
- * with `hardFilterSafe: false`.
+ * The reviewed per-country hard-filter coverage record.
+ *
+ * Every promote-eval verdict and measurement that grew the hard-country safelist appears here,
+ * and a country deliberately kept off it appears with `hardFilterSafe: false`.
  *
  * The derived safelist (`hardFilterSafe === true`) is asserted byte-identical to
  * `HARD_PLACE_COUNTRY_SAFELIST` in `coverage-manifest.test.ts`, so the two cannot drift silently.
  *
- * Grow this at promotes, with the panel receipt in `source`. The fact reaches production at the next
- * gazetteer rebuild, and the constant in core is only the fallback for artifacts predating the
- * manifest.
+ * Grow this at promotes, with the panel receipt in `source`.
+ * The fact reaches production at the next gazetteer rebuild, and the constant in
+ * core is only the fallback for artifacts predating the manifest.
  */
 export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	{ country: "US", hardFilterSafe: true, hardResolveRate: 1, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
@@ -62,9 +63,10 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 	// They stay on the soft prior until their gazetteer coverage is filled.
 	{ country: "FI", hardFilterSafe: false, hardResolveRate: 0.695, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
 	{ country: "PL", hardFilterSafe: false, hardResolveRate: 0.778, measuredAt: "2026-06-22", source: OA_PANEL_SOURCE },
-	// The postcodeCountryPrior format signal routes GB/CA confidently, and the OSM-panel checks
-	// passed with the hard filter on. CA cleared on the format-prior rationale despite a sub-95%
-	// panel number, so `hardFilterSafe` is a stored verdict rather than a rate threshold.
+	// The postcodeCountryPrior format signal routes GB/CA confidently, and the
+	// OSM-panel checks passed with the hard filter on.
+	// CA cleared on the format-prior rationale despite a sub-95% panel number,
+	// so `hardFilterSafe` is a stored verdict rather than a rate threshold.
 	{
 		country: "GB",
 		hardFilterSafe: true,
@@ -81,9 +83,9 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 		measuredAt: "2026-07-06",
 		source: OSM_PANEL_SOURCE,
 	},
-	// AU joined with the AU placer class. The hard filter is recall-safe on the AU panel
-	// (unresolved 4→2 while abroad 43→20). The receipt carries no single-rate number, so there is no
-	// `hardResolveRate` (never invent a magnitude).
+	// AU joined with the AU placer class.
+	// The hard filter is recall-safe on the AU panel (unresolved 4→2 while abroad 43→20).
+	// The receipt carries no single-rate number, so there is no `hardResolveRate` (never invent a magnitude).
 	{
 		country: "AU",
 		hardFilterSafe: true,
@@ -95,8 +97,8 @@ export const MEASURED_COUNTRY_COVERAGE: readonly CountryCoverageFact[] = [
 const BBOX_SOURCE = "2026-07-15 coordinate-parity receipt harness (scratchpad/coord-parity.mjs) — deliberately coarse"
 
 /**
- * The reviewed guard-B bounding-box record, derived from `COUNTRY_BBOX` (`resolver/plausibility.ts`)
- * rather than declared beside it.
+ * The reviewed guard-B bounding-box record, derived from `COUNTRY_BBOX`
+ * (`resolver/plausibility.ts`) rather than declared beside it.
  *
  * Membership is checked in `plausibility.test.ts` against `release.config.json`.
  *
@@ -115,8 +117,8 @@ export const MEASURED_COUNTRY_BBOXES: readonly CountryBBoxFact[] = Object.entrie
 
 export interface EmitCoverageManifestOptions {
 	/**
-	 * The candidate DB under construction, which must be pre-seal (a shipped DB is never patched,
-	 * rebuild instead).
+	 * The candidate DB under construction, which must be pre-seal
+	 * (a shipped DB is never patched, rebuild instead).
 	 */
 	dbPath: PathBuilderLike
 	/**

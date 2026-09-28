@@ -76,8 +76,8 @@ const CYRILLIC_TO_LATIN: Record<string, string> = {
 }
 
 /**
- * Leading-word abbreviations expanded before comparison, so `st georges` meets `saint george s`
- * inside the edit threshold.
+ * Leading-word abbreviations expanded before comparison, so `st georges` meets
+ * `saint george s` inside the edit threshold.
  *
  * Whole-word only, so `st` inside `stanley` never expands.
  */
@@ -104,7 +104,8 @@ export function expandNameAbbreviations(key: string): string {
 /**
  * Romanize a folded name key to the a–z0–9/space alphabet.
  *
- * `null` when characters outside the covered scripts remain. An unhandled script is no verdict.
+ * `null` when characters outside the covered scripts remain.
+ * An unhandled script is no verdict.
  */
 export function romanizeNameKey(key: string): string | null {
 	let out = ""
@@ -123,8 +124,8 @@ export function romanizeNameKey(key: string): string | null {
 }
 
 /**
- * Edit similarity between a holder's primary name key and one of its alias keys, both romanized and
- * abbreviation-expanded.
+ * Edit similarity between a holder's primary name key and one of its alias keys,
+ * both romanized and abbreviation-expanded.
  *
  * `null` when either side's script is uncovered.
  */

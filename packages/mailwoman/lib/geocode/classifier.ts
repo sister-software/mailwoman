@@ -44,8 +44,8 @@ export interface GeocodeClassifier {
 			/**
 			 * The gazetteer FST prior.
 			 *
-			 * The classifier reads this from `opts` only, with no config fallback, unlike
-			 * `placetypePair`. A path that cannot express the field never constructs the prior at all.
+			 * The classifier reads this from `opts` only, with no config fallback, unlike `placetypePair`.
+			 * A path that cannot express the field never constructs the prior at all.
 			 * Absent leaves the decode unchanged from before this option.
 			 */
 			fst?: ClassifierOpts["fst"]

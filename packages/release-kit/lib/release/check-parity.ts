@@ -124,11 +124,11 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 	const npmLatest = await readNPMLatest()
 	const checks: ParityCheck[] = []
 
-	// Two version series (see releases.mdx's "Two version series" intro). The demo serves models, so
-	// its `defaultVersion` carries the model-card lineage number. The demo leg compares that against
-	// the shipped model identity in `packages/neural-weights-en-us/model-card.json#version` (the same
-	// source verify-metadata keys off). The docs matrix row stays vs npm latest, since that surface
-	// documents package releases.
+	// Two version series (see releases.mdx's "Two version series" intro).
+	// The demo serves models, so its `defaultVersion` carries the model-card lineage number.
+	// The demo leg compares that against the shipped model identity in
+	// `packages/neural-weights-en-us/model-card.json#version` (the same source verify-metadata keys off).
+	// The docs matrix row stays vs npm latest, since that surface documents package releases.
 	const localCard = await readLocalJSONFile<{
 		version: string
 		files_md5?: Record<string, string>
@@ -138,12 +138,15 @@ export async function checkReleaseParity(options: CheckReleaseParityOptions): Pr
 
 	const demoDefault = await readDemoDefaultVersion()
 
-	// The demo's parity interface is model bytes. Bundle revisions that change only decode-side
-	// artifacts move the card version with zero model.onnx change. The demo serving the previous
-	// bundle serves the identical model and cannot use the new artifacts until the web loader grows
-	// pair-prior wiring. So a trailing defaultVersion passes when the trailing version's shipped
-	// card records the same `files_md5["model.onnx"]` as the current card, fetched from the HF
-	// bucket (the same store the demo loads from). Different bytes means real drift.
+	// The demo's parity interface is model bytes.
+	// Bundle revisions that change only decode-side artifacts move the card
+	// version with zero model.onnx change.
+	// The demo serving the previous bundle serves the identical model and cannot use
+	// the new artifacts until the web loader grows pair-prior wiring.
+	// So a trailing defaultVersion passes when the trailing version's shipped card
+	// records the same `files_md5["model.onnx"]` as the current card, fetched from
+	// the HF bucket (the same store the demo loads from).
+	// Different bytes means real drift.
 	let demoOK = demoDefault === cardModelVersion
 	let demoNote = `${cardModelVersion} (model-card version)`
 

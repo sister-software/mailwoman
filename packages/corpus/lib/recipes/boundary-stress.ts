@@ -21,10 +21,13 @@ import { alignRow } from "#utils"
 /**
  * Template weights, in the order the cumulative thresholds below read.
  *
- * The mix keeps `bare-locality` near 11%, so bare "City, state" rows are well represented without a
- * locality-first majority. House-number-before and house-number-after render at 7:3, which breaks the
- * order-bias shortcut while keeping FR house-number-before accuracy. Weights sum to 1.0. The key order
- * drives the cumulative thresholds below.
+ * The mix keeps `bare-locality` near 11%, so bare "City, state" rows are well
+ * represented without a locality-first majority.
+ * House-number-before and house-number-after render at 7:3, which breaks the order-bias
+ * shortcut while keeping FR house-number-before accuracy.
+ *
+ * Weights sum to 1.0.
+ * The key order drives the cumulative thresholds below.
  */
 const WEIGHTS: Record<BoundaryStressTemplate, number> = {
 	"street-eats-affix": 0.22,

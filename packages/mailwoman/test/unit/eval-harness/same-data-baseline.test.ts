@@ -80,8 +80,8 @@ describe("same-data baseline (#2261)", () => {
 			pool
 		)
 
-		// Unqualified, the tie breaks on the pool's canonical order, since the baseline ranks on no
-		// fame term at all.
+		// Unqualified, the tie breaks on the pool's canonical order, since the
+		// baseline ranks on no fame term at all.
 		expect(unqualified.placeID).toBe("101")
 		expect(qualified.placeID).toBe("202")
 		expect(qualified.components?.countryQualifier).toBe(1)

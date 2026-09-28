@@ -126,7 +126,8 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 /**
  * Parquet schema for `LabeledRow`.
  *
- * Optional fields carry `optional: true`. Repeated UTF8 columns capture the tokens and labels arrays.
+ * Optional fields carry `optional: true`.
+ * Repeated UTF8 columns capture the tokens and labels arrays.
  */
 export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 	raw: { type: "UTF8", compression: PARQUET_COMPRESSION },
@@ -153,9 +154,10 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
 /**
  * Project a labeled row to the Parquet schema.
  *
- * The span triple is required because `alignRow` emits it on every labeled row. A row arriving without it came from
- * a producer that has not migrated, and writing it would drop the labels from the file. A thrown error identifies
- * the row instead.
+ * The span triple is required because `alignRow` emits it on every labeled row.
+ * A row arriving without it came from a producer that has not migrated,
+ * and writing it would drop the labels from the file.
+ * A thrown error identifies the row instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {
 	const { span_starts, span_ends, span_tags } = row

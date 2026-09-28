@@ -182,8 +182,9 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-surface locale routing. A French-lead surface folds under the fr rules whatever the
-			// country default, and the probe side routes with the same shared function.
+			// Per-surface locale routing.
+			// A French-lead surface folds under the fr rules whatever the country default,
+			// and the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 
@@ -256,7 +257,8 @@ async function main(): Promise<void> {
 		kdb.exec("ANALYZE")
 	}
 
-	// Build-on-copy. The freshly-built extract is swapped into place only after the build completes.
+	// Build-on-copy.
+	// The freshly-built extract is swapped into place only after the build completes.
 	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 

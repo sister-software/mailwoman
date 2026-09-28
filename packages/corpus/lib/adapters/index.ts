@@ -45,12 +45,13 @@ import { usgovNPPESAdapter } from "#us/adapters/usgov/nppes/adapter"
  * Built-in adapters.
  *
  * Order is significant, because `corpus build` iterates this list to drive every adapter in turn.
- * The order runs coarse-first (admin, then postcode), then street-level (BAN FR, tiger US,
- * OpenAddresses global), then adversarial-source (FCC BDC US, HRSA fqhc US).
+ * The order runs coarse-first (admin, then postcode), then street-level
+ * (BAN FR, tiger US, OpenAddresses global), then adversarial-source (FCC BDC US, HRSA fqhc US).
  *
- * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list. The samhsa
- * Open Data Foundry bulk CSV it was written against is no longer publicly distributed. Its factory
- * and export remain available so an operator who obtains a compatible CSV can hand-register it.
+ * The `usgov-samhsa-treatment-locator` adapter is intentionally absent from this list.
+ * The samhsa Open Data Foundry bulk CSV it was written against is no longer publicly distributed.
+ *
+ * Its factory and export remain available so an operator who obtains a compatible CSV can hand-register it.
  * Re-add it here once a stable public source returns.
  */
 export const BUILTIN_ADAPTERS: readonly CorpusAdapter[] = [

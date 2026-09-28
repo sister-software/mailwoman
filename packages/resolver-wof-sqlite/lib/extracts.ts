@@ -107,8 +107,8 @@ function isPathBuilderLike(value: unknown): value is PathBuilderLike {
 }
 
 /**
- * Normalize the user-provided `databasePath` opt (which may be a single string, an array of strings,
- * or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
+ * Normalize the user-provided `databasePath` opt (which may be a single string, an array
+ * of strings, or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
  *
  * The first extract becomes `main` regardless of its derived schema name, the SQLite convention.
  * Subsequent extracts keep their derived or overridden schema name.
@@ -136,8 +136,8 @@ export function resolveExtracts(
 			)
 		}
 
-		// The first extract is always main per SQLite semantics, and its derived name is informational
-		// only. Subsequent extracts must have unique non-main names.
+		// The first extract is always main per SQLite semantics, and its derived name is informational only.
+		// Subsequent extracts must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
 
 		if (i > 0 && (schemaName === "main" || seen.has(schemaName))) {
@@ -162,8 +162,8 @@ export function resolveExtracts(
 /**
  * All placetype-matching extracts, in routing order (the country-aware pick chooses among these).
  *
- * Used by the bias path: a country-less postcode query with proximity hints fans out across every
- * matching extract and merges, because single-extract routing would hide the cross-country
+ * Used by the bias path: a country-less postcode query with proximity hints fans out across
+ * every matching extract and merges, because single-extract routing would hide the cross-country
  * ambiguity the hints exist to resolve ("48026" lives in postalcode-us and postalcode-intl).
  */
 export function pickExtractsForPlacetype(
@@ -204,19 +204,23 @@ export function pickExtractsForPlacetype(
  *    (e.g. `postalcode_us` matches `postalcode`), use it.
  * 3. Otherwise, fall back to `main`.
  *
- * This deliberately does not union across extracts. BM25 scores are not comparable across
- * separately indexed corpora, and the typical mailwoman query has a single placetype anyway. If a
- * caller needs cross-extract results they can issue two `findPlace` calls.
+ * This deliberately does not union across extracts.
+ * BM25 scores are not comparable across separately indexed corpora, and the typical
+ * mailwoman query has a single placetype anyway.
+ *
+ * If a caller needs cross-extract results they can issue two `findPlace` calls.
  */
 export function pickExtractForPlacetype(
 	extracts: ResolvedExtract[],
 	placetype: string | undefined,
 	opts?: {
 		/**
-		 * The query's country constraint, when the caller has one. When `country` is given and a
-		 * matching extract's probed country set contains it, that extract wins, and extracts without
-		 * the country are skipped. The placetype-match order remains the tiebreak when no extract
-		 * claims the country (or none was probed).
+		 * The query's country constraint, when the caller has one.
+		 *
+		 * When `country` is given and a matching extract's probed country set contains it,
+		 * that extract wins, and extracts without the country are skipped.
+		 * The placetype-match order remains the tiebreak when no extract claims
+		 * the country (or none was probed).
 		 */
 		country?: string
 		/**
@@ -238,9 +242,9 @@ export function pickExtractForPlacetype(
 	for (const s of extracts) {
 		if (s.schemaName === "main" || matches.includes(s)) continue
 
-		// Substring match: `postalcode_us` matches `postalcode`. Conservative, requiring the
-		// placetype at a word boundary in the schema name to avoid false hits like `region`
-		// matching `arboregion`.
+		// Substring match: `postalcode_us` matches `postalcode`.
+		// Conservative, requiring the placetype at a word boundary in the schema name
+		// to avoid false hits like `region` matching `arboregion`.
 		if (
 			s.schemaName === placetype ||
 			s.schemaName.startsWith(`${placetype}_`) ||

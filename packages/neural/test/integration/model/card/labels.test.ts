@@ -83,8 +83,8 @@ describe("readLabelsFromModelCard", () => {
 
 describe("resolveWeights — modelCardPath surface", () => {
 	test("explicit-path mode does not set modelCardPath (caller is responsible)", async () => {
-		// The dev tokenizer fixture serves both paths, since explicit mode only checks that the model
-		// path exists.
+		// The dev tokenizer fixture serves both paths, since explicit mode only
+		// checks that the model path exists.
 		const r = await resolveWeights({ modelPath: TOKENIZER_PATH, tokenizerPath: TOKENIZER_PATH })
 		expect(r.modelCardPath).toBeUndefined()
 		expect(r.source).toBe("explicit")

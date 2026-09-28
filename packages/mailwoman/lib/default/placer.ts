@@ -46,9 +46,9 @@ export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 
 				return (text: string) => {
 					const p = placer.predict(text)
-					// Hand the resolver the full in-map distribution. It boosts every plausible country
-					// and breaks ambiguous ties with its own evidence. The lossy one-hot argmax would
-					// lose that.
+					// Hand the resolver the full in-map distribution.
+					// It boosts every plausible country and breaks ambiguous ties with its own evidence.
+					// The lossy one-hot argmax would lose that.
 					const posterior = inMapPosterior(p)
 
 					return { country: p.country, confidence: p.confidence, ...(posterior ? { posterior } : {}) }

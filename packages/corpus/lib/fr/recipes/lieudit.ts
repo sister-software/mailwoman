@@ -55,8 +55,8 @@ interface LieuDitTuple {
 /**
  * Enumerate `adresses-<dept>.csv[.gz]` files in `banDir`, one path per département.
  *
- * Excludes the `merged` and `france` aggregates, which duplicate the per-département rows. When
- * both a `.csv` and a `.csv.gz` exist for the same department, the uncompressed `.csv` wins.
+ * Excludes the `merged` and `france` aggregates, which duplicate the per-département rows.
+ * When both a `.csv` and a `.csv.gz` exist for the same department, the uncompressed `.csv` wins.
  */
 async function departementFiles(banDir: PathBuilderLike): Promise<PathBuilder[]> {
 	const directory = PathBuilder.from(banDir)
@@ -200,8 +200,9 @@ export const frLieuditRecipe: CorpusRecipe = {
 				components.postcode = t.postcode
 			}
 
-			// The envelope form is the house and street line, the lieu-dit alone on its own line,
-			// then the postcode and commune line. That is La Poste's line 5.
+			// The envelope form is the house and street line, the lieu-dit alone on its
+			// own line, then the postcode and commune line.
+			// That is La Poste's line 5.
 			let raw = formatAddress(components, "FR")
 
 			if (!raw) {
@@ -211,10 +212,10 @@ export const frLieuditRecipe: CorpusRecipe = {
 			}
 
 			// Country-append: ~`countryFraction` of the time, append an explicit "France" surface
-			// form onto the trailing (postcode+commune) line plus a `country` component. The model
-			// relearns to emit country when present without over-firing it on the country-less
-			// rows. `countryFraction <= 0` (the default) never draws from `random`, so the
-			// byte-stream is unaffected when the flag is unset.
+			// form onto the trailing (postcode+commune) line plus a `country` component.
+			// The model relearns to emit country when present without over-firing it on the country-less rows.
+			// `countryFraction <= 0` (the default) never draws from `random`,
+			// so the byte-stream is unaffected when the flag is unset.
 			if (countryFraction > 0 && random() < countryFraction) {
 				const forms = COUNTRY_SURFACE_FORMS.FR
 				const form = sample(forms, random)

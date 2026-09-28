@@ -56,8 +56,8 @@ export const INTERP_RADIUS_CALIBRATION: InterpCalibrationTable = {
 /**
  * The conformal multiplier for a parsed region.
  *
- * `stateSlug` is the lowercase 2-letter slug from {@link regionToStateSlug} (e.g. `"tx"`), and
- * falls back to the table's conservative `default` for an unmeasured or absent region.
+ * `stateSlug` is the lowercase 2-letter slug from {@link regionToStateSlug} (e.g. `"tx"`),
+ * and falls back to the table's conservative `default` for an unmeasured or absent region.
  */
 export function interpCalibrationForRegion(
 	table: InterpCalibrationTable,

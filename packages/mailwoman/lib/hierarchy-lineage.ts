@@ -34,8 +34,8 @@ interface LineageAncestor {
 }
 
 /**
- * The subset of a resolved-tree node the assembly reads, structurally satisfied by the decorated
- * `AddressNode`.
+ * The subset of a resolved-tree node the assembly reads, structurally satisfied
+ * by the decorated `AddressNode`.
  */
 export interface HierarchySourceNode {
 	tag: string
@@ -79,8 +79,8 @@ const HIERARCHY_TAGS = [
 /**
  * The most-specific resolved admin node, the lineage anchor for tiers without an admin-ladder pick.
  *
- * Anchoring at the deepest resolved entry grades ancestors, which its chain does contain, and can
- * never falsely flag a descendant.
+ * Anchoring at the deepest resolved entry grades ancestors, which its chain does contain,
+ * and can never falsely flag a descendant.
  */
 export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): HierarchySourceNode | undefined {
 	for (const tag of HIERARCHY_TAGS) {
@@ -96,9 +96,10 @@ export function lineageAnchorNode(nodes: readonly HierarchySourceNode[]): Hierar
  * Assemble the result `hierarchy` from the resolved tree's admin nodes and annotate each
  * entry's lineage standing against `anchor` (see {@link annotateHierarchyLineage}).
  *
- * `streetLocality` is the register commune: on a street-tier result with no locality entry it
- * fills the locality slot, because a street-tier `city` must come from the register rather than
- * a token of the street name. It carries no place identity, so it is never lineage-graded.
+ * `streetLocality` is the register commune: on a street-tier result with no locality
+ * entry it fills the locality slot, because a street-tier `city` must come from
+ * the register rather than a token of the street name.
+ * It carries no place identity, so it is never lineage-graded.
  */
 export function assembleHierarchy(
 	nodes: readonly HierarchySourceNode[],
@@ -111,9 +112,9 @@ export function assembleHierarchy(
 		.map((n) => ({
 			tag: n.tag,
 			value: n.value.trim(),
-			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`, and
-			// this falls back to the raw parsed span when a node resolved without one. Consumers should
-			// display this rather than `value`.
+			// The resolver stamps the gazetteer's canonical name (proper casing) on `resolver_name`,
+			// and this falls back to the raw parsed span when a node resolved without one.
+			// Consumers should display this rather than `value`.
 			name: (n.metadata?.["resolver_name"] as string | undefined)?.trim() || n.value.trim(),
 			...(n.lat != null ? { lat: n.lat, lon: n.lon! } : {}),
 			...(n.placeID ? { placeID: n.placeID } : {}),
@@ -150,11 +151,11 @@ export interface LineageAnchor {
 /**
  * Annotate `entries` in place with `in_winner_lineage` against `anchor`'s stamped ancestor chain.
  *
- * Grading is by place identity (`wof:<id>`) rather than name. A name match across instances is
- * exactly the confusion the field exists to expose.
+ * Grading is by place identity (`wof:<id>`) rather than name.
+ * A name match across instances is exactly the confusion the field exists to expose.
  *
- * Without a sidecar only the anchor's own entry can be vouched for. Every other entry stays
- * ungraded rather than guessed.
+ * Without a sidecar only the anchor's own entry can be vouched for.
+ * Every other entry stays ungraded rather than guessed.
  */
 export function annotateHierarchyLineage(
 	entries: readonly HierarchyLineageEntry[],

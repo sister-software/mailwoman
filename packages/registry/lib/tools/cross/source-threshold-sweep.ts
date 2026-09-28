@@ -44,7 +44,9 @@ const MIN_CROSS_SOURCE_AGREEMENT = 3
  */
 export interface CrossSourceThresholdSweepOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -66,8 +68,9 @@ export interface CrossSourceThresholdSweepOptions {
 	 */
 	state?: string
 	/**
-	 * A trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to grade as a third
-	 * arm at its recommended threshold. This is the model `registry train-scorer cross-gbt` emits.
+	 * A trained cross-source GBT module (exports CROSS_SOURCE_GBT_MODEL + _META) to
+	 * grade as a third arm at its recommended threshold.
+	 * This is the model `registry train-scorer cross-gbt` emits.
 	 */
 	candidate?: string
 	/**
@@ -80,12 +83,12 @@ const entitySources = (e: ResolvedEntity): Set<string> =>
 	new Set(e.records.map((r) => r.source).filter((s): s is string => !!s))
 
 /**
- * Label-free precision proxy: does this cross-source entity carry the same phone in records from
- * two different sources?
+ * Label-free precision proxy: does this cross-source entity carry the same phone
+ * in records from two different sources?
  *
- * Phone is not the join key, so a match is independent corroboration of one facility. Entities
- * where no two cross-source records both carry a phone are unknown, and only checkable entities
- * count.
+ * Phone is not the join key, so a match is independent corroboration of one facility.
+ * Entities where no two cross-source records both carry a phone are unknown,
+ * and only checkable entities count.
  */
 function phoneEvidence(e: ResolvedEntity): "corroborated" | "contradicted" | "unknown" {
 	const bySource = new Map<string, Set<string>>()
@@ -174,8 +177,8 @@ async function measure(label: string, threshold: number | null, entities: Resolv
 }
 
 /**
- * Compare the FS baseline against the bundled GBT over a threshold sweep, and emit the markdown
- * report to stdout.
+ * Compare the FS baseline against the bundled GBT over a threshold sweep,
+ * and emit the markdown report to stdout.
  */
 export async function crossSourceThresholdSweep(
 	options: CrossSourceThresholdSweepOptions,
@@ -269,9 +272,8 @@ export async function crossSourceThresholdSweep(
 		gbtArms.push(await measure(`GBT @ ${t.toFixed(2)}`, t, entities))
 	}
 
-	// A GBT arm dominates only when it matches FS cross-source links at no lower phone
-	// corroboration and keeps at least 90% of FS entities, since a collapse means giant-blob
-	// artifacts rather than links.
+	// A GBT arm dominates only when it matches FS cross-source links at no lower phone corroboration and
+	// keeps at least 90% of FS entities, since a collapse means giant-blob artifacts rather than links.
 	const pct = (n: number, d: number) => formatPercent(n, d, 0)
 	const candidateArms: ArmMetrics[] = []
 

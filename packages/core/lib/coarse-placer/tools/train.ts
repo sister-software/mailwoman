@@ -90,7 +90,8 @@ export interface TrainCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer SGD trainer. See the module doc.
+ * Coarse-placer SGD trainer.
+ * See the module doc.
  */
 export async function trainCoarsePlacer(
 	options: TrainCoarsePlacerOptions = {},
@@ -130,9 +131,10 @@ export async function trainCoarsePlacer(
 	const b = new Float32Array(C)
 
 	// Deterministic, so a rerun splits the same way.
-	// The stream is the INT32 glibc LCG, because every shipped model was trained on the order
-	// it produces. `makeGlibcLcgFloat64` shares its constants and is a different sequence, so
-	// the two are not interchangeable. Swapping either for mulberry32 is a retrain.
+	// The stream is the INT32 glibc LCG, because every shipped model was trained on the order it produces.
+	// `makeGlibcLcgFloat64` shares its constants and is a different sequence,
+	// so the two are not interchangeable.
+	// Swapping either for mulberry32 is a retrain.
 	const step = makeGlibcLcgInt32(1_234_567)
 	const rand = (): number => step() / 0x7f_ff_ff_ff
 	const shuffle = (arr: Sample[]): void => shuffleWith(arr, rand)

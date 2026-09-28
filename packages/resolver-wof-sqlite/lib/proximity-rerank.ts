@@ -36,18 +36,20 @@ export const BIAS_BOOST = 4
 export const POP_BOOST = 4
 
 /**
- * `log10(population + 1)` at which the population term saturates. A value of 6 means a population
- * of one million warrants the whole {@link POP_BOOST}, and larger populations warrant no more.
+ * `log10(population + 1)` at which the population term saturates.
+ *
+ * A value of 6 means a population of one million warrants the whole {@link POP_BOOST},
+ * and larger populations warrant no more.
  */
 export const POP_SCALE_LOG10 = 6
 
 /**
  * Distance at which the nearness term halves.
  *
- * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's score is
- * log-population alone with no bm25 document term, which weakens the population signal relative to
- * the bias. At around 30 km the boost reaches only candidates the user is looking at, so
- * an in-view namesake still wins and a distant one does not.
+ * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's score is log-population
+ * alone with no bm25 document term, which weakens the population signal relative to the bias.
+ * At around 30 km the boost reaches only candidates the user is looking at,
+ * so an in-view namesake still wins and a distant one does not.
  */
 export const PROX_SCALE_KM = 30
 
@@ -63,8 +65,8 @@ export interface ProximityBias {
 /**
  * The candidate fields the re-rank reads and writes.
  *
- * This is structural, so the Node reader's `PlaceCandidate` and the browser twin's row shape both
- * satisfy it without an adapter.
+ * This is structural, so the Node reader's `PlaceCandidate` and the browser twin's
+ * row shape both satisfy it without an adapter.
  */
 export interface ProximityRerankable {
 	lat: number

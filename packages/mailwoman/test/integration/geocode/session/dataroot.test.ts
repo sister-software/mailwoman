@@ -28,21 +28,19 @@ afterAll(() => BOGUS_ROOT[Symbol.asyncDispose]())
 describe.skipIf(!haveArtifacts)("createGeocodeSession — dataRoot reaches weights (#1732)", () => {
 	it("resolves nothing from the ENV overlay under a bogus dataRoot", async () => {
 		// Weights resolution is a ladder, and only its overlay rung is governed by `dataRoot`.
-		// A checkout whose workspace packages or weights cache carry binaries (CI links them into
-		// its checkout) resolves the FST from those rungs, while a checkout without them rejects
-		// outright. Both are in-interface, so this pin asserts that whatever the ladder answers is
-		// never a path inside the process env data root's weights overlay when the session was given
-		// a different root.
+		// A checkout whose workspace packages or weights cache carry binaries
+		// (CI links them into its checkout) resolves the FST from those rungs,
+		// while a checkout without them rejects outright.
+		// Both are in-interface, so this pin asserts that whatever the ladder answers is never a path
+		// inside the process env data root's weights overlay when the session was given a different root.
 		const outcome = await createGeocodeSession(
-			// The production defaults factory rather than a hand-built literal, the same lockstep
-			// factory the dev-mcp registry derives from, so this pin cannot drift from the shipped
-			// configuration.
+			// The production defaults factory rather than a hand-built literal, the same lockstep factory the
+			// dev-mcp registry derives from, so this pin cannot drift from the shipped configuration.
 			createGeocodeCommandOptions({
 				locale: "en-US",
 				dataRoot: BOGUS_ROOT.path.toString(),
-				// A real candidate.db keeps the gazetteer check, resolved first, from masking the
-				// weights step. The point is to reach weights resolution with the bogus root still in
-				// force.
+				// A real candidate.db keeps the gazetteer check, resolved first, from masking the weights step.
+				// The point is to reach weights resolution with the bogus root still in force.
 				candidateDB: REAL_CANDIDATE_DB.toString(),
 			})
 		).then(

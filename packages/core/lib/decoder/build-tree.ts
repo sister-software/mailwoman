@@ -82,10 +82,11 @@ function bioParts(label: BIOLabel): { prefix: "B" | "I" | "O"; tag: ComponentTag
 //
 // Exception: a trailing period directly adjacent to a word character is an
 // abbreviation marker ("Str." / "St." / "Ave.").
-// The model includes these in the span correctly. Stripping them loses the abbreviation suffix.
-// We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated
-// by whitespace. The slip pattern we guard against is ", 22220" / "Paris 75004,"
-// / wrapping quotes, where the punctuation is isolated from the word body.
+// The model includes these in the span correctly.
+// Stripping them loses the abbreviation suffix.
+// We preserve the period when it is immediately preceded by \p{L}\p{N} and not separated by whitespace.
+// The slip pattern we guard against is ", 22220" / "Paris 75004," / wrapping quotes,
+// where the punctuation is isolated from the word body.
 function trimBoundary(raw: string, start: number, end: number): { start: number; end: number } {
 	let s = start
 	let e = end
@@ -162,9 +163,9 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		}
 
 		if (prefix === "B" || open === null || open.tag !== tag) {
-			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to
-			// an already-open `X` span is the model fragmenting a multi-word value,
-			// e.g. "Saint Paul" emitted as B-locality B-locality, where the second tag continues the first.
+			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to an
+			// already-open `X` span is the model fragmenting a multi-word value, e.g. "Saint
+			// Paul" emitted as B-locality B-locality, where the second tag continues the first.
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.

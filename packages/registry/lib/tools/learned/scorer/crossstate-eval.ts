@@ -50,7 +50,9 @@ import {
  */
 export interface ScorerCrossStateEvalOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -115,8 +117,9 @@ export async function scorerCrossStateEval(
 	report?.("[C] geocoding both states…")
 	const geocoder = await options.createGeocoder()
 
-	// `auth` and `taxonomy` ride as attributes so the shared featurizer's roll-up features can read
-	// the authorized official. The FS arm ignores them, since no discriminators are configured.
+	// `auth` and `taxonomy` ride as attributes so the shared featurizer's roll-up
+	// features can read the authorized official.
+	// The FS arm ignores them, since no discriminators are configured.
 	const mapping: ColumnMapping = {
 		id: "npi",
 		name: "name",
@@ -130,8 +133,8 @@ export async function scorerCrossStateEval(
 	const evalRecords = await ingestRows(evalSample.rows, mapping, { geocodeAddress: geocoder.geocodeAddress })
 	geocoder[Symbol.dispose]()
 
-	// The shared production featurizer keeps train, eval and inference on one definition, over the
-	// collapsed-spatial and address-frequency comparison set.
+	// The shared production featurizer keeps train, eval and inference on one definition,
+	// over the collapsed-spatial and address-frequency comparison set.
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
 
@@ -166,8 +169,8 @@ export async function scorerCrossStateEval(
 
 	const fs = armOver(
 		Array.from({ length: 26 }, (_, i) => i),
-		// learnedScorer false keeps the FS baseline. The learned scorer is default-on, so without
-		// this the FS arm would silently be the GBT.
+		// learnedScorer false keeps the FS baseline.
+		// The learned scorer is default-on, so without this the FS arm would silently be the GBT.
 		(t) => ({ addressFrequency, collapseSpatial: true, trainEM: true, threshold: t, learnedScorer: false })
 	)
 
@@ -185,8 +188,8 @@ export async function scorerCrossStateEval(
 		threshold: t,
 	}))
 
-	// The bundled DEDUP_GBT_MODEL is the shipped artifact every caller receives, evaluated here on a
-	// state it never trained on.
+	// The bundled DEDUP_GBT_MODEL is the shipped artifact every caller receives,
+	// evaluated here on a state it never trained on.
 	const bundledScorer = createGBTScorer({ model: DEDUP_GBT_MODEL, comparisons, addressFrequency })
 
 	const bundledArm = armOver(quantileThresholds(evalPairs.map(([a, b]) => bundledScorer(a, b))), (t) => ({

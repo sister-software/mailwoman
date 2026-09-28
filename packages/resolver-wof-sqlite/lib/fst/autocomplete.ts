@@ -43,15 +43,16 @@ export interface AutocompleteSuggestion {
 	/**
 	 * The referential likelihood the suggestion is ranked by (ROAD_TO_V9 §2).
 	 *
-	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything
-	 * else. Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic} for
-	 * display and never enters the order.
+	 * Autocomplete answers "which place does the user mean", so it ranks referentially like everything else.
+	 * Encyclopedic importance rides along on {@link AutocompleteSuggestion.encyclopedic}
+	 * for display and never enters the order.
 	 */
 	referential: number
 	/**
 	 * Encyclopedic (Wikipedia) importance, when the FST artifact carries one for this place.
 	 *
-	 * `undefined` means no article, or a pre-v5 binary. It is never 0.
+	 * `undefined` means no article, or a pre-v5 binary.
+	 * It is never 0.
 	 */
 	encyclopedic?: number
 	wofID: number
@@ -66,9 +67,9 @@ export interface AutocompleteOpts {
 	/**
 	 * Collapse same-name suggestions to the single highest-referential one.
 	 *
-	 * Off by default, because the CLI surfaces distinct same-name places such as New York the city
-	 * and New York the county. A typeahead wants it on so the dropdown does not show four
-	 * "New London"s.
+	 * Off by default, because the CLI surfaces distinct same-name places such as
+	 * New York the city and New York the county.
+	 * A typeahead wants it on so the dropdown does not show four "New London"s.
 	 */
 	dedupeByName?: boolean
 }
@@ -121,7 +122,8 @@ class FSTReader implements AncestrieReaderLike<PlaceEntry> {
 	}
 
 	continuations(stateID: number): AncestrieContinuation[] {
-		// Insertion order, verbatim. BFS visit order under the suggestion budget depends on it.
+		// Insertion order, verbatim.
+		// BFS visit order under the suggestion budget depends on it.
 		return this.#fst.continuations(stateID).map((c) => ({
 			token: c.token,
 			targetState: c.targetState,

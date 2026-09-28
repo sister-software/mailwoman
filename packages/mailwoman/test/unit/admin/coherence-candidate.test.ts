@@ -110,8 +110,8 @@ afterEach(async () => {
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
  *
- * `adminCoherence: false` keeps the re-pick out of the way, since this test is about the stamp
- * and the verdict.
+ * `adminCoherence: false` keeps the re-pick out of the way, since this test
+ * is about the stamp and the verdict.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)
@@ -131,8 +131,8 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 	test("the qualifier the ranking ignored becomes a DECIDED contradiction — the flip from unverifiable", async () => {
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
-		// The ranking is untouched: population-first still answers Weimar, Texas, with the
-		// disambiguator in the input.
+		// The ranking is untouched: population-first still answers Weimar, Texas,
+		// with the disambiguator in the input.
 		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)

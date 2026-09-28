@@ -72,9 +72,9 @@ type Options = OptionsOf<typeof spec>
  * Try to build the WOF resolver (same backend selector `geocode.tsx`/`parse.tsx --resolve` use), so an
  * anchor remainder resolves to lat/lon and `--db` category/brand queries can compute a search center.
  *
- * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite`
- * peer degrades to no resolver (today's pre-wiring behavior) rather than failing
- * the probe. A stderr note explains what's missing.
+ * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite` peer
+ * degrades to no resolver (today's pre-wiring behavior) rather than failing the probe.
+ * A stderr note explains what's missing.
  * Caller owns closing the returned handle's backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
@@ -223,8 +223,10 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
-	// An attempted-but-failed encoder load always reports its failure. Absent weights get an install
-	// hint, and a corrupt bundle surfaces its underlying error. Stderr only. Stdout stays the probe output.
+	// An attempted-but-failed encoder load always reports its failure.
+	// Absent weights get an install hint, and a corrupt bundle surfaces its underlying error.
+	// Stderr only.
+	// Stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 
@@ -267,8 +269,9 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 		return <CommandTaskResult state={state} running={<Spinner />} />
 	}
 
-	// --json dumps raw JSON. Bypass Ink's word-wrapping <Text> renderer, which corrupts
-	// long lines at 80 cols when piped (see writeRawStdout).
+	// --json dumps raw JSON.
+	// Bypass Ink's word-wrapping <Text> renderer, which corrupts long lines at 80 cols
+	// when piped (see writeRawStdout).
 	if (options.json) {
 		return writeRawStdout(state.result)
 	}

@@ -175,9 +175,10 @@ async function main(): Promise<void> {
 			console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
 		}
 
-		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
-		// it, so periodic forced GC is required. Run with `node --expose-gc` for full calibration sets
-		// (8000 rows). This is a no-op without the flag.
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS
+		// GC reclaims it, so periodic forced GC is required.
+		// Run with `node --expose-gc` for full calibration sets (8000 rows).
+		// This is a no-op without the flag.
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}

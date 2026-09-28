@@ -47,16 +47,19 @@ const MAX_ABS_LONGITUDE = 180
  * How the deepest returned place was confirmed:
  *
  * - `"polygon"`: the point ray-cast inside the place's real (DP-simplified) admin boundary.
- * - `"approximate"`: the place has no polygon on record. It won by nearest-centroid among the
- *   candidates whose bbox or parent contains the point. This is the same honesty convention as the
- *   demo's approximate circles, which surfaces a country-dependent data reality.
+ * - `"approximate"`: the place has no polygon on record.
+ *   It won by nearest-centroid among the candidates whose bbox or parent contains the point.
+ *   This is the same honesty convention as the demo's approximate circles,
+ *   which surfaces a country-dependent data reality.
  */
 export type ContainmentKind = "polygon" | "approximate"
 
 export interface ReverseGeocodeResult {
 	/**
-	 * The containment chain, deepest-first. `[0]` is the winning place, then its ancestors up to
-	 * country. This is the same tree shape forward resolution attaches via `includeAncestors`.
+	 * The containment chain, deepest-first.
+	 *
+	 * `[0]` is the winning place, then its ancestors up to country.
+	 * This is the same tree shape forward resolution attaches via `includeAncestors`.
 	 *
 	 * Empty when no candidate's bbox contains the point (open ocean, or outside the gazetteer's coverage).
 	 */
@@ -69,8 +72,10 @@ export interface ReverseGeocodeResult {
 
 export interface WOFReverseGeocoderOpts {
 	/**
-	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`). It must carry `spr`,
-	 * `ancestors`, and the package-built `place_bbox` R*Tree (`mailwoman gazetteer build fts`).
+	 * Path to the admin gazetteer DB (e.g. `admin-global-priority.db`).
+	 *
+	 * It must carry `spr`, `ancestors`, and the package-built `place_bbox`
+	 * R*Tree (`mailwoman gazetteer build fts`).
 	 *
 	 * Mutually exclusive with `adminDatabase`.
 	 */
@@ -82,7 +87,8 @@ export interface WOFReverseGeocoderOpts {
 	/**
 	 * Path to the polygon sidecar DB (`wof-polygons.db`, table `polygons(id, geom)`).
 	 *
-	 * Optional. Without it every result is `containment: "approximate"` (centroid-only mode).
+	 * Optional.
+	 * Without it every result is `containment: "approximate"` (centroid-only mode).
 	 *
 	 * Mutually exclusive with `polygonDatabase`.
 	 */
@@ -106,13 +112,13 @@ export interface ReverseGeocodeOpts {
 	/**
 	 * Cap on the bbox candidate fetch.
 	 *
-	 * Default 128, which comfortably covers a dense metro. The most bbox-overlapping point we
-	 * have measured is a few dozen neighbourhoods plus the admin chain.
+	 * Default 128, which comfortably covers a dense metro.
+	 * The most bbox-overlapping point we have measured is a few dozen neighbourhoods plus the admin chain.
 	 */
 	maxCandidates?: number
 	/**
-	 * Approximate (nearest-centroid) steps further than this from the query point are not
-	 * taken, which keeps a sparse gazetteer from "refining" to a far-away sibling.
+	 * Approximate (nearest-centroid) steps further than this from the query point are not taken,
+	 * which keeps a sparse gazetteer from "refining" to a far-away sibling.
 	 *
 	 * Polygon-confirmed steps ignore it (containment is exact regardless of centroid distance).
 	 * Default 25 km.
@@ -208,8 +214,9 @@ export class WOFReverseGeocoder implements Disposable {
 
 		this.#ownsPolygons = !opts.polygonDatabase && Boolean(opts.polygonDBPath)
 
-		// Fail loudly up front. The R*Tree is a build artifact and is not part of the upstream WOF
-		// distribution, so a missing index would otherwise surface as an opaque SQL error per query.
+		// Fail loudly up front.
+		// The R*Tree is a build artifact and is not part of the upstream WOF distribution,
+		// so a missing index would otherwise surface as an opaque SQL error per query.
 		if (!tableExists(this.#admin, PLACE_BBOX_TABLE)) {
 			throw new Error(
 				`WOFReverseGeocoder: the admin DB has no \`${PLACE_BBOX_TABLE}\` R*Tree. Build it with ` +
@@ -259,9 +266,9 @@ export class WOFReverseGeocoder implements Disposable {
 		const maxApproximateKm = opts.maxApproximateKm ?? DEFAULT_MAX_APPROXIMATE_KM
 		const candidates = this.#bboxCandidates(lat, lon, opts)
 
-		// PIP walk, smallest-bbox-first. The first polygon that contains the point is the deepest
-		// polygon-confirmable place, and polygon-rejected candidates are bbox false positives that
-		// get dropped.
+		// PIP walk, smallest-bbox-first.
+		// The first polygon that contains the point is the deepest polygon-confirmable place,
+		// and polygon-rejected candidates are bbox false positives that get dropped.
 		let winner: CandidateRow | null = null
 		let winnerConfirmed = false
 		const pointOnly: CandidateRow[] = []
@@ -282,8 +289,7 @@ export class WOFReverseGeocoder implements Disposable {
 		}
 
 		if (!winner) {
-			// No polygon confirmed anywhere, so take the nearest centroid among the polygon-less bbox
-			// candidates.
+			// No polygon confirmed anywhere, so take the nearest centroid among the polygon-less bbox candidates.
 			let bestKm = Infinity
 
 			for (const c of pointOnly) {
@@ -340,7 +346,8 @@ export class WOFReverseGeocoder implements Disposable {
 				currentConfirmed = nextConfirmed
 				currentDistanceKm = nextKm
 			}
-			// An empty tier is not terminal. Counties without localadmins jump straight to locality.
+			// An empty tier is not terminal.
+			// Counties without localadmins jump straight to locality.
 		}
 
 		// Hierarchy assembly via the shared ancestor walk.
@@ -418,9 +425,10 @@ export class WOFReverseGeocoder implements Disposable {
 
 	/**
 	 * Descendants of `parentID` at one placetype tier, pre-filtered to a centroid window
-	 * around the query point (a generous 4× the approximate cap, since polygon-holding children
-	 * may legitimately have far centroids, e.g. a sprawling consolidated city). The precise cap is
-	 * applied per-candidate in the caller, and only to centroid-fallback steps.
+	 * around the query point (a generous 4× the approximate cap, since polygon-holding
+	 * children may legitimately have far centroids, e.g. a sprawling consolidated city).
+	 *
+	 * The precise cap is applied per-candidate in the caller, and only to centroid-fallback steps.
 	 */
 	#descendants(
 		parentID: number,
@@ -462,7 +470,8 @@ export class WOFReverseGeocoder implements Disposable {
 		}
 
 		const row = this.#polygons.prepare(`SELECT geom FROM polygons WHERE id = ?`).get(id) as { geom: string } | undefined
-		// Malformed row parses to null. Treat it as no-polygon so the query does not fail.
+		// Malformed row parses to null.
+		// Treat it as no-polygon so the query does not fail.
 		const geometry = row ? tryParsingJSON<ParsedGeometry>(row.geom) : null
 
 		this.#geometryCache.set(id, geometry)

@@ -38,11 +38,13 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * How far apart two artifacts may put the same place's centroid and still be read as the same place.
  *
- * Measured from two admin snapshots. The nearest-centroid distances separate into a mode where the
- * two snapshots agree and a background rate of two different towns wearing one name in one country.
- * The background rate does not decay with distance, so 10 km is the floor between the two
- * populations, and the value is chosen by what the join means. Widening the radius past the floor
- * starts handing one town's fame to another.
+ * Measured from two admin snapshots.
+ * The nearest-centroid distances separate into a mode where the two snapshots agree
+ * and a background rate of two different towns wearing one name in one country.
+ *
+ * The background rate does not decay with distance, so 10 km is the floor between the
+ * two populations, and the value is chosen by what the join means.
+ * Widening the radius past the floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
@@ -80,8 +82,8 @@ export interface ImportanceIndexStats {
 /**
  * `(name_key, country, placetype)` → the scored places under it.
  *
- * The separator is U+0000, a character no WOF name carries and no fold can produce, so the three
- * fields cannot smear into one another.
+ * The separator is U+0000, a character no WOF name carries and no fold can produce,
+ * so the three fields cannot smear into one another.
  */
 function groupKey(nameKey: string, country: string | null, placetype: string | null): string {
 	return `${nameKey}\u0000${(country ?? "").toUpperCase()}\u0000${placetype ?? ""}`
@@ -98,12 +100,15 @@ export class ImportanceIndex {
 	 */
 	matched = 0
 	/**
-	 * Places {@link find} refused. The key matched a scored group, but the nearest member was
-	 * outside the radius, so it is a different place wearing the same name.
+	 * Places {@link find} refused.
 	 *
-	 * This is the number worth watching across rebuilds. A jump means the score source and the admin
-	 * source have drifted apart and the join is being asked to guess. It does not mean the radius is
-	 * too tight.
+	 * The key matched a scored group, but the nearest member was outside the radius,
+	 * so it is a different place wearing the same name.
+	 *
+	 * This is the number worth watching across rebuilds.
+	 * A jump means the score source and the admin source have drifted apart
+	 * and the join is being asked to guess.
+	 * It does not mean the radius is too tight.
 	 */
 	refused = 0
 
@@ -116,9 +121,11 @@ export class ImportanceIndex {
 	 * The importance of the scored place nearest `(lat, lon)` sharing `name`'s folded key, `country`
 	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
-	 * Null is unmeasured. Never substitute a zero, and never fall back to a population-derived value
-	 * here. The source column already carries that fallback where it has one, and inventing a second
-	 * one would make an absence indistinguishable from a measurement.
+	 * Null is unmeasured.
+	 * Never substitute a zero, and never fall back to a population-derived value here.
+	 *
+	 * The source column already carries that fallback where it has one, and inventing a
+	 * second one would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
 		const nameKey = normalizeLocalityForKey(name)
@@ -154,15 +161,15 @@ export class ImportanceIndex {
 }
 
 /**
- * Read `place_importance`, joined to `spr` for the name, country, placetype, and centroid, out of a
- * WOF admin database into an {@link ImportanceIndex}.
+ * Read `place_importance`, joined to `spr` for the name, country, placetype, and centroid,
+ * out of a WOF admin database into an {@link ImportanceIndex}.
  *
- * Only current, non-deprecated places are indexed. A superseded row's score belongs to a place the
- * gazetteer no longer carries, and letting it win the nearest-centroid contest would hand a live
- * place a dead one's fame.
+ * Only current, non-deprecated places are indexed.
+ * A superseded row's score belongs to a place the gazetteer no longer carries,
+ * and letting it win the nearest-centroid contest would hand a live place a dead one's fame.
  *
- * The whole table is held in memory on purpose, because the build probes it once for every place and
- * the alternative is a prepared statement per place against a multi-gigabyte database.
+ * The whole table is held in memory on purpose, because the build probes it once for every place
+ * and the alternative is a prepared statement per place against a multi-gigabyte database.
  */
 export function loadImportanceIndex(databasePath: PathBuilderLike): ImportanceIndex {
 	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })

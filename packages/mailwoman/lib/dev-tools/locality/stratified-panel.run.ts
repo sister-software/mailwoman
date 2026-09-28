@@ -64,8 +64,7 @@ const { values } = parseArguments({
 		 * street suffix (`Orland Park`, `Saxtons River`), while the default US panel draws
 		 * that shape at 12.8% and the corpus recipe teaches it at 9.7%.
 		 *
-		 * A rate measured on a draw that under-samples the shape it fails on reports
-		 * the easy population.
+		 * A rate measured on a draw that under-samples the shape it fails on reports the easy population.
 		 */
 		stratify: { type: "string", default: "region" },
 	},
@@ -138,8 +137,8 @@ function seededOrder(size: number): (a: unknown, b: unknown) => number {
  * Keyed by the stratum the draw is even across.
  *
  * The region form is the one the panel writes out, since GeoNames publishes `California`
- * and never `CA`, and the surface under test is the code. Folding here keeps the
- * shortfall report and the rows speaking the same vocabulary.
+ * and never `CA`, and the surface under test is the code.
+ * Folding here keeps the shortfall report and the rows speaking the same vocabulary.
  */
 const byStratum = new Map<string, Array<(typeof quotaed)[number] & { written: string }>>()
 
@@ -207,8 +206,8 @@ for (const [stratum, bucket] of [...byStratum].toSorted()) {
 			country: triple.cc,
 			expected: { locality: triple.locality, region: triple.written, postcode: triple.postcode },
 			/**
-			 * Every row carries this because a consumer that grades distance needs to know
-			 * it is holding a postcode centroid.
+			 * Every row carries this because a consumer that grades distance needs to
+			 * know it is holding a postcode centroid.
 			 */
 			coordinate_basis: "geonames-postcode-centroid",
 		})

@@ -58,8 +58,9 @@ export interface SoilMapUnitAreaTable {
 	 * `<areasymbol>:<ordinal>`, the survey area plus this delineation's position
 	 * in the authority's own shapefile order.
 	 *
-	 * Ssurgo publishes no per-delineation key of its own. `mukey` identifies the MAP unit, and one
-	 * map unit has many delineations, so the ordinal is what makes a row nameable at all.
+	 * Ssurgo publishes no per-delineation key of its own.
+	 * `mukey` identifies the MAP unit, and one map unit has many delineations,
+	 * so the ordinal is what makes a row nameable at all.
 	 *
 	 * Text, so a source that starts publishing a non-numeric id needs no schema change.
 	 */
@@ -96,8 +97,8 @@ export interface SoilMapUnitCellTable {
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell carries no resolution of its own, and a table that mixes resolutions cannot be
-	 * probed without this column.
+	 * A short cell carries no resolution of its own, and a table that mixes
+	 * resolutions cannot be probed without this column.
 	 */
 	resolution: number
 	area_id: string
@@ -116,8 +117,8 @@ export interface SoilMapUnitTable {
 	/**
 	 * The map unit symbol.
 	 *
-	 * `notcom` and `notpub` are meaningful values here rather than codes to skip. They mark a
-	 * polygon the authority drew with no soil mapping behind it.
+	 * `notcom` and `notpub` are meaningful values here rather than codes to skip.
+	 * They mark a polygon the authority drew with no soil mapping behind it.
 	 */
 	musym: string
 	muname: string
@@ -134,13 +135,14 @@ export interface SoilMapUnitTable {
 	/**
 	 * The full conditional string, verbatim.
 	 *
-	 * `Not prime farmland` is itself a declared value, while NULL means the map unit carries no
-	 * farmland classification at all.
+	 * `Not prime farmland` is itself a declared value, while NULL means the map
+	 * unit carries no farmland classification at all.
 	 */
 	farmlndcl: string | null
 	/**
-	 * Which of {@link FarmlandScope} `farmlndcl` falls under. Federal criteria travel between
-	 * states, while delegated ones do not.
+	 * Which of {@link FarmlandScope} `farmlndcl` falls under.
+	 *
+	 * Federal criteria travel between states, while delegated ones do not.
 	 *
 	 * Derived once at build time so a consumer never has to re-read 7 CFR 657.5 to know
 	 * whether two rows are comparable.
@@ -196,8 +198,9 @@ export interface SoilComponentTable {
 	/**
 	 * The irrigated rating.
 	 *
-	 * Populated only where irrigation is a considered use, so its absence states that the rating
-	 * does not apply rather than anything about the land. It is carried but never reduced.
+	 * Populated only where irrigation is a considered use, so its absence states that
+	 * the rating does not apply rather than anything about the land.
+	 * It is carried but never reduced.
 	 */
 	irrcapcl: string | null
 	irrcapscl: string | null
@@ -212,17 +215,17 @@ export interface SoilComponentTable {
 /**
  * The shared artifact both consumers read, one row per cell with the index reduced once.
  *
- * The result-level observation takes {@link SoilCapabilityCellTable.top_class} with the share it
- * rests on, while the affordance vector takes `class_shares` plus the four absence shares as its
- * axis. One artifact, one aggregation and one set of provenance rows, so the two consumers cannot
- * disagree about what the ground is.
+ * The result-level observation takes {@link SoilCapabilityCellTable.top_class} with the share it rests
+ * on, while the affordance vector takes `class_shares` plus the four absence shares as its axis.
+ * One artifact, one aggregation and one set of provenance rows, so the two
+ * consumers cannot disagree about what the ground is.
  */
 export interface SoilCapabilityCellTable {
 	/**
 	 * 48-bit short H3 cell at the declared index resolution.
 	 *
-	 * Single-resolution, unlike {@link SoilMapUnitCellTable}, because a consumer joins on this
-	 * table and a mixed-resolution join key cannot serve that.
+	 * Single-resolution, unlike {@link SoilMapUnitCellTable}, because a consumer joins
+	 * on this table and a mixed-resolution join key cannot serve that.
 	 */
 	h3_cell: number
 	/**
@@ -265,11 +268,11 @@ export interface SoilCapabilityCellTable {
 	 */
 	mapped_share: number
 	/**
-	 * The largest class share and the share it rests on, the result-level consumer's reading and
-	 * nrcs's own `niccdcd`/`niccdcdpct` pattern at cell grain.
+	 * The largest class share and the share it rests on, the result-level consumer's reading
+	 * and nrcs's own `niccdcd`/`niccdcdpct` pattern at cell grain.
 	 *
-	 * NULL when the cell carries no class at all, which is a real answer. A cell that is 100%
-	 * `unrated_share` is complete and carries no capability reading at all.
+	 * NULL when the cell carries no class at all, which is a real answer.
+	 * A cell that is 100% `unrated_share` is complete and carries no capability reading at all.
 	 */
 	top_class: string | null
 	top_class_share: number | null
@@ -293,10 +296,10 @@ export interface SoilCapabilityCellTable {
  * The authority's mapped footprint, one row per published survey area, derived from the
  * survey-area outline and each area's own metadata rather than from the rated polygons.
  *
- * Deriving it from the rated polygons is the error §3.2 of the survey describes. `notcom` and
- * access-denied map units are inside the footprint and carry no rating, so a footprint taken from
- * the rated set would report them as unmapped even though the authority has declared exactly what
- * they are.
+ * Deriving it from the rated polygons is the error §3.2 of the survey describes.
+ * `notcom` and access-denied map units are inside the footprint and carry no rating,
+ * so a footprint taken from the rated set would report them as unmapped even
+ * though the authority has declared exactly what they are.
  */
 export interface SoilSurveyAreaTable {
 	areasymbol: string
@@ -307,13 +310,13 @@ export interface SoilSurveyAreaTable {
 	saverest: string
 	saversion: number | null
 	/**
-	 * The oldest source citation date in the area's own fgdc lineage, the field survey the
-	 * republished polygons rest on.
+	 * The oldest source citation date in the area's own fgdc lineage, the field
+	 * survey the republished polygons rest on.
 	 *
-	 * This is a different fact from `saverest` and keeping them apart is the point. `IA153` carries
-	 * a 2025-09-09 refresh over a field survey published in 1960, and the dataset's own
-	 * time-period-of-content ends at the refresh, so a consumer reading that as survey currency
-	 * reads it wrong.
+	 * This is a different fact from `saverest` and keeping them apart is the point.
+	 * `IA153` carries a 2025-09-09 refresh over a field survey published in 1960,
+	 * and the dataset's own time-period-of-content ends at the refresh, so a consumer
+	 * reading that as survey currency reads it wrong.
 	 */
 	survey_source_date: string | null
 	/**

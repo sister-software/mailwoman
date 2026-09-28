@@ -123,8 +123,8 @@ async function resolveWOFPath(options: Options): Promise<string> {
 }
 
 /**
- * Construct the heavy geocoder once (neural parser, WOF resolver, and per-state databases) and wire it
- * into the matcher's {@link GeocodeAddress} interface.
+ * Construct the heavy geocoder once (neural parser, WOF resolver, and per-state databases)
+ * and wire it into the matcher's {@link GeocodeAddress} interface.
  *
  * @returns it plus a disposal hook for the database handles.
  */
@@ -227,8 +227,8 @@ export interface EvalGeocoderFlags {
 
 /**
  * Build the {@link EvalGeocoderFactory} the `@mailwoman/registry/tools` record-matcher tools take,
- * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`, and
- * `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
+ * pinned to a plain `WOFSQLitePlaceLookup`, `defaultCountry: "US"`, `placeCountry: false`,
+ * and `postcodeRepair: true` so migrated evals reproduce the retired scripts' numbers.
  */
 export function evalGeocoderFactory(flags: EvalGeocoderFlags): EvalGeocoderFactory {
 	return async (init): Promise<EvalGeocoder> => {
@@ -297,8 +297,8 @@ interface MultiSourceSpec {
 	 */
 	role?: "eligibility" | "funding"
 	/**
-	 * Read at most this many rows (the head of the file), so a huge source can be sampled without
-	 * pre-filtering.
+	 * Read at most this many rows (the head of the file), so a huge source can
+	 * be sampled without pre-filtering.
 	 */
 	limit?: number
 }
@@ -324,8 +324,8 @@ export async function loadSources(option: string): Promise<MultiSourceSpec[]> {
 /**
  * Write the artifacts requested via `--out` (GeoJSON) and/or `--map-out` (standalone html map).
  *
- * @returns the lines to append to the run summary, or `null` when neither is set, the signal to dump
- * GeoJSON to stdout (the original default).
+ * @returns the lines to append to the run summary, or `null` when neither is set,
+ * the signal to dump GeoJSON to stdout (the original default).
  */
 async function writeOutputs(
 	geojson: GeoFeatureCollection<PointLiteral, EntityGeoData>,
@@ -354,10 +354,11 @@ async function writeOutputs(
 }
 
 /**
- * Multi-source mode: stream each dataset under its own mapping and provenance label into one combined
- * record set, geocode, resolve, and report the entities that span two or more sources.
+ * Multi-source mode: stream each dataset under its own mapping and provenance label into one
+ * combined record set, geocode, resolve, and report the entities that span two or more sources.
  *
- * No shared key required. Geography is the join.
+ * No shared key required.
+ * Geography is the join.
  */
 async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promise<string> {
 	const {
@@ -403,10 +404,10 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 		perSource.push(`${label} ${recs.length}`)
 	}
 
-	// learnedScorer is false because multi-source is cross-dataset link discovery. The same facility
-	// under different operational names across sources is the signal. The default GBT scorer is
-	// dedup-calibrated and rejects that pattern, so this path uses the Fellegi-Sunter spine while
-	// single-CSV dedup keeps the GBT default.
+	// learnedScorer is false because multi-source is cross-dataset link discovery.
+	// The same facility under different operational names across sources is the signal.
+	// The default GBT scorer is dedup-calibrated and rejects that pattern, so this path
+	// uses the Fellegi-Sunter spine while single-CSV dedup keeps the GBT default.
 	const result = resolveEntities(records, {
 		trainEM: options.trainEm,
 		threshold: options.threshold,
@@ -416,8 +417,8 @@ async function runMultiSource(specs: MultiSourceSpec[], options: Options): Promi
 
 	const geocoded = records.filter((r) => r.address?.geocode).length
 
-	// Reconciliation mode: classify entities by eligibility and funding role membership through the
-	// same `@mailwoman/registry` library as `registry scorer-eval coverage-reconciliation`.
+	// Reconciliation mode: classify entities by eligibility and funding role membership through
+	// the same `@mailwoman/registry` library as `registry scorer-eval coverage-reconciliation`.
 	if (options.reconcile) {
 		const labelOf = (s: MultiSourceSpec) => s.source ?? s.path
 		const eligibilitySources = specs.filter((s) => s.role === "eligibility").map(labelOf)
@@ -504,7 +505,8 @@ async function runRegistry(csvPath: string, options: Options): Promise<string> {
 
 const RegistryCommand: ParsedCommandComponent<Options> = ({ args, options }) => {
 	const state = useCommandTask(async () => {
-		// `loadSources` can throw on a malformed config. The hook routes its error to the same handler.
+		// `loadSources` can throw on a malformed config.
+		// The hook routes its error to the same handler.
 		if (options.sources) {
 			return await runMultiSource(await loadSources(options.sources), options)
 		}

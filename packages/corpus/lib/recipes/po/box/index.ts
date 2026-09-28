@@ -23,8 +23,8 @@ import { SurfaceOrigin } from "#types"
 /**
  * The box number is drawn rather than read, so no register asserts that this box exists.
  *
- * The locality, region and postcode around it come from the `--input` tuples. The row as a whole
- * identifies no published record, and the register field carries null for that reason.
+ * The locality, region and postcode around it come from the `--input` tuples.
+ * The row as a whole identifies no published record, and the register field carries null for that reason.
  */
 const PO_BOX_PROVENANCE = {
 	register: null,
@@ -50,10 +50,9 @@ export const poBoxRecipe: CorpusRecipe = {
 		const random = makeLcg(opts.seed)
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
-		// `--source-name` gives an output built for one class its own source label and its own
-		// reps per row. A military-only output (`--variants 0 --military-ratio 1`) would
-		// otherwise be indistinguishable from the leader-template rows in the mixture, and the
-		// two classes carry different weights.
+		// `--source-name` gives an output built for one class its own source label and its own reps per row.
+		// A military-only output (`--variants 0 --military-ratio 1`) would otherwise be indistinguishable
+		// from the leader-template rows in the mixture, and the two classes carry different weights.
 		const source = opts.sourceName ?? "synth-po-box"
 		let read = 0
 		let emitted = 0
@@ -105,8 +104,8 @@ export const poBoxRecipe: CorpusRecipe = {
 			}
 
 			// US military/diplomatic rows, self-contained, one per input line at --military-ratio.
-			// The default of 0 keeps the output byte-stable, because random() is not called when the
-			// ratio is 0. US-only.
+			// The default of 0 keeps the output byte-stable, because random() is not called when the ratio is 0.
+			// US-only.
 			if (militaryRatio > 0 && random() < militaryRatio) {
 				const mil = synthesizeMilitaryPoBoxRow({ random })
 

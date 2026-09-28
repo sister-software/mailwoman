@@ -33,9 +33,9 @@ const describeIfStack = describe.skipIf(!hasStack)
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// Ask the resolver rather than probing a package path literal directly. A skip guard that
-		// stops matching does not fail, it skips, so the suite disappears from the run while the run
-		// reports success.
+		// Ask the resolver rather than probing a package path literal directly.
+		// A skip guard that stops matching does not fail, it skips, so the suite
+		// disappears from the run while the run reports success.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
@@ -100,9 +100,9 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 
-	// The resolver itself is pinned rather than only its observable. The third candidate is a
-	// CWD-relative dev-tree path that happens to exist when the suite runs from the repo root, so
-	// the /health assertion below would survive a broken resolution.
+	// The resolver itself is pinned rather than only its observable.
+	// The third candidate is a CWD-relative dev-tree path that happens to exist when the suite
+	// runs from the repo root, so the /health assertion below would survive a broken resolution.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
 		expect(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json")).toBe(
 			workspacePath("neural-weights-en-us", "model-card.json")
@@ -189,8 +189,8 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 
-		// Per-row metrics land in the engine under their own tiers while the route records a
-		// whole-call `batch` tier.
+		// Per-row metrics land in the engine under their own tiers while the route
+		// records a whole-call `batch` tier.
 		const snapshot = metricsSnapshot()
 
 		const perRowTotal = Object.entries(snapshot.timings.tiers)

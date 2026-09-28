@@ -22,8 +22,8 @@ import { osmDatabaseRoot } from "#paths"
 import { streetLocaleForCountry, supportedOSMCountries } from "#sdk/street/locale"
 
 /**
- * The member of {@link RegionDatabases} an OSM extract supplies, narrowed to the SQLite class that
- * opened it so the provider can dispose the handle.
+ * The member of {@link RegionDatabases} an OSM extract supplies, narrowed to the
+ * SQLite class that opened it so the provider can dispose the handle.
  */
 export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
 	addressPoints?: AddressPointSqliteLookup
@@ -35,8 +35,8 @@ export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
  * per call. {@linkcode warm} awaits `pathExists` for every supported country's extract
  * and records what exists, and `for` consults that record.
- * Prefer {@linkcode OSMRegionDatabaseProvider.create}. It constructs the provider and warms it
- * before answering.
+ * Prefer {@linkcode OSMRegionDatabaseProvider.create}.
+ * It constructs the provider and warms it before answering.
  *
  * A provider constructed directly must be warmed before its first `for`,
  * or it answers `{}` for every country.

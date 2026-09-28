@@ -27,11 +27,13 @@ import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
 /**
  * The columns this converter writes, and the DuckDB type each is written as.
  *
- * Both come from `#parquet/schema`, the one definition the native writer, the reader and the manifest share.
+ * Both come from `#parquet/schema`, the one definition the native writer,
+ * the reader and the manifest share.
  *
- * The span offsets are INT32: parallel arrays over `raw` (UTF-16 code units, `[start, end)` exclusive-end,
- * sorted, non-overlapping). `raw` is a short address string, so INT32 round-trips as a plain integer where
- * INT64 would surface as bigint.
+ * The span offsets are INT32: parallel arrays over `raw`
+ * (UTF-16 code units, `[start, end)` exclusive-end, sorted, non-overlapping).
+ * `raw` is a short address string, so INT32 round-trips as a plain integer
+ * where INT64 would surface as bigint.
  */
 const REQUIRED_COLUMNS = PARQUET_COLUMNS
 const COLUMN_TYPES = PARQUET_COLUMN_TYPES
@@ -68,8 +70,9 @@ export interface JSONLToParquetSummary {
 }
 
 /**
- * Enforce the span interface per row: all three present, parallel lengths. A row with span_starts but no
- * span_tags is a corrupt row, never a silent fallback.
+ * Enforce the span interface per row: all three present, parallel lengths.
+ *
+ * A row with span_starts but no span_tags is a corrupt row, never a silent fallback.
  */
 function assertSpanTriple(row: Record<string, unknown>, lineNo: number): void {
 	const present = SPAN_COLUMNS.filter((c) => row[c] != null)

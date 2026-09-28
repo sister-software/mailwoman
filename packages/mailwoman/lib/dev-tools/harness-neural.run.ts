@@ -67,11 +67,11 @@ interface Args {
 	postcodeRepair: boolean
 	unitRepair: boolean
 	/**
-	 * Also grade the assembled runtime pipeline (`createRuntimePipeline`: normalize → kind/ fast-path → grouper →
-	 * reconcile → classify), alongside the raw neural classifier.
+	 * Also grade the assembled runtime pipeline (`createRuntimePipeline`: normalize → kind/
+	 * fast-path → grouper → reconcile → classify), alongside the raw neural classifier.
 	 *
-	 * A pipeline regression (e.g. a reconcile/arbitration change)
-	 * is invisible when the eval grades raw neural.
+	 * A pipeline regression (e.g. a reconcile/arbitration change) is invisible
+	 * when the eval grades raw neural.
 	 *
 	 * Off by default → the existing raw-neural report is byte-stable.
 	 */
@@ -318,8 +318,8 @@ async function discoverAssertions(testsDir: PathBuilderLike): Promise<ExtractedA
 // #region Neural output → the visible ClassificationRecord vocabulary
 
 /**
- * Visible classification labels in the assertion vocabulary, the fixture format inherited from the
- * retired rule-based suite:
+ * Visible classification labels in the assertion vocabulary,
+ * the fixture format inherited from the retired rule-based suite:
  * `country, dependency, house_number, level_designator, level, locality, postcode, region, street, unit_designator, unit, venue`.
  *
  * Anything outside this set is invisible to the comparison and gets folded or dropped.
@@ -433,8 +433,8 @@ function expectedMatchesActual(expected: ClassificationRecord, actual: Classific
 
 		for (let i = 0; i < expectedValues.length; i++) {
 			if (normLoose(expectedValues[i]!) !== normLoose(actualValues[i]!)) {
-				// Allow substring containment in either direction, since the neural parser sometimes
-				// over- or under-spans (e.g. "5th Avenue" vs "Avenue").
+				// Allow substring containment in either direction, since the neural parser
+				// sometimes over- or under-spans (e.g. "5th Avenue" vs "Avenue").
 				// The fixture suite is the authority on the expected span.
 				// We count a substring match as a partial pass.
 				const exp = normLoose(expectedValues[i]!)
@@ -484,15 +484,18 @@ async function runAssertion(
 	pipeline?: ReturnType<typeof createRuntimePipeline>
 ): Promise<AssertionResult> {
 	// Neural, one tree, loose semantics: pass if any of the expected solutions
-	// is matched by the top-1 neural output. The fixtures' multi-solution structure
-	// came from the retired multi-hypothesis rules API.
+	// is matched by the top-1 neural output.
+	// The fixtures' multi-solution structure came from the retired multi-hypothesis rules API.
 	const tree = await neuralClassifier.parse(a.input, parseOpts)
 	const flat = decodeAsJSON(tree)
 	const { record: neuralRecord, dropped } = neuralTreeToVisibleRecord(flat)
 	const neuralPass = anyExpectedMatches(a.expected, neuralRecord)
 	const treeValidity = validateTree(tree)
 
-	// Assembled-pipeline arm: grade the full `runPipeline` parse (what production runs), with the same loose top-1 semantics and tree→visible-record conversion as neural. Off unless `--assembled` wired the pipeline. An assembled-pipeline regression is invisible against raw-neural F1.
+	// Assembled-pipeline arm: grade the full `runPipeline` parse (what production runs),
+	// with the same loose top-1 semantics and tree→visible-record conversion as neural.
+	// Off unless `--assembled` wired the pipeline.
+	// An assembled-pipeline regression is invisible against raw-neural F1.
 	let assembledPass: boolean | undefined
 	let assembledRecord: ClassificationRecord | undefined
 
@@ -615,7 +618,8 @@ function printReport(results: AssertionResult[]): void {
 	)
 	console.log("")
 
-	// Assembled-pipeline arm (only when --assembled): what the assembled pipeline (grouper + reconcile + fast-path) gains or loses against raw neural on the same assertions.
+	// Assembled-pipeline arm (only when --assembled): what the assembled pipeline
+	// (grouper + reconcile + fast-path) gains or loses against raw neural on the same assertions.
 	const hasAssembled = results.some((r) => r.assembled_pass !== undefined)
 
 	if (hasAssembled) {
@@ -710,8 +714,9 @@ async function main(): Promise<void> {
 		])
 
 		// Gaz-trained models (v4.2.0+) must be fed the lexicon + the postcode-anchor
-		// lookup with near-postcode suppression. Zero-filled clues depress country recall
-		// and fake an affix crash (the ship config. See CONTRIBUTING_MODEL_WORK eval invariants).
+		// lookup with near-postcode suppression.
+		// Zero-filled clues depress country recall and fake an affix crash
+		// (the ship config. See CONTRIBUTING_MODEL_WORK eval invariants).
 		let gazetteerLexicon: GazetteerLexicon | undefined
 
 		if (args.gazetteerLexiconPath) {
@@ -774,7 +779,9 @@ async function main(): Promise<void> {
 		unitRepair: args.unitRepair,
 	} as Parameters<NeuralAddressClassifier["parse"]>[1]
 
-	// The assembled runtime pipeline (reuses the neural classifier + admin FST). No resolver, so the arena grades component parses (Stage 3 / grouper / reconcile) rather than coordinates.
+	// The assembled runtime pipeline (reuses the neural classifier + admin FST).
+	// No resolver, so the arena grades component parses (Stage 3 / grouper / reconcile)
+	// rather than coordinates.
 	const pipeline = args.assembled
 		? createRuntimePipeline({ classifier: neural, ...(adminFST ? { fst: adminFST } : {}) })
 		: undefined

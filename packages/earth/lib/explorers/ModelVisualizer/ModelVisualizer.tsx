@@ -36,7 +36,8 @@ const labelText = (label: string): string => tagOf(label) || label
 /**
  * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits.
  *
- * Live traces are self-describing, so never extend this list. The model's own axis wins.
+ * Live traces are self-describing, so never extend this list.
+ * The model's own axis wins.
  */
 const LOCALE_ORDER_FALLBACK = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
@@ -45,8 +46,8 @@ export interface ModelVisualizerProps {
 }
 
 /**
- * Memoized, since the live wrapper re-renders on every input keystroke and `trace` is
- * referentially stable between runs.
+ * Memoized, since the live wrapper re-renders on every input keystroke
+ * and `trace` is referentially stable between runs.
  */
 export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {
 	const [matrixMode, setMatrixMode] = useState<"logits" | "emissions">("emissions")

@@ -34,8 +34,9 @@ import type { GauntletDatabase } from "#eval-harness/gauntlet/schema"
  * Candidate-model selection shared by the regression + metamorphic layers.
  *
  * `tokenizer`/`card`: a tokenizer-splice candidate needs its new vocab paired with the model,
- * since otherwise the new embedding rows stay dormant (the shipped tokenizer emits no ids for
- * them) and the splice is invisible to the layer. Model-only bumps omit them.
+ * since otherwise the new embedding rows stay dormant (the shipped tokenizer emits no ids for them)
+ * and the splice is invisible to the layer.
+ * Model-only bumps omit them.
  */
 export interface GauntletLayerOptions {
 	/**
@@ -64,16 +65,16 @@ export interface GauntletLayerOptions {
 	/**
 	 * Package-shaped candidate weights dir (`<root>/node_modules/@mailwoman/neural-weights-en-us`).
 	 *
-	 * The path for a splice/multisplice candidate. It resolves the model, tokenizer, card and
-	 * soft-feed siblings package-shaped, exactly like `eval parity --weights-cache`. It takes
-	 * precedence over `model`/`tokenizer`/`card`.
+	 * The path for a splice/multisplice candidate.
+	 * It resolves the model, tokenizer, card and soft-feed siblings package-shaped,
+	 * exactly like `eval parity --weights-cache`.
+	 * It takes precedence over `model`/`tokenizer`/`card`.
 	 */
 	weightsCacheRoot?: string
 	/**
 	 * Resolver-side pins (`postcodeCountryCoherence` today).
 	 *
-	 * The resolver counterpart to the model swaps above, so a resolver pin can be graded by the
-	 * standard eval.
+	 * The resolver counterpart to the model swaps above, so a resolver pin can be graded by the standard eval.
 	 *
 	 * Omitted → production defaults.
 	 */
@@ -81,9 +82,8 @@ export interface GauntletLayerOptions {
 }
 
 /**
- * The {@linkcode buildGauntletDeps} argument a layer's options describe, the model-selection
- * ladder (weights-cache → model[+tokenizer/card] → shipped default) with the resolver pins
- * carried alongside.
+ * The {@linkcode buildGauntletDeps} argument a layer's options describe, the model-selection ladder
+ * (weights-cache → model[+tokenizer/card] → shipped default) with the resolver pins carried alongside.
  *
  * Shared by every layer so a new pin cannot reach one layer and silently miss another.
  */
@@ -117,7 +117,8 @@ export function layerDepsOptions(options: GauntletLayerOptions): GauntletDepsOpt
 export async function runRegressionLayer(options: GauntletLayerOptions = {}): Promise<{ pass: boolean }> {
 	using kdb = new DatabaseClient<GauntletDatabase>(dataRootPath("gauntlet", "regression.db"), { readOnly: true })
 	// Before a single address is graded: does this DB hold the corpus that is committed right now?
-	// A check reading a stale artifact reports a verdict about a corpus nobody has. See corpus-stamp.ts.
+	// A check reading a stale artifact reports a verdict about a corpus nobody has.
+	// See corpus-stamp.ts.
 	await assertCorpusStampFresh(kdb)
 	const cases = await kdb.selectFrom("gauntlet_case").selectAll().execute()
 
@@ -127,26 +128,29 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	const tracked: string[] = [] // known_fail / improvement_target still failing → report, non-blocking
 	const newlyPassing: string[] = [] // tracked case that now passes → promote it (anti-rot)
 	// Tracked cases that now pass in a locale this run graded base-only.
-	// Held back from `newlyPassing` and printed separately, because the pass is not
-	// attributable to the production path.
+	// Held back from `newlyPassing` and printed separately, because the pass is
+	// not attributable to the production path.
 	const withheld: string[] = []
 	let counted = 0
-	// Firing receipts. An unchanged verdict means "harmless" only if the mechanism actually ran
-	// on some row. Otherwise it means "never reached", and the two are indistinguishable
-	// without this count.
+	// Firing receipts.
+	// An unchanged verdict means "harmless" only if the mechanism actually ran on some row.
+	// Otherwise it means "never reached", and the two are indistinguishable without this count.
 	const overrides: string[] = []
 
 	for (const c of cases) {
-		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index). See harness.ts.
-		// A row carrying `locale` runs under that locale's overlay: a locale-arm row like `Paris`
-		// under `en-US` is an FR row (country=FR pins the truth) whose production route goes
-		// through the US register. The region subtag is the overlay key.
+		// caseCountry selects the per-locale weights overlay (GB → en-GB's pair-index).
+		// See harness.ts.
+		// A row carrying `locale` runs under that locale's overlay: a locale-arm row
+		// like `Paris` under `en-US` is an FR row (country=FR pins the truth) whose
+		// production route goes through the US register.
+		// The region subtag is the overlay key.
 		const overlayCountry = routeCountry(c)
 
 		const geoOpts = {
 			...(c.default_country ? { defaultCountry: c.default_country } : {}),
 			...(overlayCountry ? { caseCountry: overlayCountry } : {}),
-			// A locale row's hint scopes the typo-fuzzy tier, mirroring the CLI's unconditional threading of the locale-derived country.
+			// A locale row's hint scopes the typo-fuzzy tier, mirroring the CLI's
+			// unconditional threading of the locale-derived country.
 			...(c.locale ? { fuzzyCountryScope: c.locale.split("-")[1] } : {}),
 		}
 
@@ -170,12 +174,12 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 		} else if (issues.length) {
 			tracked.push(`  ~ ${c.id} [${c.status}${ref}]: ${issues.join("; ")}`)
 		} else if (deps.gradedBaseOnly(overlayCountry)) {
-			// The overlay this row routes to did not load, so the row graded without its pair
-			// index and dependent-locality prior. That is not the production path, so a pass on
-			// it is not evidence the production path passes. Promoting it would write a
-			// base-only result into the board as a regression guard. Reported rather than
-			// dropped, since an invisible withholding is indistinguishable from a row that
-			// simply kept failing.
+			// The overlay this row routes to did not load, so the row graded without
+			// its pair index and dependent-locality prior.
+			// That is not the production path, so a pass on it is not evidence the production path passes.
+			// Promoting it would write a base-only result into the board as a regression guard.
+			// Reported rather than dropped, since an invisible withholding is indistinguishable
+			// from a row that simply kept failing.
 			withheld.push(`  · ${c.id} [${c.status}${ref}] passes, but ${overlayCountry} graded BASE-ONLY — not promotable`)
 		} else {
 			newlyPassing.push(`  + ${c.id} [${c.status}${ref}] now PASSES — promote to status=pass`)
@@ -201,8 +205,8 @@ export async function runRegressionLayer(options: GauntletLayerOptions = {}): Pr
 	}
 
 	// Printed whenever the pass could have fired, which is unless it is explicitly pinned off.
-	// Keying this on the enabled pin would hide the firing count on the standard unpinned run,
-	// which now has the pass enabled.
+	// Keying this on the enabled pin would hide the firing count on the standard
+	// unpinned run, which now has the pass enabled.
 	if (options.pins?.postcodeCountryCoherence !== false) {
 		console.log(`\npostcode-country coherence fired on ${overrides.length}/${cases.length} cases:`)
 

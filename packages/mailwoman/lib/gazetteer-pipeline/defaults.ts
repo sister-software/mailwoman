@@ -22,9 +22,9 @@ export const DEFAULT_WOF_PRIORITY_COUNTRIES = [
 	"ES",
 	"FR",
 	"GB",
-	// `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes, converting at 98.6% into
-	// 186,469 (child, parent) pairs. IN stays out of DEFAULT_OVERTURE_COUNTRIES, because a country
-	// served by both would double up its admin.
+	// `whosonfirst-data-admin-in` carries 189,026 sub-locality nodes, converting
+	// at 98.6% into 186,469 (child, parent) pairs.
+	// IN stays out of DEFAULT_OVERTURE_COUNTRIES, because a country served by both would double up its admin.
 	"IN",
 	"IT",
 	"JP",
@@ -294,28 +294,33 @@ export const DEFAULT_GEONAMES_COUNTRIES = [
 ] as const
 
 /**
- * Pinned Overture release for the divisions theme. Rows churn between monthly releases, and two
- * vintages must never mix inside one artifact.
+ * Pinned Overture release for the divisions theme.
  *
- * Overture deletes old releases, so a pin survives on the order of a month and then the build fails
- * with `No files found that match the pattern`.
+ * Rows churn between monthly releases, and two vintages must never mix inside one artifact.
+ *
+ * Overture deletes old releases, so a pin survives on the order of a month and
+ * then the build fails with `No files found that match the pattern`.
  *
  * Keep this equal to `poi/defaults.ts`'s `DEFAULT_RELEASE`.
  */
 export const DEFAULT_OVERTURE_RELEASE = "2026-07-22.0"
 
 /**
- * Staging suffix for admin rebuilds. Build here, verify, then swap over the live name (releasing.md).
+ * Staging suffix for admin rebuilds.
+ *
+ * Build here, verify, then swap over the live name (releasing.md).
  */
 export const DEFAULT_ADMIN_STAGING_SUFFIX = ".REBUILD.db"
 
 /**
  * The zero-coverage gap set: GeoNames-alias locales carrying no WOF or Overture admin.
  *
- * These are the `adminForCountries` targets for the GeoNames fold. Without the A-class fold
- * (pcli country + ADM1 regions + locality ancestry linking), their localities are orphans and
- * "City, Country" scoping breaks. Countries with WOF/Overture admin are excluded by construction,
- * because folding their GeoNames admin would double up.
+ * These are the `adminForCountries` targets for the GeoNames fold.
+ * Without the A-class fold (pcli country + ADM1 regions + locality ancestry linking),
+ * their localities are orphans and "City, Country" scoping breaks.
+ *
+ * Countries with WOF/Overture admin are excluded by construction, because folding
+ * their GeoNames admin would double up.
  */
 export function geonamesAdminGapCountries(): string[] {
 	const covered = new Set<string>([...DEFAULT_OVERTURE_COUNTRIES, ...DEFAULT_WOF_PRIORITY_COUNTRIES])
@@ -327,8 +332,8 @@ export function geonamesAdminGapCountries(): string[] {
  * The country set a standalone fold re-derives.
  *
  * It is the same recipe `buildAdmin` bakes into the admin artifact ({@link DEFAULT_GEONAMES_COUNTRIES}),
- * because the fold rewrites its whole id range, and a narrower list re-folds the front of
- * that range while other countries' name rows stay attached to the wrong places.
+ * because the fold rewrites its whole id range, and a narrower list re-folds the front
+ * of that range while other countries' name rows stay attached to the wrong places.
  */
 export const DEFAULT_FOLD_COUNTRIES = DEFAULT_GEONAMES_COUNTRIES
 
@@ -346,22 +351,25 @@ export const DEFAULT_ADMIN_DB = "admin-global-priority.db"
  * The conventional source of the `importance` column, a WOF admin database carrying
  * `place_importance`, built by `mailwoman gazetteer importance`.
  *
- * Deliberately a separate artifact from {@link DEFAULT_ADMIN_DB}: the scores are expensive to derive
- * and change on their own cadence, so the candidate build joins them in by name rather than
- * assuming one file holds both.
+ * Deliberately a separate artifact from {@link DEFAULT_ADMIN_DB}: the scores are
+ * expensive to derive and change on their own cadence, so the candidate build joins
+ * them in by name rather than assuming one file holds both.
  */
 export const DEFAULT_IMPORTANCE_DB = "admin-global-priority-importance.db"
 
 /**
  * The tail database's country set, in the frozen artifact's ingest order.
  *
- * Any change here re-freezes the artifact: rebuild, run the parity check against the previous
- * database, and rotate via the .prev workflow. The first ten entries are order-critical and every
- * later country must be appended, because ids are positional in ingest order and inserting a country
- * shifts every following id. The parity check validates ids as well as counts for this reason.
+ * Any change here re-freezes the artifact: rebuild, run the parity check against
+ * the previous database, and rotate via the .prev workflow.
+ * The first ten entries are order-critical and every later country must be appended,
+ * because ids are positional in ingest order and inserting a country shifts every following id.
  *
- * Prefer counts at resolver granularity. GeoNames postal publishes one row per (postcode, settlement)
- * and duplicates some hyphenated formats, so raw row totals overstate distinct codes.
+ * The parity check validates ids as well as counts for this reason.
+ *
+ * Prefer counts at resolver granularity.
+ * GeoNames postal publishes one row per (postcode, settlement) and duplicates some
+ * hyphenated formats, so raw row totals overstate distinct codes.
  */
 export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"FI",
@@ -375,15 +383,16 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 	"SE",
 	"BE",
 	"AD",
-	// AE is deliberately absent. GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn`
-	// pair at Dubai-area coordinates, and those are Makani building codes rather than postcodes.
-	// The United Arab Emirates has no postal code system and mail goes to PO boxes, so ingesting
-	// these as `placetype = 'postalcode'` would claim 178,171 postcodes for a country with none and
-	// every coverage figure taken from that tier would inherit the claim.
+	// AE is deliberately absent.
+	// GeoNames publishes 178,171 rows for it, every one a `nnnnn nnnnn` pair at Dubai-area
+	// coordinates, and those are Makani building codes rather than postcodes.
+	// The United Arab Emirates has no postal code system and mail goes to PO boxes,
+	// so ingesting these as `placetype = 'postalcode'` would claim 178,171 postcodes for a
+	// country with none and every coverage figure taken from that tier would inherit the claim.
 	//
-	// The lookup itself would match, because the name law strips non-alphanumerics, so `28119 95762`
-	// keys as `2811995762`. These belong in a building tier, a rooftop-grade geocode with a
-	// coordinate per building.
+	// The lookup itself would match, because the name law strips non-alphanumerics,
+	// so `28119 95762` keys as `2811995762`.
+	// These belong in a building tier, a rooftop-grade geocode with a coordinate per building.
 	"AI",
 	"AL",
 	"AR",
@@ -480,8 +489,8 @@ export const DEFAULT_GEONAMES_TAIL_COUNTRIES = [
 /**
  * Default parent-coverage floor for crediting a sub-locality rung.
  *
- * This is the weakest number in the design and is deliberately a parameter. GB is the one country
- * with a validated reading at around 33%, so 5% sits far below that calibration point.
+ * This is the weakest number in the design and is deliberately a parameter.
+ * GB is the one country with a validated reading at around 33%, so 5% sits far below that calibration point.
  *
  * It is set low on purpose, to catch thin-but-real tiers rather than to certify them.
  */

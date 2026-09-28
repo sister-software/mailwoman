@@ -306,8 +306,8 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 	for (const name of names) {
 		// The label comes from the file's own `source` column rather than from its filename.
 		// A filename is what an assembly step chose to call the file, and `corpus merge-source`
-		// writes its output as `<stem>-00000.parquet` whatever `--out` asked for, so a stem
-		// that matched an original before the merge does not match after it.
+		// writes its output as `<stem>-00000.parquet` whatever `--out` asked for,
+		// so a stem that matched an original before the merge does not match after it.
 		// The column is what the loader groups by, so reading it is the only attribution
 		// that cannot disagree with the rows.
 		const path = join(directory, name)

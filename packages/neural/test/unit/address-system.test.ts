@@ -51,8 +51,8 @@ describe("detectAddressSystem", () => {
 
 describe("conventions table", () => {
 	it("fr forbids only the trailing street_suffix (NOT street_prefix) and pins the 5-digit shape", () => {
-		// FR has a leading street_prefix ("Rue de Rivoli") that the model emits, so the conventions
-		// row forbids only the trailing USPS-style street_suffix.
+		// FR has a leading street_prefix ("Rue de Rivoli") that the model emits,
+		// so the conventions row forbids only the trailing USPS-style street_suffix.
 		const fr = conventionsForSystem("fr")!
 		expect(fr.forbiddenTags).toEqual(["street_suffix"])
 		expect(fr.forbiddenTags).not.toContain("street_prefix")

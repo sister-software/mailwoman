@@ -36,8 +36,9 @@ export interface PromotionVerdictOptions {
 	 */
 	withInt8?: boolean
 	/**
-	 * Overrides the derived label. Pass `weights-cache` when the floors were
-	 * read from a package-shaped cache.
+	 * Overrides the derived label.
+	 *
+	 * Pass `weights-cache` when the floors were read from a package-shaped cache.
 	 */
 	gradedArtifact?: "int8" | "fp32" | "weights-cache"
 }
@@ -62,14 +63,13 @@ function tableCells(line: string): string[] {
 }
 
 /**
- * Read one column for one arena row from the arena summary pipe-table,
- * by header, never a fixed offset.
+ * Read one column for one arena row from the arena summary pipe-table, by header, never a fixed offset.
  *
- * The table shape is not stable across the arena's own history. `summarize-arenas.ts`
- * emits the neural-only shape (`| arena | n | neural | fail | tree-valid |`), and an
- * earlier shape carried the v0 comparison columns
- * (`| arena | n | v0 | neural | both | … |`). A fixed column offset silently reads the
- * wrong cell across that boundary.
+ * The table shape is not stable across the arena's own history.
+ * `summarize-arenas.ts` emits the neural-only shape (`| arena | n | neural | fail | tree-valid |`),
+ * and an earlier shape carried the v0 comparison columns (`| arena | n | v0 | neural | both | … |`).
+ *
+ * A fixed column offset silently reads the wrong cell across that boundary.
  *
  * Locating the column from the header row is robust to both shapes (and any future column addition).
  */
@@ -94,8 +94,8 @@ function perLocale(md: string, tag: string, locale: string): number | undefined 
 }
 
 /**
- * One cell of a markdown pipe-table, located by header column and first-column row text
- * in a single pull over the lines: the header must come first, and the row is searched only
+ * One cell of a markdown pipe-table, located by header column and first-column row text in
+ * a single pull over the lines: the header must come first, and the row is searched only
  * after it, so a row can only belong to the table its header opened.
  *
  * A missing table, column or row reads `undefined`, and the caller parses the cell text.
@@ -153,7 +153,8 @@ export interface PromotionVerdict {
  * Assemble the verdict from the out-dir's battery outputs, write `verdict.json`,
  * and report the per-floor lines.
  *
- * @returns `failed` (any floor missed). The caller owns the exit code.
+ * @returns `failed` (any floor missed).
+ * The caller owns the exit code.
  */
 export async function assemblePromotionVerdict(
 	options: PromotionVerdictOptions,
@@ -254,8 +255,8 @@ export async function assemblePromotionVerdict(
 				: intersection
 					? Math.min(scorerF1(intersection, "intersection_a") ?? 0, scorerF1(intersection, "intersection_b") ?? 0)
 					: undefined,
-			// Arena leg runs once on the ship artifact (int8). The fp32 pass reads undefined
-			// and the delta loop skips it.
+			// Arena leg runs once on the ship artifact (int8).
+			// The fp32 pass reads undefined and the delta loop skips it.
 			// The `neural` column of the `perturb` row, located by header (see arenaColumn).
 			"arena.perturb": arenas ? arenaColumn(arenas, "perturb", "neural") : undefined,
 			// Demo-cascade smoke pass rate: whole-stack parse→reconcile→resolve against the slim hot DB.
@@ -272,9 +273,8 @@ export async function assemblePromotionVerdict(
 	const graded = int8 ?? fp32 // floors are graded on the ship artifact when present
 
 	// Floors owned by a dedicated leg in promotion-eval.ts (not a per-tag F1 in `graded`).
-	// That leg runs the check and exits non-zero on failure, so the per-tag aggregator
-	// here must skip them or it spuriously reports "not found" for a floor that
-	// already passed.
+	// That leg runs the check and exits non-zero on failure, so the per-tag aggregator here
+	// must skip them or it spuriously reports "not found" for a floor that already passed.
 	const LEG_HANDLED_FLOORS = new Set(["fr.bare_street_intact"])
 
 	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}

@@ -21,8 +21,8 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
  *
  * Higher = finer. Placetypes we never resolve (continent, empire, …) map to 0 and sort last.
  *
- * This differs from the FST's `PLACETYPE_ORDER` (fst-serialize.ts), which is a serialization
- * order. This one is containment depth.
+ * This differs from the FST's `PLACETYPE_ORDER` (fst-serialize.ts), which is a serialization order.
+ * This one is containment depth.
  */
 export const PLACETYPE_DEPTH: Readonly<Record<string, number>> = {
 	country: 1,
@@ -61,7 +61,8 @@ export interface AncestorPlaceRow {
  * The ancestor lineage of `id`, self excluded, nearest-first.
  *
  * @returns `[]` when the place has no recorded ancestry.
- * Not memoized here. `WOFSQLitePlaceLookup` keeps its own per-id cache.
+ * Not memoized here.
+ * `WOFSQLitePlaceLookup` keeps its own per-id cache.
  */
 export function ancestorLineage<DB>(db: DatabaseClient<DB>, id: number, schemaName = "main"): AncestorPlaceRow[] {
 	const rows = allRows<AncestorPlaceRow>(

@@ -62,8 +62,8 @@ export interface EncodeResult {
 /**
  * Map every UTF-8 byte boundary of `text` to its UTF-16 code-unit offset.
  *
- * The returned array is indexed by byte offset, and a hole at a non-boundary index carries the
- * containing character's start so a lookup cannot land outside the string.
+ * The returned array is indexed by byte offset, and a hole at a non-boundary index carries
+ * the containing character's start so a lookup cannot land outside the string.
  */
 function buildByteToUTF16Map(text: string): number[] {
 	// Walk once to size exactly rather than deriving a bound from the code-unit length.
@@ -132,11 +132,11 @@ export class MailwomanTokenizer {
 	/**
 	 * Load from a path to a `tokenizer.model` file on disk, Node only.
 	 *
-	 * The dynamic `node:fs` import keeps this method out of the static dependency graph so the rest
-	 * of the tokenizer bundles for the browser.
+	 * The dynamic `node:fs` import keeps this method out of the static dependency graph
+	 * so the rest of the tokenizer bundles for the browser.
 	 *
-	 * A browser call throws at runtime, so use `loadFromBase64` or the URL-fetching loaders in
-	 * `@mailwoman/neural/web-loader`.
+	 * A browser call throws at runtime, so use `loadFromBase64` or the URL-fetching
+	 * loaders in `@mailwoman/neural/web-loader`.
 	 */
 	static async loadFromFile(modelPath: PathBuilderLike): Promise<MailwomanTokenizer> {
 		const { readFile } = await import(/* webpackIgnore: true */ "node:fs/promises")

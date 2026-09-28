@@ -23,8 +23,8 @@ import { describe, expect, it } from "vitest"
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
- * `weightsCachePackageDir` owns the `node_modules/<package>` segment, so a hand-assembled path
- * into it would read a missing artifact as absent rather than as a path mistake.
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment, so a hand-assembled
+ * path into it would read a missing artifact as absent rather than as a path mistake.
  */
 function stagedModel(cacheName: string): PathBuilder {
 	return weightsCachePackageDir(tempRootPath(cacheName), "en-us")("model.onnx")

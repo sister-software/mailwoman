@@ -83,6 +83,7 @@ export interface CapitalsReference {
 		missing_national: string[]
 		/**
 		 * Catalog rows whose stated capital name (folded) matches no extracted row name for that country.
+		 *
 		 * These are worth a read rather than a failure: multi-capital countries and spelling drift land here.
 		 */
 		capital_name_mismatches: string[]
@@ -93,8 +94,8 @@ export interface CapitalsReference {
 /**
  * Feature codes admitted, mapped to the reference level.
  *
- * Exact codes only. `startsWith("ppla")` would admit the county-seat tiers
- * this reference exists to exclude.
+ * Exact codes only.
+ * `startsWith("ppla")` would admit the county-seat tiers this reference exists to exclude.
  */
 const LEVEL_BY_FEATURE_CODE: Record<string, CapitalReferenceEntry["level"]> = {
 	PPLC: "national",

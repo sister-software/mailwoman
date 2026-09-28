@@ -73,12 +73,14 @@ export const POSTAL_CITY_CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the side-index, a clustered `without rowid` B-tree on `(name_key, postcode)` so the
- * resolve is a single exact probe.
+ * Create the side-index, a clustered `without rowid` B-tree on `(name_key, postcode)`
+ * so the resolve is a single exact probe.
  *
- * Idempotent (`if not exists`). Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate
- * DB. The Kysely schema-builder is the house idiom for table creation. See `agents.md` on inline
- * SQL and Kysely.
+ * Idempotent (`if not exists`).
+ * Pass a {@link DatabaseClient} (or any `Kysely`) over the candidate DB.
+ *
+ * The Kysely schema-builder is the house idiom for table creation.
+ * See `agents.md` on inline SQL and Kysely.
  */
 export async function createPostalCityCandidateTable(db: Kysely<PostalCityCandidateDatabase>): Promise<void> {
 	await db.schema

@@ -26,8 +26,8 @@ describe("#757 release provenance: every published workspace declares its reposi
 
 		const repo = pkg.repository
 
-		// npm accepts a shorthand string here, but that form carries no `directory`. A missing or
-		// empty repository.url is what npm provenance rejects with E422.
+		// npm accepts a shorthand string here, but that form carries no `directory`.
+		// A missing or empty repository.url is what npm provenance rejects with E422.
 		if (typeof repo !== "object") {
 			throw new TypeError(`${ws}/package.json must declare "repository" as an object, not ${typeof repo}`)
 		}

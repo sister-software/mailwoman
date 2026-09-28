@@ -59,10 +59,10 @@ describe("point-in-polygon primitives", () => {
 /**
  * Fixture gazetteer, a miniature Vermont-like geography around (44.0, -72.0):
  *
- * Country US (1), region (2), county A (3, polygon), county B (6, bbox overlaps A while its polygon
- * rejects the point, since DP-simplified bboxes can lie), localadmin town (4, point geometry,
- * centroid near the query point), and locality village (5, point geometry, degenerate bbox, reachable
- * only through the ancestors-table descent rather than the R*Tree).
+ * Country US (1), region (2), county A (3, polygon), county B (6, bbox overlaps A
+ * while its polygon rejects the point, since DP-simplified bboxes can lie), localadmin town
+ * (4, point geometry, centroid near the query point), and locality village (5, point geometry,
+ * degenerate bbox, reachable only through the ancestors-table descent rather than the R*Tree).
  */
 function buildFixture(): { admin: DatabaseClient<WOFDatabase>; polygons: DatabaseClient<WOFDatabase> } {
 	const admin = DatabaseClient.temp<WOFDatabase>()

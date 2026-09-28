@@ -198,8 +198,8 @@ describe("fst-autocomplete ↔ ancestrie parity — synthetic", () => {
 
 	// Synthetic trie: new, san, chic, chicago, springfield.
 	// The behavior matrix covers a referential tie, a state denser than PER_BRANCH,
-	// encyclopedic present and absent, crossCountryBranches, a deep parent chain, one
-	// wofID reachable at several depths, and a complete edge that is also a prefix.
+	// encyclopedic present and absent, crossCountryBranches, a deep parent chain,
+	// one wofID reachable at several depths, and a complete edge that is also a prefix.
 	const nodesMatcher = deserializeThroughBytes([
 		{
 			edges: new Map([

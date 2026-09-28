@@ -68,19 +68,19 @@ export interface SerializeXMLOpts {
 	/**
 	 * Include `<alternative>` child elements for each runner-up resolver candidate on the node.
 	 *
-	 * When set and `node.alternatives` is populated, each runner-up is emitted as a self-closing
-	 * element with `place`, `name`, `lat`, `lon`, `score` attributes.
+	 * When set and `node.alternatives` is populated, each runner-up is emitted as a
+	 * self-closing element with `place`, `name`, `lat`, `lon`, `score` attributes.
 	 * Default false, which keeps the output libpostal-compat unless the caller asks.
 	 */
 	includeAlternatives?: boolean
 	/**
-	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers, which is the
-	 * input the model left unclassified.
+	 * Emit `<unknown start end>…</unknown>` elements for the all-O runs no node covers,
+	 * which is the input the model left unclassified.
 	 *
-	 * Interleaved with the root components in source order, so the `<address>` children tile the raw
-	 * input exactly.
-	 * Default false, which keeps the output libpostal-compat unless the caller asks, the same
-	 * posture as {@link includeAlternatives}.
+	 * Interleaved with the root components in source order, so the `<address>`
+	 * children tile the raw input exactly.
+	 * Default false, which keeps the output libpostal-compat unless the caller asks,
+	 * the same posture as {@link includeAlternatives}.
 	 */
 	includeUnknown?: boolean
 }
@@ -88,8 +88,8 @@ export interface SerializeXMLOpts {
 /**
  * Escape XML metacharacters for double-quoted attribute values.
  *
- * Every attribute this serializer emits is double-quoted, so `'` needs no escape. `escapeHTML`
- * (`#strings/escape`) would escape the apostrophe, which changes shipped serialization bytes.
+ * Every attribute this serializer emits is double-quoted, so `'` needs no escape.
+ * `escapeHTML` (`#strings/escape`) would escape the apostrophe, which changes shipped serialization bytes.
  */
 function escapeXml(s: string): string {
 	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")
@@ -106,8 +106,10 @@ function srcAttrValue(node: AddressNode): string | null {
 }
 
 /**
- * Centroid precision for resolver-supplied lat/lon. Six decimal places is about 11 cm at the
- * equator, more than enough for a postal-address resolver and short enough to stay readable.
+ * Centroid precision for resolver-supplied lat/lon.
+ *
+ * Six decimal places is about 11 cm at the equator, more than enough for a
+ * postal-address resolver and short enough to stay readable.
  */
 const GEO_PRECISION = 6
 
@@ -130,8 +132,9 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		}
 	}
 
-	// Emit lat + lon together. A centroid is meaningless with only one coordinate, so a resolver
-	// that produces one coordinate leaves both off the node.
+	// Emit lat + lon together.
+	// A centroid is meaningless with only one coordinate, so a resolver that produces
+	// one coordinate leaves both off the node.
 	if (opts.includeGeo && node.lat !== undefined && node.lon !== undefined) {
 		parts.push(`lat="${node.lat.toFixed(GEO_PRECISION)}"`, `lon="${node.lon.toFixed(GEO_PRECISION)}"`)
 	}
@@ -140,8 +143,9 @@ function attrs(node: AddressNode, opts: Required<SerializeXMLOpts>): string {
 		parts.push(`place="${escapeXml(node.placeID)}"`)
 	}
 
-	// A span that holds several roles lists every role it holds, primary first, for example
-	// `roles="region locality"`. Emitted only when extra roles exist.
+	// A span that holds several roles lists every role it holds, primary first,
+	// for example `roles="region locality"`.
+	// Emitted only when extra roles exist.
 	if (node.interpretations && node.interpretations.length) {
 		const roles = [node.tag, ...node.interpretations.map((i) => i.tag)]
 		parts.push(`roles="${escapeXml(roles.join(" "))}"`)

@@ -95,27 +95,29 @@ export interface LocaleRenderOpts {
 	 * Postcode surface shape.
 	 *
 	 * `"conventional"` (default) canonicalizes to the country's rendered form
-	 * (NL: OA's glued `1011AB` → the spaced `1011 AB`). `"as-source"` keeps the source's own surface.
+	 * (NL: OA's glued `1011AB` → the spaced `1011 AB`).
+	 * `"as-source"` keeps the source's own surface.
+	 *
 	 * The form OA (and the OA-derived evals) feed, which for NL is 100% glued.
 	 *
 	 * Only NL differs today.
 	 * Every other country passes through identically either way.
 	 *
-	 * Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape, so the
-	 * model learns to keep the suffix separate from the city.
+	 * Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape,
+	 * so the model learns to keep the suffix separate from the city.
 	 */
 	postcodeShape?: "conventional" | "as-source"
 	/**
 	 * How the native-order render joins street and house number.
 	 *
 	 * The OpenCage ES template comma-joins (`Calle Mayor, 12`, the official Spanish convention).
-	 * OA-derived feeds and our ES eval space-join (`calle mayor 12`, the observed form on all
-	 * 3,000 eval rows). `"template"` (default) keeps the template's own join. `"space"` collapses
-	 * `<street>, <house_number>` → `<street> <house_number>` after rendering.
+	 * OA-derived feeds and our ES eval space-join (`calle mayor 12`, the observed form on all 3,000 eval rows).
+	 *
+	 * `"template"` (default) keeps the template's own join.
+	 * `"space"` collapses `<street>, <house_number>` → `<street> <house_number>` after rendering.
 	 *
 	 * Countries whose template already space-joins (DE/IT/NL) render identically under both.
-	 * Mixing both keeps an ES recipe output from teaching the comma as the street→house
-	 * boundary signal.
+	 * Mixing both keeps an ES recipe output from teaching the comma as the street→house boundary signal.
 	 *
 	 * International order ignores this (the US template is already house-first space-joined).
 	 */
@@ -127,8 +129,8 @@ export interface LocaleRenderOpts {
 	 * `" "` renders the comma-free single-line register for dictation or a copy out of a
 	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
 	 *
-	 * Stage 2 segments the comma form into three and the comma-free form into one, and a single segment
-	 * starves the placetype-pair prior, which is how the comma-free form loses `Nippes`.
+	 * Stage 2 segments the comma form into three and the comma-free form into one, and a single
+	 * segment starves the placetype-pair prior, which is how the comma-free form loses `Nippes`.
 	 * Only the native order reads it.
 	 * The international layout keeps its own separator.
 	 */
@@ -197,10 +199,11 @@ function tokenPresent(raw: string, value: string): boolean {
  *
  * Returns `null` when the tuple is too thin or a component would not align cleanly.
  *
- * Region handling is order-dependent. Native order omits it, because the native template absorbs the
- * admin region into the postcode/city line, so it rarely renders verbatim and would break BIO
- * alignment. International order includes it in the tail ("City, Region Postcode", the US/feed layout
- * the eval uses).
+ * Region handling is order-dependent.
+ * Native order omits it, because the native template absorbs the admin region into the
+ * postcode/city line, so it rarely renders verbatim and would break BIO alignment.
+ *
+ * International order includes it in the tail ("City, Region Postcode", the US/feed layout the eval uses).
  *
  * Pass `opts.order: "international"` to render the same components house-first and postcode-after-city
  * instead (see {@link LocaleRenderOpts.order}), the layout international feeds impose on
@@ -238,9 +241,10 @@ export function renderLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
-	// International order carries the region in the tail ("City, Region Postcode"), the layout real
-	// US/feed renderings (and our OA eval) use. Native order omits the region, because the native
-	// template absorbs it into the city line, which would break verbatim alignment.
+	// International order carries the region in the tail ("City, Region Postcode"),
+	// the layout real US/feed renderings (and our OA eval) use.
+	// Native order omits the region, because the native template absorbs it into the
+	// city line, which would break verbatim alignment.
 	if (order === "international" && base.region) {
 		components.region = base.region
 	}

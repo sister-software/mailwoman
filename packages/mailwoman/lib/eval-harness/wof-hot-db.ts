@@ -29,7 +29,9 @@ export function wofHotStageDir(): PathBuilder {
 /**
  * Resolve the `wof-hot.db` path: `$MAILWOMAN_WOF_HOT_DB` when set and non-empty, then the staged database.
  *
- * `||` on purpose. An empty env var means unset, never "resolve against the empty string".
+ * `||` on purpose.
+ * An empty env var means unset, never "resolve against the empty string".
+ *
  * The answer is a string because the environment variable, the other source, is one.
  */
 export function resolveWOFHotDB(stageDir?: PathBuilderLike): string {

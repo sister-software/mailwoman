@@ -47,8 +47,8 @@ describe("char-level partial completion + BFS (#587 ports)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation", () => {
-		// The typed prefix is both a complete edge and a partial of "chicago". The walk must
-		// continue past the exact match to keep every longer completion.
+		// The typed prefix is both a complete edge and a partial of "chicago".
+		// The walk must continue past the exact match to keep every longer completion.
 		const shadowed = seal([
 			{ tokens: ["chic"], id: 10, parentIDs: [], rank: 0.1 },
 			{ tokens: ["chicago"], id: 11, parentIDs: [], rank: 0.85 },

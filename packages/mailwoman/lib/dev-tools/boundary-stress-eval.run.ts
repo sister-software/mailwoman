@@ -47,11 +47,12 @@ const N = Number(args.n)
 /**
  * The pre-registered eval (v1.6.0-boundary-stress.yaml).
  *
- * Per shape: the stress tag it teaches, the re-baselined "before" number, and the target the retrain
- * must clear. Plus the shared street-span floor (≥65 on all four shapes).
+ * Per shape: the stress tag it teaches, the re-baselined "before" number,
+ * and the target the retrain must clear.
+ * Plus the shared street-span floor (≥65 on all four shapes).
  *
- * Partial: this eval has pre-registered baselines only for the original four templates. The
- * "bare-locality" and "house-number-before-street" templates have no measured baseline here.
+ * Partial: this eval has pre-registered baselines only for the original four templates.
+ * The "bare-locality" and "house-number-before-street" templates have no measured baseline here.
  */
 const TARGETS: Partial<Record<BoundaryStressTemplate, { tag: string; baseline: number; target: number }>> = {
 	"street-eats-affix": { tag: "street_suffix", baseline: 41.7, target: 55 },
@@ -67,8 +68,8 @@ if (args.model && !args.tokenizer) throw new Error("--tokenizer is required when
 if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
-// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets
-// concrete model/tokenizer/model-card paths and does not fall back to the symlink auto-resolve.
+// Dev-weights default (no --model): resolve the en-us package paths so the scorer gets concrete
+// model/tokenizer/model-card paths and does not fall back to the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: await resolveWeights({ locale: "en-us" })

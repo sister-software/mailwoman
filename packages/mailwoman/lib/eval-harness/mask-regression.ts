@@ -96,9 +96,8 @@ export interface MaskRegressionOptions {
 	/**
 	 * The regression threshold (pp, as a fraction).
 	 *
-	 * 2pp, a finer net than the load-time delta check's 5pp, so subtler interaction harms surface
-	 * at release. A tag whose mask-on F1 is within this band of its mask-off F1 is considered
-	 * unharmed by the mask.
+	 * 2pp, a finer net than the load-time delta check's 5pp, so subtler interaction harms surface at release.
+	 * A tag whose mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
 	 *
 	 * Default 0.02.
 	 */
@@ -110,8 +109,8 @@ export interface MaskRegressionOptions {
 }
 
 /**
- * The per-tag vocabulary scored, unfolded (street parts split, mirroring score-affix.ts and
- * capability-manifest.ts).
+ * The per-tag vocabulary scored, unfolded (street parts split, mirroring score-affix.ts
+ * and capability-manifest.ts).
  *
  * Every tag here gets a mask-off↔mask-on delta computed.
  */
@@ -169,8 +168,7 @@ export async function maskRegressionCheck(
 		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades.
 		// The rows are formatted postal addresses, and on those the production pipeline derives
 		// `formatted` and runs the evidence-bundle channels off as a declared ablation.
-		// Grading them in the bare-library default measures a path production never takes on these
-		// inputs.
+		// Grading them in the bare-library default measures a path production never takes on these inputs.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,
 			TAGS,

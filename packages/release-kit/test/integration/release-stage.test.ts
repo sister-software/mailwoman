@@ -44,8 +44,8 @@ describe("checkReleaseListIdentity", () => {
 
 		await writeLocalJSONFile({ workspaces: ["packages/a", "packages/b", "packages/frozen-one"] }, root("package.json"))
 
-		// Every workspace in the field must carry a manifest. The reader refuses a literal without
-		// one.
+		// Every workspace in the field must carry a manifest.
+		// The reader refuses a literal without one.
 		for (const workspace of ["packages/a", "packages/b", "packages/frozen-one"]) {
 			await makeDirectories(root(workspace))
 			await writeLocalJSONFile({ name: workspace }, root(workspace, "package.json"))
@@ -60,8 +60,8 @@ describe("checkReleaseListIdentity", () => {
 
 		const identity = await checkReleaseListIdentity(root)
 
-		// A workspace outside the release list with no stated reason is frozen, and the failure
-		// reports its name.
+		// A workspace outside the release list with no stated reason is frozen,
+		// and the failure reports its name.
 		expect(identity.unexpectedAbsences).toEqual(["packages/frozen-one"])
 		expect(identity.publishCount).toBe(2)
 	})
@@ -94,8 +94,8 @@ describe("the tarball audit refuses the two v9.2.0 manifest-promise classes", ()
 	/**
 	 * A hand-built tarball: `package/package.json` plus whichever payload files the case ships.
 	 *
-	 * The audit reads the archive, so no yarn project is needed and these fixtures pin its refusals
-	 * without packing a real workspace.
+	 * The audit reads the archive, so no yarn project is needed and these fixtures
+	 * pin its refusals without packing a real workspace.
 	 */
 	async function tarballWith(manifest: object, payloadFiles: string[]): Promise<PathBuilder> {
 		const dir = fixtures.use(await temporaryDirectory("mw-tarball-fixture-")).path

@@ -42,7 +42,9 @@ import { buildSpecs, stateOption } from "#tools/shared"
  */
 export interface CoverageReconciliationOptions {
 	/**
-	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
+	 * The injected geocoder factory.
+	 *
+	 * The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -145,9 +147,9 @@ export async function coverageReconciliation(
 	report?.(`    ${records.length} records; geocoded ${geo}/${total} (${((100 * geo) / total).toFixed(1)}%)`)
 
 	report?.("[D] resolving + reconciling…")
-	// Use the Fellegi-Sunter baseline for this cross-dataset join. It is recall-oriented, because the
-	// same facility under a different operational name is the signal, which the dedup-calibrated GBT
-	// default rejects.
+	// Use the Fellegi-Sunter baseline for this cross-dataset join.
+	// It is recall-oriented, because the same facility under a different operational
+	// name is the signal, which the dedup-calibrated GBT default rejects.
 	const { entities } = resolveEntities(records, { trainEM: true, collapseSpatial: true, learnedScorer: false })
 
 	// Reconcile through the shared @mailwoman/registry code path, so the script and the CLI agree.

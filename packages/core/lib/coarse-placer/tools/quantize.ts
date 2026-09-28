@@ -56,7 +56,8 @@ export interface QuantizeCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer int8 quantizer. See the module doc.
+ * Coarse-placer int8 quantizer.
+ * See the module doc.
  */
 export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},

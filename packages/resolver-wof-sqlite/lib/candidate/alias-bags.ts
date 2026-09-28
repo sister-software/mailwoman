@@ -15,13 +15,13 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * The official name of every current region, keyed `${country id}\0${name key}` → region id, from
- * the source `names` table's `official` bit.
+ * The official name of every current region, keyed `${country id}\0${name key}` →
+ * region id, from the source `names` table's `official` bit.
  *
  * Empty when the source carries no `names` table (a fixture, or an extract shape).
  *
- * The positive evidence behind the alias refusal below: a name is refused from a region's bag only
- * when another region of the same country holds it as its official name.
+ * The positive evidence behind the alias refusal below: a name is refused from a region's
+ * bag only when another region of the same country holds it as its official name.
  */
 function officialNameHoldersByRegion(
 	src: DatabaseClient<WOFDatabase>,
@@ -52,9 +52,9 @@ function officialNameHoldersByRegion(
  * Pass 2: explode each place's `place_search.alt_names` bag into distinct-key alias rows
  * (`is_primary = 0`), and count each place's distinct staged keys with the primary included.
  *
- * With `regionPlacetypeID` and `ccID` given, a region's alias that is another same-country
- * region's official name is refused and counted rather than staged
- * (see {@link officialNameHoldersByRegion}). Without them the pass stages every alias.
+ * With `regionPlacetypeID` and `ccID` given, a region's alias that is another same-country region's
+ * official name is refused and counted rather than staged (see {@link officialNameHoldersByRegion}).
+ * Without them the pass stages every alias.
  */
 export function explodeAliasBags(
 	src: DatabaseClient<WOFDatabase>,
@@ -83,8 +83,9 @@ export function explodeAliasBags(
 		const seen = new Set<string>([a.pkey])
 		const isRegion = a.ptid === opts.regionPlacetypeID
 
-		// The writer space-pads each separator and appends a trailing one, so every piece carries
-		// surrounding whitespace and the last one is empty. `normalizeLocalityForKey` folds both away.
+		// The writer space-pads each separator and appends a trailing one, so every piece
+		// carries surrounding whitespace and the last one is empty.
+		// `normalizeLocalityForKey` folds both away.
 		for (const piece of alt.split(ALIAS_SEPARATOR)) {
 			const k = normalizeLocalityForKey(piece)
 

@@ -15,14 +15,14 @@
 import { hashFNV1a } from "#coarse-placer/fnv-hash"
 
 /**
- * The trained classes: the well-represented corpus countries, the Overture-sourced EU expansion,
- * and `other`, the explicit off-map class trained on non-Latin and non-CJK scripts via outlier
- * exposure, so the model learns the edge of its competence.
+ * The trained classes: the well-represented corpus countries, the Overture-sourced EU
+ * expansion, and `other`, the explicit off-map class trained on non-Latin and non-CJK
+ * scripts via outlier exposure, so the model learns the edge of its competence.
  *
  * Index order is the label id.
  *
- * It acts as a soft prior, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps resolution
- * in-region, off the global-pop attractors.
+ * It acts as a soft prior, so a neighbour confusion (DK↔NO, EE↔LT↔LV) still keeps
+ * resolution in-region, off the global-pop attractors.
  *
  * Adding a class requires a retrain and a fresh artifact.
  * The bundled meta.json carries its own `classes` for inference, so this constant drives training.

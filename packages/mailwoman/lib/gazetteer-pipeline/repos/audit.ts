@@ -46,8 +46,7 @@ export interface ClonedRepo {
 	name: string
 	layouts: CloneLayout[]
 	/**
-	 * True when the layouts resolve to the same directory through a symlink rather than a second
-	 * checkout.
+	 * True when the layouts resolve to the same directory through a symlink rather than a second checkout.
 	 *
 	 * The ingest does not follow the alias, and one directory can never diverge from itself.
 	 */
@@ -60,8 +59,8 @@ export interface ClonedRepo {
 	 */
 	commits: Partial<Record<CloneLayout, string>>
 	/**
-	 * The ISO-2 country the repo name encodes, or `undefined` for a repo with no country
-	 * (`whosonfirst-placetypes`).
+	 * The ISO-2 country the repo name encodes, or `undefined` for a repo with no
+	 * country (`whosonfirst-placetypes`).
 	 */
 	country?: string
 	theme?: string
@@ -79,13 +78,13 @@ export interface ReposAudit {
 	/**
 	 * Repos reachable through both layouts via a symlink, one physical copy.
 	 *
-	 * The ingest skips the symlinked layout, and the directory cannot diverge in the way
-	 * {@link ReposAudit.duplicated} can.
+	 * The ingest skips the symlinked layout, and the directory cannot diverge in
+	 * the way {@link ReposAudit.duplicated} can.
 	 */
 	aliased: ClonedRepo[]
 	/**
-	 * Duplicated repos whose two copies are at different commits, the state where the ingest's
-	 * result depends on enumeration order.
+	 * Duplicated repos whose two copies are at different commits, the state
+	 * where the ingest's result depends on enumeration order.
 	 *
 	 * Empty is the good case and is reported as such.
 	 */
@@ -181,8 +180,8 @@ export async function auditReposRoot(
 			continue
 		}
 
-		// An owner directory whose children are the nested layout. A name that is itself a repo was
-		// handled above.
+		// An owner directory whose children are the nested layout.
+		// A name that is itself a repo was handled above.
 		for await (const child of Globerator.from("*", { cwd: full, withFileTypes: true, onlyFiles: false })) {
 			const childPath = full(child.name)
 

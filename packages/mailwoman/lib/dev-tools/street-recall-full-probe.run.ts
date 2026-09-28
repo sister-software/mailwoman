@@ -60,7 +60,8 @@ for (const row of rows) {
 	}
 }
 
-// formatPercent renders an empty panel as an em dash. Every non-empty panel renders byte-identically.
+// formatPercent renders an empty panel as an em dash.
+// Every non-empty panel renders byte-identically.
 const pct = (n: number) => formatPercent(n, full, 1)
 
 console.log(

@@ -12,8 +12,7 @@ import type { Preset } from "../common/PresetChips.tsx"
 /**
  * Address the pipeline explorer opens on.
  *
- * It exercises every stage (house number, street, directional, locality and region)
- * in one line.
+ * It exercises every stage (house number, street, directional, locality and region) in one line.
  */
 export const PIPELINE_DEFAULT_ADDRESS = "1600 Pennsylvania Ave NW, Washington, DC 20500"
 
@@ -33,17 +32,18 @@ export const PIPELINE_PRESETS: ReadonlyArray<Preset> = [
 	{ label: "Berlin (native order)", value: "Straußstraße 27, 12623 Berlin", country: "de" },
 	{ label: "Berlin city-state (int'l order)", value: "5 Hauptstraße, Berlin, Berlin 10115", country: "de" },
 	{ label: "Paris (street fall-through)", value: "181 Rue du Chevaleret, Paris", country: "fr" },
-	// "Henbury" flips to dependent_locality via the en-gb pair-index prior, and the UK postcode
-	// is structurally detectable, in parity with the docs EXAMPLE_ADDRESSES.
+	// "Henbury" flips to dependent_locality via the en-gb pair-index prior, and the UK
+	// postcode is structurally detectable, in parity with the docs EXAMPLE_ADDRESSES.
 	{
 		label: "Macclesfield (GB dependent_locality)",
 		value: "41 Hightree Drive, Henbury, Macclesfield, SK11 9PD",
 		country: "gb",
 	},
-	// Plimmerton is a suburb (dependent_locality) of Porirua. The postcode is deliberately
-	// omitted, since a trailing "Porirua 5026" folds "porirua 5026" in segment mode and misses
-	// the index's bare "porirua" key.
-	// The `country: "nz"` pin is required, since locale-hint cannot structurally detect NZ
-	// (a 4-digit postcode is not distinctive). Only the pin selects the nz index.
+	// Plimmerton is a suburb (dependent_locality) of Porirua.
+	// The postcode is deliberately omitted, since a trailing "Porirua 5026" folds "porirua
+	// 5026" in segment mode and misses the index's bare "porirua" key.
+	// The `country: "nz"` pin is required, since locale-hint cannot structurally
+	// detect NZ (a 4-digit postcode is not distinctive).
+	// Only the pin selects the nz index.
 	{ label: "Plimmerton (NZ dependent_locality)", value: "35 Steyne Avenue, Plimmerton, Porirua", country: "nz" },
 ]

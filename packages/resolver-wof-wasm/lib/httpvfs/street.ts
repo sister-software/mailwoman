@@ -31,7 +31,8 @@ export interface HTTPVFSDB {
 }
 
 /**
- * Inline a string literal for SQL. Inlining avoids param marshaling over Comlink.
+ * Inline a string literal for SQL.
+ * Inlining avoids param marshaling over Comlink.
  */
 const sqlStr = (s: string): string => `'${s.replaceAll("'", "''")}'`
 
@@ -50,14 +51,15 @@ export interface StreetPointHit {
 export class HTTPVFSAddressPointLookup {
 	#worker: HTTPVFSDB
 	/**
-	 * One memoized round trip to confirm the extract carries `address_point`, graceful on a tableless
-	 * extract.
+	 * One memoized round trip to confirm the extract carries `address_point`,
+	 * graceful on a tableless extract.
 	 */
 	readonly #hasTable: () => Promise<boolean>
 	#locale: StreetLocale
 
 	/**
-	 * `streetLocale` must match the extract's build locale (the node class's interface). Default "us".
+	 * `streetLocale` must match the extract's build locale (the node class's interface).
+	 * Default "us".
 	 */
 	constructor(worker: HTTPVFSDB, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#worker = worker
@@ -218,8 +220,8 @@ export interface StreetResolution {
 	lon: number
 	tier: "address_point" | "interpolated"
 	/**
-	 * Calibrated uncertainty radius in meters, 10 m on the situs floor and `uncertaintyM` times the
-	 * region factor for interpolation.
+	 * Calibrated uncertainty radius in meters, 10 m on the situs floor
+	 * and `uncertaintyM` times the region factor for interpolation.
 	 */
 	uncertaintyM: number
 }
@@ -245,13 +247,14 @@ interface InterpLike {
 }
 
 /**
- * Street tier: exact situs point first (10 m floor), then tiger interpolation (calibrated radius), else
- * null so the caller falls back to the admin cascade ({@link runCascade}).
+ * Street tier: exact situs point first (10 m floor), then tiger interpolation (calibrated radius),
+ * else null so the caller falls back to the admin cascade ({@link runCascade}).
  *
  * The tier order mirrors the node `geocode-core` path (address_point, then interpolated, then admin),
- * async on the main thread. `interpRadiusCalibration` is the per-region conformal factor
- * (`data/calibration/interp-radius-conformal.json`) with a default of 1.95, the conservative national
- * default where under-coverage is the harmful error.
+ * async on the main thread.
+ * `interpRadiusCalibration` is the per-region conformal factor
+ * (`data/calibration/interp-radius-conformal.json`) with a default of 1.95,
+ * the conservative national default where under-coverage is the harmful error.
  */
 export async function resolveStreet(
 	street: string | undefined,
