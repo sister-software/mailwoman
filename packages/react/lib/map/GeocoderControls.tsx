@@ -34,33 +34,15 @@ import { VersionPicker } from "./VersionPicker.tsx"
  * Props for {@linkcode GeocoderControls}.
  */
 export interface GeocoderControlsProps {
-	/**
-	 * The geocoder runtime supplied by the host.
-	 */
 	runtime: GeocoderRuntime
-	/**
-	 * The parse and resolve state.
-	 */
 	geocode: UseGeocode
-	/**
-	 * The place-autocomplete combobox state.
-	 */
 	autocomplete: UsePlaceAutocomplete
-	/**
-	 * The compare-mode state.
-	 */
 	compare: UseCompareState
 	/**
 	 * A query from the URL to run once the runtime is ready.
 	 */
 	initialQuery?: string | null
-	/**
-	 * Panels supplied by the host.
-	 */
 	panels: GeocoderPanels
-	/**
-	 * The example chips.
-	 */
 	presets: ReadonlyArray<Preset>
 	/**
 	 * The input placeholder.
@@ -68,21 +50,12 @@ export interface GeocoderControlsProps {
 	 * The field also selects its value on focus while it still equals this text.
 	 */
 	placeholder: string
-	/**
-	 * The map instance used by the compass, label picking, and layer controls.
-	 */
 	map?: MapInstance | null
 	/**
 	 * Called before each user-initiated query, so the host can write the query to its URL.
 	 */
 	onSubmitQuery?: (query: string) => void
-	/**
-	 * Called when the user selects a model version.
-	 */
 	onSelectVersion: (version: string) => void
-	/**
-	 * Called when the user toggles the forced WASM backend.
-	 */
 	onForceWASMChange: (forceWASM: boolean) => void
 	/**
 	 * Whether the developer panel starts open.
@@ -111,9 +84,8 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Renders the search panel, result panel, map control rail, and side sheets over the map.
- *
- * On narrow screens the search panel is a bottom drawer that the user can drag between detents.
+ * Renders the search panel, result panel, map control rail, and side sheets over the map; on narrow screens the
+ * search panel is a bottom drawer the user can drag between detents.
  */
 export function GeocoderControls({
 	runtime,
@@ -433,12 +405,8 @@ export function GeocoderControls({
 		<>
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
-			{/*
-			 * One panel holds the search, the examples, and the result.
-			 *
-			 * On desktop it is a left column sized to its content.
-			 * On narrow screens it is a bottom drawer.
-			 */}
+			{/* One panel holds the search, the examples, and the result; on desktop it is a left column sized to
+			    its content, and on narrow screens a bottom drawer. */}
 			<section
 				className="mw-map-panel"
 				aria-label="Search and results"
@@ -571,12 +539,8 @@ export function GeocoderControls({
 				) : null}
 			</section>
 
-			{/*
-			 * Every floating control lives in this one rail so none can overlap.
-			 *
-			 * The compass has its own group because it appears and disappears.
-			 * The rail hides while the drawer is raised.
-			 */}
+			{/* Every floating control lives in this one rail so none can overlap; the compass has its own group
+			    because it appears and disappears, and the rail hides while the drawer is raised. */}
 			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>
 					<MapControlButton
