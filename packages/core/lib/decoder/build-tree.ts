@@ -164,7 +164,7 @@ function emitSpans(raw: string, tokens: DecoderToken[], attribution: BuildTreeOp
 		if (prefix === "B" || open === null || open.tag !== tag) {
 			// Spurious-boundary repair: a `B-X` token that is whitespace-adjacent to
 			// an already-open `X` span is the model fragmenting a multi-word value,
-			// e.g. "Saint Paul" emitted as B-locality B-locality instead of B-locality I-locality.
+			// e.g. "Saint Paul" emitted as B-locality B-locality, where the second tag continues the first.
 			// Fold it into the open span.
 			//
 			// Guard: only merge when the text in `raw` between the two spans is whitespace-only.

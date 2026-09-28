@@ -7,7 +7,7 @@
  *
  *   Every caller supplies tuples from a published register: OpenAddresses Berlin and Saxony for DE,
  *   HM Land Registry Price Paid Data for GB, OpenAddresses countrywide for NL and IT, the CNIG
- *   export for ES, a LINZ-derived extract for NZ. This file composes the ORDER and the punctuation
+ *   export for ES, a LINZ-derived extract for NZ. This file composes the order and the punctuation
  *   through the OpenCage template for the country.
  *
  *   The `synth-*` source ids the recipes emit stay unchanged. A source id is a wire identifier stored

@@ -152,7 +152,6 @@ export async function buildOutlierLatin(
 	const valAppend: string[] = []
 	const testRows: LatinTestRow[] = []
 
-
 	for (const cc of TRAIN_COUNTRIES) {
 		const rows = (await rowsFor(cc)).toSorted((a, b) => hashFNV1a(a) - hashFNV1a(b))
 		const nVal = Math.floor(rows.length * 0.1)
