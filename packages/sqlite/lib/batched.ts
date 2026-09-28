@@ -11,32 +11,22 @@
  * One open batched transaction over a connection.
  */
 export interface BatchedTransaction {
-	/**
-	 * Record one written row.
-	 *
-	 * Every `rowsPerCommit` rows the open transaction is committed and a new one opened.
-	 * Answers `true` on the call that committed, so a caller can hang a progress report off the boundary.
-	 */
+/**
+ * Record one written row, committing and reopening the transaction every `rowsPerCommit` rows and
+ * answering `true` on the call that committed.
+ */
 	rowWritten(): boolean
-	/**
-	 * Commit the open transaction — the ordinary end of an ingest loop.
-	 */
 	commit(): void
-	/**
-	 * Best-effort `rollback`, and it must never replace the real error: a build runs with the
-	 * journal off (no artifact is ever published without the swap), so SQLite may refuse to unwind.
-	 *
-	 * What matters is that the caller sees why the ingest stopped rather than that a scratch file was tidied.
-	 */
+/**
+ * Best-effort `rollback` that must never replace the real error, so the caller still sees why the
+ * ingest stopped.
+ */
 	rollbackQuietly(): void
 }
 
 /**
- * Open a transaction that commits and reopens itself every `rowsPerCommit` written rows.
- *
- * The batch size is the caller's: a geometry table whose rows carry a blob wants a
- * smaller transaction than a fixed-width staging table, because a larger one grows
- * the write-ahead file without improving throughput.
+ * Open a transaction that commits and reopens itself every `rowsPerCommit` written rows, with the
+ * batch size left to the caller.
  */
 export function beginBatched(
 	database: { exec(sql: string): void },
