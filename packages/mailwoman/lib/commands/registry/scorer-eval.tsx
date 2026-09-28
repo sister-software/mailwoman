@@ -3,13 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman registry scorer-eval <kind>` — the record-matcher eval/benchmark suite (the retired
- *   `scripts/eval/record-matcher/` scripts, one enum command). Kinds: `pairwise` / `clustering` /
- *   `cross-state` (the learned-scorer evals), `dedup-ceiling` (the #625 Bayes-error measurement —
- *   also its own `registry dedup-ceiling` command), `nppes-benchmark` (#617), and the cross-dataset
- *   family (`coverage-reconciliation`, `cross-dataset`, `threshold-sweep`) plus the geocoder probes
- *   (`namesake-probe`, `vs-provided-coords`). Every kind emits its report to stdout. most need the
- *   record-matcher source files + weights + WOF/database data locally — operator-run rather than CI.
+ *   `mailwoman registry scorer-eval <kind>`: the record-matcher eval and benchmark suite.
+ *
+ *   Most kinds need the record-matcher source files, the weights, and the WOF and database data
+ *   locally, so they are operator-run.
  */
 
 import type { EvalGeocodeStream } from "@mailwoman/registry/tools"
@@ -48,25 +45,21 @@ export const spec = {
 	description: "Run a registry scorer evaluation",
 	positionals: [{ name: "kind", required: true, choices: kinds, description: "Evaluation kind" }],
 	options: {
-		// shared data wiring
 		sources: stringOption("Record-matcher sources directory"),
 		wof: stringOption("WOF admin SQLite path"),
 		"data-root": stringOption("Per-state database root"),
 		"out-md": stringOption("Markdown report path"),
-		// sampling
 		state: stringOption("State filter"),
 		npis: numberOption("NPIs sampled"),
 		cap: numberOption("Sample cap"),
 		max: numberOption("Facilities geocoded"),
 		"max-npis": numberOption("NPPES sample size"),
 		tau: numberOption("Collision threshold"),
-		// splits + seeds
 		seed: numberOption("PRNG seed"),
 		seeds: numberOption("Splits averaged"),
 		split: numberOption("Train fraction"),
 		"train-state": stringOption("Training state"),
 		"eval-state": stringOption("Evaluation state"),
-		// nppes-benchmark
 		"train-em": { type: "boolean", default: true, description: "EM-train FS arms" },
 		"legacy-join": { type: "boolean", default: false, description: "Use legacy join" },
 		candidate: stringOption("GBT module"),
@@ -77,7 +70,6 @@ export const spec = {
 		model: stringOption("Model path"),
 		tokenizer: stringOption("Tokenizer path"),
 		"model-card": stringOption("Model card path"),
-		// cross-dataset family
 		"corpus-frequency": { type: "boolean", default: true, description: "Build corpus frequency table" },
 		"out-geojson": stringOption("GeoJSON artifact path"),
 	},
@@ -144,8 +136,8 @@ async function runKind(kind: Kind, options: Options): Promise<string> {
 			return "cross-state: report emitted"
 		}
 		case "dedup-ceiling": {
-			// The same tool as `registry dedup-ceiling` (geocode-free).
-			// Kept in this enum so the whole record-matcher eval suite is reachable from one command.
+			// The same tool as `registry dedup-ceiling`, geocode-free, kept here so the whole eval
+			// suite is reachable from one command.
 			const res = await dedupCeiling(
 				{ sources: options.sources, cap: options.cap, state: options.state, tau: options.tau, outMd: options.outMd },
 				reportToStderr

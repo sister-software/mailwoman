@@ -1,15 +1,6 @@
 /**
- * @file Production functional smoke test for the deployed demo.
- *   Version parity alone did not catch the 2026-07-04 outage: WOF, FST, and street-tier failures produced no console
- *   errors. This `@smoke` spec checks results and runs daily against `MAILWOMAN_EARTH_URL`, as well as in local checks.
- *   Its addresses exercise the resolver tiers:
- *
- *   - 1600 Pennsylvania Ave NW → the street tier (situs/interp extracts) + an address_point rooftop.
- *   - Zabiče 8, 6250 Zabiče → the WOF admin cascade and the #942/#961 postal-compound floor. If either regresses to
- *     admin-only (or drops its marker), a tier is dead — exactly what shipped silently before.
- *   - 1012 LG Amsterdam → the #924 NL digits-first postcode fix (v5.4.0). If the model regresses to parsing `1012` as a
- *     house number + `LG` as a street, the spurious street context drags it to the US situs tier (Amsterdam, NY) — so
- *     this asserts the coordinate lands in the netherlands, the exact bug v5.4.0 shipped to fix.
+ * @file Production functional smoke test for the deployed demo. It runs daily against
+ *   `MAILWOMAN_EARTH_URL` and in local checks.
  */
 
 import { expect, test } from "../e2e/index.ts"
@@ -54,7 +45,6 @@ test.describe("Demo — production functional smoke @smoke", () => {
 
 		const { markerCount } = await demo.readResult()
 
-		// Distinguish Amsterdam, Netherlands (~52.37, 4.90) from the pre-v5.4.0 result in New York (~42.94, -74.19).
 		demo.expectNear(await demo.readCoords(), { lat: 52.35, lon: 4.9 }, 0.2)
 		expect(markerCount, "no marker rendered").toBeGreaterThan(0)
 		demo.console.assertNoFailEvents()

@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman eval promote` — `promotion-eval.ts` (#479): runs the standard eval battery against a
+ *   `mailwoman eval promote` (`promotion-eval.ts`): runs the standard eval battery against a
  *   candidate model, checks every number against an eval spec interface
  *   (`mailwoman/eval-harness/specs/*.json`), and emits `<out-dir>/verdict.json`. Exit 0 = every
  *   floor met and the mask-regression lock held. exit 1 = any miss. exit 2 = usage / lore-guard
- *   refusal. On `pass` it prints the pre-filled `eval ledger-append` command (#885). The module
- *   narrates everything (provenance, battery legs, verdict lines) — this wrapper only owns argv +
+ *   refusal. On `pass` it prints the pre-filled `eval ledger-append` command. The module
+ *   narrates everything (provenance, battery legs, verdict lines). This wrapper only owns argv +
  *   the exit code.
  */
 
@@ -36,7 +36,7 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// `promotion-eval.ts` narrates its own verdict lines, so no `json` — rendering
+// `promotion-eval.ts` narrates its own verdict lines, so no `json`. Rendering
 // anything here would pollute the captured report.
 const EvalPromote = harnessCommand(
 	spec,

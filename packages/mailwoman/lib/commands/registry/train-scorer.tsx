@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman registry train-scorer <variant>` — train + emit a committed learned-scorer model:
- *   `gbt` (the production dedup GBT, #603), `cross-gbt` (the NPI-anchored cross-source link scorer,
- *   #655 option 2), or `org-cross-gbt` (the CCN-anchored org-level cross-source scorer). Needs the
- *   record-matcher source files, weights, and WOF/database data locally — operator-run rather than CI.
+ *   `mailwoman registry train-scorer <variant>`: train and emit a committed learned-scorer model.
+ *   `gbt` is the production dedup GBT, `cross-gbt` is the NPI-anchored cross-source link scorer, and
+ *   `org-cross-gbt` is the CCN-anchored org-level cross-source scorer. Needs the record-matcher source
+ *   files, weights, and WOF/database data locally, so it is operator-run.
  */
 
 import { Text } from "ink"
