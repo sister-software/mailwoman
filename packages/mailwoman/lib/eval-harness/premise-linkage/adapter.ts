@@ -3,23 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The premise-linkage input adapter interface (#1902), plus the one implementation this repository ships:
- *   a synthetic fixture whose addresses, coordinates and identifiers are invented.
+ * The premise-linkage input adapter interface, plus the one implementation this repository ships: a synthetic
+ * fixture whose addresses, coordinates, and identifiers are invented.
  *
- *   The interface is an async iterable rather than an array because a controlled file is read under terms
- *   that usually forbid holding it whole, and because a run that streams can be stopped without ever
- *   having materialized the licensed rows. A provider's data populates one implementation of this
- *   interface. no downstream code changes.
+ * The interface is an async iterable rather than an array because a controlled file is read under terms that
+ * usually forbid holding it whole, and because a run that streams can be stopped without having materialized
+ * the licensed rows. The controlled adapter is deliberately not written here: its file format is the
+ * provider's and is not known yet.
  *
- *   The controlled adapter is deliberately not written here. Its file format is the provider's, it is
- *   not known yet, and inventing one now would mean the first real file either fits a guess or forces
- *   a redesign of the thing that was supposed to be fixed in advance.
- *
- *   Everything below is synthetic. The identifiers sit in the same reserved 0-prefixed range
- *   `@mailwoman/core/resolver`'s fixture provider uses, which no real uprn occupies. the addresses name
- *   a town that does not exist. the coordinates are round numbers in the sea of arbitrary. The one
- *   rule this file must keep is that the rows and the provider'S answers are derived from a single
- *   table — two hand-maintained lists that must agree drift the moment someone edits one of them.
+ * Everything below is synthetic. The identifiers sit in the reserved 0-prefixed range the
+ * `@mailwoman/core/resolver` fixture provider uses, which no real uprn occupies. The one rule this file must
+ * keep is that the rows and the provider's answers are derived from a single table, because two
+ * hand-maintained lists drift the moment someone edits one.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -37,10 +32,8 @@ import { type PremiseLinkageInputRow, PremiseLinkageInputShapeClass } from "#eva
 import type { GeocodeClassifier, GeocodeDeps } from "#geocode/core"
 
 /**
- * Where a run's rows come from.
- *
- * One method, asynchronous, licensed-data-neutral: the controlled implementation reads a provider's
- * file, this file's implementation reads a constant, and the runner cannot tell them apart.
+ * Where a run's rows come from. One method, asynchronous, licensed-data-neutral: the controlled implementation
+ * reads a provider's file, this file's implementation reads a constant, and the runner cannot tell them apart.
  */
 export interface PremiseLinkageAdapter {
 	/**
@@ -53,46 +46,36 @@ export interface PremiseLinkageAdapter {
 }
 
 /**
- * The scheme every synthetic row grades against.
- *
- * Real UK premise linkage grades against UPRNs.
- * The fixture uses the same scheme name with invented identifiers so the grading
- * path is the one a controlled run takes.
+ * The scheme every synthetic row grades against. Real UK premise linkage grades against UPRNs, and the fixture
+ * uses the same scheme name with invented identifiers so the grading path is the one a controlled run takes.
  */
 const SYNTHETIC_SCHEME = "uprn"
 
 /**
- * The one coordinate the synthetic resolver answers with, for every row — a town centroid
- * standing in for the admin tier the open arm reaches when it cannot place a premise.
+ * The one coordinate the synthetic resolver answers with, for every row: a town centroid standing in for the
+ * admin tier the open arm reaches when it cannot place a premise.
  */
 const SYNTHETIC_ADMIN_LAT = 51.5
 const SYNTHETIC_ADMIN_LON = -0.1
 
 /**
- * One synthetic case: the row the adapter yields, and the answer the synthetic provider gives for it.
- *
- * Both halves live here so an edit to one is an edit to the other.
+ * One synthetic case: the row the adapter yields and the answer the synthetic provider gives for it, both here
+ * so an edit to one is an edit to the other.
  */
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * Substring of the normalized query the provider keys on.
-	 *
-	 * Unique per case — the fixture answers with the first rule that hits,
-	 * so an overlapping key silently reassigns another case's answer.
+	 * Substring of the normalized query the provider keys on; unique per case, because the fixture answers with
+	 * the first rule that hits, so an overlapping key silently reassigns another case's answer.
 	 */
 	matchOn: string
 	/**
-	 * The provider's answer.
-	 *
-	 * Absent means no rule, which the #1901 fixture answers as a refusal.
+	 * The provider's answer; absent means no rule, which the fixture answers as a refusal.
 	 */
 	response?: AuthoritativeResponse
 	/**
-	 * Throw instead of answering — the transport-failure case.
-	 *
-	 * A thrown provider is not a refusal, and the harness has to be able to tell them
-	 * apart on real data, so the fixture set carries one.
+	 * Throw instead of answering, the transport-failure case: a thrown provider is not a refusal, and the
+	 * harness must tell them apart on real data.
 	 */
 	transportError?: boolean
 }
@@ -285,9 +268,7 @@ const SYNTHETIC_CASES: readonly SyntheticCase[] = [
 ]
 
 /**
- * The synthetic fixture set.
- *
- * Every outcome the harness can record, at least once, across the five shape classes.
+ * The synthetic fixture set: every outcome the harness can record, at least once, across the five shape classes.
  */
 export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
 	return {
@@ -301,13 +282,10 @@ export function syntheticFixtureAdapter(): PremiseLinkageAdapter {
 }
 
 /**
- * The provider that answers {@link syntheticFixtureAdapter}'s rows, built on
- * `@mailwoman/core/resolver`'s #1901 fixture so the arm under test consumes the
- * shipped reference implementation rather than a local mock.
- *
- * The one thing layered on top is the throwing case: `createFixtureAuthoritativeProvider`
- * always answers, and a harness that has never seen a transport failure cannot
- * claim it keeps failures apart from refusals.
+ * The provider that answers {@link syntheticFixtureAdapter}'s rows, built on `@mailwoman/core/resolver`'s
+ * fixture so the arm under test consumes the shipped reference implementation rather than a local mock. The one
+ * thing layered on top is the throwing case: `createFixtureAuthoritativeProvider` always answers, and a
+ * harness that has never seen a transport failure cannot claim it keeps failures apart from refusals.
  */
 export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] } = {}): AuthoritativeProvider {
 	const rules = SYNTHETIC_CASES.filter((entry) => entry.response !== undefined).map((entry) => ({
@@ -325,9 +303,8 @@ export function syntheticFixtureProvider(options: { log?: AuthoritativeQuery[] }
 			const haystack = query.normalizedQuery.toLowerCase()
 
 			if (throwingKeys.some((key) => haystack.includes(key))) {
-				// Logged before the throw so the record is every query the provider received
-				// rather than only the ones it answered.
-				// A consult that failed is still a consult, and a log that omits it under-counts.
+				// Logged before the throw, so the record is every query the provider received rather than only
+				// the ones it answered: a consult that failed is still a consult.
 				options.log?.push(query)
 
 				throw new Error("synthetic transport failure")
@@ -343,15 +320,10 @@ function syntheticNode(partial: Partial<AddressNode> & Pick<AddressNode, "tag" |
 }
 
 /**
- * A pipeline that always resolves to one admin coordinate.
- *
- * The shape of the open arm's answer when it can name a town and not a premise.
- *
- * Fixture-only, and deliberately so: a controlled run supplies real
- * {@link GeocodeDeps} built from the shipped model and gazetteer, and this exists
- * so the synthetic self-check runs on a machine with neither.
- * It is exported for the same reason the #1901 fixture provider is — one reference
- * stub the command and the tests share, rather than two that drift.
+ * A pipeline that always resolves to one admin coordinate — the shape of the open arm's answer when it can name
+ * a town and not a premise. Fixture-only: a controlled run supplies real {@link GeocodeDeps} built from the
+ * shipped model and gazetteer, and this exists so the synthetic self-check runs on a machine with neither. It is
+ * exported for the same reason the fixture provider is: one reference stub the command and the tests share.
  */
 export function syntheticFixtureDeps(): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
