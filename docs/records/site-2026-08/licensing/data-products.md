@@ -291,7 +291,7 @@ These packages are the parser itself, distributed as data-only npm packages that
 This page records the state as of 2026-08 and its text is left as it was written. Its second sentence
 cites `--exclude-share-alike`, which was never a flag on `mw corpus build` or on any other command. Its
 underlying option, `buildCorpus({ excludeLicenses })`, was reachable only from the library and its only
-caller was `packages/corpus/lib/build.test.ts`, so no released corpus was built with it. `SHARE_ALIKE_PATTERN`
+caller was `packages/corpus/lib/build/index.test.ts`, so no released corpus was built with it. `SHARE_ALIKE_PATTERN`
 was an anchored prefix match over the row's `license` column, which admitted 358,597 rows of
 `v0.7.0-de-holdout` whose license value is prose citing ODbL rather than the identifier.
 
