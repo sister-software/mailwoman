@@ -180,6 +180,20 @@ export interface EffectiveTrainingManifest {
 	 */
 	emittedButUnrecorded: Record<string, number>
 
+	/**
+	 * The three stages a source passes through, for each source in {@linkcode emittedButUnrecorded}.
+	 *
+	 * The entries above give the emitted rows alone.
+	 * These give the rows the corpus holds, the rows the epoch drew, and the rows it emitted
+	 * after augmentation, so a reader can tell a source present in the corpus
+	 * and drawn heavily from one present and barely drawn.
+	 *
+	 * `corpusRows` comes from `draw_level.per_source`, which counts the corpus files.
+	 * A source outside the frozen manifest has a corpus row count nowhere else, and `-1`
+	 * records that the audit reported none rather than that the corpus holds no such row.
+	 */
+	unrecordedSourceStages: Record<string, { corpusRows: number; drawnRows: number; emittedRows: number }>
+
 	totalEmittedRows: number
 
 	/**
@@ -197,6 +211,14 @@ export interface EpochMixtureAudit {
 		by_country?: Record<string, number>
 		admitted_countries_drawn?: Record<string, number>
 		admitted_countries_drawing_nothing?: string[]
+		/**
+		 * Per-source detail the audit computes from the corpus files rather than from the corpus manifest.
+		 *
+		 * `rows` is how many rows of that source the corpus holds.
+		 * It is the only place a source outside the frozen manifest carries a corpus row count, so it is
+		 * what lets a reader read a source's rows in the corpus beside the rows one epoch drew and emitted.
+		 */
+		per_source?: Record<string, { rows?: number; draws?: number }>
 	}
 	emitted_level?: { totals?: Record<string, number> }
 	meta?: { seed?: number; draws_requested?: number; draws_realized?: number; config?: string }
@@ -374,11 +396,21 @@ export function deriveEffectiveTrainingManifest(input: {
 	}
 
 	const recorded = new Set(input.corpusManifest.sources.map((record) => record.source))
+	const perSource = input.audit.draw_level?.per_source ?? {}
 	const emittedButUnrecorded: Record<string, number> = {}
+	const unrecordedSourceStages: EffectiveTrainingManifest["unrecordedSourceStages"] = {}
 
 	for (const [source, rows] of Object.entries(emitted)) {
 		if (rows > 0 && !recorded.has(source)) {
 			emittedButUnrecorded[source] = rows
+
+			unrecordedSourceStages[source] = {
+				// `-1` records that the audit reported no corpus row count for this source.
+				// A 0 would read as a source the corpus holds no row of, which contradicts its emitted rows.
+				corpusRows: perSource[source]?.rows ?? -1,
+				drawnRows: drawn[source] ?? 0,
+				emittedRows: rows,
+			}
 		}
 	}
 
@@ -398,6 +430,7 @@ export function deriveEffectiveTrainingManifest(input: {
 		trainingSources: sources.filter((record) => record.emittedRows > 0).map((record) => record.source),
 		excludedSources,
 		emittedButUnrecorded,
+		unrecordedSourceStages,
 		totalEmittedRows: Object.values(emitted).reduce((sum, count) => sum + count, 0),
 		contentDigest: "",
 	}

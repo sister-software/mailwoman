@@ -275,6 +275,203 @@
 		"codex-bare-postcode": 2060,
 		"reviewed-postcode-tail": 212
 	},
+	"unrecordedSourceStages": {
+		"deepseek-kryptonite": {
+			"corpusRows": 4691,
+			"drawnRows": 14633,
+			"emittedRows": 21218
+		},
+		"rendered-pt": {
+			"corpusRows": 800000,
+			"drawnRows": 29301,
+			"emittedRows": 29802
+		},
+		"fragment-no": {
+			"corpusRows": 33203,
+			"drawnRows": 58969,
+			"emittedRows": 45335
+		},
+		"rendered-si-bare-village": {
+			"corpusRows": 6285,
+			"drawnRows": 58341,
+			"emittedRows": 59227
+		},
+		"rendered-sg-register": {
+			"corpusRows": 142083,
+			"drawnRows": 18330,
+			"emittedRows": 15442
+		},
+		"rendered-pk-register": {
+			"corpusRows": 80081,
+			"drawnRows": 10308,
+			"emittedRows": 10510
+		},
+		"rendered-ch": {
+			"corpusRows": 500000,
+			"drawnRows": 29126,
+			"emittedRows": 31624
+		},
+		"rendered-lu": {
+			"corpusRows": 150000,
+			"drawnRows": 29112,
+			"emittedRows": 29205
+		},
+		"overture-latam": {
+			"corpusRows": 3771982,
+			"drawnRows": 29552,
+			"emittedRows": 29636
+		},
+		"spliced-country": {
+			"corpusRows": 47684,
+			"drawnRows": 9870,
+			"emittedRows": 12893
+		},
+		"invented-po-box-military": {
+			"corpusRows": 5279,
+			"drawnRows": 5453,
+			"emittedRows": 5209
+		},
+		"rendered-de": {
+			"corpusRows": 187485,
+			"drawnRows": 29160,
+			"emittedRows": 31323
+		},
+		"fragment-fr-bare-street-v22": {
+			"corpusRows": 64122,
+			"drawnRows": 58983,
+			"emittedRows": 48683
+		},
+		"fragment-fr": {
+			"corpusRows": 144865,
+			"drawnRows": 58747,
+			"emittedRows": 45256
+		},
+		"rendered-sk": {
+			"corpusRows": 150000,
+			"drawnRows": 29226,
+			"emittedRows": 29089
+		},
+		"rendered-cz-pcfirst-preposition-v21": {
+			"corpusRows": 51037,
+			"drawnRows": 58648,
+			"emittedRows": 58625
+		},
+		"gnaf": {
+			"corpusRows": 149969,
+			"drawnRows": 29379,
+			"emittedRows": 31720
+		},
+		"overture": {
+			"corpusRows": 2400000,
+			"drawnRows": 14860,
+			"emittedRows": 14606
+		},
+		"rendered-fr-order": {
+			"corpusRows": 50000,
+			"drawnRows": 14624,
+			"emittedRows": 14445
+		},
+		"rendered-hr": {
+			"corpusRows": 300000,
+			"drawnRows": 29246,
+			"emittedRows": 29203
+		},
+		"spliced-trailing-region-ca-bare": {
+			"corpusRows": 13740,
+			"drawnRows": 7292,
+			"emittedRows": 7138
+		},
+		"invented-po-box-cedex": {
+			"corpusRows": 49887,
+			"drawnRows": 7180,
+			"emittedRows": 8061
+		},
+		"spliced-sub-venue": {
+			"corpusRows": 116519,
+			"drawnRows": 59103,
+			"emittedRows": 62023
+		},
+		"invented-anchor-absorption": {
+			"corpusRows": 45645,
+			"drawnRows": 29324,
+			"emittedRows": 35963
+		},
+		"osm": {
+			"corpusRows": 153965,
+			"drawnRows": 9983,
+			"emittedRows": 8802
+		},
+		"rendered-nl-postcode": {
+			"corpusRows": 10000,
+			"drawnRows": 29213,
+			"emittedRows": 29588
+		},
+		"invented-house-venue": {
+			"corpusRows": 130174,
+			"drawnRows": 9784,
+			"emittedRows": 11751
+		},
+		"rendered-gb": {
+			"corpusRows": 788972,
+			"drawnRows": 29018,
+			"emittedRows": 28821
+		},
+		"fragment-assay": {
+			"corpusRows": 200348,
+			"drawnRows": 29406,
+			"emittedRows": 22666
+		},
+		"rendered-fr-admin-split": {
+			"corpusRows": 58867,
+			"drawnRows": 29243,
+			"emittedRows": 28710
+		},
+		"spliced-trailing-region-es-v28": {
+			"corpusRows": 4944,
+			"drawnRows": 5178,
+			"emittedRows": 5262
+		},
+		"rendered-bd-register": {
+			"corpusRows": 4551,
+			"drawnRows": 4719,
+			"emittedRows": 4756
+		},
+		"spliced-unit-v30": {
+			"corpusRows": 50000,
+			"drawnRows": 7463,
+			"emittedRows": 8939
+		},
+		"spliced-affix": {
+			"corpusRows": 84678,
+			"drawnRows": 9704,
+			"emittedRows": 11386
+		},
+		"spliced-trailing-region-us": {
+			"corpusRows": 15290,
+			"drawnRows": 2032,
+			"emittedRows": 2507
+		},
+		"invented-intersection": {
+			"corpusRows": 40000,
+			"drawnRows": 4815,
+			"emittedRows": 5519
+		},
+		"spliced-suffix-boundary": {
+			"corpusRows": 30000,
+			"drawnRows": 12235,
+			"emittedRows": 9405
+		},
+		"codex-bare-postcode": {
+			"corpusRows": 20460,
+			"drawnRows": 2680,
+			"emittedRows": 2060
+		},
+		"reviewed-postcode-tail": {
+			"corpusRows": 22,
+			"drawnRows": 240,
+			"emittedRows": 212
+		}
+	},
 	"totalEmittedRows": 1000000,
-	"contentDigest": "78bfd38f3bd0801922ed2c7731646a7849c3066e23aa343940390ba67eef5018"
+	"contentDigest": "ad8d5332f9a825dc2af8ed17baf62410234f1be583538b0bd28adf152385edb6"
 }

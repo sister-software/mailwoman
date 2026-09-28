@@ -129,6 +129,17 @@ export function requireSurface(raw: Record<string, unknown>, producer: string): 
 
 /**
  * Provenance fields that every corpus row carries.
+ *
+ * Two related facts are recorded per source rather than per row.
+ * `createIneligibilityReader` in `build/eligibility.ts` joins `source` against the
+ * address-source register and refuses the row at build time, so a release-profile corpus
+ * holds eligible rows by construction and `TRAINING_SOURCES.json` records each refusal.
+ *
+ * A per-row eligibility field would copy a per-source decision onto every row
+ * and would disagree with the register after a review changed a license's state.
+ * Whether a row reached a checkpoint is a property of a run rather than of the corpus,
+ * and the sampler draws a different sample per epoch, so `deriveEffectiveTrainingManifest`
+ * records it per source from a config and an `audit_epoch_mixture` output.
  */
 export interface SourceProvenance {
 	/**

@@ -107,11 +107,21 @@ export interface ProvenanceDocument {
 		 */
 		excluded: Array<{ source: string; because: string }>
 		/**
-		 * Sources the epoch emitted that the corpus manifest does not name, with their emitted rows.
+		 * Sources the epoch emitted that the corpus manifest does not name, each at its three stages.
 		 *
-		 * A non-empty list means this block covers part of what trained the model.
+		 * `corpus_rows` is how many rows of the source the corpus holds, `drawn_rows` how many
+		 * the epoch sampled, and `emitted_rows` how many reached the trainer after augmentation.
+		 * A non-empty list means this block covers part of what trained the model,
+		 * because the corpus manifest records the terms of none of these sources.
+		 *
+		 * `corpus_rows` reads `-1` when the audit reported no count for the source.
 		 */
-		emitted_but_unrecorded: Array<{ source: string; emitted_rows: number }>
+		emitted_but_unrecorded: Array<{
+			source: string
+			corpus_rows: number
+			drawn_rows: number
+			emitted_rows: number
+		}>
 		total_emitted_rows: number
 	} | null
 	tokenizer_version: string | null
@@ -307,8 +317,13 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 						source,
 						because,
 					})),
-					emitted_but_unrecorded: Object.entries(record.effectiveTraining.emittedButUnrecorded).map(
-						([source, rows]) => ({ source, emitted_rows: rows })
+					emitted_but_unrecorded: Object.entries(record.effectiveTraining.unrecordedSourceStages).map(
+						([source, stages]) => ({
+							source,
+							corpus_rows: stages.corpusRows,
+							drawn_rows: stages.drawnRows,
+							emitted_rows: stages.emittedRows,
+						})
 					),
 					total_emitted_rows: record.effectiveTraining.totalEmittedRows,
 				}
