@@ -21,13 +21,19 @@ interface SeedPlace {
 	name: string
 	country: string
 	population?: number
-	/** Plain aliases (official = 0). */
+	/**
+	 * Plain aliases (official = 0).
+	 */
 	aliases?: string[]
-	/** Official-language aliases (official = 1). */
+	/**
+	 * Official-language aliases (official = 1).
+	 */
 	officialAliases?: string[]
 }
 
-/** The production schema shape plus the `official` column. */
+/**
+ * The production schema shape plus the `official` column.
+ */
 function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
 

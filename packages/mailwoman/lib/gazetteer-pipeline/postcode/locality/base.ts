@@ -52,7 +52,9 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
-/** The grant the finalized table records in its `license` meta row. */
+/**
+ * The grant the finalized table records in its `license` meta row.
+ */
 const POSTCODE_LOCALITY_LICENSE = "CC-BY 4.0 (Who's On First) — attribution required on redistribution"
 
 /**

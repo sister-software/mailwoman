@@ -158,7 +158,9 @@ function legacyDedupeByName(suggestions: AutocompleteSuggestion[]): Autocomplete
 }
 
 
-/** Option sets every query runs under. */
+/**
+ * Option sets every query runs under.
+ */
 const OPTION_SETS: readonly AutocompleteOpts[] = [
 	{},
 	{ dedupeByName: true },

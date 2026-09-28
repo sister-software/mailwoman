@@ -22,7 +22,9 @@ interface FixturePlace {
 	country: string | null
 	lat: number
 	lon: number
-	/** Alternate names (one per locale) joined into FTS as a single token bag. */
+	/**
+	 * Alternate names (one per locale) joined into FTS as a single token bag.
+	 */
 	alt_names?: string[]
 	/**
 	 * Ancestor chain without self, used to seed the `ancestors` table.
