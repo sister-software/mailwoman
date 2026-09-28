@@ -3,30 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `useMapLabelPick` — clicking a place label on the map searches for it, the way the reference map apps behave.
- *
- *   A label on a map looks like a link, so a visitor clicks it. Without this the click reaches the map's pan handler
- *   and has no effect, which reads as the label being decoration.
- *
- *   It reads the label's own name from the rendered feature rather than reverse-geocoding the click point: the name
- *   is what the visitor pointed at, and a lookup by coordinate answers whatever is nearest instead, which on a dense
- *   basemap is regularly not the thing under the cursor.
- *
- *   the query is scoped, and the hover query is throttled. `queryRenderedFeatures` with no `layers` walks the whole
- *   style: measured at 64.3 ms per call returning 4,819 features over the 79-layer basemap at zoom 14 in Manhattan,
- *   against 4.9 ms and 44 features scoped to that style's 11 label layers. At one call per pointer move the unscoped
- *   form is the map's whole frame budget, so the layer list is resolved once per style and the hover query runs at
- *   most once per animation frame. The click query is not throttled. There is one of those per click.
+ *   Clicking a place label on the map searches for its own name, with the layer list resolved once per style and the hover query throttled to one per animation frame.
  */
 
 import { useEffect, useEffectEvent } from "react"
 import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 
 /**
- * The layers whose features carry a place name.
- *
- * Protomaps names its label layers `<theme>_label` and its settlement layers `places_*`;
- * anything else in the style is geometry rather than a label a visitor can read and point at.
+ * The protomaps label layers (`<theme>_label`, `places_*`); other layers are geometry rather than readable place names.
  */
 const LABEL_LAYER = /_label|^places_/
 
@@ -59,6 +43,9 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
 	return null
 }
 
+/**
+ * Routes clicks on map labels to `onPick` with the clicked label's own name.
+ */
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
 	// The subscription depends on the map alone; `onPick` is fresh every render, and `useEffectEvent` reads it without becoming a reactive dependency.
 	const pick = useEffectEvent((name: string) => onPick(name))

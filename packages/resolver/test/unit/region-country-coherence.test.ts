@@ -2,16 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Tests for region-country coherence (`applyRegionCountryCoherence`, wired under `opts.adminCoherence`).
- *   When the locale-inferred `defaultCountry` is applied as a hard `spr.country` candidate filter, a region
- *   qualifier naming a foreign subdivision ("QC" under a US locale) resolves to no place and is discarded —
- *   and the locality is force-matched to the populous US namesake ("Montreal" → Montreal, WI). This pass
- *   expands the region token to its country via codex's ISO-3166-2 subdivision table (QC → Quebec / CA),
- *   confirms both the subdivision and a same-named locality resolve under that country, and swaps the pair.
- *
- *   Byte-stable on the domestic path: a US region resolves fine under `US`, so the "region unresolved"
- *   trigger never fires for "Springfield, IL" / "Portland, ME".
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -19,9 +9,6 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 import { describe, expect, it } from "vitest"
 
-// A test region carries an `abbrev` so the fake backend can model the 2-letter address-line
-// code (the gazetteer resolves "IL" via an alt-name. Here abbrev-match stands in).
-// `country` checks it under the hard default-country filter.
 interface RegionPlace extends ResolvedPlace {
 	abbrev: string
 }
@@ -74,7 +61,6 @@ const MAINE: RegionPlace = {
 	exactMatch: true,
 }
 
-// Montréal, Quebec (the populous, correct target) vs Montreal, WI (the US namesake the greedy US filter picks).
 const MONTREAL_CA: ResolvedPlace = {
 	id: 200,
 	name: "Montreal",
@@ -99,7 +85,6 @@ const MONTREAL_WI: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// London, Ontario vs London, KY (a real US namesake — so the greedy US filter does resolve a locality to rescue from).
 const LONDON_CA: ResolvedPlace = {
 	id: 202,
 	name: "London",
@@ -124,7 +109,6 @@ const LONDON_KY: ResolvedPlace = {
 	exactMatch: true,
 }
 
-// The domestic controls — a same-named US locality under its US region.
 const SPRINGFIELD_IL: ResolvedPlace = {
 	id: 204,
 	name: "Springfield",
@@ -149,12 +133,6 @@ const PORTLAND_ME: ResolvedPlace = {
 	exactMatch: true,
 }
 
-/**
- * Backend filtered by name equality (regions also match their two-letter `abbrev`),
- * placetype, country, and `parentID` (descendant scope).
- *
- * Models the hard `spr.country` filter: a query with `country` set never returns a foreign row.
- */
 async function makeBackend(places: ResolvedPlace[]): Promise<ResolverBackend> {
 	return {
 		async findPlace(query) {
@@ -182,7 +160,6 @@ const node = (over: Partial<AddressNode> & Pick<AddressNode, "tag" | "value" | "
 	...over,
 })
 
-// region(<region>) → locality(<city>), the shape the parser produces for "<city>, <region>".
 const regionLocalityTree = (city: string, region: string): AddressTree => ({
 	raw: `${city}, ${region}`,
 	roots: [
@@ -217,7 +194,6 @@ const CA_POOL = [QUEBEC, ONTARIO, ILLINOIS, MAINE, MONTREAL_CA, MONTREAL_WI, LON
 describe("resolveTree + region-country coherence (Montreal QC)", () => {
 	it("rescues 'Montreal QC' from the US namesake to Montréal, Quebec under a US default country", async () => {
 		const resolver = createWOFResolver(await makeBackend(CA_POOL))
-		// defaultCountry US models the en-US locale hard filter that discards the "QC" region and picks Montreal WI.
 		const out = await resolver.resolveTree(regionLocalityTree("Montreal", "QC"), { defaultCountry: "US" })
 		const loc = localityOf(out)
 
@@ -226,7 +202,6 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 		expect(loc?.metadata?.["resolver_country"]).toBe("CA")
 		expect(loc?.metadata?.["region_country_repicked"]).toBe(true)
 
-		// The region node is re-decorated with Québec (the subdivision resolved under CA), not left as the dropped token.
 		const region = regionOf(out)
 		expect(region?.metadata?.["resolver_country"]).toBe("CA")
 		expect(region?.metadata?.["region_country_repicked"]).toBe(true)
@@ -292,13 +267,11 @@ describe("resolveTree + region-country coherence (Montreal QC)", () => {
 
 		const loc = localityOf(out)
 
-		// Greedy US filter → Montreal WI, and no coherence re-pick.
 		expect(loc?.metadata?.["region_country_repicked"]).toBeUndefined()
 		expect(loc?.metadata?.["resolver_country"]).toBe("US")
 	})
 
 	it("keeps the greedy result when the foreign country has no same-named locality (fail-safe)", async () => {
-		// Quebec resolves under CA, but there is no 'Gotham' locality anywhere → no re-pick, region stays unresolved.
 		const resolver = createWOFResolver(await makeBackend([QUEBEC, ILLINOIS]))
 		const out = await resolver.resolveTree(regionLocalityTree("Gotham", "QC"), { defaultCountry: "US" })
 		const loc = localityOf(out)

@@ -108,10 +108,8 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
-		expect(locality!.metadata?.rescore_postcode_verified).toBe(true) // the code-subset anchor validated it
-		// The postcode node stays UNdecorated when a locality was recovered.
-		// Its medoid centroid is coarser than the village pin, and postcode-over-locality
-		// consumers must not trade down.
+		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
+		// The postcode node stays undecorated when a locality was recovered: its medoid centroid is coarser than the village pin, and postcode-over-locality consumers must not trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeFalsy()
@@ -119,8 +117,6 @@ describe("postal-compound recovery (#942)", () => {
 
 	it("flag ON: the postcode node gains the code-subset coordinate floor ONLY when no city matches", async () => {
 		const resolver = createWOFResolver(await makeBackend())
-		// "Neznano" is not in the gazetteer.
-		// The locality rescue misses, so the floor fires.
 		const raw = "Neznano 7, 1382 Neznano"
 
 		const tree: AddressTree = {
@@ -151,13 +147,11 @@ describe("postal-compound recovery (#942)", () => {
 		const out = await resolver.resolveTree(tree, { defaultCountry: "SI", postalCompoundRecovery: true })
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
-		expect(pc).toBeUndefined() // no postcode synthesized
+		expect(pc).toBeUndefined()
 		expect(out.roots.filter((n) => n.placeID)).toHaveLength(1)
 	})
 
 	it("flag ON: street tokens stay blocked — no 'Ave, France' resurrection", async () => {
-		// A street-only failing parse: the street token equals a real place name,
-		// but street blocking must keep it out of recovery even with the flag on.
 		const resolver = createWOFResolver(await makeBackend())
 
 		const tree: AddressTree = {
@@ -174,25 +168,17 @@ describe("postal-compound recovery (#942)", () => {
 	})
 
 	it("check rejects a cross-border same-named decoy (unscoped)", async () => {
-		// No defaultCountry: the HR decoy is name-identical.
-		// The code-subset anchor (SI 1382) plus the 50km check must reject the 400+km decoy
-		// and accept the SI village.
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { postalCompoundRecovery: true })
 		const locality = out.roots.find((n) => n.tag === "locality" && n.placeID)
 
-		// Both candidates surface.
-		// The check keeps only the SI one.
 		expect(locality).toBeDefined()
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 	})
 })
 
 describe("#961 joint country recovery — the locale-default trap", () => {
-	// The CLI's en-US locale default scoped both the anchor and the village probe to US,
-	// so the SI floor never fired through geocode-core.
-	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in
-	// the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
+	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })
@@ -204,8 +190,6 @@ describe("#961 joint country recovery — the locale-default trap", () => {
 	})
 
 	it("rejects a cross-country namesake whose own country cannot verify the postcode", async () => {
-		// The HR decoy shares the name but HR holds no postcode "1382" → the joint pass must not promote it.
-		// With the SI row removed the tree stays unresolved rather than guessing.
 		const resolver = createWOFResolver(
 			await makeBackend(PLACES.filter((p) => !(p.placetype === "locality" && p.country === "SI")))
 		)

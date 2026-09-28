@@ -13,12 +13,6 @@ afterEach(() => {
 })
 
 test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-OSM database paths under a data root (#920/#977)", () => {
-	// The 2026-09-15 regrouping moved every database artifact under `db/`,
-	// and this test pinned the old prefix as six absolute string literals.
-	// It therefore passed while `wofExtractPaths` named a directory holding no files.
-	//
-	// The layout is composed with the builder the rest of the tree uses,
-	// so a future regrouping fails this assertion in one place.
 	const wof = wofDatabaseRoot("/data")
 	const extract = (name: string): string => wof(name).toString()
 
@@ -28,9 +22,7 @@ test("wofExtractPaths: builds the admin + postcode + tail + intl + NL-PC6 + NI-O
 		extract("postalcode-geonames-tail.db"),
 		extract("postalcode-intl.db"),
 		extract("postalcode-nl-pc6.db"),
-		// Build-local (ODbL): present only on the machine that built it, which is
-		// exactly why it can be listed unconditionally.
-		// Every caller filters with `existsSync`, and that filter is the tier.
+		// Build-local (ODbL): every caller filters with `existsSync`, which is why it can be listed unconditionally.
 		extract("postalcode-ni-osm.db"),
 	])
 

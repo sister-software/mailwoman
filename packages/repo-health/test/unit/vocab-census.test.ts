@@ -4,17 +4,12 @@
  * @author Teffen Ellis, et al.
  * @file Fixture cases for the action classifier.
  *
- *   The classifier decides how ~2,000 comments get rewritten, so a case it silently reclassifies
- *   moves work between buckets with no failing check — the same shape as a false negative in any
- *   other measuring tool. Each case below states one line of real source and the action it warrants.
+ *   A silently reclassified comment moves work between buckets with no failing check.
  */
 
 import { classify, Remedy } from "@mailwoman/repo-health/checks/vocab-census"
 import { describe, expect, it } from "vitest"
 
-/**
- * Builds the Vale `--output line` record and the one-line source it points at.
- */
 function hitFor(source: string, word: string): ReturnType<typeof classify> {
 	const column = source.toLowerCase().indexOf(word.toLowerCase()) + 1
 
@@ -61,10 +56,6 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 	})
 
 	it("finds the word when Vale's line number drifts, rather than bucketing a blank", () => {
-		// A bare `//` line shifts Vale's numbering: a hit on line 1 gets reported as line 3.
-		// Trusting the number reads an unrelated line, so the modifier comes out empty
-		// and the site lands in the read-context bucket by accident.
-		// Two files in this repository drift, both by two.
 		const source = [
 			"\t// then fail the ambiguity gate for Nassau's rows",
 			"\t//",
@@ -93,11 +84,6 @@ describe("the classifier reads the whole line, not only the modifier", () => {
 	})
 
 	it("indexes source by ABSOLUTE line number, blank lines included", () => {
-		// The check reads files with `TextSpliterator.from(..., { skipEmpty: false })`.
-		// The default drops blank lines, which shifts every line number after the
-		// first one — the hit below then classifies against the wrong source line
-		// and lands in a different bucket with no check failing.
-		// Measured on the real corpus: the default moved 731 of 2,014 hits.
 		const source = ["// header", "", "\t// then fail the ambiguity gate for Nassau's rows"]
 		const [hit] = classify(["a.ts:3:22:Mailwoman.AmbiguousShorthand:'gate' is ambiguous"], new Map([["a.ts", source]]))
 

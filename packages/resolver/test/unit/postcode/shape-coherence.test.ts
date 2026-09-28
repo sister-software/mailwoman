@@ -2,28 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Tests for postcode-shape coherence (#31, Mechanism 1,
- *   `ResolveOpts.postcodeShapeCoherence`) — shape as confidence and exclusion, downstream of the
- *   siblings. The pre-registered bars, per `docs/superpowers/plans/2026-08-05-postcode-structure-arc.md`:
- *
- *   - **B1-1** — byte-stability where it must be inert: a confirmed span (shape ∩ confident siblings
- *     ≠ ∅) adds `postcode_shape_systems` metadata and no other field. resolution is byte-identical to
- *     the flag-off walk.
- *   - **B1-2** — the M-1 exclusion board: ≥90% of the mechanism's "speaks population" (confident
- *     siblings present) is excluded with the correct sibling tag surviving. 4 real Gauntlet spans
- *     (US 1600/3080/1200 via their region, PR 3499 via the territory-mapped country) + 9 synthesized
- *     US/PR 4-digit rows = 13/13. The MX and ES rows are documented abstentions rather than in the
- *     denominator — MX has no country token ("Tabasco" is not a `matchSubdivision` key), and ES has
- *     no codex address system at all.
- *   - **B1-3** — confound protection ≤2% false exclusions: "Sydney NSW 2000, Australia" stays
- *     confirmed (the default country is never a signal), "10 Downing Street, London SW1A 2AA" under a
- *     US default abstains, "Ponce, 00716, Puerto Rico" stays confirmed via the PR→US territory map.
- *
- *   The rule under test (three outcomes, per span): intersection non-empty → confirmed (additive
- *   stamp only); intersection empty + confident siblings → excluded (digit-only retags to
- *   `house_number`; letter-containing keeps its tag and is stamped `postcode_shape_excluded`); no
- *   confident siblings or no codex shape → abstain.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -48,9 +26,6 @@ function postcodeNode(code: string): AddressNode {
 	return node({ tag: "postcode", value: code })
 }
 
-/**
- * Collect every node with a tag, in DFS order, for the retag assertions.
- */
 function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 	const out: AddressNode[] = []
 
@@ -63,8 +38,6 @@ function tagged(roots: readonly AddressNode[], tag: string): AddressNode[] {
 	return out
 }
 
-// A fake backend whose only job is to be a ResolverBackend for the byte-stability leg.
-// Every query misses, so no node resolves and the two walks (flag on/off) are trivially comparable.
 const silentBackend: ResolverBackend = {
 	findPlace: async () => [],
 }
@@ -80,7 +53,6 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		expect(verdict.abstained).toEqual([])
 		// 94103's codex shape is [us, de, fr]; the US country signal narrows it to exactly ["US"].
 		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
-		// Additive: the span keeps its tag and its other fields.
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(verdict.narrowing).toEqual(["US"])
 	})
@@ -88,8 +60,6 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 	it("is resolution-byte-identical to the flag-off walk — only additive metadata differs", async () => {
 		const resolver = createWOFResolver(silentBackend)
 
-		// The US country sibling confirms the span (B1-1's confirmed leg — where the pass
-		// must be inert for resolution) while leaving the walk lookup-less either way.
 		const mkTree = () =>
 			tree(
 				node({ tag: "street", value: "Twin Peaks" }),
@@ -103,17 +73,14 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		const offNode = tagged(off.roots, "postcode")[0]!
 		const onNode = tagged(on.roots, "postcode")[0]!
 
-		// Resolution fields identical — no lookup ran either way, and no node resolved.
 		expect(onNode.placeID).toBe(offNode.placeID)
 		expect(onNode.lat).toBe(offNode.lat)
 		expect(onNode.source).toBe(offNode.source)
-		// The only delta is the additive confirmation stamp.
 		expect(onNode.metadata?.["postcode_shape_systems"]).toEqual(["US"])
 	})
 
 	it("confirms a DE/FR shape-native 5-digit span — M-1 finding #1, the documented limit", () => {
-		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection
-		// is non-empty — the shape cannot exclude it, and the mechanism confirms it instead.
+		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection is non-empty and the shape confirms rather than excludes.
 		const roots = [postcodeNode("50733"), node({ tag: "country", value: "Germany" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -128,7 +95,6 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		// PR is a USPS state-or-territory abbreviation, so the Puerto Rico token is a US-system signal.
-		// The true postcode in "Ponce, 00716, Puerto Rico" is confirmed, never excluded.
 		expect(verdict.confirmed).toEqual(["00716"])
 		expect(roots[0]!.metadata?.["postcode_shape_systems"]).toEqual(["US"])
 	})
@@ -136,7 +102,6 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 
 describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 	it("excludes the M-1 US spans via their region signal, retagging to house_number", () => {
-		// US "1600" (Googleplex, Mountain View CA), US "3080" (Carmel CA), US "1200" (Longmont CO).
 		const cases: Array<[string, string]> = [
 			["1600", "CA"],
 			["3080", "CA"],
@@ -150,7 +115,6 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 
 			expect(verdict.excluded).toEqual([code])
 			expect(verdict.confirmed).toEqual([])
-			// Digit-only → the correct sibling tag survives: house_number rather than a dangling postcode.
 			const span = tagged(roots, "house_number")[0]
 			expect(span?.value).toBe(code)
 			expect(tagged(roots, "postcode")).toEqual([])
@@ -167,8 +131,6 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 	})
 
 	it("excludes 9 synthesized US/PR 4-digit rows — the speaks-population board totals 13/13", () => {
-		// The B1-2 denominator: the mechanism's "speaks population" (confident siblings present).
-		// 4 real Gauntlet spans above + 9 synthesized US/PR 4-digit rows = 13 rows, all excluded.
 		const synthesized: Array<[string, string]> = [
 			["1004", "NY"],
 			["2001", "CA"],
@@ -178,7 +140,7 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			["6006", "CO"],
 			["7007", "OR"],
 			["8008", "AZ"],
-			["1009", "PR"], // matchSubdivision("PR") → US — the region signal path covers the territory too
+			["1009", "PR"], // matchSubdivision("PR") maps to US, so the region signal path covers the territory.
 		]
 
 		let excluded = 0
@@ -194,7 +156,6 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 			excluded++
 		}
 
-		// 4 real + 9 synthesized = 13 of 13 speaks-population rows excluded → 100% ≥ 90% (B1-2).
 		expect(excluded).toBe(9)
 	})
 
@@ -204,9 +165,7 @@ describe("applyPostcodeShapeCoherence — EXCLUDED (B1-2)", () => {
 		const verdict = applyPostcodeShapeCoherence(roots)
 
 		expect(verdict.excluded).toEqual(["SW1A 2AA"])
-		// The compound-split corner (#942 territory): the span is not digit-only,
-		// so it cannot be retagged to house_number.
-		// It keeps its tag and is stamped.
+		// The span is not digit-only, so it cannot be retagged to house_number and is stamped instead.
 		expect(roots[0]!.tag).toBe("postcode")
 		expect(isShapeExcludedPostcode(roots[0]!)).toBe(true)
 	})
@@ -227,14 +186,12 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
-		// The region's ES signal is filtered out of the SystemCode universe before the intersection,
-		// so no confident siblings remain — the JP-shaped span abstains rather than false-excludes.
+		// The region's ES signal is filtered out of the SystemCode universe, so no confident siblings remain and the span abstains rather than false-excludes.
 		expect(verdict.abstained).toEqual(["15 07691"])
 		expect(roots[0]!.tag).toBe("postcode")
 	})
 
 	it("abstains on a shape no codex system recognizes", () => {
-		// "1200 02" matches no codex system.
 		// An empty candidate set is no evidence either way.
 		const roots = [postcodeNode("1200 02"), node({ tag: "country", value: "United States" })]
 
@@ -244,10 +201,7 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: 'Sydney NSW 2000, Australia' stays CONFIRMED — the default country is never a signal", () => {
-		// B1-3: reached under a US default, 2000 must not be excluded.
-		// That would delete the evidence the country-scope pass needs.
-		// The mechanism has no defaultCountry input at all.
-		// The only signals are the tree's own country/region tokens.
+		// The mechanism has no defaultCountry input: the only signals are the tree's own country/region tokens.
 		const roots = [postcodeNode("2000"), node({ tag: "country", value: "Australia" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -257,7 +211,6 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 	})
 
 	it("confounds: '10 Downing Street, London SW1A 2AA' under a US default abstains", () => {
-		// No country/region tokens in the tree → no signals → abstain, never exclude.
 		const roots = [postcodeNode("SW1A 2AA")]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -275,7 +228,6 @@ describe("isShapeExcludedPostcode", () => {
 		stamped.metadata = { postcode_shape_excluded: true }
 		expect(isShapeExcludedPostcode(stamped)).toBe(true)
 
-		// A retagged span is no longer a postcode at all — the helper declines by construction.
 		const retagged = postcodeNode("1600")
 		retagged.tag = "house_number"
 		expect(isShapeExcludedPostcode(retagged)).toBe(false)
@@ -284,16 +236,12 @@ describe("isShapeExcludedPostcode", () => {
 
 describe("firstPostcodeValue integration — excluded spans never become the address's postcode", () => {
 	it("skips a stamped-excluded span when selecting the tree's postcode", async () => {
-		// Two postcode spans.
-		// The letter-containing one is excluded, the US 5-digit one is not.
 		const excluded = postcodeNode("SW1A 2AA")
 		const good = postcodeNode("80503")
 
 		const roots = [excluded, node({ tag: "region", value: "CO" }), good]
 		applyPostcodeShapeCoherence(roots)
 
-		// The resolver walk must use the good span as the address's postcode.
-		// The excluded one is skipped even though it appears first in tree order.
 		const resolver = createWOFResolver(silentBackend)
 		const resolved = await resolver.resolveTree(tree(...roots), { postcodeShapeCoherence: true })
 

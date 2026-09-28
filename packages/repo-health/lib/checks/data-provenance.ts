@@ -4,27 +4,17 @@
  * @author Teffen Ellis, et al.
  * @file Every committed data artifact in a `data/` directory is named by that directory's `PROVENANCE.md`.
  *
- *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone. No line in the file says
- *   so — a JSON file looks the same whether a generator produced it or somebody typed it — and the prose linter reads
- *   `.ts`, `.tsx`, `.py`, `.yaml`, `.yml`, `.md` and `.mdx`, so no automated pass inspects these at all. What actually
- *   happened is that a hand sweep rewrote `Contracts Finder / Find a Tender` to `Interfaces Finder / Find a Tender`
- *   inside a generated register, and the register's own structural audit passed (#2352).
+ *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone, and no automated
+ *   pass inspects them: a JSON file looks the same whether a generator produced it or somebody typed it.
  *
- *   `PROVENANCE.md` is where a directory records, per artifact, what wrote it and how a reader checks it. The check is
- *   that the record exists and covers every artifact, so an artifact landing without one is a deliberate act rather
- *   than an oversight. It does not verify the artifact's contents: `address-source-register.json` does that itself
- *   with a `contentDigest` its reader recomputes.
+ *   `PROVENANCE.md` records per artifact what wrote it and how a reader checks it; the check requires the record to
+ *   name every artifact, and does not verify the artifact's contents.
  *
- *   Coverage is two questions, because an artifact can be out of reach in two ways. Every artifact file directly in
- *   the directory has to be named, and so does every immediate subdirectory. The second was added after
- *   `packages/core/data/coarse-placer/` was found shipping a trained classifier in every copy of `@mailwoman/core`
- *   with no record anywhere: each of core's four data directories is one level down, so a file-only rule reports
- *   no finding about any of them.
+ *   Coverage names every artifact file directly in the directory and every immediate subdirectory, because each of
+ *   core's four data directories is one level down and a file-only rule reports no finding about any of them.
  *
- *   A subdirectory is named rather than recursed into. Requiring every file at any depth would ask
- *   `packages/core/data/PROVENANCE.md` to list 1,114 vendored dictionary files, which is a list nobody reads and
- *   nobody keeps true. Naming the directory is the claim a reader checks, and a subdirectory with its own
- *   `PROVENANCE.md` is covered by this check in its own right.
+ *   A subdirectory is named rather than recursed into: requiring every file at any depth would ask
+ *   `packages/core/data/PROVENANCE.md` to list 1,114 vendored dictionary files, a list nobody reads or keeps true.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -32,24 +22,13 @@ import { basename, dirname, resolvePath } from "path-ts"
 
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
-/**
- * Extensions a `data/` directory holds that this check reads as an artifact.
- *
- * A README, a `PROVENANCE.md` and a license file are prose about the directory rather than data in it.
- * Everything else committed there is something a consumer loads.
- */
 const ARTIFACT_EXTENSIONS: ReadonlySet<string> = new Set([".json", ".jsonl", ".csv", ".tsv", ".bin", ".txt"])
 
-/**
- * Files in a `data/` directory that document it rather than live in it.
- */
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set(["PROVENANCE.md", "README.md", "LICENSE.md", "LICENSE"])
 
 /**
- * The names of the directories committed directly inside `directory`, in the order git lists them.
- *
- * Derived from the tracked-file list rather than by walking the filesystem, so an untracked
- * scratch directory a build left behind is not reported as an undocumented one.
+ * The names of the directories committed directly inside `directory`, derived from the tracked-file list so an
+ * untracked scratch directory a build left behind is not reported as undocumented.
  */
 function immediateSubdirectories(trackedFiles: readonly string[], directory: string): string[] {
 	const prefix = `${directory}/`
@@ -70,16 +49,8 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
 }
 
 /**
- * Reads every package's `data` directory that carries a `PROVENANCE.md`
- * and reports each artifact the file does not name.
- *
- * Scoped to directories that already have one.
- * A `data/` directory with no `PROVENANCE.md` is a different claim.
- *
- * That the directory should have one at all — and making this check assert it would turn a
- * documentation gap in unrelated packages into a failing build on the commit that adds this file.
- *
- * Registered in `#registry`, so `mwops health data-provenance` runs it.
+ * Reads every package's `data` directory that already carries a `PROVENANCE.md` and reports each artifact the
+ * file does not name.
  */
 export const dataProvenanceCheck: RepoCheck = {
 	id: "data-provenance",
