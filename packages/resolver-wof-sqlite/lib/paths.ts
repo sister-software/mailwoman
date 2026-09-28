@@ -132,7 +132,7 @@ export interface WOFExtractPaths {
 	 * the only coverage for the hole Code-Point Open leaves.
 	 *
 	 * ODbL, build-local, 2.5 MB.
-	 * A miss on a BT code means not attested IN OSM.
+	 * A miss on a BT code means not attested in OSM.
 	 *
 	 * An unknown postcode abstains, so the extract is strictly additive.
 	 * Rebuild: `mailwoman gazetteer build postcode-ni-osm`.
