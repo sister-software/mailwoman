@@ -5,16 +5,13 @@
  *
  * Convert a jsonl of LabeledRow objects to a Parquet file matching the schema the corpus writes.
  *
- * Writes through DuckDB (`@duckdb/node-api`): `read_json` with an explicit `columns` type map projects the
- * validated rows, then `copy ... TO ... (format parquet, compression snappy, ROW_GROUP_SIZE ...)` emits the
- * file. DuckDB reproduces the same logical schema as the PyArrow original — `varchar` scalars, `varchar[]`
- * for the string arrays, and `integer[]` for the span offsets — in the same column order, so a PyArrow
+ * DuckDB reproduces the same logical schema as the PyArrow original in the same column order, so a PyArrow
  * reader sees an identical table. The trainer reads parquet by column name, which is blind to physical layout.
  *
  * Schema: `PARQUET_COLUMNS` from `#parquet/schema`, the same list the native writer uses.
  *
  * The span triple is required on every row: a row arriving without it came from a producer that has not
- * migrated, and writing it would silently drop the char-offset labels. Fail loudly, naming the row number.
+ * migrated, and writing it would silently drop the char-offset labels. Fail loudly and report the row number.
  */
 
 import { delimitedSource } from "@mailwoman/core/fs/delimited"
@@ -31,8 +28,6 @@ import { PARQUET_COLUMNS, PARQUET_COLUMN_TYPES } from "#parquet/schema"
  * The columns this converter writes, and the DuckDB type each is written as.
  *
  * Both come from `#parquet/schema`, the one definition the native writer, the reader and the manifest share.
- * A local restatement went stale the moment `synth_method` became `recipe`, `register` and `surface`, and
- * the loader reads by column name, so the rows would have arrived declaring no surface at all.
  *
  * The span offsets are INT32: parallel arrays over `raw` (UTF-16 code units, `[start, end)` exclusive-end,
  * sorted, non-overlapping). `raw` is a short address string, so INT32 round-trips as a plain integer where
@@ -112,8 +107,7 @@ export async function jsonlToParquet(
 		throw new Error(`rowGroupSize must be a positive integer (got ${stringifyJSON(rowGroupSize)})`)
 	}
 
-	// Stage the validated rows to a temp ndjson, then let DuckDB type + write them.
-	// Streaming keeps memory O(1) on the Node side (the Python original buffered every column into memory first).
+	// Streaming keeps memory O(1) on the Node side.
 	// The staging directory owns the write stream, so it is closed before the directory
 	// is removed, and a mid-stream span-triple failure leaves no orphan.
 	await using staging = await temporaryDirectory("mw-jsonl-to-parquet-")
@@ -134,7 +128,6 @@ export async function jsonlToParquet(
 		if (!line) continue
 		const row = parseJSONStrict<Record<string, unknown>>(line)
 		assertSpanTriple(row, lineNo)
-		// Write the validated line verbatim.
 		// DuckDB's `read_json` projects to the explicit `columns` map below
 		// (extra keys dropped, absent keys → NULL — matching the Python `row.get(c)`).
 		stage.write(line + "\n")
