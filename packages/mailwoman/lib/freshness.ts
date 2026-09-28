@@ -76,6 +76,22 @@ export interface ArtifactFreshness {
 	 * because the candidate gazetteer's source is a chain and the vintage carries the database counts.
 	 */
 	sources?: string[]
+	/**
+	 * `layer_manifest.license` — the SPDX expression the build admitted, verbatim.
+	 *
+	 * A row written before the column existed leaves this undefined.
+	 * An absent expression states that nobody recorded the obligations
+	 * rather than that the artifact carries none.
+	 *
+	 * This field makes the per-result rights record the subset of
+	 * `docs/static/sbom/mailwoman-data-<version>.cdx.json` that the process opened,
+	 * read from the same `layer_manifest` row the document's components are built from.
+	 */
+	license?: string
+	/**
+	 * `layer_manifest.attribution` — the credit line the publisher's terms ask for, verbatim.
+	 */
+	attribution?: string
 }
 
 /**
@@ -146,6 +162,10 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 		built: manifest.created_at,
 		version: `${manifest.name}@${manifest.version}`,
 		sources: [manifest.source, manifest.source_vintage],
+		// Spread rather than assigned, so an artifact whose row holds no expression carries no key at all.
+		// A `license: undefined` and a `license: ""` both read to a JSON consumer as a recorded absence.
+		...(manifest.license ? { license: manifest.license } : {}),
+		...(manifest.attribution ? { attribution: manifest.attribution } : {}),
 	}
 }
 

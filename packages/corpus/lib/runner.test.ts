@@ -7,7 +7,8 @@
 import { pathExists, readLocalTextFile, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { removePathIfPresent } from "@mailwoman/core/fs/writers"
-import { runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
+import { FingerprintSet } from "@mailwoman/corpus/fingerprints"
+import { DedupStore, runAdapter, type RunnerProgress } from "@mailwoman/corpus/runner"
 import { AddressRole, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "@mailwoman/corpus/types"
 import { JSONSpliterator } from "spliterator"
 import { afterEach, beforeEach, describe, expect, it } from "vitest"
@@ -440,5 +441,124 @@ describe("runAdapter", () => {
 		})
 
 		expect(manifest.dedup_exhausted_at_yielded).toBeNull()
+	})
+
+	it("refuses a duplicate whose key arrives after the capped set would have filled", async () => {
+		// The same five rows as the capped test.
+		// The fingerprint table holds every key, so the second Nice is refused where the capped set wrote it.
+		// Over `v0.7.0-de-holdout` that difference is 1,490,992 rows across `usgov-nad`, `ban` and `wof-admin`.
+		const adapter = makeAdapter({
+			id: "table",
+			rows: [
+				baseRow({ source_id: "t-1", raw: "Paris" }),
+				baseRow({ source_id: "t-2", raw: "Lyon", components: { locality: "Lyon" } }),
+				baseRow({ source_id: "t-3", raw: "Nice", components: { locality: "Nice" } }),
+				baseRow({ source_id: "t-4", raw: "Paris" }),
+				baseRow({ source_id: "t-5", raw: "Nice", components: { locality: "Nice" } }),
+			],
+		})
+
+		const manifest = await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			// 2^10 slots, so the test allocates 16 KiB rather than the default 2.0 GiB.
+			dedupSlotsLog2: 10,
+		})
+
+		expect(manifest.yielded).toBe(5)
+		expect(manifest.written).toBe(3)
+		expect(manifest.deduped).toBe(2)
+		expect(manifest.dedup_store).toBe(DedupStore.FingerprintTable)
+		expect(manifest.dedup_keys).toBe(3)
+		// A table run never reaches a cap, so it records no exhaustion point.
+		expect(manifest.dedup_exhausted_at_yielded).toBeNull()
+
+		const rows = await Array.fromAsync(
+			JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("table", "canonical.jsonl"))
+		)
+
+		expect(rows.map((row) => row.source_id)).toEqual(["t-1", "t-2", "t-3"])
+	})
+
+	it("records which store held the keys, so two builds' duplicate counts are comparable", async () => {
+		const rows = [baseRow({ source_id: "s-1", raw: "Paris" })]
+
+		const table = await runAdapter({
+			adapter: makeAdapter({ id: "store-table", rows }),
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			dedupSlotsLog2: 10,
+		})
+
+		const set = await runAdapter({
+			adapter: makeAdapter({ id: "store-set", rows }),
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			dedupMaxSize: 1000,
+		})
+
+		expect(table.dedup_store).toBe(DedupStore.FingerprintTable)
+		expect(set.dedup_store).toBe(DedupStore.CappedSet)
+		expect(table.dedup_keys).toBe(1)
+		expect(set.dedup_keys).toBe(1)
+	})
+})
+
+describe("FingerprintSet", () => {
+	it("reports a key as new once and as held afterwards", () => {
+		const set = new FingerprintSet(8)
+
+		expect(set.add("Paris")).toBe(true)
+		expect(set.add("Paris")).toBe(false)
+		expect(set.add("Lyon")).toBe(true)
+		expect(set.size).toBe(2)
+	})
+
+	it("holds more keys than a V8 Set accepts, which is why it exists", () => {
+		const set = new FingerprintSet(18)
+
+		for (let index = 0; index < 100_000; index++) {
+			expect(set.add(`key-${index}`)).toBe(true)
+		}
+
+		expect(set.size).toBe(100_000)
+
+		for (let index = 0; index < 100_000; index++) {
+			expect(set.add(`key-${index}`)).toBe(false)
+		}
+
+		expect(set.size).toBe(100_000)
+	})
+
+	it("throws at the load limit rather than degrading into a long probe", () => {
+		// 2^4 slots hold 11 keys at a load factor of 0.7.
+		const set = new FingerprintSet(4)
+
+		let added = 0
+
+		expect(() => {
+			for (let index = 0; index < 100; index++) {
+				set.add(`key-${index}`)
+
+				added++
+			}
+		}).toThrow(/reached the load limit/)
+
+		expect(added).toBe(set.limit)
+	})
+
+	it("refuses a slot count outside 1..30 rather than allocating what the caller meant", () => {
+		expect(() => new FingerprintSet(0)).toThrow(RangeError)
+		expect(() => new FingerprintSet(31)).toThrow(RangeError)
+		expect(() => new FingerprintSet(8.5)).toThrow(RangeError)
+	})
+
+	it("sizes its allocation from the slot count, outside the V8 heap", () => {
+		expect(new FingerprintSet(10).bytes).toBe(2 ** 10 * 16)
+		expect(new FingerprintSet(10).slots).toBe(1024)
 	})
 })

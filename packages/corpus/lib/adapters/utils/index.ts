@@ -233,11 +233,17 @@ export async function loadLibpostalDictionary(language: string, filename: string
  * The key is built from `country`, the sorted `components` dict, and a normalized
  * `raw` (lower-cased, whitespace collapsed).
  *
- * License and provenance fields are intentionally excluded so the same address
- * from multiple adapters is recognized as a duplicate.
+ * License and provenance fields are excluded, so two adapters emitting the
+ * same address produce the same key.
+ * That does not make the corpus deduplicated across adapters: `runAdapter` holds its key store as a local
+ * and discards it when the adapter returns, so each adapter is deduplicated against itself alone.
  *
- * Synthetic rows are never deduplicated against natural rows: `synth.method` is folded
- * into the key when present, ensuring each augmentation variant survives.
+ * A cross-adapter pass would have to hold every adapter's keys at once and would change which
+ * adapter's copy of an address survives, which decides that row's `source`, `license` and `register`.
+ * That is a corpus-level decision rather than a runner detail, and no code makes it today.
+ *
+ * An augmented row is never deduplicated against the row it was fanned from: `recipe.recipe`
+ * is folded into the key when present, so each augmentation variant survives.
  */
 export function canonicalDedupKey(row: CanonicalRow): string {
 	const sortedKeys = Object.keys(row.components).toSorted() as ComponentTag[]

@@ -11,7 +11,8 @@
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { dataRootPath } from "@mailwoman/core/data-root"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -19,6 +20,7 @@ import { dRuleCountries, readScopeConfig, tieredCountries } from "@mailwoman/cor
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
+import type { PathBuilder } from "path-ts"
 
 import { admittedByShippedGraphs, resolveTrainingConfig } from "#coverage/census"
 import { censusCoverage, newestManifest } from "#coverage/index"
@@ -48,6 +50,25 @@ const { values } = parseArguments({
 interface EpochMixtureAudit {
 	emitted_level?: { by_country?: Record<string, number> }
 	meta?: { config?: string }
+}
+
+/**
+ * Where an `audit_epoch_mixture` output for one config is looked for when `--mixture-audit` is absent.
+ *
+ * Under the data root rather than committed, because the file is a measurement of
+ * one corpus with one seed and runs about ten minutes.
+ * Naming it by the config keeps two training arms' audits apart, which is the
+ * mismatch `readMixtureAudit` refuses.
+ */
+function defaultMixtureAuditPath(configPath: string): PathBuilder {
+	return dataRootPath(
+		"corpus",
+		"epoch-mixture",
+		`${configPath
+			.split("/")
+			.at(-1)
+			?.replace(/\.ya?ml$/u, "")}.json`
+	)
 }
 
 /**
@@ -103,13 +124,26 @@ const report = await censusCoverage({
 	casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 })
 
-const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"], configPath) : undefined
+const mixtureAuditPath = values["mixture-audit"] ?? defaultMixtureAuditPath(configPath).toString()
+const mixtureAuditPresent = await pathExists(mixtureAuditPath)
+
+if (!mixtureAuditPresent) {
+	console.error(
+		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
+			`  cd corpus-python && uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
+			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
+			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
+			`jurisdiction has.\n`
+	)
+}
+
+const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, configPath) : undefined
 
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
 	tieredCountries: [...tieredCountries(scope)],
 	protectedCountries: dRuleCountries(scope).map((entry) => entry.country),
-	...(values["mixture-audit"] ? { mixtureAudit: values["mixture-audit"] } : {}),
+	...(mixtureAuditPresent ? { mixtureAudit: mixtureAuditPath } : {}),
 	...(mixture ? { sampledRows: mixture.rows, sampledTotal: mixture.total } : {}),
 })
 

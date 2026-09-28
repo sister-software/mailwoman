@@ -106,10 +106,54 @@ export interface CoverageMismatches {
 }
 
 /**
+ * The codes a corpus row may carry that name no jurisdiction.
+ */
+const COUNTRY_LESS_CODES = ["ZZ", "??"] as const
+
+/**
+ * What each country-less code stands for, and what measuring its rows established.
+ */
+const COUNTRY_LESS_READINGS: Readonly<Record<string, string>> = {
+	ZZ:
+		"The ISO 3166-1 user-assigned range. In `v0.6.0-register-surface` these are bare place names from " +
+		"`synth-fragment`, a recipe no longer in the tree, every one `locale: und`. Measured 2026-09-28 " +
+		"against the candidate gazetteer: 3,115 resolve to exactly one country, 1,646 to several, and 4 to " +
+		"none. The 3,115 are attributable at the next assembly. The other 1,650 stay country-less because " +
+		"the gazetteer does not settle them (#2358).",
+	"??": "A row whose `country` column is empty, which the training loader drops.",
+}
+
+/**
+ * One code the corpus carries that names no jurisdiction.
+ *
+ * `ZZ` is the ISO 3166-1 user-assigned range and `??` marks a row whose `country` is empty.
+ * The per-country table drops both, because a reader counting its rows would report
+ * a jurisdiction the register does not enumerate.
+ *
+ * Dropping them without reporting them makes 4,765 rows of `v0.6.0-register-surface`
+ * invisible, so they are reported here instead.
+ */
+export interface CountryLessRows {
+	code: string
+	rows: number
+	streetRows: number
+	/**
+	 * What the code stands for, and what is known about attributing its rows.
+	 */
+	reading: string
+}
+
+/**
  * Holds the full coverage report that `censusCoverage` returns.
  */
 export interface CoverageReport {
 	countries: CountryCoverage[]
+	/**
+	 * Rows the corpus carries under a code that names no jurisdiction, excluded from `countries`.
+	 *
+	 * Empty where the counted corpus carries no such row.
+	 */
+	countryLess: CountryLessRows[]
 	mismatches: CoverageMismatches
 	corpusVersion: string
 	/**
@@ -597,9 +641,24 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 		...weightsPackages.keys(),
 	])
 
-	// `??` marks a row with no country, and the loader drops the `ZZ` placeholder.
-	all.delete("??")
-	all.delete("ZZ")
+	// Both codes leave the per-country table and are reported under `countryLess`, so the rows
+	// behind them are visible without reading as a jurisdiction the register does not enumerate.
+	const countryLess: CountryLessRows[] = []
+
+	for (const code of COUNTRY_LESS_CODES) {
+		all.delete(code)
+
+		const rows = census.rows[code] ?? 0
+
+		if (!rows) continue
+
+		countryLess.push({
+			code,
+			rows,
+			streetRows: census.streetRows[code] ?? 0,
+			reading: COUNTRY_LESS_READINGS[code] ?? "a code outside ISO 3166-1 alpha-2",
+		})
+	}
 
 	const countries: CountryCoverage[] = [...all].toSorted().map((cc) => {
 		const boardEntry = board.get(cc)
@@ -640,6 +699,7 @@ export async function censusCoverage(options: CensusCoverageOptions): Promise<Co
 
 	return {
 		countries,
+		countryLess,
 		mismatches: {
 			presentButDropped: countries.filter((c) => c.corpusRows > 0 && !c.admitted).map((c) => c.country),
 			admittedButEmpty: countries.filter((c) => c.admitted && c.corpusRows === 0).map((c) => c.country),

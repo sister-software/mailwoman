@@ -28,6 +28,7 @@ import { makeUNLocodeAnnotator, UNLocodeLookup } from "@mailwoman/un-locode-look
 import {
 	corsBannerLine,
 	gazetteerBannerLines,
+	rightsBannerLines,
 	gazetteerFreshness,
 	loadClassifierOrExit,
 	openAPICommand,
@@ -290,6 +291,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			console.error(`[@mailwoman/nominatim] listening on http://${host}:${port}`)
 
 			for (const line of gazetteerBannerLines(gazetteer)) {
+				console.error(line)
+			}
+
+			// The terms come from the same `layer_manifest` rows the `/status` payload carries,
+			// so the operator reads them at boot rather than by querying the endpoint they just started.
+			for (const line of rightsBannerLines(status.mailwoman ?? { artifacts: [] })) {
 				console.error(line)
 			}
 

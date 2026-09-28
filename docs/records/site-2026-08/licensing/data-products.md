@@ -299,6 +299,11 @@ The paragraph's third and fourth sentences are about the model card's own attrib
 unaffected. What is corrected is the mechanism the second sentence offers as the reason to believe them.
 [The data licensing page](./data-provenance.md) carries the same correction with the replacement named.
 
+Its third sentence also gives `CDLA-Permissive-2.0` for Overture Addresses. That identifier is the
+Places grant. Overture declares no identifier for the Addresses theme and lists the upstream register per
+country instead, so those rows carry the register's terms. The model card now reads that way, and
+`docs/engineering/reference/artifact-rights-inventory.mdx` carries the citation.
+
 :::
 
 **Tier:** shipped, on two backends that must agree. npm hosts the packages, and the public Hugging Face bucket `sister-software/mailwoman` hosts the binaries that the CI publish job downloads.

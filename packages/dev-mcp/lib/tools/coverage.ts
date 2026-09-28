@@ -146,6 +146,10 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 		rows: shown,
 		rendered: shown.map(line),
 		...(missing.length ? { requested_but_absent_everywhere: missing } : {}),
+		// Reported beside `rows` rather than inside it.
+		// These rows exist in the corpus and belong to no jurisdiction, and a caller that
+		// read only `rows` would not know they were counted at all.
+		...(report.countryLess.length ? { country_less_rows: report.countryLess } : {}),
 		mismatches: report.mismatches,
 		summary:
 			// A mismatch leads. A caller reads the first sentence, and every count after it is about a corpus the run does not read.
@@ -158,6 +162,10 @@ export function projectCoverage(report: CoverageReport, wantedCountries?: string
 				: "") +
 			(report.mismatches.packageWithoutTraining.length
 				? `Ships a locale package but was never trained: ${report.mismatches.packageWithoutTraining.join(", ")}. `
+				: "") +
+			(report.countryLess.length
+				? `COUNTRY-LESS: ${report.countryLess.map((entry) => `${entry.code} ${entry.rows} rows`).join(", ")}, ` +
+					`counted in the total and excluded from the per-country rows. `
 				: "") +
 			(report.corpusCensusTakenAt
 				? `Corpus counts are CACHED from ${report.corpusCensusTakenAt} — pass refresh after building a new corpus.`

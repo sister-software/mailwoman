@@ -168,6 +168,9 @@ export async function buildCorpus(opts: BuildCorpusOptions): Promise<BuildCorpus
 		quarantine_count: align.quarantined,
 		total_aligned_rows: align.aligned,
 		licenses: Object.fromEntries(licenseSummary),
+		licenses_cover:
+			"the rows this build aligned from its adapters. An overlay parquet assembled afterwards carries " +
+			"its own licenses, and an overlay corpus copies this set forward without them.",
 		excluded_by_license: align.excludedByLicense,
 		license_policy: licensePolicy,
 		refused_by_license_kind: Object.fromEntries(align.refusedByKind),

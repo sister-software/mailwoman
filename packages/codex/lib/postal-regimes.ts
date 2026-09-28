@@ -186,7 +186,11 @@ export const POSTAL_REGIMES: readonly PostalRegime[] = [
 			"A code that appears in real data and is not ISO 3166-1. `XK` for Kosovo is the one this repository carries.",
 		note:
 			"The source register enumerates `XK` as its 250th jurisdiction, so it is counted. No layout, postcode shape " +
-			"or lexicon names it. Accepting the code states nothing about sovereignty.",
+			"or lexicon names it. Accepting the code states nothing about sovereignty. `ZZ` is a different case: it is " +
+			"the ISO 3166-1 user-assigned range, the register enumerates no jurisdiction for it, and the coverage " +
+			"census reports its rows under `countryLess` rather than as a jurisdiction. `v0.6.0-register-surface` " +
+			"carries 4,765 such rows, of which the candidate gazetteer resolves 3,115 to exactly one country and " +
+			"1,650 to none or to several (#2358).",
 	},
 ]
 

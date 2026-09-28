@@ -14,6 +14,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
 import { canonicalDedupKey, streamingSha256, type AdapterRegistry, type StreamingHasher } from "#adapters/utils"
+import { FingerprintSet } from "#fingerprints"
 import type { AdapterOptions, CanonicalRow, CorpusAdapter } from "#types"
 
 /**
@@ -35,15 +36,38 @@ export interface RunnerProgress {
 }
 
 /**
- * Per-invocation options for `runAdapter`.
- */
-/**
- * How many distinct dedup keys the runner holds before it stops adding new ones.
+ * Base-2 logarithm of the fingerprint table's slot count.
  *
- * A V8 `Set` refuses a 16,777,216th entry outright, so the cap is a real bound rather than a preference.
- * Three adapters passed it in `v0.7.0-de-holdout`.
+ * 2^27 slots hold 93,952,409 keys before the load limit, against the largest measured
+ * adapter's 57,570,829 distinct keys, and occupy 2.0 GiB outside the V8 heap.
+ */
+export const DEFAULT_DEDUP_SLOTS_LOG2 = 27
+
+/**
+ * How many distinct dedup keys a `Set`-backed run holds before it stops adding new ones.
+ *
+ * A V8 `Set` refuses a 16,777,216th entry outright, so this cap was a real bound rather than a preference.
+ * It applies only to a run that opts out of the fingerprint table
+ * through {@linkcode RunAdapterOptions.dedupMaxSize}.
  */
 export const DEFAULT_DEDUP_MAX_SIZE = 10_000_000
+
+/**
+ * Where a run held its dedup keys.
+ */
+export const DedupStore = {
+	/**
+	 * 128-bit fingerprints in a flat `Uint32Array`, bounded by the array the run sized.
+	 */
+	FingerprintTable: "fingerprint-table",
+
+	/**
+	 * A V8 `Set` of key strings, capped because V8 refuses a 16,777,216th entry.
+	 */
+	CappedSet: "capped-set",
+} as const
+
+export type DedupStore = (typeof DedupStore)[keyof typeof DedupStore]
 
 export interface RunAdapterOptions {
 	adapter: CorpusAdapter
@@ -51,15 +75,24 @@ export interface RunAdapterOptions {
 	adapterOptions: AdapterOptions
 
 	/**
-	 * How many distinct dedup keys to hold before the set stops growing.
+	 * Hold dedup keys in a V8 `Set` capped at this many, rather than in a fingerprint table.
 	 *
-	 * Defaults to {@linkcode DEFAULT_DEDUP_MAX_SIZE}.
+	 * The cap is what the fingerprint table replaces.
+	 * A run that sets this reproduces the pre-2026-09-28 behavior: past the cap the runner still
+	 * drops a duplicate of a key it holds, and writes a duplicate of a key first seen after the cap.
+	 *
+	 * Over `v0.7.0-de-holdout` that wrote 1,490,992 duplicate rows across three adapters.
 	 * A test sets it low to reach exhaustion in a few rows.
-	 *
-	 * Past the cap the runner still drops a duplicate of a key it holds,
-	 * and writes a duplicate of a key first seen after the cap.
 	 */
 	dedupMaxSize?: number
+
+	/**
+	 * Base-2 logarithm of the fingerprint table's slot count.
+	 *
+	 * Defaults to {@linkcode DEFAULT_DEDUP_SLOTS_LOG2}.
+	 * A test sets it low to keep the allocation small.
+	 */
+	dedupSlotsLog2?: number
 
 	/**
 	 * Root output directory.
@@ -115,6 +148,20 @@ export interface AdapterRunManifest {
 	 * duplicate counts needs this beside it.
 	 */
 	dedup_exhausted_at_yielded: number | null
+	/**
+	 * How the run held its dedup keys: `fingerprint-table` or `capped-set`.
+	 *
+	 * The two reach different row counts on the same input, so a consumer comparing
+	 * two builds needs to know which each used.
+	 * `capped-set` writes a duplicate of any key first seen after its cap.
+	 */
+	dedup_store: DedupStore
+	/**
+	 * Distinct dedup keys the run held at the end.
+	 *
+	 * Under `fingerprint-table` this is a fingerprint count, so two keys sharing all 128 bits count once.
+	 */
+	dedup_keys: number
 	bytes: number
 	sha256: string
 	jsonl_path: string
@@ -141,7 +188,14 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 	const stream = openWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
-	const seen = new Set<string>()
+
+	// The `Set` path exists for a caller that cannot accept a fingerprint collision dropping
+	// a legitimate row, and for the test that reaches the capped behavior in three rows.
+	// Every other run takes the table, whose entry count is bounded by the array it sized
+	// rather than by V8's `Set` limit.
+	const capped = opts.dedupMaxSize !== undefined
+	const seen = capped ? new Set<string>() : null
+	const fingerprints = capped ? null : new FingerprintSet(opts.dedupSlotsLog2 ?? DEFAULT_DEDUP_SLOTS_LOG2)
 	const dedupMaxSize = opts.dedupMaxSize ?? DEFAULT_DEDUP_MAX_SIZE
 	let dedupExhausted = false
 	let dedupExhaustedAtYielded: number | null = null
@@ -183,31 +237,42 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const key = canonicalDedupKey(stamped)
 
-			// The membership test runs whether or not the set is full.
-			// Exhaustion stops the set GROWING, and a set that has stopped growing still
-			// rejects every duplicate of a key it holds.
-			// Skipping the test once full let a row duplicating one of the first `dedupMaxSize` keys through.
-			// This ordering exists to refuse that row.
-			if (seen.has(key)) {
-				if (yielded % progressEvery === 0) {
-					emitProgress()
+			if (fingerprints) {
+				// The table holds every key the run has seen, so a duplicate is refused wherever it arrives.
+				if (!fingerprints.add(key)) {
+					if (yielded % progressEvery === 0) {
+						emitProgress()
+					}
+
+					continue
+				}
+			} else if (seen) {
+				// The membership test runs whether or not the set is full.
+				// Exhaustion stops the set GROWING, and a set that has stopped growing
+				// still rejects every duplicate of a key it holds.
+				// Skipping the test once full let a row duplicating one of the first `dedupMaxSize` keys through.
+				// This ordering exists to refuse that row.
+				if (seen.has(key)) {
+					if (yielded % progressEvery === 0) {
+						emitProgress()
+					}
+
+					continue
 				}
 
-				continue
-			}
+				if (!dedupExhausted) {
+					if (seen.size >= dedupMaxSize) {
+						dedupExhausted = true
+						dedupExhaustedAtYielded = yielded
 
-			if (!dedupExhausted) {
-				if (seen.size >= dedupMaxSize) {
-					dedupExhausted = true
-					dedupExhaustedAtYielded = yielded
-
-					process.stderr.write(
-						`  runner: dedup set full at ${dedupMaxSize.toLocaleString()} keys after ${yielded.toLocaleString()} ` +
-							`yielded rows — a later row duplicating a key already held is still dropped, and a duplicate of ` +
-							`a key first seen from here on is written\n`
-					)
-				} else {
-					seen.add(key)
+						process.stderr.write(
+							`  runner: dedup set full at ${dedupMaxSize.toLocaleString()} keys after ${yielded.toLocaleString()} ` +
+								`yielded rows — a later row duplicating a key already held is still dropped, and a duplicate of ` +
+								`a key first seen from here on is written\n`
+						)
+					} else {
+						seen.add(key)
+					}
 				}
 			}
 
@@ -247,6 +312,8 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		written,
 		deduped: yielded - written,
 		dedup_exhausted_at_yielded: dedupExhaustedAtYielded,
+		dedup_store: fingerprints ? DedupStore.FingerprintTable : DedupStore.CappedSet,
+		dedup_keys: fingerprints?.size ?? seen?.size ?? 0,
 		bytes,
 		sha256: hasher.digest(),
 		jsonl_path: jsonlPath.toString(),

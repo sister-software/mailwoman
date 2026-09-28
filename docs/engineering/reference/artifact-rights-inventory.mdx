@@ -196,7 +196,7 @@ travels beside the verbatim text in the package's `PROVENANCE.json`.
 |   2 | LINZ-derived OpenAddresses NZ              | CC-BY 4.0                                 | training              |
 |   3 | OpenAddresses ES tuples                    | CC-BY per OA source                       | training              |
 |   4 | BAN — Base Adresse Nationale (DINUM / IGN) | Licence Ouverte 2.0                       | training              |
-|   5 | Overture Maps Foundation — Addresses theme | CDLA-Permissive-2.0                       | training              |
+|   5 | Overture Maps Foundation — Addresses theme | per-country register license              | training              |
 |   6 | OpenAddresses CZ — ČÚZK RÚIAN              | CC-BY 4.0                                 | tokenizer, evaluation |
 |   7 | OpenAddresses PL — GUGiK / PRG             | **none named** — "public, BDOT-derived"   | tokenizer, evaluation |
 |   8 | OpenAddresses SK — MINV/ZBGIS              | CC-0/CC-BY per OA source                  | evaluation            |
@@ -210,6 +210,16 @@ the model learned from rows it never saw. Dropping the four loses an attribution
 require, so both readings are wrong and the record carries the split instead.
 
 Entry 10 states no use at all, which is recorded as `unstated` rather than assumed to be training.
+
+Entry 5 reads the per-country register license because Overture's attribution page, read 2026-09-25 at
+`https://docs.overturemaps.org/attribution/` (sha256
+`0074f0dc0d9bbe582174f7efe0581863622a8c3b40897230def5e37ab0a6c383`), declares an SPDX identifier for five
+themes and prose for Addresses. Every `CDLA Permissive 2.0` occurrence on that page sits under Places,
+which is the grant behind the `poi` bundle. For Addresses the page lists the upstream register per
+country: Spain's `scne.es` under CC BY 4.0, Italy's ANNCSU under CC BY 4.0, and all 18 of Taiwan's county
+and city Civil Affairs bodies under CC BY 4.0. Whether any Overture release document attaches an
+identifier to the Addresses theme is unresolved, because `release/latest/` and `release/2026-05-20.0/`
+answered 404 and 503 that day.
 
 Entry 10 resolves to statements that do not name a single license. Excerpted verbatim from
 `THIRD_PARTY_NOTICES.md`, in a fenced block so the prose checks grade this document's own writing

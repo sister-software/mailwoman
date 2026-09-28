@@ -159,7 +159,11 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "fragment-assay",
 		operation: SourceOperation.Fragment,
 		producer: "corpus-python/src/mailwoman_train/corpora/fragment/build.py",
-		note: "The rows carry `recipe: fragment-assay`. 4,765 of the 200,348 on disk carry `country: ZZ` (#2358).",
+		note:
+			"The rows carry `recipe: fragment-assay`, and no registered recipe emits this source: the producer " +
+			"named above is out of the tree, so the rows cannot be rebuilt. 4,765 of the 200,348 on disk carry " +
+			"`country: ZZ`, of which the candidate gazetteer resolves 3,115 to one country and 1,650 to none or " +
+			"several (measured 2026-09-28). The source survives that decision, so the name is settled (#2358).",
 	},
 	{
 		retired: "synth-fr-fragment",
@@ -205,7 +209,9 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		[
 			"street-bare",
 			"recipes/street/bare.ts",
-			"Provisional. The header says the rows come from the built-in `DEFAULT_US_BASES` pool, and the provenance block declares `Composed` behind `requireRegister`; the file decides which.",
+			"`synthesizeStreetRow` composes the street from `STREET_NAMES`, `DIRECTIONAL_PREFIXES` and " +
+				"`STREET_SUFFIXES`, all hand-written word lists, over the hand-written `DEFAULT_US_BASES` city " +
+				"tuples. No register supplies any part of the row, so the operation is invented rather than composed.",
 		],
 		["no-street", "no/recipes/street/index.ts"],
 		["no-street-v063", "no/recipes/street/index.ts"],

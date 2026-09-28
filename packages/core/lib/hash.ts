@@ -69,6 +69,18 @@ export function md5Hex(data: string | NodeJS.ArrayBufferView): string {
 }
 
 /**
+ * MD5 of in-memory content as its 16 raw bytes.
+ *
+ * The hex form doubles the width and a caller comparing fingerprints by value pays for parsing it back.
+ * A fixed-capacity fingerprint table reads four 32-bit words straight out of this buffer.
+ *
+ * Same provenance-only rationale as {@link md5Hex}, and the same non-security caveat.
+ */
+export function md5Bytes(data: string | NodeJS.ArrayBufferView): Buffer {
+	return createHash("md5").update(data).digest()
+}
+
+/**
  * The incremental hasher, for input that arrives in pieces — a row at a time, a chunk at a time.
  *
  * For a whole value, {@linkcode sha256Hex} and {@linkcode md5Hex} say which digest in their name.

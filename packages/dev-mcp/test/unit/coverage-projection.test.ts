@@ -28,6 +28,7 @@ function report(overrides: Partial<CoverageReport> = {}): CoverageReport {
 				boardPassedRows: 1,
 			},
 		],
+		countryLess: [],
 		mismatches: {
 			presentButDropped: [],
 			admittedButEmpty: ["IN"],

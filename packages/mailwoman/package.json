@@ -437,6 +437,11 @@
 			"node": "./lib/data/index.ts",
 			"default": "./out/data/index.js"
 		},
+		"./data/bom": {
+			"types": "./out/data/bom.d.ts",
+			"node": "./lib/data/bom.ts",
+			"default": "./out/data/bom.js"
+		},
 		"./data/bundles": {
 			"types": "./out/data/bundles.d.ts",
 			"node": "./lib/data/bundles.ts",

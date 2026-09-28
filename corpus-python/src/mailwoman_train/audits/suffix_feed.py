@@ -11,7 +11,11 @@ from typing import Any
 from ..data.loader import _raw_row_stream
 from ..data.relabel import AffixRelabelLexicon, relabel_row
 
-TARGET_SOURCE = "synth-suffix-boundary"
+# Both spellings of the one source this audit measures. `RECIPE_SOURCES` in
+# `packages/corpus/lib/recipes/sources.ts` is the authority for the pair, and a corpus stores whichever
+# spelling it was assembled under. Matching one alone makes the audit report every target cell as absent on
+# the other corpus, which reads the same as a feed that carries no target rows.
+TARGET_SOURCES = ("synth-suffix-boundary", "spliced-suffix-boundary")
 
 
 def _component(label: str) -> str | None:
@@ -118,22 +122,21 @@ def audit_feed(
     for row in islice(stream, rows):
         sampled += 1
         for cls, ok in evaluate_row(row, classify_lex=classify_lex, relabel_lex=relabel_lex):
-            bucket = "target" if row["source"] == TARGET_SOURCE else "ordinary"
+            bucket = "target" if row["source"] in TARGET_SOURCES else "ordinary"
             carriers[(cls, bucket)] += 1
             correct[(cls, bucket)] += int(ok)
             per_source_carriers[(cls, row["source"])] += 1
             per_source_correct[(cls, row["source"])] += int(ok)
 
-    # Every comparison in this report is target against ordinary, and `TARGET_SOURCE` is the only thing
-    # that sorts a row into the target bucket. A spelling the corpus retired puts every row in
+    # Every comparison in this report is target against ordinary, and `TARGET_SOURCES` is the only thing
+    # that sorts a row into the target bucket. A spelling absent from that tuple puts every row in
     # `ordinary`, and the report then reads as a finished measurement whose target cells are all empty.
     # An audit that cannot find what it audits has to say so: a false negative in the measuring tool
-    # reads identically to a real absence. `packages/corpus/lib/recipes/sources.ts` maps the retired
-    # `synth-` source names to their current ones.
+    # reads identically to a real absence.
     if sampled and not any(bucket == "target" for _, bucket in carriers):
         seen = sorted({src for _, src in per_source_carriers})
         raise ValueError(
-            f"no row of the {sampled:,} sampled carries source {TARGET_SOURCE!r}, so every target cell "
+            f"no row of the {sampled:,} sampled carries any of {TARGET_SOURCES!r}, so every target cell "
             f"in this report would read 0 carriers against a populated ordinary bucket. Sources seen: "
             f"{', '.join(seen) if seen else 'none carried a classified span'}."
         )

@@ -186,7 +186,41 @@ export interface OverlayPlan {
 	modalRoot: string
 	note: string
 	appliedAt: string
-	files: Array<{ parquet: string; source: string; split: SplitName }>
+	/**
+	 * Each added file with the route its split came from.
+	 *
+	 * `route` reads `split-slice` where the filename carries the split suffix that command
+	 * writes, and `caller` where the split was supplied as an argument.
+	 * A hand-placed split reached `v0.6.0-register-surface` through the second route
+	 * and put 770 of DE's 3,987 validation `source_id`s in train, and the filename
+	 * was the only place that showed it (#2359).
+	 */
+	files: Array<{ parquet: string; source: string; split: SplitName; route: SplitRoute }>
+}
+
+/**
+ * How one overlay file's split was decided.
+ */
+export const SplitRoute = {
+	/**
+	 * `corpus split-slice` applied `splitForRow` to every row and wrote the split into the filename.
+	 */
+	SplitSlice: "split-slice",
+
+	/**
+	 * The caller supplied the split.
+	 * The holdout policy never saw these rows.
+	 */
+	Caller: "caller",
+} as const
+
+export type SplitRoute = (typeof SplitRoute)[keyof typeof SplitRoute]
+
+/**
+ * Which route decided one file's split.
+ */
+export function splitRouteFor(parquet: string): SplitRoute {
+	return splitFromFilename(parquet) ? SplitRoute.SplitSlice : SplitRoute.Caller
 }
 
 export interface OverlayManifestOptions {
@@ -333,7 +367,12 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		modalRoot: args.modalRoot,
 		note: manifest.note,
 		appliedAt: new Date().toISOString(),
-		files: args.files.map((file) => ({ parquet: file.parquet, source: file.source, split: file.split ?? "train" })),
+		files: args.files.map((file) => ({
+			parquet: file.parquet,
+			source: file.source,
+			split: file.split ?? "train",
+			route: splitRouteFor(file.parquet),
+		})),
 	}
 
 	const planPath = newDir(OVERLAY_PLAN_FILE)
@@ -345,7 +384,10 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	console.log(`  files: ${manifest.slices.length} (${kept.length} base kept, +${added.length} added)`)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)
 
-	for (const file of added) {
-		console.log(`  ${file.source} ${file.split}: ${file.rows} rows (${file.bytes} bytes)`)
+	// The route prints beside the split, because a hand-placed split is otherwise visible only in a filename.
+	for (const [index, file] of added.entries()) {
+		const route = plan.files[index]?.route ?? SplitRoute.Caller
+
+		console.log(`  ${file.source} ${file.split} via ${route}: ${file.rows} rows (${file.bytes} bytes)`)
 	}
 }

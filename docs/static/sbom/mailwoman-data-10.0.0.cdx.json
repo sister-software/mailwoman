@@ -107,7 +107,7 @@
 			"bom-ref": "bundle/poi/poi/2026-07-20a/poi.db",
 			"name": "poi/2026-07-20a/poi.db",
 			"version": "2026-07-20a",
-			"description": "Overture-places POI layer — 13.68M rows across US/CA/MX/FR.",
+			"description": "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 			"licenses": [
 				{
 					"expression": "CDLA-Permissive-2.0"
@@ -235,7 +235,7 @@
 			"bom-ref": "bundle/us/street/us/ak/situs.db",
 			"name": "street/us/ak/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -303,7 +303,7 @@
 			"bom-ref": "bundle/us/street/us/ak/interp.db",
 			"name": "street/us/ak/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -371,7 +371,7 @@
 			"bom-ref": "bundle/us/street/us/al/situs.db",
 			"name": "street/us/al/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -439,7 +439,7 @@
 			"bom-ref": "bundle/us/street/us/al/interp.db",
 			"name": "street/us/al/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -507,7 +507,7 @@
 			"bom-ref": "bundle/us/street/us/ar/situs.db",
 			"name": "street/us/ar/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -575,7 +575,7 @@
 			"bom-ref": "bundle/us/street/us/ar/interp.db",
 			"name": "street/us/ar/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -643,7 +643,7 @@
 			"bom-ref": "bundle/us/street/us/az/situs.db",
 			"name": "street/us/az/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -711,7 +711,7 @@
 			"bom-ref": "bundle/us/street/us/az/interp.db",
 			"name": "street/us/az/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -779,7 +779,7 @@
 			"bom-ref": "bundle/us/street/us/ca/situs.db",
 			"name": "street/us/ca/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -847,7 +847,7 @@
 			"bom-ref": "bundle/us/street/us/ca/interp.db",
 			"name": "street/us/ca/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -915,7 +915,7 @@
 			"bom-ref": "bundle/us/street/us/co/situs.db",
 			"name": "street/us/co/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -983,7 +983,7 @@
 			"bom-ref": "bundle/us/street/us/co/interp.db",
 			"name": "street/us/co/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1051,7 +1051,7 @@
 			"bom-ref": "bundle/us/street/us/ct/situs.db",
 			"name": "street/us/ct/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1119,7 +1119,7 @@
 			"bom-ref": "bundle/us/street/us/ct/interp.db",
 			"name": "street/us/ct/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1187,7 +1187,7 @@
 			"bom-ref": "bundle/us/street/us/dc/situs.db",
 			"name": "street/us/dc/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1255,7 +1255,7 @@
 			"bom-ref": "bundle/us/street/us/dc/interp.db",
 			"name": "street/us/dc/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1323,7 +1323,7 @@
 			"bom-ref": "bundle/us/street/us/de/situs.db",
 			"name": "street/us/de/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1391,7 +1391,7 @@
 			"bom-ref": "bundle/us/street/us/de/interp.db",
 			"name": "street/us/de/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1459,7 +1459,7 @@
 			"bom-ref": "bundle/us/street/us/fl/situs.db",
 			"name": "street/us/fl/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1527,7 +1527,7 @@
 			"bom-ref": "bundle/us/street/us/fl/interp.db",
 			"name": "street/us/fl/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1595,7 +1595,7 @@
 			"bom-ref": "bundle/us/street/us/ga/situs.db",
 			"name": "street/us/ga/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1663,7 +1663,7 @@
 			"bom-ref": "bundle/us/street/us/ga/interp.db",
 			"name": "street/us/ga/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1731,7 +1731,7 @@
 			"bom-ref": "bundle/us/street/us/hi/situs.db",
 			"name": "street/us/hi/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1799,7 +1799,7 @@
 			"bom-ref": "bundle/us/street/us/hi/interp.db",
 			"name": "street/us/hi/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1867,7 +1867,7 @@
 			"bom-ref": "bundle/us/street/us/ia/situs.db",
 			"name": "street/us/ia/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -1935,7 +1935,7 @@
 			"bom-ref": "bundle/us/street/us/ia/interp.db",
 			"name": "street/us/ia/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2003,7 +2003,7 @@
 			"bom-ref": "bundle/us/street/us/id/situs.db",
 			"name": "street/us/id/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2071,7 +2071,7 @@
 			"bom-ref": "bundle/us/street/us/id/interp.db",
 			"name": "street/us/id/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2139,7 +2139,7 @@
 			"bom-ref": "bundle/us/street/us/il/situs.db",
 			"name": "street/us/il/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2207,7 +2207,7 @@
 			"bom-ref": "bundle/us/street/us/il/interp.db",
 			"name": "street/us/il/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2275,7 +2275,7 @@
 			"bom-ref": "bundle/us/street/us/in/situs.db",
 			"name": "street/us/in/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2343,7 +2343,7 @@
 			"bom-ref": "bundle/us/street/us/in/interp.db",
 			"name": "street/us/in/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2411,7 +2411,7 @@
 			"bom-ref": "bundle/us/street/us/ks/situs.db",
 			"name": "street/us/ks/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2479,7 +2479,7 @@
 			"bom-ref": "bundle/us/street/us/ks/interp.db",
 			"name": "street/us/ks/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2547,7 +2547,7 @@
 			"bom-ref": "bundle/us/street/us/ky/situs.db",
 			"name": "street/us/ky/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2615,7 +2615,7 @@
 			"bom-ref": "bundle/us/street/us/ky/interp.db",
 			"name": "street/us/ky/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2683,7 +2683,7 @@
 			"bom-ref": "bundle/us/street/us/la/situs.db",
 			"name": "street/us/la/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2751,7 +2751,7 @@
 			"bom-ref": "bundle/us/street/us/la/interp.db",
 			"name": "street/us/la/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2819,7 +2819,7 @@
 			"bom-ref": "bundle/us/street/us/ma/situs.db",
 			"name": "street/us/ma/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2887,7 +2887,7 @@
 			"bom-ref": "bundle/us/street/us/ma/interp.db",
 			"name": "street/us/ma/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -2955,7 +2955,7 @@
 			"bom-ref": "bundle/us/street/us/md/situs.db",
 			"name": "street/us/md/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3023,7 +3023,7 @@
 			"bom-ref": "bundle/us/street/us/md/interp.db",
 			"name": "street/us/md/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3091,7 +3091,7 @@
 			"bom-ref": "bundle/us/street/us/me/situs.db",
 			"name": "street/us/me/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3159,7 +3159,7 @@
 			"bom-ref": "bundle/us/street/us/me/interp.db",
 			"name": "street/us/me/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3227,7 +3227,7 @@
 			"bom-ref": "bundle/us/street/us/mi/situs.db",
 			"name": "street/us/mi/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3295,7 +3295,7 @@
 			"bom-ref": "bundle/us/street/us/mi/interp.db",
 			"name": "street/us/mi/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3363,7 +3363,7 @@
 			"bom-ref": "bundle/us/street/us/mn/situs.db",
 			"name": "street/us/mn/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3431,7 +3431,7 @@
 			"bom-ref": "bundle/us/street/us/mn/interp.db",
 			"name": "street/us/mn/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3499,7 +3499,7 @@
 			"bom-ref": "bundle/us/street/us/mo/situs.db",
 			"name": "street/us/mo/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3567,7 +3567,7 @@
 			"bom-ref": "bundle/us/street/us/mo/interp.db",
 			"name": "street/us/mo/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3635,7 +3635,7 @@
 			"bom-ref": "bundle/us/street/us/ms/situs.db",
 			"name": "street/us/ms/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3703,7 +3703,7 @@
 			"bom-ref": "bundle/us/street/us/ms/interp.db",
 			"name": "street/us/ms/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3771,7 +3771,7 @@
 			"bom-ref": "bundle/us/street/us/mt/situs.db",
 			"name": "street/us/mt/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3839,7 +3839,7 @@
 			"bom-ref": "bundle/us/street/us/mt/interp.db",
 			"name": "street/us/mt/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3907,7 +3907,7 @@
 			"bom-ref": "bundle/us/street/us/nc/situs.db",
 			"name": "street/us/nc/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -3975,7 +3975,7 @@
 			"bom-ref": "bundle/us/street/us/nc/interp.db",
 			"name": "street/us/nc/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4043,7 +4043,7 @@
 			"bom-ref": "bundle/us/street/us/nd/situs.db",
 			"name": "street/us/nd/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4111,7 +4111,7 @@
 			"bom-ref": "bundle/us/street/us/nd/interp.db",
 			"name": "street/us/nd/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4179,7 +4179,7 @@
 			"bom-ref": "bundle/us/street/us/ne/situs.db",
 			"name": "street/us/ne/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4247,7 +4247,7 @@
 			"bom-ref": "bundle/us/street/us/ne/interp.db",
 			"name": "street/us/ne/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4315,7 +4315,7 @@
 			"bom-ref": "bundle/us/street/us/nh/situs.db",
 			"name": "street/us/nh/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4383,7 +4383,7 @@
 			"bom-ref": "bundle/us/street/us/nh/interp.db",
 			"name": "street/us/nh/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4451,7 +4451,7 @@
 			"bom-ref": "bundle/us/street/us/nj/situs.db",
 			"name": "street/us/nj/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4519,7 +4519,7 @@
 			"bom-ref": "bundle/us/street/us/nj/interp.db",
 			"name": "street/us/nj/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4587,7 +4587,7 @@
 			"bom-ref": "bundle/us/street/us/nm/situs.db",
 			"name": "street/us/nm/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4655,7 +4655,7 @@
 			"bom-ref": "bundle/us/street/us/nm/interp.db",
 			"name": "street/us/nm/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4723,7 +4723,7 @@
 			"bom-ref": "bundle/us/street/us/nv/situs.db",
 			"name": "street/us/nv/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4791,7 +4791,7 @@
 			"bom-ref": "bundle/us/street/us/nv/interp.db",
 			"name": "street/us/nv/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4859,7 +4859,7 @@
 			"bom-ref": "bundle/us/street/us/ny/situs.db",
 			"name": "street/us/ny/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4927,7 +4927,7 @@
 			"bom-ref": "bundle/us/street/us/ny/interp.db",
 			"name": "street/us/ny/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -4995,7 +4995,7 @@
 			"bom-ref": "bundle/us/street/us/oh/situs.db",
 			"name": "street/us/oh/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5063,7 +5063,7 @@
 			"bom-ref": "bundle/us/street/us/oh/interp.db",
 			"name": "street/us/oh/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5131,7 +5131,7 @@
 			"bom-ref": "bundle/us/street/us/ok/situs.db",
 			"name": "street/us/ok/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5199,7 +5199,7 @@
 			"bom-ref": "bundle/us/street/us/ok/interp.db",
 			"name": "street/us/ok/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5267,7 +5267,7 @@
 			"bom-ref": "bundle/us/street/us/or/situs.db",
 			"name": "street/us/or/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5335,7 +5335,7 @@
 			"bom-ref": "bundle/us/street/us/or/interp.db",
 			"name": "street/us/or/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5403,7 +5403,7 @@
 			"bom-ref": "bundle/us/street/us/pa/situs.db",
 			"name": "street/us/pa/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5471,7 +5471,7 @@
 			"bom-ref": "bundle/us/street/us/pa/interp.db",
 			"name": "street/us/pa/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5539,7 +5539,7 @@
 			"bom-ref": "bundle/us/street/us/ri/situs.db",
 			"name": "street/us/ri/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5607,7 +5607,7 @@
 			"bom-ref": "bundle/us/street/us/ri/interp.db",
 			"name": "street/us/ri/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5675,7 +5675,7 @@
 			"bom-ref": "bundle/us/street/us/sc/situs.db",
 			"name": "street/us/sc/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5743,7 +5743,7 @@
 			"bom-ref": "bundle/us/street/us/sc/interp.db",
 			"name": "street/us/sc/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5811,7 +5811,7 @@
 			"bom-ref": "bundle/us/street/us/sd/situs.db",
 			"name": "street/us/sd/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5879,7 +5879,7 @@
 			"bom-ref": "bundle/us/street/us/sd/interp.db",
 			"name": "street/us/sd/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -5947,7 +5947,7 @@
 			"bom-ref": "bundle/us/street/us/tn/situs.db",
 			"name": "street/us/tn/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6015,7 +6015,7 @@
 			"bom-ref": "bundle/us/street/us/tn/interp.db",
 			"name": "street/us/tn/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6083,7 +6083,7 @@
 			"bom-ref": "bundle/us/street/us/tx/situs.db",
 			"name": "street/us/tx/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6151,7 +6151,7 @@
 			"bom-ref": "bundle/us/street/us/tx/interp.db",
 			"name": "street/us/tx/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6219,7 +6219,7 @@
 			"bom-ref": "bundle/us/street/us/ut/situs.db",
 			"name": "street/us/ut/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6287,7 +6287,7 @@
 			"bom-ref": "bundle/us/street/us/ut/interp.db",
 			"name": "street/us/ut/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6355,7 +6355,7 @@
 			"bom-ref": "bundle/us/street/us/va/situs.db",
 			"name": "street/us/va/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6423,7 +6423,7 @@
 			"bom-ref": "bundle/us/street/us/va/interp.db",
 			"name": "street/us/va/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6491,7 +6491,7 @@
 			"bom-ref": "bundle/us/street/us/vi/situs.db",
 			"name": "street/us/vi/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6559,7 +6559,7 @@
 			"bom-ref": "bundle/us/street/us/vt/situs.db",
 			"name": "street/us/vt/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6627,7 +6627,7 @@
 			"bom-ref": "bundle/us/street/us/vt/interp.db",
 			"name": "street/us/vt/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6695,7 +6695,7 @@
 			"bom-ref": "bundle/us/street/us/wa/situs.db",
 			"name": "street/us/wa/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6763,7 +6763,7 @@
 			"bom-ref": "bundle/us/street/us/wa/interp.db",
 			"name": "street/us/wa/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6831,7 +6831,7 @@
 			"bom-ref": "bundle/us/street/us/wi/situs.db",
 			"name": "street/us/wi/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6899,7 +6899,7 @@
 			"bom-ref": "bundle/us/street/us/wi/interp.db",
 			"name": "street/us/wi/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -6967,7 +6967,7 @@
 			"bom-ref": "bundle/us/street/us/wv/situs.db",
 			"name": "street/us/wv/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -7035,7 +7035,7 @@
 			"bom-ref": "bundle/us/street/us/wv/interp.db",
 			"name": "street/us/wv/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -7103,7 +7103,7 @@
 			"bom-ref": "bundle/us/street/us/wy/situs.db",
 			"name": "street/us/wy/situs.db",
 			"version": "address-points",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"
@@ -7171,7 +7171,7 @@
 			"bom-ref": "bundle/us/street/us/wy/interp.db",
 			"name": "street/us/wy/interp.db",
 			"version": "interpolation",
-			"description": "US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, 50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"description": "US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. Use --only <slug> to pull a single state.",
 			"licenses": [
 				{
 					"expression": "LicenseRef-USGov-Public-Domain AND LicenseRef-OpenAddresses-PerSource"

@@ -154,8 +154,20 @@ export interface BuildCorpusManifest {
 	 * Resolved license set across all included rows (license string → row count).
 	 *
 	 * The model card derives its data-attribution table from it.
+	 *
+	 * It covers the rows this build aligned.
+	 * An overlay parquet added afterwards by `corpus overlay-manifest` carries its own rows
+	 * and its own licenses, and the overlay corpus's `MANIFEST.json` copies this set forward without
+	 * them. {@linkcode licenses_cover} says so in the artifact, so a reader deriving an attribution
+	 * table from a corpus that carries overlays knows the set is incomplete rather than complete.
 	 */
 	licenses: Record<string, number>
+	/**
+	 * Which rows the `licenses` set was measured over.
+	 *
+	 * A base build writes `adapter-rows`, because no overlay had been assembled when it ran.
+	 */
+	licenses_cover: string
 	excluded_by_license: number
 	/**
 	 * The policy this build admitted rows under, so a consumer can tell a corpus that
