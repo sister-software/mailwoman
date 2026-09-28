@@ -8,7 +8,7 @@
  *
  *   1. Token ribbon — the SentencePiece pieces with char offsets.
  *   2. Channel band — anchor/gazetteer confidence as fed ("not fed" when a channel is absent —
- *      an unfed channel is a diagnostic fact, the #566/#685 OOD class rather than an empty one).
+ *      an unfed channel is a diagnostic fact, an OOD class rather than an empty one).
  *   3. Emissions heatmap — labels × pieces. toggle raw logits vs post-prior emissions (the delta
  *      is the priors' influence). conventions-masked cells hatched. viterbi path outlined. Label
  *      rows are trimmed to the model's emission width (the Stage-prefix rule — a narrower model
@@ -36,11 +36,7 @@ const labelText = (label: string): string => tagOf(label) || label
 /**
  * Fallback locale-head axis for traces produced before `localeCountries` rode with the logits.
  *
- * Live traces are self-describing, never extend this list.
- * The model's own axis wins.
- *
- * (Mirrors neural/address-system.ts LOCALE_COUNTRIES as of 2026-07. The PLACETYPE_ORDER
- * dual-maintenance class is exactly why the trace now carries the axis itself.)
+ * Live traces are self-describing, so never extend this list. The model's own axis wins.
  */
 const LOCALE_ORDER_FALLBACK = ["US", "FR", "DE", "CA", "GB", "JP", "ES", "IT", "NL"] as const
 
@@ -49,7 +45,7 @@ export interface ModelVisualizerProps {
 }
 
 /**
- * Memoized: the live wrapper re-renders on every input keystroke; `trace` is
+ * Memoized, since the live wrapper re-renders on every input keystroke and `trace` is
  * referentially stable between runs.
  */
 export const ModelVisualizer = React.memo(function ModelVisualizer({ trace }: ModelVisualizerProps): React.JSX.Element {

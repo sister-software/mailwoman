@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixtures use production schemas and rows from shipped artifacts to test real behavior. Two cases caught problems
- *   in the first implementation: `1012 LG` (lookup order) and a deprecated-only WOF name (not in FTS, so it needs a
- *   second lookup route).
+ *   Fixtures use production schemas and rows from shipped artifacts to test real behavior.
  */
 
 import { openSealedArtifact, type LookupRow } from "@mailwoman/dev-mcp/lookup/index"
@@ -57,7 +55,7 @@ function memoryDatabase<DB>(): DatabaseClient<DB> {
 }
 
 /**
- * Rows from the shipped `candidate.db`, measured on 2026-08-16.
+ * Rows from the shipped `candidate.db`.
  *
  * They cover three false absences and an NL PC6 pair whose stem hides the unit code.
  */
@@ -156,7 +154,6 @@ async function candidateFixture(): Promise<DatabaseClient<CandidateDatabase>> {
 			row.population ?? 0,
 			row.is_primary ?? 1,
 			// `importance` stays NULL unless the fixture row gives one.
-			// The unmeasured case is the point.
 			row.importance ?? null
 		)
 	}
@@ -212,11 +209,8 @@ describe("lookupCandidate", () => {
 	})
 
 	it("tries the whitespace fold BEFORE the qualifier strip", async () => {
-		// Measured against the shipped candidate.db: strip-first sends `1012 LG` to
-		// `1012`, resolving the NL PC6 unit to its 4-digit stem (and to a DK row)
-		// while the unit's own record sits under `1012lg`.
-		// The runtime folds whitespace at the top of findPlace, so this order is
-		// the runtime's rather than a preference.
+		// The unit's own record sits under `1012lg`, so the whitespace fold must run before the
+		// qualifier strip. The runtime also folds whitespace at the top of findPlace.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["1012 LG"])
 
@@ -224,7 +218,7 @@ describe("lookupCandidate", () => {
 	})
 
 	it("restricts the qualifier-strip retry to primary rows, as the runtime does", async () => {
-		// #1626: an alias-keyed stripped hit is a scrape. `hart` carries a primary Hart and an alias row for Hyattsville. Only the first may answer a stripped probe.
+		// An alias-keyed stripped hit is a scrape, so only a primary row may answer a stripped probe.
 		const db = await candidateFixture()
 		const [row] = lookupCandidate(db, ["Hart b.Graz"])
 
@@ -514,7 +508,6 @@ describe("lookupCandidate fame-diagnosis extras", () => {
 		const dbA = await candidateFixture()
 		const dbB = await candidateFixture()
 
-		// B re-scores one shared row and holds one extra bearer under the same key.
 		dbB.prepare("UPDATE candidate SET importance = 0.5 WHERE spr_id = ?").run(1)
 
 		dbB

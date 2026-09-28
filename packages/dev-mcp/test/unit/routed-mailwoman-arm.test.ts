@@ -6,8 +6,6 @@ import { describe, expect, it, vi } from "vitest"
 
 // `tier` carries a real value because `toGauntletResult` passes `resolution_tier`
 // straight through and that field is non-nullable.
-// A null here modelled a row production cannot produce, which is what the
-// assertion through `unknown` was hiding.
 // Everything else stays absent: this stands for an arm that answered without resolving anything.
 const EMPTY_RESULT = {
 	components: {},
@@ -121,9 +119,6 @@ describe("buildRoutedMailwomanArm", () => {
 	})
 
 	it("forwards every SUPPORTED config key into buildDeps — a key accepted but dropped grades the wrong configuration silently", async () => {
-		// The #1882 incident this pins: `candidate_db` joined the supported list without joining
-		// this spread, so both arms of a staged-artifact comparison ran the live artifact
-		// and reported 0 of 649 rows differed — a zero indistinguishable from a real no-effect.
 		const deps = fakeDeps()
 
 		await buildRoutedMailwomanArm(

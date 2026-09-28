@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The lockstep pin for #1732: dev-mcp's effective defaults are production's, field by field.
- *
- *   The incident this guards: `resolveConfig` carried a hand-copied default table that drifted on three values
- *   (postcode shape/containment coherence true where production ships false. placer threshold 0.5 where production
- *   ships 0.9), so every unset-pin measurement graded a configuration nobody ships. A copied constant cannot be kept
- *   honest by review — the #861 rule — so `resolveConfig` now derives from `createGeocodeCommandOptions()` itself, and
- *   this test exists to fail if anyone re-introduces a literal.
+ *   The lockstep pin: dev-mcp's effective defaults are production's, field by field.
  */
 
 import { resolveConfig } from "@mailwoman/dev-mcp/engine/registry"
@@ -35,9 +29,6 @@ describe("resolveConfig — production lockstep (#1732)", () => {
 	})
 
 	it("names the three drifted values so the incident stays legible", () => {
-		// These are assertions about production, mirrored here on purpose: if the shipped defaults change,
-		// this test fails and the person changing them is told the board's baselines need re-anchoring,
-		// which is the actual consequence of moving a default, and the thing the silent drift skipped.
 		const resolved = resolveConfig({})
 
 		expect(resolved.postcodeShapeCoherence).toBe(false)

@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Affix miss-form audit (#492 endgame): the width run falsified the capacity hypothesis (48M lands
- *   at exactly 29M's 64.9-prefix equilibrium at matched density, P=100/R≈48 on both), which points
- *   the ladder's last finger at the data. This script classifies every real-affix-eval miss by
- *   surface-form features and compares them against what the extract builder actually varies
- *   (abbr/full per affix, Title-case, four layouts) — the #487 audit method, applied to affix.
+ *   Affix miss-form audit. Classifies every real-affix-eval miss by surface-form features and
+ *   compares them against what the extract builder varies (abbr/full per affix, Title-case, four
+ *   layouts).
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/audit-affix-misses.run.ts\
  *   --model <int8.onnx> [--file data/eval/external/street-affix-real.jsonl]\
@@ -45,9 +43,8 @@ if (!args.model) throw new Error("--model required")
 
 const rows = await JSONSpliterator.fromAsync<{ raw: string; components: Record<string, string> }>(args.file!).toArray()
 
-// Mirror score-affix's ship-config construction exactly — loadFromWeights ignores a modelPath
-// and grades the default symlink with no anchor channel (the zero-fill crash signature
-// this audit's first run produced — caught by the misses-vs-scorer discrepancy).
+// Mirror score-affix's ship-config construction exactly: loadFromWeights ignores a modelPath and
+// grades the default symlink with no anchor channel.
 const card = await import("@mailwoman/neural-weights-en-us/model-card.json", { with: { type: "json" } }).then(
 	(m) => m.default
 )
