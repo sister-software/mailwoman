@@ -59,7 +59,7 @@ export interface DemoCascadeSmokeOptions {
 	/**
 	 * Staged demo release directory.
 	 *
-	 * Defaults beneath `$MAILWOMAN_TEMP_ROOT`; every artifact below defaults to a sibling of it.
+	 * Defaults beneath `$MAILWOMAN_TEMP_ROOT`. Every artifact below defaults to a sibling of it.
 	 */
 	stageDir?: string
 	/**

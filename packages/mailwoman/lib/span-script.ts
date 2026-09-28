@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stamp each parsed span with the ISO 15924 script it is written in (#2282).
+ *   Stamp each parsed span with the ISO 15924 script it is written in.
  *
  *   This lives in `mailwoman` rather than in either package it draws on, because neither may reach the other:
  *   `@mailwoman/query-shape` owns `scriptForRange` and carries no `@mailwoman/*` dependency at all, and

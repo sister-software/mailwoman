@@ -3,19 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postcode-centroid fills (#240/#525), ported from the standalone `backfill-postcode-centroids.ts` /
- *   `fill-zcta-centroids.ts` mutators into build steps — they now run on the staging db inside
- *   `buildPostcodeDatabase`, never against a shipped artifact (the sealed-artifact invariant).
+ *   Postcode-centroid fills. They run on the staging db inside `buildPostcodeDatabase`, never against
+ *   a shipped artifact (the sealed-artifact invariant).
  *
- *   Fill priority (each pass touches only rows still `(0,0)`; a placeholder never overwrites a real
- *   coordinate. all passes are idempotent):
+ *   Fill priority. Each pass touches only rows still `(0,0)`, so a placeholder never overwrites a real
+ *   coordinate, and all passes are idempotent:
  *
- *   1. US only — Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for the
+ *   1. US only: Census zcta Gazetteer internal points (public domain), then GeoNames `US.txt` for the
  *      PO-box/unique-ZIP residual (`zcta-centroids.ts`, provenance in `centroid_source`).
- *   2. GeoNames postal (`<CC>.txt`) — the postcode's own centroid, string-matched (WOF ids stay the
- *      eval keys. corrects WOF mis-links like the Italian Milan→Liguria case). CC-BY 4.0 — any DB
- *      shipping these rows must attribute "GeoNames (CC-BY 4.0)".
- *   3. WOF admin parent-borrow — the parent locality's centroid from the admin gazetteer.
+ *   2. GeoNames postal (`<CC>.txt`): the postcode's own centroid, string-matched, with WOF ids staying
+ *      the eval keys. This corrects WOF mis-links like the Italian Milan to Liguria case. CC-BY 4.0, so
+ *      any DB shipping these rows must attribute "GeoNames (CC-BY 4.0)".
+ *   3. WOF admin parent-borrow: the parent locality's centroid from the admin gazetteer.
  *   4. GeoJSON-hierarchy ancestor fallback (county, then region) for parents the admin DB lacks
  *      (city-states like Berlin). Every coordinate still comes from our own admin DB.
  */
@@ -63,7 +62,7 @@ export interface CentroidFillResult {
 	/**
 	 * Delivery-city name rows written from GeoNames postal.
 	 *
-	 * Zero means the database's postcodes are nameless — the state `postalcode-us.db` shipped in.
+	 * Zero means the database's postcodes carry no name rows.
 	 */
 	geonamesNames: number
 	parentBorrowFixed: number
@@ -74,30 +73,19 @@ export interface CentroidFillResult {
 }
 
 /**
- * Priority-2 fill: for every coordinate-less postcode, take its own centroid
- * from the GeoNames postal file for that country.
- *
- * A postcode on several GeoNames rows is averaged.
- * Matched by the postcode string only.
- * The WOF id is untouched, so the eval keys stay WOF's.
- */
-/**
  * Rows per multi-row insert.
  *
  * SQLite binds one variable per column per row and caps the total per statement
- * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds); eight columns at
+ * (`SQLITE_MAX_VARIABLE_NUMBER`, 32,766 on current builds). Eight columns at
  * this width leaves ample headroom.
  */
 const INSERT_CHUNK = 1000
 
 /**
- * GeoNames files a US territory under its own ISO code — Puerto Rico as `PR`,
- * Guam as `GU` — while the WOF postcode repo files all of them as `US`.
+ * GeoNames files a US territory under its own ISO code, such as `PR` for Puerto Rico
+ * and `GU` for Guam, while the WOF postcode repo files all of them as `US`.
  *
- * Reading only `US` rows therefore leaves every territory postcode unnamed and unplaced:
- * 149 of them, verified against the 2024 Census zcta gazetteer, which is the entire
- * set of five-digit ZIPs zcta lists and GeoNames appears to miss.
- * GeoNames misses no mainland ZIP at all.
+ * Reading only `US` rows leaves every territory postcode unnamed and unplaced.
  */
 const GEONAMES_COUNTRY_ALIASES: Readonly<Record<string, readonly string[]>> = {
 	US: ["US", "PR", "VI", "GU", "MP", "AS"],
@@ -120,13 +108,10 @@ interface GeonamesPostcode {
 /**
  * Read a country's GeoNames postal rows.
  *
- * Prefers the per-country `<CC>.txt` dump and falls back to scanning the combined
- * `allCountries-postal.txt`, because the two layouts have different coverage on disk:
- * the per-country directory is populated for the locales fetched one at a time,
- * and the combined file is the one that carries the US.
- * Without the fallback the US pass finds no file, `existsSync` short-circuits,
- * and the whole thing silently no-ops, which is why `postalcode-us.db` shipped
- * with 42,318 postcodes and an empty `names` table.
+ * Prefers the per-country `<CC>.txt` dump and falls back to the combined
+ * `allCountries-postal.txt`, because the two layouts cover different countries on disk. The
+ * per-country directory holds the locales fetched one at a time, and the combined file is the
+ * one that carries the US. Without the fallback the US pass finds no file and silently no-ops.
  */
 const geonamesCache = new Map<string, Map<string, GeonamesPostcode>>()
 
@@ -188,12 +173,11 @@ async function readGeonamesPostal(
 /**
  * Attach each postcode's GeoNames delivery-city name(s) to the database's `names` table.
  *
- * Separate from the centroid pass because the two select different rows: a centroid
- * is only wanted where one is missing, while a name is wanted on every postcode —
- * 11201 has had a Census zcta coordinate all along and no name at all.
- * Rows are the USPS delivery city, which is frequently not the geographic locality
- * (11201 is Brooklyn, inside the locality New York), and for Queens is a neighbourhood name
- * rather than the borough (Astoria, Flushing, Jamaica).
+ * Separate from the centroid pass because the two select different rows: a centroid is only wanted
+ * where one is missing, while a name is wanted on every postcode, including one that already has a
+ * Census zcta coordinate and no name at all. Rows are the USPS delivery city, which is frequently
+ * not the geographic locality (11201 is Brooklyn, inside the locality New York), and for Queens is a
+ * neighbourhood name rather than the borough (Astoria, Flushing, Jamaica).
  *
  * Shipping these rows obliges the "GeoNames (CC-BY 4.0)" attribution the sibling modules already carry.
  */
@@ -235,7 +219,7 @@ async function geonamesNameFill(
 		}
 
 		// `official` stays 0: a delivery city is what the postal system calls the place
-		// rather than an official name OF it, and the #936 name-exact tier reads that bit.
+		// rather than an official name of it, and the name-exact tier reads that bit.
 		const rows = [...acc]
 			.flatMap(([postcode, entry]) => {
 				const id = byPostcode.get(postcode)
@@ -271,7 +255,7 @@ async function geonamesFill(
 	geonamesDir: PathBuilderLike,
 	combinedPath: PathBuilderLike
 ): Promise<number> {
-	// The GeoNames update matches on (country, name); the build only indexes placetype/country/parent,
+	// The GeoNames update matches on (country, name). The build only indexes placetype/country/parent,
 	// so without this the per-postcode UPDATEs scan each country's rows (minutes on 400k+ rows).
 	// `kdb` wraps `db` for the DDL.
 	// The caller owns `db`'s lifecycle, so we don't destroy it here.
@@ -313,7 +297,7 @@ async function geonamesFill(
 
 /**
  * Pass-4 fallback: for postcodes still coordinate-less after the parent-borrow
- * (their immediate parent locality is absent from the admin DB — common for city-states like Berlin),
+ * (their immediate parent locality is absent from the admin DB, common for city-states like Berlin),
  * borrow the finest available ancestor centroid from the GeoJSON hierarchy.
  *
  * County is preferred over region for tighter placement.
@@ -409,7 +393,7 @@ export async function fillPostcodeCentroids(
 	let geonamesNames = 0
 	let ancestorFixed = 0
 
-	// Pass 2: GeoNames postal — runs first so the postcode's own centroid wins over the coarser parent-borrow.
+	// Pass 2: GeoNames postal runs first, so the postcode's own centroid wins over the coarser parent-borrow.
 	if (opts.geonamesDir && (await pathExists(opts.geonamesDir))) {
 		// Where the US lives.
 		// The per-country directory is populated for locales fetched one at a time and has no US.txt.
