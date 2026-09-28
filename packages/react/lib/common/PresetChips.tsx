@@ -13,12 +13,10 @@ export interface Preset {
 	label: string
 	value: string
 	/**
-	 * ISO country code for the placetype-pair country pin (#1278 phase 2's `{country}` override).
+	 * ISO country code for the placetype-pair country pin.
 	 *
-	 * Optional: a host that wires the pair prior hands this to `selectPairIndexForText`
-	 * when the input still equals this preset's text, so a locale structural routing can't
-	 * detect (NZ's 4-digit postcode isn't distinctive) still fires the dependent_locality prior.
-	 * Purely descriptive to `PresetChips` itself (which only emits `value`).
+	 * A host that wires the pair prior hands this to `selectPairIndexForText` when the input
+	 * still equals this preset's text.
 	 */
 	country?: string
 }
@@ -33,7 +31,7 @@ export interface PresetChipsProps {
 	caption?: string
 	/**
 	 * Optional trailing content rendered inside the chip row after the presets
-	 * (e.g. An inline permalink button).
+	 * (e.g. an inline permalink button).
 	 */
 	trailing?: ReactNode
 }

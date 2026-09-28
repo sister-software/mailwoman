@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Route definitions + handlers for the Nominatim-compatible surface. The OpenAPI document is
- *   emitted from these definitions — no handwritten spec. Handlers parse params from the
- *   `legacyQuery` express-shaped view. the zod query schemas drive only the emitted document.
+ *   Route definitions and handlers for the Nominatim-compatible surface. The OpenAPI document is
+ *   emitted from these definitions with no handwritten spec. Handlers parse params from the
+ *   `legacyQuery` express-shaped view, and the zod query schemas drive only the emitted document.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"
@@ -63,14 +63,12 @@ function parseBool(raw: unknown): boolean {
 }
 
 /**
- * A friendly html landing page for `GET /` (#1022).
+ * A friendly html landing page for `GET /`.
  *
- * Nominatim itself has no root page (just `/status`), so there's no wire interface to match.
- * This is pure courtesy: a browser visitor who pastes the bare host in gets a one-glance
- * orientation with clickable example queries instead of Express's `Cannot GET /` 404,
- * which reads as "the service is broken".
- *
- * Relative example URLs so they resolve against whatever host/port serves this.
+ * Nominatim itself has no root page, just `/status`, so there is no wire interface to match. A
+ * browser visitor who pastes the bare host gets a one-glance orientation with clickable example
+ * queries rather than Express's `Cannot GET /` 404. Relative example URLs resolve against whatever
+ * host and port serve this.
  */
 const ROOT_HTML = `<!doctype html>
 <html lang="en">
@@ -210,7 +208,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 			countrycodes: asString(q["countrycodes"])?.split(","),
 			limit: Number(q["limit"] ?? DEFAULT_LIMIT) || DEFAULT_LIMIT,
 			bounded: parseBool(q["bounded"]),
-			// #1052: jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
+			// jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
 			addressdetails: parseBool(q["addressdetails"]) || q["format"] === "jsonld",
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
@@ -221,7 +219,6 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		if (params.format === "geojson") {
 			return c.json(withEngineStamp(toFeatureCollection(results), stamp), 200)
 		} else if (params.format === "jsonld") {
-			// #1052: re-serialize the same results as schema.org `Place[]`; jsonv2 stays the default.
 			return c.json(results.map(nominatimResultToSchemaOrg), 200)
 		}
 
@@ -250,7 +247,7 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 			lat,
 			lon,
 			zoom: q["zoom"] != null ? Number(q["zoom"]) : undefined,
-			// #1052: jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
+			// jsonld projects the address breakdown into a PostalAddress, so it needs the details block.
 			addressdetails: parseBool(q["addressdetails"]) || q["format"] === "jsonld",
 			format: parseFormat(q["format"]),
 			acceptLanguage: asString(q["accept-language"]),
@@ -261,7 +258,6 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 		if (params.format === "geojson") {
 			return c.json(withEngineStamp(toFeatureCollection(result ? [result] : []), stamp), 200)
 		} else if (params.format === "jsonld") {
-			// #1052: a single reverse hit → one schema.org `Place` (or null when unresolved).
 			return c.json(result ? nominatimResultToSchemaOrg(result) : null, 200)
 		}
 
@@ -280,9 +276,9 @@ export function registerNominatimRoutes(app: OpenAPIHono, engine: NominatimEngin
 
 		const results = await engine.lookup(params)
 
-		// note: no jsonld branch here — a legacy quirk of the express handler, preserved verbatim.
-		// `format=jsonld` on `/lookup` falls through to the raw jsonv2 results,
-		// unlike `/search` and `/reverse`.
+		// No jsonld branch here, a legacy quirk of the express handler preserved verbatim, so
+		// `format=jsonld` on `/lookup` falls through to the raw jsonv2 results while `/search` and
+		// `/reverse` project.
 		return c.json(
 			params.format === "geojson"
 				? withEngineStamp(toFeatureCollection(results), stamp)

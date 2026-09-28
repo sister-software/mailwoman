@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Interface tests for address-system detection + the conventions mask (#511 Tier A). The essential
- *   properties: detection never acts below threshold or off-vocabulary, the mask removes forbidden
- *   tags from the decodable vocabulary, and models without a locale head are byte-identical
- *   no-ops.
+ *   Interface tests for address-system detection and the conventions mask.
+ *   Detection never acts below threshold or off-vocabulary, the mask removes forbidden tags from
+ *   the decodable vocabulary, and a model without a locale head is a byte-identical no-op.
  */
 
 import { conventionsForSystem } from "@mailwoman/codex"
@@ -28,7 +27,6 @@ describe("detectAddressSystem", () => {
 	})
 
 	it("returns null below the confidence threshold", () => {
-		// Uniform logits → 1/9 ≈ 0.11 confidence.
 		expect(detectAddressSystem(LOCALE_COUNTRIES.map(() => 1))).toBeNull()
 	})
 
@@ -53,9 +51,8 @@ describe("detectAddressSystem", () => {
 
 describe("conventions table", () => {
 	it("fr forbids only the trailing street_suffix (NOT street_prefix) and pins the 5-digit shape", () => {
-		// Post-#719: FR has a leading street_prefix ("Rue de Rivoli") that the model emits, so the
-		// conventions row forbids only the trailing USPS-style street_suffix — forbidding the prefix
-		// destroyed real capability (see address-system-conventions.ts provenance + the load-time check).
+		// FR has a leading street_prefix ("Rue de Rivoli") that the model emits, so the conventions
+		// row forbids only the trailing USPS-style street_suffix.
 		const fr = conventionsForSystem("fr")!
 		expect(fr.forbiddenTags).toEqual(["street_suffix"])
 		expect(fr.forbiddenTags).not.toContain("street_prefix")

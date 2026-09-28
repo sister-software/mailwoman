@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure phrase → category matching core, shared by the node entry (`lookup.ts`, `node:fs` loader) and the
- *   browser-safe entry (`table.ts`, injected table). Holds the index construction + locale-filtering logic — zero
- *   node imports, so it stays bundler-safe. Not exported via a subpath of its own.
+ *   browser-safe entry (`table.ts`, injected table). Holds the index construction and locale-filtering
+ *   logic, with zero node imports so it stays bundler-safe. Not exported via a subpath of its own.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -28,9 +28,6 @@ export interface CategoryMatch {
 	 * or label spelled as a phrase.
 	 *
 	 * At equal confidence a synonym outranks an identity phrase.
-	 * A curator wrote the redirect on purpose, and an id that happens
-	 * to read as English is not evidence anyone meant that branch
-	 * (`drugstore` → `pharmacy` in en-US, `credit union` → `bank`, `motel` → `hotel`).
 	 */
 	phraseSource: "synonym" | "identity"
 }
@@ -111,12 +108,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * Unrestricted phrases always match at 1.0.
 	 *
 	 * Deduplicated by category (best confidence wins), sorted by confidence descending, and at equal
-	 * confidence a curated synonym before an identity phrase ({@link CategoryMatch.phraseSource}).
-	 *
-	 * Without that tie-break a synonym whose phrase is also some category's id could
-	 * never reach a caller: the index inserts identity phrases first, the sort is stable,
-	 * and `matchPOISubject` reads `hits[0]` — so `drugstore → pharmacy` sat behind
-	 * the `drugstore` category for every en-US caller (#1933).
+	 * confidence a curated synonym comes before an identity phrase ({@link CategoryMatch.phraseSource}).
 	 */
 	function lookupPOICategory(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
@@ -214,8 +206,6 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	function lookupPOICategoryTypo(text: string, locale?: string): CategoryMatch[] {
 		const norm = text.trim().toLowerCase()
 
-		// With no presumed language, a correction is guesswork.
-		// Abstention is useful evidence to the caller.
 		if (!locale || norm.length < MIN_TYPO_LENGTH || byPhrase.has(norm)) return []
 
 		const language = locale.split(/[-_]/)[0]!
@@ -271,7 +261,7 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	}
 
 	/**
-	 * True when the category's data exists only in ODbL sources — answering needs a build-local layer.
+	 * True when the category's data exists only in ODbL sources, so answering needs a build-local layer.
 	 */
 	function requiresBuildLocalLayer(category: CategoryRecord): boolean {
 		return category.source === "mailwoman-infra"
@@ -282,8 +272,8 @@ export function createLookupCore(table: POITaxonomyTable): POITaxonomyLookup {
 	 * a built `poi.db` stores for it (the missing translation layer).
 	 *
 	 * @returns the category's `overtureCategories` when it declares a non-empty list, else `[seedID]`
-	 * (identity — the default for the 21 seeds whose id already equals its Overture leaf).
-	 * An unknown seed id resolves to `[]` — a clean miss, mirroring `getPOICategory`'s undefined.
+	 * (identity, the default for seeds whose id already equals its Overture leaf).
+	 * An unknown seed id resolves to `[]`, a clean miss that mirrors `getPOICategory`'s undefined.
 	 */
 	function resolveOvertureCategories(seedID: string): string[] {
 		const category = byID.get(seedID)

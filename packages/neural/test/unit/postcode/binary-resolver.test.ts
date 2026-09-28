@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Round-trip tests for the browser flat-binary postcode resolver (#240): serialize entries, load
- *   the bytes, and assert exact-match, multi-country runs, coordinate-less membership, and
- *   quantization fidelity. Also confirms `extractPostcodeAnchors` works through it (the
- *   `PostcodeResolver` interface), so the wasm resolver is a drop-in for the SQLite one.
+ *   Round-trip tests for the browser flat-binary postcode resolver: serialize entries, load the
+ *   bytes, and assert exact-match, multi-country runs, coordinate-less membership, and quantization
+ *   fidelity.
+ *   The suite also confirms `extractPostcodeAnchors` works through the `PostcodeResolver` interface,
+ *   so the wasm resolver is a drop-in for the SQLite one.
  */
 
 import {
@@ -22,7 +23,7 @@ const ENTRIES: PostcodeBinaryEntry[] = [
 	{ postcode: "75008", country: "FR", lat: 48.873, lon: 2.313 },
 	{ postcode: "75008", country: "US", lat: 33.02, lon: -96.83 }, // 75008 is also Carrollton, TX
 	{ postcode: "1012LM", country: "NL", lat: 52.375, lon: 4.9 },
-	{ postcode: "80144", country: "IT", lat: 0, lon: 0 }, // coordinate-less membership
+	{ postcode: "80144", country: "IT", lat: 0, lon: 0 },
 ]
 
 function resolver(): PostcodeBinaryResolver {
