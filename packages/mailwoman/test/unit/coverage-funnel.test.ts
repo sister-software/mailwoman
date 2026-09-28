@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The funnel's denominator is the register's, and each stage's four states are told apart.
- *
- *   The case that matters most is the jurisdiction the census report never mentions. `censusCoverage` keys its rows on
- *   the union of five registers, so such a jurisdiction has no row there at all, and a funnel that inherited that
- *   denominator would print no row for it — which is the reading this module exists to prevent.
+ *   `censusCoverage` keys its rows on the union of five registers, so inheriting its denominator would drop a jurisdiction that has no row there at all.
  */
 
 import {
@@ -64,18 +60,15 @@ function source(iso2: string, licenseID: string): AddressSourceRecord {
 	}
 }
 
-/**
- * Four jurisdictions, one per shape the funnel has to tell apart: a deep incumbent, a researched
- * jurisdiction whose terms nobody opened, a researched absence, and one the census never mentions.
- */
+		/**
+		 * Four jurisdictions, one per shape the funnel must tell apart.
+		 */
 function testRegister(): AddressSourceRegister {
 	return {
 		registerID: "test",
 		version: "0.0.0-test",
-		// A hand-built fixture rather than a generated file, so it carries no digest.
-		// `readAddressSourceRegister` is where the digest is checked, and the funnel
-		// is given this object directly.
-		contentDigest: "",
+						// A hand-built fixture carries no digest, and the funnel is given this object directly rather than through the digest-checking reader.
+						contentDigest: "",
 		provenance: { source: "test", sourceVersion: "test", authoredAt: "2026-09-20", notes: "" },
 		unresolved: [],
 		licenses: [
@@ -164,22 +157,16 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("carries all three ingest conditions, so no one of them reads as the bottleneck", async () => {
-		// `ingestEligibilityProblems` refuses a source for an unchecked licence,
-		// an unresolved address role and unmeasured coverage alike.
-		// An earlier version of this funnel carried `licensed` and neither of the others,
-		// so the one universal blocker it could see is the one it reported.
-		// The fixture's sources carry no role and no coverage, which is the state
-		// of all 389 in the committed register.
-		const report = await funnel()
+				// `ingestEligibilityProblems` refuses on an unchecked licence, an unresolved address role and unmeasured coverage alike, which is the state of all 389 committed sources.
+												const report = await funnel()
 		const kenya = report.rows.find((row) => row.iso2 === "KE")
 
 		expect(kenya?.stages.addressRole.state).toBe(StageState.Blocked)
 		expect(kenya?.stages.coverage.state).toBe(StageState.Blocked)
 		expect(kenya?.stages.licensed.state).toBe(StageState.Blocked)
 
-		// US has an elected licence and still resolves neither field, which is the point:
-		// electing terms alone admits no source.
-		const us = report.rows.find((row) => row.iso2 === "US")
+				// US has an elected licence and still resolves neither field, so electing terms alone admits no source.
+				const us = report.rows.find((row) => row.iso2 === "US")
 
 		expect(us?.stages.licensed.state).toBe(StageState.Reached)
 		expect(us?.stages.addressRole.state).toBe(StageState.Blocked)
@@ -187,10 +174,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a jurisdiction with no source as absent on both fields rather than blocked", async () => {
-		// Blocked means somebody looked and something stops the next step.
-		// A jurisdiction with no source has no role to resolve, which is a different
-		// reading from a source whose role nobody resolved.
-		const report = await funnel()
+				// Blocked means somebody looked and something stopped the next step; a jurisdiction with no source has no role to resolve.
+						const report = await funnel()
 		const antarctica = report.rows.find((row) => row.iso2 === "AQ")
 
 		expect(antarctica?.stages.addressRole.state).toBe(StageState.Absent)
@@ -226,11 +211,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads an admitted country the audit never drew as a measured zero, not an unknown", async () => {
-		// An audit's `by_country` enumerates every country it drew, so KE — admitted,
-		// and absent from the audit — drew zero of the 250,000 rows sampled.
-		// Measured on the audit's own denominator rather than unknown.
-		// This is the shape the real v5.9.0 audit reports for 97 of 135 admitted countries.
-		const report = await funnel({
+			// An audit's `by_country` enumerates every country it drew, so KE drew zero of the 250,000 sampled rows — measured, not unknown.
+								const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,
 		})
@@ -243,10 +225,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
-		// AQ carries no census row, so it is not admitted.
-		// It cannot draw, and reporting it as a sampling failure would attribute the
-		// admission filter's decision to the sampler.
-		const report = await funnel({
+				// AQ carries no census row, so it is not admitted and cannot draw; reporting it as a sampling failure would blame the admission filter.
+						const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,
 		})
@@ -266,10 +246,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("surfaces a verified source with no corpus rows, and skips one that has rows", async () => {
-		// US carries corpus rows, so it is not a candidate however far its research got.
-		// KE carries none, and the fixture's jurisdictions default to backbone `C`,
-		// so widening the filter is what reaches it.
-		const report = await funnel()
+				// US carries corpus rows so it is not a candidate, while KE carries none and is reached by widening the filter past its backbone `C`.
+						const report = await funnel()
 
 		expect(opportunityCandidates(report).map((entry) => entry.iso2)).toEqual([])
 		expect(opportunityCandidates(report, ["C"]).map((entry) => entry.iso2)).toEqual(["AQ", "IO", "KE"])
@@ -279,10 +257,8 @@ describe("readCoverageFunnel", () => {
 		const report = await funnel()
 		const kenya = opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "KE")
 
-		// KE is admitted by the training config and carries no corpus row.
-		// That is the config promising a locale it cannot deliver, which is different
-		// work from a country the config never named.
-		expect(kenya?.admitted).toBe(true)
+				// KE is admitted by the training config and carries no corpus row: the config promises a locale it cannot deliver.
+						expect(kenya?.admitted).toBe(true)
 		expect(kenya?.licensed).toBe(false)
 		expect(opportunityCandidates(report, ["C"]).find((entry) => entry.iso2 === "AQ")?.admitted).toBe(false)
 	})

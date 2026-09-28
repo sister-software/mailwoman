@@ -4,8 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Search over the pipeline's ancestrie artifact: one prefix walk over the feature names, tokenized by the same
- *   function the build used, so a query and an entry never disagree on what a token is. The artifact is one fetch
- *   at startup. every query after that is local.
+ *   function the build used, so a query and an entry never disagree on what a token is.
  */
 
 import { Ancestrie } from "@mailwoman/ancestrie"
@@ -25,10 +24,8 @@ export interface SearchHit {
 	 */
 	featureTypeCode?: string
 	/**
-	 * What the camera needs to choose a zoom.
-	 *
-	 * Absent for a feature the gazetteer gives no diameter, which a caller must
-	 * read as unknown rather than as zero.
+	 * What the camera needs to choose a zoom; absent for a feature the gazetteer gives no diameter, which
+	 * a caller must read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number
@@ -36,18 +33,14 @@ export interface SearchHit {
 }
 
 /**
- * The payload the build wrote beside every entry.
- *
- * Read through the schema rather than cast, so an artifact from a build with a different
- * payload fails at load rather than as `undefined` in the panel.
+ * The payload the build wrote beside every entry, read through the schema so a mismatched artifact fails
+ * at load rather than as `undefined` in the panel.
  */
 const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
 	name: z.string().min(1),
 	featureType: z.string().min(1),
 	// Optional because the gazetteer leaves them unset for some features.
-	// An artifact built before they were written still loads, and the camera
-	// reads a missing diameter as unknown.
 	featureTypeCode: z.string().min(1).optional(),
 	diameterKm: z.number().optional(),
 	centerLon: z.number(),
@@ -57,18 +50,14 @@ const SearchPayloadSchema = z.object({
 const DEFAULT_LIMIT = 8
 
 /**
- * The BFS collects more than it answers so the rank-descending sort has real choices.
- *
- * A name and its alias both match a shared prefix and collapse to one hit,
- * which is why the surplus is needed.
+ * The BFS collects a surplus so the rank-descending sort has real choices when a name and its alias
+ * collapse to one hit.
  */
 const CANDIDATE_MULTIPLIER = 3
 
 /**
- * How many tokens past the typed prefix a suggestion may run.
- *
- * A nomenclature name is at most a few words (`Marco Polo P`, `Mare Tranquillitatis`),
- * so a first-token prefix must reach the whole name.
+ * How many tokens past the typed prefix a suggestion may run, so a first-token prefix reaches a whole
+ * several-word nomenclature name.
  */
 const MAX_EXPANSION_DEPTH = 6
 
@@ -126,10 +115,7 @@ export class PlanetarySearch {
 
 export interface LoadSearchIndexOptions {
 	/**
-	 * How the artifact's bytes are read.
-	 *
-	 * `fetch` by default.
-	 * A test reads a fixture from disk.
+	 * How the artifact's bytes are read: `fetch` by default, a test fixture from disk in a test.
 	 */
 	readBytes?: (url: string) => Promise<Uint8Array>
 }

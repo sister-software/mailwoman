@@ -3,16 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The data-root overlay rung, and the artifact report that keeps it honest.
+ *   The data-root overlay rung and the artifact report that keeps it honest: a weights workspace carries
+ *   no `model.onnx`, so before the rung a fresh checkout resolved the package, found it empty, and
+ *   could not geocode at all.
  *
- *   A weights workspace carries no `model.onnx` — the binaries are not in git — so a fresh checkout resolves
- *   the package and finds it empty. Before the overlay rung that was terminal: the package rung threw and
- *   the later rungs were unreachable, which is why a git worktree could not geocode at all.
- *
- *   The rung's own hazard is what most of this file tests. Only `model` and `tokenizer` throw. the ~11
- *   sibling artifacts resolve `existsSync → undefined` by design, so a checkout that finds the two binaries
- *   now parses while missing every lexicon and FST — scoring worse and reporting no failure. The artifact report
- *   is the answer, and a rung that shipped without it would trade a loud failure for a quiet one.
+ *   Only `model` and `tokenizer` throw, while the sibling artifacts resolve
+ *   `existsSync → undefined` by design, so a checkout that finds the two binaries parses while missing
+ *   every lexicon and FST, scoring worse and reporting no failure; the artifact report is what keeps
+ *   that from being a quiet failure.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -30,10 +28,8 @@ async function scratch(): Promise<PathBuilder> {
 }
 
 /**
- * A weights directory in the shipped layout.
- *
- * The same fixed filenames `resolveFromPackageDir` reads, which is exactly why
- * the overlay needs no logic of its own.
+ * A weights directory in the shipped layout, using the same fixed filenames
+ * `resolveFromPackageDir` reads — which is why the overlay needs no logic of its own.
  */
 async function weightsDir(root: PathBuilder, locale: string, files: Record<string, string>): Promise<PathBuilder> {
 	const dir = root(locale)
@@ -50,10 +46,8 @@ async function weightsDir(root: PathBuilder, locale: string, files: Record<strin
 const BINARIES = { "model.onnx": "onnx", "tokenizer.model": "sp" }
 
 /**
- * A locale with no published package, so module resolution misses and the ladder
- * falls through to the probes under test.
- *
- * Using a real locale would make the result depend on whether someone had linked dev weights.
+ * A locale with no published package, so module resolution misses and the ladder falls through to
+ * the probes under test; a real locale would depend on whether someone had linked dev weights.
  */
 const ABSENT = "xx-xx"
 
@@ -73,8 +67,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 	it("refuses a half-populated overlay rather than resolving one binary", async () => {
 		const root = await scratch()
 
-		// A tokenizer without a model is not a weaker answer, it is a broken one, and the
-		// failure it would otherwise produce arrives much later, inside the ONNX session.
+		// A tokenizer without a model is broken rather than weaker, and the failure it would otherwise
+		// produce arrives much later, inside the ONNX session.
 		await weightsDir(root, ABSENT, { "tokenizer.model": "sp" })
 
 		await expect(resolveWeights({ locale: ABSENT, overlayRoot: root })).rejects.toThrow(/Could not resolve/)
@@ -104,9 +98,8 @@ describe("resolveWeights — the data-root overlay rung", () => {
 			message = (error as Error).message
 		}
 
-		// An explicit candidate cache is an isolation boundary.
-		// It must name the failed cache package and must not report an overlay probe,
-		// because consulting that overlay would mix installed artifacts into the candidate run.
+		// An explicit candidate cache is an isolation boundary: it must name the failed cache package
+		// and must not report an overlay probe, which would mix installed artifacts into the candidate run.
 		expect(message).toContain(cache.toString())
 		expect(message).toContain(`@mailwoman/neural-weights-${ABSENT}`)
 		expect(message).not.toContain(overlay(ABSENT).toString())
@@ -125,9 +118,8 @@ describe("resolveWeights — the artifact report", () => {
 		expect(by.get("model.onnx")?.origin).toBe(WeightsOrigin.Overlay)
 		expect(by.get("model-card.json")?.origin).toBe(WeightsOrigin.Overlay)
 
-		// An artifact the overlay does not carry is reported with a null origin rather than omitted.
-		// Omitting it would make "this checkout has no FST" and "this build never
-		// had an FST field" the same shape.
+		// An artifact the overlay does not carry is reported with a null origin rather than omitted,
+		// which would make "this checkout has no FST" and "this build never had one" the same shape.
 		const fst = by.get("fst-xx-xx.bin")
 
 		expect(fst).toBeDefined()
@@ -142,8 +134,7 @@ describe("resolveWeights — the artifact report", () => {
 
 		const { artifacts } = await resolveWeights({ locale: ABSENT, overlayRoot: root })
 
-		// A report whose length varied with what happened to resolve could not answer "how much am I missing".
-		// The question the rung makes newly askable.
+		// A report whose length varied with what resolved could not answer "how much am I missing".
 		expect(artifacts.length).toBeGreaterThan(10)
 		expect(artifacts.filter((a) => a.origin === null).length).toBeGreaterThan(0)
 		expect(new Set(artifacts.map((a) => a.name)).size).toBe(artifacts.length)

@@ -41,16 +41,7 @@ test("CLI secrets stay private and package-owned", () => {
 })
 
 /**
- * A blank environment variable must mean the same as an absent one.
- *
- * Shells, Docker and CI all produce empty strings where an operator believes they set no value:
- * `export FOO=`, an unset `${VAR}` interpolation, a compose key with no value.
- * Any coerced-numeric schema turns that into `0`, and a `.positive()` or `.min()`
- * then rejects it — so the process dies at import, before any application code runs,
- * citing a variable nobody knowingly set.
- *
- * The failure lives in the interaction between `z.coerce` and a constraint
- * rather than in either one, so every coerced-numeric key gets these cases.
+ * A blank environment variable must mean the same as an absent one: `z.coerce` turns it into `0`, which a `.positive()` or `.min()` constraint then rejects.
  */
 const COERCED_NUMERIC_KEYS = ["MAILWOMAN_BATCH_MAX"] as const
 
@@ -72,9 +63,8 @@ describe("blank env values are treated as absent", () => {
 		})
 
 		test(`${key} still REJECTS a genuinely invalid value`, () => {
-			// The blank exemption must not become a general tolerance: a caller who sets 0
-			// or a word has made a mistake worth surfacing, unlike one whose shell handed us "".
-			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
+			// The blank exemption must not become a general tolerance: a caller who sets 0 or a word has made a mistake worth surfacing.
+						expect(() => PublicMailwomanEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
 			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "banana" })).toThrow(/expected/i)
 		})
 	}

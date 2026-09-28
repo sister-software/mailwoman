@@ -14,10 +14,9 @@ import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Cross-language guard for the inference-side anchor features (#239/#240). The feature layout must
- *   match the Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`), or
- *   the model is fed garbage at inference. These vectors are pinned to values emitted by the Python
- *   function — if the TS drifts (locale order, centroid scale, renormalization), this fails.
+ *   Cross-language guard for the inference-side anchor features: the feature layout must match the
+ *   Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`) or the model is
+ *   fed garbage at inference, and the pinned vectors fail if the TS drifts.
  */
 import { describe, expect, it } from "vitest"
 
@@ -80,20 +79,15 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 })
 
 /**
- * The 2026-08-05 train-parity fix (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`).
- *
- * Two obligations:
- *
- * 1. The default stays byte-identical to the pre-fix scan — graded against a verbatim
- *    copy of it rather than against a hash, so the oracle is readable.
- * 2. `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
- *    does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
+ * The train-parity fix, with two obligations: the default stays byte-identical to the pre-fix scan,
+ * graded against a verbatim copy of it rather than a hash so the oracle is readable, and
+ * `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
+ * does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
-	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim.
-	 *
-	 * The oracle for obligation 1.
+	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim — the oracle for
+	 * obligation 1.
 	 */
 	function legacyBuildAnchorFeatures(
 		text: string,
@@ -133,9 +127,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * Split `text` into non-whitespace runs, each halved, so every anchor span
-	 * is covered by more than one piece.
-	 * The geometry that makes a wrong paint extent visible.
+	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered by more than
+	 * one piece — the geometry that makes a wrong paint extent visible.
 	 */
 	function piecesFor(text: string): TokenizedPiece[] {
 		const out: TokenizedPiece[] = []
@@ -156,8 +149,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing
-	 * ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
@@ -184,7 +176,6 @@ describe("buildAnchorFeatures — span modes", () => {
 
 				expect(buildAnchorFeatures(register, pieces, V2)).toEqual(legacyBuildAnchorFeatures(register, pieces, V2))
 
-				// and passing the mode explicitly is the same thing
 				expect(buildAnchorFeatures(register, pieces, V2, { spanMode: "alnum-run" })).toEqual(
 					legacyBuildAnchorFeatures(register, pieces, V2)
 				)
@@ -220,8 +211,7 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted.
-		// The outward-only paint the default produces is 2 pieces rather than 4.
+		// Both halves of the unit are painted; the outward-only default paints 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 
@@ -238,9 +228,7 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2.
-		// Its outward SW1A is.
-		// NI codes behave the same way — Code-Point Open has none.
+		// SW1A 1AA is not in V2 but its outward SW1A is; NI codes behave the same way.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)
@@ -267,15 +255,13 @@ describe("buildAnchorFeatures — span modes", () => {
 })
 
 /**
- * #1512 — the shaped keyer and the lowercase register.
+ * The shaped keyer and the lowercase register: `POSTCODE_PATTERNS`' alphanumeric shapes require
+ * `[A-Z]`, so `collectMatches` finds no match in raw lowercase and the shaped keyer fired 0/120 on
+ * the gb-golden board when case normalization was off.
  *
- * `POSTCODE_PATTERNS`' alphanumeric shapes require `[A-Z]`, so `collectMatches` finds no match in raw
- * lowercase and the shaped keyer fired 0/120 on the gb-golden board when case normalization was off.
- *
- * The default parse path never saw it because `normalizeInputCase` restores GB postcode
- * casing first (every GB letter run is ≤2 characters, which `restoreLowerInput` uppercases),
- * but lowercase is the user register, and a `normalizeCase: false` parse lost
- * the entire GB/NL anchor channel in silence.
+ * The default parse path never saw it because `normalizeInputCase` restores GB postcode casing
+ * first, but lowercase is the user register and a `normalizeCase: false` parse lost the entire
+ * GB/NL anchor channel in silence.
  */
 describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
@@ -313,16 +299,14 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 		for (const text of [asWritten.toLowerCase(), asWritten.toUpperCase()]) {
 			const { features, confidence } = buildAnchorFeatures(text, piecesFor(text), V2, { spanMode: "shaped" })
 
-			// Byte-identical to the as-written leg: same pieces painted, same vector.
 			expect(confidence).toEqual(reference.confidence)
 			expect(features).toEqual(reference.features)
 		}
 	})
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
-		// `"ß".toUpperCase()` is "SS".
-		// A naive uppercase here would slide every later offset by one and paint the wrong pieces.
-		// Ascii-only folding cannot.
+		// `"ß".toUpperCase()` is "SS", and a naive uppercase would slide every later offset by one and
+		// paint the wrong pieces, which ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
@@ -347,10 +331,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * A2 of ROAD_TO_V9 §1 — the ship obligation check.
- *
- * A lookup carrying keys only the shaped keyer can reach, next to a card that does not declare
- * `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on every row it exists for.
+ * The ship obligation check: a lookup carrying keys only the shaped keyer can reach, next to a card
+ * that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on
+ * every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

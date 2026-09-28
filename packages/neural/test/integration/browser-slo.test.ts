@@ -3,44 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #378 browser SLO runner — the decomposed cold path, measured in a real browser against the local
- *   artifacts.
+ *   The browser SLO runner: the decomposed cold path, measured in a real browser against the local
+ *   artifacts. Every quantity is measured and asserted on its own against its own named budget, with
+ *   the arm (backend) that produced it in the test name.
  *
- *   The end-to-end probe this replaces reported one number per stage ("warm parse+resolve 3.3 s"),
- *   and that number bundles inference, gazetteer range fetches and UI staging together, so no
- *   regression in it can be attributed. Every quantity below is measured and asserted on its own,
- *   against its own named budget, with the arm (backend) that produced it in the test name — a
- *   timing number is meaningless without the arm, and two arms never share an assertion.
+ *   This measures the neural browser runtime as a client bundles it —
+ *   `@mailwoman/neural/web-onnx-runner` plus `@mailwoman/neural/tokenizer` through the package's
+ *   compiled `out/` tree — so run `yarn compile` first, because a stale `out/` measures stale code.
+ *   `@mailwoman/neural/web-loader` composes those into a `NeuralAddressClassifier` that also reaches
+ *   `@mailwoman/core`, and the `bundle-graph` health check proves that graph bundles.
  *
- *   what is under measurement: the neural browser runtime as a client bundles it —
- *   `@mailwoman/neural/web-onnx-runner` (onnxruntime-web, wasm + optional WebGPU) plus
- *   `@mailwoman/neural/tokenizer` (the SentencePiece core), reached through the package's compiled
- *   `out/` tree, which is what an npm consumer and the docs demo both bundle. Run `yarn compile`
- *   first: a stale `out/` measures stale code and no check here can detect it.
+ *   The demo's FST gazetteer (`fst-en-us.bin`, ~22 MB) is deliberately outside this accounting.
  *
- *   what is not: `@mailwoman/neural/web-loader` composes those two into a `NeuralAddressClassifier`,
- *   which reaches `@mailwoman/core`. That the whole graph bundles under the `browser` condition is
- *   what the `bundle-graph` health check proves. this harness keeps the reduced graph because its
- *   subject is timing. The two node imports the reduced graph does meet (`node:fs/promises` in the
- *   tokenizer's `loadFromFile`, `node:module` in the emscripten preamble) are dynamic and
- *   node-guarded, so marking them external is the entire accommodation. The cost of the reduction: the warm number is
- *   tokenize+infer rather than tokenize+infer+decode — which is the model-only number the instrumentation
- *   plan asked for, and the decoder is platform-free TS running identically on both hosts.
+ *   Budgets are regression tripwires rather than targets: a failure means the quantity moved a lot,
+ *   and the repair is to read the receipt rather than widen the constant. Byte budgets assert RAW
+ *   bytes, which are the deterministic artifact-size signal; the wire column is reported because it
+ *   is the one comparable to a live-demo trace.
  *
- *   The demo additionally pulls the FST gazetteer (`fst-en-us.bin`, ~22 MB) through the runtime
- *   pipeline rather than through the neural loader. It is deliberately outside this accounting. add
- *   it here only alongside the pipeline stage that fetches it.
- *
- *   budgets are regression tripwires rather than targets. They are set generously against the first run on
- *   the lab workstation. A failure means the quantity moved a lot. the repair is to read the receipt
- *   this file prints rather than to widen the constant.
- *
- *   Byte budgets assert RAW bytes rather than wire bytes: raw is the artifact-size regression signal
- *   and is deterministic, while the wire number depends on the compressor. Both are reported,
- *   because the wire column is the one comparable to a live-demo trace.
- *
- *   reading the receipt: vitest's default reporter hides console output from a file whose tests all
- *   pass, so run it with the verbose reporter when you want the numbers rather than the verdict:
+ *   Run with the verbose reporter to see the numbers rather than the verdict:
  *
  *   ```
  *   yarn vitest --run --config vitest.slow.config.ts \
@@ -64,79 +44,44 @@ import { basename, dirname, extname, normalize, type PathBuilder, resolvePath as
 import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
-// MARK: Budgets.
-// One per decomposed quantity, each naming its arm.
-
 /**
- * Raw bytes of `model.onnx`.
- *
- * The shipped int8 export measured 39,419,629 B (v4.4.0); the budget leaves room for a
- * quantization change without leaving room for an fp32 export (~4× larger).
+ * Raw bytes of `model.onnx`, budgeted to leave room for a quantization change but not an fp32 export (~4× larger).
  */
 const MODEL_RAW_BYTES_BUDGET = 56_000_000
 
-/**
- * Raw bytes of `tokenizer.model` — 1,632,289 B at the v0.9.0 multisplice vocabulary.
- */
 const TOKENIZER_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`.
- *
- * Which variant it asks for is ORT's decision at load time rather than ours — the first run fetched
- * the 22,867,301 B asyncify build — so the budget covers the family rather than one file name.
- * Compresses ~4× on the wire (5,580,159 B measured, against the live demo's 5.66 MB brotli figure).
+ * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`, covering whichever variant ORT picks at load.
  */
 const ORT_WASM_RAW_BYTES_BUDGET = 40_000_000
 
-/**
- * Raw bytes of the sql.js-httpvfs runtime — its UMD entry, its worker, and `sql-wasm.wasm`.
- */
 const SQLITE_RUNTIME_RAW_BYTES_BUDGET = 8_000_000
 
 /**
- * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural
- * runner + the SentencePiece core, minified).
- *
- * The demo's own app JS is larger.
- * It carries React and MapLibre on top of this — so read the budget as a floor
- * moving under the client rather than as the page weight.
+ * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural runner + the SentencePiece core, minified).
  */
 const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped web
- * loader fetches beside the model: model card, gazetteer / country / street-type /
- * locality-surface lexicons, the postcode anchor binary, the placetype-pair index.
- *
- * Asserted as one class because a per-artifact budget would need an edit every
- * time a channel ships a new lexicon generation.
+ * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped web loader fetches beside the model.
  */
 const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 
 /**
- * Session init on the wasm arm — tokenizer load plus ORT session creation, warm-up infer
- * included, with the model bytes already in memory so no network enters the number.
+ * Session init on the wasm arm — tokenizer load plus ORT session creation, warm-up infer included, with the model bytes already in memory.
  */
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
- * Session init on the WebGPU arm.
- *
- * Asserted only when the browser granted a WebGPU adapter and the runner's diagnostics report `webgpu`.
- * The runner falls back to wasm silently, so without that check the arm would
- * measure the other arm under a WebGPU name.
- *
- * Headless Chromium grants a software adapter (SwiftShader) where no GPU is reachable,
- * which is why the receipt prints the adapter's identity beside the number:
- * 2,997 ms on SwiftShader is not a claim about hardware.
+ * Session init on the WebGPU arm, asserted only when the browser granted an adapter and the runner's
+ * diagnostics report `webgpu`; the receipt prints the adapter's identity because a software adapter
+ * and a discrete GPU are different arms wearing the same name.
  */
 const INIT_WEBGPU_MS_BUDGET = 20_000
 
 /**
  * Median tokenize+infer on the wasm arm, single-threaded.
- *
- * The 2026-06 node one-thread probe measured 41–44 ms p50/p95 on this class of model.
  */
 const WARM_P50_WASM_MS_BUDGET = 140
 
@@ -146,33 +91,17 @@ const WARM_P50_WASM_MS_BUDGET = 140
 const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
- * Http range requests a cold gazetteer session costs — opening `candidate.db` over
- * sql.js-httpvfs plus the candidate-table probes.
- *
- * The candidate table is clustered so a probe touches a handful of B-tree pages.
- * The demo's own measured session was 38 requests.
- *
- * This budget is what fails when a schema or clustering change turns a probe into a scan.
+ * Http range requests a cold gazetteer session costs; this is what fails when a schema or clustering change turns a probe into a scan.
  */
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
 /**
- * Peak `performance.memory.usedJSHeapSize` across the whole browser session.
- *
- * V8 accounts `ArrayBuffer` storage and wasm linear memory outside the JS heap, so this
- * number does not include the ~53 MB of artifact bytes the session holds nor ORT's own arena.
- * It bounds the JS side only, which is where a leak in the runner or the tokenizer would show.
- *
- * Measured at ~10 MiB on the first run.
- * The budget is the "something is retaining objects per parse" regression check rather than a memory target.
+ * Peak `performance.memory.usedJSHeapSize` across the whole browser session, bounding the JS side only since V8 accounts ArrayBuffers and wasm memory outside the heap.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
 
-// MARK: Fixtures.
-
 /**
- * The warm-inference input set: four board-register en-US rows and the same four in the lowercase
- * register, because lowercase is what users type and every eval here carries a lowercase arm.
+ * The warm-inference input set: four board-register en-US rows and the same four in lowercase, because lowercase is what users type.
  */
 const WARM_INPUTS = [
 	"1600 Pennsylvania Ave NW, Washington, DC 20500",
@@ -186,27 +115,22 @@ const WARM_INPUTS = [
 ] as const
 
 /**
- * Lowercase rows in {@link WARM_INPUTS} — half of them, stated once
- * so the receipt cannot drift from the fixture.
+ * Lowercase rows in {@link WARM_INPUTS}, stated once so the receipt cannot drift from the fixture.
  */
 const WARM_LOWERCASE_INPUTS = 4
 
 /**
- * Measured parses per arm — above the plan's floor of 50, and a whole multiple of the
- * input set so every register contributes equally to the percentiles.
+ * Measured parses per arm, a whole multiple of the input set so every register contributes equally.
  */
 const WARM_ITERATIONS = 64
 
 /**
- * Discarded parses before measurement starts.
- *
- * The first few carry ORT's per-shape allocation.
+ * Discarded parses before measurement starts, because the first few carry ORT's per-shape allocation.
  */
 const WARM_WARMUP_ITERATIONS = 8
 
 /**
- * `name_key` probes issued against the candidate table — the shape `WOFCandidateTableLookup`
- * runs per resolve, enough of them to touch more than one region of a multi-gigabyte file.
+ * `name_key` probes issued against the candidate table — the shape `WOFCandidateTableLookup` runs per resolve, enough to touch more than one region of a multi-gigabyte file.
  */
 const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage", "london"] as const
 
@@ -216,36 +140,21 @@ const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage",
 const CANDIDATE_PROBE_LIMIT = 8
 
 /**
- * Bytes per http range request, matching the demo's sql.js-httpvfs configuration
- * (16 SQLite pages at the candidate DB's 8 KiB page size).
- *
- * Changing it changes the request count by construction.
+ * Bytes per http range request, matching the demo's sql.js-httpvfs configuration (16 SQLite pages at the candidate DB's 8 KiB page size); changing it changes the request count by construction.
  */
 const HTTPVFS_CHUNK_SIZE = 65_536
 
 /**
- * Chromium flags that let the WebGPU arm be attempted at all.
- *
- * Headless Chromium ships WebGPU behind this flag and grants an adapter only
- * where the host exposes a GPU, so on a headless CI box the probe still comes back empty
- * and the arm skips, which is the honest outcome rather than a failure.
- * The adapter's own identity goes in the receipt, because a software adapter
- * and a discrete GPU are different arms wearing the same name.
+ * Chromium flags that let the WebGPU arm be attempted at all; the arm skips where no adapter is granted, which is the honest outcome, and the receipt records the adapter's identity.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
 /**
- * The candidate-table probe.
- *
- * `WOFCandidateTableLookup` issues this shape per resolve — a contiguous probe on
- * the `without rowid` B-tree keyed by `name_key` — and the range-fetch count is a
- * property of that access pattern rather than of the select list.
+ * The candidate-table probe: a contiguous probe on the `without rowid` B-tree keyed by `name_key`, whose access pattern decides the range-fetch count rather than the select list.
  */
 const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
 	`FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC LIMIT ${CANDIDATE_PROBE_LIMIT}`
-
-// MARK: Checks
 
 /**
  * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights,
