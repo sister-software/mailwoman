@@ -66,7 +66,7 @@ async function seedExtract(rows: Seed[]): Promise<StreetCentroidFixture> {
 			r.max_lon,
 			r.point_count,
 			r.street_norm,
-			r.street_norm // name_key — the geocoding lookup doesn't probe it. any non-null fixture value serves
+			r.street_norm // name_key. The geocoding lookup doesn't probe it, so any non-null fixture value serves
 		)
 	}
 
