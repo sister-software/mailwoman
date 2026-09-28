@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fold GeoNames postal codes into a WOF or unified postcode extract as first-class `postalcode`
+ *   Fold GeoNames postcode rows into a WOF or unified postcode extract as first-class `postalcode`
  *   places, for countries whose WOF postalcode repos do not exist.
  *
  *   Two laws are enforced here in code rather than in a runbook.
@@ -83,7 +83,7 @@ export interface MedoidSupport {
  * Collapse a group to its distinct points before any geometric consensus reads it.
  *
  * Rows sharing a coordinate to the digit are not independent measurements. GeoNames computes a
- * postal coordinate by matching the code against place names and admin divisions, and averages
+ * postal coordinate by matching the code against the names of places and admin divisions, and averages
  * neighbouring codes where the match fails, so one computed value reaches every row that matched
  * it.
  *
@@ -235,7 +235,7 @@ export async function ingestGeonamesPostal(
 
 		const members = new Map<string, { display: string; pts: Array<[number, number]> }>()
 
-		// The dump is headerless, so row 1 would otherwise be consumed as column names and its
+		// The dump is headerless, so row 1 would otherwise be consumed as column headings and its
 		// postcode lost. `header: false` is required.
 		for await (const cols of readUnquotedTSV(file)) {
 			if (cols.length < GEONAMES_POSTAL_COLUMNS) continue

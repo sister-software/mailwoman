@@ -97,7 +97,7 @@ export interface RankingWeights {
 	 */
 	exactMatchTiering: boolean
 	/**
-	 * Official-language names are names. When true, a candidate holding the query as an official
+	 * Official-language names count as names. When true, a candidate holding the query as an official
 	 * name (`names.official = 1`, a preferred-form name in an official language of its country,
 	 * stamped at ingest) joins the name-exact sub-tier rather than the alias-exact one, provided its
 	 * population clears {@link officialNameExactFloor}.

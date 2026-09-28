@@ -6,8 +6,8 @@
  *   Typed schema for the tiger street-segment interpolation extracts (`street-segments-<cc>-<st>.db`,
  *   built by `scripts/build-interpolation-extract.ts` from tiger edges). This is the Method-3
  *   fallback the resolver drops to when the address-point tier (Method 2) cannot bracket. It is the
- *   single source of truth for the columns the builder writes and the reader
- *   ({@link StreetInterpolator}) probes, so a column rename in one is a compile error in the other.
+ *   definition of the columns the builder writes and the reader ({@link StreetInterpolator}) probes,
+ *   so a column rename in one is a compile error in the other.
  *
  *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read`, see
  *   agents.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
@@ -83,7 +83,7 @@ export interface StreetSegmentTable {
  *
  * Written once by the builder, and read at open time by {@link StreetInterpolator}.
  *
- * Extracts built before this table exists simply lack it. The reader degrades to `undefined`, and
+ * Extracts built before this table exists lack it. The reader degrades to `undefined`, and
  * callers fall back to the in-code per-region table. Shipped DBs are rebuilt rather than patched.
  */
 export interface InterpCalibrationRow {

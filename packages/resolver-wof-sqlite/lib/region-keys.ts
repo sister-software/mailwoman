@@ -38,7 +38,7 @@ export const REGION_CLASS_PLACETYPES: ReadonlySet<string> = new Set(["region", "
  * every Irish county qualifier would read `contradicted`. The stripped form is added to the key
  * set, never substituted.
  *
- * `County Durham` is a real name whose stripped variant simply also matches, and a set union can
+ * `County Durham` is a real name whose stripped variant also matches, and a set union can
  * only widen confirmation, so the closure is monotone. `contradicted → confirmed` is the only
  * movement it can cause.
  */
@@ -123,7 +123,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
 		}
 	}
 
-	// The empty fold stays IN the set on purpose.
+	// The empty fold stays in the set on purpose.
 	// The admin-coherence verdicts have always compared the empty key
 	// (two empty-folding strings intersect → `confirmed`), and this move must not shift a verdict.
 	// A consumer probing a table by key filters the empty string out itself.
@@ -141,7 +141,7 @@ export function regionKeys(value: string, countryAlpha2?: string): Set<string> {
  *
  * Adding `county <key>` restores the two-sidedness for the one stored-form family with an evidenced
  * case. The union is monotone, since a wider qualifier set can only find more bearers, and each
- * bearer must still genuinely contain a candidate before anything moves.
+ * bearer must still contain a candidate before anything moves.
  *
  * The suffix sibling (`<key> province`) is deliberately absent.
  * No stored-form case has been evidenced, and a change without a board does not get built.

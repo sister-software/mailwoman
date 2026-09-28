@@ -178,11 +178,10 @@ export class WOFReverseGeocoder implements Disposable {
 	/**
 	 * Parsed-geometry cache.
 	 *
-	 * Reverse queries cluster geographically, so caching the JSON.parse pays for itself immediately.
+	 * Reverse queries cluster geographically, so caching the JSON.parse avoids repeated work.
 	 * The cache is bounded and clears wholesale at the cap.
 	 *
-	 * The polygons are DP-simplified and small, so the cap only keeps a long-lived server process
-	 * honest.
+	 * The polygons are DP-simplified and small, so the cap only bounds a long-lived server process.
 	 */
 	readonly #geometryCache = new Map<number, ParsedGeometry | null>()
 	static readonly #GEOMETRY_CACHE_CAP = 4096

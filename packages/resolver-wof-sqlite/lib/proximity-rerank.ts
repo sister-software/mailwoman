@@ -46,7 +46,7 @@ export const POP_SCALE_LOG10 = 6
  *
  * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's score is
  * log-population alone with no bm25 document term, which weakens the population signal relative to
- * the bias. At around 30 km the boost reaches only candidates the user is actually looking at, so
+ * the bias. At around 30 km the boost reaches only candidates the user is looking at, so
  * an in-view namesake still wins and a distant one does not.
  */
 export const PROX_SCALE_KM = 30
