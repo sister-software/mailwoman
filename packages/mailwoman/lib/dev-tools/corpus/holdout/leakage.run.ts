@@ -18,7 +18,7 @@
  *   row in this process, because a base corpus holds over a hundred million train rows.
  *
  *   Usage:
- *   node packages/mailwoman/lib/dev-tools/corpus/holdout-leakage.run.ts --corpus <corpus dir>
+ *   node packages/mailwoman/lib/dev-tools/corpus/holdout/leakage.run.ts --corpus <corpus dir>
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

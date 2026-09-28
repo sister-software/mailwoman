@@ -2,12 +2,21 @@ import { COUNTRY_SURFACE_FORMS, CountryNames, matchCountry } from "@mailwoman/co
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
+
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const BARE_COUNTRY_SOURCE = defaultRecipeSource("synth-bare-country")
 
 const BARE_COUNTRY_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
+	// The codex table is the record, and its rows carry no `source_id` of their own.
+	baseSourceID: null,
 }
 
 const MIN_NAME_LENGTH = 4
@@ -52,14 +61,14 @@ export const bareCountryRecipe: CorpusRecipe = {
 			read++
 
 			const components: Record<string, string> = { country: surface }
-			const source_id = recipeSourceID("synth-bare-country", { country: surface, cc: iso2, v: String(read) })
+			const source_id = recipeSourceID(BARE_COUNTRY_SOURCE, { country: surface, cc: iso2, v: String(read) })
 
 			const canonical = {
 				raw: surface,
 				components,
 				country: iso2,
 				locale: "und",
-				source: "synth-bare-country",
+				source: BARE_COUNTRY_SOURCE,
 				source_id,
 				corpus_version: "0.11.0",
 				license: "Synthetic — bare-country; surfaces from the codex country table (ISO 3166 + curated forms)",

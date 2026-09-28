@@ -1,0 +1,466 @@
+# v7.0.0 trains on the v0.7.0-de-holdout corpus, the first assembly whose held-out splits carry German
+# street rows and the first whose rows store the operation spelling of every recipe-output source.
+#
+# The differences from v6.0.0-register-surface-60k.yaml are:
+#
+# 1. `data.corpus_dir` moves to v0.7.0-de-holdout. A run on v0.6.0-register-surface stopped at the CPU
+#    preflight because its DE test split held no street row. Measured on the assembled corpus with
+#    `python -m mailwoman_train.audits.validation_coverage`: DE val holds 49,831 rows of which 12,537
+#    carry a street or a house number, and DE test holds 49,511 rows of which 12,583 do. All four
+#    declared floors are met.
+#
+# 2. Every recipe-output source key carries the operation spelling. The corpus stores it: the assembly
+#    rewrote each routed overlay file before the manifest computed its digest, and the per-file record
+#    beside those files states the row count and the ordered source_id digest verified on both sides.
+#    The mapping is a prefix swap recorded in packages/corpus/lib/recipes/sources.ts, and the tail of
+#    each name is unchanged except for Germany, whose retired name spelled a language word where every
+#    other locale read as an ISO code. The 54 keys below are the same 54 sources v6.0.0 weighted, and
+#    the weights and reps targets are unchanged value for value.
+#
+# 3. `train.output_dir` and `train.trackio_run_name` name the v700 run.
+#
+# The corpus vocabulary and the key set agree exactly: the corpus holds 43 overlay sources and 11
+# adapter ids, and each of those 54 appears once in source_weights or source_reps. The loader rejects a
+# source without a weight, so a missing key stops the run rather than dropping rows silently.
+#
+# The run starts from scratch with `--resume none`. A fine-tune from the v6.0.0 checkpoint is not
+# available, because no v6.0.0 run reached a checkpoint on this corpus family.
+#
+# All other weights, reps targets, receipts and the model, train and eval blocks match v6.0.0.
+#
+# One receipt is short of its floor on this mixture, and it is short for the same reason under v6.0.0's
+# spelling. `ve-locality-postcode-region` asks for 250 draws from `reviewed-postcode-tail`. That source
+# holds 22 rows, its weight of 0.05 gives it a requested share of 0.00024440 of the epoch, and 1,000,000
+# draws therefore expect 244. Measured at seed 43: 240 observed. The floor sits above the mixture's own
+# expectation, so the receipt refuses on about half of the seeds whatever the corpus is called. Raising
+# the weight, lowering the floor and emitting more than 22 VE rows are three different changes with
+# three different effects on the run, and this config leaves both numbers as v6.0.0 set them rather than
+# fitting one of them to this reading.
+
+data:
+  corpus_dir: /data/corpus/versioned/v0.7.0-de-holdout/corpus-v0.7.0-de-holdout
+  tokenizer_dir: /data/models/tokenizer/v0.9.0-multisplice
+  max_length: 128
+  country_weights:
+    AD: 1.0
+    AE: 1.0
+    AF: 1.0
+    AG: 1.0
+    AI: 1.0
+    AL: 1.0
+    AO: 1.0
+    AR: 1.0
+    AS: 1.0
+    AT: 1.0
+    AU: 1.0
+    AW: 1.0
+    BA: 1.0
+    BB: 1.0
+    BD: 1.0
+    BE: 1.0
+    BF: 1.0
+    BI: 1.0
+    BJ: 1.0
+    BM: 1.0
+    BN: 1.0
+    BQ: 1.0
+    BR: 1.0
+    BS: 1.0
+    BT: 1.0
+    BW: 1.0
+    BY: 1.0
+    BZ: 1.0
+    CA: 1.0
+    CD: 1.0
+    CF: 1.0
+    CG: 1.0
+    CH: 1.0
+    CK: 1.0
+    CN: 1.0
+    CO: 1.0
+    CR: 1.0
+    CV: 1.0
+    CW: 1.0
+    CY: 1.0
+    CZ: 1.0
+    DE: 1.0
+    DJ: 1.0
+    DK: 1.0
+    DM: 1.0
+    DO: 1.0
+    EG: 1.0
+    ER: 1.0
+    ES: 1.0
+    FI: 1.0
+    FK: 1.0
+    FM: 1.0
+    FO: 1.0
+    FR: 1.0
+    GB: 1.0
+    GD: 1.0
+    GE: 1.0
+    GH: 1.0
+    GM: 1.0
+    GT: 1.0
+    GW: 1.0
+    HK: 1.0
+    HR: 1.0
+    HU: 1.0
+    ID: 1.0
+    IE: 1.0
+    IL: 1.0
+    IM: 1.0
+    IN: 1.0
+    IO: 1.0
+    IS: 1.0
+    IT: 1.0
+    JO: 1.0
+    JP: 1.0
+    KH: 1.0
+    KR: 1.0
+    KW: 1.0
+    KY: 1.0
+    LB: 1.0
+    LU: 1.0
+    MA: 1.0
+    ML: 1.0
+    MN: 1.0
+    MP: 1.0
+    MS: 1.0
+    MU: 1.0
+    MW: 1.0
+    MX: 1.0
+    MY: 1.0
+    NA: 1.0
+    NE: 1.0
+    NG: 1.0
+    NI: 1.0
+    NL: 1.0
+    # The key is quoted because YAML 1.1 reads a bare `NO` as false, which would match no Norwegian row.
+    "NO": 1.0
+    NZ: 1.0
+    OM: 1.0
+    PE: 1.0
+    PG: 1.0
+    PH: 1.0
+    PK: 1.0
+    PL: 1.0
+    PM: 1.0
+    PR: 1.0
+    PT: 1.0
+    RU: 1.0
+    RW: 1.0
+    SA: 1.0
+    SB: 1.0
+    SC: 1.0
+    SE: 1.0
+    SG: 1.0
+    SH: 1.0
+    SI: 1.0
+    SK: 1.0
+    SM: 1.0
+    SO: 1.0
+    SR: 1.0
+    ST: 1.0
+    SV: 1.0
+    SX: 1.0
+    TH: 1.0
+    TK: 1.0
+    TM: 1.0
+    TO: 1.0
+    TR: 1.0
+    TT: 1.0
+    TW: 1.0
+    UA: 1.0
+    US: 1.0
+    VE: 1.0
+    VG: 1.0
+    VI: 1.0
+    VN: 1.0
+    VU: 1.0
+    ZA: 1.0
+  source_weights:
+    invented-house-venue: 2.0
+    reviewed-postcode-tail: 0.05
+    overture-latam: 6.0
+    wof-admin: 2.0
+    wof-postalcode: 2.0
+    ban: 3.0
+    tiger: 4.0
+    usgov-nppes: 2.0
+    usgov-hrsa-fqhc: 2.0
+    usgov-nad: 1.0
+    state-tx-notaries: 1.5
+    state-ny-notaries: 2.0
+    # These two sources are set to zero to match v5.7.0, whose loader never indexed them. The current
+    # loader sees them and rejects any source without a weight, so they must be listed.
+    state-ia-contractors: 0.0
+    usgov-imls-pls: 0.0
+    deepseek-kryptonite: 3.0
+    invented-intersection: 1.0
+    rendered-de: 6.0
+    rendered-fr-order: 3.0
+    rendered-fr-admin-split: 6.0
+    spliced-unit: 0.0 # Replaced by spliced-unit-v30.
+    spliced-unit-v30: 1.5
+    invented-po-box-cedex: 1.5
+    spliced-affix: 2.0
+    spliced-country: 2.0
+    overture: 3.0
+    gnaf: 6.0
+    invented-anchor-absorption: 6.0
+    fragment-fr-bare-street: 0.0 # Replaced by fragment-fr-bare-street-v22.
+    fragment-fr-bare-street-v22: 12.0
+    rendered-si-bare-village: 12.0
+    rendered-no-street-led: 0.0
+    rendered-cz-pcfirst-preposition: 0.0 # Replaced by rendered-cz-pcfirst-preposition-v21.
+    rendered-cz-pcfirst-preposition-v21: 12.0
+    rendered-nl-postcode: 6.0
+    fragment-assay: 6.0
+    fragment-fr: 12.0
+    fragment-no: 12.0
+    rendered-gb: 6.0
+    rendered-pt: 6.0
+    rendered-ch: 6.0
+    rendered-hr: 6.0
+    rendered-sk: 6.0
+    rendered-lu: 6.0
+    spliced-sub-venue: 12.0
+    spliced-suffix-boundary: 2.5
+  # These sources set passes per row, and the loader derives their weights. Large register sources
+  # take one pass, and sources of about 5,000 rows take eight. The values are unchanged from v5.7.0.
+  source_reps:
+    rendered-sg-register: 1.0
+    rendered-pk-register: 1.0
+    rendered-bd-register: 8.0
+    spliced-trailing-region-es-v28: 8.0
+    invented-po-box-military: 8.0
+    osm: 0.5
+    codex-bare-postcode: 1.0
+    spliced-trailing-region-us: 1.0
+    spliced-trailing-region-ca-bare: 4.0
+  required_corpus_receipts:
+    # Each receipt stops the run when the epoch-mixture audit draws fewer matching rows than `min_draws`.
+    - name: us-city-state-postcode
+      min_draws: 500
+      source: spliced-trailing-region-us
+      country: US
+      component_sequence:
+        - locality
+        - region
+        - postcode
+    - name: ca-region-code-tail
+      min_draws: 1000
+      source: spliced-trailing-region-ca-bare
+      country: CA
+    - name: us-secondary-unit-current-generation
+      min_draws: 2000
+      source: spliced-unit-v30
+      country: US
+    # The receipts below are unchanged from v5.6.0.
+    - name: bare-postcode-czech
+      min_draws: 250
+      source: codex-bare-postcode
+      country: CZ
+    - name: cz-postcode-first-current-generation
+      min_draws: 1000
+      source: rendered-cz-pcfirst-preposition-v21
+      country: CZ
+    - name: fr-bare-street-current-generation
+      min_draws: 1000
+      source: fragment-fr-bare-street-v22
+      country: FR
+    - name: ve-locality-postcode-region
+      min_draws: 250
+      source: reviewed-postcode-tail
+      country: VE
+      component_sequence:
+        - locality
+        - postcode
+        - region
+    - name: sg-registers
+      min_draws: 1000
+      source: rendered-sg-register
+      country: SG
+    - name: pk-house-line
+      min_draws: 1000
+      source: rendered-pk-register
+      country: PK
+    - name: bd-trailing-postcode
+      min_draws: 500
+      source: rendered-bd-register
+      country: BD
+    - name: es-trailing-region-local-surfaces
+      min_draws: 500
+      source: spliced-trailing-region-es-v28
+      country: ES
+    - name: us-military-po-box
+      min_draws: 500
+      source: invented-po-box-military
+      country: US
+    - name: osm-south-asia-formats
+      min_draws: 1000
+      source: osm
+    # Each national register needs 1,000 draws from its own source id. Rows from `overture` in the same
+    # country do not count.
+    - name: pt-native-order
+      min_draws: 1000
+      source: rendered-pt
+      country: PT
+    - name: ch-native-order
+      min_draws: 1000
+      source: rendered-ch
+      country: CH
+    - name: hr-native-order
+      min_draws: 1000
+      source: rendered-hr
+      country: HR
+    - name: sk-native-order
+      min_draws: 1000
+      source: rendered-sk
+      country: SK
+    - name: lu-native-order
+      min_draws: 1000
+      source: rendered-lu
+      country: LU
+    # Brazil and Mexico share the `overture-latam` source, so each receipt also filters by country.
+    - name: br-overture-rooftops
+      min_draws: 1000
+      source: overture-latam
+      country: BR
+    - name: mx-overture-rooftops
+      min_draws: 1000
+      source: overture-latam
+      country: MX
+  # Each of the four promotion locales requires held-out rows and street rows. The floors below are the
+  # v6.0.0 floors unchanged, and the assembled corpus meets all four.
+  required_validation_coverage:
+    - country: GB
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: FR
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: DE
+      min_rows: 1000
+      min_street_rows: 1000
+    - country: US
+      min_rows: 1000
+      min_street_rows: 1000
+  augment_exclude_sources:
+    - spliced-suffix-boundary
+    # This source teaches a postcode alone, such as `119 00`, so augmentation would add tokens the row
+    # must not contain.
+    - codex-bare-postcode
+  train_rows_per_epoch: 1000000
+  val_rows: 4096
+  coarse_filter: true
+  augment_directional_prob: 0.3
+  augment_region_prob: 0.3
+  augment_glue_prob: 0.25
+  augment_ordinal_prob: 0.3
+  augment_punct_drop_prob: 0.3
+  anchor_lookup_path: /data/anchor/pilot-anchor-lookup-v2-2026-08-05.json
+  gazetteer_lexicon_path: /data/gazetteer/anchor-lexicon-v1.json
+  country_lexicon_path: /data/gazetteer/country-surface-lexicon-v1.json
+  gazetteer_choreography: true
+  affix_relabel_lexicon_path: /data/gazetteer/affix-relabel-lexicon-v2.json
+  anchor_paint_mode: shaped
+  anchor_value_mode: posterior_latlon
+  street_type_lexicon_path: /data/gazetteer/street-type-lexicon-v3.json
+  locality_surface_lexicon_path: /data/gazetteer/locality-surface-lexicon-v7.json
+
+model:
+  hidden_size: 384
+  use_span_boundary_head: true
+  use_deploc_head: false
+  span_boundary_loss_weight: 0.5
+  num_hidden_layers: 6
+  num_attention_heads: 6
+  intermediate_size: 1536
+  max_position_embeddings: 128
+  type_vocab_size: 1
+  hidden_dropout_prob: 0.1
+  attention_probs_dropout_prob: 0.1
+  use_crf: true
+  crf_loss_weight: 0.0
+  crf_normalization: per_sequence
+  label_smoothing: 0.1
+  use_locale_conditioning: true
+  locale_loss_weight: 0.3
+  use_postcode_anchor: true
+  use_gazetteer_anchor: true
+  gazetteer_feature_dim: 5
+  use_country_anchor: true
+  country_feature_dim: 2
+  use_street_type_anchor: true
+  street_type_feature_dim: 1
+  use_locality_surface_anchor: true
+  locality_surface_feature_dim: 2
+  country_ambiguous_scale: 0.5
+  class_weights:
+    O: 0.5
+    B-country: 3.5
+    I-country: 3.5
+    B-region: 1.5
+    I-region: 1.5
+    B-locality: 2.0
+    I-locality: 2.0
+    B-dependent_locality: 1.0
+    I-dependent_locality: 1.0
+    B-postcode: 1.5
+    I-postcode: 1.5
+    B-subregion: 0.3
+    I-subregion: 0.3
+    B-cedex: 1.0
+    I-cedex: 1.0
+    B-venue: 1.5
+    I-venue: 1.5
+    B-street: 2.0
+    I-street: 2.0
+    B-house_number: 1.5
+    I-house_number: 1.5
+    B-street_prefix: 1.5
+    I-street_prefix: 1.5
+    B-street_suffix: 1.5
+    I-street_suffix: 1.5
+    B-unit: 1.5
+    I-unit: 1.5
+    B-po_box: 1.5
+    I-po_box: 1.5
+    B-intersection_a: 1.0
+    I-intersection_a: 1.0
+    B-intersection_b: 1.0
+    I-intersection_b: 1.0
+  use_phrase_priors: true
+  phrase_feature_dim: 10
+
+train:
+  output_dir: /data/output-v700-de-holdout-s42/checkpoints
+  seed: 42
+  batch_size: 128
+  eval_batch_size: 128
+  grad_accum_steps: 1
+  learning_rate: 5.0e-4
+  weight_decay: 0.01
+  warmup_steps: 1000
+  grad_clip_norm: 1.0
+  max_steps: 60000
+  eval_every_steps: 2000
+  save_every_steps: 5000
+  log_every_steps: 100
+  precision: bf16
+  num_workers: 0
+  csv_log_path: "{output_dir}/../train_log.csv"
+  lr_schedule: cosine
+  gazetteer_curriculum: true
+  evidence_curriculum: true
+  evidence_noise_prob: 0.15
+  fisher_capture: true
+  fisher_capture_last_n_steps: 2000
+  trackio_project: mailwoman
+  trackio_run_name: v700-de-holdout-60k-s42
+
+eval:
+  golden_dir: /data/eval/golden/v0.1.3
+  val_jsonl: ""

@@ -134,6 +134,18 @@ export interface NominatimStatusArtifact {
 	 * What it was built from: the manifest's source, then its source vintage.
 	 */
 	sources?: string[]
+	/**
+	 * The SPDX expression this artifact's own manifest records, verbatim.
+	 *
+	 * Left out when the row holds none.
+	 * An absent expression states that nobody recorded the obligations rather than that the
+	 * artifact carries none, so a client must not read its absence as permissive.
+	 */
+	license?: string
+	/**
+	 * The credit line the publisher's terms ask for, as this artifact's own manifest records it.
+	 */
+	attribution?: string
 }
 
 /**

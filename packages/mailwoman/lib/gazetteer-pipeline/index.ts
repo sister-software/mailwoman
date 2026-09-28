@@ -44,6 +44,7 @@ import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
 import { probeManifest } from "#data/inventory"
 import {
 	candidateLayerManifest,
+	censusFolds,
 	type FoldTerms,
 	foldsRefusingPublication,
 	readFoldTerms,
@@ -453,6 +454,15 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	opts.onProgress?.("layer-manifest", "stamping provenance")
 	const sha = buildSHA(repoRootPath())
 
+	// Counted before the seal, because an upstream release is pruned from its bucket and a fold's share
+	// of the published artifact is then unrecoverable from anything but the artifact's own manifest.
+	const foldCensus = censusFolds(opts.out)
+
+	opts.onProgress?.(
+		"layer-manifest",
+		`folds: ${foldCensus.map((fold) => `${fold.fold} ${fold.rows} rows / ${fold.places} places`).join(", ")}`
+	)
+
 	await stampLayerManifest(
 		opts.out,
 		await candidateLayerManifest({
@@ -462,6 +472,7 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 			buildSHA: sha,
 			version: isoDate(),
 			createdAt: new Date().toISOString(),
+			foldCensus,
 		})
 	)
 

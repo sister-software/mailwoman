@@ -31,8 +31,8 @@
 				"license_named": "DINUM / IGN, Licence Ouverte 2.0"
 			},
 			{
-				"text": "Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike.",
-				"license_named": "CDLA-Permissive-2.0"
+				"text": "Overture Maps Foundation — Addresses theme (per-country register license; Overture declares no identifier of its own for this theme, so the terms are the upstream register's): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike. Read 2026-09-25 from https://docs.overturemaps.org/attribution/.",
+				"license_named": "456,230 rows, 6.6.0"
 			},
 			{
 				"text": "OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0): tokenizer-splice training text + the oa-cz coord eval sets",
@@ -91,10 +91,11 @@
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
+	"effective_training_sources": null,
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 4 of 4 declared artifacts: anchor-lexicon-v1.json, locality-surface-lexicon-v7.json, street-type-lexicon-v3.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
 		"This package's model card records no training attribution of its own. It ships 4 artifacts and no model graph, so its own inputs are unattributed here while the 10 entries under inherited_lineage describe @mailwoman/neural-weights-en-us's graph.",
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

@@ -27,6 +27,7 @@ import {
 	type CorpusRecipe,
 	recipeSourceID,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
@@ -55,8 +56,8 @@ export const trailingRegionRecipe: CorpusRecipe = {
 	mode: "tuples",
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
-		const structuredSource = opts.sourceName ?? "synth-trailing-region-structured"
-		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : "synth-trailing-region"
+		const structuredSource = opts.sourceName ?? defaultRecipeSource("synth-trailing-region-structured")
+		const bareSource = opts.sourceName ? `${opts.sourceName}-bare` : defaultRecipeSource("synth-trailing-region")
 		let read = 0
 		let emitted = 0
 		let skipped = 0
@@ -146,7 +147,15 @@ export const trailingRegionRecipe: CorpusRecipe = {
 				license: "Synthetic — trailing-region; (locality, region) ancestor pairs from WOF (CC0/ODC-By per source)",
 			}
 
-			if (alignAndWrite(write, canonical, "trailing-region", TRAILING_REGION_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "trailing-region", {
+					...TRAILING_REGION_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

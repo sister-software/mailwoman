@@ -16,6 +16,7 @@
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { attributionEntries, licenseNamedIn } from "@mailwoman/core/license/record"
 import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
+import type { EffectiveTrainingManifest } from "@mailwoman/corpus/source-register"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#pack/verify-tarball"
@@ -238,6 +239,16 @@ export interface WeightsRightsRecord {
 	 * It does not prove which records reached the model, because no frozen per-release corpus manifest exists.
 	 */
 	corpusVersion: string | null
+	/**
+	 * The effective training manifest committed for {@linkcode corpusVersion},
+	 * or `null` when the repository holds none for it.
+	 *
+	 * The corpus manifest states what a corpus holds and this states what one config's audited
+	 * epoch drew from it, so the rights files report the second rather than the first.
+	 * `null` is a statement about the checkout: it says no such record was committed,
+	 * rather than that the epoch drew from no source.
+	 */
+	effectiveTraining: EffectiveTrainingManifest | null
 	tokenizerVersion: string | null
 	/**
 	 * What the package's own model graph can emit, read from the `.onnx` file.
@@ -281,6 +292,33 @@ const DOCUMENTATION_FILES: ReadonlySet<string> = new Set([
 
 function stringOrNull(value: unknown): string | null {
 	return typeof value === "string" && value.length ? value : null
+}
+
+/**
+ * Where a committed effective training manifest lives, relative to the repository root.
+ *
+ * It sits beside the frozen manifest for the same corpus, under the corpus version plus `.effective.json`.
+ */
+export const EFFECTIVE_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
+
+/**
+ * The effective training manifest for the corpus a card names, or `null` when the repository holds none.
+ *
+ * A card naming no corpus, and a corpus with no committed manifest, both answer `null`.
+ * The caller records that as a statement about the checkout rather than as
+ * an epoch that drew from no source.
+ */
+async function readEffectiveTrainingManifest(
+	repoRoot: PathBuilderLike,
+	corpusVersion: string | null
+): Promise<EffectiveTrainingManifest | null> {
+	if (!corpusVersion) return null
+
+	const path = resolvePath(repoRoot, EFFECTIVE_MANIFESTS_DIRECTORY, `${corpusVersion}.effective.json`)
+
+	if (!(await pathExists(path))) return null
+
+	return await readLocalJSONFile<EffectiveTrainingManifest>(path)
 }
 
 /**
@@ -336,6 +374,7 @@ export async function readWeightsRightsRecord(
 		// `readWeightsRightsRecords` fills `foreignAttribution` and `inherited` because both depend on the whole set.
 		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
+		effectiveTraining: await readEffectiveTrainingManifest(repoRoot, stringOrNull(card?.training?.corpus_version)),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
 		// Read from the file rather than from the card's `num_labels`, because the
 		// card is a claim about the graph.

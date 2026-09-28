@@ -11,10 +11,11 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 import { titleCaseIfUpper } from "spliterator"
 
 import { alignAndWrite, type CorpusRecipe, readTuples, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { SurfaceOrigin } from "#types"
 
-const SOURCE = "synth-sg-register"
+const SOURCE = defaultRecipeSource("synth-sg-register")
 
 /**
  * Street generics and their typed abbreviations.
@@ -234,8 +235,13 @@ export const sgRegisterRecipe: CorpusRecipe = {
 						"CDLA-Permissive-2.0 — Overture Maps addresses over the Singapore Open Data Licence 1.0 (OneMap / Singapore Land Authority)",
 				},
 				`sg-register:${rendering.register}`,
-				// The values come from Overture, and only their arrangement is synthetic.
-				{ register: SourceRegister.Overture, surface: SurfaceOrigin.Composed }
+				// The values come from Overture and the recipe chose only their arrangement, so the Overture
+				// record behind each row is what `baseSourceID` names when the tuples file carries its id.
+				{
+					register: SourceRegister.Overture,
+					surface: SurfaceOrigin.Composed,
+					baseSourceID: tuple.sourceID ?? null,
+				}
 			)
 
 			if (ok) {

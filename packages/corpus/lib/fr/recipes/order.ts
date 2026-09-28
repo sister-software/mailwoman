@@ -17,6 +17,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { stableSourceID } from "#adapters/utils"
 import { readOATuples, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -103,7 +104,7 @@ export const frOrderRecipe: CorpusRecipe = {
 		const count = opts.count
 		// Preserve the legacy random stream for generated rows.
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-fr-order"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-order")
 		const reversedFraction = opts.reversedFraction ?? 0.5
 
 		// Read extra rows to account for filtering and deduplication.

@@ -17,6 +17,7 @@ import { makeLcg } from "@mailwoman/core/utils"
 import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeAnchorAbsorptionRow } from "#synthesizers/anchor-absorption"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
@@ -56,7 +57,7 @@ export const anchorAbsorptionRecipe: CorpusRecipe = {
 	mode: "generate",
 	async run(opts, write) {
 		const random = makeLcg(opts.seed)
-		const source = opts.sourceName ?? "synth-anchor-absorption"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-anchor-absorption")
 		const count = opts.count ?? 50_000
 		const realZips = await loadRealUsZips(ANCHOR_LOOKUP)
 

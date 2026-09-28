@@ -212,6 +212,11 @@ function inventoryComponent(entry: InventoryEntry): DataBOMComponent {
 			...property("mailwoman:buildSha", manifest.build_sha),
 			...property("mailwoman:buildCommand", manifest.build_cmd),
 			...property("mailwoman:createdAt", manifest.created_at),
+			// The record count each publisher supplied to the build, verbatim as the manifest stores it.
+			// An artifact recording no count carries no property.
+			// The count cannot be recovered from the input afterwards, and a zero would
+			// assert that a publisher supplied 0 records to this build.
+			...property("mailwoman:sourceRecords", manifest.source_records),
 			...property("mailwoman:bytes", entry.bytes),
 			...property("mailwoman:linkTarget", entry.linkTarget),
 		],

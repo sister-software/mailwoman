@@ -17,6 +17,7 @@ import {
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeMilitaryPoBoxRow, synthesizePoBoxRow, type PoBoxBaseTuple } from "#synthesizers/po-box"
 import { SurfaceOrigin } from "#types"
 
@@ -29,6 +30,8 @@ import { SurfaceOrigin } from "#types"
 const PO_BOX_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**
@@ -53,7 +56,7 @@ export const poBoxRecipe: CorpusRecipe = {
 		// `--source-name` gives an output built for one class its own source label and its own reps per row.
 		// A military-only output (`--variants 0 --military-ratio 1`) would otherwise be indistinguishable
 		// from the leader-template rows in the mixture, and the two classes carry different weights.
-		const source = opts.sourceName ?? "synth-po-box"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-po-box")
 		let read = 0
 		let emitted = 0
 		let skipped = 0

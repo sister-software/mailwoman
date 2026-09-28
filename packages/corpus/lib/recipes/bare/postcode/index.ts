@@ -18,6 +18,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { isReservedBarePostcode } from "#recipes/bare/postcode/eval"
 import { alignAndWrite, type CorpusRecipe, readCSVRecords, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { normalizeGauntletSurface, readGauntletInputs } from "#tools/gauntlet-inputs"
 import { SurfaceOrigin } from "#types"
@@ -28,9 +29,17 @@ import { SurfaceOrigin } from "#types"
  * The codes come from this repository's postcode-format tables rather than a
  * national postcode file, so the register is the codex.
  */
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const BARE_POSTCODE_SOURCE = defaultRecipeSource("synth-bare-postcode")
+
 const BARE_POSTCODE_PROVENANCE = {
 	register: SourceRegister.Codex,
 	surface: SurfaceOrigin.Attested,
+	// The codex table is the record, and its rows carry no `source_id` of their own.
+	baseSourceID: null,
 }
 
 /**
@@ -281,8 +290,8 @@ export const barePostcodeRecipe: CorpusRecipe = {
 						components,
 						country,
 						locale: form.locale,
-						source: "synth-bare-postcode",
-						source_id: recipeSourceID("synth-bare-postcode", {
+						source: BARE_POSTCODE_SOURCE,
+						source_id: recipeSourceID(BARE_POSTCODE_SOURCE, {
 							...components,
 							c: country,
 						}),

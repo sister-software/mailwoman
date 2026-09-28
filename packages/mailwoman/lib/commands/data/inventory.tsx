@@ -19,6 +19,7 @@ import {
 	licenseHint,
 	Provenance,
 	rebuildHint,
+	sourceRecordsHint,
 	takeInventory,
 } from "#data/inventory"
 
@@ -141,6 +142,12 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 
 				if (terms) {
 					lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${terms}`)
+				}
+
+				const inputs = sourceRecordsHint(entry)
+
+				if (inputs) {
+					lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ input records: ${inputs}`)
 				}
 			}
 		} else {

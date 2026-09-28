@@ -144,6 +144,23 @@ export function gazetteerBannerLines({ adminDBPath, candidateDB }: GazetteerPath
 }
 
 /**
+ * Format one banner line per artifact, naming the terms it records.
+ *
+ * The operator running the server is the one the publisher's conditions bind, and
+ * until now the only place those terms appeared was the `/status` response.
+ * An artifact whose `layer_manifest` records no expression prints that its obligations
+ * are unrecorded, because an omitted line would read as an artifact with none.
+ */
+export function rightsBannerLines(freshness: FreshnessReport): string[] {
+	return freshness.artifacts.map((artifact) => {
+		const terms = artifact.license ?? "license unrecorded in layer_manifest"
+		const credit = artifact.attribution ? ` — attribution: ${artifact.attribution}` : ""
+
+		return `  ${artifact.name}: ${terms}${credit}`
+	})
+}
+
+/**
  * Read freshness data for the databases this process uses.
  *
  * Call at startup so the report describes the files opened by the server, even if paths change later.

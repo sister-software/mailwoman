@@ -12,6 +12,7 @@ import { LayerFreshnessPolicy, type LayerManifest, LayerTier } from "@mailwoman/
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { licenseIdentifiers } from "@mailwoman/core/license/obligations"
 import { readLicenseRecord } from "@mailwoman/core/license/record"
+import { SYNTHETIC_ID_RANGES } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
 import { tableExists } from "@mailwoman/sqlite/introspection"
 import { basename, type PathBuilderLike } from "path-ts"
@@ -63,6 +64,13 @@ export interface CandidateManifestInput {
 	buildSHA: string
 	version: string
 	createdAt: string
+	/**
+	 * Each fold's rows and places on the table this build wrote, from {@linkcode censusFolds}.
+	 *
+	 * A caller that passes none records `fold-census=unmeasured` rather than a set of zeroes,
+	 * because a later reader cannot tell a fold that contributed zero rows from a census nobody ran.
+	 */
+	foldCensus?: readonly FoldCensusRow[]
 }
 
 /**
@@ -111,6 +119,62 @@ export interface FoldTerms {
  * The key/value tables a builder wrote its terms into before the manifest existed, consulted in this order.
  */
 const TERMS_TABLES = [FoldTermsRecord.Meta, FoldTermsRecord.DatabaseMeta] as const
+
+/**
+ * One fold's contribution to a built candidate table, counted by the id range its builder mints from.
+ */
+export interface FoldCensusRow {
+	fold: string
+	rows: number
+	places: number
+}
+
+/**
+ * Count each fold's rows and distinct places in a built candidate table.
+ *
+ * A fold's share of a published artifact is recoverable from the artifact alone only
+ * while the upstream release is still served.
+ * Overture prunes a release from its bucket, and the per-country register behind an
+ * Overture row is then unreadable, so the count belongs in the manifest at build time.
+ *
+ * The bounds come from `SYNTHETIC_ID_RANGES`, the same registry each builder mints its
+ * place ids from, so a range added there reaches this census without a second list.
+ * Rows below the first base carry Who's On First's own ids and are reported under `wof`.
+ */
+export function censusFolds(candidateDBPath: PathBuilderLike): FoldCensusRow[] {
+	using db = new DatabaseClient<layerschemadatabase>(candidateDBPath, { readOnly: true })
+
+	if (!tableExists(db, "candidate")) return []
+
+	const ranges = [...SYNTHETIC_ID_RANGES].toSorted((a, b) => a.base - b.base)
+
+	const bounds: Array<{ fold: string; low: number; high: number }> = [
+		{ fold: "wof", low: 0, high: ranges[0]?.base ?? Number.MAX_SAFE_INTEGER },
+	]
+
+	for (const [index, range] of ranges.entries()) {
+		bounds.push({ fold: range.name, low: range.base, high: ranges[index + 1]?.base ?? Number.MAX_SAFE_INTEGER })
+	}
+
+	const counted: FoldCensusRow[] = []
+
+	for (const bound of bounds) {
+		const row = db
+			.prepare(
+				`SELECT COUNT(*) AS rows, COUNT(DISTINCT spr_id) AS places FROM candidate WHERE spr_id >= ? AND spr_id < ?`
+			)
+			.get(bound.low, bound.high) as { rows: number; places: number } | undefined
+
+		// A range holding zero rows is left out rather than recorded at zero.
+		// The registry lists every range any builder may mint from, and one artifact folds a handful,
+		// so the zeroes would outnumber the counts and read as folds this build refused.
+		if (row?.rows) {
+			counted.push({ fold: bound.fold, rows: row.rows, places: row.places })
+		}
+	}
+
+	return counted
+}
 
 /**
  * Read what a contributing database records about its tier and grant, resolving a pre-manifest prose
@@ -220,7 +284,12 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		sourceVintage:
 			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
-			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} importance=${input.importance ? "yes" : "no"}`,
+			`undeclared-folds=${undeclared} build-local-folds=${buildLocal} importance=${input.importance ? "yes" : "no"}` +
+			// Each fold's rows and places, measured on the built table. Recorded here because a fold's share
+			// is recoverable from the artifact alone only while its upstream release is still served.
+			(input.foldCensus?.length
+				? ` ${input.foldCensus.map((fold) => `${fold.fold}=${fold.rows}/${fold.places}`).join(" ")}`
+				: " fold-census=unmeasured (the builder passed none)"),
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,

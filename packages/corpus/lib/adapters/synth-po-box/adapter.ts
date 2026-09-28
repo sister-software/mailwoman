@@ -14,6 +14,7 @@ import { makeLcg } from "@mailwoman/core/random"
 import { TextSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
+import { defaultRecipeSource } from "#recipes/sources"
 import {
 	poBoxTemplateLocale,
 	REGION_OPTIONAL_LOCALES,
@@ -25,8 +26,12 @@ import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter
 
 /**
  * Registry id stamped into every row this adapter emits, so a corpus record traces back to its dataset.
+ *
+ * The value comes from `RECIPE_SOURCES` because `recipes/po/box/index.ts` writes rows under the same id.
+ * Two producers of one id have to spell it the same way, or a rewrite of a corpus through that table
+ * moves the recipe's rows and leaves this adapter's behind under a name the table no longer answers for.
  */
-export const SYNTH_PO_BOX_ADAPTER_ID = "synth-po-box"
+export const PO_BOX_ADAPTER_ID = defaultRecipeSource("synth-po-box")
 /**
  * License for the synthetic PO-box rows, which inherit the terms of the real tuples they are derived from.
  */
@@ -68,7 +73,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 	const militaryRatio = opts.militaryRatio ?? 0
 
 	return {
-		id: SYNTH_PO_BOX_ADAPTER_ID,
+		id: PO_BOX_ADAPTER_ID,
 		defaultLicense: SYNTH_PO_BOX_LICENSE,
 		addressRole: AddressRole.Mailing,
 		// No register asserts these boxes exist.
@@ -125,7 +130,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 
 					// Include `v` in the locality slot to vary the digest across variants;
 					// `stableSourceID` only accepts `ComponentTag` keys.
-					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
+					const sourceID = stableSourceID(PO_BOX_ADAPTER_ID, {
 						locality: `${input.locality}#${v}`,
 						region: input.region,
 						postcode: input.postcode,
@@ -137,7 +142,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						components: synth.components,
 						country: input.country,
 						locale: synth.locale,
-						source: SYNTH_PO_BOX_ADAPTER_ID,
+						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,
@@ -161,7 +166,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 				) {
 					const mil = synthesizeMilitaryPoBoxRow({ random })
 
-					const sourceID = stableSourceID(SYNTH_PO_BOX_ADAPTER_ID, {
+					const sourceID = stableSourceID(PO_BOX_ADAPTER_ID, {
 						po_box: `${mil.components.po_box}#mil${militarySeq++}`,
 						locality: mil.components.locality!,
 						region: mil.components.region!,
@@ -173,7 +178,7 @@ export function createSynthPoBoxAdapter(opts: SynthPoBoxAdapterOptions = {}): Co
 						components: mil.components,
 						country: "US",
 						locale: mil.locale,
-						source: SYNTH_PO_BOX_ADAPTER_ID,
+						source: PO_BOX_ADAPTER_ID,
 						source_id: sourceID,
 						corpus_version: "",
 						license: SYNTH_PO_BOX_LICENSE,

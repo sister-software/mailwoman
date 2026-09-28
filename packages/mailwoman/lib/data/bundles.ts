@@ -259,7 +259,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	poi: {
 		name: "poi",
-		description: "Overture-places POI layer — 13.68M rows across US/CA/MX/FR.",
+		description: "Overture-places POI layer, covering the United States, Canada, Mexico and France.",
 		artifacts: [
 			{
 				remotePath: "poi/2026-07-20a/poi.db",
@@ -318,8 +318,8 @@ export const BUNDLES: Record<string, DataBundle> = {
 	us: {
 		name: "us",
 		description:
-			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
-			"50 states + DC + VI. Use --only <slug> to pull a single state.",
+			"US national street tier — per-state rooftop address-point (situs) and TIGER interpolation databases. " +
+			"Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 		rights: {
 			publishers: [

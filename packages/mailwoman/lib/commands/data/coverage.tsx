@@ -134,6 +134,15 @@ function render(report: CoverageReport, wanted?: string[]): string {
 		lines.push(`TRAINED, NOTHING CHECKS IT: ${m.trainedButUnmeasured.join(" ")}`)
 	}
 
+	// Printed above the table and outside it, so the rows are visible and no reader
+	// counts them as a jurisdiction the register enumerates.
+	for (const entry of report.countryLess) {
+		lines.push(
+			`COUNTRY-LESS ROWS, excluded from the table below — ${entry.code}: ${entry.rows.toLocaleString()} rows, ` +
+				`${entry.streetRows.toLocaleString()} street. ${entry.reading}`
+		)
+	}
+
 	lines.push("", "country | parse | geocode | board")
 
 	for (const c of shown) {

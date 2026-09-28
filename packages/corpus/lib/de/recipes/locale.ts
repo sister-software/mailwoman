@@ -32,6 +32,7 @@ import type { PathBuilderLike } from "path-ts"
 
 import { stableSourceID } from "#adapters/utils"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { renderGermanRow, type LocaleBaseTuple } from "#surfaces/locale"
 import { alignRow } from "#utils"
 
@@ -226,7 +227,7 @@ export const germanRecipe: CorpusRecipe = {
 	],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-german"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-german")
 		const intlFraction = opts.intlFraction ?? 0.4
 		const commaFreeFraction = opts.commaFreeFraction ?? 0.3
 		const ortsteilFraction = opts.ortsteilFraction ?? 0.3

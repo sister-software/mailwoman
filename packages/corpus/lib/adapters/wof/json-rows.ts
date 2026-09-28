@@ -10,7 +10,7 @@ import { isLargestFirstSystem, lineJoinForCountry } from "@mailwoman/codex/addre
 import type { ComponentTag } from "@mailwoman/codex/component"
 
 import type { AdapterOptions, CanonicalRow } from "#types"
-import { normalizeNameKey, type WOFRecord } from "#utils"
+import { normalizeNameKey, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * The order an admin hierarchy is written in, smallest unit first.
@@ -133,14 +133,28 @@ export function nameSlotsFor(rec: WOFRecord, options: NameSlotOptions = {}): Arr
 
 interface EmitWOFJSONRowsOptions {
 	records: ReadonlyMap<number, WOFRecord>
-	ancestry: ReadonlyMap<number, WOFRecord[]>
+	/**
+	 * The ancestor names each record's variants read, rather than its ancestor records.
+	 *
+	 * A record absent from the map resolves to an empty set of ancestor names,
+	 * which is the same value a record with no resolvable ancestor carries.
+	 */
+	ancestry: ReadonlyMap<number, AncestorNames>
 	adapterOptions: AdapterOptions
 	adapterID: string
 	localeByCountry: Readonly<Record<string, string>>
 	shouldEmit?: (record: WOFRecord) => boolean
 	nameSlotsFor: (record: WOFRecord) => Array<{ key: string; value: string }>
-	variantsFor: (record: WOFRecord, ancestry: WOFRecord[], selfName: string) => WOFVariantSpec[]
+	variantsFor: (record: WOFRecord, ancestry: AncestorNames, selfName: string) => WOFVariantSpec[]
 }
+
+/**
+ * The value a record whose ancestors do not resolve carries in place of ancestor names.
+ *
+ * Frozen and shared, because the emitter reaches it once per such record
+ * and constructing a fresh object per row would allocate one per name slot.
+ */
+const NO_ANCESTORS: AncestorNames = Object.freeze({})
 
 /**
  * Emit aligned rows in WOF-id order, enforcing the adapter limit across all name and hierarchy variants.
@@ -166,7 +180,7 @@ export function* emitWOFJSONRows(options: EmitWOFJSONRowsOptions): Generator<Can
 		if (!shouldEmit(record)) continue
 
 		for (const slot of slotsForRecord(record)) {
-			for (const variant of variantsFor(record, ancestry.get(id) ?? [], slot.value)) {
+			for (const variant of variantsFor(record, ancestry.get(id) ?? NO_ANCESTORS, slot.value)) {
 				if (adapterOptions.limit !== undefined && emitted >= adapterOptions.limit) return
 
 				const rendered = variant.hierarchy

@@ -14,6 +14,7 @@
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { alignAndWrite, readTuples, requireRegister, type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 /**
  * The order-cycle slot for the street-less form (`«city» «pc», Česko`).
@@ -80,7 +81,11 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				raw = `${city} ${postcodeSurface}, Česko`
 			}
 
-			const source_id = recipeSourceID("synth-cz-pcfirst-preposition", {
+			// One resolution for both, because `source_id` carries the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-cz-pcfirst-preposition")
+
+			const source_id = recipeSourceID(source, {
 				...components,
 				o: String(order),
 				s: spaced ? "1" : "0",
@@ -92,14 +97,22 @@ export const czPcFirstPrepositionRecipe: CorpusRecipe = {
 				components,
 				country: "CZ",
 				locale: "cs-CZ",
-				source: "synth-cz-pcfirst-preposition",
+				source,
 				source_id,
 				corpus_version: "0.10.0",
 				license:
 					"Synthetic — cz-pcfirst-preposition; (street, number, postcode, city) from OpenAddresses CZ (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "cz-pcfirst-preposition", CZ_PCFIRST_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "cz-pcfirst-preposition", {
+					...CZ_PCFIRST_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

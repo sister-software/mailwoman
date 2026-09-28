@@ -25,6 +25,7 @@ import {
 	type CorpusRecipe,
 	recipeSourceID,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
 
 /**
@@ -116,21 +117,32 @@ export const noStreetLedRecipe: CorpusRecipe = {
 				raw = `${postcode} ${city}, ${street} ${number}`
 			}
 
-			const source_id = recipeSourceID("synth-no-street-led", { ...components, o: String(order), v: String(read) })
+			// One resolution for both, because `source_id` carries the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-no-street-led")
+			const source_id = recipeSourceID(source, { ...components, o: String(order), v: String(read) })
 
 			const canonical = {
 				raw,
 				components,
 				country: "NO",
 				locale: "nb-NO",
-				source: "synth-no-street-led",
+				source,
 				source_id,
 				corpus_version: "0.10.0",
 				license:
 					"Synthetic — no-street-led; (street, number, postcode, city) from OpenAddresses NO (per-source attribution in the model card)",
 			}
 
-			if (alignAndWrite(write, canonical, "no-street-led", NO_STREET_LED_PROVENANCE)) {
+			// Per row, because the id names this tuple's record.
+			// A tuples file written before `sourceID` existed carries none,
+			// and `null` says the recipe had no id to forward.
+			if (
+				alignAndWrite(write, canonical, "no-street-led", {
+					...NO_STREET_LED_PROVENANCE,
+					baseSourceID: t.sourceID ?? null,
+				})
+			) {
 				emitted++
 			} else {
 				skipped++

@@ -31,6 +31,7 @@ import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { componentsForOSMRow, OSM_LICENSE, sameName } from "#adapters/osm/adapter"
 import { alignAndWrite, type CorpusRecipe, readTuples, type RecipeOptions, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { type CanonicalRow, SurfaceOrigin } from "#types"
 
@@ -116,7 +117,9 @@ export function renderSouthAsiaRegister(
 }
 
 function makeRecipe(name: string, country: "PK" | "BD", locale: string, description: string): CorpusRecipe {
-	const source = `synth-${name}`
+	// Composed rather than written out, and read through the table rather than from the composition,
+	// so the vocabulary flip is one constant and a name the table does not record refuses here.
+	const source = defaultRecipeSource(`synth-${name}`)
 
 	return {
 		name,
@@ -181,7 +184,12 @@ function makeRecipe(name: string, country: "PK" | "BD", locale: string, descript
 					// The components come from the OpenStreetMap corpus jsonl the `osm` adapter wrote.
 					// This recipe re-orders them into the typed forms, so the address is real
 					// and the line is the recipe's.
-					{ register: SourceRegister.OpenStreetMap, surface: SurfaceOrigin.Composed }
+					// The OSM record is what `baseSourceID` names when the tuples file carries its id.
+					{
+						register: SourceRegister.OpenStreetMap,
+						surface: SurfaceOrigin.Composed,
+						baseSourceID: tuple.sourceID ?? null,
+					}
 				)
 
 				if (ok) {

@@ -10,6 +10,7 @@
  */
 
 import { CA_PROVINCES } from "@mailwoman/codex/ca"
+import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
 import { trailingRegionRecipe } from "@mailwoman/corpus/recipes/trailing-region"
 import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
@@ -71,7 +72,7 @@ describe("trailing-region postcode placement", () => {
 			[]
 		)
 
-		expect(rows.every((row) => row.source === "synth-trailing-region-structured")).toBe(true)
+		expect(rows.every((row) => row.source === defaultRecipeSource("synth-trailing-region-structured"))).toBe(true)
 	})
 
 	it("leaves a tuple with no postcode alone under every placement", async () => {
@@ -168,11 +169,16 @@ describe("trailing-region source labelling", () => {
 		expect(rows.every((row) => row.source === "synth-trailing-region-es-v28-bare")).toBe(true)
 	})
 
-	it("keeps the shipped labels when no name is given", async () => {
+	it("reads both default labels from RECIPE_SOURCES when no name is given", async () => {
+		// The labels follow `WRITE_CURRENT_SOURCE_NAMES` rather than a literal here,
+		// so the assertion pins the mapping a corpus stores rather than one spelling of it.
 		const structured = await run(repeat({ ...base, postcode: "07691", postcodePlacement: "leading" }), [])
 		const bare = await run(repeat({ ...base }), [])
 
-		expect(structured.rows.every((row) => row.source === "synth-trailing-region-structured")).toBe(true)
-		expect(bare.rows.every((row) => row.source === "synth-trailing-region")).toBe(true)
+		expect(structured.rows.every((row) => row.source === defaultRecipeSource("synth-trailing-region-structured"))).toBe(
+			true
+		)
+
+		expect(bare.rows.every((row) => row.source === defaultRecipeSource("synth-trailing-region"))).toBe(true)
 	})
 })

@@ -20,6 +20,7 @@ import { CSVSpliterator } from "spliterator"
 
 import { stableSourceID } from "#adapters/utils"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SourceRegister } from "#registers"
 import { type LocaleBaseTuple, type RenderedLocaleRow, renderLocaleRow } from "#surfaces/locale"
 import { SurfaceOrigin } from "#types"
@@ -72,7 +73,7 @@ export interface LocaleCountrySource {
  */
 const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	DE: {
-		source: "synth-german",
+		source: defaultRecipeSource("synth-german"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [
@@ -81,55 +82,55 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 		],
 	},
 	FR: {
-		source: "synth-fr",
+		source: defaultRecipeSource("synth-fr"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.4.0",
 		parts: [{ zip: dataRootPath("oa-cache", "fr__countrywide.zip"), csv: "fr/countrywide.csv" }],
 	},
 	NL: {
-		source: "synth-nl",
+		source: defaultRecipeSource("synth-nl"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nl", "countrywide.csv") }],
 	},
 	IT: {
-		source: "synth-it",
+		source: defaultRecipeSource("synth-it"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ zip: dataRootPath("oa-cache", "it__countrywide.zip"), csv: "it/countrywide.csv" }],
 	},
 	PT: {
-		source: "synth-pt",
+		source: defaultRecipeSource("synth-pt"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "pt", "countrywide.csv") }],
 	},
 	CH: {
-		source: "synth-ch",
+		source: defaultRecipeSource("synth-ch"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "ch", "countrywide.csv") }],
 	},
 	HR: {
-		source: "synth-hr",
+		source: defaultRecipeSource("synth-hr"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "hr", "countrywide.csv") }],
 	},
 	SK: {
-		source: "synth-sk",
+		source: defaultRecipeSource("synth-sk"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "sk", "countrywide.csv") }],
 	},
 	LU: {
-		source: "synth-lu",
+		source: defaultRecipeSource("synth-lu"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "lu", "countrywide.csv") }],
 	},
 	ES: {
-		source: "synth-es",
+		source: defaultRecipeSource("synth-es"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "es", "countrywide.csv") }],
@@ -146,14 +147,14 @@ const COUNTRY_SOURCES: Record<string, LocaleCountrySource> = {
 	NZ: {
 		// NZ stores the city in `district` and the suburb in `city`.
 		// The source has no postcodes.
-		source: "synth-nz",
+		source: defaultRecipeSource("synth-nz"),
 		register: SourceRegister.OpenAddresses,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("openaddresses", "extracted", "nz", "countrywide.csv"), districtAsLocality: true }],
 	},
 	GB: {
 		// Price Paid Data stores the postal town in `district` and an optional dependent locality in `city`.
-		source: "synth-gb",
+		source: defaultRecipeSource("synth-gb"),
 		register: SourceRegister.LandRegistryPricePaid,
 		corpusVersion: "0.9.9",
 		parts: [{ path: dataRootPath("ppd", "2026-07-22", "gb-tuples.csv"), districtAsLocality: true }],
@@ -395,7 +396,7 @@ export const localeRecipe: CorpusRecipe = {
 		{
 			flag: "--district-as-locality / --no-district-as-locality",
 			description:
-				"Override the per-part districtAsLocality mapping for this run. Unset (default) leaves each COUNTRY_SOURCES part's own value untouched — every existing build stays byte-identical. ES additionally switches to the pedanía (poblacion→dependent_locality) source when passed as true — combine with --source-name synth-es-pedania.",
+				"Override the per-part districtAsLocality mapping for this run. Unset (default) leaves each COUNTRY_SOURCES part's own value untouched — every existing build stays byte-identical. ES additionally switches to the pedanía (poblacion→dependent_locality) source when passed as true — combine with --source-name rendered-es-pedania.",
 		},
 	],
 	async run(opts, write) {
@@ -422,7 +423,10 @@ export const localeRecipe: CorpusRecipe = {
 			throw new Error(`--country-fraction must be in [0, 1], got ${countryFraction}`)
 		}
 
-		const source = opts.sourceName ?? countrySource.source
+		// `COUNTRY_SOURCES` keys on the retired spelling, and so does `RECIPE_SOURCES`.
+		// Resolving here decides the vocabulary this recipe writes in one place
+		// rather than in twelve table entries.
+		const source = opts.sourceName ?? defaultRecipeSource(countrySource.source)
 		const count = opts.count ?? 4000
 		// When unset, each part keeps its own setting.
 		// True also selects the ES pedanía parts.

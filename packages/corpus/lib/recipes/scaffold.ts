@@ -59,6 +59,15 @@ export interface RecipeTuple {
 	 * before this field existed means.
 	 */
 	postcodePlacement?: PostcodePlacement
+	/**
+	 * `source_id` of the record this tuple was extracted from, when the extraction carried it.
+	 *
+	 * A recipe forwards it as `baseSourceID`, which is the only way a `composed`
+	 * row can name the record behind it.
+	 * Every tuples file written before this field existed omits it, so a recipe reading one passes `null`
+	 * and its rows are unlinkable to their source records by anything but the `raw` string (#2359).
+	 */
+	sourceID?: string
 	[k: string]: unknown
 }
 
@@ -281,9 +290,20 @@ export interface RecipeProvenance {
 	surface: SurfaceOrigin
 
 	/**
-	 * `source_id` of the row this was derived from, when the recipe read one.
+	 * `source_id` of the row this was derived from.
+	 *
+	 * Required rather than optional, and `null` is a statement rather than an omission.
+	 * A `composed` row is a real record's fields in an order the recipe chose, so it has an underlying
+	 * record by definition, and `null` says the recipe did not carry that record's id forward.
+	 *
+	 * The cost of `null` is measurable.
+	 * Over `v0.6.0-register-surface` it is `null` for 4,176,539 of the 4,206,561 `composed` rows,
+	 * 99.3%, and every leak measurement over a composed source is therefore a lower bound:
+	 * two rows composed from one underlying address under different `source_id`s are
+	 * indistinguishable from two unrelated rows, and `holdout-overlap.run.ts` falls back to
+	 * comparing the `raw` string, which misses any pair the recipe rendered differently (#2359).
 	 */
-	baseSourceID?: string | null
+	baseSourceID: string | null
 }
 
 /**

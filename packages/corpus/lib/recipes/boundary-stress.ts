@@ -14,6 +14,7 @@ import { stringifyJSON } from "@mailwoman/core/json"
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
 
 import { type CorpusRecipe, recipeSourceID } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { type BoundaryStressTemplate, synthesizeBoundaryStressRow } from "#synthesizers/boundary-stress"
 import { SurfaceOrigin } from "#types"
 import { alignRow } from "#utils"
@@ -73,14 +74,17 @@ export const boundaryStressRecipe: CorpusRecipe = {
 		for (let i = 0; i < count; i++) {
 			const row = synthesizeBoundaryStressRow(undefined, { random, forceTemplate: pickTemplate(random) })
 			const country = row.locale.split("-")[1] ?? "US"
-			const source_id = recipeSourceID("synth-boundary-stress", { ...row.components, v: String(i) })
+			// One resolution for both, because `source_id` carries the source as its prefix
+			// and a pair that disagreed would name a source no row of this output declares.
+			const source = defaultRecipeSource("synth-boundary-stress")
+			const source_id = recipeSourceID(source, { ...row.components, v: String(i) })
 
 			const canonical = {
 				raw: row.raw,
 				components: row.components,
 				country,
 				locale: row.locale,
-				source: "synth-boundary-stress",
+				source,
 				source_id,
 				corpus_version: "0.6.0",
 				license: "Synthetic — boundary-stress; derived from public-domain locality/region tuples",

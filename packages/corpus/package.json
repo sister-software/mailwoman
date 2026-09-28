@@ -202,6 +202,11 @@
 			"node": "./lib/directory.ts",
 			"default": "./out/directory.js"
 		},
+		"./fingerprints": {
+			"types": "./out/fingerprints.d.ts",
+			"node": "./lib/fingerprints.ts",
+			"default": "./out/fingerprints.js"
+		},
 		"./surfaces/*": {
 			"types": "./out/surfaces/*.d.ts",
 			"node": "./lib/surfaces/*.ts",
@@ -266,6 +271,11 @@
 			"types": "./out/tools/golden/relabel-street/index.d.ts",
 			"node": "./lib/tools/golden/relabel-street/index.ts",
 			"default": "./out/tools/golden/relabel-street/index.js"
+		},
+		"./tools/migrate-source-names": {
+			"types": "./out/tools/migrate/source-names.d.ts",
+			"node": "./lib/tools/migrate/source-names.ts",
+			"default": "./out/tools/migrate/source-names.js"
 		},
 		"./tools/migrate-overlay-parquet": {
 			"types": "./out/tools/migrate/overlay-parquet.d.ts",

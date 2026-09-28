@@ -22,9 +22,12 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import {
 	auditTrainingManifest,
 	ingestEligibilityProblems,
+	provenanceRefusals,
 	readAddressSourceRegister,
+	type EffectiveTrainingManifest,
 	type TrainingManifest,
 } from "@mailwoman/corpus/source-register"
+import { dataBOMPath, LicenseBasis, type DataBOM } from "mailwoman/data/bom"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { LICENSE_FILE, PROVENANCE_FILE } from "#weights/rights/files"
@@ -143,15 +146,95 @@ export interface TrainingRecordAudit {
 		problems: string[]
 	} | null
 	/**
+	 * What one config's audited epoch actually drew from that corpus, when the repository holds the record.
+	 *
+	 * The frozen manifest states what the corpus holds.
+	 * This states what reached the trainer, and the two differ by the country filter, the source weights,
+	 * a zero weight, the sampler and every overlay merged after the frozen manifest was written.
+	 */
+	effective: {
+		config: string
+		seed: number
+		trainingSources: number
+		excludedSources: number
+		/**
+		 * Sources the epoch emitted that the frozen manifest does not name, and their row total.
+		 *
+		 * A non-zero count means the frozen manifest covers part of what trained the model.
+		 */
+		emittedButUnrecorded: number
+		emittedButUnrecordedRows: number
+		totalEmittedRows: number
+	} | null
+	/**
 	 * What stops this package's training inputs from being established.
 	 */
 	unresolved: string | null
+	/**
+	 * Why a release may not assert that this package's declared provenance equals what trained it.
+	 *
+	 * An empty array does not state agreement.
+	 * A model card's attribution entries are prose naming publishers, and an effective
+	 * manifest's entries are corpus source ids, so no field joins the two.
+	 *
+	 * The refusals below are the ones measurable without that join: no effective manifest
+	 * was read, or the one read covers part of the emitted set.
+	 */
+	provenanceRefusals: string[]
+}
+
+/**
+ * What the committed data bill of materials states about the artifacts a release can deliver.
+ *
+ * The register covers source terms, the weights records cover what a model shipped,
+ * and the frozen manifests cover what trained it.
+ * None of the three reaches a runtime database, so a release could publish a
+ * bundle whose terms no audited record named.
+ * This is that fourth input.
+ */
+export interface DataBOMAudit {
+	/**
+	 * Repository-relative path of the document this audit read, or `null`
+	 * when none exists for the `mailwoman` version being released.
+	 */
+	path: string | null
+
+	/**
+	 * The `mailwoman` version the document is keyed by.
+	 */
+	version: string
+
+	components: number
+
+	/**
+	 * Components whose expression came from the artifact's own `layer_manifest`.
+	 */
+	fromArtifactManifest: number
+
+	/**
+	 * Components whose expression is this repository's reading of the publishers' stated terms.
+	 *
+	 * The artifact's own `layer_manifest` could not be read for these, so the expression is
+	 * this repository's assertion rather than a reading of the bytes a consumer downloads.
+	 */
+	fromBundleRegistry: number
+
+	/**
+	 * Components carrying `NOASSERTION`, which records a `layer_manifest` row holding no expression.
+	 */
+	withoutExpression: number
+
+	/**
+	 * Every distinct expression the document carries, with the component count under each.
+	 */
+	expressions: Array<{ expression: string; components: number }>
 }
 
 export interface RightsAudit {
 	register: SourceRegisterAudit
 	packages: PackageRightsAudit[]
 	training: TrainingRecordAudit[]
+	data: DataBOMAudit
 	/**
 	 * What the pass established, as sentences naming the measurement.
 	 */
@@ -171,6 +254,14 @@ export interface RightsAudit {
  * The repository copy is the one a release can check, and none exists yet.
  */
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
+
+/**
+ * How many of the data document's license expressions the terminal report prints.
+ *
+ * The count under each is what a reader compares, and the tail is a long list of one-component expressions.
+ * The full set is in the document the line above names.
+ */
+const EXPRESSIONS_SHOWN = 8
 
 /**
  * The register's admissions and refusals.
@@ -267,6 +358,46 @@ async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: stri
 }
 
 /**
+ * The effective training manifest for a corpus, or `null` when the repository holds none.
+ *
+ * `effective-manifest.run.ts` writes one from the corpus's frozen manifest
+ * and an `audit_epoch_mixture` output.
+ * A read that fails for any reason returns `null`, and the caller records that no release
+ * read one rather than reporting a checkpoint whose training source set is empty.
+ */
+async function readEffectiveManifest(
+	repoRoot: PathBuilderLike,
+	corpusVersion: string
+): Promise<EffectiveTrainingManifest | null> {
+	try {
+		return await readLocalJSONFile<EffectiveTrainingManifest>(
+			resolvePath(repoRoot, FROZEN_MANIFESTS_DIRECTORY, `${corpusVersion}.effective.json`)
+		)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * One effective manifest reduced to the counts the report prints, or `null` when none was read.
+ */
+function effectiveRow(manifest: EffectiveTrainingManifest | null): TrainingRecordAudit["effective"] {
+	if (!manifest) return null
+
+	const unrecorded = Object.values(manifest.emittedButUnrecorded)
+
+	return {
+		config: manifest.config,
+		seed: manifest.seed,
+		trainingSources: manifest.trainingSources.length,
+		excludedSources: Object.keys(manifest.excludedSources).length,
+		emittedButUnrecorded: unrecorded.length,
+		emittedButUnrecordedRows: unrecorded.reduce((sum, rows) => sum + rows, 0),
+		totalEmittedRows: manifest.totalEmittedRows,
+	}
+}
+
+/**
  * What each package records about the records that trained it.
  */
 async function auditTraining(
@@ -283,22 +414,45 @@ async function auditTraining(
 				package: record.packageName,
 				corpusNamed: null,
 				manifest: null,
+				effective: null,
 				unresolved: record.inherited
 					? `ships no model graph and its card names no corpus; what trained ${record.inherited.package}'s graph is that package's row`
-					: "its model card names no corpus, so there is nothing to look a manifest up by",
+					: "its model card names no corpus, so a manifest lookup has no key",
+				// An empty list reads as agreement, and a card naming no corpus supports no comparison at all.
+				// The inherited case points at the package that owns the graph rather than repeating its refusal.
+				provenanceRefusals: record.inherited
+					? [
+							`${record.packageName}: its declared provenance is ${record.inherited.package}'s, and whether that ` +
+								`equals what trained the shared graph is that package's row.`,
+						]
+					: [
+							`${record.packageName}: its model card names no corpus, so which sources trained it is ` +
+								`unmeasured and no effective manifest can be looked up.`,
+						],
 			})
 
 			continue
 		}
 
 		const manifest = await readFrozenManifest(repoRoot, corpusNamed)
+		const effective = await readEffectiveManifest(repoRoot, corpusNamed)
+		// The card's attribution entries are prose naming publishers, so the
+		// comparison against the effective manifest's corpus source ids has no key
+		// and `provenanceRefusals` reports it as unmeasured.
+		const declared = null
 
 		if (!manifest) {
 			rows.push({
 				package: record.packageName,
 				corpusNamed,
 				manifest: null,
+				effective: effectiveRow(effective),
 				unresolved: `the card names corpus ${stringifyJSON(corpusNamed)} and no frozen manifest for it exists under ${FROZEN_MANIFESTS_DIRECTORY}, so which records reached this model is unrecorded`,
+				provenanceRefusals: provenanceRefusals({
+					manifest: effective,
+					declared,
+					packageName: record.packageName,
+				}),
 			})
 
 			continue
@@ -316,7 +470,13 @@ async function auditTraining(
 				totalRows: manifest.totalRows,
 				problems,
 			},
+			effective: effectiveRow(effective),
 			unresolved: problems.length ? `its frozen manifest fails its own audit: ${problems.join("; ")}` : null,
+			provenanceRefusals: provenanceRefusals({
+				manifest: effective,
+				declared,
+				packageName: record.packageName,
+			}),
 		})
 	}
 
@@ -338,6 +498,7 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 	}
 
 	const training = await auditTraining(repoRoot, records)
+	const data = await auditDataBOM(repoRoot)
 	const established: string[] = []
 	const unresolved: string[] = []
 
@@ -368,6 +529,20 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		unresolved.push(
 			`${withoutManifest.length} of ${training.length} packages have no frozen training manifest, so which records trained the model each one ships or inherits is unrecorded.`
 		)
+	}
+
+	const withEffective = training.filter((row) => row.effective)
+
+	if (withEffective.length) {
+		established.push(
+			`${withEffective.length} of ${training.length} packages name a corpus this repository holds an effective training manifest for, which records what one config's audited epoch drew rather than what the corpus holds.`
+		)
+	}
+
+	for (const row of training) {
+		for (const refusal of row.provenanceRefusals) {
+			unresolved.push(refusal)
+		}
 	}
 
 	const unlicensed = packages.reduce((total, entry) => total + entry.entriesNamingNoLicense, 0)
@@ -410,7 +585,107 @@ export async function auditRights(repoRoot: PathBuilderLike): Promise<RightsAudi
 		)
 	}
 
-	return { register, packages, training, established, unresolved }
+	if (!data.path) {
+		unresolved.push(
+			`No data bill of materials exists for mailwoman ${data.version}, so what governs the databases a release ` +
+				`delivers is recorded only as bundle prose. Run \`mailwoman data bom\` to write ${dataBOMPath(data.version)}.`
+		)
+	} else {
+		established.push(
+			`${data.path} describes ${data.components} data artifacts. ${data.fromArtifactManifest} carry the ` +
+				`expression their own layer_manifest records and ${data.fromBundleRegistry} carry the expression this ` +
+				`repository assigns from the publishers' stated terms.`
+		)
+
+		if (data.fromBundleRegistry) {
+			unresolved.push(
+				`${data.fromBundleRegistry} of ${data.components} data artifacts state no expression of their own, so ` +
+					`the document reports this repository's reading of their publishers' terms. A consumer downloading ` +
+					`those files receives bytes that name no license.`
+			)
+		}
+
+		if (data.withoutExpression) {
+			unresolved.push(
+				`${data.withoutExpression} data artifacts carry a layer_manifest row holding no expression, recorded as ` +
+					`NOASSERTION. Their obligations are unrecorded rather than empty.`
+			)
+		}
+	}
+
+	return { register, packages, training, data, established, unresolved }
+}
+
+/**
+ * Read the committed data bill of materials for the version being released.
+ *
+ * The document is generated rather than hand-written, so this audit reports
+ * what it says instead of re-deriving it.
+ * An absent document goes into `unresolved` as a missing record, which is
+ * where a release decision reads it.
+ */
+async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
+	const manifest = await readPackageJSON(resolvePath(repoRoot, "packages", "mailwoman", "package.json"))
+
+	if (!manifest.version) {
+		throw new Error(`packages/mailwoman/package.json declares no version, so no data document can be named.`)
+	}
+
+	const version = manifest.version
+
+	const path = dataBOMPath(version)
+
+	const empty: DataBOMAudit = {
+		path: null,
+		version,
+		components: 0,
+		fromArtifactManifest: 0,
+		fromBundleRegistry: 0,
+		withoutExpression: 0,
+		expressions: [],
+	}
+
+	let document: DataBOM
+
+	try {
+		document = await readLocalJSONFile<DataBOM>(resolvePath(repoRoot, path))
+	} catch {
+		return empty
+	}
+
+	const byExpression = new Map<string, number>()
+	let fromArtifactManifest = 0
+	let fromBundleRegistry = 0
+	let withoutExpression = 0
+
+	for (const component of document.components) {
+		const expression = component.licenses?.[0]?.expression ?? "NOASSERTION"
+		const basis = component.properties.find((property) => property.name === "mailwoman:licenseBasis")?.value
+
+		byExpression.set(expression, (byExpression.get(expression) ?? 0) + 1)
+
+		if (expression === "NOASSERTION") {
+			withoutExpression++
+		}
+
+		if (basis === LicenseBasis.ArtifactManifest) {
+			fromArtifactManifest++
+		} else if (basis === LicenseBasis.BundleRegistry) {
+			fromBundleRegistry++
+		}
+	}
+
+	return {
+		path,
+		version,
+		components: document.components.length,
+		fromArtifactManifest,
+		fromBundleRegistry,
+		withoutExpression,
+		expressions: [...byExpression.entries()]
+			.map(([expression, components]) => ({ expression, components }))
+			.toSorted((a, b) => b.components - a.components),
+	}
 }
 
 /**
@@ -452,6 +727,36 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 				? `  ${row.package}: ${row.manifest.sources} sources, ${row.manifest.totalRows} rows, profile ${row.manifest.profile}`
 				: `  ${row.package}: ${row.unresolved}`
 		)
+
+		if (row.effective) {
+			lines.push(
+				`    effective under ${row.effective.config} at seed ${row.effective.seed}: ` +
+					`${row.effective.trainingSources} of the manifest's sources drew rows, ` +
+					`${row.effective.excludedSources} excluded, ` +
+					`${row.effective.emittedButUnrecorded} emitted sources the manifest does not name ` +
+					`(${row.effective.emittedButUnrecordedRows} of ${row.effective.totalEmittedRows} rows)`
+			)
+		}
+	}
+
+	lines.push("", `Data artifacts (mailwoman ${audit.data.version}):`)
+
+	if (audit.data.path) {
+		lines.push(
+			`  ${audit.data.path}: ${audit.data.components} components, ` +
+				`${audit.data.fromArtifactManifest} from the artifact's own layer_manifest, ` +
+				`${audit.data.fromBundleRegistry} from the bundle registry`
+		)
+
+		for (const row of audit.data.expressions.slice(0, EXPRESSIONS_SHOWN)) {
+			lines.push(`    ${String(row.components).padStart(4)}  ${row.expression}`)
+		}
+
+		if (audit.data.expressions.length > EXPRESSIONS_SHOWN) {
+			lines.push(`    … ${audit.data.expressions.length - EXPRESSIONS_SHOWN} further expressions`)
+		}
+	} else {
+		lines.push(`  ${dataBOMPath(audit.data.version)} does not exist. Run \`mailwoman data bom\`.`)
 	}
 
 	lines.push("", "Established:")

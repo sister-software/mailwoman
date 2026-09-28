@@ -47,6 +47,7 @@ import { JSONSpliterator } from "spliterator"
 import { stableSourceID } from "#adapters/utils"
 import { openDuckDB } from "#parquet/duckdb"
 import { readZippedCSVRecords, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { weightedPick } from "#synthesizers/utils"
 import type { CanonicalRow, LabeledRow } from "#types"
 import { alignRow } from "#utils"
@@ -466,7 +467,7 @@ export const intersectionRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
 		const count = opts.count ?? 40_000
-		const source = opts.sourceName ?? "synth-intersection"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-intersection")
 		const edgesDir = opts.edgesDir ?? DEFAULT_EDGES_DIR
 		const counties = opts.golden ? GOLDEN_COUNTIES : TRAIN_COUNTIES
 		const exclusions = await readEvalExclusions()

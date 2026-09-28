@@ -31,6 +31,7 @@ import { Globerator } from "spliterator/node/fs"
 import { stableSourceID } from "#adapters/utils"
 import { decomposeFrStreet } from "#fr/adapters/ban/street-decompose"
 import type { CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import type { CanonicalRow } from "#types"
 import { alignRow } from "#utils"
 
@@ -153,7 +154,7 @@ export const frLieuditRecipe: CorpusRecipe = {
 	],
 	async run(opts, write) {
 		const random = makeMulberry32(opts.seed)
-		const source = opts.sourceName ?? "synth-fr-lieudit"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-fr-lieudit")
 		const count = opts.count ?? 800_000
 		const banDir = opts.banDir ?? dataRootPath("corpus", "sources", "ban")
 		const countryFraction = opts.countryFraction ?? 0

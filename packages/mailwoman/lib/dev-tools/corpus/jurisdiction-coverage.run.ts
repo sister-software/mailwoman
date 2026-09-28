@@ -158,6 +158,21 @@ const rows = sorted.map((code) => {
 	return `| \`${code}\` | ${name} | ${parseState(coverage)} | ${street} | ${families ? families.join(", ") : "—"} | ${geocodeState(coverage)} | ${coverage?.weightsPackage ?? "—"} | ${boardState(coverage)} |`
 })
 
+/**
+ * What the coverage census measured for each country-less code, or a line
+ * saying the counted corpus holds none.
+ * An absent section would read as a corpus with no such rows.
+ */
+const countryLessLines = report.countryLess.length
+	? report.countryLess
+			.map(
+				(entry) =>
+					`- \`${entry.code}\` — ${entry.rows.toLocaleString()} rows, ${entry.streetRows.toLocaleString()} street. ` +
+					entry.reading
+			)
+			.join("\n")
+	: `The counted corpus, \`${report.corpusVersion}\`, holds no row under a country-less code.`
+
 const regimeRows = POSTAL_REGIMES.map(
 	(regime) =>
 		`| ${regime.name} | ${regime.kind} | ${regime.iso2.map((code) => `\`${code}\``).join(", ")} | ${regime.coverage} |`
@@ -273,7 +288,15 @@ Each row states what the repository models rather than what the regime is.
 | regime | kind | codes | coverage |
 | --- | --- | --- | --- |
 ${regimeRows.join("\n")}
-`
+
+### A corpus row whose country is not a jurisdiction
+
+\`XK\` is an operational code the register enumerates, so it holds a row in the table above. \`ZZ\` is not:
+it is the ISO 3166-1 user-assigned range, the register enumerates no jurisdiction for it, and
+\`mailwoman data coverage\` reports its rows under \`countryLess\` rather than as a jurisdiction. A reader
+counting the census's countries must not count it as one.
+
+${countryLessLines}`
 
 const out = values.out ?? repoRootPath("docs", "engineering", "reference", "jurisdiction-coverage.mdx")
 

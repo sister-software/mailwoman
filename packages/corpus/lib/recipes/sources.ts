@@ -20,9 +20,9 @@
  *   property of the row and varies inside a source, and it never carries the register, which `requireRegister` makes
  *   a property of the invocation.
  *
- *   Recipes still stamp the retired spelling until each reads its default from this table. A corpus assembled after
- *   2026-09-26 carries the current spelling because the assembly rewrites the routed overlays through this table
- *   before `overlay-manifest` runs.
+ *   Every recipe reads its default `source` from this table through {@linkcode defaultRecipeSource}, and
+ *   {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides which spelling it answers with. An assembly rewrites its routed
+ *   overlays through this table before `overlay-manifest` runs, so the rows and the recipe defaults move together.
  */
 
 /**
@@ -159,7 +159,11 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		current: "fragment-assay",
 		operation: SourceOperation.Fragment,
 		producer: "corpus-python/src/mailwoman_train/corpora/fragment/build.py",
-		note: "The rows carry `recipe: fragment-assay`. 4,765 of the 200,348 on disk carry `country: ZZ` (#2358).",
+		note:
+			"The rows carry `recipe: fragment-assay`, and no registered recipe emits this source: the producer " +
+			"named above is out of the tree, so the rows cannot be rebuilt. 4,765 of the 200,348 on disk carry " +
+			"`country: ZZ`, of which the candidate gazetteer resolves 3,115 to one country and 1,650 to none or " +
+			"several (measured 2026-09-28). The source survives that decision, so the name is settled (#2358).",
 	},
 	{
 		retired: "synth-fr-fragment",
@@ -205,7 +209,9 @@ export const RECIPE_SOURCES: ReadonlyArray<RecipeSource> = [
 		[
 			"street-bare",
 			"recipes/street/bare.ts",
-			"Provisional. The header says the rows come from the built-in `DEFAULT_US_BASES` pool, and the provenance block declares `Composed` behind `requireRegister`; the file decides which.",
+			"`synthesizeStreetRow` composes the street from `STREET_NAMES`, `DIRECTIONAL_PREFIXES` and " +
+				"`STREET_SUFFIXES`, all hand-written word lists, over the hand-written `DEFAULT_US_BASES` city " +
+				"tuples. No register supplies any part of the row, so the operation is invented rather than composed.",
 		],
 		["no-street", "no/recipes/street/index.ts"],
 		["no-street-v063", "no/recipes/street/index.ts"],
@@ -277,6 +283,66 @@ export function currentSourceName(source: string): string | null {
  */
 export function recipeSource(source: string): RecipeSource | null {
 	return BY_RETIRED.get(source) ?? BY_CURRENT.get(source) ?? null
+}
+
+/**
+ * The spelling a recipe writes today, given the retired spelling it has always written.
+ *
+ * Every recipe's default `source` reads this rather than holding a literal, so the vocabulary
+ * is one constant rather than 26 files. {@linkcode WRITE_CURRENT_SOURCE_NAMES} decides
+ * which spelling it answers with, and it has to agree with the corpus a recipe output joins.
+ *
+ * @throws When the table records no entry for `retired`.
+ * A pass-through would let a typo become a source id on every row of a built corpus,
+ * which is the failure `wire-identifiers` exists to catch later and this catches at the call.
+ */
+export function defaultRecipeSource(retired: string): string {
+	const entry = BY_RETIRED.get(retired)
+
+	if (!entry) {
+		throw new Error(
+			`RECIPE_SOURCES records no source ${retired}. A recipe's default \`source\` is a wire identifier ` +
+				`stored on every row it writes, so add the entry with its operation and producer before writing it.`
+		)
+	}
+
+	return WRITE_CURRENT_SOURCE_NAMES ? entry.current : entry.retired
+}
+
+/**
+ * Whether a recipe writes the operation spelling or the retired one.
+ *
+ * True since 2026-09-28, because the rewrite has run.
+ * `v0.7.0-overlay-staging` carries 43 distinct sources, every one of them under an operation prefix.
+ *
+ * Its `source-names.json` records the mapping applied per file with the row count
+ * and the ordered-`source_id` digest verified on both sides.
+ * `v0.7.0-de-holdout/corpus-v0.7.0-de-holdout` is assembled from those bytes over 766 slices.
+ *
+ * A recipe writing the retired spelling from here on would produce an output
+ * disagreeing with the corpus it joins.
+ *
+ * `v0.6.0-register-surface` and the staging directory's `.pre-rename` copy are never rewritten in place.
+ * The configs that target them keep the spelling their corpus stores.
+ */
+export const WRITE_CURRENT_SOURCE_NAMES = true
+
+/**
+ * The retired spelling of a recipe-output source given either spelling, or the value unchanged.
+ *
+ * `RECIPE_SURFACES` and `OVERLAY_REGISTERS` key on the retired spelling,
+ * and both refuse a source they do not name.
+ * A corpus rewritten to the current spelling would therefore make each of
+ * them throw on every row it carries.
+ *
+ * Callers of those two tables resolve the key through this, so a lookup answers under
+ * either spelling and a genuinely unknown source still refuses.
+ *
+ * The value is returned unchanged for a source outside the table — an adapter id,
+ * or a carried overlay name — because those tables are keyed by whatever the producer emits.
+ */
+export function retiredSourceName(source: string): string {
+	return BY_CURRENT.get(source)?.retired ?? source
 }
 
 /**

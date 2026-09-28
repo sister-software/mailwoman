@@ -253,6 +253,38 @@ later assembly on the same base reads. The `v0.6.0-register-surface` plan (66 fi
 produced by three scripts in a session scratch directory with the old data root written into them, and was
 carried into the next assembly as a hand-written list.
 
+No plan exists for `v0.7.0-de-holdout`. Its overlays were assembled before `assembleOverlayManifest`
+wrote one, and its `MANIFEST.json` records the `split`, `source` and `path` of each of the 71 labeled
+slices while recording the `route` of none. A plan reconstructed from the manifest would therefore assert
+a route it cannot read, and that reconstruction is the mechanism `OverlayPlan`'s docstring names: a
+hand-placed split reached `v0.6.0-register-surface` through the caller route and put 770 of DE's
+validation `source_id`s in train, and the filename was the only record that showed it (#2359). The next
+assembly on this base writes its own plan.
+
+The rename receipt for this assembly is
+`/mnt/mw/corpus/versioned/v0.7.0-overlay-staging/source-names.json`, beside the files it rewrote. It
+records the per-file row count and the md5 over the ordered `source_id` column before and after, verified
+on both sides, and the md5 of `lib/recipes/sources.ts` as that file stood when the rewrite ran. Later
+edits to the table move that md5, so it dates the rewrite rather than tracking the table.
+
+## `training-manifests/<version>.effective.json` — what reached one trainer (#2383)
+
+The frozen manifest above states what a corpus holds. An effective training manifest states what one
+config's audited epoch drew from it, and the two differ by the country filter, the source weights, a zero
+weight, the sampler, `augment_exclude_sources` and every overlay merged after the frozen manifest was
+written. `effective-manifest.run.ts` derives it from the frozen manifest and an `audit_epoch_mixture`
+output, and `mwops release rights-audit` reads `<corpus_version>.effective.json` beside the frozen file.
+
+Each row carries the corpus row count, the config weight, the rows drawn, the rows emitted after
+augmentation, and the reason an excluded source was excluded. `emittedButUnrecorded` holds the sources the
+epoch emitted that the frozen manifest does not name, with their row counts.
+
+`v0.7.0-de-holdout.effective.json` reads the corpus through
+`corpus-python/src/mailwoman_train/configs/v7.0.0-de-holdout-60k.yaml` at seed 43 over 1,000,000 draws. Of
+the eleven sources the frozen manifest names, nine drew rows and two carry weight 0.0. Thirty-nine further
+sources were emitted under no frozen-manifest entry, 886,620 of the 1,000,000 rows, because the overlays
+carrying them were merged after that manifest was written.
+
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
 Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona

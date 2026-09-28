@@ -8,6 +8,7 @@ import {
 	CLIUsageError,
 	type CommandSpec,
 	isCLIUsageError,
+	isCorpusVersion,
 	isLocaleTag,
 	parseCommand,
 	renderCommandHelp,
@@ -169,6 +170,38 @@ describe("a renamed option keeps its old spelling working", () => {
 		} as CommandSpec
 
 		expect(() => parseCommand(invalid, [])).toThrow(/old spelling/u)
+	})
+})
+
+describe("isCorpusVersion", () => {
+	test("accepts every corpus version on disk, dotted release and bare integer alike", () => {
+		expect(isCorpusVersion("0.7.0")).toBe(true)
+		expect(isCorpusVersion("0.7.0-de-holdout")).toBe(true)
+		expect(isCorpusVersion("0.6.0-register-surface")).toBe(true)
+		expect(isCorpusVersion("0.1.0-dev")).toBe(true)
+		expect(isCorpusVersion("8")).toBe(true)
+		expect(isCorpusVersion("8-jp-full-2026-08-04")).toBe(true)
+	})
+
+	test("refuses a leading `v`, which produced `corpus-vv0.7.0-de-holdout` on disk", () => {
+		// `corpusDirectoryName` composes `corpus-v${version}`, so a value carrying the
+		// prefix doubles it and 695 files had to be re-stamped once it did.
+		expect(isCorpusVersion("v0.7.0-de-holdout")).toBe(false)
+		expect(isCorpusVersion("v8")).toBe(false)
+	})
+
+	test("refuses a value that would escape or nest the directory it names", () => {
+		expect(isCorpusVersion("0.7.0/train")).toBe(false)
+		expect(isCorpusVersion("../0.7.0")).toBe(false)
+		expect(isCorpusVersion("0.7.0 de-holdout")).toBe(false)
+	})
+
+	test("refuses a value carrying the full directory name rather than the version", () => {
+		expect(isCorpusVersion("corpus-v0.7.0-de-holdout")).toBe(false)
+	})
+
+	test("refuses an empty value", () => {
+		expect(isCorpusVersion("")).toBe(false)
 	})
 })
 

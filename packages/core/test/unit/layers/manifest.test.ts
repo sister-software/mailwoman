@@ -55,6 +55,36 @@ describe("layer manifest IO", () => {
 		expect(back).toEqual(MANIFEST)
 	})
 
+	it("round-trips the per-publisher input record counts", async () => {
+		using db = await openschemadb()
+
+		const counted: LayerManifest = {
+			...MANIFEST,
+			sourceRecords: { "overture-places": 13_680_000, "openaddresses-us": 57_847_619 },
+		}
+
+		await writeLayerManifest(db, counted)
+
+		expect(await readLayerManifest(db)).toEqual(counted)
+	})
+
+	it("reads a build that recorded no count as carrying no count, and one that counted no publisher as empty", async () => {
+		// The two are different findings.
+		// A manifest written before the column existed, and one whose build did not count,
+		// both leave `sourceRecords` absent.
+		// `{}` says the build counted and found no publisher, and the count cannot be
+		// recovered from the input once Overture prunes its release.
+		using absent = await openschemadb()
+		await writeLayerManifest(absent, MANIFEST)
+
+		expect(await readLayerManifest(absent)).not.toHaveProperty("sourceRecords")
+
+		using empty = await openschemadb()
+		await writeLayerManifest(empty, { ...MANIFEST, sourceRecords: {} })
+
+		expect((await readLayerManifest(empty)).sourceRecords).toEqual({})
+	})
+
 	it("rejects an unknown tier at write time", async () => {
 		using db = await openschemadb()
 		const offInterface: Omit<LayerManifest, "tier"> & { tier: string } = { ...MANIFEST, tier: "bootleg" }

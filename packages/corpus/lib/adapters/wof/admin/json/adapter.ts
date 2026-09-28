@@ -51,7 +51,7 @@ import {
 } from "#adapters/wof/json-rows"
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
-import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
+import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * Map a WOF placetype to a Mailwoman `ComponentTag`, or `undefined` to skip.
@@ -97,7 +97,7 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  * OpenCage template produces the canonicalized form (`"United States of America"`),
  * matching the legacy SQLite adapter's behavior.
  */
-export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
+export function variantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: string): WOFVariantSpec[] {
 	const selfTag = placetypeToTag(row.placetype)
 
 	if (!selfTag) return []
@@ -107,9 +107,9 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 	// See `WOFVariantSpec.hierarchy`.
 	const hierarchy = true
 
-	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
-	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
-	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
+	const region = ancestry.region
+	const country = ancestry.country
+	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country ?? row.country
 
 	const variants: WOFVariantSpec[] = []
 
@@ -122,7 +122,7 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 				variants.push({
 					hierarchy,
 					suffix: "with-region",
-					components: { [selfTag]: selfName, region: region.name },
+					components: { [selfTag]: selfName, region },
 				})
 			}
 
@@ -130,7 +130,7 @@ export function variantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: str
 				variants.push({
 					hierarchy,
 					suffix: "with-region-country",
-					components: { [selfTag]: selfName, region: region.name, country: countryDisplay },
+					components: { [selfTag]: selfName, region, country: countryDisplay },
 				})
 			} else if (!region && country) {
 				variants.push({
@@ -232,7 +232,7 @@ export function createWOFAdminAdapter(): CorpusAdapter {
 				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestryIndex(byID)
+			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
 
 			// Pass 2: emit rows in sorted-id order for deterministic jsonl.
 			yield* emitWOFJSONRows({

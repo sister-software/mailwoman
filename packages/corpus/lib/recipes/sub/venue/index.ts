@@ -16,6 +16,7 @@ import { poiDatabasePath } from "@mailwoman/resolver-wof-sqlite/paths"
 import type { PathBuilderLike } from "path-ts"
 
 import { recipeSourceID, type CorpusRecipe } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { buildStreetNegatives, loadContextTuples, type StreetNegatives } from "#recipes/sub/venue/context"
 import { addressGroups, type Group, type Register, renderGroups, sampleRegister } from "#recipes/sub/venue/render"
 import {
@@ -724,7 +725,7 @@ export const subVenueRecipe: CorpusRecipe = {
 
 		const context: EmitContext = {
 			write,
-			source: opts.sourceName ?? "synth-sub-venue",
+			source: opts.sourceName ?? defaultRecipeSource("synth-sub-venue"),
 			random: makeMulberry32(opts.seed),
 			modifiers: lexicon.modifiers.filter((m) => m.shipped).map((m) => m.id),
 			designatorPhrases: lexicon.designators.filter((d) => d.tier === "subvenue").map((d) => d.id),

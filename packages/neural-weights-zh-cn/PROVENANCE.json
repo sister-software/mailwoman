@@ -15,8 +15,8 @@
 		"note": "These entries are @mailwoman/neural-weights-cjk's record of what its model graph was trained on. This package ships no graph and contributed none of these rows. Read them as the base's lineage rather than as a claim about this package's own artifacts, which are listed under artifacts and attributed under training_attribution.",
 		"attribution": [
 			{
-				"text": "Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
-				"license_named": "CDLA-Permissive-2.0"
+				"text": "Japanese address data © Overture Maps Foundation contributors, Addresses theme, under the upstream register's license (Overture declares no identifier of its own for this theme; read 2026-09-25 from https://docs.overturemaps.org/attribution/); administrative names from Who's On First.",
+				"license_named": null
 			},
 			{
 				"text": "Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
@@ -31,8 +31,8 @@
 				"license_named": null
 			},
 			{
-				"text": "Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
-				"license_named": "CDLA-Permissive-2.0"
+				"text": "Taiwanese address data © Overture Maps Foundation contributors, Addresses theme, from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
+				"license_named": "Open Government Data License, Taiwan, v1.0"
 			},
 			{
 				"text": "Taiwanese company register: 提供機關／經濟部商業發展署 (Ministry of Economic Affairs, Administration for Commerce Development), 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0) — the 顯名聲明 each dataset prescribes.",
@@ -57,10 +57,11 @@
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
+	"effective_training_sources": null,
 	"tokenizer_version": null,
 	"unresolved": [
 		"No digest is recorded for 1 of 1 declared artifacts: fst-zh-cn.bin. An unrecorded digest is not a verified one.",
 		"This package's model card records no training attribution of its own. It ships 1 artifacts and no model graph, so its own inputs are unattributed here while the 6 entries under inherited_lineage describe @mailwoman/neural-weights-cjk's graph.",
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

@@ -38,8 +38,8 @@
 		"status": "recorded",
 		"entries": [
 			{
-				"text": "Japanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0); administrative names from Who's On First.",
-				"license_named": "CDLA-Permissive-2.0",
+				"text": "Japanese address data © Overture Maps Foundation contributors, Addresses theme, under the upstream register's license (Overture declares no identifier of its own for this theme; read 2026-09-25 from https://docs.overturemaps.org/attribution/); administrative names from Who's On First.",
+				"license_named": null,
 				"uses": ["unstated"]
 			},
 			{
@@ -58,8 +58,8 @@
 				"uses": ["unstated"]
 			},
 			{
-				"text": "Taiwanese address data © Overture Maps Foundation contributors (CDLA-Permissive-2.0), from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
-				"license_named": "CDLA-Permissive-2.0",
+				"text": "Taiwanese address data © Overture Maps Foundation contributors, Addresses theme, from OpenAddresses under the 政府資料開放授權條款－第1版 (Open Government Data License, Taiwan, v1.0), which requires this attribution and voids the grant without it: New Taipei City Government Civil Affairs Bureau; Taichung City Government Civil Affairs Bureau; Kaohsiung City Government Civil Affairs Bureau; Taipei City Government Civil Affairs Bureau; Taoyuan City Government Civil Affairs Bureau; Tainan City Government Civil Affairs Bureau; Changhua County Government Civil Affairs Office; Pingtung County Government; Yunlin County Government; Hsinchu County Civil Affairs Office; Miaoli Civil Affairs Office; Hsinchu City Civil Affairs Office; Keelung City Government Civil Affairs Bureau; Penghu County Government; Kinmen County Civil Affairs Office (Overture release 2026-06-17.0).",
+				"license_named": "Open Government Data License, Taiwan, v1.0",
 				"uses": ["unstated"]
 			},
 			{
@@ -74,11 +74,13 @@
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": null,
+	"effective_training_sources": null,
 	"tokenizer_version": null,
 	"unresolved": [
+		"One attribution entry names no license: Japanese address data © Overture Maps Foundation contributors, Addresses theme, under the upstream register's license (Overture declares no identifier of its own for this theme; read 2026-09-25 from https://docs.overturemaps.org/attribution/); administrative names from Who's On First.",
 		"One attribution entry names no license: Japanese corporate-number register: 国税庁 法人番号公表サイト (National Tax Agency, Corporate Number Publication Site) — the three published fields are free for anyone to use under the site's 利用規約.",
 		"One attribution entry names no license: Korean permit registry: 행정안전부 (Ministry of the Interior and Safety), 지방행정인허가데이터 (localdata.go.kr), 이용허락범위 제한 없음 — attribution to the ministry.",
 		"6 of 6 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

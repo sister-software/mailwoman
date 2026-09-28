@@ -8,6 +8,7 @@
  */
 
 import { poBoxRecipe } from "@mailwoman/corpus/recipes/po/box/index"
+import { defaultRecipeSource } from "@mailwoman/corpus/recipes/sources"
 import { recipeRunner } from "@mailwoman/corpus/test-kit/corpus-recipe"
 import { describe, expect, it } from "vitest"
 
@@ -68,9 +69,11 @@ describe("po-box source labelling", () => {
 		expect(rows.every((row) => row.source_id?.startsWith("synth-po-box-military"))).toBe(true)
 	})
 
-	it("keeps the shipped label when no name is given", async () => {
+	it("reads its default label from RECIPE_SOURCES when no name is given", async () => {
+		// The label follows `WRITE_CURRENT_SOURCE_NAMES` rather than a literal here,
+		// so the assertion pins the mapping a corpus stores rather than one spelling of it.
 		const { rows } = await run(TUPLES, [], { variants: 0, militaryRatio: 1 })
 
-		expect(rows.every((row) => row.source === "synth-po-box")).toBe(true)
+		expect(rows.every((row) => row.source === defaultRecipeSource("synth-po-box"))).toBe(true)
 	})
 })

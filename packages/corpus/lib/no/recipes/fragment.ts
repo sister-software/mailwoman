@@ -15,7 +15,14 @@ import {
 	type CorpusRecipe,
 	recipeSourceID,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { SurfaceOrigin } from "#types"
+
+/**
+ * Resolved once, because `source_id` carries the source as its prefix and a pair that
+ * disagreed would name a source no row of this output declares.
+ */
+const NO_FRAGMENT_SOURCE = defaultRecipeSource("synth-no-fragment")
 
 const titleNO = (value: string): string =>
 	value
@@ -93,14 +100,14 @@ export const noFragmentRecipe: CorpusRecipe = {
 		let emitSeq = 0
 
 		const emit = (raw: string, components: Record<string, string>, klass: string): void => {
-			const source_id = recipeSourceID("synth-no-fragment", { ...components, k: klass, v: `${read}:${emitSeq++}` })
+			const source_id = recipeSourceID(NO_FRAGMENT_SOURCE, { ...components, k: klass, v: `${read}:${emitSeq++}` })
 
 			const canonical = {
 				raw,
 				components,
 				country: "NO",
 				locale: "nb-NO",
-				source: "synth-no-fragment",
+				source: NO_FRAGMENT_SOURCE,
 				source_id,
 				corpus_version: "0.11.0",
 				license: "Synthetic — no-fragment; (street, number, postcode, city) from OpenAddresses NO / Kartverket",
@@ -116,6 +123,10 @@ export const noFragmentRecipe: CorpusRecipe = {
 		const NO_FRAGMENT_PROVENANCE = {
 			register: requireRegister(opts, "no-fragment"),
 			surface: SurfaceOrigin.Composed,
+			// `emit` is a closure over the run rather than over one tuple, so this cannot name a per-row record.
+			// The tuples file carries no `sourceID` either.
+			// Populating this needs both (#2359).
+			baseSourceID: null,
 		}
 
 		for await (const tuple of readTuples(opts.input!)) {

@@ -19,6 +19,7 @@ import {
 	SYNTHETIC_TUPLE_LICENSE as LICENSE,
 	type CorpusRecipe,
 } from "#recipes/scaffold"
+import { defaultRecipeSource } from "#recipes/sources"
 import { synthesizeHouseVenueRow, type HouseVenueBaseTuple } from "#synthesizers/house-venue"
 import { SurfaceOrigin } from "#types"
 
@@ -31,6 +32,8 @@ import { SurfaceOrigin } from "#types"
 const HOUSE_VENUE_PROVENANCE = {
 	register: null,
 	surface: SurfaceOrigin.Invented,
+	// An invented row has no underlying record to name.
+	baseSourceID: null,
 }
 
 /**
@@ -47,7 +50,7 @@ export const houseVenueRecipe: CorpusRecipe = {
 		if (!opts.input) throw new Error("house-venue recipe requires --input <tuples.jsonl>")
 		// The root build script this recipe replaced seeded the LCG via makeRandom(opts.seed) (s = seed).
 		const random = makeLcg(opts.seed)
-		const source = opts.sourceName ?? "synth-house-venue"
+		const source = opts.sourceName ?? defaultRecipeSource("synth-house-venue")
 		let read = 0
 		let emitted = 0
 		let skipped = 0

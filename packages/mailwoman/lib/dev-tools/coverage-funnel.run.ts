@@ -11,7 +11,7 @@
  */
 
 import { POSTAL_REGIMES } from "@mailwoman/codex/postal-regimes"
-import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
 import { dirtyTrackedFiles, gitHead } from "@mailwoman/core/git"
 import { repoRootPath } from "@mailwoman/core/paths"
@@ -19,6 +19,7 @@ import { dRuleCountries, readScopeConfig, tieredCountries } from "@mailwoman/cor
 import { parseArguments } from "@mailwoman/core/scripting/arguments"
 import { formatPercent } from "@mailwoman/core/stats"
 import { isoSeconds } from "@mailwoman/core/utils"
+import { epochMixtureAuditPath } from "@mailwoman/corpus/source-register"
 
 import { admittedByShippedGraphs, resolveTrainingConfig } from "#coverage/census"
 import { censusCoverage, newestManifest } from "#coverage/index"
@@ -103,13 +104,26 @@ const report = await censusCoverage({
 	casesRoot: repoRootPath("packages", "mailwoman", "lib", "eval-harness", "gauntlet", "cases"),
 })
 
-const mixture = values["mixture-audit"] ? await readMixtureAudit(values["mixture-audit"], configPath) : undefined
+const mixtureAuditPath = values["mixture-audit"] ?? epochMixtureAuditPath(configPath).toString()
+const mixtureAuditPresent = await pathExists(mixtureAuditPath)
+
+if (!mixtureAuditPresent) {
+	console.error(
+		`sampled stage: no audit at ${mixtureAuditPath}. Produce one with\n` +
+			`  cd corpus-python && uv run --extra dev --extra train python -m mailwoman_train.audits.epoch_mixture \\\n` +
+			`    --config ${configPath} --corpus-dir <corpus> --json ${mixtureAuditPath}\n` +
+			`The stage reads \`unknown\` until then, which states what this checkout holds rather than what a ` +
+			`jurisdiction has.\n`
+	)
+}
+
+const mixture = mixtureAuditPresent ? await readMixtureAudit(mixtureAuditPath, configPath) : undefined
 
 const funnel = await readCoverageFunnel({
 	coverage: report.countries,
 	tieredCountries: [...tieredCountries(scope)],
 	protectedCountries: dRuleCountries(scope).map((entry) => entry.country),
-	...(values["mixture-audit"] ? { mixtureAudit: values["mixture-audit"] } : {}),
+	...(mixtureAuditPresent ? { mixtureAudit: mixtureAuditPath } : {}),
 	...(mixture ? { sampledRows: mixture.rows, sampledTotal: mixture.total } : {}),
 })
 
