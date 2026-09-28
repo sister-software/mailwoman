@@ -3,26 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stage a weights cache that carries the base package and every locale overlay, so a candidate model is graded on
- *   the path production takes rather than on the base alone.
- *
- *   Why this exists: every candidate cache under `$MAILWOMAN_DATA_ROOT/candidates/` held exactly one package,
- *   `neural-weights-en-us`. The gauntlet warns when a routed overlay is absent and grades those cases base-only, so
- *   every board read taken through an explicit cache has graded DE, ES, GB, IN, IT and NZ without their pair-index and
- *   deploc priors. A base-only pass is not evidence the production path passes — the overlay changes the prior (#2223).
- *
- *   The layout is npm's, because that is what `resolveWeights` walks: `<out>/node_modules/@mailwoman/<package>/`. Each
- *   staged package carries its workspace `package.json`, so an overlay's `mailwoman.baseWeights` declaration reaches
- *   the resolver and it finds the base model beside it rather than shipping its own. Every other file is a symlink
- *   into `$MAILWOMAN_DATA_ROOT/weights/<locale>/`, except the base's `model.onnx`, which points at the candidate.
- *
- *   A declared file with no artifact behind it is reported rather than silently skipped and not fatal: the data root legitimately
- *   lacks some declared siblings (en-us's calibration pair is not materialized there), and the harness has its own
- *   guard, `assertDeclaredAnchorBins`, for the ones whose absence changes a score. A cache that names what it does not
- *   carry is a measurement. one that stays quiet is the defect this tool was written for.
- *
- *   Run: node packages/mailwoman/lib/dev-tools/stage-candidate-cache.run.ts --model <int8.onnx> --out <dir>
- *   [--locales en-us,en-gb,…] [--dry-run]
+ *   A declared file with no artifact behind it is reported rather than silently skipped and is not
+ *   fatal, because the data root legitimately lacks some declared siblings.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -61,12 +43,8 @@ if (!(await pathExists(modelPath))) {
 const BASE_LOCALE = "en-us"
 
 /**
- * Locales staged by default: the base plus every overlay the gauntlet's board can route to,
- * which is the set whose absence the harness warns about.
- *
- * `routing.ts` is the authority on which countries route where.
- * This list is the package side of it, so an overlay published but unrouted
- * (fr-fr, en-au) can still be staged by naming it.
+ * Locales staged by default: the base plus every overlay the gauntlet's board can route to, which
+ * is the set whose absence the harness warns about; `routing.ts` is the authority on routing.
  */
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 
@@ -94,15 +72,12 @@ for (const locale of locales) {
 	}
 
 	const manifest = await readPackageJSON(manifestPath)
-	// The npm-prefix layout has one home, and this is a caller of it: the directory
-	// does not exist yet, so there is no path to resolve, and spelling it out here
-	// would put a second copy of the layout beside the first.
+	// The npm-prefix layout has one home, and this is a caller of it: the directory does not exist
+	// yet, so there is no path to resolve and spelling it out would put a second copy beside the first.
 	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
-	// The manifest's `files` mixes concrete siblings with globs, negations
-	// and the source patterns a published tarball needs.
-	// Only the concrete data siblings belong in a cache.
-	// A glob has no file to link.
+	// The manifest's `files` mixes concrete data siblings with globs and negations, and a glob has no
+	// file to link, so only the concrete siblings belong in a cache.
 	const declared = (manifest.files ?? []).filter(
 		(entry) => !entry.startsWith("!") && !entry.includes("*") && entry !== "README.md"
 	)

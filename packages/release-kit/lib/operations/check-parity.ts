@@ -19,8 +19,6 @@ const parityCheck: z.ZodType<ParityCheck> = z.object({
 
 /**
  * `release.check-parity` — reads and makes no change.
- *
- * Listed in `registry.ts`; the description on the operation is what `mwops` prints.
  */
 export const checkParity = defineOperation({
 	id: "release.check-parity",

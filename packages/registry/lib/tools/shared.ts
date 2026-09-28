@@ -3,10 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared helpers for the `registry/tools` probe battery.
- *
- *   The rule: anything reused by two or more probes belongs here. anything a single probe needs
- *   stays with that probe.
+ *   Shared helpers used by two or more probes in the `registry/tools` probe battery.
  */
 
 import { makeDirectories, writeLocalFile } from "@mailwoman/core/fs/writers"
@@ -42,9 +39,7 @@ export interface SourceSpec {
 	 */
 	inState: (row: Record<string, string>) => boolean
 	/**
-	 * Optional: a row carries ≥1 addressable entity — yield each as its own row.
-	 *
-	 * Default identity.
+	 * Optional: a row carrying ≥1 addressable entity yields each as its own row; default identity.
 	 */
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }
@@ -77,12 +72,7 @@ const ORGANIZATION_STOP_WORDS = new Set([
 ])
 
 /**
- * The token set of an organization name: lower-cased, non-alphanumerics folded
- * to spaces, stop words removed.
- *
- * Not a canonical form — `@mailwoman/record`'s `canonicalizeOrganizationName` is the
- * stronger canonical key (jurisdiction-aware designation stripping, a DBA split).
- * This set serves the probes' cheap Jaccard overlap over raw registry names, never blocking or display.
+ * The token set of an organization name for the probes' cheap Jaccard overlap, never blocking or display — not a canonical form.
  */
 export function orgTokens(s: string): Set<string> {
 	return new Set(
@@ -101,8 +91,7 @@ export const addr = (line: string, city: string, st: string, zip: string): strin
 	[norm(line), norm(city), norm(st), norm(zip)].filter(isPresent).join(", ")
 
 /**
- * Population standard deviation; `0` on an empty sample, because these feed
- * report tables that print a number per row.
+ * Population standard deviation; `0` on an empty sample, because these feed report tables that print a number per row.
  */
 export const std = (xs: readonly number[]): number => {
 	const m = xs.reduce((a, b) => a + b, 0) / Math.max(1, xs.length)
@@ -110,20 +99,18 @@ export const std = (xs: readonly number[]): number => {
 	return Math.sqrt(xs.map((x) => (x - m) ** 2).reduce((a, b) => a + b, 0) / Math.max(1, xs.length))
 }
 
-// note(phase4): pct keeps the fraction-in/no-%-suffix shape rather than core formatPercent's
-// numerator/denominator interface (call sites append their own "%").
+/**
+ * Takes a fraction and omits the percent sign, unlike core `formatPercent`'s numerator/denominator interface; call sites append their own `%`.
+ */
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
 /**
- * Sign prefix for a signed delta.
- *
- * `"+"` for a non-negative value (a negative one carries its own sign).
+ * Sign prefix for a signed delta: `"+"` for a non-negative value, since a negative one carries its own sign.
  */
 export const sgn = (x: number): string => (x >= 0 ? "+" : "")
 
 /**
- * Logistic function with the input clamped to +/-30 — past that `Math.exp` underflows to 0
- * and the gradient step silently becomes a no-op.
+ * Logistic function with the input clamped to ±30, past which `Math.exp` underflows to 0 and the gradient step silently becomes a no-op.
  */
 export const sigmoid = (z: number): number => 1 / (1 + Math.exp(-Math.max(-30, Math.min(30, z))))
 
@@ -144,17 +131,7 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
 /**
- * NPPES registry column headers, by the short name the probes read them under.
- *
- * The NPI registry export is a ~330-column TSV with headers this long, so every probe
- * that touches it needs this map, and five of them had grown their own copy.
- * The copies were a nested superset chain rather than a disagreement -- each new
- * probe took the previous one's map and appended what it additionally read --
- * so this is the widest of the five, and no consumer loses a column.
- *
- * Reading extra keys costs no work: they are inert strings, and no code enumerates this
- * object (checked: no `Object.keys`/`values`/`entries`/spread over it anywhere in `tools/`),
- * so adding a column can never change a probe's behavior.
+ * NPPES registry column headers, by the short name the probes read them under; no code enumerates this object, so adding a column cannot change a probe's behavior.
  */
 export const NPPES_COLUMNS = {
 	npi: "NPI",
@@ -177,7 +154,7 @@ export const NPPES_COLUMNS = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
-	// #625 taxonomy discriminator: the 15 taxonomy slots. Collected as a set (any shared code = agreement).
+	// The 15 taxonomy slots; any shared code counts as agreement.
 	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
@@ -187,16 +164,12 @@ export const NPPES_COLUMNS = {
 export const MIN_GROUP_SIZE = 5
 
 /**
- * Gradient-descent epochs for {@link trainLogisticRegression}.
- *
- * Fixed rather than early-stopped so seeds stay comparable.
+ * Gradient-descent epochs for {@link trainLogisticRegression}, fixed rather than early-stopped so seeds stay comparable.
  */
 export const TRAINING_EPOCHS = 400
 
 /**
- * Smallest mean F1 gap counted as a real difference between models rather than seed noise.
- *
- * Verdicts inside ±this are reported as a tie.
+ * Smallest mean F1 gap counted as a real difference between models rather than seed noise; verdicts inside ±this are reported as a tie.
  */
 export const MIN_MEANINGFUL_F1_DELTA = 0.02
 
@@ -211,12 +184,7 @@ export const LR_LEARNING_RATE = 0.1
 export const LR_L2 = 1e-3
 
 /**
- * L2-regularized logistic regression by batch gradient descent
- * ({@link TRAINING_EPOCHS} epochs) — the probes' linear arm.
- *
- * `w` carries the per-sample class weights (the caller up-weights the rare class).
- * Returns the linear scorer: the logit rather than the probability,
- * threshold-comparable across a fixed feature layout.
+ * L2-regularized logistic regression by batch gradient descent over {@link TRAINING_EPOCHS} epochs, where `w` carries per-sample class weights, returning the logit rather than the probability so it is threshold-comparable across a fixed feature layout.
  */
 export function trainLogisticRegression(
 	X: readonly (readonly number[])[],
@@ -266,11 +234,7 @@ export function trainLogisticRegression(
 }
 
 /**
- * `n + 1` evenly-spaced order statistics of an already-sorted sample, de-duplicated —
- * the candidate split thresholds a GBT node considers.
- *
- * `[0]` for an empty sample so a degenerate feature still yields one
- * (useless but well-formed) threshold rather than an empty split set.
+ * `n + 1` evenly-spaced order statistics of an already-sorted sample, de-duplicated, that a GBT node considers as candidate splits; an empty sample yields `[0]` so a degenerate feature still yields one threshold rather than an empty split set.
  */
 export function uniqueQuantiles(sorted: readonly number[], n: number): number[] {
 	if (!sorted.length) return [0]
@@ -283,15 +247,10 @@ export function uniqueQuantiles(sorted: readonly number[], n: number): number[] 
 	return [...ts]
 }
 
-/**
- * Quantile points swept per learned-scorer arm.
- */
 const THRESHOLD_QUANTILE_POINTS = 32
 
 /**
- * Link-threshold candidates for a learned scorer: de-duplicated quantiles of the
- * scorer's own eval-pair score distribution across the 0.2–0.999 quantile band —
- * fine enough that a coarse grid can't understate an arm.
+ * Link-threshold candidates for a learned scorer: de-duplicated quantiles of the scorer's own eval-pair score distribution across the 0.2–0.999 band.
  */
 export const quantileThresholds = (scores: readonly number[]): number[] => {
 	const sorted = [...scores].toSorted((p, q) => p - q)
@@ -342,15 +301,14 @@ export function bestOver(thresholds: readonly number[], scoreAt: (threshold: num
 }
 
 /**
- * One organization provider at its practice address, as the geocode-free co-location probes
- * read it — the union of what `dedup-ceiling` and `gold-set-sample` each collect.
+ * One organization provider at its practice address, as the geocode-free co-location probes read it.
  */
 export interface ColocatedProvider {
 	npi: string
 	org: string
 	tokens: Set<string>
 	/**
-	 * The composed practice address ({@link addr}), the string the adjudication packets carry.
+	 * The composed practice address ({@link addr}).
 	 */
 	address: string
 	/**
@@ -367,8 +325,7 @@ export interface ColocatedProvider {
 	taxonomy: string
 	subpart: boolean
 	/**
-	 * `parentLBN|parentTIN`, lowercased.
-	 * `"|"` when both are blank.
+	 * `parentLBN|parentTIN`, lowercased; `"|"` when both are blank.
 	 */
 	parent: string
 }
@@ -386,10 +343,7 @@ export interface ColocatedScan {
 }
 
 /**
- * Stream in-state type-2 (organization) providers from the registry — one record per
- * row at its practice address, grouped by `addressFrequencyKey`.
- *
- * Geocode-free on purpose, so it runs at large caps in seconds.
+ * Stream in-state type-2 (organization) providers from the registry, one record per row at its practice address, grouped by `addressFrequencyKey`; geocode-free on purpose so it runs at large caps in seconds.
  */
 export async function scanColocatedProviders(options: {
 	registryPath: string
@@ -450,18 +404,13 @@ export interface ColocatedPair {
 	a: ColocatedProvider
 	b: ColocatedProvider
 	/**
-	 * The distinct-NPI providers at the shared address, length ≥ 2.
-	 *
-	 * One array reference per group, so a consumer tracking group-level tallies
-	 * can detect the group boundary by identity.
+	 * The distinct-NPI providers at the shared address, length ≥ 2, one array reference per group so a consumer can detect the group boundary by identity.
 	 */
 	group: readonly ColocatedProvider[]
 }
 
 /**
- * Every unordered pair of distinct NPIs sharing a practice-address key — the over-merge population.
- *
- * Providers are de-duplicated per address by NPI (first record wins); single-NPI addresses yield no pair.
+ * Every unordered pair of distinct NPIs sharing a practice-address key, de-duplicated per address by NPI (first record wins) so single-NPI addresses yield no pair.
  */
 export function* colocatedDistinctPairs(
 	byAddr: ReadonlyMap<string, readonly ColocatedProvider[]>
@@ -488,9 +437,6 @@ export function* colocatedDistinctPairs(
 
 /**
  * The TX facility source specs the cross-source probes share.
- *
- * `cross-dataset-correlation` composes these with its own commitments spec
- * (the exploded two-entity-per-row source).
  */
 export const buildSpecs = (S: string, STATE: string): SourceSpec[] => [
 	{
@@ -545,21 +491,12 @@ export interface GBTHyperparameters {
 	minLeaf: number
 }
 
-/**
- * The compact pure-Node GBT configuration the cross-source trainers fit with.
- */
 const CROSS_SOURCE_HYPERPARAMS: GBTHyperparameters = { rounds: 120, depth: 3, lr: 0.3, minLeaf: 20 }
 
-/**
- * Share of join keys assigned to fit during calibration.
- * The rest are held out.
- */
 const FIT_SPLIT_FRACTION = 0.8
 
 /**
- * One assembled input row for a cross-source trainer.
- *
- * `npi` carries the cross-system join key (an NPI or a CCN) — it rides `record.id` as the held-out label.
+ * One assembled input row for a cross-source trainer, whose `npi` carries the cross-system join key (an NPI or a CCN) and rides `record.id` as the held-out label.
  */
 export interface CrossSourceRow extends Record<string, string> {
 	npi: string
@@ -570,7 +507,7 @@ export interface CrossSourceRow extends Record<string, string> {
 }
 
 /**
- * Every figure Phases D–F compute — what {@link TrainCrossSourceModelOptions.meta} receives.
+ * Every figure passed to {@link TrainCrossSourceModelOptions.meta}.
  */
 export interface CrossSourceTrainingFigures {
 	records: number
@@ -592,8 +529,7 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * The assembled two-source rows.
-	 * The caller's source-loading phases stay with the caller.
+	 * The assembled two-source rows; the caller owns source loading.
 	 */
 	rows: readonly CrossSourceRow[]
 	/**
@@ -606,7 +542,7 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	sources: readonly [string, string]
 	/**
-	 * #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
+	 * Max cross-source recall subject to this held-out pairwise precision.
 	 */
 	precisionBar: number
 	/**
@@ -622,33 +558,24 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	exportPrefix: string
 	/**
-	 * Assemble the emitted `<prefix>_META` object.
-	 *
-	 * The caller owns field names and order so a retrain diffs cleanly against its committed module.
+	 * Assemble the emitted `<prefix>_META` object; the caller owns field names and order so a retrain diffs cleanly against its committed module.
 	 */
 	meta: (figures: CrossSourceTrainingFigures) => Record<string, unknown>
 	report?: (line: string) => void
 }
 
 /**
- * Phases C–F shared by the cross-source trainers: geocode + ingest each source under
- * its own provenance label, block the union and keep only cross-source candidate pairs,
- * featurize with the shared `createMatchFeaturizer` (train ≡ inference),
- * calibrate the #655 threshold on a held-out split of the join keys, train the shipped
- * model on all pairs, and emit it as a committed TS module.
+ * Geocode and ingest each source under its own provenance label, block the union, keep only cross-source candidate pairs, featurize with `createMatchFeaturizer` so train and inference agree, calibrate the threshold on a held-out split of the join keys, then train and emit the shipped model as a committed TS module.
  */
 export async function trainCrossSourceModel(
 	options: TrainCrossSourceModelOptions
 ): Promise<{ out: string; pairs: number; recommendedThreshold: number }> {
 	const { rows, joined, addressFrequency, sources, precisionBar, out, report } = options
 
-	// Geocode and ingest records, carrying the join-key label in record.id and source on the record.
-	// Heavy geocoder is injected (see ./eval-geocoder.ts). ---
 	report?.("[C] geocoding…")
 	const geocoder = await options.createGeocoder()
 
-	// `ColumnMapping.source` is a literal provenance label — ingest each source separately so every
-	// record carries its registry of origin (the cross-source filter + the sweep harness key on it).
+	// Ingest each source separately so every record carries its literal provenance label, which the cross-source filter keys on.
 	const mappingFor = (source: string): ColumnMapping => ({
 		id: "npi",
 		name: "name",
@@ -672,7 +599,6 @@ export async function trainCrossSourceModel(
 	geocoder[Symbol.dispose]()
 	report?.(`    ${records.length} records, ${records.filter((r) => r.address?.geocode).length} geocoded`)
 
-	// Block the union, retain cross-source pairs, generate features, and label by join key.
 	report?.("[D] blocking + featurizing (cross-source pairs only)…")
 	const comparisons = buildDefaultModel({ collapseSpatial: true, addressFrequency }).comparisons
 	const featurize = createMatchFeaturizer({ comparisons, addressFrequency })
@@ -687,7 +613,6 @@ export async function trainCrossSourceModel(
 		`    ${allPairs.length} blocked pairs → ${pairs.length} cross-source (${(100 * posRate).toFixed(1)}% positive)`
 	)
 
-	// Calibrate the threshold against held-out pairs.
 	report?.("[E] held-out calibration…")
 	const rnd = makeLcg(655)
 	const split = new Map<string, "fit" | "holdout">()
@@ -737,7 +662,7 @@ export async function trainCrossSourceModel(
 		const recall = totalPos > 0 ? tp / totalPos : 0
 		const f1 = precision + recall > 0 ? (2 * precision * recall) / (precision + recall) : 0
 
-		// The #655 rule: the lowest threshold whose precision clears the bar (maximizes recall under it).
+		// The lowest threshold whose precision clears the bar, maximizing recall under it.
 		if (precision >= precisionBar && recall > barRecall) {
 			barRecall = recall
 			recommendedThreshold = t
@@ -757,7 +682,6 @@ export async function trainCrossSourceModel(
 		`    held-out (${holdIdx.length} pairs, ${totalPos} pos): precision-bar ${precisionBar} → threshold ${recommendedThreshold.toFixed(3)} (recall ${(100 * barRecall).toFixed(1)}%); F1-max ${(100 * bestF1).toFixed(1)}% @ ${f1MaxThreshold.toFixed(3)}`
 	)
 
-	// Train the shipped model on all cross-source pairs and emit its committed module.
 	report?.("[F] training the shipped model on all pairs…")
 	const model = trainGBT(X, Y, W, CROSS_SOURCE_HYPERPARAMS)
 

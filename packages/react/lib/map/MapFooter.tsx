@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- * Render map identity and loading status in a footer strip, with source attributions in a compact, expandable list.
  */
 
 import { type ReactNode, useEffect, useId, useRef, useState } from "react"

@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- * `<PlaceAutocomplete>` — the suggestion listbox with fake suggestions (hover/click to highlight), and the empty case where it renders no listbox.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
