@@ -86,7 +86,7 @@ const SELF = "packages/repo-health/lib/checks/debt.ts"
 const PRODUCTION_FILE_LINE_CEILING = 1000
 
 /**
- * Lines of a source file that carry code, which is what {@link PRODUCTION_FILE_LINE_CEILING} bounds.
+ * Lines of a source file that carry code. {@link PRODUCTION_FILE_LINE_CEILING} bounds this count.
  *
  * A raw line count measures comment layout as much as file size.
  * This repository sets comments one sentence per line (`config/oxlint/comment-reflow`),
@@ -96,10 +96,11 @@ const PRODUCTION_FILE_LINE_CEILING = 1000
  * That file documents 164 Census feature-class codes in 167 lines of code.
  *
  * Block-comment state carries across lines, so a continuation line counts as comment however it begins.
- * A `//` or a block marker inside a string literal reads as a comment here,
- * which undercounts a file holding one.
+ * A `//` or block marker inside a string literal counts as a comment here.
+ * This undercounts a file containing one.
  *
- * The ceiling is a size heuristic, and a few lines either way does not carry a file across 1,000.
+ * The ceiling is a size heuristic.
+ * A few lines either way do not move a file across 1,000.
  */
 function codeLineCount(text: string): number {
 	let count = 0
@@ -426,7 +427,8 @@ const BANNED_VOCABULARY_ALLOWED: ReadonlyArray<readonly [prefix: string, reason:
 		"board rows are register data and carry real building names verbatim: Kew Gate, Singapore",
 	],
 	["evals/", "the score ledger's rows are dated notes on committed board cases"],
-	// Records that cite receipts by their historical path, which must stay byte-exact.
+	// Records cite receipts by historical path.
+	// Keep those paths byte-exact.
 	[
 		"packages/mailwoman/lib/eval-harness/baselines.json",
 		"the precision note cites a scratchpad script by its historical path",

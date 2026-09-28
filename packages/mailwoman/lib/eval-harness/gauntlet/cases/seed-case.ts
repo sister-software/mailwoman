@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression-corpus case type, its zod schema, and compile-time checks that keep the type, the schema and
- *   {@linkcode SEED_CASE_KEY_ORDER} in agreement.
+ *   This module defines the regression-corpus case type and its Zod schema.
+ *   Compile-time checks keep the type and schema aligned with {@linkcode SEED_CASE_KEY_ORDER}.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
@@ -38,10 +38,11 @@ export interface SeedCase {
 	 */
 	expectComponents?: Record<string, string>
 	/**
-	 * Expected renderings per component key for input that holds a span in two or more scripts,
-	 * such as `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`; the grader
-	 * requires each listed rendering to appear in `scriptRenderings(got)` after case folding,
-	 * and a key listed here supersedes the same key in {@linkcode expectComponents}.
+	 * Expected renderings per component key when the input span uses two or more scripts,
+	 * such as `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`.
+	 *
+	 * The grader requires each listed rendering to appear in `scriptRenderings(got)` after case folding.
+	 * A key listed here supersedes the same key in {@linkcode expectComponents}.
 	 */
 	expectComponentRenderings?: Record<string, string[]>
 	expectPlaceID?: string
@@ -55,8 +56,10 @@ export interface SeedCase {
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * Whether the resolver must abstain — any resolved coordinate fails the row,
-	 * and the grader rejects a row that also sets `expectLat` or `expectLon`.
+	 * Whether the resolver must abstain.
+	 *
+	 * Any resolved coordinate fails the row.
+	 * The grader rejects a row that also sets `expectLat` or `expectLon`.
 	 */
 	expectAbstain?: boolean
 	addedAt: string
@@ -64,8 +67,10 @@ export interface SeedCase {
 	note?: string
 	/**
 	 * Hand-pinned ablation rung per deleted component, such as `{ country: "region" }`
-	 * or `{ region: "abstain" }`; values are `abstain`, `base`, or a WOF placetype,
-	 * and the derived ladder decides when it is absent.
+	 * or `{ region: "abstain" }`.
+	 *
+	 * Values are `abstain`, `base`, or a WOF placetype.
+	 * The derived ladder decides when a rung is absent.
 	 */
 	ablationExpect?: Record<string, string>
 }
@@ -148,8 +153,8 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 >
 
 /**
- * Returns the case with keys in {@linkcode SEED_CASE_KEY_ORDER} and undefined fields removed,
- * which makes the corpus content hash depend only on content.
+ * Returns the case with keys in {@linkcode SEED_CASE_KEY_ORDER} and undefined fields removed.
+ * The corpus content hash then depends only on case content.
  */
 export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	const out: Partial<SeedCase> = {}

@@ -101,7 +101,7 @@ describe("two-score split — format v5", () => {
 
 	it("an absent encyclopedic score round-trips as ABSENT, never as 0", () => {
 		// The meaning-of-zero rule in bytes: roughly 89% of the gazetteer has no Wikipedia article,
-		// and a consumer reading 0.0 there would be reading a fact nobody recorded.
+		// and a consumer reading 0.0 there would mistake absence for a recorded value.
 		const entry = deserializeFST(serializeFST(splitMatcher())).query("Saint-Denis").accepting[0]!
 
 		expect(entry.encyclopedic).toBeUndefined()

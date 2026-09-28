@@ -5,8 +5,8 @@
  *
  *   Reduces the delineations that reach a cell into that cell's capability-class distribution.
  *
- *   The result is a distribution because most map units mix several soil components that the survey
- *   cannot separate at its mapping scale. Shares are normalized over the mapped part of the cell, and
+ *   The result is a distribution because most map units mix several soil components.
+ *   The survey cannot separate those components at its mapping scale. Shares are normalized over the mapped part of the cell.
  *   `mapped_share` records how large that part is. Capability class 8 is a rated class, so it is stored as a
  *   class share. The unrated share, the no-data share and the not-rateable share each have their own column.
  */
@@ -141,8 +141,8 @@ export interface ReducedCell {
  * Reduces one cell.
  *
  * @throws {Error} When a candidate's map unit has no profile.
- * A missing profile means the attribute join is incomplete, and the remaining
- * candidates would describe only part of the cell.
+ * A missing profile means the attribute join is incomplete.
+ * The remaining candidates would describe only part of the cell.
  */
 export function reduceCell(
 	cell: H3Cell,
@@ -177,8 +177,10 @@ export function reduceCell(
 		}
 
 		if (!covered) {
-			// No child centre fell inside a delineation, which happens when a sliver clips a corner.
-			// The row has a mapped share of zero, and the caller drops it.
+			// No child centre fell inside a delineation.
+			// A sliver can clip only a corner.
+			// This row has a mapped share of zero.
+			// The caller drops it.
 			return {
 				row: emptyRow(h3Cell, candidates.length),
 				topClassUnderHalf: false,

@@ -129,8 +129,10 @@ interface PanelRow {
 }
 
 /**
- * One graded answer, whose `km` is null when the pipeline returned no coordinate,
- * which {@link summarize} keeps apart from a far-away one.
+ * One graded answer.
+ *
+ * Its `km` is null when the pipeline returned no coordinate. {@link summarize} keeps
+ * that case separate from a coordinate that is far away.
  */
 interface GradedRecord {
 	km: number | null
@@ -186,8 +188,8 @@ async function resample(): Promise<void> {
 		const rowid = 1 + Math.floor(random() * maxRowid)
 		const hit = rowStatement.get(rowid)
 
-		// A drawn rowid can miss or lack a postcode or commune, and both are skipped
-		// rather than retried so the draw stays a pure function of the seed.
+		// A drawn rowid can miss or lack a postcode or commune.
+		// Both are skipped rather than retried so the draw stays a pure function of the seed.
 		if (!hit?.postcode || !hit.locality_norm || !hit.street_raw || !hit.number) continue
 
 		if (seenPostcode.has(hit.postcode)) continue
@@ -234,9 +236,10 @@ async function resample(): Promise<void> {
 //#region Versions
 
 /**
- * The code, model, and reference-data versions a differing re-run must tell apart,
- * reporting the artifact `resolveWeights` actually loaded rather than the one asked for
- * and dereferencing paths past development symlinks.
+ * The stamp reports the code and model versions for a differing rerun.
+ *
+ * It also reports the reference-data version and artifact `resolveWeights` loaded.
+ * Paths resolve through development symlinks.
  */
 async function versionStamp() {
 	const require = createRequire(import.meta.url)

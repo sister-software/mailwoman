@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The default base for http clients in this repo. Raw `fetch` duplicates throttling, caching, and
- *   error mapping that live here. New clients extend or instantiate this instead (see `agents.md`).
+ * @file The default base for HTTP clients in this repository. It centralizes throttling, caching and error mapping.
+ *   New clients extend or instantiate this class. See `agents.md`.
  */
 
 import { isAsyncDisposable } from "async-init"
@@ -49,7 +49,8 @@ export interface APIClientConfig {
 	 * How many requests to make per minute before enforcing a cooldown: a budget model —
 	 * spend `requestsPerMinute` dispatches, then stall until the cooldown lapses.
 	 *
-	 * This cannot express a flat per-second rate, which is what most fair-access policies publish.
+	 * This cannot express a flat per-second rate.
+	 * Many fair-access policies publish that limit.
 	 * Use {@linkcode minRequestIntervalMs} for that.
 	 *
 	 * The two compose (both limits must clear) but you almost certainly want one.
@@ -80,10 +81,10 @@ export interface APIClientConfig {
 	retry?: RetryOptions | boolean
 
 	/**
-	 * Time source powering the pacer, the cooldown timer, and the retry backoff.
+	 * Time source for the pacer, cooldown timer and retry backoff.
 	 *
-	 * Defaults to {@linkcode systemClock}, and tests inject a fake clock
-	 * so timing is deterministic and instant.
+	 * Defaults to {@linkcode systemClock}.
+	 * Tests inject a fake clock to make timing deterministic and instant.
 	 */
 	clock?: ClockLike
 
@@ -91,8 +92,9 @@ export interface APIClientConfig {
 }
 
 /**
- * A base class for API clients used in Mailwoman, providing request pacing,
- * response caching, bounded retry, mapped errors, and integrated logging.
+ * A base class for Mailwoman API clients.
+ *
+ * It provides request pacing, response caching, bounded retries, mapped errors and integrated logging.
  */
 export class APIClient<C extends APIClientConfig = APIClientConfig> extends EventTarget implements AsyncDisposable {
 	public readonly config: C
@@ -102,7 +104,8 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	/**
 	 * When the current budget window opened — the instant of its first dispatch rather than of the last one.
 	 *
-	 * The cooldown is measured from here, which is what makes `requestsPerMinute` mean requests per minute.
+	 * The cooldown is measured from this time.
+	 * That makes `requestsPerMinute` mean requests per minute.
 	 */
 	#windowStartedAt = 0
 
@@ -172,27 +175,32 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	}
 
 	/**
-	 * Perform a fetch operation using the API's Axios instance: served from cache when possible,
-	 * paced and cooldown-conditional when not, retried within the configured ceiling,
-	 * and — on the final failure — mapped to a {@linkcode ResourceError} carrying a
-	 * numeric `status` and a `(source, kind, reason)` URN.
+	 * Performs a fetch through the API's Axios instance.
+	 *
+	 * Cache hits return from cache.
+	 * Other requests are paced and subject to cooldown.
+	 *
+	 * Failed requests retry within the configured ceiling.
+	 * A final failure becomes a {@linkcode ResourceError} with a numeric `status`
+	 * and a `(source, kind, reason)` URN.
 	 *
 	 * Error mapping happens here rather than in a response interceptor so the retry loop
 	 * can see the raw `AxiosError` (status and `Retry-After`) before it is summarized.
-	 * The pacing/cooldown limit deliberately sits in the adapter (see the constructor),
-	 * downstream of the cache, so a hit incurs no cost and every retry attempt
-	 * re-enters it — a retry burst cannot outrun the pacer.
+	 * The constructor installs pacing and cooldown in the adapter downstream of the cache.
+	 *
+	 * A cache hit incurs no cost.
+	 * Each retry re-enters the adapter, so a retry burst cannot outrun the pacer.
 	 */
 	public fetch = async <T>(options: AxiosRequestConfig): Promise<AxiosResponse<T>> => {
 		const method = options.method?.toUpperCase() || "GET"
 
-		// A per-request `adapter` would win over the instance default in `mergeConfig`,
-		// and the pacing/cooldown limit lives in that instance adapter, so passing
-		// one here would dispatch with no grant at all.
-		// The cache interceptor swaps the adapter too, and that one is intended: it is how a cache
-		// hit skips the check without spending a grant, and it swaps on the merged config from
-		// inside the interceptor chain, after this method has already handed the request over.
-		// Stripping it here closes the caller-supplied door without touching the interceptor's.
+		// `mergeConfig` prefers a per-request `adapter` over the instance default.
+		// The instance adapter enforces pacing and cooldown, so a caller-supplied
+		// adapter would dispatch without a grant.
+		// The cache interceptor also swaps the adapter.
+		// Its adapter lets a cache hit skip the grant check.
+		// It receives merged config inside the interceptor chain, after this method hands over the request.
+		// Stripping the caller's adapter preserves the interceptor's adapter.
 		const { adapter: _callerAdapter, ...safeOptions } = options
 
 		for (let attempt = 1; ; attempt++) {
@@ -222,13 +230,18 @@ export class APIClient<C extends APIClientConfig = APIClientConfig> extends Even
 	/**
 	 * Acquire permission to dispatch one request, clearing both limits.
 	 *
-	 * Each reserves synchronously with respect to its own state, so concurrency cannot defeat either of them.
+	 * Each limit reserves synchronously against its own state.
+	 * Concurrent requests cannot bypass either limit.
 	 *
-	 * The pacer is re-acquired on every pass of the loop rather than taken once up front:
-	 * a grant is a claim on a specific instant, so blocking on a cooldown after taking one leaves
-	 * it stale, and every caller holding a stale grant spends it the moment the cooldown lifts.
-	 * Re-acquiring discards the stale grant — the pacer under-issues by one per cooldown wait,
-	 * which is the safe direction — and takes a fresh one for the instant we actually dispatch.
+	 * The loop reacquires the pacer on every pass.
+	 * A grant applies to a specific instant.
+	 *
+	 * Waiting on a cooldown after taking a grant makes it stale.
+	 * Callers with stale grants would all spend them when the cooldown lifts.
+	 *
+	 * Reacquiring discards each stale grant and gets a fresh one for dispatch.
+	 * The pacer under-issues by one request per cooldown wait.
+	 * This keeps the limit on the safe side.
 	 */
 	protected acquireDispatchSlot = async (): Promise<void> => {
 		for (;;) {

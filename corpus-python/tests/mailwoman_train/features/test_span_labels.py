@@ -63,7 +63,7 @@ class FakeTokenizer:
 
 # Each: (name, raw, tokens, labels, span_starts, span_ends, span_tags, piece_chunks).
 # Piece chunks deliberately split inside words (Pennsylv|ania, Républi|que, Ber|lin) to exercise
-# the B→I flip, and give separator commas their own piece to pin the "comma outside both spans"
+# the B→I flip. Separator commas get their own piece to pin the "comma outside both spans"
 # behavior on both paths.
 FIXTURES = [
     (

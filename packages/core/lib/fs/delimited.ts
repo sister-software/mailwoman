@@ -4,9 +4,11 @@
  * @author Teffen Ellis, et al.
  * @file Reading a delimited file whose `"` is an ordinary character.
  *
- *   `CSVSpliteratorInit.enableQuoteHandling` defaults TO true, and a quote-aware reader over an unquoted source does
- *   not fail — it joins every line between one `"` and the next into a single record, so the caller sees a shorter
- *   file and reads it as a smaller dataset, which is indistinguishable from a small file at every downstream count.
+ *   `CSVSpliteratorInit.enableQuoteHandling` defaults to true.
+ *   A quote-aware reader over unquoted input still returns rows.
+ *   It joins every line between one `"` and the next into one record.
+ *   The caller then sees a shorter file and reads a smaller dataset.
+ *   Downstream counts cannot distinguish this result from a small source file.
  *
  *   The GeoNames country dumps are unquoted TSV and carry `"` in place names (`Ovrag Kyzylak"on`).
  */
@@ -25,8 +27,9 @@ import { tryStat } from "#fs/readers/stat"
  *
  * The GeoNames dumps and every register that writes plain TSV are such sources.
  *
- * A source that really is quoted (a spreadsheet export, a register that escapes its delimiters)
- * wants `TSVSpliterator` directly with the default, and should say so where it is read.
+ * A genuinely quoted source, such as a spreadsheet export or a register that escapes
+ * delimiters, should use `TSVSpliterator` with its default settings.
+ * State that choice where the source is read.
  */
 export function readUnquotedTSV(path: PathBuilderLike): AsyncIterable<string[]> {
 	return TSVSpliterator.fromAsync(path, {
@@ -48,9 +51,10 @@ export function readUnquotedTSVText(text: string): Iterable<string[]> {
 /**
  * The same read, checked against the file's own line count, raising rather than answering short.
  *
- * A reader that can return a partial result must say what it got or throw: a short read
- * and a small file are the same number to every consumer, and absence is the answer a
- * gazetteer build is looking for, so the wrong answer arrives looking like a discovery.
+ * A reader that can return a partial result must state how many rows it read or throw.
+ * Consumers see the same count for a short read and a small file.
+ *
+ * A gazetteer build may then mistake the short read for an absent entry.
  */
 export async function readUnquotedTSVChecked(path: PathBuilderLike): Promise<string[][]> {
 	let expected = 0
@@ -87,15 +91,18 @@ export const ZSTD_EXTENSION = ".zst"
 /**
  * A byte source for a delimited file, transparently decompressing a `.zst` input.
  *
- * Call this inline at each read and never hoist the result: an uncompressed path
- * is returned unchanged and a spliterator opens it independently every time,
- * which is what lets {@linkcode readUnquotedTSVChecked} count a file and then read it,
- * while a compressed one becomes a single stream.
+ * Call this inline at each read.
+ * The function returns an uncompressed path unchanged.
+ *
+ * Each spliterator opens that path independently.
+ * That lets {@linkcode readUnquotedTSVChecked} count a file and then read it.
+ *
+ * A compressed file becomes a single stream.
  * Reusing that stream across two passes yields the rows once and no rows the second time.
  *
  * A compressed source is not seekable, so it cannot be segmented for parallel readers.
- * Every reader in this repository consumes a corpus part file as one stream,
- * and no bytes are buffered either way.
+ * Every reader in this repository consumes a corpus part file as one stream.
+ * The function buffers no bytes in either case.
  */
 export function delimitedSource(path: PathBuilderLike): AsyncDataResource {
 	if (!path.toString().endsWith(ZSTD_EXTENSION)) return path

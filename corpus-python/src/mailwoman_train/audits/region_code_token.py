@@ -2,7 +2,7 @@
 
 WHY THIS EXISTS. `Swiss Chalet, 92 Laurel Rd, Gander, NL A1V 0A9, Canada` answers `country: NL` — the
 Netherlands — with `Canada` written in full at the end of the same string (#2299). `NL` is a Canadian
-province code and an ISO alpha-2 country code, and the model reads whichever one the corpus attested
+province code and an ISO alpha-2 country code. The model reads whichever interpretation the corpus attested
 more. A claim that one reading outweighs the other is a claim about counts, so this module counts them,
 at the definitions stated here and at both sampling levels.
 
@@ -12,8 +12,8 @@ codex's. A code with a count under one tag only is not contested. a code with co
 
 BOTH LEVELS, BECAUSE AUGMENTATION WRITES REGIONS. `augment_region_prob` appends a region surface to a
 row that did not carry one, so the emitted stream carries region codes the drawn stream does not. A
-count taken at the draw level alone understates the region side by exactly the augmentation's share,
-which is the error this module exists to avoid rather than commit. The sampling mirrors
+draw-level counts understate the region side by exactly the augmentation's share. This module measures
+the emitted stream to capture that region signal. The sampling mirrors
 `audit_epoch_mixture` and `census_opening_token` — same stream, same seed convention, same budget — so
 a count here is comparable with an exposure reported there.
 """
@@ -42,9 +42,8 @@ def code_shaped(token: str) -> bool:
 def _tag(label: str) -> str | None:
     """The tag a token OPENS, or None.
 
-    Only a `B-` label counts. A two-letter token inside a longer span is part of a name rather than a
-    code the row attests on its own, and counting it would credit `St. John's, NL` and `Newfoundland
-    and Labrador` to the same evidence.
+    Only a `B-` label counts. A two-letter token inside a longer span is part of a name.
+    Counting it would credit `St. John's, NL` and `Newfoundland and Labrador` to the same evidence.
     """
     return label[2:] if label.startswith("B-") else None
 

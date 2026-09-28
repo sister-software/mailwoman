@@ -9,14 +9,13 @@
  *   (column 8: `pplc` national capital, `ppla` first-order administrative seat), which is what the
  *   capitals reference build consumes.
  *
- *   The catalog question is answered by the source rather than by an ISO list. `countryInfo.txt` in
- *   the same directory enumerates every country GeoNames publishes, one row per ISO alpha-2 code, and
- *   also carries each country's capital, the cross-check the capitals build grades its `pplc`
- *   extraction against. Fetch that first and derive the country set from it, so a dump absent from
- *   disk is a measured gap against the source's own catalog. The dump directory may hold files this
- *   tool did not fetch. Present files are never overwritten, and a present `<CC>.txt` that is not a
- *   19-column gazetteer dump (GeoNames' postal exports share the basename) is reported as
- *   `wrong_format_present` rather than counted as coverage.
+ *   `countryInfo.txt` supplies the country catalog. It lists each country GeoNames publishes with one
+ *   row per ISO alpha-2 code. Each row also carries the capital. The capitals build checks it against
+ *   its `pplc` extraction. The tool fetches this file first and derives the country set from it. A dump
+ *   absent from disk then counts as a gap in the source's own catalog.
+ *   The dump directory may contain files this tool never fetched. The tool keeps present files unchanged.
+ *   It checks each present `<CC>.txt` for the 19-column gazetteer format. GeoNames postal exports share
+ *   the basename, so a postal export receives `wrong_format_present` and does not count as coverage.
  */
 
 import { pathExists, readFileHead, readLocalBuffer, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -99,8 +98,9 @@ export interface GeonamesDumpManifest {
 }
 
 /**
- * Column count of a gazetteer dump row — the discriminator against GeoNames' 12-column
- * postal exports, which share the `<CC>.txt` basename.
+ * Column count of a gazetteer dump row.
+ *
+ * GeoNames postal exports have 12 columns and share the `<CC>.txt` basename.
  */
 const GAZETTEER_DUMP_COLUMNS = 19
 
@@ -110,9 +110,11 @@ const GAZETTEER_DUMP_COLUMNS = 19
  * Accepts a partial head read.
  * The first line is the whole question, so callers need not hand it a resident 350 MB dump.
  *
- * Walk the string directly rather than constructing a spliterator: the capitals builder already
- * holds whole country dumps as strings, and a byte-oriented spliterator would UTF-8 encode
- * that input — allocating up to another 350 MB — merely to inspect its first non-empty line.
+ * Walk the string directly instead of constructing a spliterator.
+ * The capitals builder already holds each country dump as a string.
+ *
+ * A byte-oriented spliterator would UTF-8 encode that input and allocate up to
+ * another 350 MB just to inspect the first non-empty line.
  */
 export function looksLikeGazetteerDump(text: string): boolean {
 	let start = 0
@@ -166,9 +168,13 @@ export function parseCountryInfo(text: string): Array<{ country: string; capital
 const FORMAT_SNIFF_BYTES = 65_536
 
 /**
- * Download `countryInfo.txt` plus every missing `<CC>.zip`, extracting each to
- * `<outRoot>/<CC>.txt` beside the hand-fetched dumps, with a `manifest.json` naming fetched,
- * skipped-present, and source-unavailable countries.
+ * Download `countryInfo.txt` and each missing `<CC>.zip`.
+ *
+ * Extract each dump to `<outRoot>/<CC>.txt` beside the hand-fetched files.
+ * The `manifest.json` lists fetched countries.
+ *
+ * It also lists countries skipped because their files were already present
+ * and countries unavailable from the source.
  */
 export async function fetchGeonamesDumps(
 	options: FetchGeonamesDumpOptions,
@@ -237,7 +243,9 @@ export async function fetchGeonamesDumps(
 			const message = error instanceof Error ? error.message : String(error)
 
 			// Branch on the typed status.
-			// Message prose contains the URL, and a URL can contain any substring.
+			// The error message contains a URL.
+			// URLs can contain any substring.
+			// Branch on the typed status instead of matching message text.
 			if (error instanceof HTTPStatusError && error.status === HTTP_NOT_FOUND) {
 				report?.(`✗ ${country}: GeoNames publishes no gazetteer dump for this country`)
 				unavailable.push(country)

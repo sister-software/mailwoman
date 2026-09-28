@@ -72,7 +72,7 @@ node mailwoman/out/cli.js wof tree <localRepoDir> country --roles common
 node mailwoman/out/cli.js wof tree <localRepoDir> locality --compact --output locality-tree.json
 ```
 
-The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`, a recursive `findChildren(roles)` walk. **Note:** WOF placetypes form a DAG in which many descendants are shared. For example, `installation` is a leaf reachable from several parents. A tree projection duplicates every shared subtree under every parent path. For shallow or sparse roots like `country` or `locality` the tree is small, and for `planet` it grows to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for large roots.
+The renderer is `generatePlacetypeTree` in `core/resources/whosonfirst/placetypes/tree.ts`, a recursive `findChildren(roles)` walk. **Note:** WOF placetypes form a DAG with shared descendants. For example, `installation` is a leaf reachable from several parents. A tree projection duplicates every shared subtree under every parent path. For shallow or sparse roots like `country` or `locality` the tree is small, and for `planet` it grows to ~174 MB. Use [`wof graph`](#commandswofgraphtsx--emit-a-node-link-json-graph) for large roots.
 
 ### `commands/wof/graph.tsx` — emit a node-link JSON graph
 

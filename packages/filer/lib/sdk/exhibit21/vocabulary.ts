@@ -100,8 +100,8 @@ const KNOWN_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Recognizes a row/line as a document header or pure-decoration row rather than a data row.
- * the exact match rather than substring sniffing avoids misfiring on a company literally named
+ * Recognizes a row/line as a document header or pure-decoration row rather than a data row. the
+ * exact match rather than substring sniffing avoids misfiring on a company literally called
  * e.g. "Subsidiary Holdings LLC", and an all-blank row is left to the empty-row handling.
  */
 export function isHeaderOrDecorationRow(values: readonly string[]): boolean {

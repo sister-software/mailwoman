@@ -16,7 +16,7 @@ import type { TokenizedPiece } from "@mailwoman/neural/tokenizer"
  *
  *   Cross-language guard for the inference-side anchor features: the feature layout must match the
  *   Python training pipeline (`mailwoman_train/tokenizer.py::anchor_feature_vector`) or the model is
- *   fed garbage at inference, and the pinned vectors fail if the TS drifts.
+ *   fed garbage at inference. The pinned vectors fail if the TypeScript implementation drifts.
  */
 import { describe, expect, it } from "vitest"
 
@@ -79,10 +79,14 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
 })
 
 /**
- * The train-parity fix, with two obligations: the default stays byte-identical to the pre-fix scan,
- * graded against a verbatim copy of it rather than a hash so the oracle is readable, and
- * `spanMode: "shaped"` keys a span exactly the way `mailwoman_train/tokenizer.py::_paint_anchor_chars`
- * does (`raw[begin:end].replace(" ", "").upper()`) and paints the span's full extent.
+ * The train-parity fix has two obligations.
+ *
+ * The default stays byte-identical to the pre-fix scan.
+ * The test compares against a verbatim copy rather than a hash, so the oracle is readable.
+ *
+ * It also checks that `spanMode: "shaped"` keys a span exactly the way
+ * `mailwoman_train/tokenizer.py::_paint_anchor_chars` does (`raw[begin:end].replace(" ", "").upper()`)
+ * and paints the span's full extent.
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
@@ -308,8 +312,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 	})
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
-		// `"ß".toUpperCase()` is "SS", and a naive uppercase would slide every later offset by one
-		// and paint the wrong pieces, which ascii-only folding cannot.
+		// `"ß".toUpperCase()` is "SS", and a naive uppercase would slide every later
+		// offset by one and paint the wrong pieces.
+		// ASCII-only folding cannot do that.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })

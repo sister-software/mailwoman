@@ -3,32 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   @file The harvest side of the sub-venue lexicon: what one row of a harvestable source looks like,
- *   how a file of them is read back, and what a pass over them extracts — attested surfaces plus the
- *   measured shape of each designator's identifier half.
+ *   @file This module defines harvestable source rows and reads them from files. Each pass extracts
+ *   attested surfaces and measures the identifier half of each designator.
  *
- *   {@link SubVenueHarvestRow} is source-neutral, and verified so: an Overture Places row from the
- *   `airport_terminal` category is `{ designatorID, name }` and fits unchanged. It is declared here
- *   rather than imported so the builder does not take a dependency on `@mailwoman/osm` (which
- *   `@mailwoman/corpus` does not depend on) just to name a shape it reads from a file.
+ *   {@link SubVenueHarvestRow} accepts rows from any source. An Overture Places row in the
+ *   `airport_terminal` category has the shape `{ designatorID, name }` and fits unchanged. The type is
+ *   declared here so the builder can read source rows without importing `@mailwoman/osm`. The corpus
+ *   package has no dependency on that package.
  *
- *   Two measurements shape {@link extractAttestedPhrases}, and both are the reason it is safe to run
- *   over raw OSM at all:
+ *   Two measurements shape {@link extractAttestedPhrases}. They show why it can run over raw OSM:
  *
- *   **A feature's `name` is usually the venue's name rather than a sub-venue phrase.** On the Berlin extract
- *   (2,060 matched features) a `railway=platform` is named `Stendaler Straße` and an `amenity=university`
- *   is named `Hertie School`; across 250,116 named Great Britain features only 6,003 (2.40%) contain a
- *   designator token at all. So names are not harvested wholesale — a name contributes only when it
- *   contains a phrase already in the surface index, which is what makes `Terminal E (Untere Ebene)`
- *   evidence and `Otto Lilienthal Flughafen Berlin Tegel` not.
+ *   **Most feature names describe the venue.** In the Berlin extract, 2,060 matched features include a
+ *   `railway=platform` with the name `Stendaler Straße`. An `amenity=university` has the name `Hertie School`.
+ *   Among 250,116 Great Britain features with names, 6,003 (2.40%) contain a designator token. A name adds a surface
+ *   when it contains a phrase already in the surface index. `Terminal E (Untere Ebene)` qualifies. The full
+ *   venue name `Otto Lilienthal Flughafen Berlin Tegel` does not.
  *
- *   **A matched phrase belongs to the record the phrase names rather than the record the row carries.**
- *   Attributing every hit to `row.designatorID` — the rule that matched the feature — produced `west →
- *   platform`, `hall → platform` and `biggin → platform` on the GB extract, because a bus stop tagged
- *   `public_transport=platform` is named "Village Hall" or "West Kensington"; 108 of 133 OSM-derived
- *   surfaces named a different record than the one they pointed at. Attribution therefore runs through
- *   the index, and the row's own designator is kept as `context` — exactly the axis a confound board
- *   needs, since a `hall` seen on a platform is a confound and a `hall` seen on a terminal is evidence.
+ *   **The matched phrase determines which record receives the surface.** Attributing every hit to
+ *   `row.designatorID`, the rule that matched the feature, produced `west → platform`, `hall → platform`, and
+ *   `biggin → platform` on the GB extract. A bus stop tagged `public_transport=platform` can carry the label
+ *   "Village Hall" or "West Kensington". Of 133 OSM-derived surfaces, 108 referred to records other than the
+ *   ones identified by the phrases. Attribution now follows the surface index. The row's designator stays in `context`.
+ *   A confound board can then distinguish `hall` found on a platform from `hall` found on a terminal.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -41,10 +37,12 @@ import type { IdentifierShape, SubVenueSurface } from "#tools/sub/venue/table"
 /**
  * One row of a harvestable source, as read back off jsonl or out of a layer database.
  *
- * Source-neutral by design, and verified so in wave 2: an Overture Places row from the
- * `airport_terminal` category is `{ designatorID, name }` and fits unchanged.
- * What did not fit was the harvest function's hardcoded `osm:name` source stamp —
- * see `overture-subvenue.ts`'s docstring.
+ * This type accepts rows from any source.
+ * An Overture Places row in the `airport_terminal` category has the shape
+ * `{ designatorID, name }` and fits unchanged.
+ *
+ * The harvest function's hardcoded `osm:name` source stamp did not fit that input.
+ * See `overture-subvenue.ts` for the source handling.
  *
  * Declared locally so the builder does not import `@mailwoman/osm`
  * (which `@mailwoman/corpus` does not depend on) just to name a shape it reads from a file.
@@ -108,8 +106,9 @@ export function classifyIdentifier(ref: string): string {
 const IDENTIFIER_EXAMPLES_PER_SHAPE = 8
 
 /**
- * Options for one harvest pass, which source stamp its surfaces carry and
- * which region they were attested in.
+ * Options for one harvest pass.
+ *
+ * They set the source stamp and region recorded on each surface.
  *
  * Both default to the OSM/unknown-region values wave 1 hardcoded, so an existing caller is unchanged.
  */
@@ -135,8 +134,8 @@ export interface HarvestOptions {
  * That filter is the whole reason this function is safe to run over raw OSM:
  * see this file's header for the Berlin measurement that motivated it.
  *
- * The index also decides attribution: a hit is a surface of the record the phrase names,
- * and the row's own designator is recorded as `context`.
+ * The index decides which record receives each hit.
+ * The row's designator is recorded as `context`.
  *
  * @returns Surfaces with real `observations` counts, so the lexicon can rank
  * `terminal` above a phrase attested once.
@@ -231,8 +230,8 @@ export function extractAttestedPhrases(
 /**
  * Read a jsonl file of {@link SubVenueHarvestRow}s.
  *
- * Blank lines and unparseable rows are skipped rather than fatal.
- * An extract is a build output, and one malformed line should not cost the whole lexicon.
+ * The reader skips blank lines and rows it cannot parse.
+ * A malformed line does not stop lexicon generation.
  */
 export async function readSubVenueJSONL(path: string): Promise<SubVenueHarvestRow[]> {
 	const out: SubVenueHarvestRow[] = []

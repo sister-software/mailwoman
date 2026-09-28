@@ -1,4 +1,7 @@
-"""Strict parquet-path resolution: a manifest declaring files the resolver cannot find must raise with the missing list rather than train on the survivors, and the legacy manifest key must keep resolving."""
+"""Strict parquet-path resolution rejects missing manifest files and reports their paths.
+
+The resolver must also keep accepting the legacy manifest key.
+"""
 
 import json
 from pathlib import Path
@@ -111,7 +114,7 @@ def test_a_pre_rename_manifest_gets_the_partial_resolution_guard_too(tmp_path: P
 
 
 def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
-    """The base corpus is a sibling directory named by the Modal volume, so re-rooting must look beside the overlay rather than only under it."""
+    """The base corpus is a sibling directory matching the Modal volume's name, so re-rooting must look beside the overlay rather than only under it."""
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"
     base = versioned / "v8-jp-kana"
@@ -138,7 +141,10 @@ def test_an_overlays_base_parts_reroot_beside_it(tmp_path: Path) -> None:
 
 
 def test_a_base_part_never_resolves_to_the_overlays_same_numbered_one(tmp_path: Path) -> None:
-    """Part files are named by position, so a base corpus and the overlay on it both hold `val/part-0000.parquet`; re-rooting by tail alone would resolve the overlay's file and report the base as read, so the guard must raise when the base is absent."""
+    """Resolve part files using their position in the filename.
+
+    The base corpus and its overlay can both contain `val/part-0000.parquet`. Re-rooting by the filename tail alone would resolve the overlay's file and report the base as read. The resolver must raise when the base file is absent.
+    """
     versioned = tmp_path / "corpus" / "versioned"
     overlay = versioned / "v8-cjk-regs"
     (overlay / "val").mkdir(parents=True)

@@ -1,8 +1,7 @@
 """Per-country training code, keyed by ISO 3166-1 alpha-2.
 
-One directory per country, and a country's own knowledge lives only there: its corpus builder, its
-government register readers, its source samplers, the text handling its script needs. Two countries
-never share a file.
+Each country has one directory for its own knowledge: its corpus builder, government register
+readers, source samplers, plus script-specific text handling. Two countries never share a file.
 
 Shared machinery stays in the role directories at the package root — `text/` for script normalization,
 `corpora/` for the row builders, the record verifier and the country-agnostic address-point sampler,
@@ -11,8 +10,8 @@ Shared machinery stays in the role directories at the package root — `text/` f
 Countries divide by what they provide: `COUNTRY_MODULES` names a country with its own corpus builder,
 label set and board floor (satisfying `protocols.CountryModule`); `SOURCE_ONLY` names a country that
 contributes readers or samplers into a corpus another module assembles and has no label set of its own.
-`cjk/` is neither. It is a regional grouping, like `packages/corpus/lib/south-asia/` on the TypeScript
-side, and no mail is addressed to a region.
+`cjk/` is a regional grouping, like `packages/corpus/lib/south-asia/` on the TypeScript side.
+Mail addresses name countries rather than regions.
 """
 
 from __future__ import annotations

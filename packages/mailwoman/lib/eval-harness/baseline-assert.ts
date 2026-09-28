@@ -91,7 +91,7 @@ let cachedFile: BaselineFile | undefined
 
 /**
  * Anchored at the package root because tsc does not emit `baselines.json` into `out/`,
- * so the file is named from where the package starts rather than from where this module runs.
+ * so the file path derives from the package root rather than this module's location.
  */
 function resolveBaselineFilePath(): string {
 	return resolvePackagePath("mailwoman", "lib", "eval-harness", "baselines.json")

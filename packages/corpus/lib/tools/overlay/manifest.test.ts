@@ -54,7 +54,8 @@ describe("assembleOverlayManifest, on who chose a held-out split", () => {
 	const scratch = useScratchDir("overlay-manifest")
 
 	/**
-	 * A base manifest on disk with one file, which is all the guard runs after.
+	 * A base manifest on disk with one file.
+	 * The guard runs after this state.
 	 */
 	async function writeBase(): Promise<string> {
 		// A string, because the overlay's `base` option is re-rooted as text.
@@ -184,8 +185,8 @@ describe("rerootBaseFilePath", () => {
 
 describe("baseManifestFiles", () => {
 	it("reads a manifest written before the 2026-09-01 rename", () => {
-		// Every corpus built before the rename lists its parquets under the old key,
-		// and a built corpus is an immutable artifact.
+		// Every corpus built before the rename lists its Parquet files under the old key.
+		// A built corpus is an immutable artifact.
 		expect(baseManifestFiles(manifestWith(PRE_RENAME_FILES_KEY, ["a.parquet", "b.parquet"]))).toEqual([
 			{ path: "a.parquet" },
 			{ path: "b.parquet" },
@@ -202,8 +203,9 @@ describe("baseManifestFiles", () => {
 	})
 
 	it("REFUSES a manifest that names no file list under either key", () => {
-		// Neither key holds an array, so the manifest makes no statement about how many
-		// files there are, and answering an empty list reports a false absence.
+		// Neither key holds an array.
+		// The manifest makes no statement about the file count.
+		// Answering an empty list would report a false absence.
 		const neither = { corpus_version: "v0.0.0" } as Parameters<typeof baseManifestFiles>[0]
 
 		expect(() => baseManifestFiles(neither)).toThrow(/names no file list/u)

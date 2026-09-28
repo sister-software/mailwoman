@@ -19,7 +19,7 @@
  *
  *   guard 2 — homonyms. Un-links a node whose matched surface (not its term) is listed in the
  *   `noAutoLink` option. This is a surface-level suppression, so the term itself keeps its tooltip
- *   wherever it is written in full: suppressing "state" leaves "region" linking, and leaves the FST
+ *   wherever it is written in full: suppressing "state" leaves "region" linking. It also leaves the FST
  *   alias "finite-state transducer" linking too, even though it contains "state". See the option's
  *   comment in docusaurus.config.ts for the two false-positive classes it exists for. Surfaces are
  *   compared lowercased, with the same "s"/"es" plural allowance the upstream matcher applies, so one
@@ -59,8 +59,9 @@ const STARTS_WITH_CAPITALIZED_WORD = /^\s*[A-Z]/
 /**
  * Every surface an entry can be matched as, given the upstream matcher's "s"/"es" plural allowance.
  *
- * Generated forward from the entry rather than un-inflected from the surface,
- * which is the same direction the matcher runs.
+ * Generated forward from the entry.
+ * The matcher also runs in this direction.
+ *
  * An inverse ("strip a trailing es, else strip a trailing s") is not the inverse:
  * it takes "states" to "stat", and the first build with one shipped a guard that
  * suppressed `state` on every page while leaving `states` linking on 26.

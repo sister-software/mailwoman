@@ -45,7 +45,8 @@ export interface ParsedExhibit21 {
 	/**
 	 * Rows/lines this parser recognized as an entry but could not confidently reduce to a subsidiary name.
 	 *
-	 * Decision 6 counts and drops them, and criterion 3 forbids throwing.
+	 * Decision 6 counts and drops them.
+	 * Criterion 3 forbids throwing.
 	 */
 	unparseable: number
 }
@@ -62,8 +63,8 @@ interface ColumnMapping {
  * The narrowest header row that establishes a mapping, counted in the row's own cells
  * before blank columns are dropped.
  *
- * A two-cell header would claim to describe a wider data row it never mentions, which is
- * `exhibit21-mangled.html`'s `Name of Subsidiary`/`State` shape over a third `"Note: ..."` cell.
+ * A two-cell header cannot describe a wider data row.
+ * `exhibit21-mangled.html` has `Name of Subsidiary` and `State` headings over a third `"Note: ..."` cell.
  */
 const MINIMUM_HEADER_ROW_CELLS = 3
 
@@ -238,8 +239,9 @@ function subsidiariesFromTable(
 			let name = row[mapping.name]?.text ?? ""
 
 			if (!name && mapping.name < mapping.jurisdiction) {
-				// An indented child's name sits right of the labelled name column but left of
-				// the labelled jurisdiction column, and the nesting depth is discarded.
+				// An indented child's name sits right of the labelled name column
+				// but left of the labelled jurisdiction column.
+				// The parser discards the nesting depth.
 				for (let column = mapping.name + 1; column < Math.min(mapping.jurisdiction, row.length); column++) {
 					if (row[column]!.text) {
 						name = row[column]!.text
@@ -271,7 +273,8 @@ function subsidiariesFromTable(
 
 		if (!values[0]) {
 			// A blank leading cell with no mapping to explain it is an unattributable
-			// indented child or a misaligned spacer, and decision 6 abstains.
+			// indented child or a misaligned spacer.
+			// Decision 6 abstains.
 			unparseable++
 
 			continue
@@ -310,9 +313,11 @@ function subsidiariesFromTableRows(tables: readonly TableCell[][][]): ParsedExhi
  * Narrows one raw edgar archive document to the markup every strategy reasons about,
  * applied once in {@linkcode parseExhibit21} so all three strategies see the same window.
  *
- * The sgml `<text>` element is edgar's envelope around the exhibit, and a document with
- * no envelope is left whole; `<head>` goes because its `<title>` is the source filename
- * rather than a subsidiary, and `<script>`/`<style>` because their text is code.
+ * The SGML `<text>` element wraps the exhibit.
+ * The function leaves a document whole when it has no envelope.
+ *
+ * It removes `<head>` because its `<title>` is the source filename.
+ * It also removes `<script>` and `<style>` because their text is code.
  */
 function documentWindow(html: string): string {
 	return narrowDocument(html, { within: "text", without: ["head", "script", "style"] })
@@ -348,8 +353,8 @@ function extractListItemOwnText(html: string): string[] {
  * line uncollapsed so the 2+ spaces a fixed-width Exhibit 21 uses as its column
  * separator survive for {@linkcode splitCandidateLine}.
  *
- * Block-level element boundaries become real line breaks, and two adjacent boundaries
- * (`</p><p>`) are one separation rather than two.
+ * Block-level element boundaries become line breaks.
+ * Adjacent boundaries such as `</p><p>` produce one separation.
  */
 function extractPlainTextLines(html: string): string[] {
 	const text = htmlToLayoutText(html, BLOCK_ELEMENTS)
@@ -358,9 +363,10 @@ function extractPlainTextLines(html: string): string[] {
 }
 
 /**
- * True when `value` is just a corporate legal-entity suffix ("Inc.", "LLC", "Corp.")
- * with no other value, which guards {@linkcode splitCandidateLine}'s single-comma
- * rule against reading a name's own tail as a jurisdiction.
+ * Returns true when `value` contains only a corporate legal-entity suffix such as "Inc.", "LLC" or "Corp.".
+ *
+ * This prevents {@linkcode splitCandidateLine}'s single-comma rule from treating
+ * a name's suffix as a jurisdiction.
  */
 function isBareLegalDesignation(value: string): boolean {
 	const canonicalized = canonicalizeOrganizationName(value)
@@ -375,9 +381,11 @@ function isBareLegalDesignation(value: string): boolean {
 const COLUMN_GAP_PATTERN = /[ \t\u00A0]{2,}/
 
 /**
- * Splits one candidate line into a name and an optional jurisdiction, trying a 2+-space
- * column gap, then a trailing `(Jurisdiction)` parenthetical, then exactly one comma,
- * and returning a blank name for a 3+-column gap so the caller counts the line `unparseable`.
+ * Splits one candidate line into a name and optional jurisdiction.
+ *
+ * It checks a 2+-space column gap first, then a trailing `(Jurisdiction)`
+ * parenthetical, then exactly one comma.
+ * A 3+-column gap returns a blank name so the caller counts the line as `unparseable`.
  */
 function splitCandidateLine(line: string): { name: string; jurisdiction?: string } {
 	const spaced = line
@@ -423,7 +431,7 @@ const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
  * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name.
  *
  * Whole-string patterns rather than keyword sniffing, because substring sniffing on
- * "subsidiaries" would misfire on a company actually named that.
+ * "subsidiaries" would misfire on a company whose name is "subsidiaries".
  */
 const TITLE_LINE_PATTERNS = [
 	/^exhibit\s*21(\.\d+)?(\s*[-–—:]?\s*list of subsidiaries)?$/i,
@@ -442,10 +450,12 @@ const TITLE_LINE_PATTERNS = [
 const MAX_ENTITY_NAME_WORDS = 12
 
 /**
- * Shared by the list and plain-text strategies: strips a leading list marker,
- * abstains on a title/heading line or a line too long to be one name, splits
- * the rest, and applies the header/decoration-row check the table strategy uses
- * because a `<li>` document has no `<th>` markup to lean on.
+ * Shared by the list and plain-text strategies.
+ *
+ * It strips a leading list marker, abstains on a title or heading and on lines too
+ * long to be one name, then splits the remaining lines.
+ * It also applies the table strategy's header/decoration-row check
+ * because `<li>` documents have no `<th>` markup.
  *
  * A line reduced to whitespace by the marker strip is counted `unparseable` like any other
  * blank name, since the marker character class overlaps plain decorative dashes.
@@ -510,10 +520,11 @@ function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 }
 
 /**
- * Parses an Exhibit 21 document into its subsidiary list, committing to the first
- * of an html `<table>`, an `<li>` list, or plain fixed-width text that it detects,
- * and counting rather than guessing at a row or line it cannot confidently extract
- * (decision 6, and never throwing under criterion 3).
+ * Parses an Exhibit 21 document into its subsidiary list.
+ *
+ * It commits to the first detected structure: an HTML `<table>`, an `<li>` list or plain fixed-width text.
+ * It counts rows or lines it cannot confidently extract instead of guessing, as decision 6 requires.
+ * Criterion 3 requires the parser to return without throwing.
  */
 export function parseExhibit21(html: string): ParsedExhibit21 {
 	const window = documentWindow(html)

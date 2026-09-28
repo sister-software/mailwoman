@@ -22,7 +22,8 @@ export const StageState = {
 	Reached: "reached",
 	Absent: "absent",
 	/**
-	 * The jurisdiction has inputs for the stage, and a measured condition blocks it.
+	 * The jurisdiction has inputs for the stage.
+	 * A measured condition blocks it.
 	 */
 	Blocked: "blocked",
 	/**
@@ -60,7 +61,8 @@ export type FunnelStage = (typeof FUNNEL_STAGES)[number]
 export interface StageReading {
 	state: StageState
 	/**
-	 * Evidence for the state, which for `unknown` says which input would answer the stage.
+	 * Evidence for the state.
+	 * For `unknown`, it says which input would answer the stage.
 	 */
 	detail: string
 }
@@ -110,7 +112,8 @@ export interface CoverageFunnelInput {
 	 */
 	tieredCountries: readonly string[]
 	/**
-	 * Countries where a named release check fails on regression, the tier 1 and `dRuleProtected` countries.
+	 * Countries where a designated release check fails on regression: the tier 1
+	 * and `dRuleProtected` countries.
 	 */
 	protectedCountries: readonly string[]
 	/**
@@ -204,8 +207,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 			? { state: StageState.Reached, detail: "named in the training config's country_weights" }
 			: { state: StageState.Absent, detail: "absent from the training config's country_weights" }
 
-		// An admitted country missing from the audit is blocked, and one not admitted
-		// is absent because the sampler had no row to draw.
+		// An admitted country missing from the audit is blocked.
+		// A country outside the config is absent because the sampler has no row to draw.
 		const sampledCount = input.sampledRows?.get(iso2)
 
 		const sampled: StageReading = !input.sampledRows
@@ -228,7 +231,8 @@ export async function readCoverageFunnel(input: CoverageFunnelInput): Promise<Co
 							detail: "not admitted by the training config, so it has nothing to draw",
 						}
 
-		// Both stages count gauntlet board rows only, excluding the golden, panel, and locale-probe sets.
+		// Both stages count only gauntlet board rows.
+		// They exclude golden, panel and locale-probe sets.
 		const boardRows = country?.boardRows ?? 0
 		const checkingRows = country?.boardPassedRows ?? 0
 
@@ -372,7 +376,7 @@ export function opportunityCandidates(
 }
 
 /**
- * Inputs for choosing coverage work, and whether the funnel supplies each one.
+ * Inputs for choosing coverage work and whether the funnel supplies each one.
  */
 export const OPPORTUNITY_INPUTS = [
 	{

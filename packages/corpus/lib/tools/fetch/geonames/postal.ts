@@ -79,7 +79,7 @@ interface GeonamesPostalManifest {
 /**
  * Download the requested GeoNames postal zips into `<outRoot>/geonames-postal/` with
  * a sibling `manifest.json`; a country the source does not carry is counted as failed
- * and named in `failedCodes` without stopping the rest.
+ * and recorded in `failedCodes` without stopping the rest.
  */
 export async function fetchGeonamesPostal(
 	options: FetchGeonamesPostalOptions,

@@ -2,18 +2,18 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Planning a module move: which specifiers stop naming what they named, and what each becomes.
+ * @file Plans a module move by resolving specifiers to their targets before and after the move.
  *
- *   A specifier is claimed by resolution, never by its text. Two files can spell one module three ways — `#recipes/x`,
- *   `@mailwoman/corpus/recipes/x`, `./x.ts` — and a text sweep finds whichever spelling it was told to look for. So
- *   every candidate replacement is resolved against a filesystem where the move has already happened, and it is
- *   written only if it lands on the moved file. A specifier with no candidate that lands there is reported unresolved,
- *   and an unresolved specifier refuses the whole plan: this operation has no way to guess that is better than the
- *   author's next reading of the diff.
+ *   Resolution determines a specifier's target. One module can have several spellings — `#recipes/x`,
+ *   `@mailwoman/corpus/recipes/x`, and `./x.ts`. A text sweep only finds the spellings it searches for. The planner
+ *   resolves each candidate replacement against the filesystem after the move. It writes a replacement only when
+ *   resolution reaches the moved file. The planner reports a specifier as unresolved when no candidate reaches that
+ *   file. Any unresolved specifier refuses the whole plan because the planner cannot choose a replacement without
+ *   evidence from the author reviewing the diff.
  *
- *   Text is used for one thing, and only to save work: a file whose source contains no spelling of a moved module is
- *   not parsed. The probes are the moved file's own basename plus every specifier its package's maps can express for
- *   it, so a file that references it through a subpath key is read even when the key hides the filename.
+ *   Text narrows the files that need parsing. The planner skips a file when its source contains no spelling of a
+ *   moved module. It probes the moved file's basename and every specifier its package maps can express for that file.
+ *   This includes files that refer to the module through a subpath key that hides the filename.
  */
 
 import { readLocalJSONFile, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -142,8 +142,11 @@ function candidateReplacements(
 /**
  * Read every move against the checkout in `context` and answer what would have to change.
  *
- * The plan is complete before anything is written: `moves` are the file renames, `rewrites` the specifier
- * edits with their offsets, and `unresolved` the specifiers no proven replacement was found for.
+ * The plan is complete before anything is written.
+ * `moves` lists file renames.
+ *
+ * `rewrites` lists specifier edits and their offsets.
+ * `unresolved` lists specifiers with no replacement proven by resolution.
  */
 export async function planModuleMoves(context: RepoContext, moves: readonly ModuleMove[]): Promise<ModuleMovePlan> {
 	const manifests = await readPackageManifests(context)

@@ -175,7 +175,7 @@ export const StampedNominatimResultSchema = stampedResponseSchema(NominatimResul
 
 /**
  * The `format=geojson` FeatureCollection with the optional `engine` stamp,
- * named for the same reason as {@linkcode StampedNominatimResultSchema}.
+ * with a name for the same reason as {@linkcode StampedNominatimResultSchema}.
  */
 export const StampedNominatimFeatureCollectionSchema = stampedResponseSchema(
 	NominatimFeatureCollectionSchema,

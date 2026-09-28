@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Wrapper around `docusaurus-plugin-glossary` that keeps the package's validation, tooltip theme
- *   component (`@theme/GlossaryTerm`), client modules, and remark auto-linking — but replaces the
+ *   Wrapper around `docusaurus-plugin-glossary`. It keeps the package's validation, tooltip theme
+ *   component (`@theme/GlossaryTerm`) and client modules. It also provides remark auto-linking. It replaces the
  *   `/glossary` route with our own page component. The upstream plugin hard-codes its route
  *   component to a path inside the package (not a `@theme/*` component), so swizzling can't reach
  *   it. overriding the lifecycle hooks is the supported extension-free alternative to vendoring.

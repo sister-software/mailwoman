@@ -61,7 +61,7 @@ function buildMainDB(): DatabaseClient<WOFDatabase> {
 	)
 
 	spr.run(1, 0, "Nashville", "locality", "US", 36.16, -86.78, 36, 36.4, -87, -86.5)
-	// Antioch, CA: a same-named distractor about 3000 km away the bare name-match would otherwise win.
+	// Antioch, CA: a distractor with the same name about 3000 km away that the bare name-match would otherwise select.
 	spr.run(2, 0, "Antioch", "locality", "US", 38, -121.8, 37.9, 38.1, -121.9, -121.7)
 	db.prepare(`INSERT INTO place_population (id, population) VALUES (?, ?)`).run(1, 700_000)
 	// 37013's centroid sits in Nashville as the containing locality, and the parsed name "Antioch" does not match it.

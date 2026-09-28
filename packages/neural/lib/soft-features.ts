@@ -66,7 +66,8 @@ export interface SoftFeatureSources {
 	postcodeAnchorLookup?: AnchorLookup
 
 	/**
-	 * The substrings the anchor channel looks up, which defaults to `alnum-run`.
+	 * The substrings the anchor channel looks up.
+	 * The default is `alnum-run`.
 	 *
 	 * It must match the model card's `requires.anchor.span_mode`.
 	 */
@@ -85,7 +86,7 @@ export interface SoftFeatureSources {
 	suppressGazetteerNearPostcode?: boolean
 
 	/**
-	 * The street-type evidence lexicon, which uses the gazetteer lexicon schema.
+	 * The street-type evidence lexicon uses the gazetteer lexicon schema.
 	 */
 	streetTypeLexicon?: GazetteerLexicon
 

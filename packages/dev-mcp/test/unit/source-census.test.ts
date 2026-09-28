@@ -134,7 +134,7 @@ describe("censusArtifact", () => {
 
 describe("gazetteerArtifacts", () => {
 	it("lists the .db extracts and skips .prev / .bak siblings", async () => {
-		// A `.prev` reports the same country a second time under a name nobody can act on.
+		// A `.prev` reports the same country a second time under an unusable name.
 		const names = (await gazetteerArtifacts(root.path)).map((path: string) => path.split("/").pop())
 
 		expect(names).toEqual(["postalcode-fr.db", "postalcode-geonames-intl.db", "postalcode-intl.db"])

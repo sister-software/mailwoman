@@ -7,7 +7,7 @@
  */
 
 /**
- * Named perturbation with its literature citation.
+ * Perturbation described in its literature citation.
  */
 export interface Transform {
 	id: string

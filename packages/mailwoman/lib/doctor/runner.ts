@@ -170,7 +170,7 @@ async function readRuntimeLicense(): Promise<string> {
 }
 
 /**
- * The production dependencies — the real filesystem, env, weights resolver, and dynamic imports.
+ * The production dependencies include the real filesystem, env, weights resolver and dynamic imports.
  */
 export async function defaultDoctorDeps(): Promise<DoctorDeps> {
 	const dataRoot = dataRootPath()
@@ -307,7 +307,7 @@ async function gatherOverlay(deps: DoctorDeps, locale: string): Promise<DoctorCh
 
 /**
  * Runs every diagnostic and assembles the report in runtime-first render order: node version,
- * the ONNX binding, the model weights, the optional data layers, and the informational locale overlays.
+ * the ONNX binding, the model weights, the optional data layers and the informational locale overlays.
  */
 export async function runDoctor(overrides?: Partial<DoctorDeps>): Promise<DoctorReport> {
 	const deps: DoctorDeps = { ...(await defaultDoctorDeps()), ...overrides }

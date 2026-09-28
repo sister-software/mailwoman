@@ -5,14 +5,14 @@
  *
  *   Admin-gazetteer enrichment, the two post-build steps that must run in order:
  *
- *   1. Region abbreviations: WOF region records carry only the full name, and `findPlace('IL')`
+ *   1. Region abbreviations: WOF region records carry only the full name. `findPlace('IL')`
  *      returns no place without the abbreviation, killing the parent constraint the resolve walk
  *      depends on. The source of truth is the packaged chromium-i18n / libaddressinput dataset
  *      (`core/data/chromium-i18n/ssl-address/<CC>.json`), whose tilde-delimited `sub_keys` and
- *      `sub_names` are index-aligned.
+ *      `sub_names` are index-aligned. These fields supply the abbreviations.
  *   2. `place_abbr`, the `id → abbreviation` join table that lets the resolver accept a 2-letter
  *      region abbreviation as an exact match. Derived from the step-1 rows, so it must run after
- *      them, and both must precede the FTS build.
+ *      them. Both enrichment steps must precede the FTS build.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"

@@ -8,12 +8,11 @@
  *   layout `resolveWeights`' cache rung finds and the posture `score-anchor-v2-boards.run.ts` and
  *   `overlay-channel-smoke.ts` both take.
  *
- *   A model is not its `.onnx`: the card declares which channels it needs, and the siblings feed them,
- *   so swapping the model file alone would silently score it with the shipped bundle's channels.
+ *   A model includes more than its `.onnx` file. The card declares required channels. Sibling artifacts provide them.
+ *   Replacing only the model file would score it with the shipped bundle's channels.
  *
- *   Symlinks by default, so no file is copied and no file in the data root is touched; `--from` seeds
- *   the layout and `--file`, `--omit` and `--card` then diverge it, which is the seed-plus-diverge
- *   shape an A/B needs.
+ *   The default uses symlinks, so it copies no files and leaves the data root untouched.
+ *   `--from` seeds the layout. `--file`, `--omit`, and `--card` then change it for an A/B comparison.
  *
  *   Usage:
  *     yarn mwops release stage-weights-cache --out <dir> --locale en-gb \
@@ -83,7 +82,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	/**
 	 * Staged name → source path, seeded from `from` then overridden.
 	 *
-	 * Last writer wins, which makes `file` a divergence rather than a conflict.
+	 * The last writer wins.
+	 * This makes `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, PathBuilder>()
 
@@ -93,8 +93,9 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 		for await (const entry of Globerator.from("*", { cwd: fromDir, absolute: false })) {
 			const source = fromDir(entry)
 
-			// Files only: a directory in a workspace package is not part of the artifact set
-			// a loader reads, and symlinking one into the layout invites a stale walk.
+			// Stage files only.
+			// A loader does not read package directories as artifacts.
+			// Symlinking a directory into the layout could make its walk stale.
 			if (await isFile(source)) {
 				staged.set(entry, source)
 			}

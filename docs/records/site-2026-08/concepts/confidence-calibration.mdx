@@ -21,7 +21,7 @@ Think about a weather forecaster. A good one who says "70% chance of rain" shoul
 
 A neural classifier makes the same promise implicitly, every time it hands you a softmax probability. And like several cross-entropy-trained models, ours broke it: confident in some bands, timid in others, with no single knob that lined the number up with reality.
 
-We measured the gap with Expected Calibration Error. Bucket the predictions by stated confidence, and in each bucket compare the average confidence to how frequently those predictions were right. Average the gaps, weighted by how many predictions land in each bucket. Zero is a forecaster you can trust. The shipped model sat around 0.060, about six points of slack between what it claimed and what it delivered — and, interestingly, mostly _under_-stated: a span it called 92% was right closer to 98% of the time. Slack is slack in either direction; a number you can't trust to be too low is no more useful than one you can't trust to be too high.
+We measured the gap with Expected Calibration Error. Bucket the predictions by stated confidence, and in each bucket compare the average confidence to the share of predictions that were right. Average the gaps, weighted by the prediction count in each bucket. Zero is a forecaster you can trust. The shipped model sat around 0.060, about six points of slack between what it claimed and what it delivered — and, interestingly, mostly _under_-stated: a span it called 92% was right closer to 98% of the time. Slack is slack in either direction; a number you can't trust to be too low is no more useful than one you can't trust to be too high.
 
 ## A correction sticker rather than a new model
 

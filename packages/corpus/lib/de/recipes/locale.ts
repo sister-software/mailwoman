@@ -9,12 +9,12 @@
  * Generate mode builds a tuple pool from the cached zips, then draws `--count` rows with the passed
  * `random`.
  *
- * Mixing the two renderings stops a native-only recipe output from over-teaching German order, which
- * reads as a collapse on the US/feed-order eval.
+ * Mixing the two renderings keeps native-only recipe output from over-teaching German order.
+ * Over-teaching German order appears as a collapse on the US/feed-order eval.
  *
  * Two registers the OA tuples do not carry. A comma-free single line (`Neusser Str. 12 Nippes 50733
- * Köln`) segments as one unit at stage 2, and with one segment the placetype-pair prior never fires,
- * so the model reads `Nippes` as a second street and the one-value-per-tag projection deletes it.
+ * Köln`) segments as one unit at stage 2. With one segment, the placetype-pair prior never fires.
+ * The model then reads `Nippes` as a second street. The one-value-per-tag projection deletes it.
  * `--comma-free-fraction` renders that many native-order rows with `" "` as the line separator. OA
  * rows also carry no district, so `--ortsteil-fraction` rows borrow a WOF Ortsteil of the tuple's
  * own locality as `dependent_locality`. The German spelling is recovered from the `names` table
@@ -51,7 +51,8 @@ interface GermanSource {
  * OA's region column is empty for DE, so the region comes from the per-state file.
  * The international order needs it for the "City, Region Postcode" tail.
  *
- * The Berlin file is a city-state whose region equals its locality, and the Saxony file is Sachsen.
+ * The Berlin file is a city-state whose region equals its locality.
+ * The Saxony file is Sachsen.
  */
 const SOURCES: GermanSource[] = [
 	{ zip: dataRootPath("oa-cache", "de__berlin.zip"), csv: "de/berlin.csv", region: "Berlin" },
@@ -284,9 +285,9 @@ export const germanRecipe: CorpusRecipe = {
 			// (the US/feed layout), the rest in idiomatic German order.
 			// Same components either way.
 			const order = random() < intlFraction ? "international" : "native"
-			// The two registers OA does not carry, each drawn independently of the order
-			// so every combination occurs: an Ortsteil borrowed from the tuple's own locality,
-			// and a native line with no commas.
+			// OA does not carry these two registers.
+			// Draw each independently of the order so every combination occurs: an Ortsteil
+			// borrowed from the tuple's own locality or a native line with no commas.
 			const localOrtsteile = ortsteile.get(drawn.locality.toLowerCase())
 
 			const ortsteil =

@@ -1,8 +1,8 @@
 """Periodic checkpoint writes.
 
-Only the interval saves live here. The run's FINAL checkpoint stays in the loop, because its path
-is what the Fisher artifact is written beside — a product of the run rather than an observation of
-it, and the loop is what can still fail loudly if it does not land.
+Only interval saves live here. The loop writes the run's FINAL checkpoint because the Fisher artifact
+is written beside it. The checkpoint is a product of the run rather than an observation. The loop
+can report loudly if the final checkpoint does not land.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from ..state import TrainState
 
 
 def checkpoint_extras(state: TrainState, step: int) -> dict[str, Any]:
-    """The config stamped into a checkpoint, which the resume-drift audit reads back."""
+    """The config stamped into a checkpoint. The resume-drift audit reads it back."""
     return {
         "step": step,
         "config": {

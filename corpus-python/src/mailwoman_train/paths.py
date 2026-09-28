@@ -5,7 +5,7 @@ kind of file:
 
 - `data_root_path` holds large downloaded data such as corpora, gazetteers and model artifacts.
 - `cache_root_path` holds regenerable files.
-- `temp_root_path` holds named intermediates that a person may inspect.
+- `temp_root_path` holds intermediate files that a person may inspect.
 - `config_root_path` holds settings that a person edits.
 - `package_path` and `repo_root_path` locate files that ship with the source.
 """
@@ -35,7 +35,7 @@ def cache_root_path(*parts: str) -> Path:
 
 
 def temp_root_path(*parts: str) -> Path:
-    """Return a path under `$MAILWOMAN_TEMP_ROOT` for a named intermediate file.
+    """Return a path under `$MAILWOMAN_TEMP_ROOT` for an intermediate file the caller can inspect.
 
     Use `tempfile` for scratch files that no later step reads.
     """

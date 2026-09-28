@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `numberMatched` decides whether a layer build has anything to fetch, so the three answers a WFS server can give
- *   must stay three answers: a count, a refusal to count, and a malformed response.
+ *   `numberMatched` decides whether a layer build has anything to fetch. Preserve the three WFS answers separately:
+ *   a count, a refusal to count and a malformed response.
  */
 
 import { type APIClient, OGCServiceError, readOGCServiceException, readWFSFeatureCount } from "@mailwoman/core/api"

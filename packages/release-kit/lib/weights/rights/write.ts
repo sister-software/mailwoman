@@ -36,7 +36,7 @@ export interface RightsFileState {
  *
  * Read from the root workspace list rather than `.release-it.json`, because a weights
  * workspace held out of the release still publishes the moment it is added back,
- * and a rights file that only appears then is one nobody reviewed.
+ * and a rights file that appears only then has no review record.
  */
 export async function publishedWeightsWorkspaces(repoRoot: PathBuilderLike): Promise<string[]> {
 	const workspaces = await readWorkspaceDirectories(repoRoot)

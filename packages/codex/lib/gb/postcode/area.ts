@@ -6,7 +6,7 @@
  *   Postcode area → constituent country, the Royal Mail mapping — and the concrete proof of the
  *   lesson in `postcode.ts` that UK postcodes do not track administrative geography.
  *
- *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), named
+ *   A postcode area is the leading one or two letters of a postcode (`SW`, `M`, `EH`, `BT`), derived
  *   after the sorting town Royal Mail routes it through rather than after a county or a constituent
  *   country. There is no clean postcode→admin hierarchy to inherit the way France gives you a
  *   département from the first two digits. The only honest thing we _can_ derive is which of the
@@ -73,7 +73,7 @@ const WALES_AREAS = [
  * England is intentionally absent: it is the default (the great majority of UK areas are English),
  * so listing it would be both enormous and a maintenance trap.
  * Keeping only the non-England set makes the default transparent.
- * Anything not named here is England.
+ * All other postcode areas fall in England.
  */
 export const GB_POSTCODE_AREA_COUNTRY: Record<string, UkCountryCode> = {
 	...Object.fromEntries(NORTHERN_IRELAND_AREAS.map((a) => [a, "NIR" as const])),

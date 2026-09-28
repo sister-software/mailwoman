@@ -196,7 +196,8 @@ describe("open-set reject rule (#244 M2)", () => {
 		)
 
 	test("keeps an in-map-but-country-ambiguous address the max-prob rule rejects", () => {
-		// The top class has probability 0.4, and the in-map classes together have 0.8.
+		// The top class has probability 0.4.
+		// The in-map classes together have probability 0.8.
 		const bias = [Math.log(0.4), Math.log(0.4), Math.log(0.2)]
 		const def = make(bias, { abstainBelow: 0.5 })
 		const open = make(bias, { abstainBelow: 0.5, openSet: true })

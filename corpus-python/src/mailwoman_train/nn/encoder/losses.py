@@ -1,8 +1,8 @@
 """Composing the supervised loss and its auxiliary terms.
 
-None of these terms appears in `logits`, so a term that stops firing changes what the model learns
-and no term the inference path returns. Every reduction that could divide by an empty count guards
-its own case, and every structural term runs in fp32 — a bf16 reduction is a known NaN source.
+None of these terms appears in `logits`. A term that stops firing changes what the model learns
+without changing the logits returned by inference. Every reduction that could divide by an empty
+count guards its own case. Every structural term runs in fp32 because bf16 reduction can produce NaNs.
 """
 
 from __future__ import annotations
@@ -31,13 +31,13 @@ class CoarseEncoderLosses(CoarseEncoderState):
         locale_logits: torch.Tensor | None,
         affix_logits: torch.Tensor | None,
     ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
-        """The supervised loss, its auxiliary terms, and the span scores.
+        """Compute the supervised loss and auxiliary terms. Return span scores separately.
 
-        Token CE (with the optional CRF NLL beside it), the affix head's own CE, the locale
-        auxiliary CE, the span-boundary BCE, and the semi-Markov span NLL each switch on by their
-        own config flag and are summed into one scalar. Answers `None` for the loss when no term
-        fired, which is inference. The span scores come back separately because they are an output
-        rather than a loss: the export path reads them.
+        Token CE can include CRF NLL. The affix head adds its own CE. Locale auxiliary CE has its own
+        config flag. Span-boundary BCE and semi-Markov span NLL each use a separate flag. The enabled
+        terms are summed into one scalar. The method returns `None` for loss when no term
+        fires, as in inference. Span scores return separately because the export path reads them as
+        an output rather than as a loss.
         """
         loss: torch.Tensor | None = None
         if labels is not None:
@@ -72,8 +72,8 @@ class CoarseEncoderLosses(CoarseEncoderState):
                 if self.crf_fp32:
                     # Disable autocast for the CRF forward and upcast emissions + mask to fp32: the
                     # transition-table forward pass operates on masked-`-inf` entries that lose
-                    # precision under bf16's 7-bit mantissa, and fp32's 23 bits have enough
-                    # headroom for `logsumexp` over -1e30 sentinels.
+                    # precision under bf16's 7-bit mantissa. fp32's 23 bits provide enough headroom
+                    # for `logsumexp` over -1e30 sentinels.
                     device_type = logits.device.type
                     with torch.autocast(device_type=device_type, enabled=False):
                         emissions_fp32 = logits.float()
@@ -119,13 +119,13 @@ class CoarseEncoderLosses(CoarseEncoderState):
     ) -> tuple[torch.Tensor | None, torch.Tensor | None]:
         """The three auxiliary terms, each switched on by its own flag and scaled by its own weight.
 
-        Each shapes the shared encoder without appearing in the inference graph: the locale CE
-        supervises the pooled representation the FiLM conditioning reads, the span-boundary BCE
-        pressures span edges, and the semi-Markov NLL scores segmentations. `loss` arrives as the
-        supervised term or None, and each addition guards its own empty-batch case — an all-ignored
-        batch contributes no term rather than dividing by zero.
+        Each shapes the shared encoder without appearing in the inference graph. Locale CE supervises
+        the pooled representation read by FiLM conditioning. Span-boundary BCE pressures span edges.
+        Semi-Markov NLL scores segmentations. `loss` arrives as the supervised term or `None`.
+        Each addition guards its empty-batch case, so an all-ignored batch contributes no term instead
+        of dividing by zero.
 
-        Returns the accumulated loss and the span scores, which are an output rather than a term.
+        Returns the accumulated loss plus span scores. Span scores are an output rather than a term.
         """
         # Auxiliary locale cross-entropy, in fp32: supervises the locale head against the row's
         # country so the pooled representation (and therefore the FiLM conditioning) actually
@@ -148,7 +148,7 @@ class CoarseEncoderLosses(CoarseEncoderState):
 
         # Span-boundary auxiliary loss: per-token BCE on span start (B-*) and END (entity token whose
         # successor doesn't continue it), supervised from the BIO labels. Computed in fp32 because a
-        # structural/transition-style leg gets fp32 headroom, and BCE over masked positions is cheap.
+        # structural/transition-style leg gets fp32 headroom. BCE over masked positions is cheap.
         # Masked to real, non-ignore tokens. A batch with no valid position contributes no term
         # rather than 0/0 → NaN.
         if (

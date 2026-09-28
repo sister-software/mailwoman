@@ -228,7 +228,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 				soilCapabilityRoute: route,
 			})
 
-			// An advisory here would report a survey nobody ran.
+			// An advisory here would report an unmeasured survey.
 			expect(result.intent_markers).toEqual([])
 
 			expect(route.observe(OUTSIDE_SURVEY.latitude, OUTSIDE_SURVEY.longitude)).toEqual({

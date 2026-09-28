@@ -1,9 +1,9 @@
 """Checks that the corpus sync table stages what the original per-version sync functions staged.
 
-`launch/corpora.py` holds one row per corpus version, `plan_sync` builds the transfers, and
-`sync-census.json` is a hand-kept pin of the rclone commands, verified paths and `__pycache__`
+`launch/corpora.py` holds one row per corpus version. `plan_sync` builds the transfers.
+`sync-census.json` is a hand-kept pin of the rclone commands, verified paths, plus `__pycache__`
 clears the original functions ran. When a version fails, fix its table row. Edit the fixture only
-when a version's staging is meant to change, and say which version and why in the commit message.
+when a version's staging is meant to change. Say which version changed and why in the commit message.
 """
 
 from __future__ import annotations

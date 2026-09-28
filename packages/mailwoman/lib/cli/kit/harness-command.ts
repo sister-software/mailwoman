@@ -5,8 +5,8 @@
  *
  *   The one-shot harness command: run a task, show the ✓/✗ tail while it runs, print its own output.
  *
- *   Built with `createElement`, not JSX: the kit's index is imported under the dev `node →` condition, which
- *   strips `.ts` and cannot read `.tsx`.
+ *   The command uses `createElement` because the kit's index loads under the dev `node →` condition.
+ *   That condition strips `.ts` and cannot read `.tsx`.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"
@@ -18,18 +18,20 @@ import { type CommandComponent, CommandTaskResult, useCommandTask } from "#cli/k
 import type { CommandSpec, OptionsOf } from "#cli/native/spec"
 
 /**
- * How a harness command differs from every other one: the task, and what it prints when the task is done.
+ * The task a harness command runs and its output when the task finishes.
  */
 export interface HarnessCommandOptions<Spec extends CommandSpec, T> {
 	/**
 	 * The process exit code, read off the task's result.
-	 * Absent means 0 on success, and an error is 1 either way.
+	 *
+	 * An absent callback result means 0 on success.
+	 * Errors produce 1 either way.
 	 */
 	exitCode?: (result: T) => number
 	/**
 	 * The value to print as JSON, or `undefined` to print none.
 	 *
-	 * The options are passed so the condition is named at the call site rather than assumed here.
+	 * The options are passed so the call site states the condition rather than relying on an assumption here.
 	 */
 	json?: (result: T, options: OptionsOf<Spec>) => unknown
 }

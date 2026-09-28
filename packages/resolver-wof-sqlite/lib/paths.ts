@@ -140,7 +140,7 @@ export interface WOFExtractPaths {
 }
 
 /**
- * {@link wofExtractPaths} as a named record, in the same order the runtime attaches them.
+ * {@link wofExtractPaths} as a record keyed by source, in the same order the runtime attaches them.
  */
 export function wofExtractPathsByName(dataRoot: PathBuilderLike = dataRootPath()): WOFExtractPaths {
 	const wof = wofDatabaseRoot(dataRoot)

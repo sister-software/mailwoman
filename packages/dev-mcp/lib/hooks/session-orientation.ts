@@ -36,7 +36,7 @@ function exportedSubpaths(exports: unknown): string[] {
 /**
  * Builds the listing, with one line per workspace giving its package name and export subpaths.
  *
- * Returns an empty string when no workspace has a named manifest.
+ * Returns an empty string when no workspace manifest has a `name` field.
  */
 export async function orientationListing(repoRoot: PathBuilderLike): Promise<string> {
 	const lines: string[] = []

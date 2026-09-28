@@ -179,9 +179,10 @@ describe("defaultHoldouts", () => {
 	})
 
 	it("names GB by postcode area, since a GB street row carries no region", () => {
-		// GB carried no entry at all before this, so both its splits held zero rows.
-		// How many rows the entry holds out is unmeasured: no corpus in the lab data root
-		// carries a natural GB street row, and `split.ts`'s comment records what settles it.
+		// GB had no entry before this change, so both splits held zero rows.
+		// The number of rows this entry holds out remains unmeasured.
+		// The lab data root contains no natural GB street rows.
+		// The `split.ts` comment records the evidence used to set these prefixes.
 		const gb = policyOf(defaultHoldouts().GB)
 
 		expect(gb.postcodePrefixes).toEqual(["TR", "LL", "HX"])
@@ -190,8 +191,8 @@ describe("defaultHoldouts", () => {
 
 	it("gives every GB prefix two letters, so one area cannot swallow another", () => {
 		// `L` is Liverpool and `LL` is Llandudno.
-		// A one-letter prefix matches by `startsWith`, so it would hold out both,
-		// and the holdout would be larger than the one anybody reviewed.
+		// A one-letter prefix uses `startsWith`, so `L` would match Liverpool and Llandudno.
+		// That would exceed the reviewed holdout size.
 		const prefixes = policyOf(defaultHoldouts().GB).postcodePrefixes ?? []
 
 		for (const prefix of prefixes) {
@@ -206,9 +207,12 @@ describe("defaultHoldouts", () => {
 
 describe("the holdout predicate reaches a row whose source emits no region (#2353)", () => {
 	/**
-	 * BAN's shape: a street row carrying a postcode and a locality, and no region at
-	 * all. 96.9% of FR train rows are this, and a region-only predicate holds out
-	 * none of them however many departments it names.
+	 * BAN street rows carry a postcode and locality.
+	 *
+	 * They have no region.
+	 * This shape covers 96.9% of FR training rows.
+	 *
+	 * A region-only predicate would exclude none of them even if its region list included every department.
 	 */
 	const banRow = (id: string, postcode: string): MinRow => ({
 		source_id: id,
@@ -255,14 +259,15 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 
 		expect(splitForRow(gbRow("gb-london", "SW1A 1AA"))).toBe("train")
 		expect(splitForRow(gbRow("gb-manchester", "M1 1AE"))).toBe("train")
-		// Liverpool, which a one-letter `L` prefix would have taken along with Llandudno.
+		// A one-letter `L` prefix would also match Liverpool and Llandudno.
 		expect(splitForRow(gbRow("gb-liverpool", "L1 8JQ"))).toBe("train")
 	})
 
 	it("names DE by postcode area as well as by region, since its street source emits neither Land", () => {
-		// `synth-german` is the source of every DE street row, and over `v0.6.0-register-surface`
-		// it emits exactly two region values, `Sachsen` and `Berlin`.
-		// The region list therefore reaches `wof-admin` rows alone, and `02` reaches the street rows.
+		// `synth-german` supplies every DE street row.
+		// In `v0.6.0-register-surface`, it emits exactly two region values: `Sachsen` and `Berlin`.
+		// The region list reaches only `wof-admin` rows.
+		// Prefix `02` reaches the street rows.
 		const de = policyOf(defaultHoldouts().DE)
 
 		expect(de.regions).toEqual(["Saarland", "SL", "Mecklenburg-Vorpommern", "MV"])
@@ -282,7 +287,8 @@ describe("the holdout predicate reaches a row whose source emits no region (#235
 		expect(splitForRow(deRow("de-goerlitz", "02826"))).not.toBe("train")
 		expect(splitForRow(deRow("de-bautzen", "02625"))).not.toBe("train")
 
-		// The rest of Sachsen, which the corpus holds in quantity, stays in train.
+		// Other Sachsen postcodes stay in train.
+		// The corpus contains many rows in this group.
 		expect(splitForRow(deRow("de-dresden", "01067"))).toBe("train")
 		expect(splitForRow(deRow("de-leipzig", "04103"))).toBe("train")
 		expect(splitForRow(deRow("de-chemnitz", "09126"))).toBe("train")

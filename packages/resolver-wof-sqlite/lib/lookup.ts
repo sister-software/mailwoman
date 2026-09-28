@@ -142,7 +142,7 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	readonly #extractCountries: Map<string, ReadonlySet<string>>
 	/**
 	 * The Geographic Rule Engine: `#conventionSource` supplies per-WOF-polygon profiles,
-	 * `#strategies` is the named-primitive registry, and `#countryWOFIdCache`
+	 * `#strategies` is the registry keyed by primitive name, and `#countryWOFIdCache`
 	 * memoizes the country-code to country-WOF-id lookup.
 	 */
 	readonly #conventionSource: ConventionSource
@@ -213,9 +213,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.database, s.schemaName))
 		}
 
-		// An extract is guarded when it is named for a routed placetype or carries `spr`,
-		// and must then carry `place_search`; testing only one of those would let an
-		// empty file through or exempt a build input.
+		// An extract is guarded when its path identifies a routed placetype
+		// or it carries `spr`, and must then carry `place_search`; testing only one of
+		// those would let an empty file through or exempt a build input.
 		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue
 

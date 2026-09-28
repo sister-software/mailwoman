@@ -117,8 +117,9 @@ function treeWithLocaleCountry(
 }
 
 /**
- * Parses address text into an `AddressTree` with a neural token classifier,
- * which `parseJSON`, `parseTuples` and `parseXML` serialize.
+ * Parses address text into an `AddressTree` with a neural token classifier.
+ *
+ * `parseJSON`, `parseTuples` and `parseXML` serialize that tree.
  */
 export class NeuralAddressClassifier {
 	private readonly labels: readonly string[]
@@ -196,8 +197,9 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Returns the default span proposer config, which uses the codex lexicon
-	 * and the prior builder's default scales.
+	 * Returns the default span proposer config.
+	 *
+	 * It uses the codex lexicon and the prior builder's default scales.
 	 */
 	private defaultProposer(): SpanProposerConfig {
 		this.#defaultProposerCfg ??= { lexicon: buildCodexSpanLexicon() }
@@ -232,8 +234,8 @@ export class NeuralAddressClassifier {
 
 	async parse(text: string, opts?: ParseOpts): Promise<AddressTree> {
 		if (!text.length) return { raw: text, roots: [] }
-		// All-caps ASCII input is title-cased because the model trained on mixed case,
-		// and the change preserves length so offsets stay valid.
+		// The model trained on mixed case, so this converts all-caps ASCII input to title case.
+		// The conversion preserves length and keeps offsets valid.
 		const modelText = opts?.normalizeCase !== false ? normalizeInputCase(text) : text
 		const { tokens, localeCountry } = await this.#decode(modelText, opts)
 
@@ -270,9 +272,10 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Parses text and returns the serializable decode trace instead of a tree,
-	 * which `buildAddressTree(trace.text, trace.tokens)` reproduces from `parse`
-	 * and which does not carry `opts.calibrate`.
+	 * Parses text and returns the serializable decode trace instead of a tree.
+	 *
+	 * `buildAddressTree(trace.text, trace.tokens)` reproduces the tree returned by `parse`.
+	 * The trace omits `opts.calibrate`.
 	 */
 	async traceParse(text: string, opts?: ParseOpts): Promise<NeuralParseTrace> {
 		const labels = [...this.labels] as string[]
@@ -328,10 +331,12 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Runs the shared decode path (encoding, soft features, inference, priors, Viterbi or argmax, and repairs)
-	 * that every parse method calls so their decodes cannot diverge.
+	 * Runs the shared decode path used by every parse method.
+	 *
+	 * The path encodes input, computes soft features and inference, applies priors,
+	 * runs Viterbi or argmax and applies repairs.
 	 */
-	// oxlint-disable-next-line complexity -- 104, and splitting it is what drifted last time
+	// oxlint-disable-next-line complexity -- Complexity is 104. Splitting the method caused drift in the previous refactor.
 	async #decode(
 		text: string,
 		opts?: ParseOpts,
@@ -410,8 +415,8 @@ export class NeuralAddressClassifier {
 			traceRepairs.push({ pass, before, after })
 		}
 
-		// Repair snapshots are per piece, and because the span bridge merges tokens each
-		// piece takes the label of the token covering its start offset.
+		// Repair snapshots are per piece.
+		// The span bridge merges tokens, so each piece takes the label of the token covering its start offset.
 		const labelsPerPiece = (toks: readonly DecoderToken[]): string[] => {
 			let t = 0
 
@@ -500,12 +505,14 @@ export class NeuralAddressClassifier {
 
 		tracePriors?.push({ kind: "spanProposer", applied: spanProposals.length > 0 })
 
-		// The placetype-pair prior is off unless the options or config set it, and it runs
-		// before the conventions mask so the mask still removes any forbidden tag it favours.
+		// The placetype-pair prior stays off unless options or config enable it.
+		// It runs before the conventions mask, so the mask still removes any
+		// forbidden tag that the prior favors.
 		const placetypePairOpt = opts?.placetypePair ?? this.cfg.placetypePair
 		// This record, allocated only when tracing, receives the probe path that fired.
 		const pairProbeTrace: PlacetypePairProbeTrace | undefined = trace ? {} : undefined
-		// The census is probed only when tracing, and its observations enter the trace without changing a logit.
+		// The census is probed only when tracing.
+		// Its observations enter the trace without changing a logit.
 		const placetypeCensusOpt = opts?.placetypeCensus ?? this.cfg.placetypeCensus
 
 		const censusForProbe: PlacetypeCensusLike | undefined = trace && placetypeCensusOpt ? placetypeCensusOpt : undefined
@@ -682,8 +689,8 @@ export class NeuralAddressClassifier {
 			}
 		}
 
-		// The opt-in punctuation bridge merges same-tag fragments split by punctuation,
-		// and annotation and quoted spans block merges across their boundaries.
+		// The opt-in punctuation bridge merges same-tag fragments split by punctuation.
+		// Annotation and quoted spans block merges across their boundaries.
 		if (opts?.bridgePunctuationGaps ?? this.cfg.bridgePunctuationGaps) {
 			const blockedSpans = spanProposals.filter((p) => p.kind === "ANNOTATION_SPAN" || p.kind === "QUOTED_SPAN")
 			const before = traceRepairs ? labelsPerPiece(tokens) : []
@@ -748,9 +755,10 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Encodes text into the units the model reads: the SentencePiece path returns
-	 * pieces with vocabulary ids, and the character path one piece per code point
-	 * plus the `(S, W)` character ids the graph reads.
+	 * Encodes text into the units read by the model.
+	 *
+	 * The SentencePiece path returns pieces with vocabulary IDs.
+	 * The character path returns one piece per code point plus the `(S, W)` character IDs read by the graph.
 	 */
 	private encode(text: string): {
 		pieces: TokenizedPiece[]

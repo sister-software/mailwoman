@@ -204,7 +204,7 @@ is not. Any change based on it needs a board to measure it, rather than a decisi
 
 Three reasons worth stating, because they generalise:
 
-1. **The fan-out is invisible per query.** No query asks how many keys one place has, so 19 rows for `to`
+1. **The fan-out is invisible per query.** Queries do not report a place's key count, so 19 rows for `to`
    looks like a busy key rather than a data problem.
 2. **The bad rows are shaped exactly like the good ones.** Both are alt-names in a named language with
    `privateuse=preferred`. Toledo shows why the alias rows are required: abbreviation aliases are how

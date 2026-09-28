@@ -54,7 +54,7 @@ export interface CoastalErosionObservation {
 }
 
 /**
- * Named reasons a coordinate produced no observation.
+ * Reasons a coordinate produced no observation.
  */
 export const COASTAL_REFUSALS = [
 	"no_coordinate",
@@ -68,7 +68,7 @@ export const COASTAL_REFUSALS = [
 export type CoastalRefusal = (typeof COASTAL_REFUSALS)[number]
 
 /**
- * Observation or named refusal for one coordinate.
+ * Observation or explicit refusal for one coordinate.
  */
 export type CoastalDecision =
 	| { fired: true; observation: CoastalErosionObservation }
@@ -78,7 +78,7 @@ export interface CoastalErosionRoute extends Disposable {
 	identity: CoastalLayerIdentity
 	scenarioKey: string
 	/**
-	 * Read the layer for one coordinate, or return a named refusal for missing coordinates.
+	 * Read the layer for one coordinate, or return a reasoned refusal for missing coordinates.
 	 */
 	observe: (latitude: number | null | undefined, longitude: number | null | undefined) => CoastalDecision
 }
@@ -88,7 +88,7 @@ export interface CoastalErosionRouteOptions {
 	 * The sealed layer to read.
 	 *
 	 * Required, because a route that guessed a default would report a designation
-	 * from an authority nobody asked about.
+	 * from an authority not configured for this request.
 	 */
 	databasePath: PathBuilderLike
 	/**

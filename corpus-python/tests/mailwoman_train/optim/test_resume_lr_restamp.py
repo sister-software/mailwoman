@@ -95,7 +95,10 @@ def test_restamp_resume_lrs_recovers_the_live_config_value(tmp_path, capsys):
 
 
 def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
-    """Identical-config resume: state round-trips, param groups end up byte-equal, and `restamp_resume_lrs` prints no line."""
+    """Resume with identical config and verify a byte-equal state round trip.
+
+    The param groups stay byte-equal. `restamp_resume_lrs` prints no line.
+    """
     m1 = TinyModel()
     optim1, _labels1 = build_optimizer(m1, learning_rate=1e-5, weight_decay=0.01, classifier_learning_rate=1e-3)
     sched1 = build_scheduler(optim1, _scheduler_cfg(warmup_steps=2))
@@ -131,7 +134,10 @@ def test_restamp_resume_lrs_is_silent_when_nothing_changed(tmp_path, capsys):
 
 
 def test_build_optimizer_three_group_labels_attribute_to_the_right_group(tmp_path, capsys):
-    """With both override LRs set there are 3 groups, and each label must attribute to the group that carries its override rather than merely be the right string."""
+    """Set both override LRs and verify that three groups receive the matching labels.
+
+    Each label must identify the group that carries its override.
+    """
     m1 = TinySpanClassifierModel()
     optim1, labels1 = build_optimizer(
         m1,

@@ -8,7 +8,7 @@ prerequisites: "@mailwoman/registry; a CSV too big for memory; gazetteer data fo
 verified-with: mailwoman v6.1.0
 ---
 
-National datasets often arrive as a single CSV, such as the NPPES provider registry (millions of rows), an FCC broadband availability release, or a state address export. You need every row normalized into the same shape, and ideally a coordinate for each one. Two problems stand in the way: the file does not fit in memory, and geocoding a million addresses sequentially takes hours. This recipe handles both with a simple streaming normalize stage and an optional threaded geocode stage that you add only when the per-row cost justifies it.
+National datasets arrive as a single CSV in cases such as the NPPES provider registry (millions of rows), an FCC broadband availability release, or a state address export. You need every row normalized into the same shape, and ideally a coordinate for each one. Two problems stand in the way: the file does not fit in memory, and geocoding a million addresses sequentially takes hours. This recipe handles both with a simple streaming normalize stage and an optional threaded geocode stage that you add only when the per-row cost justifies it.
 
 ## Start with a stream rather than a file
 
@@ -102,4 +102,4 @@ If your gazetteer fits in RAM or is spread across several disks, your throughput
 
 Not every ingest needs a coordinate. If you load records to dedupe by name and org, or to join on an ID, the address is never geocoded. Without an expensive stage to thread, `normalizeCSV` does the whole job. Adding `geocodeStream` there would only add worker overhead to microsecond work, the loss described two sections earlier. Thread only the stage whose per-row cost justifies it.
 
-Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup and entity-resolution step that this ingest usually feeds, and [Displaying results on a map](./display-on-a-map.md) covers plotting the output on a map.
+Once you have geocoded `SourceRecord`s, [Geocode-first record matching](../concepts/geocode-first-record-matching.mdx) covers the dedup and entity-resolution step that follows this ingest. [Displaying results on a map](./display-on-a-map.md) covers plotting the output.

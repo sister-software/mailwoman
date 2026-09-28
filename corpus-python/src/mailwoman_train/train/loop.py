@@ -26,8 +26,8 @@ from .state import TrainState
 def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
     """Perturb the evidence channels in place, by optimizer step.
 
-    Each curriculum ramps with the run so the model cannot launder a clue, and is conditioned on
-    its own config flag so a run that leaves one off stays reproducible against earlier runs.
+    Each curriculum ramps with the run so the model cannot launder a clue. It is also conditioned
+    on its own config flag, so a run that leaves one off stays reproducible against earlier runs.
     """
     if "anchor_confidence" in tb:
         tb["anchor_confidence"] = perturb_anchor_confidence(tb["anchor_confidence"], step, cfg.train.max_steps)
@@ -51,7 +51,7 @@ def apply_curricula(cfg: Config, tb: dict[str, Any], step: int) -> None:
 def write_final_artifacts(
     state: TrainState, step: int, output_dir: Path, regularizers: Regularizers, cfg: Config
 ) -> None:
-    """The checkpoint a finished run owes, and the Fisher artifact that lands beside it.
+    """Write the final checkpoint and the Fisher artifact beside it.
 
     The save stays with the loop rather than a callback because a run that reached its last step
     owes a checkpoint whether or not a callback is listening.
@@ -140,8 +140,8 @@ def run_training_loop(
             micro_step += 1
             if not is_accum_boundary:
                 continue
-            # Fisher capture reads the accumulated gradient before clipping: the empirical
-            # Fisher is defined on the unclipped ∂L/∂θ, and clipping understates curvature
+            # Fisher capture reads the accumulated gradient before clipping. The empirical
+            # Fisher is defined on the unclipped ∂L/∂θ. Clipping understates curvature
             # exactly where it is largest. Read-only.
             if (
                 regularizers.fisher_acc is not None

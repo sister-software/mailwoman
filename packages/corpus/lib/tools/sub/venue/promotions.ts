@@ -49,7 +49,7 @@ export interface SubVenuePromotion {
 	 */
 	confoundNote: string
 	/**
-	 * The extract or dataset that the census counted, and when.
+	 * The extract or dataset that the census counted, plus the census date.
 	 */
 	census: string
 }
@@ -58,7 +58,7 @@ export interface SubVenuePromotion {
  * Every curation decision, grouped by designator.
  *
  * This ledger is the only input that sets `curated: true` on a machine-derived surface.
- * Rejections stay in the ledger so that nobody proposes the same surface again without new evidence.
+ * Rejections stay in the ledger so the system can reject duplicate proposals until new evidence arrives.
  *
  * The span proposer in `packages/neural/lib/venue-structure.ts` ships its English designators
  * without a locale gate, so a rejection here guides recipes only and does not stop the proposer.
@@ -171,7 +171,8 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "france.jsonl 2026-08-05 (251,260 rows), 40 hits; all 19 shape hits enumerated",
 	},
 
-	// gate: the English surface ships without modifier eligibility, and these entries cover its localized forms.
+	// gate: the English surface ships without modifier eligibility.
+	// These entries cover its localized forms.
 	{
 		designatorID: "gate",
 		phrase: "flugsteig",
@@ -232,7 +233,8 @@ export const SUBVENUE_PROMOTIONS: readonly SubVenuePromotion[] = [
 		census: "poi.db 2026-05-20.0, full 13,681,698-row scan 2026-08-05",
 	},
 
-	// terminal: the English surface ships, and these entries cover its localized forms.
+	// terminal: the English surface ships.
+	// These entries cover its localized forms.
 	{
 		designatorID: "terminal",
 		phrase: "terminal",

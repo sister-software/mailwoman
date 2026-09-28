@@ -99,7 +99,7 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump carried on several rows that all named one coordinate.
+	 * How many of those codes the dump carried on several rows that all referred to one coordinate.
 	 *
 	 * GeoNames averages that coordinate from neighbouring codes where a name match fails, so the
 	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.
@@ -299,9 +299,10 @@ async function collectSourceFacts(
 const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © GeoNames contributors, CC-BY 4.0"
 
 /**
- * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey
- * Code-Point Open under OGL v3, whose OS attribution block a redistributor must carry,
- * while the ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.
+ * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL v3.
+ *
+ * A redistributor must carry the OS attribution block.
+ * The ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +

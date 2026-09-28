@@ -18,7 +18,7 @@ const GLOSSARY_NO_AUTO_LINK = ["state", "tier"] as const
 
 const gitHash = (() => {
 	try {
-		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous, and `@mailwoman/core/git` answers a promise
+		// oxlint-disable-next-line mailwoman/prefer-home -- the Docusaurus config loader is synchronous. `@mailwoman/core/git` answers a promise.
 		return runShellSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim()
 	} catch {
 		return "unknown"
@@ -137,7 +137,7 @@ const config: Config = {
 					{ from: "/docs", to: "/docs/developers/get-started/what-mailwoman-is" },
 					// The navbar labels this door "Pricing", so `/pricing` is the URL a visitor guesses.
 					{ from: "/pricing", to: "/docs/pricing" },
-					// Same for the license page, which is the only route that can take money.
+					// The license page is the only route that can take money.
 					{ from: ["/licensing", "/licenses"], to: "/license" },
 				],
 			},

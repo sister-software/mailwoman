@@ -4,13 +4,13 @@ One class across several modules, split by what each part owns rather than by si
 
 - `model.py` — `MailwomanCoarseEncoder` itself: construction, `forward`, and the predict paths.
 - `state.py` — what construction establishes, declared once for every part that reads it.
-- `heads.py` — building the output heads, and the weight initialization that follows them.
-- `channels.py` — turning ids into representations, and adding each evidence channel to them.
+- `heads.py` — output-head construction plus weight initialization.
+- `channels.py` — map ids into representations. Add each evidence channel to them.
 - `losses.py` — composing the supervised loss and its auxiliary terms.
 - `decode.py` — reading tag sequences out of the logits, the only paths that consult the CRF.
 - `soft_feed.py` — one evidence channel, built and injected. Pure functions over tensors.
-- `output.py` — what a forward pass returns, and the SDPA backend setting it needs.
-- `build.py` — building an encoder from a `Config`, and counting what it holds.
+- `output.py` — the forward-pass result plus its SDPA backend setting.
+- `build.py` — construct an encoder from a `Config`. Count its parameters.
 
 CONSTRUCTION ORDER IS A INTERFACE. `_init_weights` walks `self.parameters()`. It yields in registration order and draws from the global RNG for each. Therefore, moving a module's construction changes the initial weights of everything registered after it and a from-scratch run stops reproducing earlier ones. `tests/mailwoman_train/nn/test_encoder_split_parity.py` pins the logits,
 the loss, the state-dict keys and each parameter's initial checksum for exactly that reason.

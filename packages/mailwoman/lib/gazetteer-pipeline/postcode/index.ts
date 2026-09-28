@@ -4,11 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   The WOF postcode-database build (`postalcode-<cc>.db`) — ingest the country's
- *   `whosonfirst-data-postalcode-<cc>` repo, fill the `(0,0)` placeholder centroids (US: Census zcta +
- *   GeoNames. all: GeoNames postal → admin parent-borrow → hierarchy-ancestor fallback), FTS, seal.
+ *   `whosonfirst-data-postalcode-<cc>` repo and fill `(0,0)` placeholder centroids.
+ *   US builds use Census ZCTA and GeoNames. Other builds use GeoNames postal, admin parent-borrow,
+ *   then hierarchy-ancestor fallback. The build creates FTS and seals the database.
  *   Replaces the reopen-and-mutate pair (`fill-zcta-centroids.ts` / `backfill-postcode-centroids.ts`)
- *   that patched shipped databases after the fact — the fills are build steps now, and the artifact is
- *   read-only from the moment it exists.
+ *   that patched shipped databases after the fact. The fills now run during the build.
+ *   The artifact is read-only from the moment it exists.
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The span diff, which is where a parse comparison can lie quietly.
+ *   The span diff is where a parse comparison can lie quietly.
  *
- *   Both parsers speak libpostal's label vocabulary, and mailwoman's route into it is many-to-one. So the two ways this
- *   can mislead are opposite: reporting a disagreement that is really a case or segmentation difference, and reporting
- *   an agreement that is really two different tags landing on one label.
+ *   Both parsers speak libpostal's label vocabulary. Mailwoman's route into it is many-to-one.
+ *   The comparison can mislead in two opposite ways: it can report a disagreement that is really a case or segmentation difference,
+ *   or report an agreement that is really two different tags landing on one label.
  */
 
 import { diffSpans, SpanVerdict, type LabelledSpan } from "@mailwoman/dev-mcp/parse/compare/index"

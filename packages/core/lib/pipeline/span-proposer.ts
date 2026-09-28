@@ -115,7 +115,7 @@ export interface SpanProposerLexicon {
 }
 
 /**
- * An empty lexicon, which limits proposals to paired delimiters.
+ * An empty lexicon limits proposals to paired delimiters.
  */
 export const EMPTY_SPAN_PROPOSER_LEXICON: SpanProposerLexicon = {
 	systems: new Set(),
@@ -436,7 +436,8 @@ const FRACTION = /^\d\/\d$/
 const AMBIGUOUS_PROPOSAL_CONFIDENCE = 0.55
 
 /**
- * Road-type words whose following number is a route number, which must stay unsplit.
+ * Road-type words that mark the following number as a route number.
+ * Keep that number unsplit.
  */
 const ROAD_LEADERS: ReadonlySet<string> = new Set(["hwy", "highway", "route", "rte", "sr", "cr", "interstate", "loop"])
 

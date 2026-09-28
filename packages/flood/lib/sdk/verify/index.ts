@@ -3,28 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path agreement check, and its negative half.
+ *   The check compares two paths. A separate half verifies locations outside coverage.
  *
- *   positive half. A sample of points is answered from the sealed artifact and then re-asked of the EA's
- *   OGC API Features service — the same authority, a different distribution channel, and geometry this
- *   package has never touched. The point test is run again on the service's own rings, so what is compared
- *   is a verdict against a verdict rather than a file against itself. That is what makes it a check on OUR
- *   conversion rather than on the authority.
+ *   The positive half samples points from the sealed artifact and asks the Environment Agency's OGC API Features
+ *   service about them. The service returns geometry through a separate distribution channel. This package has not
+ *   touched that geometry. The check runs the point test on the service's rings, then compares the two verdicts from
+ *   the same authority. This measures our conversion against the authority's published geometry.
  *
- *   negative half, and IT matters AS much. A sample of points in Wales and Scotland must come back
- *   `unknown` — no coverage row at all — and never Zone 1. Wales is a different authority under a
- *   four-zone TAN15 scheme that is not interchangeable with England's, and Scotland is a third. reporting
- *   either as the EA's low-probability zone would be the exact defect this layer was built to make
- *   impossible. The positive half alone would pass on an artifact that answered Zone 1 for the whole
+ *   The negative half carries equal importance. Sample points in Wales and Scotland must return `unknown` with no
+ *   coverage row. They must never return Zone 1. Wales uses a different authority and a four-zone TAN15 scheme. That
+ *   scheme differs from England's. Scotland uses a third system. Reporting either location as the EA's
+ *   low-probability zone would violate this layer's coverage contract. The positive half alone could pass an artifact
+ *   that answered Zone 1 for the whole
  *   planet.
  *
  *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
  *   geodatabase publishes nine decimals through this package's ingest. the OGC service publishes six. Six
- *   decimals is about 10 cm, so a point within roughly a metre of a zone boundary can land on opposite
- *   sides of two renderings of the same edge. Those are reported as `boundary_tolerance` rather than as
- *   disagreements, with their distance to the nearest edge, and the count is part of the receipt.
+ *   decimals differ by about 10 cm. A point within roughly a metre of a zone boundary can land on opposite sides of
+ *   two renderings of the same edge. The check reports these cases as `boundary_tolerance` with their distance to the
+ *   nearest edge. The receipt includes their count.
  *
- *   this check has already earned its keep, and what it caught is the reason to keep running it. A missing
+ *   The check has already found a projection defect. That result is a reason to keep running it. A missing
  *   proj datum grid put the whole layer 3.4 m from where the authority puts it — coordinates that pass
  *   every structural check there is, because they are ordinary WGS84 numbers inside the declared extent.
  *   It showed up here and nowhere else, as eight disagreements out of 59, each a point that had fallen
@@ -44,7 +43,8 @@ export { sampleAgreementPoints } from "#sdk/verify/sample"
 const BOUNDARY_TOLERANCE_METRES = 0.5
 
 /**
- * One point, both verdicts, and whether they agree.
+ * Records one point and both verdicts.
+ * It also records whether they agree.
  */
 export interface AgreementRow {
 	label: string
@@ -67,14 +67,18 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * To the edge rather than to the nearest vertex: a polygon's edges are long compared to this
-	 * product's slivers, so a point can sit a centimetre from an edge and metres from every vertex of it.
-	 * Measuring vertices makes the boundary tolerance far stricter than it reads,
-	 * which is how a rendering difference gets reported as a conversion defect.
+	 * Measures to the edge rather than the nearest vertex.
+	 * Polygon edges are long compared with this product's slivers.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from the two channels rendering the same edge differently,
-	 * and a receipt that omits it forces a re-run.
+	 * A point can sit a centimetre from an edge and metres from every vertex.
+	 * Vertex distance makes the boundary tolerance stricter than its stated value
+	 * and can report a rendering difference as a conversion defect.
+	 *
+	 * Every row carries this distance.
+	 * It separates a real defect from a difference caused by the two channels
+	 * rendering the same edge differently.
+	 *
+	 * A receipt without the distance forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
@@ -103,8 +107,9 @@ export interface VerifyFloodResult {
 	/**
 	 * Points the service's geometry contains without labelling.
 	 *
-	 * Neither agreement nor disagreement: the service's answer is unreadable there,
-	 * and the row is carried so the count is visible rather than folded into either side.
+	 * The service's answer is unreadable at these points.
+	 * The result records each row so the count remains visible instead of being
+	 * folded into agreement or disagreement.
 	 */
 	serviceUnlabelled: number
 	outside: OutsideRow[]
@@ -112,10 +117,10 @@ export interface VerifyFloodResult {
 }
 
 /**
- * Points outside England, named.
+ * Identifiers for points outside England.
  *
- * Each is a place rather than a bare pair of numbers: a coordinate a reader
- * cannot name is a coordinate nobody can check.
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader a
+ * coordinate without a reference source cannot be checked.
  *
  * Wales and Scotland are the cases that matter, because both border England and both publish
  * flood maps of their own under schemes that are not interchangeable with the EA's.
@@ -163,9 +168,8 @@ export async function verifyFloodDatabase(options: VerifyFloodOptions): Promise<
 
 			const nearEdge = service.nearestEdgeMetres !== undefined && service.nearestEdgeMetres <= BOUNDARY_TOLERANCE_METRES
 
-			// The distance rides on every row rather than only the tolerated ones:
-			// it is the first thing anyone wants when a disagreement appears, and carrying it only
-			// where it was already acted on means re-running the check to see it.
+			// Every row carries the distance.
+			// Readers can inspect it when a disagreement appears without rerunning the check.
 			agreement.push({
 				...point,
 				local,

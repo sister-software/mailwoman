@@ -1,4 +1,4 @@
-"""Reading the container's own view: what is on the volume, and what the image actually holds.
+"""Reading the container's own view: what is on the volume and what the image holds.
 
 Each of these answers a question the local machine cannot. The volume's container and CLI views are
 divergent, so `modal volume ls` is not evidence about what a run will see. the image's resolved
@@ -43,7 +43,7 @@ def debug_volume(config_name: str = "v1.4.0-charoffset.yaml") -> None:
     """What a container actually sees on the volume, before and after `vol.reload()`.
 
     The two snapshots are the point: a file the CLI reports as present can be absent from a mount
-    that started before it was committed, and the difference between them says which of the two you
+    that started before it was committed. Their difference shows which of the two you
     are looking at.
     """
     cfgdir = f"{VOL_MOUNT}/corpus-python/src/mailwoman_train/configs"
@@ -85,7 +85,7 @@ def versions() -> None:
     """Print the export/quant toolchain versions baked into ``training_image``.
 
     The pins in `launch/app.py` are what should be installed. this is what is installed. They can differ when
-    a pin is edited without rebuilding, which is the state that produced an unreproducible int8
+    a pin is edited without rebuilding. That state produced an unreproducible int8
     graph.
     """
     import sys

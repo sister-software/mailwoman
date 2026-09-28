@@ -3,23 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postcode shape patterns — which substrings of a line look like a postcode, ordered most-specific
- *   to least. Priority is the index: a lower index wins an overlap.
+ *   Postcode shape patterns identify substrings of a line that look like a postcode.
+ *   Patterns appear from most-specific to least-specific. A lower index wins when patterns overlap.
  *
- *   The data lives in `./shapes.json` so non-TS consumers read the identical record, the
- *   same arrangement `us/street-suffix.json` has. Two runtimes need this table and both used to
- *   carry their own typed copy: `@mailwoman/neural`'s postcode repair, and the Python trainer's
- *   `features/postcode_shapes.py`, which paints the train-side anchor on the spans inference paints.
- *   Hand-mirrored, they drifted twice — the IE Eircode row was TS-only for a month, the BR CEP row
- *   for five weeks — and each time the trainer painted one fewer shape than inference, silently.
+ *   The data lives in `./shapes.json` so non-TypeScript consumers read the same records as
+ *   `us/street-suffix.json`. The neural package uses this table for postcode repair.
+ *   The Python trainer reads it in `features/postcode_shapes.py` to paint the train-side anchor
+ *   on the spans inference paints. Separate typed copies drifted twice. The IE Eircode row appeared
+ *   in TypeScript one month before it appeared in Python. The BR CEP row followed five weeks later.
+ *   Each gap made the trainer paint one fewer shape than inference.
  *
- *   This is a shape test rather than a gazetteer-membership test. A bare `68161` matches the US, German,
- *   French, Spanish and Italian 5-digit shapes; `./systems.ts` answers the membership
- *   question, and neither module reads the other.
+ *   This function checks postcode form. `./systems.ts` checks whether a postcode occurs in a gazetteer.
+ *   A bare `68161` matches the US five-digit shape. It also matches the German shape.
+ *   It matches the French shape. It matches the Spanish shape.
+ *   It matches the Italian shape.
+ *   The modules remain independent.
  *
- *   regex dialect. The bodies are written in the subset both JavaScript `RegExp` and Python `re`
- *   accept, which is what lets one file serve both. A row needing different source text in the two
- *   dialects needs a second field and a stated reason rather than a loosened comparison on either side.
+ *   The pattern bodies use a regex subset accepted by both JavaScript `RegExp` and Python `re`.
+ *   This lets both runtimes read one file. A row needing different source text requires a second field
+ *   and a stated reason. Keep each runtime's comparison strict.
  */
 
 import postcodeShapeData from "./shapes.json" with { type: "json" }
@@ -27,14 +29,17 @@ import postcodeShapeData from "./shapes.json" with { type: "json" }
 /**
  * What a match is eligible to do.
  *
- * `designated` may overwrite any existing label, `alnum` may add a postcode
- * where the model emitted none, and `numeric` may only snap an existing one.
- * So a numeric shape can never invent a postcode over a hyphenated house number.
+ * `designated` may overwrite any existing label.
+ * `alnum` may add a postcode when the model emitted none.
+ *
+ * `numeric` may only snap an existing postcode.
+ * A numeric shape cannot invent a postcode over a hyphenated house number.
  */
 export type PostcodeShapeKind = "alnum" | "numeric" | "designated"
 
 /**
- * One shape: the label it reports, what it is eligible to do, and the compiled pattern.
+ * One shape, including its label and compiled pattern.
+ * The kind describes its allowed operation.
  */
 export interface PostcodeShape {
 	readonly label: string
@@ -46,8 +51,8 @@ export interface PostcodeShape {
  * Every postcode shape, in priority order.
  *
  * Compiled once at module load.
- * Each `RegExp` carries the `g` flag because callers scan a whole line,
- * and `u` as well where the row declares it.
+ * Each `RegExp` carries the `g` flag so callers scan a whole line.
+ * Rows that declare Unicode matching also carry the `u` flag.
  */
 export const POSTCODE_SHAPES: readonly PostcodeShape[] = postcodeShapeData.shapes.map((shape) => ({
 	label: shape.label,

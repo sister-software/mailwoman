@@ -24,7 +24,7 @@ import {
 export { LOCALITY_SURFACE_FEATURE_DIM, STREET_TYPE_FEATURE_DIM } from "#gazetteer-inference"
 
 /**
- * Re-exports the character feed packer, which lives in the pure feed module shared with the browser runner.
+ * Re-exports the character feed packer from the pure feed module shared with the browser runner.
  */
 export { packCharFeed } from "#ort-feeds"
 /**
@@ -45,7 +45,8 @@ export interface ONNXRunnerOpts {
 	warmup?: boolean
 
 	/**
-	 * The fixed input sequence length of the model, which defaults to {@link DEFAULT_FIXED_SEQ_LEN}.
+	 * The fixed input sequence length of the model.
+	 * The default is {@link DEFAULT_FIXED_SEQ_LEN}.
 	 *
 	 * Shorter inputs are padded with id 0 and masked out.
 	 * Longer inputs are truncated.
@@ -64,8 +65,8 @@ export interface ONNXRunnerOpts {
 	/**
 	 * The maximum intra-op thread count for one operator.
 	 *
-	 * When unset, ONNX Runtime uses every core, which oversubscribes the machine
-	 * when several processes run at once.
+	 * When unset, ONNX Runtime uses every core.
+	 * This oversubscribes the machine when several processes run at once.
 	 */
 	intraOpNumThreads?: number
 }

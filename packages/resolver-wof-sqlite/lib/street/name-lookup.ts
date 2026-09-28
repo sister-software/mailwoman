@@ -8,7 +8,7 @@
  *   Reads a street-name index (the FR instance is BAN `street-centroids-fr.db`, a `street_centroid`
  *   table of `street_norm × locality_base × postcode` rows) and answers "does this street surface
  *   exist as a name" for the k-best rerank. It is sync-by-interface and read-only, uses prepared
- *   statements, and degrades gracefully on a tableless extract, the same reader discipline as
+ *   statements. It also degrades gracefully on a tableless extract, following the same reader discipline as
  *   `AddressPointSqliteLookup`.
  *
  *   The fold interface: the surface is folded with {@link foldStreetSurface} (the shared function),
@@ -62,9 +62,10 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 		if (hasTable(this.database, table)) {
 			// Prefer the `name_key` column (built with `foldStreetSurface`
 			// and indexed by `idx_sc_name` for a direct seek).
-			// Fall back to `street_norm` on a pre-rebuild extract, which is a skip-scan but correct.
-			// The fold that built `name_key` must match `foldStreetSurface` here,
-			// which is the fold-parity interface.
+			// On a pre-rebuild extract, `street_norm` is a correct fallback.
+			// It uses a skip-scan.
+			// The fold that built `name_key` must match `foldStreetSurface` here.
+			// This is the fold-parity interface.
 			const keyCol = hasColumn(this.database, table, "name_key") ? "name_key" : "street_norm"
 			this.#byName = this.database.prepare(`SELECT 1 FROM ${table} WHERE ${keyCol} = ? LIMIT 1`)
 
@@ -85,8 +86,8 @@ export class SQLiteStreetNameLookup extends SQLiteLookup<WOFDatabase> implements
 		if (!norm) return false
 
 		// Scoped lookups tighten precision when the hypothesis carries a locality/postcode.
-		// A scoped miss falls back to the unscoped probe (index incompleteness in the scope
-		// column is not evidence of absence, which is the positive-evidence rule).
+		// A scoped miss falls back to the unscoped probe.
+		// The scope column may be incomplete, so a miss there does not establish absence.
 		if (
 			scope?.locality &&
 			this.#byNameLocality &&

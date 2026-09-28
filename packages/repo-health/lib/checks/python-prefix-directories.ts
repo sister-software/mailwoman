@@ -142,7 +142,7 @@ export function findPythonPrefixGroups(trackedFiles: readonly string[]): PythonP
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself heads the family rather than sitting beside it,
+		// A sibling whose full name is the prefix heads the family rather than sitting beside it,
 		// since leaving `splice.py` out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)

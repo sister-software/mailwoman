@@ -23,7 +23,7 @@ import {
 export const CANONICAL_FORM_LAW = "canonical-form-invariance"
 
 /**
- * Named canonical normalization forms.
+ * Canonical normalization forms.
  * The suite excludes the compatibility forms NFKC and NFKD.
  */
 export const CANONICAL_FORMS = ["nfd", "nfc"] as const
@@ -31,7 +31,7 @@ export const CANONICAL_FORMS = ["nfd", "nfc"] as const
 export type CanonicalFormName = (typeof CANONICAL_FORMS)[number]
 
 /**
- * Implementation of each named transformation.
+ * Implementation of each normalization form.
  */
 export const CANONICAL_TRANSFORMATION_BY_NAME: Record<CanonicalFormName, (text: string) => string> = {
 	nfd: (text) => text.normalize("NFD"),
@@ -76,7 +76,7 @@ export function canonicalFormState(text: string): CanonicalFormState {
 }
 
 /**
- * Returns the named form that maps `base` to `variant`, or `null` when neither form does.
+ * Returns the normalization form that maps `base` to `variant`, or `null` when neither form does.
  */
 export function classifyCanonicalTransformation(base: string, variant: string): CanonicalFormName | null {
 	if (base === variant || canonicalFormKey(base) !== canonicalFormKey(variant)) return null
@@ -217,7 +217,7 @@ export function describeCanonicalFormCoverage(
 /**
  * Audits suite rows.
  *
- * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named form derives from the base.
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant derived from the base by one normalization form.
  */
 export function auditCanonicalFormSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CANONICAL_FORM_LAW, (fixture, label, problems) => {

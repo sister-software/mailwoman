@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the phase-2 decision: load the frozen pre-registration, run the instruments its checks read,
- *   and emit one receipt carrying the arithmetic against every bar.
+ *   Runs the live half of the phase-2 decision. It loads the frozen pre-registration, runs the instruments its checks
+ *   read and emits one receipt with the arithmetic for every bar.
  *
- *   This module decides only what it read. Lanes, checks, denominators, bars, artifact pins and the one marker
- *   query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to hand over
- *   if its content hash has moved. The runner supplies measurements and no more, and it runs the existing
- *   instruments rather than re-deriving them.
+ *   This module decides only from its measurements. `decision-definition.json` supplies the lanes, checks,
+ *   denominators, bars, artifact pins and marker query. {@linkcode loadPhase2Definition} rejects a changed content
+ *   hash. The runner supplies measurements only. It runs existing instruments instead of re-deriving them.
  *
  *   The receipt records the artifact identity and the deviation: a run on a rebuilt `poi.db` or a bumped weights
- *   package is still a run, but it is not comparable to the merged-PR receipts the ruler names as baselines, so
- *   every difference is named and the verdict carries `comparability` as reported rather than a decision input.
+ *   package produces a valid run. Rebuilt `poi.db` or bumped weights differ from the merged-PR receipts used as
+ *   baselines. The report shows every difference. The verdict reports `comparability` without using it as a decision
+ *   input.
  *
  *   The recording is the operator's — the receipt carries `recorded: false`.
  */
@@ -50,9 +50,11 @@ import { createSemanticObservationRoute, semanticObservationMarkers } from "#obs
 /**
  * The committed collision census the recognition lane's control checks read.
  *
- * It is read rather than re-run because the census scans every `name_key` in the shipped
- * `poi.db` and takes about eleven minutes, and its recorded lexicon and layer identity
- * are checked against the pins so a stale census becomes a named deviation.
+ * The runner reads this census instead of rerunning it.
+ * The census scans every `name_key` in the shipped `poi.db` and takes about eleven minutes.
+ *
+ * The runner compares its recorded lexicon and layer identity with the pins,
+ * so stale census data appears as a deviation.
  */
 export const COLLISION_CENSUS_PATH = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
@@ -103,8 +105,10 @@ export interface Phase2LaneReport {
 	blockedBy?: string
 	blockedReason?: string
 	/**
-	 * The rows a blocked lane will read once it is unblocked, and what each reads today.
-	 * present only on a blocked lane and never counted anywhere.
+	 * Lists the rows a blocked lane will read after it unblocks and the current value of each reading.
+	 *
+	 * Present only on a blocked lane.
+	 * These rows never enter any count.
 	 */
 	plannedChecks?: { id: string; measures: string; todayReads: string }[]
 }
@@ -166,9 +170,10 @@ function matches(observed: string | number, pinned: string | number): number {
 }
 
 /**
- * Run every instrument the registered checks read, and answer with one reading per measurement.
- * instruments are selected from the checks rather than run unconditionally, so a definition
- * that registers no absence check needs no build-local coverage layer to produce a receipt.
+ * Runs each instrument used by registered checks and returns one reading per measurement.
+ *
+ * The function selects instruments from the checks.
+ * A definition without an absence check therefore needs no build-local coverage layer to produce a receipt.
  */
 async function measure(
 	definition: Phase2DecisionDefinition,
@@ -364,9 +369,9 @@ async function measure(
 	let coverageVersion = "not measured"
 
 	if (needed.has("absence_observation_probe")) {
-		// `db` is deliberately not forwarded: the absence probe defaults the queried layer
-		// to the coverage layer itself, and an absence qualified by one layer's coverage
-		// while the answer came out of another is a statement about two artifacts nobody compared.
+		// Leave `db` unset so the absence probe uses the coverage layer as the queried layer.
+		// Qualifying an answer from one layer with another layer's coverage would
+		// compare artifacts from different runs.
 		const absence = await runAbsenceObservationProbe({
 			locale: options.locale,
 			weightsCacheRoot: options.weightsCacheRoot,
@@ -468,9 +473,10 @@ async function measure(
 	}
 
 	if (needed.has("conformance_laws")) {
-		// Named fields rather than the whole options object: the laws run through
-		// the Gauntlet's deps, which take a weights root and a candidate gazetteer
-		// rather than whatever the POI board's options mean.
+		// Pass only explicit fields.
+		// The laws use the Gauntlet's dependencies.
+		// Those dependencies require a weights root and candidate gazetteer.
+		// The POI board uses a different option shape.
 		const { laws, problems, measured } = await measureConformance({
 			weightsCacheRoot: options.weightsCacheRoot,
 			candidateDB: options.candidateDB,
@@ -546,9 +552,11 @@ async function measure(
 }
 
 /**
- * Every pinned artifact whose observed identity differs, named with both values. a measurement not
- * taken is not a deviation, because a definition registering no absence check leaves the absence pins
- * unmeasured and reporting that would turn "this ruler did not ask" into "the artifact moved".
+ * Every pinned artifact whose observed identity differs, with both values included.
+ *
+ * A measurement not taken is not a deviation, because a definition registering no
+ * absence check leaves the absence pins unmeasured and reporting that would turn
+ * "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
 	const deviations: string[] = []
@@ -582,9 +590,9 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
  * Run the one frozen marker query and count the markers that reach a caller
  * with the registered code and mechanism.
  *
- * This is the only instrument that builds its own pipeline because the probe runner
- * grades an answer but never hands back the query-kind verdict a marker is attached to,
- * and everything the check reads comes from the definition.
+ * This is the only instrument that builds its own pipeline.
+ * The probe runner grades the answer but does not return the query-kind verdict attached to the marker.
+ * The definition supplies all data this check reads.
  */
 async function measureMarker(
 	definition: Phase2DecisionDefinition,

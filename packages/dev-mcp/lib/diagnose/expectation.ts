@@ -14,7 +14,7 @@ import { caseCarriesTruth, seedToCaseTable } from "#grade"
 import type { ResolvedInput } from "#input-sets"
 
 /**
- * How the row was graded, and against what.
+ * How the row was graded and the basis for that grade.
  *
  * `met: null` means the row asserts no fact, never that it passed.
  */
@@ -30,8 +30,9 @@ export interface ExpectationReading {
  * The case table this row is graded against, or `null` when it asserts no fact.
  *
  * A board row carries a `SeedCase` and grades through the board's own `checkCase`;
- * a panel / holdout / golden / parity row carries expectations without a seed, so one is
- * synthesized around what its corpus actually pinned, and the same grader then reads both.
+ * a panel / holdout / golden / parity row carries expectations without a seed,
+ * so one is synthesized around what its corpus actually pinned.
+ * The same grader then reads both.
  */
 export function expectationCase(
 	item: ResolvedInput
@@ -78,8 +79,8 @@ export function expectationCase(
  * Grade one row against whatever its corpus pinned.
  *
  * Typed against the real `GeocodeResult` rather than {@link AccountInput}:
- * `checkCase` reads the gauntlet projection, and projecting twice is how a recorded answer
- * and the live one it came from stop agreeing.
+ * `checkCase` reads the gauntlet projection.
+ * Projecting twice causes a recorded answer and the live one it came from to disagree.
  */
 export function gradeExpectation(item: ResolvedInput, result: GeocodeRun["result"]): ExpectationReading {
 	const expectation = expectationCase(item)

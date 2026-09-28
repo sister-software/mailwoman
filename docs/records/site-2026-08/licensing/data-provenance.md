@@ -155,7 +155,7 @@ shape of its string. `mw corpus build --license-policy share-alike-free` refuses
 resolves to an expression carrying share-alike, and separately a row whose text cites a share-alike
 license while stating no grant of its own. `mw corpus upload` refuses a corpus version whose license set
 holds either class unless `--allow-share-alike` is passed. The corpus manifest records which policy ran,
-how many rows each refusal class removed, and how many admitted rows carry a license resolving to no
+the row count for each refusal class, and the count of admitted rows whose license resolves to no
 expression, because unknown obligations are different from none.
 
 The claim's second sentence still holds: the `ban` adapter stamps `Licence Ouverte 2.0`, which resolves to

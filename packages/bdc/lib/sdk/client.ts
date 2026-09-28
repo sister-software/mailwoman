@@ -64,7 +64,7 @@ const DEFAULT_DOWNLOAD_TIMEOUT_MS = 300_000
 const HTTP_INTERNAL_SERVER_ERROR = 500
 
 /**
- * Statuses for rejected credentials, which {@linkcode explainCredentialFailure} rewrites.
+ * Statuses for rejected credentials. {@linkcode explainCredentialFailure} rewrites them.
  */
 const HTTP_UNAUTHORIZED = 401
 const HTTP_FORBIDDEN = 403
@@ -266,9 +266,11 @@ function explainCredentialFailure(error: unknown, url: URL, username: string): u
 /**
  * Coerce a binary response body into an `ArrayBuffer`.
  *
- * Axios's Node adapter returns a `Buffer`, and its fetch adapter returns an `ArrayBuffer`.
- * A view that spans its whole backing buffer is returned without copying,
- * which matters for archives of hundreds of megabytes.
+ * Axios's Node adapter returns a `Buffer`.
+ * Its fetch adapter returns an `ArrayBuffer`.
+ *
+ * Return a view over the whole backing buffer without copying.
+ * This matters for archives of hundreds of megabytes.
  */
 function toArrayBuffer(data: unknown): ArrayBuffer {
 	if (data instanceof ArrayBuffer) return data
@@ -316,7 +318,9 @@ export class BDCClient extends APIClient<BDCClientConfig> {
 	/**
 	 * Issue an authenticated `GET` and return the body as an `ArrayBuffer`, for zip downloads.
 	 *
-	 * This path never uses the response cache, which stores only JSON envelopes.
+	 * This path skips the response cache.
+	 * That cache stores only JSON envelopes.
+	 *
 	 * `downloadBDCFile` keeps its own copy on disk.
 	 * The throttle still applies.
 	 */
@@ -463,8 +467,8 @@ export function createBDCClient(options: CreateBDCClientOptions = {}): BDCClient
 		// `APIClient` treats `requestsPerMinute` as a burst budget, so on its own
 		// it lets N requests out back to back.
 		// `minRequestIntervalMs` spaces the requests and holds the real rate.
-		// Together they add a short cooldown after every N requests, which gives about
-		// 9.1 requests per minute at a limit of 10.
+		// Together they add a short cooldown after every N requests.
+		// At a limit of 10, the resulting rate is about 9.1 requests per minute.
 		requestsPerMinute,
 		minRequestIntervalMs: Math.ceil(MS_PER_MINUTE / requestsPerMinute),
 		retry: {

@@ -137,7 +137,7 @@ export async function relabelGoldenDirectory(
 ): Promise<RelabelGoldenReport> {
 	const { input, output } = options
 	const outputDir = PathBuilder.from(output)
-	// A string, because the report records it and its markdown sibling is named by suffix replacement.
+	// A string, because the report records it and its markdown sibling path uses suffix replacement.
 	const deckPath = options.deck ?? outputDir("REVIEW-DECK.jsonl").toString()
 	await makeDirectories(outputDir)
 

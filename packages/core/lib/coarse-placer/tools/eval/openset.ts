@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compares post-hoc rejection scores on a frozen coarse-placer model. Routing stays fixed, thresholds are
- *   selected on a development half, and results are reported on the other half.
+ *   Compares post-hoc rejection scores on a frozen coarse-placer model. Routing stays fixed.
+ *   Thresholds are selected on one half of the data and reported on the other half.
  */
 
 /* oxlint-disable sister-software/prefer-region-over-marks -- these markers label steps inside one
@@ -299,7 +299,7 @@ export async function evalOpenSet(
 		softmaxInto(z, probs)
 		const zin = inVec(z)
 
-		// Every score shares the same route, which is the top in-map logit.
+		// Every score uses the route selected by the highest in-map logit.
 		let amIdx = 0,
 			am = -Infinity
 
@@ -333,7 +333,8 @@ export async function evalOpenSet(
 
 	const heldoutScored = heldout.map((r) => scoreRow(r.raw, undefined))
 
-	// Even-indexed rows form the development half, and odd-indexed rows form the test half.
+	// Even-indexed rows form the development half.
+	// Odd-indexed rows form the test half.
 	const inDev = inmapScored.filter((_, i) => i % 2 === 0)
 	const inTest = inmapScored.filter((_, i) => i % 2 === 1)
 	const heldDev = heldoutScored.filter((_, i) => i % 2 === 0)

@@ -5,9 +5,9 @@
  *
  *   Per-locale held-out F1 regression check.
  *
- *   The golden v0.1.2 dev set is already split by country (`dev/us.jsonl`, `dev/fr.jsonl`,
- *   `dev/adversarial.jsonl`); this script loads the neural classifier once and scores each country file
- *   separately, reporting per-locale component-F1, exact-match, and the spread of macro-F1 across locales.
+ *   The golden v0.1.2 dev set has country files `dev/us.jsonl` and `dev/fr.jsonl`.
+ *   It also has `dev/adversarial.jsonl`. This script loads the neural classifier once and scores each country file.
+ *   It reports per-locale component-F1 and exact-match. It also reports macro-F1 spread across locales.
  *
  *   Scoring mirrors `harness-neural.ts`: flatten the AddressTree via `decodeAsJSON`, fold the Stage-3 street
  *   parts (`street_prefix`/`street`/`street_suffix` → `street`, `intersection_a`/`_b` → `street`) into the
@@ -54,10 +54,12 @@ import { deriveGeocodeRegister } from "#geocode/core"
  * Default anchor + gazetteer feed paths — the same ones `score-country-homograph.ts`
  * and the verdict `oa-resolver-eval` runs use.
  *
- * These are defaults rather than opt-in because an anchor-trained model scored without them
- * falls back to the ONNXRunner's `confidence = 0` zero-feed, which selectively collapses the
- * admin tags (`country` F1 to 0, region↔locality flips) while the morphology tags survive —
- * a harness OOD artifact that reads as a per-version model regression.
+ * These paths are defaults for anchor-trained models.
+ * Without them, the ONNXRunner uses its `confidence = 0` zero-feed.
+ *
+ * That setting collapses admin tags (`country` F1 to 0 and region↔locality flips)
+ * while morphology tags survive.
+ * The harness then reports a per-version regression from this out-of-distribution setup.
  */
 const DEFAULT_ANCHOR_LOOKUP = dataRootPath("anchor", "pilot-anchor-lookup.json")
 const DEFAULT_GAZETTEER_LEXICON = "data/gazetteer/anchor-lexicon-v1.json"
@@ -97,7 +99,8 @@ export interface PerLocaleF1Options {
 	 */
 	rawCase?: boolean
 	/**
-	 * Parse each row in the register `deriveGeocodeRegister` gives it, which is what the geocode path does.
+	 * Parse each row with the register returned by `deriveGeocodeRegister`.
+	 * The geocode path uses the same register.
 	 *
 	 * Default false parses every row with no `inputMode`, which the classifier reads
 	 * as `fragmented` and so feeds both evidence lexicons to every row, including the
@@ -169,7 +172,8 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 	}
 
 	if (xs.length) {
-		// Unfolded mode passes them through as their own tags, which is what the golden labels them as.
+		// Unfolded mode preserves the tags of intersection parts.
+		// The golden labels use those tags.
 		if (foldStreetParts) {
 			out.street = [out.street, ...xs].filter(isPresent).join(" ")
 		} else {
@@ -338,8 +342,10 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 // #region Main
 
 /**
- * Score each locale file separately and report per-locale component-F1, exact-match,
- * and the cross-locale macro-F1 spread.
+ * Score each locale file separately.
+ *
+ * Report per-locale component-F1 and exact-match.
+ * Also report the cross-locale macro-F1 spread.
  *
  * The markdown report goes to `report` (one call per line, matching the child stdout the runner captured)
  * and the progress narration to `reportError`.
@@ -490,8 +496,8 @@ export async function perLocaleF1(
 				// Production feeds them only where the kind verdict says so.
 				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
-				// `--raw-case` disables the all-caps title-case shim so the read measures the
-				// model's own case handling, which the shim would mask.
+				// `--raw-case` disables the all-caps title-case shim.
+				// The shim would hide the model's own case handling from this measurement.
 				...(args.rawCase ? { normalizeCase: false } : {}),
 			})
 

@@ -72,7 +72,8 @@ export type RouteSource = (typeof RouteSource)[keyof typeof RouteSource]
 /**
  * A router's decision for one input and the rule behind it.
  *
- * The rule and abstention reason let a caller measure a router, which the family alone cannot support.
+ * The rule and abstention reason let a caller measure a router.
+ * The family alone cannot support that measurement.
  */
 export interface RoutingDecision {
 	/**
@@ -202,7 +203,7 @@ export function familyForLocale(locale: string): WeightsFamily | undefined {
  * Returns the family id that a locale without its own graph falls back to, or `undefined`.
  *
  * It returns `undefined` for a family id itself, for a locale in a family without
- * routing scripts, and for a locale that no family claims.
+ * routing scripts or a locale that no family claims.
  * A Latin overlay names its base through `mailwoman.baseWeights` in its manifest instead.
  */
 export function familyFallbackFor(locale: string): string | undefined {

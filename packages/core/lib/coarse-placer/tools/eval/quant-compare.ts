@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Accuracy cost of the coarse-placer int8 quantization. Runs the held-out test split through the
- *   fp32 model and the int8 model (dequantized inline) and reports overall and per-class accuracy
- *   for each, the delta, prediction-agreement rate, and confidence MAE. The int8 model must stay
+ *   Accuracy cost of the coarse-placer int8 quantization. Runs the held-out test split through both
+ *   the fp32 model and the int8 model (dequantized inline). Reports overall and per-class accuracy
+ *   for each model, the delta, prediction-agreement rate and confidence MAE. The int8 model must stay
  *   within ~1pp of fp32.
  *
  *   Run: `mailwoman placer eval quant-compare [--fp32 <dir>] [--int8 <dir>] [--abstain 0.5]`

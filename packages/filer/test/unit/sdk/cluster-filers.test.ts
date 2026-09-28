@@ -124,7 +124,7 @@ async function readClusterMap(db: DatabaseClient<FilerDatabase>, assertion: stri
 }
 
 /**
- * Inserts two named Form 499 nodes linked to one FRN, so they can pass the identifier check.
+ * Inserts two Form 499 nodes with names linked to one FRN, so they can pass the identifier check.
  */
 async function seedSharedFRNPair(
 	db: DatabaseClient<FilerDatabase>,

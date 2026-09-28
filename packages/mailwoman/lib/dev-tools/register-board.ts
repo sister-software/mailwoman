@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The three-register board instrument the anchor-v2 board family shares: the register axis, the grading fold,
- *   and the per-register hit/total board with its report line.
+ * @file The anchor-v2 board family shares this three-register instrument.
+ *   It defines the register axis and grading fold. It also defines the per-register hit/total report.
  */
 
 /**

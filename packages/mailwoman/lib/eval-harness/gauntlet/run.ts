@@ -3,18 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Gauntlet eval — runs all three layers and emits one combined verdict, so a model ship checks on the
- *   full-pipeline integration net rather than just per-tag F1:
+ *   The Gauntlet evaluation runs all three layers and emits one combined verdict.
+ *   A model ship checks against the full-pipeline integration set alongside per-tag F1:
  *
  *     1. regression  — the curated executable bug log. A fixed bug must stay fixed (conditioned on status=pass).
  *     2. metamorphic — un-gameable INV/DIR relations. Surface-form robustness (conditional minus tracked xfails).
  *     3. held-out    — candidate-vs-prod z-test on a fresh draw. The generalization check (only with --candidate).
  *
- *   `ablation` is a measurement layer reachable only via `--layer`, deliberately absent from the combined verdict because
- *   its expectations are derived from the gazetteer at run time and a measurement that could fail a ship would invite
- *   tuning the corpus instead of the parser.
+ *   `ablation` is a measurement layer reachable only via `--layer`. It is absent from the combined verdict because
+ *   its expectations come from the gazetteer at run time. Letting this measurement fail a ship would invite
+ *   corpus tuning instead of parser changes.
  *
- *   A layer that throws is caught, printed, and counted as a failed layer, preserving the old isolated-failure semantics
+ *   A thrown layer error is caught, printed and counted as a failed layer. This preserves isolated-failure semantics
  *   without a child process.
  *
  *   Wired into the release flow as a `before:release` check, where a non-zero exit blocks the ship.
@@ -31,9 +31,10 @@ import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gau
 /**
  * The Gauntlet layers.
  *
- * The first three are checks that make up the combined verdict, while `ablation`
- * is a measurement layer reachable only via `--layer ablation`, absent from the
- * combined check, and incapable of blocking a ship.
+ * The first three make up the combined verdict.
+ * `ablation` is reachable only via `--layer ablation`.
+ *
+ * It is absent from the combined check and cannot block a ship.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
 
@@ -79,35 +80,45 @@ export interface GauntletRunOptions {
 	 */
 	n?: number
 	/**
-	 * Force `postcodeCountryCoherence` on or off for every layer; `undefined`
-	 * grades the shipped configuration, which is on.
+	 * Force `postcodeCountryCoherence` on or off for every layer.
+	 *
+	 * `undefined` grades the shipped configuration, where this option is on.
 	 * The off pin is the one that carries evidence.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
 	 * Feed the gazetteer FST prior to the parse.
 	 *
-	 * Production-default `undefined` is on, and `false` withholds it, because forwarding
-	 * only the truthy half would silently discard the off flag.
+	 * Production-default `undefined` enables the prior.
+	 * `false` withholds it.
+	 *
+	 * Forwarding only truthy values would silently discard the off flag.
 	 */
 	gazetteerPrior?: boolean
 	/**
-	 * The admin-containment re-rank; `undefined` grades the production default (off),
-	 * `true` is the evidence pin, and `false` pins the default explicitly
-	 * so a log labeled off really graded with the re-rank off.
+	 * The admin-containment re-rank.
+	 *
+	 * `undefined` grades the production default (off).
+	 * `true` is the evidence pin.
+	 *
+	 * `false` pins the default explicitly so a log labeled off records an off run.
 	 */
 	adminContainmentRerank?: boolean
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name; `undefined` grades
-	 * the production default (off), `true` is the evidence pin, and `false` pins the default
-	 * explicitly so a log labeled off really graded with the remainder requirement off.
+	 * A span-rescore sub-span may drop context but must retain every word of the name.
+	 *
+	 * `undefined` grades the production default (off).
+	 * `true` is the evidence pin.
+	 *
+	 * `false` pins the default explicitly so a log labeled off records the remainder requirement as off.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
 	 * Which reading of a weak resolution lifts the span-rescore brake.
 	 *
-	 * Three readings exist so there is no off spelling, and `undefined` is the
-	 * production default that takes a `placeID` at face value.
+	 * Three readings exist and have no off spelling.
+	 * `undefined` is the production default.
+	 * It takes a `placeID` at face value.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -141,9 +152,10 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * The resolver pins a run's options describe, or undefined when no option is pinned. pure
- * and exported because the pin-reaches-every-layer mapping is cheap to test,
- * and the alternative is discovering a dropped pin from two identical pin logs.
+ * Describes a run's resolver options, or returns undefined when no option is pinned.
+ *
+ * The function is pure and exported because tests can cheaply check the pin-to-layer mapping.
+ * Otherwise a dropped pin could be discovered only from two identical pin logs.
  */
 export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
 	const pins: GauntletResolverPins = {

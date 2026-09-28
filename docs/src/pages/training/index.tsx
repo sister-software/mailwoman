@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Training metrics page — full-page layout with the TrainingCharts dashboard. Mirrors the demo page
- *   pattern: Layout header, BrowserOnly boundary, and build-commit footer.
+ *   pattern: a Layout header and a BrowserOnly boundary. It also has a build-commit footer.
  */
 
 import BrowserOnly from "@docusaurus/BrowserOnly"

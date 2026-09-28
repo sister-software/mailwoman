@@ -1,9 +1,9 @@
 """Sampling across sources so the observed mix matches `source_weights`.
 
-The mixture is STATIONARY for the whole epoch: an exhausted source restarts with a fresh shuffled
-pass rather than leaving the multinomial, and the epoch ends once every source has completed at
-least one full pass. Held-out splits take the other branch entirely — they have no mixture to
-steer, and bucketing a mixed-source val file by its first row would drop every later source.
+The mixture is STATIONARY for the whole epoch. An exhausted source restarts with a fresh shuffled
+pass rather than leaving the multinomial. The epoch ends once every source has completed at least
+one full pass. Held-out splits use a separate branch with no mixture to steer. Bucketing a
+mixed-source validation file by its first row would drop every later source.
 """
 
 from __future__ import annotations
@@ -38,9 +38,8 @@ def _stream_held_out(
     order = [s for s in paths if s.exists()]
     rng.shuffle(order)
     for s in order:
-        # Keep a --golden misuse check here: a label-less golden file scoring as val would silently
-        # produce garbage metrics, and `file_source_counts` raises on the non-string cell such a file
-        # carries.
+        # Keep a --golden misuse check here. A label-less golden file used for val would produce
+        # garbage metrics. `file_source_counts` raises on the non-string cell such a file carries.
         try:
             file_source_counts(s)
         except TypeError as exc:
@@ -61,13 +60,12 @@ def _stream_held_out(
 def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
     """Bucket parquet files by every `source` they carry.
 
-    A file appears under each of its sources, and `_file_row_iter` filters per row against the one it
-    was asked for, so a file carrying two is read twice and yields each source only its own rows.
-    `packages/corpus/lib/parquet/writers.ts` closes a part at `rowsPerFile` rows without breaking it at
-    a source boundary, so a source ends wherever its row count leaves it and the next continues in the
-    same part.
+    Index a file under every source it carries. `_file_row_iter` filters for the requested source.
+    A file carrying two sources is read twice. Each pass yields only that source's rows.
+    `packages/corpus/lib/parquet/writers.ts` closes a part at `rowsPerFile` rows, including between
+    sources. One source can end midway through a part. The next can begin there.
 
-    A file that is missing or unreadable is skipped and named. One with a non-string source raises,
+    A missing or unreadable file is skipped and reported. A file with a non-string source raises,
     because that is a --golden (label-less) file used as a train file.
     """
     by_source: dict[str, list[Path]] = {}
@@ -109,13 +107,13 @@ def _index_by_source(paths: list[Path]) -> dict[str, list[Path]]:
 def _apply_source_weights(
     by_source: dict[str, list[Path]], source_weights: dict[str, float], split: str
 ) -> dict[str, list[Path]]:
-    """Drop the sources the weights decline, and refuse the ones they never mention.
+    """Drop sources with zero weight. Refuse sources absent from the weights.
 
-    A source named at zero is the config declining it deliberately. A source the weights never mention
-    is an oversight, invisible because the sampler cannot miss what it never indexed and the run log
-    carries no trace — so an unnamed source refuses on the split whose recipe claims coverage. The
-    shape it hides: a regenerated source takes a ``-vNN`` suffix, the config keeps the old key, and
-    training silently continues on the superseded vintage.
+    A source with zero weight is the config declining it deliberately. A source absent from the weights
+    is an oversight. The sampler cannot see that source. The run log carries no trace.
+    Raise on the split whose recipe claims coverage when a source is unnamed. The
+    A regenerated source may take a ``-vNN`` suffix. If the config keeps the old key, training
+    silently continues on the superseded vintage.
     """
     unnamed = sorted(src for src in by_source if src not in source_weights)
     if unnamed and split == "train":
@@ -146,9 +144,9 @@ def _stationary_mixture(
 ) -> Iterator[dict[str, Any]]:
     """Draw a source per row from a multinomial fixed for the whole epoch.
 
-    An exhausted source restarts with a fresh shuffled pass rather than leaving the mixture, and the
-    epoch ends once every source has completed at least one full pass. The largest source is seen
-    exactly once, and no source ever silently leaves the mixture.
+    An exhausted source restarts with a fresh shuffled pass rather than leaving the mixture.
+    The epoch ends once every source has completed at least one full pass. The largest source is seen
+    exactly once. Each source remains in the mixture throughout the epoch.
     """
     iters = {src: fresh_iter(src) for src in weights}
     sources = list(iters.keys())

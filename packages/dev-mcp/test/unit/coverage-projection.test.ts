@@ -81,7 +81,7 @@ describe("projectCoverage", () => {
 	})
 
 	it("reports a requested country that exists nowhere, rather than returning an empty row set", () => {
-		// An empty `rows` for a country nobody has heard of is indistinguishable from a country with no data.
+		// An empty `rows` value for an unknown country is indistinguishable from a country with no data.
 		// Naming it separately is the difference between "absent" and "I could not find it".
 		const out = projectCoverage(report(), ["ZZ"])
 

@@ -6,10 +6,9 @@
  *   `mailwoman corpus sub-venue-extract` — run the sub-venue structure extractor over one Geofabrik
  *   `.osm.pbf` and write the rows as jsonl, the input `mailwoman corpus sub-venue-lexicon` reads.
  *
- *   Wave 1 did this with an ad-hoc script because it ran once. Wave 2 runs it per locale, and the
- *   country stamp is an argument nobody can infer from the file. A Geofabrik extract's country is a
- *   property of the invocation rather than of a feature — so it belongs behind a flag rather than in shell
- *   history.
+ *   Wave 1 used an ad-hoc script because it ran once. Wave 2 runs the extractor per locale.
+ *   The file does not encode its country, so the caller must provide the country stamp. A Geofabrik
+ *   extract's country belongs to the invocation rather than to a feature. A flag records it explicitly.
  *
  *   ```sh
  *   mailwoman corpus sub-venue-extract \

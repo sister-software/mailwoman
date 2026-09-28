@@ -138,7 +138,7 @@ def test_every_channel_pads_to_the_label_width(encoded: dict[str, Any], case: st
 
 
 def test_a_row_without_channels_carries_only_the_three_base_keys(encoded: dict[str, Any]) -> None:
-    """Absent channels are OMITTED, which is what keeps a pre-channel recipe byte-identical."""
+    """Absent channels are omitted. This keeps a pre-channel recipe byte-identical."""
     assert set(encoded["no_channels"]) == {"input_ids", "attention_mask", "labels"}
 
 

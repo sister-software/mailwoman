@@ -102,12 +102,16 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 }
 
 /**
- * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from
- * the 3×3 block around a query coordinate, filtered by great-circle radius,
- * and answered nearest-first under a caller-owned tie-break.
+ * A fixed-cell proximity grid buckets entries by cell.
  *
- * The cell keying is part of each builder's output interface (`pyRound` against `Math.round`,
- * ×10 at 0.1° against ×2 at 0.5°), so it is a constructor parameter rather than a convention.
+ * It gathers neighbors from the 3×3 block around a query coordinate.
+ * It filters by great-circle radius, then orders results by a caller-owned tie-break.
+ *
+ * The cell keying is part of each builder's output interface.
+ * One builder uses `pyRound` at 0.1°.
+ *
+ * The other uses `Math.round` at 0.5°.
+ * Each builder passes its keying function to the constructor.
  * A builder's keying must not be aligned with a sibling's.
  */
 export class ProximityGrid<Entry> {
@@ -186,9 +190,11 @@ export interface PostcodeLocalityBaseOptions {
 
 /**
  * Freeze the accumulated table into a self-contained, read-only, distributable sqlite
- * asset (the same shape as our other WOF tables): a provenance/license `meta` table,
- * query-planner stats, an integrity check, a rollback (non-WAL) journal mode
- * so there's no sidecar, and a vacuum to compact.
+ * asset (the same shape as our other WOF tables) with a provenance/license `meta` table,
+ * query-planner stats plus an integrity check.
+ *
+ * It uses rollback (non-WAL) journal mode to avoid a sidecar.
+ * The final step vacuums the database to compact it.
  */
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const now = new Date()

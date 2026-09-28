@@ -46,8 +46,9 @@ const DISCOVERY_RAIL_ORIGIN = "global_research_rail"
 /**
  * Joins the two parts of the per-sector counter's key.
  *
- * A solidus is used because a NUL cannot survive a format pass, and it is safe because an ISO
- * 3166-1 code is two letters and a sector is kebab-case, so neither part can contain one.
+ * A solidus separates the fields because a NUL cannot survive a format pass.
+ * The solidus is safe because an ISO 3166-1 code has two letters and a sector is kebab-case.
+ * Neither field can contain a solidus.
  */
 const KEY_SEPARATOR = "/"
 
@@ -165,7 +166,8 @@ const LICENSE_DECISIONS: ReadonlyArray<readonly [statement: string, licenseID: s
 ]
 
 /**
- * Whole notes the research pass wrote in vocabulary this repository has retired, and what each becomes.
+ * Rewrites for complete notes that use retired vocabulary.
+ * Each entry records the replacement note.
  *
  * Each rewrite must fire at least once, so a pair left behind after the upstream
  * text changes fails the build.
@@ -186,8 +188,9 @@ const RETIRED_NOTE_REWRITES: ReadonlyArray<readonly [from: string, to: string]> 
 ]
 
 /**
- * Words this repository has removed from its vocabulary, and the plain synonym
- * each takes wherever the research pass used one.
+ * Rewrites for words removed from the repository's vocabulary.
+ *
+ * Each entry gives the plain synonym used when the research pass emitted that word.
  *
  * The substitution runs over every string this build emits, because `repo-health`'s
  * `bannedVocabulary` counter reads every tracked text file and a committed JSON artifact is one.
@@ -332,8 +335,9 @@ async function readJurisdictions(
 }
 
 /**
- * What one generated license decision is about: the access label the research pass recorded,
- * and the party whose terms a reviewer would open to decide it.
+ * One generated license decision records the access label from the research pass.
+ *
+ * It also identifies the party whose terms a reviewer would consult.
  */
 interface LicenseScope {
 	licenseID: string
@@ -371,8 +375,8 @@ function partyKey(value: string): string {
 }
 
 /**
- * The id fragment for a party: its key trimmed so one long ministry name does not dominate the id,
- * which is why {@link scopedLicenseID} compares the untrimmed key before accepting a match.
+ * The id fragment for a party is its key trimmed to prevent a long ministry key from dominating
+ * the id. {@link scopedLicenseID} compares the untrimmed key before accepting a match.
  */
 const ID_FRAGMENT_LENGTH = 48
 
@@ -383,8 +387,10 @@ function idFragment(partyKeyValue: string): string {
 /**
  * The license id for one source row, scoped to the party a reviewer would read.
  *
- * The id carries the publisher when the row names one and the source id when it does not,
- * and the jurisdiction is part of the scope because a publisher name is not unique across states.
+ * The id includes the publisher when that value exists.
+ * It uses the source id when the publisher value is empty.
+ *
+ * The jurisdiction also forms part of the scope because a publisher can use the same name in several states.
  */
 function scopedLicenseID(
 	statementID: string,
@@ -515,7 +521,7 @@ async function readSources(
 /**
  * Values the research pass wrote into a column it did not resolve per source.
  *
- * Carrying them onto a record would turn "nobody looked" into a value a consumer reads as an answer.
+ * Carrying them onto a record would turn "uninspected" into a value a consumer reads as an answer.
  */
 const UNRESOLVED_COLUMN_PLACEHOLDERS: ReadonlySet<string> = new Set(["varies", "country-specific", "unknown", "n/a"])
 
@@ -546,7 +552,8 @@ export function readUnresolvedColumn(value: string | undefined, column: string, 
 /**
  * Build the register and write it, refusing to write one that fails the audit.
  *
- * The output is tab-indented JSON, which `oxfmt` reformats a little further.
+ * The output is tab-indented JSON.
+ * `oxfmt` applies additional formatting.
  *
  * @throws When an input row carries a vocabulary this build has no mapping for, when a declared
  * rewrite never fires, or when the finished register fails {@linkcode auditAddressSourceRegister}.

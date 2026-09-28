@@ -195,8 +195,8 @@ export class PostcodeBinaryResolver {
 	 * Decodes the whole binary into an anchor lookup that maps each postcode to its
 	 * member countries and the mean of its non-zero centroids.
 	 *
-	 * Each member country gets weight 1 rather than a normalized share,
-	 * and a postcode with no non-zero centroid gets `0, 0`.
+	 * Each member country gets weight 1.
+	 * A postcode with no non-zero centroid gets `0, 0`.
 	 */
 	toAnchorLookup(): AnchorLookup {
 		const out: AnchorLookup = new Map()

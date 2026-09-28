@@ -1,8 +1,8 @@
 """The run's metrics, as a CSV one column per tag wide.
 
 Two row kinds share the file. A step row fills the loss and LR columns and leaves the val columns
-empty. an eval row fills the val columns. A reader tells them apart by whether `val_loss` is blank,
-which is why a step row writes empty strings rather than zeros.
+empty. An eval row fills the val columns. A reader distinguishes them by whether `val_loss` is blank.
+Step rows write empty strings rather than zeros.
 """
 
 from __future__ import annotations

@@ -17,8 +17,8 @@ import { describe, expect, test } from "vitest"
 const docsDir = resolvePackagePath("@mailwoman/docs")
 
 /**
- * Directory subpaths whose barrel re-exports a Node-only sibling, and
- * which the demo must therefore never import whole.
+ * Directory subpaths whose barrel re-exports a Node-only sibling.
+ * The demo must not import those barrels whole.
  *
  * `@mailwoman/resolver-wof-sqlite/fst` carries `fst/freshness`, and `/street` carries
  * `street/morphology-fst-loader`; both reach `@mailwoman/core/fs`, and the package

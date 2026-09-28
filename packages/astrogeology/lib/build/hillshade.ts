@@ -4,16 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   The hillshade build: publish the DEM as terrain-RGB tiles, so MapLibre's `hillshade` layer shades it at draw
- *   time. The archive carries encoded elevation rather than a shaded picture, which moves the colour decision into
- *   the style where a re-tint costs an edit rather than a rebuild.
+ *   time. The archive carries encoded elevation. The style chooses the color ramp, so a re-tint requires a style edit
+ *   instead of rebuilding the archive.
  *
- *   Average the elevations, never the encoded bytes: after the encode those bytes are a base-256 numeral, and the
- *   mean of two neighbours' high bytes is an elevation that is neither of them, so the overview pyramid is built
- *   with `nearest`, which decimates to real samples.
+ *   Average elevations before encoding. Each encoded byte is a base-256 numeral. Averaging neighboring high bytes
+ *   would produce an elevation that matches neither sample. The overview pyramid uses `nearest` to decimate real samples.
  *
- *   The XYZ tile scheme is angular — the same lon/lat grid on any sphere — so the epsg:4326 label only tells gdal
- *   which grid to tile, and the whole-body extent is assigned beside it so a grid in the body's metres is not read
- *   as degrees.
+ *   The XYZ tile scheme is angular and uses the same lon/lat grid on any sphere. The EPSG:4326 label tells GDAL
+ *   which grid to tile. The build assigns the whole-body extent beside it, so coordinates in the body's metres
+ *   do not read as degrees.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -94,8 +93,11 @@ export interface HillshadeBuildOptions {
 /**
  * The terrarium encoding's zero point: a height of `-TERRARIUM_DATUM_METRES` encodes as byte zero.
  *
- * MapLibre reads `height = (R * 256 + G + B / 256) - 32768`, so the envelope is ±32,768 m,
- * and the build refuses a DEM outside it rather than wrapping a height silently into a wrong one.
+ * MapLibre reads `height = (R * 256 + G + B / 256) - 32768`.
+ * The representable range is ±32,768 m.
+ *
+ * The build accepts DEMs only within this range.
+ * This keeps encoded heights within their valid values.
  */
 const TERRARIUM_DATUM_METRES = 32_768
 
@@ -145,9 +147,10 @@ export async function buildHillshadePMTiles(
 	const forTiling = resolvePath(scratch.path, "hillshade-4326.tif")
 	const mbtiles = resolvePath(scratch.path, "hillshade.mbtiles")
 
-	// Resample the elevations and declare the tiling grid, in one pass: averaging is meaningful here
-	// and nowhere later, and resizing to exactly the requested zoom's pixel grid is what fixes
-	// the tiling zoom, because the MBTiles driver reads it from the source resolution alone.
+	// Average the elevations while resampling.
+	// Later stages use encoded bytes, where averaging is meaningless.
+	// Resizing to the requested zoom's pixel grid sets the tiling zoom.
+	// The MBTiles driver reads that zoom from the source resolution.
 	const width = TILE_PIXELS * 2 ** options.maxZoom
 
 	const declare = [
@@ -168,8 +171,8 @@ export async function buildHillshadePMTiles(
 
 	await runFile("gdal_translate", declare)
 
-	// The range is read off the resampled raster rather than the source:
-	// it is the data that gets encoded, and it is far smaller.
+	// Read the range from the resampled raster because that is the data to encode.
+	// The resampled raster is much smaller than the source.
 	await assertWithinTerrariumEnvelope(resampled)
 
 	// Encode terrarium: R is the high byte of the offset height, G the low byte, B the fractional metre.

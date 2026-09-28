@@ -11,8 +11,10 @@ import { PathBuilder, type PathBuilderLike, createPathBuilderResolver, resolvePa
 import { $public } from "#env/index"
 
 /**
- * The per-user configuration root (`$MAILWOMAN_CONFIG_ROOT`, defaulting to the platform config directory):
- * where the license signing key lives, and anything else that is the operator's rather than the data's.
+ * The per-user configuration root is `$MAILWOMAN_CONFIG_ROOT`.
+ *
+ * It defaults to the platform config directory and stores the license signing
+ * key plus other operator-owned files.
  */
 export const configRootPath = createPathBuilderResolver<"~env/config-root">(() => $public.MAILWOMAN_CONFIG_ROOT)
 
@@ -30,9 +32,11 @@ export const dataRootPath = createPathBuilderResolver<"~env/data-root">(() => $p
  * Source downloads, corpora, weights and caches stay at the data root's top level
  * and do not pass through here.
  *
- * The group name is a bare string in every path a caller composes, so the compiler reports no error
- * when a call site keeps a pre-grouping prefix: such a call site resolves to a directory that
- * does not exist, and every reader of a layer database treats an absent file as an absent layer.
+ * The group name is a bare string in every path a caller composes,
+ * so the compiler reports no error when a call site keeps a pre-grouping prefix:
+ * such a call site resolves to a directory that does not exist.
+ * Every reader of a layer database treats an absent file as an absent layer.
+ *
  * Compose a database path through this function — via the owning package's `paths` export, for example
  * `wofDatabasePath` from `@mailwoman/resolver-wof-sqlite/paths` — so one edit moves all of them.
  */
@@ -42,18 +46,22 @@ export function databaseRootPath<T extends PathBuilderLike>(source: T) {
 
 /**
  * Path builder for the Who's On First git checkouts: `$MAILWOMAN_DATA_ROOT/src/wof-repos/`,
- * cloned sources rather than built artifacts, which `mailwoman gazetteer repos-sync` writes
- * and the admin, postcode and polygon builds read.
+ * They are cloned sources rather than built artifacts.
+ *
+ * `mailwoman gazetteer repos-sync` writes here.
+ * Admin builds read here.
+ * Postcode builds and polygon builds also read from here.
  */
 export const wofReposPath = dataRootPath("src", "wof-repos")
 
 /**
- * The dev-weights overlay for a locale: `$MAILWOMAN_DATA_ROOT/weights/<locale>/`,
- * kept centralized because multiple `link-dev-weights.ts` scripts write here
- * and `@mailwoman/neural` (`resolveWeights`) reads here.
+ * The dev-weights overlay for a locale is `$MAILWOMAN_DATA_ROOT/weights/<locale>/`.
  *
- * It lives outside git on purpose: weight binaries are not committed, and the data
- * root is shared across local checkouts and is never packaged.
+ * Multiple `link-dev-weights.ts` scripts write here.
+ * `@mailwoman/neural` (`resolveWeights`) reads from this directory.
+ *
+ * It lives outside git because the data root is shared across local checkouts and never packaged.
+ * Weight binaries stay outside the repository.
  */
 export function weightsOverlayPath(locale: string, ...segments: string[]) {
 	return dataRootPath("weights", locale.toLowerCase(), ...segments)

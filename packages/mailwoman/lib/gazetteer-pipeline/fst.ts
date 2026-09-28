@@ -14,7 +14,7 @@
  * Exclusion sources are the shipped libpostal dictionaries. The language set is uniform across locales
  * because a FR query hits the en-us FST on the default path.
  *
- * Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer, and
+ * Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer.
  * artifacts are written to `--output` (default: a `fst-per-locale-curated/` sibling of the shipped
  * `fst-per-locale/`) — staged beside, never overwriting.
  */
@@ -304,8 +304,8 @@ export async function computeSurfaceCountryCounts(source: PathBuilderLike): Prom
  * Memo for {@link computeSurfaceCountryCounts}, keyed on (path, mtimeMs, size) because the WOF admin
  * DB is a sealed readonly artifact a rebuild replaces, so a path-only key would serve a stale scan.
  *
- * The returned map is shared with every caller, which treats it as read-only.
- * a future mutating caller must copy first.
+ * The returned map is shared with every caller.
+ * Callers treat it as read-only. a future mutating caller must copy first.
  */
 const surfaceCountryCountsMemo = new Map<string, Map<string, number>>()
 
@@ -410,8 +410,8 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 	}
 
 	// Ambiguity classes ride the curated builds only.
-	// The uncurated control stays a pure pre-curation byte baseline, and one
-	// global scan is shared by every locale.
+	// The uncurated control stays a pure pre-curation byte baseline.
+	// Every locale shares one global scan.
 	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
 
 	if (surfaceCountryCounts) {

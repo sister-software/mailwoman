@@ -159,7 +159,7 @@ export interface NominatimStatusExtension {
 	 * Every artifact this process opened, including the ones that carry no manifest.
 	 *
 	 * An unstamped artifact reports its own absence rather than being omitted,
-	 * because an omission cannot be told apart from an artifact nobody opened.
+	 * because an omission cannot be told apart from an unopened artifact.
 	 */
 	artifacts: NominatimStatusArtifact[]
 }

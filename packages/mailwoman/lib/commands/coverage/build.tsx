@@ -63,8 +63,9 @@ const unit = (description: string, defaultValue: number) =>
 /**
  * The command specification for `mailwoman coverage build`.
  *
- * The CLI reference page `docs/articles/developers/reference/cli.mdx` is generated from
- * these option names and descriptions, and the docs check fails when the page is stale.
+ * The CLI reference page `docs/articles/developers/reference/cli.mdx` is generated
+ * from these option names and descriptions.
+ * The docs check fails when the page is stale.
  */
 export const spec = {
 	name: "build",

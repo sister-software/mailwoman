@@ -1,1 +1,4 @@
-"""Tests for `mailwoman_train.nn`: the encoder, its heads, and the CRF."""
+"""Tests for `mailwoman_train.nn`, including the encoder and its heads.
+
+The tests also cover the CRF.
+"""

@@ -89,7 +89,7 @@ STAGE3_BIO_LABELS: Final[tuple[str, ...]] = (
 #   "Eingang 2"   -> entrance="Eingang 2" ; "Stiege 4" -> staircase="Stiege 4"
 #
 # The existing STAGE3 ``unit`` tag stays the bare unit-id role rather than being renamed to
-# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. That rename, and
+# ``unit_id``, because a rename would rewrite every ``unit``-labeled corpus row. Renaming the tag and
 # reconciling the JP ``building_number``/``building_name`` declarations against
 # ``building_designator``/``building_id``, is a version-conditional batch for the activation bump
 # rather than piecemeal here.
@@ -148,11 +148,11 @@ STAGE3_JP_BIO_LABELS: Final[tuple[str, ...]] = (
 # region CN fine tags (the organizational ladder)
 
 # One tag, ``locality_unit``, for the whole ordinal chain China's rural and state-farm addresses
-# carry below the named settlement (``三分场八队``: No. 3 sub-farm, No. 8 production team, the xpcc
+# carry below the settlement ``三分场八队`` (No. 3 sub-farm, No. 8 production team, the xpcc
 # ``一四三团十二连``, and the villager group ``民权三组``). Which rung each generic names is a deterministic
 # reading of the suffix (``分场``/``大队``/``队``/``连``/``团``/``组``), done after decode by
 # ``@mailwoman/core``'s CN unit reader, so the label set does not grow with every ladder found.
-# The named head unit (``孟定农场``) is ``dependent_locality``. Mirrors ``core/types/component.ts``
+# The head unit ``孟定农场`` is ``dependent_locality``. Mirrors ``core/types/component.ts``
 # and schema.mdx. Like ``stage3-jp``, the Latin model never trains on it.
 CN_FINE_TAGS: Final[tuple[str, ...]] = ("locality_unit",)
 
@@ -202,7 +202,7 @@ ID_TO_LABEL: Final[dict[int, str]] = {i: label for label, i in LABEL_TO_ID.items
 # a non-default set, never silently collapse: a label-space mismatch that zero-fills is invisible
 # until fingerprinted.
 class LabelSet:
-    """One model's label vocabulary: tags, BIO labels, and the derived id maps."""
+    """One model's label vocabulary: tags/BIO labels and the derived id maps."""
 
     def __init__(self, name: str, tags: tuple[str, ...], bio_labels: tuple[str, ...]) -> None:
         self.name = name
@@ -246,8 +246,8 @@ IGNORE_INDEX: Final[int] = -100
 # region Locale conditioning (self-conditioning)
 
 # Country (ISO 3166-1 alpha-2) → locale class id for the auxiliary self-conditioning head.
-# The head predicts which country an address belongs to from the pooled sequence, and it is the
-# LocalePosterior the resolver consumes. The posterior does not feed the FiLM path: model.py sends
+# The head predicts which country an address belongs to from the pooled sequence.
+# The resolver consumes its LocalePosterior. The posterior does not feed the FiLM path: model.py sends
 # the same pooled vector through a sibling projection, so the aux loss shapes what both read rather
 # than one selecting the other.
 #

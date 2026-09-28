@@ -61,7 +61,8 @@ export interface GranularityReportMeta {
 function rungCell(country: CountryGranularity, rung: ComponentTag): string {
 	const measurement = country.rungs[rung]
 
-	// An absent measurement is never-measured, distinct from a measured zero, which renders as "0".
+	// An absent measurement means the rung was never measured.
+	// A measured zero renders as "0".
 	if (!measurement) return "—"
 
 	if (!measurement.nodes) return "0"

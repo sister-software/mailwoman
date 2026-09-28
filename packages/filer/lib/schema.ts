@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Typed schema for filer.db — the identity crosswalk read-side layer. Deliberately not a layer-interface artifact:
- * filer.db has no coordinate references until ASR arrives, and `@mailwoman/core/layers`' `layer_coverage` is H3-keyed,
- * so `filer_manifest` is filer.db's own single-row identity/provenance record — see {@link readFilerManifest}, which
- * copies `readLayerManifest`'s throw-unless-exactly-one discipline without reusing its table or its
- * tier/freshness-policy/spine-key validation.
+ * Typed schema for filer.db, the read-side identity crosswalk. filer.db has no coordinate references until ASR arrives.
+ * `@mailwoman/core/layers` keys `layer_coverage` by H3 cell, so `filer_manifest` has its own single-row
+ * identity/provenance record. {@link readFilerManifest} follows {@link readLayerManifest}'s requirement for exactly
+ * one row. It uses a separate table and skips layer-specific tier, freshness-policy and spine-key validation.
  *
  * `filer_node` is the crosswalk's join surface, one row per identifier instance (an FRN, a Form 499 ID, a spin, a BDC
  * `provider_id`, a holding- or management-company name), keyed on the synthetic
  * `node_id = "${identifier_type}:${identifier_value}"`; `filer_edge` asserts a relationship between two nodes as
  * reported by one source at one vintage.
  *
- * `valid_from` is mandatory on every edge and the primary key is the 4-tuple `(from_node_id, to_node_id, source,
- * valid_from)`, so two sources asserting the same relationship — or one source revising its assertion at a later
- * vintage — produce two rows rather than a silent overwrite, which is the point of carrying provenance.
+ * Every edge requires `valid_from`. The primary key is `(from_node_id, to_node_id, source, valid_from)`. Two sources
+ * asserting the same relationship therefore produce separate rows. One source can also revise its assertion at a
+ * later vintage. The key preserves both records and their provenance.
  * `FilerEdgeTable` has no `Generated<>`-wrapped columns, so `Insertable<FilerEdgeTable>` requires every field
  * including the nullable ones as an explicit `null`.
  *
@@ -33,14 +32,14 @@
  * different identifiers) and a corporate family (a holding/parent/subsidiary/management tree spanning several
  * filers) — see {@link FilerFamilyTable}.
  *
- * `naming_node_id` carries a family fact's naming provenance: `family_id` is a canonicalized slug, and re-running the
- * canonicalizer at read time would put a sealed, separately-versioned artifact's output at the mercy of a
- * designation-list edit in another workspace, with no manifest field pinning the canonicalizer's identity, so every
- * display name could silently disappear. See {@link FilerFamilyTable}.
+ * `naming_node_id` carries a family fact's naming provenance. `family_id` is a canonicalized slug. Re-running the
+ * canonicalizer at read time would make a sealed, versioned artifact depend on designation-list edits in another
+ * workspace. The manifest does not pin the canonicalizer's identity, so such an edit could remove every display name.
+ * See {@link FilerFamilyTable}.
  *
- * `filer_family` carries `assertion` + `match_score` too, because criterion 2 (`inferred never merges with
- * authoritative`) enforced on `filer_edge` alone stops at the table boundary while edgar writes inferred family
- * memberships, and `source` cannot stand in because `edgar-exhibit-21` writes both grades under one source name.
+ * `filer_family` also carries `assertion` and `match_score`. Criterion 2 requires inferred rows to remain distinct
+ * from authoritative rows. Enforcing it only on `filer_edge` would miss inferred family memberships written by Edgar.
+ * `source` cannot represent the distinction because `edgar-exhibit-21` writes both grades under one source name.
  */
 
 import { sql, type Kysely } from "kysely"
@@ -75,9 +74,11 @@ export const FilerIdentifierType = {
 export type FilerIdentifierType = (typeof FilerIdentifierType)[keyof typeof FilerIdentifierType]
 
 /**
- * How a `filer_edge` relationship was established: `Authoritative` when the source
- * document states it directly, `Inferred` when derived by name/address comparators,
- * which carries `match_score` and `evidence`.
+ * Records how a `filer_edge` relationship was established.
+ *
+ * `Authoritative` means the source document states it directly.
+ * `Inferred` means name or address comparators derived it.
+ * Inferred rows carry `match_score` and `evidence`.
  */
 export const FilerEdgeAssertion = {
 	Authoritative: "authoritative",
@@ -195,7 +196,7 @@ export interface FilerClusterTable {
 
 /**
  * Corporate-family membership, the distinction `filer_cluster` never had: one row asserts
- * that `node_id` belongs to `family_id` (named by `naming_node_id`'s raw spelling)
+ * that `node_id` belongs to `family_id` (identified by `naming_node_id`'s raw spelling)
  * under a {@link FilerRelationship} at a {@link FilerEdgeAssertion} strength,
  * reported by one source at one vintage and provenance-plural like `filer_edge`.
  */
@@ -220,8 +221,9 @@ export interface FilerFamilyTable {
 	valid_from: string
 	valid_to: string | null
 	/**
-	 * Inferred only and null for authoritative memberships, which
-	 * `filer_family_match_score_inferred_only` enforces in one direction.
+	 * Populated only for inferred memberships.
+	 *
+	 * `filer_family_match_score_inferred_only` enforces this direction.
 	 *
 	 * An inferred row carrying no score gives a caller no signal about how far to trust it, but matching
 	 * `filer_edge`'s permissiveness that direction is a writer's obligation rather than a constraint.
@@ -240,8 +242,9 @@ export interface FilerFamilyTable {
 export const FILER_FAMILY_SCHEMA_VERSION = 2
 
 /**
- * The current `schema_version` — version 3, which added {@link FilerRelationship.SupersededBy}
- * and made `filer_edge.valid_to` a column something actually writes.
+ * The current `schema_version`, version 3.
+ *
+ * It added {@link FilerRelationship.SupersededBy} and made `filer_edge.valid_to` an actively written column.
  *
  * No table changed shape between 2 and 3, so a version-2 artifact is structurally readable,
  * but it cannot be trusted about content: every ceased filer in a version-2 build
@@ -381,10 +384,14 @@ export async function createFilerClusterIndex(db: Kysely<FilerDatabase>): Promis
 }
 
 /**
- * Create `filer_family` with the composite PK `(node_id, family_id, naming_node_id, source, valid_from)`,
- * mirroring {@link createFilerEdgeTable}'s reasoning: the PK tells apart provenance, and both
- * `relationship` and `assertion` are deliberately excluded because one source grading the identical
- * membership two ways at one instant is a contradiction to reject rather than a plurality to store.
+ * Creates `filer_family` with composite primary key `(node_id, family_id, naming_node_id, source, valid_from)`,
+ * following {@link createFilerEdgeTable}'s reasoning.
+ *
+ * The key distinguishes provenance.
+ * `relationship` and `assertion` stay outside the key because one source assigning
+ * two grades to the same membership at one instant signals a conflict.
+ *
+ * The schema should reject that conflict before storing either row.
  *
  * `naming_node_id` is in the key and must stay there: two raw spellings can canonicalize
  * to the same `family_id`, and left out of the key their identical PK tuple would let
@@ -414,7 +421,8 @@ export async function createFilerFamilyTable(db: Kysely<FilerDatabase>): Promise
 		.addPrimaryKeyConstraint("filer_family_pk", ["node_id", "family_id", "naming_node_id", "source", "valid_from"])
 		.addCheckConstraint("filer_family_relationship_not_blank", sql`trim(relationship) != ''`)
 		.addCheckConstraint("filer_family_assertion_not_blank", sql`trim(assertion) != ''`)
-		// sql.lit rather than a bound parameter: SQLite's DDL cannot carry one, and the literal is derived from FilerEdgeAssertion rather than hand-typed so the constraint and the const can never drift apart.
+		// Use sql.lit because SQLite DDL cannot carry a bound parameter. Deriving the literal from FilerEdgeAssertion
+		// keeps the constraint aligned with the constant.
 		.addCheckConstraint(
 			"filer_family_match_score_inferred_only",
 			sql`match_score is null or assertion = ${sql.lit(FilerEdgeAssertion.Inferred)}`

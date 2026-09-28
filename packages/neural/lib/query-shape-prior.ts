@@ -6,7 +6,7 @@
  *   Soft-prior emission biases derived from `QueryShape`: when the query-shape subsystem has
  *   identified a known-format span (US ZIP, UK postcode, PO box, etc.) this module produces an
  *   additive bias matrix that nudges the encoder's per-token emissions toward the matching BIO
- *   label without overriding the encoder, which stays the authority on context-dependent calls.
+ *   label without overriding the encoder. The encoder stays authoritative on context-dependent calls.
  *
  *   The `QueryShape` value is consumed structurally and the format-name convention is imported from
  *   its owner rather than restated, because a restated convention drops the formats added after it.
@@ -124,9 +124,10 @@ export function buildEmissionPriors(
 }
 
 /**
- * The scoped locality bias, which fires only on the bare admin doubleton
- * (a region-ambiguous name immediately before its abbreviation) and only when the input holds no digits,
- * the abbreviation is the final token, and at most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
+ * The scoped locality bias fires only on the bare admin doubleton
+ * (a region-ambiguous name immediately before its abbreviation) and only
+ * when the input holds no digits, the abbreviation is the final token.
+ * At most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],

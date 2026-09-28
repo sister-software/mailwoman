@@ -17,8 +17,8 @@ from tests import paths
 PACKAGE_ROOT = paths.PACKAGE_ROOT
 SOURCE_ROOT = paths.SOURCE_ROOT
 
-#: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks: a
-#: new entry means a cycle was introduced, and an entry that stops matching means one was closed and
+#: Cycles this tree still carries, each with the move that closes it. The list only ever shrinks.
+#: A new entry means a cycle was introduced. An entry that stops matching means one was closed and
 #: the line should go. Both are assertions below, so neither can drift.
 KNOWN_CYCLES: frozenset[str] = frozenset()
 
@@ -32,9 +32,9 @@ def _module_name(path: Path) -> str:
 def _resolve(module: str | None, level: int, holder: str, *, is_package: bool) -> str:
     """The absolute module a `from ... import` names, given the module holding it.
 
-    Inside a package's `__init__.py` a single dot means that package. inside a plain module it means
+    Inside a package's `__init__.py`, a single dot means that package. Inside a plain module it means
     the package containing it. Conflating the two makes `from .x` in `a/b/__init__.py` resolve to
-    `a.x`, and if `a.x` happens to exist the check passes over a broken import.
+    `a.x`. The check then accepts a broken import if `a.x` happens to exist.
     """
     if level == 0:
         return module or ""
@@ -96,7 +96,7 @@ def test_no_deferred_import_dodges_a_cycle() -> None:
         tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
         for target, lineno in sorted(_imports(tree, holder, deferred=True, is_package=path.name == "__init__.py")):
             if _reaches(graph, target, holder):
-                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}, which imports back")
+                offenders.append(f"{path.relative_to(SOURCE_ROOT)}:{lineno} defers {target}; that target imports back")
 
     found = set(offenders)
     introduced = sorted(found - KNOWN_CYCLES)
@@ -107,7 +107,7 @@ def test_no_deferred_import_dodges_a_cycle() -> None:
 
 
 def test_every_deferred_import_names_a_module_that_exists() -> None:
-    """A deferred import is not checked until it runs, and most of them never run under test.
+    """A deferred import is checked only when it runs. Most deferred imports never run under test.
 
     Moving a module one directory deeper re-levels every relative import inside it. A module-level
     import that survives the move wrong fails at import. a deferred one fails at first call, on a
@@ -151,11 +151,11 @@ def _declared_names(tree: ast.Module) -> set[str]:
 def test_an_import_names_the_module_that_declares_it() -> None:
     """Importing a name from a module that only re-imported it pins the wrong file.
 
-    A plain module's import list is its own business rather than a public surface: ``trainer`` imports
-    ``build_optimizer`` so it can call it, and a test that took the name from there kept passing
-    after the function moved to ``optim.groups`` — so the move looked complete while six call sites
-    still named the old file. A package ``__init__`` is the exception: re-exporting is what it is
-    for, and so is an explicit ``__all__``.
+    A plain module's import list is an implementation detail. For example, ``trainer`` imports
+    ``build_optimizer`` so it can call it. A test that imported the name from ``trainer`` kept passing
+    after the function moved to ``optim.groups``. The move then looked complete even though six call
+    sites still referenced the old file. A package ``__init__`` is an exception because it defines a
+    re-export surface. An explicit ``__all__`` also defines that surface.
     """
     modules: dict[str, ast.Module] = {}
     packages: set[str] = set()
@@ -187,7 +187,7 @@ def test_an_import_names_the_module_that_declares_it() -> None:
                     if alias.name in declared[target] or f"{target}.{alias.name}" in submodules:
                         continue
                     offenders.append(
-                        f"{path.name}:{node.lineno} imports {alias.name} from {target}, which re-imports it"
+                        f"{path.name}:{node.lineno} imports {alias.name} from {target}; that module re-imports it"
                     )
 
     assert offenders == [], "imports naming a module that does not declare the name:\n" + "\n".join(offenders)

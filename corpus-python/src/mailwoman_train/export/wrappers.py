@@ -1,14 +1,14 @@
 """One wrapper per input combination the exporter can trace.
 
 Two constraints produce this file. The ONNX exporter prefers plain-tensor outputs, so the model's
-output object is unwrapped into a tensor or a tuple of them. And the dynamo tracer wants a FIXED
+output object is unwrapped into a tensor or tuple. The dynamo tracer wants a FIXED
 POSITIONAL SIGNATURE, so a single wrapper taking `**kwargs` cannot stand in for all of them — the
 combination a model was trained with decides which signature its graph gets.
 
-What every wrapper shares is the output assembly, and it is shared as a method rather than as seven
-copies: `logits` always, `locale_logits` when the model carries the self-conditioning head, and
-`span_scores` when it carries the span scorer. Both flags are plain Python attributes read at trace
-time, so the graph contains only the outputs that model has.
+Every wrapper uses the same output assembly method. The method always returns `logits`.
+It returns `locale_logits` when the model carries the self-conditioning head. It returns
+`span_scores` when the model carries the span scorer. Trace-time reads of the plain Python flags
+ensure the graph contains only the outputs supported by that model.
 
 `tests/mailwoman_train/export/test_channel_export.py` exports through every one of these.
 """
@@ -22,7 +22,7 @@ from torch import nn
 
 
 class PlainOutputs(nn.Module):
-    """Holds the model, and turns its output object into what the exporter traces."""
+    """Wrap the model and convert its output object into the structure the exporter traces."""
 
     def __init__(self, inner: nn.Module) -> None:
         super().__init__()

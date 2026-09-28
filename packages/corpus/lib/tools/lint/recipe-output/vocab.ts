@@ -9,7 +9,7 @@
  *
  * The check is country-scoped and full-count, because a token's correct tag is country-specific: "Paris" is a
  * locality in FR data and a street in US "Paris Ave". A cross-country aggregate mis-judges any country-specific
- * token, and a small sample is street-biased because the street sources dwarf the locality sources. Each
+ * token. A small sample is street-biased because street sources dwarf locality sources. Each
  * recipe-output token's base tag is therefore tallied scoped to the country the output uses it in, over a large
  * scan. Pure-numeric tokens are excluded because house_number and postcode are context-determined. An
  * affix-split flag (recipe output street_suffix/_prefix against base "street") is expected, because the loader's
@@ -117,10 +117,11 @@ function bump(table: Map<string, Map<string, number>>, key: string, sub: string)
 }
 
 /**
- * Read a corpus parquet into rows, projecting only tokens, labels, and country.
+ * Read a corpus parquet into rows, projecting only tokens, labels and country.
  *
- * The list columns ride out as JSON text (DuckDB `to_json`), the same trick the gazetteer
- * builders use for nested columns, and parse back to string arrays here.
+ * DuckDB `to_json` returns list columns as JSON text.
+ * Gazetteer builders use the same technique for nested columns.
+ * This function parses the text back to string arrays.
  */
 async function readRows(con: DuckDBConnection, path: string): Promise<CorpusRow[]> {
 	const result = await con.runAndReadAll(

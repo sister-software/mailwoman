@@ -11,9 +11,10 @@ import { Box, Text } from "ink"
 import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
- * Command specification for `gazetteer postal-city`, which adds the `postal_city_candidate`
- * table to a candidate database so that the resolver can map a postal city
- * and postcode to the geographic locality.
+ * Command specification for `gazetteer postal-city`.
+ *
+ * It adds the `postal_city_candidate` table to a candidate database so that the resolver
+ * can map a postal city and postcode to the geographic locality.
  *
  * The command modifies the candidate database in place and drops and recreates the table on each run.
  */

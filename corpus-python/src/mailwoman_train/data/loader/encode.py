@@ -1,9 +1,9 @@
 """One corpus row to one `EncodedExample`, through SentencePiece or the char path.
 
-Everything a channel needs is loaded once here, before the row loop, and passed to every
-`encode_row` call. The two paths are exclusive: the char path skips SentencePiece entirely,
-requires span-schema parquet files, and refuses a configured channel, because the channels project per
-SentencePiece piece and have no per-unit alignment yet.
+Load everything a channel needs before the row loop. Pass it to every `encode_row` call.
+The two paths are exclusive. The char path skips SentencePiece and requires span-schema parquet
+files. It refuses configured channels because they project per SentencePiece piece without per-unit
+alignment.
 """
 
 from __future__ import annotations
@@ -26,8 +26,8 @@ from .stream import iter_rows
 
 logger = logging.getLogger(__name__)
 
-#: The channel paths `char_mode` refuses. Each projects per SentencePiece piece, and the char path
-#: has no per-unit alignment for them yet, so a config naming one alongside `char_mode` is asking
+#: The channel paths `char_mode` refuses. Each projects per SentencePiece piece.
+#: The char path has no per-unit alignment for them yet, so a config naming one alongside `char_mode` is asking
 #: for a clue the encoder cannot place.
 CHANNEL_PATHS = (
     "anchor_lookup_path",
@@ -124,9 +124,9 @@ def load_lexicons(cfg_data: DataConfig) -> Lexicons:
 def encode_char_row(row: dict[str, Any], char: CharMode, label_set: Any) -> EncodedExample:
     """One row on the CharCNN path: per-unit char windows, labels straight from the span triple.
 
-    Span-schema is required here. The per-char label array comes from the span triple with no
-    whitespace-token quantization, and a token-only frozen parquet file has no honest char-level labels to
-    offer. Loud failure, never a silent fallback (#519).
+    Span-schema is required here. The per-char label array comes from the span triple without
+    whitespace-token quantization. A token-only frozen parquet file has no honest char-level labels
+    to offer. Fail loudly under #519 rather than falling back silently.
     """
     starts, ends, tags = row.get("span_starts"), row.get("span_ends"), row.get("span_tags")
     if starts is None or ends is None or tags is None:

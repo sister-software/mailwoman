@@ -115,8 +115,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 
 	// Brooklyn: parent_id points at NYC, so the parent_id closure produced exactly self + NYC and stopped.
 	// NYC's own parent_id is the -4 sentinel.
-	// Two ancestor rows, which the previous "<= 1 ancestor row" candidate test excluded,
-	// leaving the borough with no region ancestor.
+	// The previous "<= 1 ancestor row" candidate test excluded both ancestor rows.
+	// The borough then had no region ancestor.
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'borough')").run(brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'borough', 0)").run(brooklynID, brooklynID)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(brooklynID, nycID)
@@ -147,7 +147,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 	const result = await backfillAncestorsFromHierarchy(db, [dataRoot])
 
 	// continent + country + county + region = 4 new rows.
-	// Self is excluded, and the locality row (NYC) is already present, so neither is re-inserted.
+	// The query excludes self.
+	// The locality row (NYC) is already present, so the query skips it too.
 	expect(result.placesFixed).toBe(1)
 	expect(result.rowsAdded).toBe(4)
 
@@ -155,8 +156,8 @@ test("backfillAncestorsFromHierarchy: repairs a borough that INHERITED its paren
 		.prepare("SELECT ancestor_placetype AS pt, ancestor_id AS aid FROM ancestors WHERE id = ? ORDER BY pt")
 		.all(brooklynID) as Array<{ pt: string; aid: number }>
 
-	// The region ancestor is the whole point: without it the resolver's region-descendant filter
-	// cannot reach the borough, and "Brooklyn, NY" resolves to a Jefferson County hamlet instead.
+	// The region ancestor lets the resolver's region-descendant filter reach the borough.
+	// The filter without that ancestor resolves "Brooklyn, NY" to a Jefferson County hamlet.
 	expect(byPlacetype.find((row) => row.pt === "region")?.aid).toBe(nyStateID)
 	expect(byPlacetype.find((row) => row.pt === "county")?.aid).toBe(kingsCountyID)
 	expect(byPlacetype.find((row) => row.pt === "country")?.aid).toBe(usID)
@@ -211,8 +212,9 @@ test("backfillAncestorsFromHierarchy: leaves a place whose SOURCE hierarchy stop
 	db.exec("CREATE TABLE ancestors (id INTEGER, ancestor_id INTEGER, ancestor_placetype TEXT, lastmodified INTEGER)")
 
 	// Fatumafuti, American Samoa: WOF itself gives it {country_id, locality_id} and no region.
-	// The artifact matching that is correct rather than truncated, and because it has a
-	// country ancestor it is not a candidate at all, so no geojson probe happens for it.
+	// The artifact matching this row is complete.
+	// Its country ancestor excludes it from candidates.
+	// The resolver makes no GeoJSON probe for that row.
 	const id = 101_734_391
 	db.prepare("INSERT INTO spr (id, placetype) VALUES (?, 'locality')").run(id)
 	db.prepare("INSERT INTO ancestors VALUES (?, ?, 'locality', 0)").run(id, id)

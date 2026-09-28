@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The zone-keyed cell index: one accumulator per flood zone code, and the measurement the index
- *   resolution is chosen from.
+ *   This module builds a zone-keyed cell index with one accumulator per flood zone code.
+ *   It also reports the measurement used to choose the index resolution.
  *
  *   the classifier itself lives IN `@mailwoman/spatial`, re-exported below so this package's call sites and
  *   its `@mailwoman/flood/sdk/cells` subpath keep reading the same. `classifyFeatureCells` and the
@@ -90,8 +90,9 @@ export class FloodCellIndex {
 	 *
 	 * Populated for every touched cell and pruned at {@link FloodCellIndex.finish}
 	 * once the whole-cell sets are known.
-	 * A cell that turns out whole for its zone needs no candidate list, and
-	 * which cells those are is not decided until every feature has been seen.
+	 * A cell that is whole for its zone needs no candidate list.
+	 *
+	 * The index can identify those cells only after it sees every feature.
 	 */
 	readonly #candidates = new Map<string, Set<string>>()
 
@@ -138,15 +139,18 @@ export class FloodCellIndex {
 	}
 
 	/**
-	 * Compact the whole-cell sets, prune the candidate lists, and report the rows plus the measurement.
+	 * Compact the whole-cell sets and prune the candidate lists.
+	 * Return the rows with the resolution measurement.
 	 *
-	 * Compaction is where the size interface is paid: a zone's uniform interior collapses
-	 * parent-ward into a handful of coarse cells and only the fringe stays fine,
-	 * which is hierarchy-respecting run-length encoding.
+	 * Compaction is where the size interface is paid: a zone's uniform interior
+	 * collapses parent-ward into a handful of coarse cells.
+	 * Only the fringe stays fine.
+	 *
+	 * This is hierarchy-respecting run-length encoding.
 	 * It is applied to the whole set only.
 	 *
-	 * A partial cell's parent is not partial in any useful sense, and compacting it
-	 * would claim the fringe covers ground it does not.
+	 * A partial cell's parent includes area outside that cell.
+	 * Compacting it would claim the fringe covers that ground.
 	 */
 	finish(): {
 		zoneCells: Array<{ h3Cell: number; resolution: number; zoneCode: string; containment: "whole" | "partial" }>

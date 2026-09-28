@@ -2,17 +2,18 @@
  * @copyright Sister Software.
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Zip readers, in two flavours — buffer-in for archives already in memory, path-in for archives on disk.
+ * @file Zip readers for archives already in memory or stored on disk.
  *
- *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`, the right shape when a
- *   client has just downloaded one (`bdc/sdk/download.ts`) and the wrong shape for anything sizable, because adm-zip
- *   holds the archive and the decompressed member resident at once. The national address dumps under
- *   `$MAILWOMAN_DATA_ROOT` are 0.5–2.9 GB compressed and up to 9 GB unpacked, so the path-in readers below stream:
- *   yauzl seeks the central directory over a file handle and inflates one member on demand, at constant memory
- *   regardless of archive size.
+ *   {@link extractZip} and {@link extractSingleFileZip} take the whole archive as a `Buffer`.
+ *   That suits a client that just downloaded one (`bdc/sdk/download.ts`).
+ *   It does not suit large archives because adm-zip keeps both the archive and decompressed member in memory.
+ *   National address dumps under `$MAILWOMAN_DATA_ROOT` range from 0.5–2.9 GB compressed and reach 9 GB unpacked.
+ *   The path-based readers stream them. Yauzl seeks the central directory through a file handle and inflates one member on demand.
+ *   Memory use stays constant regardless of archive size.
  *
- *   The path-in readers also handle ZIP64, which the dumps need: a member above 4 GB parks `0xFFFFFFFF` in the 32-bit
- *   size and offset slots and carries the real values in the entry's extra field.
+ *   The dumps need the ZIP64 support in the path-based readers.
+ *   A member above 4 GB puts `0xFFFFFFFF` in the 32-bit size and offset slots.
+ *   The entry's extra field carries the actual values.
  */
 
 import { pipeline } from "node:stream/promises"
@@ -41,8 +42,8 @@ async function openStreamingArchive(
 	archivePath: PathBuilderLike,
 	options?: ZipNameOptions
 ): Promise<StreamingArchive & AsyncDisposable> {
-	// `decodeStrings: false` hands back the central directory's raw name bytes,
-	// which is the only way to read a name the archive never said the encoding of.
+	// `decodeStrings: false` returns the central directory's raw name bytes.
+	// This lets the caller read a name when the archive does not declare its encoding.
 	// See {@link ZipNameOptions}.
 	const archive = await openArchive(archivePath.toString(), options?.filenameEncoding ? { decodeStrings: false } : {})
 
@@ -52,13 +53,18 @@ async function openStreamingArchive(
 /**
  * How to read member names that the archive does not declare an encoding for.
  *
- * A zip flags UTF-8 names with bit 11, and yauzl decodes those correctly.
- * Without the flag the format says CP437, so a publisher writing CP949, Shift_JIS
- * or GBK names produces bytes that decode to mojibake and match no selector.
+ * A ZIP flags UTF-8 names with bit 11.
+ * Yauzl decodes those names correctly.
  *
- * Naming an encoding decodes the raw bytes instead, which is not the same as
- * recoding the mojibake back through CP437: that round trip needs a 256-entry table
- * and silently mangles any byte CP437 maps to a character it cannot invert.
+ * Without the flag, the format specifies CP437.
+ * A publisher writing CP949, Shift_JIS, or GBK names produces bytes that decode
+ * to mojibake and match no selector.
+ *
+ * Naming an encoding decodes the raw bytes directly.
+ * Recoding mojibake back through CP437 is a different operation.
+ *
+ * That round trip needs a 256-entry table.
+ * It silently mangles any byte CP437 maps to a character it cannot invert.
  *
  * @category Files
  */
@@ -66,8 +72,8 @@ export interface ZipNameOptions {
 	/**
 	 * An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`.
 	 *
-	 * Omit when the archive's names are ascii or properly flagged UTF-8,
-	 * which is every other archive this repository reads.
+	 * Omit when the archive's names are ASCII or properly flagged UTF-8.
+	 * Every other archive this repository reads uses one of those encodings.
 	 */
 	filenameEncoding?: string
 }
@@ -111,9 +117,9 @@ async function openEntryStream(entry: Entry, options?: ZipFileOptions): Promise<
 
 			contents.destroy()
 
-			// Wait for the teardown to finish rather than merely to start: `destroy()` returns
-			// before yauzl has released its read, and the archive's own disposer
-			// then raises `Cannot close while reading in progress`.
+			// Wait for the teardown to finish rather than merely to start.
+			// `destroy()` returns before yauzl releases its read.
+			// The archive's disposer then raises `Cannot close while reading in progress`.
 			await closed
 		},
 	})
@@ -280,8 +286,8 @@ export interface ExtractZipEntriesOptions {
 	 * Write each member under its basename rather than its archive-internal path,
 	 * flattening the tree — `unzip -j`.
 	 *
-	 * The shapefile archives this exists for carry their siblings in one directory,
-	 * and the readers downstream expect them flat.
+	 * The shapefile archives this option serves carry their siblings in one directory.
+	 * Downstream readers expect those files at the archive root.
 	 */
 	flatten?: boolean
 	/**

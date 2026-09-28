@@ -28,14 +28,17 @@ function fields(parts: Array<string | null>): string {
 // #region Rows
 
 /**
- * Three entries: the head's axis is nine countries wide, and three fit beside
- * the rest of the row on a narrow pane.
+ * Three entries fit beside each other because the head's axis is nine countries wide.
+ * The head's axis has the rest of the row on a narrow pane.
  */
 const LOCALE_HEAD_ENTRIES = 3
 
 /**
- * `systemSource` rides in parentheses to separate three reasons for the same system code: `auto` means
- * the locale head chose it, `pinned` the bundle or caller, and `off` that conventions never ran.
+ * `systemSource` rides in parentheses to separate three reasons for the same system code:
+ * `auto` means the locale head chose it.
+ *
+ * `pinned` means the bundle or caller supplied it.
+ * `off` means conventions never ran.
  */
 export function systemRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT
@@ -118,7 +121,7 @@ export function channelsRow(trace: GeocodeTrace | undefined): string {
 
 /**
  * What the decode did: algorithm, mean per-token confidence, component sequence,
- * priors that actually carried a nonzero bias, and repair passes that changed a label.
+ * priors that actually carried a nonzero bias and repair passes that changed a label.
  */
 export function decodeRow(trace: GeocodeTrace | undefined): string {
 	if (!trace) return ABSENT

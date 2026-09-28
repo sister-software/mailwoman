@@ -45,7 +45,7 @@ export interface GeocodeResult {
 	/**
 	 * Every parsed component, projected from the resolved tree.
 	 *
-	 * It includes locale-specific tags, such as `prefecture` and `block`, that the named fields omit.
+	 * It includes locale-specific tags, such as `prefecture` and `block`, that the fixed fields omit.
 	 */
 	components: Partial<Record<ComponentTag, string>>
 
@@ -140,7 +140,8 @@ export interface GeocodeResult {
 	 *
 	 * Each entry is resolved independently.
 	 * `in_winner_lineage` is `true` when the entry lies on the winner's ancestor chain,
-	 * `false` when it lies outside, and absent when the chain is unknown.
+	 * `false` when it lies outside.
+	 * The field is absent when the chain is unknown.
 	 */
 	hierarchy: HierarchyEntry[]
 

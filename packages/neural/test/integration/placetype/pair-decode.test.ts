@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   The placetype-pair prior's two registered decode-order test classes: a window the prior biases
- *   stays a united BIO span through the `enforceWordConsistency` heal, and a word the encoder is
- *   confident about is not overridden by the prior.
+ *   stays a united BIO span through the `enforceWordConsistency` heal. The prior leaves a word
+ *   unchanged when the encoder is confident about it.
  *
- *   Both fixtures are the comma-free two-word "Shoreditch London" shape, and `probeMode: "window"` is
- *   passed explicitly because the prior's default `"segment"` mode collapses this input to one inert
+ *   Both fixtures use the comma-free two-word "Shoreditch London" shape. They pass
+ *   `probeMode: "window"` explicitly because the prior's default `"segment"` mode collapses this input to one inert
  *   segment that would never reach the decode-order behavior under test.
  */
 
@@ -216,8 +216,8 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			col("B-locality"),
 		])
 
-		// The beta is a decoder term: the post-prior emission matrices are byte-identical
-		// across the two runs, and only the transition side moved.
+		// The beta is a decoder term: the post-prior emission matrices are byte-identical across the two runs.
+		// Only the transition side moved.
 		expect(withBeta.emissions).toEqual(betaLess.emissions)
 
 		// And the flip lands in the tree the user sees.

@@ -11,10 +11,12 @@ import { parseArguments } from "@mailwoman/core/scripting/arguments"
 /**
  * Argument parsing for the `map-tui` bin.
  *
- * `parseCLIArgs` is pure: it takes the argv array and an environment record, and answers with
- * a discriminated result (`help` / `version` / `browse`) or throws {@link CLIArgsError}.
- * Reading `process.argv` / `process.env` is the bin's job (./cli.ts), which keeps
- * every rejection path testable without a subprocess.
+ * `parseCLIArgs` is pure.
+ * It takes the argv array and an environment record, then returns a discriminated
+ * result (`help` / `version` / `browse`) or throws {@link CLIArgsError}.
+ *
+ * The bin (`./cli.ts`) reads `process.argv` and `process.env`.
+ * This keeps every rejection path testable without a subprocess.
  */
 
 /**
@@ -46,9 +48,9 @@ const MIN_ZOOM = 0
  */
 const MAX_ZOOM = 24
 
-// True geographic bounds rather than Web-Mercator's ±85.05113: the flag accepts any real latitude,
-// and the browser clamps the center to the projection's MERCATOR_LATITUDE_LIMIT itself
-// (see ./browser.ts) — rejecting 87 here would refuse a value the viewport handles fine.
+// The flag accepts any real latitude.
+// The browser clamps the center to the projection's MERCATOR_LATITUDE_LIMIT (see ./browser.ts) —
+// rejecting 87 here would refuse a value the viewport handles fine.
 const MIN_LAT = -90
 const MAX_LAT = 90
 const MIN_LON = -180
@@ -100,7 +102,7 @@ export interface CLIEnvironment {
  *
  * It doubles as the package's key reference, so the bindings listed here
  * and the ones ./input.ts decodes are the same list said twice.
- * A key added there without a line here is a key nobody finds.
+ * A key added there without a line here is missing from CLI help.
  */
 export const HELP_TEXT = `map-tui — the whole world in your terminal
 
@@ -149,7 +151,8 @@ function numericFlag(name: string, raw: string | undefined, fallback: number, mi
 }
 
 /**
- * Flags whose value is a number, and may therefore start with a dash.
+ * Flags with numeric values.
+ * Their values may start with a dash.
  */
 const NUMERIC_FLAGS = new Set(["--lat", "--lon", "--zoom"])
 
@@ -157,12 +160,12 @@ const NUMERIC_FLAGS = new Set(["--lat", "--lon", "--zoom"])
  * Joins `--lon -122.6` into `--lon=-122.6` before `parseArgs` sees it.
  *
  * `node:util`'s parser refuses a separate value that starts with a dash.
- * It cannot tell a negative number from a mistyped flag, and says so ("argument is ambiguous").
+ * It reports "argument is ambiguous" because a negative number can resemble a mistyped flag.
  *
  * Half the planet has a negative longitude, so the space-form has to work.
  *
- * The join is conditional on the next token parsing as a finite number, which leaves a
- * genuinely missing value (`--lon --zoom 3`) to `parseArgs` and its own error.
+ * The join occurs only when the next token parses as a finite number.
+ * `parseArgs` then handles a missing value such as `--lon --zoom 3` and returns its own error.
  */
 function joinNegativeNumbers(argv: readonly string[]): string[] {
 	const joined: string[] = []

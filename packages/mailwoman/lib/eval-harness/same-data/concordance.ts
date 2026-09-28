@@ -6,8 +6,8 @@
  *   Maps GeoNames gold entities to sets of WOF IDs through the WOF concordance table.
  *
  *   The benchmark grades by identity through this join because distance cannot tell two nearby
- *   same-named places apart. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
- *   IDs. The join admits a set only when every member passes the name, country, and distance checks in
+ *   places that share a name apart. A GeoNames ID can map to several city-tier WOF rows, so the gold is a set of
+ *   IDs. The join admits a set only when every member passes the name, country and distance checks in
  *   {@link readGoldSets}.
  */
 
@@ -40,7 +40,9 @@ export const GOLD_COHERENCE_KM = 25
  * Identifiers per `IN` clause.
  *
  * The value stays under SQLite's default limit of 999 host parameters.
- * Chunking keeps the filter in SQL, which avoids loading about two million `gn:id` rows into JavaScript.
+ * Chunking keeps the filter in SQL.
+ *
+ * This avoids loading about two million `gn:id` rows into JavaScript.
  */
 const IDENTIFIERS_PER_QUERY = 900
 
@@ -119,9 +121,10 @@ export interface GoldSets {
  * Reads the coherent gold set for each subject.
  *
  * The query joins the concordance to `spr` so the checks can read each WOF row's
- * placetype, name, country, and coordinate.
- * A subject yields a set only when all of its city-tier rows match the register's name,
- * sit in its country, and lie within {@link GOLD_COHERENCE_KM} of its coordinate.
+ * placetype, name, country and coordinate.
+ * A subject yields a set only when every city-tier row matches the register's name and country.
+ *
+ * Each row must also lie within {@link GOLD_COHERENCE_KM} of its coordinate.
  */
 export async function readGoldSets(databasePath: PathBuilderLike, subjects: readonly GoldSubject[]): Promise<GoldSets> {
 	using db = new DatabaseClient<WOFGazetteerDatabase>(databasePath, { readOnly: true })

@@ -3,12 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Integration test for `mailwoman skill install [--dest <dir>]` (#task-8): spawns the compiled CLI
- *   and asserts it copies the packaged Claude Code skill (`skills/mailwoman/`, shipped inside this
- *   package) into `<dest>/.claude/skills/mailwoman/`. Covers the default (cwd-rooted) destination, a
- *   second idempotent run, the explicit `--dest` override, and the clean-slate reinstall (a stale file
- *   a newer shipped skill dropped must be removed rather than left behind by a merge-only copy — the finding
- *   the task review caught: `cpSync` alone never deletes).
+ *   Integration test for `mailwoman skill install [--dest <dir>]`. It runs the compiled CLI and checks that the
+ *   packaged Claude Code skill reaches `<dest>/.claude/skills/mailwoman/`. Cases cover the default destination,
+ *   a second idempotent run, the explicit `--dest` override and reinstall removal of stale files.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -45,11 +42,14 @@ const CLI_TEST_TIMEOUT_MS = 120_000
 /**
  * Vitest's per-test budget for this whole file.
  *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
- * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
- * A per-test annotation has to be remembered on each new test, and the one that forgets
- * inherits the global 15s, which kills the test before the thing being measured can report,
- * surfacing as a bare timeout with no attribution.
+ * Set the timeout at file scope because every test spawns the compiled CLI.
+ * Startup takes seconds before assertions, then each test queues behind {@link withCLISpawnLockAsync}.
+ *
+ * A new test can omit its per-test annotation.
+ * It would inherit the global 15s timeout.
+ *
+ * That timeout can kill the operation before it reports.
+ * The failure then says timeout without attribution.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 

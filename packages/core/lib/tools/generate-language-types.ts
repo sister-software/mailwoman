@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regenerate `core/resources/languages/types.gen.ts` — the ISO 639-1 / 639-2 language-code types +
- *   label maps — from the committed `internal/languages.csv` resource dictionary.
+ *   Regenerate the language-code types and label maps in `core/resources/languages/types.gen.ts`.
+ *   The generator reads the committed `internal/languages.csv` dictionary.
  *
- *   ISO 639-2's /B (bibliographic) and /T (terminological) three-letter forms differ for exactly 20 languages, and
- *   Who's On First keys its name properties in /T: a /B-only union excluded `deu`, `fra` and `nld`, three tier-1
- *   locales, while admitting spellings the data never uses. Measured over the built gazetteer's `names` table,
- *   3,591,751 rows sit on the /T side of those 20 pairs against 247 on the /B side.
+ *   ISO 639-2 has /B (bibliographic) and /T (terminological) three-letter forms that differ for 20 languages.
+ *   Who's On First uses /T in its name-property keys.
+ *   A /B-only union excluded `deu`, `fra`, and `nld`, which identify three tier-1 locales.
+ *   It also admitted spellings absent from the data.
+ *   The built gazetteer's `names` table contains 3,591,751 rows with /T spellings and 247 rows with /B spellings.
  *
  *   /B is not dropped: `packages/codex/lib/country/official-languages.ts` lists both forms deliberately
  *   (`DE: ["de","deu","ger"]`) and 247 real rows carry one, so the union accepts either and both map to the same
@@ -67,12 +68,13 @@ export async function generateLanguageTypes(
 	report?.(`Reading ${dataSourcePath}`)
 
 	// `header` defaults true and skips the `alpha3-b,alpha2,English` line.
-	// The columns are read by position, so the mode is named rather than derived from it.
+	// The columns are read by position, so the mode is explicit rather than derived from them.
 	for await (const columns of CSVSpliterator.fromAsync<string[]>(dataSourcePath, { mode: "array" })) {
 		const alpha3b = columns[0] as string
 		const alpha2 = columns[1] as string
 		const labelsConcatenated = columns[2] as string
-		// Empty for the 163 languages whose two 639-2 forms agree, and a distinct code for the 20 that diverge.
+		// The two 639-2 forms agree for 163 languages.
+		// The 20 languages with differing forms receive a distinct code.
 		const alpha3t = (columns[3] as string | undefined) ?? ""
 
 		const labels = labelsConcatenated.split("; ")
@@ -82,8 +84,9 @@ export async function generateLanguageTypes(
 
 		entryLines.push([alpha2, alpha3b])
 
-		// The /T spelling is a first-class member of the same union, maps to the same label
-		// and alpha-2, and is the form WOF actually writes.
+		// The /T spelling is a first-class member of the same union.
+		// It maps to the same label and alpha-2 code.
+		// WOF writes this form.
 		// It goes to `alpha3tPairs` rather than `entryLines` because both lists build
 		// their maps from a `new Map([...])` where the last entry for a key wins,
 		// so appending it to `entryLines` would silently flip `Alpha2ToAlpha3b.get("de")`
@@ -198,7 +201,8 @@ export const Alpha3bToAlpha2: ReadonlyMap<Alpha3bLanguageCode, Alpha2LanguageCod
 `)
 
 	// This direction accepts a code, so it takes both spellings.
-	// The keys are distinct, none is overwritten, and `deu` answers `de` exactly as `ger` does.
+	// The keys are distinct and none is overwritten.
+	// `deu` answers `de` exactly as `ger` does.
 	for (const [alpha2, alpha3] of [...entryLines, ...alpha3tPairs]) {
 		await writeLine(`["${alpha3}", "${alpha2}"],`)
 	}

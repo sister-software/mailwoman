@@ -3,18 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The whitespace law's two guards, and the failure line a violation produces.
+ *   The whitespace law's two guards and the failure line a violation produces.
  *
- *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`, and the reason both exist is
- *   here in executable form: the key refuses a pair that changed anything besides whitespace, and the
- *   applicability rules refuse a pair the key accepts but whose spacing the transformation could never have
- *   moved. A space swapped for a newline clears the first and is refused by neither. It is refused because
- *   no named transformation produces it, which is how this law keeps the segmentation grammar out.
+ *   The required pair is `whitespaceBlindKey` and `whitespaceApplicability`. This test gives the reason for both:
+ *   the key refuses a pair that changed anything besides whitespace. The applicability rules refuse a pair the
+ *   key accepts when its spacing could not result from the transformation. A space swapped for a newline clears
+ *   the first check and passes the second. No listed whitespace transformation produces it, so the law keeps the
+ *   segmentation grammar out.
  *
- *   Every exclusion is exercised against a real committed board row rather than an invented string: the bare
- *   GB unit code, whose only space belongs to the code, and the single-token Polish row, which has no
- *   internal space at all. A rule demonstrated only on a synthetic input has not been shown to apply to
- *   anything the repo holds.
+ *   Every exclusion uses a real committed board row. The bare GB unit code has a space that belongs to the
+ *   code. The single-token Polish row has no internal space. A rule demonstrated only on a synthetic input
+ *   has not been shown to apply to any text in the repository.
  */
 
 import type { ConformanceOutcome } from "mailwoman/eval-harness/conformance/comparators"
@@ -321,9 +320,9 @@ describe("a seeded whitespace regression", () => {
 		expect(rendered).toContain("cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore")
 		// The comparator and both relations.
 		expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
-		// The mechanism: which component moved, and how.
+		// The mechanism reports the component that moved and the direction of the change.
 		expect(rendered).toContain('locality: ∅ → "Saint-Honoré"')
-		// The transformation, which the report line derives rather than storing.
+		// The report line derives the transformation rather than storing it.
 		expect(describeWhitespaceTransformation(findings[0]!.fixture)).toBe("tabbed")
 	})
 

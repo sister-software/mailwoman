@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The structural interfaces the browser runtime composes over: each `…Like` mirrors a package type by shape so a
- *   host bundle can name the classifier, the FST matcher, and the parse trace while those packages stay dynamic
+ *   host bundle can name the classifier, the FST matcher and the parse trace while those packages stay dynamic
  *   imports on the load path.
  */
 
@@ -120,7 +120,7 @@ export interface AssetLoadProgress {
 	 * It is `null` when none is in flight.
 	 * It is optional so a host that predates it still satisfies this interface.
 	 *
-	 * The step index cannot report the model, which is fetched before the first step is entered.
+	 * The step index cannot report the model because the runtime fetches it before entering the first step.
 	 */
 	setByteFraction?: (fraction: number | null) => void
 }

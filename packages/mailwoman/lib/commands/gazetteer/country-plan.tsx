@@ -5,15 +5,14 @@
  *
  *   `mailwoman gazetteer country-plan <cc>` — what moving a country between admin sources would involve.
  *
- *   Read-only by construction and not by flag: it performs no clone, makes no edit and runs no build, and
- *   the `--apply` half is a separate command precisely because the steps it would take are a clone measured
- *   in hundreds of megabytes and an edit to a file that is reviewed like code.
+ *   This command performs no clone, edit or build. Its read-only behavior comes from its implementation.
+ *   The separate `--apply` command clones hundreds of megabytes and edits a file reviewed like code.
  *
  *   Everything it reports is computed from the artifact rather than the lists: `defaults.ts` is a
  *   declaration and the WOF leg is presence-driven, so only the built database has the two reconciled.
  *
  *   Output goes through {@linkcode writeRawStdout} because an Ink frame as tall as the viewport emits
- *   `\x1b[3J`, which wipes the scrollback.
+ *   `\x1b[3J`. That code wipes the scrollback.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"
@@ -40,7 +39,7 @@ import { addCountry, removeCountry } from "#gazetteer-pipeline/recipe-edit"
 import { auditReposRoot, clonedCountries, reposSentence } from "#gazetteer-pipeline/repos/audit"
 
 export const description =
-	"Report which source serves a country's admin coverage today, and every edit moving it would require. " +
+	"Report which source serves a country's admin coverage today. List every edit required to move it. " +
 	"Read-only: clones nothing, edits nothing, builds nothing."
 
 /**
@@ -85,7 +84,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 
 			// The repos root is checked against the declared WOF list rather than substituted
 			// for it: the leg is presence-driven, so an undeclared clone becomes coverage
-			// while a declaration nobody cloned silently does not.
+			// while a declaration without a clone has no effect.
 			const reposRoot = wofReposPath()
 			const audit = await auditReposRoot(reposRoot)
 			const cloned = clonedCountries(audit)
@@ -122,7 +121,7 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (audit.duplicated.length) {
-				lines.push("", "checked out TWICE — two independent copies, which can diverge:")
+				lines.push("", "checked out TWICE — two independent copies that can diverge:")
 
 				for (const repo of audit.duplicated) {
 					const commits = Object.entries(repo.commits)
@@ -160,12 +159,12 @@ const CountryPlanCommand: CommandComponent<typeof spec, [string?]> = ({ options,
 			}
 
 			if (!(await adminDBAvailable(adminDB))) {
-				// Absence reported as absence: without the artifact there is no current state to
-				// move from, and guessing it from the lists is what this command exists not to do.
+				// Absence reported as absence: without the artifact there is no current state to move from.
+				// This command reads the artifact instead of guessing from the lists.
 				lines.push(
 					"",
 					`No admin gazetteer at ${adminDB}.`,
-					"The current source can only be read from the built artifact — the lists are a declaration, and the",
+					"The built artifact is the only source for current state. The lists are declarations. The",
 					"WOF leg is presence-driven, so they cannot answer which source is actually serving a country."
 				)
 

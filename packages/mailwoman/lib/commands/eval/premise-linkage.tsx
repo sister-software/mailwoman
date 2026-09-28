@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   With `--config <module>` the command loads a private run configuration and requires an agreed `--min-cell-size`;
- *   without it the shipped synthetic fixture is a self-check of the harness, never a measurement of a register.
+ *   With `--config <module>` the command loads a private run configuration. It requires an agreed `--min-cell-size`;
+ *   Without the config, the shipped synthetic fixture checks the harness. It never measures a register.
  *
  *   The salt is read from `$MAILWOMAN_PREMISE_LINKAGE_SALT` rather than taken as a flag, because a flag value is
  *   visible in the process table to every user on the host.
@@ -161,8 +161,8 @@ const EvalPremiseLinkage: CommandComponent<typeof spec> = ({ options }) => {
 }
 
 /**
- * No code here inspects the operator's specifier beyond handing it to the loader,
- * and `resolve` decides whether what came back is usable.
+ * This code passes the operator's specifier to the loader without inspecting it.
+ * `resolve` decides whether the loaded value is usable.
  */
 async function loadControlledConfig<T>(
 	specifier: string,
@@ -174,7 +174,8 @@ async function loadControlledConfig<T>(
 }
 
 /**
- * The synthetic fixture, its matching provider, and a pipeline stub ship together, so they cannot disagree.
+ * The synthetic fixture ships with its matching provider and a pipeline stub.
+ * They cannot disagree.
  */
 async function loadSyntheticConfig() {
 	const { syntheticFixtureAdapter, syntheticFixtureDeps, syntheticFixtureProvider } =

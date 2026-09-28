@@ -81,7 +81,7 @@ Full parse exact match on 4,535 golden entries is ~0.08 — meaning the model ge
 
 This observation is not fatal. The project is early-stage and the architecture is additive. It does mean the project's "what you can use today" story is limited, and the docs do not state that limitation.
 
-### The v0.5.0 scope bundle was too many variables
+### The v0.5.0 scope bundle combined independent variables
 
 v0.5.0 combined five architectural changes (new tokenizer, expanded corpus with 78K LLM-generated rows, phrase-prior input layer, hidden-size bump, and the reconcile stage) into one release. The training divergence forced a bisect to isolate which change was the destabilizer — exactly the "one change at a time" lesson the v0.4.0 retrospective itself recommended. The project learned this lesson in v0.4.0, acknowledged it in the retrospective, and then repeated the pattern in v0.5.0.
 

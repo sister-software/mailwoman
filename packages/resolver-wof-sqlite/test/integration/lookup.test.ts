@@ -96,8 +96,8 @@ const FIXTURE: FixturePlace[] = [
 		country: "FR",
 		lat: 48.85,
 		lon: 2.34,
-		// The canonical name also lives in `names` in a real WOF distribution,
-		// which the exact-match tier reads.
+		// A real WOF distribution also stores the canonical name in `names`.
+		// The exact-match tier reads that table.
 		alt_names: ["Paris", "Pari", "París", "パリ", "巴黎"],
 		ancestor_ids: [85_633_723],
 	},
@@ -174,8 +174,8 @@ const FIXTURE: FixturePlace[] = [
 		country: "US",
 		lat: 40.64,
 		lon: -73.95,
-		// The canonical name also lives in `names` in a real WOF distribution,
-		// which the exact-match tier reads.
+		// A real WOF distribution also stores the canonical name in `names`.
+		// The exact-match tier reads that table.
 		alt_names: ["Brooklyn"],
 		ancestor_ids: [85_633_147],
 	},
@@ -211,8 +211,8 @@ function buildFixtureDB(path: PathBuilderLike = ":memory:"): DatabaseClient<WOFD
 
 	// Schema mirrors the subset of columns the resolver reads from a real WOF SQLite
 	// distribution, with the full schema documented in `schema.ts`.
-	// In the WOF lifecycle `is_current = -1` (modern) and `is_current = 1` (legacy)
-	// both mean current, and `0` means not current.
+	// In the WOF lifecycle, `is_current = -1` (modern) and `is_current = 1` (legacy) both mean current.
+	// The value `0` means not current.
 	db.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY,
@@ -302,8 +302,8 @@ afterEach(() => {
 describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Paris" with no country/parent filter returns both Paris,FR and Paris,US as localities', async () => {
 		// Without a popularity signal the resolver has no reason to prefer one Paris over the other.
-		// Both are valid candidates, and callers disambiguate through country,
-		// parentID or an alternate-name match.
+		// Both are valid candidates.
+		// Callers disambiguate through country, parentID, or an alternate-name match.
 		const candidates = await lookup.findPlace({ text: "Paris" })
 		const names = candidates.map((c) => `${c.name},${c.country}`)
 		expect(names).toContain("Paris,FR")
@@ -336,7 +336,8 @@ describe("WOFSQLitePlaceLookup against an inline WOF fixture", () => {
 	test('"Brooklyn" locality query reaches the exact-named borough over the fuzzy "Brooklyn Park" locality', async () => {
 		// With the borough excluded, the only locality-typed match is the partial
 		// "Brooklyn Park" and the resolver mislocates to Minnesota.
-		// The expansion makes the exact-named borough reachable, and exact-match tiering puts it on top.
+		// The expansion makes the borough with the exact name reachable.
+		// Exact-match tiering puts it on top.
 		const candidates = await lookup.findPlace({ text: "Brooklyn", placetype: "locality" })
 		expect(candidates.length).toBeGreaterThan(0)
 		expect(candidates[0]).toMatchObject({ id: 421_205_765, name: "Brooklyn", placetype: "borough" })
@@ -479,7 +480,8 @@ describe("WOFSQLitePlaceLookup ctor", () => {
 		let ro: WOFSQLitePlaceLookup | undefined
 
 		try {
-			// With buildFTS omitted this opens the 0444 file read-only, and a write-mode open would throw here.
+			// Omitting buildFTS opens the 0444 file read-only.
+			// A write-mode open would throw here.
 			ro = new WOFSQLitePlaceLookup({ databasePath: dbPath })
 			const candidates = await ro.findPlace({ text: "Paris", country: "US" })
 			expect(candidates.length).toBeGreaterThan(0)

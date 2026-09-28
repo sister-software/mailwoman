@@ -7,8 +7,8 @@
  * (locality, region) pairs from the WOF admin DB's `ancestors` table and writes one PIX1 binary per
  * country to `$MAILWOMAN_DATA_ROOT/db/wof/pair-index-hierarchy-probe/`.
  *
- * Not a shipped-artifact build. Three safety properties keep an accidental wire-up inert: `delta: 0`,
- * a filename that does not match the loader's auto-wire pattern, and output under the data root
+ * This build does not produce a shipped artifact. Three safety properties keep an accidental wire-up inert: `delta: 0`,
+ * a filename that does not match the loader's auto-wire pattern, plus output under the data root
  * rather than any `neural-weights-*` workspace.
  *
  * Format is PIX1 verbatim, with extra header keys `edge`, `source` and `probeArtifact`; old readers
@@ -43,7 +43,8 @@ import { basename, PathBuilder, resolvePath } from "path-ts"
 import { TextSpliterator } from "spliterator"
 
 /**
- * The argument tail both hierarchy runners share: the country list, lower-cased, and the admin DB they read.
+ * The argument tail shared by both hierarchy runners: a lower-cased country
+ * list plus the admin DB they read.
  */
 export function resolveHierarchyRunInputs(values: { countries?: string; db?: string }): {
 	countries: string[]
@@ -99,7 +100,7 @@ export interface HierarchyPairIndexHeader extends PairIndexHeaderInput {
 	 */
 	edge: { child: "locality"; parent: "region" }
 	/**
-	 * WOF extraction provenance — enough to re-derive the artifact from the named DB.
+	 * WOF extraction provenance — enough to re-derive the artifact from the database listed in the manifest.
 	 */
 	source: {
 		kind: "wof-ancestors"

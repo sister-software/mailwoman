@@ -98,7 +98,7 @@ export function haversine(point1: GeoPointInput, point2: GeoPointInput, unit: Ea
 }
 
 /**
- * Great-circle distance on the named body. {@link haversine} is this function on Earth.
+ * Great-circle distance on the selected body. {@link haversine} is this function on Earth.
  * A caller with a body passes it here.
  *
  * The Null-Island sentinel of the object form applies: a `(0, 0)` input answers `NaN`.

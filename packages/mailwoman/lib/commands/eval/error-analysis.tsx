@@ -5,7 +5,7 @@
  *
  *   `mailwoman eval error-analysis` is the categorized failure report over the golden eval set, the
  *   pre-publish 2pp promote eval. It builds the classifier via `createScorer` in strict ship-config
- *   mode so a `--model` candidate is graded in-distribution, and `--no-strict`
+ *   mode so a `--model` candidate is graded in-distribution. `--no-strict`
  *   warns-and-continues for legacy pre-anchor models.
  */
 

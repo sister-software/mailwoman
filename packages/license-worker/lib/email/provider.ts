@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The one thing the worker asks of an email provider: deliver a license message under the invoice id. The id rides
- *   as the idempotency key, and a provider that honours one (Resend) deduplicates a retried send after a failed
- *   ledger write. one that does not (Cloudflare's binding) can deliver that retry twice, and the ledger's
+ *   The worker asks an email provider to deliver a license message under the invoice id. The provider uses that id
+ *   as the idempotency key. Resend deduplicates a retried send after a failed ledger write. Cloudflare's binding can
+ *   deliver that retry twice. The ledger's
  *   `email_state` is what keeps the window to that one crash.
  */
 
@@ -22,10 +22,10 @@ export interface LicenseEmail {
 	 */
 	agreement: string
 	/**
-	 * Present while the license's plaintext secret is still pending, which is
-	 * until the first claim reads and clears it: the first message carries it, and.
+	 * Present while the plaintext refresh secret is pending.
 	 *
-	 * Therefore, does a re-send before that claim.
+	 * The first claim reads and clears it.
+	 * A resend before that claim therefore includes the secret.
 	 */
 	refreshSecret?: string
 }

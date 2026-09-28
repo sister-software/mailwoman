@@ -5,9 +5,9 @@
  * @file `diffGeocode` — saying why the answer moved rather than just that it did.
  *
  *   A distance delta is the geocoding equivalent of a component map: it reports that the answer moved and not which of
- *   three unrelated problems caused it. These tests pin the three apart, because the fix differs completely — a parse
- *   change is a model problem, a repoint is a ranking or gazetteer problem, and a tier change is data coverage, which
- *   no amount of model work touches.
+ *   three unrelated problems caused it. These tests distinguish the three because each needs a different fix.
+ *   A parse change is a model problem. A repoint is a ranking or gazetteer problem. A tier change is a data-coverage
+ *   problem that model work cannot change.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -72,7 +72,8 @@ describe("diffGeocode", () => {
 
 	it("attributes a move to RETRIEVAL when the parse held and a span repointed", () => {
 		// Same text, same tag, different place.
-		// A ranking or gazetteer-coverage problem, and the only signal that says so is the placeID.
+		// This is a ranking or gazetteer-coverage problem.
+		// The placeID is the only signal that shows it.
 		const before: GeocodeArm = {
 			tree: tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5074, -0.1278, 2]),
 			lat: 51.5074,
@@ -99,8 +100,8 @@ describe("diffGeocode", () => {
 
 	it("attributes a move to the TIER when parse and places both held", () => {
 		// The same components fell through to a coarser rung because a rooftop lookup missed.
-		// No model change touches this, and reporting it as a regression against
-		// the model wastes a training run.
+		// Model changes cannot affect this.
+		// Reporting it as a regression against the model wastes a training run.
 		const node = tree(["locality", "London", 13, 19, 0.9, "wof:101750367", 51.5074, -0.1278, 2])
 		const before: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "address_point", uncertaintyM: 5 }
 		const after: GeocodeArm = { tree: node, lat: 51.5074, lon: -0.1278, tier: "admin", uncertaintyM: 4000 }

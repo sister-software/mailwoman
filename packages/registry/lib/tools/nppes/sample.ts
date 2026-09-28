@@ -18,8 +18,8 @@ import { addr, MIN_GROUP_SIZE, norm, NPPES_COLUMNS as C } from "#tools/shared"
 /**
  * One synthetic input row for the matcher.
  *
- * `npi` is the hidden NPI-level truth, and `entityID` is the site-level
- * entity-level truth (subpart-collapsed).
+ * `npi` is the hidden NPI-level truth.
+ * `entityID` is the site-level entity-level truth (subpart-collapsed).
  */
 export interface MessyRow extends Record<string, string> {
 	npi: string
@@ -40,7 +40,8 @@ export interface MessyRow extends Record<string, string> {
 export interface NPPESStateSample {
 	rows: MessyRow[]
 	/**
-	 * The sampled NPIs, which are the true-entity count at the NPI grain.
+	 * The sampled NPIs.
+	 * Their count is the true-entity count at the NPI grain.
 	 */
 	keptNpis: Set<string>
 	/**
@@ -94,8 +95,10 @@ export interface NPPESMultiSampleOptions {
 /**
  * Build the benchmark's input records from the real registry, one bucket per requested state.
  *
- * Two passes over two files, and the second cannot break early, because the address-frequency
- * table needs every registry row even after the sample is full.
+ * Two passes read the two files.
+ * The second pass cannot break early because the address-frequency table needs
+ * every registry row even after the sample is full.
+ *
  * The per-bucket `keptNpis.size < maxNpisPerState` test bounds only the sample branch.
  */
 export async function buildNPPESStateSamples(
@@ -227,7 +230,7 @@ export async function buildNPPESStateSamples(
 }
 
 /**
- * Build one state's benchmark input records, which is {@linkcode buildNPPESStateSamples} with a single bucket.
+ * Build one state's benchmark input records using {@linkcode buildNPPESStateSamples} with a single bucket.
  */
 export async function buildNPPESSample(
 	options: NPPESSampleOptions,

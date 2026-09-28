@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file `walkNodes` yields document order, so a `find` over it and the flat component map name the same span when a tag
- *   occurs twice — as in `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921`, whose two `venue` spans the named slot answered with the second and the map with the first.
+ *   occurs twice — as in `Village of Fae, Camino Real, Carmel-By-The-Sea, CA 93921`, whose two `venue` spans put the second in the slot and the first in the map.
  */
 
 import { collectNodes, decodeAsJSON, slotNodes, walkNodes } from "@mailwoman/core/decoder"

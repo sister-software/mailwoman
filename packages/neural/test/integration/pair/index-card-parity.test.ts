@@ -18,9 +18,10 @@ import { repoRootPath } from "@mailwoman/core/paths"
 import { describe, expect, test } from "vitest"
 
 /**
- * Which weights package ships which country's index, and where that package's card describes it:
- * the card key is spelled out per package because the naming is genuinely inconsistent, and a
- * guard that guessed it would silently pass on a card whose block had been renamed or dropped.
+ * Shows which weights package ships each country's index and where its card describes the index.
+ *
+ * The card key is listed per package because the names differ.
+ * A guessed key could silently pass when a card's block had been renamed or dropped.
  */
 const PACKAGES = [
 	{ pkg: "neural-weights-en-us", country: "us", cardKeys: ["us_artifacts", "pair_index_us_bin"] },
@@ -113,9 +114,10 @@ describe("pair-index ↔ model-card parity", () => {
 				).toContain(String(facts.transitionBeta))
 			}
 
-			// The whole-edge parent bias is default-on for locales that have a board and off
-			// (no header key) for those that do not, and both directions are graded: an omitted shipped
-			// parentDelta misdescribes the behaviour, while a claimed one the artifact lacks is worse.
+			// The whole-edge parent bias is default-on for locales that have a board
+			// and off (no header key) for other locales.
+			// The test grades both directions: an omitted shipped parentDelta misdescribes
+			// the behaviour, while a claimed one the artifact lacks is worse.
 			// The assertion spells out `parentDelta=<n>` because δ and β are both 5 today,
 			// so a substring match on "5" would pass on a card that never mentioned the parent at all.
 			const parentClaim = `parentDelta=${facts.parentDelta}`

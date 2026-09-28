@@ -36,7 +36,7 @@ export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
 export const DEFAULT_ABLATION_TOLERANCE_KM = 5
 
 /**
- * One cell of the deletion-ablation map: what deleting `component` costs in `locale`, on a named board.
+ * One cell of the deletion-ablation map: what deleting `component` costs in `locale`, on the selected board.
  */
 export interface AblationCell {
 	component: AblatableComponent

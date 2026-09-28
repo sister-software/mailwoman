@@ -19,8 +19,9 @@ import {
 import { DEFAULT_FOLD_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * Command specification for `gazetteer release`, which folds GeoNames, builds the
- * candidate database, promotes it and publishes it to R2.
+ * Command specification for `gazetteer release`.
+ *
+ * It folds GeoNames, builds the candidate database, promotes it and publishes it to R2.
  *
  * The publish step reads R2 credentials from the `RCLONE_S3_PUBLIC_*` environment variables.
  */

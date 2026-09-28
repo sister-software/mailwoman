@@ -7,7 +7,7 @@
  *   against the bytes an operator holds rather than against prose written once and left to drift.
  *
  *   A bundle whose artifacts carry no publisher column reports `none-recorded-in-the-artifacts` rather than an
- *   empty census, and an artifact that is not on disk is reported as absent rather than contributing zero rows.
+ *   empty census. An artifact that is not on disk is reported as absent rather than contributing zero rows.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -49,7 +49,7 @@ export interface BundleSourceCensusResult {
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
-	 * Artifacts read, and artifacts the data root does not hold.
+	 * Artifacts read and artifacts the data root does not hold.
 	 *
 	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
@@ -64,7 +64,7 @@ export interface BundleSourceCensusResult {
 	totalRows: number
 	/**
 	 * What could not be read, one message per artifact: an artifact present
-	 * but unreadable is named here rather than counted as absent.
+	 * but unreadable rows receive their own status here.
 	 */
 	problems: string[]
 }

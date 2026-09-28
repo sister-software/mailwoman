@@ -26,9 +26,10 @@ import { ByteFormatter, type ByteFormatterOptions } from "#fs/formatters"
 /**
  * Attempts to stat a file or directory.
  *
- * A `URL` is passed through rather than stringified: `node:fs` accepts a `file:`
- * URL object and rejects the string it prints, so `stat("file:///etc/hostname")`
- * is enoent, which this function reports as absence.
+ * The function passes a `URL` through without stringifying it.
+ * `node:fs` accepts a `file:` URL object and rejects its printed string.
+ *
+ * `stat("file:///etc/hostname")` therefore reports `enoent`, which this function maps to absence.
  *
  * @throws If the path exists but cannot be statted for some reason other than non-existence.
  */
@@ -45,8 +46,8 @@ export function tryStat(pathBuilderLike: PathBuilderLike | URL): Promise<Stats |
 /**
  * Stat a file or directory, raising enoent when the path is absent.
  *
- * The throwing counterpart to {@linkcode tryStat}: reach for this one where absence is a
- * defect the caller wants reported, and for {@linkcode tryStat} where absence is an answer.
+ * Use this function when absence is a defect the caller wants reported.
+ * Use {@linkcode tryStat} when absence is an answer.
  */
 export function statPath(path: PathBuilderLike | URL): Promise<Stats> {
 	return stat(path instanceof URL ? path : path.toString())
@@ -210,9 +211,10 @@ export function isSymbolicLink(path: PathBuilderLike | URL): Promise<boolean> {
 /**
  * Whether the process may write to a path.
  *
- * A permission question rather than an existence one: `access` answers about the
- * caller's credentials against the file as it stands, and absence reads as `false`,
- * which is what a caller checking "can I write here" means.
+ * This function checks permission rather than existence.
+ * `access` applies the caller's credentials to the path as it stands.
+ *
+ * It returns `false` for an absent path, as callers asking "can I write here" expect.
  */
 export function isWritable(path: PathBuilderLike): Promise<boolean> {
 	return access(path.toString(), constants.W_OK).then(

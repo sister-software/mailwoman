@@ -1,7 +1,7 @@
-"""The checkpoint directory name, which the writer and every reader now take from one function.
+"""The function that supplies checkpoint directory names to the writer and every reader.
 
 `save_checkpoint` zero-padded to six digits while `export_onnx` interpolated the step verbatim, so the invocation
-`export_onnx`'s own docstring documented — `--step=60000` — raised FileNotFoundError against a directory named
+`export_onnx`'s own docstring documented — `--step=60000` — raised FileNotFoundError against a directory called
 `step-060000`. `--step=060000` worked.
 
 A step reaches a Modal entry point as a string, so the name has to accept either spelling and produce the one the

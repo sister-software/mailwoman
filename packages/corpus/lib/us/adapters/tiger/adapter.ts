@@ -7,7 +7,7 @@
  *
  *   tiger/Line is the canonical US street + locality dataset published by the Census Bureau as a
  *   **public-domain** product (no ODbL share-alike concerns for US-only corpora). Coverage extends
- *   to every named street segment + every incorporated place + CDP across the 50 states + DC + the
+ *   to every street segment with a name + every incorporated place + CDP across the 50 states + DC + the
  *   five primary territories — substantially better US street-name coverage than OSM, especially in
  *   rural areas.
  *

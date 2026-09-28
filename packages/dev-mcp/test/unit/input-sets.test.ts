@@ -98,8 +98,8 @@ describe.skipIf(!havePanel)("resolveInputSet — panel", () => {
 	})
 
 	it("carries truth_type per row rather than blending it away", async () => {
-		// The benchmark plan's own rule: a headline @1km lives or dies on truth_type,
-		// and a caller that cannot see it reports a number about its own row mix.
+		// The benchmark plan's own rule: a headline @1km lives or dies on truth_type.
+		// A caller that cannot see it reports a number about its own row mix.
 		const set = await resolveInputSet({ kind: "panel", version: "v2" })
 
 		expect(set.inputs.some((row) => row.truthType === "rooftop")).toBe(true)
@@ -160,7 +160,8 @@ describe("resolveInputSet — parity", () => {
 
 describe.skipIf(!haveGolden)("a corpus that cannot be read", () => {
 	it("refuses rather than resolving to an empty set", async () => {
-		// An empty set measures zero differences, which reads as "no effect" rather than "no run occurred".
+		// An empty set measures zero differences.
+		// That reads as "no effect" instead of "no run occurred".
 		await expect(resolveInputSet({ kind: "golden", version: "v9.9.9-nonexistent" })).rejects.toThrow(
 			/resolved no rows|not found/
 		)
@@ -214,8 +215,8 @@ describe.skipIf(!haveHoldoutUS)("resolveInputSet — holdout", () => {
 
 	it("refuses an unknown source rather than resolving to an empty set", async () => {
 		// `source` arrives from an MCP tool call as untrusted JSON, so the refusal is
-		// a runtime check on a value the signature forbids, and `Reflect.set` puts it
-		// in the field without asserting "de" is a HoldoutSource.
+		// a runtime check on a value the signature forbids.
+		// `Reflect.set` puts it in the field without asserting "de" is a HoldoutSource.
 		const unknownSource: Extract<InputSetRef, { kind: "holdout" }> = { kind: "holdout" }
 
 		Reflect.set(unknownSource, "source", "de")

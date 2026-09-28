@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Filling one stratum of a pre-registered panel: shuffle the eligible rows once with the registered seed,
- *   take in order until the target is reached, and report what was dropped and why.
+ *   Fill one stratum of a pre-registered panel. Shuffle eligible rows once with the registered seed.
+ *   Take rows in that order until the target is reached. Report each dropped row and the reason.
  *
- *   Shared by every stratified benchmark here, because the part that must not vary between them is the part a
- *   second copy would get subtly wrong — the draw order decides which rows a frozen panel contains, and a
- *   stratum that counted its own drops differently would report a coverage hole as a panel choice.
+ *   Every stratified benchmark uses this function so its draw order stays consistent. The draw order decides
+ *   which rows a frozen panel contains. A stratum with separate drop-counting logic could report a coverage
+ *   hole as a panel choice.
  *
- *   A stratum decides for itself whether a row is gradeable, because the gold is not always the row being
- *   iterated: the same-data homograph rule alternates between two bearers, and a check against the iterated
- *   one would refuse rows whose actual gold is fine.
+ *   Each stratum decides whether a row is gradeable. Under the same-data homograph rule, gold alternates between
+ *   two bearers. Checking only the iterated row would refuse rows whose actual gold is valid.
  */
 
 import { SeededRandom } from "@mailwoman/core/random"
@@ -68,7 +67,7 @@ export interface FillStratumOptions<Item, Row> {
 }
 
 /**
- * Fill one stratum, and report the census beside it.
+ * Fill one stratum and report its census.
  */
 export function fillStratum<Item, Row>(
 	options: FillStratumOptions<Item, Row>
@@ -82,8 +81,8 @@ export function fillStratum<Item, Row>(
 	let droppedUnbuildable = 0
 
 	// A copy, so the caller's array is untouched.
-	// The order this walk produces is what selects the rows a frozen panel contains,
-	// and a published record names that panel's digest.
+	// This walk's order selects the rows in the frozen panel.
+	// A published record stores the panel's digest.
 	// So the generator is `SeededRandom`'s, seeded the way `SeededRandom` seeds it,
 	// rather than a normalisation re-typed here.
 	const shuffled = [...eligible]
@@ -149,10 +148,14 @@ export interface PanelSubject {
 }
 
 /**
- * Rows grouped by their lowercased ascii name, which is how both builders ask whether a name is borne once.
+ * Group rows by lowercased ASCII name.
  *
- * Built once per build and passed down: the question is asked per candidate row,
- * and re-deriving the grouping for each would walk the whole register every time.
+ * Both builders use these groups to find names with one bearer.
+ *
+ * Build this grouping once and pass it down.
+ * Each candidate row needs a lookup.
+ *
+ * Rebuilding the groups for each row would walk the whole register repeatedly.
  */
 export function groupByFoldedName<Subject extends PanelSubject>(subjects: readonly Subject[]): Map<string, Subject[]> {
 	const byName = new Map<string, Subject[]>()

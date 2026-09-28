@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The align phase: read each adapter's canonical rows, refuse what the license policy and the register
- *   refuse, fan out the synthesis, align each row, and route it to a split or to the quarantine pile.
+ * @file The align phase reads each adapter's canonical rows and applies license and register refusals.
+ *   It expands synthesis and aligns each row. It then routes the result to a split or quarantine.
  *
- *   The phase appends to four files and writes a checkpoint at every adapter boundary, so an interrupted
- *   build resumes at the next adapter instead of aligning everything again.
+ *   The phase appends to four files. It writes a checkpoint at each adapter boundary, allowing an interrupted
+ *   build to resume at the next adapter without aligning earlier adapters again.
  */
 
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
@@ -65,7 +65,9 @@ export interface AlignPhaseOptions {
 }
 
 /**
- * What the align phase counted, which the build's manifest and its frozen source record are built from.
+ * The counts produced by the align phase.
+ *
+ * The build uses them in its manifest and frozen source record.
  */
 export interface AlignPhaseResult {
 	aligned: number
@@ -80,13 +82,16 @@ export interface AlignPhaseResult {
 	ineligibleSources: Map<string, readonly string[]>
 
 	/**
-	 * The license cache this phase read through, whose `refusedValues()` names every value it refused.
+	 * The license cache used by this phase.
+	 *
+	 * Its `refusedValues()` method returns every value it refused.
 	 */
 	licenses: LicenseVerdictCache
 }
 
 /**
- * The mutable state of one align run, which the checkpoint both restores and records.
+ * The mutable state of one align run.
+ * The checkpoint restores and records this state.
  */
 interface AlignTally {
 	aligned: number
@@ -306,8 +311,9 @@ export async function runAlignPhase(opts: AlignPhaseOptions): Promise<AlignPhase
 		}
 
 		// The checkpoint is written at the adapter boundary, after the bytes it counts have reached disk.
-		// Mid-adapter recovery is not offered: the largest adapter aligns in about twenty minutes,
-		// and a row offset inside one adapter's file would still have to replay that adapter's synthesis.
+		// Mid-adapter recovery is unavailable.
+		// The largest adapter takes about twenty minutes to align.
+		// A row offset inside one adapter's file would still require replaying that adapter's synthesis.
 		await Promise.all(ALIGN_OUTPUTS.map((name) => flushStream(streams[name])))
 
 		completed.push(adapterRun.adapter_id)

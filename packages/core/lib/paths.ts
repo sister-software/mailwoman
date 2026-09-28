@@ -5,9 +5,9 @@
  *
  *   Path homes: the repo root, the data root, the package roots.
  *
- *   Extracted from `core/utils` (2026-09): a shelf is not a home, and these two modules carried 366 of
+ *   Extracted from `core/utils` (2026-09): these two modules carried 366 of
  *   ~540 consumer references through that door — 68% of everything `@mailwoman/core/utils` was asked for.
- *   `repo` and `data-root` also reference each other, which made them the shelf's only internal edge.
+ *   `repo` and `data-root` reference each other. That was the shelf's only internal edge.
  */
 import { createPathBuilderResolver, createPathResolver, dirname, resolvePath, type Join } from "path-ts"
 
@@ -48,19 +48,18 @@ type PathReflection = typeof PathReflection
  * The directory path of the current file, post-compilation.
  */
 // `import.meta.url`, not `import.meta.dirname`: the Docusaurus config loader
-// (jiti 1.x, a CommonJS transform) rewrites only `import.meta.url`, and this module
-// sits on that loader's import path through `@mailwoman/core/utils`.
+// (jiti 1.x, a CommonJS transform) rewrites only `import.meta.url`.
+// This module sits on that loader's import path through `@mailwoman/core/utils`.
 const __dirname = dirname(fileURLToPath(import.meta.url)) as Join<[RepoRootAlias, ...PathReflection], "/">
 
 /**
  * The absolute path to the root of the repository.
  *
- * There is no source/compiled branch here any more, and that is a property of the layout
- * rather than a simplification anyone is free to undo.
+ * Source and compiled files use one branch because the layout gives them matching depths.
  * Source lives at `core/lib/paths.ts` and its emit at `core/out/paths.js`: `lib/` and `out/`
  * are siblings, so both trees put this file at the same depth and one constant serves both.
  *
- * If this file moves to a different depth, {@link PathReflection} must move with it.
+ * If this file moves to a different depth, update {@link PathReflection} with it.
  * A constant that counts the wrong depth resolves `core/data/` reads to a path that does not exist.
  *
  * If a future layout change breaks that equality — moving this file to a different

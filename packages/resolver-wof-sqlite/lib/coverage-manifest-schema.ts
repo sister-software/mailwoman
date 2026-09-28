@@ -5,8 +5,8 @@
  * @file Schema and read/write helpers for the candidate gazetteer's coverage manifest.
  *
  *   The manifest holds two country-keyed tables. `country_coverage` records each measured country's hard-filter
- *   verdict. A missing row means the country was never measured, and `hard_filter_safe = 0` means it was measured and
- *   failed. `country_bbox` holds coarse plausibility boxes, and a missing row never trips the guard.
+ *   verdict. A missing row means the country was never measured. `hard_filter_safe = 0` means measurement found the
+ *   filter unsafe. `country_bbox` holds coarse plausibility boxes. A missing bbox row never trips the guard.
  */
 
 import {
@@ -26,7 +26,8 @@ import { hasTable } from "#sqlite-utils"
  */
 export interface CountryCoverageTable {
 	/**
-	 * The upper-case ISO 3166-1 alpha-2 code, which is the primary key.
+	 * The upper-case ISO 3166-1 alpha-2 code.
+	 * This field is the primary key.
 	 */
 	country: string
 	/**
@@ -58,7 +59,8 @@ export interface CountryCoverageTable {
  */
 export interface CountryBBoxTable {
 	/**
-	 * The upper-case ISO 3166-1 alpha-2 code, which is the primary key.
+	 * The upper-case ISO 3166-1 alpha-2 code.
+	 * This field is the primary key.
 	 */
 	country: string
 	lat_min: number
@@ -173,7 +175,9 @@ export async function writeGazetteerCoverageManifest(
 /**
  * Reads the coverage manifest from an open candidate database.
  *
- * It returns `undefined` when neither table exists, and consumers then fall back to the code constants.
+ * It returns `undefined` when neither table exists.
+ * Consumers then fall back to the code constants.
+ *
  * The reads are synchronous because the candidate lookup calls this from its constructor.
  */
 export function readGazetteerCoverageManifest<DB>(db: DatabaseClient<DB>): GazetteerArtifactCoverage | undefined {

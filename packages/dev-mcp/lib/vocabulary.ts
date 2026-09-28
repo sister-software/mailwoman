@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Whether the tokenizer can represent an input at all: SentencePiece marks what it cannot represent by falling back
- * to raw UTF-8 bytes, and the per-character report is required because a fallback share has no meaning without a
+ * Whether the tokenizer can represent an input at all. SentencePiece marks unrepresented text by falling back
+ * to raw UTF-8 bytes. The per-character report is required because a fallback share has no meaning without a
  * control arm.
  */
 
@@ -22,8 +22,8 @@ interface VocabularyLine {
 	/**
 	 * Pieces per character.
 	 *
-	 * Latin text against this tokenizer runs around 0.4, and a figure near or above 1.0
-	 * means the string is being spelled out rather than tokenized.
+	 * Latin text against this tokenizer runs around 0.4.
+	 * A figure near or above 1.0 means the string is being spelled out rather than tokenized.
 	 */
 	piecesPerCharacter: number
 	/**
@@ -172,6 +172,8 @@ export async function runVocabulary(options: VocabularyOptions): Promise<Vocabul
 }
 
 /**
- * Internals reached by the unit tests, which drive a stub tokenizer rather than loading the real 9 MB model.
+ * Internals reached by unit tests.
+ *
+ * The tests drive a stub tokenizer instead of loading the real 9 MB model.
  */
 export const __testing = { characterCoverage, measureLine, total }

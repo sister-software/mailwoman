@@ -19,8 +19,8 @@
  *   - `streamingSha256()`: thin wrapper around `node:crypto` so the runner can hash jsonl output as it
  *       streams (avoids re-reading the jsonl for the manifest checksum).
  *   - `loadLibpostalDictionary(language, filename)`: the curated libpostal dictionary reader the
- *       street-decompose modules share — the one read this module performs. everything else here is
- *       pure, and other side-effecting code goes in `./runner.ts`.
+ *       street-decompose modules share. It is the only read this module performs. Everything else here is
+ *       pure. Other side-effecting code belongs in `./runner.ts`.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -110,7 +110,9 @@ export const defaultAdapterRegistry = new InMemoryAdapterRegistry()
  * Deterministic content-addressed source id.
  *
  * For adapters whose upstream source has no native primary key (CSV rows, GeoJSON features),
- * the runner expects a stable id so dedup, holdout manifests, and resumability work across reruns.
+ * the runner expects a stable id so deduplication and holdout manifests remain consistent across reruns.
+ * The id also supports resumability.
+ *
  * This helper produces one by hashing the adapter id and a canonical serialization
  * of the components dict (keys sorted, values verbatim).
  *
@@ -129,8 +131,8 @@ export function stableSourceID(adapterID: string, components: Partial<Record<Com
  *
  * Every key handed in is sorted and hashed either way.
  *
- * Only the key vocabulary differs, and the narrow signature above is what stops
- * an adapter hashing a misspelled component name.
+ * Only the key vocabulary differs.
+ * The narrow signature above prevents an adapter from hashing a misspelled component name.
  */
 export function stableSourceIDFromParts(
 	adapterID: string,
@@ -206,10 +208,11 @@ export function splitStreetLine(line: string): SplitStreetLine | null {
  *
  * `resourceDictionaryPath` already resolves both layouts — `core/data/...` from source
  * and from the packaged `out/` tree.
- * The candidate list this replaced named it twice and then guessed a third path off `process.cwd()`,
+ * The candidate list this replaced listed it twice and then guessed a third path off `process.cwd()`,
  * and swallowed every error while probing, so a corrupt dictionary reported as a missing one.
  *
- * The largest libpostal dictionary is 8.4 KB, and each caller runs this once per process at module load.
+ * The largest libpostal dictionary is 8.4 KB.
+ * Each caller loads it once per process at module load.
  */
 export async function loadLibpostalDictionary(language: string, filename: string): Promise<Set<string>> {
 	const text = await readLocalTextFile(resourceDictionaryPath("libpostal", language, filename))
@@ -230,8 +233,9 @@ export async function loadLibpostalDictionary(language: string, filename: string
  * Canonical dedup key for a row.
  *
  * Two rows that share this key are treated as duplicates and only the first wins.
- * The key is built from `country`, the sorted `components` dict, and a normalized
- * `raw` (lower-cased, whitespace collapsed).
+ * The key combines `country` with the sorted `components` dictionary.
+ *
+ * It also includes normalized `raw` text with lowercase letters and collapsed whitespace.
  *
  * License and provenance fields are excluded, so two adapters emitting the
  * same address produce the same key.

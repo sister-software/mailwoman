@@ -23,8 +23,9 @@ export const ObligationRefusal = {
 	 */
 	ShareAlike: "share-alike",
 	/**
-	 * An identifier whose obligations this repository has not recorded,
-	 * which carries unknown obligations rather than none.
+	 * An identifier whose obligations this repository has not recorded.
+	 *
+	 * The identifier carries unknown obligations rather than none.
 	 */
 	Unresolved: "unresolved",
 } as const

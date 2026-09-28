@@ -41,7 +41,9 @@ interface CountryReferenceEntry {
  */
 export interface GenerateCountryReferenceOptions {
 	/**
-	 * Overrides the output path, which defaults to the committed `codex/country/reference-data.ts`.
+	 * Overrides the output path.
+	 *
+	 * The default is the committed `codex/country/reference-data.ts`.
 	 */
 	out?: string
 }

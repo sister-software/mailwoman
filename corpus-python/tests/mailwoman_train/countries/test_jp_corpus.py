@@ -101,7 +101,7 @@ def test_bare_chome_leaves_an_empty_district() -> None:
 
 def test_non_trailing_chome_is_left_whole() -> None:
     # 2,316 rows carry 丁目 somewhere other than the end. Re-rendering a form we have not read grows
-    # labels nobody verified, so it stays one district span.
+    # unverified labels, so it stays one district span.
     assert split_street("一丁目北") == ("一丁目北", None)
 
 
@@ -235,8 +235,8 @@ def test_stage3_jp_is_a_superset_so_the_universal_tags_are_still_legal() -> None
 def test_verify_rejects_a_tag_outside_the_active_label_set() -> None:
     record = render(URBAN, "native")
     record["span_tags"] = list(record["span_tags"])
-    # A STAGE4 tag: defined in labels.py, absent from stage3-jp, and therefore silently collapsed to
-    # O at load if the builder ever emitted one.
+    # A STAGE4 tag is defined in labels.py but absent from stage3-jp.
+    # If emitted by the builder, it would collapse to O during loading.
     record["span_tags"][0] = "unit_designator"
     with pytest.raises(RuntimeError, match="outside stage3-jp"):
         verify_record(record, TAG_SET)

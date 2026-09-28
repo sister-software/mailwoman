@@ -91,7 +91,8 @@ async function parseFeature(
 
 	const mzIsCurrent = props["mz:is_current"]
 
-	// The label point is preferred over the geometry point, and each counts only with both coordinates.
+	// The label point is preferred over the geometry point.
+	// Either point counts only with both coordinates.
 	const hasLbl = typeof props["lbl:latitude"] === "number" && typeof props["lbl:longitude"] === "number"
 	const hasGeom = typeof props["geom:latitude"] === "number" && typeof props["geom:longitude"] === "number"
 

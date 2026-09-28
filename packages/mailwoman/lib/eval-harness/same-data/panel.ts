@@ -3,12 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The panel builder for the same-data benchmark. It executes the frozen selection rules over GeoNames
- *   and emits the rows, and it contains no judgement of its own.
+ *   Builds the panel for the same-data benchmark. It applies the frozen selection rules to GeoNames and emits rows.
+ *   The builder does not make independent selection judgments.
  *
  *   Eligibility, query construction, gold, fill order and the sampling seed all come from
- *   `benchmark-definition.json`, committed before any row was inspected. A change to what it selects is a
- *   change to the definition, which bumps the version and the content hash.
+ *   `benchmark-definition.json`, committed before inspecting any row. Changes to its selection rules require a
+ *   definition version and content-hash update.
  *
  *   A row's entity, name, coordinate and population come from `cities15000.txt` under CC-BY-4.0.
  *   `readGoldSets` turns the geonameid into the ids the candidate backend answers with. A geonameid whose
@@ -16,7 +16,7 @@
  *   the gazetteer and reporting it keeps a coverage hole from reading as a panel choice.
  *
  *   Half the homograph rows carry a bearer that is not the most populous. A panel whose gold is always the
- *   largest bearer would be satisfied by a population prior alone, and that prior is under test.
+ *   largest bearer would be satisfied by a population prior alone. The benchmark tests that prior.
  */
 
 import { compareByCodePoint } from "@mailwoman/core/strings/compare"
@@ -55,8 +55,10 @@ const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
  * The postal dump's admin1 code column.
  *
  * `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} puts the admin1 name at index 3
- * because that is what a corpus row renders.
- * This panel keys on the code beside it, which is stable across the register's language variants.
+ * because corpus rows render that value.
+ * This panel keys on the adjacent code.
+ *
+ * The code stays stable across the register's language variants.
  */
 const POSTAL_ADMIN1_CODE_COLUMN = 4
 
@@ -77,8 +79,9 @@ export interface GeoNamesCity {
 /**
  * Parse a GeoNames main-table dump.
  *
- * `header: false` matches the headerless dump, and a spliterator that assumed
- * a header would eat the first row.
+ * `header: false` matches the headerless dump.
+ * A spliterator that assumes a header would consume the first row.
+ *
  * A per-country dump (`FR.txt`) carries the same columns and parses here unchanged.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
@@ -125,8 +128,8 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * Taking the first makes the choice a property of the source instead of a
- * second seeded draw nobody registered.
+ * Taking the first makes the choice a property of the source instead of a second
+ * seeded draw absent from the registry.
  * The file carries 1.8 million rows, so it is streamed and only the index is held.
  */
 export async function readPostcodeByAdmin(path: string): Promise<Map<string, string>> {
@@ -174,8 +177,8 @@ export interface PanelBuildResult {
 /**
  * Build the panel by executing the frozen selection rules.
  *
- * Strata are filled in the definition's order and draw from disjoint geonameid pools:
- * every row a stratum takes is marked used, and a later stratum's eligibility excludes it.
+ * Strata follow the definition's order and draw from disjoint geonameid pools.
+ * The builder marks each selected row as used, so later strata exclude it from eligibility.
  */
 export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const { definition, cities, countryNames, postcodeByAdmin, goldSets } = inputs
@@ -241,8 +244,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// The gold alternates between the largest bearer and a smaller one, and the qualifier
-	// alternates between the country's English name and the bearer's admin1 code.
+	// The gold alternates between the largest bearer and a smaller one.
+	// The qualifier alternates between the country's English name and the bearer's admin1 code.
 	const homographEligible = cities
 		.filter((city) => {
 			const bearers = byName.get(city.asciiname.toLowerCase())!
@@ -255,8 +258,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 
 			if (populations[1]! < populations[0]! * HOMOGRAPH_CONTEST_SHARE) return false
 
-			// Only the two largest bearers need a gradeable gold: the stratum's gold alternates between them,
-			// and every other bearer is a distractor, which needs no identity join to distract.
+			// Only the two largest bearers need a gradeable gold because the stratum alternates between them.
+			// Every other bearer is a distractor and needs no identity join.
 			return bearers
 				.toSorted((left, right) => right.population - left.population)
 				.slice(0, 2)
@@ -356,8 +359,8 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// `goldPresent: false` is what the recorder reads to know which candidates to remove,
-	// and what the scorer reads to pick the denominator.
+	// The recorder reads `goldPresent: false` to determine which candidates to remove.
+	// The scorer reads it to choose the denominator.
 	take("gold_absent", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 

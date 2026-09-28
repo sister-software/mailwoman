@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Evaluate the coarse-placer: in-distribution accuracy, per-class results, and calibration (ECE)
- *   on the held-out test split, plus the abstention story on the multi-script set. Off-map scripts
+ *   Evaluate the coarse-placer's in-distribution accuracy, per-class results and calibration (ECE)
+ *   on the held-out test split. Also report abstention on the multi-script set. Off-map scripts
  *   (Cyrillic, Arabic, Thai, …) should draw low confidence and abstain, the "probably off my loaded
  *   map" behavior the design wants.
  *

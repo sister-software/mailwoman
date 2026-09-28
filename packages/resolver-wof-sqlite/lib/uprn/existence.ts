@@ -4,11 +4,11 @@
  * @author Teffen Ellis, et al.
  * @file The consult `./lookup.ts`'s docstring instructs: "callers building negative evidence must consult
  *   `readLayerCoverage`, not this reader alone." A bare `null` from `nearestUPRN` is two different facts — no uprn here,
- *   or nobody surveyed here — and this is the only place that separates them. It answers an {@link Exclusion} or `null`,
+ *   or an unsurveyed area — and this is the only place that separates them. It answers an {@link Exclusion} or `null`,
  *   so a caller cannot read an unsurveyed cell as an empty one by accident.
  *
  *   `radiusM` is a caller'S parameter with no default. There is no radius that is correct for both "which property is
- *   this coordinate" and "is this street built at all", and picking one here would bury that choice where nobody
+ *   this coordinate" and "is this street built at all", and picking one here would bury that choice where reviewers
  *   reviewing an exclusion can see it.
  */
 

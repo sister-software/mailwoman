@@ -41,8 +41,9 @@ import type { ResolvedEntity, SourceRecord } from "#types"
  * Cheap, parse-free normalization for the address-frequency key: uppercase,
  * collapse whitespace, drop punctuation.
  *
- * The count is over distinct entities that share an address, and it is computable
- * over millions of rows without geocoding.
+ * The count covers distinct entities that share an address.
+ * It is computable over millions of rows without geocoding.
+ *
  * A crowded clinic or billing address is weak identity evidence.
  * A lonely address is strong.
  */
@@ -118,8 +119,9 @@ export function normalizePhone(raw: string | null | undefined): string | null {
 /**
  * {@link normalizePhone} under the probes' stricter interface, where only a full line counts.
  *
- * The result is the last 10 digits when the input carries at least 10,
- * and `""` otherwise, never a partial digit string.
+ * Returns the last 10 digits when the input contains at least 10.
+ * Returns `""` for shorter input, so callers never receive a partial digit string.
+ *
  * Callers guard on truthiness, so `""` reads as no comparable phone rather than a weaker key.
  */
 export function normalizePhoneStrict(raw: string | null | undefined): string {
@@ -179,7 +181,9 @@ export interface DefaultModelOptions {
 	 * Closed-vocabulary code-set discriminators drawn from {@link SourceRecord.attributes},
 	 * such as NPPES taxonomy codes or license numbers.
 	 *
-	 * The attribute value is a whitespace-joined set of codes, and agreement means any shared code.
+	 * The attribute value is a whitespace-joined set of codes.
+	 * Any shared code counts as agreement.
+	 *
 	 * This is set overlap rather than string similarity, since `207R00000X`
 	 * and `207Q00000X` are different specialties despite near-identical text.
 	 *
@@ -284,7 +288,8 @@ export function buildDefaultModel(opts: DefaultModelOptions = {}): FellegiSunter
 }
 
 /**
- * The default blocking keys: a union of location, canonical address, phone, and email.
+ * The default blocking keys include location and canonical address.
+ * They also include phone and email.
  */
 export function defaultBlockingKeys(): BlockingKey<SourceRecord>[] {
 	return [
@@ -354,8 +359,9 @@ export interface ResolveConfig {
 	 */
 	requireCorroboration?: boolean
 	/**
-	 * Add a normalized-phone comparison to the default model, which is strong evidence
-	 * and the secondary corroborator that keeps corroboration from killing name-drift recall.
+	 * Add a normalized-phone comparison to the default model.
+	 *
+	 * Phone agreement provides strong secondary evidence when entity names have drifted.
 	 *
 	 * Ignored if `model` is supplied.
 	 */
@@ -445,7 +451,8 @@ export interface ResolveResult {
 /**
  * Resolve source records into canonical entities: block, score, cluster.
  *
- * Every record lands in exactly one entity, and a record with no confident link is its own singleton entity.
+ * Every record belongs to exactly one entity.
+ * A record without a confident link forms a singleton entity.
  */
 export function resolveEntities(records: readonly SourceRecord[], config: ResolveConfig = {}): ResolveResult {
 	const addressFrequency =

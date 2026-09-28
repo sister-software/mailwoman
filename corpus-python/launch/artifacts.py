@@ -1,4 +1,4 @@
-"""Turning a checkpoint into the artifact that ships: fp32 ONNX, int8, and the way back out.
+"""Turning a checkpoint into the artifact that ships: fp32 ONNX, int8 and the way back out.
 
     modal run -m launch.train_remote::export_onnx --output-dir=/data/output-<run> --step=40000
     modal run -m launch.train_remote::quantize_onnx --fp32-path=… --int8-path=…
@@ -32,7 +32,7 @@ def export_onnx(
     """Export a checkpoint to ONNX.
 
     Env-var fallbacks (MAILWOMAN_EXPORT_OUTPUT_DIR / MAILWOMAN_EXPORT_STEP /
-    MAILWOMAN_EXPORT_TOKENIZER) apply when a CLI param is unset, and a CLI param wins.
+    MAILWOMAN_EXPORT_TOKENIZER) apply when a CLI param is unset. A CLI param takes precedence.
 
     ``--model-dir`` bypasses the ``{output_dir}/checkpoints/step-{step}`` layout and loads a flat
     ``from_pretrained`` dir directly (``pytorch_model.bin`` + ``config.json``), writing ``model.onnx``
@@ -73,9 +73,9 @@ def export_onnx(
     export_to_onnx(model, out_path, opset=17, max_length=128, pad_token_id=tokenizer.pad_id)
     print(f"ONNX exported: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
-    # A span-scorer model's ONNX carries a `span_scores` output, but the JS k-best decoder also needs
-    # the segment-transition table, which is decode-time data rather than part of the graph. Write it
-    # as a sidecar next to model.onnx. A span-less model returns None and keeps the export unchanged.
+    # A span-scorer model's ONNX carries a `span_scores` output. The JS k-best decoder also needs
+    # the segment-transition table for decoding. The graph does not contain this table. Write it as
+    # a sidecar next to model.onnx. A span-less model returns None and keeps the export unchanged.
     import json as _json
 
     from mailwoman_train.export.package_weights import export_semi_crf_transitions
@@ -104,8 +104,8 @@ def quantize_onnx(
     import sys
     from pathlib import Path
 
-    # Reload before reading: this runs right after `export_onnx` wrote its fp32 to the volume, and a
-    # container with an older view reads whatever its mount still holds at that path, silently.
+    # Reload the volume before reading. This function runs right after `export_onnx` writes its fp32
+    # artifact. A container with an older view could otherwise read stale contents from that path.
     vol.reload()
 
     sys.path.insert(0, f"{VOL_MOUNT}/corpus-python/src")
@@ -117,9 +117,8 @@ def quantize_onnx(
     if not fp32.is_file():
         raise RuntimeError(f"no fp32 at {fp32} after vol.reload() — export it first")
 
-    # The input's digest travels with the output. An int8 artifact is otherwise unattributable: no field
-    # in the file says which checkpoint it came from, and the fp32 it was made from is usually
-    # overwritten by the next export.
+    # The input's digest travels with the output. The int8 file has no field for its source checkpoint.
+    # The next export can overwrite the fp32 input.
     fp32_md5 = hashlib.md5(fp32.read_bytes()).hexdigest()
 
     print(f"Quantizing {fp32} (md5 {fp32_md5}) → {int8}")

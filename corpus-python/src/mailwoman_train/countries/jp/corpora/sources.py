@@ -31,7 +31,7 @@ _AZA_PREFIX = re.compile(r"^(大字|字)")
 class KenAllIndex:
     """The 〒 join: TOWN-level first, municipality catch-all only as the fallback.
 
-    KEN_ALL carries the town (``大字``/``町``) in column 4, and Overture writes the ōaza prefix
+    KEN_ALL carries the town (``大字``/``町``) in column 4. Overture writes the ōaza prefix
     (``字崎枝``, ``大字上田``) that KEN_ALL omits, so an exact town match is retried with a leading
     ``字``/``大字`` stripped before falling back to the municipality catch-all.
     """
@@ -60,7 +60,7 @@ def load_kenall_postcodes(path: Path) -> KenAllIndex:
     """Read KEN_ALL_ROME (cp932) into the two-tier index above.
 
     Column layout: ``postcode, prefecture-kanji, city-kanji, town-kanji, …romaji``. Parenthetical town
-    annotations are stripped, and the literal ``以下に掲載がない場合`` ("if not listed below") is the
+    annotations are stripped. The literal ``以下に掲載がない場合`` ("if not listed below") is the
     municipality catch-all rather than a town.
     """
     town: dict[str, str] = {}
@@ -86,12 +86,12 @@ def iter_source_rows(
 ) -> Iterator[tuple[str, str, str, str, float, float]]:
     """Yield ``(prefecture, municipality, street, number, lon, lat)`` for every eligible source row.
 
-    Eligibility, and why each rule exists:
+    Eligibility rules and their reasons:
 
     - both address levels present and the prefecture in the canonical 47;
     - at least one of street/number non-empty;
-    - the number carries no comma, since a comma marks an MLIT parcel aggregation (``岡山町1154,1153,1155,…``),
-      which renders as one ``house_number`` span sixty parcels long;
+    - the number carries no comma. A comma marks an MLIT parcel aggregation
+      (``岡山町1154,1153,1155,…``). That row renders as one ``house_number`` span sixty parcels long;
     - the field total fits ``max_field_chars``. This is the structural guard behind the semantic one:
       the char path runs at S=96 units and ``encode_row_units`` truncates silently, so a row that
       cannot fit is dropped here, counted, rather than half-labelled there.

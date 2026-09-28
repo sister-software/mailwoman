@@ -1,4 +1,4 @@
-"""Building an encoder from a run config, and counting what it holds.
+"""Build an encoder from a run config and count its parameters.
 
 The one place a `Config` is read into constructor arguments. Every `getattr(cfg.model, …)` default
 here is the value a recipe that does not name the setting gets, so this file is also the list of

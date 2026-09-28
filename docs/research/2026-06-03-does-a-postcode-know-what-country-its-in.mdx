@@ -41,7 +41,7 @@ Before building any of it, we tried to disprove the assumption the design depend
 
 ## Measure before you build
 
-The design assumes that the postcode is present and unambiguous often enough to determine the country by itself. We could test that on real addresses with a probe, without a model or other new code. The probe took over a thousand real US addresses and over a thousand German ones, extracted the postcode, resolved it against the gazetteer, and measured how often it resolved to a single country with confidence.
+The design depends on the postcode being present and unambiguous for country resolution. We could test that on real addresses with a probe, without a model or other new code. The probe took over a thousand real US addresses and over a thousand German ones, extracted the postcode, resolved it against the gazetteer, and measured the share that resolved to a single country with confidence.
 
 The postcode is _present_ every time. OpenAddresses is postcode-rich, and an anchor fired on 100% of rows.
 

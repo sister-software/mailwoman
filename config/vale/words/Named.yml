@@ -1,4 +1,4 @@
-## Flag `named` in prose and source text for review.
+## Flag `named` in comments and docstrings for review.
 extends: existence
 message: "'%s' may hide the specific identifier or action; state what the person, code, or record does."
 level: warning

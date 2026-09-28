@@ -56,16 +56,18 @@ export interface GauntletCaseTable {
 	/**
 	 * Optional multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface).
 	 *
-	 * For a listed key the grader asserts that `scriptRenderings(got)` contains every listed
-	 * rendering, case-folded, and supersedes the same key in {@linkcode expect_components}.
+	 * For a listed key the grader asserts that `scriptRenderings(got)` contains
+	 * every listed rendering after case-folding.
+	 * It supersedes the same key in {@linkcode expect_components}.
+	 *
 	 * Every list must be non-empty, since both the seed schema and the grader refuse an empty one.
 	 */
 	expect_component_renderings: string | null
 	/**
 	 * Expected resolved place id (null = place not asserted), graded against `hierarchy[0].placeID`.
 	 *
-	 * An expectation column can sit in the schema and DDL, look asserted,
-	 * and assert no fact, so this is read by `check-case.ts`.
+	 * An expectation column can exist in the schema and DDL without asserting a fact.
+	 * `check-case.ts` reads this column.
 	 */
 	expect_place_id: string | null
 	/**
@@ -106,14 +108,16 @@ export interface GauntletCaseTable {
 	 */
 	note: string | null
 	/**
-	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's
+	 * Ablation only and optional: a JSON `{ component: rung }` hand-pin that overrides the ablation layer's
 	 * derived graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`),
 	 * where `rung` is `abstain`, `base`, or a WOF placetype.
 	 *
 	 * Absent means the derived ladder decides.
-	 * The pin exists for the two classes no threshold fixes: territories, whose ancestry
-	 * is politically shaped, and dual-role places, where one name is both a locality
-	 * and its own county and the ladder double-counts a rung.
+	 * The pin exists for two classes that no threshold fixes.
+	 *
+	 * Territories have politically shaped ancestry.
+	 * Dual-role places use one name as both a locality and its own county,
+	 * so the ladder double-counts a rung.
 	 */
 	ablation_expect: string | null
 	/**
@@ -134,8 +138,8 @@ export interface GauntletCaseTable {
 	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain,
 	 * without falling through to a world-fuzzy candidate.
 	 *
-	 * The abstain pin is the interface, and lands re-pinned to real coordinates once
-	 * coverage arrives (the row's note says which artifact).
+	 * The abstain pin is the interface.
+	 * Lands are re-pinned to real coordinates once coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
@@ -143,8 +147,8 @@ export interface GauntletCaseTable {
 /**
  * The build stamp, one row describing the committed corpus the DB was built from.
  *
- * It exists because `regression.db` is a derived artifact with no link back to its source,
- * and no record in the DB could contradict a wrong build.
+ * It exists because `regression.db` is a derived artifact with no link back to its source.
+ * No record in the database could contradict an incorrect build.
  */
 export interface GauntletMetaTable {
 	/**
@@ -248,7 +252,7 @@ export async function createGauntletTable(db: Kysely<GauntletDatabase>): Promise
 		.addColumn("expect_abstain", "integer")
 		.execute()
 
-	// Coverage-by-kind is a first-class query: "how many kinds does the corpus cover, and which are thin?"
+	// The coverage-by-kind query reports how many kinds the corpus covers and which are thin.
 	await db.schema.createIndex("idx_gauntlet_kind").on("gauntlet_case").columns(["country", "address_kind"]).execute()
 }
 

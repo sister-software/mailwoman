@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Offline by default: an artifact on disk is reported "present" against the registry's surveyed `approxBytes`, a
- *   size-only integrity check that catches truncation but is not a version comparison, and `--check-remote` upgrades it
- *   to a live head `Content-Length` probe via `APIClient`.
+ *   The command runs offline by default. It reports an on-disk artifact as "present" when its size matches
+ *   the registry's surveyed `approxBytes`. This size-only integrity check catches truncation and does not
+ *   compare versions. `--check-remote` adds a live head `Content-Length` probe through `APIClient`.
  */
 
 import type { APIClient } from "@mailwoman/core/api"

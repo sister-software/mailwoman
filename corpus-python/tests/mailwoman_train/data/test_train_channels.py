@@ -1,7 +1,7 @@
 """Structural parity test for the collate → ``_to_tensor_batch`` boundary (#1349).
 
 Every optional channel travels the same three-hop path: the loader paints per-piece features onto
-``EncodedExample``, ``collate`` emits them keyed by name, and ``_to_tensor_batch`` converts each key
+``EncodedExample``. ``collate`` emits features keyed by name. ``_to_tensor_batch`` converts each key
 to a device tensor for ``model(**tb)``. The first two hops are presence-driven (a configured lexicon
 adds the key); the third is a hand-maintained if-chain — and a key it misses disappears silently,
 because the model's forward zero-fills absent channel tensors. That is exactly how the locality-

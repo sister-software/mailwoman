@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Implements `mailwoman gazetteer postcode-binary`, which writes one `postcode-<cc>.bin` per country
+ *   Implements `mailwoman gazetteer postcode-binary`. It writes one `postcode-<cc>.bin` per country
  *   from the SQLite postcode databases. `PostcodeBinaryResolver` in `@mailwoman/neural` reads these
- *   files, and per-country files let the browser fetch only the locale it needs.
+ *   file. Per-country files let the browser fetch only the locale it needs.
  *
  *   The database `name` column already holds the normalized postcode key that the anchor queries, so
  *   the command serializes it unchanged.
@@ -80,7 +80,8 @@ const GazetteerPostcodeBinary: CommandComponent<typeof spec> = ({ options }) => 
 			const [country, db] = localeSpec.split(":")
 
 			if (country && db) {
-				// A relative `db` resolves under the WOF directory, and an absolute one is used as is.
+				// A relative `db` resolves under the WOF directory.
+				// The resolver uses an absolute path as is.
 				locales.push({ country, db: wofDatabasePath(db) })
 			}
 		}

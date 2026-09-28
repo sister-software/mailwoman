@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Narrowing a document to the markup worth reading, before anything reads it. An archive document
- *   arrives wrapped — an envelope element around the payload, a `<head>` whose `<title>` is a filename
- *   rather than content, `<script>`/`<style>` blocks that are neither — and every strategy downstream
- *   should reason about the same narrowed window rather than each re-deriving one.
+ *   Narrows a document to the markup worth reading before downstream code parses it.
+ *   An archive can wrap its payload in an envelope element. Its `<head>` title can contain a filename.
+ *   Its `<script>` and `<style>` blocks do not contain document content.
+ *   Downstream strategies should read the same narrowed window instead of deriving their own.
  *
- *   Returns html rather than text: the caller still has a document to parse. `#html/text` answers the text
- *   question and `#html/tables` the grid question.
+ *   The function returns HTML so the caller can still parse a document.
+ *   `#html/text` extracts text. `#html/tables` reads grids.
  */
 
 import render from "dom-serializer"
@@ -22,8 +22,8 @@ export interface DocumentNarrowingOptions {
 	 * Narrow to the inner html of the first element with this (lower-case) name —
 	 * an sgml/XML envelope's payload element.
 	 *
-	 * A document that states no such element is not narrowed, which is the right
-	 * reading for a bare fragment that never had an envelope.
+	 * A document that states no such element remains unchanged.
+	 * That result is correct for a bare fragment that never had an envelope.
 	 */
 	within?: string
 	/**
@@ -36,9 +36,10 @@ export interface DocumentNarrowingOptions {
 /**
  * Narrows `html` to the window described by `options` and renders it back to html.
  *
- * One parse, and the tree answers both questions.
- * A regex `<head[^>]*>[\s\S]*?<\/head>` cannot tell a `<` inside an attribute value from a tag,
- * and a document whose envelope is malformed is exactly the document a caller most needs read correctly.
+ * One parse provides the tree for both operations.
+ * A regex such as `<head[^>]*>[\s\S]*?<\/head>` cannot distinguish a `<` in an attribute value from a tag.
+ *
+ * Callers also need correct results when an envelope is malformed.
  */
 export function narrowDocument(html: string, options: DocumentNarrowingOptions = {}): string {
 	const document = parseDocument(html, { decodeEntities: true })
@@ -50,15 +51,16 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
 	if (options.without?.length) {
 		const removed = new Set(options.without)
 
-		// Collected before removal: `removeElement` detaches a node from its parent,
-		// and a live tree walk over a list it is mutating skips siblings.
+		// The code collects nodes before removing them because `removeElement`
+		// detaches each node from its parent.
+		// A live tree walk over a list it mutates skips siblings.
 		for (const unwanted of findAll((element) => removed.has(element.name), roots)) {
 			removeElement(unwanted)
 		}
 	}
 
-	// `roots` is the live children array of the envelope (or the document),
-	// and `removeElement` splices each node out of its own parent.
+	// `roots` is the live children array of the envelope or document.
+	// `removeElement` splices each node out of its own parent.
 	// So the array read here is already the narrowed window.
 	return render(roots)
 }
@@ -66,9 +68,14 @@ export function narrowDocument(html: string, options: DocumentNarrowingOptions =
 /**
  * Whether to read `markup` as XML.
  *
- * XML mode keeps tag case and treats every element as needing an explicit close,
- * which is what an OGC exception report, an fgdc metadata document, or an S3 listing want.
- * Html mode recovers unclosed tags the way a browser does, which is what a filing wants.
+ * XML mode keeps tag case and requires an explicit close for every element.
+ * OGC exception reports use that behavior.
+ *
+ * FGDC metadata documents use it too.
+ * S3 listings use it as well.
+ *
+ * HTML mode recovers unclosed tags as a browser does.
+ * Filing documents use that behavior.
  */
 export interface MarkupQueryOptions {
 	xml?: boolean
@@ -77,8 +84,8 @@ export interface MarkupQueryOptions {
 /**
  * The local name of an element — `gco:CharacterString` is `characterstring`.
  *
- * A namespace prefix is the publisher's choice of alias and two documents from
- * the same service can spell it differently.
+ * A namespace prefix is the publisher's choice of alias.
+ * Two documents from the same service can spell it differently.
  * The local name is the interface.
  */
 function localName(name: string): string {
@@ -88,11 +95,13 @@ function localName(name: string): string {
 }
 
 /**
- * The text of every element named `name`, in document order — namespace prefix ignored,
- * entities decoded, nested markup flattened to its text.
+ * Returns the text of every element with the tag `name` in document order.
  *
- * An empty array when the document states no such element, which is a real answer:
- * the element is absent, as distinct from present and empty.
+ * The function ignores namespace prefixes.
+ * It decodes entities and flattens nested markup.
+ *
+ * An empty array means the document states no such element.
+ * The element is absent, rather than present and empty.
  */
 export function elementTexts(markup: string, name: string, options: MarkupQueryOptions = {}): string[] {
 	const wanted = localName(name)
@@ -102,7 +111,7 @@ export function elementTexts(markup: string, name: string, options: MarkupQueryO
 }
 
 /**
- * The text of the first element named `name`, or `undefined` when the document states none.
+ * The text of the first element with the tag `name`, or `undefined` when the document states none.
  */
 export function elementText(markup: string, name: string, options: MarkupQueryOptions = {}): string | undefined {
 	return elementTexts(markup, name, options).at(0)
@@ -112,8 +121,9 @@ export function elementText(markup: string, name: string, options: MarkupQueryOp
  * One attribute of the document's root element, or `undefined` when the root carries no such attribute.
  *
  * Asked of the root specifically, so a value repeated on a descendant cannot answer for the document.
- * The count a service reports for a collection is a property of the collection,
- * and a regex over the whole body cannot tell the two apart.
+ * A service's collection count describes the collection.
+ *
+ * A regex over the whole body cannot distinguish that count from a repeated descendant value.
  */
 export function rootAttribute(markup: string, attribute: string, options: MarkupQueryOptions = {}): string | undefined {
 	const document = parseDocument(markup, { decodeEntities: true, xmlMode: options.xml ?? false })

@@ -9,7 +9,7 @@
  *   actually ingested, so a build that reads no Overture rows does not claim Overture as a source.
  *
  *   The license is a conjunction: three sources with three different terms fold into one file, so the
- *   field carries an SPDX-style `AND` expression naming exactly the contributing folds, and each term is
+ *   field carries an SPDX-style `AND` expression naming exactly the contributing folds. Each term is
  *   the publisher's own grant read from that publisher's text.
  */
 
@@ -29,16 +29,20 @@ export interface IngestCounts {
  * Per-source identity: the name that goes in `source`, and the licence its rows arrive under.
  *
  * `sourceVintage` is deliberately absent here: WOF's is a git commit per cloned repo,
- * Overture's is a release tag, and GeoNames' is a dump date, so inventing one
- * shared format would record a precision none of them has.
+ * Overture's identity is a release tag.
+ * GeoNames' identity is a dump date.
+ *
+ * Inventing one shared format would record a precision none of them has.
  */
 const SOURCE_TERMS = {
-	// Who's On First states CC0 over "the format and structure", in those words, and its records are a
-	// modification of 102 open-data sources carrying their own terms, some requiring attribution.
+	// Who's On First states CC0 over "the format and structure", in those words.
+	// Its records are a modification of 102 open-data sources carrying their own terms,
+	// some requiring attribution.
 	// It states no single grant over the records, so `LicenseRef-WhosOnFirst-Mixed`
 	// records that rather than electing one of the 102.
 	wof: { name: "whosonfirst", license: "LicenseRef-WhosOnFirst-Mixed" },
-	// Overture licenses per theme, and its attribution page gives Divisions `License for theme: ODbL`.
+	// Overture licenses each theme.
+	// Its attribution page gives Divisions `License for theme: ODbL`.
 	overture: { name: "overture-divisions", license: "ODbL-1.0" },
 	geonames: { name: "geonames", license: "CC-BY-4.0" },
 } as const satisfies Record<keyof IngestCounts, { name: string; license: string }>
@@ -60,8 +64,8 @@ export interface AdminManifestInput {
 	/**
 	 * What each contributing source was at.
 	 *
-	 * Keys no source contributed are ignored, and a contributing source with no recorded
-	 * vintage is reported as `unknown` rather than omitted.
+	 * Keys no source contributed are ignored.
+	 * A contributing source with no recorded vintage is reported as `unknown` rather than omitted.
 	 */
 	vintages?: Partial<Record<keyof IngestCounts, string>>
 	createdAt: string
@@ -87,8 +91,8 @@ export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 		name: "admin-global-priority",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: Overture's Divisions theme is share-alike ODbL and the
-		// Who's On First records carry 102 sources' terms nobody has read per source,
+		// Never `shipped`: Overture's Divisions theme is share-alike ODbL and the Who's
+		// On First records carry terms for 102 sources without per-source review,
 		// either one enough to keep the artifact local.
 		tier: LayerTier.BuildLocal,
 		license: contributing.map((key) => SOURCE_TERMS[key].license).join(" AND "),

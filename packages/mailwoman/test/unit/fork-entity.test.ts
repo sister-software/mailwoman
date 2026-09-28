@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The fork→entity probe's conditions (`fork-entity.ts`), each against a stub lookup. The savile row
- *   hijack guard is the required one: poi.db really does hold exactly one poi named
+ *   hijack guard is the required one: poi.db really does hold exactly one poi whose name is
  *   `savile row`, and without check 2 the famous London street would resolve to it — the board row
  *   `gb-fork-entity-savile-row-guard` tracks the live behavior. this test is the blocking half.
  */
@@ -71,7 +71,7 @@ describe("probeForkEntity", () => {
 	})
 
 	it("THE HIJACK GUARD: a street-generic token stands the probe down even with a unique entity", () => {
-		// poi.db's real state: exactly one poi named 'savile row'.
+		// poi.db's real state: exactly one poi has the name 'savile row'.
 		// Without check 2 this would resolve.
 		const lookup = stubLookup([{ name: "Savile Row", categoryID: "clothing_store", lat: 51, lon: -2, country: "GB" }])
 
@@ -112,8 +112,8 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 
 	it("answers the single exact-name entity near the anchor — local uniqueness, not worldwide", () => {
 		const lookup = stubLookup([
-			// The local bearer plus a same-named entity in another city: the fork
-			// probe would abstain on this pair.
+			// The local bearer plus an entity with the same name in another city:
+			// the fork probe would abstain on this pair.
 			// The anchored probe must not, because the anchor separates them.
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 51.48223, lon: -0.13718, country: "GB" },
 			{ name: "Nine Elms Tavern", categoryID: "pub", lat: 40.7, lon: -74, country: "US" },
@@ -135,9 +135,9 @@ describe("probeVenueNearAnchor (#1684's venue tier)", () => {
 	})
 
 	it("honors a tightened reach — a unit-postcode anchor refuses the namesake 9.9 km away", () => {
-		// The board row: the walk answered "University of Chichester, Bognor Regis"
-		// to its unit postcode, 80 m from the campus, and the only same-named entity
-		// in the metro was the other campus, 9.87 km away.
+		// The board row: the walk answered "University of Chichester, Bognor Regis" to
+		// its unit postcode, 80 m from the campus, and the only entity with the same
+		// name in the metro was the other campus, 9.87 km away.
 		// Under the locality reach that entity is locally unique and replaces a better answer.
 		const bognor = { lat: 50.7876, lon: -0.6717 }
 		const lookup = stubLookup([{ name: "University of Chichester", lat: 50.8455, lon: -0.7756, country: "GB" }])

@@ -109,8 +109,9 @@ const FAMILIES: Record<string, string[]> = {
 /**
  * Leave-one-language-family-out probe: hold out whole families the model never sees a row from.
  *
- * Baltic is Latin and distinct, Oceania is English-Latin and distinct,
- * and the Middle East is romanized non-Latin.
+ * Baltic is distinct and uses Latin script.
+ * Oceania is distinct and uses English Latin script.
+ * The Middle East examples use romanized non-Latin scripts.
  */
 const HELDOUT_FAMILIES = new Set(["baltic", "oceania", "middle_east"])
 

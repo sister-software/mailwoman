@@ -5,7 +5,7 @@
  *
  *   Oracle-recall@k over segment-level k-best decodes (stage-2 instrumentation).
  *
- *   Every standing eval scores the TOP-1 parse, which made hypothesis-space improvements invisible.
+ *   Every standing eval scores the top-1 parse. That score hides improvements elsewhere in the hypothesis space.
  *   This eval measures the k-best headroom directly: a semi-Markov Viterbi over the current model's
  *   post-prior emissions (span score = summed B-/I- log-probs over word-aligned segments, smoothed
  *   empirical segment-type transition bigrams from the golden dev gold orderings), returning the
@@ -143,8 +143,10 @@ interface SegmentDecodeResult {
  * K-best segment-level semi-Markov Viterbi over a trace's post-prior emissions.
  *
  * Word-aligned spans (a `▁`-delimited word never splits).
- * Pure-punctuation pieces are unit `O` words that no typed segment may cross,
- * and `O` words are unit length.
+ * Pure-punctuation pieces are unit `O` words.
+ *
+ * Typed segments cannot cross them.
+ * `O` words always have unit length.
  * State = (word index, last non-O segment type). Scores share one normalization per input,
  * so the k hypotheses' scores are directly comparable.
  */
@@ -332,7 +334,7 @@ function extractSurface(
  * Run the oracle-recall@k eval.
  * Narrates the per-floor table on stdout.
  *
- * Informational, and always exits 0.
+ * Reports information and always exits 0.
  */
 export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKOutcome> {
 	const k = options.k ?? 10
@@ -354,8 +356,8 @@ export async function runOracleK(options: OracleKOptions = {}): Promise<OracleKO
 		options.fixturesPath ?? PARITY_FIXTURES_PATH
 	).filter((candidate) => !candidate.dropped && candidate.expect)) {
 		fixtureCount++
-		// Production config parity: every path production parses on feeds the query-shape
-		// emission prior (`safeClassify` in the runtime pipeline, and `geocode-core`).
+		// Match production config: every path production parses also feeds the query-shape
+		// emission prior (`safeClassify` in the runtime pipeline and `geocode-core`).
 		// A no-op on inputs carrying no known format and no region abbrev.
 		const tree = await classifier.parse(fixture.input, productionParseOptions(fixture.input))
 

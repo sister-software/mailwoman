@@ -59,8 +59,9 @@ const PANELS: Record<string, { path: string; country: string; misScope: string; 
 }
 
 /**
- * Not an ISO-3166 assignment, so no codex address system can claim it and step 1 always
- * fails, which isolates what the alternative countries alone decide.
+ * It has no ISO-3166 assignment, so no codex address system can claim it.
+ *
+ * Step 1 therefore fails, isolating what the alternative countries alone decide.
  */
 const IMPOSSIBLE_DEFAULT = "ZZ"
 

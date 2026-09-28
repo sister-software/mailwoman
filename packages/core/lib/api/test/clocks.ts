@@ -29,8 +29,10 @@ const IDLE_BUDGET_MS = 5000
  *
  * The spin is the fast path — work that is one promise-chain away settles within
  * a few turns and should not pay a timer.
- * Past that the wait is on something real, and continuing to spin actively harms it: back-to-back
- * `setImmediate` turns monopolize the event loop and starve the very I/O the loop is waiting for.
+ * Past that point, the wait is on real work.
+ *
+ * Continuing to spin actively harms that work.
+ * Back-to-back `setImmediate` turns monopolize the event loop and starve the I/O it awaits.
  */
 const IDLE_SPIN_TURNS = 50
 
@@ -111,8 +113,9 @@ export function createFakeClock(startAt = 0): FakeClock {
  * every same-deadline sleeper "at once" cannot distinguish a fixed pacer from a broken one —
  * under such a clock both let a whole cohort through together, because the naive clock's
  * call-time (not wake-time) mutation of `now()` interleaves in a way that masks the bug.
- * Here each pending `sleep()` resolves only when `advance()` reaches its deadline, and the
- * woken continuation (which may register a new `sleep()`, pushing its own deadline further out)
+ * Each pending `sleep()` resolves only when `advance()` reaches its deadline.
+ *
+ * The woken continuation (which may register a new `sleep()`, pushing its own deadline further out)
  * runs to completion before the next same-deadline sleeper is resolved —
  * reproducing how N real, independent timers settle.
  */
@@ -141,10 +144,13 @@ export class VirtualClock implements ClockLike {
 	 * to quiescence before the next deadline is considered.
 	 *
 	 * The drain is a `setImmediate` (a macrotask), not a fixed number of `await Promise.resolve()` turns.
-	 * A woken continuation that runs through a library's own promise chain — Axios's request/response
-	 * interceptors, say — needs more microtask turns than any hardcoded count, and coming up
-	 * short lets the clock run ahead of an in-flight dispatch: the request then records a later
-	 * deadline's timestamp, and two dispatches appear to share an instant when they didn't.
+	 * A woken continuation that runs through a library's own promise chain — Axios's
+	 * request/response interceptors — needs more microtask turns than any hardcoded count.
+	 *
+	 * Coming up short lets the clock run ahead of an in-flight dispatch.
+	 * The request then records a later deadline's timestamp.
+	 *
+	 * Two dispatches can appear to share an instant when they did not.
 	 */
 	public async advance(ms: number): Promise<void> {
 		const target = this.#now + ms
@@ -174,10 +180,14 @@ export class VirtualClock implements ClockLike {
 	 * A paced client whose limit sits downstream of an on-disk cache spends several real
 	 * event-loop turns in `readFile` before it ever registers its `sleep()`.
 	 *
-	 * A caller that drains once and then advances finds no sleep pending, jumps the clock
-	 * past the deadlines that are registered a moment later, and the test hangs.
+	 * A caller that drains once and then advances finds no sleep pending, jumps the
+	 * clock past the deadlines that register a moment later.
+	 * The test then hangs.
 	 *
-	 * This polls instead: drain, and if any sleep is pending, advance to the earliest deadline.
+	 * This method polls instead.
+	 * It drains the queue first.
+	 *
+	 * If a sleep is pending, it advances to the earliest deadline.
 	 * If none is, yield and look again.
 	 *
 	 * @throws Rather than hanging when the work neither settles nor schedules anything

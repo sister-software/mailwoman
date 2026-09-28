@@ -50,7 +50,7 @@ export interface Form499LifecycleTotals {
 
 /**
  * One 499 row's lifecycle writes: a `ceased_at` attribute, one `cessation_reason` attribute
- * per recognized reason, and a `SupersededBy` edge when the FCC named a successor filer.
+ * per recognized reason, and a `SupersededBy` edge when the FCC designated a successor filer.
  *
  * Returns the `valid_to` the caller should stamp on that row's relationship edges,
  * or `null` when {@linkcode closeableCessationDate} abstains.

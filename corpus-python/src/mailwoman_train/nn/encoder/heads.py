@@ -1,8 +1,8 @@
-"""Building the output heads, and the weight initialization that follows them.
+"""Build output heads before initializing their weights.
 
-Construction order is an interface: `_init_weights` walks `self.parameters()`, which yields in
-registration order and draws from the global RNG for each. Therefore, moving a head's construction changes
-the initial weights of everything registered after it.
+Construction order is an interface. `_init_weights` walks `self.parameters()` in registration
+order. It draws from the global RNG once for each parameter. Moving a head's construction changes
+the initial weights of every parameter registered after it.
 """
 
 from __future__ import annotations
@@ -44,7 +44,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         The structured heads sit beside the classifier — the CRF decodes its output, the span scorer
         and span-boundary head score it — and touch no column.
 
-        Do not reorder these, and keep the calls where they sit in `__init__`. Registration order
+        Preserve this order. Keep the calls where they sit in `__init__`. Registration order
         decides what `_init_weights` draws for each parameter, so a move changes the initial
         weights of every parameter registered after it and a from-scratch run stops reproducing
         earlier ones.
@@ -160,7 +160,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # Span-boundary auxiliary head (#727, GLiNER-lite probe). A training-only 2-logit head over the
         # final hidden state predicting, per token, whether an entity span starts (a B-* tag) and whether
         # one ends here (an entity token whose successor doesn't continue it). The BIO head places tags.
-        # this head places boundaries, and the shared encoder must satisfy both — the pressure targets the
+        # This head places boundaries. The shared encoder must satisfy both tasks, so the pressure targets the
         # boundary-absorption residual (a region token pulled into an adjacent street span, "05149 VT
         # Tucker Road" → "VT" absorbed into street). It never touches the exported inference graph (like the
         # locale aux-CE, the loss consumes it and the ONNX path emits only `logits`), so stage-1 carries no
@@ -179,7 +179,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         # #727 stage-2 phase 1: the semi-Markov span scorer. Unlike stage-1's aux head (which only
         # shapes the encoder via BCE pressure and is never exported), this is a real scoring path —
         # Phase 2 exports it, Phase 3 decodes it in JS. Default-off ⇒ byte-identical: the BIO logits
-        # path never reads it, which `test_span_scorer_off_is_byte_identical_to_baseline` enforces.
+        # path never reads it. `test_span_scorer_off_is_byte_identical_to_baseline` enforces this.
         self.use_span_scorer = use_span_scorer
         self.span_loss_weight = float(span_loss_weight)
         self.span_scorer: SpanScorer | None = None
@@ -215,7 +215,7 @@ class CoarseEncoderHeads(CoarseEncoderState):
         """Xavier-style init for linears + small-normal embeddings + LN gamma=1.
 
         Critical: ``nn.LayerNorm.weight`` (``gamma``) must be initialized to 1.0 rather than 0.
-        A previous version zeroed every 1D parameter, which collapsed every LN to a constant
+        A previous version zeroed every 1D parameter. That collapsed every LN to a constant
         output (``gamma·normalized + beta`` = 0·anything + 0 = 0) and made the model
         predict the same class for every token regardless of input. Loss plateaued near
         the all-O baseline and macro-F1 sat at floor.

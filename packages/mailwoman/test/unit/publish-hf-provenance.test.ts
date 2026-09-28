@@ -49,7 +49,7 @@ describe("verifyTrainingProvenance", () => {
 	})
 
 	it("reads the top-level attribution key, which the character-path card uses", async () => {
-		// A control that answers a false absence refuses a release nobody needed to block,
+		// A control that answers a false absence blocks a release without cause,
 		// and the absence it reports is indistinguishable from a real one.
 		const card = await cardWith({
 			attribution: [

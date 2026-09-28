@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads `release.config.json`, which lists the shipped locales and their model, tokenizer and soft-feed artifacts.
+ *   Reads `release.config.json`. The file lists shipped locales and their model, tokenizer and soft-feed artifacts.
  */
 
 import { resolvePath, type PathBuilderLike } from "path-ts"
@@ -17,7 +17,8 @@ import { repoRootPathBuilder } from "#paths"
  * Countries use different inputs.
  * For example, `gb` sets a `source` CSV and `us` sets only a `boroughDB`.
  *
- * Most fields are therefore optional, and unknown keys are allowed.
+ * Most fields are optional.
+ * Unknown keys are allowed.
  */
 export interface PairIndexInputs {
 	source?: string
@@ -54,8 +55,9 @@ export interface SoftFeedRecipe {
  * The artifacts of one character-path base package, such as `cjk`.
  *
  * Paths are relative to the data root, like `weights.model`.
- * The package also commits its vocabulary, and the `charVocab` copy here keeps
- * that vocabulary in step with the model graph.
+ * The package also commits its vocabulary.
+ *
+ * The `charVocab` copy here keeps that vocabulary in step with the model graph.
  */
 export interface CharWeightsRecipe {
 	model: string
@@ -82,7 +84,8 @@ export interface ReleaseConfig {
 }
 
 /**
- * Reads `release.config.json` from a repository root, which defaults to this checkout.
+ * Reads `release.config.json` from a repository root.
+ * The default root is this checkout.
  */
 export async function readReleaseConfig(repoRoot: PathBuilderLike = repoRootPathBuilder()): Promise<ReleaseConfig> {
 	return readLocalJSONFile<ReleaseConfig>(repoRoot, "release.config.json")

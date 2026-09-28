@@ -5,17 +5,17 @@
  *
  *   Diff the committed layout table against the dataset it was generated from, country by country.
  *
- *   The generated half of the table is 186 transcriptions of a libaddressinput `fmt` string. A transcription error
- *   does not look like one: it reads as a plausible address from somewhere else, and no reviewer of a
- *   1215-line generated file catches it. So the comparison is mechanical — re-derive each skeleton from the
- *   dataset and require the committed layout to print the same fields in the same order with the same line breaks.
+ *   The generated half of the table contains 186 transcriptions of libaddressinput `fmt` strings. A transcription error
+ *   can produce a plausible address from another place. Reviewers can miss it in the 1,215-line generated file.
+ *   This test re-derives each skeleton from the dataset. It requires the committed layout to print the same fields,
+ *   in the same order, with the same line breaks.
  *
- *   It reads the dataset through `@mailwoman/core`, which is legal for a test and not for `lib/`:
- *   `@mailwoman/core` imports `@mailwoman/codex`, so a source file here reaching back would close that loop. This
- *   file lives under `test/`, which no code imports, and codex's own manifest stays free of core.
+ *   The test reads the dataset through `@mailwoman/core`. Production files under `lib/` cannot import core because
+ *   core imports `@mailwoman/codex`. This test lives under `test/`, which application code does not import.
+ *   The codex manifest therefore stays free of core.
  *
- *   The eleven hand-authored countries are not compared here. Those depart from the dataset on purpose, and
- *   `@mailwoman/codex`'s own test pins each departure against its reason.
+ *   The test skips eleven hand-authored countries because their layouts intentionally differ from the dataset.
+ *   A separate `@mailwoman/codex` test records the reason for each difference.
  */
 
 import { isAlternation, isLayout, isSlot, type AddressAtom, type AddressLayout } from "@mailwoman/codex/address-layout"
@@ -44,14 +44,16 @@ const FIELD: Readonly<Record<string, string>> = {
 }
 
 /**
- * Two slots drop out of the skeleton comparison because they are authored
- * rather than transcribed, so comparing them against the source would report every
- * country carrying one as a departure and make no statement:
+ * Two slots are authored rather than transcribed, so the skeleton comparison omits them.
+ *
+ * Including either slot would mark every country that carries it as a departure
+ * without testing transcription:
  *
  * - `country`, because `%R` is absent from nearly every `fmt` — libaddressinput's
  *   consumers add the destination country themselves.
- * - `dependent_locality`, for the 47 countries measured as printing one; `%D` appears in 14
- *   of the 197 shipped `fmt` strings, and a country that really has the line still needs it.
+ * - `dependent_locality`, for the 47 countries measured as printing one.
+ *   `%D` appears in 14 of the 197 shipped `fmt` strings.
+ *   A country that has the line still needs it.
  *   It takes a line of its own beside the locality, or a place inside the locality's line where that
  *   line also carries the street, so it is dropped wherever it sits rather than only as a line.
  *   Where the generator put it is what `address-layouts.test.ts` checks.
@@ -77,8 +79,9 @@ function nameOf(atom: AddressAtom): string[] {
 }
 
 /**
- * A placeholder this project does not model drops out, which is what lets a country whose
- * `fmt` names only such fields be reported as unusable rather than as a mismatch.
+ * A placeholder this project does not model drops out.
+ *
+ * A country whose `fmt` contains only such fields is reported as unusable rather than as a mismatch.
  */
 function skeletonOfFormat(fmt: string): string[][] {
 	return fmt

@@ -1,4 +1,8 @@
-"""One seeded Korea build, pinned end to end—both corpora, both boards, and the report—because the four passes share one `random.Random` and feed each other, so a moved stage changes what the later ones see."""
+"""Pin one seeded Korea build end to end.
+
+The receipt covers both corpora, both boards plus the report. The four passes share one
+`random.Random` and feed each other. Moving a stage changes later passes' inputs.
+"""
 
 from __future__ import annotations
 
@@ -122,8 +126,8 @@ REGIONS = [
 ]
 
 #: (name, status, road address, lot address, road postcode, lot postcode, x, y). The road forms are
-#: written to align against the index above. the last row aligns against neither, which is what puts
-#: an unaligned permit on the registry board.
+#: written to align against the index above. The last row aligns against neither form.
+#: That row lands on the registry board as an unaligned permit.
 PERMITS: list[tuple[str, str, str, str, str, str, str, str]] = [
     (
         "서울식당",

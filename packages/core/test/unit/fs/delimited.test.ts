@@ -8,8 +8,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest"
 /**
  * Three GeoNames-shaped rows.
  *
- * The middle one carries a `"` in a place name, which the real dumps do.
- * `Ovrag Kyzylak"on` is line 394 of Turkmenistan's, and every row after it was swallowed.
+ * The middle row carries a `"` in its place name, as real dumps do.
+ * `Ovrag Kyzylak"on` appears on line 394 of Turkmenistan's dump.
+ * The quote-aware reader swallowed every row after it.
  */
 const DUMP = ["1\tAshgabat\t37.95\t58.38", `2\tOvrag Kyzylak"on\t38.23\t55.11`, "3\tTürkmenabat\t39.07\t63.57"].join(
 	"\n"
@@ -58,8 +59,9 @@ describe("reading an unquoted delimited file", () => {
 	/**
 	 * The defect this module exists for, pinned as the behaviour it must not have.
 	 *
-	 * A quote-aware reader over this input answers two rows and neither of them is Türkmenabat,
-	 * and two rows is indistinguishable from a two-row file at every later boundary.
+	 * A quote-aware reader over this input returns two rows.
+	 * Neither row is Türkmenabat.
+	 * Every later boundary sees the same count as a two-row file.
 	 */
 	it("differs from the default, which swallows the rows between one quote and the next", async () => {
 		const rows: string[][] = []
@@ -98,9 +100,10 @@ describe("the checked read", () => {
 	})
 
 	/**
-	 * The shortfall branch is defence IN depth and no file content reaches it:
-	 * with quote handling off, the TSV reader yields one record per non-empty line
-	 * for every input, which is what the cases above establish.
+	 * The shortfall branch is defence IN depth and no file content reaches it: With quote
+	 * handling off, the TSV reader yields one record per non-empty line for every input.
+	 *
+	 * The cases above show that each input yields one row per non-empty line.
 	 *
 	 * It exists to catch a reader whose options regress — the defect it was written
 	 * for was a default rather than a file — so the test drives the branch directly
@@ -109,8 +112,8 @@ describe("the checked read", () => {
 	it("raises rather than answering short, naming both counts", async () => {
 		const missing = dir.path("gone.txt")
 
-		// A read that cannot happen at all must also not answer an empty array,
-		// which is the same failure wearing a different mask.
+		// A read that cannot happen at all must not answer with an empty array.
+		// That would hide the read failure as an empty result.
 		await expect(readUnquotedTSVChecked(missing)).rejects.toThrow(/Cannot read from the provided source/)
 	})
 })

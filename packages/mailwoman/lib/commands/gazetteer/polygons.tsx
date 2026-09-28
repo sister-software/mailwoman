@@ -18,9 +18,9 @@
  *   text)` where geom is a GeoJSON geometry the demo feeds straight into a MapLibre source.
  *
  *   `--points <wof-hot.db>` keeps the demo sidecar in lockstep with the slim points DB (small,
- *   shippable); `--admin <admin-global-priority.db>` instead pulls every admin row from the full
- *   gazetteer (optionally `--countries US,DE`) — the slim DB excludes localadmin, which is where US
- *   town polygons actually live.
+ *   shippable). `--admin <admin-global-priority.db>` instead pulls every admin row from the full
+ *   gazetteer (optionally `--countries US,DE`). The slim DB excludes localadmin.
+ *   US town polygons live in that placetype.
  */
 
 import { wofReposPath } from "@mailwoman/core/data-root"

@@ -93,7 +93,7 @@ export interface OverlayFile {
 	 * The split that the file's rows belong to.
 	 * The default is `train`.
 	 *
-	 * `val` and `test` are allowed only for files that `splitOverlaySlice` named,
+	 * `val` and `test` are allowed only for files that `splitOverlaySlice` returned,
 	 * so that the holdout policy chooses held-out rows.
 	 */
 	split?: SplitName
@@ -113,17 +113,21 @@ export function splitFromFilename(parquet: string): SplitName | null {
 /**
  * Reads one overlay parquet and describes it for the manifest.
  *
- * The `source` argument is what the caller believes the file holds, and the file itself
- * is what the loader reads: `file_source_counts` groups the rows, never the manifest.
- * So a caller passing a stale label writes a manifest that disagrees with its own rows, the run
- * trains on the rows, and the next plan derived from that manifest carries the stale label forward.
+ * The loader groups rows by `file_source_counts`.
+ * The manifest records the `source` value supplied by the caller.
+ *
+ * A stale argument therefore writes a manifest that disagrees with the rows.
+ * The run trains on the rows.
+ *
+ * The next plan then carries the stale label forward from the manifest.
  *
  * This reads the column and refuses the mismatch rather than recording the claim.
  *
  * `source_id` is materialized rather than aggregated because `first_source_id`
  * and `last_source_id` mean the first and last row of the file.
- * DuckDB's `first` and `last` aggregates read whichever row a parallel scan
- * reaches first, which is not the same thing.
+ * DuckDB's `first` and `last` aggregates read whichever row a parallel scan reaches first.
+ *
+ * That result can differ from the first and last rows in the file.
  */
 async function descriptor(
 	localPath: string,
@@ -131,7 +135,7 @@ async function descriptor(
 	split: SplitName,
 	source: string
 ): Promise<ParquetFileDescriptor> {
-	// One per file, and `assembleOverlayManifest` calls this once per file.
+	// `assembleOverlayManifest` calls this once for each file.
 	using db = await openDuckDB()
 
 	const result = await db.runAndReadAll(`SELECT source_id, source FROM read_parquet('${escapeSQLString(localPath)}')`)
@@ -264,8 +268,8 @@ export function localManifestFilePath(path: string): string {
 /**
  * Writes a corpus manifest that keeps every file of `args.base` and appends `args.files`.
  *
- * A `val` or `test` file must have the `.<split>.parquet` name that `splitOverlaySlice`
- * writes, which shows that the holdout policy chose its rows.
+ * A `val` or `test` file must use the `.<split>.parquet` suffix written by `splitOverlaySlice`.
+ * The suffix shows that the holdout policy chose its rows.
  * A `train` file has no naming requirement.
  *
  * @throws When the base lists no files or a held-out file lacks the matching filename suffix.
@@ -290,7 +294,8 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 		}
 	}
 
-	// Held-out rows must come from the holdout policy, which encodes the split in the filename.
+	// Held-out rows must come from the holdout policy.
+	// The filename records the split.
 	// A caller that picks held-out rows by hand can leak them into train.
 	for (const file of args.files) {
 		if (!file.split || file.split === "train") continue

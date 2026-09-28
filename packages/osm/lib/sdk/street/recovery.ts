@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Recovers a missing `addr:street` from the nearest named highway within a bounded radius.
+ *   Recovers a missing `addr:street` from the nearest highway with a name within a bounded radius.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -25,7 +25,7 @@ interface Vertex {
 }
 
 /**
- * Grid-indexed nearest-named-highway lookup.
+ * Grid-indexed lookup for the nearest highway with a name.
  */
 export class StreetRecoveryIndex {
 	readonly #grid = new Map<string, Vertex[]>()
@@ -106,7 +106,7 @@ function* densify(coords: number[][]): Generator<[number, number]> {
 }
 
 /**
- * Build the recovery index from the PBF's named highways (the `lines` layer).
+ * Build the recovery index from highways with names in the PBF's `lines` layer.
  */
 export async function buildStreetRecoveryIndex(pbfPath: string): Promise<StreetRecoveryIndex> {
 	const args = [

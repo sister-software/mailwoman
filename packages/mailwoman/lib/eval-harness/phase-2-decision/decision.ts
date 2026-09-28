@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Frozen phase-2 decision definition, its audit, and the decision rule. The module loads no engine and writes no
- *   receipt.
+ *   Defines the frozen phase-2 decision, audits it and applies its decision rule. The module loads no engine and
+ *   writes no receipt.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -98,8 +98,8 @@ export type Phase2CheckRole = (typeof PHASE2_CHECK_ROLES)[number]
 /**
  * Target tiers.
  *
- * A `resolution` check measures recognition capability, and an `evidence` check
- * measures what the caller can observe.
+ * A `resolution` check measures recognition capability.
+ * An `evidence` check measures what the caller can observe.
  */
 export const PHASE2_TARGET_TIERS = ["resolution", "evidence"] as const
 
@@ -160,7 +160,8 @@ export interface Phase2Baseline {
 export interface Phase2Check {
 	id: string
 	/**
-	 * ID of the owning lane, which must be measurable.
+	 * ID of the owning lane.
+	 * The lane must be measurable.
 	 */
 	lane: string
 	role: Phase2CheckRole
@@ -196,7 +197,8 @@ export interface Phase2PlannedCheck {
 	id: string
 	measures: string
 	/**
-	 * Current value of the same reading, which the check will be compared against once the lane unblocks.
+	 * Current value of the same reading.
+	 * The check compares against it once the lane unblocks.
 	 */
 	todayReads: string
 }
@@ -227,7 +229,8 @@ export interface Phase2Lane {
 /**
  * Default-change requirement from the integration record and its current state.
  *
- * The verdict reports these rows, and they do not affect {@linkcode decidePhase2}'s decision.
+ * The verdict reports these rows.
+ * They do not affect {@linkcode decidePhase2}'s decision.
  */
 export interface Phase2DefaultBarRow {
 	row: number
@@ -322,7 +325,7 @@ export interface Phase2DecisionDefinition {
 }
 
 /**
- * Freeze record that pins the definition by ID, version, and content hash.
+ * Freeze record that pins the definition by ID and version, with its content hash.
  */
 export interface Phase2FreezeRecord {
 	definition: string
@@ -356,7 +359,9 @@ export function phase2DefinitionHash(definition: Phase2DecisionDefinition): stri
 }
 
 /**
- * Audits lane IDs and statuses, the checks a lane may own, and the details a blocked lane must record.
+ * Audits lane IDs and statuses.
+ *
+ * It checks which checks each lane may own and which details a blocked lane must record.
  */
 function auditLanes(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
@@ -444,7 +449,8 @@ function auditLanes(definition: Phase2DecisionDefinition): string[] {
 }
 
 /**
- * Audits each check's ID, role, tier, measurement, bar, and baseline.
+ * Audits each check's ID, role and tier.
+ * It also audits the measurement, bar and baseline.
  */
 function auditChecks(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
@@ -577,7 +583,8 @@ function auditThresholds(definition: Phase2DecisionDefinition): string[] {
 }
 
 /**
- * Audits the default-change rows for order, state, and references to registered checks.
+ * Audits the order and state of default-change rows.
+ * It checks their references to registered checks.
  */
 function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
@@ -619,7 +626,8 @@ function auditDefaultChangeBar(definition: Phase2DecisionDefinition): string[] {
 /**
  * Audits a definition without running any instrument.
  *
- * It returns one message per problem, and an empty list means the definition can run.
+ * It returns one message per problem.
+ * An empty list means the definition can run.
  */
 export function auditPhase2Definition(definition: Phase2DecisionDefinition): string[] {
 	const problems: string[] = []
@@ -655,8 +663,8 @@ export function auditPhase2Definition(definition: Phase2DecisionDefinition): str
 /**
  * Loads the frozen preregistration.
  *
- * It throws unless the freeze record matches the definition's ID and version,
- * the content hash matches the frozen hash, and the audit is clean.
+ * It throws when the freeze record's definition ID or version differs, when the content
+ * hash differs from the frozen hash, or when the audit finds a problem.
  */
 export async function loadPhase2Definition(
 	definitionPath: PathBuilderLike = PHASE2_DEFINITION_PATH,

@@ -5,7 +5,7 @@
  *
  *   `mailwoman registry scorer-eval <kind>`: the record-matcher eval and benchmark suite.
  *
- *   Most kinds need the record-matcher source files, the weights, and the WOF and database data
+ *   Most kinds need the record-matcher source files, the weights and the WOF and database data
  *   locally, so they are operator-run.
  */
 

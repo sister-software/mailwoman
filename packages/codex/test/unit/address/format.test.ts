@@ -7,9 +7,9 @@
  *
  *   Most of what this file used to assert was about the third-party engine's vocabulary — whether a country's mustache
  *   template names `suburb` or `quarter` or neither, whether a connector survived an empty slot, whether a missing line
- *   could be spliced back in afterwards. None of those questions exist once the order is data: a layout that declares a
- *   `dependent_locality` slot has one, and a line assembled from present values writes no connector around an absent
- *   one. What survives here is the behaviour those mechanisms were reaching for, asserted on output.
+ *   could be spliced back in afterwards. Those questions disappear once the order is data.
+ *   A layout that declares a `dependent_locality` slot has one. A line assembled from present values
+ *   writes no connector around an absent slot. These tests assert the resulting behaviour.
  */
 
 import {
@@ -262,8 +262,8 @@ describe("the script a row renders in", () => {
 	/**
 	 * The same Hong Kong address in both registers.
 	 *
-	 * Rendering either through one country-keyed layout prints one of them in an order
-	 * nobody writes, which is the whole reason the selection exists.
+	 * Rendering either through one country-keyed layout prints one of them in an order no address uses.
+	 * That behavior is why the selection exists.
 	 */
 	const HK_LATIN: ComponentDict = {
 		street: "Jordan Road",
@@ -335,13 +335,14 @@ describe("the script a row renders in", () => {
 
 		// Seven of the eight two-order countries place slot for slot.
 		// Japan's Latin skeleton has no slot below the prefecture, so deriving there would
-		// trade an order nobody writes for `locality` and `dependent_locality`.
+		// trade an unsupported order for `locality` and `dependent_locality`.
 		const derived = formatAddressRow(romanized, "JP", { singleLine: true })
 
 		expect(derived?.script).toBe("local")
 		expect(derived?.unplaced).toEqual([])
 
-		// The caller can still ask for it, and then the loss is theirs to see.
+		// The caller can still ask for it.
+		// The output makes the loss visible.
 		// It is reported rather than silent.
 		expect(formatAddressRow(romanized, "JP", { singleLine: true, script: "latin" })?.unplaced).toEqual([
 			"locality",

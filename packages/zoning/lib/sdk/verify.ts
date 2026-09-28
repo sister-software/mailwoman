@@ -3,35 +3,31 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two-path agreement check, and its negative half.
+ *   The check compares the artifact with a second path. A separate half tests locations outside its coverage.
  *
- *   positive half. A sample of points is answered from the sealed artifact and then re-asked of the
- *   Department's own feature service — the same authority, a different distribution channel, and geometry
- *   this package has never touched. The point test is run again on the service's own rings, so what is
- *   compared is a verdict against a verdict rather than a file against itself. That is what makes it a check
- *   on OUR conversion rather than on the authority.
+ *   The positive half samples points from the sealed artifact and asks the Department's feature service about them.
+ *   The service supplies geometry through a separate distribution channel. This package has not touched that geometry.
+ *   The check runs the point test on the service's rings. It compares two verdicts from the same authority.
+ *   This measures our conversion against the authority's published geometry.
  *
- *   and the service answers IN the publisher'S own ring convention, so the comparison exercises the hole
- *   handling twice over. `outSR=4326` on the query path returns the same clockwise-exterior rings the bulk
- *   export carries, so this side re-derives the roles the same way the ingest did — and a point inside a hole
- *   comes back outside on both paths or on neither.
+ *   The service returns geometry in the publisher's ring convention. `outSR=4326` returns the same clockwise-exterior
+ *   rings as the bulk export. This path re-derives ring roles as ingest does. A point inside a hole then falls outside
+ *   on both paths or inside on both paths.
  *
- *   negative half, and IT matters more here than FOR any sibling layer. Donegal is the one local authority of
- *   31 the Department does not publish, and Northern Ireland is outside the product entirely — so points in
- *   both must come back `unknown` with no designation. A positive-only check would pass on an artifact that
- *   reported the whole island as zoned, and this layer's entire coverage posture exists because an absent
- *   polygon is not a statement.
+ *   The negative half checks locations outside the publication area. The Department omits Donegal, one of 31 local
+ *   authorities. The product also excludes Northern Ireland. Points in both areas must return `unknown` with no
+ *   designation. A positive-only check could pass an artifact that reports the whole island as zoned. The layer treats
+ *   a missing polygon as no zoning statement.
  *
- *   the channels differ IN coordinate precision and that is why A boundary point is not A failure. The
- *   archive publishes nine decimals through this package's ingest. the service's own JSON rounds. A point
- *   within roughly a metre of a zone boundary can land on opposite sides of two renderings of the same edge.
- *   Those are reported as `boundary_tolerance` with their distance to the nearest edge, and the count is part
- *   of the receipt.
+ *   The channels use different coordinate precision. A boundary-point disagreement therefore does not establish a
+ *   conversion defect. The archive publishes nine decimals through this package's ingest. The service rounds its JSON.
+ *   A point within roughly a metre of a zone boundary can fall on opposite sides of the two rendered edges. The check
+ *   reports these cases as `boundary_tolerance` with the distance to the nearest edge. The receipt includes their count.
  *
- *   the distance is TO the edge rather than TO the nearest vertex. A point a centimetre from a long edge can be
- *   metres from every vertex of it — a sibling layer's one near-miss read 1.58 m to vertices and 0.009 m to
- *   edges, an overstatement of 175-fold — so measuring vertices makes the boundary tolerance far stricter than
- *   it reads, which is how a rendering difference gets reported as a conversion defect.
+ *   The distance measures to the edge rather than to the nearest vertex. A point a centimetre from a long edge can be
+ *   metres from every vertex. In one sibling-layer near-miss, vertex distance measured 1.58 m and edge distance
+ *   measured 0.009 m. The vertex measurement overstated distance by 175 times. It would make the stated boundary
+ *   tolerance stricter and report a rendering difference as a conversion defect.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -52,7 +48,8 @@ import type { ZoningDatabase } from "#schema"
 import type { GZTClient } from "#sdk/client"
 
 /**
- * One point, both verdicts, and whether they agree.
+ * Records one point and both verdicts.
+ * It also records whether they agree.
  */
 export interface AgreementRow {
 	label: string
@@ -78,9 +75,11 @@ export interface AgreementRow {
 	/**
 	 * Metres from the point to the nearest edge of any polygon the service returned nearby.
 	 *
-	 * Carried on every row rather than only the tolerated ones, because it is what
-	 * separates a real defect from the two channels rendering the same edge differently,
-	 * and a receipt that omits it forces a re-run.
+	 * Every row carries this distance.
+	 * It separates a real defect from a difference caused by the two channels
+	 * rendering the same edge differently.
+	 *
+	 * A receipt without it forces a re-run.
 	 * `undefined` means the service returned no polygon at all near the point.
 	 */
 	nearestEdgeMetres?: number
@@ -116,16 +115,16 @@ export interface VerifyZoningResult {
 }
 
 /**
- * Points this product's publication does not reach, named.
+ * Point identifiers for locations outside this product's publication area.
  *
- * Each is a place rather than a bare pair of numbers: a coordinate a reader
- * cannot name is a coordinate nobody can check.
+ * Each is a place rather than a bare pair of numbers: a coordinate a reader a
+ * coordinate without a reference source cannot be checked.
  *
- * Two populations, and both are required.
+ * The check requires points from two populations.
  * The Donegal points are the case this layer's coverage posture exists for.
  *
- * The Department has not published that authority's zoning, and a builder that read
- * absence as "unrestricted" would answer them confidently.
+ * The Department has not published that authority's zoning.
+ * A builder that reads the absence as "unrestricted" would answer these points confidently.
  *
  * The Northern Irish points confirm the artifact is clipped to the Republic rather than to the
  * island: zoning there is a different jurisdiction's instrument under a different planning act.
@@ -171,11 +170,13 @@ export interface ServiceFeature {
 /**
  * The one call the verification makes against the service: the features it publishes near a point.
  *
- * A function rather than the client, and that is what makes the check's own logic testable.
+ * The function exposes only the service read.
+ * This keeps the check's own logic testable.
+ *
  * The comparison's value is that it decides which of three outcomes a point gets.
  *
- * Expressed against an http client it could only ever be watched on a live run, and a scripted
- * reader lets those decisions be pinned. {@link createServiceReader} builds the real one.
+ * An HTTP client would let tests observe these decisions only during a live run.
+ * A scripted reader pins the decisions. {@link createServiceReader} builds the real reader.
  */
 export type ServiceFeatureReader = (latitude: number, longitude: number) => Promise<ServiceFeature[]>
 
@@ -344,9 +345,11 @@ export function sampleAgreementPoints(
 	const count = options.count ?? 48
 	using database = new DatabaseClient<ZoningDatabase>(databasePath, { readOnly: true })
 
-	// ordered BY the authority first, so a stride walks across the 30 of them rather than down one.
-	// A stride over `area_id` alone would follow the publisher's own feature numbering, which is grouped
-	// by authority, and would draw every sample from whichever authorities happen to sit on the stride.
+	// Sort by authority so the stride samples across the 30 authorities
+	// instead of sampling one authority repeatedly.
+	// A stride over `area_id` alone would follow the publisher's feature numbering.
+	// That numbering is grouped by authority, so the stride would select only the
+	// authorities that fall on its positions.
 	const areaIDs = (
 		database.prepare("SELECT area_id FROM zoning_area ORDER BY jurisdiction_id, area_id").all() as Array<{
 			area_id: string

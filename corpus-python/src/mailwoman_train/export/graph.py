@@ -1,8 +1,8 @@
-"""Which channels a model carries, whether that combination is exportable, and what its graph looks like.
+"""Inspect a model's channels and graph. Decide whether its channel combination is exportable.
 
 A channel the model was trained with and the graph does not carry runs off at inference, silently:
-the runtime feeds by name, so an absent input is an absent clue, and the model reports confident
-answers computed without it. That is why the unsupported combinations below raise instead of
+the runtime feeds by name, so an absent input is an absent clue. The model then reports confident
+answers computed without that clue. Unsupported combinations below raise instead of
 exporting a reduced graph.
 
 Every feature input requests a dynamic dim 0 and dim 1 (batch, sequence) and a fixed dim 2 — the
@@ -75,8 +75,8 @@ class ExportGraph:
 def detect_channels(model: nn.Module) -> Channels:
     """Read the channel flags off the model.
 
-    Off the MODEL rather than off a config: a checkpoint is resumed and re-exported long after the config
-    that built it has moved on, and the graph has to match the weights.
+    Read the model rather than a config. A checkpoint may be resumed and re-exported after its config
+    has changed. The graph must match the weights.
     """
     return Channels(
         anchor=bool(getattr(model, "use_postcode_anchor", False)),
@@ -95,7 +95,7 @@ def detect_channels(model: nn.Module) -> Channels:
         # Consumers fetch outputs by name, so appending is backward-compatible. Without it the
         # model's address-system detection is trained but unreadable at inference.
         locale=getattr(model, "locale_head", None) is not None,
-        # Export the span scorer's (B, S, L, T) scores as a named output. Appending is
+        # Export the span scorer's (B, S, L, T) scores as a separate output. Appending is
         # backward-compatible — a runtime that never asks for `span_scores` pays no cost (ORT prunes
         # the unfetched branch). The JS decoder and the semi-crf-transitions.json sidecar
         # (package_weights.export_semi_crf_transitions) consume it.

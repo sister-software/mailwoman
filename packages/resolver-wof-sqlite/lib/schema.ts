@@ -5,9 +5,8 @@
  *
  *   Kysely table types for the subset of the Who's On First SQLite schema this package touches.
  *
- *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships about 7 tables, and
- *   this file models only the ones we read. Modeling the others would be misleading, since their
- *   shapes are unverified and they are not part of the resolver's interface.
+ *   The full upstream distribution at data.geocode.earth/wof/dist/sqlite/ ships about seven tables.
+ *   This file models only the tables we read. The others are outside the resolver interface. Their shapes remain unverified.
  *
  *   Authoritative schema docs:
  *
@@ -16,7 +15,8 @@
  */
 
 /**
- * The FTS5 virtual table this package builds on first open, which is local to this repository.
+ * The FTS5 virtual table this package builds on first open.
+ * It is local to this repository.
  *
  * `content` is unindexed and is there so we can roundtrip the original name
  * back to the caller without a second select.
@@ -76,8 +76,10 @@ export interface SprTable {
  * No `kind` column in real WOF.
  * The FTS build concatenates all names per id.
  *
- * `official` marks a preferred-form name in an official language of the place's country
- * in our unified builds only, and it is absent in real WOF dumps.
+ * `official` marks a preferred-form name in an official language of the place's country.
+ * This column appears only in unified builds.
+ *
+ * Real WOF dumps omit it.
  * These are the aliases eligible to join the name-exact tier.
  * See `unified-schema.ts` for the full interface.
  */
@@ -187,8 +189,9 @@ export interface CoincidentRolesTable {
  * The full schema we hand to `Kysely<WOFDatabase>` / `new DatabaseClient<WOFDatabase>(...)`.
  *
  * Tables not listed here will fail type-checked queries, by design.
- * The reader ({@link WOFSQLitePlaceLookup}) already consumes this, and the build/augment
- * writers adopt it so a column rename is a compile error on both sides.
+ * The reader ({@link WOFSQLitePlaceLookup}) already consumes this.
+ *
+ * The build and augment writers adopt it so a column rename is a compile error on both sides.
  */
 /**
  * The provenance row every built extract carries: source fingerprints travelling with

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   POI query board, which grades committed POI queries against the production pipeline's result and checks the
- *   registered floors.
+ *   Grades committed POI queries against the production pipeline's result. The board also checks the registered floors.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -38,7 +37,8 @@ export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/
  * Row statuses.
  *
  * Only `pass` rows count toward the floors.
- * A `known_fail` row needs a repair, and an `improvement_target` row needs a new capability.
+ * A `known_fail` row needs a repair.
+ * An `improvement_target` row needs a new capability.
  */
 export const POI_BOARD_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
@@ -93,7 +93,7 @@ export function isCountedFixture(fixture: POIBoardFixture): boolean {
 }
 
 /**
- * Audits fixtures for duplicate IDs, unknown keys and statuses, and `bugRef` use.
+ * Audits fixtures for duplicate IDs, unknown keys, unknown statuses and `bugRef` use.
  * It returns one message per problem.
  */
 export function auditFixtures(fixtures: readonly POIBoardFixture[]): string[] {
@@ -320,7 +320,7 @@ export interface TrackedCase {
 }
 
 /**
- * Grades split into counted rows, which the floors read, and tracked rows, which are only reported.
+ * Splits grades into counted rows used by the floors and tracked rows included only in reports.
  */
 export interface CasePartition {
 	counted: CaseGrade[]
@@ -477,7 +477,9 @@ export interface POIBoardReport {
 	 */
 	totalCases: number
 	/**
-	 * Number of rows that the floors read, which is {@linkcode totalCases} minus {@linkcode trackedCases}.
+	 * Number of rows the floors read.
+	 *
+	 * This equals {@linkcode totalCases} minus {@linkcode trackedCases}.
 	 */
 	countedCases: number
 	/**
@@ -491,7 +493,8 @@ export interface POIBoardReport {
 	 */
 	byExpectKind: Record<string, { total: number; pass: number; rate: number }>
 	/**
-	 * Pass rate over the counted rows, which the `overall` floor reads.
+	 * Pass rate over the counted rows.
+	 * The `overall` floor reads this value.
 	 */
 	overallPassRate: number
 	/**
@@ -551,8 +554,9 @@ function computeStats(values: number[]): QuantileStats | null {
 }
 
 /**
- * Runs every fixture through one board pipeline, grades the rows, evaluates the floors,
- * and prints the report unless `quiet` is set.
+ * Runs every fixture through one board pipeline.
+ *
+ * It grades the rows and evaluates the floors, then prints the report unless `quiet` is set.
  */
 export async function runPOIBoard(options: POIBoardOptions = {}): Promise<POIBoardRunResult> {
 	const fixturesPath = options.fixturesPath ?? POI_BOARD_FIXTURES

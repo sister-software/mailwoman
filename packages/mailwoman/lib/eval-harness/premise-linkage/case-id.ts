@@ -19,7 +19,7 @@ import { sha256Hex } from "@mailwoman/core/hash"
  * Hex characters kept from the digest.
  *
  * Sixty-four bits of identifier: long enough that a run's rows do not collide,
- * short enough that nobody mistakes it for something to look up.
+ * short enough for readers to distinguish it from a lookup key.
  */
 const CASE_ID_LENGTH = 16
 

@@ -99,7 +99,8 @@ console.log(
  * `lookupUSState` folds region text such as `California` and `CA` to one code.
  * `unfolded` counts region text that folds to no code.
  *
- * `noRegionSpan` counts rows without a region, which count toward no code.
+ * `noRegionSpan` counts rows without a region.
+ * Those rows contribute to no code.
  */
 interface SourceComposition {
 	source: string
@@ -123,7 +124,8 @@ const streetShapes = new Map<
 		withStreet: number
 		bareAdmin: number
 		/**
-		 * Counts rows that write the region as its two-letter code, and how many of those are bare admin rows.
+		 * Counts rows that write the region as its two-letter code.
+		 * Also counts how many of those rows are bare admin rows.
 		 *
 		 * The model sees `Arkansas` and `AR` as different strings, so the code form gets its own count.
 		 */

@@ -6,14 +6,12 @@
  * `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
  * `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
- * This exists because the swap is a data-source change rather than a refresh, and the tool reports
- * rather than decides: a large coordinate delta usually indicts GeoNames, whose GB provenance is
- * the muddled one, rather than Code-Point Open.
+ * The swap changes data sources rather than refreshing one source. The tool reports evidence for a decision.
+ * A large coordinate delta points toward GeoNames because its GB provenance is unclear.
  *
- * Three questions: which postcodes are in one and not the other, keyed exactly on `spr.name` in the
- * sanitized form. How far apart the shared ones are, reported as a distribution rather than a mean
- * because the mean of a bimodal disagreement describes neither mode. And Northern Ireland, which
- * Code-Point Open omits by product definition and which is counted explicitly.
+ * The tool reports which postcodes appear in each source, keyed exactly on sanitized `spr.name`.
+ * It reports the distance distribution for shared postcodes because a mean hides both modes in bimodal disagreement.
+ * It also counts Northern Ireland explicitly because Code-Point Open omits it by product definition.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -158,7 +156,7 @@ const NORTHERN_IRELAND_AREAS = ["BT"] as const
 /**
  * Crown-dependency postcode areas: Isle of Man, Guernsey, Jersey.
  *
- * Outside Great Britain, and outside Code-Point Open.
+ * These areas lie outside Great Britain and Code-Point Open.
  */
 const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
 
@@ -166,16 +164,18 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * Hand-checked probes — postcodes whose real-world location is independently known,
  * so a coordinate can be judged right or wrong rather than merely different.
  *
- * Chosen to be individually verifiable and to span England, Scotland
- * and Wales plus both coordinate extremes of the join.
+ * Each probe can be verified individually.
+ * Together they span England, Scotland and Wales.
+ * They also cover both coordinate extremes in the join.
  *
  * A Code-Point centroid is the postcode unit's mean delivery point,
  * so tens of metres of offset is correct behaviour.
- * The three city-centre probes near 500-900 m are loose because their landmark is a district
- * rather than a door, and both databases agree there to within 3 m.
+ * The three city-centre probes near 500-900 m use loose bounds because each landmark is a district.
+ * Both databases agree there to within 3 m.
  *
- * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA` and the incumbent GeoNames
- * snapshot still carries the retired one, which is the terminated-postcode residual in miniature.
+ * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA`
+ * and the incumbent GeoNames snapshot still carries the retired one.
+ * This is a small example of the terminated-postcode residual.
  */
 export const CODEPOINT_PROBES = [
 	{ postcode: "SW1A 1AA", landmark: "Buckingham Palace, London", latitude: 51.5014, longitude: -0.1419 },
@@ -318,8 +318,9 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 
 		phase("stats", `${deltas.length.toLocaleString()} joined postcodes`)
 
-		// Sorted once here: `percentile` copies-and-sorts internally, which is wrong for 1.7
-		// M values read four times, so the quantiles are taken off this array directly.
+		// Sort once here.
+		// `percentile` copies and sorts internally.
+		// It would repeat that work for 1.7 M values read four times, so these quantiles use this sorted array.
 		deltas.sort((a, b) => a - b)
 
 		const quantile = (p: number): number => percentile(deltas, p) ?? 0

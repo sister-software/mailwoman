@@ -23,7 +23,7 @@ Every model change runs a check before it can reach production. Part of the chec
 
 Brazil built and trained without errors. The check then reported one failure. Country recall, the model's ability to extract the country from an address that includes one, had dropped more than five points. Every other category (cities, streets, postcodes, and house numbers) stayed flat. Only country dropped, and by enough to fail.
 
-The earlier run explained the pattern. The run with only Canada and Mexico had lowered country recall by about a point and a half, which was under the threshold and easy to dismiss as noise. Adding Brazil did not introduce a new problem. It made the _existing_ one larger. Two data points suggested a trend: the more of these addresses I added, the less often the model labeled countries.
+The earlier run explained the pattern. The run with only Canada and Mexico had lowered country recall by about a point and a half, which was under the threshold and easy to dismiss as noise. Adding Brazil did not introduce a new problem. It made the _existing_ one larger. The two runs showed a lower country-label rate after more addresses were added.
 
 ## What the addresses forgot to say
 

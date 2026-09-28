@@ -9,8 +9,8 @@
  *   implementation instead of hand-rolled mocks that drift.
  *
  *   The fixture matches on the query's normalized form or a declared component value, deliberately simple
- *   string keys because it tests the threading of provider answers through result surfaces rather than
- *   matching quality. No fixture row may carry licensed data, and synthetic uprn-shaped identifiers use the
+ *   string keys because it tests how provider answers pass through result surfaces rather than
+ *   matching quality. No fixture row may carry licensed data. Synthetic UPRN-shaped identifiers use the
  *   reserved 0-prefix range no real uprn occupies.
  */
 
@@ -51,7 +51,8 @@ const FIXTURE_ATTRIBUTION = "Synthetic fixture data — not derived from any lic
 /**
  * Build a fixture provider from rules.
  *
- * The returned provider is pure and synchronous under the hood, and the async signature is the interface's.
+ * The returned provider performs synchronous work.
+ * Its async signature matches the interface.
  */
 export function createFixtureAuthoritativeProvider(
 	options: FixtureAuthoritativeProviderOptions

@@ -12,16 +12,16 @@
  *   This holds the locality fixed and varies what stands beside it. Two modes:
  *
  *   `--mode swap` re-renders each subject under every host region. `--mode grid` runs the 2x2 that separates the two
- *   things a swap moves together: home region with home postcode, home region with the donor's postcode, the donor's
- *   region with the home postcode, and both. Measured on the v5.7.0 candidate over 60 Arkansas localities that fail at
+ *   things a swap moves together: home region with home postcode, home region with the donor's postcode,
+ *   the donor's region with the home postcode, plus both. Measured on the v5.7.0 candidate over 60 Arkansas localities that fail at
  *   home: 0/60, 36/60, 30/60, 58/60.
  *
  *   Postcodes are real codes drawn from the panel, but a crossed pairing denotes no place. No coordinate is claimed
- *   for it, and the grade is only whether the locality the row was given came back. The result is therefore about what
+ *   for it. The grade is only whether the locality assigned to the row came back. The result is about what
  *   the decode conditions on rather than about the world.
  *
  *   The arms geocode in place rather than through a written panel. `readCoordPanel` keys on (country, region,
- *   locality), and the grid's arms differ only in the postcode, so routing them through a panel file collapses each
+ *   locality). The grid's arms differ only in the postcode, so routing them through a panel file collapses each
  *   pair of arms into one row. Reading the panel once and rendering each arm from the same rows avoids the key.
  *
  *   Usage:
@@ -79,7 +79,9 @@ const regionsPresent = new Set(localities.map((place) => place.region))
 /**
  * The panel's rows for one region, raising when the panel holds none.
  *
- * An absent region yields an empty arm, which reports 0% and is indistinguishable from a measured zero.
+ * An absent region yields an empty arm.
+ * It reports 0%, the same value as a measured zero.
+ *
  * The default coordinate panel's 2,000 rows carry 7 of the 50 states and DC
  * (CA, DC, IL, SD, MT, IA, VT), so most regions hit this path.
  */
@@ -95,7 +97,8 @@ function byRegion(region: string): typeof localities {
 }
 
 /**
- * One arm: a name, the region and postcode it is being written under, and which arm it belongs to.
+ * One arm carries a name plus the region and postcode used for it.
+ * It also identifies the arm.
  */
 interface Arm {
 	name: string

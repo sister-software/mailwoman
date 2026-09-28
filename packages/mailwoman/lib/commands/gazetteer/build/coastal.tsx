@@ -8,15 +8,15 @@
  *   → download → build → verify all live in `@mailwoman/coastal/sdk`, so each stays unit-testable without Ink
  *   or the network in the loop. Mirrors `flood.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
- *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
- *   over the chosen scenarios per candidate and produces a table rather than an artifact. The table is PER scenario:
- *   twelve layers cover the same frontages with different extents, and a pooled share would average a
+ *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
+ *   Running the measurement costs a full pass over the chosen scenarios per candidate and produces a table
+ *   instead of an artifact. The table reports each scenario separately. Twelve layers cover the same
+ *   frontages with different extents. A pooled share would average a
  *   present-day designation together with a 2105 projection and describe neither.
  *
- *   `--scenarios` is the smoke rung, and `--limit` narrows it further. Building one scenario over a real
+ *   `--scenarios` selects the smoke rung. `--limit` narrows it further. Building one scenario over a real
  *   prefix of the source exercises the field names, the per-layer distance column, the value domains, the
- *   projection and the seal — which is what fixtures structurally cannot.
+ *   projection and the seal. Fixtures cannot exercise those source-dependent checks.
  */
 
 import { formatFileSize } from "@mailwoman/core/fs/readers"
@@ -125,8 +125,9 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 		// OGL v3.0 makes the attribution statement a licence condition, so a change
 		// in it changes what a re-user has to publish.
 		// Read from the structured record and compared against the constant the artifact is stamped with.
-		// The abstract's copy is doubled and its first copy carries no year,
-		// which is why the parse refuses a yearless one.
+		// The abstract repeats this copy.
+		// Its first copy has no year.
+		// The parser therefore refuses the statement without a year.
 		if (!options.offline) {
 			assertAttributionUnchanged(await client.readAttributionStatement())
 		}
@@ -183,8 +184,8 @@ const GazetteerBuildCoastal: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`▸ source declares ${identity.declaredFeatureCount.toLocaleString()} features`)
 
-		// The live service's per-layer feature counts are the cheapest two-path check there is,
-		// and they catch a stale or truncated archive before anything is written.
+		// The live service's per-layer feature counts provide a cheap second check.
+		// They catch a stale or truncated archive before anything is written.
 		// PER layer rather than pooled: twelve layers of nearly identical size is exactly
 		// the population where a pooled total agrees while two of them are transposed.
 		// A `--limit` run has deliberately fewer features than the service reports,

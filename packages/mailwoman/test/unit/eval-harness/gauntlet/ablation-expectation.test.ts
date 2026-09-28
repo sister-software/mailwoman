@@ -82,7 +82,7 @@ const LADDER: AblationLadder = ablationLadderFromChain(
 /**
  * Builds a gazetteer that answers from fixtures.
  *
- * `named` applies the country filter only.
+ * The lookup applies the country filter only.
  * The real reader in `ablation-gazetteer.ts` applies the bbox filter.
  */
 function fakeGazetteer(over: Partial<AblationGazetteerProbe> = {}): AblationGazetteerProbe {

@@ -163,7 +163,7 @@ The change is one configuration line: `crf_loss_weight = 0.0`. The structural gu
 
 1. **Adding two weighted losses can fail badly.** Two loss functions can have very different gradient magnitudes even when their loss _values_ look comparable. Scaling the loss value does not balance their contributions to the optimizer.
 2. **Run cheap diagnostics first.** The gradient-norm probe took 5 minutes and answered a question that more than a month of retraining experiments had not. Exhaust the diagnostics that need no GPU before a retrain.
-3. **ML debugging resembles ordinary program debugging.** It uses the same steps: bisect, isolate, instrument, hypothesize, and test. The hard part is describing what happens inside the model precisely enough. After that, the bug is usually findable.
+3. **ML debugging resembles ordinary program debugging.** It uses the same steps: bisect, isolate, instrument, hypothesize, and test. The hard part is describing what happens inside the model precisely enough. Those steps make the remaining bug easier to locate.
 
 ## See also
 

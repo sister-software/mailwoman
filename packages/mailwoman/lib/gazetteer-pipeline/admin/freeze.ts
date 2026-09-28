@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The admin build's Freeze phase: WAL checkpoint, journal freeze, ancestors closure, an
- *   `ancestors(id)` index before the −4 backfill, the `wof:hierarchy` −4 backfill for WOF ids only,
- *   coincident_roles, indexes, analyze, and an integrity check. The `ancestors(id)` index comes first
+ *   The admin build's Freeze phase checkpoints WAL, freezes the journal and closes the ancestor relation.
+ *   It creates an `ancestors(id)` index before the −4 backfill. The `wof:hierarchy` −4 backfill applies only to WOF ids.
+ *   The phase then builds `coincident_roles`, indexes and analyze data. It also runs an integrity check. The index comes first
  *   because the backfill's per-candidate lookups otherwise full-scan the 13M-row table and the build
- *   stalls for hours. Runs in place on the staging DB, and the caller `vacuum into`s the final artifact
+ *   stalls for hours. The phase runs in place on the staging DB. The caller then `vacuum into`s the final artifact
  *   afterwards.
  */
 
@@ -20,7 +20,8 @@ import type { PathBuilderLike } from "path-ts"
 
 export interface FreezeAdminOptions {
 	/**
-	 * Repos root for the `wof:hierarchy` −4 backfill, which reaches NYC/London-class multi-parent orphans.
+	 * Repos root for the `wof:hierarchy` −4 backfill.
+	 * It reaches NYC/London-class multi-parent orphans.
 	 *
 	 * Omit only in fixture tests.
 	 * A real build without it leaves those metros unreachable by the region-descendant filter.
@@ -93,8 +94,8 @@ export async function freezeAdmin(
 			)
 		} else {
 			// Only real WOF places have `wof:hierarchy` geojson.
-			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never do, and probing
-			// millions of them across every repo root stalls the step for ~40 minutes.
+			// Synthetic Overture/GeoNames rows (ids >= OVERTURE_ID_BASE) never have GeoJSON.
+			// Probing millions of them across every repo root stalls the step for ~40 minutes.
 			// Their ancestry comes from the parent_id closure.
 			const bf = await backfillAncestorsFromHierarchy(db, geojsonRoots, { maxID: OVERTURE_ID_BASE })
 			backfillPlacesFixed = bf.placesFixed
@@ -102,7 +103,7 @@ export async function freezeAdmin(
 		}
 	}
 
-	// The dual-role-place relation needs `ancestors`, `spr` bbox, and `place_population`, all present by now.
+	// The dual-role-place relation needs `ancestors`, `spr` bbox and `place_population`, all present by now.
 	// It drives the resolver's hierarchy completion (on by default).
 	phase("coincident-roles")
 	const roles = buildCoincidentRoles(db)

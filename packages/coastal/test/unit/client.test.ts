@@ -5,10 +5,10 @@
  *
  *   The attribution parse, pinned against the record's own malformed text.
  *
- *   this is A measured trap rather than A hypothetical one. The 2024 record's abstract carries the attribution
- *   statement twice, and the first copy — inherited from the superseded 2018–2021 record — has no year. OGL
- *   v3.0 makes the statement a licence condition, so a parse taking the first match ships a licence condition
- *   stated incorrectly. The fixture below is the real text, read from the Environment Agency's CSW.
+ *   This test covers a measured case. The 2024 record's abstract carries the attribution statement twice.
+ *   The first copy, inherited from the superseded 2018–2021 record, has no year. OGL v3.0 makes the statement
+ *   a licence condition. A parser taking the first match would state that condition incorrectly.
+ *   The fixture below is the real text from the Environment Agency's CSW.
  */
 
 import { assertAttributionUnchanged, parseAttributionStatement } from "@mailwoman/coastal/sdk/client"
@@ -50,11 +50,13 @@ describe("parseAttributionStatement", () => {
 	})
 
 	it("stays linear on a pathological input, because the record arrives over the network", () => {
-		// The regex this parse replaced backtracked polynomially: its `\s*` and its lazy run overlapped
-		// on whitespace, and its lookahead's `$` alternative made every position a candidate end.
+		// The regex this parse replaced backtracked polynomially: its `\s*`
+		// and its lazy run overlapped on whitespace.
+		// Its lookahead's `$` alternative made every position a candidate end.
 		// A long whitespace run after the marker is exactly the shape that triggers it.
-		// Two `indexOf` calls per copy answer the same question in one pass, and a ceiling far
-		// above any real parse time is what turns "it is linear" into something a test can fail on.
+		// Two `indexOf` calls per copy answer the same question in one pass.
+		// A ceiling far above any real parse time is what turns "it is linear"
+		// into something a test can fail on.
 		const pathological = `${ATTRIBUTION_MARKER}${" ".repeat(200_000)}`
 
 		const started = performance.now()
@@ -68,7 +70,8 @@ describe("parseAttributionStatement", () => {
 		const record =
 			`<a>${ATTRIBUTION_MARKER} © Somebody 1999.</a>` + `<b>${ATTRIBUTION_MARKER} © Somebody Else 2025.</b>`
 
-		// The last dated copy wins, which is what makes the published record's yearless first copy unreachable.
+		// The last dated copy wins.
+		// This leaves the published record's yearless first copy unused.
 		expect(parseAttributionStatement(record)).toBe("© Somebody Else 2025.")
 	})
 

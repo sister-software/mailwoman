@@ -48,9 +48,9 @@ const MAX_ABS_LONGITUDE = 180
  *
  * - `"polygon"`: the point ray-cast inside the place's real (DP-simplified) admin boundary.
  * - `"approximate"`: the place has no polygon on record.
- *   It won by nearest-centroid among the candidates whose bbox or parent contains the point.
- *   This is the same honesty convention as the demo's approximate circles,
- *   which surfaces a country-dependent data reality.
+ *   It returns the nearest-centroid candidate among places whose bbox or parent contains the point.
+ *   The demo's approximate circles use the same convention.
+ *   Both results expose country-dependent data coverage.
  */
 export type ContainmentKind = "polygon" | "approximate"
 
@@ -112,13 +112,16 @@ export interface ReverseGeocodeOpts {
 	/**
 	 * Cap on the bbox candidate fetch.
 	 *
-	 * Default 128, which comfortably covers a dense metro.
+	 * The default is 128.
+	 * Current measurements show that this covers a dense metro.
+	 *
 	 * The most bbox-overlapping point we have measured is a few dozen neighbourhoods plus the admin chain.
 	 */
 	maxCandidates?: number
 	/**
-	 * Approximate (nearest-centroid) steps further than this from the query point are not taken,
-	 * which keeps a sparse gazetteer from "refining" to a far-away sibling.
+	 * The lookup skips approximate (nearest-centroid) steps farther than this from the query point.
+	 *
+	 * This keeps a sparse gazetteer from "refining" to a far-away sibling.
 	 *
 	 * Polygon-confirmed steps ignore it (containment is exact regardless of centroid distance).
 	 * Default 25 km.
@@ -267,8 +270,8 @@ export class WOFReverseGeocoder implements Disposable {
 		const candidates = this.#bboxCandidates(lat, lon, opts)
 
 		// PIP walk, smallest-bbox-first.
-		// The first polygon that contains the point is the deepest polygon-confirmable place,
-		// and polygon-rejected candidates are bbox false positives that get dropped.
+		// The first polygon that contains the point is the deepest polygon-confirmable place.
+		// Drop candidates whose bounding boxes match but whose polygons reject the point.
 		let winner: CandidateRow | null = null
 		let winnerConfirmed = false
 		const pointOnly: CandidateRow[] = []
@@ -428,7 +431,8 @@ export class WOFReverseGeocoder implements Disposable {
 	 * around the query point (a generous 4× the approximate cap, since polygon-holding
 	 * children may legitimately have far centroids, e.g. a sprawling consolidated city).
 	 *
-	 * The precise cap is applied per-candidate in the caller, and only to centroid-fallback steps.
+	 * The caller applies the precise cap per candidate.
+	 * It limits centroid-fallback steps only.
 	 */
 	#descendants(
 		parentID: number,

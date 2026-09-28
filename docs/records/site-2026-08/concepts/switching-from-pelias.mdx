@@ -6,7 +6,7 @@ description: A self-hosted geocoder without the Elasticsearch cluster and the im
 
 # Switching from Pelias
 
-[Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. It is capable, and it takes a lot of work to operate: the cluster, the importers, gigabytes of data, and an analysis chain you tune by hand.
+[Pelias](https://pelias.io) is a modular, self-hosted geocoder. Its importers for OSM, OpenAddresses, Who's On First, and other sources feed an Elasticsearch cluster. Operating Pelias requires maintaining the cluster, importers, gigabytes of data, and an analysis chain tuned by hand.
 
 Mailwoman keeps what Pelias offers (self-hosting, open data, and hierarchy awareness) and removes the cluster. The hierarchy lives in SQLite, in a Who's On First `ancestors` table. A calibrated neural model does the work that Pelias's analysis chain did with rules.
 

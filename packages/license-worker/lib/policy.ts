@@ -3,16 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The access-state rules, platform-free: what a license reads given what Stripe has said, and what the public routes
- *   answer for each state. The webhook handlers and the reconciliation pass supply the observations and the ledger
- *   functions persist the decision. neither holds a rule of its own.
+ *   This module defines platform-free license access rules from Stripe observations.
+ *   It also defines the public response for each state. Webhook handlers and reconciliation supply observations.
+ *   Ledger functions persist each decision. Neither caller contains its own access rule.
  *
- *   Precedence, highest first. A revocation (a full refund, a dispute opened) stands until a dispute is ruled won, when
- *   the subscription decides again. A review (a partial refund) stands until an operator resolves it, whatever the
- *   subscription does and whether or not the current token's date has passed: the customer paid, and the question is
- *   the operator's, so the license reads `active` outside. Otherwise the subscription decides, and one that has ended
- *   keeps the license active until the current token's date passes, since the token carries the paid period plus its
- *   grace and online status must not refuse a license whose offline token is still good.
+ *   State precedence runs from highest to lowest. A full refund or open dispute revokes access until the dispute is ruled
+ *   in the customer's favor. The subscription determines the state again after that ruling. A partial refund triggers
+ *   operator review. The public license status remains `active` during review, regardless of subscription status or token
+ *   expiration, because the customer paid and the operator owns the review decision. Otherwise the subscription determines
+ *   access. An ended subscription stays active until the current token expires. The token covers the paid period plus its
+ *   grace period, so online status follows the same validity period as the offline token.
  */
 
 import type Stripe from "stripe"
@@ -24,7 +24,7 @@ export type PublicLicenseStatus = "active" | "lapsed" | "revoked"
 /**
  * The word the public routes answer for a state.
  *
- * `review` reads `active`: the customer paid, and the question is the operator's.
+ * `review` maps to `active` because the customer paid and the operator must resolve the case.
  */
 export function publicLicenseStatus(state: LicenseState): PublicLicenseStatus {
 	return state === LicenseState.Review ? LicenseState.Active : state
@@ -70,7 +70,8 @@ export function licenseStateAfterSubscription(
 /**
  * What a refund says: a full refund revokes.
  *
- * A partial one is the operator's to review, and the license reads active meanwhile.
+ * The operator reviews a partial refund.
+ * The license reads `active` during that review.
  */
 export function licenseStateAfterRefund(charge: Pick<Stripe.Charge, "amount" | "amount_refunded">): LicenseState {
 	return charge.amount_refunded < charge.amount ? LicenseState.Review : LicenseState.Revoked

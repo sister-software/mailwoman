@@ -5,11 +5,11 @@
  *
  *   `mailwoman gazetteer build uprn` — the OS Open UPRN spatial layer (`uprn.db`): every GB Unique
  *   Property Reference Number with OS's own WGS84 point. It acquires the archive from the open OS
- *   Downloads API, verifies it against OS's published md5, and writes a sealed, atomically-swapped
+ *   Downloads API. It verifies the archive against OS's published md5 and writes a sealed, atomically-swapped
  *   artifact. The layer is an interoperability key source. No step on the parse/resolve path reads it.
  *
- *   Coverage is England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer rather
- *   than any OS OpenData product, and the layer's own coverage rows say so.
+ *   Coverage includes England, Scotland and Wales. Northern Ireland's identifiers live in LPS Pointer,
+ *   outside OS OpenData products. The layer's coverage rows record that distinction.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.

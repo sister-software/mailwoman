@@ -19,7 +19,7 @@ export { resolveAnchorCenter, type AnchorCenter } from "#httpvfs/poi/anchor"
 const POI_H3_RESOLUTION = 9
 
 /**
- * The worker handle that `loadHTTPVFSDatabase` resolves to, named here
+ * The worker handle that `loadHTTPVFSDatabase` resolves to, described here
  * because `resolver.ts` does not export its type.
  */
 export type POIHTTPVFSWorker = Awaited<ReturnType<typeof loadHTTPVFSDatabase>>
@@ -81,7 +81,7 @@ export interface POISearchOpts {
 }
 
 /**
- * One named POI returned by {@link searchPOICategory}, with its distance from the search center in meters.
+ * One POI result returned by {@link searchPOICategory}, with its distance from the search center in meters.
  */
 export interface POISearchHit {
 	name: string

@@ -2,9 +2,10 @@
  * The four surfaces the locality-region-postcode decision rests on, over the same
  * US localities, through the production path.
  *
- * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003`
- * does, and the corpus reason is that no US recipe ever put a locality in front of
- * a region code and a postcode without a street ahead of it.
+ * `Washington, DC 20003` answers a locality far less often than `123 Main St, Washington, DC 20003` does.
+ * The corpus reason is that no US recipe ever put a locality in front of a region code
+ * and a postcode without a street ahead of it.
+ *
  * This renders one set of real localities four ways and reports the locality-match rate of each,
  * so the three-arm table and the reverse risk are one measurement rather than two.
  *
@@ -14,10 +15,11 @@
  * how often it comes back tagged `locality`.
  * A row whose locality is null there is correct.
  *
- * Three of the four arms render through `formatAddress` and the codex layouts
- * and differ only in which components the dict carries.
- * `street_only` cannot, because it puts a street name where a locality belongs, and a
- * renderer that produces well-formed addresses cannot express a deliberate malformation.
+ * Three arms render through `formatAddress` and the codex layouts.
+ * They differ only in which components the dict carries.
+ *
+ * `street_only` puts a street name where a locality belongs.
+ * The normal renderer cannot produce this deliberate malformation.
  *
  * Each arm's rate ships with a per-name-shape and a per-tail-word table beside it,
  * because one rate hides the split this panel exists to show.
@@ -70,9 +72,9 @@ const { values } = parseArguments({
 /**
  * The street of a coordinate row, with its house number removed.
  *
- * The reverse arm needs a street that stands where a locality would, and a
- * house number in front of it is the very cue that makes the shape unambiguous,
- * leaving it in would measure the arm that already works.
+ * The reverse arm needs a street in the locality position.
+ * A house number before the street makes the address shape unambiguous.
+ * Removing the number measures the arm that already works.
  */
 function streetWithoutNumber(input: string): string | undefined {
 	const head = input.split(",")[0]?.trim()
@@ -93,8 +95,9 @@ const { localities, qualifiersStripped } = await readCoordPanel(values.eval!, {
  * One panel locality, with the street the reverse arm stands in place of it
  * where the row's own input carries one.
  *
- * The street is optional because only the reverse arm needs it, and a panel drawn
- * from a postcode export has no streets at all.
+ * Only the reverse arm needs a street, so this field is optional.
+ * A panel from a postcode export contains no streets.
+ *
  * Requiring one would report every arm as `0/0` with a zero exit, an empty read
  * that looks exactly like a measured zero.
  *
@@ -119,7 +122,7 @@ if (!panel.length) {
 }
 
 /**
- * The four surfaces, and what a correct answer looks like in each.
+ * Defines the four surfaces and the correct answer for each.
  *
  * `street_only` is the reverse arm and is graded inverted: the street must not be
  * read as a locality, so a row with no locality at all is the pass.
@@ -164,7 +167,7 @@ interface RowOutcome {
 	arm: string
 	input: string
 	/**
-	 * The locality the panel carries, and the one the run answered.
+	 * The locality carried by the panel and the locality returned by the run.
 	 *
 	 * Both are localities, so neither is `locality` alone.
 	 * A field whose label is the tag says which tag, never which side of the comparison.
@@ -178,7 +181,8 @@ interface RowOutcome {
 }
 
 // A probe written to price a corpus change has to be able to point at the model that change produced.
-// Without this it can only ever grade the installed one, which is the arm the change is measured against.
+// Without this option, the run grades only the installed model.
+// That is the comparison arm for a candidate change.
 const depsOptions: GauntletDepsOptions = {
 	...(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {}),
 	...(values["force-kind"] ? { forceQueryKind: values["force-kind"] as QueryKind } : {}),
@@ -227,8 +231,8 @@ for (const arm of ARMS) {
 		}
 
 		// What counts as a failure differs by arm, so the examples have to ask the arm.
-		// `street_only` is graded inverted, and listing rows whose answer is not the
-		// expected locality would print its passes under "misses".
+		// `street_only` is graded inverted.
+		// Listing rows whose answer differs from the expected locality would print its passes under "misses".
 		// Every one of them `null`, which is the answer that arm wants.
 		const failed = arm.inverted ? locality !== null : locality !== place.locality
 
@@ -311,11 +315,11 @@ for (const arm of ARMS) {
 }
 
 if (values["out-json"]) {
-	// A rate is only reproducible beside the four things that decide it: which panel bytes,
-	// which model bytes, which checkout, and whether the checkout was clean when the run read it.
-	// Two arms of this probe differ by the model alone, and a staged candidate's
-	// model-card can be a symlink into the shared data root.
-	// So the card version cannot tell the arms apart and the md5 is what the receipt is for.
+	// Reproducing a rate requires four values: panel bytes, model bytes, checkout
+	// and checkout cleanliness when the run read it.
+	// The two probe arms differ only by model.
+	// A staged candidate's model card can point through a symlink into the shared data root.
+	// The card version cannot distinguish the arms, so the receipt records the MD5.
 	const repoRoot = repoRootPath()
 
 	const provenance = {

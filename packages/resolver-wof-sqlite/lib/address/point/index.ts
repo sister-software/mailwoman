@@ -79,8 +79,9 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 	 * It defaults to `"us"`.
 	 * @param opts.localityKeys Whether the extract's `locality_norm` holds full place names.
 	 * With `"abbreviated"`, a row's locality can select a row but never rejects one.
-	 * The US situs extract uses NAD city fields, which some counties abbreviate
-	 * (`addi` for Addison) or replace with the parent town.
+	 * The US situs extract uses NAD city fields.
+	 * Some counties abbreviate them (`addi` for Addison).
+	 * Other counties replace them with the parent town.
 	 * It defaults to `"abbreviated"` for `"us"` and `"full"` for every other locale.
 	 */
 	constructor(
@@ -139,7 +140,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 
 		if (!number) return null
 
-		// A `zh` extract keys locality as 縣市 + 鄉鎮市區, which the parse tags `region` and `subregion`.
+		// A `zh` extract keys locality as 縣市 + 鄉鎮市區.
+		// The parser tags 縣市 as `region` and 鄉鎮市區 as `subregion`.
 		// The Taiwanese register has no postcode, so this pair becomes the locality key.
 		// A query with only the 鄉鎮市區 matches the stored key by its suffix.
 		const scoped =
@@ -150,7 +152,8 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 				: query
 
 		// `streetKeyVariants` yields the literal key first.
-		// Each variant runs the full number fallback sequence, and the first variant that answers wins.
+		// Each variant runs the full number fallback sequence.
+		// The first variant with a match wins.
 		let row: AddressPointRow | undefined
 
 		for (const streetNorm of streetKeyVariants(query.street, streetLocaleForSurface(query.street, this.#locale))) {
@@ -212,8 +215,10 @@ export class AddressPointSqliteLookup<DB extends AddressPointDatabase = AddressP
 			}
 		}
 
-		// The Taiwanese register stores `14之12` and `30附40` as numbers `14` and `30`, with the rest in `unit`.
-		// A query number that still carries the sub-number falls back to the base number, which is approximate.
+		// The Taiwanese register stores `14之12` and `30附40` as numbers `14` and `30`.
+		// It stores the rest in `unit`.
+		// A query number that still carries the sub-number falls back to the base number.
+		// That result is approximate.
 		if (!row && this.#locale === "zh") {
 			const base = /^(\d+)(?:[之附]\d+)+$/u.exec(number)?.[1]
 

@@ -15,7 +15,7 @@
  *   | Saint-Denis, Aude                 | 101896431   | 418        | 0.5683       |
  *
  *   Encyclopedic importance ranks the 418-person Aude hamlet **4.8x above** the Paris suburb of 96,128.
- *   A geocoder that ranked on it would answer a bare "Saint-Denis" with a hamlet nobody means. The
+ *   A geocoder that ranked on it would answer a bare "Saint-Denis" with the wrong hamlet. The
  *   fixture below carries both scores in the gazetteer — the suburb's disadvantage on the encyclopedic
  *   column isn't withheld and asserts the suburb still wins.
  *
@@ -158,7 +158,7 @@ afterEach(() => {
 describe("Saint-Denis — ranking is referential", () => {
 	it("the encyclopedic column really does invert the truth (the premise this test rests on)", () => {
 		// Stated as an assertion rather than a comment: if the fixture's numbers ever stop
-		// disagreeing, every test below passes vacuously and nobody would notice.
+		// disagreeing, every test below passes vacuously without signaling the fixture change.
 		const suburb = SAINT_DENIS[0]!
 		const hamlet = SAINT_DENIS[1]!
 

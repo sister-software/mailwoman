@@ -121,10 +121,10 @@ def write_label_splits(
 def write_label_board(
     out_dir: Path, board: list[LabelRow], encoder: LabelEncoder, centroids: dict[str, list[float]]
 ) -> tuple[list[dict[str, Any]], int]:
-    """Write the held-out board, whose coordinate half is the permit registry's 시군구 centroid.
+    """Write the held-out board. Its coordinate half uses the permit registry's 시군구 centroid.
 
-    A row whose 시군구 has no centroid is dropped rather than written without one: the JP scorer
-    compares a resolved pair against a coordinate, and a board row with none cannot be scored.
+    Drop a row whose 시군구 has no centroid. The JP scorer compares a resolved pair against a
+    coordinate, so it cannot score a board row without one.
     """
     board_records: list[dict[str, Any]] = []
     without_centroid = 0
@@ -178,7 +178,7 @@ def check_no_leak(train: list[LabelRow], val: list[LabelRow], board: list[LabelR
 def select_registry_rows(
     permit_dir: Path, args: argparse.Namespace, rng: random.Random, survey: RegisterSurvey, permits: PermitSurvey
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Counter[str]]:
-    """Pass 4: exact selection of the aligned permit rows, and the registry board the rest feeds."""
+    """Pass 4: select aligned permit rows exactly. Use the remaining rows for the registry board."""
     tag_set = frozenset(resolve_label_set(LABEL_SET_NAME).tags)
     registry_selector = select_exact(permits.registry_pool, args.registry_rows, rng)
     board_selector = select_exact(permits.registry_board_pool + permits.unaligned_pool, args.registry_board_rows, rng)

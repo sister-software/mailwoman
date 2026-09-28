@@ -156,7 +156,7 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 
 	/**
 	 * Constructs the probe from the caller's existence check, opening no handle
-	 * while any path is named in `missingPaths`.
+	 * while any path appears in `missingPaths`.
 	 */
 	constructor(
 		opts: { ancestryPath?: PathBuilderLike; candidatePath?: PathBuilderLike; missingPaths?: readonly string[] } = {}

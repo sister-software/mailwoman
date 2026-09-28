@@ -31,7 +31,8 @@ export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 export type MapTUIInput =
 	| { kind: "quit" }
 	/**
-	 * Ctrl+C. Distinct from `quit` because the process must exit 130, and because raw mode means no sigint is raised.
+	 * Ctrl+C sends an interrupt. The process exits with status 130.
+	 * Raw mode prevents the terminal from raising SIGINT.
 	 */
 	| { kind: "interrupt" }
 	| { kind: "pan"; dx: number; dy: number }
@@ -63,7 +64,9 @@ const ARROW_PATTERN = /\u001B(?:\[|O)([ABCD])/y
 const UNKNOWN_CSI_PATTERN = /\u001B\[[\d;<>?]*[\u0020-\u002F]*[\u0040-\u007E]/y
 
 /**
- * Any other SS3 sequence (`ESC O <final>`) — F1–F4 on xterm, and the numeric keypad in application mode.
+ * Any other SS3 sequence (`ESC O <final>`).
+ *
+ * On xterm this includes F1–F4 and the application-mode numeric keypad.
  */
 const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 
@@ -89,12 +92,15 @@ const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /
 /* oxlint-enable no-control-regex */
 
 /**
- * Wheel reports set bit 6 of the button field, whose low bit separates up (0) from down (1).
+ * Wheel reports set bit 6 of the button field.
+ * The low bit separates up (0) from down (1).
  */
 const WHEEL_FLAG = 64
 
 /**
- * Motion reports set bit 5, which under mode 1002 means "moved with a button held" — a drag.
+ * Motion reports set bit 5.
+ *
+ * In mode 1002, that bit means "moved with a button held" — a drag.
  */
 const MOTION_FLAG = 32
 
@@ -115,8 +121,13 @@ const ARROW_INPUTS: Record<string, MapTUIInput> = {
 }
 
 /**
- * Single-character bindings taken from mapscii: `a`/`z` zoom, `+`/`-` the common pair, `hjkl` the
- * vim pan set, and `y` joining `z` for zoom-out because qwertz places it where qwerty has `z`.
+ * Single-character bindings taken from mapscii.
+ *
+ * `a` and `z` zoom.
+ * `+` and `-` form the common pair.
+ *
+ * `hjkl` pans like vim.
+ * `y` zooms out beside `z` on QWERTZ keyboards, where QWERTY places `z`.
  */
 const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 	q: { kind: "quit" },
@@ -239,8 +250,9 @@ export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 		if (isIncompleteSequence(buffer, index)) {
 			const fragment = buffer.slice(index)
 
-			// An unterminated string sequence would otherwise grow the held fragment for the life of the
-			// process, and dropping is the safe failure because flushing the body back would read it as keys.
+			// An unterminated string sequence could grow the held fragment for the life of the process.
+			// Drop an overlong fragment.
+			// Flushing its body back would make terminal content read as key presses.
 			return { events, pending: fragment.length > MAX_PENDING_LENGTH ? "" : fragment }
 		}
 

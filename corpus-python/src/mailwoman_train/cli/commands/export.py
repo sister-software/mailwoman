@@ -25,9 +25,9 @@ def add_parser(subparsers: Any) -> None:
 def _staged(out: Path) -> Path:
     """Where the graph is written while it is still unverified.
 
-    Exporting straight to ``out`` leaves a graph on disk that no test has compared against torch, and
-    the next step picks it up as if it had passed. So the graph is built beside its destination and
-    moved into place only after the comparison ran, the same order a sealed database is built in.
+    Exporting straight to ``out`` leaves a graph on disk that no test has compared against torch.
+    The next step could then pick it up as if it had passed. Build the graph beside its destination.
+    Move it into place only after the comparison runs, as with a sealed database.
     """
     return out.with_name(out.name + ".unverified")
 
@@ -35,8 +35,9 @@ def _staged(out: Path) -> Path:
 def _require_samples(samples: list[Any]) -> None:
     """Refuse an empty parity sample, rather than reporting metrics computed over an empty sample.
 
-    `verify_parity` over zero samples returns a well-formed dict with no violation in it, and printing that says the
-    graph was checked. An unreadable val split and a verified export are different outcomes and must not share one.
+    `verify_parity` over zero samples returns a well-formed dict with no violation in it. Printing
+    that dict would say the graph was checked. An unreadable val split differs from a verified export
+    and must produce a separate result.
     """
     if not samples:
         raise RuntimeError(

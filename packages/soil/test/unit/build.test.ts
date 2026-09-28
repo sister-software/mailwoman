@@ -194,7 +194,7 @@ describe("the invariants that make the shares readable", () => {
 
 		for (const row of rows) {
 			// Read column by column rather than cast whole: the five fields the invariant
-			// turns on are named here, so a column that stopped being written fails as a
+			// turns on are listed here, so a column that stopped being written fails as a
 			// missing name rather than as a share that reads zero.
 			const total = shareTotal({
 				h3_cell: 0,

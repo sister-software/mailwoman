@@ -7,7 +7,7 @@
  *
  *   A character model can close a span early inside an unfamiliar name. For example, `富山県中新川郡上市町北島` decodes
  *   as municipality `中新川郡上市` plus district `町北島`. The pass extends the span only when the extended text is a
- *   register name, and it reopens the following span. The model sometimes emits a second `B-` inside a name, so each
+ *   register name. It reopens the following span. The model sometimes emits a second `B-` inside a name, so each
  *   `B-` run is extended independently.
  */
 

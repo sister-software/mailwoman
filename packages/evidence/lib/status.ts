@@ -21,7 +21,7 @@ export const EpistemicStatus = {
 	 */
 	Designated: "designated",
 	/**
-	 * A named source recorded it at a named vintage, such as an OSM node or an Overture row.
+	 * An identified source recorded it at a specific vintage, such as an OSM node or an Overture row.
 	 */
 	Observed: "observed",
 	/**

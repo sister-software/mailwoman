@@ -8,8 +8,8 @@ import {
 } from "node:zlib"
 
 /**
- * The shape a `node:zlib` zstd transform presents: a duplex that is async-iterable
- * over bytes, which is what a spliterator accepts as a source.
+ * A `node:zlib` zstd transform is a duplex that is async-iterable over bytes.
+ * A spliterator accepts that shape as a source.
  */
 type ZlibTransform = ZstdCompress
 
@@ -33,9 +33,11 @@ function byteTransform(stream: CompressionStream | DecompressionStream): {
 	writable: WritableStream<Uint8Array>
 } {
 	// `pipeThrough` rejects the native transform: its readable side is `NonSharedUint8Array`
-	// and its writable side is `BufferSource`, neither of which matches `ReadableStream<Uint8Array>`.
-	// Keep the `new Uint8Array(chunk)` copy, because `Uint8Array<ArrayBufferLike>` may
-	// sit on a SharedArrayBuffer, and the copy produces a non-shared buffer.
+	// Its writable side is `BufferSource`.
+	// Neither side matches `ReadableStream<Uint8Array>`.
+	// Keep the `new Uint8Array(chunk)` copy because `Uint8Array<ArrayBufferLike>`
+	// may sit on a SharedArrayBuffer.
+	// The copy produces a non-shared buffer.
 	const writer = stream.writable.getWriter()
 
 	return {

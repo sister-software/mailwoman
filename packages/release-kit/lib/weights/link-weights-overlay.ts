@@ -6,10 +6,9 @@
  *   Populate `$MAILWOMAN_DATA_ROOT/weights/<locale>/` from `release.config.json` — the writer half of the
  *   overlay rung in `@mailwoman/neural`'s `resolveWeights`.
  *
- *   The data root rather than the tracked package, because a worktree starts empty, `yarn test` would
- *   mutate tracked directories, and `fs.copyFile` can write through a leftover symlink that a publish
- *   tarball then refuses (`YN0035`); writing outside git removes all four hazards, and symlinks are
- *   safe there because no operation tars the data root.
+ *   The overlay writes to the data root rather than the tracked package. A worktree starts empty. `yarn test`
+ *   could mutate tracked directories. `fs.copyFile` can also write through a leftover symlink that a publish tarball
+ *   rejects (`YN0035`). Writing outside git avoids these cases. Symlinks are safe there because no operation tars the data root.
  *
  *   Run with `--plan` (or `--dry-run`) to see what it would do and make no change.
  *
@@ -105,8 +104,8 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 		// and the first parse throws, so its absence is a broken install rather than a lean one.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
-		// Copied rather than linked: a symlink would make the overlay depend on one working tree,
-		// and a worktree removed after linking would leave it resolving a dangling card.
+		// Copy the card to keep the overlay independent of one working tree.
+		// Removing a worktree after linking would leave the card dangling.
 		if ((await pathExists(cardSource)) && !plan) {
 			await makeDirectories(dir)
 			await removePathIfPresent(resolvePath(dir, "model-card.json"))
@@ -147,9 +146,9 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			log(`  ${plan ? "·" : "✓"} ${shippedName}${recorded ? "  digest ok" : "  (no recorded digest)"}`)
 		}
 
-		// Reported, never linked: the per-locale `link-dev-weights.ts` scripts build these
-		// into the overlay directly, and each channel degrades to `undefined` at resolve time,
-		// so absence is only visible if it is said here.
+		// Report these artifacts.
+		// The per-locale `link-dev-weights.ts` scripts build them into the overlay.
+		// Each channel degrades to `undefined` at resolve time, so absence is only visible if it is said here.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

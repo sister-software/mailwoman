@@ -105,7 +105,7 @@ export interface GoogleGeometry {
 export interface GooglePlusCode {
 	global_code: string
 	/**
-	 * The shortened form relative to a named locality, present only when one exists.
+	 * The shortened form relative to a locality with a name, present only when one exists.
 	 */
 	compound_code?: string
 }

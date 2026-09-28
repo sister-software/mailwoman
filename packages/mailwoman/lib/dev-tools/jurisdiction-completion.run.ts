@@ -94,8 +94,9 @@ const report = await censusCoverage({
 const byCountry = new Map(report.countries.map((c) => [c.country, c]))
 
 /**
- * The conventions table is keyed by address system rather than by country,
- * and the lookup is the lower-cased code until one spans more than its own.
+ * The conventions table is keyed by address system rather than country.
+ *
+ * The lookup uses the lower-cased code until one system spans multiple countries.
  */
 const hasConventions = (code: string): boolean =>
 	Object.hasOwn(ADDRESS_SYSTEM_CONVENTIONS, code.toLowerCase() as keyof typeof ADDRESS_SYSTEM_CONVENTIONS)
@@ -134,8 +135,9 @@ const DIMENSIONS: ReadonlyArray<{ name: string; held: (r: JurisdictionRow) => bo
 	{ name: "renders — codex layout", held: (r) => r.layout },
 	{ name: "resolves — gazetteer places > 0", held: (r) => r.gazetteerPlaces > 0 },
 	{ name: "parses — trains on corpus rows", held: (r) => r.trains },
-	// Admission is part of the predicate: street rows the config does not admit train no model,
-	// and reporting them as held would put this row above the one it depends on.
+	// Admission is part of the predicate.
+	// Street rows excluded by config train no model.
+	// Reporting them as held would put this row above its prerequisite.
 	{ name: "parses streets — street-labeled rows", held: (r) => r.trains && r.corpusStreetRows > 0 },
 	{ name: "measured — board rows > 0", held: (r) => r.boardRows > 0 },
 	{ name: "rooftop — obtainable outside the repo", held: (r) => r.geocodeTier === "rooftop-published" },

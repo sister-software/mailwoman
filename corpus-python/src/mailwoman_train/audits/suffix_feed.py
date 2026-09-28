@@ -128,8 +128,8 @@ def audit_feed(
             per_source_carriers[(cls, row["source"])] += 1
             per_source_correct[(cls, row["source"])] += int(ok)
 
-    # Every comparison in this report is target against ordinary, and `TARGET_SOURCES` is the only thing
-    # that sorts a row into the target bucket. A spelling absent from that tuple puts every row in
+    # Every comparison in this report is target against ordinary. `TARGET_SOURCE` alone sorts a row
+    # into the target bucket. A spelling the corpus retired puts every row in
     # `ordinary`, and the report then reads as a finished measurement whose target cells are all empty.
     # An audit that cannot find what it audits has to say so: a false negative in the measuring tool
     # reads identically to a real absence.

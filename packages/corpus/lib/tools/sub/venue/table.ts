@@ -5,9 +5,9 @@
  *
  * @file The sub-venue lexicon's record schema and the shipped vocabulary it is seeded from.
  *
- * The seeds duplicate `neural/venue-structure.ts` knowingly: `@mailwoman/corpus` does not depend on
- * `@mailwoman/neural`, so the shipped vocabulary is re-declared here, and `sub-venue-lexicon.test.ts`
- * pins the seed literally so a change in either place fails a test.
+ * The seeds mirror `neural/venue-structure.ts`. `@mailwoman/corpus` has no dependency on `@mailwoman/neural`,
+ * so this file declares the shipped vocabulary locally. `sub-venue-lexicon.test.ts` pins the seed values
+ * and fails when either copy changes.
  */
 
 import type { SubVenuePromotion } from "#tools/sub/venue/promotions"
@@ -70,7 +70,9 @@ export interface SubVenueModifier {
 }
 
 /**
- * One surface form: a phrase, the record it names, and where it was attested.
+ * One surface form stores a phrase.
+ *
+ * It records the corresponding entity and where the source attested it.
  */
 export interface SubVenueSurface {
 	/**
@@ -108,7 +110,8 @@ export interface SubVenueSurface {
 	curated: boolean
 	/**
 	 * How many source features attested this exact phrase when the source counts (OSM, Overture);
-	 * `0` for vocabulary sources, which attest a term's existence rather than its frequency.
+	 * Vocabulary sources attest phrase existence and use a count of `0`.
+	 * OSM and Overture sources count occurrences.
 	 */
 	observations: number
 	/**
@@ -116,7 +119,7 @@ export interface SubVenueSurface {
 	 * each (`platform:3205 campus:49` for GB's `hall`); empty for vocabulary sources.
 	 *
 	 * Without it an `observations` count is a magnitude with no sign (`hall` on a `platform` row is a
-	 * British bus stop named after a village hall. On a `terminal` row it is a real German departure hall).
+	 * British bus stop called after a village hall. On a `terminal` row it is a real German departure hall).
 	 */
 	context: Record<string, number>
 }
@@ -124,9 +127,11 @@ export interface SubVenueSurface {
 /**
  * The measured shape of a designator's identifier half — what follows `Gate`/`Terminal` in real data.
  *
- * Derived from OSM `ref` values rather than names: every one of Berlin's 26 `aeroway=gate` features
- * is unnamed and carries only a `ref`, so `Gate A12` is a rendering (`<designator> <ref>`)
- * rather than a string anyone wrote down, and generating that form needs the identifier distribution.
+ * Derived from OSM `ref` values.
+ * Each of Berlin's 26 `aeroway=gate` features carries a `ref` and has no name.
+ *
+ * The extractor renders `Gate A12` from `<designator> <ref>`.
+ * Generation requires the identifier distribution.
  */
 export interface IdentifierShape {
 	designatorID: string
@@ -225,8 +230,8 @@ export const SHIPPED_MODIFIER_SEED: readonly string[] = [
 /**
  * Designators the lexicon adds beyond what ships, each with the source that attests it.
  *
- * None is `modifierEligible`: that claim needs a confound board per term and per locale,
- * and a promotion marks a surface usable without widening the modifier grammar.
+ * None is `modifierEligible` because that claim requires a confound board for each term and locale.
+ * A promotion marks a surface usable while preserving the modifier grammar.
  */
 export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 	id: string
@@ -242,8 +247,10 @@ export const PROPOSED_DESIGNATORS: ReadonlyArray<{
 ]
 
 /**
- * `designatorID` → Wikidata QID, mirroring `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`;
- * the builder stays a pure function over parsed input, and the test pins the two against each other.
+ * `designatorID` → Wikidata QID, matching `fetch/wikidata-subvenue.ts`'s `SUBVENUE_CONCEPTS`.
+ *
+ * The builder remains a pure function over parsed input.
+ * The test compares both maps.
  */
 export const CONCEPT_QIDS: Readonly<Record<string, string>> = {
 	terminal: "Q849706",

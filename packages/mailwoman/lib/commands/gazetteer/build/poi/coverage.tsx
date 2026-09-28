@@ -4,16 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build poi-coverage` — build a POI layer whose `layer_coverage` rows carry an
- *   exclusion-grade basis: one class in one named administrative region, completeness measured rather
+ *   exclusion-grade basis: one class in one specified administrative region, completeness measured rather
  *   than asserted.
  *
- *   This is the one path to `basis: surveyed`, and taking it costs a second, independent inventory of the
+ *   This is the one path to `basis: surveyed`. It requires a second, independent inventory of the
  *   same class in the same region — the class is extracted from a Geofabrik `.osm.pbf`, read out of an
- *   already-sealed reference layer, and matched under a pre-registered protocol grid. The command is
+ *   already-sealed reference layer and matched under a pre-registered protocol grid. The command is
  *   parameterized so the claim can be re-run and audited. Running it in more places leaves coverage
  *   where it was: a completeness estimate from two sources bounds sampling error only and cannot see the
- *   dependence between them, which is the direction that turns a data gap into confident negative
- *   evidence.
+ *   dependence between them. Dependence can turn a data gap into confident negative evidence.
  *
  *   Tier is `build-local`, always: the subject inventory is OSM, so the built artifact is a Derived
  *   Database under ODbL and we ship the builder rather than the bytes.
@@ -37,7 +36,7 @@ import { buildSHA as resolveBuildSHA } from "#gazetteer-pipeline/stamp-manifest"
 const DEFAULT_COVERAGE_RESOLUTION = "6"
 
 /**
- * Named in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories
+ * Listed in the taxonomy with an `osmTag` of `amenity=pharmacy`, so both inventories
  * select from the same declaration rather than two hand-written predicates.
  */
 const DEFAULT_CATEGORY = "pharmacy"

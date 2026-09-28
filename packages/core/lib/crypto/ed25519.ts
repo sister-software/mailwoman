@@ -56,8 +56,8 @@ export async function generateEd25519KeyPair(): Promise<Ed25519KeyPairPEM> {
 	const pair = await crypto.subtle.generateKey(ALGORITHM, true, ["sign", "verify"])
 
 	// The overload answers a single key for symmetric algorithms.
-	// Ed25519 always answers a pair, and narrowing by shape keeps this module free
-	// of a global type name the Node typings do not declare.
+	// Ed25519 always answers a pair.
+	// Narrowing by shape keeps this module free of a global type name that the Node typings do not declare.
 	if (!("privateKey" in pair)) throw new TypeError("Ed25519 key generation answered a single key, not a pair")
 
 	return {

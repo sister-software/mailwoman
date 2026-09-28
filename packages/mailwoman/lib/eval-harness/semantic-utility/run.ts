@@ -3,20 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The live half of the semantic-utility probe: load the frozen pre-registration, run its target and
- *   control rows through the same pipeline construction the POI board uses, and emit a receipt.
+ *   Runs the live half of the semantic-utility probe. It loads the frozen pre-registration and sends target and control
+ *   rows through the pipeline construction used by the POI board. It then emits a receipt.
  *
- *   This module decides only what it read — every row, threshold, and baseline comes from
- *   `probe-definition.json`, which {@linkcode loadProbeDefinition} refuses to hand over if its content
- *   hash has moved.
+ *   This module decides from `probe-definition.json`. That file supplies the rows.
+ *   It also defines the baseline and thresholds. {@linkcode loadProbeDefinition} checks its content hash before returning it.
  *
- *   The receipt records the artifact identity as well as the numbers, and names an unreadable field in
- *   place rather than omitting it, because a pass rate over an unnamed database and unnamed weights is
- *   not reproducible.
+ *   The receipt records artifact identity and measurement values. It reports an unreadable field at its location.
+ *   A pass rate without database and weight identities cannot be reproduced.
  *
- *   A route dropped on the way in produces exactly the numbers a route that changed no behavior
- *   produces, so `semanticRoute` records whether the injected route was actually built and what from,
- *   and every firing is recorded beside its row with its provenance.
+ *   A dropped route can produce the same numbers as a route with no behavior change.
+ *   `semanticRoute` records whether the run built the injected route and what it built it from.
+ *   Each firing is recorded beside its row with its provenance.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -124,8 +122,9 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	gitCommit?: string
 	/**
-	 * Build the one semantic observation route and inject it into the pipeline this run constructs. absent
-	 * or `false` runs the un-injected pipeline, which the frozen baseline was measured against.
+	 * Build the semantic observation route and inject it into the pipeline for this run.
+	 *
+	 * `false` or an absent value runs the un-injected pipeline used to measure the frozen baseline.
 	 */
 	semanticObservation?: boolean
 }

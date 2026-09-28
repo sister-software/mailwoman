@@ -5,19 +5,20 @@
  *
  *   Structural-validity checker for the decoded `AddressTree`.
  *
- *   The postcode-only harness scores an address as a pass on exact component match, and a parse can
- *   match a component while remaining structurally incoherent. Examples are a `house_number` or
- *   `street_suffix` floating with no `street` anywhere, and an `attention` with no `venue`. This
- *   checker raises the harness from address-level pass to address-level pass plus structural
- *   validity.
+ *   The postcode-only harness scores an address as a pass when its components match exactly.
+ *   A parse can match a component while remaining structurally incoherent.
+ *   Examples include `house_number` or `street_suffix` without any `street`.
+ *   Another example is `attention` without `venue`.
+ *   This checker adds structural validity to the harness's address-level pass.
  *
  *   Two checks:
  *
- *   1. illegal-edge. A non-root node's parent tag must appear in its `PARENT_OF` list. The tree
- *      builder enforces this by construction, and the check guards against regressions in
+ *   1. illegal-edge. A non-root node's parent tag must appear in its `PARENT_OF` list.
+ *      The tree builder enforces this by construction. The check guards against regressions in
  *      build-tree.ts.
- *   2. stranded-dependent. A strict dependent tag, which is meaningless without a structural
- *      anchor, has no anchor type anywhere in the tree. The checker skips the geographic containers.
+ *   2. stranded-dependent. A strict dependent tag needs a structural anchor.
+ *      The checker reports it when no anchor type appears anywhere in the tree.
+ *      It skips the geographic containers.
  *      A postcode-only or city-only input is a valid degenerate parse.
  */
 

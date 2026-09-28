@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The DuckDB boundary for the parquet family — the one place that opens a connection, and the two escapers every
+ * @file The DuckDB boundary for the parquet family — the one place that opens a connection and the two escapers every
  *   statement built here goes through.
  *
  *   `@duckdb/node-api` is an optional peer, so the import is lazy: the native module loads only on the paths that read
- *   or write Parquet through DuckDB, and a consumer that only needs the schema types never pays for it.
+ *   or write Parquet through DuckDB. A consumer that only needs the schema types never loads it.
  */
 
 /**
@@ -77,10 +77,11 @@ export interface DuckDBLimits {
  * Open an in-memory DuckDB connection, taken with `using db = await openDuckDB()`.
  *
  * The connection is returned directly, so it reads as a connection at every call site.
- * Disposal closes it and then the instance: a connection left open holds the native instance
- * for the life of the process, and one opened per file in a loop holds one per file.
+ * Disposal closes the connection and then the instance.
  *
- * Every connection carries a memory limit.
+ * An open connection holds the native instance for the life of the process.
+ * A connection opened per file in a loop holds one instance per file.
+* Every connection carries a memory limit.
  * It is set here rather than at each call site because the failure it prevents is the host
  * running out of memory, which reaches every process rather than the query that caused it.
  */

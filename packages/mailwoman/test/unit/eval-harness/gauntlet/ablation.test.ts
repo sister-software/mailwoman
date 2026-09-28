@@ -123,7 +123,7 @@ describe("ablationVariants — one variant per attributable component", () => {
 	})
 
 	// An empty asserted value means the slot stays empty, so counting it as a deletion
-	// would manufacture support for a cell nobody measured.
+	// would manufacture support for an unmeasured cell.
 	it("refuses an empty asserted value rather than counting it as support", () => {
 		const { variants, skips } = ablationVariants("1600 Pennsylvania Ave NW, Washington DC", {
 			postcode: "",
@@ -290,7 +290,7 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		unresolved: false,
 		slot: "absent",
 		emitted: null,
-		// Omitting these would let `aggregateCells` count an undefined grade and grow a histogram bucket nobody reads.
+		// Omitting these would let `aggregateCells` count an undefined grade and grow an unused histogram bucket.
 		expectedRung: "base",
 		expectedRungDepth: 0,
 		expectedWhy: "fixture",

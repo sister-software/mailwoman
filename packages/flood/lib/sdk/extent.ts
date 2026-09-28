@@ -3,23 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The authority's mapped footprint, and the cells a `designated` coverage claim may be written to.
+ *   The authority's mapped footprint determines which cells may receive a `designated` coverage claim.
  *
- *   the footprint is the coverage statement, never the polygon union. The EA states that the Flood Zone
- *   mapping "covers all of England". Zone 1 is defined as the land outside Zones 2 and 3, so the union of
- *   the hazard polygons is the mapped area minus Zone 1. A footprint taken from the polygons would report
- *   every Zone 1 location as unmapped, which inverts the one reading this layer exists to get right.
+ *   The footprint encodes the coverage statement for each affected cell. The EA states that the Flood Zone
+ *   mapping "covers all of England". Zone 1 is land outside Zones 2 and 3. The hazard polygons therefore omit
+ *   Zone 1. A footprint built from those polygons would report every Zone 1 location as unmapped. That would
+ *   reverse the coverage result this layer must provide.
  *
- *   the flood authority does not publish where england is, so a second authority's artifact is needed to
- *   turn its sentence into a cell set — the national statistical authority's country boundary. Which
- *   artifact that was is written into `flood_map_extent` rather than left implicit, because the coverage
- *   claim is only as good as the outline it was clipped to.
+ *   The flood authority does not publish an England boundary. The national statistical authority's country
+ *   boundary supplies the outline needed to convert the coverage statement into cells. `flood_map_extent` records
+ *   that artifact. The coverage claim depends on the outline used for clipping.
  *
- *   the clip is conservative and that asymmetry is deliberate. `interiorCoverageCellSet` keeps only cells
- *   lying wholly inside the outline, so the England–Wales and England–Scotland border strips get no
- *   coverage row at all. A point there reads unknown, which is the honest answer for a location the EA's
- *   statement may or may not reach. a cell wrongly called interior would state that an authority
- *   determined a location it never looked at.
+ *   The clip is conservative. `interiorCoverageCellSet` keeps only cells that lie wholly inside the outline.
+ *   England–Wales and England–Scotland border strips receive no coverage row. A point there reads unknown
+ *   because the EA's statement may not cover it. Marking a cell as interior would claim that the authority
+ *   determined coverage for a location it did not assess.
  */
 
 import { interiorCoverageCellSet, type ParsedGeometry } from "@mailwoman/spatial"
@@ -52,7 +50,7 @@ export const EA_EXTENT_ID = "ea-england"
 export const FLOOD_EXTENT_STATUS_MAPPED = "mapped"
 
 /**
- * The boundary artifact a footprint was clipped to, and its terms.
+ * The boundary artifact used to clip a footprint and the artifact's terms.
  */
 export interface BoundaryProvenance {
 	source: string
@@ -74,7 +72,8 @@ export const ONS_ENGLAND_PROVENANCE: BoundaryProvenance = {
 }
 
 /**
- * One realized footprint: the outline, its provenance, and the cells a coverage row may be written to.
+ * One realized footprint, including its outline and provenance.
+ * It also lists eligible coverage cells.
  */
 export interface FloodMapExtent {
 	extentID: string
@@ -108,9 +107,10 @@ export interface RealizeExtentOptions {
  * a `Feature` wrapping one, or a `FeatureCollection`.
  *
  * A collection must contain exactly one feature.
- * Every export tool writes a `FeatureCollection`, so refusing the shape outright would refuse
- * the ordinary case, but taking the first of several would silently choose which country the
- * coverage claim is about, and the claim is only as good as the outline it was clipped to.
+ * Every export tool writes a `FeatureCollection`, so refusing the shape outright would
+ * refuse the ordinary case, but taking the first of several would silently choose
+ * which country the coverage claim describes.
+ * The claim depends on the outline used for clipping.
  *
  * @throws {TypeError} When the document holds no geometry, or a collection
  * holds anything other than one feature.
@@ -146,8 +146,8 @@ export function outlineFromGeoJSON(document: unknown, origin: string): ParsedGeo
  * Turn an outline plus a coverage statement into a footprint.
  *
  * @throws {Error} When the outline yields no interior cell at `coverageResolution`.
- * That is not an empty country: it means the resolution is coarser than the outline,
- * and a zero-cell footprint would silently write no coverage rows.
+ * The resolution is coarser than the outline.
+ * A zero-cell footprint would write no coverage rows.
  * An artifact that answers "unknown" everywhere while reporting a successful build.
  */
 export function realizeFloodMapExtent(options: RealizeExtentOptions): FloodMapExtent {

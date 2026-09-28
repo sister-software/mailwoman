@@ -40,7 +40,8 @@ const Cmd: CommandComponent<typeof spec> = ({ options }) => {
 
 		type Manifest = Parameters<typeof baseManifestFiles>[0]
 
-		// A slice without a hash would match another slice without one, and an overlay would be skipped as base.
+		// A slice without a hash could match another unhashed slice.
+		// The migration could then skip an overlay as a base.
 		const readHashedFiles = async (path: string) => {
 			const files = baseManifestFiles(await readLocalJSONFile<Manifest>(path))
 			const unhashed = files.find((file) => typeof file.sha256 !== "string")

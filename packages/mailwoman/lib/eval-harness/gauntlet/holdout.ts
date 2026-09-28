@@ -4,11 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Held-out fresh-draw Gauntlet. It is the generalization check. Each run draws a fresh random
- *   sample with truth coordinates (BAN for FR), so the model cannot memorize it, and runs both the
- *   candidate and the current production model on the same draw. It checks on a two-proportion
- *   z-test, and it ships only when the candidate is at least as good as production at the locality
- *   tolerance. Absolute accuracy is not the check, and the candidate-against-production delta
- *   controls for data drift and coverage gaps.
+ *   sample with truth coordinates (BAN for FR). The candidate and current production model run on the same draw.
+ *   A two-proportion z-test compares them. The candidate ships only when it matches or exceeds production at the
+ *   locality tolerance. This paired comparison controls for data drift and coverage gaps.
  *
  *   Run: mailwoman eval gauntlet --layer holdout --candidate ./out/v194-final/model.onnx [--n 300]
  */
@@ -230,8 +228,8 @@ function zStat(cand: number, prod: number, n: number): number {
 /**
  * Run the held-out layer.
  *
- * `exitCode` is 0 for `pass`, 1 when the candidate is significantly worse,
- * and 2 for a usage error (missing candidate or unknown source).
+ * `exitCode` is 0 for `pass` and 1 when the candidate is significantly worse.
+ * It is 2 for a usage error, such as a missing candidate or unknown source.
  */
 export async function runHoldoutLayer(options: HoldoutLayerOptions = {}): Promise<{ pass: boolean; exitCode: number }> {
 	const N = options.n ?? 300

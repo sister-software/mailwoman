@@ -117,8 +117,8 @@ def push_oa_locale_rows(args: argparse.Namespace, push: Push) -> None:
                 license_note,
             )
 
-        # Fragment recipe v6 (#1104): country counterweight — the recipe-v5 mass is country-sparse, which eroded
-        # country recall 88.6%→82.0% on the fragment lineage. Emit a full address ending in the country
+        # Fragment recipe v6 (#1104): country counterweight — recipe-v5 mass was country-sparse.
+        # Country recall fell from 88.6% to 82.0% on the fragment lineage. Emit a full address ending in the country
         # token per triple, both comma'd and comma-free (golden has both), rotating the codex surface
         # forms, so the fine-tune keeps the country class alive without touching the fragment gains.
         surfaces = COUNTRY_SURFACES.get(country, [])
@@ -246,8 +246,8 @@ def push_country_counterweight_rows(
     Both draw from `country_rng`. It is seeded separately from the recipe's own shuffle. Therefore, this
     block's numbers do not move when a block before it changes size.
     """
-    # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy, and neither
-    # is an OA_LOCALES locale, so those tails had zero signal — the country-sparse fine-tune eroded
+    # Fragment recipe v6 (#1104): country counterweight. The golden country classes are US + FR heavy.
+    # Neither is an OA_LOCALES locale, so those tails had zero signal. The country-sparse fine-tune eroded
     # recall 88.6%→82.0%. The corpus rarely co-locates street+locality in one row (WOF-admin-heavy), so
     # synthesize by zipping separate street + locality pools (both do exist in the corpus) with a codex
     # country surface tail (COUNTRY_SURFACES, sourced from @mailwoman/codex), comma'd and comma-free.
@@ -332,7 +332,7 @@ def push_country_counterweight_rows(
 
 
 def write_output(args: argparse.Namespace, rows: list[dict[str, Any]], rng: random.Random) -> None:
-    """Shuffle once, separate the first tenth as the dev holdout, and write both.
+    """Shuffle once. Use the first tenth as the dev holdout, then write both outputs.
 
     The holdout is read, never trained, so the shuffle is what decides which rows a read-out can
     measure. It is the only place this function's `rng` is consumed.
@@ -386,7 +386,7 @@ def main() -> None:
     # surface rather than one value standing for all of them.
     #
     # The locale rows are OpenAddresses streets and localities written short. The harvest rows are
-    # localities read back out of the built corpus, whose register varies per row and is unknown at
+    # localities read back out of the built corpus. Their register varies per row and is unknown at
     # this point. The counterweight rows are country names from this repository's codex table.
     push_oa_locale_rows(
         args,

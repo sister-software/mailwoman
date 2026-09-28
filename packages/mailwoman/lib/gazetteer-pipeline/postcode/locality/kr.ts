@@ -9,8 +9,8 @@
  *   `postcode_locality` table, so the existing `postcode_area_resolution` resolver strategy
  *   consumes it unchanged. KR's data shape is the inverse of Japan's, so the build is inverted too.
  *
- *   Japan is name-primary: KEN_ALL supplies the municipality name, GeoNames supplies the point, and
- *   the name is matched with a proximity tiebreak against romanized `spr.name`. Korea is
+ *   Japan is name-primary. KEN_ALL supplies the municipality name. GeoNames supplies the point.
+ *   The builder matches the name with a proximity tiebreak against romanized `spr.name`. Korea is
  *   point-primary: the GeoNames postal file already carries postcode to (place_name, admin1, lat,
  *   lon) in one source. `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor`
  *   plus Hangul-containing `und`) variants, so the nearest locality point resolves the postcode and

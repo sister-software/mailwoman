@@ -5,9 +5,9 @@
  * @file Whether a layer may cross the boundary from built to published.
  *
  *   `LayerTier` already states the answer. `shipped` is defined as a permissive-license artifact this
- *   project publishes, `build-local` as one whose sources carry share-alike so the builder ships and
- *   the user builds, and `private` as the user's own data. Every reader of the field consulted it for
- *   something other than publication, so `candidate.db` shipped as a bundle while its own manifest
+ *   project publishes. `build-local` means the sources carry share-alike. The builder ships the
+ *   build tool. The user builds the data. `private` means the user's own data. Every reader consulted the field for
+ *   a purpose beyond publication. One result was `candidate.db` shipping as a bundle while its own manifest
  *   recorded `tier = build-local` and `license = ODbL-1.0 AND CDLA-Permissive-2.0 AND CC-BY-4.0`.
  *
  *   The tier is the assertion and the license expression is the evidence for it, so this reads both and
@@ -116,8 +116,9 @@ export interface PublicationSubject {
  * Every reason the given layers may not be published, in the order they were given.
  *
  * An empty array means each layer's tier permits publication and no license expression contradicts it.
- * It does not mean the expression was verified against the upstream terms,
- * which no code in this repository can decide.
+ * The array does not state whether anyone verified the expression against the upstream terms.
+ *
+ * Code in this repository cannot decide whether those terms support the expression.
  */
 export function refusalsForPublication(subjects: readonly PublicationSubject[]): PublicationRefusal[] {
 	const refusals: PublicationRefusal[] = []

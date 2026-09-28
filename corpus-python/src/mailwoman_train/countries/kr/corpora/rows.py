@@ -1,10 +1,9 @@
-"""Rendering one Korean address in one of seven registers, and deciding which a row can render.
+"""Render a Korean address in one of seven registers. Determine which registers a row supports.
 
-A register is a way the same address gets written: the ministry's own form, the typed form, the
-delivery form, the spoken short region, a search box with no spaces, the lot-number form. A row
-does not always support all seven — `short_region` needs a known short form, `official` and
-`building` need the parenthetical, `jibun` needs a lot with its 동 — so `available_registers`
-answers what is honestly renderable and the build report counts what landed.
+A register is one way to write an address: ministry, typed, delivery, spoken short region, search
+without spaces, or lot-number form. A row may support only some registers. `short_region` needs a known short
+form. `official` and `building` need the parenthetical. `jibun` needs a lot with its 동.
+`available_registers` returns the supported forms. The build report counts each form selected.
 """
 
 from __future__ import annotations

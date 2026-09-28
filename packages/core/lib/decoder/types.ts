@@ -82,7 +82,9 @@ export interface AddressNode {
 	interpretations?: ReadonlyArray<Interpretation>
 	/**
 	 * The ISO 15924 script of the span.
-	 * `Zyyy` means no specific script, and absence means unknown.
+	 *
+	 * `Zyyy` means no specific script.
+	 * An absent value means the script is unknown.
 	 */
 	script?: string
 }

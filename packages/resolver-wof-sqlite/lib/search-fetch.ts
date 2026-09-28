@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The FTS5 candidate fetch behind the fuzzy name match: the schema-qualified `place_search`
- *   `match`, its population-ordered companion fetch, and the raw row shape both of them return.
+ *   Fetches FTS5 candidates for fuzzy name matching. It runs the schema-qualified `place_search` match and its
+ *   population-ordered companion query. Both queries return the raw row shape defined here.
  *
  *   Bbox and near-with-radius narrow at the SQL level through SQLite's built-in `rtree`, whose index name and schema
- *   live in `fts.ts` beside the FTS5 build. That is why this package pulls neither SpatiaLite nor turf: the R*Tree does
- *   the narrowing, and the passes downstream of it operate on ≤ a few hundred candidates per query rather than the
- *   whole corpus, so an exact haversine over the survivors is cheap.
+ *   are defined in `fts.ts` beside the FTS5 build. This package uses SQLite's R*Tree instead of SpatiaLite or turf.
+ *   The R*Tree narrows the search to at most a few hundred candidates per query. Downstream passes work on that set
+ *   instead of the whole corpus, so exact haversine calculations remain cheap.
  */
 
 import { allRows } from "@mailwoman/core/utils"
@@ -28,7 +28,9 @@ import type { FindPlaceQuery, WOFPlacetype } from "#types"
 const SHORT_QUERY_MAX_LENGTH = 3
 
 /**
- * Over-fetch floor for short (≤3-char) queries, which are region abbreviations like "NY" or "VT".
+ * Over-fetch floor for short (≤3-character) queries.
+ *
+ * These queries are usually region abbreviations such as "NY" or "VT".
  *
  * An exact-abbrev holder's BM25 is poor (long multilingual alt-name document),
  * so the normal `limit * 4` window can drop it before `exactMatchTiering` promotes
@@ -44,8 +46,8 @@ const SHORT_QUERY_OVERFETCH = 200
  * Small on purpose.
  * Its only job is to guarantee the famous holders of a name enter the pool at all.
  *
- * For "Paris"-class floods the bm25 window is saturated by thousands of tiny same-name rows,
- * and no boost inside the bm25-based order BY can rescue a candidate whose bm25 is
+ * For "Paris"-class floods, thousands of small same-name rows fill the BM25 window.
+ * A boost inside the BM25-based ORDER BY cannot rescue a candidate whose score is
  * length-poisoned by about 15 points (see the fetch-site comment).
  */
 const POPULATION_FETCH_LIMIT = 15
@@ -68,7 +70,8 @@ export interface RawSearchRow {
 	 * From `place_importance.encyclopedic` when the extract's table carries the two-score split columns.
 	 *
 	 * NULL means the place has no Wikipedia article, or the extract predates the split.
-	 * Absence either way, and never 0 (ROAD_TO_V9 §2).
+	 * Either case records an absence.
+	 * The value remains null rather than 0 (ROAD_TO_V9 §2).
 	 */
 	encyclopedic: number | null
 }
@@ -122,8 +125,9 @@ export function fetchSearchRows<DB>(options: {
 	// `is_current = 0` is the only WOF value that means "not current", while both
 	// `-1` (modern) and `1` (legacy) mean current.
 	//
-	// With a schema-qualified `from`, the bare `place_search` reference in `match`
-	// resolves to the `from` table, which the FTS5 parser requires.
+	// The schema-qualified `from` makes the bare `place_search` reference in
+	// `match` resolve to the from table.
+	// The FTS5 parser requires that resolution.
 	// See the extracts.ts header comment.
 	const where: string[] = ["place_search MATCH ?", "spr.is_current != 0", "spr.is_deprecated = 0"]
 	const params: SQLInputValue[] = [ftsQuery]
@@ -154,15 +158,16 @@ export function fetchSearchRows<DB>(options: {
 	if (useBboxJoin) {
 		joinClause += ` JOIN ${sch}.${PLACE_BBOX_TABLE} bbox ON bbox.id = spr.id`
 		// aabb intersection.
-		// Both bbox sides must overlap, and the R*Tree handles this in O(log n).
+		// Both bounding-box sides must overlap.
+		// The R*Tree checks them in O(log n).
 		const filterBox = query.bbox || bboxAround(query.near!.lat, query.near!.lon, query.near!.maxDistanceKm!)
 		where.push("bbox.min_lat <= ? AND bbox.max_lat >= ?", "bbox.min_lon <= ? AND bbox.max_lon >= ?")
 		params.push(filterBox.maxLat, filterBox.minLat, filterBox.maxLon, filterBox.minLon)
 	}
 
 	// Left join the population aux table when present.
-	// Missing on this extract means the select omits the population column,
-	// and the post-scoring loop treats it as 0.
+	// If this extract lacks the table, the select omits the population column.
+	// The post-scoring loop then uses 0.
 	const extractHasPopulation = hasPopulationIndex.get(sch) === true
 
 	const populationSelect = extractHasPopulation
@@ -191,8 +196,8 @@ export function fetchSearchRows<DB>(options: {
 	// FTS5's bm25 length normalization is polluted by the row's total document size,
 	// so identical 1-token `name` docs read −16.0 (empty alt_names) against −0.43
 	// (2.7 KB alt_names) even with the alt_names column weighted to zero.
-	// The population-ordered companion fetch below returns the most populous holder of the name,
-	// and the exact tier breaks ties by population in the post-scoring sort.
+	// The population-ordered companion fetch below returns the most populous holder of the name.
+	// The post-scoring sort uses population to break ties in the exact tier.
 	const orderByExpr = extractHasPopulation
 		? `(bm25(place_search) - ? * MIN(1.0, COALESCE(log10(1.0 + ${PLACE_POPULATION_TABLE}.population), 0) / ?))`
 		: "bm25(place_search)"
@@ -233,8 +238,8 @@ export function fetchSearchRows<DB>(options: {
 	// For name floods ("Paris" matches thousands of gap-fill villages) the bm25-based
 	// window above cannot admit the famous holder, because its bm25 is length-poisoned
 	// by the row's alias bulk (measured ~15 pts, against a +4.0 boost cap).
-	// This fetch makes the prominent holders of a name pool-complete by construction,
-	// and the exact-tier sort below decides whether they win.
+	// This fetch includes prominent holders of a name in the candidate pool.
+	// The exact-tier sort below decides whether they win.
 	// It is skipped without a population index, since there is no column to order by.
 	if (extractHasPopulation) {
 		const popStmt = db.prepare(`

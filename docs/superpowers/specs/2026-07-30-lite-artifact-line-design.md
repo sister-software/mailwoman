@@ -99,7 +99,7 @@ on everything already published is irrevocable, and the pricing page publishes t
 - **A name.** A key attaches an email address and a company to a download. Today an embedder is
   invisible until they file an issue. GeoLite works the same way: MaxMind's free tier
   is a lead list that is also a useful product.
-- **Volume and shape.** Keys show which artifacts and versions are downloaded, how frequently, and roughly how many
+- **Volume and shape.** Keys show which artifacts and versions are downloaded, how frequently, and the approximate count of
   distinct users download them. That is enough to answer "is anyone using the FR extract" without
   instrumenting anyone's runtime.
 - **A notification channel.** When an artifact is rebuilt because the previous one had a bug

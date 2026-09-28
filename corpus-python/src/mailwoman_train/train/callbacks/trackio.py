@@ -1,9 +1,8 @@
 """The Trackio dashboard mirror of the CSV.
 
-`init_tracker` answers a null tracker whenever tracking is off or the package is absent, and every
-call it returns swallows its own failures. So this callback joins every run unconditionally: a
-disabled tracker costs a method call per interval, and making membership conditional would put the
-same decision in two places.
+`init_tracker` returns a null tracker when tracking is off or the package is absent. The returned
+call handles its own failures. This callback therefore joins every run unconditionally. A disabled
+tracker costs one method call per interval. Conditional membership would duplicate the decision.
 """
 
 from __future__ import annotations

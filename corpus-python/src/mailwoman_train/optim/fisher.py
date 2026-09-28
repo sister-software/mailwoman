@@ -17,8 +17,8 @@ Design: docs/superpowers/plans/2026-07-30-fisher-capture-design.md. Two halves:
   our own next fine-tune (largest λ that leaves the increment's target within noise of λ=0) and
   becomes the template default.
 
-The gradient is read at the accumulation boundary before clipping: the empirical Fisher is defined
-on ∂L/∂θ, and the clipped surrogate would understate curvature exactly where it is largest.
+Read the gradient at the accumulation boundary before clipping. The empirical Fisher is defined
+on ∂L/∂θ. A clipped surrogate would understate curvature where it is largest.
 """
 
 from __future__ import annotations

@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a measurement this layer takes rather than a number argued to: the share of cells
- *   that come out `partial` decides whether the index answers most probes on its own, and this module streams
- *   the real source at each candidate resolution and reports the table the choice is made from.
+ *   The index resolution is measured from this layer's data. The share of cells that come out `partial`
+ *   decides whether the index answers most probes on its own. This module streams the real source at each
+ *   candidate resolution and reports the table used to choose the resolution.
  *
  *   The table is per scenario, because a pooled `partial` share averages a present-day designation together
  *   with a 2105 projection and describes neither.
  *
- *   One stream covers every resolution. Memory is the cost, and a caller that runs out of headroom runs the
+ *   One stream covers every resolution. Memory is the cost. A caller that runs out of headroom runs the
  *   candidates in separate invocations.
  */
 
@@ -48,8 +48,8 @@ const DEFAULT_PROGRESS_EVERY = 2000
  * Measure every candidate resolution over the real source, keeping the scenarios apart.
  *
  * @throws {Error} When a layer's streamed feature count does not match the count it declares.
- * A short read produces a well-formed table describing a shorter coastline,
- * which is the partial result that must throw.
+ * A short read produces a well-formed table describing a shorter coastline.
+ * That partial result must throw.
  */
 export async function measureCoastalCellResolutions(
 	options: MeasureResolutionsOptions

@@ -3,14 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Read one POI class out of an already-sealed POI layer, as the second inventory a capture-recapture
- *   estimate needs. Read-only by construction: the handle is opened `readOnly`, so pointing this at the
- *   shipped `poi.db` cannot reopen or patch it.
+ *   Read one POI class from a sealed POI layer. Capture-recapture estimation uses it as the second inventory.
+ *   The handle opens with `readOnly`, so this function cannot reopen or patch the shipped `poi.db`.
  *
- *   The category is named, never numbered. `poi.category_id` is a per-build dictionary code — `pharmacy`
- *   is 72 in the 2026-07-22 build and carries no promise of being 72 in the next one — so the lookup goes
- *   through `poi_category_codes` and refuses a class the artifact does not hold. A numeric literal would
- *   read some other class's rows under this class's name, which no downstream check could catch.
+ *   The category uses a label rather than a number. `poi.category_id` is a per-build dictionary code.
+ *   `pharmacy` maps to 72 in the 2026-07-22 build. A later build can assign another code.
+ *   The lookup uses `poi_category_codes` and refuses a class the artifact does not hold.
+ *   A numeric literal could read another class's rows under this class's name.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

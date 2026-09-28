@@ -56,8 +56,9 @@ export interface PlaceCandidate {
 	exactMatch?: boolean
 
 	/**
-	 * The population term plus the best proximity-bias term, which the exact tier sorts by
-	 * instead of population when the query has `near` or `bias`.
+	 * The population term plus the best proximity-bias term.
+	 *
+	 * The exact tier sorts by this value instead of population when the query has `near` or `bias`.
 	 */
 	prominence?: number
 
@@ -110,8 +111,10 @@ export interface PlaceCandidate {
 }
 
 /**
- * Describes a place lookup where every field except `text` narrows or ranks the search,
- * and an extract without the R*Tree index silently ignores `bbox` and `near.maxDistanceKm`.
+ * Describes a place lookup.
+ *
+ * Every field except `text` narrows or ranks the search.
+ * An extract without the R*Tree index ignores `bbox` and `near.maxDistanceKm` without an error.
  */
 export interface FindPlaceQuery {
 	text: string
@@ -164,8 +167,11 @@ export interface FindPlaceQuery {
 	/**
 	 * The parsed region qualifier for a locality lookup.
 	 *
-	 * A backend with the ancestors sidecar marks contained candidates, ranks them first,
-	 * may add ones a country scope hid, and never removes candidates.
+	 * A backend with the ancestors sidecar marks contained candidates.
+	 * It ranks them first.
+	 *
+	 * It may add candidates hidden by a country scope.
+	 * It never removes candidates.
 	 */
 	regionQualifier?: string
 
@@ -177,8 +183,9 @@ export interface FindPlaceQuery {
 	/**
 	 * Ordered proximity-bias points with an optional weight defaulting to 1.
 	 *
-	 * The bias re-ranks exact-tier candidates by combined prominence, never removes them,
-	 * and counts `near` as weight 1.
+	 * The bias re-ranks exact-tier candidates by combined prominence.
+	 * It keeps every candidate.
+	 * It counts `near` as weight 1.
 	 */
 	bias?: Array<LatLon & { weight?: number }>
 

@@ -6,7 +6,7 @@
  *   Honest-eval harness (leakage-free geographic split + PIP-containment).
  *
  *   The yardstick the rest of the roadmap is graded on. Random OA evaluation flatters us: the model
- *   trains on a corpus that covers the same streets OA tests, and the legacy locality name-match
+ *   trains on a corpus that covers the same streets OA tests. The legacy locality name-match
  *   metric is blind to picking the right name in the wrong place. This harness measures only the
  *   leakage-free held-out set (OA rows in corpus-held-out geography the model never trained on) and
  *   reports the NON-gameable coordinate truth: region-match, coordinate error (p50/p90), and

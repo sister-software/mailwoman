@@ -33,7 +33,7 @@ def diagnose_suffix_plasticity(
 
     This is diagnostic evidence only, never a third promotion attempt. It holds the corrected corpus,
     initialization, optimizer family, batch size and model geometry fixed. disables EWC, uses a constant
-    learning rate so a short probe does not disappear into a cosine tail, and saves every 500 steps.
+    learning rate so a short probe does not disappear into a cosine tail. The run saves every 500 steps.
     """
     import sys
 
@@ -162,7 +162,7 @@ def grade_street_type_contrast(step: int = 3000, show_flips: str = "", heal: boo
     the same retrained checkpoint — the clean, fully-controlled read of "does street-type input evidence
     improve street<->locality discrimination." For each ban-fragments-fr row we build the full feature
     set (anchor + gazetteer + country + street_type, faithful to training) via encode_row, run forward
-    twice (street_type_features as-computed, then zeroed), argmax-decode the street span, and compare to
+    twice (street_type_features as-computed, then zeroed), argmax-decode the street span and compare it to
     the gold street. The ON-OFF street-match delta per class is the verdict. the P-C classes (admin-
     street-homonym / bare-street / street-particle) are where the evidence hypothesis lives."""
     import json

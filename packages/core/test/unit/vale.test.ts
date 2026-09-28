@@ -18,7 +18,9 @@ import { describe, expect, it } from "vitest"
 /**
  * Writes a fixture `@vvago/vale` install and returns a caller module URL to resolve from.
  *
- * The fixture's `bin.vale` points to a `.cjs` launcher, and the binary sits under `native/`.
+ * The fixture's `bin.vale` points to a `.cjs` launcher.
+ * The binary sits under `native/`.
+ *
  * `withBinary: false` simulates a failed postinstall download.
  */
 async function fixtureInstall(

@@ -78,7 +78,7 @@ export const WESTERN_PARENT_OF: Partial<Record<ComponentTag, ComponentTag[]>> = 
 	sub_block: ["block"],
 	building_number: ["sub_block", "block"],
 	building_name: ["building_number", "sub_block", "block"],
-	// CN — the ordinal chain nests under the named unit it belongs to (`孟定农场` → `三分场二队`), else the settlement.
+	// CN — the ordinal chain nests under its parent unit (`孟定农场` → `三分场二队`), else the settlement.
 	locality_unit: ["dependent_locality", "locality", "subregion", "region"],
 }
 

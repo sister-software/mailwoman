@@ -5,8 +5,8 @@
  *
  *   The CLI weights guard (plan 3): wraps model-requiring commands the way a router AuthGuard wraps
  *   routes. Probes weight resolution. when weights are absent on an interactive stdin, offers a
- *   one-keystroke download into the user weights cache (`~/.cache/mailwoman/weights`, an npm prefix
- *   populated by the user's own `npm install` — integrity, proxy, and registry config for free).
+ *   one-keystroke download into the user weights cache (`~/.cache/mailwoman/weights`). The user's
+ *   `npm install` populates that npm prefix with their integrity, proxy and registry settings.
  *
  *   Outcomes handed to the render prop:
  *
@@ -16,8 +16,8 @@
  *   - `"unavailable"` — weights absent + non-interactive stdin and no flag. the caller keeps its
  *       legacy fallback chain (pre-v7 behavior interface).
  *
- *   Installs `@latest` rather than pinning the CLI version: resolving `mailwoman/package.json` from
- *   both the source and compiled trees is the `__isCompiledTree` trap, and the post-install probe
+ *   Installs `@latest` rather than pinning the CLI version. Resolving `mailwoman/package.json` from
+ *   both the source and compiled trees triggers the `__isCompiledTree` trap. The post-install probe
  *   already catches the metadata-only-tarball case. The durable pin is the `weights-latest` dist-tag
  *   (board issue filed with this plan).
  */
@@ -83,9 +83,9 @@ export interface DownloadWeightsOpts {
  * Install the weights package into the cache prefix via the user's own npm
  * (spawned as our own child. No pattern kills anywhere near this).
  *
- * Success = npm exits 0 and the post-install probe resolves.
- * A metadata-only tarball (code-only release) installs "successfully" but carries no
- * binaries, and must report as a failure with an actionable message.
+ * Success requires npm to exit 0 and the post-install probe to resolve.
+ * A metadata-only tarball (code-only release) installs "successfully" but carries no binaries.
+ * Report the install as a failure with an actionable message.
  */
 export function downloadWeights(
 	opts: DownloadWeightsOpts,

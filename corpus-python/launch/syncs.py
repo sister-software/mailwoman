@@ -4,7 +4,7 @@ Files written by `modal volume put` do not become visible to a mounted container
 `vol.reload()`; container-side writes followed by `vol.commit()` do propagate, so every asset
 travels to R2 and then to the volume through these functions.
 
-An overlay corpus ships only its own parquet files, and its MANIFEST refers to the base version's
+An overlay corpus ships only its own parquet files. Its MANIFEST refers to the base version's
 files by absolute `/data/...` path, so the base must already be on the volume;
 `audit_epoch_mixture` reports a base that is missing.
 """
@@ -66,7 +66,7 @@ def _report_checks(paths: list[str]) -> None:
 
 
 def verify_staged(version: str) -> None:
-    """Run the version's `verifier`, if it has one, and raise with the labels of failed checks.
+    """Run the version's `verifier` when it has one. Raise with the labels of failed checks.
 
     The verifier module is imported from the volume's copy of the package, so an ImportError means
     the training package was not staged.

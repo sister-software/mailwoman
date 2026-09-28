@@ -5,24 +5,24 @@
  *
  *   the D-rule measurement for ROAD_TO_V9 §2 R1's resolver half.
  *
- *   §2 R1 predicts a resolver delta of zero: today's resolver already ranks namesakes by population,
- *   the split only names that key `referential`, and `referentialFromPopulation` is a monotone
+ *   §2 R1 predicts a resolver delta of zero. Today's resolver already ranks namesakes by population.
+ *   The split only names that key `referential`, and `referentialFromPopulation` is a monotone
  *   transform of population — so the order cannot move. Predicted is not measured. This probe
  *   measures it, on the live gazetteer, in the one regime where the prediction could fail.
  *
- *   where IT could fail, and why that is the whole probe. `referentialFromPopulation` is
+ *   where IT could fail. That is the full probe. `referentialFromPopulation` is
  *   `min(1, log2(1 + pop/1000) / 14)`: strictly increasing up to `REFERENTIAL_SATURATION_POPULATION`
  *   (16,383,000) and clamped to 1.0 above it. Two places that both clear that line score identically
  *   on referential while population would still separate them. A comparator keyed on referential
  *   alone would therefore re-order the world's largest cities — so `compareReferential` carries a raw
- *   population tiebreak, and this probe's job is to confirm (a) that the tiebreak is what makes the two
- *   orderings agree, and (b) how much of the live gazetteer sits in the regime where it matters. A
+ *   population tiebreak. This probe checks whether the tiebreak makes the orderings agree.
+ *   It measures how much of the live gazetteer sits in the regime where the tiebreak matters. A
  *   claim about the saturated tail is exactly the kind of claim agents.md says to spend one command on
  *   rather than reason about.
  *
  *   two measurements:
  *
- *   1. **Gazetteer census** — every place at or above saturation, and every name-colliding pair where
+ *   1. **Gazetteer census** — every place at or above saturation plus every name-colliding pair where
  *      both bearers clear it. The second number is the population of cases where the tiebreak is
  *      required. if it is zero the tiebreak is insurance, if it is not, it is a bug fix.
  *   2. **Live query replay** — every board query plus the namesake families, run through the real

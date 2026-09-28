@@ -2,13 +2,13 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The corpus parquet schema, meaning the column list, its logical types, and the projection from a `LabeledRow`.
+ * @file The corpus parquet schema defines its columns and logical types. It also defines the projection from a `LabeledRow`.
  *
  *   Every file in this family agrees on this one definition. A column added here and nowhere else fails to compile
  *   against {@linkcode ParquetRow}, which keeps the writer, the reader and the manifest's `schema` key from drifting
  *   apart.
  *
- *   Compression is `snappy` throughout, which is also PyArrow's default and the standard ML-corpus codec. A reader
+ *   Compression is `snappy` throughout. PyArrow uses it by default. It is also the standard ML-corpus codec. A reader
  *   outside this repository therefore opens the files without configuration.
  */
 
@@ -120,8 +120,8 @@ export const PARQUET_COLUMN_TYPES: Record<(typeof PARQUET_COLUMNS)[number], stri
 	base_source_id: "VARCHAR",
 }
 
-/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition,
-   and the rule has no way to tell the two apart. */
+/* oxlint-disable unicorn/text-encoding-identifier-case -- `"UTF8"` below is a ParquetType enum member rather than a text-encoding identifier. Lowercasing it does not type-check against ParquetSchemaDefinition.
+   The rule cannot distinguish the enum member from a text-encoding identifier. */
 
 /**
  * Parquet schema for `LabeledRow`.
@@ -155,8 +155,9 @@ export const LABELED_ROW_SCHEMA: ParquetSchemaDefinition<ParquetRow> = {
  * Project a labeled row to the Parquet schema.
  *
  * The span triple is required because `alignRow` emits it on every labeled row.
- * A row arriving without it came from a producer that has not migrated,
- * and writing it would drop the labels from the file.
+ * A row without it came from a producer that has not migrated.
+ *
+ * Writing that row would drop the labels from the file.
  * A thrown error identifies the row instead.
  */
 export function rowToParquet(row: LabeledRow): ParquetRow {

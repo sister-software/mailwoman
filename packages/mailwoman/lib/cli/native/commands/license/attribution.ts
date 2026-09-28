@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What this installation is obliged to, read off the artifacts it actually has: installed packages rather than
- *   the source register, whose set differs from what an installation carries, and obligations are reported rather
- *   than cleared — a commercial key covers first-party code and model artifacts but not an upstream attribution
- *   or share-alike condition.
+ *   This report reads obligations from the installed packages. Their set differs from the source register.
+ *   It reports obligations without clearing them. A commercial key covers first-party code and model artifacts.
+ *   Upstream attribution and share-alike conditions still apply.
  */
 
 import { pathExists, readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -59,7 +58,7 @@ export interface AttributionReport {
 	engineLicense: string
 	packages: InstalledPackageReport[]
 	/**
-	 * Packages named on the command line or discovered, that are not installed here.
+	 * Packages supplied on the command line or discovered, that are not installed here.
 	 */
 	notInstalled: string[]
 	/**

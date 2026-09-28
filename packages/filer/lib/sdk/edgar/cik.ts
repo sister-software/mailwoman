@@ -137,15 +137,18 @@ export async function fetchCompanyTickers(client: SECGetClient): Promise<Company
  * There is no ticker column (the empty third field is always blank). ~1,054,085 entries covering 40 MB.
  * Read the file once and keep the result rather than reparsing it per query.
  *
- * An entry whose CIK won't parse is skipped without throwing.
- * This is a flat file rather than SEC's documented API shape, and a malformed
- * line is the rule rather than the exception.
+ * An entry whose CIK cannot be parsed is skipped without throwing.
+ * This input is a flat file.
+ *
+ * SEC's documented API uses a different shape.
+ * Malformed lines are common in this file.
  *
  * A CIK that rounds to zero (edgar pads to 10 digits) is also skipped.
  *
- * **1,054,085 entries → one `resolveCIKCandidates` call scores all of them.** The
- * function does a single O(n) pass with a cheap `nameSimilarity` call per entry,
- * which is fast enough for a tool that runs once per vintage.
+ * **One `resolveCIKCandidates` call scores all 1,054,085 entries.** The function
+ * makes one O(n) pass with a `nameSimilarity` call for each entry.
+ * This is fast enough for a tool that runs once per vintage.
+ *
  * A caller running thousands of queries should build a prefix index instead.
  * That is not this.
  */
@@ -225,7 +228,8 @@ export interface ResolveCIKOptions {
 	 * Cap on the number of candidates returned, highest score first.
 	 *
 	 * Defaults to {@linkcode DEFAULT_CANDIDATE_LIMIT}.
-	 * `company_tickers.json` carries 10,000+ rows, and reporting the whole tail below a real match is noise.
+	 * `company_tickers.json` carries more than 10,000 rows.
+	 * Reporting every candidate below a real match adds noise.
 	 *
 	 * Never narrows a genuine tie at the top score below this cap (see the function's own docstring).
 	 * `limit` trims the long low-scoring tail rather than a collision the caller needs to see.
@@ -260,14 +264,16 @@ function canonicalOf(name: string): string {
  * each at score `1` — the exact 3a lesson this module exists to not repeat.
  * `limit` only ever trims the tail strictly below the top score.
  *
- * **Candidates are collapsed to one row per CIK before any of that runs,
- * and the tie rule depends on it.** `company_tickers.json` carries one row per ticker,
- * so a registrant filed under several share classes appears several times under a single CIK —
- * resolving `"Liberty Broadband Corporation"` on 2026-08-03 returned CIK `0001611983`
- * four times, each scoring 1.0, and the same phantom tie appeared for Comcast,
- * AT&T, T-Mobile and Telephone and Data Systems.
- * Left uncollapsed those duplicates trip the tie rule, which then suppresses `limit`
- * and hands a caller the same company back N times as though it were an unresolved ambiguity.
+ * **Candidates are collapsed to one row per CIK before scoring ties.** The
+ * tie rule depends on this collapse.
+ * `company_tickers.json` carries one row per ticker, so a registrant filed under several share
+ * classes appears several times under a single CIK — resolving `"Liberty Broadband Corporation"`
+ * on 2026-08-03 returned CIK `0001611983` four times with a score of 1.0 for every row.
+ *
+ * The same phantom tie appeared for Comcast, AT&T, T-Mobile and Telephone and Data Systems.
+ * Those duplicates trigger the tie rule before collapse.
+ *
+ * The rule then suppresses `limit` and returns the same company N times as an unresolved ambiguity.
  *
  * The rule exists for a collision between different companies.
  * One company's share classes are not one.
@@ -285,8 +291,8 @@ export function resolveCIKCandidates(
 	const limit = options.limit ?? DEFAULT_CANDIDATE_LIMIT
 	const queryCanonical = canonicalOf(companyName)
 
-	// Keyed by CIK rather than pushed to a list: this is the share-class collapse the docstring describes,
-	// and it has to happen before the sort so the tie rule below only ever sees distinct registrants.
+	// This map collapses share classes by CIK, as described above.
+	// Collapse before sorting so the tie rule sees only distinct registrants.
 	const bestByCIK = new Map<CIK, CIKCandidate>()
 
 	for (const entry of tickers) {

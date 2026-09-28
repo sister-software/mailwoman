@@ -28,7 +28,7 @@ export interface PlaceAttrs {
 	 *
 	 * NULL rather than zero.
 	 * `place_population` holds no zero, so an absent row is the only way a place has no number.
-	 * A zero written for those would be a count nobody made.
+	 * A zero written for those would be an unmeasured count.
 	 */
 	pop: number | null
 	neg: number

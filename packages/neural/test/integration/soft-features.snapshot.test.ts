@@ -6,8 +6,8 @@
  *   Golden snapshot of the soft-feature choreography: known addresses produce known feature tensors.
  *   A drift in the channel wiring or the near-postcode suppression window makes these fail.
  *
- *   The file uses small inline fixtures (2-3 entries) rather than the production lookup and lexicon,
- *   and the piece offsets are hand-built so the anchor and gazetteer land on the expected pieces.
+ *   The file uses small inline fixtures with 2–3 entries instead of the production lookup and lexicon.
+ *   Hand-built piece offsets place the anchor and gazetteer on the expected pieces.
  */
 
 import { ANCHOR_FEATURE_DIM, anchorFeatureVector, type AnchorLookup } from "@mailwoman/neural/anchor-inference"

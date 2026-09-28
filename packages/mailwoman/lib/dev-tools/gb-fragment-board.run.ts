@@ -16,8 +16,8 @@
  *
  *   - `street`: the street line alone (`components.street`, house number prefixed when the row has one).
  *     The street-type channel's own register.
- *   - `place`: `dependent_locality, locality`. The locality-surface channel's register, and the one the
- *     shipped bundle's homonym wins were measured in.
+ *   - `place`: `dependent_locality, locality`. This is the locality-surface channel's register.
+ *     The shipped bundle's homonym wins were measured in this register.
  *
  *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
  *   graded in the wrong register.

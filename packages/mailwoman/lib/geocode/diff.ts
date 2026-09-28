@@ -11,7 +11,7 @@
  *   missed and the same components fell through to a coarser rung).
  *
  *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs
- *   `haversineKm`, and `@mailwoman/spatial` depends on `@mailwoman/core`, so putting it in core would
+ *   `haversineKm`. `@mailwoman/spatial` depends on `@mailwoman/core`, so putting this module in core would
  *   close a cycle.
  */
 
@@ -77,8 +77,8 @@ export interface GeocodeDiff {
 	/**
 	 * Kilometres the final answer moved.
 	 *
-	 * Undefined when either arm returned no coordinate, which is a different event
-	 * from moving zero kilometres and must not read as one.
+	 * Undefined when either arm returned no coordinate.
+	 * This differs from a zero-kilometre move and must not be read as one.
 	 */
 	movedKm?: number
 	uncertaintyBefore?: number | null
@@ -124,7 +124,9 @@ export interface GeocodeArm {
 }
 
 /**
- * Diff two geocodes of the same input, and say which of the three explanations the evidence supports.
+ * Diff two geocodes of the same input.
+ *
+ * Report which of the three explanations the evidence supports.
  */
 export function diffGeocode(input: string, before: GeocodeArm, after: GeocodeArm): GeocodeDiff {
 	const parse = diffParse(input, before.tree, after.tree, {

@@ -36,8 +36,8 @@ const MAX_ATTEMPTS = Number($public.MAX_ATTEMPTS ?? 50)
 const LOG = $public.LOG ?? tempRootPath("stage1-train.log")
 const CONFIG = $public.CONFIG ?? "src/mailwoman_train/configs/stage1-coarse.yaml"
 /**
- * Verbatim passthrough to `python -m mailwoman_train train` — parseArgs cannot collect
- * undeclared flags, and reconstructing them from tokens would be lossy.
+ * Verbatim passthrough to `python -m mailwoman_train train`. parseArgs cannot collect undeclared flags.
+ * Reconstructing them from tokens would be lossy.
  */
 const ADDITIONAL_COMMAND_LINE_ARGS = passThroughCLIArguments()
 

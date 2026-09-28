@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The per-country layout table. Each entry reads in the order it prints, so checking a country means looking at
- *   the shape of an address from there rather than at a nested call.
+ *   The per-country layout table lists entries in print order. Readers can check a country by inspecting an address
+ *   shape instead of tracing nested calls.
  *
- *   The line skeletons come from libaddressinput, Google's address metadata, which this repository ships at
+ *   The line skeletons come from libaddressinput, Google's address metadata. This repository ships the data at
  *   `packages/core/data/chromium-i18n/ssl-address/` (252 countries, Apache-2.0). Its `fmt` field is the print order.
- *   What it does not carry, and what is authored here, is the `%A` expansion into this project's street tags, the
- *   line-join policy, the country line, and the post-office box.
+ *   This repository supplies the `%A` expansion into its street tags, the line-join policy, the country line and the
+ *   post-office box.
  */
 
 import {
@@ -40,8 +40,9 @@ export {
 } from "#address/layouts/generated"
 
 /**
- * Which script an address is written in when a country writes two different orders: `local` is
- * the country's own script, which libaddressinput's `fmt` states, and `latin` is its `lfmt`.
+ * Which script an address is written in when a country writes two different orders:
+ * `local` is the country's own script. libaddressinput's `fmt` states that order.
+ * `latin` uses its `lfmt` value.
  *
  * Eight of the 252 shipped records carry a distinct pair (CN, HK, JP, KP, KR, MO, TH, TW)
  * and every other country writes one order in both.
@@ -67,8 +68,8 @@ export const chineseStreet = addr`${street}${house_number}`
 /**
  * How a system joins its lines for single-line output.
  *
- * Absent reads as `", "`, the anglophone default, and the CJK entries are the reason
- * this is per-system rather than a caller's argument.
+ * An absent value means `", "`, the anglophone default.
+ * CJK systems use different joins, so this setting belongs to each system instead of a caller argument.
  */
 export const LINE_JOINS: Readonly<Record<string, string>> = {
 	JP: " ",
@@ -83,7 +84,7 @@ export const LINE_JOINS: Readonly<Record<string, string>> = {
 }
 
 /**
- * Whether the country named by `countryCode` prints the largest unit first, in `script`.
+ * Whether the country selected by `countryCode` prints the largest unit first, in `script`.
  *
  * Every country carrying a distinct Latin order writes it smallest-first,
  * read off the layout rather than encoded as a rule.
@@ -152,9 +153,10 @@ function printedTags(layout: AddressLayout): ComponentTag[] {
 }
 
 /**
- * Per-country layouts for the locales this project publishes weights for: each is the
- * country's libaddressinput `fmt` skeleton with `%A` expanded, and the `fmt` is quoted
- * beside it so the two can be compared without opening the dataset.
+ * Lists layouts for locales where this project publishes weights.
+ *
+ * Each entry expands `%A` in the country's libaddressinput `fmt` skeleton.
+ * The quoted `fmt` beside it lets readers compare the values without opening the dataset.
  */
 export const ADDRESS_LAYOUTS: Readonly<Record<string, AddressLayout>> = {
 	// %N%n%O%n%A%n%C, %S %Z
@@ -242,7 +244,8 @@ ${region}${japaneseSubPrefecture}
 ${venue}
 ${attention}`,
 
-	// %Z%n%S%C%D%n%A%n%O%n%N — the admin run prints unseparated, which is what `LINE_JOINS.CN` carries.
+	// %Z%n%S%C%D%n%A%n%O%n%N — the admin run prints without separators.
+	// `LINE_JOINS.CN` sets that behavior.
 	CN: addr`${country}
 ${postcode}
 ${region}${locality}${dependent_locality}
@@ -267,10 +270,12 @@ ${country}`,
  * Address systems that print the largest unit first, derived from the layouts
  * rather than listed because the layout is the statement of print order.
  *
- * A caller composing its own order — a gazetteer hierarchy string, which is a query
- * rather than an address — reads this instead of re-deriving it.
- * The 122 of the 197 layouts that name no region or no street are absent here
- * and a caller treats them as small-first.
+ * A caller composing its own order can read this value instead of deriving it again.
+ * A gazetteer hierarchy string represents a query and belongs to this API.
+ *
+ * Of the 197 layouts, 122 omit both a region and a street.
+ * They are absent here.
+ * Callers treat them as small-first.
  */
 export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
 	Object.entries({ ...GENERATED_ADDRESS_LAYOUTS, ...ADDRESS_LAYOUTS })
@@ -279,9 +284,10 @@ export const LARGEST_FIRST_SYSTEMS: ReadonlySet<string> = new Set(
 )
 
 /**
- * The layout for `country`, or null when neither table names it: the hand-authored
- * entries take precedence because those are checked against real addresses, and null is
- * a real answer for the 55 of 252 shipped records that carry no usable `fmt`.
+ * Returns the layout for `country`, or `null` when neither table has an entry.
+ *
+ * Hand-authored entries take precedence because tests check them against real addresses.
+ * `null` is the result for 55 of the 252 shipped records with no usable `fmt`.
  */
 export function layoutForCountry(countryCode: string | null | undefined, script?: AddressScript): AddressLayout | null {
 	if (!countryCode) return null
@@ -308,9 +314,10 @@ export function layoutForCountry(countryCode: string | null | undefined, script?
 }
 
 /**
- * How the country named by `countryCode` joins its lines for single-line output,
- * in `script`; the CJK joins belong to the local script alone, and asking for a
- * script keeps the order and the separator naming one system.
+ * Returns the line join for single-line output in the selected country and `script`.
+ *
+ * CJK joins apply only to the local script.
+ * Selecting a script keeps line order and separator tied to one system.
  */
 export function lineJoinForCountry(countryCode: string | null | undefined, script?: AddressScript): string {
 	if (!countryCode) return ", "
@@ -323,9 +330,10 @@ export function lineJoinForCountry(countryCode: string | null | undefined, scrip
 }
 
 /**
- * Which script {@link layoutForCountry} answers in when no caller says:
- * `local` everywhere except a country whose default layout prints the other order
- * from its own script's skeleton, which is Hong Kong.
+ * Returns the script used by {@link layoutForCountry} when the caller does not choose one.
+ *
+ * It returns `local` except for Hong Kong.
+ * Hong Kong's default layout follows the order from its Latin skeleton.
  */
 export function defaultScriptForCountry(countryCode: string): AddressScript {
 	const code = countryCode.trim().toUpperCase()

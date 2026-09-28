@@ -55,7 +55,8 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 	const penalty = cfg.penalty ?? 0
 
 	async function classify(section: Section, _ctx: ClassifierContext): Promise<ClassificationProposal[]> {
-		// Postcode regex repair is on by default, which fixes the SentencePiece fragmentation misses.
+		// Postcode regex repair is on by default.
+		// It fixes SentencePiece fragmentation misses.
 		const tree = await cfg.classifier.parse(section.body, { postcodeRepair: true })
 		const proposals: ClassificationProposal[] = []
 		const sectionOffset = section.start
@@ -64,8 +65,8 @@ export function createNeuralProposalClassifier(cfg: NeuralProposalClassifierConf
 			if (emitsSet.has(node.tag)) {
 				// Avoid `Span.from(...)`, where the tokenization module would run a filesystem-bound
 				// module-init (libpostal data dir scan) on every consumer of this module.
-				// The solver and policy registry read `start`, `end` and `body` only, and a
-				// consumer needing the full Span behavior re-constructs it through `Span.from`.
+				// The solver and policy registry read only `start`, `end` and `body`.
+				// A consumer needing full Span behavior reconstructs it through `Span.from`.
 				const span = {
 					start: sectionOffset + node.start,
 					end: sectionOffset + node.end,

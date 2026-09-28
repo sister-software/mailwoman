@@ -128,10 +128,11 @@ export interface PairIndexOverlay {
 	/**
 	 * The child bias magnitude.
 	 *
-	 * The build writes `delta`, `transitionBeta` and `parentDelta` into the PIX1 header,
-	 * and the freshness check compares them.
-	 * An absent `transitionBeta` or `parentDelta` leaves its key out of the header,
-	 * and the freshness check treats an absent key as distinct from zero.
+	 * The build writes `delta`, `transitionBeta` and `parentDelta` into the PIX1 header.
+	 * The freshness check compares them.
+	 *
+	 * An absent `transitionBeta` or `parentDelta` leaves its key out of the header.
+	 * The freshness check treats an absent key as distinct from zero.
 	 */
 	delta: number
 	transitionBeta?: number
@@ -220,7 +221,8 @@ export async function peekPairIndexHeaderFields(path: PathBuilderLike): Promise<
 
 const MD5_HEX_LENGTH = 32
 
-// repo-health-ignore export-name-affix -- This variant caches the hash in a sidecar, and `md5File` hashes every time.
+// repo-health-ignore export-name-affix -- This variant caches the hash in a sidecar.
+// `md5File` hashes every time.
 /**
  * Returns the MD5 of `path`, cached in a `<path>.md5` sidecar in `md5sum` format.
  *
@@ -577,8 +579,8 @@ export interface DevOverlayManifest {
 	 * The `inherit` kind removes any local pair, because the package declares
 	 * `mailwoman.baseWeights` and a local file would shadow the base.
 	 *
-	 * The `char` kind links the `charWeights.<family>` model, character vocabulary
-	 * and model card, and removes any tokenizer.
+	 * The `char` kind links the `charWeights.<family>` model, character vocabulary and model card.
+	 * It removes any tokenizer.
 	 */
 	model?: { kind: "link"; digestCard?: string } | { kind: "inherit" } | { kind: "char"; family: string }
 

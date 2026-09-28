@@ -11,7 +11,7 @@
  *
  *   The builder reads geometry from shapefiles via DuckDB's spatial extension (raw `ST_Read`, see
  *   agents.md "Database / inline SQL") and writes here through `node:sqlite`. The hot positional
- *   insert (a county's worth of edges) stays raw, and its column list derives from
+ *   insert (a county's worth of edges) stays raw. Its column list derives from
  *   {@link STREET_SEGMENT_COLUMNS} so it cannot drift from the DDL.
  */
 
@@ -21,18 +21,20 @@ import type { RouteKey } from "#street/normalize"
 
 /**
  * One tiger street-segment edge: a `(from_hn, to_hn)` house-number range on one `side`
- * of a named street, with the geometry the interpolator walks.
+ * of a street with a name, with the geometry the interpolator walks.
  *
- * `min_hn`/`max_hn` are the sorted bounds the probe filters on, and `parity` is `odd`, `even` or `mixed`.
+ * `min_hn`/`max_hn` are the sorted bounds used by the probe.
+ * `parity` is `odd`, `even`, or `mixed`.
  */
 export interface StreetSegmentTable {
 	/**
 	 * `canonicalizeRouteKey(normalizeStreetForKey(street))`, the build/query-consistent probe key.
 	 *
-	 * The column name says `street_norm`, but the value carries the route fold on top
-	 * of the street fold, which is why the brand is {@link RouteKey}.
-	 * Builder and probe both apply both folds, and a plain street key bound here
-	 * misses every numbered-route row.
+	 * The column name says `street_norm`, but the value carries the route fold on top of the street fold.
+	 * The value therefore uses the {@link RouteKey} brand.
+	 *
+	 * The builder and probe apply both folds.
+	 * A plain street key bound here misses every numbered-route row.
 	 */
 	street_norm: RouteKey
 	/**
@@ -85,7 +87,7 @@ export interface StreetSegmentTable {
  *
  * See the pair-index precedent in `neural/pair-index-resolver.ts`.
  *
- * Written once by the builder, and read at open time by {@link StreetInterpolator}.
+ * The builder writes this table once. {@link StreetInterpolator} reads it when opening the database.
  *
  * Extracts built before this table exists lack it.
  * The reader degrades to `undefined`, and callers fall back to the in-code per-region table.

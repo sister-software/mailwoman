@@ -37,7 +37,8 @@ export interface GeocodeCommandOptions {
 	 *
 	 * Deliberately tri-state with no entry in {@link createGeocodeCommandOptions}:
 	 * unstated flows through as absent so the session default applies.
-	 * `--capital-tier` demands the reference loudly, and `--no-capital-tier` opts out.
+	 * `--capital-tier` requires the reference and reports a clear error when it is missing.
+	 * `--no-capital-tier` opts out.
 	 */
 	capitalTier?: boolean
 	/**

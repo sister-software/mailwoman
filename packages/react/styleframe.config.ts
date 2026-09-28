@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The design tokens for `@mailwoman/react`. This file is the source of record, and `tokens.css` is generated
- *   from it. `styleframe dtcg export` publishes the same values as W3C DTCG JSON.
+ *   Defines the design tokens for `@mailwoman/react`. `tokens.css` is generated from this file.
+ *   `styleframe dtcg export` publishes the values as W3C DTCG JSON.
  *
- *   The tokens have three layers. Primitives are raw values. Semantic tokens describe what a value is used for, and
- *   component rules may read only this layer. Component tokens exist where a component needs a name of its own.
+ *   The tokens have three layers. Primitives hold raw values. Semantic tokens describe how values are used.
+ *   Component rules may read semantic tokens only. Component tokens exist when a component needs its own name.
  *
- *   The light theme serves the docs site. The dark theme serves the map apps, which set `data-theme="dark"` on
- *   `<html>`. Every semantic token has a value in both themes.
+ *   The light theme serves the docs site. The dark theme serves map apps. They set `data-theme="dark"` on `<html>`.
+ *   Every semantic token has a value in both themes.
  */
 
 import { styleframe } from "styleframe"
@@ -43,8 +43,8 @@ const brandTeal = variable("brand-teal", "hsl(97.78deg 100% 50%)")
 /**
  * The neutral ramp.
  *
- * It uses oklch so the lightness steps are perceptually even, and one hue
- * so the ramp keeps a constant temperature.
+ * It uses oklch to make lightness steps perceptually even.
+ * A single hue keeps the ramp's temperature constant.
  */
 const neutral0 = variable("neutral-0", "oklch(100% 0 264)")
 const neutral50 = variable("neutral-50", "oklch(97% 0.004 264)")
@@ -75,8 +75,10 @@ const infoBase = variable("info-base", "oklch(65% 0.13 230)")
 // #region Type
 
 /*
- * A rule refers to a scale role, a scale role refers to a face role,
- * and only a face role refers to a font family.
+ * Rules refer to scale roles.
+ *
+ * Scale roles refer to face roles.
+ * Face roles refer to font families.
  */
 
 /**

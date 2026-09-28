@@ -1,8 +1,8 @@
-"""Parameter groups, and the classifier-row reset a dead tag needs.
+"""Build parameter groups and reset classifier rows for dead tags.
 
 Both exist for the same reason: a freshly initialized part of an otherwise pretrained model cannot
-learn at the encoder's fine-tuning rate. A carved-out group gives that part its own rate, and a
-re-initialized output row gives a dead tag somewhere to learn from.
+learn at the encoder's fine-tuning rate. A carved-out group gives that part its own rate.
+A re-initialized output row gives a dead tag somewhere to learn from.
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ def build_optimizer(
     span_head_learning_rate: float | None = None,
     classifier_learning_rate: float | None = None,
 ) -> tuple[AdamW, list[str]]:
-    """AdamW over the model's trainable parameters, with optional faster rates for named parts.
+    """AdamW over the model's trainable parameters, with optional faster rates for selected modules.
 
     A part of the model that starts from random weights needs a much higher learning rate than one
     that is being fine-tuned. Running both at the encoder's rate leaves the new part barely moving:
@@ -32,8 +32,8 @@ def build_optimizer(
     their own group at their own rate, typically 1e-3 against the encoder's 1e-5.
 
     `span_head_learning_rate` covers the span scorer. `classifier_learning_rate` covers the output
-    head, plus the separate dependent-locality head and the street-type and locality-surface input
-    channels, which are all fresh for the same reason.
+    head plus the separate dependent-locality head. The street-type and locality-surface input
+    channels are also fresh for the same reason.
 
     Schedules compose for free: LambdaLR scales each group's own base rate by the same multiplier,
     so every group keeps its shape and the ratios between them hold.
@@ -100,10 +100,10 @@ def build_optimizer(
 
 
 def reinit_label_rows(model: Any, labels: list[str]) -> None:
-    """Reset the named BIO labels' classifier rows to the mean of the LIVE rows.
+    """Reset the selected BIO labels' classifier rows to the mean of the LIVE rows.
 
     The dead-tag mechanism: initializing from a checkpoint where a tag never fires leaves its
-    output row deeply negative, and class weights only scale a vanishing gradient. Mean-of-live
+    output row deeply negative. Class weights only scale a vanishing gradient. Mean-of-live
     re-init puts the row back on the decision surface, where the resurrection rate can steer it.
     """
     rows = [LABEL_TO_ID[label] for label in labels]

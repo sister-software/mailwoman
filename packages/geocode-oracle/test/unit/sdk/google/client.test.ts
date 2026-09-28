@@ -4,15 +4,13 @@
  * @author Teffen Ellis, et al.
  * @file Tests for {@linkcode createGoogleGeocoderClient}.
  *
- *   Every test drives the stub Axios adapter from `@mailwoman/core/api/test-transport` and, where
- *   timing matters, an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. no test here
- *   performs A live network call or A real sleep, and on this client the first half is not merely
- *   hygiene: every uncached Google request is billed, so a suite that reached the network would charge
- *   the operator's card on every CI run.
+ *   Every test uses the stub Axios adapter from `@mailwoman/core/api/test-transport`. Tests that depend
+ *   on timing also use an injected `ClockLike` from `@mailwoman/core/api/test-clocks`. The suite makes no
+ *   live network calls or real sleeps. Each uncached Google request incurs a charge, so a network call
+ *   during CI would bill the operator on every run.
  *
- *   The interesting assertions are the ones about Google's IN-band error channel — statuses that
- *   arrive under http 200 and are therefore invisible to every check `core/api` provides — and about
- *   the API key, which must not reach a log, a cache key or a filename.
+ *   The tests check Google's IN-band error channel. Those statuses arrive under HTTP 200, so checks in
+ *   `core/api` cannot see them. The tests also check that the API key stays out of logs. They check cache keys and filenames too.
  */
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
@@ -25,10 +23,10 @@ import type { PathBuilder } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-// `$private` is a live getter over `{ ...dotEnv, ...process.env }`, and `dotEnv` is read from the
-// repo's real `.env` once at module load, which on this machine does carry a `GOOGLE_MAPS_API_KEY`.
-// A `vi.stubEnv(..., undefined)` cannot hide it: the merge falls back to `dotEnv`
-// regardless of what the test puts on `process.env`.
+// `$private` reads `{ ...dotEnv, ...process.env }`.
+// Module loading reads `dotEnv` from the repo's `.env`, which can contain
+// `GOOGLE_MAPS_API_KEY` on the test machine.
+// `vi.stubEnv(..., undefined)` leaves the key visible because the merge falls back to `dotEnv`.
 // Mocking the module is the only way to make the missing-key test test anything.
 // (`bdc/sdk/client.test.ts` learned this the first time real FCC credentials landed in `.env`.)
 vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
@@ -37,19 +35,20 @@ vi.mock("@mailwoman/geocode-oracle/env", async (importOriginal) => {
 	return { ...actual, $private: { ...actual.$private, GOOGLE_MAPS_API_KEY: undefined } }
 })
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so `./google-client.ts` may
-// already sit in the worker's cache — evaluated without this file's env mock by an earlier file.
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork does not inherit it.
+// The root Vitest config sets `isolate: false`.
+// An earlier file may leave `./google-client.ts` in the worker cache
+// after evaluating it without this file's environment mock.
+// Reset before imports so the chain re-evaluates against the mock.
+// Reset after the suite so the next file in this fork starts with the original module graph.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
 const { createGoogleGeocoderClient, geocodeCacheKey, isCacheableGoogleBody } =
 	await import("@mailwoman/geocode-oracle/sdk/google-client")
 
-// Also imported after the reset, so the `ResourceError` this file compares against is the same
-// class identity the client under test throws — a `vi.resetModules()` mints a fresh module
-// registry, and a statically-imported class from the old one would fail every `toBeInstanceOf`.
+// Import after the reset so this file compares the same `ResourceError` class identity the client throws.
+// `vi.resetModules()` creates a fresh module registry.
+// A statically imported class from the old registry would fail every `toBeInstanceOf` check.
 const { isTransientResourceError } = await import("@mailwoman/core/api")
 const { ResourceError } = await import("@mailwoman/core/errors")
 
@@ -268,8 +267,8 @@ describe("the response cache", () => {
 
 		await client.geocodeAddress("anywhere").catch(() => undefined)
 
-		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a
-		// permanently broken address, self-healing only by hand-deleting a hash-named file.
+		// A REQUEST_DENIED cached under a 30-day TTL would make an unbilled key look like a permanently
+		// broken address, self-healing only by hand-deleting the file whose name contains the hash.
 		expect(await Globerator.files("json", { cwd: cacheDir, recursive: false }).toArray()).toHaveLength(0)
 	})
 
@@ -351,9 +350,9 @@ describe("input dispatch", () => {
 
 	it("treats a bare coordinate STRING as an address rather than a point", async () => {
 		// Deliberate.
-		// `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter
-		// and longitude-then-latitude to GeoJSON, and `GeoPoint.from` resolves that
-		// as GeoJSON without a heuristic.
+		// `"48.85, 2.29"` means latitude-then-longitude to Google's `latlng` parameter.
+		// GeoJSON uses longitude-then-latitude.
+		// `GeoPoint.from` resolves that as GeoJSON without a heuristic.
 		// So reading the string as a point would silently reverse-geocode Somalia for someone who typed Paris.
 		const transport = stubTransport([{ body: OK_BODY }])
 

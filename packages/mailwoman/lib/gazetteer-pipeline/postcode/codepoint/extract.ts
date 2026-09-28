@@ -5,10 +5,10 @@
  *
  *   Unpack the Code-Point Open archive. `codepo_gb.zip` (14 MB) holds 120 per-postcode-area CSVs under
  *   `Data/CSV/` — `ab.csv`, `al.csv`, … `ze.csv`, one per outward-code area, 162 MB unpacked — plus a
- *   small `Doc/` tree carrying the licence text, the column headers, and a metadata file that turns out
- *   to be the most useful thing in the archive.
+ *   small `Doc/` tree carrying the licence text and column headers, plus metadata.
+ *   The metadata file provides the most useful check in the archive.
  *
- *   ## `Doc/metadata.txt` is a row-count manifest, and we use it as one
+ *   ## `Doc/metadata.txt` supplies a row-count manifest
  *
  *   OS ships a per-area expected row count inside the archive:
  *
@@ -22,15 +22,15 @@
  *            B      41835
  *     …
  *
- *   That is an oracle the build gets for free: sum the manifest, compare against the rows actually
- *   parsed, and a truncated CSV or a silently-skipped area file fails loudly instead of shipping a
- *   slightly-short database. {@link parseCodePointMetadata} reads it and {@link ExtractCodePointResult}
+ *   The build sums the manifest and compares it with the parsed rows.
+ *   A truncated CSV or skipped area file then fails the build instead of producing a short database.
+ *   {@link parseCodePointMetadata} reads the manifest and {@link ExtractCodePointResult}
  *   carries it forward. Verified against the 2026-05 extract: the manifest sums to 1,747,841 and the CSVs
  *   hold exactly 1,747,841 rows.
  *
  *   Extraction is to disk rather than streamed in memory because the dated acquisition directory is the
- *   cache — a rebuild re-reads the CSVs instead of re-downloading, and a human debugging a postcode can
- *   `grep` the same bytes the builder saw.
+ *   cache. A rebuild re-reads the CSVs instead of re-downloading them.
+ *   A human debugging a postcode can `grep` the same bytes the builder saw.
  */
 
 import { ByteFormatter } from "@mailwoman/core/fs/formatters"
@@ -67,7 +67,7 @@ export interface CodePointMetadata {
 	 */
 	datasetVersion: string
 	/**
-	 * `20260420` — the OS copyright date, and the source of the year that must appear in the attribution block.
+	 * `20260420` — the OS copyright date. Its year must appear in the attribution block.
 	 */
 	copyrightDate: string
 	/**
@@ -88,10 +88,11 @@ export interface CodePointMetadata {
 /**
  * Parse `Doc/metadata.txt`.
  *
- * The format is positional and undocumented, so this is defensive: the four header
- * fields are located by their `KEY:` label rather than by line number, and the count
- * table is every remaining line that looks like `<area> <integer>`.
- * A line that does not is skipped rather than fatal.
+ * The format is positional and undocumented.
+ * This parser locates the four header fields by their `KEY:` label rather than by line number.
+ *
+ * The count table is every remaining line that looks like `<area> <integer>`.
+ * Lines without that shape are skipped.
  *
  * OS has added header fields before (the `RM update date` row is newer than the product),
  * and a new one must not break the build.
@@ -152,9 +153,9 @@ export interface ExtractCodePointResult {
 	 */
 	metadata: CodePointMetadata
 	/**
-	 * `Doc/licence.txt` verbatim, so the database's provenance quotes OS's own words rather than ours.
+	 * `Doc/licence.txt` verbatim. The database provenance therefore quotes OS's own words.
 	 *
-	 * Decoded as **Latin-1**, and that is required rather than fussy. The archive declares no encoding, and the file's only non-ascii byte is `0xA9`. Latin-1 `©`, which is not valid UTF-8 on its own. Reading it as UTF-8 turns every copyright symbol into U+fffd, so the first build baked `Contains Ordnance Survey data � Crown copyright` into the database's `meta`. Mojibake in a decorative string is cosmetic. Mojibake in the attribution text a redistributor is legally required to carry is not.
+	 * Decode the file as **Latin-1**. The archive declares no encoding. Its only non-ASCII byte is `0xA9`, which Latin-1 maps to `©` and UTF-8 cannot decode alone. UTF-8 decoding turns each copyright symbol into U+fffd. The first build therefore stored `Contains Ordnance Survey data � Crown copyright` in the database's `meta`. Mojibake in a decorative string is cosmetic. The attribution text is legally required for redistribution, so corrupted text there prevents accurate attribution.
 	 */
 	licenseText: string
 	totalBytes: number

@@ -9,7 +9,8 @@ import type { OxfmtConfig } from "oxfmt"
 
 const config: OxfmtConfig = {
 	...sisterSoftwareOxfmtConfig,
-	// `mailwoman/comment-reflow` owns comment layout, and two formatters cannot own it at once.
+	// `mailwoman/comment-reflow` owns comment layout.
+	// Two formatters cannot own it at once.
 	jsdoc: false,
 }
 

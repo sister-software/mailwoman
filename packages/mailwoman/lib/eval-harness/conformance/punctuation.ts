@@ -25,7 +25,7 @@ import {
 export const PUNCTUATION_LAW = "punctuation-invariance"
 
 /**
- * Named punctuation transformations.
+ * Punctuation transformations.
  *
  * - `comma-removed` deletes every separating comma and keeps the spacing (`Portland, or` → `Portland or`).
  * - `period-removed` deletes every separating period (`Neusser Str. 12` → `Neusser Str 12`).
@@ -51,7 +51,7 @@ export type PunctuationTransformationName = (typeof PUNCTUATION_TRANSFORMATIONS)
 export type PunctuationScope = "boundary" | "removal" | "replacement"
 
 /**
- * Scope of each named transformation.
+ * Scope of each punctuation transformation.
  */
 export const PUNCTUATION_TRANSFORMATION_SCOPE: Record<PunctuationTransformationName, PunctuationScope> = {
 	"comma-removed": "removal",
@@ -115,7 +115,7 @@ function removeSeparatingRuns(text: string, mark: string): string {
 }
 
 /**
- * Implementation of each named transformation.
+ * Implementation of each punctuation transformation.
  */
 export const PUNCTUATION_TRANSFORMATION_BY_NAME: Record<PunctuationTransformationName, (text: string) => string> = {
 	"comma-removed": (text) => removeSeparatingRuns(text, ","),
@@ -134,7 +134,7 @@ export function punctuationBlindKey(text: string): string {
 }
 
 /**
- * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
+ * Returns the punctuation transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyPunctuationTransformation(base: string, variant: string): PunctuationTransformationName | null {
 	if (base === variant || punctuationBlindKey(base) !== punctuationBlindKey(variant)) return null
@@ -264,8 +264,8 @@ export const PUNCTUATION_SUITE_PATH: string = resolvePackagePath(
 /**
  * Audits suite rows.
  *
- * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named transformation
- * derives from the base and that applies under the row's comparator.
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a punctuation
+ * transformation derives from the base and that applies under the row's comparator.
  */
 export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, PUNCTUATION_LAW, (fixture, label, problems) => {
@@ -307,7 +307,7 @@ export function auditPunctuationSuite(fixtures: readonly ConformanceFixture[]): 
 }
 
 /**
- * Returns the fixture's transformation name, or `?` when no named transformation fits.
+ * Returns the fixture's transformation label, or `?` when no punctuation transformation fits.
  */
 export function describePunctuationTransformation(fixture: ConformanceFixture): string {
 	return classifyPunctuationTransformation(fixture.base, fixture.variant) ?? "?"

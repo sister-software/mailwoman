@@ -31,7 +31,8 @@ const { values } = parseArguments({
 })
 
 /**
- * Routes to the character family, which loads that model before the first row.
+ * Routes to the character family.
+ * The family loads its model before the first row.
  */
 const FAMILY_WARMUP = "東京都千代田区"
 

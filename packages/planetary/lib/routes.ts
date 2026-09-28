@@ -12,7 +12,7 @@ import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
 import type { PlanetaryView } from "#bodies/config"
 
 /**
- * The two views: the globe at `/`, and the globe with one named feature selected at
+ * The two views: the globe at `/`, and the globe with one feature selected by name at
  * `/feature/<id>`, where the id is the pipeline's stable feature id.
  */
 export type PlanetaryRoute = { kind: "map" } | { kind: "feature"; id: string }

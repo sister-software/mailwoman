@@ -126,8 +126,10 @@ const admitted = sorted.filter((code) => shippedFamilies.has(code))
 const admittedEmpty = admitted.filter((code) => !measured.get(code)?.corpusRows)
 const notAdmitted = sorted.filter((code) => measured.has(code) && !shippedFamilies.has(code))
 /**
- * Jurisdictions the corpus holds rows for that no shipped graph admits, which closing
- * takes a `country_weights` entry while a jurisdiction with no data takes acquiring data.
+ * The corpus holds rows for these jurisdictions, but no shipped graph admits them.
+ *
+ * Closing the gap takes a `country_weights` entry.
+ * A jurisdiction with no data requires data acquisition.
  */
 const droppedWithRows = withRows.filter((code) => !shippedFamilies.has(code))
 const absent = sorted.filter((code) => !measured.has(code))
@@ -135,7 +137,7 @@ const rooftop = withRows.filter((code) => measured.get(code)?.geocodeTier === "r
 const packaged = sorted.filter((code) => measured.get(code)?.weightsPackage)
 
 /**
- * The admission list of a second config, when one is named: reading its count beside the
+ * The admission list of a second config, when one is supplied: reading its count beside the
  * shipped one distinguishes what the next run would admit from what today's model was taught.
  */
 const nextConfig = values["next-config"]

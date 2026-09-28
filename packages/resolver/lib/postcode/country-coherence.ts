@@ -21,9 +21,10 @@ export const POSTCODE_COUNTRY_COHERENCE_THRESHOLD_KM = 25
  * The part of the address that justified a country-scope verdict.
  *
  * - `pair`: the postcode and the locality both resolve in the country, within the threshold distance.
- * - `locality`: the locality exists in exactly one country, and that country's
- *   copy of the postcode does not contradict it.
- * - `postcode`: the postcode exists in exactly one country, and no gazetteer knows the locality.
+ * - `locality`: the locality exists in exactly one country.
+ *   The postcode copy in that country does not contradict it.
+ * - `postcode`: the postcode exists in exactly one country.
+ *   No gazetteer knows the locality.
  */
 export type PostcodeCountryScopeEvidence = "pair" | "locality" | "postcode"
 
@@ -52,7 +53,7 @@ export interface PostcodeCountryScope {
 	evidence: PostcodeCountryScopeEvidence
 
 	/**
-	 * The distance in kilometres between the postcode point and the nearest same-named locality.
+	 * The distance in kilometres between the postcode point and the nearest locality with the same name.
 	 *
 	 * It is set only for `pair` evidence, because the other verdicts compare no second point.
 	 */
@@ -86,8 +87,8 @@ export interface PostcodeCountryScopeOpts {
 	/**
 	 * The caller's default country filter, or `undefined` when no default applies.
 	 *
-	 * Without a default, only the `pair` test runs, and the pass returns a scope only
-	 * when exactly one country qualifies.
+	 * Without a default, only the `pair` test runs.
+	 * The pass returns a scope when exactly one country qualifies.
 	 */
 	defaultCountry: string | undefined
 
@@ -101,8 +102,8 @@ export interface PostcodeCountryScopeOpts {
 	/**
 	 * Upper-case ISO 3166-1 alpha-2 codes that replace the countries inferred from the postcode's shape.
 	 *
-	 * Countries whose gazetteer holds the postcode are still added, and every
-	 * candidate must pass the pair test.
+	 * The pass still adds countries whose gazetteer holds the postcode.
+	 * Every candidate must pass the pair test.
 	 */
 	candidateSystems?: readonly string[]
 }

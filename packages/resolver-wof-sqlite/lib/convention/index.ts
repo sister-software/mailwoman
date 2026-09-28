@@ -70,7 +70,7 @@ export const BUILTIN_STRATEGY_NAMES = ["postcode_area_resolution", "fallback_fuz
 export const ADDRESS_CONVENTION_TABLE = "address_convention"
 
 /**
- * A named resolution strategy.
+ * A resolution strategy selected by name.
  *
  * @returns `null` to abstain, so the dispatcher tries the next strategy,
  * or an array, possibly empty, to claim the result.

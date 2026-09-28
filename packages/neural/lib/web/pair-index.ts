@@ -30,8 +30,9 @@ export function resolvePairIndexCountry(country: string | undefined): string {
  * skipped with a `console.warn` that reports the URL and the classifier load continues.
  *
  * Every successfully fetched index is constructed into a live {@link PairIndexResolver}
- * tagged by its header country, and the per-parse selection ({@link resolvePairIndexForText})
- * chooses among them at decode time.
+ * tagged by its header country.
+ * The per-parse selection ({@link resolvePairIndexForText}) chooses among them at decode time.
+ *
  * A session that serves a US and a GB address needs both resolvers live.
  */
 export async function loadPairIndexes(urls: readonly string[], fetchImpl: typeof fetch): Promise<LoadedPairIndex[]> {

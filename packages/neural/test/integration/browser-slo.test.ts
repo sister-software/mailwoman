@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The browser SLO runner: the decomposed cold path, measured in a real browser against the local
- *   artifacts. Every quantity is measured and asserted on its own against its own named budget, with
- *   the arm (backend) that produced it in the test name.
+ *   Measures the decomposed cold path in a real browser against local artifacts. Each quantity is measured and
+ *   asserted against its assigned budget. The test name identifies the arm (backend) that produced it.
  *
  *   This measures the neural browser runtime as a client bundles it —
  *   `@mailwoman/neural/web-onnx-runner` plus `@mailwoman/neural/tokenizer` through the package's
@@ -15,10 +14,9 @@
  *
  *   The demo's FST gazetteer (`fst-en-us.bin`, ~22 MB) is deliberately outside this accounting.
  *
- *   Budgets are regression tripwires rather than targets: a failure means the quantity moved a lot,
- *   and the repair is to read the receipt rather than widen the constant. Byte budgets assert RAW
- *   bytes, which are the deterministic artifact-size signal. The wire column is reported because it
- *   is the one comparable to a live-demo trace.
+ *   Budgets are regression tripwires rather than targets. A failure means the quantity moved substantially.
+ *   Read the receipt before changing a constant. Byte budgets assert raw bytes, the deterministic artifact-size signal.
+ *   The wire column is reported because it can be compared with a live-demo trace.
  *
  *   Run with the verbose reporter to see the numbers rather than the verdict:
  *
@@ -159,8 +157,8 @@ const HTTPVFS_CHUNK_SIZE = 65_536
 /**
  * Chromium flags that let the WebGPU arm be attempted at all.
  *
- * The arm skips where no adapter is granted, which is the honest outcome,
- * and the receipt records the adapter's identity.
+ * The arm skips when the browser grants no adapter.
+ * The receipt records the adapter's identity when one is granted.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
@@ -411,8 +409,8 @@ async function createAssetServer(
 		const range = parseRange(req.headers.range, size)
 
 		if (!range) {
-			// A whole-file GET of a multi-gigabyte gazetteer is never what the VFS wants,
-			// and answering one would hide the very thing under measurement.
+			// The VFS requests ranges from a multi-gigabyte gazetteer.
+			// Answering a whole-file GET would hide the range behavior this test measures.
 			res.writeHead(HTTP_RANGE_NOT_SATISFIABLE, { "Content-Range": `bytes */${size}` })
 			res.end()
 
@@ -806,10 +804,10 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 	page.on("pageerror", (error) => pageErrors.push(String(error)))
 
 	page.on("console", (message) => {
-		// ORT writes its own warnings to the wasm stderr, which reaches the page as a console
-		// error (`VerifyEachNodeIsAssignedToAnEp` fires on every session).
-		// Reporting those as page errors trains the reader to ignore the channel,
-		// and then a real one goes unread.
+		// ORT writes warnings to wasm stderr.
+		// They reach the page as console errors.
+		// `VerifyEachNodeIsAssignedToAnEp` fires on every session.
+		// Classifying those messages as page errors would make real page errors easy to miss.
 		if (message.type() === "error" && !message.text().includes("W:onnxruntime")) {
 			pageErrors.push(message.text())
 		}
@@ -841,10 +839,10 @@ async function measure(resolved: ResolvedWeights, ortDistLocator: string): Promi
 
 	const gazetteer = rangeMount ? await measureGazetteer(browser, server, rangeMount.path) : null
 
-	// The byte table is snapshotted here rather than after the explicit fetches: onnxruntime-web
-	// pulls its `.wasm` during session creation and sql.js-httpvfs pulls its worker + wasm
-	// when the gazetteer page opens, so an earlier snapshot reports both classes as zero,
-	// which reads as "this session downloads no wasm" rather than "the snapshot was early".
+	// The byte table is snapshotted here rather than after the explicit fetches:
+	// onnxruntime-web pulls its `.wasm` during session creation. sql.js-httpvfs pulls
+	// its worker and wasm when the gazetteer page opens.
+	// An earlier snapshot would report zero bytes for both classes and imply this session downloads no wasm.
 	// Everything after this line is deliberately excluded: a second session on the
 	// WebGPU arm re-fetches artifacts a cold user session pays for once.
 	const download = server.snapshot()
@@ -924,8 +922,9 @@ async function measureGazetteer(browser: Browser, server: AssetServer, dbPath: s
 
 			const opened = await globalThis.createDbWorker([{ from: "inline", config }], args.workerURL, args.wasmURL)
 
-			// Forces the header + schema pages through SQLite, so "open" covers the whole cost of
-			// getting to a queryable database: the worker, its wasm, and the first range fetches.
+			// Force SQLite to read the header and schema pages.
+			// The measured "open" cost then includes the worker startup, wasm load
+			// and first range fetches required to reach a queryable database.
 			await opened.db.exec("SELECT count(*) FROM sqlite_master")
 			const readyAt = performance.now()
 			const rows: number[] = []

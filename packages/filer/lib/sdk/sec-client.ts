@@ -8,12 +8,12 @@
  *   2026-07-31) declares a max request rate of 10/second and asks for a descriptive `User-Agent`
  *   naming a company + contact address, plus `Accept-Encoding: gzip, deflate`.
  *
- *   The pacer, retry loop, on-disk cache, and error type all live in `@mailwoman/core/api`, not here —
- *   every one of them is general http-client implementation a second client would otherwise re-derive
- *   (`bdc/sdk/client.ts` is that second client). What remains here is genuinely SEC-specific:
+ *   `@mailwoman/core/api` provides the shared pacer, retry loop, on-disk cache and error type.
+ *   `bdc/sdk/client.ts` uses the same general HTTP-client implementation. This file provides the
+ *   SEC-specific behavior:
  *
  *     1. UA fail-fast off `$private.SEC_EDGAR_USER_AGENT` — a silently-UA-less client just 403s on
- *        first use, which is a worse failure mode than failing at construction.
+ *        first use. Constructor validation reports a missing UA before any request starts.
  *     2. The 10 req/s ceiling, expressed as {@linkcode APIClientConfig.minRequestIntervalMs} and
  *        clamped regardless of a caller-supplied rate, so a misconfigured caller cannot push past the
  *        policy limit. Not a token bucket: capacity C admits `C + rate * 1s` inside a sliding second,
@@ -24,7 +24,7 @@
  *     5. The 403 explanation. A bare 403 from sec.gov means "you didn't identify yourself":
  *        reproduced by hitting the same URL with and without a compliant UA — no UA is a 403, a
  *        descriptive one is a 200. It does not mean the resource is missing or that this client/IP is
- *        blocked, and retrying it would only burn the 10 req/s budget, so 403 is non-retryable
+ *        blocked. Retrying it would burn the 10 req/s budget. The 403 is non-retryable
  *        (`core/api/retry.ts`) and the thrown error says all of this explicitly. This project already
  *        lost a debugging cycle to a generic "403 Forbidden" on an FCC endpoint.
  *
@@ -34,7 +34,7 @@
  *   never fetch a filing document (a 10-K, an Exhibit 21, any `/Archives/` html/text page). {@linkcode
  *   SECClient.getDocument} is the raw-text sibling: same client, same pacing limit, same host allowlist, same
  *   retry policy, same {@linkcode ResourceError} mapping — the only difference is a per-request `responseType:
- *   "text"` override, which makes Axios return the body as-is rather than attempt `JSON.parse`. The on-disk
+ *   "text"` override makes Axios return the body as-is. Axios skips `JSON.parse`. The on-disk
  *   cache is keyed by URL alone (method/URL/params/body — never `responseType`), so a document fetched once
  *   is served from the same cache entry on a later `getDocument` call for that URL; `get`/`getDocument` are
  *   never called against the same URL in practice (JSON endpoints vs. `/Archives/` documents are disjoint
@@ -54,8 +54,8 @@
  *   | exhausted network/timeout            | requeue       | `isTransientResourceError(error)`        |
  *   | disallowed host, undecodable body    | programmer bug| `isTransientResourceError(error)` is false |
  *
- *   redirect policy — documented rather than implemented: Axios follows redirects automatically, and the host
- *   allowlist is checked against the original request URL rather than each hop. A redirect from an allowed
+ *   redirect policy: Axios follows redirects automatically. The host allowlist checks the original
+ *   request URL and skips each later hop. A redirect from an allowed
  *   host to an arbitrary one would carry the configured UA there unchecked. Accepted for now — edgar's
  *   public JSON/document endpoints don't redirect cross-host in normal operation — but a future
  *   hardening pass fetching caller-discovered (as opposed to hardcoded) URLs should set
@@ -80,44 +80,52 @@ import { $private } from "#env"
 
 /**
  * The SEC fair-access policy's stated ceiling (https://www.sec.gov/os/accessing-edgar-data):
- * "Current max request rate: 10 requests/second." {@linkcode createSECClient} clamps to this
- * regardless of a caller-supplied value, and because the underlying pacer is strict-interval
- * rather than a bucket, this is a hard ceiling on the schedule rather than a steady-state average.
+ * "Current max request rate: 10 requests/second." {@linkcode createSECClient}
+ * clamps to this regardless of a caller-supplied value.
+ *
+ * The underlying pacer uses a strict interval instead of a bucket, so this is a hard
+ * ceiling on the schedule rather than a steady-state average.
  */
 export const SEC_MAX_REQUESTS_PER_SECOND = 10
 
 /**
  * What this client actually paces at — deliberately one below {@linkcode SEC_MAX_REQUESTS_PER_SECOND}.
  *
- * Pacing exactly at the ceiling puts every grant on a schedule with zero slack,
- * and the schedule is not what SEC measures — the arriving request is.
+ * Pacing exactly at the ceiling puts every grant on a schedule with zero slack.
+ * SEC measures arriving requests rather than the grant schedule.
+ *
  * Measured end-to-end through {@linkcode createSECClient} on real timers, a 40-call
  * fan-out at 10/s produced **11 requests inside one sliding second on 3 of 3 runs**:
  * the grants themselves are spaced correctly, but the continuation that issues the request
  * lands 0-2 ms late and tips one grant across the boundary (the preceding second then holds 9).
  *
- * Against a true sliding-window limiter that is a violation, and it happens on a schedule that is
- * arithmetically compliant, which is exactly the kind of correctness nobody can debug after a block.
+ * A true sliding-window limiter counts this as a violation.
+ * The grant schedule remains arithmetically compliant.
+ * This mismatch makes a failed block difficult to debug.
  *
- * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy,
- * and provides a schedule that stays inside the published limit even when the event loop is late.
+ * One request per second of headroom costs ~10% throughput on a crawl that is already cache-heavy.
+ * The extra headroom keeps arrivals inside the published limit when the event loop runs late.
+ *
  * `SEC_MAX_REQUESTS_PER_SECOND` remains the clamp — a caller may ask for anything
  * up to it — but the default is this.
  *
  * Raise it only with a measurement showing the arrival-time distribution stays
  * under 10/s rather than merely the grant times.
  *
- * The rate alone is not enough, and this constant did not meet its own bar when it was introduced.
- * `1000 / 9` is `111.111…`, and a fractional interval puts the 10th grant at
- * exactly 1000.0 ms after the first.
+ * The interval must also be an integer number of milliseconds.
+ * This constant's first value did not meet that requirement.
+ *
+ * `1000 / 9` is `111.111…`.
+ * A fractional interval puts the 10th grant at exactly 1000.0 ms after the first.
  *
  * So sub-millisecond jitter tips a 10th arrival into the window every time, measured 5/5 runs.
  * {@linkcode createSECClient} therefore ceils the interval (`Math.ceil(1000 / 9)` = 112 ms),
  * which moves the 10th grant to 1008 ms and costs 0.8% throughput.
  *
  * Measured after the ceil: 9 arrivals per sliding second, 3/3 runs.
- * Any future rate that does not divide 1000 evenly needs the same treatment, which is
- * why the ceil lives at the single construction site rather than in the constant.
+ * Apply the same treatment to future rates that do not divide 1000 evenly.
+ *
+ * Keeping the ceil at the single construction site makes that policy explicit.
  */
 export const SEC_DEFAULT_REQUESTS_PER_SECOND = 9
 
@@ -152,11 +160,12 @@ const PERMANENT_CACHE_TTL_MS = 100 * 365 * 24 * 60 * 60 * 1000
 const HTTP_FORBIDDEN = 403
 
 /**
- * The lowest success status, and the first status past the success range.
+ * The lowest success status and the first status past the success range.
  *
  * The window a response must land in before its body is worth caching.
  *
- * Deliberately narrower than the interceptor's default, which admits 3xx too.
+ * The interceptor's default admits 3xx responses.
+ * This interval excludes them.
  */
 const HTTP_OK = 200
 const HTTP_MULTIPLE_CHOICES = 300
@@ -164,7 +173,7 @@ const HTTP_MULTIPLE_CHOICES = 300
 const SEC_ARCHIVE_PATH_PATTERN = /^\/Archives\/edgar\/data\//
 
 /**
- * Edgar archive documents (10-Ks, Exhibit 21 subsidiary lists, and every other filing exhibit)
+ * Edgar archive documents (10-Ks, Exhibit 21 subsidiary lists and every other filing exhibit)
  * live at a path of this shape once submitted,
  * e.g. `https://www.sec.gov/Archives/edgar/data/320193/000032019323000106/aapl-20230930.htm`.
  *
@@ -190,7 +199,9 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * The only hosts this client will ever send a request to. {@linkcode SECClient.get} refuses
  * (before any cache/rate-limit/network activity) a URL on any other host, or any non-https scheme.
  *
- * This is the designated SEC edgar client, and its configured User-Agent carries a real contact address.
+ * This is the designated SEC edgar client.
+ * Its configured User-Agent carries a real contact address.
+ *
  * Sending that anywhere a caller happens to point it (or in cleartext) would leak
  * it outside SEC's fair-access program for no benefit.
  *
@@ -198,11 +209,11 @@ export function isImmutableArchiveURL(url: URL): boolean {
  * are included alongside the two hosts decision 5 names.
  * Matching is exact (a `Set` lookup on `url.hostname`), not a suffix check.
  *
- * `www.sec.gov.attacker.example` must not match, and an `.endsWith(".sec.gov")`-style
- * check would let it through.
+ * Exact hostname matching rejects `www.sec.gov.attacker.example`.
+ * An `.endsWith(".sec.gov")`-style check would accept it.
  *
- * `url.hostname` (from the whatwg URL parser) already lower-cases, strips userinfo,
- * and percent/punycode-decodes, so those bypasses need no extra handling.
+ * The whatwg URL parser lower-cases `url.hostname`, strips userinfo and decodes percent and punycode.
+ * Those inputs therefore need no extra handling.
  */
 const SEC_ALLOWED_HOSTS = new Set(["www.sec.gov", "data.sec.gov", "sec.gov", "efts.sec.gov"])
 
@@ -277,7 +288,7 @@ export interface CreateSECClientOptions {
 	 * Base delay for the exponential backoff between retry attempts, in milliseconds.
 	 *
 	 * Attempt `n`'s wait is `baseRetryDelayMs * 2^(n-1)`, unless the response carried
-	 * a `Retry-After` header, which is honored instead.
+	 * A `Retry-After` header overrides this delay.
 	 */
 	baseRetryDelayMs?: number
 	/**
@@ -305,7 +316,7 @@ export interface SECClientConfig extends APIClientConfig {
 	/**
 	 * The fair-access User-Agent every request carries.
 	 *
-	 * Named in the 403 explanation so a maintainer can see what was actually sent.
+	 * Included in the 403 explanation so a maintainer can see what was actually sent.
 	 */
 	userAgent: string
 }
@@ -344,13 +355,14 @@ function explainForbidden(cause: ResourceError, url: URL, userAgent: string): Re
 export class SECClient extends APIClient<SECClientConfig> {
 	/**
 	 * Issue a `GET` against a full absolute edgar URL (https, on an allowed host only) and return
-	 * the parsed JSON body, subject to the on-disk cache, the request pacer, and bounded retry.
+	 * the parsed JSON body, subject to the on-disk cache, request pacer and bounded retry.
 	 *
 	 * Takes a full absolute URL rather than a path appended to one base: edgar is served
 	 * across several hosts, so there is no single base to append to.
 	 *
 	 * Concurrent calls for the same URL that both miss the cache share a single in-flight request.
-	 * The cache interceptor's own stampede guard, which the bespoke client had to hand-roll.
+	 * The cache interceptor provides a stampede guard.
+	 * The bespoke client had to implement one itself.
 	 */
 	public async get<T>(input: string | URL): Promise<T> {
 		const url = input instanceof URL ? input : new URL(input)
@@ -373,15 +385,15 @@ export class SECClient extends APIClient<SECClientConfig> {
 	/**
 	 * Issue a `GET` against a full absolute edgar URL and return the RAW response body as text.
 	 *
-	 * The sibling {@linkcode get} cannot provide: a filing document (a 10-K, an Exhibit 21 exhibit)
-	 * is html/text rather than JSON, and `get`'s `responseType: "json"` plus its
-	 * cache `validate` predicate both assume a JSON body.
+	 * Use this method for filing documents such as 10-Ks and Exhibit 21s. {@linkcode get}
+	 * assumes a JSON body in its `responseType: "json"` setting and cache `validate` predicate.
 	 *
 	 * Same client, same pacing limit, same host allowlist, same retry policy,
-	 * same {@linkcode ResourceError} mapping as {@linkcode get} — only a per-request
-	 * `responseType: "text"` override differs, which tells Axios to hand back the body as-is
-	 * rather than attempt `JSON.parse` on it (Axios's default `transformResponse` only parses
+	 * same {@linkcode ResourceError} mapping as {@linkcode get} — only a per-request The
+	 * `responseType: "text"` override tells Axios to return the body as-is.
+	 * Axios does not attempt `JSON.parse` on it (the default `transformResponse` only parses
 	 * when `responseType === "json"`; this override is what turns that off for exactly this one call).
+	 *
 	 * `/Archives/edgar/data/` documents still get the permanent cache TTL
 	 * ({@linkcode isImmutableArchiveURL}); the widened cache `validate` predicate below
 	 * is what stops that permanent cache from rejecting the non-JSON body.
@@ -429,7 +441,8 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  * The cache's `validate` predicate — decides whether a response body is worth
  * persisting at all, before it reaches disk.
  *
- * Two shapes are worth caching, and the same edgar host serves both depending on the endpoint:
+ * Two response shapes are worth caching.
+ * The same edgar host serves both, depending on the endpoint:
  *
  * - A JSON object/array (every `get<T>` call — the submissions index, the ticker map, `browse-edgar`).
  *   Axios already rejects an unparseable body via `transitional.silentJSONParsing`
@@ -441,12 +454,13 @@ function responseTTL(response: { config: { url?: string } }, mutableTTLMs: numbe
  *   `.length > 0` is the truncated/empty guard on this shape.
  *   `getDocument` has no Axios-level parse step to lean on the way the JSON path does,
  *   so this predicate is the only check standing between a truncated/empty document
- *   and a permanent (`/Archives/edgar/data/`) cache entry with no self-healing
- *   path short of hand-deleting a hash-named file.
+ *   and a permanent (`/Archives/edgar/data/`) cache entry with no self-healing path
+ *   short of hand-deleting a file whose name is its hash.
  *
  * An `/Archives/` entry cached under the permanent TTL has no self-healing path
- * short of hand-deleting a hash-named file, which is why both branches exist
- * rather than one permissive `Boolean(value.data?.data)` check.
+ * short of hand-deleting a file whose name is its hash.
+ * That is why both branches exist instead of one permissive `Boolean(value.data?.data)` check.
+ *
  * That would also admit a numeric `0` or a boolean `false` body, neither of
  * which this client's endpoints ever legitimately return.
  */
@@ -505,8 +519,8 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			}),
 			ttl: (response) => responseTTL(response, cacheTTLMs),
 			// SEC sends its own `Cache-Control`.
-			// Honoring it would override the archive-vs-index rule above, which is the
-			// whole point of the cache configuration here.
+			// Honoring it would override the archive-vs-index rule above.
+			// That rule is the reason for this cache configuration.
 			interpretHeader: false,
 			// Never cache a failure: the default predicate admits 3xx too.
 			cachePredicate: { statusCheck: (status) => status >= HTTP_OK && status < HTTP_MULTIPLE_CHOICES },
@@ -515,15 +529,15 @@ export function createSECClient(options: CreateSECClientOptions = {}): SECClient
 			headers: {
 				// Per SEC's documented sample headers: a descriptive User-Agent plus Accept-Encoding.
 				// `Host` is also in that sample, but this client spans multiple hosts.
-				// The transport derives Host from the URL itself, and hardcoding one here
-				// would break requests to the others.
+				// The transport derives Host from the URL itself.
+				// A hardcoded value would break requests to the other hosts.
 				"User-Agent": userAgent,
 				"Accept-Encoding": "gzip, deflate",
 			},
 			timeout: options.requestTimeoutMs ?? API_CLIENT_DEFAULTS.requestTimeoutMs,
 			responseType: "json",
-			// `silentJSONParsing` defaults to true, which makes Axios hand back the RAW string
-			// when a body fails to parse instead of raising.
+			// `silentJSONParsing` defaults to true.
+			// Axios then hands back the RAW string when a body fails to parse instead of raising.
 			// SEC occasionally serves an html error page under a 200 status.
 			// Silently returning that string as `T` is exactly the poisoning this client's
 			// cache rules exist to prevent, so parse failures must be errors.

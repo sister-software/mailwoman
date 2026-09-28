@@ -3,17 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Postcode format → country evidence, pure and platform-free, kept here so `@mailwoman/resolver` (which runs
- *   in the browser via the demo cascade) can derive the implied set itself rather than depending on a CLI-side
- *   caller to thread it; `geocode-core` re-exports everything so its consumers and tests are unmoved.
+ *   This module maps postcode formats to country evidence without platform dependencies.
+ *   `@mailwoman/resolver` runs in the browser through the demo cascade.
+ *   It derives the implied country set here rather than relying on a CLI caller to pass it in.
+ *   `geocode-core` re-exports the functions for its consumers and tests.
  */
 
 /**
- * Distinctive postcode formats that unambiguously indicate a country — a stronger signal than the
- * language-based coarse placer, which conflates GB/US and mis-routes GB addresses to US namesakes.
+ * These distinctive postcode formats indicate a country unambiguously.
  *
- * The format is unforgeable across these countries: letters-first never matches a US ZIP,
- * so extend only with formats validated as non-overlapping.
+ * They provide a stronger signal than the language-based coarse placer.
+ * The coarse placer conflates GB and US, routing some GB addresses to US namesakes.
+ *
+ * Letters-first formats never match a US ZIP.
+ * Extend this table only with formats verified as non-overlapping.
  */
 export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; readonly country: string }> = [
 	// GB `E4 9AZ` — letters-first, ending `\d[A-Z]{2}` and never matching a US ZIP / NL / FR / CA code.
@@ -25,7 +28,8 @@ export const POSTCODE_FORMAT_COUNTRY: ReadonlyArray<{ readonly re: RegExp; reado
 	{ re: /^(?:[A-Z]\d{2}|D6W)\s?[A-Z\d]{4}$/i, country: "IE" },
 	// NL PC6 is deliberately absent because `\d{4} [A-Z]{2}` is forgeable in parse context —
 	// a US house-number plus directional fragment (`1234 NE`) matches it exactly —
-	// and this table feeds recognizeBarePostcode, which must never touch a street name.
+	// This table feeds recognizeBarePostcode.
+	// That function must never treat a street name as a postcode.
 	// NL lives in countriesFromPostcodeFormat instead.
 ]
 
@@ -43,9 +47,12 @@ export function countryFromPostcodeFormat(postcode: string | undefined): string 
 }
 
 /**
- * Spaced `NNN NN` — the CZ/SK/SE/GR shared postcode space, which unlike the
- * {@link POSTCODE_FORMAT_COUNTRY} singles implies a set: it can check a locale-inferred
- * scope but never name one country outright.
+ * Spaced `NNN NN` is shared by CZ and SK.
+ *
+ * SE and GR use the same postcode space.
+ * Unlike the country-specific formats in {@link POSTCODE_FORMAT_COUNTRY}, it implies a set.
+ *
+ * It can check a locale-inferred scope but cannot identify one country.
  */
 const SHARED_NNN_NN = /^\d{3} \d{2}$/
 
@@ -57,9 +64,14 @@ const SHARED_NNN_NN = /^\d{3} \d{2}$/
 const NL_PC6 = /^\d{4}\s?[A-Z]{2}$/i
 
 /**
- * Every country a parsed postcode's format is consistent with — the singles table, the NL
- * PC6 shape, and the shared `NNN NN` family — or empty when the shape implies no country,
- * such as a bare 5-digit that reads US/FR/DE and more and stays with the locale prior on purpose.
+ * Returns each country consistent with the parsed postcode format.
+ *
+ * The function checks the singles table.
+ * It also checks the NL PC6 shape and the shared `NNN NN` family.
+ *
+ * It returns an empty list when the shape implies no country, such as a bare
+ * five-digit format shared by US / FR / DE and other countries.
+ * Such inputs stay with the locale prior on purpose.
  *
  * Unlike {@link countryFromPostcodeFormat} this is not an unforgeable-in-any-context claim,
  * so consumers apply it only to a tree that is a bare postcode, where the street-fragment

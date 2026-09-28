@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared fixtures for the decoder suites: the `DecoderToken` constructor, the recursive tag
- *   lookup, and the White House address the serializer tests walk.
+ *   Shared fixtures for decoder suites: the `DecoderToken` constructor, recursive tag lookup
+ *   and the White House address used by serializer tests.
  */
 
 import type { BIOLabel } from "@mailwoman/codex/component"

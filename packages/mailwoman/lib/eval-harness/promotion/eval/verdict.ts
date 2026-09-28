@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Verdict assembler for promotion-eval.ts. Parses the battery outputs the runner teed into
- *   the out-dir, checks every number against the eval spec's floors, enforces the fp32↔int8 delta
- *   cap, and writes verdict.json. `failed: false` = all floors met.
+ *   the out-dir. It checks each number against the eval spec's floors and enforces the fp32↔int8 delta
+ *   cap. It writes `verdict.json`; `failed: false` means every floor was met.
  *
  *   Parsing interface: the scorers emit pipe-tables (`| tag | P | R | F1 |` from the affix scorers, `|
  *   tag | golden | … |` from per-locale-f1, the de-order summary line). If a harness output format
@@ -94,9 +94,10 @@ function perLocale(md: string, tag: string, locale: string): number | undefined 
 }
 
 /**
- * One cell of a markdown pipe-table, located by header column and first-column row text in
- * a single pull over the lines: the header must come first, and the row is searched only
- * after it, so a row can only belong to the table its header opened.
+ * One cell of a markdown pipe-table, located by header column and first-column row text in one pass.
+ *
+ * The header must come first.
+ * The parser searches for the row afterward, so it belongs to that table.
  *
  * A missing table, column or row reads `undefined`, and the caller parses the cell text.
  */
@@ -139,8 +140,8 @@ export interface PromotionVerdict {
 	 *
 	 * `weights-cache` is its own value because a package-shaped cache's `model.onnx` is whatever
 	 * the package ships (int8, in every shipped weights package), and calling that "fp32"
-	 * invites exactly the confound `baselines.json`'s $precision_comparability documents:
-	 * someone diffs two verdicts, sees fp32-vs-int8, and attributes a quantization delta to the model.
+	 * invites the confound described in `baselines.json`'s `$precision_comparability` field.
+	 * A reader may diff two verdicts, see fp32-vs-int8, and attribute a quantization delta to the model.
 	 */
 	graded_artifact: "int8" | "fp32" | "weights-cache"
 	verdict: "PASS" | "FAIL"
@@ -280,8 +281,8 @@ export async function assemblePromotionVerdict(
 	const results: Record<string, { floor: number; actual: number | undefined; pass: boolean }> = {}
 	let failed = false
 
-	// A leg-handled floor is enforced by its leg but would otherwise be absent from `results`
-	// entirely, and a floor missing from a report reads as a floor that did not run.
+	// A leg-handled floor is enforced by its leg but would otherwise be absent from `results` entirely.
+	// A floor missing from a report looks like a floor that did not run.
 	// Enforcement stays with the leg.
 	// This only completes the record, from the sidecar the leg already writes.
 	// Reaching this function at all means the leg passed, since it returns non-zero otherwise.

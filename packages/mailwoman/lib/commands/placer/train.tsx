@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman placer train` — train the coarse placer: a multinomial logistic regression over
- *   hashed char-n-gram + script features via plain SGD (CPU-only, a few minutes, and no GPU or
+ *   hashed char-n-gram + script features via plain SGD (CPU-only, a few minutes, without a GPU or
  *   Modal). Fits a val-NLL temperature and writes the `meta.json` + `weights.bin` artifact.
  */
 

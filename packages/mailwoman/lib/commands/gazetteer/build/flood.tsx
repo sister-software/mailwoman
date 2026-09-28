@@ -8,13 +8,13 @@
  *   live in `@mailwoman/flood/sdk`, so each stays unit-testable without Ink or the network in the loop.
  *   Mirrors `bdc.tsx`'s progress (stderr) / summary (stdout) split.
  *
- *   `--measure-resolutions` does not build. The index resolution is a measurement this layer takes rather
- *   than a number argued to, and running the measurement is a mode of its own because it costs a full pass
+ *   `--measure-resolutions` does not build. The index resolution is measured for this layer.
+ *   Running the measurement is a separate mode because it costs a full pass
  *   over 813,627 polygons per candidate and produces a table rather than an artifact.
  *
- *   `--limit` is the smoke rung. It stops the ingest after N features, which builds a real artifact over a
+ *   `--limit` selects the smoke rung. It stops the ingest after N features and builds a real artifact over a
  *   real prefix of the source — enough to exercise the field names, the value domain, the projection and
- *   the seal, which is what fixtures structurally cannot. The coverage rows still cover all of England,
+ *   the seal. Fixtures cannot exercise those source-dependent checks. The coverage rows still cover all of England,
  *   because the footprint comes from the authority's statement rather than from the polygons.
  */
 
@@ -178,7 +178,8 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			`▸ footprint: ${extent.coverageCells.size.toLocaleString()} coverage cells at res ${coverageResolution}`
 		)
 
-		// The authority's ids run 1..featureCount contiguously, and the batched build walks that range.
+		// The authority's ids run contiguously from 1 through featureCount.
+		// The batched build walks that range.
 		const identity = await readFloodSourceIdentity({ geodatabasePath })
 
 		const out = options.out ?? floodDatabasePath("flood.db").toString()
@@ -209,8 +210,8 @@ const GazetteerBuildFlood: CommandComponent<typeof spec> = ({ options }) => {
 			indexResolution,
 			coverageResolution,
 			extent,
-			// The live service's feature count is the cheapest two-path check there is,
-			// and it catches a stale or truncated archive before anything is written.
+			// The live service's feature count provides a cheap second check.
+			// It catches a stale or truncated archive before anything is written.
 			// A `--limit` run has deliberately fewer features than the service reports,
 			// so the check is skipped there rather than made to pass.
 			...(options.offline || options.limit ? {} : { expectedFeatureCount: await client.readFeatureCount() }),

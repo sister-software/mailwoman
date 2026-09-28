@@ -25,7 +25,8 @@ import { SurfaceOrigin } from "#types"
  * The box number is drawn rather than read, so no register asserts that this box exists.
  *
  * The locality, region and postcode around it come from the `--input` tuples.
- * The row as a whole identifies no published record, and the register field carries null for that reason.
+ * The row as a whole identifies no published record.
+ * The register field carries null for that reason.
  */
 const PO_BOX_PROVENANCE = {
 	register: null,
@@ -37,8 +38,8 @@ const PO_BOX_PROVENANCE = {
 /**
  * Recipe registered with the corpus builder.
  *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
+ * See the file header for the parse behaviour this recipe exercises.
+ * See `description` below for the surface form it generates.
  */
 export const poBoxRecipe: CorpusRecipe = {
 	name: "po-box",
@@ -54,8 +55,9 @@ export const poBoxRecipe: CorpusRecipe = {
 		const pmbRatio = opts.pmbRatio ?? 0.15
 		const militaryRatio = opts.militaryRatio ?? 0
 		// `--source-name` gives an output built for one class its own source label and its own reps per row.
-		// A military-only output (`--variants 0 --military-ratio 1`) would otherwise be indistinguishable
-		// from the leader-template rows in the mixture, and the two classes carry different weights.
+		// A military-only output (`--variants 0 --military-ratio 1`) would otherwise be
+		// indistinguishable from the leader-template rows in the mixture.
+		// The two classes carry different weights.
 		const source = opts.sourceName ?? defaultRecipeSource("synth-po-box")
 		let read = 0
 		let emitted = 0

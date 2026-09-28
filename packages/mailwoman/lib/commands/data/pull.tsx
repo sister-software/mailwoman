@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Head probes and `.md5` sidecars go through `APIClient` (paced, retried, mapped errors); artifact bodies stream
- *   straight to disk through the raw-`fetch` `streamToDisk`, because response caching, pacing, and in-memory buffering
- *   do not fit a transfer of tens of MB to several GB.
+ *   Head probes and `.md5` sidecars go through `APIClient`, which paces requests, retries them and maps errors.
+ *   Artifact bodies stream straight to disk through raw-`fetch` `streamToDisk`. Response caching, pacing and
+ *   in-memory buffering do not fit transfers of tens of MB to several GB.
  *
- *   Each artifact lands at `<dataRoot>/tmp/`, is verified against the sidecar md5 or head `Content-Length`, sealed, then
- *   swapped into place, so a crash mid-download can never corrupt an existing install.
+ *   Each artifact lands at `<dataRoot>/tmp/`. The command verifies it against the sidecar md5 or head
+ *   `Content-Length`, seals it and swaps it into place. A crash during download cannot corrupt an existing install.
  *
- *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line because candidate.db resolution
- *   is env-restricted, so writing the file alone does not wire it up.
+ *   A successful `candidate` pull prints the `export MAILWOMAN_CANDIDATE_DB=...` line. Candidate database
+ *   resolution requires this environment variable, so writing the file alone does not configure it.
  */
 
 import type { APIClient } from "@mailwoman/core/api"
@@ -109,10 +109,11 @@ export const spec = {
 } as const satisfies CommandSpec
 
 /**
- * Whether each artifact the pull would take is on disk, and what its own manifest records.
+ * Whether each artifact the pull would take is on disk and what its own manifest records.
  *
- * Read before any transfer, so the artifact's own terms print beside the registry's
- * and a disagreement between the two is visible before a copy is taken.
+ * Read before any transfer.
+ * The command prints the artifact's terms beside the registry's terms.
+ * A disagreement is visible before it copies the artifact.
  */
 async function observeArtifactTerms(
 	dataRoot: PathBuilderLike,

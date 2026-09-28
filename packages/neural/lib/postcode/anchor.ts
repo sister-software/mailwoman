@@ -70,15 +70,16 @@ export interface PostcodeAnchor {
 	 * How the span matched.
 	 *
 	 * `outward` means a GB unit postcode matched its outward code without penalty.
-	 * `fuzzy` means only an edit-distance-1 variant matched, and the confidence is penalized.
+	 * `fuzzy` means only an edit-distance-1 variant matched.
+	 * The confidence is penalized.
 	 */
 	matchType: "exact" | "outward" | "fuzzy" | "none"
 
 	/**
 	 * The house-number factor included in `confidence`.
 	 *
-	 * It is `0.2` for a digit-only code that shares its comma-delimited segment
-	 * with a street word, and `1` otherwise.
+	 * It is `0.2` for a digit-only code that shares its comma-delimited segment with a street word.
+	 * The value is `1` otherwise.
 	 */
 	positionFactor: number
 }
@@ -101,8 +102,8 @@ const FUZZY_PENALTY = 0.6
 /**
  * Returns the edit-distance-1 variants of a postcode.
  *
- * The variants are deletions, adjacent transpositions, and substitutions and insertions
- * within the neighbouring character's class (digit or letter).
+ * The variants are deletions, adjacent transpositions, substitutions and insertions
+ * within the neighbouring character's class, either digit or letter.
  * Restricting the class keeps the candidate set small.
  */
 export function editDistance1Variants(s: string): string[] {

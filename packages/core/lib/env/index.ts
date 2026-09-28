@@ -16,7 +16,8 @@ export { DefaultMailwomanPaths } from "#env/paths"
  * `process.loadEnvFile` is the runtime's own reader: synchronous, so the views below can expose
  * synchronous getters without a top-level `await` (which the Docusaurus config loader cannot evaluate),
  * and not a filesystem call made by repository code.
- * A variable already in `process.env` wins over the file, which is the precedence the views always had.
+ * A variable already in `process.env` wins over the file.
+ * The views have always used this precedence.
  *
  * An absent `.env` is the common case and is not an error.
  */

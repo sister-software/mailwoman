@@ -50,15 +50,18 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: PathBuilderLike
 	/**
-	 * Every postcode and locality database whose rows this candidate carries, whose paths
-	 * compose the manifest's license expression and whose count reaches `sourceVintage`.
+	 * Every postcode and locality database whose rows this candidate carries.
+	 *
+	 * Their paths compose the manifest's license expression.
+	 * Their count reaches `sourceVintage`.
 	 */
 	contributingDatabases: {
 		postcodes: readonly PathBuilderLike[]
 		localities: readonly PathBuilderLike[]
 	}
 	/**
-	 * Whether an importance database was folded in, which changes ranking in a way the schema does not show.
+	 * Whether an importance database was folded in.
+	 * This changes ranking in a way the schema does not show.
 	 */
 	importance: boolean
 	buildSHA: string
@@ -273,8 +276,8 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: the admin ancestor is `build-local`, this file carries its rows,
-		// and the postcode folds add share-alike sources.
+		// Never `shipped`: the admin ancestor is `build-local`, and this file carries its rows.
+		// The postcode folds add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
 		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",

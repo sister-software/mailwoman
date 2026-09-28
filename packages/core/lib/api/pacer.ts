@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file Strict minimum-interval request pacing for {@linkcode APIClient}.
  *
- *   Lifted verbatim (modulo the SEC-specific rate clamp, which now lives at the SEC client's own call
- *   site) from `98c4dda1:filer/sdk/sec-client.ts`, where the design was settled over two review rounds
- *   and verified across eight arrival shapes — fan-out, interleaved, serial-plus-fanout, multi-burst,
- *   mid-refill, idle-then-burst, and a 60-call run at 50/s — under an injected clock.
+ *   The design came from `98c4dda1:filer/sdk/sec-client.ts` with the SEC-specific rate clamp moved to the SEC client.
+ *   Two review rounds settled the design.
+ *   An injected clock verified eight arrival shapes: fan-out / interleaved / serial-plus-fanout / multi-burst /
+ *   mid-refill / idle-then-burst / a 60-call run at 50/s.
  */
 
 import { type ClockLike, systemClock } from "#api/clock"
@@ -45,8 +45,8 @@ export class RequestPacer {
 	/**
 	 * @param intervalMs Minimum milliseconds between two grants.
 	 * Values `<= 0` are rejected.
-	 * A zero-interval pacer would never actually pace, and silently accepting one would
-	 * make a misconfigured caller look throttled when it isn't.
+	 * A zero-interval pacer would never actually pace.
+	 * Silently accepting one would make a misconfigured caller look throttled when it isn't.
 	 * @param clock Time source.
 	 * Defaults to {@linkcode systemClock}.
 	 */
@@ -81,25 +81,30 @@ export class RequestPacer {
 	 * then update state") reopens the concurrency bug this pacer exists to close.
 	 * N callers invoked in the same synchronous turn would all read the same
 	 * stale `#nextGrantAt` before any of them updates it, compute the same wait,
-	 * and all be released together instead of one interval apart.
+	 * They would all be released together instead of one interval apart.
 	 *
 	 * `Math.max(#nextGrantAt, now)` is also required.
-	 * Without it, a long idle gap leaves `#nextGrantAt` stuck in the past,
-	 * and every call after the idle would compute a negative/zero wait forever
+	 * Without it, a long idle gap leaves `#nextGrantAt` stuck in the past, Every call
+	 * after the idle would compute a negative or zero wait forever.
+	 *
 	 * (the increment-by-one-interval never catches up to a `now` that's run far ahead) —
 	 * pacing would silently stop working after any idle period.
 	 *
 	 * Both are mutation-proved in `pacer.test.ts`.
 	 *
 	 * Real-clock caveat, measured rather than assumed: the guarantee is on the clock's timeline.
-	 * Grant instants are scheduled exactly `intervalMs` apart, but the continuation
-	 * that actually issues the request runs whenever the event loop gets to it,
-	 * which on real timers is 0-2ms after the deadline.
+	 * Grant instants are scheduled exactly `intervalMs` apart.
 	 *
-	 * A grant that lands 1ms late shifts toward the following window, so a sliding-second
-	 * count over the observed dispatch times reads 11 rather than 10 at a 100ms interval
-	 * (measured 3/3 runs of a 40-call fan-out. The preceding second correspondingly holds 9,
-	 * and the long-run rate is exactly at the cap).
+	 * The continuation that issues the request runs when the event loop reaches it.
+	 * Real timers run 0–2ms after the deadline.
+	 *
+	 * A grant that lands 1ms late shifts toward the following window.
+	 * A sliding-second count over observed dispatch times then reads 11 rather than 10 at a 100ms interval.
+	 *
+	 * This occurred in 3 of 3 runs of a 40-call fan-out.
+	 * The preceding second held 9 grants.
+	 *
+	 * The long-run rate remained at the cap.
 	 * A caller that needs a hard sliding-window ceiling with no jitter headroom should
 	 * pace fractionally under the published rate rather than exactly at it.
 	 */

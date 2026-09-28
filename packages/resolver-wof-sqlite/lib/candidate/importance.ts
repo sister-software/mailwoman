@@ -13,19 +13,20 @@
  *   admin source are different snapshots whose ids disagree. An id join silently drops rows and
  *   leaves the ranking inert on the queries the prior exists for.
  *
- *   The key alone is not enough. `(warwick, US, locality)` covers eleven different places, and taking
- *   the group's max would give every Warwick in America the fame of Warwick, Rhode Island. The group
- *   is therefore disambiguated geographically: the nearest centroid wins, and only within
- *   {@link IMPORTANCE_JOIN_RADIUS_KM}. Two artifacts describing the same settlement put its centroid
- *   in almost the same place. Two same-named towns in one country do not.
+ *   The key alone is not enough. `(warwick, US, locality)` covers eleven different places.
+ *   Taking the group's max would give every Warwick in America the fame of Warwick, Rhode Island.
+ *   The join picks the nearest centroid when it falls within {@link IMPORTANCE_JOIN_RADIUS_KM}.
+ *   Two artifacts describing the same settlement put its centroid
+ *   in almost the same place. Two towns with the same name in one country do not.
  *
  *   `place_importance.importance` lands in the column verbatim, the pre-split conflation that is
  *   encyclopedia-derived where the concordance matched and a population-derived proxy everywhere
  *   else. See {@link CandidateTable.importance} for why the split `encyclopedic` channel is not what
  *   is written here.
  *
- *   A place with no match gets NULL. NULL is unmeasured, never zero, and the consumer
- *   (`resolver/toponym-prior.ts`) leaves an unmeasured candidate exactly where population put it.
+ *   A place with no match gets NULL. NULL means the place's fame is unmeasured.
+ *   The consumer (`resolver/toponym-prior.ts`) leaves an unmeasured candidate at the position
+ *   population assigned it.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -42,14 +43,16 @@ import { normalizeLocalityForKey } from "#street/normalize"
  * The nearest-centroid distances separate into a mode where the two snapshots agree
  * and a background rate of two different towns wearing one name in one country.
  *
- * The background rate does not decay with distance, so 10 km is the floor between the
- * two populations, and the value is chosen by what the join means.
+ * The background rate does not decay with distance.
+ * Ten kilometers separates the two populations.
+ *
+ * That distance matches the join's purpose.
  * Widening the radius past the floor starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
 /**
- * One scored place from the source: where it is, and what it scored.
+ * One scored place from the source, with its coordinates and importance score.
  */
 interface ScoredPlace {
 	lat: number
@@ -122,10 +125,11 @@ export class ImportanceIndex {
 	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
 	 * Null is unmeasured.
-	 * Never substitute a zero, and never fall back to a population-derived value here.
+	 * Keep the value null.
+	 * Do not substitute zero or a population-derived value here.
 	 *
-	 * The source column already carries that fallback where it has one, and inventing a
-	 * second one would make an absence indistinguishable from a measurement.
+	 * The source column already carries a population-derived fallback where one exists.
+	 * A second fallback would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
 		const nameKey = normalizeLocalityForKey(name)
@@ -161,12 +165,15 @@ export class ImportanceIndex {
 }
 
 /**
- * Read `place_importance`, joined to `spr` for the name, country, placetype, and centroid,
- * out of a WOF admin database into an {@link ImportanceIndex}.
+ * Read `place_importance` from a WOF admin database and join it to `spr`.
+ *
+ * The join retrieves each place's name, country, placetype, plus its centroid.
+ * These fields populate an {@link ImportanceIndex}.
  *
  * Only current, non-deprecated places are indexed.
- * A superseded row's score belongs to a place the gazetteer no longer carries,
- * and letting it win the nearest-centroid contest would hand a live place a dead one's fame.
+ * A superseded row's score belongs to a place the gazetteer no longer carries.
+ *
+ * If that row won the nearest-centroid contest, a live place would inherit the superseded place's fame.
  *
  * The whole table is held in memory on purpose, because the build probes it once for every place
  * and the alternative is a prepared statement per place against a multi-gigabyte database.

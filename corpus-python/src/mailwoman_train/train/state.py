@@ -4,8 +4,8 @@ The loop owns this object and mutates the reading fields before each dispatch, s
 observing one moment sees the same numbers. That matters for `elapsed`: the console line and the
 CSV row it accompanies carry one reading rather than two clock calls a few microseconds apart.
 
-Callbacks read. the loop writes. A callback that assigns to a field here is steering the run, which
-is what `protocols.TrainCallback` forbids.
+Callbacks read the object. The loop writes it. Assigning to a field would steer the run.
+`protocols.TrainCallback` forbids that.
 """
 
 from __future__ import annotations
@@ -33,15 +33,16 @@ class TrainState:
     output_dir: Path
     started: float
 
-    #: `vocab_size` is 2 on the char path, which reads no SentencePiece table — the same dummy
-    #: width `build_model` uses, carried here. Therefore, the checkpoint's extras can state it.
+    #: The char path sets `vocab_size` to 2 because it reads no SentencePiece table.
+    #: `build_model` uses the same dummy width. The checkpoint extras record it here.
     vocab_size: int = 2
 
     #: The step this PROCESS began at: 0 on a fresh run, the checkpoint's step on a resume.
     #:
-    #: `elapsed` is time since this process started, so throughput is `(step - start_step) / elapsed`. Dividing the
-    #: absolute step by it reported 103.70 steps/s on a run resumed at 35,000 whose real rate was 5.42, and the figure
-    #: fell every line as `elapsed` grew — a resumed run inherits the steps but not the seconds.
+    #: `elapsed` is time since this process started, so throughput is `(step - start_step) / elapsed`.
+    #: Dividing the absolute step by it reported 103.70 steps/s on a run resumed at 35,000.
+    #: That run's real rate was 5.42 steps/s. The reported figure fell each line as `elapsed` grew.
+    #: A resumed run inherits steps but starts a new elapsed-time counter.
     start_step: int = 0
 
     #: Set by the loop before each dispatch.

@@ -57,7 +57,7 @@ def render_row(
     """Render one JP row in one register and return its span-triple corpus record.
 
     Components run from largest to smallest. ``spaced`` puts one ASCII space between the admin
-    components. The 〒 mark sits outside the postcode span, which covers only the digits.
+    components. The 〒 mark sits outside the postcode span. The span covers only the digits.
     """
     renderer = RowRenderer()
     sep = " " if spaced else ""
@@ -139,7 +139,7 @@ def available_registers(chome: int | None, number: str, kana: bool = False) -> t
 
     A number with non-digit parts (``362B-2``) renders only in the native register. A row without a
     chōme also allows the designator register. ``kana`` is true when the municipality has a kana
-    reading, which enables the kana_municipality register.
+    reading. That enables the kana_municipality register.
     """
     clean = bool(_COMPACT.match(number)) if number else False
     kana_extra = ("kana_municipality",) if kana else ()

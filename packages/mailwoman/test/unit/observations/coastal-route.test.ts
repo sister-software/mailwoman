@@ -202,7 +202,7 @@ describe("#1993: the coastal-erosion route on the geocode path", () => {
 			coastalErosionRoute: route,
 		})
 
-		// An advisory here would be a determination nobody made, so the refusal is named instead.
+		// An advisory here would be an unverified determination, so the response reports a refusal.
 		expect(result.intent_markers).toEqual([])
 
 		const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

@@ -27,7 +27,7 @@ export interface FinalizeVerdictOptions {
 	 */
 	check: string
 	/**
-	 * True when `--weights-cache` named the graded artifact.
+	 * True when `--weights-cache` points to the graded artifact.
 	 *
 	 * It the verdict records.
 	 * Therefore, a reader can tell a staged candidate's numbers from the installed package's.

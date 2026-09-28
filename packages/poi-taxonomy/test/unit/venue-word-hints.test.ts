@@ -49,7 +49,7 @@ describe("venue-word-hints table integrity", () => {
 	it("the toponym family the composed measure exists to kill stays out", () => {
 		// Venue-frequency alone admits famous place names (the f6 saturation finding:
 		// 'paris' out-ratios 'comer'); the place-rate suppressor is what keeps them out.
-		// The street-fork family is the falsifier's named false positives.
+		// The street-fork family is the falsifier's listed false positives.
 		for (const toponym of ["paris", "mexico", "augusta", "catherine", "savile", "alvear", "paulista"]) {
 			expect(venueWordHint(toponym), toponym).toBeNull()
 		}

@@ -107,7 +107,8 @@ export interface OutputLinesInput {
 	result: GeocodeResult
 	tree: AddressTree
 	/**
-	 * Only `kind` is read; `Pick` says so, and lets a test hand in exactly that.
+	 * Only `kind` is read.
+	 * `Pick` lets a test hand in exactly that field.
 	 */
 	trace?: Pick<GeocodeTrace, "kind">
 	/**

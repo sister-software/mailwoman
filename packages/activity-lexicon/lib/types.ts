@@ -61,7 +61,8 @@ export interface RegionalRegisterAttestation {
 	 */
 	base: string
 	/**
-	 * The locales of the referenced record, which the entry's `locales` copy.
+	 * The locales of the referenced record.
+	 * The entry copies them into `locales`.
 	 */
 	detail: string
 }
@@ -74,7 +75,8 @@ export interface RegionalRegisterAttestation {
 export interface ConceptDescriptionAttestation {
 	kind: "concept-description"
 	/**
-	 * The cited concept identifier, which equals the entry's `activity`.
+	 * The cited concept identifier.
+	 * It equals the entry's `activity`.
 	 */
 	reference: string
 	/**
@@ -140,7 +142,8 @@ export interface ActivityPhraseLexicon {
  *
  * - `unscoped`: the entry declares no locales and matches any locale.
  * - `exact`: the entry declares the query's locale tag.
- * - `language`: only the language subtag matches, which is weaker evidence for a regional phrase.
+ * - `language`: only the language subtag matches.
+ *   This is weaker evidence for a regional phrase.
  */
 export type ActivityPhraseLocaleScope = "unscoped" | "exact" | "language"
 

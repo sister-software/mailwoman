@@ -5,7 +5,7 @@
  *
  *   `mailwoman gazetteer build postcode-codepoint` — the GB unit-postcode database from Ordnance Survey
  *   Code-Point Open (OGL v3). Acquires the archive from the open OS Downloads API, verifies it against
- *   OS's published md5, converts OSGB36 eastings/northings to WGS84, and writes a sealed database to a new
+ *   OS's published md5. It converts OSGB36 eastings/northings to WGS84 and writes a sealed database to a new
  *   dated path. Promotion into `DEFAULT_POSTCODE_DATABASES` is a separate, deliberate step.
  *
  *   Coverage is England, Scotland and Wales. Northern Ireland is not in this product and the database says

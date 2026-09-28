@@ -3,9 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   OGC service reads the layer products share: an API Features bbox probe, a collection's declared extent,
- *   and a WFS `resultType=hits` feature count — the second distribution channel every two-path agreement
- *   check re-asks.
+ *   Layer products share three OGC service reads.
+ *   They use an API Features bbox probe and a collection's declared extent.
+ *   They also use a WFS `resultType=hits` feature count.
+ *   Every two-path agreement check re-asks the count through the second distribution channel.
  */
 
 import { decodeXML } from "entities"
@@ -48,11 +49,14 @@ const EXCEPTION_OPEN = "<ServiceException"
 /**
  * The inner text of the first real `<ServiceException>` element.
  *
- * Index scans rather than a regex, because the obvious pattern backtracks polynomially on a body
- * whose opening tag has no closing partner — and this body is whatever a network service returned.
+ * Index scans rather than a regex, because the obvious pattern backtracks polynomially
+ * on a body whose opening tag has no closing partner.
+ * The body comes from a network service.
  *
- * The tag name must end at the match: `<ServiceExceptionReport xmlns="…">` shares the prefix,
- * and taking it captures the entire report as the message.
+ * The tag name must end at the match.
+ * `<ServiceExceptionReport xmlns="…">` shares the prefix.
+ *
+ * Matching that tag would capture the entire report as the message.
  * An unclosed element reads as unreadable rather than as empty.
  */
 function exceptionText(body: string): string | undefined {
@@ -68,8 +72,8 @@ function exceptionText(body: string): string | undefined {
 		cursor = after
 
 		// `>` closes a bare tag and whitespace introduces attributes.
-		// Anything else continues the tag name, which means this is `ServiceExceptionReport`
-		// or a sibling rather than the element being read.
+		// Any other character continues the tag name.
+		// The match then identifies `ServiceExceptionReport` or a sibling instead of the element being read.
 		if (!/^[\s>]/u.test(body.slice(after, after + 1))) continue
 
 		const contentStart = body.indexOf(">", after)
@@ -93,8 +97,8 @@ function exceptionText(body: string): string | undefined {
 export function readOGCServiceException(body: string): string | undefined {
 	if (!body.includes("ServiceExceptionReport")) return undefined
 
-	// A report whose exception element cannot be read is still a report, and reporting it
-	// as a successful empty answer is the failure this whole function exists to prevent.
+	// A body remains an exception report when its exception element cannot be read.
+	// Reporting it as a successful empty answer is the failure this function prevents.
 	return decodeXML((exceptionText(body) ?? "the report carried no readable ServiceException element").trim())
 }
 
@@ -222,8 +226,8 @@ export async function readWFSFeatureCount(
 	assertNoOGCServiceException(data, options.context)
 
 	// The root element's attribute rather than the first match anywhere in the body:
-	// the count describes the collection, and a regex cannot tell that apart from
-	// the same attribute repeated on a nested member.
+	// The count describes the collection.
+	// A regex cannot distinguish it from the same attribute repeated on a nested member.
 	const numberMatched = rootAttribute(data, "numberMatched", { xml: true })
 	const subject = options.subject === undefined ? "" : ` for ${options.subject}`
 
@@ -233,7 +237,8 @@ export async function readWFSFeatureCount(
 
 	// WFS 2.0 permits `numberMatched="unknown"`, which is the server declining to count
 	// rather than a count of zero.
-	// Reporting it as "no attribute" would name the wrong fact, and returning 0 would invent one.
+	// Reporting "no attribute" would name the wrong fact.
+	// Returning 0 would invent a count.
 	if (!/^\d+$/u.test(numberMatched)) {
 		throw new Error(
 			`${options.context}: the WFS hits response${subject} reported numberMatched=${stringifyJSON(numberMatched)} rather than a count — the server declined to count the matches, which is not the same as matching none`

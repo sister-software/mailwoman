@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Canadian postcodes: the branded type, the shape, normalization, and the FSA-letter →
- *   province/territory prior — the only alphanumeric postcode of the systems the codex models.
+ *   Canadian postcodes: the branded type, shape, normalization and FSA-letter →
+ *   province/territory prior. They are the only alphanumeric postcodes among the systems the codex models.
  *
  *   The informative contrast across `us/zipcode.ts`, `de/postleitzahl.ts`, `fr/code-postal.ts`, and
  *   here:
@@ -84,8 +84,10 @@ export function isCaPostalCode(input: unknown): input is PostalCode {
 /**
  * FSA first letter → province/territory.
  *
- * Clean (one province per letter) except `X`, shared by the Northwest Territories and Nunavut,
- * and the large provinces that span several letters: Ontario owns `K L M N P` and Quebec owns `G H J`.
+ * Each letter maps to one province except `X`, which the Northwest Territories and Nunavut share.
+ * Ontario owns `K L M N P`.
+ *
+ * Quebec owns `G H J`.
  * Letters `D F I O Q U W Z` never open a Canadian postcode and so do not appear here.
  */
 export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | CanadianProvinceCode[]> = {
@@ -114,7 +116,7 @@ export const FSA_LETTER_TO_PROVINCE: Record<string, CanadianProvinceCode | Canad
  *
  * @returns The single code for the clean letters, the `["NT", "NU"]` pair
  * for the shared `X`, and null if the input is not a valid Canadian postcode
- * (or its first letter has no province, which the pattern already forbids).
+ * (or its first letter has no province. The pattern already forbids that case).
  */
 export function provinceOfPostalCode(postalCode: unknown): CanadianProvinceCode | CanadianProvinceCode[] | null {
 	const normalized = normalizeCaPostalCode(postalCode)

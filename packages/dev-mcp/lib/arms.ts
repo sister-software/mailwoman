@@ -5,15 +5,14 @@
  *
  *   What a comparison's two sides may be.
  *
- *   Spec §6.1 gives `ArmSpec` four members and all four are built: a mailwoman configuration, an external endpoint, a
- *   metered reference geocoder, and a stored past run.
+ *   Spec §6.1 defines four `ArmSpec` members. This module builds a mailwoman configuration, an external endpoint, a
+ *   metered reference geocoder and a stored past run.
  *
- *   Every kind gets its own schema branch, and that is the required detail in this file. A bare {@link EngineConfig}
- *   stays legal as shorthand so the older two-mailwoman-arms call keeps working, and a zod object strips unknown keys —
- *   so without an explicit branch, `{kind:"oracle", provider:"google"}` parses cleanly as an empty mailwoman config and
- *   silently runs the production default against itself. The caller would get a comparison, a verdict, and no
- *   indication whatever that they did not get the arm they asked for. That is why a kind is never handled by falling
- *   through to the shorthand, including the unknown one, which is refused by name.
+ *   Each arm kind has its own schema branch. A bare {@link EngineConfig} remains valid shorthand for the older
+ *   two-mailwoman-arms call. Zod objects strip unknown keys. Without an explicit branch, `{kind:"oracle",
+ *   provider:"google"}` would parse as an empty mailwoman config and run the production default against itself. The
+ *   caller would receive a comparison and verdict for the wrong arm. The schema therefore handles each kind before
+ *   shorthand parsing. It reports an unknown kind by name.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -28,9 +27,10 @@ import { WORKING_TREE_REF } from "#worktree/arm"
 /**
  * How one arm answers one raw query string, whichever kind of arm it is.
  *
- * Lives beside the arm specs rather than inside the comparison, so a new arm kind
- * can be implemented in its own module without that module importing the comparison,
- * which would close a cycle, since the comparison must import it back.
+ * Lives beside the arm specs.
+ * A new arm kind can be implemented in its own module without importing the comparison.
+ *
+ * This avoids a cycle because the comparison imports that module.
  */
 export interface ArmRunner {
 	label: string
@@ -47,7 +47,8 @@ export interface ArmRunner {
  * rather than a pair of hand-written scripts.
  * What it cannot vary is source.
  *
- * Both arms run whatever this process imported, which is what {@link WorktreeArm} exists for.
+ * Both arms run the code imported by this process. {@link WorktreeArm} allows
+ * an arm to use a separate worktree.
  */
 interface MailwomanArm {
 	kind: "mailwoman"
@@ -97,8 +98,10 @@ export interface RecordedArm {
  * A mailwoman arm running a different version OF the source, in its own process (see `worktree-arm.ts`).
  *
  * The kind a source change needs and the other four cannot express.
- * A `mailwoman` arm runs whatever this process imported, so two of them can only differ by
- * config, which does cover the model, via `weights_cache`, but never the code that loads it.
+ * A `mailwoman` arm runs the code imported by this process, so two such arms differ only by config.
+ *
+ * The config can select different models through `weights_cache`, but it cannot
+ * change the code that loads them.
  *
  * A `recorded` arm replays a past run but cannot produce a new one at an old ref.
  *
@@ -120,7 +123,8 @@ export type ArmSpec = MailwomanArm | ExternalArm | OracleArm | RecordedArm | Wor
  *
  * `mailwoman` because the question a recorded arm answers is almost always
  * "did OUR side change since that run".
- * The external or oracle side is the control, and re-running it is what a recorded arm exists to avoid.
+ * The external or oracle side is the control.
+ * A recorded arm avoids rerunning it.
  */
 const DEFAULT_RECORDED_ARM = "mailwoman"
 

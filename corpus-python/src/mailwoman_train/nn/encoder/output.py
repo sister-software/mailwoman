@@ -1,4 +1,4 @@
-"""What a forward pass returns, and the one backend setting it needs to run at all."""
+"""Return the forward-pass output and set the backend required to run it."""
 
 from __future__ import annotations
 

@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lanes, checks, denominators, bars, artifact pins, and the one marker query all come from
- *   `decision-definition.json`, which the loader refuses to hand over if its content hash has moved.
+ *   Lanes, checks, denominators, bars, artifact pins and the one marker query all come from
+ *   `decision-definition.json`. The loader refuses to hand it over if its content hash has moved.
  *
  *   A blocked lane is printed with what it will measure once unblocked and is scored nowhere.
  *

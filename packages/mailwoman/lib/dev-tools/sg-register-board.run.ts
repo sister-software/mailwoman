@@ -40,8 +40,8 @@ const SOURCE = `sg-register-board:${isoDate()}`
 const ADDED_AT = isoDate()
 
 /**
- * Sets the coordinate tolerance, which is a postcode's precision because a
- * six-digit Singapore postcode covers one building.
+ * Sets the coordinate tolerance.
+ * A Singapore postcode covers one building,
  */
 const TOLERANCE_M = 1000
 

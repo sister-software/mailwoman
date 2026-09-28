@@ -49,7 +49,8 @@ export interface FamilyRow {
 /**
  * Sets the tolerance around a district's own point.
  *
- * The parent city's point is the wrong answer, and it usually lies farther away than this.
+ * The parent city's point is the wrong answer.
+ * It lies farther away than this point in most cases.
  */
 const DISTRICT_TOLERANCE_M = 2000
 

@@ -7,8 +7,8 @@
  *   `check/docs-structure.ts`.
  *
  *   What is worth pinning here is the refusal boundary rather than the walk. The check's finding count is only meaningful if
- *   the classes it excludes are the ones its docstring names: a refusal that widens silently makes the count fall
- *   without anything being repaired, and one that narrows reports the regex rather than the tree. Pure strings only —
+ *   the classes it excludes are the ones its docstring names. A refusal that widens silently makes the count fall
+ *   without anything being repaired. A refusal that narrows reports the regex rather than the tree. Pure strings only —
  *   the filesystem walk is exercised by running the check itself.
  */
 

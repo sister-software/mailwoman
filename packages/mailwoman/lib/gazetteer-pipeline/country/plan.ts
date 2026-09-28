@@ -161,9 +161,10 @@ export function planCountryMove(options: {
 		}
 	}
 
-	// Every other current source must be removed.
-	// Otherwise both sources fold into one database, and `verifyAdmin` does not catch it
-	// because duplicate rows only raise the counts it checks.
+	// Remove every other current source.
+	// Otherwise both sources fold into one database.
+	// `verifyAdmin` misses that duplication because it only checks counts.
+	// Duplicates raise those counts.
 	for (const source of current) {
 		if (source === options.target) continue
 

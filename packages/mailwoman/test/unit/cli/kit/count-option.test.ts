@@ -13,7 +13,7 @@ describe("countOption", () => {
 		// `corpus slice --variants 0` asks a recipe to emit its self-contained rows
 		// and none of its tuple-driven ones.
 		// The falsy-zero idiom answered the fallback and the po-box military recipe output came out
-		// at 10,558 rows against the 5,279 requested, every one of them a row nobody asked for.
+		// at 10,558 rows against the 5,279 requested, every one extra beyond the requested total.
 		expect(countOption("0", 1)).toBe(0)
 		expect(countOption("3", 1)).toBe(3)
 	})
@@ -24,7 +24,7 @@ describe("countOption", () => {
 	})
 
 	it("REFUSES a value that is not a non-negative integer rather than falling back", () => {
-		// A typo that falls back is a row count nobody chose, which is the same defect one step further away.
+		// A typo that falls back invents a row count, which is the same defect one step further away.
 		for (const bad of ["", "  ", "two", "1.5", "-1", "NaN", "1e3x"]) {
 			expect(() => countOption(bad, 1), bad).toThrow(/non-negative integer/u)
 		}

@@ -2,7 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `prefer-home` table: helper shapes that already have a home, and the import each re-typed copy should become, read by `oxlint.plugin.ts`.
+ * @file The `prefer-home` table lists helper shapes with an existing home and the import that each re-typed copy should use. `oxlint.plugin.ts` reads it.
  */
 
 /* oxlint-disable mailwoman/prefer-home -- this file is the table the rule reads. Every constant and subcommand below
@@ -10,12 +10,14 @@
    rule with no copy to match on. */
 
 /**
- * A helper shape that already has a home, whose `signature` is what a re-typed
- * copy looks like in the AST: a `method-chain` lists the outermost call's
- * methods innermost-first, matched as a suffix with optional literal arguments,
- * a `numeric-literal` or `string-literal` names a literal a copy cannot avoid,
- * a `descending-swap-loop` names a control shape that carries no distinctive literal,
- * and a `template-properties` names the components a template interpolates in order.
+ * A helper shape that already has a home.
+ *
+ * Its `signature` describes what a re-typed copy looks like in the AST: a `method-chain` lists
+ * the outermost call's methods innermost-first, matched as a suffix with optional literal arguments,
+ * a `numeric-literal` or `string-literal` rule matches a literal a copy cannot avoid.
+ * A `descending-swap-loop` rule detects a control shape that carries no distinctive literal.
+ *
+ * A `template-properties` entry lists the components a template interpolates in order.
  */
 export interface HelperHome {
 	readonly id: string

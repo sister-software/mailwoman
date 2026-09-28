@@ -121,7 +121,7 @@ export const ABSENCE_REFUSALS = [
 export type AbsenceRefusal = (typeof ABSENCE_REFUSALS)[number]
 
 /**
- * What the route decided about one answer: an observation, or a named silence.
+ * What the route decided about one answer: an observation or an explicit absence.
  */
 export type AbsenceDecision =
 	| { fired: true; observation: AbsenceObservation }
@@ -141,15 +141,16 @@ export interface AbsenceRouteIdentity {
 	coverageCells: number
 
 	/**
-	 * Cells recorded as surveyed and empty on a basis that supports exclusion,
-	 * which bounds how often the route can fire.
+	 * Cells recorded as surveyed and empty under a basis that supports exclusion.
+	 * This bounds how frequently the route can fire.
 	 */
 	exclusionGradeEmptyCells: number
 }
 
 /**
- * An open absence route that decides, for each POI outcome, whether to record an absence
- * observation or a named refusal, and that closes the coverage database when disposed.
+ * An open absence route decides whether each POI outcome records an absence
+ * observation or an explicit refusal.
+ * Disposing the route closes the coverage database.
  */
 export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
@@ -161,13 +162,14 @@ export interface AbsenceObservationRoute extends Disposable {
 }
 
 /**
- * Configures {@linkcode createAbsenceObservationRoute} with the sealed coverage layer to read,
- * and optionally a compiled model to use in place of the committed one.
+ * Configures {@linkcode createAbsenceObservationRoute} with the sealed coverage layer to read.
+ *
+ * It may also provide a compiled model to use in place of the committed one.
  */
 export interface AbsenceObservationRouteOptions {
 	/**
-	 * The sealed single-class layer whose `layer_coverage` rows qualify the absence, with no
-	 * default because a guessed layer would qualify an absence against a survey nobody chose.
+	 * The sealed single-class layer whose `layer_coverage` rows qualify the absence, with no default
+	 * because the selected layer determines which coverage survey qualifies the absence.
 	 */
 	coverageDatabasePath: PathBuilderLike
 	model?: CompiledGeographicModel
@@ -221,8 +223,9 @@ async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<
 }
 
 /**
- * Opens an absence route against one compiled model and one sealed single-class coverage layer, and
- * throws at construction on any configuration that would otherwise make the route silently never fire.
+ * Opens an absence route against one compiled model and one sealed single-class coverage layer.
+ *
+ * It throws at construction when a configuration would prevent the route from firing.
  */
 export async function createAbsenceObservationRoute(
 	options: AbsenceObservationRouteOptions

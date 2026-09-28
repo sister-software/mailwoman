@@ -203,8 +203,8 @@ function compareAssembledCoordinate(
 		}
 	}
 
-	// Inside tolerance is not enough: a tier change is reported as a divergence with
-	// both tiers named rather than absorbed by the distance bar.
+	// Inside tolerance is not enough: a tier change is reported as a divergence with both
+	// tiers listed separately rather than absorbed by the distance bar.
 	if (a.tier !== b.tier) {
 		return {
 			comparator: "assembled_coordinate",
@@ -391,7 +391,7 @@ function compareCandidateAdmissibility(base: ConformanceOutcome, variant: Confor
 // #endregion
 
 /**
- * Reads a pair of outcomes on the axis the fixture named.
+ * Reads a pair of outcomes on the axis specified by the fixture.
  *
  * @throws On a comparator name outside the closed set, which can only come from
  * a hand-built fixture that skipped the loader.

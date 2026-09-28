@@ -6,8 +6,8 @@
  *   Convention pins for the SP 0.2.2 native-offsets runtime over `@mailwoman/sentencepiece-wasm`.
  *
  *   Three behaviors are pinned: a piece following a non-BMP character lands on the correct UTF-16
- *   range and the rest of the input stays aligned, a `▁`-prefixed piece's native span is trimmed
- *   to the word start while a bare `▁` collapses to a zero-width range, and the coarse normalizer
+ *   range while the rest of the input stays aligned. A `▁`-prefixed piece's native span is trimmed
+ *   to the word start while a bare `▁` collapses to a zero-width range. The coarse normalizer
  *   alignment of the all-caps class matches the training convention.
  */
 
@@ -59,8 +59,9 @@ describe("MailwomanTokenizer — native offsets (SP 0.2.2)", () => {
 			const text = "CALLE MAYOR 4"
 			const { pieces } = tokenizer.encode(text)
 
-			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input, the spans BIO
-			// gold was built from, and pinning it here keeps runtime and trainer on one convention.
+			// EncodeAsImmutableProto attributes "CAL" to the second piece on this input,
+			// the spans BIO gold was built from.
+			// Pinning it here keeps runtime and trainer on one convention.
 			// Do not "fix" this back to per-char intuition without re-deriving training gold.
 			expect(pieces[0]!.piece).toBe("▁C")
 			expect(pieces[0]!.start).toBe(pieces[0]!.end)

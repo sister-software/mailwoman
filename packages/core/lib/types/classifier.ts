@@ -7,7 +7,7 @@
  *
  *   A classifier is pull-based and async: given a section of the input, it returns a list of
  *   `ClassificationProposal` objects keyed by the canonical `ComponentTag` union. The policy registry
- *   filters those proposals by component and locale, and the decoder converts the survivors into an
+ *   filters those proposals by component and locale. The decoder converts the survivors into an
  *   `AddressTree`. `@mailwoman/neural` provides the one classifier implementation.
  */
 
@@ -27,7 +27,8 @@ export type Section = Span
 /**
  * Source of a `ClassificationProposal`.
  *
- * The policy registry selects proposals by source, and telemetry groups them by it.
+ * The policy registry selects proposals by source.
+ * Telemetry groups them by source.
  *
  * - `neural`: emitted by an ONNX-backed sequence classifier.
  * - `merged`: synthetic source for a merger that fused proposals from multiple classifiers.

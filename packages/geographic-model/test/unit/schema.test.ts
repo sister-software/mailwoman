@@ -528,7 +528,7 @@ describe("relation refusals", () => {
 			})
 		})
 
-		// Both records declare the pairing so both are named.
+		// Both records declare the pairing, so the validator identifies both.
 		// Either could be the wrong half and the validator does not decide which.
 		expect(refusalPairs(input)).toEqual([
 			["$.relations[0].inverse", ValidationIssueCode.InverseKindsMismatch],
@@ -622,8 +622,8 @@ describe("reporting every violation at once", () => {
 			["$.concepts[0].assertions[0].relation", ValidationIssueCode.UnknownRelation],
 			["$.concepts[0].assertions[0].target", ValidationIssueCode.UnknownConcept],
 			// The duplicate identifier removed `obtain_medication` from the concept table,
-			// so every record that named it now names no concept — the cascade the
-			// whole-table reference pass exists to catch.
+			// so every record that referenced it now points to no concept — the cascade
+			// the whole-table reference pass exists to catch.
 			["$.observations[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].object", ValidationIssueCode.UnknownConcept],
 			["$.derivedFacts[0].inputs[1].id", ValidationIssueCode.UnknownDerivationInput],

@@ -5,10 +5,10 @@
  *
  *   Libpostal-compatible JSON projection.
  *
- *   Flattens the tree to `{ tag: value }`, first occurrence winning for a repeated tag, which matches libpostal.
+ *   Flattens the tree to `{ tag: value }`. The first occurrence wins for repeated tags, matching libpostal.
  *   Use `decodeAsTuples` if order or repetition matters.
  *
- *   A multi-role node — a city-state span tagged `region` that also plays `locality` — emits one entry per role
+ *   A multi-role node, such as a city-state span tagged `region` that also plays `locality`, emits one entry per role
  *   from its `interpretations`, so `out.locality` still surfaces for a completed city-state. Every role shares the
  *   span's `value`.
  */
@@ -20,11 +20,14 @@ import type { AddressNode, AddressTree } from "#decoder/types"
 import { type UnknownSpan, unknownSpans } from "#decoder/unknown-spans"
 
 /**
- * A span the flat projection could not represent, and why.
+ * A span the flat projection could not represent.
+ * This type records why.
  *
- * The flat map holds one value per tag, so a tree carrying two `locality` spans emits one
- * and the other ceases to exist: `region: null` then means both "the input named no region"
- * and "the input named one, we parsed it, and the projection deleted it".
+ * The flat map holds one value per tag.
+ * A tree carrying two `locality` spans emits one and drops the other.
+ *
+ * `region: null` can mean the input had no region.
+ * It can also mean the projection dropped an input region.
  */
 export interface DroppedSpan {
 	/**
@@ -57,15 +60,18 @@ export interface SerializeJSONOpts {
 	/**
 	 * Add a `dropped` array naming every span first-occurrence-wins discarded.
 	 *
-	 * The default false keeps the output libpostal-compatible, and the geocode path opts in
-	 * because a silently deleted component is the one thing a caller cannot recover for itself.
+	 * The default false keeps the output libpostal-compatible.
+	 * The geocode path opts in because a silently deleted component is the one
+	 * thing a caller cannot recover for itself.
 	 */
 	includeDropped?: boolean
 }
 
 /**
- * Place one node's tag (and its alternative interpretations) into the flat map,
- * first occurrence winning, and receipt every span the taken slot deletes.
+ * Place one node's tag and alternative interpretations into the flat map.
+ *
+ * The first occurrence wins.
+ * The function records every span deleted by a taken slot.
  */
 function place(node: AddressNode, out: Partial<Record<ComponentTag, string>>, dropped: DroppedSpan[]): void {
 	if (node.tag in out) {
@@ -104,7 +110,7 @@ export function decodeAsJSON(
 	const out: Partial<Record<ComponentTag, string>> & { unknown?: UnknownSpan[]; dropped?: DroppedSpan[] } = {}
 	const dropped: DroppedSpan[] = []
 
-	// Grounded spans first, then text order — the same order the named result slots read (tree-shape.ts).
+	// Grounded spans first, then text order — the same order the result slots read (tree-shape.ts).
 	for (const node of slotNodes(tree.roots)) {
 		place(node, out, dropped)
 	}

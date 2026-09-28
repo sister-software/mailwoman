@@ -15,7 +15,8 @@ import { normalizePostcodeDisplay } from "#gazetteer-pipeline/postcode/display-f
 /**
  * The positional quality indicator for a row with no coordinate.
  *
- * These rows carry zero eastings and northings, which would convert to a real but wrong location.
+ * These rows carry zero eastings and northings.
+ * Conversion would place them at a real but wrong location.
  */
 export const PQI_NO_COORDINATE = 90
 
@@ -117,7 +118,8 @@ export interface CodePointParseStats {
 const UNIT_POSTCODE = /^[A-Z]{1,2}[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * Returns the postcode area, which is the leading one or two letters.
+ * Returns the postcode area.
+ * It consists of the leading one or two letters.
  *
  * For example, `SW1A 1AA` gives `SW` and `B33 8TH` gives `B`.
  * `Doc/metadata.txt` counts rows by area.

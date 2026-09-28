@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * One deterministic pass over everything the repository records about where its published artifacts came from, and
- * what it does not record.
+ * One deterministic pass over the repository's records about the sources of published artifacts. It also identifies
+ * missing records.
  *
- * Seven repository checks already hold individual invariants: the notices agree, the rights documents name a
- * licensor, the generated files equal their writer's output, the register's digest matches its contents. None of
- * them answers the question a release asks, which is whether the chain from a source's terms to a published
- * tarball closes, and this pass says exactly where it does not.
+ * Seven repository checks test individual conditions. The notices agree. Rights documents identify a licensor.
+ * Generated files match their writer's output. The register digest matches its contents. Those checks do not answer
+ * whether a source's terms can be traced to a published tarball. This pass identifies gaps in that chain.
  *
- * No part of this report asserts clearance, and a clean report is not one. A section that establishes no fact says
- * so, and the report separates what it observed from what it could not read. Reading this as permission is the
- * misreading the whole rights record was built to refuse.
+ * This report does not establish clearance. A clean report also does not establish clearance. Each section says when
+ * it establishes no fact. The report separates observations from unreadable records. The rights record does not grant
+ * permission to use data.
  */
 
 import { readLocalJSONFile } from "@mailwoman/core/fs/readers"
@@ -35,7 +34,7 @@ import { SourceUse, type WeightsRightsRecord } from "#weights/rights/record"
 import { weightsRightsRecords } from "#weights/rights/write"
 
 /**
- * What the register admits, and what refuses the rest.
+ * What the register admits and what it refuses.
  */
 export interface SourceRegisterAudit {
 	sources: number
@@ -84,8 +83,8 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries whose text names no license this reader could find.
 	 *
-	 * The entry may still state terms outside a parenthetical, which is why this
-	 * counts entries rather than declaring them unlicensed.
+	 * The entry may state terms outside a parenthetical.
+	 * The audit counts entries and does not declare them unlicensed.
 	 */
 	entriesNamingNoLicense: number
 	/**
@@ -97,8 +96,10 @@ export interface PackageRightsAudit {
 	/**
 	 * Entries stating no use at all.
 	 *
-	 * Whether the source trained the model is unrecorded, which is a different answer from recorded as
-	 * not having trained it — counting the two together would report an absence as a measurement.
+	 * The records do not establish whether the source trained the model.
+	 * That differs from a record stating the source did not train it.
+	 *
+	 * Combining those cases would report missing evidence as a measurement.
 	 */
 	entriesStatingNoUse: number
 	/**
@@ -250,8 +251,11 @@ export interface RightsAudit {
 /**
  * Where a frozen training manifest would be read from, relative to the repository root.
  *
- * A corpus build writes it beside the corpus it produced, under the data root, which no release path reads.
- * The repository copy is the one a release can check, and none exists yet.
+ * A corpus build writes it beside its corpus under the data root.
+ * Release paths do not read that location.
+ *
+ * A release can check a repository copy.
+ * The repository currently contains none.
  */
 const FROZEN_MANIFESTS_DIRECTORY = "packages/corpus/data/training-manifests"
 
@@ -342,10 +346,14 @@ async function auditPackage(repoRoot: PathBuilderLike, record: WeightsRightsReco
 }
 
 /**
- * The frozen manifest for a corpus, or `null` when the repository holds none.
+ * Reads the frozen manifest for a corpus.
+ * It returns `null` when the repository holds none.
  *
- * A read that fails for any reason returns `null` and the caller records the corpus as unestablished.
- * It never reports zero sources, which would read as a corpus built from no source.
+ * A failed read returns `null`.
+ * The caller records the corpus as unestablished.
+ *
+ * The function never reports zero sources.
+ * That value would imply a corpus built from no source.
  */
 async function readFrozenManifest(repoRoot: PathBuilderLike, corpusVersion: string): Promise<TrainingManifest | null> {
 	try {
@@ -689,10 +697,11 @@ async function auditDataBOM(repoRoot: PathBuilderLike): Promise<DataBOMAudit> {
 }
 
 /**
- * The audit as lines for a terminal.
+ * Formats the audit as terminal lines.
  *
  * The unresolved section prints last and is never omitted.
- * A report ending on what it established would read as a verdict, and this pass reaches none.
+ * A report ending on its established findings could read as a verdict.
+ * This pass reaches no verdict.
  */
 export function renderRightsAudit(audit: RightsAudit): string[] {
 	const lines: string[] = [
@@ -712,8 +721,10 @@ export function renderRightsAudit(audit: RightsAudit): string[] {
 			`    ${entry.digestsRecorded} of ${entry.artifacts} artifact digests recorded; ${entry.attributionEntries} attribution entries, ${entry.entriesNotTraining} describing data the model did not learn from and ${entry.entriesStatingNoUse} stating no use; ${entry.openQuestions} open questions`
 		)
 
-		// The chain starts with the package itself, so a reader following it sees where it began.
-		// This line is about the base, and printing the package's own name twice on one line reads as a cycle.
+		// The chain starts with the package itself.
+		// Showing that entry helps readers see its origin.
+		// This line describes the base.
+		// Repeating the package name would make the chain appear circular.
 		if (entry.lineage.length > 1) {
 			lines.push(`    decodes through ${entry.lineage.slice(1).join(" → ")}`)
 		}

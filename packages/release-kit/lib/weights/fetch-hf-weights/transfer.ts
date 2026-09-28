@@ -52,7 +52,7 @@ export async function writeArtifact(destination: string, bytes: Buffer): Promise
 }
 
 /**
- * Verify `bytes` against a plan's declared md5, refusing with the artifact named on a mismatch.
+ * Verify `bytes` against a plan's declared md5, and include the artifact path in a mismatch error.
  */
 export function verifyChecksum(plan: WeightsArtifactPlan, bytes: Buffer, source: string): void {
 	if (!plan.expectedMD5) return

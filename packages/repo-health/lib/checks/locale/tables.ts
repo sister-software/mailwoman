@@ -4,16 +4,15 @@
  * @author Teffen Ellis, et al.
  * @file Every country→locale table keys each locale by its own region subtag.
  *
- *   A table is read by key, so a transposed pair fails silently: it answers a locale for the country asked
- *   about, and every consumer treats a plausible answer as the right one.
+ *   Consumers look up a locale by country key. A transposed pair can return a plausible locale for the wrong country.
  *
- *   Tables are discovered rather than listed, because a check that names its subjects cannot see a table somebody
- *   adds. A declaration qualifies when at least two entries pair a country code with a locale tag and those are at
- *   least half of what it holds.
+ *   The check discovers tables across the repository. A fixed list would miss tables added later.
+ *   A declaration qualifies when at least two entries pair a country code with a locale tag.
+ *   Those entries must make up at least half of the declaration.
  *
- *   A table naming a locale that does not ship is deliberately not an error: `FST_LOCALE_BY_COUNTRY` carries
- *   `KR: "ko-kr"` ahead of the Korean package, and the ladder resolves an FST by path and returns no answer when
- *   the file is absent, so the forward-looking entry costs a warning line and no wrong reading.
+ *   This check permits a locale entry before its package ships. `FST_LOCALE_BY_COUNTRY` contains `KR: "ko-kr"`
+ *   ahead of the Korean package. The ladder resolves an FST by path and returns no answer while the file is absent.
+ *   The forward-looking entry produces a warning without returning the wrong locale.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -24,17 +23,21 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * A country code, and a locale tag whose region half a country code can be read out of.
+ * A country code contains two letters.
+ * A locale tag contains a two-letter region code.
  */
 const COUNTRY_CODE = /^[A-Za-z]{2}$/u
 const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
 
 /**
- * The threshold for recognizing a country→locale map: at least two entries pair a country
- * code with a locale tag, and those are at least half of what the declaration holds.
+ * A declaration qualifies as a country-to-locale map when at least two entries
+ * pair a country code with a locale tag.
  *
- * Both halves are required — two pairs alone admits a table of something else carrying
- * a couple, and the ratio alone admits a two-entry map of anything.
+ * Those entries must comprise at least half of the declaration.
+ *
+ * Both conditions are required.
+ * Two pairs alone could match an unrelated table with two pairs.
+ * The ratio alone could match any two-entry map.
  */
 const MINIMUM_LOCALE_PAIRS = 2
 
@@ -130,8 +133,8 @@ export async function findLocaleTables(context: {
 	repoRoot: string
 	trackedFiles: readonly string[]
 }): Promise<LocaleTable[]> {
-	// `existingOnly` because this walk opens every path it is given, and a staged rename
-	// the index still names would throw ENOENT for a reason unrelated to the tables.
+	// Use `existingOnly` because the walk opens every path it receives.
+	// A staged rename can leave the old path in the index and cause an unrelated ENOENT error.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))
 		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))

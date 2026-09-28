@@ -7,13 +7,12 @@
  *   every business a local authority has licensed, about 195 categories. Each row carries both address
  *   forms of the same premises — `소재지전체주소` (the lot-number form, 지번) and `도로명전체주소` (the
  *   road-name form) — plus both postcodes and a planar coordinate (`좌표정보(x/y)`, epsg:5174). That
- *   pairing is the cheapest dual-format signal Korean addresses offer, and the coordinate is the
- *   board's coordinate half, which is why this source carries the weight it does rather than being a side
- *   dish.
+ *   Pairing the two formats is the cheapest dual-format signal Korean addresses offer.
+ *   The coordinate supplies the board's coordinate half. That role gives this source its weight.
  *
  *   What it asserts differs by field. The local authority grants the permit, so the permit identifier is an
  *   `identity` assertion. The address is an `observation`: a clerk typed it, in both address systems, with
- *   no validation, and the registry attests only that it received the string. Both sit on `premise` rows —
+ *   no validation. The registry attests only that it received the string. Both sit on `premise` rows —
  *   the address of the licensed premises. One verdict over the source would discard the permit identity.
  *
  *   The public-data portal labels the category files "이용허락범위 제한 없음" and links them to

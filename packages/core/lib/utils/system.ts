@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   What the host offers — cores, memory, platform — for sizing a fan-out or naming the machine in a report. The one
- *   place `node:os` is reached for it, and the one place `node:v8` is reached for the heap ceiling.
+ *   Reads the host's cores, memory and platform to size a fan-out or name the machine in a report.
+ *   This is the only module that reads those values from `node:os` or the heap ceiling from `node:v8`.
  */
 
 import { arch, availableParallelism as nativeAvailableParallelism, cpus, platform, totalmem } from "node:os"

@@ -2,8 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Where a replacement specifier comes from: the package's own `imports`/`exports` patterns for a mapped
- *   specifier, and the path arithmetic for a relative one.
+ * @file Derives replacement specifiers from package `imports`/`exports` patterns or relative path arithmetic.
  *
  * A mapped specifier is re-derived by running the same pattern that produced it, so a form the maps cannot express is
  * a form this module cannot emit.
@@ -29,7 +28,8 @@ export interface PackageManifest {
  */
 export interface PackageSpecifiers {
 	/**
-	 * `#`-prefixed, from the package's `imports` map, and package-private so a test file may not write one.
+	 * `#`-prefixed and read from the package's `imports` map.
+	 * It is package-private, so a test file may not write one.
 	 */
 	internal: string[]
 	/**
@@ -74,8 +74,10 @@ function conditionTargets(value: unknown): string[] {
 }
 
 /**
- * A pattern entry substitutes exactly one `*`, as Node does: the target's text before
- * and after the star must bracket the path, and the middle becomes the key's star.
+ * A pattern entry substitutes exactly one `*`, as Node does.
+ *
+ * The target's text before and after the star must bracket the path.
+ * The intervening text becomes the key's star.
  */
 function subpathKeyFor(key: string, target: string, packageRelative: string): string | undefined {
 	const star = target.indexOf("*")
@@ -151,7 +153,8 @@ export function relativeSpecifier(containingFile: string, target: string, keepEx
 }
 
 /**
- * Whether a specifier writes its file extension, which decides the form a relative replacement takes.
+ * Whether a specifier writes its file extension.
+ * This decides the form of a relative replacement.
  */
 export function hasSourceExtension(specifier: string): boolean {
 	return SOURCE_EXTENSION.test(specifier)

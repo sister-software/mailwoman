@@ -1,4 +1,4 @@
-"""Token-level scores read during a run, and the CSV row they are logged as.
+"""Read token-level scores during a run. Write them into a CSV row.
 
 Both metrics here take the same position on absent evidence: a tag the validation sample does not
 contain has an UNDEFINED score rather than a zero. `token_f1` excludes it from the macro average and
@@ -27,10 +27,9 @@ def token_f1(
     (``f1_tag.locality`` = (B + I) / 2) and per-tag support. The per-tag columns are what the CSV
     log and dashboard read. the per-BIO ones are for debugging.
 
-    ``macro_f1`` averages only component labels with support above zero, and excludes ``O``. A
-    zero-support tag would otherwise pin F1 at 0 and drag the macro down, which measures validation
-    coverage rather than the model; ``O``'s huge support and near-1.0 F1 would inflate it the other
-    way.
+    ``macro_f1`` averages only component labels with support above zero. It excludes ``O``.
+    A zero-support tag would pin F1 at 0 and drag down the macro, making it measure validation
+    coverage instead of model performance. ``O``'s huge support and near-1.0 F1 would inflate it.
     """
     mask = labels != IGNORE_INDEX
     p = preds[mask]
@@ -76,7 +75,7 @@ def cross_pollution(
     pre-registered PR3 bar is under 1% per locale by 20k steps.
 
     Answers an empty dict when the validation sample contains no city or region start tokens at all.
-    No rate is defined over an empty denominator, and 0.0 would read as a clean result.
+    No rate is defined over an empty denominator. Returning 0.0 would read as a clean result.
     """
     start = torch.zeros_like(labels, dtype=torch.bool)
     for name in ("B-locality", "B-region"):
@@ -109,7 +108,7 @@ def eval_csv_row(step: int, elapsed: float, val: Mapping[str, float], tags: Sequ
 
     The header is written from the run's label set, so the row must be too. A row built from the
     default 16-tag list against a 35-tag ``stage3-cjk`` header left every JP fine tag and
-    ``locality_unit`` unreadable, and shifted the cells that were present under the wrong names.
+    ``locality_unit`` unreadable. It also shifted the present cells under the wrong names.
     """
     cells: list[str | int] = [
         step,

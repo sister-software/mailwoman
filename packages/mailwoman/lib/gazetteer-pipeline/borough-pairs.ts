@@ -11,8 +11,8 @@
  *   Scope discipline: the extractor is country-filtered — only locales with a carrier package and
  *   a contextually-alive tag receive entries (GB/London first. a perfect index against a dead tag
  *   is zero, the v385 control's lesson). The 211-borough census (2026-08-01): London 33, Tokyo 23,
- *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-named — the directional-homograph class. they
- *   enter only when their locale carrier exists, and law-1-style directional care applies).
+ *   Paris 20, Rotterdam 23, Amsterdam 8 (compass-direction names from the directional-homograph class).
+ *   Include them only when their locale carrier exists. Apply law-1-style directional care.
  *   Berlin-style duplicates (locality + localadmin parents) dedupe on (child, parent) surface.
  *
  *   currency (added 2026-08-02, after the fact): both ends of the pair must be live — `is_current != 0 and
@@ -45,8 +45,10 @@ export interface BoroughPair {
 	 * through {@link PLACETYPE_PROJECTION}.
 	 *
 	 * Per-row rather than per-source: `PAIR_PLACETYPES_BY_COUNTRY` admits `locality`,
-	 * `localadmin` and `borough` as parents on several countries, and those do not project to
-	 * the same tag (`locality`/`localadmin` → `locality`; `borough` → `dependent_locality`).
+	 * `localadmin` and `borough` as parents in several countries.
+	 * Those types do not project to the same tag (`locality`/`localadmin` → `locality`;
+	 * `borough` → `dependent_locality`).
+	 *
 	 * Deriving it from the child's tag instead — the pre-PIX2 containment approach — cannot represent
 	 * the borough-parent relationship at all: `WESTERN_PARENT_OF` gives `dependent_locality`
 	 * exactly one allowed parent, `locality`, and "Park Slope under Brooklyn" is not that.
@@ -85,7 +87,8 @@ function parentTagFor(placetype: string): ComponentTag {
  *   Its neighbourhood pairs come from a curated, venue-confound-boarded file
  *   (`data/gazetteer/london-pairs-v2.jsonl`, campaign R4b) — sweeping in all ~20k GB WOF neighbourhoods
  *   here would ship an unboarded batch and skip the law-1 discipline every GB increment has cleared.
- * - **US** takes boroughs and neighbourhoods, and admits `borough` as a parent.
+ * - **US** takes boroughs and neighbourhoods.
+ *   It admits `borough` as a parent.
  *   WOF parents US neighbourhoods to the locality rather than to the borough
  *   ("Astoria" hangs off New York rather than off Queens), so a locality-only parent rule
  *   silently drops the borough-level pairs the US instance exists for (campaign R5).
@@ -97,8 +100,8 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 > = {
 	US: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
 	DE: { children: ["borough", "neighbourhood"], parents: ["locality", "localadmin", "borough"] },
-	// India is the one country where parent aliases are enabled, and it is enabled
-	// because it was measured there.
+	// India is the one country where parent aliases are enabled.
+	// The team measured the behavior there.
 	// Indian cities carry official renames that WOF has not promoted: it stores Bangalore
 	// while an address today says Bengaluru (renamed 2014, present as an `eng` variant).
 	// Without expansion the pair exists and never fires — "12 MG Road, Indiranagar,
@@ -107,9 +110,9 @@ const PAIR_PLACETYPES_BY_COUNTRY: Readonly<
 	// Not enabled globally, deliberately.
 	// Applying it everywhere took the US index from 47,878 to 101,560 — more than double,
 	// on surfaces no board has ever graded.
-	// Every other increment in this campaign cleared a venue-confound board before shipping,
-	// and a 2× expansion of the flagship locale is exactly the kind of change that warrants one
-	// rather than riding in on another country's evidence.
+	// Every other increment in this campaign cleared a venue-confound board before shipping.
+	// A 2× expansion of the flagship locale warrants its own board rather than
+	// riding in on another country's evidence.
 	IN: {
 		children: ["borough", "neighbourhood"],
 		parents: ["locality", "localadmin", "borough"],
@@ -144,8 +147,9 @@ const DEFAULT_PAIR_PLACETYPES: {
  * Shortest parent alias worth indexing.
  *
  * WOF's `eng` variants include airport and agency codes ("BLR", "bbmp" for Bangalore).
- * Three letters or fewer is overwhelmingly that class rather than a name anyone writes in
- * an address, and a short key is the shape most likely to collide with an unrelated word.
+ * Three letters or fewer usually identifies that class rather than a name anyone writes in an address.
+ *
+ * A short key is also likely to collide with an unrelated word.
  */
 const MIN_ALIAS_LENGTH = 3
 
@@ -194,9 +198,10 @@ export function extractBoroughPairs(adminDBPath: string, country: string): Borou
 			.all(country) as Array<{ child: string; parent: string; parent_placetype: string }>
 
 		// Parent alias expansion.
-		// A writer uses the name they know, which is not always WOF's preferred one:
-		// WOF stores Bangalore, while an Indian address today almost always says Bengaluru
-		// (renamed 2014, and WOF carries it as an `eng` variant rather than the preferred name).
+		// A writer uses the name they know.
+		// It may differ from WOF's preferred one: WOF stores Bangalore,
+		// while an Indian address today almost always says Bengaluru
+		// (renamed 2014. WOF carries it as an `eng` variant rather than the preferred name).
 		// Without this the pair exists and never fires.
 		//
 		// Scoped to `eng` deliberately.

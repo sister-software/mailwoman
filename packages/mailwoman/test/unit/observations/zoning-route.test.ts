@@ -226,9 +226,9 @@ describe("#1995: the zoning route on the geocode path", () => {
 				zoningDesignationRoute: route,
 			})
 
-			// An advisory here would be a determination nobody made, since the location
-			// may be outside any plan area, unzoned land inside one, in a jurisdiction
-			// that has never zoned, or in one nobody has published.
+			// An advisory here would be an unverified determination, since the location may
+			// be outside any plan area, unzoned land inside one, in a jurisdiction without
+			// zoning data or in a region without published zoning data.
 			expect(result.intent_markers).toEqual([])
 
 			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

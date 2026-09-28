@@ -3,28 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   UK postcodes: the branded type, the validation shape, normalization, and the outward/inward
- *   split.
+ *   This module defines the UK postcode type. It also defines validation and normalization, plus the outward/inward split.
  *
- *   This is the most complex postcode of any system in the codex, and the contrast is the whole point
- *   of the file. A US ZIP, a German PLZ, and a French code postal are all a fixed five digits. The
- *   shape is trivial and the only interesting question is what admin unit the prefix maps to. The
- *   UK postcode is none of that:
+ *   US ZIPs and German PLZs use five digits. French codes postaux do too. UK postcodes have a more complex shape.
+ *   Those systems map a prefix to an administrative unit. UK postcodes require handling the shape itself:
  *
  *   - It is **variable-length alphanumeric**, from six characters (`M1 1AE`) to eight (`SW1A 1AA`),
  *       across forms like `B33 8TH`, `CR2 6XH`, `DN55 1PT`.
- *   - It splits into an **outward code** (area + district, the part before the space — `SW1A`) and an
- *       **inward code** (sector + unit, the three chars after — `1AA`). Royal Mail sorts on the
- *       outward to a delivery office, then on the inward to a walk.
- *   - And — the lesson that propagates to `postcode-area.ts` — it does **not align with administrative
- *       geography**. A postcode area is a Royal Mail routing construct named after a sorting town
- *       (`SW` = south-west London, `EH` = Edinburgh), not a county or a constituent country. You
- *       cannot read a county off a UK postcode the way you read a département off a French one. the
- *       postcode→country mapping in `postcode-area.ts` exists precisely _because_ there is no clean
- *       hierarchy to inherit.
+ *   - It splits into outward and inward codes. The **outward code** contains the area and district before the space,
+ *       such as `SW1A`. The **inward code** contains the sector and unit in the final three characters, such as `1AA`.
+ *       Royal Mail sorts the outward
+ *       code to a delivery office. It then sorts the inward code to a walk.
+ *   - It does **not align with administrative geography**. A postcode area is a Royal Mail routing construct derived
+ *       from a sorting town such as south-west London (`SW`) or Edinburgh (`EH`). It does not identify a county or
+ *       constituent country. A UK postcode does not identify a county as a French code postal identifies a département.
+ *       `postcode-area.ts` maps postcodes to countries because they have no administrative hierarchy to inherit.
  *
- *   So unlike the other systems, the hard work here is the shape itself — validating, normalizing the
- *   internal space, and cleaving outward from inward — not a prefix→admin lookup.
+ *   The hard work here is validating the shape and normalizing its internal space. It also separates outward from
+ *   inward codes. The implementation does not use a prefix-to-administration lookup.
  */
 
 import type { Tagged } from "type-fest"
@@ -60,8 +56,10 @@ export type Postcode = Tagged<string, "UkPostcode">
 export const UK_POSTCODE_PATTERN = /^[A-Z]{1,2}\d[A-Z\d]? ?\d[A-Z]{2}$/i
 
 /**
- * Normalize a UK postcode surface form: uppercase, strip surrounding whitespace,
- * and ensure exactly one space before the final three characters (the inward code).
+ * Normalize a UK postcode surface form.
+ *
+ * The function uppercases the text and strips surrounding whitespace.
+ * It ensures exactly one space before the final three characters (the inward code).
  *
  * `sw1a1aa` → `SW1A 1AA`, `M11AE` → `M1 1AE`, `b33 8th` → `B33 8TH`.
  * Returns null if the result is not a valid postcode.
@@ -114,7 +112,7 @@ export function inwardCode(pc: unknown): string | null {
 
 /**
  * The postcode area — the leading one or two letters of the outward code, the Royal Mail routing
- * region named after a sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`, `B33 8TH` → `B`.
+ * region derived from a sorting town: `SW1A 1AA` → `SW`, `M1 1AE` → `M`, `B33 8TH` → `B`.
  *
  * This is the key into `postcode-area.ts`'s area→country map.
  * Null if the input is not a valid postcode.

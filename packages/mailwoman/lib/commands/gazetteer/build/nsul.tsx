@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory (there is no download
- *   step), verifies it against the sidecar, and writes a sealed, atomically-swapped artifact.
+ *   Reads a hand-acquired archive from a vintage-dated `<data-root>/db/nsul/<yyyy-MM>/` directory. No download
+ *   step runs. The command verifies the archive against the sidecar and writes a sealed, atomically-swapped artifact.
  *
- *   Coverage is England, Scotland, and Wales. Northern Ireland postcode data is outside ONS's open terms, and the
- *   layer's own coverage rows say so.
+ *   Coverage includes England, Scotland and Wales. ONS's open terms exclude Northern Ireland postcode data.
+ *   The layer's coverage rows record that exclusion.
  *
  *   The pipeline module is lazy-imported so `--help` never faults without the optional
  *   `@mailwoman/resolver-wof-sqlite` peer.

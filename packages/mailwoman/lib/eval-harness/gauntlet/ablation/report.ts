@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rendering for the ablation map, where a cell nobody measured must never render as a zero and {@linkcode ABLATION_ABSENT} covers the three distinct absences.
+ *   Rendering for the ablation map, where an unmeasured cell must never render as a zero and {@linkcode ABLATION_ABSENT} covers the three distinct absences.
  */
 
 import { toLinesText } from "@mailwoman/core/fs/writers"

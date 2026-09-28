@@ -8,46 +8,42 @@
  *   into the same `candidate.db` by `build-candidate.ts` and read by
  *   {@link WOFCandidateTableLookup.ancestors}.
  *
- *   encoding: closure-lite rows, denormalized — one row per (place, ancestor) edge carrying the
- *   parent's placetype, display name and folded key — rather than a fixed-slot id chain on the
- *   candidate row. Decided by the two consumers:
+ *   The sidecar stores denormalized closure rows. Each row represents one (place, ancestor) edge. The row carries the
+ *   parent's placetype, display name, and folded key. The two consumers determine this layout:
  *
  *   1. The admin-coherence check needs the winner's chain as (placetype, name) pairs in one probe.
- *      A fixed-slot `[id.8]` chain answers with ids, and every id then needs a name lookup the
- *      artifact has no per-id table for — up to 8 indirections where the closure row has zero.
+ *      A fixed-slot `[id.8]` chain returns ids. Each id would then need a name lookup, but the artifact has no
+ *      per-id table. That design requires up to 8 indirections. The closure row requires none.
  *   2. The account layer needs every candidate under a `name_key` enumerable with its chain from
  *      one artifact probe ("present-but-outranked, discriminated by containment"). That is the
  *      candidate probe (contiguous) followed by one `spr_id`-clustered closure probe per candidate
  *      — each a handful of adjacent pages.
  *
- *   Denormalizing the parent onto the edge is the same discipline as the candidate table itself:
- *   this artifact is read over http byte ranges, where a join to a dimension table scatters page
- *   fetches, and a `without rowid` B-tree clustered on `(spr_id, depth)` keeps a whole chain in
- *   1-2 pages. The repeated parent strings are the price of the zero-join read, paid at build time.
+ *   The artifact is read over HTTP byte ranges. A join to a dimension table scatters page fetches. A `without rowid`
+ *   B-tree clustered on `(spr_id, depth)` keeps a whole chain in 1–2 pages. The builder repeats parent strings to
+ *   avoid joins during reads.
  *
- *   `depth` is 1 for the nearest ancestor (deepest containment tier), increasing outward to the
- *   country — the same nearest-first order `ancestry.ts` serves for the FTS backend, so the two
- *   backends' `ancestors()` agree by construction. The order within a place is deterministic:
+ *   `depth` is 1 for the nearest ancestor (deepest containment tier) and increases outward to the
+ *   country. This matches the nearest-first order that `ancestry.ts` serves for the FTS backend. Both backends'
+ *   `ancestors()` results therefore use the same order. The order within a place is deterministic:
  *   containment depth descending (`placetypeDepth`), then ancestor id ascending, capped at
  *   {@link MAX_ANCESTOR_DEPTH}. `parent_name_key` is the shared {@link normalizeLocalityForKey}
  *   fold — the same fold `candidate.name_key` is built with, so a chain entry and a candidate key
  *   compare under one normalizer.
  *
- *   `candidate_interval` carries pre/post-order labels over the canonical-parent forest, assigned
- *   at build time: `a` contains `d` ⟺ `a.pre <= d.pre and d.post <= a.post` — O(1) in either
- *   direction with no chain scan and no knowledge of either side's tier — and the descendants of
- *   `a` are the contiguous range `pre between a.pre and a.post`. Interval labels are classically
- *   avoided for their relabel-on-update cost. this database is a sealed read-only artifact rebuilt
- *   whole, which is exactly the regime where that cost is void.
+ *   `candidate_interval` stores pre/post-order labels over the canonical-parent forest. The builder assigns them
+ *   during construction. The predicate `a.pre <= d.pre and d.post <= a.post` tests whether `a` contains `d` in O(1)
+ *   time. It needs no chain scan or tier information. Descendants of `a` occupy the contiguous range
+ *   `pre between a.pre and a.post`. Interval labels add relabeling work to updates. This database is sealed and
+ *   read-only, so the builder can regenerate all labels together.
  *
- *   the DAG caveat, and the recorded choice: WOF places can carry more than one parent (multiple
- *   hierarchies, ambiguous boundaries). `candidate_ancestor` keeps every parent. The closure rows
- *   are the complete containment record. A single interval pair can only encode a tree, so the
- *   interval forest links each place to one canonical parent: its depth-1 edge — the finest
- *   containment tier, lowest ancestor id — the same MIN-stability convention the candidate table's
- *   `region_id` stamp uses. A containment question about a NON-canonical hierarchy must consult the
- *   closure rows. the interval answer for it is `false`, which is why interval verdicts are
- *   "contained along the canonical hierarchy", never "not contained at all".
+ *   WOF places can have multiple parents because boundaries can be ambiguous or participate in multiple
+ *   hierarchies. `candidate_ancestor` stores every parent. Its closure rows hold the complete containment record.
+ *   One interval pair encodes only a tree. The interval forest therefore links each place to one canonical parent:
+ *   the depth-1 edge with the finest containment tier and lowest ancestor id. This follows the same MIN-based
+ *   stability convention as the candidate table's `region_id` stamp. A containment query about another hierarchy
+ *   must consult the closure rows. The interval result answers only whether a place is contained along the canonical
+ *   hierarchy.
  *
  *   absence semantics (meaning-of-zero): a place with no `candidate_interval` row has no recorded
  *   ancestry in the source (extract-fed postcodes and localities, isolated places, cycle-skipped
@@ -143,7 +139,8 @@ export interface CandidateAncestorsDatabase {
 /**
  * The `candidate_ancestor` columns in clustered-key order.
  *
- * The first two are the primary key, and the builder's positional `insert` binds by this order.
+ * The first two columns form the primary key.
+ * The builder's positional `insert` binds values in this order.
  *
  * Keep in sync with {@link CandidateAncestorTable}.
  */

@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Write the CycloneDX document naming every data artifact a release can deliver, with the terms each one
+ *   Write the CycloneDX document naming every data artifact a release can deliver and the terms each one
  *   carries. `docs/src/pages/license.mdx` renders its bundle table from the committed copy.
  *
- *   Output goes through {@linkcode writeRawStdout} rather than Ink because an Ink frame at least as tall as the
- *   viewport emits `\x1b[2J\x1b[3J\x1b[H`, and `3J` wipes the scrollback.
+ *   Output goes through {@linkcode writeRawStdout} rather than Ink. An Ink frame at least as tall as the
+ *   viewport emits `\x1b[2J\x1b[3J\x1b[H`. The `3J` code wipes the scrollback.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -51,9 +51,9 @@ const DataBOMCommand: CommandComponent<typeof spec> = ({ options }) => {
 		const { version } = await readMailwomanManifest()
 		const dataRoot = options.dataRoot ?? dataRootPath()
 
-		// A data root absent from this host yields zero manifested databases.
-		// The document would then state a data root holding none.
-		// The inventory is left out instead, and the metadata carries no `mailwoman:dataRoot` property at all.
+		// A data root absent from this host provides no database inventory.
+		// Omitting the inventory also keeps the metadata from claiming that the data root holds none.
+		// The metadata carries no `mailwoman:dataRoot` property in that case.
 		const inventory =
 			options.skipInventory || !(await pathExists(dataRoot)) ? undefined : await takeInventory({ dataRoot })
 

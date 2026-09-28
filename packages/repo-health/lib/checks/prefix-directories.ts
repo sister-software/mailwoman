@@ -4,20 +4,20 @@
  * @author Teffen Ellis, et al.
  *
  *   A repeated hyphen prefix among a directory's children is a directory hierarchy encoded in names.
- *   `usgov-nppes/` and `usgov-nad/` do not merely happen to start alike: they are US federal register adapters and
- *   belong under `usgov/`. Keeping that boundary as a directory lets imports, a file listing, and an editor's tree
- *   state the same hierarchy.
+ *   `usgov-nppes/` and `usgov-nad/` are US federal register adapters that belong under `usgov/`. Keeping that boundary
+ *   as a directory makes imports, file listings and editor trees show the same hierarchy.
  *
- *   A group is two or more children sharing their first hyphen-delimited segment, and the sibling named for the prefix
- *   itself joins them: `reliability.ts` beside `reliability-report.ts` is the family's own module rather than a bystander.
+ *   A group contains two or more children that share their first hyphen-delimited segment. A sibling whose full name
+ *   is the prefix joins the group. For example, `reliability.ts` belongs beside `reliability-report.ts` as the family's
+ *   own module.
  *   A file in that position becomes the directory's `index`; a directory in it is already the destination and stays.
  *
- *   Two conditions decide what counts as a child, and both exist because a name is sometimes an interface rather than a
- *   layout. A workspace directory is an npm package name — `packages/neural-weights-en-gb` is published under that
- *   name and named by the release list — so it is never a group member. And a subdirectory counts only when it holds
- *   at least one tracked TypeScript file, which is what separates a code family from a data directory mirroring
- *   someone else's names: `hf-publish/mailwoman-cjk/` is a Hugging Face repository and
- *   `fixtures/.../whosonfirst-data-admin-fr/` is an upstream repository, and neither is this repository's to arrange.
+ *   Two conditions determine what counts as a child. A name can represent an interface instead of a layout. A
+ *   workspace directory is an npm package name. `packages/neural-weights-en-gb` is published under that
+ *   name and appears in the release list, so it cannot join a group. A subdirectory counts only when it contains a
+ *   tracked TypeScript file. That distinguishes code families from data directories that mirror external names.
+ *   `hf-publish/mailwoman-cjk/` is a Hugging Face repository. `fixtures/.../whosonfirst-data-admin-fr/` is an upstream
+ *   repository. This check does not arrange either external repository.
  */
 
 import { readWorkspaceDirectories } from "@mailwoman/core/workspaces"
@@ -65,8 +65,8 @@ function isSource(file: string): boolean {
 /**
  * Every directory-with-children view of the tracked tree, as `name -> kind` per parent directory.
  *
- * A directory child is admitted only when it carries a tracked TypeScript file somewhere
- * beneath it, and a workspace directory is never admitted at all.
+ * A directory child qualifies when it contains a tracked TypeScript file.
+ * Workspace directories never qualify.
  */
 function directoryChildren(
 	trackedFiles: readonly string[],
@@ -140,9 +140,9 @@ export function findPrefixGroups(
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself belongs to the family it heads:
-		// `reliability.ts` beside `reliability-report.ts` is the family's own module,
-		// and leaving it out splits the family across two levels.
+		// A sibling whose full name is the prefix belongs to the family it heads:
+		// `reliability.ts` beside `reliability-report.ts` is the family's own module.
+		// Leaving it out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 
@@ -166,8 +166,10 @@ export function findPrefixGroups(
 }
 
 /**
- * The moves a group needs: the shared prefix becomes the directory,
- * and each member keeps the rest of its name.
+ * Lists the moves a group needs.
+ *
+ * The shared prefix becomes the directory.
+ * Each member keeps the rest of its name.
  *
  * A directory member expands into one move per tracked file beneath it,
  * because the move operation works in files.
@@ -193,10 +195,10 @@ export function planPrefixMoves(groups: readonly PrefixGroup[], trackedFiles: re
 
 		for (const member of group.members) {
 			const stem = member.kind === "file" ? member.name.replace(SOURCE_FILE, "") : member.name
-			// The member named for the prefix heads the family rather than sitting beside it.
+			// The member whose full name is the prefix heads the family rather than sitting beside it.
 			// A directory already is the destination and stays put.
-			// A file becomes the directory's index, which is the one name that reads
-			// as "the family itself" from inside it.
+			// A file becomes the directory's index.
+			// That name represents the family itself from inside the directory.
 			const head = stem === group.prefix
 
 			if (head && member.kind === "directory") continue
@@ -246,8 +248,10 @@ export const prefixDirectoriesCheck: RepoCheck = {
 }
 
 /**
- * The repair for {@linkcode prefixDirectoriesCheck}: every grouped sibling moves into
- * its prefix directory, and the move operation repoints whatever named it.
+ * Repairs {@linkcode prefixDirectoriesCheck} findings.
+ *
+ * Each grouped sibling moves into its prefix directory.
+ * The move operation updates references to the file.
  */
 export const prefixDirectoriesFix: RepoFix = {
 	id: CHECK_ID,

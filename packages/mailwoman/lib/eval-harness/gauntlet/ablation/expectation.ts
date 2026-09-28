@@ -306,7 +306,7 @@ export interface AblationGazetteerProbe {
 	 */
 	containingChain(lat: number, lon: number): AblationPlace[]
 	/**
-	 * Named candidates, ranked most-populous first.
+	 * Candidates ranked from most populous to least populous.
 	 */
 	named(name: string, opts?: { country?: string; placetypes?: readonly string[] }): AblationPlace[]
 }

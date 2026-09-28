@@ -15,7 +15,8 @@ export type StreetOrder = "number-first" | "number-last"
  * Lists the countries that separate the street name and house number with a comma, as in `Calle Mayor, 12`.
  *
  * The list comes from the OpenCage `address-formatting` templates, the same source as `STREET_ORDERS`.
- * Spain's corpus recipe renders both forms, and its `nativeHouseJoin` option collapses the comma.
+ * Spain's corpus recipe renders both forms.
+ * Its `nativeHouseJoin` option collapses the comma.
  */
 export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
 	"BJ",
@@ -47,8 +48,8 @@ export const COMMA_JOINED_STREET_COUNTRIES: ReadonlySet<string> = new Set([
  * from its romanized street line.
  *
  * `STREET_ORDERS` describes the romanized form.
- * Hong Kong writes `21 Jordan Road` in Latin script but `佐敦道21號` in Chinese,
- * and neither order can be derived from the other.
+ * Hong Kong writes `21 Jordan Road` in Latin script and `佐敦道21號` in Chinese.
+ * Neither order can be derived from the other.
  *
  * `han` is the unseparated name-then-number line that Chinese-writing systems use.
  * A country absent from this table uses one street order in every script.
@@ -65,8 +66,9 @@ export const LOCAL_STREET_NODES: Readonly<Record<string, "han">> = {
  *
  * The values come from the OpenCage `address-formatting` templates (MIT)
  * and are committed as data, so no third-party package loads at run time.
- * A country is absent when its template lacks either slot, and the layout generator
- * in `@mailwoman/codex/address-layouts` then defaults to number-first.
+ * A country is absent when its template lacks either slot.
+ *
+ * The layout generator in `@mailwoman/codex/address-layouts` then defaults to number-first.
  *
  * To refresh the table, read each country's `address_template` from `templates.json`.
  * Collapse each `{{#first}}` alternation to the `{{{road}}}` it contains,

@@ -1,7 +1,7 @@
 """`smoke` — the whole pipeline at tiny scale on CPU: train, eval, export, quantize, package.
 
-This validates the WIRING. It does not produce shippable weights, and every bundle it writes says
-so in its card and its README.
+This validates the WIRING. It does not produce shippable weights. Every bundle it writes says so in
+its card and README.
 """
 
 from __future__ import annotations
@@ -49,8 +49,8 @@ def run(args: argparse.Namespace) -> int:
     from ...train.trainer import train
 
     cfg = load_config(args.config)
-    # A smoke defaults to constant LR: a cosine decay flattens the loss curve on its own, which is
-    # indistinguishable from the divergence a smoke exists to catch.
+    # A smoke defaults to constant LR. Cosine decay flattens the loss curve on its own.
+    # That effect is indistinguishable from the divergence a smoke exists to catch.
     if getattr(args, "smoke_mode", None) is None:
         args.smoke_mode = "constant"
     apply_smoke_mode(args, cfg)

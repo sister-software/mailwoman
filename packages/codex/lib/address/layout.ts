@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   Address layouts written as tagged templates in print order: interpolations are slots and the literal text
- *   between them is a connector. A node that renders no value drops out together with its connector. An interior
- *   connector renders only when both neighbours rendered, and an edge connector binds to the one slot it touches.
+ *   between them is a connector. A node that renders no value drops out together with its connector.
+ *   An interior connector renders only when both neighbours rendered. An edge connector binds to the one slot it touches.
  *
  *   The evaluator lives in `render.ts`, so modules that only need the layout table do not load it.
  */
@@ -53,8 +53,8 @@ export interface AddressLayout {
 	 * Indices of lines whose preceding break becomes a space in single-line output,
 	 * in place of the system's join.
 	 *
-	 * Each index refers to the line after the break, and `evaluateLines` drops
-	 * empty lines without moving the index.
+	 * Each index refers to the line after the break.
+	 * `evaluateLines` drops empty lines without moving the index.
 	 */
 	readonly softBreakBefore?: ReadonlySet<number>
 }
@@ -177,7 +177,9 @@ ${either(
 /**
  * Builds a layout from a tagged template.
  *
- * A newline in the literal text starts a new line, and other literal text becomes a connector.
+ * A newline in the literal text starts a new line.
+ * Other literal text becomes a connector.
+ *
  * Each interpolation is a slot, an alternation or a nested layout.
  */
 export function addr(strings: TemplateStringsArray, ...values: readonly AddressAtom[]): AddressLayout {

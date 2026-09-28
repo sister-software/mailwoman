@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * The authored records — the frozen pharmacy record set and the wave-1 set amended onto it — read
- * through the artifact a consumer would read.
+ * The tests read the authored records through the consumer artifact. That artifact combines the frozen
+ * pharmacy record set with the additions from wave 1.
  *
  * Every assertion is made against the committed artifact or a fresh compile of the committed authoring
  * files, never against a fixture built in this file.
  *
- * The freshness check compares parsed values rather than bytes, because a committed artifact is the
- * generator's output run through `oxfmt`, which inlines short arrays. Byte determinism is asserted
- * between two compiles, and between the committed artifact and a fresh compile once both are canonically
- * serialized.
+ * The freshness check compares parsed values rather than bytes. `oxfmt` inlines short arrays in the
+ * committed generator output. Separate assertions check byte determinism between two compiles and
+ * between the committed artifact and a fresh compile after canonical serialization.
  */
 
 import {
@@ -95,8 +94,8 @@ describe("the authored pharmacy records", () => {
 		expect(mapping?.vocabulary).toBe(ExternalVocabulary.POITaxonomy)
 		expect(mapping?.externalID).toBe(POI_CATEGORY)
 
-		// Reading the id back through the vocabulary's owner catches a mapping onto an identifier
-		// the taxonomy does not carry, which would look exactly like a working one from here.
+		// Reading the id through the vocabulary owner catches an identifier the taxonomy does not carry.
+		// Such a mapping would otherwise appear to work inside this package.
 		const category = getPOICategory(String(POI_CATEGORY))
 
 		expect(category?.id).toBe(POI_CATEGORY)
@@ -203,8 +202,9 @@ describe("the wave-1 records", () => {
 		expect(assertion?.id).toBe("drugstore-affords-obtain-medication")
 		expect(assertion?.target).toBe(OBTAIN_MEDICATION)
 
-		// Not `necessary`: the attested material says a US drugstore characteristically dispenses,
-		// and neither a locale-scoped synonym nor a row count is a census of dispensing.
+		// `necessary` would overstate the evidence.
+		// The attested material says a US drugstore characteristically dispenses.
+		// A locale-scoped synonym and a row count each fall short of a dispensing census.
 		expect(assertion?.modality).toBe(Modality.StronglyExpected)
 
 		// The one country a committed record scopes the class to.
@@ -226,15 +226,15 @@ describe("the wave-1 records", () => {
 		expect(mapping?.provenance.source).toBe("mailwoman-curated")
 		expect(mapping?.provenance.sourceRecord).toContain("taxonomy.json")
 
-		// Reading the category back through the vocabulary's owner catches an identifier
-		// that stopped resolving, which would leave the mapping translating into no category
-		// and no other check would notice.
+		// Reading the category through the vocabulary owner catches an identifier that stopped resolving.
+		// Without this check, the mapping would translate into no category and other checks would miss it.
 		const category = getPOICategory(String(DRUGSTORE_CATEGORY))
 
 		expect(category?.id).toBe(DRUGSTORE_CATEGORY)
 		expect(category?.hierarchy).toEqual(["retail", "drugstore"])
 
-		// Disjoint from the pharmacy leaf, which is the whole reason the second mapping reaches rows the first cannot.
+		// The drugstore leaf differs from the pharmacy leaf.
+		// The second mapping therefore reaches rows the first mapping cannot.
 		expect(getPOICategory(String(POI_CATEGORY))?.hierarchy).toEqual(["health_and_medical", "pharmacy"])
 	})
 })
@@ -253,7 +253,8 @@ describe("reading the record set through the runtime lookups", () => {
 		expect(assertion?.modality).toBe(Modality.Necessary)
 		expect(assertion?.countries).toBeUndefined()
 
-		// Provenance is the half a consumer cannot reconstruct: who stands behind the claim, and where to read it.
+		// Provenance tells a consumer who stands behind the claim.
+		// It also gives the record to read.
 		expect(assertion?.provenance.source).toBe("mailwoman-curated")
 		expect(assertion?.provenance.sourceRecord).toContain("2026-08-26-geographic-model-boundaries.md")
 		expect(assertion?.provenance.authoredAt).toBe("2026-08-26")

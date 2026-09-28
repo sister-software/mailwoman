@@ -152,7 +152,7 @@ describe("parseRepoName", () => {
 
 describe("clonedCountries — the directory IS the recipe", () => {
 	it("reports what a build would actually ingest, whatever any list says", async () => {
-		// `ingestWOF` globs the root and reads no list, so a clone nobody declared still becomes coverage.
+		// `ingestWOF` globs the root and reads no list, so an undeclared clone still becomes coverage.
 		const root = await reposRoot()
 
 		await clone(root("whosonfirst-data-admin-tr"), "x")

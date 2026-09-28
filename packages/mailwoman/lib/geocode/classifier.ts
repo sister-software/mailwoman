@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The classifier interface the geocode cascade consumes, and the two helpers every geocode entry runs first: which
- *   classifier will read this input (a script-routed one answers the character-path family for a kanji or Hangul
- *   line), and the normalizer call whose postal-mark decision must follow that classifier's encoder. They live
- *   together so the three geocode entries cannot disagree about either.
+ *   The classifier interface the geocode cascade consumes and the two helpers every geocode entry runs first.
+ *   One helper selects the classifier that reads this input. A script-routed classifier handles the character-path
+ *   family for a kanji or Hangul line. The other helper normalizes the input, including the postal-mark decision
+ *   that must follow the classifier's encoder. These helpers live together so the three geocode entries agree.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -28,8 +28,8 @@ export interface GeocodeClassifier {
 	encoder?: "sentencepiece" | "char"
 	/**
 	 * The classifier this text will run on, when the implementation routes by script
-	 * (`ScriptRoutedClassifier`): a kanji or Hangul line answers the character-path family,
-	 * whose `encoder` is what the postal-mark normalization must follow.
+	 * (`ScriptRoutedClassifier`): a kanji or Hangul line answers the character-path family.
+	 * Its `encoder` determines the postal-mark normalization.
 	 * Absent = this classifier reads every input.
 	 */
 	forInput?(text: string): Promise<GeocodeClassifier>

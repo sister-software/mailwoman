@@ -13,7 +13,8 @@ export interface DocsSectionDef {
 }
 
 /**
- * Top-level documentation sections, whose ids must match sidebar ids in `sidebars.ts`.
+ * Top-level documentation sections.
+ * Their ids must match the sidebar ids in `sidebars.ts`.
  */
 export const DOCS_SECTIONS: readonly DocsSectionDef[] = [
 	{ id: "product", label: "Product" },

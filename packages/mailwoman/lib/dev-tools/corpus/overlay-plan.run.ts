@@ -15,10 +15,9 @@
  *   collapse to one original. This groups them and reports the original each came from.
  *
  *   **Every original is routed, including one holding no row the policy holds out.** `split-slice`
- *   writes a val or test file only where rows reach it, so routing such a file produces one train file
- *   with the same rows. Deciding per file which ones need routing is what a hand-maintained list does,
- *   and the cost of getting it wrong is a holdout that silently overlaps train. The cost of routing
- *   everything is a few seconds per small file.
+ *   writes a val or test file only where rows reach it. Routing an empty file therefore produces one train file with
+ *   the same rows. A hand-maintained per-file list can omit a file and silently overlap holdout with train. Routing
+ *   every file costs a few seconds per small file.
  *
  *   An original this cannot locate is reported by name and counted. It is never dropped from the plan,
  *   because an overlay missing from the next corpus is a silent loss of the rows a recipe was written
@@ -68,7 +67,8 @@ if (!search) throw new Error("--search <dir,dir,...> is required")
 const BASE_FILE = /^part-\d{4}\.parquet$/u
 
 /**
- * The suffix `corpus split-slice` appends, which several entries of one original share.
+ * The suffix `corpus split-slice` appends.
+ * Several entries from one original share it.
  */
 const ROUTED_SUFFIX = /\.(train|val|test)\.parquet$/u
 
@@ -87,10 +87,11 @@ interface OverlayOriginal {
 	/**
 	 * The `source` label `overlay-manifest --source` needs, in its current spelling.
 	 *
-	 * The previous manifest records whatever spelling was current when it was written,
-	 * and `currentSourceName` maps a retired one forward.
-	 * Passing the recorded spelling to `overlay-manifest` writes a manifest disagreeing with
-	 * the rows, and the next plan derived from that manifest carries the stale label on again.
+	 * The previous manifest preserves the spelling that was current when written.
+	 * `currentSourceName` maps retired spellings forward.
+	 *
+	 * Passing a retired spelling to `overlay-manifest` would make the manifest disagree with the rows.
+	 * A later plan would then carry the stale label forward again.
 	 */
 	source: string
 	/**
@@ -98,7 +99,8 @@ interface OverlayOriginal {
 	 */
 	retiredSource?: string
 	/**
-	 * The splits the previous corpus placed it in, which says whether it was routed before.
+	 * The splits that held this file in the previous corpus.
+	 * They show whether it was routed before.
 	 */
 	previousSplits: string[]
 	previousRows: number
@@ -138,9 +140,9 @@ const searchDirectories = TextSpliterator.from(search, { delimiter: "," }).toArr
  *
  * An original sits under the version directory that first produced it,
  * so the roots are walked rather than listed.
- * The previous corpus's own directory is excluded: the files there are the copies
- * this plan replaces, and routing a copy that was already routed under the old
- * policy is the mistake the plan exists to avoid.
+ * The plan excludes the previous corpus directory because its files are the copies this plan replaces.
+ *
+ * Routing a copy that already followed the old policy would repeat its previous routing.
  */
 const index = new Map<string, string[]>()
 const previousCorpusDirectory = dirname(baseManifest)
@@ -169,8 +171,9 @@ for (const [stem, entry] of [...grouped].toSorted(([a], [b]) => a.localeCompare(
 		ambiguous.push(`${stem}: ${!entry.source.size ? "no source recorded" : [...entry.source].join(", ")}`)
 	}
 
-	// `.migrated.parquet` first: where both forms exist, that one carries the register,
-	// surface and recipe columns a current corpus needs, and the plain one predates them.
+	// Check `.migrated.parquet` first.
+	// When both forms exist, it carries the register, surface and recipe columns a current corpus needs.
+	// The plain file predates those columns.
 	let unsplitPath: string | null = null
 
 	for (const candidateName of [`${stem}.migrated.parquet`, `${stem}.parquet`]) {
@@ -195,8 +198,8 @@ for (const [stem, entry] of [...grouped].toSorted(([a], [b]) => a.localeCompare(
 	const current = CARRIED_SOURCES.includes(recorded) ? recorded : currentSourceName(recorded)
 
 	if (recorded && !current) {
-		// A label neither table knows is a label nobody can map forward, and passing it
-		// to `overlay-manifest` records a claim the rows may not support.
+		// A label absent from both tables has no forward mapping.
+		// Passing it to `overlay-manifest` would record a claim the rows may not support.
 		unmappable.push(`${stem}: ${recorded}`)
 	}
 
@@ -285,8 +288,8 @@ if (renamed.length) {
  * The lists are positional: `overlay-manifest` zips `--parquet`, `--source` and `--split` by index,
  * so a transposition between two of them is a file recorded under another file's source and split.
  *
- * These are derived, and the source comes from the plan's current spelling
- * rather than from the previous manifest's.
+ * These entries are derived.
+ * The source comes from the plan's current spelling instead of the previous manifest.
  *
  * Reading the directory rather than the originals is deliberate: routing decides how many files exist
  * and which splits they carry, so a file it wrote and a file it declined both show up here as they are.
@@ -304,10 +307,10 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 	using db = await openDuckDB()
 
 	for (const name of names) {
-		// The label comes from the file's own `source` column rather than from its filename.
-		// A filename is what an assembly step chose to call the file, and `corpus merge-source`
-		// writes its output as `<stem>-00000.parquet` whatever `--out` asked for,
-		// so a stem that matched an original before the merge does not match after it.
+		// The label comes from the file's `source` column.
+		// An assembly step chooses the filename.
+		// `corpus merge-source` writes `<stem>-00000.parquet` regardless of `--out`.
+		// A stem that matched an original before the merge therefore may not match afterward.
 		// The column is what the loader groups by, so reading it is the only attribution
 		// that cannot disagree with the rows.
 		const path = join(directory, name)
@@ -328,8 +331,8 @@ async function routedLists(directory: string): Promise<{ parquet: string[]; sour
 			continue
 		}
 
-		// The manifest records the name the corpus holds, and the copy into the corpus drops
-		// the `.migrated` infix that marks a file carried from an older corpus.
+		// The manifest records the name held by the corpus.
+		// Copying the file into the corpus drops the `.migrated` infix that marks files from an older corpus.
 		// `overlay-manifest` resolves `<newDir>/<split>/<parquet>`, so a list carrying
 		// the staged spelling resolves to a path the corpus does not have.
 		parquet.push(name.replace(".migrated", ""))

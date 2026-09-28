@@ -5,10 +5,8 @@
  *
  *   Tests for the one carrier both observation routes use to reach a caller.
  *
- *   Two properties are asserted rather than described, because both are what the marker interface promises
- *   and neither is visible from a marker in isolation: the observation's whole authority survives the
- *   conversion, and a verdict carrying no POI kind produces no marker instead of one naming a kind the
- *   result does not hold.
+ *   These tests check two properties of the marker interface. The conversion preserves the observation's full authority.
+ *   A verdict without a POI kind produces no marker that claims a kind the result does not contain.
  *
  *   The semantic half is driven by the committed route, so the evidence the marker carries is the evidence
  *   a real firing produces. The absence half is built from a synthetic observation, because a real one
@@ -30,14 +28,15 @@ import { describe, expect, it } from "vitest"
 const route = await createSemanticObservationRoute()
 
 /**
- * A verdict whose top kind is the POI branch, which is what a query the route claimed produces.
+ * A verdict whose top kind is the POI branch.
+ * The route produces this result for a query it claimed.
  */
 const POI_VERDICT: QueryKindResult = { kind: "poi_query", confidence: 0.9, alternatives: [] }
 
 /**
- * A verdict that named the POI reading below its structural incumbent.
+ * A verdict that placed the POI reading below its structural incumbent.
  *
- * The marker still has a kind to name, and it is the one in `alternatives`.
+ * The marker can still report the kind in `alternatives`.
  */
 const ALTERNATIVE_VERDICT: QueryKindResult = {
 	kind: "structured_address",
@@ -125,8 +124,8 @@ describe("a semantic observation as a marker", () => {
 		expect(marker!.message).toContain("obtain_medication")
 	})
 
-	// The `pharmacy` member of the set, picked by its concept rather than by position: en-US admits
-	// both wave-1 kinds, and a marker read off `[0]` would be asserting whichever concept sorts first.
+	// Find the `pharmacy` member by concept rather than position. en-US admits both wave-1 kinds.
+	// Reading `[0]` would assert whichever concept sorts first.
 	it("carries the whole authority, so the marker can be checked rather than taken", () => {
 		const markers = semanticMarkers(POI_VERDICT)
 		const marker = markers.find(({ evidence }) => evidence?.["concept"] === "pharmacy")
@@ -150,9 +149,9 @@ describe("a semantic observation as a marker", () => {
 		expect(evidence["modelVersion"]).toBeTruthy()
 	})
 
-	// One marker per member, each naming its own concept and its own assertion.
-	// Folding the set into one marker would lose which authority put which class in it,
-	// which is the one thing this carrier exists to keep.
+	// Emit one marker per member.
+	// Each marker carries its concept and assertion.
+	// A single marker for the set would lose which authority assigned each class.
 	it("emits one marker per member of a plural set, each with its own authority", () => {
 		const markers = semanticMarkers(POI_VERDICT)
 

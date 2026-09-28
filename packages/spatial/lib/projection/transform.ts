@@ -6,39 +6,37 @@ import { TextSpliterator } from "spliterator"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ask proj which datum transformation it would choose, and refuse a ballpark one.
+ *   Ask PROJ which datum transformation it would choose. Refuse a ballpark operation.
  *
- *   proj substitutes A ballpark datum shift when the accurate grid is not on disk, and IT does SO silently.
- *   Measured on the EA flood product: with the OSGB36→WGS84 grid missing, ogr2ogr placed the first
- *   feature's first vertex at `1.698151293, 52.648130027`; with `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present
- *   it placed it at `1.698174628, 52.648157259` — 3.4 m apart. Both look like perfectly ordinary WGS84
- *   coordinates, both pass a bounding-box check, and the whole layer is offset. It surfaced as eight
- *   disagreements out of 59 against the authority's own OGC service, every one a point that fell into a
+ *   PROJ silently substitutes a ballpark datum shift when the accurate grid is absent. On the EA flood product,
+ *   `ogr2ogr` placed the first feature's first vertex at `1.698151293, 52.648130027` without the OSGB36→WGS84 grid.
+ *   With `uk_os_OSTN15_NTv2_OSGBtoETRS.tif` present, it placed the vertex at `1.698174628, 52.648157259`, a distance
+ *   of 3.4 m. Both coordinates look like ordinary WGS84 values and pass a bounding-box check. The layer is offset.
+ *   The check found eight disagreements among 59 points against the authority's OGC service. Each point fell into a
  *   neighbouring sliver.
  *
- *   `--config PROJ_NETWORK on` does not reach proj through gdal 3.8, and `PROJ_ONLY_BEST=on` was observed
- *   not to refuse, so neither is a usable guard. What is usable is asking proj what it would do: `projinfo`
- *   names the best candidate operation and says when a grid is missing.
+ *   GDAL 3.8 does not pass `--config PROJ_NETWORK on` through to PROJ. Tests also showed that `PROJ_ONLY_BEST=on`
+ *   does not refuse a ballpark shift. `projinfo` provides the usable check. Its output identifies the best candidate
+ *   operation and reports a missing grid.
  *
- *   IT is RUN even where no transformation is needed, and that is the point. A source already in epsg:4326
- *   gets `Null geographic offset from WGS 84 to WGS 84, 0 m, World.` — trivially usable, and the check costs
- *   one process. Skipping it on the reasoning that a source needs no shift makes the guard fire on the day
- *   a source arrives that does, which is the day nobody is looking.
+ *   The check runs even when a source needs no transformation. A source already in EPSG:4326 returns
+ *   `Null geographic offset from WGS 84 to WGS 84, 0 m, World.` This operation is usable. The check costs one process.
+ *   Skipping this case would leave a later source's required grid unchecked.
  *
- *   shared BY every vector ingest, because the failure is a property of proj rather than of any product. The
- *   parse is split from the spawn so it can be pinned against captured output: the two states it
- *   distinguishes were observed from the same command on the same machine, before and after the grid was
- *   installed, and they are the difference between a metre-accurate layer and a 3 m-offset one.
+ *   Every vector ingest shares this check because the failure comes from PROJ rather than from a particular product.
+ *   Parsing is separate from process execution so tests can use captured output. The two output states came from the
+ *   same command on the same machine before and after grid installation. One produced a metre-accurate layer. The
+ *   other produced a 3 m offset.
  */
 
 /**
- * What proj would do, and whether it can actually do it.
+ * Reports the operation PROJ would choose and whether it can run it.
  */
 export interface DatumTransformationVerdict {
 	/**
-	 * The candidate operation line proj named, verbatim.
+	 * The candidate operation string returned by PROJ, verbatim.
 	 *
-	 * Absent when it named none.
+	 * Absent when PROJ returned no candidate operation.
 	 */
 	best?: string
 	usable: boolean
@@ -46,11 +44,14 @@ export interface DatumTransformationVerdict {
 }
 
 /**
- * Read `projinfo --summary` output: which operation proj would choose, and whether it can actually run.
+ * Reads `projinfo --summary` output.
+ *
+ * It reports which operation PROJ would choose and whether it can run it.
  */
 export function assessDatumTransformation(summary: string): DatumTransformationVerdict {
-	// The first line naming a candidate operation is the one proj will choose.
-	// Everything before it is a header, and the `Note:` line about `--spatial-test` is not a candidate.
+	// The first line naming a candidate operation is the one PROJ will choose.
+	// Earlier lines are headers.
+	// The `Note:` line about `--spatial-test` also describes no candidate operation.
 	// The reader trims each line.
 	const best = TextSpliterator.from(summary).find(
 		(line) => line.includes(", ") && !line.startsWith("Note:") && !line.startsWith("Candidate operations")

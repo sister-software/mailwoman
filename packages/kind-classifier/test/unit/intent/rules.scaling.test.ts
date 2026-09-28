@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   cost OF the §4 intent vocabulary. Stage 2.5 runs on every query on the hot per-query path
- *   (`geocode-core.ts`'s `deriveGeocodeRegister` calls `classifyKindSync` on every geocode, and
- *   `runPipeline` calls it on every parse), so three new scorers is a claim that has to be
- *   measured rather than asserted.
+ *   Measures the cost of the §4 intent vocabulary. Stage 2.5 runs on every query. `deriveGeocodeRegister` in
+ *   `geocode-core.ts` calls `classifyKindSync` on every geocode. `runPipeline` calls it on every parse. The cost
+ *   of three new scorers therefore needs measurement.
  *
- *   Two assertions, and they measure different failure modes:
+ *   The test makes two assertions. They measure different failure modes:
  *
  *   1. **Growth** — the intent rules must stay linear in input length. All three are
  *       lexicon-lookup-cheap by construction (a bounded regex over the tail, a Set membership test
@@ -16,10 +15,9 @@
  *       the ratio is what proves that rather than the docstring saying so. A ratio assertion also
  *       survives a loaded runner in a way a millisecond budget does not.
  *   2. **Absolute overhead vs the pre-§4 scorer set** — the number the reader of ROAD_TO_V9 §4
- *       actually wants: what did adding intent cost per query? Measured on the corpus register mix
- *       rather than on a synthetic string, and asserted as a ratio against the same replayed
- *       baseline the invariance receipt uses, for the same reason: an absolute microsecond budget
- *       flakes, a doubling does not.
+ *       measures the cost of adding intent per query. The test uses the corpus register mix instead of a synthetic
+ *       string. It asserts a ratio against the same replayed baseline as the invariance receipt. An absolute
+ *       microsecond budget can flake. A doubling does not.
  */
 
 import { classifyKindSync } from "@mailwoman/kind-classifier/classify"
@@ -50,8 +48,10 @@ import { expect, test } from "vitest"
 const TIMING_SAMPLES = 5
 
 /**
- * Capitalized run — every token is candidate place-name content, which is the shape that makes
- * `bareNameWords`'s word split and per-word Set probes work hardest before the length check can reject.
+ * The capitalized run makes every token candidate place-name content.
+ *
+ * This input makes `bareNameWords`'s word split and per-word Set probes do the most work
+ * before the length check rejects it.
  */
 const CAPS_RUN_UNIT = "Aa "
 
@@ -76,11 +76,13 @@ function bestOf(run: () => void): number {
  * Median of per-pair ratios, with the two arms measured back-TO-back inside each pair.
  *
  * Measuring all small trials then all large trials (even as best-of-N) leaves the
- * ratio exposed to a load burst that arrives between the two blocks — on a host that
- * also runs the CI fleet, that is the common case, and it fired the 3x bar three times
- * in one night at 3.19–3.25x with both arms individually healthy.
- * Pairing puts any burst into both arms of the affected pair, and the median
- * sheds the corrupted pairs in either direction.
+ * ratio exposed to a load burst between the two blocks.
+ * The test host also runs the CI fleet, so that condition occurs.
+ *
+ * It triggered the 3x bar three times in one night at 3.19–3.25x while both
+ * arms remained individually healthy.
+ * Pairing exposes both arms of an affected pair to the burst.
+ * The median removes corrupted pairs in either direction.
  *
  * A genuinely quadratic run still shows ~4x in every clean pair.
  */
@@ -129,8 +131,8 @@ test("the intent rules stay linear in input length", () => {
 	// Sizes chosen so the absolute timings clear a millisecond: at 50k/100k the whole measurement
 	// lands under 0.3 ms, where scheduler noise on a parallel test runner is larger than the signal
 	// and the ratio flakes (measured: 3.25x on a run where both arms were sub-millisecond).
-	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes
-	// over the full string, which is linear.
+	// The work being timed is a `trim` + `toLowerCase` + two anchored regexes The
+	// work grows linearly with the full string length.
 	// The length check rejects everything else at 30 characters.
 	const { ratio, smallMs, largeMs } = medianPairedRatio(runAt(500_000), runAt(1_000_000))
 
@@ -215,8 +217,8 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 	const perQueryIntentUs = (withIntent * 1000) / (PASSES * prepared.length)
 	const ratio = withIntent / Math.max(baseline, 0.001)
 
-	// Printed rather than only asserted: the docstring rule in agents.md is that a measured value includes its number, and this
-	// is the number ROAD_TO_V9 §4's cost line is reporting.
+	// Print the result as well as asserting it. The agents.md docstring rule requires a measured value to include its
+	// number. This is the value ROAD_TO_V9 §4's cost line reports.
 	// oxlint-disable-next-line no-console -- the measurement is the deliverable here.
 	console.log(
 		`intent cost: ${perQueryBaselineUs.toFixed(3)} us/query baseline -> ${perQueryIntentUs.toFixed(3)} us/query ` +
@@ -224,18 +226,20 @@ test("intent adds a bounded fraction to the per-query classify cost", () => {
 			`over ${prepared.length} queries x ${PASSES} passes`
 	)
 
-	// The BAR is absolute, and the ratio above is reported rather than asserted, because
-	// the ratio's denominator is the unstable half of the pair: the baseline arm is a bare
-	// score-and-max with no allocation, which V8 optimizes aggressively and inconsistently —
-	// measured at 0.354, 0.585 and 0.663 us/query across three consecutive runs of this file,
-	// moving the ratio from 1.94x to 3.48x while the numerator barely moved (1.185-1.284 us/query).
+	// The bar uses an absolute cost.
+	// The test reports the ratio without asserting it because its denominator
+	// is the unstable half of the pair.
+	// The baseline arm performs score-and-max without allocation.
+	// V8 optimizes it inconsistently.
+	// Three consecutive runs measured 0.354, 0.585 and 0.663 us/query.
+	// The ratio moved from 1.94x to 3.48x while the numerator stayed within 1.185–1.284 us/query.
 	// Asserting on the ratio measures the JIT's mood.
 	// Asserting on the absolute measures Stage 2.5.
 	//
 	// 10 us is ~8x the measured cost.
-	// It is set to catch an order-OF-magnitude regression (someone adding a lexicon load,
-	// a gazetteer probe, or an unbounded scan to an intent rule), not to police a microsecond,
-	// and it sits far enough above the measurement to survive a loaded CI runner.
+	// The 10 us bar catches an order-of-magnitude regression, such as a lexicon load,
+	// a gazetteer probe or an unbounded scan in an intent rule.
+	// It does not police microseconds and leaves room for a loaded CI runner.
 	// For scale: the classifier's own neighbour on this path is a ~3 ms ONNX inference,
 	// so Stage 2.5 in full is ~0.04% of a parse.
 	expect(

@@ -89,12 +89,12 @@ def load_pretrain_model(cfg: Config, tokenizer: Tokenizer, device: torch.device,
 
 
 def restore_pretrain_state(optim: AdamW, scheduler: Any, resume_from: Path) -> int:
-    """Restore the optimizer and schedule from a checkpoint, and return the step it stopped at.
+    """Restore the optimizer and schedule from a checkpoint. Return the saved step.
 
     A checkpoint written before `scheduler.pt` existed carries the step and no schedule state, so
-    the schedule is REPLAYED that many times rather than left at step 0. Left at 0 the run resumes
-    inside warmup at a learning rate the earlier steps had already passed, which trains without
-    complaint and does not reproduce the run it claims to continue.
+    the schedule is REPLAYED that many times rather than left at step 0. Leaving it at 0 resumes
+    inside warmup at a learning rate the earlier steps had already passed. Training continues
+    without complaint, but the resumed run does not reproduce its predecessor.
     """
     resume_step = 0
     if (resume_from / "optimizer.pt").is_file():

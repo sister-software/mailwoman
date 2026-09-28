@@ -2,8 +2,8 @@
 
 A name several countries need lives in `text/` or `corpora/`, not inside one country's builder. The
 two tests below pin the halves of that rule a reader cannot see from the import list: that the
-helpers answer correctly from the shared home, and that the verifier reports the label set its
-CALLER named rather than a constant read from wherever the function happens to live.
+helpers answer correctly from the shared home. The verifier also reports the label set its
+CALLER-provided rather than a constant read from wherever the function happens to live.
 """
 
 from __future__ import annotations
@@ -45,7 +45,7 @@ def test_int_to_kanji_inverts_kanji_to_int() -> None:
 
 def test_normalize_text_strips_an_ideographic_space() -> None:
     # 135 street values carry U+3000 as a rendering artifact of the source. the written form closes
-    # it up. `str.split()` treats U+3000 as whitespace, which is why no explicit replace is needed.
+    # it up. `str.split()` treats U+3000 as whitespace, so normalization needs no explicit replace.
     assert normalize_text("西与賀町　字今津乙") == "西与賀町字今津乙"
 
 

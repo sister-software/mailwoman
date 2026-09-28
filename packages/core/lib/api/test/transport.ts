@@ -2,21 +2,20 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A scripted stub Axios adapter for testing {@linkcode APIClient} subclasses, and the
- *   Axios-shaped error builder it rejects with. The sibling of `./test-clocks.ts`: that module makes
- *   time deterministic, this one makes the network deterministic, and a pacing test needs both.
+ * @file A scripted stub Axios adapter for testing {@linkcode APIClient} subclasses.
+ *   It also provides the Axios-shaped error builder for rejected requests.
+ *   Its sibling `./test-clocks.ts` makes time deterministic. This module makes the network deterministic.
+ *   Pacing tests use both modules.
  *
- *   Extracted from `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`, which had grown
- *   near-identical copies of it. That is the expected shape of the duplication rather than a
- *   surprise: `agents.md` names those two as the worked examples for the `APIClient` migration, so
- *   the second client's tests were written from the first's, and every client migrated after them
- *   would have copied it again.
+ *   The code came from `filer/sdk/sec-client.test.ts` and `bdc/sdk/client.test.ts`.
+ *   Those files had near-identical copies.
+ *   The duplication was expected because `agents.md` names those two as worked examples for the `APIClient` migration.
+ *   The second client's tests were written from the first's.
+ *   Later clients would have copied the same helpers.
  *
- *   Everything here is built structurally — `isAxiosError: true` plus `config`/`code`/`response`,
- *   and the adapter typed through `APIClientConfig["axios"]` — because the packages under test
- *   depend on neither `axios` nor `axios-cache-interceptor`, reaching both only through
- *   `@mailwoman/core`. A test file is not a reason to breach that, so this module does not import
- *   axios either.
+ *   Everything here is built structurally with `isAxiosError: true` and `config`/`code`/`response`.
+ *   The adapter uses `APIClientConfig["axios"]` because the packages under test reach Axios integrations through
+ *   `@mailwoman/core`. This module imports only the core type and JSON helper.
  */
 
 import type { APIClientConfig } from "#api/APIClient"
@@ -171,9 +170,11 @@ export function stubTransport(outcomes: StubOutcome[], options: StubTransportOpt
 		const status = outcome.status ?? HTTP_OK
 
 		const response = {
-			// Axios's `transformResponse` runs on the RAW body, so hand it exactly what the wire would:
-			// a string passes through untouched (that is how an html error page under a 200 actually arrives),
-			// bytes pass through untouched, and anything else is serialized the way a JSON endpoint would.
+			// Axios's `transformResponse` runs on the raw body, so the stub passes
+			// through the wire representation.
+			// A string passes through unchanged, as does an HTML error page under status 200.
+			// Bytes also pass through unchanged.
+			// The stub serializes other values as a JSON endpoint would.
 			data:
 				typeof outcome.body === "string" || Buffer.isBuffer(outcome.body)
 					? outcome.body

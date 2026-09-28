@@ -1,8 +1,8 @@
-"""The Korean corpus builder over the 주소DB: the reader's join, the seven registers, span discipline, and eligibility.
+"""Test the Korean corpus builder over the 주소DB.
 
-The end-to-end build is not exercised here: it needs the permit registry and `gdaltransform` for the centroid pass, and
-its receipt is the build report beside the corpus it wrote. What a unit test can pin is the shape of one LABEL row and
-what each register renders from it.
+The end-to-end build needs the permit registry and `gdaltransform` for the centroid pass. Its receipt
+is the build report beside the corpus. These unit tests pin the LABEL row shape and each register's
+rendered output.
 """
 
 from __future__ import annotations

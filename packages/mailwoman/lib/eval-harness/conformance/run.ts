@@ -89,8 +89,8 @@ export interface ConformanceSummary {
 	 */
 	tracked: ConformanceFinding[]
 	/**
-	 * Tracked rows whose law now holds, printed as a promotion instruction because a
-	 * tracked list nobody prunes stops being a record of known defects.
+	 * Tracked rows whose law now holds, printed as a promotion instruction because a tracked
+	 * list that retains resolved defects stops describing the current known set.
 	 */
 	newlyHolding: ConformanceFinding[]
 	/**

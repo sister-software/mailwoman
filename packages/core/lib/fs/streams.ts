@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  * @file Byte streams over a path, taking a {@linkcode PathBuilderLike} like the rest of `@mailwoman/core/fs`.
  *
- *   A stream is neither the synchronous surface nor the asynchronous one — `createReadStream` returns immediately and
- *   the work happens as the consumer pulls — so it sits in its own module rather than being duplicated across the
- *   pair. It is here for the same reason the readers are: `node:fs` is reached from `@mailwoman/core/fs` alone, and
- *   `packages/core/lib/fs/*` is the only place that reaches it.
+ *   `createReadStream` returns immediately. The work happens as the consumer pulls from the stream.
+ *   Streams therefore have their own module rather than being duplicated across synchronous and asynchronous modules.
+ *   The module follows the readers' boundary: only `@mailwoman/core/fs` reaches `node:fs`.
+ *   `packages/core/lib/fs/*` is the only directory that imports it.
  *
  *   These are thin. What they add is the path type and one import site, so a caller that already imports the readers
  *   does not reach past them for a stream.
@@ -68,7 +68,8 @@ export function openReadStream(path: PathBuilderLike, options?: Parameters<typeo
  * The decoder is streaming for the same reason a `TextDecoder` would need `{ stream: true }`:
  * a multi-byte character split across two chunks must be held until its tail arrives,
  * where a per-chunk decode emits a replacement character and corrupts the row.
- * `iconv-lite`'s stream decoder holds that state, and `end()` flushes what is left.
+ * `iconv-lite`'s stream decoder holds that state.
+ * `end()` flushes the remaining bytes.
  *
  * @category Files
  * @param encoding An `iconv-lite` label — `cp949`, `shift_jis`, `gbk`.

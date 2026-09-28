@@ -103,7 +103,8 @@ export interface BrokenCitation {
 }
 
 /**
- * The census result: resolved citations, refusals by class, and broken citations.
+ * The census result includes resolved citations and broken citations.
+ * It groups refusals by class.
  */
 export interface CitationCensus {
 	resolved: number

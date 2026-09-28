@@ -4,12 +4,11 @@
  * @author Teffen Ellis, et al.
  * @file Google Geocoding result → mailwoman {@linkcode OracleGeocodeResult}.
  *
- *   Casing is preserved exactly as Google returns it, because this oracle canonicalizes gauntlet cases
- *   across ~160 countries: uppercasing would turn `Köln` into `KÖLN` and quietly damage the reader's
- *   confidence in every CJK or Cyrillic name.
+ *   Casing matches Google's response because this oracle canonicalizes gauntlet cases across about 160
+ *   countries. Uppercasing would turn `Köln` into `KÖLN` and alter CJK and Cyrillic names as well.
  *
- *   The component mapping is the judgement call, and {@linkcode OracleGeocodeResult.raw} is the escape
- *   hatch that keeps it from being lossy. See {@linkcode COMPONENT_RULES} for the ordering rule and
+ *   The component mapping is a judgment call. {@linkcode OracleGeocodeResult.raw} preserves the full
+ *   response when that mapping loses information. See {@linkcode COMPONENT_RULES} for the ordering rule and
  *   {@linkcode REGION_ABBREVIATION_COUNTRIES} for the one place a country-conditional choice is made.
  */
 
@@ -37,16 +36,18 @@ interface ComponentRule {
 /**
  * The component-type → `ComponentTag` table, IN priority order.
  *
- * Two first-writer-wins rules apply as it is walked: a tag is written once,
- * and a component is consumed once.
- * Rule 2 is what makes the two `locality` entries correct rather than a duplication bug:
- * Google returns a GB address as `postal_town: "London"` plus often a `locality` holding the district,
- * so `postal_town` takes `locality` and the district falls through to `dependent_locality`;
- * with no `postal_town` the first `locality` rule consumes the component and the second finds none left.
+ * The walk applies two first-writer-wins rules.
+ * It writes each tag once and consumes each component once.
  *
- * Deliberately unmapped, and available on `raw`: `political`, `administrative_area_level_3`
- * and below (a comune in Italy, a ward in Japan, a census-designated area in the United States),
- * `postal_code_prefix`, and every `plus_code`-derived pseudo-component.
+ * Rule 2 is what makes the two `locality` entries correct rather than a duplication bug:
+ * Google returns a GB address as `postal_town: "London"` and may also return a
+ * `locality` holding the district, so `postal_town` takes `locality` and the district
+ * falls through to `dependent_locality`; with no `postal_town` the first `locality`
+ * rule consumes the component and the second finds none left.
+ *
+ * `raw` retains component types this mapping leaves unused: `political`, `administrative_area_level_3`
+ * and lower levels (a comune in Italy, a ward in Japan, a census-designated area in the United States),
+ * `postal_code_prefix`, and each `plus_code`-derived pseudo-component.
  */
 const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },
@@ -57,7 +58,7 @@ const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["room"], tag: "unit", form: "short" },
 	{ types: ["floor"], tag: "unit", form: "short" },
 	{ types: ["post_box"], tag: "po_box", form: "short" },
-	// A named building or business: `premise` is the building, the POI types are what "Eiffel Tower" comes back as.
+	// A building or business with a name: `premise` is the building, the POI types are what "Eiffel Tower" comes back as.
 	{ types: ["premise"], tag: "venue", form: "long" },
 	{ types: ["point_of_interest", "establishment"], tag: "venue", form: "long" },
 	{ types: ["postal_code"], tag: "postcode", form: "long" },
@@ -109,7 +110,8 @@ function indexByType(components: readonly GoogleAddressComponent[]): Map<string,
 /**
  * The ISO-3166 alpha-2 code for a result, read off its `country` component's `short_name`.
  *
- * `null` when the result has no country component at all, which happens for a bare `plus_code` query.
+ * Returns `null` when the result has no country component.
+ * This occurs for a bare `plus_code` query.
  */
 export function countryCodeOf(result: GoogleGeocodeResult): string | null {
 	const country = result.address_components.find((component) => component.types.includes("country"))
@@ -188,11 +190,10 @@ export function toResolutionTier(result: GoogleGeocodeResult): ResolutionTier | 
 }
 
 /**
- * The `{ latitude, longitude }` shape the rest of the repo speaks, from Google's `{ lat, lng }`.
+ * Converts Google's `{ lat, lng }` result to the repo's `{ latitude, longitude }` shape.
  *
- * `GeoPoint` is deliberately not in this path: it treats `0, 0` as the missing-coordinate
- * sentinel, and a geocode that genuinely lands in the Gulf of Guinea is exactly
- * what an oracle should surface rather than swallow.
+ * `GeoPoint` treats `0, 0` as the missing-coordinate sentinel.
+ * This conversion preserves a geocode at `0, 0`, including a result in the Gulf of Guinea.
  */
 function toCoordinate(location: GoogleLatLngLiteral): { latitude: number; longitude: number } {
 	return { latitude: location.lat, longitude: location.lng }
@@ -201,8 +202,9 @@ function toCoordinate(location: GoogleLatLngLiteral): { latitude: number; longit
 /**
  * Turn one Google `results` entry into the package's normalized {@linkcode OracleGeocodeResult}.
  *
- * `uncertaintyMeters` is left `null`: Google publishes no uncertainty radius, and inventing one
- * per `location_type` would put a fabricated number where the matcher expects a calibrated one.
+ * `uncertaintyMeters` is `null` because Google publishes no uncertainty radius.
+ * Deriving one from `location_type` would put a fabricated number where the
+ * matcher expects a calibrated value.
  */
 export function parseGoogleGeocodeResult(result: GoogleGeocodeResult): OracleGeocodeResult<GoogleGeocodeResult> {
 	const components = buildGoogleComponents(result)

@@ -8,7 +8,7 @@ tags:
 
 # Input robustness — absorbing the mess users type
 
-Addresses in a test fixture are clean, and the addresses a geocoder receives are often messy. They arrive in all caps from a compliance export, with commas squeezed together from a spreadsheet paste, missing a letter from fast typing, or with `Ave` where the fixture said `Avenue`. A parser that works only on clean input is not usable in production.
+Addresses in a test fixture are clean. Geocoder inputs can contain all caps from a compliance export, squeezed commas from a spreadsheet paste, a missing letter from fast typing, or `Ave` where the fixture said `Avenue`. A parser that works only on clean input is not usable in production.
 
 The useful test is whether `1600 PENNSYLVANIA AVE NW,WASHINGTON DC` resolves to the same rooftop as `1600 Pennsylvania Avenue NW, Washington, DC 20500`. This page describes how Mailwoman handles that input. Three layers remove surface noise before it can move the coordinate, and three checks verify each layer.
 

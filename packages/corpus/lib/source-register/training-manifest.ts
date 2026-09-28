@@ -32,7 +32,7 @@ export interface TrainingSourceRecord {
 	license: string
 	/**
 	 * The register's decision for that license when the build ran, or `null`
-	 * when the register named no decision for it.
+	 * when the register contains no decision for it.
 	 */
 	decision: {
 		licenseID: string

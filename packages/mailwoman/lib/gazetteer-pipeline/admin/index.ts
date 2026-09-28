@@ -115,8 +115,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 		await removePath(ingestPath)
 	}
 
-	// Checked before the WOF ingest rather than at `fold-overture`: a pruned pin is a one-request question,
-	// and discovering it after 2.9M records reads as a network fault rather than an expired pin.
+	// Check before the WOF ingest rather than at `fold-overture`.
+	// A pruned pin is a one-request question.
+	// Discovering it after 2.9M records would look like a network fault rather than an expired pin.
 	const releaseCheck = await checkOvertureRelease(overtureRelease)
 
 	phase("preflight", releaseCheck.message)
@@ -152,8 +153,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
 			// GeoNames-anchored label-point adjudication.
-			// Reads the same per-country extracts fold-geonames consumes, and a data root
-			// without them degrades to the plain label preference.
+			// Reads the same per-country extracts that fold-geonames consumes.
+			// A data root without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, total) =>
 				phase(
@@ -259,7 +260,7 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	phase("seal")
 	await sealDatabase(out)
 
-	// Build log — an auto-appended record of what ran, when, and its fingerprint,
+	// Build log — an auto-appended record of what ran, when and its fingerprint.
 	// so the manifest cannot lag the artifact.
 	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")

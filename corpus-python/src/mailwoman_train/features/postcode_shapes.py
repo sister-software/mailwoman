@@ -11,8 +11,8 @@ container receives only ``corpus-python/src`` and cannot read the repository's p
 copy, because ``test_postcode_shapes`` fails on any byte of difference.
 
 WHAT THIS SIDE READS. Every row except those the record marks ``javascriptOnly``. There is one: the
-〒-marked Japanese row, whose ``(?<=〒\\s?)`` is a variable-width lookbehind — legal in JavaScript,
-refused by Python's ``re``. The record says so in the row itself, so the omission is a stated
+〒-marked Japanese row. Its ``(?<=〒\\s?)`` pattern is a variable-width lookbehind, legal in
+JavaScript but refused by Python's ``re``. The record states this limitation in the row itself, so the omission is a stated
 constraint rather than a gap somebody has to rediscover. The tests assert both that the row is
 skipped and that every row the record does not mark compiles here.
 """
@@ -48,7 +48,7 @@ UNREADABLE_HERE: dict[str, str] = {
 }
 
 #: The shapes this side paints, compiled. Priority is the INDEX, so the order of the record is part
-#: of the interface: a lower index wins an overlap, and dropping a row must not reorder the rest.
+#: of the interface: a lower index wins an overlap. Dropping a row must not reorder the rest.
 POSTCODE_PATTERNS: list[tuple[str, str, re.Pattern[str]]] = [
     (label, kind, re.compile(pattern)) for label, kind, pattern in ALL_POSTCODE_SHAPES if label not in UNREADABLE_HERE
 ]

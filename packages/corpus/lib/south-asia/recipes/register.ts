@@ -10,7 +10,7 @@
  *
  *   - the house line, `House 4, Street 25, F-7/2, Islamabad` and `House 34, Road 4, Sector 9, Uttara,
  *     Dhaka 1230`, with `House` in front of the number (untagged, the same rule as Singapore's `Blk`),
- *     the numbered street, the scheme or sector as the dependent locality, and the city
+ *     the numbered street, the scheme or sector as dependent locality, then the city
  *   - the plain line with the trailing postcode and no dash, `58 Kalabagan 1st Ln, Dhaka 1205`, which
  *     is what a person types where the template writes `Dhaka - 1205`
  *
@@ -20,7 +20,7 @@
  *   row's own. The components are the `osm` adapter's mapping (`componentsForOSMRow`), so the two
  *   surfaces cannot disagree about what a field means.
  *
- *   ODbL: the rows inherit OpenStreetMap's share-alike license, and a corpus build run under
+ *   ODbL: the rows inherit OpenStreetMap's share-alike license. A corpus build run under
  *   `LicensePolicy.ShareAlikeFree` refuses them.
  *
  *   Run: mailwoman corpus slice pk-register --input <osm-pk.corpus.jsonl> --count N --seed S
@@ -36,8 +36,9 @@ import { SourceRegister } from "#registers"
 import { type CanonicalRow, SurfaceOrigin } from "#types"
 
 /**
- * Islamabad's residential sectors: the lettered rows E to I, the numbered columns the
- * Capital Development Authority has developed, and the four sub-sectors each splits into.
+ * Islamabad's residential sectors: the lettered rows E to I and the numbered columns
+ * developed by the Capital Development Authority.
+ * Each column splits into four sub-sectors.
  */
 const ISLAMABAD_SECTOR_ROWS = ["E", "F", "G", "I"] as const
 const ISLAMABAD_SECTOR_COLUMNS = [6, 7, 8, 9, 10, 11] as const

@@ -5,8 +5,8 @@
  *
  *   Downloads one vintage of a published file geodatabase and unzips it into a `.gdb` directory for GDAL.
  *
- *   The publishers put the geodatabase files at the archive root, and GDAL recognizes a file geodatabase by its
- *   `.gdb` directory suffix. The archive is therefore extracted into a named `.gdb` directory.
+ *   The publishers put the geodatabase files at the archive root. GDAL recognizes a file geodatabase by its
+ *   `.gdb` directory suffix, so the archive is extracted into a directory with that suffix.
  *
  *   The cache is keyed on the catalogue's revision date. The hosts reject `HEAD` requests and ignore `Range`, so
  *   checking the remote size would download the whole file. Each vintage gets its own directory.
@@ -30,7 +30,8 @@ export interface DownloadZippedGeodatabaseOptions {
 	 */
 	url: string
 	/**
-	 * The product's ISO revision date, which keys the cache.
+	 * The product's ISO revision date.
+	 * It keys the cache.
 	 */
 	revisionDate: string
 	/**

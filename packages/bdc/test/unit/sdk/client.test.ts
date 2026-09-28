@@ -45,11 +45,12 @@ vi.mock("@mailwoman/bdc/env", async (importOriginal) => {
 	}
 })
 
-// The root vitest config runs `isolate: false`, so `./client.ts` may already sit in the
-// worker's cache, evaluated without this file's `@mailwoman/bdc/env` mock by an earlier file
-// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork never inherits our mocked env module.
+// The root vitest config runs `isolate: false`, so `./client.ts` may already sit in the worker's cache.
+// An earlier file may have loaded it without this file's env mock.
+// Cached modules do not re-evaluate.
+// `vi.mock` factories run only during evaluation.
+// Reset before importing so the chain uses this mock.
+// Reset again after this file so the next file in the worker does not inherit the mocked env module.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -74,9 +75,11 @@ const API_KEY = "s3cr3t"
 const DEFAULT_INTERVAL_MS = 6000
 
 /**
- * BDC answers with a `{ data: … }` envelope, and the client refuses to cache a
- * 200 whose body is not one, so the stub's default body must be a valid envelope
- * or every cache assertion would exercise the self-heal path instead.
+ * BDC answers with a `{ data: … }` envelope.
+ *
+ * The client refuses to cache a 200 whose body is not one.
+ * The stub's default body must be a valid envelope or every cache assertion
+ * would exercise the self-heal path instead.
  */
 const BDC_EMPTY_ENVELOPE = { data: [] }
 
@@ -104,7 +107,7 @@ afterEach(() => {
 
 /**
  * A client with every timing dependency pinned: an immediately-resolving clock,
- * an isolated cache directory, and the stub transport as its only route to "the network".
+ * an isolated cache directory and the stub transport as its only route to "the network".
  */
 function clientFor(transport: StubTransport, overrides: Parameters<typeof createBDCClient>[0] = {}) {
 	return createBDCClient({
@@ -222,9 +225,10 @@ describe("createBDCClient: the 10 requests/minute throttle", () => {
 	})
 
 	it("never lets more than the configured budget arrive inside any sliding minute", async () => {
-		// Arrivals are timestamped inside the adapter, because `clock.sleepCalls`
-		// records the grant schedule, which differs from what a rate limiter sees,
-		// and asserting it lets a burst hide behind correctly spaced sleeps.
+		// Arrivals are timestamped inside the adapter.
+		// `clock.sleepCalls` records the grant schedule.
+		// The rate limiter sees request arrivals.
+		// Asserting only sleep calls would let a burst hide behind correctly spaced grants.
 		// `runUntilSettled` is required because the throttle sits downstream of the on-disk
 		// cache lookup, so each request spends real event-loop turns in `readFile` first.
 		const FAN_OUT = 12
@@ -314,8 +318,9 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	it("counts a per-minute budget cooldown once the budget is spent", async () => {
-		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit, and this
-		// is what proves it is wired, since the interval limit alone produces identical arrival spacing.
+		// The budget limit (`requestsPerMinute`) is declared alongside the interval limit.
+		// This assertion proves the budget limit is wired.
+		// The interval alone produces identical arrival spacing.
 		const BUDGET = 2
 
 		const clock = new VirtualClock()
@@ -328,9 +333,11 @@ describe("createBDCClient: the throttle meter", () => {
 	})
 
 	/**
-	 * The composed steady state of both limits at the shipped defaults: `APIClient` measures
-	 * the cooldown to the end of the minute the window opened in, and after nine 6 s
-	 * intervals only 54 s of that minute is spent, so the budget costs a real 6 s wait.
+	 * The composed steady state of both limits at the shipped defaults: `APIClient`
+	 * measures the cooldown to the end of the minute when the window opened.
+	 *
+	 * Nine 6 s intervals use 54 s of that minute.
+	 * The budget therefore costs a 6 s wait.
 	 */
 	it("both checks composed: 10 requests per 66s, with a real 6s budget cooldown between windows", async () => {
 		const WINDOWS = 2
@@ -342,20 +349,23 @@ describe("createBDCClient: the throttle meter", () => {
 
 		await clock.runUntilSettled(Promise.all(Array.from({ length: FAN_OUT }, (_, i) => client.get(`/map/steady/${i}`))))
 
-		// 0, 6, …, 54 — then a 6 s cooldown, and the pacer discards its stale grant across it
-		// (APIClient re-acquires rather than holding one, under-issuing by one, the safe direction),
-		// so the next window opens at 66 s rather than 60 s.
+		// Grants arrive at 0, 6, …, 54 seconds, followed by a 6 s cooldown.
+		// The pacer discards its stale grant across the cooldown.
+		// APIClient reacquires the grant.
+		// That safely under-issues by one.
+		// The next window opens at 66 s rather than 60 s.
 		expect(transport.dispatchTimes).toEqual([
 			0, 6000, 12_000, 18_000, 24_000, 30_000, 36_000, 42_000, 48_000, 54_000, 66_000, 72_000, 78_000, 84_000, 90_000,
 			96_000, 102_000, 108_000, 114_000, 120_000, 132_000,
 		])
 
-		// One cooldown per budget's worth of requests, and it is a wait
-		// rather than a zero-length rollover marker.
+		// Each budget's worth of requests triggers one cooldown.
+		// The cooldown has positive duration.
 		expect(client.throttleStats().cooldowns).toBe(WINDOWS)
 
-		// The composed rate lands below the published limit — conservative, which is why
-		// the two limits are left composed rather than dropping the budget.
+		// The composed rate stays below the published limit.
+		// The margin is conservative.
+		// Both limits remain active so the minute budget still constrains arrivals.
 		expect(maxCountInSlidingWindow(transport.dispatchTimes, 60_000)).toBeLessThanOrEqual(
 			BDC_DEFAULT_REQUESTS_PER_MINUTE
 		)
@@ -443,8 +453,9 @@ describe("createBDCClient: the on-disk response cache", () => {
 	})
 
 	it("refuses to cache a 200 whose body is not a BDC `{ data: … }` envelope, and self-heals", async () => {
-		// Validate before writing: an upstream serving an error page under a 200 would otherwise
-		// be handed to the next run, whose caller destructures `.data` into `undefined`.
+		// Validate before writing.
+		// Otherwise, the next run could receive an upstream error page with status 200.
+		// Its caller would destructure `.data` into `undefined`.
 		const bad = bdcTransport([{ body: { error: "nope" } }])
 
 		expect(await clientFor(bad).get("/map/not-an-envelope")).toEqual({ error: "nope" })
@@ -491,8 +502,8 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("never reaches the cache layer at all, and re-fetches on a second call", async () => {
-		// A multi-hundred-megabyte zip through a JSON-validating disk cache cannot be read back,
-		// and `downloadBDCFile` already writes the extracted CSV itself.
+		// A JSON-validating disk cache cannot read back a multi-hundred-megabyte zip.
+		// `downloadBDCFile` writes the extracted CSV itself.
 		//
 		// An empty cache directory alone would not prove this: the storage layer's own `validate`
 		// check rejects a zip too, so the assertion would pass with `cache: false` deleted.
@@ -525,11 +536,11 @@ describe("createBDCClient: the binary download path", () => {
 	})
 
 	it("copies out of a POOLED buffer rather than handing over its neighbours' bytes", async () => {
-		// Node pools small `Buffer.allocUnsafe` allocations, so a short body arrives
-		// as a view at a non-zero `byteOffset` into a shared 8 KiB backing store,
-		// and returning `.buffer` directly there would hand the caller the whole pool.
-		// The zero-copy branch is only correct for the exactly-sized allocation `Buffer.concat` makes
-		// past the pool threshold, which is what a real multi-hundred-megabyte download produces.
+		// Node pools small `Buffer.allocUnsafe` allocations.
+		// A short body arrives as a view at a non-zero `byteOffset` into a shared 8 KiB backing store.
+		// Returning `.buffer` directly would hand the caller the whole pool.
+		// `Buffer.concat` makes an exactly-sized allocation past the pool threshold.
+		// A real multi-hundred-megabyte download uses that allocation, so the zero-copy branch is correct.
 		const pool = Buffer.alloc(64, 0xaa)
 		const view = pool.subarray(8, 12)
 
@@ -775,8 +786,10 @@ describe("the SDK callers, over the migrated client", () => {
 })
 
 /**
- * ZIP local-file-header, central-directory and end-of-central-directory signatures, and the fixed
- * byte lengths of the two headers this builder emits (30 and 46, per appnote 4.3.7/4.3.12).
+ * ZIP local-file-header, central-directory and end-of-central-directory signatures.
+ *
+ * It also records the fixed byte lengths of the two headers this builder emits
+ * (30 and 46, per appnote 4.3.7/4.3.12).
  */
 const ZIP_LOCAL_SIGNATURE = 0x04_03_4b_50
 const ZIP_CENTRAL_SIGNATURE = 0x02_01_4b_50
@@ -791,8 +804,8 @@ const ZIP_VERSION = 20
  * availability download has, minus the deflate.
  *
  * Hand-assembled rather than pulled from a fixture file or a new dependency:
- * `yauzl-promise` (the extractor under test) reads zips and does not write them,
- * and a committed binary fixture would be unreadable in review.
+ * `yauzl-promise` (the extractor under test) reads zips but does not write them.
+ * A committed binary fixture would be unreadable in review.
  */
 function storedZip(filename: string, contents: string): Buffer {
 	const name = Buffer.from(filename, "utf8")

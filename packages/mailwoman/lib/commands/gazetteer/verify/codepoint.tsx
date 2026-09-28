@@ -5,9 +5,9 @@
  *
  *   `mailwoman gazetteer verify-codepoint` — `promotion-eval.ts` for the Code-Point Open GB
  *   database. Compares it against the incumbent GeoNames `GB_full` rows on row membership, coordinate
- *   agreement, Northern Ireland coverage, and ten hand-checked landmark probes.
+ *   agreement, Northern Ireland coverage and ten hand-checked landmark probes.
  *
- *   Reports. does not decide. Both databases are opened read-only.
+ *   Reports results without deciding them. Both databases are opened read-only.
  */
 
 import { prettyJSON } from "@mailwoman/core/json"

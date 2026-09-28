@@ -9,11 +9,11 @@
  *
  *   - `active`: may sign and verify.
  *   - `retired`: may no longer sign. tokens it signed still verify offline until they expire.
- *   - `revoked`: compromised. online status refuses its tokens at once, and the trust map this module derives leaves
- *     it out, so the next release stops trusting it offline.
+ *   - `revoked`: compromised. Online status refuses its tokens at once. The derived trust map omits the key, so the
+ *     next release stops trusting it offline.
  *
- *   `mailwoman license register --write` regenerates the well-known file from this module, and the `license-register`
- *   health check refuses a tree where the two differ.
+ *   `mailwoman license register --write` regenerates the well-known file from this module. The `license-register`
+ *   health check reports a mismatch between the register and the generated file.
  */
 
 /**
@@ -30,7 +30,8 @@ export type LicenseKeyStatus = (typeof LicenseKeyStatus)[keyof typeof LicenseKey
 
 export interface LicenseSigningKey {
 	/**
-	 * `licenseKeyID(publicKeyPEM, majorVersions[0])`; the register test holds every entry to that.
+	 * `licenseKeyID(publicKeyPEM, majorVersions[0])`.
+	 * The register test checks that value for every entry.
 	 */
 	kid: string
 	publicKeyPEM: string
@@ -45,7 +46,8 @@ export interface LicenseSigningKey {
  * Every signing key ever registered, with its current status.
  *
  * `mailwoman license keygen` prints the entry to add.
- * A key leaves this list never, and changes status instead.
+ * Keys remain in this list for their full history.
+ * Their status records later changes.
  */
 export const LICENSE_SIGNING_KEYS: readonly LicenseSigningKey[] = [
 	{

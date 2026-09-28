@@ -64,9 +64,9 @@ describe("RequestPacer", () => {
 		expect(grantTimes).toEqual([10_000, 10_100, 10_200, 10_300, 10_400])
 	})
 
-	// `VirtualClock` (not the simpler `createFakeClock`) is required: the property under
-	// test is how concurrent waiters interleave when woken, and a clock that resolves every
-	// same-deadline sleeper at once cannot tell a fixed pacer from a broken one.
+	// `VirtualClock` is required because the test checks how concurrent waiters interleave when woken.
+	// `createFakeClock` resolves every same-deadline sleeper at once cannot tell
+	// a fixed pacer from a broken one.
 	it("paces N concurrent acquire() calls strictly one interval apart — no cohort ever shares an instant", async () => {
 		const INTERVAL_MS = 100
 		const TOTAL_CALLS = 40

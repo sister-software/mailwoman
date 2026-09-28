@@ -153,11 +153,12 @@ export const ServedBundlesTable: React.FC = () => {
 
 /**
  * The rights table on `/license`: who published each bundle's rows, the SPDX expression
- * this repository records for it, and the terms as the publisher names them.
+ * this repository records for it, along with the terms each publisher uses.
  *
  * The page carried these three columns as hand-typed markdown.
- * The registry is the one place a publisher or an expression is recorded,
- * and `mailwoman data bom` serializes the same record per artifact.
+ * The registry is the source for each publisher and license expression.
+ *
+ * `mailwoman data bom` serializes that record for each artifact.
  */
 export const BundleRightsTable: React.FC = () => {
 	const data = useRuntimeAssets()
@@ -191,7 +192,7 @@ export const BundleRightsTable: React.FC = () => {
 }
 
 /**
- * What each bundle obliges an operator to do, and what nobody has established about it.
+ * The obligations each bundle places on an operator and any obligation without an assessment.
  *
  * `mailwoman data pull` prints the same two lists before any bytes move.
  */

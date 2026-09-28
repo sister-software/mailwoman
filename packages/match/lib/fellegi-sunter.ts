@@ -5,9 +5,9 @@
  *
  *   The Fellegi-Sunter scorer — the matcher's decision layer.
  *
- *   Each field comparison lands a record pair in a discrete _agreement level_ (exact / high / low /
- *   different / missing). Each level carries two probabilities: `m` = P(this level | the pair
- *   really matches) and `u` = P(this level | it doesn't). Their ratio is a Bayes factor, and its
+ *   Each field comparison assigns a record pair to an _agreement level_: exact, high, low, different, or missing.
+ *   Each level carries two probabilities. `m` is P(this level | the pair really matches).
+ *   `u` is P(this level | the pair does not match). Their ratio is a Bayes factor. Its
  *   log is the level's contribution to the total match weight in bits:
  *
  *   ```
@@ -16,13 +16,12 @@
  *
  *   — a prior (how likely any two random records match) plus an additive, per-field-attributable
  *   stack of evidence. Convert `M` to a probability and threshold it: above the upper bound is a
- *   link, below the lower bound a non-link, and the band between is _clerical review_ — the
- *   calibrated abstain zone the whole design leans on.
+ *   link. Below the lower bound, it is a non-link. The band between them is _clerical review_, the calibrated abstain zone.
  *
  *   The `m`/`u` numbers here are not universal constants. They are estimated from the data — by EM,
  *   unsupervised (the next increment) — and the term-frequency adjustment that makes a rare-name
  *   agreement count more than a common one layers on top. This module is the deterministic core
- *   those build on: given the levels, it produces the weights, the probability, and the decision.
+ *   those build on. Given the levels, it produces the weights and probability. It also produces the decision.
  */
 
 import { nameSimilarity } from "#comparators"
@@ -219,7 +218,8 @@ export function similarityComparison<R>(config: {
 }
 
 /**
- * Score a record pair: total match weight, probability, and the per-field contributions.
+ * Scores a record pair and returns its total match weight and probability.
+ * The result also includes per-field contributions.
  */
 export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScore {
 	let weight = priorWeight(model.lambda)
@@ -260,8 +260,10 @@ export function scorePair<R>(model: FellegiSunterModel<R>, a: R, b: R): PairScor
 }
 
 /**
- * Classify a score against upper / lower match-weight thresholds (in bits): at or above `upper`
- * is a link, at or below `lower` a non-link, and the band between is clerical review (abstain).
+ * Classify a score against upper / lower match-weight thresholds (in bits): at or above `upper` is a link.
+ *
+ * A score at or below `lower` is a non-link.
+ * The band between them means clerical review (abstain).
  */
 export function decide(score: PairScore, thresholds: { upper: number; lower: number }): MatchDecision {
 	if (score.weight >= thresholds.upper) return "match"

@@ -12,8 +12,9 @@ import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoma
 /**
  * How many of a hole's vertices are tested against a candidate exterior.
  *
- * One vertex is not enough: holes share vertices with their exterior,
- * and a ray cast on an edge is implementation-defined.
+ * A hole and its exterior share vertices.
+ * One vertex cannot distinguish them.
+ * A ray cast on an edge is implementation-defined.
  */
 const HOLE_VERTEX_SAMPLES = 9
 
@@ -41,8 +42,9 @@ export interface ResolvedRingRoles {
 	/**
 	 * `1` where the feature's exterior was chosen by magnitude because no ring read as one by orientation.
 	 *
-	 * The largest ring becomes the exterior, which is also correct for a feature published
-	 * wholly inverted, and the count rides on the receipt rather than being implied to be zero.
+	 * The largest ring becomes the exterior.
+	 * This also handles a feature published wholly inverted.
+	 * The receipt reports the count explicitly.
 	 */
 	exteriorByMagnitude: number
 	/**
@@ -93,7 +95,7 @@ function containsMajority(ring: ReadonlyArray<readonly number[]>, outer: Readonl
 /**
  * Resolve one feature's hole roles from ring orientation.
  *
- * @param featureID Named in every refusal, so a build log says which feature failed.
+ * @param featureID Included in every refusal, so a build log says which feature failed.
  * @throws {Error} When the feature carries no ring at all, the one case with no reading.
  */
 export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string): ResolvedRingRoles {
@@ -118,8 +120,10 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 
 		signedAreaM2 += signed
 
-		// `ringSignedAreaM2` signs clockwise positive, which is exterior under this service. a
-		// zero-area ring is degenerate and carried as a hole so it can never enclose anything.
+		// `ringSignedAreaM2` signs clockwise positive.
+		// This service treats clockwise rings as exteriors.
+		// A zero-area ring is degenerate and stays a hole.
+		// It cannot enclose anything.
 		if (signed > 0) {
 			exteriors.push({ ring, area: signed, holes: [] })
 		} else {

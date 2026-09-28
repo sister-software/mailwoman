@@ -23,7 +23,7 @@ import {
 export const CASE_FOLDING_LAW = "case-folding-invariance"
 
 /**
- * Named case transformations.
+ * Case-folding transformations.
  *
  * The `mixed` transformation title-cases each whitespace-separated token.
  */
@@ -48,7 +48,7 @@ function titleCaseToken(token: string): string {
 }
 
 /**
- * Implementation of each named transformation.
+ * Implementation of each case-folding transformation.
  * The `mixed` transformation keeps the original whitespace.
  */
 export const CASE_TRANSFORMATION_BY_NAME: Record<CaseTransformationName, (text: string) => string> = {
@@ -70,7 +70,7 @@ export function caseFoldKey(text: string): string {
 }
 
 /**
- * Returns the named transformation that maps `base` to `variant`, or `null` when none does.
+ * Returns the case-folding transformation that maps `base` to `variant`, or `null` when none does.
  */
 export function classifyCaseTransformation(base: string, variant: string): CaseTransformationName | null {
 	if (base === variant || caseFoldKey(base) !== caseFoldKey(variant)) return null
@@ -158,8 +158,8 @@ export const CASE_FOLDING_SUITE_PATH: string = resolvePackagePath(
 /**
  * Audits suite rows.
  *
- * Each row needs a `rowRef`, a `caseCountry`, and a variant that a named transformation
- * derives from the base and that applies in that country.
+ * Each row needs a `rowRef`, a `caseCountry`, and a variant that a case-folding
+ * transformation derives from the base and that applies in that country.
  */
 export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): string[] {
 	return auditCommonFixtureFields(fixtures, CASE_FOLDING_LAW, (fixture, label, problems) => {
@@ -201,7 +201,7 @@ export function auditCaseFoldingSuite(fixtures: readonly ConformanceFixture[]): 
 }
 
 /**
- * Returns the fixture's transformation name, or `?` when no named transformation fits.
+ * Returns the fixture's transformation label, or `?` when no case-folding transformation fits.
  */
 export function describeCaseTransformation(fixture: ConformanceFixture): string {
 	return classifyCaseTransformation(fixture.base, fixture.variant) ?? "?"

@@ -7,8 +7,9 @@
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The width of the gazetteer candidate-tag channel, which must match the lexicon's
- * `feature_dim` and the model's `gazetteer_feature_dim`.
+ * The width of the gazetteer candidate-tag channel.
+ *
+ * It must match the lexicon's `feature_dim` and the model's `gazetteer_feature_dim`.
  */
 export const GAZETTEER_FEATURE_DIM = 5
 

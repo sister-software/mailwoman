@@ -5,16 +5,16 @@
  *
  *   Reports whether the GB postcode-anchor binary fires on the gb-golden board and by which route,
  *   replaying the `collectMatches` shaped recognizer that `parse` uses. Each register is reported
- *   separately, and three failure modes are kept apart: no shaped span, a span whose key the lookup
- *   does not carry, and a hit through the GB outward fallback.
+ *   separately. It reports three failure modes: no shaped span, a span whose key the lookup
+ *   does not carry. The third is a hit through the GB outward fallback.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/probe/gb-anchor-fire.run.ts --bin <postcode-gb.bin>
  */
 
-// `@mailwoman/neural` exports no `./postcode-repair` subpath, and `collectMatches` is
-// the exact span source `buildAnchorFeatures`'s shaped mode reads.
-// `normalizeInputCase` is what the text has been through by the time the anchor sees it,
-// and `parse` applies it by default.
+// `@mailwoman/neural` exports no `./postcode-repair` subpath.
+// `collectMatches` is the exact span source `buildAnchorFeatures`'s shaped mode reads.
+// `normalizeInputCase` transforms the text before the anchor sees it.
+// `parse` applies this transformation by default.
 // These must not drift from `parse`, so this repo-local diagnostic imports the same modules.
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
 import { stringifyJSON } from "@mailwoman/core/json"

@@ -57,7 +57,7 @@ export function foldedPlacetype(subtype: string, country: string): string {
 const OVERTURE_ID_SPAN = 1_000_000_000_000
 
 /**
- * Bracket, pipe, and delimiter characters that mark an editorial aside in a name field.
+ * Bracket, pipe and delimiter characters that mark an editorial aside in a name field.
  */
 const NAME_NOISE = /[()[\]{}<>|/\\_@#$%^*+=~`"]/u
 
@@ -184,8 +184,8 @@ function compileInsert(
  * Prepares the bulk-write statements against an open unified database.
  *
  * It is exported so a test can run the statements against a real `createUnifiedSchema` database.
- * The `satisfies` checks compare the columns with the `WOFDatabase` interface only,
- * and the DDL can drift from that interface.
+ * The `satisfies` checks compare the columns with the `WOFDatabase` interface only.
+ * The DDL can drift from that interface.
  */
 export function prepareInserts(db: DatabaseClient<WOFDatabase>): {
 	spr: StatementSync
@@ -324,10 +324,11 @@ export async function ingestOvertureDivisions(
 		namesInsert.run(nid, name, placetype, country, "", 0, 0)
 
 		// `names.common` maps a language to that language's standard name.
-		// Each one becomes an alias, and an alias is official when its language is
-		// an official language of the country.
+		// Each one becomes an alias.
+		// An alias is official when its language is an official language of the country.
 		if (r.common_json) {
-			// A malformed map parses to null, and the row keeps only its primary name.
+			// A malformed map parses to null.
+			// The row keeps only its primary name.
 			const common = tryParsingJSON<Record<string, string>>(String(r.common_json))
 
 			if (common) {

@@ -5,15 +5,14 @@
  *
  *   `computeQueryShape` must stay linear in input size.
  *
- *   Every parse pays this stage before the model is touched, and its inputs (tokens, segments) both grow with
- *   input length — so any routine that pairs them is quadratic, and a 1 MB query costs minutes instead of
- *   milliseconds. `region-abbreviations.ts` is the one that has to walk both.
+ *   Every parse runs this stage before the model. Its token and segment counts both grow with input length.
+ *   A routine that pairs them is quadratic. A 1 MB query then takes minutes rather than milliseconds.
+ *   `region-abbreviations.ts` must walk both inputs.
  *
- *   No correctness test can catch that: a quadratic and a linear implementation return identical results, so
- *   only the growth curve distinguishes them. Hence a ratio assertion, and hence a ratio rather than a
- *   millisecond budget — pinning absolute time makes a timing test a CI flake, while the ratio is the thing a
- *   complexity regression actually changes. Quadratic doubles to ~4x, linear to ~2x. the 3x threshold sits
- *   clear of a loaded runner without letting the real failure through.
+ *   Correctness tests cannot distinguish quadratic and linear implementations because both return the same results.
+ *   The growth curve distinguishes them, so this test compares elapsed-time ratios instead of a millisecond budget.
+ *   Absolute timing would make the test unstable on CI. Doubling input size gives quadratic code about 4x the work
+ *   and linear code about 2x. The 3x threshold tolerates a loaded runner and catches the quadratic behavior.
  */
 
 import { computeQueryShape } from "@mailwoman/query-shape"
@@ -22,7 +21,8 @@ import { expect, test } from "vitest"
 /**
  * One "City, ST ZIP" record.
  *
- * Repeating it grows segments and tokens together, which is the pairing that made the original nested.
+ * Repeating it grows segments and tokens together.
+ * That pairing made the original algorithm quadratic.
  */
 const UNIT = "123 Main St, Springfield, IL 62701, "
 
@@ -38,8 +38,8 @@ const TIMING_SAMPLES = 5
  * Contention can only ever ADD time to a sample, never remove it, so the minimum is
  * the run least polluted by whatever else the machine was doing.
  *
- * A mean or a single sample inherits every load spike, which on a shared CI runner is
- * the difference between measuring the algorithm and measuring the neighbours.
+ * A mean or a single sample includes load spikes.
+ * On a shared CI runner, that measures neighboring work along with the algorithm.
  */
 function timeAt(input: string): number {
 	const start = performance.now()
@@ -51,8 +51,9 @@ function timeAt(input: string): number {
 
 /**
  * Sample both sizes interleaved (small, large, small, large, …) rather than
- * all-small-then-all-large: runner load and thermal state drift over the test's lifetime,
- * and a block design hands the drift entirely to one side of the ratio.
+ * all-small-then-all-large: runner load and thermal state drift during the test.
+ *
+ * A block design would apply that drift to only one side of the ratio.
  *
  * Interleaving gives both sizes an equal draw from every load regime, so the two minimums are comparable.
  */

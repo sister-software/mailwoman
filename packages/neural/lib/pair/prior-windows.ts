@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Candidate-window construction for the placetype-pair prior: which token runs may stand as a child/parent pair,
- *   how segment boundaries and postcode shapes clip them, and the word-shape guards that keep a house number or a
+ * @file Candidate-window construction for the placetype-pair prior. It defines which token runs may stand as a child/parent pair,
+ *   how segment boundaries and postcode shapes clip them, plus word-shape guards that keep a house number or a
  *   title preposition from opening a window. Split from `placetype-pair-prior.ts`, which owns the probing and the
  *   bias writes over the windows this module builds.
  */
@@ -58,8 +58,8 @@ export function looksLikeHouseNumber(token: string): boolean {
  * one of these withholds the transition adjustment for that hit while the emission bias stays as-is.
  *
  * An immediately preceding "at" or "of" marks a lexicalized venue title whose embedded
- * place name belongs to the venue's own name rather than an address field, and address
- * syntax introduces dependent localities positionally rather than prepositionally.
+ * place name belongs to the venue's own name rather than an address field.
+ * Address syntax introduces dependent localities positionally rather than prepositionally.
  *
  * Interior place-name prepositions ("Barrow upon Soar", "Knott End on Sea") are unaffected.
  * List growth requires a per-word rationale line.
@@ -218,9 +218,10 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
 /**
  * Drop a trailing postcode-shaped run from a segment's fold tokens before it becomes a parent-candidate key.
  *
- * The guards: only a trailing run, the longest suffix of at most {@link MAX_TRAILING_POSTCODE_WORDS} tokens
- * whose bare concatenation full-matches `shape` (longest-first so a two-token GB postcode strips whole),
- * never the entire segment, and only when `shape` is defined.
+ * The guards: only a trailing run, the longest suffix of at most
+ * {@link MAX_TRAILING_POSTCODE_WORDS} tokens whose bare concatenation full-matches `shape`
+ * (longest-first so a two-token GB postcode strips whole), never the entire segment.
+ * It strips a run only when `shape` is defined.
  */
 export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
 	if (shape === undefined || tokens.length < 2) return 0
@@ -239,7 +240,8 @@ export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: Re
  * {@link trailingSegmentPostcodeTake} for countries that write the postcode before the locality.
  *
  * The anchored full-match against the country shape means only a postcode for that country is removed.
- * Only the probe key changes, and the segment itself and every emitted span are untouched.
+ * Only the probe key changes.
+ * The segment and every emitted span stay unchanged.
  */
 export function leadingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
 	if (shape === undefined || tokens.length < 2) return 0
@@ -306,15 +308,17 @@ export function buildSegmentWindows(
 }
 
 /**
- * Whether two windows' word-group position ranges do not overlap, which also excludes a window from itself.
+ * Whether two windows' word-group position ranges do not overlap.
+ * This also excludes a window from itself.
  */
 export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
 	return a.endPos < b.startPos || b.endPos < a.startPos
 }
 
 /**
- * Whether two candidates fold to an identical key under any of their fold forms,
- * which is the identity test behind the repeated-name convention.
+ * Whether two candidates fold to an identical key under any of their fold forms.
+ *
+ * This is the identity test behind the repeated-name convention.
  *
  * Two different places collide here only when their folds collide,
  * since the same name text folds the same way.

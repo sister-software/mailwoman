@@ -923,7 +923,7 @@ function initializedExpression(node: AstNode | null | undefined): AstNode | null
 /**
  * The synchronously-disposed name an initializer resolves to, or null for any other expression.
  *
- * `locals` holds the same-file helpers whose return type named one.
+ * `locals` holds same-file helpers whose return type is a single identifier.
  */
 function syncDisposableSource(node: AstNode, locals: ReadonlySet<string>): string | null {
 	if (node.type === "NewExpression") {

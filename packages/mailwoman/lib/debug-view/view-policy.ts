@@ -61,7 +61,7 @@ export function assertDebugFormatSanity(options: GeocodeCommandOptions): void {
 /**
  * Sets the smallest frame that renders a usable map pane.
  *
- * A smaller frame makes `mapPaneCellSize` return a non-positive row count, which crashes map-tui.
+ * A smaller frame makes `mapPaneCellSize` return a non-positive row count. map-tui crashes on that value.
  * The row floor is `DebugFrame`'s fixed chrome plus six map rows.
  * If the chrome grows, `MIN_DEBUG_ROWS` must grow with it.
  */

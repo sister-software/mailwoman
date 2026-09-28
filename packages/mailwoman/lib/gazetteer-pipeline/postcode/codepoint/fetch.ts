@@ -14,7 +14,8 @@ import { prettyJSON } from "@mailwoman/core/json"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 /**
- * The root of the OS Downloads API, which serves OpenData products without authentication.
+ * The root of the OS Downloads API.
+ * It serves OpenData products without authentication.
  */
 export const OS_DOWNLOADS_API_BASE = "https://api.os.uk/downloads/v1"
 
@@ -61,7 +62,8 @@ export interface CodePointDownload {
 	size: number
 
 	/**
-	 * The download URL, which redirects to a CDN object.
+	 * The download URL.
+	 * It redirects to a CDN object.
 	 */
 	url: string
 
@@ -96,8 +98,9 @@ export interface CodePointProduct {
 }
 
 /**
- * A note stating that Code-Point Open covers England, Scotland, and Wales only,
- * a licensing gap that reports must state rather than fill from another source.
+ * Record that Code-Point Open covers England, Scotland and Wales only.
+ *
+ * Reports must state this licensing gap instead of filling it from another source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -139,7 +142,8 @@ export function createOSDownloadsClient(): APIClient {
 }
 
 /**
- * Fetches the Code-Point Open product record, which carries the release `version`.
+ * Fetches the Code-Point Open product record.
+ * It carries the release `version`.
  */
 export async function fetchCodePointProduct(client: APIClient = createOSDownloadsClient()): Promise<CodePointProduct> {
 	const { data } = await client.fetch<CodePointProduct>({ url: `/products/${CODEPOINT_PRODUCT_ID}`, method: "GET" })
@@ -166,8 +170,10 @@ export async function fetchCodePointDownloads(
  */
 export interface DownloadCodePointOptions {
 	/**
-	 * The directory for the archive, its `.md5` sidecar, and `acquisition.json`; a later
-	 * download into the same directory overwrites them, so use a new directory per acquisition.
+	 * The directory for an archive plus its `.md5` sidecar and `acquisition.json`.
+	 *
+	 * Keep acquisitions in separate directories.
+	 * A later download overwrites files in its directory.
 	 */
 	destDir: PathBuilderLike
 
@@ -201,7 +207,8 @@ export interface DownloadCodePointResult {
 	bytes: number
 
 	/**
-	 * The MD5 of the archive on disk, which matches {@link CodePointDownload.md5}.
+	 * The MD5 of the archive on disk.
+	 * It matches {@link CodePointDownload.md5}.
 	 */
 	md5: string
 
@@ -222,9 +229,10 @@ export interface DownloadCodePointResult {
 }
 
 /**
- * Downloads a Code-Point Open archive into `destDir`, verifies its MD5 against the
- * Downloads API record, and writes an `.md5` sidecar and `acquisition.json` provenance
- * file beside it, which a reused archive does not rewrite.
+ * Downloads a Code-Point Open archive into `destDir` and verifies its MD5 against the Downloads API record.
+ *
+ * It writes an `.md5` sidecar and `acquisition.json` provenance file beside the archive.
+ * Reusing an archive leaves those files unchanged.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options

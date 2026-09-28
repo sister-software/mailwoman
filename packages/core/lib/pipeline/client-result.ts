@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The parse result as a client renders it: what the browser runtime produces after classify + resolve, and what
- *   `@mailwoman/react` takes as input. One definition, because a producer and a renderer that each write the shape
- *   agree only by accident. Every field a stage may leave unset is optional here. a renderer that needs a value it
- *   cannot see shows absence, never a default.
+ *   The parse result as a client renders it. The browser runtime produces it after classify + resolve.
+ *   `@mailwoman/react` takes it as input. One definition prevents the producer and renderer from
+ *   drifting apart. Every field a stage may leave unset is optional here. A renderer that needs a value it
+ *   cannot see shows absence rather than a default.
  */
 
 export interface ParsedComponent {

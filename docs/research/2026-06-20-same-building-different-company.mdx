@@ -44,7 +44,7 @@ Normalization therefore runs first. `canonicalizeOrganizationName` strips legal-
 
 ## You don't have labels, and that's fine
 
-Most ML-based matchers also assume you have training data. Zingg asks you to label thirty to fifty pairs to start, dedupe runs an active-learning loop built on labeling, and Tamr expects ongoing human curation. Many users have only a set of CSVs and a deadline.
+Most ML-based matchers also assume you have training data. Zingg asks you to label thirty to fifty pairs to start, dedupe runs an active-learning loop built on labeling, and Tamr expects ongoing human curation. The input may consist of CSV files and a deadline, without labeled pairs.
 
 Mailwoman's scorer estimates its parameters from the data without labels, using expectation-maximization. Splink uses the same label-free Fellegi-Sunter method, and it runs at a scale we have not matched. The difference is that Splink expects _you_ to have already geocoded the addresses, while Mailwoman covers the whole stack from raw string to resolved place to calibrated link. When you _do_ have labels, an optional gradient-boosted scorer captures non-linear interactions that the hand-built weights miss. In our held-out tests it added about six points of pairwise F1 and five of clustering F1, across every random seed we tried.
 
@@ -58,7 +58,7 @@ A result such as "F1 of 68%" is meaningless until you state _what it was measure
 
 ## Own it, and what it doesn't do
 
-It runs on your machine. It is open source, runs on your infrastructure, and has no per-record charge. The alternatives include AWS at $0.25 per thousand records (billed on non-matches as well), Senzing starting around $58k a year, and Tamr, Quantexa, and Tilores, which all require a quote. Your data stays under your control, which is often the main requirement for compliance and healthcare records.
+It runs on your machine. It is open source, runs on your infrastructure, and has no per-record charge. The alternatives include AWS at $0.25 per thousand records (billed on non-matches as well), Senzing starting around $58k a year, and Tamr, Quantexa, and Tilores, which all require a quote. This can meet data-control requirements in compliance and healthcare workflows.
 
 The claims above depend on stating these limits. Placekey _does_ implement place-identity matching. Angle four is our response, but the overlap is real. Melissa ships patented coordinate-proximity matching, so it would be false to say no one else uses coordinates. Our narrower claim is that we make the _calibrated_ coordinate the primary evidence in a probabilistic model. Splink offers the label-free baseline at much larger scale. The enterprise incumbents lead on raw volume, multi-domain mastering, support, and decades of name-matching expertise. None of them combines an open, label-free, geocode-first approach with the geocoder and the linker in one auditable stack. That combination is what distinguishes Mailwoman.
 

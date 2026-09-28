@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Render a weights package's two rights files from its {@link WeightsRightsRecord}: `LICENSE.md`, the terms this
- *   repository grants, and `PROVENANCE.json`, where the artifacts came from and what the repository does not know
- *   about them.
+ *   Render a weights package's two rights files from its {@link WeightsRightsRecord}.
+ *   `LICENSE.md` states the terms this repository grants. `PROVENANCE.json` records artifact sources and unresolved facts.
  *
- *   Neither file asserts clearance: `PROVENANCE.json` records what the model card records and marks the rest
- *   unresolved, and `LICENSE.md` states that the commercial grant does not reach third-party inputs.
+ *   Neither file asserts clearance. `PROVENANCE.json` records the model card's statements and marks other facts
+ *   unresolved. `LICENSE.md` states that the commercial grant excludes third-party inputs.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -60,8 +59,9 @@ export interface ProvenanceDocument {
 	 * What this package's own model graph emits, read from the `.onnx` file at generation time.
 	 *
 	 * `null` for a package shipping no graph of its own, such as an overlay that decodes through its base.
-	 * `text_emitting_output` answers what running the model returns, and settles no
-	 * question about a white-box extraction attack over the weights.
+	 * `text_emitting_output` answers what running the model returns.
+	 *
+	 * It settles no question about a white-box extraction attack over the weights.
 	 */
 	model_graph: {
 		format: string
@@ -141,8 +141,8 @@ const SERIES_MEANING: Readonly<Record<string, string>> = {
 /**
  * The questions this record leaves open, each phrased as the question rather than as a finding.
  *
- * A reader has to be able to tell a package with no recorded training inputs from a package trained on
- * no inputs, and an artifact with no recorded digest from an artifact whose digest was checked.
+ * A reader must distinguish a package with no recorded training inputs from one trained on no inputs.
+ * The reader must also distinguish an artifact with no recorded digest from one whose digest was checked.
  */
 function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 	const questions: string[] = []

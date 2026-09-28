@@ -251,7 +251,7 @@ async function* runSubVenueLayer(
 }
 
 /**
- * Streams every named transport structure that matches `rules` from the `points`
+ * Streams every transport structure with a name that matches `rules` from the `points`
  * and `multipolygons` layers of a `.osm.pbf` extract.
  *
  * A feature mapped as both a node and an area appears twice with different coordinates.

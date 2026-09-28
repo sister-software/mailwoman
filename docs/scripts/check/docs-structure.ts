@@ -5,7 +5,7 @@
  *
  *   Checks docs frontmatter, duplicate titles, sidebar coverage, relative links and cited repository paths.
  *
- *   `--strict` applies the six-role frontmatter rules, and the default applies the legacy rules. Accepted
+ *   `--strict` applies the six-role frontmatter rules. The default applies the legacy rules. Accepted
  *   exceptions live in `docs/scripts/docs/structure-allowlist.ts`.
  */
 

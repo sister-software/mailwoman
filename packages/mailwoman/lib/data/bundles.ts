@@ -25,9 +25,9 @@ export interface BundleArtifact {
 	remotePath: string
 
 	/**
-	 * Gives the destination relative to the data root's `db/` directory,
-	 * which {@link bundleArtifactPath} resolves. {@link resolveBundleArtifacts} rewrites
-	 * a family-tagged artifact's path to its manifest-pinned version.
+	 * Gives the destination relative to the data root's `db/` directory.
+	 * {@link bundleArtifactPath} resolves it. {@link resolveBundleArtifacts} rewrites
+	 * a family-tagged path to its manifest-pinned version.
 	 */
 	localPath: string
 
@@ -37,7 +37,8 @@ export interface BundleArtifact {
 	md5Sidecar: boolean
 
 	/**
-	 * Records the surveyed size in bytes, which plans and progress output display.
+	 * Records the surveyed size in bytes.
+	 * Plans and progress output display it.
 	 *
 	 * `data status` without `--check-remote` compares the local file size against
 	 * it exactly, so it must match the published file.
@@ -45,13 +46,14 @@ export interface BundleArtifact {
 	approxBytes: number
 
 	/**
-	 * Names the release family of a per-state US database, which selects its
-	 * pinned version in the release manifest.
+	 * Names the release family of a per-state US database.
+	 * The release manifest uses it to select the pinned version.
 	 */
 	family?: "address-points" | "interpolation"
 
 	/**
-	 * Gives the lowercase US state or territory slug, such as `ca`, which `--only` can also match.
+	 * Gives the lowercase US state or territory slug, such as `ca`.
+	 * The `--only` option can match this value.
 	 */
 	stateSlug?: string
 }
@@ -61,13 +63,15 @@ export interface BundleArtifact {
  */
 export interface BundleSourceCensus {
 	/**
-	 * Names the table whose publisher stamps are tallied, either the per-record
-	 * `address_point` or the one-row `layer_manifest`.
+	 * Names the table whose publisher stamps are tallied.
+	 *
+	 * The value is the per-record `address_point` table or the one-row `layer_manifest` table.
 	 */
 	table: "address_point" | "layer_manifest"
 
 	/**
-	 * Names the column holding the publisher stamp, where a null value tallies as `unstamped`.
+	 * Names the column holding the publisher stamp.
+	 * A null value tallies as `unstamped`.
 	 */
 	column: "source"
 
@@ -78,47 +82,55 @@ export interface BundleSourceCensus {
 	shape: "per-row" | "manifest"
 
 	/**
-	 * Selects the family to census when a bundle mixes families, so artifacts of
-	 * other families count as out of scope.
+	 * Selects the family to census when a bundle mixes families.
+	 * Artifacts from other families count as out of scope.
 	 */
 	family?: BundleArtifact["family"]
 }
 
 /**
- * Describes a bundle's licensing: who published the data, the terms it is under,
- * what users must do, and the rights questions still open.
+ * Describes a bundle's licensing.
+ *
+ * It records who published the data, its terms, user obligations and open rights questions.
  */
 export interface BundleRights {
 	publishers: readonly string[]
 
 	/**
-	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`, or, where
-	 * an artifact records none, the expression this registry assigns from the publishers' stated terms.
+	 * The SPDX expression the bundle's artifacts record in their own `layer_manifest`.
 	 *
-	 * A `LicenseRef-` names a grant nobody has resolved to an identifier, and reads as unresolved.
-	 * `mailwoman data pull --refuse` decides on this field, and prints the artifact's own
-	 * expression beside it once the artifact is on disk, so the two disagreeing is visible.
+	 * When an artifact records no expression, this registry assigns one from the publishers' stated terms.
+	 *
+	 * A `LicenseRef-` identifies a grant without a resolved identifier.
+	 * It reads as unresolved.
+	 *
+	 * `mailwoman data pull --refuse` bases its decision on this field.
+	 * Once the artifact is on disk, the command prints the artifact's own expression
+	 * beside it so readers can see a disagreement.
 	 */
 	expression: string
 
 	/**
-	 * Lists the license terms, with one entry per source where the sources differ.
+	 * Lists the license terms.
+	 * Sources with different terms receive separate entries.
 	 */
 	terms: readonly string[]
 
 	/**
-	 * Lists the obligations the operator must meet, which print as `you must:` lines.
+	 * Lists the obligations the operator must meet.
+	 * They print as `you must:` lines.
 	 */
 	conditions: readonly string[]
 
 	/**
-	 * Lists the rights questions still open, which print as `unresolved:` lines.
+	 * Lists open rights questions.
+	 * They print as `unresolved:` lines.
 	 */
 	unresolved: readonly string[]
 }
 
 /**
- * Named downloadable data bundle.
+ * Downloadable data bundle.
  */
 export interface DataBundle {
 	name: string
@@ -128,8 +140,8 @@ export interface DataBundle {
 	rights: BundleRights
 
 	/**
-	 * Says where to count publisher stamps in the artifacts, and is absent
-	 * when the artifacts carry no publisher column.
+	 * Says where to count publisher stamps in the artifacts.
+	 * The field is absent when they carry no publisher column.
 	 */
 	sourceCensus?: BundleSourceCensus
 }
@@ -368,8 +380,9 @@ function describeExpression(expression: string): string {
  * and the recorded expression for terminal output.
  *
  * The prose carries publisher names and conditions no manifest holds.
- * The expression line is what {@link BundleRights.expression} implies, which is what
- * a pull decides on when the artifact is not yet on disk.
+ * The expression line states the implication of {@link BundleRights.expression}.
+ *
+ * A pull uses it to decide when the artifact is not yet on disk.
  */
 export function describeBundleRights(bundle: DataBundle): string[] {
 	const { rights } = bundle
@@ -389,8 +402,11 @@ export function describeBundleRights(bundle: DataBundle): string[] {
 export interface ArtifactTermsObservation {
 	path: string
 	/**
-	 * `absent` when the file is not on disk, `unmanifested` when it carries no `layer_manifest`,
-	 * `unreadable` when opening it failed, and `recorded` when its manifest was read.
+	 * `absent` means the file is not on disk.
+	 *
+	 * `unmanifested` means it carries no `layer_manifest`.
+	 * `unreadable` means opening it failed.
+	 * `recorded` means the manifest was read.
 	 */
 	state: "absent" | "unmanifested" | "unreadable" | "recorded"
 	tier?: string
@@ -403,8 +419,10 @@ export interface ArtifactTermsObservation {
  *
  * Artifacts are grouped by what they say, so a bundle of a hundred files prints
  * a line per distinct answer rather than per file.
- * An artifact whose own expression differs from the registry's is the finding worth
- * surfacing, and the artifact is the authority for what it carries.
+ * A difference between an artifact's expression and the registry's expression
+ * is the finding worth surfacing.
+ *
+ * The artifact is authoritative for the expression it carries.
  */
 export function describeArtifactTerms(bundle: DataBundle, observations: readonly ArtifactTermsObservation[]): string[] {
 	const groups = new Map<string, { count: number; example: ArtifactTermsObservation }>()
@@ -531,8 +549,9 @@ export interface RemoteArtifactState {
 }
 
 /**
- * Decides whether an artifact needs downloading by comparing MD5 when the
- * remote has one, and otherwise size.
+ * Decides whether an artifact needs downloading.
+ *
+ * It compares MD5 when the remote has one and compares size otherwise.
  *
  * It returns `false` when neither can be compared, so callers should report
  * that the artifact was not verified.

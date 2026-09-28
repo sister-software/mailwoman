@@ -145,7 +145,7 @@ export function classifyFiler(row: Form499Row): FilerClassification[] {
 }
 
 /**
- * Maps one TSV row to the named columns.
+ * Maps one TSV row to the declared columns.
  * A row with the wrong column count throws.
  */
 function toForm499Raw(fields: readonly string[], tsvPath: string, lineNumber: number): Record<Form499Column, string> {

@@ -52,8 +52,8 @@ export type ServiceFeatureReader = (
 ) => Promise<ServiceFeature[]>
 
 /**
- * The reader the live check uses: an OGC API Features bbox query against the EA's own
- * service, in the collection named by the scenario asked about.
+ * The reader the live check uses: an OGC API Features bbox query against the EA's
+ * own service, in the collection selected by the scenario.
  *
  * The service answers a bbox rather than a point, so this returns what it published nearby
  * and the containment decision is made in {@link readServiceContainment} against

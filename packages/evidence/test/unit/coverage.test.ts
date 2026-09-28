@@ -37,7 +37,7 @@ describe("requireExclusionBasis", () => {
 		expect(e!.scope.layer).toBe("os-open-uprn")
 	})
 
-	// The meaning-of-zero rule: a cell nobody surveyed is unknown, and unknown is not absence.
+	// The meaning-of-zero rule: an unsurveyed cell is unknown, and unknown is not absence.
 	it("refuses when the cell is missing from layer_coverage", () => {
 		expect(requireExclusionBasis({ ...BASE, cell: undefined })).toBeNull()
 	})

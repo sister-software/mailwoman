@@ -5,7 +5,7 @@
  *
  *   Encodes and verifies offline commercial-license tokens of the form `mwl1.<payload>.<signature>`.
  *
- *   Ed25519 signs the payload, and verification checks it against trusted public keys. The module uses WebCrypto,
+ *   Ed25519 signs the payload. Verification checks the signature against trusted public keys. The module uses WebCrypto,
  *   so it runs in Node, browsers and Workers.
  */
 
@@ -41,11 +41,11 @@ export const LicenseKeyPayloadSchema = z.object({
 	 */
 	v: z.literal(1),
 	/**
-	 * The signing key ID, which selects the trusted public key.
+	 * The signing key ID selects the trusted public key.
 	 */
 	kid: z.string().min(1),
 	/**
-	 * The license holder's name, which `doctor` displays.
+	 * The license holder's name appears in `doctor` output.
 	 */
 	licensee: z.string().min(1),
 	issued: CalendarDate,

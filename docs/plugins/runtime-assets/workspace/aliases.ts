@@ -41,8 +41,10 @@ const FILE_SUBPATHS: ReadonlyArray<readonly [packageName: string, subpath: strin
 const CODEX_SUBPATHS = [null, "country", "de", "es", "fr", "gb", "it", "nz", "us"] as const
 
 /**
- * Build the source-first webpack alias map, whose exact root aliases use webpack's `$` suffix
- * so package subpaths continue through their own explicit aliases or exports maps.
+ * Build the source-first webpack alias map.
+ *
+ * Exact root aliases use webpack's `$` suffix.
+ * Package subpaths then continue through their own explicit aliases or exports maps.
  */
 export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	const aliases: Record<string, string> = {}
@@ -54,7 +56,7 @@ export async function buildWorkspaceAliases(): Promise<Record<string, string>> {
 	}
 
 	/**
-	 * Alias a specifier this file named, throwing when its hand-maintained target no longer resolves.
+	 * Alias a specifier requested by this file, throwing when its hand-maintained target no longer resolves.
 	 */
 	const requireAlias = (specifier: string, target: string | null): void => {
 		if (!target) {

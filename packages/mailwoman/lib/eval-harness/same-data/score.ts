@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Scores the same-data benchmark with per-stratum and pooled metrics, an exact McNemar test, and a
- *   paired bootstrap interval.
+ *   Scores the same-data benchmark with per-stratum and pooled metrics. It also computes an exact McNemar test
+ *   and a paired bootstrap interval.
  *
- *   Every arm answers the same rows, so the tests are paired. The decision uses the pooled comparison,
- *   and the per-stratum tables are descriptive.
+ *   Every arm answers the same rows, so the tests are paired. The decision uses the pooled comparison.
+ *   Per-stratum tables describe the results.
  *
  *   A row whose arm threw an error is excluded from every metric and counted in `errors`. Counting it as
  *   an abstention would make a harness failure look like a resolver refusal.
@@ -22,7 +22,8 @@ import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 /**
  * The registered confidence bin edges for the reliability table.
  *
- * Each bin includes its low edge and excludes its high edge, except the last bin, which includes both.
+ * Each bin includes its low edge and excludes its high edge.
+ * The last bin includes both edges.
  */
 export const CONFIDENCE_BINS = [0, 0.2, 0.4, 0.6, 0.8, 1] as const
 
@@ -219,8 +220,9 @@ export interface PairedComparison {
 /**
  * Compares two arms row by row over the gold-present rows that both scored without error.
  *
- * Each bootstrap resample draws row pairs with replacement and recomputes both arms'
- * accuracy on the same draw, which makes the interval paired.
+ * Each bootstrap resample draws row pairs with replacement and recomputes both
+ * arms' accuracy on the same draw.
+ * Reusing each draw makes the interval paired.
  */
 export function comparePaired(
 	first: readonly ArmRowResult[],

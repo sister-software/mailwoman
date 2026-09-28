@@ -6,8 +6,8 @@
  * The candidate-gazetteer build → promote → publish pipeline, as reusable functions the `mailwoman
  * gazetteer` commands compose.
  *
- * `fold` and `build` reuse the canonical package functions so the CLI, the standalone scripts, and a
- * future `build-unified-wof --geonames-countries` all share one implementation. `publish` uses the
+ * `fold` and `build` reuse the canonical package functions. The CLI and standalone scripts share
+ * one implementation. A future `build-unified-wof --geonames-countries` will use it too. `publish` uses the
  * same TypeScript R2 publisher as the standalone release tool and bumps the demo's
  * `ADMIN_GAZETTEER_VERSION`; the demo resource file is the only repo-coupled path, so callers pass
  * it in.
@@ -65,7 +65,7 @@ import { publishDemoAssets } from "#release-tools/publish/demo-assets"
  *
  * Every member is spelled `postalcode-` because that is a routing interface: `deriveSchemaName`
  * turns the filename into the attached SQL schema name and `pickExtractsForPlacetype`
- * tests it against the placetype, so a database named `postcode-<cc>.db` builds fine
+ * tests it against the placetype, so a database stored as `postcode-<cc>.db` builds fine
  * and is then unreachable to `findPlace({ placetype: "postalcode" })`.
  * The `postcode-locality-<cc>.db` family holds a `postcode_locality` relation table
  * and no `spr`, so it is never routed as a place database.
@@ -85,8 +85,8 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	// ODbL 1.0 is share-alike, so this artifact is never published and folds
 	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
-	// Japan's 7-digit codes from WOF. 48,216 carry the 0,0 unlocated sentinel,
-	// which the candidate fold skips by construction.
+	// Japan's 7-digit codes from WOF.
+	// The candidate fold skips the 48,216 rows that carry the 0,0 unlocated sentinel.
 	"postalcode-jp.db",
 	// The GeoNames-postal tail database: ten countries in ingest order.
 	"postalcode-geonames-tail.db",
@@ -245,9 +245,10 @@ export interface FoldResult {
  * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox`.
  *
  * Build-on-copy — `adminIn` is never touched.
- * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale,
- * and the synthetic id is a position in the run, so folding a country set narrower
- * than what `adminIn` already carries drops the difference.
+ * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale.
+ *
+ * Each synthetic id is a position in the run.
+ * Folding a narrower country set than what `adminIn` already carries drops the difference.
  *
  * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
@@ -300,7 +301,8 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	// The purge clears the A-class country/region nodes and the locality ancestry too,
 	// so a fold that omits adminForCountries un-parents the zero-coverage localities.
-	// Default to the gap set scoped to this run, and the caller opts out by passing an explicit set.
+	// Default to the gap set scoped to this run.
+	// The caller opts out by passing an explicit set.
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
@@ -344,9 +346,10 @@ export interface BuildOptions {
 	importanceDB?: string | false
 	/**
 	 * Countries judged by the cross-source currency backfill
-	 * (WOF localities resurrected only under a GeoNames attestation); default is
-	 * the WOF-priority set, the only countries whose admin comes from WOF repos,
-	 * and a country without a `<data-root>/geonames/<CC>.txt` dump is skipped loudly.
+	 * (WOF localities resurrected only under a GeoNames attestation); default is the
+	 * WOF-priority set, the only countries whose admin comes from WOF repos.
+	 *
+	 * A country without a `<data-root>/geonames/<CC>.txt` dump is skipped loudly.
 	 *
 	 * Pass `false` to disable.
 	 */
@@ -386,9 +389,9 @@ function foldRefusalMessage(refusing: readonly FoldTerms[]): string {
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 
-	// `undefined` means "use the convention"; `false` means "the caller chose an empty
-	// column", and only the second may skip the resolve, so a missing artifact is not
-	// indistinguishable from a deliberate opt-out in the build log.
+	// `undefined` means "use the convention"; `false` means "the caller chose an empty column".
+	// Only the second may skip the resolve, so a missing artifact is not indistinguishable
+	// from a deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
 
 	const backfillCountries =
@@ -408,8 +411,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]
 
 	// Each fold's own tier decides whether its rows may enter a gazetteer that could be published.
-	// A fold that states no tier is reported rather than refused, and its undeclared
-	// grant refuses publication of the whole.
+	// A fold that states no tier is reported rather than refused.
+	// Its undeclared grant refuses publication of the whole.
 	const foldTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readFoldTerms(path)))
 	const refusing = foldsRefusingPublication(foldTerms)
 	const unstated = foldTerms.filter((fold) => fold.tier === null)
@@ -560,7 +563,7 @@ function assertCandidatePublishable(candidateDB: PathBuilderLike, key: string, o
 
 	if (!probed.manifest) {
 		throw new CommandError(
-			`gazetteer publish: ${candidateDB} carries no layer_manifest, so it states no tier, and an artifact that ` +
+			`gazetteer publish: ${candidateDB} carries no layer_manifest, so it states no tier. An artifact that ` +
 				`states no tier cannot be said to permit publication. Rebuild it with \`mailwoman gazetteer build candidate\`.`
 		)
 	}

@@ -2,8 +2,8 @@
  * Prints the coverage funnel for every jurisdiction in the source register, where a stage reads `unknown`
  * when a checkout cannot answer it — a statement about the checkout rather than the jurisdiction.
  *
- * `--mixture-audit` fills the `sampled` stage, which otherwise reads `unknown`
- * because sampling depends on a run.
+ * `--mixture-audit` fills the `sampled` stage.
+ * Without it, that stage reads `unknown` because sampling depends on a run.
  *
  * Run:
  *

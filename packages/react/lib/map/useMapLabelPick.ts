@@ -36,7 +36,7 @@ function labelLayerIDs(map: MapInstance): string[] {
 function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layers: string[]): string | null {
 	if (!layers.length) return null
 
-	// `queryRenderedFeatures` answers topmost-first, so the first named feature is the one the click landed on.
+	// `queryRenderedFeatures` answers topmost-first, so the first feature with a label is the one the click landed on.
 	for (const feature of map.queryRenderedFeatures(point, { layers })) {
 		for (const key of NAME_KEYS) {
 			const value = feature.properties?.[key]

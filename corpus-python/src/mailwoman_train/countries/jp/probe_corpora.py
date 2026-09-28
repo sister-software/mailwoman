@@ -208,7 +208,7 @@ def fill_reservoirs(args: argparse.Namespace, rng: random.Random) -> Reservoirs:
 
     Each prefecture carries its own reservoir so Tokyo cannot drown Tottori, capped at three times
     a prefecture's share of the target. A municipality whose bucket lands in the board range goes
-    to the board instead, which is what keeps board municipalities unseen by train and val.
+    to the board instead. This keeps board municipalities out of train and val.
     """
     per_pref_cap = 3 * ((args.train_rows + args.val_rows) // 47)
     pool: dict[str, list[dict[str, Any]]] = {}
@@ -322,7 +322,7 @@ def write_splits(
     rng: random.Random,
     postcode_fraction: float,
 ) -> None:
-    """Write each split's parquet, and RAISE rather than ship a corpus the checks fail.
+    """Write each split's parquet. Raise rather than ship a corpus that fails the checks.
 
     An all-O row cannot occur by construction — the raw is concatenated from the labeled fields —
     so one means the build is broken rather than the data thin. The printed char coverage is the
@@ -346,8 +346,8 @@ def check_stratification(
 ) -> tuple[Counter[str], set[str]]:
     """RAISE on a train split missing a prefecture, or on a board municipality that leaks into it.
 
-    Both failures produce a corpus that still trains and a board that still scores — the board
-    would just be measuring memorization, which is the one thing it exists to rule out.
+    Both failures produce a corpus that still trains and a board that still scores.
+    The board would measure memorization, the outcome it exists to rule out.
     """
     prefs = Counter(r["pref"] for r in train_rows)
     if len(prefs) != 47:

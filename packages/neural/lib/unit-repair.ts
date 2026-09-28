@@ -7,7 +7,7 @@
  *   `buildAddressTree` with the model untouched.
  *
  *   The pass fires on explicit designators only, reclaims a span only when it is `O` or a
- *   `locality`/`dependent_locality` tag, and clears the unit tokens immediately flanking a
+ *   `locality`/`dependent_locality` tag. It clears the unit tokens immediately flanking a
  *   repaired run.
  *
  *   Opt-in through `ParseOpts.unitRepair`.

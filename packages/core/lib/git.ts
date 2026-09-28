@@ -39,9 +39,10 @@ export async function currentBranch(repoRoot: PathBuilderLike): Promise<string> 
 /**
  * `git status --porcelain` lines for tracked files with uncommitted changes.
  *
- * Untracked files are excluded on purpose: materialized weights binaries and compiled
- * `out/` trees are gitignored, and a publish path creates both before it publishes.
- * Pathspecs narrow the reading to the paths named.
+ * Untracked files are excluded because materialized weight binaries
+ * and compiled `out/` trees are gitignored.
+ * A publish path creates both before publishing.
+ * Pathspecs narrow the reading to caller-supplied paths.
  */
 export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
 	const scope = pathspecs.length ? ["--", ...pathspecs] : []
@@ -56,11 +57,12 @@ export async function dirtyTrackedFiles(repoRoot: PathBuilderLike, pathspecs: st
 /**
  * Every `git status --porcelain` line, staged and unstaged and untracked alike.
  *
- * The sibling {@linkcode dirtyTrackedFiles} answers a publish path's question —
- * which committed files have moved — and excludes what a build creates.
+ * The sibling {@linkcode dirtyTrackedFiles} answers a publish path's question about changed committed files.
+ * It excludes build outputs.
+ *
  * This answers a cache's question: has anything at all changed since a derived artifact was built.
  *
- * A key built from the narrower reading goes stale over a staged edit and over a new file,
+ * A key built from the narrower reading goes stale after a staged edit or a new file.
  * and a stale index reports that a helper written an hour ago does not exist.
  */
 export async function workingTreeStatus(repoRoot: PathBuilderLike, pathspecs: string[] = []): Promise<string[]> {
@@ -102,9 +104,10 @@ export async function trackedFiles(repoRoot: PathBuilderLike, pathspecs: string[
  * Every path in the working tree that git would carry, repo-relative: the tracked ones
  * and the untracked ones an ignore rule does not cover, optionally narrowed by git pathspecs.
  *
- * The set a checker over the repository's own contents wants. {@linkcode trackedFiles}
- * answers what is committed, so a file written a minute ago is absent from it,
- * and a checker reading that list reports a clean result for a file it never opened.
+ * This is the set a checker over repository contents needs. {@linkcode trackedFiles}
+ * answers what is committed.
+ * A newly written file is absent from that set, so a checker could report a clean result without opening it.
+ *
  * `--exclude-standard` applies `.gitignore`, so a build output stays out
  * and only a file somebody intends to commit comes in.
  */
@@ -127,11 +130,13 @@ export async function workingTreeFiles(repoRoot: PathBuilderLike, pathspecs: str
  * and a path a fixture invents are both absent from the tree and neither is a defect.
  *
  * `--no-renames` is what makes it answer the question asked.
- * With rename detection on, `--name-only` prints a rename's destination and the old
- * path never appears, so the reading is a set of paths that all still exist.
+ * With rename detection on, `--name-only` prints a rename's destination.
  *
- * Turning detection off makes every move a deletion of the old path,
- * which is the name a stale literal holds.
+ * The old path never appears, so the result contains only paths that still exist.
+ *
+ * Turning detection off reports every move as a deletion of the old path.
+ * That is the path a stale literal holds.
+ *
  * Measured on this repository: 11,696 paths over 4,398 commits in 205 ms,
  * against 11,483 for the reading that answers the wrong set.
  */

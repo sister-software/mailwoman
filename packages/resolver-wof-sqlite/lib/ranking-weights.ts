@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The locality-ranking weights and their shipped defaults. Its own module because every value here is
- *   a measured tuning decision with its rationale attached. The block reads as a reference table rather than
- *   as part of the lookup's control flow, and the tests import it directly to pin one change at a time.
+ *   The locality-ranking weights and their shipped defaults live here because each value is a measured tuning decision
+ *   with its rationale attached. This block reads as a reference table outside the lookup's control flow.
+ *   Tests import it directly to pin one change at a time.
  */
 
 /**
@@ -42,8 +42,10 @@ export interface RankingWeights {
 	 * Magnitude of the proximity boost when the query carries `near`.
 	 *
 	 * The contribution is `proximityBoost / (1 + distanceKm / proximityScaleKm)`.
-	 * At distance 0 the boost is full magnitude, at `proximityScaleKm` it is half,
-	 * and it decays further with distance.
+	 * At distance 0 the boost has full magnitude.
+	 *
+	 * At `proximityScaleKm` it is half magnitude.
+	 * It decays further as distance increases.
 	 *
 	 * Default tuned so proximity can overcome a typical FTS rank tie but not dominate a strong text match.
 	 */
@@ -91,11 +93,13 @@ export interface RankingWeights {
 	 *
 	 * The weighted sum adds population as a large additive boost, so famous places
 	 * surface for unambiguous full-name queries.
-	 * Population is a prominence prior, and its job is to break ties among candidates that
-	 * match the query equally well, as in "Springfield" → Springfield IL over Springfield MA.
+	 * Population is a prominence prior.
 	 *
-	 * It does not promote a place that matches the query worse, and tiering keeps match
-	 * quality as the primary key with prominence secondary within a tier.
+	 * Its job is to break ties among candidates that match the query equally well,
+	 * as in "Springfield" → Springfield IL over Springfield MA.
+	 *
+	 * It does not promote a place that matches the query worse.
+	 * Tiering keeps match quality as the primary key with prominence secondary within a tier.
 	 *
 	 * Note: tiering re-ranks within the over-fetched candidate window (`limit * 4`),
 	 * so a pathological exact match outside that window is not rescued.
@@ -109,12 +113,13 @@ export interface RankingWeights {
 	 * joins the name-exact sub-tier rather than the alias-exact one, provided its
 	 * population clears {@link officialNameExactFloor}.
 	 *
-	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally named Åbo.
+	 * Fixes unscoped "Åbo" → Turku (its official Swedish name) over a hamlet literally called Åbo.
 	 * Population still orders within the sub-tier, so Paris → Paris FR is untouched.
 	 *
 	 * Default true.
-	 * It requires a gazetteer carrying the `official` ingest bit, and on older DBs without
-	 * the `official` column the probe fails soft and behavior matches the flag being off.
+	 * It requires a gazetteer carrying the `official` ingest bit.
+	 *
+	 * On older DBs without that column, the probe fails soft and behavior matches the flag being off.
 	 */
 	officialNameExact: boolean
 	/**
@@ -151,8 +156,8 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 	// The separate Wikipedia-derived `place_importance` table is consumed by the FST layer.
 	populationBoost: 4,
 	populationScaleLog10: 6,
-	// Exact name and alias matches outrank partial matches before the weighted sum, which keeps
-	// population as an intra-tier prominence tiebreaker instead of a cross-tier promoter.
+	// Exact name and alias matches outrank partial matches before the weighted sum.
+	// This keeps population as an intra-tier prominence tiebreaker instead of a cross-tier promoter.
 	exactMatchTiering: true,
 	officialNameExact: true,
 	officialNameExactFloor: 100_000,
@@ -161,10 +166,11 @@ export const DEFAULT_WEIGHTS: RankingWeights = {
 /**
  * The population contribution as a 0..1 fraction: `min(1, log10(1 + population) / populationScaleLog10)`.
  *
- * Zero for an absent or non-positive population, and zero for a non-positive scale,
- * so a magnitude never carries its own absence.
- * The coordinate-first locality path consumes this fraction directly,
- * and {@link populationBoostTerm} scales it.
+ * Returns zero for an absent or non-positive population.
+ * It also returns zero for a non-positive scale.
+ *
+ * A magnitude never carries its own absence.
+ * The coordinate-first locality path consumes this fraction directly. {@link populationBoostTerm} scales it.
  */
 export function populationScaleTerm(
 	population: number | null | undefined,

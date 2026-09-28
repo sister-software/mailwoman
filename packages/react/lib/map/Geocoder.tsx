@@ -26,7 +26,9 @@ import { ResolvedPlaceLayers } from "./ResolvedPlaceLayers.tsx"
  */
 export interface GeocoderProps {
 	/**
-	 * The geocoder runtime, which supplies the map style, overlays, parser, and version and backend controls.
+	 * The geocoder runtime supplies the map style and overlays.
+	 *
+	 * It also supplies the parser and version and backend controls.
 	 */
 	runtime: GeocoderRuntime
 	/**
@@ -172,7 +174,8 @@ function GeocoderInner({
 						zoom: runtime.initialZoom ?? 3,
 					}}
 					style={{ width: "100%", height: "100%" }}
-					// The attribution is compact, and the MapLibre logo is hidden.
+					// The attribution is compact.
+					// The MapLibre logo is hidden.
 					mapProps={{ attributionControl: { compact: true }, maplibreLogo: false, onLoad: onMapLoad }}
 				>
 					<GraticuleLayer beforeID={baseLayerID} />
@@ -207,7 +210,8 @@ const NO_PANELS: GeocoderPanels = {}
 const NO_PRESETS: ReadonlyArray<Preset> = []
 
 /**
- * Renders the map, search controls, and host panels as one geocoder.
+ * Renders the map and search controls as one geocoder.
+ * It also renders host panels.
  *
  * It renders only on the client because MapLibre needs browser APIs.
  * Import it from `@mailwoman/react/map`.

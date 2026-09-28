@@ -27,7 +27,8 @@ export type ZoningCellContainment = (typeof ZoningCellContainment)[keyof typeof 
 /**
  * One authority zoning polygon, verbatim.
  *
- * A plain rowid table: it holds a geometry blob, which is the one shape `without rowid` hurts.
+ * A rowid table that holds a geometry blob.
+ * `WITHOUT ROWID` performs poorly for this shape.
  */
 export interface ZoningAreaTable {
 	/**
@@ -130,8 +131,10 @@ export interface ZoningPlanTable {
 	 */
 	valid_to: string | null
 	/**
-	 * `CURRENT_PLAN`, carried as published: `1` means the plan is not superseded,
-	 * and `valid_to` marks whether it is in force today.
+	 * `CURRENT_PLAN`, carried as published.
+	 *
+	 * `1` means the publisher has not superseded the plan.
+	 * `valid_to` records whether it remains in force today.
 	 */
 	current_plan: number
 }
@@ -171,8 +174,9 @@ export interface ZoningVocabularyTable {
 	 */
 	definition: string | null
 	/**
-	 * NULL for the Irish generic types: their definitions were not retrievable,
-	 * and this column is never filled with a plausible one.
+	 * NULL for the Irish generic types because their definitions were unavailable.
+	 *
+	 * The column stays NULL until a source supplies the definition.
 	 */
 	definition_url: string | null
 	/**
@@ -226,7 +230,8 @@ export interface ZoningCellTable {
 	/**
 	 * The resolution this row's cell was captured at.
 	 *
-	 * A short cell does not name its own resolution, and a table that mixes them cannot be probed without it.
+	 * Short H3 cell values omit their resolution.
+	 * Queries against a table with mixed resolutions require this field.
 	 */
 	resolution: number
 	area_id: string
@@ -239,8 +244,10 @@ export interface ZoningCellTable {
 /**
  * The authority's own statement of what it mapped.
  *
- * One row per statement, never derived from the zoning polygons: the union of zoned areas
- * is not the area the authority examined, and deriving a footprint from it is forbidden.
+ * One row per authority statement.
+ * The zoning polygons describe individual zones.
+ *
+ * Use the authority statement for mapped extent instead of deriving the extent from the polygon union.
  */
 export interface ZoningMappedExtentTable {
 	extent_id: string
@@ -375,7 +382,8 @@ export async function createZoningCrosswalkEdgeTable(db: ZoningSchemaHandle): Pr
 /**
  * Create `zoning_cell` — the summary tier.
  *
- * Small fixed-width rows probed by their exact primary key, which is the `without rowid` shape.
+ * This table stores small fixed-width rows.
+ * Queries use exact primary keys, the pattern supported by `WITHOUT ROWID`.
  */
 export async function createZoningCellTable(db: ZoningSchemaHandle): Promise<void> {
 	const table = db.schema.createTable("zoning_cell")

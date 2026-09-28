@@ -4,10 +4,10 @@
  * @author Teffen Ellis, et al.
  *
  *   Reader for `coastal-england.db`, which reports the Environment Agency's coastal erosion zones at a
- *   coordinate under a named scenario.
+ *   coordinate under the selected scenario.
  *
- *   A reading is `designated` when an erosion polygon of that scenario contains the point, and `unknown`
- *   otherwise. The source publishes no coverage statement, so an empty answer cannot mean "not at risk".
+ *   A reading is `designated` when an erosion polygon for that scenario contains the point. Otherwise it is `unknown`.
+ *   The source publishes no coverage statement, so an empty answer cannot mean "not at risk".
  *   A point with no polygon may be inland or on an unmapped coast. The constructor therefore refuses
  *   any coverage row whose basis would support an exclusion.
  *
@@ -121,7 +121,8 @@ export interface CoastalDesignation {
 	/**
 	 * Publication year as published.
 	 *
-	 * Some source rows carry 0 with blank policy and defence fields, and the source does not explain them.
+	 * Some source rows carry 0 with blank policy and defence fields.
+	 * The source does not explain them.
 	 */
 	publishedYear?: number
 	/**
@@ -193,8 +194,8 @@ export interface CoastalLayerIdentity {
 	/**
 	 * Every resolution with rows in `coastal_zone_cell`, coarsest first.
 	 *
-	 * Whole cells are compacted to coarser parents, and very large polygons are indexed
-	 * coarser, so a lookup must probe every resolution in this list.
+	 * Whole cells are compacted to coarser parents.
+	 * Very large polygons are also indexed coarser, so a lookup must probe every resolution in this list.
 	 */
 	cellResolutions: number[]
 	/**
@@ -208,7 +209,8 @@ export interface CoastalLayerIdentity {
 	 */
 	mappedExtents: Array<{ extentID: string; source: string; statement: string; statementURL: string }>
 	/**
-	 * The coverage basis of every row, which the constructor checks is `source_present`.
+	 * The coverage basis of every row.
+	 * The constructor checks that it is `source_present`.
 	 */
 	coverageBasis: CoverageBasis
 	databasePath: string
@@ -277,8 +279,8 @@ export class CoastalErosionLookup implements Disposable {
 		)
 
 		// The attributes and bbox are read apart from the geometry blob.
-		// The bbox rejects most candidates before the large blob is read,
-		// and a whole cell never reads the blob.
+		// The bbox rejects most candidates before the large blob is read.
+		// A whole cell never reads the blob.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, frontage_id, distance_m, smp_no, smp_name, smp_pu, mt_policy, mt_policy_interp, lt_policy, " +
 				"lt_policy_interp, defence_type, published_year, min_lat, min_lon, max_lat, max_lon " +
@@ -393,7 +395,8 @@ export class CoastalErosionLookup implements Disposable {
 	}
 
 	/**
-	 * Walk the cell index for one scenario, and ray-cast only the polygons of partial cells.
+	 * Walk the cell index for one scenario.
+	 * Ray-cast only polygons in partial cells.
 	 */
 	#resolveDesignations(
 		indexCell: H3Cell,
@@ -550,8 +553,8 @@ function readIdentity(database: DatabaseClient<CoastalDatabase>, databasePath: s
 		)
 	}
 
-	// The manifest records only the index resolution, and this layer has no footprint
-	// row that could record the coarser coverage resolution.
+	// The manifest records only the index resolution.
+	// This layer has no footprint row that could record the coarser coverage resolution.
 	// A short cell is valid at exactly one resolution, so the helper recovers it from
 	// the cells and throws if the table mixes resolutions.
 	const coverageResolution = recoverShortCellResolution(

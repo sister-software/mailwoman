@@ -129,8 +129,8 @@ describe("the sealed artifact", () => {
 		}>
 
 		// Every fixture feature carries frontage 1000.
-		// The real product repeats a frontage id within one layer, and a build keyed
-		// on it would have collapsed five rows into one.
+		// The real product repeats a frontage ID within one layer.
+		// A build keyed on it would collapse five rows into one.
 		expect(new Set(rows.map((row) => row.frontage_id))).toEqual(new Set([1000]))
 		expect(rows).toHaveLength(5)
 		expect(new Set(rows.map((row) => row.area_id)).size).toBe(5)
@@ -144,8 +144,8 @@ describe("the sealed artifact", () => {
 			.prepare("SELECT count(*) AS n FROM coastal_zone_cell WHERE area_id = ?")
 			.get(`${NFI}:4`) as { n: number }
 
-		// A polyfill keyed on cell centres returns no cells for a 5 m square,
-		// and a feature indexed to no cell reads downstream as an absence.
+		// A polyfill keyed on cell centres returns no cells for a 5 m square.
+		// A feature indexed to no cell reads downstream as absent.
 		// The failure the per-part zero-cell guard exists to make impossible.
 		expect(sliver.n).toBeGreaterThan(0)
 	})

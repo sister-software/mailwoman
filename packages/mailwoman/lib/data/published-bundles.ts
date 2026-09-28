@@ -3,14 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The committed snapshot of what the public bucket serves for each bundle in `BUNDLES`: the size the server
- *   reports per artifact, the tier and license expression its `layer_manifest` records, and the instant they were
+ *   The committed snapshot of what the public bucket serves for each bundle in `BUNDLES` records the size the server
+ *   reports per artifact and the tier and license expression in its `layer_manifest`. The snapshot also records when they were
  *   measured.
  *
- *   `BUNDLES` records `approxBytes` by hand, and the docs site once restated those numbers by hand again. The
+ *   `BUNDLES` records `approxBytes` by hand. The docs site once restated those numbers by hand again. The
  *   artifacts themselves are gigabytes that neither a docs build nor a health check can download, so this file holds
  *   the measurement and `dev-tools/data/published-bundles.run.ts` is its one writer. The `published-bundles` check in
- *   `@mailwoman/repo-health` compares it against the registry, and the docs site renders it beside its date.
+ *   `@mailwoman/repo-health` compares it against the registry. The docs site renders it beside its date.
  *
  *   A value that could not be measured is recorded as unmeasured with the reason. It is never defaulted, because a
  *   default reads the same as a measurement to everyone downstream.
@@ -54,15 +54,16 @@ export type ServedSize =
  * The tier and license expression an artifact's own `layer_manifest` records.
  *
  * `expression` is the manifest's flat `license` string, verbatim.
- * It joins every upstream's terms with `AND`, which claims that all of them govern
- * the whole artifact, and counsel has said that is the wrong kind of claim for a
- * database whose own rights differ from the rights in its contents.
+ * It joins every upstream's terms with `AND`.
+ *
+ * That claims that all of them govern the whole artifact.
+ * Counsel says that claim is wrong for a database whose own rights differ from the rights in its contents.
  *
  * It is recorded because it is what the artifact says.
  * The per-component record belongs in {@link BundleRightsRecord}.
  *
- * `null` records a manifest row that holds no expression, which is a reading of the row
- * rather than a failure to read it.
+ * `null` records a manifest row that holds no expression.
+ * This value describes the row rather than a failure to read it.
  */
 export type ServedManifest =
 	| {
@@ -122,8 +123,10 @@ export interface RightsComponent {
  * What is known about a bundle's rights beyond its artifacts' flat expressions.
  *
  * `components` is empty when none was measured.
- * A component nobody read is absent rather than synthesized from the flat expression,
- * which is the same rule the absent artifact case follows.
+ * A component without a read record is absent.
+ *
+ * The code does not synthesize it from the flat expression.
+ * This follows the same rule as an absent artifact.
  */
 export interface BundleRightsRecord {
 	database: DatabaseLicense
@@ -144,7 +147,8 @@ export interface PublishedBundleRecord {
  */
 export interface PublishedBundlesSnapshot {
 	/**
-	 * The ISO 8601 instant the writer ran, which readers render as the measurement date.
+	 * The ISO 8601 instant when the writer ran.
+	 * Readers render it as the measurement date.
 	 */
 	measuredAt: string
 	/**
@@ -219,7 +223,7 @@ function assertServedManifest(value: unknown, path: string, where: string): Serv
 		fail(
 			path,
 			where,
-			`records expression ${stringifyJSON(value.expression ?? null)}, which is neither a string nor null`
+			`records expression ${stringifyJSON(value.expression ?? null)}. The value must be a string or null`
 		)
 	}
 
@@ -325,7 +329,7 @@ function assertArtifact(value: unknown, path: string, where: string): PublishedA
  * Validates a parsed snapshot field by field, throwing on the first field it cannot read.
  *
  * Every field is required.
- * A reader that filled one in would hand its consumers a number nobody measured.
+ * A reader that filled one in would hand its consumers an unmeasured number.
  */
 export function assertPublishedBundlesSnapshot(value: unknown, path: string): PublishedBundlesSnapshot {
 	if (!isRecord(value)) {

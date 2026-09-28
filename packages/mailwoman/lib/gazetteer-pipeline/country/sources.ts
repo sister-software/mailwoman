@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Which source serves a country's admin coverage, and what it costs when more than one does.
+ * Map each country to its admin coverage sources. Report conflicts when a country has an unrecorded second source.
  *
  * The WOF leg is presence-driven while Overture and GeoNames are list-driven, so the fourteen
  * baseline Overture + GeoNames pairs are accepted and a fifteenth is refused.

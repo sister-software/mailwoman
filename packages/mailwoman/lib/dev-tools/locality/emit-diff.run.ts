@@ -3,7 +3,7 @@ import { dataRootPath } from "@mailwoman/core/data-root"
  * @copyright Sister Software · @license AGPL-3.0 · @author Teffen Ellis, et al.
  *
  *   Dump-and-read tool for a two-model locality comparison. For each
- *   golden row, parse with two models (baseline + candidate), extract the emitted `locality` span, and
+ *   golden row, parse with two models (baseline + candidate), then extract the emitted `locality` span.
  *   resolve each tree → record whether it resolved + the emitted locality. Lets us see whether the
  *   candidate emits a different locality string (grain mismatch) or the same string that stopped
  *   resolving (boundary/anchor), or drops the locality entirely. Verify-before-verdict rather than assurance.

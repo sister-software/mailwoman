@@ -253,9 +253,9 @@ export async function coarsePlacerReliabilitySample(corpusPath: string): Promise
 		observations.push({
 			confidence: prediction.confidence,
 			correct: prediction.country === row.country,
-			// An abstain is a prediction here, named rather than dropped, because at
-			// abstainBelow 0 the placer still declines on an out-of-set input and dropping
-			// those rows would report a precision the eval does not deliver.
+			// An abstain is a prediction here, reported rather than dropped,
+			// because at abstainBelow 0 the placer still declines on an out-of-set input
+			// and dropping those rows would report a precision the eval does not deliver.
 			strata: { expected: row.country, predicted: prediction.country ?? "(abstain)" },
 		})
 	}

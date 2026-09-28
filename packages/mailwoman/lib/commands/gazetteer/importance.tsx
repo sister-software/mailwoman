@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer importance` — build the `place_importance` table in a WOF SQLite database.
- *   Downloads Nominatim's `wikimedia-importance.csv.gz`, joins it through the `concordances` table, and
- *   writes two scores per place.
+ *   Downloads Nominatim's `wikimedia-importance.csv.gz`. It joins the data through the `concordances`
+ *   table and writes two scores per place.
  *
  *   The two-score split keeps `referential` (population-anchored, the ranking backbone) and
  *   `encyclopedic` (the Wikipedia join, NULL when there is no article) in their own columns, plus the
@@ -13,13 +13,13 @@
  *   blend live in `@mailwoman/resolver-wof-sqlite/place-importance-schema` — read it before changing
  *   either score.
  *
- *   The table is added to the `--db` in place, and the WOF DB must already carry `concordances` (and,
- *   for the fallback, `place_population`), so run `mailwoman gazetteer build admin` first.
+ *   The table is added to the `--db` in place. The WOF DB must already carry `concordances` and
+ *   `place_population` for the fallback. Run `mailwoman gazetteer build admin` first.
  *
- *   The join is not a function: a Wikidata id can name more than one current WOF place, and
- *   `gazetteer-pipeline/importance-fanout.ts` decides which candidate it means — coincident candidates
- *   are all kept, otherwise decisive population keeps the winner, otherwise the id is dropped. Dropped
- *   places fall through to the population fallback rather than being left blank.
+ *   A Wikidata id can map to more than one current WOF place. The join is not a function.
+ *   `gazetteer-pipeline/importance-fanout.ts` resolves the candidates. It keeps coincident candidates,
+ *   selects a winner when population distinguishes them and drops the id when neither condition applies.
+ *   Dropped places fall through to the population fallback instead of remaining blank.
  */
 
 import { cacheRootPath } from "@mailwoman/core/data-root"
@@ -88,9 +88,9 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 		const fanout = emptyFanoutStats()
 
 		try {
-			// Joins `spr` for the geometry and population the fan-out guard needs, restricts
-			// to `is_current = 1` so a dead row cannot win a fan-out group, and is DISTINCT
-			// because `concordances` carries duplicate (id, other_id) rows.
+			// Join `spr` for the geometry and population the fan-out guard needs.
+			// Restrict rows to `is_current = 1` so a dead row cannot win a fan-out group.
+			// Use DISTINCT because `concordances` carries duplicate (id, other_id) rows.
 			const stmt = kdb.prepare(
 				`SELECT DISTINCT c.other_id AS other_id, s.id AS id, s.placetype AS placetype,
 				        s.latitude AS lat, s.longitude AS lon, COALESCE(p.population, 0) AS population
@@ -165,8 +165,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		const fileChunks = await createReadStream(gzPath, IMPORTANCE_READ_HIGH_WATER_MARK)
 
-		// `crlf: true` because the Wikidata id is the last column, and a CRLF source
-		// would leave a stray `\r` on it.
+		// Set `crlf: true` because the Wikidata id is the last column.
+		// A CRLF source would leave a stray `\r` on that value.
 		for await (const line of TextSpliterator.fromAsync(gunzipChunks(fileChunks), { crlf: true })) {
 			totalRows++
 
@@ -192,15 +192,16 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		console.error(`  Parsed ${totalRows.toLocaleString()} rows, ${importanceMap.size} matched Wikidata IDs`)
 
-		// Each place gets one row carrying both scores in their own columns, and the legacy
-		// `importance` column is written by `blendImportance`, the bounded blend whose cap
-		// keeps an article-floor score from outranking a population-attested town.
+		// Each place gets one row with both scores in their own columns.
+		// The legacy `importance` column comes from `blendImportance`, the bounded blend whose
+		// cap keeps an article-floor score from outranking a population-attested town.
 		console.error("Building place_importance table (referential + encyclopedic)...")
 
 		await createPlaceImportanceTable(kdb)
 
-		// A single WOF id can concord to multiple Wikidata ids, and a naive per-Wikidata insert
-		// would violate the `id` primary key, so collapse to the max importance per WOF id first.
+		// A single WOF id can concord to multiple Wikidata ids.
+		// A naive per-Wikidata insert would violate the `id` primary key.
+		// Collapse to the maximum importance per WOF id first.
 		const wofEncyclopedic = new Map<number, number>()
 
 		for (const [wikidataID, importance] of importanceMap) {
@@ -267,8 +268,8 @@ const GazetteerImportance: CommandComponent<typeof spec> = ({ options }) => {
 
 		kdb.exec("COMMIT")
 
-		// The total is read back with `select count(*)` rather than derived by adding the two
-		// counters, which describe what the run tried to do rather than what the table did.
+		// Read the total back with `select count(*)`.
+		// The two counters describe what the run tried to do rather than what the table contains.
 		const total = countRows(kdb, "place_importance")
 
 		await kdb.destroy() // closes the underlying `db` handle

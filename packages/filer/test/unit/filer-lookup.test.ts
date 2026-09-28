@@ -63,7 +63,8 @@ async function createAllTables(db: DatabaseClient<FilerDatabase>): Promise<void>
 const MANIFEST: FilerManifestTable = {
 	name: "filer",
 	version: "2026-Q1",
-	// `filerLookup` rejects schema version 1, which predates `filer_family`.
+	// `filerLookup` rejects schema version 1.
+	// That version predates `filer_family`.
 	schema_version: 2,
 	source: "form-499,bdc-provider-list",
 	source_vintage: "2026-Q1",
@@ -711,7 +712,8 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-01-01",
 						valid_from: "2026-01-01",
 					}),
-					// FRN_IN_FORCE filed earlier, and its edge stays open.
+					// FRN_IN_FORCE filed earlier.
+					// Its edge stays open.
 					authoritativeEdge({
 						from_node_id: FRN_IN_FORCE,
 						to_node_id: FORM_IN_FORCE,
@@ -719,7 +721,8 @@ describe("§7-3a criteria", () => {
 						source_vintage: "2026-02-01",
 						valid_from: "2026-02-01",
 					}),
-					// FRN_CLOSED filed later, and its edge closes on 2026-05-01.
+					// FRN_CLOSED filed later.
+					// Its edge closes on 2026-05-01.
 					{
 						...authoritativeEdge({
 							from_node_id: FRN_CLOSED,
@@ -1046,7 +1049,8 @@ describe("§7-3b criteria", () => {
 				buildSHA: "deadbeef",
 			})
 
-			// The builder seals the file read-only, and the clusterer needs to write to it.
+			// The builder seals the file read-only.
+			// The clusterer needs to write to it.
 			await changeMode(out, 0o644)
 			using db = new DatabaseClient<FilerDatabase>(out)
 
@@ -1235,7 +1239,8 @@ describe("§7-3b criteria", () => {
 			expect(rollup).toHaveLength(1)
 			expect(rollup[0]?.display_names).toEqual(expectedSpellings)
 
-			// `members` has one entry per row, and `distinct_member_count` counts nodes.
+			// `members` has one entry per row.
+			// `distinct_member_count` counts nodes.
 			expect(rollup[0]?.distinct_member_count).toBe(1)
 
 			const memberNodeIDs: string[] = []

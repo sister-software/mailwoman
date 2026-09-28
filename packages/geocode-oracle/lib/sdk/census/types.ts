@@ -98,7 +98,8 @@ export interface CensusVintageMetadata {
 export interface CensusTigerLine {
 	side: "L" | "R"
 	/**
-	 * The tiger/Line segment identifier, whose wire key is `tigerLineId` with a lowercase `d`.
+	 * The TIGER/Line segment identifier.
+	 * Its wire key is `tigerLineId` with a lowercase `d`.
 	 *
 	 * @pattern ^\d+$
 	 */
@@ -112,8 +113,9 @@ export interface CensusTigerLine {
  * Every value comes back uppercase because that is the provider's form (USPS Publication 28),
  * not a normalization this package applies.
  *
- * Seven slots, and mailwoman's `ComponentTag` vocabulary has four for the same span;
- * `census-parser.ts` documents the fold.
+ * The provider returns seven slots.
+ * Mailwoman's `ComponentTag` vocabulary has four tags for the same span.
+ * `census-parser.ts` documents the mapping.
  */
 export interface CensusAddressComponents {
 	/**
@@ -179,15 +181,16 @@ export interface CensusAddressMatch {
 	addressComponents: CensusAddressComponents
 	tigerLine: CensusTigerLine
 	/**
-	 * `{ x: longitude, y: latitude }` — the Census geocoder's own axis naming,
-	 * which is `InternalPointCoordinates` in `@mailwoman/spatial`.
+	 * `{ x: longitude, y: latitude }` uses the Census geocoder's axis names.
+	 *
+	 * `@mailwoman/spatial` defines the same shape as `InternalPointCoordinates`.
 	 */
 	coordinates: InternalPointCoordinates
 }
 
 /**
- * A `Census Blocks` entry from a `geographies/*` lookup, whose every field is a
- * tiger attribute typed by `@mailwoman/tiger`.
+ * A `Census Blocks` entry from a `geographies/*` lookup.
+ * `@mailwoman/tiger` types every field as a TIGER attribute.
  */
 export interface CensusBlockGeography {
 	/**
@@ -239,7 +242,8 @@ export interface CensusGeographyMatch extends CensusAddressMatch {
 }
 
 /**
- * The response envelope, whose `input` is nested inside `result`.
+ * The Census geocoder response envelope.
+ * It nests `input` inside `result`.
  */
 export interface CensusGeocodeResponse<Match extends CensusAddressMatch = CensusAddressMatch> {
 	result: {

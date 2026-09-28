@@ -6,7 +6,7 @@
  *   Builds a digest of the Vale rules that the Stop hook applies to replies, read from the rule files.
  *
  *   Reading the files keeps the digest in step with the rules. The parser scans lines because the fields it
- *   needs are flat scalars and one flat map, and the repository ships no YAML parser.
+ *   needs are flat scalars and one flat map. The repository ships no YAML parser.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -18,8 +18,8 @@ import { TextSpliterator } from "spliterator"
 /**
  * Rules whose word lists the digest omits.
  *
- * Each rule bans words, and printing those words into a session's context makes
- * an agent more likely to use them.
+ * Each rule bans words.
+ * Printing those words into a session's context makes an agent more likely to use them.
  */
 const WITHHELD_TOKENS = new Set([
 	"AmbiguousShorthand",
@@ -30,7 +30,8 @@ const WITHHELD_TOKENS = new Set([
 ])
 
 /**
- * Rules meant for source comments, which the digest leaves out.
+ * Rules meant for source comments.
+ * The digest leaves them out.
  *
  * `.vale-chat.ini` loads the whole style directory, so these rules also load for replies.
  */

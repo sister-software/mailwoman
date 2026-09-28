@@ -1,6 +1,6 @@
 """Lists the parquet files of a corpus split and counts rows per source.
 
-Only `file_source_counts` reads row data, and it reads just the dictionary-encoded `source` column.
+Only `file_source_counts` reads row data. It reads only the dictionary-encoded `source` column.
 """
 
 from __future__ import annotations
@@ -20,8 +20,8 @@ _PRE_RENAME_MANIFEST_KEY = "sh" + "ards"
 def manifest_files(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Return the manifest's parquet file list from the `slices` key or the older key.
 
-    Reading only `slices` would make an older overlay corpus fall through to the glob fallback, which
-    sees only the overlay's own files.
+    Reading only `slices` would make an older overlay corpus use the glob fallback. That fallback sees
+    only the overlay's own files.
     """
     current = data.get("slices")
     if current:
@@ -61,9 +61,9 @@ def _reroot(raw: Path, corpus_dir: Path, split: str) -> Path | None:
 def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
     """Return the parquet files for one split, from MANIFEST.json or a directory glob.
 
-    The manifest lists an absolute ``path`` and a ``split`` per file, and an overlay's also lists files
-    in its base corpus. Each path is used as-is when it exists and re-rooted by `_reroot` when it does
-    not, and the glob runs only when the manifest resolves no files.
+    The manifest lists an absolute ``path`` and ``split`` per file. An overlay manifest also lists
+    files in its base corpus. Use each path as-is when it exists. Otherwise, re-root it with
+    `_reroot`. Run the glob only when the manifest resolves no files.
     """
     manifest = corpus_dir / "MANIFEST.json"
     if manifest.exists():
@@ -110,11 +110,11 @@ def _parquet_paths(corpus_dir: Path, split: str) -> list[Path]:
 
 
 def file_source_counts(path: Path) -> dict[str, int]:
-    """Count rows per ``source`` in one parquet file, which can hold several sources because the writer
-    splits files by row count. The count runs inside Arrow with `value_counts`, avoiding one Python
-    string per row.
+    """Count rows per ``source`` in one parquet file. A file can hold several sources because the
+    writer splits files by row count. Arrow's `value_counts` performs the count without creating one
+    Python string per row.
 
-    Raises `TypeError` on a non-string cell, which usually means a label-less ``--golden`` file was
+    Raises `TypeError` on a non-string cell. This usually means a label-less ``--golden`` file was
     passed as a train file.
     """
     column = pq.ParquetFile(path).read(columns=["source"])["source"]

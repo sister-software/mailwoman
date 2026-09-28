@@ -1,4 +1,7 @@
-"""Every fragment renderer agrees with its own text across a split, because `raw` and its char offsets are built separately and a disagreement still trains, exports, and scores."""
+"""Check that each fragment renderer's text agrees with its character offsets.
+
+The builder creates them separately. Incorrect spans can pass through training. The model can then export and score.
+"""
 
 from __future__ import annotations
 
@@ -70,7 +73,7 @@ def test_one_label_per_token(name: str) -> None:
 
 @pytest.mark.parametrize("name", sorted(CASES))
 def test_each_field_opens_with_b_and_continues_with_i(name: str) -> None:
-    """An `I-` with no `B-` before it is a field that starts mid-span, which decodes as a fragment."""
+    """An `I-` with no preceding `B-` starts a field mid-span. The decoder treats it as a fragment."""
     row = CASES[name]
     previous: str | None = None
 

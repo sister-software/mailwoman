@@ -25,7 +25,7 @@ JP_PREFECTURES = frozenset(
 )
 
 # Hyphen-equivalence class. Applied to the number field only: U+30FC and U+FF70 are prolonged-sound
-# marks that belong inside katakana names, and folding them there would corrupt the name. In a
+# marks that belong inside katakana names. Folding them there would corrupt the name. In a
 # banchi-go they are a typed hyphen.
 _HYPHEN_CLASS = "‐‑‒–—―−ー﹘﹣－ｰ"
 _HYPHEN_TABLE = str.maketrans({character: "-" for character in _HYPHEN_CLASS})
@@ -42,9 +42,9 @@ def normalize_name(text: str) -> str:
 
     All whitespace is removed, interior included. 135 street values carry an ideographic space
     (``西与賀町　字今津乙``) which is a rendering artifact of the source rather than part of the name — the
-    written form closes it up, and leaving it in put a U+3000 inside a ``district`` span (found by
-    counting labelled chars against significant chars on the first full build: coverage read
-    1.000001, which is how a six-row defect announces itself).
+    written form closes it up. Leaving it in put a U+3000 inside a ``district`` span. The first full
+    build counted labeled characters against significant characters and measured coverage at
+    1.000001. A six-row defect produced that value.
 
     Explicitly does not touch hyphens (U+30FC is a real katakana character here) and does not fold
     itaiji — the MJ縮退マップ tables are CC BY-SA.
@@ -62,7 +62,7 @@ def split_street(street: str) -> tuple[str, int | None]:
 
     ``八島町二丁目`` → ``("八島町", 2)``; ``字崎枝`` → ``("字崎枝", None)``; ``二丁目`` → ``("", 2)``.
     A non-trailing 丁目 (2,316 rows) is left whole as the district — re-rendering a form we have not
-    read is how a corpus grows labels nobody verified.
+     read is how a corpus accumulates unverified labels.
     """
     match = _CHOME_TAIL.match(street)
     if not match:

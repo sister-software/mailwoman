@@ -5,7 +5,7 @@
  * @file County-key parity between the tiger interpolation extracts and WOF's county ancestry, per US state.
  *
  *   A county-scoped join from a WOF county ancestor into a tiger county-keyed extract reads "no data" wherever the two
- *   registers disagree about what a county is, and that absence is indistinguishable from "not there". This measures
+ *   registers disagree about what a county is. The join result then looks the same as "not there". This measures
  *   the cheap half of the county-key correspondence check: for every state extract under `$MAILWOMAN_DATA_ROOT/db/interpolation`,
  *   the count of distinct `county_fips` values against the count of WOF `county` records whose region ancestor is that
  *   state. Equal counts do not prove the keys correspond. Unequal counts prove they cannot.

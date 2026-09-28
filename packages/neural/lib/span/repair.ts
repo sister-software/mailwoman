@@ -13,9 +13,9 @@
  *   skeleton was duplicated line-for-line — including two byte-identical sort comparators. This
  *   module is that skeleton, extracted once so the two passes cannot drift on it.
  *
- *   What stays in each pass is what actually differs: the patterns, the ADD/snap eligibility rules,
- *   the `ADD_OVER_TAGS` set, and the smear-cleanup policy (postcode-repair hands a trailing smear
- *   back to a following locality. unit-repair always clips to `O`). Those are the changes — do not
+ *   Each pass retains what actually differs: the patterns, the ADD/snap eligibility rules,
+ *   the `ADD_OVER_TAGS` set and the smear-cleanup policy. Postcode-repair hands a trailing smear
+ *   back to a following locality. Unit-repair always clips to `O`. These differences belong in each pass.
  *   pull them up here.
  */
 
@@ -26,7 +26,8 @@ import type { DecoderToken } from "@mailwoman/core/decoder"
  * A regex hit over the raw input text: a half-open char range plus the index
  * of the pattern that produced it.
  *
- * Lower `priority` means a more specific pattern, which wins a same-length tie.
+ * Lower `priority` means a more specific pattern.
+ * It wins a same-length tie.
  */
 export interface SpanMatch {
 	start: number
@@ -171,7 +172,7 @@ export function tokenIndicesOverlapping(tokens: readonly DecoderToken[], start: 
 /**
  * Extract the bare tag from a BIO label ("B-locality" → "locality", "O" → null).
  *
- * Unlike {@link bareBIOTag}, `O` reads as the absence of a tag rather than as a tag named `O`.
+ * Unlike {@link bareBIOTag}, `O` reads as the absence of a tag rather than as the literal tag `O`.
  */
 export function tagOf(label: string): string | null {
 	return label === "O" ? null : bareBIOTag(label)

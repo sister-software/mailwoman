@@ -1,4 +1,7 @@
-"""Every module that runs as `python -m` imports, and its usage string names its own path. Discovery is by the `__main__` guard rather than a list, so a new builder is covered by existing."""
+"""Every module that runs as `python -m` imports. Its usage string identifies its path.
+
+Discovery uses the `__main__` guard instead of a fixed list. Existing checks then cover new builders.
+"""
 
 from __future__ import annotations
 
@@ -56,7 +59,7 @@ def test_the_discovery_found_the_builders() -> None:
 
 @pytest.mark.parametrize("path", RUNNABLE, ids=_module_name)
 def test_a_runnable_module_imports(path: Path) -> None:
-    """Import alone, which is where a moved data file or a stale relative import raises."""
+    """Import the module to catch moved data files and stale relative imports."""
     importlib.import_module(_module_name(path))
 
 

@@ -3,17 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Reference geocoders as a comparison arm — metered, and never a grading truth.
+ *   Reference geocoders provide a metered comparison arm. They never supply grading truth.
  *
- *   An oracle arm always reports `grade: "diff-only"` and a null verdict, and its purpose is flagging rows for a human to
- *   read. That is enforced here rather than left to the caller, because a billed third-party geocoder quietly becoming an
- *   answer key is the exact failure `@mailwoman/geocode-oracle` was made private to prevent.
+ *   An oracle arm always reports `grade: "diff-only"` and a null verdict. It flags rows for a human to read.
+ *   The harness enforces this behavior because a billed third-party geocoder must not become an answer key.
  *
- *   `census` is free, unauthenticated and US-only, and allowed with no ceremony.
+ *   `census` is free and unauthenticated. It covers the United States, so callers can use it without extra setup.
  *
- *   `google` is billed, and its opt-in lives in the daemon's config file: a spend decision belongs to
- *   whoever owns the key, so it is read from that file plus a per-lifetime call cap that the result reports as
- *   it consumes, and the tool argument carries no opt-in.
+ *   `google` incurs a charge. Its opt-in lives in a daemon config file because the key owner controls spending.
+ *   The result reports the call cap for that daemon's lifetime. Tool arguments cannot opt in to billed requests.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -46,8 +44,9 @@ export const OracleProviderName = {
 export type OracleProviderName = (typeof OracleProviderName)[keyof typeof OracleProviderName]
 
 /**
- * Under the data root rather than the repo: it names an operator's billing posture on one
- * machine, which is not a fact about the source tree and must never be committed.
+ * The config lives under the data root.
+ *
+ * It records one machine's billing settings and belongs outside the source tree.
  */
 const ORACLE_CONFIG_PATH = dataRootPath("dev-mcp", "oracle-config.json")
 
@@ -93,8 +92,10 @@ export interface OracleAdmission {
 }
 
 /**
- * Deliberately not persisted: a cap that survives a restart is a budget, and a budget
- * is the operator's to keep rather than this process's to guess at.
+ * The call cap resets when the process restarts.
+ *
+ * The operator owns the budget.
+ * The process does not infer it.
  */
 export class OracleMeter {
 	#googleCalls = 0
@@ -178,35 +179,39 @@ export class OracleMeter {
 }
 
 /**
- * Not a default but a refusal to grade, holding for every input set rather than per set:
- * the board's `expectLat`/ `expectLon` are pinned by hand with these same geocoders open as
- * a second opinion, so scoring against them is partly scoring the oracle against itself,
- * and a rule with a list of sets it applies to becomes a rule about which set to pick.
+ * The mode refuses grading for every input set.
+ *
+ * The board's expected coordinates were pinned by hand with these geocoders open as a second opinion.
+ * Scoring those coordinates would partly score an oracle against itself.
+ *
+ * Applying the refusal to only some sets would make set selection part of the rule.
  */
 export const ORACLE_GRADE_MODE = "diff-only"
 
 /**
- * A reader who sees differing rows and no verdict, with no sentence saying why,
- * will supply their own, and the one they supply is a score.
+ * A reader may interpret differing rows as a score when the output gives no verdict or explanation.
  */
 export const ORACLE_VERDICT_NOTE =
 	"An oracle arm is never a grading truth, so this comparison is diff-only and its verdict is null however the " +
 	"caller asked for it to be graded. Read the differing rows; do not read a score."
 
 /**
- * Narrower than either real client on purpose: it is the transport interface a
- * test replaces, and an injection point shaped like the whole client invites a
- * test to assert its own idea of the provider's protocol.
+ * This test interface exposes only the transport call that a test replaces.
+ *
+ * Injecting a whole client could lead a test to assert a fabricated version of the provider's protocol.
  */
 export interface OracleGeocoderLike extends AsyncDisposable {
 	geocodeOne(input: string): Promise<OracleGeocodeResult[]>
 }
 
 /**
- * No per-arm normalization: Google accepts a `country` hint and the input sets carry one,
- * but the pre-registered protocol sends the same raw query string to every arm, and a hint
- * given to one side is the per-arm rewriting that protocol forbids — flattering the oracle
- * on exactly the bare-locality rows where mailwoman's country scope is under examination.
+ * The protocol sends the same raw query string to every arm.
+ *
+ * Google accepts a `country` hint.
+ * Input sets contain one.
+ *
+ * The call omits the hint so it cannot rewrite one arm's query.
+ * The protocol compares the same input, including bare-locality rows where country scope is under test.
  */
 export function createOracleClient(provider: OracleProviderName): OracleGeocoderLike {
 	if (provider === OracleProviderName.Census) {
@@ -270,16 +275,18 @@ export async function answerFromOracle(client: OracleGeocoderLike, input: string
 		label: top.address.formatted ?? null,
 		// The provider's own tier, reported and never thresholded — the same posture
 		// as an external engine's `layer` or `addresstype`.
-		// The mapping onto our vocabulary is `@mailwoman/geocode-oracle`'s judgement call,
-		// which `OracleGeocodeResult.raw` exists to let a human re-read.
+		// The provider's tier-to-vocabulary mapping is its own judgment call.
+		// `raw` lets a human inspect the original result.
 		resultType: geocode.tier,
 		noResultReason: null,
 	}
 }
 
 /**
- * Provenance for an oracle arm — what answered, under what posture, and what it cost;
- * `partial_match` and the cap state say whether the run was complete or stopped at the ceiling.
+ * Provenance for an oracle arm: provider, posture and cost.
+ *
+ * The record preserves `partial_match` for the consumer to interpret.
+ * The cap state shows whether the run was complete or stopped at the ceiling.
  */
 export interface OracleArmIdentity {
 	arm: "oracle"

@@ -186,7 +186,9 @@ describe("scriptForCodepoint", () => {
 		let checked = 0
 
 		for (let cp = 0; cp <= 0x2_a6_df; cp++) {
-			// Surrogates are not characters and `String.fromCodePoint` produces a lone one, which no property matches.
+			// Skip surrogate codepoints.
+			// `String.fromCodePoint` produces a lone surrogate for them.
+			// Unicode script properties do not match lone surrogates.
 			if (cp >= 0xd8_00 && cp <= 0xdf_ff) continue
 
 			if (scriptForCodepoint(cp) !== code) continue
@@ -204,8 +206,8 @@ describe("scriptForCodepoint", () => {
 	 * The converse direction, what the table leaves uncovered, since asserting only
 	 * that claimed scripts are real says what the table misses.
 	 *
-	 * The allowance is per script rather than global, each number is a measurement of the uncovered
-	 * remainder rather than a target, and a number that grows is a script the table stopped answering for.
+	 * Each allowance measures the uncovered remainder for one script.
+	 * A growing value means the table covers fewer codepoints in that script.
 	 */
 	const UNCOVERED_ALLOWANCE: Readonly<Record<string, number>> = {
 		// Hentaigana, the historic hiragana variants, at U+1B002 and above.
@@ -257,8 +259,9 @@ describe("scriptForCodepoint", () => {
 	})
 
 	it("says Zzzz for a script it has no ranges for, rather than folding it into a neighbour", () => {
-		// Devanagari ग; an address in a script this file does not carry is a script it cannot
-		// name, which lets a consumer tell that apart from "no script here".
+		// Devanagari ग has no range in this file.
+		// The function returns Zzzz for it.
+		// Consumers can distinguish missing script coverage from "no script here".
 		expect(scriptForCodepoint(0x09_17)).toBe("Zzzz")
 	})
 })
@@ -267,8 +270,8 @@ describe("scriptForRange", () => {
 	const CHINESE_UNIT = "逊克二分场四队, HEILONGJIANG, CHINA"
 
 	it("answers per segment, which is not what the whole string answers", () => {
-		// The string reads Latin because the romanized province and country outweigh
-		// the Han unit, which itself reads Han.
+		// The romanized province and country outweigh the Han unit, so the string reads Latin.
+		// The Han unit reads Han on its own.
 		const shape = computeQueryShape(CHINESE_UNIT)
 
 		expect(shape.scripts[0]!.script).toBe("Latn")
@@ -327,8 +330,8 @@ describe("foldInputScripts", () => {
 	})
 
 	it("excludes digits and punctuation from BOTH halves of the share", () => {
-		// Otherwise a Japanese address with a postcode reports a lower Han share than the same
-		// address without one, and the number measures the punctuation rather than the writing.
+		// A Japanese postcode would lower the Han share for an address containing the same Han text.
+		// The measured share should reflect the writing rather than digits and punctuation.
 		const withPostcode = foldInputScripts("〒100-0005 東京都千代田区")
 		const without = foldInputScripts("東京都千代田区")
 
@@ -336,7 +339,8 @@ describe("foldInputScripts", () => {
 	})
 
 	it("answers an empty list when nothing in the input names a script", () => {
-		// A bare postcode is script-neutral, and an empty list says so where a default would not.
+		// A bare postcode has no script.
+		// An empty list records that result without supplying a default.
 		expect(foldInputScripts("10118")).toEqual([])
 	})
 

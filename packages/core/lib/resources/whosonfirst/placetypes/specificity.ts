@@ -5,11 +5,11 @@
  *
  *   How specific a placetype is, the ordering `Placetype.ts` deliberately does not give you.
  *
- *   WOF placetype ids follow assignment order, and `Placetype.ts` says so in place. Consumers that
- *   need to compare placetypes rank them here instead.
+ *   WOF placetype IDs follow assignment order. `Placetype.ts` states this in place.
+ *   Consumers that compare placetypes use the ranks here.
  *
- *   This scale orders the eleven placetypes it shares with `resolver-wof-sqlite/ancestry.ts`'s
- *   `PLACETYPE_DEPTH` identically, and `specificity.test.ts` holds that agreement. The two scales
+ *   This scale orders the eleven placetypes shared with `resolver-wof-sqlite/ancestry.ts`'s
+ *   `PLACETYPE_DEPTH` identically. `specificity.test.ts` checks that agreement. The two scales
  *   differ in offset and in what an unranked placetype means, never in which of two placetypes is
  *   finer.
  */
@@ -49,9 +49,10 @@ export const PLACETYPE_SPECIFICITY: Readonly<Partial<Record<WhosOnFirstPlacetype
 /**
  * The rank of a placetype, or `undefined` when it carries none.
  *
- * Returning `undefined` rather than a number is the point: a caller that cannot rank
- * a row has to decide what that means for its own check, and the two reasonable
- * answers (block conservatively, or ignore) differ per call site.
+ * Returning `undefined` rather than a number leaves the decision to the caller.
+ * A caller that cannot rank a row must decide what that means for its own check.
+ *
+ * The two reasonable answers (block conservatively, or ignore) differ per call site.
  */
 export function placetypeSpecificity(placetype: string | null | undefined): number | undefined {
 	if (!placetype) return undefined
@@ -62,9 +63,11 @@ export function placetypeSpecificity(placetype: string | null | undefined): numb
 /**
  * Is `candidate` at least as fine-grained as `reference`?
  *
- * `undefined` when either placetype is unranked, leaving the caller to decide.
- * The comparison is `>=` so an equal rung counts as covering, which is what a check for
- * whether the place is already represented wants.
+ * Returns `undefined` when either placetype is unranked.
+ * The caller decides how to handle that result.
+ *
+ * The comparison uses `>=` so an equal rung counts as covering.
+ * A check for an already represented place needs that behavior.
  */
 export function isAtLeastAsSpecific(
 	candidate: string | null | undefined,

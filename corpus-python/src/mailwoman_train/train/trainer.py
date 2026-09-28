@@ -1,9 +1,9 @@
 """Training loop for the Stage 1 coarse token-classification model.
 
-`train()` below is the order the stages run in: `setup.py` holds what a run decides before its
-first batch, `loop.py` the optimizer loop, and the callbacks what is written as it goes.
-`tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape, the event order and
-the final per-parameter weights, so a stage that moves is a failing test rather than a changed
+`setup.py` holds what a run decides before its first batch. `loop.py` runs the optimizer loop.
+Callbacks write the run's outputs.
+`tests/mailwoman_train/train/test_train_loop_trace.py` pins the CSV shape and event order.
+It also pins final per-parameter weights, so a moved stage fails the test rather than changing the
 model.
 """
 
@@ -121,7 +121,7 @@ def train(
     # Mandatory on gfx1103 — flash/mem-efficient sdpa paths crash bf16 on this GPU.
     force_math_sdpa()
     # A reps-targeted source's weight is derived from the corpus row counts and this run's samples,
-    # so the loader samples the mixture the config named in reps per row.
+    # so the loader samples the mixture specified by the config in reps per row.
     derived_reps = resolve_config_reps(cfg)
     if derived_reps:
         print(format_derivation(derived_reps), flush=True)

@@ -132,7 +132,10 @@ function probeCountry(token: string): string | undefined {
 }
 
 /**
- * Result of a country match: the alpha-2 code, the canonical English name, and the matched surface.
+ * Result of a country match.
+ *
+ * It contains the alpha-2 code and canonical English name.
+ * It also contains the matched surface.
  */
 export interface CountryMatch {
 	iso2: string
@@ -164,9 +167,11 @@ export function matchCountry(token: string | null | undefined): CountryMatch | n
  * surface a declared country field carries — `ES`, `ESP` or `Spain`.
  *
  * Two resolvers, in this order, because they answer different questions.
- * A two-letter value is taken as the code: {@link matchCountry} deliberately refuses `AR` and `VE`
- * because in address text they are Arkansas and a Spanish preposition far more often than Argentina
- * and Venezuela, and that caution is wrong for a field whose whole job is to name the country.
+ * A two-letter value is taken as the code: {@link matchCountry} deliberately refuses `AR`
+ * and `VE` because address text uses them for Arkansas and a Spanish preposition
+ * more than it uses them for Argentina and Venezuela.
+ *
+ * That caution is wrong for a field whose job is to identify the country.
  *
  * Anything longer goes through {@link matchCountry}, which resolves an alpha-3 and a name alike.
  *
@@ -203,10 +208,12 @@ export function formatAsCountryISO2(value: string): CountryISO2 {
 /**
  * Whether a value has the two-upper-case-letter shape a country code is keyed by.
  *
- * This admits a code {@link CountryISO2} does not list, which is why it exists
- * beside {@link formatAsCountryISO2}: `XK` is Kosovo, carried by the source register
- * and by the `operational-non-iso-codes` postal regime, and `ZZ` is the user-assigned
- * code the corpus fragment recipes put on a row whose country is undetermined.
+ * This admits a code that {@link CountryISO2} does not list.
+ * It sits beside {@link formatAsCountryISO2} for two cases.
+ *
+ * `XK` represents Kosovo in the source register and the `operational-non-iso-codes` postal regime.
+ * `ZZ` is the user-assigned code that corpus fragment recipes put on a row whose country is undetermined.
+ *
  * Both are legitimate keys and neither is in the 249 ISO members, so a filter or a row validator
  * checks the shape and a field that means a real country calls {@link formatAsCountryISO2}.
  */

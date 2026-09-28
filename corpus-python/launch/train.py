@@ -1,11 +1,11 @@
-"""The GPU run itself, its wall-clock budget, and the entry point an operator types.
+"""The GPU training run, its wall-clock budget and its command-line entry point.
 
     modal run -d -m launch.train_remote --config <recipe>.yaml --resume auto
 
 Stage what the recipe reads first, with `launch/syncs.py`; this module trains against whatever is
-already on the volume. Two preflights run before the GPU is billed — the corpus receipts on CPU, and
-the wall-clock estimate against this function's timeout — because both failures are otherwise found
-hours in, after the spend.
+already on the volume. Two preflights run before the GPU is billed. The first checks corpus receipts
+on CPU. The second compares the wall-clock estimate with this function's timeout. Without those
+checks, either failure can appear hours into the run, after the spend.
 """
 
 from __future__ import annotations

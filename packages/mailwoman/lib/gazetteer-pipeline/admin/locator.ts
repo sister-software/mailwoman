@@ -52,8 +52,8 @@ export interface AdminLocatorOptions {
 	/**
 	 * WOF polygon DB supplying the geometry.
 	 *
-	 * A place present in the admin DB with no row here cannot be located, and the locator
-	 * counts that rather than treating it as a probe-time miss.
+	 * A place present in the admin DB with no row here cannot be located.
+	 * The locator counts that rather than treating it as a probe-time miss.
 	 */
 	polygonPath: PathBuilderLike
 	placetype: string

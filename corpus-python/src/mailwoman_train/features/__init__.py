@@ -12,11 +12,11 @@ continuum rather than a switch: a token with no clue contributes no signal, so a
 given no features computes what an encoder built without the channel computes. There is no discrete
 "no clue" embedding and no regime to switch between.
 
-The five, and what each is for:
+Five feature channels and their purposes:
 
 **Postcode anchor** — a uniform country posterior over the locale set plus a 2-d centroid, painted on
-the postcode span. Position-local, which is the property the global locale FiLM lacks. The two
-compose, anchor at the input and FiLM after the blocks. Robustness comes from a confidence CURRICULUM
+the postcode span. This position-local design has a property the global locale FiLM lacks. The two
+compose, with the anchor at the input and FiLM after the blocks. Robustness comes from a confidence CURRICULUM
 applied upstream in the loader. It is painted beside the tokenizer rather than here, because locating
 a postcode span needs piece offsets.
 
@@ -25,8 +25,8 @@ codex lexicon. The homograph bit explicitly marks "context decides here". See `g
 
 **Country lexicon** — `[country_surface, country_ambiguous]`. Country is a closed, enumerable class of
 roughly 250 surfaces that the learned grammar mislabels in the WOF-admin leading-long-form case. It
-gets its own projection and cue rather than a gazetteer slot, and is not zeroed near a postcode, so a
-trailing "…12345 USA" keeps its clue.
+gets its own projection and cue rather than a gazetteer slot. The channel stays active near a postcode,
+so a trailing "…12345 USA" keeps its clue.
 
 **Street type** — a multi-hot from the codex street-type lexicon (rue, boulevard, street, straße, …),
 reusing the gazetteer lexicon format and its matcher. A separate channel rather than a gazetteer slot

@@ -3,16 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Run one bounded child process and read its result off stdout — the coordination every chunked layer build uses
- *   to keep a polyfill's heap bounded: h3's wasm heap cannot be reset from JavaScript and does not survive an
- *   unbounded number of polyfill calls, so the process boundary gives each range an interpreter that starts empty.
+ *   Run one bounded child process and read its result from stdout.
+ *   Chunked layer builds use this to bound a polyfill's heap.
+ *   JavaScript cannot reset h3's wasm heap.
+ *   The heap does not survive unbounded polyfill calls.
+ *   The process boundary gives each range an interpreter that starts empty.
  *
- *   Stdout contains only the result, stderr is inherited so progress passes straight through, and only the last
- *   stdout line is read, so a child that prints diagnostics before its result still parses.
+ *   Stdout contains only the result. Stderr is inherited so progress passes through.
+ *   The function reads only the last stdout line, so a child can print diagnostics before its result.
  *
- *   A non-zero exit throws, and so does a chunk that exits cleanly having printed no rows: a chunk that died
- *   mid-range has already written part of its rows into the shared artifact, and continuing would seal a database
- *   missing rows nobody could name, which reads downstream as a smaller source rather than as a failure.
+ *   A non-zero exit throws.
+ *   A chunk that exits cleanly without rows also throws.
+ *   A chunk that dies mid-range has already written part of its rows into the shared artifact.
+ *   Continuing would seal a database
+ *   missing rows without identifiers.
+ *   Downstream code reads the incomplete database as a smaller source rather than as a failure.
  */
 
 import { TextSpliterator } from "spliterator"

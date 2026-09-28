@@ -4,16 +4,16 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer census` — build the PCN1 placetype census from the shipped WOF admin DB: count
- *   each locality-class parent's children through the projection table, and fold parent surfaces with the
+ *   each locality-class parent's children through the projection table. It folds parent surfaces with the
  *   same `normalizeFSTToken` the PIX1 pair index uses, so a consumer folds once and probes both artifacts.
  *
  *   Fold collisions sum: two distinct raw parents that fold together are one census node whose counts are
- *   the union of both, and the serializer refuses duplicate parents so a merge bug surfaces as a throw
- *   rather than a silently halved count.
+ *   the union of both. The serializer refuses duplicate parents and makes a merge bug throw
+ *   instead of producing a silently halved count.
  *
  *   `--delta` is deliberately optional and unset by default, unlike the pair index's required one: the
- *   census ships as data + loader + offline probe with no decode wiring, and writing an unmeasured delta
- *   now would put a bias into a shipped artifact.
+ *   census ships as data, a loader and an offline probe. It has no decode wiring.
+ *   Writing an unmeasured delta now would put a bias into a shipped artifact.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

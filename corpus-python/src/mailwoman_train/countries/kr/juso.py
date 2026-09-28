@@ -8,9 +8,9 @@ nationwide road-code file, laid out as the guide inside the zip states (붙임1,
     지번_<시도>.txt              관리번호|일련번호|법정동코드|시도명|시군구명|법정읍면동명|법정리명|산여부|지번본번|지번부번|대표여부
     부가정보_<시도>.txt          관리번호|행정동코드|행정동명|우편번호|우편번호일련번호|다량배달처명|건축물대장건물명|시군구건물명|공동주택여부
 
-A LABEL row is one 주소 record joined to its road code (the admin ladder and the road name), its representative
-lot (대표여부 = 1: the 법정동, the 리, and the lot number the 지번 form writes) and its supplement (the postcode — the
-기초구역번호 on the 주소 row is the five-digit postcode — and the building name). The row count note in the zip gives
+A LABEL row joins one 주소 record to its road code (the admin ladder and road name), its representative
+lot (대표여부 = 1: the 법정동, the 리, plus the lot number written in 지번 form) and its supplement
+(the postcode — 기초구역번호 on the 주소 row — with the building name). The row count note in the zip gives
 6,424,089 addresses and 8,194,643 lots for the 2026-08-31 edition.
 
 The 2026 edition writes the merged 전남광주통합특별시 where every older source (the permit registry, Who's On First)
@@ -78,8 +78,10 @@ class LabelRow:
 
 
 def member_names(archive: zipfile.ZipFile) -> dict[str, str]:
-    """Readable name → the archive's own name. The portal writes CP949 names without the UTF-8 flag, which `zipfile`
-    surfaces as CP437 mojibake. recoding them is the only way to find `주소_서울특별시.txt` by name."""
+    """Readable name → the archive's own name. The portal writes CP949 names without the UTF-8 flag.
+
+    `zipfile` surfaces them as CP437 mojibake. Recode them to find `주소_서울특별시.txt` by name.
+    """
     names: dict[str, str] = {}
     for info in archive.infolist():
         if info.flag_bits & 0x800:

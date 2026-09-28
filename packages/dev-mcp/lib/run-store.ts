@@ -5,9 +5,9 @@
  *
  * Past runs on disk, so a `{kind: "recorded"}` arm can be replayed rather than re-measured.
  *
- * A cache: `evals/scores-by-version.json` and `docs/records/evals/` are the record, and a pruned run has
- * to be re-measured. A run whose `tree_fingerprint` no longer matches the working tree is still evidence about that
- * tree, and `{kind:"recorded"}` refuses to compare across fingerprints anyway.
+ * This is a cache. `evals/scores-by-version.json` and `docs/records/evals/` are the record.
+ * A pruned run has to be re-measured. A run whose `tree_fingerprint` no longer matches the working tree
+ * remains evidence about that tree. `{kind:"recorded"}` refuses to compare across fingerprints.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -26,7 +26,8 @@ export const RUN_STORE_DIR = dataRootPath("dev-mcp", "runs")
 /**
  * Age ceiling in days.
  *
- * A stored run describes the tree that produced it, and after two weeks of commits that tree is gone.
+ * A stored run describes the tree that produced it.
+ * Two weeks of commits make that tree unavailable.
  */
 export const RETENTION_DAYS = 14
 

@@ -365,8 +365,8 @@ export type PersonNameStyle = "full" | "short"
  * `"short"` prints what a person is addressed by, which is the form a display label and a match key want.
  *
  * The particle travels with the surname in both styles.
- * The parser stores it separately so the matcher can compare `Vega` independently of
- * `de la`; printing them apart would produce a name nobody wrote.
+ * The parser stores it separately so the matcher can compare `Vega` independently of `de la`;
+ * printing them apart would produce a form absent from the input name.
  */
 export function formatPersonName(name: PersonName | null | undefined, style: PersonNameStyle = "full"): string {
 	if (!name) return ""

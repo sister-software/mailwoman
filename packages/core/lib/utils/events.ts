@@ -5,6 +5,7 @@
  */
 
 /**
- * A promise for an emitter's next named event — `await once(child, "exit")` — rejecting on its `error`.
+ * A promise for the emitter's next event with the requested key —
+ * `await once(child, "exit")` — rejecting on its `error`.
  */
 export { once } from "node:events"

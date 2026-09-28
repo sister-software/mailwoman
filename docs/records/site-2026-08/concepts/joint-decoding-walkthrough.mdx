@@ -99,7 +99,7 @@ Houston   →  locality (0.85 × ?)
 TX        →  region   (0.95 × ?)
 ```
 
-Every Mailwoman version before v0.5.0 returned this reading. It has two regions in one address (`NY` and `TX`) and one locality. The resolver tries to satisfy it and fails, because no `parent_id` chain places Houston in both New York and Texas. The output is incoherent.
+Every Mailwoman version before v0.5.0 returned this reading. It has two regions in one address (`NY` and `TX`) and one locality. No `parent_id` chain places Houston in both New York and Texas, so the resolver cannot return this interpretation. The output is incoherent.
 
 **Interpretation Y** takes the `venue` reading for `NY-NY`:
 

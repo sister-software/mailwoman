@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The synchronous street-tier lookup interfaces the resolution ladder is built on, covering
- *   address point, interpolation, street centroid, and postcode prefix. Synchronous by design,
- *   because `@mailwoman/neural` calls into this ladder. Turning one member async forces every
- *   implementer and both package boundaries async with it.
+ *   This module defines the synchronous street-tier lookup interfaces used by the resolution ladder.
+ *   The ladder checks address points and interpolation results.
+ *   It also checks street centroids and postcode prefixes.
+ *   These interfaces stay synchronous because `@mailwoman/neural` calls into the ladder.
+ *   Making one member asynchronous would require asynchronous implementers and package boundaries.
  */
 
 /**
@@ -31,8 +32,8 @@ export interface AddressPointHit {
 	 *
 	 * These hold the register's locality in normalized key form and its postcode.
 	 *
-	 * A rooftop answer can then be decorated with the commune and postcode the register
-	 * attests, which a query that never carried them cannot supply.
+	 * The resolver can then decorate a rooftop answer with the commune and postcode attested by the register.
+	 * A query that never carried those values cannot supply them.
 	 * Optional, because not every source carries both.
 	 */
 	localityNorm?: string
@@ -143,10 +144,11 @@ export interface InterpolationLookup {
 	 * so it ships in the artifact.
 	 * The resolver applies it as the default whenever `ResolveOpts.interpolationRadiusCalibration` is absent.
 	 *
-	 * `undefined`, or an implementation without the property, means the artifact carries none,
-	 * which happens for extracts built before the metadata table existed.
-	 * Behavior is then exactly the pre-artifact ladder, which uses the
-	 * caller-supplied factor or the raw value.
+	 * `undefined` means the artifact carries no multiplier.
+	 * An implementation without the property also reports no multiplier.
+	 *
+	 * Extracts built before the metadata table existed use that behavior.
+	 * The ladder then uses the caller-supplied factor or raw value, as before.
 	 *
 	 * Implementations must read this at open time (constructor/factory), never per-lookup.
 	 * `find()` is synchronous by design.

@@ -7,8 +7,8 @@
  */
 
 /* oxlint-disable mailwoman/prefer-home -- the admin tails below are written as US templates because every tuple this
-   synthesizer draws from is `US_TUPLES`, a hardcoded US list. The comma-less arm is a deliberate malformation of that
-   order, which a layout cannot express: it exists to stress the segmentation cue the commas carry. */
+   synthesizer draws from is `US_TUPLES`, a hardcoded US list. The comma-less arm deliberately malforms that order.
+   A layout cannot express it. The arm stresses the segmentation cue carried by commas. */
 
 import type { DirectionalAbbreviation } from "@mailwoman/codex/us"
 import { sample } from "@mailwoman/core/random"
@@ -17,9 +17,9 @@ import type { CanonicalRow } from "#types"
 
 /* oxlint-disable sister-software/no-unnamed-threshold -- the bare decimals below are weighted-sampler
    cutoffs rather than thresholds: `const r = random()` followed by a cascade of `r < 0.4` branches is the
-   output distribution, and reading the cascade top-to-bottom is how you see it. Naming each cutoff
-   would hide the distribution behind a wall of identifiers. Genuine thresholds in these files are
-   extracted as named constants above. */
+   output distribution. Reading the cascade top-to-bottom shows it. Naming each cutoff
+   would hide the distribution behind identifiers. The genuine thresholds in these files are
+    extracted as constants above. */
 
 /**
  * The row templates that {@link synthesizeBoundaryStressRow} can produce.
@@ -236,8 +236,8 @@ const FR_NAMES = [
 /**
  * Venue prefixes for bare-locality rows.
  *
- * The list uses only words that the base corpus labels as venue, and avoids words
- * that it mostly labels as street or locality.
+ * The list uses only words that the base corpus labels as venue.
+ * It avoids words that it mostly labels as street or locality.
  */
 const VENUES = [
 	"Community Center",

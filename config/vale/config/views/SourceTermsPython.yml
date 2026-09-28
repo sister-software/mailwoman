@@ -3,5 +3,6 @@ scopes:
   - name: source
     expr: |
       (comment) @prose
-      (string_content) @prose
-      (identifier) @prose
+      (module . (expression_statement (string (string_content) @prose)))
+      (class_definition body: (block . (expression_statement (string (string_content) @prose))))
+      (function_definition body: (block . (expression_statement (string (string_content) @prose))))

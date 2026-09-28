@@ -23,7 +23,7 @@ export interface PostcodeShapeVerdict {
 	narrowing?: string[]
 
 	/**
-	 * Postcode values whose shape fits a system named by a sibling country or region span.
+	 * Postcode values whose shape fits a system used by a sibling country or region span.
 	 */
 	confirmed: string[]
 
@@ -77,7 +77,7 @@ function collectSiblingSystems(roots: readonly AddressNode[]): Set<string> {
 
 /**
  * Checks each postcode span's shape against the postcode systems of the countries
- * and regions named in the same tree, without querying a backend.
+ * and regions listed in the same tree, without querying a backend.
  *
  * A span that fits none of those systems is excluded: an all-digit span is retagged
  * `house_number`, and any other span is stamped `postcode_shape_excluded`.

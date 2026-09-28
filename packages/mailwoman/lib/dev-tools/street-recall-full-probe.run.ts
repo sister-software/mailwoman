@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Measures street exact-match on the held-out US golden subset where gold has both a street and a
- *   locality span, compares a baseline to a candidate, and tallies how often a street regression
+ *   locality span. It compares a baseline to a candidate and tallies how often a street regression
  *   coincides with the gold street's leading token landing in the candidate's locality (the "eat"
  *   mechanism). The guard refuses a candidate more than one percentage point below the baseline.
  *

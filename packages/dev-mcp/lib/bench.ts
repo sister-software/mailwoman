@@ -7,10 +7,10 @@
  *
  *   A warm daemon makes it very easy to publish a throughput number no user will ever see. The measured gap on this box
  *   is not subtle — ~1.37 s of fixed cost before a cold process answers at all, against ~115 ms per query once warm —
- *   so a figure that quietly averages the two describes a system nobody runs. Cold and warm are therefore separate
- *   fields, always, and `cold: null` means the caller did not ask for it rather than that it was free.
+ *   so a figure that averages the two describes neither mode. The report keeps cold and warm fields separate.
+ *   `cold: null` means the caller did not request a cold measurement. It does not mean the operation was free.
  *
- *   Concurrency is fixed at 1 and says so. `session.run()` in `onnxruntime-node` blocks the thread it is on, and
+ *   Concurrency is fixed at 1 and reported. `session.run()` in `onnxruntime-node` blocks its thread.
  *   `geocode-stream.ts` records the measurement that settles the rest: on a shared multi-GB WOF SQLite, throughput
  *   peaked at 2 workers (~1.4×) and degraded beyond, because memory bandwidth and the shared database are the ceiling.
  *   A single-threaded number is the honest one to quote.
@@ -23,9 +23,9 @@ export interface LatencyReading {
 	/**
 	 * Nearest-rank percentiles.
 	 *
-	 * `percentile` takes `p` in **[0, 100]**, not a fraction — agents.md flags the unit
-	 * because local copies elsewhere took a fraction, and a careless swap silently
-	 * changes the number by orders of magnitude.
+	 * `percentile` takes `p` in **[0, 100]**, not a fraction. agents.md flags the unit
+	 * because local copies elsewhere took a fraction.
+	 * A careless swap silently changes the number by orders of magnitude.
 	 */
 	p50_ms: number | null
 	p90_ms: number | null
@@ -73,9 +73,11 @@ export interface BenchReading {
 /**
  * Why every benchmark here is single-threaded, carried on the result rather than left to a reader to know.
  *
- * Two measurements rather than a preference: `session.run()` in `onnxruntime-node`
- * blocks its calling thread, and `geocode-stream.ts` recorded throughput on a shared
- * multi-GB WOF SQLite peaking at 2 workers (~1.4x) and degrading beyond it.
+ * Two measurements document the concurrency decision.
+ * `session.run()` in `onnxruntime-node` blocks its calling thread.
+ *
+ * `geocode-stream.ts` recorded throughput on a shared multi-GB WOF SQLite peaking
+ * at 2 workers (~1.4x) and degrading beyond it.
  */
 export const CONCURRENCY_NOTE =
 	"Single-threaded, and deliberately: session.run() in onnxruntime-node blocks the calling thread, and " +

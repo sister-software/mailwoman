@@ -3,27 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The pipe-delimited nasis export inside a survey-area archive: which file holds which table, which
- *   column sits at which position, and the authority's own declared domains.
+ *   Reads the pipe-delimited NASIS export inside a survey-area archive. It maps files to tables and columns to
+ *   positions, then reads the authority's declared domains.
  *
- *   the files carry no header and the archive ships the schema. `mstab.txt` maps a logical table name to
- *   the file base name that holds it (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt` — neither is
- *   guessable), and `mstabcol.txt` gives every column's ordinal position. So the reader looks the positions
- *   up rather than hard-coding them, and {@link readTable} throws on a requested column the shipped
- *   dictionary does not declare. A reader that quietly returned `undefined` for a renamed column would turn
- *   "the source changed" into "there is none of it", at exactly the measurement boundary where that lie
- *   costs the most.
+ *   The files have no headers. The archive supplies their schema. `mstab.txt` maps each logical table name to a
+ *   filename (`component` → `comp.txt`, `sacatalog` → `sacatlog.txt`). The filenames cannot be inferred. `mstabcol.txt`
+ *   gives each column's ordinal position. The reader looks up those positions instead of hard-coding them.
+ *   {@link readTable} throws when a requested column is absent from the shipped dictionary. Returning `undefined`
+ *   for a renamed column would turn a source change into an apparent absence. That would corrupt the measurement.
  *
- *   quote handling is not optional here, and the measurement determines the result. `sacatlog.txt` holds 594 newline
- *   bytes and exactly one record: its `fgdcmetadata` column carries a 43,251-character XML document with
- *   embedded newlines. `mstabcol.txt` — the column dictionary itself — holds 913 newlines and 865 records.
- *   A line-splitting reader gets 594 malformed rows from a one-row file, every one of them well-formed
- *   enough to keep going.
+ *   Quote handling affects the parsed result. `sacatlog.txt` contains 594 newline bytes and one record. Its
+ *   `fgdcmetadata` column contains a 43,251-character XML document with embedded newlines. `mstabcol.txt`, the column
+ *   dictionary, contains 913 newlines and 865 records. A line-splitting reader would create 594 malformed rows from
+ *   the one-row `sacatlog.txt` file. Each malformed row would still look valid enough to process.
  *
- *   the declared domains come OUT OF the archive too, which is stronger than transcribing them.
- *   `msdomdet.txt` carries every `Choice` column's members with the authority's own prose definition —
- *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, the 28 conditional farmland
- *   classifications, the six component kinds. The layer stores them and validates against them.
+ *   The archive also supplies its declared domains. Reading them avoids transcribing values by hand.
+ *   `msdomdet.txt` carries every `Choice` column's members and the authority's prose definition. It includes
+ *   capability classes 1 through 8, subclasses `c`/`e`/`s`/`w`, 28 conditional farmland classifications and six
+ *   component kinds. The layer stores and validates those values.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -56,7 +53,7 @@ async function readPipeDelimited(path: PathBuilderLike): Promise<TabularRow[]> {
 }
 
 /**
- * The archive's own description of itself: table → file, and table → column positions.
+ * Maps each table to a file and to its column positions, as recorded in the archive's dictionary.
  */
 export interface TabularDictionary {
 	/**
@@ -72,10 +69,11 @@ export interface TabularDictionary {
 /**
  * Column positions in `mstab.txt` and `mstabcol.txt` themselves.
  *
- * These two are the only positions this module hard-codes, and they cannot be looked up
- * because they are what the lookup is built from.
- * Both files declare themselves in `mstabcol.txt`, so the assertions below check the
- * bootstrap against the archive's own account of it rather than trusting it.
+ * This module hard-codes only these two positions.
+ * It cannot look them up because they initialize the lookup.
+ *
+ * `mstabcol.txt` declares positions for both files.
+ * The assertions below check the bootstrap against the archive's own dictionary.
  */
 const MSTAB_TABLE_NAME = 0
 const MSTAB_FILE_NAME = 4
@@ -86,8 +84,8 @@ const MSTABCOL_COLUMN_NAME = 2
 /**
  * Declared widths of the two bootstrap files, asserted before either is read as a dictionary.
  *
- * A different width means the metadata format changed, and reading positions out of
- * a changed format is how a builder mis-reads every column at once.
+ * A different width means the metadata format changed.
+ * Reading positions from the changed format could misread every column.
  */
 const MSTAB_WIDTH = 5
 const MSTABCOL_WIDTH = 14
@@ -144,9 +142,9 @@ function assertWidth(rows: ReadonlyArray<TabularRow>, width: number, name: strin
 /**
  * A reader over one logical table, projecting the columns a caller names.
  *
- * The projection is by name and a missing name throws, which is the whole point:
- * this is the shape that produced the repository's worst measurement bugs,
- * where a silently dropped column read downstream as an empty world.
+ * The projection selects columns by name and throws when a name is missing.
+ * This prevents a silently dropped column from appearing downstream as an empty dataset,
+ * the failure behind the repository's worst measurement bugs.
  */
 export interface TabularTable {
 	/**
@@ -234,7 +232,7 @@ export interface DomainMember {
  *
  * Declared in `mstabcol.txt` under table `msdomdet`, so unlike the two bootstrap
  * files above these could be looked up.
- * They are named here because the domain read runs before any dictionary-driven read
+ * They are listed here because the domain read runs before any dictionary-driven read
  * and the file is five columns wide by its own declaration.
  */
 const MSDOMDET_WIDTH = 5
@@ -275,14 +273,16 @@ export function domainCodes(members: ReadonlyArray<DomainMember>, domain: string
 /**
  * `M/D/yyyy H:MM:SS` (and the `MM/DD/yyyy HH:MM:SS` the tabular export writes) to an ISO date.
  *
- * The two channels spell the same instant differently — Soil Data Access answers
- * `9/9/2025 1:57:25 PM` and the shipped `sacatlog.txt` writes `09/09/2025 13:57:25` —
- * and the download URL needs `2025-09-09`.
+ * Soil Data Access writes `9/9/2025 1:57:25 PM`.
+ * The shipped `sacatlog.txt` writes the same instant as `09/09/2025 13:57:25`.
+ *
+ * The download URL needs `2025-09-09`.
  * Parsing to a date rather than slicing the string is what makes both channels agree.
  *
  * @throws {Error} When the value is not one of those shapes.
- * A freshness date guessed wrong asks the download host for a file that does not exist,
- * and the host answers 400 rather than 404, which reads as a bad request rather than a bad date.
+ * An incorrect freshness date requests a nonexistent file.
+ * The host returns 400 for the request.
+ * A 404 would identify a missing file.
  */
 // repo-health-ignore export-name-affix -- parses the survey's M/D/yyyy form; `isoDate` formats a Date and reads none.
 export function saverestToISODate(value: string): string {

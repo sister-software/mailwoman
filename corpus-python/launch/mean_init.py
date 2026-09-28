@@ -1,9 +1,9 @@
-"""Running one named splice: the Modal half of `launch/splices.py`.
+"""Running one selected splice: the Modal half of `launch/splices.py`.
 
     modal run -m launch.train_remote::mean_init --splice ptro
 
-Thin by design, the way `syncs.py` is thin over `corpora.py`. The values live in `splices.py`, which
-imports no Modal and is. Therefore, testable without the SDK. this supplies the volume, the image, and
+Thin by design, the way `syncs.py` is thin over `corpora.py`. The values live in `splices.py`.
+That module imports no Modal, so tests can run without the SDK. This module supplies the volume, image and
 the refusal when a result does not match what the table recorded.
 """
 
@@ -19,7 +19,7 @@ from .splices import SPLICES, TOKENIZERS
     timeout=1200,
 )
 def mean_init(splice: str = "") -> None:
-    """Expand one named splice's checkpoint onto its wider tokenizer, and commit the result.
+    """Expand a selected splice's checkpoint onto its wider tokenizer and commit the result.
 
     Mean-init is FVT: each new piece's embedding row starts as the mean of the rows its old-tokenizer
     constituents had. Encoder and heads are untouched.

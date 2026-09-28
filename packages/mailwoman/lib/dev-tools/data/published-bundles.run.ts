@@ -6,11 +6,11 @@
  *   Measures what the public bucket serves for every artifact in `BUNDLES` and writes the committed snapshot
  *   `packages/mailwoman/data/published-bundles.json`.
  *
- *   Each artifact gets two readings. The size is the `content-length` a HEAD request against its public URL
- *   reports, which needs no download. The tier and license come from the `layer_manifest` of the local copy under
- *   the data root, which only a host that has pulled the bundle can supply. An artifact this host does not hold
+ *   Each artifact gets two readings. A HEAD request against its public URL reports `content-length` without downloading it.
+ *   The tier and license come from `layer_manifest` in the local copy under the data root.
+ *   Only a host that has pulled the bundle can supply that copy. An artifact this host does not hold
  *   gets its manifest recorded as unmeasured with the path that was looked for, so a reader of the snapshot can
- *   tell a tier nobody read from a tier somebody read.
+ *   tell a tier with a read record from one without a read record.
  *
  *   The `published-bundles` repository-health check compares the sizes here against the registry's `approxBytes`,
  *   and the docs site renders the snapshot beside its date. Run this after publishing an artifact or changing the
@@ -51,7 +51,8 @@ import {
 const LAYER_TIERS = new Set<string>(Object.values(LayerTier))
 
 /**
- * The manifest row's `tier` column is a string, and only a value `LayerTier` defines is recorded as a tier.
+ * The manifest row's `tier` column is a string.
+ * Record a tier only when `LayerTier` defines its value.
  */
 function isLayerTier(value: string): value is LayerTier {
 	return LAYER_TIERS.has(value)
@@ -85,8 +86,9 @@ async function measureSize(url: string): Promise<ServedSize> {
 /**
  * Reads the manifest of the local copy at `path` only when that copy is the published artifact.
  *
- * A data root commonly holds a newer build under the published artifact's local name,
- * and the only cheap test that the two are one file is the size comparison `data status` makes.
+ * A data root commonly holds a newer build under the published artifact's local name.
+ * `data status` compares sizes as the cheapest test that both paths identify one file.
+ *
  * A size that differs records why rather than another build's tier.
  */
 async function measureManifest(path: string, size: ServedSize): Promise<ServedManifest> {
@@ -131,9 +133,10 @@ async function measureManifest(path: string, size: ServedSize): Promise<ServedMa
 }
 
 /**
- * No published artifact records a database-level license apart from its flat expression,
- * and no reader here can measure one, so both halves of the rights record are written
- * as unmeasured and empty rather than derived from that expression.
+ * Published artifacts record one flat license expression for each layer.
+ *
+ * The reader cannot measure a database-level license from that expression.
+ * It writes both rights fields as unmeasured and empty.
  */
 function unmeasuredRights(): BundleRightsRecord {
 	return {

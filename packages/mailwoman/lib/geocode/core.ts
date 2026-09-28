@@ -246,7 +246,7 @@ export function deriveGeocodeRegister(parseInput: string, queryShape = computeQu
 }
 
 /**
- * Inputs derived before parse: normalized text, query shape, register, and parse opts.
+ * Inputs derived before parse: normalized text, query shape, register and parse opts.
  */
 export interface GeocodeParseInputs {
 	/**

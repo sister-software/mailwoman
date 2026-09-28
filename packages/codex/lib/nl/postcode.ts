@@ -4,12 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Dutch postcodes: four digits then two letters (`1012 LG`), the PC6 level CBS publishes a polygon
- *   for. The surface carries the space or omits it, and both spellings are attested.
+ *   for. The surface may carry the space or omit it. Both spellings are attested.
  *
  *   This module holds the key form — compact and upper-case — because that is what a gazetteer row,
- *   an anchor-lookup key and a corpus recipe all compare on, and a spaced or lower-case value silently
+ *   an anchor-lookup key and a corpus recipe compare against. A spaced or lower-case value silently
  *   matches no row. The surface forms belong to the other two NL patterns in the repository:
- *   `POSTCODE_SHAPES`' NL row scans a line for either spelling, and `@mailwoman/core/resolver`'s
+ *   `POSTCODE_SHAPES`' NL row scans a line for either spelling. `@mailwoman/core/resolver`'s
  *   `NL_PC6` accepts either on a bare-postcode tree. Neither is anchored on the key.
  */
 

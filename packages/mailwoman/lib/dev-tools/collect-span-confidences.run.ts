@@ -8,8 +8,8 @@
  *   confidence with a correct/incorrect label, the `(score, correct?)` pairs the isotonic fitter
  *   (`fit-isotonic-calibration.py`) consumes.
  *
- *   Calibration is over predictions (spans the model emitted), conditioning on how often the model is
- *   right when it said tag T at confidence C. So we iterate the decoded tree's spans, and the gold is
+ *   Calibration is over predictions (spans the model emitted). It measures how often the model is
+ *   right when it emits tag T at confidence C. Iterate the decoded tree's spans. Use gold only
  *   used only to label them.
  *
  *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of
@@ -145,8 +145,8 @@ async function main(): Promise<void> {
 		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
-	// Ship-config channels: the calibrator must describe the model as deployed, since anchor,
-	// gazetteer, suppression, conventions, and the span bridge all change span confidences.
+	// The calibrator must describe the model as deployed.
+	// Anchor, gazetteer, suppression, conventions, or the span bridge change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"

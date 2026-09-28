@@ -2,15 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Read-only inspection of a resolved `AddressTree`: the coordinate tiers a node carries, the
- *   resolver-attributed places under it, and the tag presence the eval's preconditions test.
+ * @file Read-only inspection of a resolved `AddressTree`. It reads a node's coordinate tiers and resolver-attributed
+ *   places. It also records the tag presence tested by eval preconditions.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
 import { mostSpecificResolved } from "@mailwoman/resolver"
 
 /**
- * A resolver-attributed node: the WOF place it landed on, that place's name/placetype, and its coordinate.
+ * A resolver-attributed node contains the WOF place it landed on and that place's name and placetype.
+ * It also contains that place's coordinate.
  *
  * `value` is the parsed span, kept beside the resolver's own `name`
  * because ranking a `postalcode` needs both.
@@ -126,8 +127,8 @@ export function collectResolved(tree: AddressTree): Resolved[] {
  * The deepest resolved place in the set, the one whose coordinate the eval grades.
  *
  * Delegates to `@mailwoman/resolver`'s ranking so the grade tracks what result assembly actually returns.
- * A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` over the locality,
- * which is production's ladder on one arm and its opposite on the other.
+ * A flat `PLACETYPE_SPECIFICITY` sort promoted every resolved `postalcode` above the locality.
+ * That reversed production's ranking order for one arm.
  */
 export function mostSpecific(rs: Resolved[]): Resolved | null {
 	return mostSpecificResolved(rs, (r) => ({
@@ -171,8 +172,9 @@ export function hasStreetHouseNumber(tree: AddressTree | null): boolean {
 }
 
 /**
- * The first non-empty street / house-number / postcode values in the tree, the interpolation
- * tier's precondition triple, and the text a diagnostic miss line reproduces.
+ * The first non-empty street, house-number and postcode values in the tree.
+ *
+ * The function also returns the interpolation tier's precondition triple and diagnostic text for a miss.
  */
 export function findInterpolationSpans(tree: AddressTree): {
 	street?: string

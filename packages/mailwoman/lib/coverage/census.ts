@@ -73,7 +73,8 @@ export interface CountryCoverage {
 }
 
 /**
- * Reports whether a country trains, which requires admission and at least one corpus row.
+ * Reports whether a country trains.
+ * Training requires admission and at least one corpus row.
  */
 export function trains(c: Pick<CountryCoverage, "admitted" | "corpusRows">): boolean {
 	return c.admitted && c.corpusRows > 0
@@ -356,7 +357,7 @@ export async function readAdmittedCountries(configPath: PathBuilderLike): Promis
 	const admitted = new Set<string>()
 	let inBlock = false
 
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded, and sync by interface
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- small, bounded and sync by interface
 	for (const line of (await readLocalTextFile(configPath)).split("\n")) {
 		if (/^\s*country_weights:\s*$/.test(line)) {
 			inBlock = true
@@ -601,11 +602,13 @@ export interface CensusCoverageOptions {
 	 */
 	casesRoot: PathBuilderLike
 	/**
-	 * Sets the serving gazetteer, which defaults to the data root's `wof/candidate.db`.
+	 * Sets the serving gazetteer.
+	 * The default is the data root's `wof/candidate.db`.
 	 */
 	gazetteerPath?: string
 	/**
-	 * Recounts the corpus instead of reading the cache, which takes minutes.
+	 * Recounts the corpus instead of reading the cache.
+	 * This takes minutes.
 	 */
 	refresh?: boolean
 }

@@ -11,8 +11,8 @@ import { CSVSpliterator } from "spliterator"
 import type { ProviderID } from "#sdk/common"
 
 /**
- * Column positions in the FCC's 12-column availability CSV, named so a reader
- * can check them against the header row.
+ * Column positions in the FCC's 12-column availability CSV, kept in header order
+ * so a reader can check them against the header row.
  */
 const Column = {
 	LocationID: 3,

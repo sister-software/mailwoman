@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The one registry of synthetic place-id ranges.
  *
- *   A real WOF id is below 2e9. Every other source a gazetteer artifact folds in mints its own ids from a base high
- *   above that, and the bases must be pairwise distinct: the candidate table's `candidate_ancestor` and
+ *   A real WOF id is below 2e9. Every other source a gazetteer artifact folds in mints ids from a higher base.
+ *   The bases must be pairwise distinct. The candidate table's `candidate_ancestor` and
  *   `candidate_interval` sidecars are keyed by `spr_id` alone, a result's `placeID` is `wof:<spr_id>`, and the
  *   backend's `ancestors(id)` answers whichever row wrote last. Two builders that pick the same base give two places
  *   one id — which happened twice while each builder kept its own list of the ranges it believed were taken

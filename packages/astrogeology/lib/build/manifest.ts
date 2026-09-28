@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The build manifest: what a build read, what it wrote with each output's SHA-256 and size, and the exact tool
- *   invocations in between. Written beside the outputs, validated before it is written, and the record the verify
- *   step recomputes against.
+ *   The build manifest records what a build read and wrote. It stores each output's SHA-256 and size.
+ *   It also records the exact tool invocations. The build writes it beside the outputs after validation.
+ *   The verify step recomputes the record against those outputs.
  */
 
 import { statPath } from "@mailwoman/core/fs/readers"
@@ -41,7 +41,8 @@ export function formatTransformation(command: readonly PathBuilderLike[]): strin
 }
 
 /**
- * Compute each output's checksum and size, validate, and write `manifest.json` at `outPath`.
+ * Compute each output's checksum and size.
+ * Then validate and write `manifest.json` at `outPath`.
  *
  * Answers the manifest.
  */

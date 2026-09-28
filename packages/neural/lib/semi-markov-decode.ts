@@ -14,7 +14,8 @@ export interface SemiCRFTransitions {
 	segmentTypes: string[]
 
 	/**
-	 * The maximum span length in tokens, which is the length axis of `span_scores`.
+	 * The maximum span length in tokens.
+	 * It is the length axis of `span_scores`.
 	 */
 	maxSpan: number
 
@@ -45,8 +46,9 @@ export interface DecodedSegment {
 }
 
 /**
- * One complete segmentation of the input and its score, which is comparable only
- * with other hypotheses decoded from the same input.
+ * One complete segmentation of the input and its score.
+ *
+ * Compare the score only with hypotheses decoded from the same input.
  */
 export interface SegmentationHypothesis {
 	score: number

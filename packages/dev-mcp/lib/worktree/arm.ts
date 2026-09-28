@@ -9,7 +9,7 @@
  *
  *   A git worktree has no `node_modules`. Symlinking the main checkout's directory would not work, because
  *   yarn's workspace links resolve back into the main checkout. This module builds a symlink farm instead:
- *   third-party packages link to the main checkout, and each workspace in {@link FINGERPRINTED_WORKSPACES}
+ *   third-party packages link to the main checkout. Each workspace in {@link FINGERPRINTED_WORKSPACES}
  *   links into the worktree. Other workspaces, including `neural-weights-*`, keep their main-checkout links
  *   because their weight files are not committed.
  */
@@ -191,7 +191,8 @@ export async function runWorktreeArm(args: {
 	const setupStartedAt = Date.now()
 
 	// The working-tree arm runs in the main checkout, which already has `node_modules`.
-	// It still runs in a child process through the same runner, so both arms are invoked the same way.
+	// It still runs in a child process through the same runner.
+	// Both arms are invoked the same way.
 	const live = ref === WORKING_TREE_REF
 
 	await using resources = new AsyncDisposableStack()
@@ -246,8 +247,8 @@ export async function runWorktreeArm(args: {
 			cwd: worktree,
 			input: stringifyJSON({ inputs, options }),
 			encoding: "utf8",
-			// A full board through a cold engine takes minutes and returns megabytes,
-			// which exceed the default limits.
+			// A full board through a cold engine takes minutes and returns megabytes.
+			// Both exceed the default limits.
 			timeout: args.timeoutMs ?? 30 * 60 * 1000,
 			maxBuffer: 512 * 1024 * 1024,
 		})

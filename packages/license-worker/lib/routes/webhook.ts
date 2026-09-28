@@ -10,7 +10,7 @@
  *   answers 200 without running anything, so Stripe's redelivery is inert. Otherwise the handler runs first and the
  *   event id is recorded after it succeeds: a crash between the two leaves no record, Stripe retries, and the handler's
  *   own writes are idempotent by primary key, so the retry finds its work done. Recording first would turn one crash
- *   into a payment nobody minted for.
+ *   into a payment without a matching invoice.
  */
 
 import { createRoute, type OpenAPIHono, z } from "@hono/zod-openapi"

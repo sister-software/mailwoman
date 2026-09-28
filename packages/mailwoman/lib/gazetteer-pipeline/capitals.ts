@@ -6,14 +6,14 @@
  *   Build `data/gazetteer/capitals-v1.json`, the capital-status reference: every national
  *   capital (`pplc`) and first-order administrative seat (`ppla`) in the GeoNames gazetteer dumps,
  *   each carrying its coordinate and its folded name set (name + romanization + alternate names).
- *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country,
- *   proximity, and name membership, all three conjuncts together, so a capital-adjacent namesake
- *   cannot stand in for the capital. The alternate names keep exonym rows ("Vienna" for Wien)
+ *   The consumer (`@mailwoman/resolver-wof-sqlite/capitals`) matches a candidate by country, proximity and name
+ *   membership. All three conditions must match, so a capital-adjacent namesake cannot stand in for the capital.
+ *   Alternate names preserve exonym rows ("Vienna" for Wien)
  *   matching without a hand-kept exonym list.
  *
  *   Feature codes are matched exactly: `PPLA2`–`PPLA4` (lower-order seats) and `pplch` (historical
  *   capital) stay out. `countryInfo.txt`, the same source's own catalog, grades the extraction: a
- *   catalog country whose dump yields no `pplc` row, and a catalog capital name that matches none
+ *   catalog country whose dump yields no `pplc` row. It also records a catalog capital name that matches none
  *   of the extracted rows' names, are both recorded in the coverage block rather than silently
  *   absorbed (the partial-reader rule: a reference that could not measure a country must say so).
  */
@@ -29,7 +29,8 @@ import { dirname, PathBuilder, type PathBuilderLike } from "path-ts"
  * One capital or admin-1 seat.
  *
  * `latitude`/`longitude` are rounded to 4 decimals (~11 m).
- * The consumer matches at kilometre radius, and the rounding keeps the committed file small.
+ * The consumer matches within a kilometre radius.
+ * Rounding keeps the committed file small.
  */
 export interface CapitalReferenceEntry {
 	/**
@@ -47,8 +48,8 @@ export interface CapitalReferenceEntry {
 	/**
 	 * Folded name keys (name + romanization + alternate names).
 	 *
-	 * The consumer's name-membership conjunct, which is what keeps the coordinate
-	 * radius from promoting a capital's same-name neighbours.
+	 * The consumer checks name membership as well as coordinates.
+	 * This prevents the coordinate radius from promoting a capital's same-name neighbours.
 	 *
 	 * Folded with the same `normalizeLocalityForKey` the candidate gazetteer keys with.
 	 */
@@ -66,15 +67,16 @@ export interface CapitalsReference {
 		national: number
 		admin1: number
 		/**
-		 * Catalog countries with no dump file on disk, which this reference could not measure.
+		 * Catalog countries with no dump file on disk.
+		 * This reference could not measure them.
 		 */
 		missing_dumps: string[]
 		/**
 		 * Catalog countries whose `<CC>.txt` is not a 19-column gazetteer dump
 		 * (GeoNames' postal exports share the basename).
 		 *
-		 * Not counted as scanned: a wrong-format file cannot answer the capital question,
-		 * and "scanned, found none" would be the partial-reader lie.
+		 * A wrong-format file cannot answer the capital question, so it does not count as scanned.
+		 * Reporting "scanned, found none" would falsely claim the reader had complete evidence.
 		 */
 		wrong_format: string[]
 		/**
@@ -120,11 +122,12 @@ const roundCoord = (value: number): number => Number(value.toFixed(COORD_DECIMAL
 export function parseCapitalRows(text: string): CapitalReferenceEntry[] {
 	const rows: CapitalReferenceEntry[] = []
 
-	// Walk lines by index rather than split("\n"): a dump runs to ~350 MB / millions of rows,
-	// and only the few carrying a capital code are worth a column split.
+	// Walk lines by index instead of calling split("\n").
+	// A dump can contain ~350 MB and millions of rows.
+	// Only rows carrying a capital code need a column split.
 	// The substring probes are the pre-filter.
-	// The feature code sits between tabs, so a capital row must contain the exact delimited
-	// code, and plain populated-place rows (the millions) never split.
+	// The feature code sits between tabs, so a capital row must contain the exact delimited code.
+	// Plain populated-place rows do not need splitting.
 	for (let start = 0; start < text.length;) {
 		const end = text.indexOf("\n", start)
 		const line = end === -1 ? text.slice(start) : text.slice(start, end)
@@ -193,12 +196,13 @@ export interface BuildCapitalsResult {
 }
 
 /**
- * Read every catalog country's dump, extract the capital rows, grade the extraction
- * against the catalog's own capital names, and write the reference.
+ * Reads every catalog country's dump and extracts its capital rows.
+ *
+ * It grades the extraction against the catalog's capital names and writes the reference.
  *
  * @throws When `countryInfo.txt` is absent.
- * Without the catalog there is no denominator, and a reference built from "whatever
- * files exist" cannot state what it failed to cover.
+ * Without the catalog, the reference has no denominator.
+ * A reference built from "whatever files exist" cannot state which countries it failed to cover.
  */
 export async function buildCapitalsReference(options: BuildCapitalsOptions): Promise<BuildCapitalsResult> {
 	const geonamesDir = PathBuilder.from(options.geonamesDir)

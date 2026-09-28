@@ -92,8 +92,9 @@ const EvalOAResolver = harnessCommand(spec, async (options) => {
 		// The harness option keeps the house spelling, so the rename happens here
 		// rather than in the eval's own interface.
 		...(adminFst ? { adminFST: adminFst } : {}),
-		// Same derivation, and the same rename.
-		// `--postcode-max-move-km` is the postcode-move cap, whose option spells the pass it caps.
+		// Keep the derivation and rename consistent.
+		// `--postcode-max-move-km` is the postcode-move cap.
+		// Its option name spells out the pass it caps.
 		// Spreading the derived name instead reaches no field, so the cap is accepted and never applied.
 		...(postcodeMaxMoveKM === undefined ? {} : { postcodeConsistencyMaxMoveKm: postcodeMaxMoveKM }),
 	})

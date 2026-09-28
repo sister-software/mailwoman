@@ -1,9 +1,9 @@
-"""The two passes over one epoch: what the sampler drew, and what the trainer would read.
+"""The two passes over one epoch: what the sampler drew and what the trainer would read.
 
-They open the same stream at the same seed, which is what makes their counts comparable — with
-every augmentation probability at zero the two consume the rng identically and their counts are
-byte-equal, which the test pins. The emitted pass still skips `iter_rows`' shuffle buffer, which
-reorders rows and cannot change counts.
+They open the same stream at the same seed. Their counts are comparable.
+When every augmentation probability is zero, both passes consume the rng identically and produce
+byte-equal counts. The test pins that result. The emitted pass still skips `iter_rows`' shuffle
+buffer. That buffer reorders rows without changing counts.
 """
 
 from __future__ import annotations
@@ -35,9 +35,9 @@ class DrawPass:
     countries: Counter[str]
     #: Countries drawn from each source, keyed `source`, then country code.
     #:
-    #: `per_source` says how many rows a source contributed and `countries` says how many a country
-    #: received, and neither says which countries a source's rows belonged to. That join separates a
-    #: country the sampler declined from a country whose rows sit in files the sampler never opened:
+    #: `per_source` says how many rows a source contributed. `countries` says how many rows a country
+    #: received. Neither field says which countries received rows from each source. That join separates
+    #: a country the sampler declined from a country whose rows sit in files the sampler never opened:
     #: `_source_iter` visits a source's parquet files in shuffled order and drains each before opening
     #: the next, so a fixed draw per source reads only the earliest files.
     countries_by_source: dict[str, Counter[str]]
@@ -87,8 +87,8 @@ def run_draw_pass(
 ) -> DrawPass:
     """Pass 1 — draw level, straight off the sampler.
 
-    The per-window counts are the stationarity receipt: a source that exhausts mid-epoch keeps its
-    share in the totals and loses it in the later windows, which a prefix audit cannot see.
+    The per-window counts are the stationarity receipt. A source that exhausts mid-epoch keeps its
+    share in the totals but loses it in later windows. A prefix audit cannot show that change.
     """
     n_windows = (draws + window - 1) // window
     window_counts: list[Counter[str]] = [Counter() for _ in range(n_windows)]
@@ -106,7 +106,7 @@ def run_draw_pass(
     total_draws = sum(draw_totals.values())
 
     full_windows = [w for w in window_counts if sum(w.values()) == window]
-    # `reps_per_row` is the number every weight implicitly chooses and that nobody sees: a 0.60% share
+    # `reps_per_row` is the number every weight implicitly chooses and that the report omits: a 0.60% share
     # of 7.68M draws over 277 rows is 165 passes per row, while a 3.57% share over 53,078 rows is 5.
     rows_by_source = source_row_counts(corpus_dir, "train")
 
@@ -122,8 +122,8 @@ def run_draw_pass(
             "draws": draws_for_src,
             "draw_share": share,
             "max_window_relative_deviation": max(deviations) if deviations else 0.0,
-            # `None` when the source's row count could not be read — reported as unknown rather than as
-            # zero reps per row, which would read as "this source is safe".
+            # `None` when the source's row count could not be read. Zero reps per row could imply
+            # "this source is safe", so the report preserves the unknown value.
             "rows": rows,
             "reps_per_row": (draws_for_src / rows) if rows else None,
         }
@@ -159,9 +159,9 @@ def run_emitted_pass(
 ) -> EmittedPass:
     """Pass 2 — emitted level: the same stream expanded through the augmentation policy.
 
-    The same emit step the trainer runs, per-source exclusion included. The relabel lexicon stays
-    absent: this pass counts rows per source and per country, and relabel rewrites labels within a
-    row without adding or removing one.
+    The pass uses the trainer's emit step, including per-source exclusion. It omits the relabel
+    lexicon because it counts rows per source and country. Relabeling rewrites labels within a row
+    without adding or removing rows.
     """
     policy = EmitPolicy(
         directional_prob=augment["directional"],
@@ -197,8 +197,8 @@ def emitted_per_source(
 ) -> dict[str, dict[str, Any]]:
     """Each source's emitted share, against the share the sampler drew it at.
 
-    `distortion_vs_draw_share` above 1 is a source claiming more of the row budget than it was
-    sampled at, which is what an augmentable source does to every source beside it.
+    `distortion_vs_draw_share` above 1 means a source claims more of the row budget than its draw
+    share. An augmentable source increases its share at the expense of other sources.
     """
     total_emitted = sum(emitted.totals.values())
     out: dict[str, dict[str, Any]] = {}

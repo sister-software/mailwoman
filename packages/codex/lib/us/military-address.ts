@@ -14,7 +14,7 @@
  *   Sourcing (accessed 2026-06-12):
  *
  *   - **USPS Publication 28, Chapter 7** ("Armed Forces and Diplomatic Post Offices") defines the three
- *       armed-forces location codes and three state-code regions, and states: "Use APO with AA
+ *       armed-forces location codes and three state-code regions. The publication states: "Use APO with AA
  *       (Americas), AE (Europe/Middle East/Africa/Canada), or AP (Pacific)"; "FPO (Fleet Post
  *       Office) for Navy ships and shore installations"; "DPO (Diplomatic Post Office) for US
  *       embassies and missions." Full URL: https://pe.usps.com/text/pub28/28c7_001.htm
@@ -137,8 +137,9 @@ export interface USMilitaryUnitMatch {
 const UNIT_LINE_RE = /^\s*(psc|cmr|unit)\s+(\d+)(?:\s+box\s+([\dA-Za-z]+))?\s*$/i
 
 /**
- * If `input` is a USPS military unit-line ("PSC 1520 BOX 4620", "CMR 453 BOX 100", "unit 7
- * BOX 234A", "unit 7"), return the canonical designator, installation id, and optional box.
+ * If `input` is a USPS military unit-line ("PSC 1520 BOX 4620", "CMR 453 BOX 100",
+ * "unit 7 BOX 234A", "unit 7"), return the canonical designator and installation id.
+ * The box is optional.
  *
  * Null otherwise.
  * Throws on a PSC or CMR line without a BOX component
@@ -212,7 +213,7 @@ const CITY_LINE_RE = /^\s*(apo|fpo|dpo)\s+(aa|ae|ap)\s+(\d{5}(?:-\d{4})?)\s*$/i
 
 /**
  * If `input` is a USPS military city line ("APO AE 09165", "FPO AP 96602-1254", "DPO AE 09498",
- * "APO AA 34022", "APO AP 96525"), return the canonical code, region, and ZIP.
+ * "APO AA 34022", "APO AP 96525"), return the canonical code, region and ZIP.
  *
  * Null otherwise.
  *

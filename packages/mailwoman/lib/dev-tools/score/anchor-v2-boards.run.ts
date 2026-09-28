@@ -152,8 +152,9 @@ if (board === "gb") {
 			for (const [tag, gold] of Object.entries(row.expect ?? {})) {
 				if (!gold.length) continue
 
-				// The gold `street` is the whole street name while the model emits a family,
-				// which `parity-corpus.ts`'s floor compares assembled, so a bare tag-vs-tag read misses.
+				// The gold `street` contains the whole street name.
+				// The model emits a family of tags.
+				// `parity-corpus.ts` compares the assembled family, so a bare tag-to-tag comparison misses.
 				const emitted =
 					tag === "street" ? STREET_FAMILY_TAGS.flatMap((t) => byTag.get(t) ?? []) : (byTag.get(tag) ?? [])
 

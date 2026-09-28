@@ -17,8 +17,9 @@ const GAZETTEER_ROW_COLUMNS = 7
 export const ZCTA_SOURCE = "census-zcta-2024"
 
 /**
- * Tags centroid rows filled from the GeoNames US postal file, which is CC-BY 4.0,
- * so any database shipping such rows must attribute "GeoNames (CC-BY 4.0)".
+ * Tags centroid rows filled from the GeoNames US postal file.
+ *
+ * That file uses CC-BY 4.0, so a database shipping these rows must attribute "GeoNames (CC-BY 4.0)".
  */
 export const GEONAMES_US_SOURCE = "geonames-us"
 
@@ -132,8 +133,10 @@ export function parseGeonamesCentroids(text: string): Map<string, LatLon> {
 }
 
 /**
- * Fills current US postcode rows in `spr` that are still `(0,0)` from GeoNames centroids, so census
- * ZCTA and WOF coordinates are never overwritten, and stamps each filled row as `geonames-us`.
+ * Fill current US postcode rows in `spr` that remain `(0,0)` with GeoNames centroids.
+ *
+ * Census ZCTA and WOF coordinates stay intact.
+ * Stamp each filled row as `geonames-us`.
  *
  * @returns The number of rows filled.
  */

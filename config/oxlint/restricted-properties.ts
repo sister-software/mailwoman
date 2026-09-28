@@ -2,11 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The `no-restricted-properties` entries, named so an override can lift one of them.
+ * @file The `no-restricted-properties` entries, each with its own constant so an override can lift one.
  *
  *   oxlint models the rule as a single list, so an override that writes `"off"` drops every entry —
- *   including the ones it never meant to touch, and including whatever is added to the list later. Each
- *   entry is a named constant here and {@linkcode restrictedPropertiesExcept} rebuilds the list by
+ *   including the ones it never meant to touch and whatever is added to the list later. Each
+ *   entry has its own constant here. {@linkcode restrictedPropertiesExcept} rebuilds the list by
  *   subtraction, so an override names what it is lifting and inherits everything it is not.
  */
 
@@ -32,8 +32,10 @@ export const JSON_PARSE: RestrictedProperty = {
 }
 
 /**
- * `JSON.stringify` returns a bare `string`, so a caller cannot tell a serialized payload
- * from any other text, and the two call shapes get re-typed at every site that needs one.
+ * `JSON.stringify` returns a bare `string`, so a caller cannot tell a serialized
+ * payload from any other text.
+ *
+ * The two call shapes get re-typed at every site that needs one.
  */
 export const JSON_STRINGIFY: RestrictedProperty = {
 	object: "JSON",
@@ -55,9 +57,10 @@ const RESTRICTED_PROPERTIES: readonly RestrictedProperty[] = [JSON_PARSE, JSON_S
 /**
  * The rule with `lifted` removed — the form an override uses.
  *
- * Subtraction rather than a hand-written list: an override written as "these
- * two still apply" silently stops applying the third the day one is added,
- * and the file it governs is the last place anyone looks.
+ * Subtraction keeps the override tied to the full property set.
+ * A hand-written list can omit a property added later.
+ *
+ * Readers are unlikely to look for the override in the file it governs.
  */
 export function restrictedPropertiesExcept(...lifted: readonly RestrictedProperty[]) {
 	return ["error", ...RESTRICTED_PROPERTIES.filter((entry) => !lifted.includes(entry))] as const

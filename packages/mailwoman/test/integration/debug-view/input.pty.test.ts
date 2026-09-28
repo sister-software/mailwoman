@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The regression for the debug view's input field, driven through a real pty because the defect it covers is about
- *   bytes: what a terminal sends for alt+backspace, and what Ink's keypress parser makes of it. A component test can
- *   only assert what the harness decides to pass `useInput`, which is the same assumption that let the bug ship.
+ *   Tests the debug view's input field through a real PTY. It checks the bytes a terminal sends for Alt+Backspace
+ *   and the values Ink's keypress parser assigns to them. A component test sees only the input passed to `useInput`.
  *
- *   What the probe measured against `ink-text-input` 6.0.0 (the field this replaced), Ink 7.1.1, 2026-08-13:
+ *   The PTY probe checks two terminal sequences:
  *
  *   - `\x17` (ctrl+W — the tty's `werase`, and what iTerm2 sends for ⌥⌫ by default) arrives as
  *       `input: "w", key.ctrl: true`, because Ink resolves ctrl+letter to the letter. `ink-text-input` guards only
@@ -16,10 +15,10 @@
  *   - `\x1b\x7f` (meta+backspace) arrives as `input: "", key.backspace + key.meta`, and was treated as a plain
  *       backspace — one character deleted rather than one word.
  *
- *   Both sequences must now delete the word before the cursor, and neither may leave a letter behind.
+ *   Both sequences must delete the word before the cursor. The field must also remove the resolved letter.
  *
- *   `script` is util-linux's, and the `-e` / `-c` spelling is too. the suite skips where that isn't the `script` on
- *   path, exactly like `map-tui/cli.pty.test.ts`, which this harness is modelled on.
+ *   The test uses util-linux `script` with its `-e` and `-c` options.
+ *   It skips when another `script` executable appears first on `PATH`, like `map-tui/cli.pty.test.ts`.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -107,9 +106,8 @@ async function driveInput(keys: string[]): Promise<string> {
 /**
  * Every `value=[…]` the probe rendered, in stream order — the field's edit history.
  *
- * Not de-duplicated: the same value can be reached twice (both word deletes here land on `hello `),
- * and a `Set` would hide the second behind the first, which is exactly the assertion
- * this test needs to make about the last frame.
+ * Keeps duplicate values because both word deletes here produce `hello `.
+ * A `Set` would hide the second value and prevent the test from checking the last frame.
  */
 function valueSamples(output: string): string[] {
 	// oxlint-disable-next-line no-control-regex -- stripping SGR from a pty capture is matching a control character
@@ -127,7 +125,8 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("debug-view input field (pty)", () => {
 			// Meta+backspace: the word rather than the character (`hello worl` was ink-text-input's answer).
 			expect(samples).toContain("VALUE=[hello ]")
 			expect(samples).toContain("VALUE=[hello there]")
-			// Ctrl+W landed as a word delete, and the letter Ink resolved it to never reached the value.
+			// Ctrl+W deletes a word.
+			// Ink's resolved letter does not reach the value.
 			expect(samples.at(-1)).toBe("VALUE=[hello ]")
 			expect(samples).not.toContain("VALUE=[hello worldw]")
 			expect(samples).not.toContain("VALUE=[hello therew]")

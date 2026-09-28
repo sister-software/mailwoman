@@ -5,14 +5,13 @@
  *
  * The constraint census — what our checks cost, measured per constraint rather than per row.
  *
- * `census.ts` asks whether a mechanism in the parse path fires at all (L0/L1); this asks the
- * resolver-path question underneath it: of the lookups that resolved no candidate, which constraint was
- * in force, and did we hold the row anyway.
+ * `census.ts` measures whether a mechanism in the parse path fires (L0/L1). This module examines misses in the
+ * resolver path. It records the constraint in force and whether the resolver held the row anyway.
  *
- * The split that makes this a measurement rather than a miss count: a lookup that missed in band X
- * while the same key sits in band Y is a reachability failure, since the gazetteer had the row and the query
- * went to the wrong shelf. A key that exists nowhere is a coverage fact. Both reach a caller as
- * `null` and call for opposite work, a retrieval fix versus data acquisition, so they are never summed.
+ * This measurement distinguishes two kinds of miss. A lookup that missed in band X while the same key exists
+ * in band Y is a reachability failure. The gazetteer has the row, but the query checked the wrong band. A key
+ * that exists nowhere is a coverage fact. Both return `null` to a caller. One calls for a retrieval fix. The
+ * other calls for data acquisition. The census reports them separately.
  *
  * Keys are folded with `normalizeLocalityForKey`, the fold the candidate build writes and its readers
  * probe. A `toLowerCase()` approximation silently moves rows from the reachability column into the
@@ -38,8 +37,8 @@ interface ConstraintMiss {
 	value: string
 	name_key: string
 	/**
-	 * The placetype band the query was scoped to, chosen by the model's tag: a wrong tag makes
-	 * a row we hold unreachable, and the miss is indistinguishable from the row not existing.
+	 * The placetype band selected by the model's tag.
+	 * A wrong tag can make an existing row unreachable.
 	 */
 	band: string
 	checks: string[]
@@ -52,18 +51,21 @@ interface ConstraintMiss {
 	/**
 	 * Candidates on a null pick mean the rows came back and were lost downstream.
 	 *
-	 * None means the probe itself returned an empty set, and calling a scoring filter
-	 * an empty gazetteer is the misreading this separates.
+	 * None means the probe returned an empty set.
+	 * A scoring filter can still have returned candidates that failed later.
+	 *
+	 * The census distinguishes that result from an empty gazetteer.
 	 */
 	had_candidates: boolean
 }
 
 /**
- * What the census reader needs of a connection it is handed: one prepared read, and a way to end it.
+ * The methods the census reader needs from a database connection: a prepared read and a way to end it.
  *
- * Structural rather than `DatabaseClient` itself because `OpenCensusArtifact` is
- * injectable, and `destroy` (what a `DatabaseClient` offers) rather than `close`,
- * so the real opener satisfies this without an adapter.
+ * `OpenCensusArtifact` is injectable, so the reader depends on this structural type
+ * instead of `DatabaseClient`.
+ * The type uses `destroy`, the method provided by `DatabaseClient`, so the real
+ * opener satisfies it without an adapter.
  */
 interface CensusDatabase {
 	prepare(sql: string): { all(nameKey: string): Array<Record<string, unknown>> }
@@ -90,8 +92,8 @@ export interface ConstraintCensusResult {
 	n_lookups: number
 	n_resolved_nothing: number
 	/**
-	 * We hold the row and could not reach it — a retrieval fix, and the only
-	 * column a cross-band retry can move.
+	 * The gazetteer contains the row in another band, but the query could not reach it.
+	 * A cross-band retry can move this count.
 	 */
 	n_reachability: number
 	/**

@@ -27,9 +27,12 @@ export interface SpanRescoreOptions {
 	 */
 	postcode?: string
 	/**
-	 * Reject a candidate whose coordinate is farther than this (km) from the postcode
-	 * anchor. the check fires only when the postcode resolves to a point, so a backend
-	 * without postcode coverage is never penalized, and 0 disables.
+	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor.
+	 *
+	 * The check fires only when the postcode resolves to a point.
+	 * A backend without postcode coverage receives no penalty.
+	 *
+	 * A value of 0 disables the check.
 	 * Default 50.
 	 */
 	thresholdKm?: number
@@ -196,8 +199,9 @@ export function hasResolvedPlace(
  * Ranges of multi-token `country` / `region` spans, used to block their interior
  * tokens from being re-read as standalone places.
  *
- * The whole span stays probeable, single-token spans are excluded, and the guard
- * is deliberately not confidence-conditioned.
+ * The whole span stays probeable.
+ * Single-token spans are excluded.
+ * The guard does not depend on confidence.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -286,8 +290,10 @@ function confidentRanges(
 }
 
 /**
- * Find the best locality the raw text exact-matches in the gazetteer; `null` when no entry matches
- * or the postcode check rejects every match, and callers test `hasResolvedPlace` first.
+ * Find the best locality that the raw text exactly matches in the gazetteer.
+ *
+ * Return `null` when no entry matches or the postcode check rejects every match.
+ * Callers test `hasResolvedPlace` first.
  */
 export async function findRescoreCandidate(
 	raw: string,
@@ -435,7 +441,7 @@ export async function findRescoreCandidate(
 					countryWeight
 				)
 			: // A SUB-span probe is a RE-READING of a token the parse classified into a longer span — it
-				// never named an alias, so alias-keyed rows are off for it (`primaryOnly`); a whole-input
+				// never included an alias, so alias-keyed rows are off for it (`primaryOnly`); a whole-input
 				// span keeps the alias tier regardless of scope.
 				await backend.findPlace({
 					text: sp.text,
@@ -445,7 +451,8 @@ export async function findRescoreCandidate(
 					limit: 5,
 					...(wholeSpan ? {} : { primaryOnly: true }),
 					// The qualifier the sub-span left behind.
-					// A backend without the ancestors sidecar ignores it, which is the same answer as not asking.
+					// A backend without the ancestors sidecar ignores this qualifier.
+					// That matches a query without one.
 					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
 				})
 
@@ -514,8 +521,9 @@ export async function findRescoreCandidate(
 				const verified = pcHits.find((p) => p.lat !== 0 || p.lon !== 0)
 
 				if (verified && haversineKm(verified.lat, verified.lon, h.lat, h.lon) <= thresholdKm) {
-					// No alternatives from this pass: admission is per-candidate postcode verification,
-					// and the postcode has already picked the country so no ambiguity is left to declare.
+					// Admission uses per-candidate postcode verification.
+					// The postcode already picked the country, so this pass has no remaining
+					// country ambiguity to report.
 					return { text: sp.text, start: sp.start, end: sp.end, place: h, postcodeVerified: true, alternatives: [] }
 				}
 			}

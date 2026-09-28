@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Rows, expected outcomes, and the coverage layer all come from `probe-definition.json`, which the loader refuses to
+ *   Rows, expected outcomes and the coverage layer all come from `probe-definition.json`. The loader refuses to
  *   hand over if its content hash has moved.
  *
  *   No route is injected into the runtime pipeline for the absence work. The semantic phrase route is injected because

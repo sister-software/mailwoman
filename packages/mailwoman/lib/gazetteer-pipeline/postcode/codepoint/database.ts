@@ -80,8 +80,8 @@ export function codePointLayerManifest(input: {
 /**
  * ISO-3166-1 alpha-2 stamped on every row.
  *
- * Code-Point Open is GB-only, and the ONS code distinguishing England/Scotland/Wales
- * is not what `spr.country` means.
+ * Code-Point Open covers Great Britain only.
+ * `spr.country` uses the country code `GB`, not ONS codes for England, Scotland, or Wales.
  */
 const COUNTRY = "GB"
 
@@ -157,8 +157,9 @@ export async function buildPostcodeCodePoint(
 	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
-	// An offline build must not record blank provenance: the `acquisition.json` sidecar recovers
-	// the release label and md5, and an absent sidecar is recorded in words rather than an empty string.
+	// An offline build must not record blank provenance.
+	// The `acquisition.json` sidecar supplies the release label and MD5.
+	// The build records a missing sidecar in words rather than an empty string.
 	let archiveMD5: string
 	let osVersion: string
 

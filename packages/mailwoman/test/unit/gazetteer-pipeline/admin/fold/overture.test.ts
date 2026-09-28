@@ -141,8 +141,8 @@ describe("foldedPlacetype", () => {
 	})
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
-		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's
-		// are Doha zone numbers, so both clear a count test but would attest surfaces nobody writes.
+		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's are
+		// Doha zone numbers, so both clear a count test but would attest surfaces absent from the source.
 		expect(foldedPlacetype("county", "KW")).toBe("county")
 		expect(foldedPlacetype("county", "QA")).toBe("county")
 		expect(foldedPlacetype("county", "US")).toBe("county")

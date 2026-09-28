@@ -6,13 +6,15 @@ admin ladder by exact lookup. the third is the typed part (``柏木町４－７`
 ``末広町１８４ ビル名 ３Ｆ``): full-width digits and hyphens, the chōme as kanji or full-width digits, then a number in
 whichever register the filer used, then a building name and floor.
 
-Alignment: the (prefecture, municipality) pair must be one Overture keys, and the leading name of 丁目番地等 must be
-a district that municipality lists. Spans are then placed on the RAW string. No value is normalized, because the
-whole value of a noisy row is the surface a person typed — with the JP head's own tags: ``prefecture``,
-``municipality``, ``district``, ``block`` for a trailing 丁目, ``house_number`` for the number in its typed form
-(designator forms ``N番N号`` are left whole under ``house_number`` here: splitting them into ``sub_block`` /
-``building_number`` is the LABEL builder's synthesis, and a typed row is not re-rendered), ``building_name`` for
-the rest, and ``postcode`` when the register carries one and the row is rendered with a 〒 prefix.
+Alignment uses the (prefecture, municipality) pair and the leading name of 丁目番地等. The pair must
+match an Overture key. The leading name must be a district listed by that municipality. Spans are
+placed on the RAW string without normalization. A noisy row preserves the surface a person typed.
+The JP head uses its own tags. Use ``prefecture/municipality/district`` for those fields. Use
+``block`` for a trailing 丁目 and ``house_number`` for the number in its typed form. Leave designator
+forms ``N番N号`` whole under ``house_number``. The LABEL builder splits them into
+``sub_block``/``building_number`` during synthesis. A typed row keeps its original form.
+Use ``building_name`` for the remainder. Use ``postcode`` when the register carries one and the row
+has a 〒 prefix.
 """
 
 from __future__ import annotations

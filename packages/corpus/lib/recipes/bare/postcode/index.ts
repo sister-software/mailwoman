@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * `bare-postcode` — a postcode standing alone, in the form its country writes, and no other component.
+ * `bare-postcode` — a postcode standing alone in the country's format. The address has no other component.
  * Every surface the recipe renders is run through `detectKnownFormats` and refused unless the detector
  * calls it a postcode, so the rendering table and `known-formats.ts`'s patterns must agree.
  */
@@ -91,10 +91,11 @@ const SOURCES: PostcodeSource[] = [
 ]
 
 /**
- * How a country writes its postcode when typed alone, and the locale to stamp.
+ * The postcode format to use on its own and the locale to stamp.
  *
- * Only countries whose bare postcode collides with a house number are here, `render` answers
- * the spaced form first, and GB is deliberately absent because `SW1A 1AA` opens with letters.
+ * This map includes countries whose bare postcode collides with a house number.
+ * `render` answers with the spaced form first.
+ * GB is absent because `SW1A 1AA` starts with letters.
  */
 const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: string) => string[] }> = new Map([
 	// `NNN NN`, written with the space.
@@ -103,7 +104,8 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 	["SK", { locale: "sk-SK", render: spacedThree }],
 	["SE", { locale: "sv-SE", render: spacedThree }],
 	["GR", { locale: "el-GR", render: spacedThree }],
-	// `nnnn LL`; both spellings are attested, and the spaced one is the failing one.
+	// Both spellings of `nnnn LL` are attested.
+	// The spaced form is the failing case.
 	[
 		"NL",
 		{
@@ -114,8 +116,10 @@ const WRITTEN_FORMS: ReadonlyMap<string, { locale: string; render: (compact: str
 ])
 
 /**
- * `10000` → `["100 00", "10000"]`; Sweden and Greece space five digits after the third as Czechia
- * and Slovakia do, and the compact form rides along because sources store it that way.
+ * `10000` → `["100 00", "10000"]`.
+ *
+ * Sweden and Greece group five digits after the third, as Czechia and Slovakia do.
+ * The compact form remains because sources store it that way.
  */
 function spacedThree(compact: string): string[] {
 	if (!/^\d{5}$/.test(compact)) return []
@@ -126,8 +130,8 @@ function spacedThree(compact: string): string[] {
 /**
  * Choose distinct postcodes without inheriting the publisher's row order.
  *
- * Sorting first makes the result input-order independent, and the seeded sample
- * spreads reproducibly across the complete set.
+ * Sorting first makes the result independent of input order.
+ * The seeded sample spreads reproducibly across the complete set.
  */
 export function selectPostcodes(codes: Iterable<string>, limit: number, seed: number): string[] {
 	const pool = [...new Set(codes)].toSorted()

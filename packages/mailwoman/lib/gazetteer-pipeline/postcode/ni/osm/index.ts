@@ -3,8 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Northern Ireland `BT` postcode acquisition from OpenStreetMap — fetch → parse, the `ban/sdk` shape. See
- *   `./fetch.ts` for the ODbL obligation, the build-local tier, and why the query is a bbox.
+ *   Acquires Northern Ireland `BT` postcodes from OpenStreetMap through fetch and parse stages.
+ *   The structure follows `ban/sdk`. See `./fetch.ts` for the ODbL obligation and build-local tier.
+ *   That file also explains the bounding-box query.
  */
 
 export * from "#gazetteer-pipeline/postcode/ni/osm/fetch"

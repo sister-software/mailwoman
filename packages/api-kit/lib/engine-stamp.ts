@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The engine stamp on the http side: the zod schema every app documents it with, the two headers every response
- *   carries, and the helper that attaches the body field. The stamp itself is built by the `mailwoman` package and
- *   arrives as an option value: an app factory (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) is engine-agnostic and
+ *   The engine stamp defines the Zod schema apps use in their documentation and the two headers each response carries.
+ *   It also provides the helper that attaches the body field. The `mailwoman` package builds the stamp and passes it as an option.
+ *   App factories (`lib/app.ts`, `lib/routes.ts`, `lib/schema.ts`) remain engine-agnostic. Each app supplies its stamp.
  *   must not import `mailwoman`; the bin (`lib/cli.ts`) is the wiring layer that resolves the stamp and passes it in.
  */
 
@@ -14,8 +14,9 @@ import type { EngineStamp } from "@mailwoman/core/license"
 import type { MiddlewareHandler } from "hono"
 
 /**
- * Strict on purpose: the stamp carries no licensee and no key id, and a strict object
- * makes a field that leaks one a schema failure rather than a documented extension.
+ * The stamp carries no licensee or key id.
+ *
+ * A strict object makes a field that leaks one a schema failure rather than a documented extension.
  */
 export const EngineStampSchema = z
 	.strictObject({
@@ -35,13 +36,14 @@ export const EngineStampSchema = z
  * what the engine produces (the schema drift pin in `mailwoman` depends on that) and the
  * OpenAPI document references the outcome component through `allOf` instead of cloning it.
  *
- * `name` registers the stamped shape as its own component, and it is required
- * rather than optional because an unnamed intersection is inlined at every use: a generator
- * then has no name to give the type and invents one from the position it appears in.
+ * `name` registers the stamped shape as its own component.
+ * It is required rather than optional because an unnamed intersection is inlined at every use:
+ * a generator then has no name to give the type and invents one from the position it appears in.
+ *
  * `PhotonResponse::Variant0`, or a flattened per-operation clone of an outcome that already has a name.
  *
- * Naming it keeps one `$ref` per stamped shape, which is what makes a generated
- * client's type names follow the document's.
+ * This produces one `$ref` per stamped shape.
+ * Generated client type names then follow the document's names.
  */
 export function stampedResponseSchema<S extends z.ZodTypeAny>(schema: S, name: string) {
 	return z.intersection(schema, z.object({ engine: EngineStampSchema.optional() })).openapi(name)

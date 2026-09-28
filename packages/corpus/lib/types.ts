@@ -28,7 +28,8 @@ export const AddressRole = {
 	 */
 	RegisteredOffice: "registered-office",
 	/**
-	 * The place where post is delivered, which is often a post-office box.
+	 * The place where post is delivered.
+	 * This can be a post-office box.
 	 */
 	Mailing: "mailing",
 	/**
@@ -151,12 +152,13 @@ export interface SourceProvenance {
 	 * An id that is unique within the source and stable across reruns,
 	 * so that deduplication and holdouts reproduce.
 	 *
-	 * SQLite-backed adapters use the primary key, and file-backed adapters usually hash the components.
+	 * SQLite-backed adapters use the primary key.
+	 * File-backed adapters hash the components.
 	 */
 	source_id: string
 
 	/**
-	 * The corpus version, which the runner stamps.
+	 * The corpus version stamped by the runner.
 	 */
 	corpus_version: string
 
@@ -206,7 +208,8 @@ export interface CanonicalRow extends SourceProvenance {
 	country: string
 
 	/**
-	 * The BCP-47 locale, which the runner derives from the country when absent.
+	 * The BCP-47 locale.
+	 * The runner derives it from the country when absent.
 	 */
 	locale?: string
 
@@ -244,7 +247,8 @@ export interface CanonicalRow extends SourceProvenance {
 /**
  * A row after alignment, with tokens, BIO labels and character spans.
  *
- * The span arrays are the source of truth, and token labels can be derived from them.
+ * The span arrays are the source of truth.
+ * Consumers can derive token labels from them.
  */
 export interface LabeledRow extends CanonicalRow {
 	/**
@@ -263,7 +267,8 @@ export interface LabeledRow extends CanonicalRow {
 	 * The three span arrays are parallel.
 	 * Spans are sorted by start and never overlap.
 	 *
-	 * `raw` must be NFC-normalized, and `alignRow` enforces both rules.
+	 * `raw` must be NFC-normalized.
+	 * `alignRow` enforces both rules.
 	 * Older corpora and some synthesis paths omit the spans.
 	 */
 	span_starts?: readonly number[]
@@ -292,7 +297,8 @@ export interface QuarantinedRow {
  */
 export interface AdapterOptions {
 	/**
-	 * The adapter's input, which each adapter interprets as a file, a directory or a URL.
+	 * The adapter's input.
+	 * Each adapter interprets it as a file, directory or URL.
 	 */
 	inputPath: PathBuilderLike
 
@@ -304,7 +310,8 @@ export interface AdapterOptions {
 	/**
 	 * An ISO 3166-1 alpha-2 country filter.
 	 *
-	 * Multi-country adapters must apply it, and single-country adapters should reject a mismatch.
+	 * Multi-country adapters must apply it.
+	 * Single-country adapters should reject a mismatch.
 	 */
 	country?: string
 
@@ -316,15 +323,17 @@ export interface AdapterOptions {
 	/**
 	 * The fraction of rows that carry an explicit `country` component.
 	 *
-	 * A source without country tokens teaches the model that country tokens are rare,
-	 * which lowers `country` recall.
+	 * A source without country tokens teaches the model that country tokens are rare.
+	 * That lowers `country` recall.
+	 *
 	 * A value of `0` or no value adds no country and consumes no random draw,
 	 * so existing outputs stay identical.
 	 */
 	countryFraction?: number
 
 	/**
-	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw, which has a fixed default.
+	 * The seed for the {@linkcode AdapterOptions.countryFraction} draw.
+	 * The draw has a fixed default.
 	 */
 	seed?: number
 

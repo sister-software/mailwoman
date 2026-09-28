@@ -23,7 +23,7 @@ export interface BuildOutputNames {
 /**
  * Return the file names that a body's build writes, relative to its output directory.
  *
- * The `hillshade` archive is named `<body>-terrain` because it holds terrarium-encoded elevation.
+ * The `hillshade` archive uses the `<body>-terrain` path because it holds terrarium-encoded elevation.
  * An earlier archive with the `-hillshade` name held shaded images.
  *
  * A cache could serve those stale images to a client that reads elevation,

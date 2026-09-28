@@ -7,7 +7,7 @@
  *   the trace.
  *
  *   The interface this file holds is the negative one: a census present must produce a decode
- *   byte-identical to a census absent — same emission matrix and transition adjustments, and on real
+ *   byte-identical to a census absent: same emission matrix and transition adjustments. On real
  *   weights the same emissions, path and tokens — so an accidental wiring fails loudly.
  *
  *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusResolver` round trip
@@ -202,10 +202,10 @@ describe("census observability — what lands on the trace", () => {
 
 // End-to-end on the real en-us bundle: the mechanism-level assertions prove the prior's own
 // output is unchanged, but only a full decode proves no downstream code reads the census.
-// The pair index is required because without it the prior never runs, the census
-// artifact is built into a temp dir because the data root is read-only on the lab host,
-// and weights resolve through `resolveWeights` because a skip-guard keyed on the wrong
-// directory would skip and report success while testing no assertion.
+// The pair index is required because the prior otherwise never runs.
+// The census artifact is built into a temp dir because the data root is read-only on the
+// lab host. and weights resolve through `resolveWeights` because a skip-guard keyed on
+// the wrong directory would skip and report success while testing no assertion.
 const resolved = await (async () => {
 	try {
 		return await resolveWeights({ locale: "en-us" })

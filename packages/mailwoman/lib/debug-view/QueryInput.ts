@@ -188,8 +188,8 @@ const CURSOR_PAD = " "
 /**
  * Renders the query field as one Ink `<Text>`.
  *
- * The module avoids JSX so the pty test can run it from source under plain Node,
- * which strips types but does not transform JSX.
+ * The module avoids JSX so the pty test can run it from source under plain Node.
+ * Node strips types but does not transform JSX.
  */
 export function QueryInput(props: QueryInputProps): ReactElement {
 	const { value, cursor, focus, onChange, onSubmit } = props
@@ -202,7 +202,9 @@ export function QueryInput(props: QueryInputProps): ReactElement {
 				return
 			}
 
-			// The session handles tab and escape, which move focus and quit.
+			// The session handles tab and escape.
+			// Tab moves focus.
+			// Escape quits.
 			if (key.tab || key.escape) return
 
 			const next = applyKey({ value, cursor }, input, key)

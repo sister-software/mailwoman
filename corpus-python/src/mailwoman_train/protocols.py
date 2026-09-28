@@ -1,4 +1,4 @@
-"""The structural interfaces a country module, a CLI command, and a training callback satisfy."""
+"""Define interfaces for country modules and CLI commands. Define the training callback interface."""
 
 from __future__ import annotations
 
@@ -51,9 +51,11 @@ class CLICommand(Protocol):
 
 @runtime_checkable
 class TrainCallback(Protocol):
-    """One concern observed during a training run. Hooks answer None and one that must stop a run
-    raises, and `state` is `Any` to keep the training loop out of every module that reads an
-    interface."""
+    """One concern observed during a training run. Hooks return `None` unless they must stop the run.
+
+    A stopping hook raises. `state` is `Any` so modules that read the interface need not import the
+    training loop.
+    """
 
     def on_train_begin(self, state: Any) -> None: ...
 

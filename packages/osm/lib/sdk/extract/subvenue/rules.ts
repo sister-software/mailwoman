@@ -90,7 +90,7 @@ export interface SubVenueTagRule {
  * designators, but indoor features are overwhelmingly unnamed geometry primitives
  * (`indoor=room`, `indoor=corridor`), and this extractor's yield is names.
  *
- * Measure the named fraction before adding it.
+ * Measure the share of structures that carry a `name` tag before adding a rule.
  */
 export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 	{ designatorID: "terminal", tier: SubVenueTier.SubVenue, all: [["aeroway", "terminal"]] },
@@ -107,7 +107,7 @@ export const SUBVENUE_TAG_RULES: SubVenueTagRule[] = [
 ]
 
 /**
- * The OSM driver layers that can carry a named transport structure: nodes and closed ways/relations.
+ * The OSM driver layers that can carry a transport structure with a name: nodes and closed ways/relations.
  *
  * `lines` is excluded.
  * A platform mapped as an open way is an edge case whose name duplicates the node or area version.

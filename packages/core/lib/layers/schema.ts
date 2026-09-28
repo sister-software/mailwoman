@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Typed schema for the spatial-layer interface — the two tables every layer database embeds,
- *   regardless of tier: `layer_manifest` (single-row identity/provenance/licensing record) and
- *   `layer_coverage` (per-H3-cell survey completeness). The interface is what lets shipped,
- *   build-local, and private layers share one query surface.
+ *   regardless of tier. `layer_manifest` records identity, provenance and licensing in one row.
+ *   `layer_coverage` stores per-H3-cell survey completeness. Shipped, build-local and private layers
+ *   share one query surface through this interface.
  *
  *   Coverage defines the meaning-of-zero rule: a missing coverage row means "unmapped/unknown",
  *   never "surveyed and empty". Consumers must treat absence as absence of evidence.
@@ -115,7 +115,9 @@ export interface LayerCoverageTable {
 	 *
 	 * One of {@link CoverageBasis}.
 	 *
-	 * NULL means the row predates this column, and must be read as {@link CoverageBasis.SourcePresent}.
+	 * NULL means the row predates this column.
+	 * Read it as {@link CoverageBasis.SourcePresent}.
+	 *
 	 * The weakest reading, because that is what every layer built before the column was writing.
 	 */
 	basis: CoverageBasis | null
@@ -141,7 +143,8 @@ export interface layerschemadatabase {
  *
  * Kysely is invariant in its schema parameter, so a `Kysely<POIDatabase>` is not assignable
  * to `Kysely<layerschemadatabase>` even when `POIDatabase extends layerschemadatabase`.
- * The incompatibility is in `transaction()` and `with()`, which the interface never calls.
+ * The incompatibility comes from `transaction()` and `with()`.
+ * The interface never calls those methods.
  *
  * Naming only the members it does call lets a layer pass its own handle directly.
  * The alternative — a cast at every call site — does not merely skip one check:
@@ -185,7 +188,7 @@ export async function createLayerCoverageTable(db: layerschemahandle): Promise<v
 		.createTable("layer_coverage")
 		.addColumn("h3_cell", "integer", (c) => c.primaryKey())
 		.addColumn("completeness", "real", (c) => c.notNull())
-		// Nullable on purpose: artifacts built before this column exist and read back as NULL, which `readLayerCoverage` resolves to `source_present`. What they were in fact recording.
+		// Older artifacts predate this nullable column and read back as NULL. `readLayerCoverage` resolves NULL to `source_present`, the value those artifacts recorded.
 		.addColumn("basis", "text")
 		.addColumn("observed_rows", "integer", (c) => c.notNull())
 		// `without rowid` has no first-class builder. The raw modifier is the idiomatic fallback.

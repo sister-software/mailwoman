@@ -51,7 +51,7 @@ export const FloodContainmentPath = {
 	 */
 	WholeCell: "whole_cell",
 	/**
-	 * A boundary crosses the cell, so the point was ray-cast against a named polygon.
+	 * A boundary crosses the cell, so the point was ray-cast against a polygon with a label.
 	 */
 	RayCast: "ray_cast",
 	NoZoneCell: "no_zone_cell",
@@ -74,7 +74,7 @@ export interface FloodZoneReading {
 	 */
 	definition?: FloodZoneDefinition
 	/**
-	 * The polygon the ray cast matched on a `ray_cast` reading, named so a reader can fetch and draw it.
+	 * The polygon the ray cast matched on a `ray_cast` reading, identified so a reader can fetch and draw it.
 	 */
 	areaID?: string
 	containment: FloodContainmentPath

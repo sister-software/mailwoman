@@ -17,13 +17,13 @@
  *   The emitted per-piece feature is `[country_surface, country_ambiguous]`. `country_surface` marks
  *   a piece inside a recognized country surface phrase. `country_ambiguous` marks a homograph that is
  *   also a US region, such as "Georgia", or a curated common-word name such as "America". The model
- *   learns to trust the unambiguous long and code forms strongly and the ambiguous forms weakly,
- *   which keeps recall on a phrase such as "Republic of Georgia".
+ *   learns to trust unambiguous long and code forms strongly. It trusts ambiguous forms weakly,
+ *   preserving recall on phrases such as "Republic of Georgia".
  *
- *   The gazetteer's own `country` slot already carries these surfaces and the shipped model already
- *   consumes them, yet the WOF-admin case still fails. That slot shares one projection with region,
- *   po_box, cedex and homograph, and it is zeroed next to a postcode by
- *   `suppressGazetteerNearPostcode`, which is exactly where "…12345 USA" sits. A separate channel
+ *   The gazetteer's own `country` slot already carries these surfaces. The shipped model consumes them.
+ *   The WOF-admin case still fails. That slot shares one projection with region, po_box, cedex and homograph.
+ *   `suppressGazetteerNearPostcode` zeroes the slot next to a postcode, including in "…12345 USA".
+ *   A separate channel
  *   gives country its own projection and confidence weight, so that suppression cannot reach it.
  */
 
@@ -36,8 +36,9 @@ import {
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The country feature width, which must match the lexicon JSON's `feature_dim`
- * and the trained model's `country_feature_dim`.
+ * The country feature width.
+ *
+ * It must match the lexicon JSON's `feature_dim` and the trained model's `country_feature_dim`.
  */
 export const COUNTRY_FEATURE_DIM = 2
 
@@ -57,8 +58,8 @@ export const COUNTRY_AMBIGUOUS_BIT = 2
 export type CountryLexicon = GazetteerLexicon
 
 /**
- * Parse the country lexicon JSON, which the caller has already run through `JSON.parse`
- * so this module stays browser-safe.
+ * Parse country lexicon JSON that the caller has already passed through `JSON.parse`.
+ * This keeps the module browser-safe.
  */
 export function parseCountryLexicon(raw: {
 	feature_dim: number

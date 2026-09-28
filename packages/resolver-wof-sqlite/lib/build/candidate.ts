@@ -64,9 +64,10 @@ export interface BuildCandidateOptions {
 	/**
 	 * The capital reference entries to store in the artifact's `capital` table.
 	 *
-	 * The caller passes them because this published module must not read repo paths.
-	 * Without them the table is not created, and the capital loader falls back
-	 * to the repo's `capitals-v1.json`.
+	 * The caller supplies these entries because this published module cannot read repository paths.
+	 * The builder creates no `capital` table when the caller omits them.
+	 *
+	 * The capital loader then falls back to the repository's `capitals-v1.json`.
 	 */
 	capitals?: readonly CapitalPoint[]
 
@@ -89,10 +90,11 @@ export interface BuildCandidateOptions {
 	localities?: readonly PathBuilderLike[]
 
 	/**
-	 * A WOF admin database with a `place_importance` table, which supplies the `importance` column.
+	 * A WOF admin database with a `place_importance` table supplies the `importance` column.
 	 *
 	 * Rows join on name key, country and placetype, then on the nearest centroid.
-	 * Without this option every row's `importance` is NULL, and consumers treat NULL as unmeasured.
+	 * Without this option every row's `importance` is NULL.
+	 * Consumers treat NULL as unmeasured.
 	 */
 	importance?: PathBuilderLike
 
@@ -166,8 +168,8 @@ export interface BuildCandidateResult {
 	ancestorPlaces: number
 
 	/**
-	 * The count of places that received a pre/post interval label, which equals
-	 * the node count of the canonical-parent forest.
+	 * The count of places that received a pre/post interval label.
+	 * It equals the node count of the canonical-parent forest.
 	 *
 	 * Containment against a place outside the forest is unknown.
 	 */
@@ -211,8 +213,8 @@ export interface BuildCandidateResult {
 }
 
 /**
- * Builds the candidate lookup database from a WOF admin database, replacing any
- * existing output, and adds its FTS5 trigram index for fuzzy lookup.
+ * Builds the candidate lookup database from a WOF admin database and replaces any existing output.
+ * The builder adds an FTS5 trigram index for fuzzy lookup.
  */
 export async function buildCandidateTable(opts: BuildCandidateOptions): Promise<BuildCandidateResult> {
 	const progress = opts.onProgress ?? (() => {})

@@ -63,8 +63,8 @@ export interface PlacetypeCensusHeader {
 	buildDate: string
 
 	/**
-	 * The share of each tag across every counted child in the country,
-	 * which {@link PlacetypeCensusLike.lift} divides by.
+	 * The share of each tag across every counted child in the country.
+	 * {@link PlacetypeCensusLike.lift} divides by this value.
 	 *
 	 * The node table holds only parents that passed the inclusion rule,
 	 * so summing the nodes gives a different number.
@@ -74,7 +74,8 @@ export interface PlacetypeCensusHeader {
 	/**
 	 * The emission bias a census hit would add at decode time.
 	 *
-	 * It stays absent until calibration measures a value, and the decoder applies no census bias.
+	 * It stays absent until calibration measures a value.
+	 * The decoder applies no census bias then.
 	 */
 	delta?: number
 }

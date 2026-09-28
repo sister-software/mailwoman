@@ -5,8 +5,8 @@
  *
  *   CSV → SQLite ingestion utility. Ported from isp-nexus's `sdk/data/csv.ts`.
  *
- *   Reads a CSV file, infers column types from a sample of rows, creates a SQLite table, and imports
- *   the data. Handles quoted fields, NULL normalization, and duplicate column name disambiguation.
+ *   Reads a CSV file, infers column types from a sample of rows, creates a SQLite table and imports
+ *   the data. It handles quoted fields, NULL normalization and duplicate column name disambiguation.
  *
  *   ## Usage
  *
@@ -131,9 +131,10 @@ interface IngestOptions {
 }
 
 async function runIngest(opts: IngestOptions): Promise<void> {
-	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own header
-	// handling consumes the first row as the header, and `drop` counts from the row after it,
-	// so a preamble before the header has to be dropped here and the header row taken by hand.
+	// `header: false` with `drop` is what expresses `--skip N`: the spliterator's own
+	// header handling consumes the first row as the header.
+	// `drop` counts from the row after it.
+	// Therefore, this code must drop a preamble before the header and take the header row by hand.
 	// Quote handling is end-to-end (quoted delimiters, doubled quotes); `skipEmpty` drops
 	// blank lines that readline would have turned into all-null rows.
 	// The early `break` closes the file descriptor.

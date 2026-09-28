@@ -162,8 +162,8 @@ export function bboxCoverageCells(
  *
  * Whether a license carries share-alike is derived from the expression through
  * `assertTierMatchesLicense` rather than recorded here.
- * A boolean beside the expression can disagree with it, and that disagreement is
- * exactly what the tier check below exists to catch.
+ * A separate boolean can disagree with the license expression.
+ * `assertTierMatchesLicense` catches that disagreement.
  */
 const SOURCE_MANIFEST_DEFAULTS = {
 	"overture-places": {
@@ -220,7 +220,9 @@ export interface BuildPOIOptions {
 	createdAt?: string
 
 	/**
-	 * The manifest source, which also selects the licence and attribution.
+	 * The manifest source.
+	 *
+	 * It selects the licence and attribution.
 	 * Defaults to `"overture-places"`.
 	 */
 	source?: "overture-places" | "osm"
@@ -286,8 +288,9 @@ export interface BuildPOIResult {
 /**
  * Builds and seals `poi.db` from POI rows, replacing any existing file at `out`.
  *
- * The build stages and dictionary-encodes the rows, writes the table in H3 cell order,
- * and adds the indexes, FTS table, layer manifest, and coverage.
+ * The build stages and dictionary-encodes the rows, then writes the table in H3 cell order.
+ * It adds the indexes and FTS table.
+ * It also writes the layer manifest and coverage.
  */
 export async function buildPOIDatabase(opts: BuildPOIOptions): Promise<BuildPOIResult> {
 	const progress = opts.onProgress ?? (() => {})

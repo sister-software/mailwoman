@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests that overlap resolution returns non-overlapping spans and applies confidence, span-length,
- *   and start-position ordering.
+ *   Tests that overlap resolution returns non-overlapping spans and orders them by confidence,
+ *   span length and start position.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"

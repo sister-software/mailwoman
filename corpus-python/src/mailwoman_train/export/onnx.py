@@ -8,8 +8,8 @@ Per Phase 2 §7:
 - Output: ``/data/models/onnx/model-v0.1.0-en-us.onnx`` (and per spec, the same weights are
   exported per-locale. Phase 3 may split them if size or load behavior demands).
 
-`graph.py` decides what gets exported — which channels the model carries, whether that combination
-is exportable, and the wrapper and example inputs it needs. This module runs the export and checks
+`graph.py` decides what gets exported: the model's channels, whether their combination is exportable,
+plus the wrapper and example inputs it needs. This module runs the export and checks
 the result against PyTorch.
 """
 
@@ -38,8 +38,9 @@ def export_to_onnx(
     """Export the token-classification model to ONNX. Returns the output path.
 
     A char-path model (``use_char_embed``) exports behind ``char_ids (batch, sequence, char_window)`` +
-    ``attention_mask (batch, sequence)`` and no ``input_ids``: its forward never reads token ids, and a
-    graph that took them would bind the runtime to a SentencePiece vocabulary the model does not have.
+    ``attention_mask (batch, sequence)``. The forward pass never reads token ids, so leave out
+    ``input_ids``. Adding that input would bind the runtime to a SentencePiece vocabulary the model
+    does not have.
     ``char_window`` is the training config's ``max_unit_width`` (the unit plus its context characters), a
     data-side constant the model does not carry, so the caller must pass it; ``max_length`` is
     ``max_units``. The char path is channel-free by interface (D5), so none of the anchor, gazetteer or

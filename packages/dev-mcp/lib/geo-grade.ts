@@ -76,8 +76,9 @@ export function thresholdKey(thresholdKm: number): string {
 
 /**
  * Deliberately a HIT/miss comparison rather than "whichever arm is closer":
- * an arm that moves a result from 40 km to 30 km has not found the address, and a metric
- * that rewards it would report progress on rows where no usable result changed.
+ * an arm that moves a result from 40 km to 30 km still has not found the address.
+ *
+ * A metric that rewards this change would report progress on rows where no usable result changed.
  */
 export function gradeAtThreshold(distanceA: number | null, distanceB: number | null, thresholdKm: number): RowGrade {
 	const a = hitAt(distanceA, thresholdKm)
@@ -133,8 +134,9 @@ export interface EquivalenceReading {
 	p_lower: number | null
 	p_upper: number | null
 	/**
-	 * `false` covers both a real difference and too few rows to tell, which is why the
-	 * sentence says which rather than leaving `false` to read as "different".
+	 * `false` covers both a real difference and too few rows to tell.
+	 *
+	 * The sentence identifies the case instead of leaving `false` to read as "different".
 	 */
 	equivalent: boolean
 	sentence: string
@@ -179,8 +181,10 @@ function equivalence(
 
 /**
  * The independent-samples standard error is used even though the rows are paired:
- * paired arms are positively correlated, so the true paired variance is smaller,
- * which makes this interval wider and equivalence harder to declare.
+ * paired arms are positively correlated.
+ *
+ * The true paired variance is smaller.
+ * This makes the interval wider and equivalence harder to declare.
  */
 export function tostEquivalence(
 	successesA: number,

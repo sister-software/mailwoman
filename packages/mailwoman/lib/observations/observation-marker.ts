@@ -3,7 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Converts semantic observations, coverage-qualified absences and layer designations into `QueryIntentMarker`s, which are additive, never change which answer wins, and carry a kind the verdict holds as its top kind or an alternative.
+ *   Converts semantic observations, coverage-qualified absences and layer designations into `QueryIntentMarker`s.
+ *   Markers add evidence without changing the winning answer. Each marker carries a kind that the verdict holds as
+ *   its top kind or an alternative.
  */
 
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
@@ -351,14 +353,13 @@ export function zoningDesignationMarker(
  */
 export interface LayerDesignationRoutes {
 	/**
-	 * The EA Flood Map for Planning route, which reports a designated absence inside England
+	 * The EA Flood Map for Planning route reports a designated absence inside England
 	 * where a location has no flood polygon because that is Flood Zone 1.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route, which fires only on a designation
-	 * because NCERM publishes no coverage statement.
+	 * The EA coastal-erosion route fires only on a designation because NCERM publishes no coverage statement.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**

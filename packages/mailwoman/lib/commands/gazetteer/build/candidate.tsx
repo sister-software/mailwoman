@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman gazetteer build` — the durable GeoNames-alias upstream fold + the byte-range candidate
- *   build (FTS5-trigram fuzzy index baked in), in one command. Every decision the 2026-06-27 manual
- *   rebuild needed (which countries fold, which postcode databases, FTS) is a default here. Progress
- *   streams to stderr. the final summary is on stdout. See releasing.md Step 5.
+ *   build (FTS5-trigram fuzzy index baked in), in one command. This command sets every choice required
+ *   by the 2026-06-27 manual rebuild, including folded countries, postcode databases and FTS. Progress
+ *   streams to stderr. The final summary goes to stdout. See releasing.md Step 5.
  */
 
 import { tryStat } from "@mailwoman/core/fs/readers"

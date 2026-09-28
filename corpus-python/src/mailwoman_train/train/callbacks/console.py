@@ -9,8 +9,8 @@ from __future__ import annotations
 from ...config import Config
 from ..state import TrainState
 
-#: The five tags a reader scans first. The eval block prints these inline. the full per-tag table
-#: goes to the CSV, which is where a question about a rarer tag gets answered.
+#: The five tags a reader scans first. The eval block prints these inline.
+#: The CSV carries the full per-tag table for questions about rarer tags.
 HEADLINE_TAGS = ("locality", "region", "street", "house_number", "postcode")
 
 
@@ -31,7 +31,7 @@ class ConsoleCallback:
         # a resumed run's absolute step divided by it reports the steps a previous process also paid for.
         ran = step - state.start_step
         rate = ran / state.elapsed if state.elapsed > 0 else 0.0
-        # The span is named because the figure cannot be read against the wrong one: `rate=5.42 steps/s over 2,100
+        # The span has a label because the figure cannot be read against the wrong one: `rate=5.42 steps/s over 2,100
         # since step 35,000` and `rate=5.42 steps/s` are the same number and only the first is checkable.
         span = f" over {ran:,} since step {state.start_step:,}" if state.start_step else ""
         print(

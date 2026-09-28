@@ -18,7 +18,6 @@
 
 import { pathExists } from "@mailwoman/core/fs/readers"
 import { workingTreeFiles } from "@mailwoman/core/git"
-import { repoRootPath } from "@mailwoman/core/paths"
 import { isProcessError, runFile } from "@mailwoman/core/process"
 import { cliArguments } from "@mailwoman/core/scripting/arguments"
 import { runCLICommand } from "@mailwoman/core/scripting/command"
@@ -27,7 +26,9 @@ import { resolvePath } from "path-ts"
 
 type Surface = "docs" | "docs-vocab" | "code"
 
-const REPO_ROOT = repoRootPath()
+// The package script runs from the repository root.
+// Keep the caller's worktree path when shared packages resolve through a symlink to another checkout.
+const REPO_ROOT = process.cwd()
 
 const prependExclude = (path: string) => `:(exclude)${path}`
 
@@ -203,27 +204,23 @@ async function main(args: readonly string[]): Promise<number> {
 	const checks = [{ config: configFor(selectedSurface), files }]
 
 	if (selectedSurface === "code") {
-		const sourceFiles = narrowing.length
-			? files.filter((file) => /\.(?:ts|tsx|py)$/u.test(file))
-			: await workingTreeFiles(REPO_ROOT, ["*.ts", "*.tsx", "*.py"])
+		const sourceFiles = files.filter((file) => /\.(?:ts|tsx|py)$/u.test(file))
 
-		// These two lexical rules inspect source nodes, including comments, docstrings,
-		// strings, regular expressions, and identifiers. The prose config remains comment-aware.
-		if (sourceFiles.length) checks.push({ config: "config/vale/.vale-code-terms.ini", files: sourceFiles })
+		// These rules inspect comments and Python docstrings through their source Views.
+		// Reuse the checked code surface so Vale's fixture and generated-file exclusions apply here too.
+		if (sourceFiles.length) {
+			checks.push({ config: "config/vale/.vale-code-terms.ini", files: sourceFiles })
+		}
 	}
 
 	let exitCode = 0
 
 	for (const check of checks) {
 		try {
-			const result = await runFile(
-				vale.file,
-				[...vale.argv, "--config", check.config, ...check.files],
-				{
-					cwd: REPO_ROOT,
-					maxBuffer: 50 * 1024 * 1024,
-				}
-			)
+			const result = await runFile(vale.file, [...vale.argv, "--config", check.config, ...check.files], {
+				cwd: REPO_ROOT,
+				maxBuffer: 50 * 1024 * 1024,
+			})
 
 			process.stdout.write(result.stdout)
 			process.stderr.write(result.stderr)

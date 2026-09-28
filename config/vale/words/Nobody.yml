@@ -1,4 +1,4 @@
-## Flag `nobody` in prose and source text for review.
+## Flag `nobody` in comments and docstrings for review.
 extends: existence
 message: "'%s' can hide the actor; name the person, group, or system responsible for the action."
 level: warning

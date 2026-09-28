@@ -5,15 +5,16 @@
  *
  *   Boundary-stress eval: the promote/no-promote verdict for a boundary-instability retrain. Same four
  *   stress shapes as the "before" baseline (boundary-stress-baseline.ts), graded against the recipe's
- *   pre-registered targets and the shared street-span floor. Emits a per-shape table and a single
- *   promote / no-promote line. Exit 0 = all targets met, exit 1 = any miss.
+ *   pre-registered targets. It also applies the shared street-span floor.
+ *   The tool emits a per-shape table and one promote / no-promote line.
+ *   Exit 0 means every target passed. Exit 1 means at least one target missed.
  *
  *   Unlike the baseline, this accepts an explicit model so it can grade a freshly-trained checkpoint
  *   without touching the neural-weights symlink (which yarn test re-creates). The classifier is built
  *   via the canonical `createScorer` in strict mode, so the model is fed the full ship-config it was
- *   trained against (anchor, gazetteer, and conventions, per the model-card's `requires` block), and
- *   the eval fails closed if a declared channel can't be fed. A custom model therefore requires the
- *   model-card, since `createScorer` reads its label vocab and `requires`.
+ *   trained against. Its `requires` block lists the anchor plus the gazetteer plus conventions.
+ *   The eval fails closed if it cannot supply a declared channel. A custom model therefore requires
+ *   the model-card. `createScorer` reads its label vocabulary and `requires` field.
  *
  *   Run (baseline, dev weights): node packages/mailwoman/lib/dev-tools/boundary-stress-eval.run.ts
  *   Run (a fetched v1.6.0 bundle): node
@@ -47,8 +48,8 @@ const N = Number(args.n)
 /**
  * The pre-registered eval (v1.6.0-boundary-stress.yaml).
  *
- * Per shape: the stress tag it teaches, the re-baselined "before" number,
- * and the target the retrain must clear.
+ * For each shape, list the stress tag it teaches and the re-baselined "before" number.
+ * Also list the target the retrain must clear.
  * Plus the shared street-span floor (≥65 on all four shapes).
  *
  * Partial: this eval has pre-registered baselines only for the original four templates.

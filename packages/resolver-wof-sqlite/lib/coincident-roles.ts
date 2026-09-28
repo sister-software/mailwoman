@@ -6,7 +6,7 @@
  *   `buildCoincidentRoles` derives the coincident-roles relation into the unified gazetteer.
  *
  *   Many places occupy multiple admin tiers under one name: German city-states (Berlin, Hamburg,
- *   Bremen), Italian provinces named after their capital (Milano, Varese), Spanish
+ *   Bremen), Italian provinces whose names match their capital (Milano, Varese), Spanish
  *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals (Utrecht,
  *   Groningen), and Shanghai. When an address surfaces only the admin role because the parser
  *   dropped the locality span, the resolver has no locality to place. The hierarchy-completion step
@@ -15,7 +15,7 @@
  *
  *   V1 is region-tier only (admin.placetype = `region`), the ~124 places matching the census across
  *   nine countries. County-tier same-name coincidences are excluded because they are dominated by
- *   French cantons and JP counties, admin subdivisions named after a seat town that do not hit the
+ *   French cantons and JP counties, admin subdivisions whose names match a seat town that do not hit the
  *   parser-drops-locality failure. Consolidated city-counties (US SF, Denver) are a separate
  *   follow-up needing a relative-size filter.
  *
@@ -195,7 +195,7 @@ export function buildCoincidentRoles(
 
 			if (dist > tolerance) continue
 			// v1 is region-tier only: a place is `city-state` when its centroid coincides with the
-			// region's (Berlin, Hamburg), otherwise `capital-seat` (a region named after its
+			// region's (Berlin, Hamburg), otherwise `capital-seat` (a region whose name matches its
 			// principal city, such as Milano province and Milano comune). `consolidated-county` is
 			// reserved for a future county-tier pass (US SF, Denver), excluded from v1 because
 			// county-tier same-name coincidences are dominated by French cantons and JP counties

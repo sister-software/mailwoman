@@ -18,7 +18,8 @@ import { readRequiredChannels } from "#weights/channels"
  *
  * A model card declares its lexicon in `requires.<channel>.lexicon`,
  * and {@linkcode resolveEvidenceLexicon} resolves that file.
- * The legacy filename applies only to a card that declares no lexicon, and using it logs a warning once.
+ * The legacy filename applies only to cards that declare no lexicon.
+ * Using it logs one warning.
  */
 export const EVIDENCE_LEXICON_FAMILIES = {
 	street_type: { prefix: "street-type-lexicon-v", legacy: "street-type-lexicon-v3.json" },

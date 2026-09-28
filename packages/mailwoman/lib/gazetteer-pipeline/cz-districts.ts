@@ -4,14 +4,14 @@
  * @author Teffen Ellis, et al.
  *
  *   Build `localities-cz-districts.db`, the Prague municipal-district locality database. The `Praha 9`
- *   pair rung needs a locality row to cohere with, and WOF carries almost none of Prague's městské
- *   části, so this database supplies that half.
+ *   pair rung needs a locality row to cohere with.
+ *   WOF carries almost none of Prague's městské části, so this database supplies that half.
  *
  *   Source and license: the GeoNames CZ places file (`<data-root>/geonames/CZ.txt`, CC-BY 4.0,
  *   attribution GeoNames), keeping rows whose name matches `Praha \d+` (the 22 administrative
  *   districts) with the A-feature (administrative-division) row preferred per name. It uses the same
  *   unified-schema shape as the LINZ NZ database, so the candidate build's `localities` fold consumes
- *   it as-is, and the same provenance discipline (`database_meta` + source md5).
+ *   it as-is. It also uses the same provenance discipline (`database_meta` + source MD5).
  *
  *   Run: mailwoman gazetteer build cz-districts [--source <CZ.txt>] [--out <localities-cz-districts.db>]
  */

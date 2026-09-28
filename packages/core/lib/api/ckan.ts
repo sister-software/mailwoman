@@ -27,7 +27,7 @@ export interface CKANPackageRecord {
 	 */
 	datasetID: string
 	/**
-	 * The ISO `revision` reference date, which identifies the product version.
+	 * The ISO `revision` reference date identifies the product version.
 	 */
 	revisionDate: string
 	publicationDate: string | null
@@ -57,7 +57,7 @@ export interface ReadCKANPackageRecordOptions {
 	/**
 	 * The licence that the entry must list.
 	 *
-	 * Any other value means the licence changed, and the read throws.
+	 * The read throws when the catalogue lists a different licence.
 	 */
 	expectLicence: string
 	/**

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Generate canonical and reversed French addresses from real OpenAddresses tuples. Reversed forms
- *   vary postcode, locality, and street order. Optional sub-modes add ordinal house numbers and
+ *   vary postcode, locality and street order. Optional sub-modes add ordinal house numbers and
  *   uppercase localities. `--golden` emits a held-out evaluation set.
  */
 
@@ -141,10 +141,10 @@ export const frOrderRecipe: CorpusRecipe = {
 					// Postcode and locality before number and street.
 					raw = `${postcode} ${locality}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_B_CUTOFF) {
-					// Locality, postcode, number, and street.
+					// Locality, postcode, number and street.
 					raw = `${locality}, ${postcode}, ${house_number} ${street}`
 				} else if (variantRoll < REVERSED_VARIANT_C_CUTOFF) {
-					// Locality, number, street, and postcode without commas.
+					// Locality, number, street and postcode without commas.
 					raw = `${locality} ${house_number} ${street} ${postcode}`
 				} else {
 					// Postcode, number, street, then locality.

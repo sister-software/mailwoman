@@ -5,9 +5,8 @@
  *
  *   Reduce the saved Overpass response to one point per `BT` unit postcode.
  *
- *   The response is a flat list of OSM elements that each claim a postcode on an address, and the
- *   database needs one coordinate per postcode. This module does three things and counts everything
- *   it drops:
+ *   The response is a flat list of OSM elements. Each element claims a postcode on an address.
+ *   The database needs one coordinate per postcode. This module does three things and counts every drop:
  *
  *   1. **Validate** against the BT unit shape. OSM tag values are free text typed by humans, so a
  *      format check is what keeps a typo from becoming a searchable place.
@@ -25,10 +24,13 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
 /**
  * A Northern Ireland unit postcode.
  *
- * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`) with the
- * area pinned to `BT`: loose about the outward code's second character, because `BT1`
- * and `BT47` are both legal and differ structurally, and strict about the inward code,
- * which is invariant across the whole system.
+ * This is the GB unit-postcode shape (`../codepoint/parse.ts`'s `UNIT_POSTCODE`)
+ * with the area pinned to `BT`.
+ * The outward code's second character is optional.
+ *
+ * `BT1` `BT1` and `BT47` are both legal forms with different outward structures.
+ * The pattern requires the system-wide inward-code shape.
+ *
  * The `[A-Z0-9]?` slot cannot fire for a real BT district (they are `BT1`–`BT94`, all-numeric),
  * and is kept rather than tightened to `[0-9]?` so the pattern stays recognisably the national one.
  *
@@ -37,9 +39,10 @@ import type { OverpassElement, OverpassResponse } from "#gazetteer-pipeline/post
 export const NI_UNIT_POSTCODE = /^BT[0-9][A-Z0-9]?\s[0-9][A-Z]{2}$/
 
 /**
- * What a parse run read and dropped, and why.
+ * Records what a parse run read, what it dropped, plus the reason for each drop.
  *
- * Counters rather than booleans so the database's provenance can state the meaning of each zero.
+ * Use counters.
+ * The database provenance can then explain each zero.
  * "Measured, none" is a different claim from "never looked".
  */
 export interface NIOSMParseStats {
@@ -81,8 +84,10 @@ export interface NIOSMParseStats {
 /**
  * How many distinct malformed values to retain.
  *
- * A bounded list: the counter is the signal, the samples are the diagnosis, and an unbounded
- * map would let a filter regression write a million keys into the database's `meta`.
+ * The counter is the signal.
+ * The samples are the diagnosis.
+ *
+ * An unbounded map would let a filter regression write a million keys into the database's `meta`.
  */
 const MALFORMED_SAMPLE_LIMIT = 50
 
@@ -104,8 +109,8 @@ export interface NIPostcodeRecord {
 	/**
 	 * How many OSM elements attested this postcode.
 	 *
-	 * Coverage evidence, and the reason a database consumer can tell a one-node
-	 * guess from a 40-building consensus.
+	 * This is coverage evidence.
+	 * A database consumer can distinguish a one-node guess from a 40-building consensus.
 	 */
 	attestations: number
 	/**

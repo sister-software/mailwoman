@@ -2,24 +2,23 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file An on-disk `axios-cache-interceptor` storage adapter, so a client gets a durable http cache by
- *   configuration rather than by hand-rolling one.
+ * @file An on-disk `axios-cache-interceptor` storage adapter that gives clients a durable HTTP cache.
  *
- *   Node only, and deliberately not re-exported from `./index.ts`: `core/api` reaches a browser bundle
- *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`),
- *   and webpack refuses to resolve `node:fs/promises` for the web target. Import this through its own
+ *   This module runs only in Node. It is not re-exported from `./index.ts` because `core/api` reaches a browser bundle
+ *   (`docs`'s `DashboardMap` → `@mailwoman/cartographer` → `tiles/api.ts` → `@mailwoman/core/api`).
+ *   Webpack cannot resolve `node:fs/promises` for the web target. Import this module through its own
  *   `@mailwoman/core/api/disk-storage` subpath.
  *
  *   Two rules here are required:
  *
- *     1. validate before writing. A response that can't be read back — an unparseable body, a
- *        non-finite TTL — must never reach disk. A permanently-cached entry has no self-healing path
- *        short of hand-deleting a hash-named file.
- *     2. atomic write, unique temp name. Write-then-rename, with a temp name unique per write. A
- *        deterministic temp name (`${final}.building`) lets two clients writing one URL collide: the
- *        first `rename()` moves the shared temp file away and the second gets a raw `enoent` for a
- *        response that had already succeeded, and at multi-MB bodies the two writers' bytes can
- *        interleave into a corrupt-but-parseable entry.
+ *     1. Validate before writing. A response that cannot be read back must never reach disk.
+ *        Examples include an unparseable body and a non-finite TTL. A permanently cached entry has no self-healing path
+ *        short of hand-deleting a file whose name is its hash.
+ *     2. Use an atomic write with a unique temporary name. Write the temporary file, then rename it.
+ *        Give each write a unique temporary name. A deterministic name (`${final}.building`) lets two clients writing one URL collide.
+ *        The first `rename()` moves the shared temporary file. The second gets a raw `enoent` for a
+ *        response that had already succeeded. With multi-MB bodies, the writers' bytes can interleave
+ *        into a corrupt but parseable entry.
  */
 
 import { type AxiosStorage, buildStorage, type NotEmptyStorageValue, type StorageValue } from "axios-cache-interceptor"
@@ -47,8 +46,8 @@ export interface DiskStorageOptions {
 	 * (or throw) to drop the write, so the entry is removed and the next request re-fetches.
 	 *
 	 * This is the hook for "a 200 whose body isn't what this API is supposed to return" —
-	 * some upstreams (SEC edgar among them) serve an html error page with a 200 status,
-	 * and persisting one under a permanent TTL poisons that URL forever.
+	 * Some upstreams, including SEC EDGAR, serve an HTML error page with a 200 status.
+	 * Persisting that page under a permanent TTL poisons the URL indefinitely.
 	 *
 	 * The structural checks (serializable, finite `createdAt`/`ttl`) always run regardless.
 	 */
@@ -74,8 +73,10 @@ function isPersistableState(value: NotEmptyStorageValue): boolean {
  * The structural half of the validate-before-write rule: an entry must survive
  * a JSON round trip with its meaning intact.
  *
- * `createdAt` and `ttl` get an explicit finite check because `JSON.stringify(Infinity)` is the string
- * `null`, and `null` reads back as `0` in the interceptor's `createdAt + ttl < Date.now()` expiry test.
+ * The function checks that `createdAt` and `ttl` are finite.
+ * `JSON.stringify(Infinity)` produces the string `null`.
+ *
+ * The interceptor reads `null` as `0` in its `createdAt + ttl < Date.now()` expiry test.
  * An `Infinity` TTL — the obvious way to spell "cache this immutable document forever" —
  * would therefore round-trip into an entry that is expired the instant it is read.
  */
@@ -86,20 +87,25 @@ function hasFiniteTiming(value: NotEmptyStorageValue): boolean {
 }
 
 /**
- * Create an on-disk {@linkcode AxiosStorage}, keyed by the SHA-256 of the
- * interceptor's cache key (which already folds in method, URL, params and body),
- * so a filename is always a fixed-length, filesystem-safe hex digest.
+ * Create an on-disk {@linkcode AxiosStorage}, keyed by the SHA-256 of the interceptor's cache key.
  *
- * An in-process overlay Map sits in front of the files, and it is required for two reasons:
+ * That key includes the method and URL.
+ * It also includes request parameters and the body.
+ *
+ * The resulting filename is a fixed-length, filesystem-safe hexadecimal digest.
+ *
+ * An in-process overlay Map sits in front of the files for two reasons:
  *
  * 1. `loading` markers live there instead of on disk.
- *    That keeps the interceptor's stampede guard working (a concurrent second request for
- *    the same key sees `loading` and waits on the first) without a file write per request,
- *    and without an interrupted process leaving a `loading` marker on disk forever.
+ *    That keeps the interceptor's stampede guard working.
+ *    A concurrent second request for the same key sees `loading` and waits on the first.
+ *    The overlay avoids one file write per request.
+ *    It also prevents an interrupted process from leaving a `loading` marker on disk.
  * 2. A value being written stays there until its `rename` lands.
- *    Without that, `set()` clearing the `loading` marker before the file exists opens a window
- *    where the key is in neither place, and a concurrent reader gets `empty` for a
- *    response that is already in hand — which defeats the stampede guard.
+ *    Without that, `set()` could clear the `loading` marker before the file exists.
+ *    The key would then exist in neither place.
+ *    A concurrent reader would get `empty` for a response already in hand.
+ *    That defeats the stampede guard.
  */
 export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 	const { validate } = options
@@ -186,8 +192,8 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 			const serialized = serializeIfValid(key, value)
 
 			if (serialized === null) {
-				// Drop any older entry too: the interceptor is telling us this key's content
-				// just changed, and keeping a superseded body would be worse than a miss.
+				// Drop any older entry too: the interceptor is telling us this key's content just changed.
+				// Keeping a superseded body would be worse than a miss.
 				await removeEntry(key)
 
 				return
@@ -231,8 +237,9 @@ export function buildDiskStorage(options: DiskStorageOptions): AxiosStorage {
 		clear: async () => {
 			overlay.clear()
 
-			// Recreated rather than left absent: "the cache is empty" and "the cache directory vanished" are
-			// different states to anything inspecting the data root, and only the first is intended.
+			// The function recreates the directory instead of leaving it absent.
+			// Data-root inspection distinguishes an empty cache from a missing cache directory.
+			// The intended state is an empty cache.
 			await removePathIfPresent(directory)
 			await makeDirectories(directory)
 		},

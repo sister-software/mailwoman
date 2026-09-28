@@ -703,8 +703,9 @@ export interface ObligationPostureObservation {
 	 */
 	layers: ReadonlyArray<{ subject: string; expression: string }>
 	/**
-	 * Layers on disk whose manifest could not be read, which the posture reports
-	 * as unreadable rather than as satisfied.
+	 * Layers on disk whose manifest could not be read.
+	 *
+	 * The posture reports them as unreadable rather than as satisfied.
 	 */
 	unreadable: readonly string[]
 }
@@ -713,8 +714,10 @@ export interface ObligationPostureObservation {
  * Reports whether the layers on disk satisfy the installation's refusal of an obligation class.
  *
  * The check exists only when a refusal is set.
- * It reads the same manifests the license lines above read, and reports the identifier that
- * carries the refused class, which is what `mailwoman data pull --refuse` would refuse on.
+ * It reads the same manifests as the license lines above.
+ *
+ * It reports the identifier carrying the refused class, matching the behavior
+ * of `mailwoman data pull --refuse`.
  * The check is informational and never core.
  */
 export function obligationPostureCheck(o: ObligationPostureObservation): DoctorCheck {
@@ -760,7 +763,8 @@ export function obligationPostureCheck(o: ObligationPostureObservation): DoctorC
 // #region Aggregate
 
 /**
- * Returns `0` when every core check is `ok`, and `1` otherwise.
+ * Returns `0` when every core check is `ok`.
+ * Returns `1` otherwise.
  *
  * Non-core checks, such as optional data layers, report gaps without failing the process.
  */
@@ -779,7 +783,7 @@ export function assembleReport(checks: DoctorCheck[]): DoctorReport {
  * Returns the trimmed first line of an error message so each check stays on one line.
  */
 function firstLine(message: string): string {
-	// oxlint-disable-next-line mailwoman/prefer-spliterator -- An in-memory error message, and the limit argument stops after the first segment.
+	// oxlint-disable-next-line mailwoman/prefer-spliterator -- The message is in memory. The limit stops after the first segment.
 	return message.split("\n", 1)[0]!.trim()
 }
 

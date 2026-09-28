@@ -5,10 +5,9 @@
  *
  *   Reading a place out of a cloned Who's On First data repo.
  *
- *   WOF stores each record at a path derived from its own id: the decimal id split into three-character directories,
- *   then `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The rule is not written down in the data.
- *   it is layout knowledge every reader has to carry — so it lives here once, next to the {@link WOFFeature} type the
- *   parsed record has.
+ *   WOF stores each record at a path derived from its own ID. The decimal ID is split into three-character directories,
+ *   followed by `<id>.geojson`. `85977539` lives at `859/775/39/85977539.geojson`. The data does not state this rule.
+ *   It is layout knowledge every reader needs, so it lives here beside the {@link WOFFeature} type for parsed records.
  */
 
 import { resolvePath, resolvePathBuilder, type PathBuilderLike } from "path-ts"
@@ -35,12 +34,14 @@ export function wofRepoName(theme: "admin" | "postalcode" | "venue", country: st
  * Find a cloned repository under a repositories root, in either layout.
  *
  * Two are in use and both are legitimate.
- * `gazetteer inspect sync` writes `<root>/<owner>/<name>`, which is what the
- * admin ingest's depth-agnostic GeoJSON glob reads.
+ * `gazetteer inspect sync` writes `<root>/<owner>/<name>`.
+ * The admin ingest's depth-agnostic GeoJSON glob reads it.
  *
  * The shipped postcode extracts were built from repositories cloned by hand as `<root>/<name>`.
- * A reader that knows one layout reports a repository that is present as missing,
- * and every reader here treats missing as "no evidence" and continues.
+ * A reader that knows only one layout reports a present repository as missing.
+ *
+ * Every reader here treats missing as "no evidence".
+ * It continues in that case.
  * So the wrong layout is silent rather than loud.
  */
 export async function resolveWOFRepo(
@@ -82,9 +83,9 @@ const ID_CHUNK = 3
 /**
  * A WOF id → its repo-relative path segments, ending in `<id>.geojson`.
  *
- * Segments rather than a joined string so a caller can append them to whatever
- * root it already holds — the repos layout puts a `data` directory under each
- * `whosonfirst-data-*` clone, and callers reach it differently.
+ * Segments rather than a joined string so a caller can append them to whatever root it already holds.
+ * The repos layout puts a `data` directory under each `whosonfirst-data-*` clone.
+ * Callers reach it differently.
  */
 export function wofIDPathSegments(id: number): string[] {
 	const digits = String(id)

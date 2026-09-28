@@ -5,7 +5,7 @@
  *
  *   Refinement-monotonicity suite rows and their audit. The law itself is evaluated in `candidate-admissibility.ts`.
  *
- *   Each row's `variant` is the finer query, and a named coarsening step derives its `base`. Rows that share a
+ *   Each row's `variant` is the finer query. A listed coarsening step derives its `base`. Rows that share a
  *   `rowRef` must form one chain whose finest query is the committed corpus row.
  */
 
@@ -25,11 +25,11 @@ import {
 export const REFINEMENT_MONOTONICITY_LAW = "refinement-monotonicity"
 
 /**
- * Named coarsening steps.
+ * Coarsening steps.
  *
  * - `drop-leading-segment` removes the first comma-separated segment, such as a venue or street line.
- * - `drop-trailing-segment` removes the last comma-separated segment,
- *   which is usually the coarsest admin area.
+ * - `drop-trailing-segment` removes the last comma-separated segment.
+ *   That segment represents the coarsest admin area when present.
  * - `drop-leading-numeric-token` removes the first whitespace-separated token when it contains a digit.
  *   It reaches a postcode or house number that a comma does not separate, as in many DE and FR addresses.
  */
@@ -111,7 +111,9 @@ export interface RefinementChain {
 	 */
 	links: string[]
 	/**
-	 * Finest query in the group, which the committed corpus row must hold.
+	 * Finest query in the group.
+	 *
+	 * The committed corpus row must contain it.
 	 * It is empty when the group has no single finest query.
 	 */
 	tip: string
@@ -239,7 +241,7 @@ export function describeRefinementCoverage(
  * Audits suite rows and chains.
  *
  * Each row needs the `candidate_admissibility` comparator, a `refines` expectation,
- * a `rowRef`, a `caseCountry`, and a named coarsening step.
+ * a `rowRef`, a `caseCountry` plus a listed coarsening step.
  * Each chain must be connected, end at one finest query, and share one context.
  */
 export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): string[] {
@@ -313,7 +315,7 @@ export function auditRefinementSuite(fixtures: readonly ConformanceFixture[]): s
 }
 
 /**
- * Returns the fixture's step name, or `?` when no named step fits.
+ * Returns the fixture's step label, or `?` when no coarsening step fits.
  */
 export function describeRefinementStep(fixture: ConformanceFixture): string {
 	return classifyRefinementStep(fixture.base, fixture.variant) ?? "?"

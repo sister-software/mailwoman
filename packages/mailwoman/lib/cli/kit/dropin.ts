@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared helpers for the `mailwoman-libpostal`, `mailwoman-nominatim`, and
+ *   Shared helpers for the `mailwoman-libpostal`, `mailwoman-nominatim` and
  *   `mailwoman-photon` CLIs. They handle command dispatch, classifier and gazetteer
- *   setup, and startup output.
+ *   setup plus startup output.
  *
  *   This module is in `mailwoman` because it uses the neural classifier and resolver
  *   backend. It is separate from `cli-kit/index.ts`, which loads Ink and React for
@@ -214,7 +214,8 @@ export interface DropInCLI {
  */
 export async function runDropInCLI({ binaryName, openapi, serve, usage }: DropInCLI): Promise<void> {
 	const command = parseArguments({
-		// The subcommand is the first positional, and the rest are parsed by the subcommand's own spec.
+		// The subcommand is the first positional.
+		// The subcommand's own spec parses the rest.
 		strict: false,
 		allowPositionals: true,
 	}).positionals[0]

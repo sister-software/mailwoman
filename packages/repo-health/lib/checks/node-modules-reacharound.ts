@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Guard for the node_modules reach-around: hand-assembling a path into another package's install directory
- *   (say `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")`) instead of asking Node where
- *   that package lives or exposing the file through an `exports` subpath.
+ *   This check finds callers that hand-assemble paths into another package's install directory.
+ *   For example, `resolve(root, "node_modules/@mailwoman/neural-weights-en-us/model.onnx")` embeds an install path.
+ *   Callers can ask Node where a package lives or expose the file through an `exports` subpath.
  *
- *   The assembled literal encodes a layout its owner never agreed to, so it survives a package moving, a scope
- *   rename, a hoist, and a `files` change by silently pointing nowhere, and the caller reads that as the artifact
- *   being missing rather than looked for in the wrong place.
+ *   The assembled path relies on an install layout the package owner has not promised.
+ *   A package move, scope rename, hoist, or `files` change can make it point nowhere.
+ *   The caller may then report a missing artifact even though it looked in the wrong place.
  *
- *   The check targets literal `node_modules` path segments in `join`/`resolve` arguments via the TypeScript AST
- *   rather than a grep, prefiltering files on the substring first, because `node_modules` appears legitimately in
- *   vitest exclude globs, `.gitignore`-shaped arrays, and prose.
+ *   The TypeScript AST finds literal `node_modules` path segments in `join` and `resolve` arguments.
+ *   A substring prefilter avoids parsing files that mention `node_modules` in Vitest exclude globs,
+ *   `.gitignore`-shaped arrays, or prose.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -39,8 +39,8 @@ const MINIMUM_REASON_LENGTH = 20
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
 
 /**
- * Every site allowed to spell a `node_modules` path by hand, keyed by repo-relative path,
- * with the reason it is not a reach-around.
+ * Every site allowed to spell a `node_modules` path by hand, keyed by repo-relative
+ * path with the reason for it.
  */
 const ALLOWED: Record<string, string> = {
 	// The oracle for that layout: a fixture built with the implementation's own helper cannot fail
@@ -59,8 +59,8 @@ const ALLOWED: Record<string, string> = {
 	// The oracle for that farm: a fixture built with the implementation's own helper
 	// cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
-	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves
-	// the way yarn makes it resolve, which a fixture with no install layout cannot exercise.
+	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves.
+	// A fixture without an install layout cannot test Yarn's resolution behavior.
 	"packages/repo-health/test/unit/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
 	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads,
@@ -82,8 +82,9 @@ const ALLOWED: Record<string, string> = {
 /**
  * Every tracked source that mentions `node_modules` at all.
  *
- * "Ours" is the set git tracks, because scratchpad probes, agent worktrees,
- * and local build output must not fail a guard CI cannot reproduce.
+ * Git tracks the source files this check scans.
+ * CI cannot reproduce scratchpad probes, agent worktrees, or local build output,
+ * so those remain outside the check.
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
@@ -109,9 +110,10 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 		// `isStringLiteralLike` already covers a no-substitution template.
 		if (ts.isStringLiteralLike(node)) return node.text
 
-		// An interpolated template is spliced with a NUL standing in for each `${…}`
-		// so the segment test sees the chunks rather than the raw source, whose leading
-		// backtick could never match the leading-segment anchor.
+		// An interpolated template is spliced with a NUL for each `${…}` expression.
+		// The segment test then sees the chunks.
+		// The raw source begins with a backtick.
+		// That character cannot match the leading-segment anchor.
 		if (ts.isTemplateExpression(node)) {
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}
@@ -164,8 +166,10 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 }
 
 /**
- * The `node-modules-reacharound` check: one error per hand-spelled `node_modules` path outside
- * the allowlist, and one per allowlist entry that no longer exists or no longer reaches around.
+ * The `node-modules-reacharound` check: one error per hand-spelled `node_modules`
+ * path outside the allowlist.
+ *
+ * It also reports each allowlist entry that no longer exists or no longer reaches around.
  */
 export const nodeModulesReacharoundCheck: RepoCheck = {
 	id: "node-modules-reacharound",

@@ -169,7 +169,7 @@ Country-level granularity is the right v0.7 scope. Variation within a country (U
 
 **Data source:** The existing training corpus (OpenAddresses + WOF + synth extracts), not external OSM data. Consistency with the model's training distribution matters more than an independent data source.
 
-**Build:** One pass over the training corpus's bigrams and trigrams. For each n-gram, count the distinct localities where the n-gram appears next to a labeled locality span. Localities are keyed by WOF `wof_id` so that places sharing a name, such as the many Springfields, are counted separately.
+**Build:** One pass over the training corpus's bigrams and trigrams. For each n-gram, count the distinct localities where the n-gram appears next to a labeled locality span. Localities are keyed by WOF `wof_id` so that separate places named Springfield remain separate entries.
 
 **Output format:** A flat `(ngram → count)` lookup table in compact binary or compressed JSON, ~500K entries.
 

@@ -1,8 +1,8 @@
-"""Moving a collated batch onto the device, and reading the precision setting.
+"""Move a collated batch onto the device. Read the precision setting.
 
-Shared by the supervised loop and the MLM pre-training loop. They previously lived in the trainer,
-which made pre-training import the trainer while the trainer routed the MLM objective back to
-pre-training — a cycle each side dodged with a deferred import.
+Shared by the supervised loop and the MLM pre-training loop. Both previously lived in the trainer.
+That made pre-training import the trainer while the trainer routed the MLM objective back to
+pre-training, creating a cycle each side dodged with a deferred import.
 """
 
 from __future__ import annotations
@@ -15,12 +15,10 @@ import torch
 def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, Any]:
     """Collated lists to device tensors, carrying every channel the loader emitted.
 
-    A channel is present only when its lexicon is configured, so each is copied under its own
-    guard. Dropping one here is silent: the encoder's forward zero-fills a missing channel, so the
-    projection trains on zeros and the shipped weights carry an untrained channel. That happened to
-    the locality-surface channel from v3.16.0 through v3.24.0 (#1349) — the loader painted the
-    features, the collator emitted them, and this function dropped them. `test_train_channels`
-    asserts key parity between the collator and this function so a channel cannot vanish again.
+    A channel is present only when its lexicon is configured. Copy each channel under its own guard.
+    The encoder zero-fills a missing channel, so a dropped channel makes the projection train on zeros.
+    The shipped weights would then carry an untrained channel. `test_train_channels` checks key parity
+    between the collator and this function.
     """
     tb = {
         "input_ids": torch.tensor(batch["input_ids"], dtype=torch.long, device=device),
@@ -60,8 +58,8 @@ def to_tensor_batch(batch: dict[str, Any], device: torch.device) -> dict[str, An
 def precision_to_dtype(precision: str, device: torch.device) -> torch.dtype | None:
     """The autocast dtype for a precision setting, or None for full precision.
 
-    fp16 answers None off CUDA: the CPU path has no fp16 kernels worth using, and asking for one
-    there is a request full precision satisfies better than a failure would.
+    fp16 answers `None` off CUDA because the CPU path has no fp16 kernels worth using.
+    Full precision satisfies that request better than a failure would.
     """
     if precision == "fp16":
         return torch.float16 if device.type == "cuda" else None

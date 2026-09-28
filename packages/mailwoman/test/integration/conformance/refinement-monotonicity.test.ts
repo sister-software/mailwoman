@@ -3,29 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The refinement-monotonicity law against the live pipeline — the leg that actually geocodes, and the only
- *   one that can read a real candidate table.
+ *   The refinement-monotonicity law runs against the live pipeline. This leg geocodes and reads a real candidate table.
  *
- *   It lives in `test/integration/` because that is the suite the `mailwoman-data` runner runs, with
- *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. the fast leg is portable by construction and a
- *   data-dependent test placed there would skip its way to green. The guard is the resolver-based
- *   `weightsPresent()` idiom the other integration suites use: ASK the resolver for the model the loader will
- *   open, never a path literal, because a skip-guard that stops matching does not fail — it skips, and the
- *   suite disappears from the run reporting success.
+ *   It lives in `test/integration/` because the `mailwoman-data` runner runs that suite with
+ *   `MAILWOMAN_DATA_ROOT` set and the weights materialized. The fast suite is portable by construction. A
+ *   data-dependent test placed there would skip and report success. The guard uses the resolver-based
+ *   `weightsPresent()` idiom from the other integration suites. It asks the resolver for the model the loader
+ *   will open. A path literal could stop matching while the suite continued to skip and report success.
  *
- *   what this LEG adds over the fast one. The unit legs prove the instrument reads a candidate table
- *   correctly and that every chain is corpus-attested, both without loading anything. Neither can produce a
- *   candidate table, and the table is the whole subject: the fetch window, the country scope, the hierarchy
- *   path and the `checks` are things the resolver decides at run time, and no synthetic trace can attest what
- *   the shipped walk actually does with them.
+ *   This integration leg adds evidence beyond the fast one. The unit legs prove that the instrument reads a
+ *   candidate table correctly and that every chain is corpus-attested. They do so without loading data. Neither
+ *   unit leg can produce a candidate table. The table is the subject of this test. The resolver decides the
+ *   fetch window and country scope at run time. It also decides the hierarchy path and `checks`. A synthetic trace
+ *   cannot attest how the shipped walk handles them.
  *
- *   this LEG cannot GO RED on A known defect, and cannot GO green on A blind one. `runConformanceCommand`
- *   blocks on `status: pass` rows, reports tracked ones without blocking, and removes unmeasured rows from the
- *   count the verdict is stated over — so a suite that stops being able to decide anything returns non-zero
- *   rather than reporting a clean run over rows nobody measured.
+ *   This integration leg cannot report a known defect as passing or a blind row as passing. `runConformanceCommand`
+ *   blocks on `status: pass` rows and reports tracked rows without blocking. It removes unmeasured rows from the
+ *   verdict's count. A suite that cannot decide any rows returns non-zero instead of reporting a clean run over
+ *   unmeasured rows.
  *
- *   The suite path is pinned rather than defaulted: a default run covers every committed law, and this file
- *   is the refinement leg.
+ *   The suite path is pinned. A default run covers every committed law. This file runs the refinement leg.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -41,7 +38,7 @@ import { describe, expect, it } from "vitest"
 
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver — see the module docstring, and `v1-parse-eval.test.ts`, which carries the incident.
+		// ASK the resolver — see the module docstring and `v1-parse-eval.test.ts`, which carries the incident.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false

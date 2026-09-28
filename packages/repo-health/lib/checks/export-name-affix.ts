@@ -6,8 +6,8 @@
  *   `readWorkspaceDirectories` over `workspaceDirectories`. The longer name is how a duplicate arrives,
  *   because an author who knew the shorter name would have imported it.
  *
- *   The sibling {@linkcode findPrivateNameShadows} compares names for equality, which finds a copy only when both
- *   authors chose the same word. This compares camelCase component runs instead, which is what an affix leaves behind.
+ *   The sibling {@linkcode findPrivateNameShadows} compares names for equality. It finds a copy only when both
+ *   authors chose the same word. This check compares camelCase component runs to expose an affix.
  *
  *   scoped across packages on purpose. Two names inside one package are usually a deliberate family
  *   (`buildPostcodeLocalityJP` beside `buildPostcodeLocalityBase`); across packages, the shorter name has a public home the
@@ -48,7 +48,7 @@ export interface AffixPair {
 	line: number
 	name: string
 	/**
-	 * The shorter exported name spelled out inside it, and where that one lives.
+	 * The shorter exported name spelled out inside it and the workspace where it lives.
 	 */
 	contains: string
 	containedIn: string[]
@@ -155,8 +155,8 @@ export async function findAffixPairs(context: RepoContext): Promise<AffixPair[]>
 		byLowerName.set(key, [...(byLowerName.get(key) ?? []), site])
 	}
 
-	// One diagnostic per declaration rather than per matching run and not per overload: an overload
-	// set is one name, and a name containing several shorter names is still one thing to look at.
+	// Emit one diagnostic per declaration.
+	// An overload set has one name, even when the name contains several shorter names.
 	const pairs = new Map<string, AffixPair>()
 
 	for (const site of sites) {

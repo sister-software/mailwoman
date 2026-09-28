@@ -87,8 +87,8 @@ export interface VersionOption {
 export type InferenceBackend = "webgpu" | "wasm"
 
 /**
- * The injected geocoder runtime, which extends {@link PipelineRuntime} with the map
- * and version/backend surface.
+ * The injected geocoder runtime extends {@link PipelineRuntime} with the map.
+ * It also supplies version and backend controls.
  *
  * The package imports no `@mailwoman/cartographer`, `@mailwoman/neural` web loader, httpvfs, or Docusaurus.
  */
@@ -193,8 +193,10 @@ export interface ResultContext {
 }
 
 /**
- * Host-injected panels for {@link Geocoder}, the map analogue of `PipelinePanels`;
- * each is an already-rendered `ReactNode` or a thunk, and every field is optional.
+ * Host-injected panels for {@link Geocoder}, the map analogue of `PipelinePanels`.
+ *
+ * Each is an already-rendered `ReactNode` or a thunk.
+ * Every field is optional.
  */
 export interface GeocoderPanels {
 	/**
@@ -225,13 +227,15 @@ export interface GeocoderPanels {
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
 	/**
-	 * Host controls appended to the Developer sheet — the opt-in display toggles,
-	 * whose state and renderers belong to the host.
+	 * Host controls appended to the Developer sheet.
+	 * The host owns their state and renderers.
 	 */
 	developerExtras?: ReactNode
 	/**
-	 * Replaces the package's default {@link ResultPanel}; absent → the built-in panel renders,
-	 * and when provided the host renders from {@link ResultContext}.
+	 * Replaces the package's default {@link ResultPanel}.
+	 *
+	 * When absent, the built-in panel renders.
+	 * When provided, the host renders from {@link ResultContext}.
 	 */
 	result?: (context: ResultContext) => ReactNode
 	/**

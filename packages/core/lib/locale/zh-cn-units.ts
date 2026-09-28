@@ -5,8 +5,8 @@ import { stringifyJSON } from "#json"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file The CN organizational-unit reader: the schema holds China's below-settlement ordinal chain as one
- *   `locality_unit` span, and this module both reads which rung each generic names and labels that span for the corpus
- *   recipe, from the one generic table.
+ *   `locality_unit` span. This module reads the rung for each generic and labels that span for
+ *   the corpus recipe from one generic table.
  *
  *   The vocabulary is geography wearing organizational words, so a literal translation would read as mail to an army
  *   formation and the reader maps each word to its administrative rung rather than translating it.
@@ -14,7 +14,8 @@ import { stringifyJSON } from "#json"
 
 /**
  * The rungs a generic can name, coarsest first, where `headquarters` is not a further level
- * but the central settlement of the unit it follows, and stays inside the span.
+ * but the central settlement of the unit it follows.
+ * It stays inside the span.
  */
 export const CN_UNIT_RUNGS = [
 	"farm",
@@ -30,9 +31,12 @@ export const CN_UNIT_RUNGS = [
 export type CNUnitRung = (typeof CN_UNIT_RUNGS)[number]
 
 /**
- * Longer generics are listed first so `生产队` is read before `队` and `大队` before `队`, every
- * entry was found at least once as the tail of an ordinal unit in the coarse-placer CN census,
- * and a generic that only ever follows a name (`林场`, `牧场`, `垦殖场`) is deliberately absent.
+ * Longer generics are listed first.
+ *
+ * This reads `生产队` before `队` and `大队` before `队`.
+ * The coarse-placer CN census found every entry at least once as the tail of an ordinal unit.
+ *
+ * Generics that only follow a name (`林场`, `牧场`, `垦殖场`) are absent.
  */
 export const CN_UNIT_GENERICS: ReadonlyArray<readonly [generic: string, rung: CNUnitRung]> = [
 	["生产大队", "brigade"],
@@ -91,7 +95,7 @@ export function isCNUnitChain(span: string): boolean {
 /**
  * Read a `locality_unit` span into its rungs, outermost first.
  *
- * @throws On a span that is not a chain, because reading part of it would report a hierarchy nobody wrote.
+ * @throws On a span that is not a chain, because reading part of it would report an unrecorded hierarchy.
  */
 export function readCNUnits(span: string): CNUnit[] {
 	if (!isCNUnitChain(span)) {
@@ -117,7 +121,7 @@ export function readCNUnits(span: string): CNUnit[] {
 }
 
 /**
- * Split a CJK run into the named head and the trailing organizational chain,
+ * Split a CJK run into its head unit and the trailing organizational chain,
  * for the corpus labeler: a generic with no ordinal in front of it is part of a name
  * rather than a rung, so `红卫大队` stays in the head.
  */

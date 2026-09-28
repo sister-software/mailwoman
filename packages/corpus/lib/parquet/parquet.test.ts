@@ -141,7 +141,7 @@ describe("LABELED_ROW_SCHEMA", () => {
 		expect(LABELED_ROW_SCHEMA.recipe!.optional).toBe(true)
 		expect(LABELED_ROW_SCHEMA.base_source_id!.optional).toBe(true)
 		// A null register states that the row names no published record, which is an answer.
-		// A null surface would mean nobody said how the text was produced, so every row carries one.
+		// A null surface would leave the text's provenance unrecorded, so every row carries one.
 		expect(LABELED_ROW_SCHEMA.surface!.optional).toBeUndefined()
 	})
 
@@ -204,7 +204,7 @@ describe("readers", () => {
 	})
 
 	it("countParquetRows counts without reading, and raises rather than answering zero for an absent file", async () => {
-		// `0` from a file nobody wrote and `0` from a file holding no rows are different
+		// `0` from a missing file and `0` from a file holding no rows are different
 		// statements, and a count is a measurement.
 		// So absence raises here rather than returning the number that reads like data.
 		expect(await countParquetRows(await written([labeled({ source_id: "r-4" }), labeled({ source_id: "r-5" })]))).toBe(

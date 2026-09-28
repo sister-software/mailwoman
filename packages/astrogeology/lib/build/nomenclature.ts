@@ -3,14 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The nomenclature build: shapefile rows out of the pinned archive, features through `featureFromSourceRow`, ndjson
- *   with a per-feature minimum zoom, and one `tippecanoe` run into a PMTiles archive.
+ *   The nomenclature build reads shapefile rows from the pinned archive and converts each with `featureFromSourceRow`.
+ *   It writes NDJSON with a per-feature minimum zoom, then runs `tippecanoe` once to create a PMTiles archive.
  *
- *   the row reader reads attributes rather than geometry. The shapefile's CRS is the body's own (`GCS_Moon_2000`,
- *   `GCS_Mars_2000`), proj refuses to relate it to WGS84, and the GeoJSON writer insists on WGS84 output. So the
- *   transport declares the source as WGS84 on both sides, which makes the writer copy the numbers through untouched.
- *   the label is on the transport only. The values the build reads are the row's `center_lon`, `center_lat` and the
- *   bounding box, in the source's own convention, which the manifest records and `normalize.ts` converts.
+ *   The row reader reads attributes rather than geometry. The shapefile CRS belongs to the body (`GCS_Moon_2000`,
+ *   `GCS_Mars_2000`). proj cannot transform it to WGS84, but the GeoJSON writer requires WGS84 output. The transport
+ *   therefore declares WGS84 as both source and destination so the writer copies the numbers unchanged. That label
+ *   applies only to transport. The build reads `center_lon` and `center_lat`.
+ *   It also reads the bounding box in the source convention.
+ *   The manifest records that convention. `normalize.ts` converts the values.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

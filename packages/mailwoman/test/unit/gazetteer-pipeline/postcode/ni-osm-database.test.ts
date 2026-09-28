@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fixture-scale guard for the NI OSM postcode database: the name law holds, the medoid lands on a member point, a malformed tag value is dropped and named rather than repaired, and the provenance `meta` reaches the sealed artifact.
+ *   Fixture-scale check for the NI OSM postcode database: the name law holds, the medoid lands on a member point, a malformed tag value is dropped and reported, and the provenance `meta` reaches the sealed artifact.
  *
  *   The fixture is a synthetic Overpass response in the real envelope shape, because a node carries `lat`/`lon` and a way carries `center`, and a parser that handles only one still passes tests written against the other.
  */
@@ -90,7 +90,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	expect(result.stats.points).toBe(5)
 	expect(result.stats.skippedMalformed).toBe(1)
 	expect(result.stats.skippedNoCoordinate).toBe(1)
-	// The named value says which value was dropped; `"BT36 4RU,"` is a typo rather than a bug.
+	// The reported value says which value was dropped; `"BT36 4RU,"` is a typo rather than a bug.
 	expect(result.stats.malformedValues).toEqual({ "BT36 4RU,": 1 })
 	// Ways are not a footnote: 2 of the 5 surviving points come from `center`.
 	expect(result.stats.pointsByType).toEqual({ node: 3, way: 2 })

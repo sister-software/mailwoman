@@ -5,7 +5,7 @@
  *
  *   Count the train-split rows of a built corpus that the holdout policy says belong in val or test.
  *
- *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild, and an overlay
+ *   A holdout added to `defaultHoldouts()` takes effect at the next base rebuild. An overlay
  *   never passes through the align loop that applies it. This reads what a finished corpus holds and
  *   answers the question directly: for each country the policy names, how many of its held-out rows
  *   are in the train split.
@@ -13,7 +13,7 @@
  *   The matchers come from `defaultHoldouts()` rather than being restated here, so a prefix added to
  *   the policy is checked without editing this file.
  *
- *   The region and locality tests are exact equality and the postcode test is a prefix, which is what
+ *   The region and locality tests use exact equality. The postcode test uses a prefix, matching what
  *   `splitForRow` applies. The predicate runs inside DuckDB over the parquet files rather than row by
  *   row in this process, because a base corpus holds over a hundred million train rows.
  *
@@ -53,9 +53,11 @@ const clauses: string[] = []
  * One predicate per country, kept so an offending row can be read back after the count.
  *
  * A count says how many rows the policy names.
- * It does not say which, and the two cases differ: a row whose `region` span holds a
- * holdout name is the policy working on data the split missed, while a row whose `locality`
- * happens to equal one is the policy matching a name that is not a region.
+ * It does not say which rows matched.
+ *
+ * The cases differ: a row whose `region` span holds a holdout name is the policy
+ * working on data the split missed, while a row whose `locality` happens to equal
+ * one is the policy matching a name that is not a region.
  */
 const predicates = new Map<string, string>()
 

@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end corpus build: drives every registered adapter (or the filtered subset) per `--inputs`, runs
- *   synthesis and alignment, computes the locality-holdout split, and writes the final jsonl and parquet
- *   files plus per-stage manifests under `<out>/corpus-v<version>/`.
+ *   End-to-end corpus build: drives every registered adapter (or the filtered subset) from `--inputs`.
+ *   It runs synthesis and alignment. It computes the locality-holdout split and writes the final jsonl
+ *   and parquet files plus per-stage manifests under `<out>/corpus-v<version>/`.
  *
- *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest, which is how the
+ *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest. This lets the
  *   CLI handles partial builds during development.
  *
  *   A build whose `--inputs` names `wof-admin` or `wof-postalcode` needs
- *   `NODE_OPTIONS="--max-old-space-size=20480"`. Both adapters hold every source record resident, and at
- *   Node's default heap the process aborts with SIGABRT partway through the adapter phase. This command
- *   refuses such a launch through `assertHeapForAdapters`, and `buildCorpus` prints the heap limit it has.
+ *   `NODE_OPTIONS="--max-old-space-size=20480"`. Both adapters hold every source record in memory.
+ *   Node's default heap makes the process abort with SIGABRT during the adapter phase. This command
+ *   refuses such a launch through `assertHeapForAdapters`. `buildCorpus` prints the heap limit it has.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
@@ -35,8 +35,9 @@ import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandCompo
 const LICENSE_POLICIES: readonly LicensePolicy[] = Object.values(LicensePolicy)
 
 /**
- * `--inputs` values are either a bare path string, for adapters needing no extra options,
- * or an `AdapterOptions` object, which a country filter (OpenAddresses) or a fixture `limit` requires.
+ * `--inputs` accepts a bare path string when an adapter needs no extra options.
+ *
+ * An `AdapterOptions` object supplies options such as an OpenAddresses country filter or a fixture `limit`.
  */
 export const spec = {
 	name: "build",
@@ -110,9 +111,9 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 
 		if ("outputDir" in value && value.outputDir !== undefined && typeof value.outputDir !== "string") return false
 
-		// The shape rather than the type: a lower-case `nl` is a string, and the four
-		// adapters that filter per row compare it against the row's upper-case code,
-		// so it selects zero rows and reports no matches.
+		// Check the shape because a lower-case `nl` is still a string.
+		// The four adapters that filter per row compare it with the row's upper-case code.
+		// A lower-case value selects zero rows and reports no matches.
 		if ("country" in value && value.country !== undefined && !isAlpha2CodeShape(value.country)) return false
 
 		return (

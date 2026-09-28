@@ -43,8 +43,9 @@ const MAX_LISTED_FAILURES = 20
 /**
  * The command specification for `mailwoman situs interpolation`.
  *
- * The command downloads TIGER EDGES county archives, most populous counties first,
- * and then runs `situs interpolation-database` once per state.
+ * The command downloads TIGER EDGES county archives, starting with the most populous counties.
+ * It then runs `situs interpolation-database` once per state.
+ *
  * It skips counties that are already unpacked and state databases that already exist
  * unless `--force` is set.
  */
@@ -127,7 +128,8 @@ const STATE_FIPS: Record<string, string> = {
 const RANKED_FILE = repoRootPathBuilder("mailwoman", "data", "county-population-ranked.json")
 
 /**
- * The entry script of the running CLI, which the command re-invokes for each state build.
+ * The entry script of the running CLI.
+ * The command re-invokes it for each state build.
  */
 const CLI_ENTRY = scriptEntryPath()
 
@@ -182,7 +184,8 @@ async function fetchAndBuildRanking(): Promise<CountyRecord[]> {
 }
 
 /**
- * Reads the cached county ranking, and fetches and caches it when the file is missing.
+ * Reads the cached county ranking.
+ * Fetches and caches it when the file is missing.
  */
 async function loadRankedCounties(): Promise<CountyRecord[]> {
 	if (await pathExists(RANKED_FILE)) {
@@ -514,8 +517,8 @@ const SitusInterpolation: CommandComponent<typeof spec> = ({ options }) => {
 		console.error(`  ${availableStates.length} states with available SHPs: ${availableStates.join(", ")}`)
 		console.error("")
 
-		// States build one at a time because each build already runs DuckDB in parallel,
-		// and concurrent builds risk running out of memory.
+		// States build one at a time because each build already runs DuckDB in parallel.
+		// Concurrent builds risk running out of memory.
 		const wallStart = Date.now()
 		let totalSegments = 0
 		let builtStates = 0

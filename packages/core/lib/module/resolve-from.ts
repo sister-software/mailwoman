@@ -5,10 +5,10 @@
  *
  *   Resolves packages relative to the caller. Every helper takes `base`, the caller's `import.meta.url`, so a package
  *   resolves through the dependency graph of the calling workspace. The sibling `resolvers.ts` resolves from
- *   `@mailwoman/core` instead, which cannot see a dependency that only a docs plugin or a hook declares.
+ *   `@mailwoman/core`. That package cannot see a dependency declared only by a docs plugin or hook.
  *
- *   Docusaurus loads plugins through jiti's CommonJS transform, which rejects a bare `import.meta` and
- *   `import … with { type: "json" }`. This module therefore avoids both constructs, and Docusaurus plugins must import
+ *   Docusaurus loads plugins through jiti's CommonJS transform. That transform rejects a bare `import.meta` and
+ *   `import … with { type: "json" }`. This module avoids both constructs. Docusaurus plugins must import
  *   it instead of `resolvers.ts`.
  */
 

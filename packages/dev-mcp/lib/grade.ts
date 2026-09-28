@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Grading a comparison, and refusing to grade one that cannot be graded.
+ *   This module grades comparisons only when their truth data supports a verdict.
  *
- *   This module owns no metric: `checkCase` is the grader, `toGauntletResult` is the projection, and what lives here
- *   is the part `checkCase` has no opinion about — whether truth exists for a set, what a two-arm delta means, and how
- *   large an effect this many rows could have missed.
+ *   `checkCase` grades individual cases. `toGauntletResult` projects the result. This module
+ *   determines whether a set has truth data. It interprets a two-arm delta and calculates the
+ *   smallest effect the current row count could detect.
  *
- *   A diff is not a verdict: a set without truth grades `ungradeable` rather than passing.
+ *   A set without truth data receives the `ungradeable` grade. The grade keeps it out of passing cases.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -18,15 +18,16 @@ import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 
 /**
- * The z at which a two-sided 95% test rejects, matching `holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`.
+ * The z at which a two-sided 95% test rejects.
+ * This matches `holdout.ts`'s `Z_CRITICAL_95_TWO_SIDED`.
  */
 const Z_CRITICAL_95 = 1.96
 
 /**
- * Written with named fields on purpose: `build-regression-db.ts` inserts the same
- * mapping positionally for bulk-load speed, so it cannot be shared as-is, but naming
- * every field means a column added to {@link GauntletCaseTable} is a compile error here
- * rather than a silently-null column at grade time.
+ * Written with explicit fields on purpose: `build-regression-db.ts` inserts the
+ * same mapping positionally for bulk-load speed, so it cannot be shared as-is,
+ * but listing every field means a column added to {@link GauntletCaseTable} is a
+ * compile error here rather than a silently-null column at grade time.
  */
 export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 	return {
@@ -55,8 +56,9 @@ export function seedToCaseTable(seed: SeedCase): GauntletCaseTable {
 }
 
 /**
- * A row with no expectations is ungradeable, and an ungradeable row stays apart
- * from a passing one in every sum.
+ * A row with no expectations is ungradeable.
+ *
+ * Every sum keeps ungradeable rows separate from passing rows.
  */
 export function caseCarriesTruth(seed: SeedCase): boolean {
 	return Boolean(
@@ -117,8 +119,9 @@ export interface SignificanceReading {
 }
 
 /**
- * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation, whose max absolute error
- * of 1.5e-7 is four orders of magnitude tighter than any decision taken on it here.
+ * Normal CDF via the Abramowitz–Stegun 7.1.26 erf approximation.
+ *
+ * Its maximum absolute error is 1.5e-7, four orders of magnitude below the precision of decisions made here.
  */
 export function normalCDF(z: number): number {
 	const sign = z < 0 ? -1 : 1
@@ -133,10 +136,11 @@ export function normalCDF(z: number): number {
 }
 
 /**
- * The MDE is the effect this n would detect with 80% power at α = 0.05,
- * a convention stated rather than measured.
+ * The MDE is the effect this n would detect with 80% power at α = 0.05.
  *
- * It turns "we saw no effect" into "we saw no effect, and no smaller effect was detectable".
+ * This threshold follows a statistical convention rather than a measurement.
+ *
+ * It reports the smallest effect the test could detect when the observed effect is zero.
  */
 export function significance(successesA: number, successesB: number, n: number): SignificanceReading {
 	if (n === 0) {

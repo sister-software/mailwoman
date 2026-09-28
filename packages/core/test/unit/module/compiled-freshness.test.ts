@@ -61,7 +61,7 @@ describe("checkCompiledFreshness", () => {
 
 		expect(freshness.fresh).toBe(false)
 		expect(freshness.reason).toContain("yarn compile")
-		// Both endpoints are named, because "stale" without them sends the reader looking for the file themselves.
+		// Both endpoints are explicit, because "stale" without them sends the reader looking for the file themselves.
 		expect(freshness.reason).toContain(workspace("thing.ts"))
 		expect(freshness.reason).toContain(workspace("out", "thing.js"))
 	})
@@ -75,7 +75,8 @@ describe("checkCompiledFreshness", () => {
 	})
 
 	it("reads the newest EMITTED FILE rather than the out/ directory's own mtime", async () => {
-		// `tsc` overwrites in place, and a directory's mtime moves only when an entry is added or removed.
+		// `tsc` overwrites files in place.
+		// A directory's mtime moves only when an entry is added or removed.
 		// A check anchored on the directory therefore never advances on a recompile.
 		// Measured on `packages/core`, the directory read 2026-09-14T17:36:04Z against a newest emit of
 		// 2026-09-19T02:33:12Z, so the battery's own copy of this warned after every successful compile.

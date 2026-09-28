@@ -90,7 +90,7 @@ export function applyPlusCodeOverride(result: GeocodeOutcomeLike, input: string,
 }
 
 /**
- * The named component slots the parse can put a plus-code token into.
+ * The component slots the parse can use for a plus-code token.
  */
 const COMPONENT_SLOTS = [
 	"locality",

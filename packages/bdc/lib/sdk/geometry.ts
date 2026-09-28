@@ -27,19 +27,22 @@ interface GeoJSONMultiPolygon {
  * ring(s), area-weighted across rings for a MultiPolygon.
  *
  * Interior rings/holes are still ignored.
- * A hole moves a block's centroid far less than the vertex-density skew this replaces,
- * and only 1.0% of measured blocks carry one.
+ * A hole moves a block's centroid far less than the vertex-density skew this replaces.
+ * Only 1.0% of measured blocks contain a hole.
  *
- * This replaced the first version's vertex-average, whose "same res-9 cell for all
- * but pathological shapes" claim was falsified by measurement over every real tiger 2020 block
- * in LA + Orange county (118,360 blocks, 2026-08-11): the vertex-average landed in a different
- * res-9 cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell edge), max 3.7 km.
- * The tail is tiger's elongated rural/mountain blocks, whose boundary vertices cluster
- * on the squiggly natural edge and drag a vertex-average toward it.
+ * Measurement over every real TIGER 2020 block falsified the first version's claim that the
+ * vertex average stayed in the same res-9 cell for all but pathological shapes. in LA +
+ * Orange county (118,360 blocks, 2026-08-11): the vertex-average landed in a different res-9
+ * cell for 11.6% of blocks, p99 displacement 286 m (past the ~174 m cell edge), max 3.7 km.
+ * TIGER's elongated rural and mountain blocks form the tail.
+ *
+ * Their boundary vertices cluster on natural edges.
+ * This clustering pulls the vertex average toward those edges.
  *
  * A degenerate geometry with zero total ring area (a sliver the shoelace annihilates)
  * falls back to the vertex average.
- * A weaker answer beats none, and the fallback is exactly the old behavior.
+ * A weaker answer provides a coordinate where the alternative provides none.
+ * The fallback uses the vertex average.
  *
  * @returns `undefined` for anything that doesn't parse as one of the two geometry
  * types (including `null` geometry).

@@ -3,19 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The hard-case board: the curated inputs that make an FST/importance change measurable, with the schema,
- *   zod shadow, and loader for `fixtures/hard-case-board.jsonl`. It exists because a well-formed address never
- *   puts the decoder where a soft gazetteer bias can change the argmax, so every row here exercises the bias
- *   list — bare toponyms, comma-free fragments, and namesake confounds.
+ *   The hard-case board contains curated inputs for measuring FST and importance changes. It includes the schema
+ *   shadow in Zod and a loader for `fixtures/hard-case-board.jsonl`. A well-formed address does not put the decoder
+ *   in a state where a soft gazetteer bias changes the argmax. Each row therefore exercises that bias with a bare
+ *   toponym, comma-free fragment, or namesake confound.
  *
  *   {@linkcode HardCase.fstReach} says whether the row's expected place is inside the locale-scoped
- *   `fst-<locale>.bin` the arm loads: `in` means bias can push the parse toward the answer, `out` means the
- *   country is out of scope and the gazetteer can only pull toward a wrong place, so those rows are reported
- *   separately as the arm comparison's hijack-risk population.
+ *   `fst-<locale>.bin` the arm loads. `in` means bias can push the parse toward the answer. `out` means the
+ *   country falls outside the FST scope, where the gazetteer can only pull toward a wrong place. The comparison
+ *   reports those rows separately as its hijack-risk population.
  *
  *   A coordinate assertion is all-or-none — `expectLat` + `expectLon` + `expectToleranceM` together or no
  *   coordinate at all, as {@linkcode HardCaseSchema} enforces, because a silently-defaulted tolerance is a
- *   number nobody chose. A zero bias means the FST accepted no entry for that surface. Whether a bias
+ *   unrequested tolerance. A zero bias means the FST accepted no entry for that surface. Whether a bias
  *   applies is a separate question.
  *
  *   Graded through `createRuntimePipeline`, the only path an FST prior actually reaches (see the runner).
@@ -69,8 +69,10 @@ export const HARD_CASE_CLASSES = [
 export type HardCaseClass = (typeof HARD_CASE_CLASSES)[number]
 
 /**
- * Whether this row's country is inside the shipped FST country scope: a row marked `out` is
- * expected to tie across arms, and its tie is evidence about coverage rather than about importance.
+ * Indicates whether this row's country falls inside the shipped FST scope.
+ *
+ * A row marked `out` should tie across arms.
+ * That tie measures coverage rather than importance.
  */
 export const FST_REACH = ["in", "out"] as const
 
@@ -99,7 +101,7 @@ export interface HardCase {
 	probeSurface: string
 	/**
 	 * Measured `max(importance)` for {@linkcode probeSurface} under the shipped
-	 * population-proxy FST, on the BIO tag named by {@linkcode probeTag}, so a tie from
+	 * population-proxy FST, on the BIO tag selected by {@linkcode probeTag}, so a tie from
 	 * "no bias difference" is distinguishable from one the decoder ignored.
 	 */
 	popBias: number
@@ -197,8 +199,9 @@ export const HardCaseSchema = zod
 	)
 
 /**
- * The compile-time bridge: add a field to one of {@linkcode HardCase} /
- * {@linkcode HardCaseSchema} and not the other, and `tsc` stops here.
+ * Checks that {@linkcode HardCase} and {@linkcode HardCaseSchema} have the same fields.
+ *
+ * Adding a field to only one makes `tsc` report an error here.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof HardCaseSchema>, HardCase>
 
@@ -210,10 +213,12 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	keyof HardCase
 >
 
-// Probe the directory rather than the board file: the builder resolves this constant before the file
-// exists, and a file-existence probe would send the first build to the compiled-tree fallback.
+// Probe the directory rather than the board file.
+// The builder resolves this constant before the board exists.
+// Probing the file would send the first build to the compiled-tree fallback.
 /**
- * The committed board, named from the package root — tsc emits no `.jsonl` into `out/`.
+ * Resolves the committed board from the package root.
+ * `tsc` does not emit `.jsonl` files into `out/`.
  */
 export const HARD_CASE_BOARD_PATH: string = resolvePackagePath(
 	"mailwoman",
@@ -233,8 +238,9 @@ export function canonicalizeHardCase(c: HardCase): HardCase {
 	for (const key of HARD_CASE_KEY_ORDER) {
 		const value = c[key]
 
-		// `Object.assign` rather than `out[key] = value`: a dynamic key widens the write
-		// target to the intersection of every field type, which no value satisfies.
+		// Use `Object.assign` instead of `out[key] = value`.
+		// A dynamic key widens the write target to the intersection of every field type.
+		// No value satisfies that intersection.
 		if (value !== undefined) {
 			Object.assign(out, { [key]: value })
 		}

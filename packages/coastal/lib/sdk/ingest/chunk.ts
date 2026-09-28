@@ -11,12 +11,12 @@
  *   fragmentation happens to stay low is not reproducible.
  *
  *   The domain checks run here and throw: an unknown policy, policy interpretation or defence type is a
- *   source-schema change, and coercing it to a nearest neighbour or null converts "the source changed" into
+ *   source-schema change. Coercing it to a nearest neighbour or null converts "the source changed" into
  *   "there is no data here". The defence check compares case-folded and stores the source's own string for the
  *   source's inconsistent capitalization.
  *
- *   The chunk owns no artifact. It appends rows to a database the parent created and will seal, and returns
- *   counts the parent adds up. Chunks run one at a time against that file, so there is no concurrent writer.
+ *   The chunk owns no artifact. It appends rows to a database that the parent created and will seal.
+ *   It returns counts for the parent to add. Chunks run one at a time against that file, so no writers overlap.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -43,8 +43,8 @@ import {
 /**
  * Rows per bulk-insert transaction.
  *
- * Chosen for the geometry table, whose rows carry a blob: a larger transaction
- * grows the write-ahead file without improving throughput.
+ * Chosen for the geometry table because its rows carry a blob.
+ * A larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
 
@@ -77,7 +77,8 @@ export interface CoastalChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres: the source's own figure, the encoded rings read with their holes, and read without.
+	 * Square metres for the source's own figure, encoded rings with their holes
+	 * and encoded rings without them.
 	 */
 	area: { sourceM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -196,8 +197,8 @@ export async function ingestCoastalChunk(
 				}
 			}
 
-			// Coverage is derived from the uncompacted classification rather than the stored rows,
-			// which is the reading a compaction decision cannot change.
+			// Coverage is derived from the uncompacted classification rather than the stored rows.
+			// A compaction decision cannot change that reading.
 			for (const cell of classified.whole) {
 				addCoverageCells(coverageCells, cell, classified.resolution, options.coverageResolution)
 			}
@@ -249,8 +250,8 @@ export async function ingestCoastalChunk(
 				encodeRings(feature.polygons)
 			)
 
-			// No cell rows: ground instability is a different hazard, and leaving it out of
-			// the index is what makes it impossible for one to reach an erosion probe.
+			// Ground instability is a different hazard and has no cell rows.
+			// Leaving it out of the index keeps it from reaching an erosion probe.
 			instabilityFeatures++
 
 			batch.rowWritten()

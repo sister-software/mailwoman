@@ -61,7 +61,7 @@ SOURCE_ROWS: list[tuple[str, str, str, str]] = [
 
 #: KEN_ALL_ROME columns: postcode, prefecture-kanji, city-kanji, town-kanji, then romaji. The town
 #: rows cover an exact match, an ōaza-prefixed one that matches only once stripped, a parenthetical
-#: annotation the reader strips, and the municipality catch-all every city needs.
+#: annotation the reader strips. The last row is the municipality catch-all every city needs.
 KENALL_ROWS: list[tuple[str, str, str, str]] = [
     ("1920000", "東京都", "八王子市", "以下に掲載がない場合"),
     ("1920062", "東京都", "八王子市", "八島町"),
@@ -127,7 +127,7 @@ def reference_args(parquet: Path, kenall: Path, out_dir: Path) -> argparse.Names
         spaced_fraction=0.4,
         variant_hyphen_fraction=0.25,
         max_field_chars=64,
-        max_row_groups=1,  # also skips the 47-prefecture check, which a fixture cannot satisfy
+        max_row_groups=1,  # also skips the 47-prefecture check. A fixture cannot satisfy it.
         upweight_pattern="市$:2",
         seed=42,
         force=True,

@@ -6,7 +6,7 @@
  *   Classifies a gazetteer place ID by the source that minted it.
  *
  *   `spr.id` is a real Who's On First ID only for WOF rows. The Overture and GeoNames folds mint synthetic IDs
- *   in reserved ranges above every WOF ID, and those IDs do not resolve on spelunker.
+ *   in reserved ranges above every WOF ID. Those IDs do not resolve on spelunker.
  */
 
 import {
@@ -25,7 +25,8 @@ export const PlaceIDSource = {
 	 */
 	WOF: "wof",
 	/**
-	 * A synthetic ID from the Overture `divisions` backfill, which hashes the GERS ID into its reserved range.
+	 * A synthetic ID from the Overture `divisions` backfill.
+	 * The backfill hashes the GERS ID into its reserved range.
 	 */
 	Overture: "overture",
 	/**
@@ -33,7 +34,8 @@ export const PlaceIDSource = {
 	 */
 	GeoNames: "geonames",
 	/**
-	 * A synthetic ID from the GeoNames postal fold, whose range sits above the alias fold's.
+	 * A synthetic ID from the GeoNames postal fold.
+	 * Its range sits above the alias fold's range.
 	 */
 	GeoNamesPostal: "geonames-postal",
 } as const

@@ -5,8 +5,8 @@
  *
  *   A loader-built classifier (real `NeuralAddressClassifier` plus the real fixture tokenizer, only
  *   onnxruntime-web mocked) must thread a country-matched index's emission matrix and its
- *   transition-beta adjustments into the shared decode, and must be byte-stable when no index matches
- *   the eval.
+ *   transition-beta adjustments into the shared decode. It must remain byte-stable when no index matches
+ *   the evaluation data.
  *
  *   The fixture is the path-fusion lattice "Shoreditch London" → ['▁Shore','d','itch','▁London']: the
  *   fused street run (8+7+7=22) outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4,

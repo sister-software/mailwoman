@@ -8,8 +8,8 @@
  *   the leg can be run on its own — the `fr.bare_street_intact` floor's provenance in the promotion
  *   specs (`v2.3.0-nl-postcode.json`, `v5.3.0-family.json`) names it.
  *
- *   Exit code parity: the module returns the floor verdict, and this entry maps a miss back to exit
- *   1, which is what `--floor` promised. Do not add logic here.
+ *   The module returns the floor verdict. This entry maps a miss to exit 1, as `--floor` specifies.
+ *   Keep logic in the module.
  *
  *   Run: node packages/mailwoman/lib/dev-tools/fr/parse-recall.run.ts [--floor 75]
  */

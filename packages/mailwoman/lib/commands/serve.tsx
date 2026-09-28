@@ -41,10 +41,10 @@ export const spec = {
 	},
 } as const satisfies CommandSpec
 
-// note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code dance
-// to move: the process deliberately never exits, WorkerStatus is event-subscription UI with cleanup,
-// and ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There is no
-// `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
+// note(retrofit): long-running — exempt from useCommandTask (no one-shot task or exit-code sequence
+// to move: the process deliberately never exits. WorkerStatus is event-subscription UI with
+// cleanup. ChildThread's effect boots the @mailwoman/api Hono app over a node listener. There is
+// no `setImmediate(process.exit)` here — sigint/sigterm now dispose the server after it drains).
 
 const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus = availableParallelism() } }) => {
 	const [workers, setWorkers] = useState<Worker[]>()
@@ -63,7 +63,8 @@ const ClusterManager: ParsedCommandComponent<ServerConfig> = ({ options: { cpus 
 
 		cluster.on("listening", () => {
 			// One notice per server, from the primary, the first time a worker binds.
-			// The launcher's own notice prints at exit, which for a daemon is the wrong moment.
+			// The launcher prints its own notice at exit.
+			// A daemon needs the notice when a worker binds.
 			if (!anyListened) {
 				void resolveEngineStamp().then(printLicenseNotice)
 			}
@@ -221,9 +222,9 @@ const ChildThread: ParsedCommandComponent<ServerConfig> = ({ options: { port, ho
 				// regardless of which worker's preflight check happens to finish first.
 				// Only that one worker prints.
 				// The rest exit silently.
-				// Chosen over a primary-side pre-fork check (the primary doesn't otherwise
-				// call createServeEngine() at all, and duplicating its import/db-existence
-				// check there just to avoid forking would be the more invasive change)
+				// Chosen over a primary-side pre-fork check
+				// (the primary doesn't otherwise call createServeEngine() at all. Duplicating its
+				// import/db-existence check there just to avoid forking would change more code)
 				// and over routing the message back through the primary's cluster "exit" handler
 				// (would require an IPC round-trip for what's a one-line dedupe).
 				if (cluster.worker?.id === 1) {

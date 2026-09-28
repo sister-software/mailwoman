@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build a PFX1 postcode-prefix index from a postcode database: group a database's unit postcodes by
- *   prefix, measure each group's dispersion, and attach the admin ancestry the prefix asserts.
+ *   Build a PFX1 postcode-prefix index from a postcode database.
+ *   Group unit postcodes by prefix. Measure each group's dispersion and attach the admin ancestry the prefix asserts.
  *
  *   A GB outward code is the compact form minus its last three characters, never a greedy
  *   `^([A-Z]{1,2}\d{1,2})`; {@link outwardOf} is the one place the rule lives.
@@ -40,8 +40,8 @@ export type PostcodePrefixLevel = "outward" | "3"
 /**
  * Coordinate tier of a build.
  *
- * `"centroid"` ships a centroid plus its measured `radiusP95Km`; `"ancestry-only"`
- * ships neither, which states that the source cannot place the prefix.
+ * `"centroid"` ships a centroid plus its measured `radiusP95Km`; `"ancestry-only"` ships neither.
+ * This tier states that the source cannot place the prefix.
  */
 export type PostcodePrefixCoordinateTier = "centroid" | "ancestry-only"
 
@@ -107,7 +107,7 @@ export interface BuildPostcodePrefixResult {
 	/**
 	 * Units the US arm dropped because their coordinate is not a location, by reason.
 	 *
-	 * Empty on the GB arm, which drops none.
+	 * The GB arm drops no units, so this record is empty for that arm.
 	 * Reported separately from {@link BuildPostcodePrefixResult.skippedShort}
 	 * because the two are different source defects.
 	 */
@@ -214,8 +214,8 @@ function readMeta(db: DatabaseClient<WOFDatabase>): Record<string, string> {
 	const hasMeta =
 		db.prepare(`select name from sqlite_master where type = 'table' and name = 'meta'`).get() !== undefined
 
-	// A database with no `meta` table has made no declaration, which is not the same as
-	// declaring itself complete; `postalcode-us.db` has none and the US arm never asks.
+	// A database with no `meta` table has made no declaration.
+	// The US arm never asks for one in `postalcode-us.db`.
 	if (!hasMeta) return {}
 
 	const rows = db.prepare(`select key, value from meta`).all() as Array<{ key: string; value: string | null }>
@@ -439,8 +439,8 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	const byCoordinate = new Map<string, Set<string>>()
 
 	for (const row of rows) {
-		// A row that is not a postcode has no prefix to contribute, and letting one vote
-		// would mark a real unit sharing its coordinate as a placeholder.
+		// A non-postcode row has no prefix to contribute.
+		// Letting it vote would mark a real unit sharing its coordinate as a placeholder.
 		if (!isZipCode(row.name)) continue
 
 		if (row.latitude === 0 && row.longitude === 0) continue
@@ -461,8 +461,9 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	let skippedShort = 0
 
 	for (const row of rows) {
-		// The shape guard rather than a length check: place names reach a postcode table,
-		// and at least one carries a real coordinate.
+		// Use a shape guard rather than a length check.
+		// Place names reach a postcode table.
+		// At least one of those names carries a real coordinate.
 		if (!isZipCode(row.name)) {
 			excluded.notAPostcode++
 

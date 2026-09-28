@@ -21,8 +21,8 @@ import { loadRegressionCases } from "#eval-harness/gauntlet/cases/load"
 import { buildGauntletDeps, type GauntletDepsOptions } from "#eval-harness/gauntlet/harness"
 
 /**
- * Loads every named suite into one fixture list, refusing an id that two files both claim
- * because ids name rows in failure output.
+ * Loads every registered suite into one fixture list, refusing an id that two files
+ * both claim because ids name rows in failure output.
  */
 async function loadSuites(paths: readonly string[]): Promise<ConformanceFixture[]> {
 	const fixtures: ConformanceFixture[] = []

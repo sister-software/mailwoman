@@ -1,4 +1,4 @@
-"""Deciding which augmentations fire for one row, and in what order.
+"""Decide which augmentations fire for one row. Preserve their draw order.
 
 The ORDER of the draws below is an interface. Every knob left at 0 is guarded by `prob > 0` before
 the draw, so a recipe that does not use an augmentation consumes no randomness for it and its
@@ -60,8 +60,8 @@ def augment_row(
     # Region+postcode glue (#513): fuse the last region token with an immediately-following
     # postcode token in raw. Letter→digit boundary only — that's the boundary SentencePiece
     # is guaranteed to split (the eval's glue class); letter→letter fusions (e.g. GB outcodes)
-    # could yield a piece straddling the label boundary, which the char projection cannot
-    # represent (first-char label wins). The prob guard keeps the rng stream bit-identical
+    # could yield a piece straddling the label boundary. The char projection cannot represent
+    # that boundary because the first-character label wins. The prob guard keeps the rng stream bit-identical
     # for configs that leave the knob at 0.
     if glue_prob > 0 and rng.random() < glue_prob:
         glue_indices = [

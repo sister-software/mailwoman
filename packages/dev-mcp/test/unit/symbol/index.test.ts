@@ -82,7 +82,7 @@ describe("findDeclarations", () => {
 	})
 
 	it("does not report a nested declaration", () => {
-		// Nobody can import a nested declaration, so nobody can duplicate it.
+		// Consumers cannot import a nested declaration, so they cannot duplicate it.
 		expect(findDeclarations(["unreachable"], { cwd: FIXTURE_ROOT }).get("unreachable")).toBeUndefined()
 	})
 

@@ -3,10 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Lossless decomposition: the typed-`unknown`-span primitive. Every byte of the input belongs to exactly one
- *   segment — a span some node covers, or an `unknown` run the model left all-O. Those all-O runs are what
- *   `decodeAsJSON` silently drops, and surfacing them lets a consumer route them to fallback logic, display them, or
- *   aggregate them.
+ *   This module provides a lossless decomposition into typed unknown spans.
+ *   Every input byte belongs to one segment: a span covered by a node or an `unknown` run the model left all-O.
+ *   `decodeAsJSON` drops those all-O runs.
+ *   Surfacing them lets a consumer route them to fallback logic, display them, or aggregate them.
  *
  *   This is the pure primitive: it reads `tree.raw` and node `[start,end)` ranges and returns the complement,
  *   mutating no state and changing no serializer.

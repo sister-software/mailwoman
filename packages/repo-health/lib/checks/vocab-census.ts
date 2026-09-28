@@ -4,9 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs and reports each as a diagnostic.
  *
- *   The three repairs rise in cost: an interface-tied name keeps its spelling and needs only backticks, a
- *   modified reference identifies the check in the preceding word, and a bare reference needs the reader to work out the
- *   meaning from the paragraph.
+ *   The three edits increase in cost. Interface-tied terms keep their spelling and need only backticks.
+ *   Modified references use the preceding word to identify the check. Bare references require readers to infer
+ *   the meaning from the paragraph.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -25,9 +25,12 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Matches an interface-tied name, which keeps its spelling and needs only backticks.
- * the pattern currently matches no line, and a new name added here needs its
- * reason recorded in `AmbiguousShorthandCode.yml`.
+ * Matches an interface-tied token.
+ *
+ * The token keeps its spelling and needs only backticks.
+ * The current pattern matches no lines.
+ *
+ * Record the reason in `AmbiguousShorthandCode.yml` for each addition.
  */
 const INTERFACE_TOKEN = /(?!)/
 
@@ -62,8 +65,10 @@ export interface Hit {
 }
 
 /**
- * Preceding words that carry no meaning, such as articles, pronouns, and comment
- * markers. a hit after one is a bare reference.
+ * Preceding words that carry no meaning include articles and pronouns.
+ *
+ * Comment markers also carry no meaning.
+ * A hit after any of them is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
 	"the",
@@ -139,8 +144,10 @@ function locate(
 }
 
 /**
- * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines.
- * the function is pure, and a wrong line offset can mislabel a hit's action but cannot drop the hit.
+ * Classifies each Vale `--output line` record against `sources`, a map from paths to file lines.
+ *
+ * The function is pure.
+ * A wrong line offset can mislabel a hit's action, but it cannot drop the hit.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []
@@ -206,9 +213,9 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
-	// Vale must run from the repo root because the paths are repo-relative, and a process
-	// error carries the expected output since Vale exits non-zero when it reports alerts,
-	// while any other error is rethrown rather than read as zero hits.
+	// Vale must run from the repository root because its paths are repo-relative.
+	// A process error carries the expected output when Vale exits non-zero for alerts.
+	// The function rethrows every other error instead of treating it as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,

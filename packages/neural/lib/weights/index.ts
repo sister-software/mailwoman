@@ -65,7 +65,8 @@ export function weightsCachePackageDir(cacheRoot: PathBuilderLike, locale?: stri
  */
 export interface ResolveWeightsOpts {
 	/**
-	 * The locale tag that selects the weights package, which defaults to `en-us`.
+	 * The locale tag that selects the weights package.
+	 * The default is `en-us`.
 	 */
 	locale?: string
 
@@ -97,7 +98,8 @@ export interface ResolveWeightsOpts {
 	baseModelCardPath?: string
 
 	/**
-	 * The serving tier, which defaults to `server`.
+	 * The serving tier.
+	 * The default is `server`.
 	 *
 	 * The `pocket` tier omits every lexicon and keeps only the postcode anchor.
 	 */
