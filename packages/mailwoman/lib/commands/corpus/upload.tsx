@@ -17,7 +17,7 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { useState } from "react"
 import { Globerator } from "spliterator/node/fs"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 import { $private } from "#env"
 
 const DEFAULT_BUCKET = "mailwoman-assets"
@@ -32,6 +32,9 @@ export const spec = {
 		bucket: { type: "string", default: DEFAULT_BUCKET, description: "R2 bucket name" },
 		"corpus-version": {
 			type: "string",
+			validate: isCorpusVersion,
+			validationMessage:
+				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
 			description: "Corpus version directory under <data-root>/corpus/versioned (repeatable, comma-separated)",
 		},
 		"corpus-dir": { type: "string", description: "Local corpus root. Default <data-root>/corpus/versioned" },

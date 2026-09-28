@@ -37,10 +37,29 @@ export interface RunnerProgress {
 /**
  * Per-invocation options for `runAdapter`.
  */
+/**
+ * How many distinct dedup keys the runner holds before it stops adding new ones.
+ *
+ * A V8 `Set` refuses a 16,777,216th entry outright, so the cap is a real bound rather than a preference.
+ * Three adapters passed it in `v0.7.0-de-holdout`.
+ */
+export const DEFAULT_DEDUP_MAX_SIZE = 10_000_000
+
 export interface RunAdapterOptions {
 	adapter: CorpusAdapter
 
 	adapterOptions: AdapterOptions
+
+	/**
+	 * How many distinct dedup keys to hold before the set stops growing.
+	 *
+	 * Defaults to {@linkcode DEFAULT_DEDUP_MAX_SIZE}.
+	 * A test sets it low to reach exhaustion in a few rows.
+	 *
+	 * Past the cap the runner still drops a duplicate of a key it holds,
+	 * and writes a duplicate of a key first seen after the cap.
+	 */
+	dedupMaxSize?: number
 
 	/**
 	 * Root output directory.
@@ -86,6 +105,16 @@ export interface AdapterRunManifest {
 	yielded: number
 	written: number
 	deduped: number
+	/**
+	 * The `yielded` count at which the dedup set stopped growing, or `null` where it never did.
+	 *
+	 * A run reporting a number here deduplicated its rows completely up to that point
+	 * and partially after it: a row duplicating a key already held is still dropped,
+	 * and a duplicate of a key first seen after the cap is written.
+	 * `deduped` alone cannot say which, so a consumer comparing two builds'
+	 * duplicate counts needs this beside it.
+	 */
+	dedup_exhausted_at_yielded: number | null
 	bytes: number
 	sha256: string
 	jsonl_path: string
@@ -113,8 +142,9 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 	const stream = openWriteStream(jsonlPath, { encoding: "utf8" })
 	const hasher: StreamingHasher = streamingSha256()
 	const seen = new Set<string>()
-	const DEDUP_MAX_SIZE = 10_000_000
+	const dedupMaxSize = opts.dedupMaxSize ?? DEFAULT_DEDUP_MAX_SIZE
 	let dedupExhausted = false
+	let dedupExhaustedAtYielded: number | null = null
 
 	let yielded = 0
 	let written = 0
@@ -153,20 +183,28 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 
 			const key = canonicalDedupKey(stamped)
 
-			if (!dedupExhausted) {
-				if (seen.has(key)) {
-					if (yielded % progressEvery === 0) {
-						emitProgress()
-					}
-
-					continue
+			// The membership test runs whether or not the set is full.
+			// Exhaustion stops the set GROWING, and a set that has stopped growing still
+			// rejects every duplicate of a key it holds.
+			// Skipping the test once full let a row duplicating one of the first `dedupMaxSize` keys through.
+			// This ordering exists to refuse that row.
+			if (seen.has(key)) {
+				if (yielded % progressEvery === 0) {
+					emitProgress()
 				}
 
-				if (seen.size >= DEDUP_MAX_SIZE) {
+				continue
+			}
+
+			if (!dedupExhausted) {
+				if (seen.size >= dedupMaxSize) {
 					dedupExhausted = true
+					dedupExhaustedAtYielded = yielded
 
 					process.stderr.write(
-						`  runner: dedup set full at ${DEDUP_MAX_SIZE.toLocaleString()} — skipping dedup for remaining rows\n`
+						`  runner: dedup set full at ${dedupMaxSize.toLocaleString()} keys after ${yielded.toLocaleString()} ` +
+							`yielded rows — a later row duplicating a key already held is still dropped, and a duplicate of ` +
+							`a key first seen from here on is written\n`
 					)
 				} else {
 					seen.add(key)
@@ -208,6 +246,7 @@ export async function runAdapter(opts: RunAdapterOptions): Promise<AdapterRunMan
 		yielded,
 		written,
 		deduped: yielded - written,
+		dedup_exhausted_at_yielded: dedupExhaustedAtYielded,
 		bytes,
 		sha256: hasher.digest(),
 		jsonl_path: jsonlPath.toString(),
@@ -275,6 +314,20 @@ function assertEmittedRow(adapter: CorpusAdapter, row: CanonicalRow): void {
 	if (!row.license) {
 		throw new Error(`adapter ${adapter.id}: row.license is empty for source_id=${row.source_id}`)
 	}
+}
+
+/**
+ * Resolve once everything written to `stream` so far has reached the file.
+ *
+ * A zero-length write is the barrier: its callback runs after the writes queued before it,
+ * so a caller that records a byte offset can state that the file holds those bytes.
+ * `drain` fires only when the buffer was full, and `bytesWritten` excludes what
+ * is still queued, so neither answers the question.
+ */
+export function flushStream(stream: WriteStream): Promise<void> {
+	return new Promise((resolve, reject) => {
+		stream.write("", (error) => (error ? reject(error) : resolve()))
+	})
 }
 
 /**

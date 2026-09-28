@@ -4,6 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
+export * from "#data/bom"
 export * from "#data/bundles"
 export * from "#data/inventory"
 export * from "#data/obligations"

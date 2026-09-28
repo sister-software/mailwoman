@@ -7,7 +7,19 @@
  *   Every file writer creates the parent directory first.
  */
 
-import { appendFile, chmod, copyFile, cp, mkdir, rename, rm, symlink, utimes, writeFile } from "node:fs/promises"
+import {
+	appendFile,
+	chmod,
+	copyFile,
+	cp,
+	mkdir,
+	rename,
+	rm,
+	symlink,
+	truncate,
+	utimes,
+	writeFile,
+} from "node:fs/promises"
 
 import { dirname, type PathBuilderLike, resolvePath } from "path-ts"
 import { createNewlineWriter } from "spliterator"
@@ -296,6 +308,28 @@ export function removeFile(path: PathBuilderLike, cachedStats?: Stats): Promise<
  */
 export function removePathIfPresent(path: PathBuilderLike): Promise<void> {
 	return rm(path.toString(), { recursive: true, force: true })
+}
+
+/**
+ * Shortens a file to `length` bytes, discarding everything past that offset.
+ *
+ * A resumed append-only pass uses this to return an output to the offset its checkpoint recorded,
+ * so the bytes a partial run wrote after the checkpoint are removed rather than duplicated.
+ *
+ * @throws {Error} If the file is shorter than `length`, because the checkpoint then describes
+ * bytes the file does not have and extending it with zeroes would corrupt the output.
+ */
+export async function truncateFile(path: PathBuilderLike, length: number): Promise<void> {
+	const stats = await statPath(path)
+
+	if (stats.size < length) {
+		throw new Error(
+			`Cannot truncate ${path.toString()} to ${length} bytes: the file holds ${stats.size}. ` +
+				`Truncating upward would pad the file with zero bytes.`
+		)
+	}
+
+	await truncate(path.toString(), length)
 }
 
 /**

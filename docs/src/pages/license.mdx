@@ -3,6 +3,7 @@ title: License
 description: Mailwoman is AGPL-3.0-only, or commercial under a paid license. This page says what each branch asks of you, how to provide a license, and how a key is configured, checked and kept current.
 ---
 
+import { BundleObligationsList, BundleRightsTable } from "#components/DataBundles/DataBundles"
 import { BuyLicense } from "#components/License/BuyLicense"
 
 # License
@@ -66,20 +67,25 @@ The resolver needs a gazetteer, and no npm package carries one. Four bundles are
 download (`candidate`, `poi`, `fr` and `us`), and each one contains rows another party published.
 Taking a copy engages that publisher's terms:
 
-| bundle      | published by                               | terms as the publisher names them                                              |
-| ----------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
-| `candidate` | Who's On First, GeoNames                   | Creative Commons Zero over Mapzen's own work; Creative Commons Attribution     |
-| `poi`       | Overture Maps Foundation                   | CDLA-Permissive-2.0                                                            |
-| `fr`        | DINUM and IGN, for Base Adresse Nationale  | Licence Ouverte 2.0, the attribution-only half of a dual grant                 |
-| `us`        | United States Census Bureau; OpenAddresses | TIGER/Line carries no copyright; OpenAddresses is per-source terms that differ |
+<BundleRightsTable />
+
+The table above is rendered from the bundle registry in the `mailwoman` package rather than typed here.
+`mailwoman data bom` writes the same record as a CycloneDX 1.5 document with one `data` component per
+artifact, under `docs/static/sbom/mailwoman-data-<version>.cdx.json`, and each component states whether its
+license expression came from the artifact's own `layer_manifest` or from this registry.
+
+What each bundle obliges you to do, and what nobody has established about it:
+
+<BundleObligationsList />
 
 No command downloads a bundle for you. `mailwoman serve` and `mailwoman geocode` with no gazetteer print
-the command to run and stop; the download happens when you run `mailwoman data pull <bundle>`. Both
-`mailwoman data --list` and `mailwoman data pull` print each bundle's publishers, its terms, what it
-obliges you to do, and what nobody has established about it, before any bytes move. Two paths do fetch
-without a prompt and are not this command: a page running the browser engine loads its model and
-database assets from `public.mailwoman.ai` as it starts, and a map surface loads fonts and sprites from
-the same origin.
+the command to run and stop. The download happens when you run `mailwoman data pull <bundle>`, and that
+command prints each bundle's publishers, its terms, what it obliges you to do, and what nobody has
+established about it, before any bytes move. `mailwoman data --list` prints each bundle's description, file
+count, size and destination, and states no terms.
+Two paths do fetch without a prompt and are not this command: a page running the browser engine
+loads its model and database assets from `public.mailwoman.ai` as it starts, and a map surface loads fonts
+and sprites from the same origin.
 
 A commercial key does not reach any of this. The publishers above are not parties to your agreement
 with us, and their attribution and share-alike conditions apply to you whichever branch you are on.

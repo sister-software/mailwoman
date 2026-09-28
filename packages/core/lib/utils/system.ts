@@ -4,10 +4,11 @@
  * @author Teffen Ellis, et al.
  *
  *   What the host offers — cores, memory, platform — for sizing a fan-out or naming the machine in a report. The one
- *   place `node:os` is reached for it.
+ *   place `node:os` is reached for it, and the one place `node:v8` is reached for the heap ceiling.
  */
 
 import { arch, availableParallelism as nativeAvailableParallelism, cpus, platform, totalmem } from "node:os"
+import { getHeapStatistics } from "node:v8"
 
 /**
  * How many threads can run at once, as the runtime measures it — the ceiling for a worker pool.
@@ -35,6 +36,17 @@ export function cpuModel(): string {
  */
 export function totalMemoryBytes(): number {
 	return totalmem()
+}
+
+/**
+ * The ceiling V8 will grow the old generation to, in bytes.
+ *
+ * This is what `--max-old-space-size` sets, defaulting to about 4 GiB.
+ * A process that exceeds it aborts with SIGABRT rather than throwing, so a job whose peak memory is a
+ * property of its input reads this at startup and refuses the run instead of failing partway through.
+ */
+export function heapLimitBytes(): number {
+	return getHeapStatistics().heap_size_limit
 }
 
 /**

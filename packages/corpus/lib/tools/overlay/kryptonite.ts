@@ -22,6 +22,7 @@ import { writeLocalJSONFile, writeLocalTextFile, makeDirectories } from "@mailwo
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE } from "#parquet/schema"
 import { type ParquetManifest, writeParquetSplits } from "#parquet/writers"
 import { type CanonicalRow, type LabeledRow, requireSurface } from "#types"
@@ -86,7 +87,7 @@ export async function buildKryptoniteOverlay(
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
 	const outDir = PathBuilder.from(options.outDir)
-	const corpusDir = outDir(`corpus-v${corpusVersion}`)
+	const corpusDir = outDir(corpusDirectoryName(corpusVersion))
 	await makeDirectories(outDir)
 
 	const quarantine: string[] = []

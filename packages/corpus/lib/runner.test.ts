@@ -385,4 +385,60 @@ describe("runAdapter", () => {
 		expect(firstJsonl).toBe(secondJsonl)
 		expect(first.sha256).toBe(second.sha256)
 	})
+
+	it("keeps rejecting a duplicate of a held key after the dedup set stops growing", async () => {
+		// The defect this pins: the membership test used to sit inside the not-exhausted branch,
+		// so a row duplicating one of the first `dedupMaxSize` keys was written once the cap was reached.
+		// A cap of 2 reaches exhaustion on the third distinct key.
+		const adapter = makeAdapter({
+			id: "cap",
+			rows: [
+				baseRow({ source_id: "cap-1", raw: "Paris" }),
+				baseRow({ source_id: "cap-2", raw: "Lyon", components: { locality: "Lyon" } }),
+				// Exhausts the set: two keys are held, and this third one is not added.
+				baseRow({ source_id: "cap-3", raw: "Nice", components: { locality: "Nice" } }),
+				// A duplicate of a key the set holds.
+				// It is still dropped.
+				baseRow({ source_id: "cap-4", raw: "Paris" }),
+				// A duplicate of the key first seen once the set had stopped growing.
+				// The set never held it, so it is written.
+				baseRow({ source_id: "cap-5", raw: "Nice", components: { locality: "Nice" } }),
+			],
+		})
+
+		const manifest = await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+			dedupMaxSize: 2,
+		})
+
+		expect(manifest.yielded).toBe(5)
+		// Paris, Lyon, Nice, and the second Nice.
+		// The second Paris is dropped.
+		expect(manifest.written).toBe(4)
+		expect(manifest.deduped).toBe(1)
+		expect(manifest.dedup_exhausted_at_yielded).toBe(3)
+
+		const rows = await Array.fromAsync(JSONSpliterator.fromAsync<CanonicalRow>(scratch.path("cap", "canonical.jsonl")))
+
+		expect(rows.map((row) => row.source_id)).toEqual(["cap-1", "cap-2", "cap-3", "cap-5"])
+	})
+
+	it("records no exhaustion point for a run that stays under the cap", async () => {
+		const adapter = makeAdapter({
+			id: "under",
+			rows: [baseRow({ source_id: "under-1", raw: "Paris" })],
+		})
+
+		const manifest = await runAdapter({
+			adapter,
+			adapterOptions: { inputPath: "ignored" },
+			outputDir: scratch.path,
+			corpusVersion: "0.1.0",
+		})
+
+		expect(manifest.dedup_exhausted_at_yielded).toBeNull()
+	})
 })

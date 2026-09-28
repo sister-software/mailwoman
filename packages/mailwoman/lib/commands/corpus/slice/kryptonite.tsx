@@ -10,7 +10,7 @@
 
 import { Text } from "ink"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -30,7 +30,14 @@ export const spec = {
 			required: true,
 			description: "Output directory (parquet files land under corpus-v<version>/)",
 		},
-		"corpus-version": { type: "string", default: "0.4.0", description: "Corpus version stamped into rows + MANIFEST" },
+		"corpus-version": {
+			type: "string",
+			default: "0.4.0",
+			description: "Corpus version stamped into rows + MANIFEST",
+			validate: isCorpusVersion,
+			validationMessage:
+				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
+		},
 		source: {
 			type: "string",
 			default: "deepseek-kryptonite",

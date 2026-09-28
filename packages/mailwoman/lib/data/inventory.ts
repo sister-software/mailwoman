@@ -326,6 +326,25 @@ export async function buildCommandGaps(buildCmd: string, repoRoot: PathBuilderLi
 /**
  * The command that would rebuild an artifact, or the reason none is known.
  */
+/**
+ * The terms a manifested artifact records, as one line for the text report.
+ *
+ * A manifest row written before the `license` column existed leaves it undefined.
+ * This reports that state as unrecorded rather than as an absence of obligations.
+ *
+ * An artifact whose provenance is anything other than `Manifested` carries no
+ * `layer_manifest` row to read, and returns `null` so the caller omits the line.
+ */
+export function licenseHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const manifest = entry.manifest!
+	const license = manifest.license ?? "license unrecorded in layer_manifest"
+	const attribution = manifest.attribution ? ` — attribution: ${manifest.attribution}` : ""
+
+	return `${license}${attribution}`
+}
+
 export function rebuildHint(entry: InventoryEntry): string {
 	if (entry.provenance === Provenance.Manifested) return entry.manifest!.build_cmd
 

@@ -16,6 +16,7 @@ import {
 	buildCommandGaps,
 	inventorySentence,
 	type InventoryEntry,
+	licenseHint,
 	Provenance,
 	rebuildHint,
 	takeInventory,
@@ -135,6 +136,12 @@ const InventoryCommand: CommandComponent<typeof spec> = ({ options }) => {
 				)
 
 				lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${rebuildHint(entry)}`)
+
+				const terms = licenseHint(entry)
+
+				if (terms) {
+					lines.push(`  ${" ".repeat(14)} ${" ".repeat(10)}  ↳ ${terms}`)
+				}
 			}
 		} else {
 			lines.push(``, `Pass --all to list every artifact with the command that would rebuild it.`)

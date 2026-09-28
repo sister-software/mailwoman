@@ -31,6 +31,11 @@
 			"node": "./lib/adapters/utils/index.ts",
 			"default": "./out/adapters/utils/index.js"
 		},
+		"#build": {
+			"types": "./out/build/index.d.ts",
+			"node": "./lib/build/index.ts",
+			"default": "./out/build/index.js"
+		},
 		"#runner": {
 			"types": "./out/runner.d.ts",
 			"node": "./lib/runner.ts",
@@ -183,9 +188,19 @@
 			"default": "./out/source-register/index.js"
 		},
 		"./build": {
-			"types": "./out/build.d.ts",
-			"node": "./lib/build.ts",
-			"default": "./out/build.js"
+			"types": "./out/build/index.d.ts",
+			"node": "./lib/build/index.ts",
+			"default": "./out/build/index.js"
+		},
+		"./build/*": {
+			"types": "./out/build/*.d.ts",
+			"node": "./lib/build/*.ts",
+			"default": "./out/build/*.js"
+		},
+		"./directory": {
+			"types": "./out/directory.d.ts",
+			"node": "./lib/directory.ts",
+			"default": "./out/directory.js"
 		},
 		"./surfaces/*": {
 			"types": "./out/surfaces/*.d.ts",

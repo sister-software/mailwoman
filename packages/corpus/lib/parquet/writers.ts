@@ -33,7 +33,7 @@
  *   their own trained at another source's weight (#2318).
  */
 
-import { tryStat } from "@mailwoman/core/fs/readers"
+import { pathExists, readLocalJSONFile, tryStat } from "@mailwoman/core/fs/readers"
 import { openWriteStream, type WriteStream } from "@mailwoman/core/fs/streams"
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
 import { makeDirectories, writeLocalBuffer, writeLocalJSONFile } from "@mailwoman/core/fs/writers"
@@ -44,6 +44,7 @@ import { Field, Int32, List, Table as ArrowTable, tableToIPC, Utf8, vectorFromAr
 import { Compression, Table as WasmTable, WriterPropertiesBuilder, writeParquet } from "parquet-wasm"
 import { type PathBuilderLike, resolvePathBuilder } from "path-ts"
 
+import { corpusDirectoryName } from "#directory"
 import { escapeSQLIdentifier, escapeSQLString, openDuckDB } from "#parquet/duckdb"
 import {
 	PARQUET_COLUMN_TYPES,
@@ -203,6 +204,19 @@ export interface WriteParquetSplitsOptions {
 	 * Default 1,000,000 per the Phase 1 plan.
 	 */
 	rowsPerFile?: number
+
+	/**
+	 * Continue from the files `<corpusDir>/MANIFEST.json` already records.
+	 *
+	 * The manifest is rewritten after every finished file, and a descriptor is appended
+	 * only once its `.parquet` file is closed, so each recorded file is complete.
+	 * A resumed run re-reads each descriptor's size, discards as many rows from the front
+	 * of each split's iterable as those files hold, and opens the next file index.
+	 *
+	 * The caller therefore has to supply the same iterables in the same order.
+	 * For `buildCorpus` that means the same labeled files and the same shuffle seed.
+	 */
+	resume?: boolean
 }
 
 /**
@@ -253,12 +267,39 @@ export async function writeParquetSplits(
 	opts: WriteParquetSplitsOptions
 ): Promise<ParquetManifest> {
 	const rowsPerFile = opts.rowsPerFile ?? ROWS_PER_FILE
-	const corpusDir = resolvePathBuilder(opts.outputDir, `corpus-v${opts.corpusVersion}`)
+	const corpusDir = resolvePathBuilder(opts.outputDir, corpusDirectoryName(opts.corpusVersion))
 	await makeDirectories(corpusDir)
 
-	const files: ParquetFileDescriptor[] = []
-	const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
-	let totalRows = 0
+	const manifestPath = corpusDir("MANIFEST.json")
+	const files: ParquetFileDescriptor[] = opts.resume ? await readFinishedParquetFiles(manifestPath) : []
+
+	/**
+	 * The manifest as the finished files describe it.
+	 *
+	 * `counts` and `total_rows` are summed from the descriptors rather than from a running row counter,
+	 * so a manifest written between two files never claims the rows of the file being written.
+	 */
+	const manifestNow = (): ParquetManifest => {
+		const counts: Record<SplitName, number> = { train: 0, val: 0, test: 0 }
+		let totalRows = 0
+
+		for (const file of files) {
+			counts[file.split] += file.rows
+			totalRows += file.rows
+		}
+
+		return {
+			corpus_version: opts.corpusVersion,
+			schema: PARQUET_COLUMNS,
+			rows_per_slice: rowsPerFile,
+			row_group_size: ROW_GROUP_SIZE,
+			slices: files.toSorted((a, b) =>
+				a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)
+			),
+			counts,
+			total_rows: totalRows,
+		}
+	}
 
 	for (const split of ["train", "val", "test"] as const) {
 		const rows = perSplit[split]
@@ -267,7 +308,14 @@ export async function writeParquetSplits(
 
 		await using staging = await temporaryDirectory(`mailwoman-parquet-${split}-`)
 
-		let fileIndex = 0
+		const finished = files.filter((file) => file.split === split)
+
+		// The rows of this split already in `.parquet` files.
+		// A resumed run reads the same iterable from its start, so these rows arrive again
+		// and are discarded rather than written twice.
+		let skipRows = finished.reduce((total, file) => total + file.rows, 0)
+
+		let fileIndex = finished.length
 		let path = ""
 		let stagePath = ""
 		let fileRows = 0
@@ -315,6 +363,11 @@ export async function writeParquetSplits(
 					first_source_id: firstSourceID,
 					last_source_id: lastSourceID,
 				})
+
+				// Written per file rather than once at the end, so an interrupted build resumes
+				// at the next file index instead of rewriting every split.
+				// About 700 small writes over a full build.
+				await writeLocalJSONFile(manifestNow(), manifestPath)
 			}
 
 			stage = null
@@ -322,6 +375,12 @@ export async function writeParquetSplits(
 		}
 
 		for await (const row of rows) {
+			if (skipRows > 0) {
+				skipRows--
+
+				continue
+			}
+
 			if (!path) {
 				await openFile()
 			}
@@ -339,10 +398,6 @@ export async function writeParquetSplits(
 
 			lastSourceID = row.source_id
 
-			counts[split]++
-
-			totalRows++
-
 			if (fileRows >= rowsPerFile) {
 				await closeFile()
 
@@ -354,19 +409,43 @@ export async function writeParquetSplits(
 		await closeFile()
 	}
 
-	files.sort((a, b) => (a.split === b.split ? a.path.localeCompare(b.path) : a.split.localeCompare(b.split)))
+	const manifest = manifestNow()
 
-	const manifest: ParquetManifest = {
-		corpus_version: opts.corpusVersion,
-		schema: PARQUET_COLUMNS,
-		rows_per_slice: rowsPerFile,
-		row_group_size: ROW_GROUP_SIZE,
-		slices: files,
-		counts,
-		total_rows: totalRows,
-	}
-
-	await writeLocalJSONFile(manifest, corpusDir("MANIFEST.json"))
+	await writeLocalJSONFile(manifest, manifestPath)
 
 	return manifest
+}
+
+/**
+ * The finished `.parquet` files an earlier run recorded, each verified against its file on disk.
+ *
+ * @throws When a recorded file is missing or its size differs from the descriptor.
+ * A descriptor is written only after its file is closed, so either case means the
+ * file changed after the run that wrote it, and continuing would produce a corpus
+ * whose manifest describes bytes the files no longer hold.
+ */
+async function readFinishedParquetFiles(manifestPath: PathBuilderLike): Promise<ParquetFileDescriptor[]> {
+	if (!(await pathExists(manifestPath))) return []
+
+	const manifest = await readLocalJSONFile<ParquetManifest>(manifestPath)
+
+	for (const file of manifest.slices) {
+		const stat = await tryStat(file.path)
+
+		if (!stat) {
+			throw new Error(
+				`resume refused: ${manifestPath.toString()} records ${file.path} and no file sits at that path. ` +
+					`Delete the manifest to write every parquet file again.`
+			)
+		}
+
+		if (stat.size !== file.bytes) {
+			throw new Error(
+				`resume refused: ${file.path} is ${stat.size.toLocaleString()} bytes and ` +
+					`${manifestPath.toString()} records ${file.bytes.toLocaleString()}.`
+			)
+		}
+	}
+
+	return [...manifest.slices]
 }

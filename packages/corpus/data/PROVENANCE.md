@@ -217,6 +217,42 @@ France and nine overseas territories, so it holds ten decisions, and a reviewer 
 once records that conclusion ten times. That is the direction to err in: an over-wide election is the
 failure review cannot undo.
 
+## `training-manifests/<version>.json` — what reached one base corpus (#2375)
+
+The frozen training manifest `buildCorpus` writes beside the corpus it produced, copied here so a release
+path can read it. Each file names the sources that contributed, their row counts, their license label, and
+the register decision in force at build time, and carries a `contentDigest` over its own contents. The
+corpus `MANIFEST.json` records the same digest as `training_manifest_digest`, so a committed copy that
+drifted from the build it claims is detectable; `auditTrainingManifest` recomputes the digest and compares
+the source rows against `totalRows`.
+
+`mwops release rights-audit` looks a manifest up by the `training.corpus_version` a package's
+`model-card.json` names. Observed 2026-09-28: of the twelve `neural-weights-*` cards, ten carry no
+`training.corpus_version` at all and the two that do carry prose rather than a version, so no card yet
+resolves to a file here. The record exists for the corpus the next base model trains on.
+
+`v0.7.0-de-holdout.json` is byte-identical to
+`/mnt/mw/corpus/versioned/v0.7.0-de-holdout/TRAINING_SOURCES.json`, the file that build wrote. Eleven
+sources, 118,938,779 rows, profile `exploratory`, no refusals.
+
+## `builds/<version>/inputs.json` — which adapter read which input (#2375)
+
+The adapter inputs of one base corpus build. `corpus build --inputs <path>` reads this file when the
+argument is not JSON text, and `readBuildInputs` resolves each `inputPath` against `$MAILWOMAN_DATA_ROOT`.
+The paths are data-root-relative because the predecessor record,
+`/mnt/mw/corpus/build-logs/v0.5.0-inputs.json`, names paths under `/mnt/playpen/mailwoman-data/`. Those paths
+stopped resolving when the data root moved to `/mnt/mw` on 2026-09-23.
+
+The source data itself is not committed and not reproducible from this repository. What the record
+establishes is which path each adapter was pointed at. A corpus `MANIFEST.json` states that for no adapter.
+
+`builds/<version>/OVERLAY_PLAN.json` holds what an overlay assembly was asked to add: the per-file
+`parquet`, `source` and `split` triples, the base manifest it extended, the Modal root, and the note.
+`assembleOverlayManifest` writes it next to the `MANIFEST.json` it produced, and the copy here is the one a
+later assembly on the same base reads. The `v0.6.0-register-surface` plan (66 files in three lists) was
+produced by three scripts in a session scratch directory with the old data root written into them, and was
+carried into the next assembly as a hand-written list.
+
 ## `reviewed-ve-postcode-tuples.json` — reviewed Venezuelan postcode placement (#1821)
 
 Four geographic facts support the Venezuelan `locality postcode, region` convention. The Barcelona

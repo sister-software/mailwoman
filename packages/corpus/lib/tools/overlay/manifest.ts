@@ -167,6 +167,28 @@ async function descriptor(
 /**
  * Options for {@link assembleOverlayManifest}.
  */
+/**
+ * The filename {@linkcode assembleOverlayManifest} writes its plan under, beside `MANIFEST.json`.
+ */
+export const OVERLAY_PLAN_FILE = "OVERLAY_PLAN.json"
+
+/**
+ * What one overlay assembly was asked to add, written beside the manifest it produced.
+ *
+ * The next assembly on the same base reads this rather than reconstructing the file list.
+ * Reconstructing it is the mechanism behind an overlay carrying a stale list
+ * of files into a later corpus version.
+ */
+export interface OverlayPlan {
+	corpusVersion: string
+	overlayBase: string | null
+	baseManifest: string
+	modalRoot: string
+	note: string
+	appliedAt: string
+	files: Array<{ parquet: string; source: string; split: SplitName }>
+}
+
 export interface OverlayManifestOptions {
 	base: string
 	newDir: PathBuilderLike
@@ -300,6 +322,25 @@ export async function assembleOverlayManifest(args: OverlayManifestOptions): Pro
 	const out = newDir("MANIFEST.json")
 	await writeLocalJSONFile(manifest, out)
 
+	// The plan is written beside the manifest it produced, because the previous overlay
+	// assembly's plan existed only as three scripts in a session scratch directory
+	// and was carried into the next assembly as a hand-written list.
+	// Commit this file under `packages/corpus/data/builds/<version>/`.
+	const plan: OverlayPlan = {
+		corpusVersion: args.version,
+		overlayBase: base.corpus_version ?? null,
+		baseManifest: args.base,
+		modalRoot: args.modalRoot,
+		note: manifest.note,
+		appliedAt: new Date().toISOString(),
+		files: args.files.map((file) => ({ parquet: file.parquet, source: file.source, split: file.split ?? "train" })),
+	}
+
+	const planPath = newDir(OVERLAY_PLAN_FILE)
+
+	await writeLocalJSONFile(plan, planPath)
+
+	console.log(`wrote ${planPath}`)
 	console.log(`wrote ${out}`)
 	console.log(`  files: ${manifest.slices.length} (${kept.length} base kept, +${added.length} added)`)
 	console.log(`  counts: ${stringifyJSON(manifest.counts)}  total: ${manifest.total_rows}`)

@@ -152,6 +152,78 @@ export const ServedBundlesTable: React.FC = () => {
 }
 
 /**
+ * The rights table on `/license`: who published each bundle's rows, the SPDX expression
+ * this repository records for it, and the terms as the publisher names them.
+ *
+ * The page carried these three columns as hand-typed markdown.
+ * The registry is the one place a publisher or an expression is recorded,
+ * and `mailwoman data bom` serializes the same record per artifact.
+ */
+export const BundleRightsTable: React.FC = () => {
+	const data = useRuntimeAssets()
+
+	return (
+		<table>
+			<thead>
+				<tr>
+					<th>Bundle</th>
+					<th>Published by</th>
+					<th>Expression</th>
+					<th>Terms as the publisher names them</th>
+				</tr>
+			</thead>
+			<tbody>
+				{data.bundles.map((bundle) => (
+					<tr key={bundle.name}>
+						<td>
+							<code>{bundle.name}</code>
+						</td>
+						<td>{bundle.rights.publishers.join("; ")}</td>
+						<td>
+							<code>{bundle.rights.expression}</code>
+						</td>
+						<td>{bundle.rights.terms.join(" ")}</td>
+					</tr>
+				))}
+			</tbody>
+		</table>
+	)
+}
+
+/**
+ * What each bundle obliges an operator to do, and what nobody has established about it.
+ *
+ * `mailwoman data pull` prints the same two lists before any bytes move.
+ */
+export const BundleObligationsList: React.FC = () => {
+	const data = useRuntimeAssets()
+
+	return (
+		<>
+			{data.bundles.map((bundle) => (
+				<div key={bundle.name}>
+					<h4>
+						<code>{bundle.name}</code>
+					</h4>
+					<p>You must:</p>
+					<ul>
+						{bundle.rights.conditions.map((condition) => (
+							<li key={condition}>{condition}</li>
+						))}
+					</ul>
+					<p>Unresolved:</p>
+					<ul>
+						{bundle.rights.unresolved.map((question) => (
+							<li key={question}>{question}</li>
+						))}
+					</ul>
+				</div>
+			))}
+		</>
+	)
+}
+
+/**
  * One bundle's summed size, inline.
  */
 export const BundleSize: React.FC<{ name: string }> = ({ name }) => {

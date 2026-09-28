@@ -18,6 +18,7 @@ import { Box, Text } from "ink"
 import { useState } from "react"
 
 import {
+	isCorpusVersion,
 	type CommandSpec,
 	CommandTaskResult,
 	type CommandComponent,
@@ -53,7 +54,14 @@ export const spec = {
 			type: "string",
 			description: "The `source` id stamped on every row, when it differs from the adapter id",
 		},
-		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
+		"corpus-version": {
+			type: "string",
+			default: "0.1.0-dev",
+			description: "Corpus version",
+			validate: isCorpusVersion,
+			validationMessage:
+				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
+		},
 		"progress-every": positiveIntegerOption("--progress-every", 1000),
 	},
 } as const satisfies CommandSpec

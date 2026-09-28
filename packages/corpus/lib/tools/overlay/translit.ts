@@ -36,6 +36,7 @@ import { sha256File } from "@mailwoman/core/hash"
 import { PathBuilder, type PathBuilderLike } from "path-ts"
 import { JSONSpliterator } from "spliterator"
 
+import { corpusDirectoryName } from "#directory"
 import { PARQUET_COLUMNS, PARQUET_COMPRESSION, ROW_GROUP_SIZE, rowToParquet } from "#parquet/schema"
 import type { ParquetFileDescriptor, ParquetManifest } from "#parquet/writers"
 import { writeParquetFile } from "#parquet/writers"
@@ -142,7 +143,7 @@ export async function buildTranslitOverlay(
 
 	if (!(await pathExists(options.baseManifest))) throw new Error(`base-manifest not found: ${options.baseManifest}`)
 
-	const corpusDir = PathBuilder.from(options.outDir)(`corpus-v${corpusVersion}`)
+	const corpusDir = PathBuilder.from(options.outDir)(corpusDirectoryName(corpusVersion))
 	const trainDir = corpusDir("train")
 	await makeDirectories(trainDir)
 

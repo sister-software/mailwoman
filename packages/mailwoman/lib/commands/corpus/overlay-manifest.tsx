@@ -9,7 +9,7 @@
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"
 import { CommandError } from "@mailwoman/core/scripting/command"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * Native command-line interface consumed by the filesystem command router.
@@ -25,7 +25,14 @@ export const spec = {
 			required: true,
 			description: "Remote path of --new-dir, e.g. /data/corpus/versioned/<version>/corpus-<version>",
 		},
-		"corpus-version": { type: "string", required: true, description: "New corpus version" },
+		"corpus-version": {
+			type: "string",
+			required: true,
+			description: "New corpus version",
+			validate: isCorpusVersion,
+			validationMessage:
+				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
+		},
 		parquet: {
 			type: "string",
 			required: true,

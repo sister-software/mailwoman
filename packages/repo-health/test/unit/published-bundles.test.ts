@@ -23,8 +23,9 @@ function bundleWith(name: string, remotePath: string, approxBytes: number): Data
 		name,
 		description: `${name} fixture`,
 		artifacts: [{ remotePath, localPath: `${name}/${name}.db`, md5Sidecar: false, approxBytes }],
-		// `expression` is what `data pull --refuse` decides on. The fixture carries a grant whose
-		// obligations are unrecorded, so a refusal over this bundle would rest on an unresolved reading.
+		// `expression` is what `data pull --refuse` decides on.
+		// The fixture carries a grant whose obligations are unrecorded, so a refusal
+		// over this bundle would rest on an unresolved reading.
 		rights: { publishers: [], expression: "LicenseRef-Undeclared-Input", terms: [], conditions: [], unresolved: [] },
 	}
 }

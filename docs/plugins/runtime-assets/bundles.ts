@@ -59,6 +59,20 @@ export interface PublishedBundleSummary {
 	description: string
 	artifactCount: number
 	/**
+	 * The bundle registry's rights record, verbatim.
+	 *
+	 * The license page's rights table renders this rather than restating it.
+	 * The same two inputs, the registry and the snapshot, produce `mailwoman data bom`,
+	 * so the customer table and the CycloneDX document state one joined record rather than two.
+	 */
+	rights: {
+		publishers: string[]
+		expression: string
+		terms: string[]
+		conditions: string[]
+		unresolved: string[]
+	}
+	/**
 	 * Summed from the registry's per-artifact `approxBytes`, never restated.
 	 */
 	totalBytes: number
@@ -145,6 +159,13 @@ export async function summarizePublishedBundles(): Promise<RuntimeAssetsGlobalDa
 			name: bundle.name,
 			description: bundle.description,
 			artifactCount: bundle.artifacts.length,
+			rights: {
+				publishers: [...bundle.rights.publishers],
+				expression: bundle.rights.expression,
+				terms: [...bundle.rights.terms],
+				conditions: [...bundle.rights.conditions],
+				unresolved: [...bundle.rights.unresolved],
+			},
 			totalBytes,
 			totalSize: formatSize(totalBytes),
 			served: record ? summarizeServed(record) : null,

@@ -9,17 +9,23 @@
  *
  *   Adapters whose id is missing from `--inputs` are skipped and noted in the manifest, which is how the
  *   CLI handles partial builds during development.
+ *
+ *   A build whose `--inputs` names `wof-admin` or `wof-postalcode` needs
+ *   `NODE_OPTIONS="--max-old-space-size=20480"`. Both adapters hold every source record resident, and at
+ *   Node's default heap the process aborts with SIGABRT partway through the adapter phase. This command
+ *   refuses such a launch through `assertHeapForAdapters`, and `buildCorpus` prints the heap limit it has.
  */
 
 import { isAlpha2CodeShape } from "@mailwoman/codex/country"
 import { CommandError } from "@mailwoman/core/scripting/command"
+import { heapLimitBytes } from "@mailwoman/core/utils/system"
 import type { BuildStage } from "@mailwoman/corpus"
 import type { AdapterOptions } from "@mailwoman/corpus/types"
 import { LicensePolicy } from "@mailwoman/corpus/utils/license"
 import { Box, Text } from "ink"
 import { useState } from "react"
 
-import { type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
+import { isCorpusVersion, type CommandSpec, CommandTaskResult, type CommandComponent, useCommandTask } from "#cli-kit"
 
 /**
  * The accepted `--license-policy` values, for the flag's validation message.
@@ -36,9 +42,22 @@ export const spec = {
 	name: "build",
 	description: "Build a versioned corpus.",
 	options: {
-		"corpus-version": { type: "string", default: "0.1.0-dev", description: "Corpus version" },
+		"corpus-version": {
+			type: "string",
+			default: "0.1.0-dev",
+			description: "Corpus version",
+			validate: isCorpusVersion,
+			validationMessage:
+				"--corpus-version is the version alone, without the `corpus-v` prefix, as `0.7.0` or `0.7.0-de-holdout`.",
+		},
 		out: { type: "string", required: true, description: "Output root", deprecatedName: "output" },
-		inputs: { type: "string", required: true, description: "Adapter input JSON map" },
+		inputs: {
+			type: "string",
+			required: true,
+			description:
+				"Adapter inputs: a path to a committed record under `packages/corpus/data/builds/<version>/inputs.json`, " +
+				"or a JSON map from adapter id to an input path or options object",
+		},
 		synthesize: { type: "boolean", default: true, description: "Enable augmentation" },
 		"rows-per-file": {
 			type: "number",
@@ -104,29 +123,52 @@ function isAdapterInputMap(input: unknown): input is Record<string, AdapterInput
 	})
 }
 
+/**
+ * Read the inline `--inputs` JSON map.
+ *
+ * @throws {CommandError} When the text is not JSON, or an entry is not an input path or options object.
+ */
+function readInlineAdapterInputs(
+	text: string,
+	parseJSONStrict: (text: string) => unknown
+): Record<string, AdapterOptions> {
+	let parsed: unknown
+
+	try {
+		parsed = parseJSONStrict(text)
+
+		if (!isAdapterInputMap(parsed)) throw new TypeError("expected an adapter-id to input map")
+	} catch (error) {
+		throw new CommandError(`invalid --inputs JSON: ${(error as Error).message}`)
+	}
+
+	return Object.fromEntries(
+		Object.entries(parsed).map(([id, value]) => [id, typeof value === "string" ? { inputPath: value } : value])
+	)
+}
+
 const CorpusBuild: CommandComponent<typeof spec> = ({ options }) => {
 	const [stage, setStage] = useState<{ name: BuildStage; message: string }>()
 
 	const state = useCommandTask(async () => {
 		const { parseJSONStrict } = await import("@mailwoman/core/json")
-		const { buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { assertHeapForAdapters, buildCorpus, defaultAdapterRegistry } = await import("@mailwoman/corpus")
+		const { readBuildInputs } = await import("@mailwoman/corpus/build/inputs")
 		const { compileLicenseExcludes } = await import("@mailwoman/corpus/utils/license")
 
-		let inputsParsed: unknown
-
-		try {
-			inputsParsed = parseJSONStrict(options.inputs)
-
-			if (!isAdapterInputMap(inputsParsed)) throw new TypeError("expected an adapter-id to input map")
-		} catch (error) {
-			throw new CommandError(`invalid --inputs JSON: ${(error as Error).message}`)
-		}
-
-		const adapterInputs: Record<string, AdapterOptions> = Object.fromEntries(
-			Object.entries(inputsParsed).map(([id, value]) => [id, typeof value === "string" ? { inputPath: value } : value])
-		)
+		// A record's `inputPath` is data-root-relative and a JSON map's is absolute,
+		// so the two forms are read by different functions rather than normalized into one.
+		const adapterInputs = options.inputs.trimStart().startsWith("{")
+			? readInlineAdapterInputs(options.inputs, parseJSONStrict)
+			: await readBuildInputs(options.inputs).catch((error: Error) => {
+					throw new CommandError(`--inputs ${options.inputs} could not be read as a build record: ${error.message}`)
+				})
 
 		const adapters = defaultAdapterRegistry.list()
+
+		// The refusal lives at the launch rather than in `buildCorpus`, because the library's
+		// own tests run the WOF adapter against a five-kilobyte fixture under the default heap.
+		assertHeapForAdapters(Object.keys(adapterInputs), heapLimitBytes())
 
 		const m = await buildCorpus({
 			outputDir: options.out,

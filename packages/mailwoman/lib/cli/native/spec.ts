@@ -416,6 +416,19 @@ export const positiveInteger = (value: number): boolean => Number.isInteger(valu
 export const isLocaleTag = (value: string): boolean => /^[a-z]{2}(-[A-Z]{2})?$/u.test(value)
 
 /**
+ * A `--corpus-version` option's value, which is the version alone without the `corpus-v` prefix.
+ *
+ * Three sites compose a directory name as `corpus-v${version}`, so a value already carrying
+ * the prefix produced `corpus-vv0.7.0-de-holdout` on disk and 695 files had to be re-stamped.
+ * The check refuses a leading `v` for that reason, and refuses a path separator
+ * because the value is interpolated into a directory name.
+ *
+ * It accepts a dotted release with an optional suffix, such as `0.7.0` or `0.7.0-de-holdout`,
+ * and the bare-integer spellings the older corpora use, such as `8` or `8-jp-full-2026-08-04`.
+ */
+export const isCorpusVersion = (value: string): boolean => /^\d+(\.\d+)*(-[A-Za-z0-9.]+)*$/u.test(value)
+
+/**
  * Option-descriptor shorthand: a plain string option.
  */
 export const stringOption = (description: string) => ({ type: "string", description }) as const
