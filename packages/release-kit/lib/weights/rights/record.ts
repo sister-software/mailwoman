@@ -19,6 +19,7 @@ import { readPackageJSON } from "@mailwoman/core/module/resolve-from"
 import { type PathBuilderLike, resolvePath } from "path-ts"
 
 import { literalFilesEntries } from "#pack/verify-tarball"
+import { MODEL_GRAPH_FILE, type ModelGraphRecord, readModelGraph } from "#weights/rights/model-graph"
 
 /**
  * The meaning of the `version` field in a package's `model-card.json`.
@@ -246,6 +247,14 @@ export interface WeightsRightsRecord {
 	 */
 	corpusVersion: string | null
 	tokenizerVersion: string | null
+	/**
+	 * What the package's own model graph can emit, read from the `.onnx` file.
+	 *
+	 * `null` for a package that ships no graph of its own, such as an overlay that reuses its base's.
+	 * The record answers what running the model returns, and settles no question
+	 * about a white-box extraction attack over the weights.
+	 */
+	modelGraph: ModelGraphRecord | null
 }
 
 interface ModelCard {
@@ -336,6 +345,13 @@ export async function readWeightsRightsRecord(
 		inherited: null,
 		corpusVersion: stringOrNull(card?.training?.corpus_version),
 		tokenizerVersion: stringOrNull(card?.training?.tokenizer_version),
+		// Read from the file rather than from the card's `num_labels`, because the
+		// card is a claim about the graph.
+		// The `cjk` graph carries 49 labels where `en-us` carries 33, so a value copied
+		// from one card would misdescribe the other.
+		modelGraph: artifacts.some((artifact) => artifact.path === MODEL_GRAPH_FILE)
+			? await readModelGraph(resolvePath(repoRoot, workspace, MODEL_GRAPH_FILE))
+			: null,
 	}
 }
 

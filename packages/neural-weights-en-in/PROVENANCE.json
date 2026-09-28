@@ -89,6 +89,7 @@
 			"digest": "unrecorded"
 		}
 	],
+	"model_graph": null,
 	"training_attribution": {
 		"status": "none-recorded-in-this-package",
 		"entries": [],

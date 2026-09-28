@@ -54,6 +54,34 @@ has no power to waive them.
 
 ---
 
+## 4a. Third-Party Datasets
+
+This Agreement grants rights only in software, models, and other materials that Licensor has authority to license under
+this Agreement. It does not grant or sublicense rights in third-party datasets distributed or made available for
+download through Mailwoman, including the reference databases `mailwoman data pull` fetches.
+
+Each third-party dataset remains subject to the license and notices supplied with that dataset. A recipient's right to
+use, modify, redistribute, or sublicense that dataset arises under those upstream terms rather than under this
+Agreement.
+
+To the extent this Agreement is nevertheless construed as granting a sublicense in Code-Point Open information, that
+sublicense is subject to the Open Government Licence v3.0 and the following acknowledgements:
+
+> Contains Ordnance Survey data © Crown copyright and database right [year].
+>
+> Contains Royal Mail data © Royal Mail copyright and database right [year].
+>
+> Contains National Statistics data © Crown copyright and database right [year].
+
+Any further sublicense of that information must contain the same acknowledgements and require any further sublicense to
+impose the same requirement.
+
+The canonical, versioned attribution text for each dataset ships with that dataset and is generated from its recorded
+provenance. This section exists so that a construction of this Agreement as a data sublicense does not make it a
+defective one.
+
+---
+
 ## 5. Fees
 
 Fees, pricing, and commercial terms are determined separately and communicated by Licensor.

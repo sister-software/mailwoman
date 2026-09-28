@@ -224,7 +224,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	candidate: {
 		name: "candidate",
 		description:
-			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries (~2.88 GB).",
+			"Global admin candidate gazetteer — population-first place resolution + postcode coverage across 244 countries.",
 		artifacts: [
 			{
 				remotePath: "gazetteer/2026-08-25b/candidate.db",
@@ -259,7 +259,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	},
 	poi: {
 		name: "poi",
-		description: "Overture-places POI layer — 13.68M rows across US/CA/MX/FR (~3.89 GB).",
+		description: "Overture-places POI layer — 13.68M rows across US/CA/MX/FR.",
 		artifacts: [
 			{
 				remotePath: "poi/2026-07-20a/poi.db",
@@ -288,7 +288,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 	fr: {
 		name: "fr",
 		description:
-			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier (~6.95 GB).",
+			"French national rooftop address-point database (BAN), with situs points only and no interpolation tier.",
 		artifacts: [
 			{
 				remotePath: "street/fr/2026-07-10/situs.db",
@@ -319,7 +319,7 @@ export const BUNDLES: Record<string, DataBundle> = {
 		name: "us",
 		description:
 			"US national street tier — per-state rooftop address-point (situs) + TIGER interpolation databases, " +
-			"50 states + DC + VI (103 files, ~41.3 GB total). Use --only <slug> to pull a single state.",
+			"50 states + DC + VI. Use --only <slug> to pull a single state.",
 		artifacts: usStreetArtifacts(),
 		rights: {
 			publishers: [

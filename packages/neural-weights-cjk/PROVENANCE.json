@@ -22,6 +22,18 @@
 			"digest": "recorded"
 		}
 	],
+	"model_graph": {
+		"format": "ONNX",
+		"outputs": [
+			{
+				"name": "logits",
+				"type": "float32",
+				"shape": [1, "sequence", 49]
+			}
+		],
+		"text_emitting_output": false,
+		"summary": "The model accepts tokenized text and emits logits float32[1, sequence, 49]. It has no supported text-generating output."
+	},
 	"training_attribution": {
 		"status": "recorded",
 		"entries": [

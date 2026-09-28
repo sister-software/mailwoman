@@ -19,6 +19,7 @@
 
 import { stringifyJSON } from "@mailwoman/core/json"
 
+import { describeModelGraph } from "#weights/rights/model-graph"
 import type { AttributionRecord, WeightsRightsRecord } from "#weights/rights/record"
 
 /**
@@ -61,6 +62,20 @@ export interface ProvenanceDocument {
 		unresolved: string | null
 	} | null
 	artifacts: Array<{ path: string; role: string; md5: string | null; digest: string }>
+	/**
+	 * What this package's own model graph emits, read from the `.onnx` file at generation time.
+	 *
+	 * `null` for a package shipping no graph of its own, such as an overlay that decodes through its base.
+	 * `text_emitting_output` answers what running the model returns, and settles no
+	 * question about a white-box extraction attack over the weights.
+	 */
+	model_graph: {
+		format: string
+		outputs: Array<{ name: string; type: string; shape: Array<number | string> }>
+		text_emitting_output: boolean
+		summary: string
+		unreadable?: string
+	} | null
 	training_attribution: {
 		status: "recorded" | "none-recorded-in-this-package"
 		entries: Array<{ text: string; license_named: string | null; uses: string[] }>
@@ -209,6 +224,15 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 			md5: artifact.md5,
 			digest: artifact.digest,
 		})),
+		model_graph: record.modelGraph
+			? {
+					format: record.modelGraph.format,
+					outputs: record.modelGraph.outputs,
+					text_emitting_output: record.modelGraph.textEmittingOutput,
+					summary: describeModelGraph(record.modelGraph),
+					...(record.modelGraph.unreadable === undefined ? {} : { unreadable: record.modelGraph.unreadable }),
+				}
+			: null,
 		training_attribution: {
 			status: record.attribution.length ? "recorded" : "none-recorded-in-this-package",
 			entries: record.attribution.map((entry) => ({
