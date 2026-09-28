@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the demo's #741 postal-city side-index probe in the browser candidate lookup
- *   (`WOFCandidateTableLookup`), against a node:sqlite-backed stub worker that mimics
- *   sql.js-httpvfs's `db.exec` interface. Pins parity with the Node lookup: an exact `(name_key,
- *   postcode)` hit resolves a postal city to its geographic locality. a bare query, and a
- *   candidate.db without the side-index (today's production demo), are byte-stable.
+ *   Unit tests for the `WOFCandidateTableLookup` postal-city side-index probe in the browser
+ *   candidate lookup, against a node:sqlite-backed stub worker that mimics sql.js-httpvfs's
+ *   `db.exec` interface.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -79,16 +77,12 @@ describe("browser WOFCandidateTableLookup postal-city side-index (#741)", () => 
 	test("a candidate.db WITHOUT the side-index is byte-stable (today's production demo)", async () => {
 		const lk = new WOFCandidateTableLookup(stubWorker(makeDB(false)))
 		const hits = await lk.findPlace({ text: "Antioch", placetype: "locality", postcode: "37013", country: "US" })
-		expect(hits[0]!.name).toBe("Antioch") // no probe → normal population-first ranking
+		expect(hits[0]!.name).toBe("Antioch")
 	})
 })
 
 describe("sql.js-httpvfs external-name interface (the batch-B casing incident)", () => {
-	// The acronym-casing sweep (da54bc8c) renamed `window.createDbWorker` → `createDBWorker` —
-	// an external library's export, explicitly exempt from the house convention (agents.md).
-	// The UMD loaded, the capitalized global never existed, and the demo street tier
-	// silently fell back to the admin cascade for three days.
-	// These pins make the next sweep fail loudly instead.
+	// `createDbWorker` is an external library export, so the acronym convention does not apply.
 	test("the library actually exports `createDbWorker` (lowercase b)", async () => {
 		const require = createRequire(import.meta.url)
 		const umd = require("sql.js-httpvfs/dist/index.js") as Record<string, unknown>
