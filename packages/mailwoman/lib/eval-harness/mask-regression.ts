@@ -3,34 +3,34 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Per-release mask-regression check (#718) — the "second lock", paired with the load-time
+ *   Per-release mask-regression check, the "second lock" paired with the load-time
  *   capability-manifest delta check shipped in `neural/scorer.ts`
  *   (`assertConventionsRespectCapabilities`).
  *
  *   What it adds over the load-time delta check (and why two locks):
  *
- *   - The load-time delta check (createScorer) is reactive + coarse: it consults the model card's
+ *   - The load-time delta check (createScorer) is reactive and coarse. It consults the model card's
  *       `capabilities` block and rejects only a conventions mask that forbids a tag the card
  *       certifies, at a 5pp `maskOffF1 − maskOnF1` threshold. It fires only on explicitly-forbidden
- *       tags, and only against pre-recorded numbers — it can't see a tag the mask harms indirectly
- *       (e.g. forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
- *       regression on a tag no `forbiddenTags` row names.
- *   - This check is proactive + fine: it RE-runs the model (mask-off vs mask-auto/on) per locale under
- *       the full ship-config (anchor-on + gazetteer-on) and fails if any tag's F1 drops by more
- *       than a tighter 2pp threshold (per the DeepSeek consult) under the conventions mask —
- *       catching the subtler interaction harms the per-tag 5pp delta check would miss.
+ *       tags, and only against pre-recorded numbers, so it cannot see a tag the mask harms indirectly
+ *       (for example forbidding `street_suffix` shifts probability mass and depresses `street`), nor a
+ *       regression on a tag no `forbiddenTags` row lists.
+ *   - This check is proactive and fine-grained. It re-runs the model (mask-off against mask-auto/on)
+ *       per locale under the full ship-config (anchor-on and gazetteer-on) and fails if any tag's F1
+ *       drops by more than a tighter 2pp threshold under the conventions mask, catching the subtler
+ *       interaction harms the per-tag 5pp delta check would miss.
  *
- *   It is weight-dependent (it runs the model), so it is a release check — run with weights on disk
- *   before publishing — not a weightless CI step (weight-dependent tests don't run in CI; #582).
- *   Hook it into the release path (`mailwoman eval promote` / the publish flow), not into Test CI.
+ *   It is weight-dependent (it runs the model), so it is a release check to run with weights on disk
+ *   before publishing. It is not a weightless CI step, since weight-dependent tests do not run in CI.
+ *   Hook it into the release path (`mailwoman eval promote` / the publish flow) rather than Test CI.
  *
- *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim — `createScorer` (so
- *   the channel feed matches the ship config, the #566/#685 trap) with `overrides.conventions`
- *   toggling mask off vs auto, and the unfolded exact-match per-tag F1 from `score-affix.ts`
- *   (street parts split, so an affix regression is visible — the folded `per-locale-f1.ts` can't
- *   see it). The difference from the manifest generator: that one records `maskOnF1` only for
- *   codex-forbidden tags (the only tags the load-time check reads); this check computes the delta for
- *   every tag, because a mask can harm a tag no `forbiddenTags` row names.
+ *   Mechanics: reuses the `capability-manifest.ts` scoring implementation verbatim, `createScorer` (so
+ *   the channel feed matches the ship config) with `overrides.conventions`
+ *   toggling mask off against auto, and the unfolded exact-match per-tag F1 from `score-affix.ts`
+ *   (street parts split, so an affix regression is visible, unlike the folded `per-locale-f1.ts`).
+ *   The difference from the manifest generator: that one records `maskOnF1` only for
+ *   codex-forbidden tags (the only tags the load-time check reads), while this check computes the delta
+ *   for every tag, because a mask can harm a tag no `forbiddenTags` row lists.
  *
  *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
  *
@@ -41,7 +41,7 @@
  *
  *   `threshold` overrides the default 0.02 (2pp). `json` writes the full per-tag delta table (every
  *   locale × tag rather than just violations) for the release record. All narration goes through the
- *   `report` sink (stderr by default) — `promotion-eval.ts` captures it into
+ *   `report` sink (stderr by default), and `promotion-eval.ts` captures it into
  *   `<out-dir>/mask-regression.md`.
  */
 
@@ -96,9 +96,9 @@ export interface MaskRegressionOptions {
 	/**
 	 * The regression threshold (pp, as a fraction).
 	 *
-	 * Per the DeepSeek consult, 2pp — a finer net than the load-time delta check's 5pp,
-	 * so subtler interaction harms surface at release.
-	 * A tag whose mask-on F1 is within this band of its mask-off F1 is considered unharmed by the mask.
+	 * 2pp, a finer net than the load-time delta check's 5pp, so subtler interaction harms surface
+	 * at release. A tag whose mask-on F1 is within this band of its mask-off F1 is considered
+	 * unharmed by the mask.
 	 *
 	 * Default 0.02.
 	 */
@@ -109,18 +109,16 @@ export interface MaskRegressionOptions {
 	json?: string
 }
 
-// #region Locale matrix (mirrors capability-manifest.ts)
 
 /**
- * The per-tag vocabulary scored, unfolded (street parts split — mirrors score-affix.ts / capability-manifest.ts).
+ * The per-tag vocabulary scored, unfolded (street parts split, mirroring score-affix.ts and
+ * capability-manifest.ts).
  *
  * Every tag here gets a mask-off↔mask-on delta computed.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
 
-// #endregion
 
-// #region The check
 
 interface Delta {
 	locale: SystemCode
@@ -171,11 +169,11 @@ export async function maskRegressionCheck(
 		const rows = await loadPerTagEvalRows(spec.files)
 		report(`\n[${spec.system}] n=${rows.length} (${spec.files.join(", ")})`)
 
-		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades (#2048).
+		// `inputMode: "formatted"`, the same mode the capability-manifest generator grades.
 		// The rows are formatted postal addresses, and on those the production pipeline derives
 		// `formatted` and runs the evidence-bundle channels off as a declared ablation.
-		// Grading them in the bare-library default measured a path production never takes on these inputs.
-		// The per-tag numbers before this change grade `fragmented`.
+		// Grading them in the bare-library default measures a path production never takes on these
+		// inputs.
 		const { off, on } = await scoreConventionsMaskOffOn(
 			rows,
 			TAGS,
@@ -203,7 +201,6 @@ export async function maskRegressionCheck(
 		}
 	}
 
-	// Report the complete per-tag delta table for every in-scope tag.
 	report(`\n--- per-tag mask-off vs mask-on F1 (in-scope tags) ---`)
 	report(`  locale  tag                    maskOff   maskOn     Δpp`)
 
@@ -216,7 +213,6 @@ export async function maskRegressionCheck(
 		)
 	}
 
-	// Reject a mask whose regression exceeds the per-tag threshold.
 	const thresholdPp = THRESHOLD * 100
 	const violations = deltas.filter((d) => d.inScope && d.delta > thresholdPp)
 
@@ -266,4 +262,3 @@ export async function maskRegressionCheck(
 	return { pass: true, violations }
 }
 
-// #endregion

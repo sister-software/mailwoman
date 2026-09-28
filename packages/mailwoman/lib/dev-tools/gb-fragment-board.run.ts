@@ -3,27 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   A GB board in the fragment register — the one register that can see the Option-A evidence bundle.
+ *   A GB board in the fragment register, the one register that can see the Option-A evidence bundle.
  *
- *   why IT had TO exist. Restoring the evidence channels to the en-gb overlay (#1511, ROAD_TO_V9 §1 A4)
- *   is a default-on change, so the D-rule wants a before/after on GB. Run against `gb-golden.jsonl`
- *   through the production pipeline, the two arms come back byte-identical — same span sha256, all
- *   three boards unmoved. That is not evidence of safety: every gb-golden row is a full address, the
- *   kind classifier calls it `formatted`, and the register check (Decision A, `classifier.ts`'s
- *   `evidenceOn`) withholds both evidence channels in that register by design. The board is blind to
- *   the change by construction, and reporting its byte-identity as a pass would be reporting the
- *   instrument rather than the model.
+ *   Restoring the evidence channels to the en-gb overlay (ROAD_TO_V9 §1 A4) is a default-on change, so
+ *   the D-rule wants a before/after on GB. Every gb-golden row is a full address, the kind classifier
+ *   calls it `formatted`, and the register check (Decision A, `classifier.ts`'s `evidenceOn`) withholds
+ *   both evidence channels in that register by design. A board over those rows is blind to the change
+ *   by construction, so this projects each row onto the register where the channels are live.
  *
- *   So this projects each gb-golden row onto the register where the channels are live. Two fragment
- *   shapes per row, both drawn from the row's own gold components so the grading stays exact-match:
+ *   Two fragment shapes per row, both drawn from the row's own gold components so the grading stays
+ *   exact-match:
  *
- *   - `street` — the street line alone (`components.street`, house number prefixed when the row has one).
+ *   - `street`: the street line alone (`components.street`, house number prefixed when the row has one).
  *     The street-type channel's own register.
- *   - `place` — `dependent_locality, locality`. The locality-surface channel's register, and the one
- *     the shipped bundle's homonym wins were measured in.
+ *   - `place`: `dependent_locality, locality`. The locality-surface channel's register, and the one the
+ *     shipped bundle's homonym wins were measured in.
  *
- *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently graded
- *   in the wrong register — the mistake this file exists to correct.
+ *   Rows whose fragment does not classify as `fragmented` are skipped and counted rather than silently
+ *   graded in the wrong register.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/gb-fragment-board.run.ts --cache-root <dir> --label <name>
  */
@@ -72,7 +69,7 @@ const SHAPES = [
 		tag: "street",
 		build: (c: Record<string, string>) =>
 			c.street ? [c.house_number, c.street].filter((part) => part != null && part.length).join(" ") : undefined,
-		// The model emits the street as a family (prefix/name/particle/suffix); assemble it the
+		// The model emits the street as a family (prefix/name/particle/suffix). Assemble it the
 		// way `score-anchor-v2-boards.run.ts` does before comparing to the whole-name gold.
 		emit: STREET_FAMILY_TAGS,
 	},
@@ -99,7 +96,7 @@ for (const shape of SHAPES) {
 			if (!base) continue
 			const text = register(base, reg)
 
-			// The register is the whole point — grade only where the channels are actually live.
+			// Grade only where the channels are actually live.
 			if (deriveGeocodeRegister(text) !== "fragmented") {
 				if (reg === "asis") {
 					skippedByShape.set(shape.name, (skippedByShape.get(shape.name) ?? 0) + 1)

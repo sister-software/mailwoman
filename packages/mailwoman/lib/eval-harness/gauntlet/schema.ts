@@ -3,21 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is the
- *   curated regression layer: the executable memory of fixed bugs. Its check is regression-only — "must not
- *   break what already passed" — and its pass-rate is never a ship gauge. Generalization is conditional
- *   elsewhere, in the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants
- *   (`metamorphic.ts`), which need no stored expected values and so cannot be over-fit.
+ *   The Gauntlet, a full-pipeline integration-test corpus (`input → expected assembled output`). This
+ *   is the curated regression layer, the executable memory of fixed bugs. Its check is regression-only
+ *   ("must not break what already passed"), and its pass-rate is never a ship gauge. Generalization
+ *   is conditional elsewhere, in the held-out fresh-draw runner (`holdout.ts`) and the metamorphic
+ *   invariants (`metamorphic.ts`), which need no stored expected values and so cannot be over-fit.
  *
- *   The `source` + `address_kind` columns are required: coverage is tracked BY kind, so a total can never hide
- *   that every row is the same kind.
+ *   The `source` and `address_kind` columns are required, since coverage is tracked by kind, so a
+ *   total can never hide that every row is the same kind.
  */
 
 import type { ResolutionTier } from "@mailwoman/annotations/geo"
 import type { Kysely } from "kysely"
 
 /**
- * The address kind a case exercises — a free string, deliberately extensible because the taxonomy
+ * The address kind a case exercises, a free string deliberately extensible because the taxonomy
  * grows with the corpus (seed examples: `fr_street_bare`, `us_residential`, `us_po_box`, `de_street`).
  */
 export type AddressKind = string
@@ -37,7 +37,7 @@ export interface GauntletCaseTable {
 	id: string
 	input: string
 	/**
-	 * Provenance: where this case came from — `bug:#828`, `demo`, `nppes`, `golden`, `manual`.
+	 * Provenance: where this case came from (`demo`, `nppes`, `golden`, `manual`, or a `bug:` id).
 	 */
 	source: string
 	address_kind: AddressKind
@@ -46,7 +46,7 @@ export interface GauntletCaseTable {
 	 */
 	country: string
 	/**
-	 * Expected status — the baseline the runner diffs against to report regressions vs improvements.
+	 * Expected status, the baseline the runner diffs against to report regressions vs improvements.
 	 */
 	status: CaseStatus
 	/**
@@ -54,21 +54,21 @@ export interface GauntletCaseTable {
 	 */
 	expect_components: string | null
 	/**
-	 * OPT-IN multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no interface);
-	 * for a listed key the grader asserts that `scriptRenderings(got)` contains every listed
-	 * rendering, case-folded, and supersedes the same key in {@linkcode expect_components},
-	 * while every list must be non-empty (both the seed schema and the grader refuse an empty one).
+	 * Optional multi-script rendering interface as JSON `{ tag: [rendering, …] }` (null = no
+	 * interface). For a listed key the grader asserts that `scriptRenderings(got)` contains every
+	 * listed rendering, case-folded, and supersedes the same key in {@linkcode expect_components}.
+	 * Every list must be non-empty, since both the seed schema and the grader refuse an empty one.
 	 */
 	expect_component_renderings: string | null
 	/**
 	 * Expected resolved place id (null = place not asserted), graded against
-	 * `hierarchy[0].placeID` — an expectation column can sit in the schema and DDL,
-	 * look asserted, and assert no fact, so this is read by `check-case.ts`.
+	 * `hierarchy[0].placeID`. An expectation column can sit in the schema and DDL, look asserted,
+	 * and assert no fact, so this is read by `check-case.ts`.
 	 */
 	expect_place_id: string | null
 	/**
 	 * Expected resolved place canonical name (null = not asserted), case-insensitive against
-	 * `hierarchy[0].name` rather than `GauntletResult.locality`, which echoes the parsed query span.
+	 * `hierarchy[0].name`, since `GauntletResult.locality` echoes the parsed query span.
 	 */
 	expect_place_name: string | null
 	/**
@@ -77,7 +77,7 @@ export interface GauntletCaseTable {
 	expect_lat: number | null
 	expect_lon: number | null
 	/**
-	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh); null defaults at runtime.
+	 * Accepted great-circle tolerance in meters (Pelias's distanceThresh). Null defaults at runtime.
 	 */
 	expect_tolerance_m: number | null
 	/**
@@ -99,18 +99,18 @@ export interface GauntletCaseTable {
 	 */
 	bug_ref: string | null
 	/**
-	 * Human note — what failure this case pins.
+	 * Human note recording what failure this case pins.
 	 */
 	note: string | null
 	/**
-	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation layer's
-	 * derived graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`),
-	 * where `rung` is `abstain`, `base`, or a WOF placetype.
+	 * Ablation only, and optional: a JSON `{ component: rung }` hand-pin overriding the ablation
+	 * layer's derived graceful-degradation ladder for this row (`{"country": "region"}`,
+	 * `{"region": "abstain"}`), where `rung` is `abstain`, `base`, or a WOF placetype.
 	 *
 	 * Absent means the derived ladder decides.
-	 * The pin exists for the two classes no threshold fixes — territories, whose ancestry
-	 * is politically rather than geographically shaped, and dual-role places, where one
-	 * name is both a locality and its own county and the ladder double-counts a rung.
+	 * The pin exists for the two classes no threshold fixes: territories, whose ancestry is
+	 * politically shaped, and dual-role places, where one name is both a locality and its own
+	 * county and the ladder double-counts a rung.
 	 */
 	ablation_expect: string | null
 	/**
@@ -119,35 +119,36 @@ export interface GauntletCaseTable {
 	 * The runner derives the weights overlay from its region subtag,
 	 * mirroring production's locale-hint routing.
 	 *
-	 * It is a locale hint, never a country constraint — `country` above stays the truth's
+	 * It is a locale hint and never a country constraint. `country` above stays the truth's
 	 * country, so `Paris` under `en-US` is an FR row run with the US overlay.
 	 */
 	locale: string | null
 	/**
-	 * 1 = this row's expected outcome is no coordinate, so the resolver abstains rather than answering and any resolved coordinate fails the row.
+	 * 1 = this row's expected outcome is no coordinate, so the resolver abstains and any
+	 * resolved coordinate fails the row.
 	 *
-	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain
-	 * rather than fall through to a world-fuzzy candidate.
+	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain, without falling
+	 * through to a world-fuzzy candidate.
 	 *
-	 * The abstain pin is the interface, and lands re-pinned to real coordinates once
-	 * coverage arrives (the row's note says which artifact).
+	 * The abstain pin is the interface, and lands re-pinned to real coordinates once coverage
+	 * arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
 
 /**
- * The build stamp — one row, describing the committed corpus the DB was built from. it exists
- * because `regression.db` is a derived artifact with no link back to its source,
- * and no record in the DB could contradict a wrong build.
+ * The build stamp, one row describing the committed corpus the DB was built from. It exists
+ * because `regression.db` is a derived artifact with no link back to its source, and no record
+ * in the DB could contradict a wrong build.
  */
 export interface GauntletMetaTable {
 	/**
-	 * Always {@linkcode GAUNTLET_META_ROW_ID}; a one-row table pinned by its primary key, so a
-	 * second write replaces the stamp rather than appending a second, equally-authoritative one.
+	 * Always {@linkcode GAUNTLET_META_ROW_ID}. It is a one-row table pinned by its primary key, so
+	 * a second write replaces the stamp rather than appending a second, equally-authoritative one.
 	 */
 	id: string
 	/**
-	 * `regressionCorpusHash` of the rows this DB was built from (`cases/load.ts`) —
+	 * `regressionCorpusHash` of the rows this DB was built from (`cases/load.ts`),
 	 * order-independent and content-addressed.
 	 */
 	corpus_hash: string
@@ -183,7 +184,7 @@ export const GAUNTLET_META_ROW_ID = "corpus"
 export const GAUNTLET_META_TABLE = "gauntlet_meta"
 
 /**
- * Column order for the positional insert — derived once so the builder + writer can't drift.
+ * Column order for the positional insert, derived once so the builder and writer cannot drift.
  */
 export const GAUNTLET_CASE_COLUMNS = [
 	"id",
@@ -204,7 +205,7 @@ export const GAUNTLET_CASE_COLUMNS = [
 	"bug_ref",
 	"note",
 	// Append-only: this list is the positional insert order, so a new column goes
-	// on the END or every existing row shifts.
+	// at the end or every existing row shifts.
 	"ablation_expect",
 	"expect_component_renderings",
 	"locale",

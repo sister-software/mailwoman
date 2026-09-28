@@ -3,30 +3,27 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Capability-manifest generator (#718 / #719) — the measurement half of the load-time delta check.
+ *   Capability-manifest generator, the measurement half of the load-time delta check.
  *
- *   The structural fix for the D2/#719 bug-class (a conventions mask destroying a capability the
- *   model demonstrably has): the model card declares, PER tier × PER address-system × PER tag, the
- *   model's measured per-tag F1 with the conventions mask off, plus the mask-on F1 for any tag a
- *   codex `forbiddenTags` row would suppress. The `createScorer` loader (neural/scorer.ts) reads
- *   this `capabilities` block and fails closed when a conventions mask would forbid a tag the model
- *   is certified to emit — conditional by a delta (`maskOffF1 − maskOnF1 > 5pp`), not an absolute floor,
- *   so a tag the model emits at 0.80 is still guarded if the mask drops it to 0.0 (the exact #719
- *   shape: FR `street_prefix` collapsed 80.0 → 0.0 under the old blanket prefix+suffix forbid).
+ *   The model card declares, per tier, per address-system and per tag, the model's measured per-tag F1
+ *   with the conventions mask off, plus the mask-on F1 for any tag a codex `forbiddenTags` row would
+ *   suppress. The `createScorer` loader (neural/scorer.ts) reads this `capabilities` block and fails
+ *   closed when a conventions mask would forbid a tag the model is certified to emit. The guard is a
+ *   delta (`maskOffF1 − maskOnF1 > 5pp`), so a tag the model emits at 0.80 is still guarded if the mask
+ *   drops it to 0.0.
  *
- *   Tiers (the two ship-CONFIGs the model is fed under):
+ *   Tiers:
  *
- *   - `server`: anchor + gazetteer channels on (the production default — what `createScorer` builds).
- *   - `pocket`: anchor on, gazetteer off (the lighter on-device feed. not yet a serving target).
+ *   - `server`: anchor and gazetteer channels fed (the production default `createScorer` builds).
+ *   - `pocket`: anchor fed, gazetteer ablated (the lighter on-device feed, not yet a serving target).
  *
- *   For each tier × locale × {mask-off, mask-on} we run the model and compute unfolded exact-match
- *   per-tag F1 (same implementation as `score-affix.ts` — split `street_prefix`/`street`/`street_suffix`
- *   so the affix capability is measurable, which the folded `per-locale-f1.ts` cannot see). The
- *   classifier is built via the canonical `createScorer` so the channel feed matches the ship
- *   config (the #566/#685 trap), with `overrides.conventions` toggling mask off/on and
- *   `overrides.gazetteer` selecting the tier.
+ *   For each tier, locale and mask setting we run the model and compute unfolded exact-match per-tag F1
+ *   (the same implementation as `score-affix.ts`, which splits `street_prefix`, `street` and
+ *   `street_suffix` so the affix capability is measurable). The classifier is built via the canonical
+ *   `createScorer` so the channel feed matches the ship config, with `overrides.conventions` toggling
+ *   the mask and `overrides.gazetteer` selecting the tier.
  *
- *   Run (Node 26+, custom DB / anchor-on, the production default v1.5.0 int8):
+ *   Run (Node 26+, custom DB, anchor-on, the production default v1.5.0 int8):
  *
  *   Mailwoman eval capability-manifest\
  *   --model $MAILWOMAN_DATA_ROOT/models/quantized/model-v150-step-40000-int8.onnx\
@@ -34,8 +31,8 @@
  *   --model-card neural-weights-en-us/model-card.json\
  *   --write
  *
- *   `--write` patches the `capabilities` block into the card (additive metadata, tabs preserved);
- *   omit it for a dry run that only prints the block.
+ *   `--write` patches the `capabilities` block into the card (additive metadata, tabs preserved).
+ *   Omit it for a dry run that only prints the block.
  */
 
 import { ADDRESS_SYSTEM_CONVENTIONS } from "@mailwoman/codex"

@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The currency check's census (#1746): what the resurrection judges per country on the shipped dead-row query
- *   (`locality`), and what widening it to `localadmin` admits — read on the admin gazetteer and the GeoNames dumps
- *   with the check's own function in dry-run, so the count is the build's arithmetic and not a second copy of it.
+ * @file The currency check's census: what the resurrection judges per country on the shipped dead-row query
+ *   (`locality`), and what widening it to `localadmin` admits, read on the admin gazetteer and the GeoNames dumps
+ *   with the check's own function in dry-run, so the count is the build's own arithmetic rather than a second copy of it.
  *
  *   Usage: node packages/mailwoman/lib/dev-tools/currency-holes-census.run.ts [--admin <admin-global-priority.db>]
  *   [--geonames <dir>] [--countries GB,DE,FR,IT,US] [--json <out>]

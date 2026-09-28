@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ledger-append (#885) — turn a promotion-eval out-dir into one row of
- *   `evals/scores-by-version.json`, so the per-version score ledger updates itself instead of
- *   relying on discipline (which is how it froze at v4.4.0 for eleven releases).
+ *   Ledger-append. It turns a promotion-eval out-dir into one row of
+ *   `evals/scores-by-version.json`, so the per-version score ledger updates itself and does not
+ *   rely on discipline.
  *
- *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings — the
+ *   Metric values come from the out-dir's `verdict.json` (the eval spec's own floor readings, the
  *   same numbers the promote decision used). Run metadata (corpus, steps, hardware) defaults from
- *   the model-card. everything is overridable by option. Rows follow the file's practiced shape
- *   (the v4.4.0 row): the strict schema wants 64-hex digests for corpus/eval-set, but the
- *   populated rows use free-text pointers — this tool warns on that drift, it does not fail.
+ *   the model-card, and everything is overridable by option. Rows follow the file's practiced shape
+ *   (the v4.4.0 row): the strict schema wants 64-hex digests for corpus and eval-set, but the
+ *   populated rows use free-text pointers. This tool warns on that drift, and does not fail.
  *
- *   Refuses to append a duplicate (same model_version + run_id) unless `replace`, and always
+ *   Refuses to append a duplicate (same model_version and run_id) unless `replace`, and always
  *   checks that the result is parseable JSON before writing (write-to-temp, then rename).
  *
  *   Usage:
@@ -76,12 +76,12 @@ export interface LedgerAppendOptions {
 	replace?: boolean
 	/**
 	 * The check-revision escape (mirrors the no-silent-check-drift discipline):
-	 * a `fail` verdict may be ledgered only when every failing check is
-	 * named here — i.e. the operator adjudicated the exact miss at a fork
-	 * (e.g. A per-artifact int8-delta exception recorded in the eval spec's $revision comment).
+	 * a `fail` verdict may be ledgered only when every failing check appears
+	 * here, since the operator adjudicated the exact miss at a fork
+	 * (for example a per-artifact int8-delta exception recorded in the eval spec's $revision comment).
 	 *
 	 * The excepted checks are stamped into the row's notes.
-	 * Any UNnamed failure still refuses.
+	 * Any failure absent from that list still refuses.
 	 * Repeatable.
 	 */
 	operatorException?: string[]
@@ -106,8 +106,8 @@ interface Ledger {
 /**
  * Append one eval run to the ledger.
  *
- * @returns 0 when appended and 1 when refused.
- * (duplicate without `replace`, or an un-excepted `fail` verdict), 2 = usage error.
+ * @returns 0 when appended, 1 when refused (duplicate without `replace`, or an un-excepted
+ * `fail` verdict), and 2 for a usage error.
  */
 export async function ledgerAppend(options: LedgerAppendOptions): Promise<number> {
 	const card = options.card ?? "packages/neural-weights-en-us/model-card.json"

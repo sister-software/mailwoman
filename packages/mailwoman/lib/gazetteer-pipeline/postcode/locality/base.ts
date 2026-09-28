@@ -3,21 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Build the postcode → containing-locality candidate table (#274), offline, from source.
- *
- *   The PIP-containment probe (#274 groundwork) showed coordinate-first resolution lifts German
- *   locality accuracy where name-match misses (Sachsen +22pp). This productizes it: for every
- *   postcode, point-in-polygon its centroid against the WOF locality polygons and record the
- *   containing locality (+ a few nearby ones for the abutting-postcode / soft-scoring candidate
- *   set), with WOF alt-name aliases.
+ *   Build the postcode → containing-locality candidate table offline: for every postcode,
+ *   point-in-polygon its centroid against the WOF locality polygons and record the containing
+ *   locality plus a few nearby ones for the abutting-postcode candidate set, with WOF alt-name
+ *   aliases.
  *
  *   The resolver consumes this at resolve time: postcode → candidate localities → soft-score by
- *   (postcode-proximity + name-match) → pick. It supplies the coordinate candidate the FTS
- *   name-match can't generate when a small town isn't well-indexed.
+ *   postcode proximity and name match → pick. It supplies the coordinate candidate that a name
+ *   match alone cannot generate when a small town is not well indexed.
  *
- *   Build-from-source per the standing rule: locality polygons from the whosonfirst-data-admin-<cc>
- *   GeoJSON repos. postcode centroids from our own custom-built postalcode-intl.db (not a prebuilt
- *   dump).
+ *   Locality polygons come from the whosonfirst-data-admin-<cc> GeoJSON repos and postcode centroids
+ *   from our own custom-built postalcode-intl.db.
  *
  *   Usage: node scripts/build-postcode-locality.ts --country DE\
  *   --admin-repo $MAILWOMAN_DATA_ROOT/src/wof-repos/whosonfirst-data/whosonfirst-data-admin-de\
@@ -25,14 +21,12 @@
  *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-de.db\
  *   --radius-km 10 --max-candidates 4
  *
- *   port note (from scripts/build-postcode-locality.py): faithful TypeScript port. Point-in-polygon
- *   reuses the canonical even-odd ray cast `geometryContains` from `@mailwoman/spatial`
- *   (byte-identical to the Python `in_geom`/`ray_in_ring`; `scripts/eval/pip-containment.py` is the
- *   one copy no import can reach and must be matched by hand). Haversine is ported inline (asin form)
- *   to match the Python exactly. The output is written directly to `--output` — not via a
- *   temp-then-move — because this builder is deliberately accumulative: `create table if not
- *   exists` + `delete from … where country=?` lets one shared DB be filled DE, FR, … in successive
- *   `--country` runs (a temp-build would wipe prior countries' rows).
+ *   Point-in-polygon reuses the canonical even-odd ray cast `geometryContains` from
+ *   `@mailwoman/spatial`, byte-identical to the Python `in_geom`/`ray_in_ring`. Haversine is
+ *   ported inline (asin form) to match the Python exactly. The output is written directly to
+ *   `--output` because this builder is accumulative: `create table if not exists` plus
+ *   `delete from … where country=?` lets one shared DB be filled DE, FR, … in successive
+ *   `--country` runs, where a temp-build would wipe prior countries' rows.
  */
 
 import { pathExists, readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -58,18 +52,16 @@ import {
 } from "#gazetteer-pipeline/postcode/locality/schema"
 import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest"
 
-/**
- * The grant the finalized table records, as the `meta` table has stated it since the first build.
- */
+/** The grant the finalized table records in its `license` meta row. */
 const POSTCODE_LOCALITY_LICENSE = "CC-BY 4.0 (Who's On First) — attribution required on redistribution"
 
 /**
- * Plus name:* / label:* props, gathered below.
+ * The only unprefixed alias key. `aliasesFor` reads the `name:` and `label:` prefixes separately.
  */
 const ALT_NAME_KEYS = new Set(["wof:label"])
 
 /**
- * WOF alt-name aliases from name:* / label:* props (+ `wof:label`), minus the canonical.
+ * WOF alt-name aliases minus the canonical name.
  */
 function aliasesFor(props: Record<string, unknown>, canonical: string): string[] {
 	const out = new Set<string>()
@@ -93,7 +85,7 @@ function aliasesFor(props: Record<string, unknown>, canonical: string): string[]
 }
 
 /**
- * Push `v` into the array bucket at `k`, creating it on first touch (Python `defaultdict(list)`).
+ * Python `defaultdict(list)` semantics.
  */
 function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 	const a = m.get(k)
@@ -106,13 +98,13 @@ function pushTo<V>(m: Map<string, V[]>, k: string, v: V): void {
 }
 
 /**
- * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from
- * the 3×3 block around a query coordinate, filtered by great-circle radius,
- * and answered nearest-first under a caller-owned tie-break.
+ * A fixed-cell proximity grid: entries bucketed by cell, neighbors gathered from the 3×3 block
+ * around a query coordinate, filtered by great-circle radius, and answered nearest-first under a
+ * caller-owned tie-break.
  *
- * The cell keying is part OF each builder'S output interface — `pyRound` vs `Math.round`,
- * ×10 (0.1°) vs ×2 (0.5°) — so it is a constructor parameter rather than a convention,
- * and a builder's keying must not be "fixed" to match a sibling's.
+ * The cell keying is part of each builder's output interface (`pyRound` against `Math.round`, ×10
+ * at 0.1° against ×2 at 0.5°), so it is a constructor parameter rather than a convention. A
+ * builder's keying must not be aligned with a sibling's.
  */
 export class ProximityGrid<Entry> {
 	readonly #cells = new Map<string, Entry[]>()
@@ -197,7 +189,7 @@ export interface PostcodeLocalityBaseOptions {
 export async function finalizePostcodeLocality(output: string): Promise<void> {
 	const now = new Date()
 
-	// Ordered (SQL order BY country) summary of {rows, containing}.
+	// Ordered by country for stable meta output.
 	const summary = new Map<string, { rows: number; containing: number }>()
 
 	let countriesJson: string
@@ -291,7 +283,7 @@ export async function finalizePostcodeLocality(output: string): Promise<void> {
 }
 
 /**
- * Recursively collect every `.geojson` file under `dir` (Python's recursive `glob` over `data`).
+ * Python's recursive `glob` over `data`.
  */
 async function geojsonFiles(dir: PathBuilderLike): Promise<string[]> {
 	if (!(await pathExists(dir))) {
@@ -354,19 +346,16 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				geom,
 			})
 		} catch {
-			// A malformed file is skipped and counted in the summary line below.
 			unreadable++
 		}
 	}
 
 	console.log(`  ${locs.length} localities; ${unreadable} unreadable files skipped`)
 
-	// Two 0.1°-cell (~11km) grid indexes.
-	// `grid` (by centroid) drives the radius candidate set; `bgrid`
-	// (by bbox-spanned cells — a locality is registered in every cell its bounding box overlaps)
-	// drives the containing-PIP, so it checks only the localities whose bbox could
-	// cover the point instead of a linear scan over all of them.
-	// At GB scale (2.7M postcodes × 11.7K localities) that's the difference between minutes and ~an hour.
+	// Two 0.1°-cell (~11km) grid indexes. `grid` keys by centroid and drives the radius
+	// candidate set. `bgrid` registers a locality in every cell its bounding box overlaps and
+	// drives the containing-PIP check, so that check reads only the localities whose bbox
+	// could cover the point.
 	const grid = new ProximityGrid<number>({
 		cellOf: (lon, lat) => [pyRound(lon * 10), pyRound(lat * 10)],
 		positionOf: (idx) => [locs[idx]!.clat, locs[idx]!.clon],
@@ -419,7 +408,6 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 
 			if (plat == null || plon == null) continue
 
-			// containing locality via bbox-grid-prefiltered PIP (only localities whose bbox spans this cell)
 			let containingIdx: number | null = null
 
 			for (const idx of bgrid.get(`${Math.floor(plon * 10)}|${Math.floor(plat * 10)}`) ?? []) {
@@ -439,7 +427,6 @@ export async function buildPostcodeLocalityBase(args: PostcodeLocalityBaseOption
 				}
 			}
 
-			// nearby candidates within radius (grid-limited) for the soft-scoring candidate set + abutting case
 			const cand = grid.nearby(plat, plon, radiusKM).map(({ d, entry }) => ({ d, idx: entry }))
 
 			const chosen: Array<{ d: number; idx: number; isc: number }> = []

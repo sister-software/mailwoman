@@ -3,27 +3,26 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Fr-admin-split-selfvalidation.ts — the PRE-GPU eval for the international admin-split retrain
- *   (night 2026-06-19). Before spending an A100, falsify the premise: does splitting the
- *   département out of the locality actually move the resolved coordinate, anchor-on, through the
- *   production resolver? Or does FTS land the same commune either way (DeepSeek's silent-wash risk
- *   — the v1.7.0 trap: a label change that the resolver ignores)?
+ *   The pre-GPU eval for the international admin-split retrain. Before spending an A100, falsify the
+ *   premise: does splitting the département out of the locality actually move the resolved coordinate,
+ *   anchor-on, through the production resolver? Or does FTS land the same commune either way, the
+ *   silent-wash risk of a label change the resolver ignores?
  *
  *   For each sampled FR commune (truth = its own WOF centroid) we resolve three parse states through
  *   the same resolver the geocoder ships (`createWOFResolver` over `admin-global-priority.db`,
  *   `defaultCountry: FR`):
  *
- *   - `dropped` {locality:[commune]} — the model's "région → null" failure
- *   - `merged` {locality:[commune + " " + dept]} — the "canberra ACT" fuse failure
- *   - `split` {locality:[commune], region:[dept]} — the corrected parse and measure the great-circle
+ *   - `dropped` {locality:[commune]}: the model's "région → null" failure
+ *   - `merged` {locality:[commune + " " + dept]}: the "canberra ACT" fuse failure
+ *   - `split` {locality:[commune], region:[dept]}: the corrected parse and measure the great-circle
  *       error to the commune's true centroid.
  *
- *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged` — concentrated on
+ *   The premise is real iff `split`'s mean error is materially below `dropped`/`merged`, concentrated on
  *   collision communes (a name in >1 département), where the région is the only disambiguator.
- *   unique communes are the control (the resolver should find them with or without the région).
+ *   Unique communes are the control (the resolver should find them with or without the région).
  *
- *   Eval: ≥5% mean centroid-error reduction (`split` vs `dropped`) on the collision stratum, else stop —
- *   the premise is false and no retrain can fix it.
+ *   Eval: ≥5% mean collision-stratum reduction (`split` vs `dropped`), else the premise is false and
+ *   no retrain can fix it.
  *
  *   Run (compiled CLI): node packages/mailwoman/lib/dev-tools/fr/admin/split/selfvalidation.run.ts\
  *   --db $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db --n 200 --out /tmp/fr-split.md
@@ -43,7 +42,6 @@ import { resolvePath } from "path-ts"
 
 import { collectResolved, mostSpecific } from "#eval-harness/oa/resolver/tree-hits"
 import { v0RecordToTree } from "#eval-harness/v0-tree-adapter"
-// Loose scan parity with the retired scripts/lib/cli-args helpers: unknown flags tolerated.
 /**
  * Percentage-point collision reduction the split must deliver to be judged effective.
  */
@@ -57,24 +55,12 @@ const { values: rawValues } = parseArguments({
 // Typed view: strict:false loosens TS inference, but declared options always parse to their schema type.
 const values = rawValues as { db?: string; n?: string; out?: string }
 
-// The resolved-tree readers are the shared `mailwoman/eval-harness/oa-resolver/tree-hits`
-// helpers — the home the oa-resolver-eval copies moved to.
-// `mostSpecific` there delegates to the production resolver ladder (`mostSpecificResolved`),
-// replacing the flat `placetypeSpecificity` sort this file carried.
-// Note the sibling `fr-admin-split-eval.ts` deliberately keeps its own flat ranking
-// (the post-#945 locality-over-postcode convention), which the shared ladder would
-// not preserve on the postcode-vs-locality axis.
-
-/**
- * --- args ----------------------------------------------------------------------------------------.
- */
 const DB = resolvePath(values["db"] || wofDatabasePath("admin-global-priority.db"))
 /**
  * Per stratum.
  */
 const N = Number(values["n"] || "200")
 
-// Sample French communes from collision and unique strata.
 using db = new DatabaseClient<WOFDatabase>(DB, { readOnly: true })
 
 interface Commune {
@@ -87,7 +73,7 @@ interface Commune {
 }
 
 // Communes with their département (placetype 'region' in WOF-FR) + how many distinct
-// départements share the same commune name (the collision degree — the disambiguation pressure).
+// départements share the same commune name (the collision degree, the disambiguation pressure).
 const rows = allRows<Commune>(
 	db.prepare(
 		`WITH fr_comm AS (
@@ -104,12 +90,11 @@ const rows = allRows<Commune>(
 	)
 )
 
-// Deterministic shuffle (no Math.random in this env) — order by id hash.
+// Deterministic shuffle (no Math.random in this env), ordered by id hash.
 const shuffled = [...rows].toSorted((a, b) => ((a.id * 2_654_435_761) % 1e9) - ((b.id * 2_654_435_761) % 1e9))
 const collision = shuffled.filter((r) => r.collisionCount > 1).slice(0, N)
 const unique = shuffled.filter((r) => r.collisionCount === 1).slice(0, N)
 
-// Construct the resolver through its production path.
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite")
 using backend = new WOFSQLitePlaceLookup({ databasePath: DB })
 const resolver = createWOFResolver(backend)
@@ -150,7 +135,6 @@ async function resolveState(c: Commune, state: State): Promise<{ km: number; res
 		: { km: haversineKm(FR_CENTROID.lat, FR_CENTROID.lon, c.lat, c.lon), resolved: false }
 }
 
-// Run the self-validation sample through the resolver.
 interface StratumAgg {
 	dropped: number[]
 	merged: number[]
@@ -209,7 +193,6 @@ console.error(`[fr-split] collision=${collision.length} unique=${unique.length} 
 const collAgg = await runStratum("collision", collision)
 const uniqAgg = await runStratum("unique", unique)
 
-// Report the sampled resolver outcomes.
 const row = (label: string, a: StratumAgg): string => {
 	const dM = mean(a.dropped) ?? Number.NaN
 	const mM = mean(a.merged) ?? Number.NaN

@@ -3,17 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Country homograph scorer — the true baseline for the model-first country change. Measures
+ *   Country homograph scorer, the baseline for the model-first country change. Measures
  *   country/region/locality P/R/F1 (unfolded `decodeAsJSON`) on the hard homograph eval, plus the
  *   over-fire confusion: how often a gold region/locality span is mistagged as `country` (the
  *   "trailing token = country" failure), and how often gold country is missed.
  *
- *   `promotion-eval.ts` calls this once per battery and captures the report into
- *   `<out-dir>/<tag>-country.md`, with the machine-readable sidecar at `<tag>-country.json` (the
- *   verdict reads `tags.country.f1` from it). Every printed line goes through the `report` sink, one
- *   call per line, so the captured markdown is byte-identical to the child stdout it replaced.
- *   `packages/mailwoman/lib/dev-tools/score/country-homograph.run.ts` is the thin CLI that keeps standalone invocation
- *   working.
+ *   Every printed line goes through the `report` sink, one call per line.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -29,15 +24,13 @@ import {
 } from "#eval-harness/per/tag-f1"
 
 /**
- * Options for {@linkcode scoreCountryHomograph} — one field per flag the check used to serialize into argv.
+ * Options for {@linkcode scoreCountryHomograph}.
  */
 export interface ScoreCountryHomographOptions {
 	/**
 	 * ONNX artifact to grade.
 	 *
-	 * Empty/omitted is legal alongside {@linkcode ScoreCountryHomographOptions.weightsCache};
-	 * the value also feeds the report header verbatim (its last path segment),
-	 * so an empty string renders the same empty slot the child process did.
+	 * Empty or omitted is legal alongside {@linkcode ScoreCountryHomographOptions.weightsCache}.
 	 */
 	model?: string
 	/**
@@ -47,41 +40,40 @@ export interface ScoreCountryHomographOptions {
 	 */
 	file?: string
 	/**
-	 * Gazetteer-anchor lexicon (#464): fed when the path exists so a gazetteer-trained
+	 * Gazetteer-anchor lexicon, fed when the path exists so a gazetteer-trained
 	 * model (v0.9.12+) gets its candidate-tag clues.
 	 *
-	 * Harmless for older models (the runner skips inputs the ONNX doesn't declare).
+	 * Harmless for older models (the runner skips inputs the ONNX does not declare).
 	 *
-	 * Unlike `score-affix`, this probe defaults the path to
-	 * `data/gazetteer/anchor-lexicon-v1.json` rather than off.
+	 * Unlike `score-affix`, this probe defaults this path to
+	 * `data/gazetteer/anchor-lexicon-v1.json`.
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Write the machine-readable sidecar here.
-	 * The interface the check verdict reads.
+	 * Write the machine-readable sidecar here. The check verdict reads this file.
 	 */
 	json?: string
 	/**
-	 * #511 Tier A: `auto` | `<system>` enables the address-system conventions mask.
+	 * `auto` or `<system>` enables the address-system conventions mask.
 	 */
 	conventions?: string
 	/**
-	 * V4.4.0 corrective: merge same-tag spans split at unlabeled punctuation.
+	 * Merge same-tag spans split at unlabeled punctuation.
 	 */
 	bridgeGaps?: boolean
 	/**
 	 * Suppress gazetteer clues adjacent to a postcode.
 	 *
-	 * The check always passes this for the country probe — zero-filled clues near
+	 * The check always passes this for the country probe, because zero-filled clues near
 	 * a postcode depress country recall.
 	 */
 	suppressGazNearPostcode?: boolean
 	/**
-	 * Package-shaped (#718-safe): `<root>` loads model + tokenizer + card + all soft
+	 * Package-shaped `<root>` loads model + tokenizer + card + all soft
 	 * channels (anchor + gazetteer + country) from the package via `loadFromWeights`.
 	 *
 	 * The only in-distribution grade for a country-channel model (v6.2.0+),
-	 * which is exactly what this country probe must feed.
+	 * which is what this country probe must feed.
 	 *
 	 * Precedence over {@linkcode ScoreCountryHomographOptions.model}.
 	 */
@@ -101,7 +93,7 @@ export interface CountryHomographTag {
 }
 
 /**
- * What {@linkcode scoreCountryHomograph} returns — the same object written to the JSON sidecar.
+ * What {@linkcode scoreCountryHomograph} returns, the same object written to the JSON sidecar.
  */
 export interface ScoreCountryHomographResult {
 	n: number
@@ -122,8 +114,7 @@ const TAGS = ["country", "region", "locality"] as const
 /**
  * Score the country-homograph battery.
  *
- * Every narration line goes through `report`, one call per line, so the check's captured
- * markdown matches the child-process stdout it replaced byte-for-byte.
+ * Every narration line goes through `report`, one call per line.
  */
 export async function scoreCountryHomograph(
 	options: ScoreCountryHomographOptions = {},
@@ -144,7 +135,6 @@ export async function scoreCountryHomograph(
 
 	const rows = await JSONSpliterator.fromAsync<PerTagEvalRow>(file).toArray()
 
-	// over-fire diagnostics
 	let overfire = 0 // gold region/locality token tagged as country
 	let missedCountry = 0 // gold country present, model emitted no country
 	const overfireCases: string[] = []

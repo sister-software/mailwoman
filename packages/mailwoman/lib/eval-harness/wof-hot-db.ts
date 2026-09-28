@@ -5,9 +5,9 @@
  *
  *   Resolve the `wof-hot.db` used by the demo-cascade smoke test.
  *
- *   `promotion-eval.ts`, smoke module, and provenance report must use the same lookup order. The database exists only in
- *   a staged demo release because the live demo no longer uses it as its points source. The smoke test skips when the
- *   file is absent (#524), so provenance must report the exact path that the test checks.
+ *   `promotion-eval.ts`, the smoke module, and the provenance report must use the same lookup order. The database
+ *   exists only in a staged demo release. The smoke test skips when the file is absent, so provenance must report
+ *   the exact path that the test checks.
  *
  *   Keep this module limited to environment and path handling. The provenance report imports it without loading the
  *   neural or resolver modules.
@@ -29,7 +29,7 @@ export function wofHotStageDir(): PathBuilder {
 /**
  * Resolve the `wof-hot.db` path: `$MAILWOMAN_WOF_HOT_DB` when set and non-empty, then the staged database.
  *
- * `||` on purpose — an empty env var means unset, never "resolve against the empty string".
+ * `||` on purpose. An empty env var means unset, never "resolve against the empty string".
  * The answer is a string because the environment variable, the other source, is one.
  */
 export function resolveWOFHotDB(stageDir?: PathBuilderLike): string {

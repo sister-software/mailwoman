@@ -3,20 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The panel builder for the same-data benchmark (#2261): it executes the frozen selection rules over
- *   GeoNames and emits the rows, and it contains no judgement of its own.
+ *   The panel builder for the same-data benchmark. It executes the frozen selection rules over GeoNames
+ *   and emits the rows, and it contains no judgement of its own.
  *
  *   Eligibility, query construction, gold, fill order and the sampling seed all come from
- *   `benchmark-definition.json`, committed before any row was inspected. This module is the executable form
- *   of those rules, so a change to what it selects is a change to the definition, which bumps the version
- *   and the content hash.
+ *   `benchmark-definition.json`, committed before any row was inspected. A change to what it selects is a
+ *   change to the definition, which bumps the version and the content hash.
  *
- *   A row's entity, name, coordinate and population come from `cities15000.txt` under CC-BY-4.0;
+ *   A row's entity, name, coordinate and population come from `cities15000.txt` under CC-BY-4.0.
  *   `readGoldSets` turns the geonameid into the ids the candidate backend answers with. A geonameid whose
  *   join is not coherent is dropped before sampling with the count reported, because that count describes
  *   the gazetteer and reporting it keeps a coverage hole from reading as a panel choice.
  *
- *   Half the homograph rows name a bearer that is not the most populous. A panel whose gold is always the
+ *   Half the homograph rows carry a bearer that is not the most populous. A panel whose gold is always the
  *   largest bearer would be satisfied by a population prior alone, and that prior is under test.
  */
 
@@ -37,14 +36,8 @@ import {
 import type { SameDataBenchmarkDefinition } from "#eval-harness/same-data/definition"
 import type { SameDataPanelRow } from "#eval-harness/same-data/fixture"
 
-/**
- * The provenance every panel row carries.
- */
 const SOURCE = { register: "geonames:cities15000", license: "CC-BY-4.0", attribution: "GeoNames" } as const
 
-/**
- * The population floor the unambiguous rule registers.
- */
 const POPULATION_FLOOR = 50_000
 
 /**
@@ -61,7 +54,7 @@ const COUNTRY_INFO_COLUMNS = { iso: 0, country: 4 } as const
 /**
  * The postal dump's admin1 code column.
  *
- * `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} names the admin1 name at index 3
+ * `@mailwoman/corpus`'s {@link GEONAMES_POSTAL_COLUMNS} puts the admin1 name at index 3
  * because that is what a corpus row renders.
  * This panel keys on the code beside it, which is stable across the register's language variants.
  */
@@ -84,11 +77,8 @@ export interface GeoNamesCity {
 /**
  * Parse a GeoNames main-table dump.
  *
- * This benchmark reads `cities15000.txt`, the table filtered to places above 15,000 population.
- * A per-country dump (`FR.txt`) carries the same columns and parses here unchanged,
- * which is what a panel reaching below that floor would read.
- *
- * `header: false`: the dump is headerless, and a spliterator that assumed one would eat the first row.
+ * `header: false` matches the headerless dump, and a spliterator that assumed a header would eat the
+ * first row. A per-country dump (`FR.txt`) carries the same columns and parses here unchanged.
  */
 export async function readCities(path: string): Promise<GeoNamesCity[]> {
 	const rows: GeoNamesCity[] = []
@@ -114,8 +104,7 @@ export async function readCities(path: string): Promise<GeoNamesCity[]> {
 /**
  * The English short country names, read from `countryInfo.txt`.
  *
- * The register's own column, so a country qualifier is spelled the way the gold
- * source spells it rather than the way this file would.
+ * The register's own column, so a country qualifier is spelled the way the gold source spells it.
  */
 export async function readCountryNames(path: string): Promise<Map<string, string>> {
 	const names = new Map<string, string>()
@@ -135,9 +124,8 @@ export async function readCountryNames(path: string): Promise<Map<string, string
 /**
  * The first postcode seen for each `(country, admin1)` pair, from `allCountries-postal.txt`.
  *
- * First rather than random: the register's order is the register's, and taking the first makes
- * the choice a property of the source instead of a second seeded draw nobody registered.
- * The file carries 1.8 million rows, so it is streamed and only the index is held.
+ * Taking the first makes the choice a property of the source instead of a second seeded draw
+ * nobody registered. The file carries 1.8 million rows, so it is streamed and only the index is held.
  */
 export async function readPostcodeByAdmin(path: string): Promise<Map<string, string>> {
 	const byAdmin = new Map<string, string>()
@@ -159,7 +147,7 @@ export async function readPostcodeByAdmin(path: string): Promise<Map<string, str
 }
 
 /**
- * What the build dropped and why — reported beside the panel, never folded into it.
+ * What the build dropped and why, reported beside the panel rather than folded into it.
  */
 export type PanelBuildCensus = StratumFillCensus
 
@@ -198,7 +186,7 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	const census: PanelBuildCensus[] = []
 
 	/**
-	 * Rows whose name is borne exactly once, above the population floor — the pool three strata share.
+	 * Rows whose name is borne exactly once with a population above the floor. Three strata share this pool.
 	 */
 	const uniqueEligible = (): GeoNamesCity[] =>
 		uniqueNameEligible({
@@ -232,7 +220,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 	 */
 	const goldFor = (city: GeoNamesCity): number[] | null => goldSets.get(city.geonameid) ?? null
 
-	// Stratum 1 — the bare toponym, one bearer.
 	take("unambiguous", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
@@ -251,7 +238,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 2 — a qualified homograph.
 	// The gold alternates between the largest bearer and a smaller one, and the qualifier
 	// alternates between the country's English name and the bearer's admin1 code.
 	const homographEligible = cities
@@ -311,7 +297,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 3 — the same unique-name pool, rendered reversed with the comma removed.
 	take("reordered", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
@@ -344,7 +329,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		adminKeysByCountry.set(country, bucket)
 	}
 
-	// Stratum 4 — the name paired with a postcode from a different region of the same country.
 	take("contradictory_postcode", uniqueEligible(), (city, index) => {
 		const gold = goldFor(city)
 
@@ -369,7 +353,6 @@ export function buildPanel(inputs: PanelBuildInputs): PanelBuildResult {
 		}
 	})
 
-	// Stratum 5 — the bare toponym again, with the gold withheld from the fixture after recording.
 	// `goldPresent: false` is what the recorder reads to know which candidates to remove,
 	// and what the scorer reads to pick the denominator.
 	take("gold_absent", uniqueEligible(), (city, index) => {
