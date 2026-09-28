@@ -68,7 +68,7 @@ if (args.model && !args["model-card"])
 	throw new Error("--model-card is required when --model is passed (createScorer reads its `requires` SHIP-CONFIG)")
 
 // Dev-weights default (no --model): resolve the en-us package paths so the scorer gets
-// concrete model/tokenizer/model-card paths instead of the symlink auto-resolve.
+// concrete model/tokenizer/model-card paths and does not fall back to the symlink auto-resolve.
 const resolved = args.model
 	? { modelPath: args.model, tokenizerPath: args.tokenizer!, modelCardPath: args["model-card"]! }
 	: await resolveWeights({ locale: "en-us" })

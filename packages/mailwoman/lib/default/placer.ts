@@ -9,7 +9,7 @@
  *
  *   Loaded lazily and cached once per process, because the bundled-artifact read is async. Returns
  *   `null` (no prior, graceful) when the bundled model can't be resolved, so a default-on consumer
- *   degrades to plain resolution instead of throwing.
+ *   degrades to plain resolution and does not throw.
  */
 
 /**
@@ -47,8 +47,8 @@ export function loadDefaultPlaceCountry(): Promise<PlaceCountryFn | null> {
 				return (text: string) => {
 					const p = placer.predict(text)
 					// Hand the resolver the full in-map distribution. It boosts every plausible country
-					// and breaks ambiguous ties with its own evidence, instead of the lossy one-hot
-					// argmax.
+					// and breaks ambiguous ties with its own evidence. The lossy one-hot argmax would
+					// lose that.
 					const posterior = inMapPosterior(p)
 
 					return { country: p.country, confidence: p.confidence, ...(posterior ? { posterior } : {}) }
