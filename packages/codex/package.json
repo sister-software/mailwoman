@@ -208,7 +208,7 @@
 	},
 	"dependencies": {
 		"spliterator": "^8.1.0",
-		"type-fest": "^5.9.0"
+		"type-fest": "^5.10.0"
 	},
 	"devDependencies": {
 		"@mailwoman/annotations": "workspace:*"
