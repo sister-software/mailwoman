@@ -3,10 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Verifies the boundary-stress synthesizer (#375) aligns cleanly through the real `alignRow`
- *   aligner — the gold boundary the model should learn must survive tokenization + BIO labeling.
- *   Each shape asserts the stress-relevant tags land in order. the bulk run confirms the
- *   overwhelming majority align (no quarantine).
+ *   Verifies that boundary-stress rows align cleanly through the real `alignRow` aligner, so the
+ *   gold boundary survives tokenization and BIO labeling.
  */
 
 import { mulberry32 } from "@mailwoman/core/random"

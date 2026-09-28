@@ -128,9 +128,9 @@ describe("auditTrainingManifest", () => {
 	})
 
 	it("refuses a manifest edited after its build", () => {
-		// The digest is what makes this record frozen rather than merely written.
-		// A hand edit to a generated artifact is the failure the source register's own
-		// digest exists to catch (#2352), and it applies here for the same reason.
+		// The digest is what makes this record frozen rather than merely written. A hand edit to a
+		// generated artifact is the failure the source register's own digest exists to catch, and it
+		// applies here for the same reason.
 		const edited = freeze()
 
 		edited.sources[0]!.rows = 1

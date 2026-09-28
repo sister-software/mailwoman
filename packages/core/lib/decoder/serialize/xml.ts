@@ -89,7 +89,7 @@ export interface SerializeXMLOpts {
  * Escape XML metacharacters for double-quoted attribute values.
  *
  * Every attribute this serializer emits is double-quoted, so `'` needs no escape. `escapeHTML`
- * (`#strings/escape`) would add `&#39;`, which changes shipped serialization bytes.
+ * (`#strings/escape`) would escape the apostrophe, which changes shipped serialization bytes.
  */
 function escapeXml(s: string): string {
 	return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;")

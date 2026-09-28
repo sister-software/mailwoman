@@ -7,19 +7,19 @@
  *
  *   The decoder emits a per-span `confidence` that is the mean of the span's per-token softmax
  *   probabilities (`build-tree.ts`). Softmax probabilities are not calibrated. A CE-trained model
- *   is systematically over/under-confident in bands. Task #59 fits an isotonic-regression
- *   calibrator on a held-out OpenAddresses + corpus set
- *   (`corpus-python/scripts/fit-isotonic-calibration.py`) and ships the result as a 20-bin lookup table
+ *   is systematically over-confident or under-confident in bands. An isotonic-regression calibrator
+ *   is fitted on a held-out OpenAddresses + corpus set
+ *   (`corpus-python/scripts/fit-isotonic-calibration.py`) and the result ships as a lookup table
  *   (`data/eval/calibration/isotonic-<locale>-<version>.json`).
  *
  *   This module turns that table into a pure `(rawConfidence) => calibratedConfidence` function. It
  *   is deliberately decoupled from the table source: pass the parsed JSON object so this stays
- *   browser-safe (no `node:fs`) — the demo imports the JSON directly, Node scripts `JSON.parse`
- *   it.
+ *   browser-safe (no `node:fs`). The demo imports the JSON directly and Node scripts call
+ *   `JSON.parse` on it.
  *
- *   Wiring is OPT-IN. The default decode path is unchanged (byte-stable `conf=` output). A caller
- *   that wants calibrated confidences builds a `Calibrator` here and passes it via
- *   `ParseOpts.calibrate` (neural) / `BuildTreeOpts.calibrate` (decoder), which `build-tree.ts`
+ *   The default decode path is unchanged (byte-stable `conf=` output). A caller that wants
+ *   calibrated confidences builds a `Calibrator` here and passes it via
+ *   `ParseOpts.calibrate` (neural) or `BuildTreeOpts.calibrate` (decoder), which `build-tree.ts`
  *   applies in `flush()`.
  */
 
@@ -64,7 +64,6 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 		throw new Error("createCalibrator: empty calibration table")
 	}
 
-	// Sort by center and extract parallel arrays for interpolation.
 	// oxlint-disable-next-line unicorn/no-array-sort -- sorts a freshly-built array. toSorted would double-allocate on a hot path
 	const sorted = [...bins].sort((a, b) => a.center - b.center)
 	const centers = sorted.map((b) => b.center)
@@ -77,7 +76,6 @@ export function createCalibrator(table: CalibrationTable | CalibrationBin[]): Ca
 		if (x <= centers[0]!) return cals[0]!
 
 		if (x >= centers[n - 1]!) return cals[n - 1]!
-		// Binary search for the interval [centers[i], centers[i+1]] containing x.
 		let lo = 0
 		let hi = n - 1
 
