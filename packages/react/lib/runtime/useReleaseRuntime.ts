@@ -7,18 +7,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 
 /**
- * The minimal fields of a release-manifest entry.
- * Hosts extend it with their own fields.
+ * The minimal fields of a release-manifest entry, which hosts extend with their own.
  */
 export interface ReleaseBase {
-	/**
-	 * The version string that identifies the entry.
-	 */
 	version: string
 
 	/**
-	 * The version picker's display label.
-	 * The picker falls back to `version` when it is absent.
+	 * The version picker's display label, falling back to `version`.
 	 */
 	label?: string
 }
@@ -36,10 +31,8 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 }
 
 /**
- * The abort signal and progress setters that the hook passes to a host's `loadAssets`.
- *
- * The setters have no effect once the load is aborted or superseded.
- * The hook sets the final ready or error state itself.
+ * The abort signal and progress setters that the hook passes to a host's `loadAssets`; the setters have no
+ * effect once the load is aborted or superseded, and the hook sets the final ready or error state itself.
  */
 export interface AssetsLoadContext {
 	/**
@@ -57,9 +50,6 @@ export interface AssetsLoadContext {
 	 */
 	setProgress: (progress: string) => void
 
-	/**
-	 * Sets the labels of the loader's steps.
-	 */
 	setStepLabels: (labels: string[]) => void
 
 	/**
@@ -73,11 +63,9 @@ export interface AssetsLoadContext {
 	setBackend: (backend: string) => void
 
 	/**
-	 * Reports the fraction of the current download received so far, in [0, 1].
-	 *
-	 * The value is `null` when no download is in progress or the response declares no length.
-	 *
-	 * The step index cannot show this progress because the model is fetched before the first step begins.
+	 * Reports the fraction of the current download received so far, in [0, 1], or `null` when no download is in
+	 * progress or the response declares no length; the step index cannot show it because the model is fetched
+	 * before the first step begins.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
@@ -87,10 +75,8 @@ export interface AssetsLoadContext {
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetches the releases manifest once on mount.
-	 *
-	 * It returns `null` when no manifest is available.
-	 * The hook reports a rejection through `errorMessage`.
+	 * Fetches the releases manifest once on mount; it returns `null` when no manifest is available, and the hook
+	 * reports a rejection through `errorMessage`.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 

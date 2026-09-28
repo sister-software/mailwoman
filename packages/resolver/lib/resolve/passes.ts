@@ -33,9 +33,8 @@ const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
 
 /**
  * The admin placetypes from country to microhood that `ResolveOpts.diagnoseUnreachable`
- * re-probes, coarse to fine.
- *
- * The list derives from `PLACETYPE_SPECIFICITY`, so a new placetype in that range is probed automatically.
+ * re-probes, coarse to fine; the list derives from `PLACETYPE_SPECIFICITY`, so a new placetype
+ * in that range is probed automatically.
  */
 export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
 	.filter(([, rank]) => rank !== undefined && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
@@ -43,10 +42,9 @@ export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPEC
 	.map(([placetype]) => placetype)
 
 /**
- * Collects the trace for one placetype lookup and emits it as a `ResolveNodeTrace`.
- *
- * The walk always calls a recorder and uses {@link NOOP_TRACE_RECORDER} when no
- * trace sink is set, so the hot path has no per-event branches.
+ * Collects the trace for one placetype lookup and emits it as a `ResolveNodeTrace`; the walk always
+ * calls one and uses {@link NOOP_TRACE_RECORDER} when no trace sink is set, so the hot path has no
+ * per-event branches.
  */
 export interface NodeTraceRecorder {
 	bind(
@@ -79,9 +77,8 @@ export const NOOP_TRACE_RECORDER: NodeTraceRecorder = Object.freeze({
 })
 
 /**
- * Creates a {@link NodeTraceRecorder} that sends one `ResolveNodeTrace` to `sink` on `emit`.
- *
- * The record lists at most ten candidates from the last stage, with each candidate's rank in every stage.
+ * Creates a {@link NodeTraceRecorder} that sends one `ResolveNodeTrace` to `sink` on `emit`, listing
+ * at most ten candidates from the last stage with each candidate's rank in every stage.
  */
 export function createNodeTraceRecorder(sink: (record: ResolveNodeTrace) => void): NodeTraceRecorder {
 	const checks: string[] = []
@@ -335,12 +332,8 @@ export interface ResolutionState {
 }
 
 /**
- * Picks the completion locality among coincident candidates of the same name,
- * preferring the most populous and then the nearest.
- * It returns `null` on an exact tie.
- *
- * Population ranks above distance because a principal city can lie farther from
- * the admin centroid than a hamlet of the same name.
+ * Picks the completion locality among coincident candidates of the same name, preferring the most
+ * populous and then the nearest, and returns `null` on an exact tie.
  */
 export function pickCompletion(candidates: readonly CoincidentLocality[]): CoincidentLocality | null {
 	if (!candidates.length) return null
@@ -361,9 +354,8 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 }
 
 /**
- * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
- *
- * A locality lookup uses it because the postcode node is usually a sibling of the locality.
+ * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes; a
+ * locality lookup uses it because the postcode node is usually a sibling.
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
 	for (const n of walkNodes(roots)) {
@@ -374,11 +366,8 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 }
 
 /**
- * Recovers a locality from raw-text spans when the tree resolved no place,
- * and appends a resolved `locality` node on a hit.
- *
- * When no span matches, it tries to resolve the postcode node from the code
- * part of a compound postcode value.
+ * Recovers a locality from raw-text spans when the tree resolved no place, appending a resolved
+ * `locality` node on a hit; when no span matches, it tries the postcode node's code part.
  */
 export async function applySpanRescore(
 	roots: AddressNode[],
@@ -473,20 +462,13 @@ async function recoverPostcodeNode(
 /**
  * The farthest distance, in kilometres, that {@link applyPostcodeConsistency}
  * moves a locality onto its postcode's point.
- *
- * The value sits above the 99th percentile of distances between agreeing postcodes and settlements.
  */
 export const DEFAULT_POSTCODE_MAX_MOVE_KM = 300
 
 /**
- * Reconciles each resolved locality that lies farther than `thresholdKm` from
- * the tree's resolved postcode point.
- *
- * It re-picks the nearest alternative within the threshold.
- * Without one, it flags `postcode_city_mismatch` and moves the coordinate to the postcode point.
- *
- * It skips the move when the distance exceeds `maxMoveKm`, because a mistyped
- * but valid postcode can point far away.
+ * Reconciles each resolved locality that lies farther than `thresholdKm` from the tree's resolved
+ * postcode point, re-picking the nearest alternative within the threshold and otherwise moving the
+ * coordinate there, but skipping the move when the distance exceeds `maxMoveKm`.
  */
 export function applyPostcodeConsistency(
 	roots: readonly AddressNode[],

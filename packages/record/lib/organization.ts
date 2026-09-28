@@ -140,15 +140,8 @@ const BASE_DESIGNATIONS = new Set([
 ])
 
 /**
- * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms), added only
- * when the jurisdiction is known.
- *
- * This is where the collision-prone tokens live: `pt` (Indonesia), `sca` / `scs`
- * (French/Belgian/Luxembourg commandite forms).
- * Stripping these is correct only when we know the org's country, never in the universal base.
- *
- * Grounded seeds rather than exhaustive.
- * Extend per ISO 20275.
+ * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms) added only when the jurisdiction is known,
+ * holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base must not strip.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang
@@ -160,13 +153,8 @@ const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 }
 
 /**
- * Domain guard-sets (domain → tokens never stripped).
- *
- * Overrides any jurisdiction pack: a token here stays in the name even if the
- * org's jurisdiction would treat it as a legal form.
- * `healthcare` guards the clinical abbreviations that collide with jurisdiction-conditional
- * legal forms — `pt` (Physical Therapy), `sca` (Sudden Cardiac Arrest), `scs`
- * (Spinal Cord Stimulator) — plus a couple of always-clinical ones for future-proofing.
+ * Domain guard-sets (domain → tokens never stripped) that override any jurisdiction pack, e.g. `healthcare`
+ * keeps `pt`, `sca`, and `scs` from being stripped as legal forms.
  */
 const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 	general: [],
@@ -174,8 +162,7 @@ const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 }
 
 /**
- * Compute the effective designation strip-set for the given
- * context: `(base ∪ jurisdiction-pack) − domain-guard-pack`.
+ * Compute the effective strip-set `(base ∪ jurisdiction-pack) − domain-guard-pack`.
  *
  * @returns the shared base set unchanged when no context is given (the byte-stable default),
  * so the common path allocates no set.
@@ -238,14 +225,9 @@ function canonicalizeFragment(
 }
 
 /**
- * Canonicalize an organization name: split off any `doing business as` clause,
- * then reduce the legal name to a designation-stripped key.
- *
- * Returns `null` for empty input.
- *
- * Pass {@link CanonicalizeOptions} to resolve the jurisdiction × domain collision (#668):
- * a `jurisdiction` adds that country's legal forms, a `domain` guards its meaningful abbreviations.
- * With no options the universal base set is used and the result is byte-for-byte the legacy behavior.
+ * Canonicalize an organization name: split off any `doing business as` clause, then reduce the legal name to a
+ * designation-stripped key; returns `null` for empty input, and {@link CanonicalizeOptions} resolves the
+ * jurisdiction × domain collision.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,

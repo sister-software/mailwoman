@@ -3,22 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The shape every repository health check takes: it inspects the checkout and returns diagnostics. The admission
- *   rule is in the type. A check has no way to mutate, generate, publish, benchmark or probe, because `run` returns
- *   diagnostics and no other result is asked of it.
+ * A check has no way to mutate, generate, publish, benchmark or probe, because `run` returns diagnostics and no other result is asked of it.
  */
 
 /**
  * How a diagnostic counts: an `error` fails its check, a `warning` is reported and never fails it.
  */
 export const DiagnosticSeverity = {
-	/**
-	 * Fails the check.
-	 */
 	Error: "error",
-	/**
-	 * Reported, never fails the check.
-	 */
 	Warning: "warning",
 } as const
 
@@ -27,17 +19,14 @@ export type DiagnosticSeverity = (typeof DiagnosticSeverity)[keyof typeof Diagno
 export interface Diagnostic {
 	severity: DiagnosticSeverity
 	/**
-	 * One sentence a reader can act on.
-	 * The file and line, when there is one, come separately.
+	 * One sentence a reader can act on, with the file and line, when present, carried separately.
 	 */
 	message: string
 	file?: string
 	line?: number
 	/**
-	 * The sites behind the message, one per line, for a check that counts rather than points.
-	 *
-	 * A count on its own tells a reader that something grew and leaves them to find it.
-	 * These print under the message, indented, and ride along in `--json` as they are.
+	 * The sites behind a count print indented under the message and ride along in `--json`, because a count on its
+	 * own leaves a reader to find the growth.
 	 */
 	details?: readonly string[]
 }

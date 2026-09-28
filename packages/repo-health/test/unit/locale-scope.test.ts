@@ -4,12 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file The scope-register guard over a planted tree: a drifted tier, an unplaced shipping locale, a stale reason.
  *
- *   The case the check was written for is `reports a country the declaration tiers and the register does not`. The
- *   live instance was the other list — `D_RULE_COUNTRIES` read `["FR", "GB", "DE"]` while tier 1 read US and FR, and
- *   no check reported it for four months because a list that does not name a country produces no answer for it.
- *
- *   The parser case matters for the shape. Every membership assertion here is vacuously true against a table that
- *   parsed as empty, so the check refuses a declaration it read fewer tier rows out of than the register declares.
+ * Every membership assertion here is vacuously true against a table that parsed as empty, so the check refuses a
+ * declaration it read fewer tier rows out of than the register declares.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -26,8 +22,6 @@ const DECLARATION = "docs/engineering/SCOPE.mdx"
 
 /**
  * The five tier rows as `scope.mdx` writes them, minus the evidence column's prose.
- *
- * Every fixture starts from these and edits the one row its case is about.
  */
 const TIER_ROWS: Record<string, string[]> = {
 	"1": ["US", "FR"],
@@ -93,8 +87,6 @@ describe("localeScopeCheck", () => {
 	})
 
 	it("reports a country the declaration tiers and the register does not", async () => {
-		// The live shape of the defect: the doc moves, the list beside it does not, and every
-		// consumer of the list reads the missing country as "no claim here" rather than as an error.
 		const context = await plant({
 			scope: { ...REGISTER_MATCHING_THE_ROWS, tiers: { ...TIER_ROWS, "1": ["FR"] } },
 		})
@@ -127,8 +119,6 @@ describe("localeScopeCheck", () => {
 	})
 
 	it("reports a shipping locale placed in no tier and given no reason", async () => {
-		// GB, IN and NZ are in this state on the current tree, each with a stated reason.
-		// A fourth that arrives without one is the case this refuses.
 		const context = await plant({
 			scope: REGISTER_MATCHING_THE_ROWS,
 			locales: ["en-us", "fr-fr", "en-gb"],
@@ -166,8 +156,6 @@ describe("localeScopeCheck", () => {
 	})
 
 	it("reports a protection for a country tier 1 already protects", async () => {
-		// Two sources for one fact is what the register replaced.
-		// Reproducing it inside the register is the same defect one file further in.
 		const context = await plant({
 			scope: { ...REGISTER_MATCHING_THE_ROWS, dRuleProtected: { US: "belt and braces" } },
 		})
