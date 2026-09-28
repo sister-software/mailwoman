@@ -3,16 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The grading environment's artifact-presence interface (#1516, second half).
- *
- *   The failure being guarded is silent by construction: a weights package missing its `postcode-<cc>.bin`
- *   throws no error, resolves the anchor channel off, and costs the run 3-4 baseline cases — which reads as a
- *   model regression. The guard must fire on that, and must stay quiet for the packages that ship no binary on
- *   purpose (en-gb under the #1476 mitigation, en-nz for want of a WOF NZ postcode database), which is why the
- *   expectation is read from each package's own card instead of a list in the harness.
- *
- *   Fixture packages rather than the workspace ones: "declared and missing" cannot be posed against the real
- *   neural-weights-* dirs without deleting an artifact out from under every other test in the run.
+ *   A missing `postcode-<cc>.bin` throws no error and reads as a model regression, so the guard reads each
+ *   package's own card rather than a list in the harness and stays silent only where a package ships no binary on purpose.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -25,10 +17,6 @@ const fixtures = new AsyncDisposableStack()
 
 afterAll(() => fixtures.disposeAsync())
 
-/**
- * Lay out `<root>/node_modules/@mailwoman/neural-weights-<locale>` with the two binaries
- * `resolveWeights` probes for, the given card, and whichever sibling artifacts the case wants present.
- */
 async function fixtureWeights(locale: string, card: Record<string, unknown>, siblings: string[] = []): Promise<string> {
 	const root = fixtures.use(await temporaryDirectory("gauntlet-weights-")).path.toString()
 	const dir = weightsCachePackageDir(root, locale)
@@ -76,10 +64,8 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
-		// Verbatim shape of the en-gb card: `requires.anchor.required` is true (a fact about the shared encoder)
-		// while `files` carries only a comment where the binary key would be.
-		// A guard keyed on `requires` calls this broken.
-		// A guard keyed on `files` calls it what it is.
+		// The en-gb card sets `requires.anchor.required` true while `files` carries only a comment, so a guard
+		// keyed on `requires` would call it broken and one keyed on `files` would not.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },
@@ -101,10 +87,8 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("reports EVERY missing package, not just the first", async () => {
-		// One fixture root cannot hold two locales' packages under the cache layout `resolveWeights`
-		// probes, so the multi-locale case is posed as two calls against the same root.
-		// What matters is that the message is per-locale and carries the locale tag,
-		// which is what makes a six-overlay run diagnosable.
+		// One fixture root cannot hold two locales' packages in the cache layout `resolveWeights` probes, so
+		// the multi-locale case is two calls against one root and the message must carry a per-locale tag.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)

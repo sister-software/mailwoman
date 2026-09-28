@@ -5,15 +5,8 @@
  */
 
 /**
- * Viewport-to-braille-frame renderer for map-tui's debug view.
- *
- * `MapRenderer.renderFrame` is the package's single public entry point: given a `Viewport`
- * (center lon/lat, zoom, cell columns/rows), it fetches the covering tiles from a `TileSource`,
- * rasterizes styled geometry (./style.ts, ./raster.ts) into a subpixel rgba grid, converts that grid
- * to braille cells (./frame.ts), then overlays collected labels and marker/ring annotations on top.
- * Draw order is fill → line → label per the layer style table, with overlays
- * (ring, labels, markers) layered afterward in that order — markers deliberately skip
- * the label collision bitmap so a requested marker always wins the cell.
+ * Draw order is fill → line → label per the layer style table, then overlays (ring, labels, markers),
+ * and markers deliberately skip the label collision bitmap so a requested marker always wins the cell.
  */
 
 import { clamp } from "@mailwoman/core/numeric"
@@ -56,8 +49,8 @@ const DEFAULT_MARKER_CHAR = "●"
 const DEFAULT_MARKER_COLOR: RGB = [255, 80, 80]
 
 /**
- * Minimum ring radius (in device pixels) worth drawing — smaller than this,
- * the midpoint circle algorithm degenerates to a single point or no useful ring.
+ * A ring radius below this many device pixels degenerates the midpoint circle algorithm to a single
+ * point.
  */
 const MIN_RING_RADIUS_PX = 2
 
@@ -73,28 +66,15 @@ interface PendingLabel {
 	color: number
 }
 
-/**
- * Origin of the render's subpixel grid, in world (Mercator) pixels.
- * Everything projected onto the grid is offset by this pair.
- */
 interface GridOrigin {
 	x: number
 	y: number
 }
 
 /**
- * Everything a point projection needs, bundled so the per-feature rasterizers
- * below take one parameter instead of four.
- *
- * That's what keeps `rasterizeFeature` under `max-params` (8) once `style`,
- * `renderZoom`, and `pendingLabels` join it.
- *
- * Threaded through as a value rather than closed over so those rasterizers stay free
- * functions (no nesting inside `renderFrame` deep enough to trip `max-depth`).
- *
- * `worldX`/`worldY` are the tile's top-left corner in render-zoom world pixels,
- * for a native tile that is `tileX * TILE_SIZE`, for an overzoomed parent it is scaled
- * by the tile's span, so the projection needs no zoom arithmetic of its own.
+ * Bundled so the per-feature rasterizers take one parameter instead of four, with `worldX`/`worldY`
+ * the tile's top-left corner in render-zoom world pixels — `tileX * TILE_SIZE` for a native tile,
+ * span-scaled for an overzoomed parent.
  */
 interface TileProjection {
 	worldX: number
@@ -104,13 +84,9 @@ interface TileProjection {
 }
 
 /**
- * A tile chosen for a viewport slot: the native tile when the archive has one,
- * otherwise the nearest ancestor that exists.
- *
- * `span` is how many render-zoom world pixels the tile covers
- * (`TILE_SIZE << dz` for an ancestor `dz` levels up).
- * A spatially sparse archive (deep zooms only where people are) degrades to
- * coarse geometry instead of blank cells.
+ * A tile chosen for a viewport slot — the native tile when the archive has one, otherwise the nearest
+ * existing ancestor — with `span` the render-zoom world pixels it covers (`TILE_SIZE << dz` for an
+ * ancestor `dz` levels up).
  */
 interface ResolvedTile {
 	tile: DecodedTile
@@ -174,11 +150,8 @@ function collectLabels(
 }
 
 /**
- * Rasterizes (or, for labels, collects) one feature under one style.
- *
- * The `style.kind` dispatch is the only branching here.
- * The actual per-kind work lives in {@link rasterizeFill}/{@link rasterizeLine}/{@link collectLabels}
- * so this stays a flat one-level `if`/`else` regardless of how deeply its caller is already nested.
+ * Rasterizes (or, for labels, collects) one feature under one style, keeping the `style.kind` dispatch
+ * as the only branching so this stays a flat one-level `if`/`else`.
  */
 function rasterizeFeature(
 	grid: RGBAGrid,
@@ -198,10 +171,8 @@ function rasterizeFeature(
 }
 
 /**
- * Rasterizes every layer/style/feature in one tile matching `kind`.
- *
- * Pulled out of {@link MapRenderer.renderFrame} so that method's own tile loop doesn't
- * accumulate this function's three nested loops on top of its own.
+ * Pulled out of {@link MapRenderer.renderFrame} so its tile loop does not accumulate this function's
+ * three nested loops on top of its own.
  */
 function rasterizeTileForKind(
 	grid: RGBAGrid,
@@ -234,11 +205,9 @@ function rasterizeTileForKind(
 }
 
 /**
- * Walks a viewport's rendering pipeline: tile fetch, style-ordered rasterization,
- * braille conversion, then overlay annotations (ring, labels, markers).
- *
- * One `MapRenderer` can render any number of viewports against the same `TileSource`.
- * It holds no per-frame state itself.
+ * Walks a viewport's rendering pipeline (tile fetch, style-ordered rasterization, braille conversion,
+ * then ring/label/marker overlays) and holds no per-frame state, so one instance can render any number
+ * of viewports against the same `TileSource`.
  */
 export class MapRenderer {
 	private readonly source: TileProvider
@@ -248,11 +217,8 @@ export class MapRenderer {
 	}
 
 	/**
-	 * Resolves each viewport slot to its native tile or, when the archive has none —
-	 * a spatially sparse deep band, a zoom-capped extract — the nearest existing ancestor.
-	 *
-	 * Ancestors shared by several absent slots are deduplicated so their geometry rasterizes once,
-	 * and coarse tiles sort first so native detail paints over the fallback wherever both cover a cell.
+	 * Resolves each viewport slot to its native tile or the nearest existing ancestor, deduplicated so
+	 * shared ancestors rasterize once and sorted coarse-first so native detail paints over the fallback.
 	 */
 	private async resolveTiles(
 		tileCoords: ReadonlyArray<{ x: number; y: number }>,

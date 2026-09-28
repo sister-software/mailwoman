@@ -3,13 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the Gauntlet's resolver-pin pin (#42, 2026-08-05) — the plumbing that lets the check grade a resolver
- *   configuration rather than just a model.
- *
- *   These assert a mapping, deliberately: `run options → layer options → geocode deps`. The check itself needs the ~9 GB
- *   database set and a loaded ONNX, so a test that ran it would be an integration run rather than a check — and the failure mode
- *   this surface exists to prevent is silent. A dropped pin does not throw. it produces a check log identical to the
- *   unpinned one, which reads exactly like "the pin changed no option". Every hop is therefore pinned here.
+ *   A dropped resolver pin does not throw: it produces a check log identical to the unpinned one, so every
+ *   hop from run options to geocode deps is pinned here rather than by running the check.
  */
 
 import { describeResolverPins, resolverPinDeps } from "mailwoman/eval-harness/gauntlet/harness"
@@ -56,9 +51,8 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
-	// The pin that carries evidence since the 2026-08-05 default-on flip: the pin that
-	// turns it on now restates production, so a run that means to grade the pre-promotion
-	// configuration has to be able to turn it off and be believed.
+	// The ON pin now restates production, so grading the pre-promotion configuration requires an OFF
+	// pin that is believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
@@ -147,9 +141,8 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 })
 
 describe("gazetteerPrior pin (#1497)", () => {
-	// The pin carries an artifact, so `resolverPinDeps` — which is pure — cannot see it.
-	// That is exactly how a pinned run printed as "production defaults" on its first outing
-	// while quietly changing the board by one case.
+	// The pin carries an artifact, so the pure `resolverPinDeps` cannot see it and only the banner
+	// can announce it.
 	it("is announced even though resolverPinDeps cannot carry it", () => {
 		expect(describeResolverPins({ gazetteerPrior: true })).toContain("gazetteerPrior=ON")
 	})
@@ -166,7 +159,7 @@ describe("gazetteerPrior pin (#1497)", () => {
 	})
 
 	it("announces an OFF pin, now that the production default is ON", () => {
-		// Promoted default-on 2026-08-16, which makes `false` a real pin rather than the incumbent behaviour.
+		// The production default is ON, which makes `false` a real pin rather than the incumbent behaviour.
 		expect(describeResolverPins({ gazetteerPrior: false })).toContain("gazetteerPrior=OFF")
 	})
 
@@ -176,13 +169,8 @@ describe("gazetteerPrior pin (#1497)", () => {
 })
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
-	// The bug this pins: while the prior was opt-in, the builder forwarded only the truthy
-	// half (`...(options.gazetteerPrior ? { gazetteerPrior: true } : {})`).
-	// After the default-on flip that silently discarded `--gazetteer-prior-off`,
-	// so the off arm graded the default configuration while its log said `gazetteerPrior=off`.
-	// The exact "two pin logs that differ only in a flag someone typed" failure
-	// the pins line exists to prevent.
-	// Caught by running the off arm and reading the board rather than by a test.
+	// A one-sided forward that handles only the truthy half silently discards `--gazetteer-prior-off`,
+	// grading the default arm under an OFF label.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})
@@ -197,8 +185,8 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 })
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
-	// Two-sided from day one — the #1706 class: a one-sided forwarding compiles,
-	// passes every other test, and produces an off-labelled log that graded the default arm.
+	// Two-sided from day one: a one-sided forwarding compiles, passes every other test, and produces
+	// an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})
@@ -276,9 +264,8 @@ describe("spanRescoreWeakResolution — #2264's pin", () => {
 	})
 
 	it("names the READING in the run banner, not an ON", () => {
-		// Three readings that grade different configurations.
-		// Collapsing them to a single on reading is how two arms produce identical pin logs,
-		// which is the one thing the banner exists to prevent.
+		// The three readings grade different configurations, so collapsing them to a single ON is how two
+		// arms produce identical pin logs.
 		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
 
 		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(

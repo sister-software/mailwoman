@@ -3,16 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The family registry's own invariants: one family per locale, one family per routing script, and a vocabulary
- *   artifact for every encoder.
+ *   The family registry's own invariants: one family per locale, one family per routing script, and a
+ *   vocabulary artifact for every encoder.
  *
- *   These are the two properties `weights-family`'s repository check delegates here. That check reads `FAMILIES`
- *   against the checkout's manifests and cannot reach a branch that requires mutating `FAMILIES`, so the declaration's
- *   internal consistency is asserted at this end.
+ *   The `weights-family` repository check reads `FAMILIES` against the checkout's manifests and cannot
+ *   reach a branch that mutates `FAMILIES`, so the declaration's internal consistency is asserted here.
  *
- *   The routing assertions are the ones that would break silently. `familyForSegment` reads families in declaration
- *   order, so two families claiming one script would make the order decide which graph reads a Han line, and every
- *   existing router test would still pass.
+ *   The routing assertions are the ones that break silently: `familyForSegment` reads families in
+ *   declaration order, so two families claiming one script would let order decide which graph reads a
+ *   Han line while every existing router test still passed.
  */
 
 import {
@@ -56,8 +55,8 @@ describe("the family registry", () => {
 	})
 
 	it("keeps a claimed language clear of another family's packaged locales", () => {
-		// The packaged lookup runs first, so a language claimed by one family while another packages
-		// a locale in it would make the language claim cover no locale and the two paths disagree.
+		// The packaged lookup runs first, so a language claimed by one family while another packages a
+		// locale in it would make the language claim cover no locale.
 		for (const family of FAMILIES) {
 			for (const language of family.languages ?? []) {
 				for (const other of FAMILIES) {
@@ -104,16 +103,13 @@ describe("the family registry", () => {
 	})
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
-		// A locale with no declared graph is a finding the `weights-family` check reports.
-		// Reading it as the Latin family would decode its rows on a graph no family declares for them.
+		// Reading an undeclared locale as the Latin family would decode its rows on a graph no family
+		// declares for them.
 		expect(familyForLocale("pt-br")).toBeUndefined()
 		expect(familyForScript("Cyrl")).toBeUndefined()
 	})
 
 	it("serves a language's unpackaged locales, so ko-KR and zh-TW reach the character family", () => {
-		// These three ship no weights package.
-		// Listing only the packaged locales made `familyForLocale` answer undefined
-		// while `scriptFamilyBase` answered `cjk` — two declarations of one fact, disagreeing.
 		for (const locale of ["ko-KR", "zh-TW", "zh-HK", "ja"]) {
 			expect(familyForLocale(locale)?.family, locale).toBe("cjk")
 		}
@@ -131,9 +127,8 @@ describe("familyFallbackFor", () => {
 		// A family id resolves to itself, so it has no fallback.
 		expect(familyFallbackFor("cjk")).toBeUndefined()
 		expect(familyFallbackFor("en-us")).toBeUndefined()
-		// A Latin overlay names its base in its manifest, so resolution follows
-		// `mailwoman.baseWeights` rather than a script rule.
-		// Answering here would give resolution two sources for one fact.
+		// A Latin overlay names its base in its manifest, so resolution follows `mailwoman.baseWeights`
+		// rather than a script rule and answering here would give one fact two sources.
 		expect(familyFallbackFor("en-GB")).toBeUndefined()
 		expect(familyFallbackFor("fr-FR")).toBeUndefined()
 		// No family claims it.

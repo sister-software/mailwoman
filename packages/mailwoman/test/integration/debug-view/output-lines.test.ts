@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The output pane's line list: section order, what each section reads from, and which sections disappear when their
- *   source has no content to report.
+ *   The output pane's line list: section order and which sections disappear when their source has no content.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -82,9 +81,7 @@ describe("outputLines", () => {
 	})
 
 	it("omits the sections whose source produced nothing", () => {
-		// No trace ⇒ no kind verdict and no timing to report.
-		// Omitted rather than rendered empty: an empty `kind` section would read as "the
-		// classifier had no opinion", which is a different claim from "nobody asked it".
+		// Omitted rather than rendered empty, because an empty `kind` section would read as the classifier having no opinion rather than nobody asking it.
 		const lines = outputLines({ result: { ...RESULT, hierarchy: [], candidates: [] }, tree: TREE })
 
 		expect(labels(lines)).toEqual(["components", "resolved"])
@@ -107,9 +104,7 @@ describe("outputLines", () => {
 	})
 
 	it("reads the resolved place off the DEEPEST hierarchy entry, not the candidate head", () => {
-		// On a rooftop tier the candidate head is the resolver's primary node (often the region),
-		// which is not the place the query resolved to.
-		// Regression for showing "Oregon" as the resolved place of a Portland address.
+		// On a rooftop tier the candidate head is the resolver's primary node, often the region, not the place the query resolved to.
 		const result = {
 			...RESULT,
 			candidates: [

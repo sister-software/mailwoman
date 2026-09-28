@@ -3,23 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every board row must decode to a structurally coherent tree, or be on the list below with a reason.
- *
- *   `validateTree` (v0.7 task #37) was written because a parse can match a component and still be incoherent — a
- *   `street_suffix` floating with no `street`, an `intersection_a`/`_b` pair claiming a junction that has no road. For
- *   years no caller consumed it: `validateTree` was called only by its own test, so the check existed and the answer was
- *   never asked for. #1747 repaired one instance after finding the diagnosis had sat unread.
- *
- *   the property that makes this worth restricting is that the verdict needs no truth. Every other board assertion compares
- *   against an expected component or coordinate. this one reads the tree against its own interface, so it can fail a row
- *   nobody has labelled and it cannot be satisfied by pinning a new expectation. Measured over 854 rows it flags four,
- *   and all four are rows the board independently tracks as failing — no false positives.
- *
- *   It earned the check by first being wrong in a way worth recording. The initial sweep flagged eight, and five were
- *   the sub-venue shape (`Terminal 5` of `Heathrow Airport`) on a row that passes the check: `PARENT_OF[unit]` had no
- *   `venue` edge, so the interface was narrower than the capability the board already tested. Fixed in 8c54b4b48. A
- *   structural check is only as good as the structure it is given, which is the argument for the allowlist below being
- *   short and reasoned rather than long and tolerated.
+ *   Every board row must decode to a structurally coherent tree or appear in the allowlist with a reason;
+ *   because the check reads the tree against its own interface, it needs no truth and cannot be satisfied by
+ *   pinning a new expectation.
  */
 
 import { validateTree } from "@mailwoman/core/decoder"
@@ -40,13 +26,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 /**
- * Rows whose tree is structurally invalid today, each with the issue that owns it.
- *
- * An entry is a debt with a name.
- * Removing one because it started passing is the good outcome.
- *
- * Adding one needs the defect written down first, because a row added here silently
- * is a defect converted into a permanent exemption.
+ * Adding an entry requires the defect written down first, because a row added here silently converts a defect
+ * into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =
 	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."
@@ -89,9 +70,7 @@ async function boardRows(): Promise<Row[]> {
 		let files: string[]
 
 		try {
-			// A country directory carries more than `regression.jsonl` —
-			// street-name-boundaries, gloss-keys, others.
-			// Reading only the first name silently measured 326 of 854 rows.
+			// A country directory carries more than `regression.jsonl`, so reading only the first name undercounts the board.
 			files = await Globerator.files("jsonl", { cwd: CASES_DIR(entry), absolute: false, recursive: false }).toArray()
 		} catch {
 			continue

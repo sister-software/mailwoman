@@ -3,28 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   String comparators for the matcher's scoring stage.
- *
- *   The record-linkage literature (Winkler/Census. Belin 1993) settles on the prefix-weighted Jaro
- *   comparator (Jaro-Winkler) as the default for names: it tolerates the typographical error real
- *   data is full of better than raw character-edit distance. But J-W has a documented blind spot on
- *   compound / double surnames (e.g. Hispanic `Garcia Lopez`): the second half of the compound
- *   falls outside J-W's match window, so `Lopez` vs `Garcia Lopez` scores ~0. The fix the
- *   literature prescribes is an edit-distance / token fallback for single-vs-compound pairs —
- *   implemented in {@link nameSimilarity}.
- *
- *   These are pure similarity primitives in [0, 1]. The mapping of a similarity onto discrete
- *   Fellegi-Sunter agreement levels (and the m/u weights) is the scorer's job rather than theirs.
+ *   Jaro-Winkler is the default record-linkage comparator for names, and {@link nameSimilarity} adds
+ *   the literature's token/edit fallback because J-W scores a compound surname's second half near zero.
  */
 
 import { distance as levenshteinDistance } from "fastest-levenshtein"
 
 /**
- * Jaro similarity in [0, 1].
- *
- * Two empty strings are identical (1); one empty is 0.
- * Counts matching characters within a sliding window of `floor(max(len)/2) - 1`,
- * discounting half-transpositions.
+ * Jaro similarity in [0, 1], where two empty strings are identical (1) and one empty is 0.
  */
 export function jaro(a: string, b: string): number {
 	if (a === b) return 1
@@ -56,7 +42,6 @@ export function jaro(a: string, b: string): number {
 
 	if (matches === 0) return 0
 
-	// Count transpositions: matched chars of `a` and `b`, in order, that disagree (halved).
 	let transpositions = 0
 	let k = 0
 
@@ -80,11 +65,8 @@ export function jaro(a: string, b: string): number {
 }
 
 /**
- * Jaro-Winkler similarity in [0, 1]: Jaro with a bonus for a shared prefix —
- * `jw = jaro + prefix * weight * (1 - jaro)`, prefix capped at `maxPrefix`
- * (Winkler's standard 4), `weight` the scaling factor (standard 0.1).
- *
- * Only boosts when `jaro` already clears `boostThreshold` (0.7), per Winkler.
+ * Jaro-Winkler similarity in [0, 1]: Jaro plus a shared-prefix bonus, boosting only when Jaro already
+ * clears the 0.7 threshold, with Winkler's standard prefix cap 4 and weight 0.1.
  */
 export function jaroWinkler(
 	a: string,
@@ -110,16 +92,8 @@ export function jaroWinkler(
 }
 
 /**
- * Jaccard similarity between two token sets in [0, 1]: `|a ∩ b| / |a ∪ b|`.
- *
- * The set-of-tokens complement to the string comparators above.
- * Where {@link nameSimilarity} asks how close two names look, this asks how much two token bags overlap.
- *
- * The right question for organization names and address bags, where word order carries no
- * information and a shared rare token is worth more than character-level proximity.
- *
- * Either side empty scores 0 rather than 1: an empty bag agrees with no bag, and treating
- * "no evidence" as "perfect agreement" is how a blocking pass floods with false pairs.
+ * Jaccard similarity `|a ∩ b| / |a ∪ b|` over two token sets, where an empty side scores 0 rather than
+ * 1 because treating no evidence as perfect agreement floods a blocking pass with false pairs.
  */
 export function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
 	if (!a.size || !b.size) return 0
@@ -147,17 +121,9 @@ export function levenshteinSimilarity(a: string, b: string): number {
 }
 
 /**
- * Name-aware similarity in [0, 1].
- *
- * Jaro-Winkler by default, with the compound-surname fallback the literature prescribes:
- *
- * - If one name's tokens are a strict subset of the other's (`Lopez` ⊂ `Garcia Lopez`),
- *   that is strong partial agreement J-W misses — floor the score at 0.9.
- * - Otherwise return the better of Jaro-Winkler and normalized edit similarity, so a single token
- *   that is a substring of a longer compound (`Garcia` vs `Garcialopez`) still scores sensibly.
- *
- * Case- and whitespace-insensitive.
- * Empty input scores 0.
+ * Name-aware similarity in [0, 1] that floors the score at 0.9 when one name's tokens are a strict
+ * subset of the other's, and otherwise returns the better of Jaro-Winkler and normalized edit
+ * similarity, case- and whitespace-insensitively.
  */
 export function nameSimilarity(a: string, b: string): number {
 	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")

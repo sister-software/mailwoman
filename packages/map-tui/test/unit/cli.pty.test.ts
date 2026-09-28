@@ -5,16 +5,9 @@
  */
 
 /**
- * End-to-end smoke of the `map-tui` bin, driven through a real pty.
- *
- * A pty is not a nicety here: the app only takes over the screen when stdin can be put
- * in raw mode, so a piped-stdio child would render no interface and exit on EOF.
- * `script` supplies one — `-e` returns the child's exit code, and `stty` inside the command
- * sets a window size, since a pty created without a controlling terminal reports 0x0.
- *
- * The bin is run from source rather than `out/cli.js` so the suite carries no
- * dependency on a prior `yarn compile`; Node runs the `.ts` entry directly,
- * which is the same thing the repo's other source-first tooling relies on.
+ * A pty is required because the app only takes over the screen when stdin can be put in raw mode, and
+ * `script` supplies one with `stty` setting a window size since a controlling-terminal-less pty
+ * reports 0x0.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -33,11 +26,8 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, which doubles as the ready signal.
- *
- * Its first appearance means a frame has been rendered and raw mode is on.
- *
- * Therefore, keystrokes will land.
+ * The status bar's coordinate/zoom field, whose first appearance means a frame has rendered and raw
+ * mode is on, so keystrokes will land.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
@@ -52,10 +42,8 @@ const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 40_000
 
 /**
- * `script` is util-linux's, and this test's `-e` / `-c` spelling is too. macOS
- * ships a BSD `script` with different flags.
- *
- * Rather than maintain two invocations for a smoke test, the suite runs where CI runs.
+ * `script` here is util-linux's `-e`/`-c` spelling, which macOS's BSD `script` does not accept, so
+ * the suite runs only where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false
@@ -76,10 +64,6 @@ function delay(ms: number): Promise<void> {
 	})
 }
 
-/**
- * Runs the bin against the fixture and feeds it `keys`, one keystroke at a time,
- * once the first frame is on screen.
- */
 async function driveMap(keys: string[]): Promise<PTYRun> {
 	const command = [
 		`stty cols ${PTY_COLUMNS} rows ${PTY_ROWS}`,
@@ -118,16 +102,10 @@ async function driveMap(keys: string[]): Promise<PTYRun> {
 	return { output, code }
 }
 
-/**
- * Every distinct `lat,lon zN` the status bar showed, in order of first appearance.
- */
 function statusSamples(output: string): string[] {
 	return [...new Set(output.match(STATUS_PATTERN))]
 }
 
-/**
- * The center a status sample reports.
- */
 function centerOf(sample: string): { lat: number; lon: number } {
 	const [lat, lon] = sample.split(" ")[0]!.split(",")
 
@@ -162,8 +140,7 @@ describe.skipIf(!HAS_LINUX_SCRIPT)("map-tui bin (pty)", () => {
 			expect(samples.length).toBeGreaterThanOrEqual(4)
 			expect(samples.some((sample) => sample.endsWith("z13"))).toBe(true)
 
-			// The terminal must be exactly as it was found.
-			// Anything less leaves an unusable shell.
+			// The terminal must be exactly as it was found, or a later shell is unusable.
 			expect(output).toContain(MOUSE_SGR_DISABLE)
 			expect(output).toContain(CURSOR_SHOW)
 			expect(output).toContain(ALT_SCREEN_EXIT)

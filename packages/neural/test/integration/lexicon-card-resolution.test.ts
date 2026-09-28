@@ -3,18 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1510 — the evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename.
+ *   The evidence-bundle lexicons resolve from the model-card rather than a hard-coded filename: a
+ *   card naming a generation the package does not ship must refuse rather than silently serve a
+ *   different one.
  *
- *   The defect: `resolveWeights` probed the literal `locality-surface-lexicon-v6.json` while both the
- *   shipped v4.0.1 recipe and the v4.2.0 candidate train against v7. Serving fed the channel a
- *   different lexicon generation than training painted, and no check reported it — the v6 file exists, the
- *   channel loads, the parse works. The Run B check had to stage v7's content under the v6 filename to
- *   score faithfully.
- *
- *   These tests build synthetic package layouts under a `cacheRoot.path` (the same injection point
- *   `weights.test.ts`'s pair-index check uses) so they need no model binaries: `resolveWeights` only
- *   `existsSync`-probes `model.onnx` / `tokenizer.model`, so empty stubs are enough to reach the
- *   sibling-resolution code this file is about.
+ *   These tests build synthetic package layouts under a `cacheRoot.path` so they need no model
+ *   binaries — `resolveWeights` only `existsSync`-probes `model.onnx` / `tokenizer.model`, and empty
+ *   stubs are enough to reach the sibling-resolution code.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -28,8 +23,8 @@ let cacheRoot: TemporaryDirectory
 let packageDir: PathBuilder
 
 /**
- * A package-shaped directory the `cache:` resolution rung
- * finds: `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
+ * A package-shaped directory the `cache:` resolution rung finds under
+ * `<cacheRoot.path>/node_modules/@mailwoman/neural-weights-en-us`.
  */
 async function stagePackage(card: Record<string, unknown>, lexicons: readonly string[]): Promise<void> {
 	await writeLocalTextFile("", packageDir("model.onnx"))
@@ -41,9 +36,6 @@ async function stagePackage(card: Record<string, unknown>, lexicons: readonly st
 	}
 }
 
-/**
- * A minimal card `requires` block for one evidence channel.
- */
 function cardDeclaring(lexicon: string | undefined): Record<string, unknown> {
 	return {
 		requires: {
@@ -91,9 +83,8 @@ describe("resolveWeights — evidence lexicons resolve from the card (#1510)", (
 	})
 
 	test("a card naming a lexicon against a package shipping NONE of the family is plain absence, not a mismatch", async () => {
-		// `neural-weights-base-latn` is the live example: it symlinks en-us's card
-		// and ships no lexicons. createScorer's declared-required fail-closed is what
-		// covers this case rather than a resolution throw.
+		// A package that ships no lexicons is covered by createScorer's declared-required fail-closed
+		// rather than by a resolution throw.
 		await stagePackage(cardDeclaring("locality-surface-lexicon-v7.json"), [])
 
 		expect(

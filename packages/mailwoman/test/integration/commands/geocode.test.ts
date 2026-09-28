@@ -3,20 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `mailwoman geocode` command.
- *
- *   Structure mirrors `reverse.test.ts`: unconditional argument-validation tests that run in every
- *   environment, plus DB-conditional integration tests (`describe.skipIf`) that eval on live database files
- *   being present on disk.
- *
- *   Integration suite paths:
- *
- *   - WOF admin DB: $MAILWOMAN_WOF_DB or $MAILWOMAN_DATA_ROOT/db/wof/admin-global-priority.db
- *   - Address-point database: --address-points-db flag (explicit, skips state-selection)
- *   - Interpolation database: --interpolation-db flag (explicit, skips state-selection)
- *
- *   The integration test demonstrates the compiled CLI geocoding a real TX address with explicit
- *   database overrides, expecting a street-level coordinate near 30.5, -97.6.
+ *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests gated on live database files being present.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -34,46 +21,27 @@ import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 
-// MARK: Paths
 
 const CLI_PATH = await mailwomanCLIPath()
 
 const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 
-// Per-state TX databases (the demo address is Round Rock, TX).
 const TX_ADDRESS_POINTS_DB = addressPointDatabasePath("address-points-us-tx.db")
 const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
 
 /**
- * Wall-clock budget for a CLI spawn.
- *
- * The old 10 s was set against an imagined fast path.
- * Measured 2026-08-03 on an idle 16-core box, one `mailwoman geocode` takes 5.62 s end to end — 2.73 s
- * of it node boot plus this CLI's import graph, before any model is touched — so the margin was 1.8x.
- *
- * Eight concurrent spawns reach 8.75 s, 87% of the old budget, and vitest runs test files in parallel.
- * That is why these "flaked": not randomness, a deterministic threshold sitting
- * just under a floor nobody had measured.
- * A generous budget adds no time to a passing test.
+ * Wall-clock budget for a CLI spawn, set to absorb the eight concurrent spawns vitest can run rather than a single-spawn cost.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
 /**
- * Per-test budget.
- *
- * Must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
+ * Per-test budget, which must exceed {@link CLI_SPAWN_TIMEOUT_MS} plus time queued on the spawn lock.
  */
 const CLI_TEST_TIMEOUT_MS = 120_000
 
 /**
- * Vitest's per-test budget for this whole file.
- *
- * Set at file scope rather than per test: every test here spawns the compiled CLI, which costs
- * seconds before any assertion runs and then queues behind {@link withCLISpawnLockAsync}.
- * A per-test annotation has to be remembered on each new test, and the one that forgets
- * inherits the global 15s, which kills the test before the thing being measured can report,
- * surfacing as a bare timeout with no attribution.
+ * Vitest's per-test budget for this whole file, set at file scope because every test spawns the compiled CLI and queues behind {@link withCLISpawnLockAsync}.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -82,7 +50,6 @@ const hasCLICompiled = await pathExists(CLI_PATH)
 const hasTxAddressPoints = await pathExists(TX_ADDRESS_POINTS_DB)
 const hasTxInterpolation = await pathExists(TX_INTERPOLATION_DB)
 
-// MARK: Argument-validation tests (unconditional — no DB required)
 
 describe("geocode argument validation", () => {
 	test("a bare `mailwoman geocode` prints the command's help and still exits 1", async () => {
@@ -109,11 +76,10 @@ describe("geocode argument validation", () => {
 			threw = true
 			const execErr = error as { stdout?: string; stderr?: string; code?: number }
 			output = (execErr.stdout ?? "") + (execErr.stderr ?? "")
-			// The promisified spawn carries the exit code in `.code`; the sync error exposed it as `.status`.
+			// The promisified spawn carries the exit code in `.code`.
 			status = execErr.code
 		}
 
-		// A missing required operand is a usage error, but the response still includes actionable command help.
 		expect(threw).toBe(true)
 		expect(status).toBe(1)
 		expect(output).toMatch(/Usage:.*geocode/u)
@@ -181,10 +147,7 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
-					// Unset the env var and point the data root at an empty dir: since the proximity-bias pass,
-					// geocode auto-attaches the wofExtractPaths default set when the env is absent —
-					// on a standard data root that now succeeds (the new interface).
-					// The error interface only survives when no default database exists either.
+					// Unset the env var and point the data root at an empty dir so the error interface is reached, since a default database set would otherwise be auto-attached.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
@@ -197,20 +160,13 @@ describe("geocode argument validation", () => {
 		}
 
 		expect(threw).toBe(true)
-		// The error message should mention how to provide a DB path.
 		expect(output).toMatch(/MAILWOMAN_WOF_DB|resolve-db|wof/i)
 	})
 })
 
-// MARK: DB-conditional integration tests
 
 const hasTxDatabases = hasTxAddressPoints && hasTxInterpolation
 
-/**
- * Integration: compiled CLI geocodes a real Round Rock, TX address with explicit database overrides.
- *
- * Expects a street-level coordinate near 30.5, -97.6 (Round Rock area).
- */
 describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 	`geocode integration — ${wofPath} + TX databases`,
 	() => {
@@ -241,23 +197,18 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 				region: string | null
 			}>(stdout)
 
-			// We got a coordinate.
 			expect(result.lat).not.toBeNull()
 			expect(result.lon).not.toBeNull()
 
-			// Coordinate is plausibly in the Round Rock, TX area (within ~50 km).
 			expect(result.lat!).toBeGreaterThan(29.5)
 			expect(result.lat!).toBeLessThan(31.5)
 			expect(result.lon!).toBeGreaterThan(-98.5)
 			expect(result.lon!).toBeLessThan(-96.5)
 
-			// Should have resolved to address_point or interpolated (not admin centroid).
 			expect(["address_point", "interpolated"]).toContain(result.resolution_tier)
 
-			// Uncertainty_m should be set for non-admin tiers.
 			expect(result.uncertainty_m).not.toBeNull()
 
-			// Admin context is populated.
 			expect(result.region).toBeTruthy()
 		}, 60_000)
 
@@ -283,10 +234,6 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 		}, 60_000)
 
 		test("--format=json stdout is machine-parseable even with >80-col lines (Ink wrap regression)", async () => {
-			// "Toledo Ohio" is a route_pair query: its intent_markers[].message is a ~140-char JSON string.
-			// Before writeRawStdout (2026-08-07), Ink's <Text> renderer word-wrapped piped output
-			// at 80 cols, inserting real newlines inside the JSON string and breaking JSON.parse.
-			// This test fails against the unfixed CLI.
 			const { stdout } = await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "Toledo Ohio", `--resolve-db=${wofPath}`], {
 					encoding: "utf8",
@@ -298,7 +245,6 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 
 			expect(result.lat).not.toBeNull()
 			expect(result.lon).not.toBeNull()
-			// Toledo, OH — the route_pair reading resolves to the toponym pair's locality.
 			expect(result.lat!).toBeGreaterThan(41)
 			expect(result.lat!).toBeLessThan(42)
 		}, 60_000)
@@ -329,7 +275,6 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 
 			expect(place["@context"]).toBe("https://schema.org")
 			expect(place["@type"]).toBe("Place")
-			// A street-level TX geocode carries a coordinate and a PostalAddress with the street line + ISO country.
 			expect(place.geo?.["@type"]).toBe("GeoCoordinates")
 			expect(place.geo?.latitude).toBeGreaterThan(29.5)
 			expect(place.geo?.latitude).toBeLessThan(31.5)
@@ -358,10 +303,6 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB || !hasTxDatabases)(
 	}
 )
 
-/**
- * Admin-only degradation: when no database is provided, geocode still returns
- * a coordinate from the WOF admin centroid.
- */
 describe.skipIf(!hasCLICompiled || !hasWOFDB)(`geocode admin-only degradation — ${wofPath}`, () => {
 	test("geocodes to admin centroid when no databases provided", async () => {
 		const { stdout } = await withCLISpawnLockAsync(() =>
@@ -379,7 +320,6 @@ describe.skipIf(!hasCLICompiled || !hasWOFDB)(`geocode admin-only degradation �
 			region: string | null
 		}>(stdout)
 
-		// Even without street-level databases, admin resolution should produce a coordinate.
 		expect(result.lat).not.toBeNull()
 		expect(result.lon).not.toBeNull()
 		expect(result.resolution_tier).toBe("admin")

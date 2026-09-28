@@ -3,23 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for `WebONNXRunner`'s feed construction against a mocked onnxruntime-web session — no
- *   model files required, so these run in CI where the weights aren't linked.
+ *   Unit tests for `WebONNXRunner`'s feed construction against a mocked onnxruntime-web session, so
+ *   they need no model files.
  *
- *   What this suite guards (the live-demo regression of 2026-06-10): models since v4.2.0 are
- *   gazetteer-anchor-trained and their ONNX graphs declare `gazetteer_features` /
- *   `gazetteer_confidence` (and `anchor_features` / `anchor_confidence`) as required inputs. The
- *   runner must mirror `@mailwoman/neural`'s node `ONNXRunner`:
- *
- *   - Caller-provided anchor/gazetteer features are fed through.
- *   - When the graph declares the inputs but the caller provides no values, zero-fill them (the
- *       confidence=0 identity) instead of letting ORT throw `input 'gazetteer_features' is missing
- *       in 'feeds'`. Zero-fill is a structural fallback only — the loader warns loudly about the
- *       quality trap — but the session must not crash.
- *   - The optional `locale_logits` output (v4.3.0+ locale head) surfaces as `localeLogits`.
- *   - The optional `span_scores` output (#727 stage-2, v3.x+) surfaces as `spanScores`, with the same
- *       (token, length, type) unflattening the node runner does. The two reads are duplicated across
- *       hosts, so a cross-runner parity test pins them together.
+ *   Gazetteer-anchor-trained graphs declare `gazetteer_features` / `gazetteer_confidence` and
+ *   `anchor_features` / `anchor_confidence` as required inputs, and the runner must mirror
+ *   `@mailwoman/neural`'s node `ONNXRunner`: feed caller-provided features through, zero-fill a
+ *   declared input the caller omits instead of letting ORT throw, and surface the optional
+ *   `locale_logits` as `localeLogits` and `span_scores` as `spanScores` with the node runner's
+ *   (token, length, type) unflattening.
  */
 
 import { ANCHOR_FEATURE_DIM } from "@mailwoman/neural/anchor-inference"
@@ -30,9 +22,6 @@ import { afterAll, beforeEach, describe, expect, test, vi } from "vitest"
 const { sessionCreateMock } = vi.hoisted(() => ({ sessionCreateMock: vi.fn() }))
 
 vi.mock("onnxruntime-web/webgpu", () => {
-	/**
-	 * Captures constructor args so tests can assert on what the runner fed.
-	 */
 	class Tensor {
 		readonly type: string
 		readonly data: BigInt64Array | Float32Array
@@ -52,16 +41,13 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	}
 })
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so `./web-onnx-runner.ts` may
-// already sit in the worker's cache — evaluated without this file's ORT mock by an earlier file
-// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork (e.g. Web-onnx-runner.test.ts, which needs the real runtime)
-// never inherits our mocked ORT from the cache.
+// Shared-graph guard: the root vitest config runs `isolate: false`, so reset modules on the way in and
+// out, or a cached `./web-onnx-runner.ts` evaluates without this file's ORT mock and the next file
+// inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declaration + reset (vi.mock is hoisted, but keep the reading order honest).
+// Import after the mock declaration and reset; vi.mock is hoisted.
 const { WebONNXRunner } = await import("@mailwoman/neural/web-onnx-runner")
 
 interface FedTensor {
@@ -126,7 +112,6 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
-		// Pre-fix this rejected with ORT's `input 'gazetteer_features' is missing in 'feeds'`.
 		const result = await runner.infer([5, 6, 7])
 		expect(result.logits).toHaveLength(3)
 
@@ -186,8 +171,7 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 	})
 
 	test("plain graph (no gazetteer inputs) + gazetteer features provided → clue is NOT fed", async () => {
-		// Mirrors the node ONNXRunner's `gazetteer && session.inputNames.includes(...)` guard:
-		// feeding an undeclared input would itself crash ORT.
+		// Mirrors the node ONNXRunner's inputNames guard: feeding an undeclared input crashes ORT.
 		const session = mockSession(["input_ids", "attention_mask"])
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
@@ -197,7 +181,6 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 		expect(Object.keys(feeds).toSorted()).toEqual(["attention_mask", "input_ids"])
 	})
 
-	// #1104 country channel — v6.2.0+ models declare `country_features`/`country_confidence`. The runner must feed them (real or zero-filled) exactly like the gazetteer channel, else ORT throws.
 	test("country-channel graph (v6.2.0+) + NO country provided → zero-filled structural fallback, not a throw", async () => {
 		const session = mockSession([
 			"input_ids",
@@ -212,7 +195,6 @@ describe("WebONNXRunner feed construction (mocked session)", () => {
 
 		const runner = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 
-		// Pre-wiring this rejected with ORT's `input 'country_features' is missing in 'feeds'` (the v263 browser break).
 		const result = await runner.infer([5, 6, 7])
 		expect(result.logits).toHaveLength(3)
 
@@ -346,7 +328,6 @@ describe("defaultGazetteerLexiconURL", () => {
 			"https://public.mailwoman.ai/mailwoman/en-us/v4.4.0/anchor-lexicon-v1.json"
 		)
 
-		// Relative URLs stay relative.
 		expect(defaultGazetteerLexiconURL("/static/mailwoman/model.onnx")).toBe("/static/mailwoman/anchor-lexicon-v1.json")
 	})
 })
@@ -367,11 +348,8 @@ describe("defaultCountryLexiconURL", () => {
 
 describe("cross-runner parity (#727 span read)", () => {
 	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
-		// The (token, length, type) unflatten is duplicated in neural/onnx-runner.ts
-		// and here — two hosts, one interface.
-		// A silent divergence would make the browser decode a transposed tensor
-		// and mis-tag every span (the PLACETYPE_ORDER failure mode, one layer down).
-		// This pins them: the same flat buffer must produce the same nested array on both sides.
+		// The (token, length, type) unflatten is duplicated across two hosts, so the same flat buffer
+		// must produce the same nested array on both sides.
 		const SEQ_LEN = 2
 		const L = 3
 		const T = 4
@@ -385,9 +363,8 @@ describe("cross-runner parity (#727 span read)", () => {
 		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 		const webResult = await web.infer([5, 6])
 
-		// The node runner's read, replicated from neural/onnx-runner.ts.
-		// If that file's loop changes and this expectation still passes,
-		// the two hosts have diverged, which is the point.
+		// The node runner's read, replicated: if that file's loop changes and this expectation still
+		// passes, the two hosts have diverged.
 		const expected: number[][][] = []
 
 		for (let t = 0; t < SEQ_LEN; t++) {

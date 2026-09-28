@@ -3,9 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The app's routes, read from `location.pathname` with no router. Cloudflare's SPA fallback serves `index.html`
- *   for every path, so the app decides what a path means. a path it does not know is a not-found view, so a stale
- *   link fails visibly rather than showing the globe as if no error had occurred.
+ *   The app's routes, read from `location.pathname` with no router; a path the app does not know is a not-found
+ *   view, so a stale link fails visibly rather than showing the globe.
  */
 
 import { withoutTrailingSlashes } from "@mailwoman/core/strings/format"
@@ -43,10 +42,7 @@ export function pathForRoute(route: PlanetaryRoute): string {
 }
 
 /**
- * A viewport carried in the query as `?lon=&lat=&z=`, or null when any of the
- * three is absent or not a finite number.
- *
- * All three or none: a partial viewport is not a viewport.
+ * A viewport carried in the query as `?lon=&lat=&z=`, or null unless all three are present and finite.
  */
 export function viewportFromSearch(search: string): PlanetaryView | null {
 	const params = new URLSearchParams(search)

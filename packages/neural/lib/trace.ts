@@ -11,9 +11,8 @@ import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
 
 /**
- * Every prior kind the decode path records, in the order it records them.
- *
- * `"placetypeCensus"` only observes and adds no emission bias, so its record always has `applied: false`.
+ * Every prior kind the decode path records, in the order it records them; `"placetypeCensus"` only
+ * observes and adds no emission bias, so its record always has `applied: false`.
  */
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
@@ -31,40 +30,32 @@ export const TRACE_PRIOR_KINDS = [
 export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
 /**
- * Whether one prior affected a decode.
- * The trace has one record for every kind.
+ * One prior's effect on a decode; the trace has one record for every kind.
  */
 export interface TracePrior {
 	kind: TracePriorKind
 
 	/**
-	 * Whether this prior changed any emission.
-	 *
-	 * A configured prior that found no match reports `false`.
+	 * Whether this prior changed any emission; a configured prior that found no match reports `false`.
 	 */
 	applied: boolean
 
 	/**
-	 * The probe path that produced the `placetypePair` bias.
-	 *
-	 * The paths are comma-delimited segments, the adjacent pair in comma-free text,
-	 * and the opt-in sliding window.
-	 * The field is present only on an applied `placetypePair` record.
+	 * The probe path that produced the `placetypePair` bias — comma-delimited segments, the adjacent
+	 * pair in comma-free text, or the opt-in sliding window — present only on an applied record.
 	 */
 	probePath?: "segment" | "anchored" | "window"
 
 	/**
-	 * The census entry for each parent name that the pair probe looked up.
-	 *
-	 * It is present on the `placetypeCensus` record only when a census is loaded.
+	 * The census entry for each parent name the pair probe looked up, present on the
+	 * `placetypeCensus` record only when a census is loaded.
 	 */
 	census?: PlacetypeCensusObservation[]
 
 	/**
-	 * The number of distinct parent names probed against the census, which is the
-	 * denominator for {@link TracePrior.census}.
-	 *
-	 * An empty `census` with a positive count means the census contained none of those parents.
+	 * The number of distinct parent names probed against the census, the denominator for
+	 * {@link TracePrior.census}; an empty `census` with a positive count means the census held none
+	 * of them.
 	 */
 	censusProbedParents?: number
 }
@@ -81,10 +72,8 @@ export type TraceRepairPass =
 	| "spanBridge"
 
 /**
- * One repair pass that changed labels, with the per-piece labels before and after.
- *
- * The label arrays are index-aligned with `pieces`.
- * Passes that changed no label are omitted.
+ * One repair pass that changed labels, with per-piece label arrays index-aligned with `pieces`;
+ * passes that changed no label are omitted.
  */
 export interface TraceRepair {
 	pass: TraceRepairPass
@@ -111,9 +100,6 @@ export interface NeuralParseTrace {
 	 */
 	text: string
 
-	/**
-	 * Whether case normalization changed the input.
-	 */
 	caseNormalized: boolean
 	pieces: TracePiece[]
 
@@ -196,7 +182,7 @@ export interface NeuralParseTrace {
 	repairs: TraceRepair[]
 
 	/**
-	 * The final tokens, which match the tokens that `parse()` builds its tree from.
+	 * The final tokens, matching those `parse()` builds its tree from.
 	 */
 	tokens: DecoderToken[]
 }

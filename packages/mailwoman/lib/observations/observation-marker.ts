@@ -3,15 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Converts semantic observations, coverage-qualified absences and layer designations into
- *   `QueryIntentMarker`s on the ordinary result.
- *
- *   A marker is additive and never changes which answer wins, so no code in this module reads or
- *   returns a candidate, coordinate or ordering. The caller converts and attaches the markers, because
- *   `createRuntimePipeline` receives the semantic route as a plain `POIPhraseLookup`.
- *
- *   `QueryIntentMarker.kind` must be a kind that the verdict carries as its top kind or an alternative.
- *   The POI converters therefore return no marker when the verdict carries no POI kind.
+ *   Converts semantic observations, coverage-qualified absences and layer designations into `QueryIntentMarker`s, which are additive, never change which answer wins, and carry a kind the verdict holds as its top kind or an alternative.
  */
 
 import { type QueryIntentMarker, QueryIntentCode, type QueryKind, type QueryKindResult } from "@mailwoman/core/pipeline"
@@ -50,10 +42,7 @@ export const SEMANTIC_AFFORDS_MECHANISM = "semantic:affords"
 export const SEMANTIC_ABSENCE_MECHANISM = "semantic:absence"
 
 /**
- * The `family:rule` mechanism for a designation from the EA flood-zone layer.
- *
- * Each designation layer has its own rule under the `layer` family, so a reader
- * can tell the markers on one answer apart by authority.
+ * The `family:rule` mechanism for a designation from the EA flood-zone layer, one rule per layer under the `layer` family so a reader can tell the markers on one answer apart by authority.
  */
 export const FLOOD_ZONE_DESIGNATION_MECHANISM = "layer:flood_zone"
 
@@ -72,9 +61,6 @@ export const COASTAL_EROSION_DESIGNATION_MECHANISM = "layer:coastal_erosion"
  */
 export const ZONING_DESIGNATION_MECHANISM = "layer:zoning"
 
-/**
- * The query kinds that a POI observation marker may carry.
- */
 const POI_KINDS: ReadonlySet<QueryKind> = new Set<QueryKind>(["poi_query", "poi_category"])
 
 /**
@@ -86,11 +72,6 @@ export function poiObservationKind(verdict: QueryKindResult): QueryKind | null {
 	return verdict.alternatives.find(({ kind }) => POI_KINDS.has(kind))?.kind ?? null
 }
 
-/**
- * Reads one designation route at a coordinate and returns one marker when it fires.
- *
- * A missing route or a refusal yields no markers.
- */
 function designationMarkers<Observation>(
 	route:
 		| {
@@ -113,9 +94,7 @@ function designationMarkers<Observation>(
 }
 
 /**
- * Converts drained semantic observations into markers for one query's verdict.
- *
- * Each observation gets its own marker so that every category keeps its own assertion.
+ * Converts drained semantic observations into markers for one query's verdict, each observation getting its own marker so every category keeps its own assertion.
  */
 export function semanticObservationMarkers(
 	observations: ReadonlyArray<SemanticObservation>,
@@ -154,9 +133,7 @@ export function semanticObservationMarkers(
 }
 
 /**
- * Converts one coverage-qualified absence into a marker for the query's verdict.
- *
- * The evidence carries the full coverage record so that a reader can re-derive the absence claim.
+ * Converts one coverage-qualified absence into a marker for the query's verdict, carrying the full coverage record so a reader can re-derive the absence claim.
  */
 export function absenceObservationMarker(
 	observation: AbsenceObservation,
@@ -191,13 +168,7 @@ export function absenceObservationMarker(
 }
 
 /**
- * Returns the flood designation marker for a coordinate, or no markers when the route is absent or refuses.
- *
- * Designation markers use the verdict's top kind.
- * A designation does not come from query intent, so it has no kind of its own.
- *
- * The message states what the authority's map assigns.
- * It makes no claim that the location will flood.
+ * Returns the flood designation markers for a coordinate, stating what the authority's map assigns rather than whether a location will flood.
  */
 export function authorityDesignationMarkers(
 	route: AuthorityDesignationRoute | undefined,
@@ -209,8 +180,7 @@ export function authorityDesignationMarkers(
 }
 
 /**
- * Converts one flood designation observation into a marker.
- * Callers normally use {@link authorityDesignationMarkers}.
+ * Converts one flood designation observation into a marker; callers normally use {@link authorityDesignationMarkers}.
  */
 export function authorityDesignationMarker(
 	observation: AuthorityDesignationObservation,
@@ -240,14 +210,7 @@ export function authorityDesignationMarker(
 }
 
 /**
- * Returns the soil-capability marker for a coordinate, or no markers when the route is absent or refuses.
- *
- * The marker shares the `authority_designation` code with the other layer markers.
- * Its message always pairs the top class with the share of the cell it covers,
- * because the top class may hold only a plurality.
- *
- * The message states what the survey assigns to the map unit.
- * It makes no claim that the land can be farmed.
+ * Returns the soil-capability markers for a coordinate, pairing the top class with the share of the cell it covers and stating what the survey assigns rather than whether the land can be farmed.
  */
 export function soilCapabilityMarkers(
 	route: SoilCapabilityRoute | undefined,
@@ -259,8 +222,7 @@ export function soilCapabilityMarkers(
 }
 
 /**
- * Converts one soil-capability observation into a marker.
- * Callers normally use {@link soilCapabilityMarkers}.
+ * Converts one soil-capability observation into a marker; callers normally use {@link soilCapabilityMarkers}.
  */
 export function soilCapabilityMarker(
 	observation: SoilCapabilityObservation,
@@ -290,17 +252,7 @@ export function soilCapabilityMarker(
 }
 
 /**
- * Returns the coastal-erosion marker for a coordinate, or no markers when the route is absent or refuses.
- *
- * NCERM publishes one erosion layer per scenario, including long-range projections.
- * The message includes the scenario key and label so that a projection cannot
- * be read as a present-day designation.
- *
- * NCERM publishes no coverage statement, so the route fires only on a designation.
- * The evidence carries the coverage limit.
- *
- * The message states what the authority's map assigns.
- * It makes no claim that a property will erode.
+ * Returns the coastal-erosion markers for a coordinate, naming the scenario key and label so a projection cannot be read as a present-day designation.
  */
 export function coastalErosionMarkers(
 	route: CoastalErosionRoute | undefined,
@@ -312,8 +264,7 @@ export function coastalErosionMarkers(
 }
 
 /**
- * Converts one coastal-erosion observation into a marker.
- * Callers normally use {@link coastalErosionMarkers}.
+ * Converts one coastal-erosion observation into a marker; callers normally use {@link coastalErosionMarkers}.
  */
 export function coastalErosionMarker(
 	observation: CoastalErosionObservation,
@@ -343,19 +294,7 @@ export function coastalErosionMarker(
 }
 
 /**
- * Returns the zoning marker for a coordinate, or no markers when the route is absent or refuses.
- *
- * The message leads with the authority's own zone code and puts the publisher's generic type beside it.
- * The generic type cannot recover the local code, because some local codes
- * map to more than one generic type.
- * The message also includes the plan name.
- *
- * `currentPlan = 1` means the plan is not superseded.
- * It does not mean the plan is in force today, so the evidence carries the
- * plan window for the reader to check.
- *
- * The message states what a plan assigns.
- * It makes no claim about what may be built there.
+ * Returns the zoning markers for a coordinate, leading with the authority's own zone code and stating what a plan assigns rather than what may be built there.
  */
 export function zoningDesignationMarkers(
 	route: ZoningDesignationRoute | undefined,
@@ -367,8 +306,7 @@ export function zoningDesignationMarkers(
 }
 
 /**
- * Converts one zoning observation into a marker.
- * Callers normally use {@link zoningDesignationMarkers}.
+ * Converts one zoning observation into a marker; callers normally use {@link zoningDesignationMarkers}.
  */
 export function zoningDesignationMarker(
 	observation: ZoningDesignationObservation,
@@ -397,46 +335,26 @@ export function zoningDesignationMarker(
 }
 
 /**
- * The optional designation layer routes that a caller can attach to a geocode.
- *
- * `GeocodeDeps` extends this interface.
- * The caller opens each route, so the geocode core never resolves a layer path itself.
- *
- * When a route is absent, the layer is never read and the result is unchanged.
- *
- * Each route reads the coordinate of the finished result and contributes at most one marker.
+ * The optional designation layer routes a caller attaches to a geocode, each contributing at most one marker from the finished result's coordinate and leaving the result unchanged when absent.
  */
 export interface LayerDesignationRoutes {
 	/**
-	 * The EA Flood Map for Planning route.
-	 *
-	 * Inside England, a location with no flood polygon is Flood Zone 1,
-	 * so this route reports a designated absence.
+	 * The EA Flood Map for Planning route, which reports a designated absence inside England where a location has no flood polygon because that is Flood Zone 1.
 	 */
 	authorityDesignationRoute?: AuthorityDesignationRoute
-	/**
-	 * The NRCS SSURGO soil-capability route.
-	 */
 	soilCapabilityRoute?: SoilCapabilityRoute
 	/**
-	 * The EA coastal-erosion route.
-	 *
-	 * NCERM publishes no coverage statement, so this route fires only on a designation.
+	 * The EA coastal-erosion route, which fires only on a designation because NCERM publishes no coverage statement.
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**
-	 * The Irish zoning route.
-	 *
-	 * It fires only on a designation, because an absent zoning polygon has several indistinguishable causes.
+	 * The Irish zoning route, which fires only on a designation because an absent zoning polygon has several indistinguishable causes.
 	 */
 	zoningDesignationRoute?: ZoningDesignationRoute
 }
 
 /**
- * Returns the designation markers from every attached layer for one resolved coordinate.
- *
- * The markers always appear in flood, soil, coastal, zoning order.
- * A session without routes gets an empty list.
+ * Returns the designation markers from every attached layer for one resolved coordinate, always in flood, soil, coastal, zoning order.
  */
 export function layerDesignationMarkers(
 	routes: LayerDesignationRoutes,

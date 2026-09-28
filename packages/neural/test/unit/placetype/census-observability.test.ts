@@ -3,20 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The PCN1 census observability rung (2026-08-05): the census rides the placetype-pair prior's
- *   parent-candidate probes and records what it knows on the trace, and that is the whole feature.
+ *   The census rides the placetype-pair prior's parent-candidate probes and records what it knows on
+ *   the trace.
  *
- *   **The interface this file exists to hold is the negative one.** A census present must produce a
- *   decode byte-identical to a census absent — same emission matrix, same transition adjustments, and
- *   (end-to-end, on real weights) the same emissions/path/tokens. The 2026-08-04 wiring assessment
- *   ruled that no decode wiring ships before a calibration rung measures a δ, and the artifact header
- *   deliberately carries none. these assertions are what makes an accidental wiring fail loudly
- *   instead of quietly moving a number nobody re-measured.
+ *   The interface this file holds is the negative one: a census present must produce a decode
+ *   byte-identical to a census absent — same emission matrix and transition adjustments, and on real
+ *   weights the same emissions, path and tokens — so an accidental wiring fails loudly.
  *
- *   The doubles idiom is `placetype-pair-prior.test.ts`'s verbatim — hand-built pieces, a hand-built
- *   `PairIndexLike`. The census side uses the real `serializePlacetypeCensus` →
- *   `PlacetypeCensusResolver` round trip rather than a double, because the fold agreement between the
- *   two artifacts (`foldVersion`) is part of what's under test.
+ *   The census side uses the real `serializePlacetypeCensus` → `PlacetypeCensusResolver` round trip
+ *   because the fold agreement between the two artifacts (`foldVersion`) is part of what is under
+ *   test.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -44,10 +40,8 @@ afterAll(() => fixtures.disposeAsync())
 const LABELS = STAGE2_BIO_LABELS
 
 /**
- * Comma-preserving piece builder.
- *
- * `placetype-pair-prior.test.ts`'s `makePiecesWithCommas`, copied rather than exported:
- * it is a fixture shape, and a shared export would tie two test files' input assumptions together.
+ * Comma-preserving piece builder; copied rather than exported so a shared export cannot tie two test
+ * files' input assumptions together.
  */
 function makePiecesWithCommas(text: string): Array<{ piece: string; start: number; end: number }> {
 	const tokens = text.match(/[^\s,]+|,/g) ?? []
@@ -74,8 +68,8 @@ function mockPairIndex(entries: Record<string, PairEdge>, delta = 5): PairIndexL
 }
 
 /**
- * Build a real PCN1 artifact and read it back — writer and reader both, so the fold
- * and the base-rate denominator are the shipped ones.
+ * Build a real PCN1 artifact and read it back, so the fold and the base-rate denominator are the
+ * shipped ones.
  */
 function makeCensus(
 	nodes: Array<{ parent: string; counts: Partial<Record<ComponentTag, number>> }>,
@@ -149,12 +143,11 @@ describe("census observability — what lands on the trace", () => {
 				parent: "london",
 				// Artifact order: descending count, so the dominant class is first.
 				childTagsPresent: ["dependent_locality", "locality"],
-				// share(dependent_locality) = 642/675 = 0.9511… over a 0.2 base rate.
 				lift: { dependent_locality: 642 / 675 / 0.2, locality: 33 / 675 / 0.6 },
 			},
 		])
 
-		// The pair prior still fired, unchanged — the census rides the probe, it doesn't replace it.
+		// The census rides the probe rather than replacing it.
 		expect(probeTrace.firedPath).toBe("segment")
 		expect(probeTrace.firedChildTags).toEqual(["dependent_locality"])
 	})
@@ -182,8 +175,6 @@ describe("census observability — what lands on the trace", () => {
 			LABELS
 		)
 
-		// Both segments take the parent role in the other's iteration, so two distinct
-		// surfaces were looked up and the census knew neither.
 		// An empty list with a positive denominator is coverage rather than a claim.
 		expect(probeTrace.censusObservations).toEqual([])
 		expect(probeTrace.censusProbedParents).toBe(2)
@@ -208,20 +199,12 @@ describe("census observability — what lands on the trace", () => {
 	})
 })
 
-// End-to-end on the real en-us bundle: the mechanism-level assertions above prove the
-// prior's own output is unchanged, but only a full decode proves no downstream code
-// (the transition conversion, the repair passes, the tree build) reads the census.
-// Conditioned on the dev weights being linked.
-// `link-dev-weights.ts` puts both the model and `pair-index-us.bin` in place, and the pair index is
-// required here: without it the prior never runs and there is no parent candidate to probe alongside.
-// The census artifact is built into a temp dir rather than resolved from the data root,
-// which is read-only on the lab host.
-// A fixture census is enough to prove the wiring.
-// Resolved rather than probed in the workspace: the binaries are not in git, so
-// where they live is the resolver's answer (package, data-root overlay, or user cache)
-// and not a directory this file can name.
-// A skip-guard keyed on the wrong directory does not fail.
-// It skips, and the suite reports success while testing no assertion.
+// End-to-end on the real en-us bundle: the mechanism-level assertions prove the prior's own output is
+// unchanged, but only a full decode proves no downstream code reads the census. The pair index is
+// required because without it the prior never runs, the census artifact is built into a temp dir
+// because the data root is read-only on the lab host, and weights resolve through `resolveWeights`
+// because a skip-guard keyed on the wrong directory would skip and report success while testing no
+// assertion.
 const resolved = await (async () => {
 	try {
 		return await resolveWeights({ locale: "en-us" })
@@ -274,7 +257,6 @@ describe("census observability — end-to-end through loadFromWeights", () => {
 			expect(wired?.censusProbedParents).toBeGreaterThan(0)
 			expect(wired?.census?.map((o) => o.parent)).toContain("new york")
 
-			// The unwired leg is shape-identical to every trace produced before this rung existed.
 			expect(withoutCensus.priors.find((p) => p.kind === "placetypeCensus")).toEqual({
 				kind: "placetypeCensus",
 				applied: false,

@@ -3,16 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for {@linkcode buildPOIDatabase} — the load/materialize/seal phase of `poi.db` (spec §3.4).
- *   Feeds the loader a synthetic row source directly (an injected `Iterable<POISourceRow>`), so the
- *   suite exercises the whole build without touching DuckDB/network — `ingestPlaces` (the Overture
- *   S3 parquet phase) is covered separately, and its schema-probe logic is exercised as a pure
- *   function over `describe` rows in `overture-places-schema.test.ts`.
- *
- *   Fixture: 30 rows across 2 countries (US, FR) × 3 categories (cafe, restaurant, museum), 5 rows
- *   per (country, category) pair at ~3m lat jitter (well inside a res-9 cell, so a group clusters
- *   into the same `h3_cell`) with 5 distinct confidence values — plus 2 rows with non-finite
- *   coordinates the loader must skip (and count) rather than insert.
+ *   Tests for {@linkcode buildPOIDatabase} — the load/materialize/seal phase of `poi.db` — fed a synthetic `Iterable<POISourceRow>` so the suite runs without DuckDB or network.
  */
 
 import { isFile, statPath } from "@mailwoman/core/fs/readers"
@@ -32,8 +23,7 @@ const SPRINGFIELD = { latitude: 39.7817, longitude: -89.6501, country: "US" as c
 const PARIS = { latitude: 48.8566, longitude: 2.3522, country: "FR" as const }
 const CATEGORIES = ["cafe", "restaurant", "museum"] as const
 /**
- * ~3m lat steps — well under a res-9 hex's ~174m edge, so a (country, category)
- * group clusters into one cell.
+ * ~3m lat steps, well under a res-9 hex's ~174m edge, so a (country, category) group clusters into one cell.
  */
 const JITTER_DEG = 0.00003
 
@@ -106,27 +96,21 @@ describe("buildPOIDatabase", () => {
 		expect(result.rows).toBe(30)
 		expect(result.skipped).toBe(2)
 		expect(result.categories).toBe(3)
-		// Per-country counts: 15 rows kept for each of US/FR (3 categories × 5 rows).
-		// The 2 skipped non-finite-coordinate rows (both nominally "US") are not counted,
-		// per the Map's interface.
+		// The 2 skipped non-finite-coordinate rows are not counted, per the Map's interface.
 		expect(Object.fromEntries(result.countries)).toEqual({ US: 15, FR: 15 })
 
-		// The completed artifact has no write bits.
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
-		// `kdb`'s dispose closes the underlying connection — don't also `using` `raw`, or both
-		// dispose paths race to close() the same DatabaseSync and one throws "database is not open".
+		// `kdb`'s dispose closes the underlying connection; another `using` on the same DatabaseSync would race it to close().
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
-		// Category codes round-trip by first sight.
-		// Zero remains uncategorized.
+		// Category codes are assigned on first sight; zero remains uncategorized.
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
 		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
 		const cafeID = codes.find((c) => c.category === "cafe")!.id
 
-		// Clustered disk order makes the first (h3_cell, category_id) row authoritative.
-		// No order BY — relying on the without rowid clustered-key order) is the best-confidence one. ---
+		// Without a rowid, clustered disk order makes the first (h3_cell, category_id) row the best-confidence one.
 		const group = await kdb
 			.selectFrom("poi")
 			.select(["h3_cell", "confidence"])
@@ -138,7 +122,6 @@ describe("buildPOIDatabase", () => {
 		const clusterCell = group[0]!.h3_cell
 		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true)
 
-		// all 5 jittered into one res-9 cell
 
 		const firstPhysicalRow = await kdb
 			.selectFrom("poi")
@@ -150,7 +133,6 @@ describe("buildPOIDatabase", () => {
 		const maxConfidence = Math.max(...group.map((r) => r.confidence))
 		expect(firstPhysicalRow.confidence).toBeCloseTo(maxConfidence, 10)
 
-		// The persisted manifest reads back as valid.
 		const manifest = await readLayerManifest(kdb)
 
 		expect(manifest).toMatchObject({
@@ -167,7 +149,6 @@ describe("buildPOIDatabase", () => {
 			createdAt: "2026-07-18T00:00:00Z",
 		})
 
-		// Resolution-six coverage rows were persisted.
 		expect(result.coverageCells).toBeGreaterThan(0)
 		const coverageRows = await kdb.selectFrom("layer_coverage").selectAll().execute()
 		expect(coverageRows).toHaveLength(result.coverageCells)
@@ -177,12 +158,10 @@ describe("buildPOIDatabase", () => {
 		// Meaning-of-zero: an unsurveyed cell is unknown, never present with completeness 0.
 		expect(await readLayerCoverage(kdb, 999_999_999)).toBeUndefined()
 
-		// POILookup reads the completed artifact end to end.
 		using lookup = new POILookup({ databasePath: out })
 		const cafeHits = lookup.search({ categoryID: "cafe", center: SPRINGFIELD, limit: 5 })
 		expect(cafeHits.length).toBeGreaterThan(0)
 		expect(cafeHits.every((h) => h.name?.startsWith("US cafe"))).toBe(true)
-		// Nearest (n=0) row carries the highest confidence in the fixture too.
 		expect(cafeHits[0]!.confidence).toBeCloseTo(0.85, 10)
 
 		const brandHits = lookup.search({ brandWikidata: "Q00000", center: SPRINGFIELD, limit: 10 })
@@ -209,14 +188,7 @@ describe("buildPOIDatabase", () => {
 })
 
 /**
- * Extract-bbox coverage polyfill (decision 5).
- *
- * The pure helper `--source osm` uses in place of the Overture path's "rows-present ⇒ 1" coverage.
- *
- * Springfield IL sits well inside this small bbox.
- * The bbox spans several res-6 cells, so an empty `rows` list
- * (or rows clustered in only one spot) always leaves at least one cell with
- * `observedRows: 0` to exercise decision 5's "well-surveyed, none found" case.
+ * The pure `--source osm` helper that replaces the Overture path's "rows-present ⇒ 1" coverage; the bbox spans several res-6 cells so an empty or single-cluster `rows` list always leaves a cell with `observedRows: 0`.
  */
 describe("bboxCoverageCells", () => {
 	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -239,7 +211,6 @@ describe("bboxCoverageCells", () => {
 
 		expect(observed).toHaveLength(1)
 		expect(observed[0]!.observedRows).toBe(2)
-		// At least one polyfilled cell saw no rows — decision 5's zero-permitted case.
 		expect(cells.some((c) => c.observedRows === 0)).toBe(true)
 	})
 
@@ -257,11 +228,7 @@ describe("bboxCoverageCells", () => {
 })
 
 /**
- * The `--source osm` build-local branch (decisions 3/5): same `rows:` injection point as
- * the default Overture path, but `source`/`tier` swap the manifest to build-local/ODbL
- * and `coverageCellsOverride` replaces the rows-derived coverage with the bbox polyfill above,
- * including a zero-observed-rows cell, which must round-trip through `writeLayerCoverage`
- * / `readLayerCoverage` (never silently dropped, never conflated with "unsurveyed").
+ * The `--source osm` build-local branch: `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the rows-derived coverage, including a zero-observed-rows cell that must round-trip rather than be conflated with "unsurveyed".
  */
 describe("buildPOIDatabase — --source osm build-local branch", () => {
 	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -295,7 +262,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 		const osmRows = osmFixtureRows()
 		const coverageCellsOverride = bboxCoverageCells(bbox, osmRows)
 
-		// Sanity: the fixture must actually exercise the zero-count case, or this test proves no fact.
+		// The fixture must actually exercise the zero-count case, or this test proves no fact.
 		expect(coverageCellsOverride.some((c) => c.observedRows === 0)).toBe(true)
 
 		const result = await buildPOIDatabase({
@@ -327,7 +294,6 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 
 		expect(manifest.attribution).toMatch(/OpenStreetMap/)
 
-		// A zero-observed-rows cell round-trips as zero rather than undefined.
 		const zeroCell = coverageCellsOverride.find((c) => c.observedRows === 0)!
 		const readBack = await readLayerCoverage(kdb, zeroCell.h3Cell)
 
@@ -356,8 +322,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 			createdAt: "2026-07-30T00:00:00Z",
 		})
 
-		// Both fixture rows share one res-9 cell -> one res-6 parent -> exactly one coverage row,
-		// matching the Overture path's "rows-present only" behavior when no override is supplied.
+		// Both fixture rows share one res-9 cell, so the rows-derived coverage produces exactly one res-6 row.
 		expect(result.coverageCells).toBe(1)
 
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
@@ -397,25 +362,7 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 })
 
 /**
- * Builder/reader res-6 coverage-cell agreement.
- *
- * `bboxCoverageCells` (the `--source osm` build branch's coverage aggregator, decision 5)
- * must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct
- * `latLngToCell(row, 6)`: the default (non-override) rows-derived coverage path
- * just above in this same file's `buildPOIDatabase` (~:592) and every layer reader
- * (`res9ShortCellToRes6Parent` in `bdc/sdk/filing-landscape.ts`, `plausibility.ts`,
- * `nearest-infrastructure.ts`) derive it the parent way, and a builder that disagrees
- * with its readers about the spine is the recurring failure class here.
- *
- * H3's cell hierarchy is not geometrically exact, so the two derivations disagree
- * for a real fraction of points (~6.56% measured over 20k conus points):
- * a row's observed count could land on a neighbouring cell, or be dropped entirely
- * when its direct-res-6 cell isn't a member of the bbox polyfill.
- *
- * `DIVERGENT_POINT` is reused verbatim from `bdc/sdk/filing-landscape.test.ts`'s
- * own brute-force-found divergent point.
- * The H3 math is generic (no domain data involved), so the exact same coordinate
- * reproduces the exact same res-6 divergence regardless of which layer is asking.
+ * `bboxCoverageCells` must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct `latLngToCell(row, 6)`, because H3's hierarchy is not geometrically exact and a builder that disagrees with its readers puts the count on a neighbouring cell.
  */
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 
@@ -423,9 +370,7 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 	const bbox: LatLonBounds = { minLon: -79.9, minLat: 37, maxLon: -79.5, maxLat: 37.3 }
 
 	it("keys a row's observed count off cellToParent(res9Cell, 6), never a direct latLngToCell(row, 6)", () => {
-		// Prove this point is genuinely divergent before trusting the rest of the test — if this
-		// assertion ever stops holding (e.g. An h3-js upgrade changes cell boundaries), the point needs
-		// re-selecting via a fresh brute-force search, exactly as noted in filing-landscape.test.ts.
+		// If this point ever stops being divergent, it needs re-selecting by brute-force search.
 		const oldBuggyCell = shortCellToInt(latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 6) as H3Cell)
 		const res9Cell = latLngToCell(DIVERGENT_POINT.latitude, DIVERGENT_POINT.longitude, 9) as H3Cell
 		const unifiedCell = shortCellToInt(cellToParent(res9Cell, 6) as H3Cell)
@@ -435,11 +380,8 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 		const cells = bboxCoverageCells(bbox, [DIVERGENT_POINT])
 		const observedByCell = new Map(cells.map((c) => [c.h3Cell, c.observedRows]))
 
-		// The row must land on the unified (res-9-parent) cell...
 		expect(observedByCell.get(unifiedCell)).toBe(1)
 
-		// ...never on the old direct-latLngToCell(_, 6) cell, if that (different) cell
-		// even appears in this bbox's polyfill at all.
 		if (observedByCell.has(oldBuggyCell)) {
 			expect(observedByCell.get(oldBuggyCell)).toBe(0)
 		}
@@ -457,12 +399,9 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 			gersID: "gers-divergent",
 		}
 
-		// The OSM branch's coverage aggregator (over the same row) — what this test pins.
 		const overrideCells = bboxCoverageCells(bbox, [row])
 		const overrideCell = overrideCells.find((c) => c.observedRows === 1)!
 
-		// The default (Overture) branch's rows-derived coverage — already correct (~:592) —
-		// built independently via the real `buildPOIDatabase` entry point over the exact same row.
 		const result = await buildPOIDatabase({
 			rows: [row],
 			out,
@@ -479,11 +418,6 @@ describe("bboxCoverageCells — builder/reader res-6 coverage-cell agreement (2b
 
 		const builderWrittenCoverage = await readLayerCoverage(schemadb, overrideCell.h3Cell)
 
-		// The builder's/reader's agreement, pinned: the OSM branch's coverage cell for
-		// this row is the same cell the default branch actually wrote coverage under —
-		// reverting the `bboxCoverageCells` fix makes `overrideCell.h3Cell` the old buggy
-		// direct-res-6 cell, which the default branch never writes to.
-		// Therefore, this read comes back `undefined` and the assertion below fails.
 		expect(builderWrittenCoverage).toEqual({
 			h3Cell: overrideCell.h3Cell,
 			completeness: 1,

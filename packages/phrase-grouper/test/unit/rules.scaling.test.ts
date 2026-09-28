@@ -3,19 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every per-segment rule must stay linear in segment length, including on the input shape that makes it work
- *   hardest: a long run of capitalized tokens, every one of which is candidate place-name content.
+ *   Every per-segment rule must stay linear in segment length, including on the worst-case input shape: a long run
+ *   of capitalized tokens, every one of which is candidate place-name content.
  *
- *   `scoreLocalityPhrase` walks forward from each start index to measure the run it could propose. That walk has to
- *   stay bounded by {@link MAX_LOCALITY_PHRASE_TOKENS}, because the proposals it feeds are clamped to that length
- *   anyway — unbounded, every start index walks to the end of the run and the segment costs quadratic time for an
- *   identical result.
+ *   `scoreLocalityPhrase` walks forward from each start index, and that walk must stay bounded by
+ *   {@link MAX_LOCALITY_PHRASE_TOKENS} — unbounded, it costs quadratic time for the identical proposals its
+ *   clamped results already produce.
  *
- *   Correctness tests cannot catch that: bounded and unbounded walks emit the same proposals, which is what makes the
- *   waste invisible. Only the growth curve separates them. The curve is measured by operation count. The number of
- *   token reads a rule makes, observed through a `Proxy` over the token array — rather than by wall clock: a token
- *   read is what the walk spends, it is exact, and it does not move with whatever else the host is running — a
- *   wall-clock ratio on a shared host cannot tell a load change between its two measurements from a complexity change.
+ *   Correctness tests cannot catch that, because bounded and unbounded walks emit the same proposals; only the
+ *   growth curve separates them, measured as token reads through a `Proxy` rather than as wall-clock time that
+ *   moves with the host.
  */
 
 import {
@@ -32,28 +29,21 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Every token is capitalized place-name content and no token terminates the run —
- * the worst case for a forward walk, and the shape a pasted document produces.
+ * Every token is capitalized place-name content and no token terminates the run, the worst case for a
+ * forward walk.
  */
 const CAPS_RUN_UNIT = "Aa "
 
 /**
- * A doubled input doubles a linear read count and quadruples a quadratic one.
- *
- * The bound sits well below the midpoint: the only departure from 2.0 a linear rule
- * shows is the run's tail, where the last few start indices find fewer tokens to read,
- * and that shortfall shrinks as the input grows.
+ * A doubled input doubles a linear read count and quadruples a quadratic one; the bound sits above 2.0 to
+ * absorb the run's tail, where the last start indices find fewer tokens to read.
  */
 const MAX_LINEAR_GROWTH = 2.2
 
 /**
- * Token reads the locality walk may spend per start index.
- *
- * The head is read three times before the walk, the walk looks ahead at most
- * `MAX_LOCALITY_PHRASE_TOKENS - 1` tokens, and each of the `MAX_LOCALITY_PHRASE_TOKENS`
- * proposal lengths reads its two endpoints — 3 + 5 + 12 = 20 at the shipped cap.
- * Four reads per cap token leaves room for the shape of those reads to change
- * without letting the walk range past the cap.
+ * Token reads the locality walk may spend per start index: three head reads, a `MAX_LOCALITY_PHRASE_TOKENS - 1`
+ * lookahead and two endpoint reads per proposal length total 20 at the shipped cap, and four reads per cap
+ * token leaves room for that shape to change.
  */
 const MAX_LOCALITY_READS_PER_TOKEN = 4 * MAX_LOCALITY_PHRASE_TOKENS
 
@@ -63,9 +53,7 @@ interface CountingTokens {
 }
 
 /**
- * The token array behind a `Proxy` that counts every indexed read.
- *
- * A rule that walks further reads more, so the count is the walk's length in the unit the walk is paid in.
+ * The token array behind a `Proxy` that counts every indexed read, the unit the walk is paid in.
  */
 function countingTokens(tokens: ReadonlyArray<SegmentToken>): CountingTokens {
 	let reads = 0

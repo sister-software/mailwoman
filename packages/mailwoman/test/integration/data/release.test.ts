@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data switchover (#485 piece 4): manifest read + path resolution, and the
- *   USStateDatabaseProvider's zero-downtime atomic reload (version flip + one-generation grace on old
- *   handles). Uses a fake lookup factory + on-disk touch files — no WOF / weights needed.
+ *   Versioned data switchover: manifest read and path resolution, and the `USStateDatabaseProvider`'s zero-downtime atomic reload with a one-generation grace on old handles.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -24,9 +22,6 @@ async function tmp(): Promise<PathBuilder> {
 	return fixtures.use(await temporaryDirectory("mw-data-release-")).path
 }
 
-/**
- * Fake lookups: record the path they were opened from + whether they've been closed.
- */
 class FakeAddressPoints {
 	closed = false
 	dbPath: string
@@ -59,9 +54,6 @@ class FakeInterp {
 
 const factory = { AddressPointSqliteLookup: FakeAddressPoints, StreetInterpolator: FakeInterp }
 
-/**
- * Ensure a directory exists and return it.
- */
 async function dirEnsure(d: PathBuilder): Promise<PathBuilder> {
 	await makeDirectories(d)
 
@@ -92,26 +84,22 @@ describe("resolveDatabasePath", () => {
 	test("prefers the versioned name; falls back to legacy; null if neither", async () => {
 		const root = tmp()
 		const apDir = await dirEnsure(addressPointDatabaseRoot(await root))
-		// legacy only
 		await writeLocalTextFile("", apDir("address-points-us-tx.db"))
 
 		expect(await resolveDatabasePath(await root, "address-points", "tx", null)).toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
-		// versioned present + pinned → wins
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 
 		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v2" })).toBe(
 			apDir("address-points-us-tx-v2.db").toString()
 		)
 
-		// pinned version with no file → legacy fallback
 		expect(await resolveDatabasePath(await root, "address-points", "tx", { "address-points": "v9" })).toBe(
 			apDir("address-points-us-tx.db").toString()
 		)
 
-		// no path for an unknown slug
 		expect(await resolveDatabasePath(await root, "address-points", "zz", null)).toBeNull()
 	})
 })
@@ -128,17 +116,14 @@ describe("RegionDatabaseProvider atomic switchover", () => {
 		expect(v1.dbPath).toContain("address-points-us-tx-v1.db")
 		expect(provider.versions()).toEqual({ "address-points": "v1" })
 
-		// Publish v2 alongside, flip the manifest, reload.
 		await writeLocalTextFile("", apDir("address-points-us-tx-v2.db"))
 		await writeLocalJSONFile({ "address-points": "v2" }, (await root)("releases.json"))
 		expect(await provider.reload()).toEqual({ "address-points": "v2" })
 
 		const v2 = provider.for("tx").addressPoints as FakeAddressPoints
 		expect(v2.dbPath).toContain("address-points-us-tx-v2.db")
-		// One-generation grace: the v1 handle is retired but not yet closed.
 		expect(v1.closed).toBe(false)
 
-		// A second reload (no version change) closes the retired v1 handle.
 		await provider.reload()
 		expect(v1.closed).toBe(true)
 

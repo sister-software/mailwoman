@@ -3,18 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   End-to-end decode proof for the #1278 browser pair-prior wiring: a loader-built classifier (real
- *   `NeuralAddressClassifier` + real fixture tokenizer, only onnxruntime-web mocked) must thread a
- *   country-matched index's emission matrix and its transition-beta adjustments into the shared decode
- *   (`buildPlacetypePairPriors` → `viterbi` — the same one-decoder-two-hosts path the node classifier
- *   runs), and must be byte-stable when no index matches the eval.
+ *   A loader-built classifier (real `NeuralAddressClassifier` plus the real fixture tokenizer, only
+ *   onnxruntime-web mocked) must thread a country-matched index's emission matrix and its
+ *   transition-beta adjustments into the shared decode, and must be byte-stable when no index matches
+ *   the eval.
  *
- *   The fixture is `neural/test/placetype-pair-decode.test.ts`'s task-8 path-fusion lattice on the same
- *   fixture tokenizer: "Shoreditch London" → ['▁Shore','d','itch','▁London'], with a fused street run
- *   (8+7+7=22) that outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4 — more than the
- *   per-piece emission gap, less than β=5. So the flip to dependent_locality requires both halves to
- *   reach viterbi: without the emission matrix the dep-loc path scores ~β alone. without the transition
- *   bonus the fused street path survives (the measured emission-only miss). One assertion, both wires.
+ *   The fixture is the path-fusion lattice "Shoreditch London" → ['▁Shore','d','itch','▁London']: the
+ *   fused street run (8+7+7=22) outscores the δ=6-biased dependent_locality reading (6+6+6=18) by 4,
+ *   so the flip requires both the emission matrix and the β=5 transition bonus to reach viterbi.
  */
 
 import { readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -41,17 +37,12 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	return { Tensor, InferenceSession: { create: sessionCreateMock }, env: { wasm: {} } }
 })
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so `./loader.ts` may
-// already sit in the worker's cache — evaluated without this file's ORT mock by an earlier file
-// (a cached module never re-evaluates, and vi.mock factories are only consulted at evaluation).
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
-// so the next file in this fork never inherits our mocked ORT from the cache.
+// Shared-graph guard: the root vitest config runs `isolate: false`, so reset modules on the way in and
+// out, or a cached `./loader.ts` evaluates without this file's ORT mock and the next file inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the ORT mock.
-// The tokenizer + classifier are not mocked here — the load runs the real tokenizer +
-// classifier so the parse below exercises the real shared decode.
+// Import after the ORT mock; the tokenizer and classifier run real so the parse exercises the shared decode.
 const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
 const SEQ = 128
@@ -71,11 +62,8 @@ function col(label: string): number {
 }
 
 /**
- * The task-8 path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are
- * "shoreditch"'s fused street run, row 3 is a decisive "london" locality.
- *
- * Rows past the real pieces stay zero (the runner trims to seqLen, and the loader's
- * warmup `infer([0])` reads only row 0 — harmless).
+ * The path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s fused
+ * street run, row 3 a decisive "london" locality; rows past the real pieces stay zero.
  */
 function fusedLatticeSession(): void {
 	const flat = new Float32Array(SEQ * L)
@@ -94,7 +82,6 @@ function fusedLatticeSession(): void {
 
 /**
  * Real PIX1 bytes at the neural fixture's calibration: δ=6, β=5.
- * The flip needs both (see file header).
  */
 function gbIndexBytes(): Uint8Array {
 	const header: PairIndexHeaderInput = {
@@ -151,18 +138,11 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 
 		const json = await classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
-		// δ=6 emissions alone lose by 4; β=5 alone recovers no reading without the emission mass.
-		// The flip is the proof both halves were threaded into the one shared decode.
-		// Here the prior comes from the config-default posture pin ('en-gb');
-		// the per-parse path is proven in the next test.
 		expect(json.dependent_locality).toBe("Shoreditch")
 		expect(json.locality).toBe("London")
 	})
 
 	test("PER-PARSE selection reaches decode: a selected resolver fed as ParseOpts.placetypePair flips the SAME lattice", async () => {
-		// Load with no country posture → no config default.
-		// The prior can only come from the per-parse selection, so the flip below is proof
-		// the selected resolver threads through the shared decode.
 		const warn = vi.spyOn(console, "warn").mockImplementation(() => {})
 		const result = await loadNeuralClassifierFromURLs(baseOpts([GB_INDEX]))
 		warn.mockRestore()
@@ -170,9 +150,7 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		expect(result.pairIndexes).toHaveLength(1)
 		expect(result.pairIndexes[0]!.resolver).not.toBeNull() // LIVE despite no posture (phase 2 load-all)
 
-		// "Shoreditch London" has no postcode, so detection alone yields `us` (no bias); the `{ country }`
-		// override is the mechanism a preset uses to pin a posture the text shape can't reveal.
-		// The returned opt is spread as ParseOpts.placetypePair — exactly the demo's intended call site.
+		// "Shoreditch London" has no postcode, so the call site pins the posture with `{ country }`.
 		const placetypePair = result.selectPairIndexForText("Shoreditch London", { country: "en-gb" })
 		expect(placetypePair).toBeDefined()
 
@@ -189,20 +167,16 @@ describe("loader-built classifier — pair prior in the shared decode (#1278)", 
 		fusedLatticeSession() // fresh canned session for the second load
 		const priorFree = await loadNeuralClassifierFromURLs(baseOpts([]))
 
-		// Phase 2: the gb index is live + retained (not conditional to null), but no posture
-		// pin + a text that detects `us` (no UK postcode) means no path selects it — byte-stable.
 		expect(loaded.pairIndexes).toHaveLength(1)
 		expect(loaded.pairIndexes[0]!.resolver).not.toBeNull()
 		expect(priorFree.pairIndexes).toEqual([])
 
-		// The per-parse selection returns undefined for this US-detecting text (gb-only load) → no prior.
 		const placetypePair = loaded.selectPairIndexForText("Shoreditch London")
 		expect(placetypePair).toBeUndefined()
 
 		const loadedJSON = await loaded.classifier.parseJSON("Shoreditch London", { spanProposer: false, placetypePair })
 		const priorFreeJSON = await priorFree.classifier.parseJSON("Shoreditch London", { spanProposer: false })
 
-		// The unselected load keeps the encoder's fused street reading, and matches the index-free parse exactly.
 		expect(loadedJSON).toEqual(priorFreeJSON)
 		expect(loadedJSON.street).toBe("Shoreditch")
 		expect(loadedJSON.locality).toBe("London")

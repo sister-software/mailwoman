@@ -24,10 +24,8 @@ beforeAll(async () => {
 afterAll(() => root[Symbol.asyncDispose]())
 
 /**
- * Build a fixture database at `path` and seal it.
- *
- * The connection closes before the seal: `sealDatabase` opens its own handle to checkpoint
- * the file and switch its journal mode, and refuses while another writer still holds it.
+ * The connection closes before the seal: `sealDatabase` opens its own handle to checkpoint the file and
+ * refuses while another writer still holds it.
  */
 async function buildSealed(
 	path: PathBuilderLike,
@@ -43,10 +41,8 @@ async function buildSealed(
 }
 
 test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging copy", async () => {
-	// The live admin artifact is sealed 0444 (sealDatabase is every builder's last step).
-	// copyFileSync stamps the source mode onto the copy, so without the write-bit
-	// restore the fold's first write dies with "attempt to write a readonly database" —
-	// exactly how the 2026-08-04 candidate rebuild failed against the freshly-sealed admin DB.
+	// `copyFileSync` stamps the source's read-only mode onto the copy, so without the write-bit restore
+	// the fold's first write fails with "attempt to write a readonly database".
 	const adminIn = root.path("admin-sealed.db")
 	await buildSealed(adminIn)
 
@@ -54,8 +50,6 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 	const emptyDumps = root.path("geonames-empty")
 	await makeDirectories(emptyDumps)
 
-	// Zero countries: no dump files needed.
-	// The place_search rebuild alone exercises the write path.
 	const result = await foldGeonamesIntoAdmin({
 		adminIn,
 		adminOut,
@@ -65,7 +59,6 @@ test("foldGeonamesIntoAdmin: a SEALED admin source yields a writable staging cop
 	})
 
 	expect(result.ingested).toBe(0)
-	// The staging copy must carry the write bit even though the source is sealed.
 	await expect(isWritable(adminOut)).resolves.not.toThrow()
 })
 
@@ -73,9 +66,8 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 	const adminIn = root.path("admin-sealed-2.db")
 	await buildSealed(adminIn)
 
-	// A prior fold output at the destination — itself sealed, the worst case:
-	// copyFileSync writes through an existing destination and keeps its mode, so a stale
-	// 0444 copy re-poisons every subsequent fold unless the fold removes it first.
+	// `copyFileSync` writes through an existing destination and keeps its mode, so a stale 0444 copy
+	// re-poisons every subsequent fold unless the fold removes it first.
 	const adminOut = root.path("admin-folded-2.db")
 
 	{
@@ -103,7 +95,8 @@ test("foldGeonamesIntoAdmin: overwrites a stale prior copy, sealed or not", asyn
 })
 
 test("foldGeonamesIntoAdmin: refuses a fold that would drop the source's existing alias coverage", async () => {
-	// #1514. `buildAdmin` bakes a 161-country fold into every admin artifact, and the fold rewrites its whole id range — so folding a narrower list against one deletes the difference. The 2026-08-05 build did exactly that with the old 14-country default and no check said a word.
+	// `buildAdmin` bakes a 161-country fold into every admin artifact and the fold rewrites its whole id
+	// range, so folding a narrower list against one deletes the difference.
 	const adminIn = root.path("admin-prefolded.db")
 
 	await buildSealed(adminIn, (db) => {
@@ -156,9 +149,8 @@ test("foldGeonamesIntoAdmin: a country list covering the source's coverage passe
 
 	expect(result.refoldedCountries).toEqual(["AT"])
 
-	// The dumps are absent, so both countries skip, and the pre-existing row is gone anyway,
-	// because the fold rewrites its range rather than patching it.
-	// A silent survivor is what bound Gaborone's names to an Austrian village.
+	// The dumps are absent so both countries skip, yet the pre-existing row is gone because the fold
+	// rewrites its range rather than patching it.
 	using folded = new DatabaseClient<WOFDatabase>(adminOut, { readOnly: true })
 	const left = folded.prepare("SELECT COUNT(*) AS n FROM spr WHERE id >= 9000000000000").get() as { n: number }
 

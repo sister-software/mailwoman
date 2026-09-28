@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman license` end to end on the compiled CLI: `register` printing the derivation, `keygen` into a scratch
- *   config root, `issue` refused against a register that does not carry the new key, `verify` reading a token this build
- *   does not trust, and `adopt` and `refresh` refusing to write one. The compiled CLI ships its register, so no test can
- *   hand it a trusted key. what is asserted is every refusal by its word and that no file is written on one. The worker
- *   is a fetch handler on a node listener, reached through `MAILWOMAN_LICENSE_URL`.
+ *   The compiled CLI ships its register, so no test can hand it a trusted key; every refusal is asserted by its word, and no file may be written on one.
  */
 
 import { serveNode } from "@mailwoman/api-kit"
@@ -113,13 +109,8 @@ describe("mailwoman license", () => {
 		return { kid, token }
 	}
 
-	/**
-	 * The worker's two customer routes and the well-known register, as a fetch handler:
-	 * the refresh route answers the self-service token for the right secret,
-	 * `lapsed` for one lid, and the worker's 404 otherwise.
-	 *
-	 * The status route answers `revoked`; the register lists no key, so the publication
-	 * reads `unlisted` without reaching mailwoman.ai.
+		/**
+	 * The worker's two customer routes and the well-known register as a fetch handler; the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {
 		const handler = async (request: Request): Promise<Response> => {

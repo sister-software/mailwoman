@@ -3,18 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1991: the soil-capability route on the geocode path, exercised through `geocodeAddress` with mock
- *   classifier/resolver deps and a fixture-built soil layer.
+ *   The soil-capability route on the geocode path, exercised through `geocodeAddress` with mock classifier and resolver deps and a fixture-built layer.
  *
- *   the first test is the one that matters. With the layer absent — which is every default construction.
- *   the geocode result must be identical to a run against a build without the field existing. That is a
- *   statement about construction rather than about a measurement, and it is what makes the option safe to
- *   configure: rollback is removing the argument.
+ *   The first test is the one that matters: with the layer absent the geocode result must be identical to a run with the field never built, which is what makes rollback removing the argument.
  *
- *   the rest PIN the three readings' journey TO A caller: a rated cell becomes one additive marker naming
- *   the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes
- *   the same marker with no class and the absence shares that say why, and a location outside every built
- *   survey area raises no marker — an advisory there would report a survey nobody ran.
+ *   A rated cell becomes one additive marker naming the verdict's own top kind and carrying the share the class rests on, a mapped-but-unrated cell becomes the same marker with no class and the absence shares that say why, and a location outside every survey area raises no marker.
  */
 
 import type { AddressNode } from "@mailwoman/core/decoder"
@@ -40,16 +33,12 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports.
- *
- * A designation marker must name it — the verdict's own top kind — because a
- * designation is not raised by intent and has no kind of its own.
+ * The kind the mock classifier reports: a designation marker must name the verdict's own top kind because a designation is not raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine that answers at `latitude`/`longitude`,
- * so the coordinate the route is handed is the one this test chose.
+ * A minimal always-resolves engine answering at `latitude`/`longitude`, so the coordinate the route is handed is the one the test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -179,10 +168,7 @@ describe("#1991: the soil-capability route on the geocode path", () => {
 			const evidence = marker.evidence as Record<string, unknown>
 
 			expect(evidence.topClass).toBe("2")
-			// A 45% plurality.
-			// Reporting the class without this number would manufacture certainty nrcs
-			// itself declines to manufacture — its own aggregation ships the share beside
-			// the class, with an observed minimum of 2%.
+			// A 45% plurality: reporting the class without this number would manufacture certainty nrcs itself declines to manufacture.
 			expect(evidence.topClassShare as number).toBeLessThan(0.5)
 			expect(marker.message).toMatch(/not whether the land can be farmed/u)
 			expect(marker.message).toMatch(/% of the cell/u)

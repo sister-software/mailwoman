@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The national Overture rooftop provider: a registered country with its database on disk answers a `zh`-keyed
- *   lookup. a registered country with no database, and an unregistered country, answer `{}` rather than a handle to
- *   no place.
+ *   The national Overture rooftop provider answers a `zh`-keyed lookup for a registered country with its database on disk, and `{}` for one without a database or unregistered.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -44,12 +42,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {
-		// Overture's attribution page declares an identifier for every theme but addresses,
-		// where it states only that the sources carry permissive open licenses and
-		// then lists the register per country.
-		// An expression naming `CDLA-Permissive-2.0` here would assert the places grant.
-		// Read through `overtureCountryLicense`, because a country whose grant is unsettled
-		// has no expression to check and `licenseForOvertureCountry` refuses it.
+		// Overture declares no addresses-theme grant, so a CDLA expression here would assert a places grant; read through `overtureCountryLicense` because `licenseForOvertureCountry` refuses an unsettled country.
 		for (const country of supportedOvertureCountries()) {
 			const entry = overtureCountryLicense(country)
 
@@ -64,10 +57,7 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("refuses Taiwan's grant, because two documents name different licenses over the same rows", () => {
-		// Overture's attribution page gives CC BY 4.0 for each of the 18 Civil Affairs bodies,
-		// and `counsel-dossier.md` §6 reads OGDL-Taiwan-1.0 over the same municipal 門牌 rows.
-		// Recording the stricter of the two states a grant nobody established,
-		// and a stricter incorrect attribution is as incorrect as a permissive one.
+		// Two documents name different licenses over the same municipal 門牌 rows, so recording the stricter one would state a grant nobody established.
 		expect(() => licenseForOvertureCountry("tw")).toThrow(/unsettled: CC-BY-4\.0 or OGDL-Taiwan-1\.0/)
 		expect(() => licenseForOvertureCountry("tw")).toThrow(/counsel-dossier/)
 	})
@@ -134,7 +124,6 @@ describe("OvertureNationalDatabaseProvider", () => {
 			lookup?.find({ street: "重慶南路一段", number: "122號", region: "台北市", subregion: "中正區" })
 		).toMatchObject({ lat: 25.0399658, lon: 121.5124584 })
 
-		// One handle per country: the second call is the cached entry.
 		expect(provider.for("TW")).toBe(provider.for("tw"))
 	})
 })

@@ -2,10 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A forward geocode result as Nominatim's address block: the parse's named slots first, then the resolved
- *   ancestry labelled by tag the way Nominatim labels each ancestor by its address rank — a Japanese municipality is
- *   `city`, a prefecture `state`, a 大字 / 町名 `suburb`. The native `locality` / `region` slots stay what the parse said.
- *   only this compatibility surface reads the JP tiers into the Latin keys.
+ * @file A forward geocode result as Nominatim's address block: the parse's named slots first, then the
+ *   resolved ancestry labelled by tag, so a Japanese municipality is `city` and a prefecture `state`.
  */
 
 import type { GeocodeResult } from "mailwoman/geocode"
@@ -48,9 +46,8 @@ export function forwardToResolved(r: GeocodeResult): ResolvedAddress {
 		address.postcode = r.postcode
 	}
 
-	// The resolved ancestry fills what the slots did not: a JP result includes `municipality`
-	// and `prefecture` in `hierarchy` and no entry in `locality` / `region`.
-	// Most specific first, so the first name per key wins.
+	// The resolved ancestry fills what the slots did not, most specific first, so the first name per key
+	// wins.
 	for (const h of r.hierarchy) {
 		const key = TAG_TO_KEY[h.tag]
 

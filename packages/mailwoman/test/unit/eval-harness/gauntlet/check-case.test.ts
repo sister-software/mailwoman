@@ -3,12 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The grader's check. Every assertion the curated regression layer makes is decided here, and until
- *   2026-08-06 none of it was reachable without the ~9 GB database set — which is how two stored expectation
- *   columns (`expect_place_id`, `expect_place_name`) went the corpus's whole life unread (#1507).
- *
- *   The required case is `grades place identity off the resolved place rather than the echoed query span`: it
- *   pins the exact confusion that would make this whole check decorative.
+ *   The required case grades place identity off the resolved place rather than the echoed query span, the
+ *   confusion that would make the whole check decorative.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -18,8 +14,7 @@ import type { GauntletCaseTable } from "mailwoman/eval-harness/gauntlet/schema"
 import { describe, expect, it } from "vitest"
 
 /**
- * A stored case with no assertion.
- * Every check opts in per row, so this one must always pass.
+ * Every check opts in per row, so a stored case with no assertion must always pass.
  */
 function storedCase(over: Partial<GauntletCaseTable> = {}): GauntletCaseTable {
 	return {
@@ -147,10 +142,8 @@ describe("the place-identity check (#1507)", () => {
 	})
 
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
-		// The Gaborone class, verbatim: the parse is perfect and `locality` echoes it,
-		// while the resolver returned an Austrian hamlet.
-		// `expect_components.locality` is green on this result.
-		// Only the place check can see the failure, which is what makes reading `hierarchy[0].name` required.
+		// The parse can be perfect and `locality` echo it while the resolver returned another place, so
+		// only reading `hierarchy[0].name` sees the failure.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",
@@ -205,15 +198,10 @@ describe("the place-identity check (#1507)", () => {
 })
 
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
-	// The 2026-08-10 global relaxation (any dual-script got satisfied a truth freezing one rendering)
-	// let a cross-tag bleed grade as a pass, so review converted it into the
-	// `expect_component_renderings` opt-in.
-	// The first two tests pin the reversal.
-	// The rest pin the opt-in interface itself.
+	// Dual-script truth is a per-row `expect_component_renderings` opt-in, never a global relaxation
+	// that lets a cross-tag bleed grade as a pass.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
-		// The exposure the global relaxation disclosed: a locality that swallowed
-		// the CJK venue next door graded as a pass.
-		// With no rendering interface on the row, this must fail again.
+		// With no rendering interface on the row, a locality that swallowed the CJK venue next door must fail.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
 
 		expect(checkCase(c, result({ locality: "四季酒家 Manchester" }))).toEqual([
@@ -272,11 +260,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("lets an interface key supersede the same key in expect_components", () => {
-		// expect_components freezes the Latin half.
-		// The interface requires both.
-		// The dual span passes (the superseded exact comparison would have failed it),
-		// the frozen half alone fails (the interface owns the key), and an unrelated exact
-		// key on the same row still grades through expect_components.
+		// An interface key supersedes the same key in `expect_components` while leaving unrelated exact
+		// keys to grade through it.
 		const c = storedCase({
 			expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
 			expect_component_renderings: stringifyJSON({
@@ -315,9 +300,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
-		// mn-ws-national-university-pluscode-sbd-6-khoroo: a model that types the Open
-		// Location Code as `postcode` emits two postcode spans next to the real 14200.
-		// No interface lists them, so the exact comparison keeps failing (that visibility is the row's point).
+		// A model that types the Open Location Code as `postcode` emits two spans next to the real 14200,
+		// and with no interface listing them the exact comparison must keep failing.
 		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
 		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])

@@ -4,17 +4,9 @@
  * @author Teffen Ellis, et al.
  *
  *   Stream the address-containing features of a Geofabrik `.osm.pbf` extract to the per-country corpus jsonl the
- *   `@mailwoman/corpus` `osm` adapter reads. The split is the same one the Overture adapter rides: gdal and the PBF
- *   stay here, and the corpus package, a runtime dependency of the `mailwoman` CLI, streams a light jsonl.
+ *   `@mailwoman/corpus` `osm` adapter reads.
  *
- *   One row per `addr:housenumber` feature that also carries an `addr:street`. A point with no street is counted rather
- *   than written: a parser corpus row without a street teaches no lesson the `wof-admin` rows do not already teach, and
- *   the rooftop builder sizes the same gap for the resolver. Every tag the extract projects rides along, absent ones
- *   omitted, plus the representative coordinate so a board can be drawn from the same file.
- *
- *   ⚠ ODbL: the output is derived from OpenStreetMap and carries the share-alike obligation. The adapter stamps every
- *   row `ODbL-1.0`, whose recorded obligations include share-alike. A corpus build run under
- *   `LicensePolicy.ShareAlikeFree` refuses these rows at ingest, so only the open weights learn from them.
+ *   ⚠ ODbL: the output is derived from OpenStreetMap and carries the share-alike obligation.
  */
 
 import { makeDirectories } from "@mailwoman/core/fs/writers"
@@ -25,8 +17,8 @@ import { createNewlineWriter } from "spliterator"
 import { extractAddrPoints, type OSMAddrRecord } from "#sdk/extract"
 
 /**
- * The corpus jsonl row: the extract's record with the house number under the `number` key
- * the Overture rows use, so an adapter reading either file meets the same shape.
+ * The corpus jsonl row: the extract's record with the house number under the `number` key the Overture rows
+ * use.
  */
 export interface OSMCorpusRow {
 	street: string
@@ -53,7 +45,7 @@ export interface OSMCorpusJSONLStats {
 	 */
 	written: number
 	/**
-	 * Features skipped for carrying no `addr:street` — the association gap.
+	 * Features skipped for carrying no `addr:street`, the association gap.
 	 */
 	noStreet: number
 }
@@ -79,9 +71,6 @@ export function toCorpusRow(record: OSMAddrRecord): OSMCorpusRow | null {
 
 /**
  * Write the corpus jsonl for one extract.
- *
- * The output directory is created.
- * An existing file is replaced.
  */
 export async function writeOSMCorpusJSONL(pbfPath: string, outPath: PathBuilderLike): Promise<OSMCorpusJSONLStats> {
 	await makeDirectories(dirname(outPath))

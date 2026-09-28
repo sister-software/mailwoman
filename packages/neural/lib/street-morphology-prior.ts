@@ -6,20 +6,14 @@
  *   Street-morphology emission bias — Layer 1 of the four-layer street-supplement architecture (see
  *   `docs/articles/concepts/street-supplement-architecture.md`).
  *
- *   This module composes with {@linkcode buildFSTEmissionPriors} (admin FST) and the QueryShape prior
- *   via {@linkcode addEmissionMatrix} — same shape, same additive semantics. Where the admin FST
- *   biases admin BIO labels (`B/I-locality`, `B/I-region`, ...), the morphology FST biases:
+ *   It composes with {@linkcode buildFSTEmissionPriors} (admin FST) and the QueryShape prior via
+ *   {@linkcode addEmissionMatrix}: where the admin FST biases `B/I-locality`, `B/I-region`, ..., this
+ *   biases the matched affix span toward `B/I-street_prefix` and `B/I-street_suffix` and the
+ *   adjacent tokens toward `B/I-street` and away from `B/I-dependent_locality`, the negative bias
+ *   that closes the inference-time vacuum behind dep_locality hallucination.
  *
- *   - **Affix-token (the matched span):** toward `B/I-street_prefix` and `B/I-street_suffix` (position
- *       unknown — let the model + context disambiguate).
- *   - **Adjacent token (one before and one after each match):** toward `B/I-street`, away from
- *       `B/I-dependent_locality`. The negative bias on `dependent_locality` is the essential piece
- *       — it closes the inference-time vacuum that caused v0.6.1's 1066 dep_locality hallucinations
- *       (see [[project-v061-failure-mechanism]]).
- *
- *   The morphology FST itself is built by `resolver-wof-sqlite/street-morphology-fst-builder.ts` and
- *   ships as a separate binary (`fst-street-morphology.bin`) loaded into a second `FSTMatcher`
- *   instance.
+ *   The morphology FST binary (`fst-street-morphology.bin`) is built by
+ *   `resolver-wof-sqlite/street-morphology-fst-builder.ts` and loaded into a second `FSTMatcher`.
  */
 
 import { groupPiecesIntoWords, type FSTMatcherLike, type WordGroup } from "#fst-prior"
@@ -28,40 +22,28 @@ import type { TokenLike } from "#query-shape-prior"
 
 export interface StreetMorphologyPriorOpts {
 	/**
-	 * Multiplier on the base bias before {@linkcode maxBias} is applied.
-	 *
-	 * Default 1.0.
+	 * Multiplier on the base bias before {@linkcode maxBias} is applied; default 1.0.
 	 */
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits) on the affix span itself.
-	 *
-	 * Default 3.0 — same as the admin FST.
-	 * The morphology signal is structurally less ambiguous than admin names
-	 * (`Avenue` is almost never anything but street-typing), so equal magnitude is justified.
+	 * Maximum bias magnitude (logits) on the affix span itself, default 3.0 — equal to the admin FST
+	 * because the morphology signal is structurally less ambiguous.
 	 */
 	maxAffixBias?: number
 	/**
-	 * Maximum bias magnitude (logits) on the adjacent (neighbour) tokens for the `street` label.
-	 *
-	 * Default 2.0 — a touch weaker than the affix bias because the neighbour is
-	 * inferred from adjacency rather than direct match.
+	 * Maximum bias magnitude (logits) on adjacent tokens for the `street` label, default 2.0 — weaker
+	 * than the affix bias because the neighbour is inferred from adjacency rather than matched.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
-	 * Magnitude of the negative bias applied to `dependent_locality` BIO labels on the adjacent tokens.
-	 *
-	 * Default 2.0.
-	 * This is the essential piece.
+	 * Magnitude of the negative bias on `dependent_locality` BIO labels for adjacent tokens, default 2.0.
 	 */
 	dependentLocalityPenalty?: number
 }
 
 /**
- * Build a `[seqLen][numLabels]` bias matrix from street-morphology FST matches.
- *
- * The output composes with the admin FST bias matrix via {@linkcode addEmissionMatrix} —
- * same `addEmissionMatrix(emissions, fstBias) → biasedEmissions` pattern as the existing admin prior.
+ * Build a `[seqLen][numLabels]` bias matrix from street-morphology FST matches, composing with the
+ * admin FST bias matrix through {@linkcode addEmissionMatrix}.
  */
 export function buildStreetMorphologyEmissionPriors(
 	fst: FSTMatcherLike,
@@ -88,9 +70,7 @@ export function buildStreetMorphologyEmissionPriors(
 	const bDepLoc = labelToCol.get("B-dependent_locality")
 	const iDepLoc = labelToCol.get("I-dependent_locality")
 
-	// If the label vocabulary doesn't include street tags at all (e.g. A Stage 1 model),
-	// there are no street tags to bias toward.
-	// Return zero-matrix and let the additive pipeline no-op.
+	// A vocabulary without street tags leaves no label to bias, so the zero matrix no-ops the pipeline.
 	if (bStreet === undefined || bStreetPrefix === undefined || bStreetSuffix === undefined) {
 		return matrix
 	}
@@ -99,8 +79,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 	if (!wordGroups.length) return matrix
 
-	// Track which word-group indices are matched as affixes (and which spans they cover)
-	// so the second pass can locate neighbours without re-walking the FST.
+	// Track matched word-group spans so the neighbour pass needs no second FST walk.
 	interface AffixMatch {
 		startGroupIdx: number
 		endGroupIdx: number // inclusive
@@ -108,8 +87,6 @@ export function buildStreetMorphologyEmissionPriors(
 
 	const affixMatches: AffixMatch[] = []
 
-	// Pass 1 — walk every contiguous subpath, collect accepting morphology matches,
-	// and apply the affix bias to matched tokens.
 	for (let start = 0; start < wordGroups.length; start++) {
 		const group = wordGroups[start]!
 
@@ -148,8 +125,7 @@ export function buildStreetMorphologyEmissionPriors(
 
 		if (bestEnd === -1) continue
 
-		// Verify the accepting entries are street_affix (the morphology FST may eventually
-		// contain other placetypes if the binary format is reused for related priors).
+		// The FST may hold other placetypes if its binary format is reused for related priors.
 		const entries = fst.accepting(bestStateID)
 		const hasAffix = entries.some((e) => e.placetype === "street_affix")
 
@@ -157,7 +133,6 @@ export function buildStreetMorphologyEmissionPriors(
 
 		affixMatches.push({ startGroupIdx: start, endGroupIdx: bestEnd })
 
-		// Collect piece indices for the matched span.
 		const affixPieceIndices: number[] = []
 
 		for (let g = start; g <= bestEnd; g++) {
@@ -170,10 +145,7 @@ export function buildStreetMorphologyEmissionPriors(
 			}
 		}
 
-		// Apply affix bias: positive bias toward both prefix and suffix BIO labels on the matched tokens.
-		// The model's existing logits + the QueryShape prior + the adjacent context
-		// (via pass 2) determine which of {prefix, suffix} actually wins.
-		// We don't pre-commit to one.
+		// Bias both prefix and suffix BIO labels on the matched tokens rather than pre-committing to one.
 		const affixBias = biasScale * maxAffixBias
 
 		for (let k = 0; k < affixPieceIndices.length; k++) {
@@ -187,9 +159,6 @@ export function buildStreetMorphologyEmissionPriors(
 
 	if (!affixMatches.length) return matrix
 
-	// Pass 2 — for each affix match, identify the immediately-adjacent word groups
-	// (skipping empty/punctuation groups) on either side and bias them toward street,
-	// away from dependent_locality.
 	const neighbourStreetBias = biasScale * maxNeighbourStreetBias
 
 	for (const match of affixMatches) {
@@ -217,9 +186,8 @@ export function buildStreetMorphologyEmissionPriors(
 }
 
 /**
- * Walk word groups outward from `fromGroupIdx` in `direction` (+1 or -1),
- * skipping empty groups (whitespace / punctuation), and return the first non-empty
- * group encountered, or `null` if no such neighbour exists.
+ * Walk word groups outward from `fromGroupIdx` in `direction`, skipping empty groups (whitespace /
+ * punctuation), and return the first non-empty neighbour or `null`.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {

@@ -3,18 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwops`: the private operator CLI. Four verbs, each a view over a registry: `release <operation>` over
- *   `@mailwoman/release-kit`, `shop <operation>` over the license worker's shop, `storage <operation>` over
- *   `@mailwoman/storage-kit`, and `health <check>|all` over `@mailwoman/repo-health`. The three operation registries
- *   share one runner that differs only in the context it builds and the exit code an output earns. It parses
- *   arguments, hands them to the registered capability, and prints the result. Every decision about what happens
- *   belongs to the operation or the check. Kept free of `process` so it is unit-testable: the bin wrapper supplies
- *   argv, stdout, and the exit code.
+ *   `mwops`: the private operator CLI. Four verbs, each a view over a registry — `release`, `shop`, `storage`,
+ *   and `health` — through one runner that differs only in the context it builds and the exit code an output
+ *   earns. Kept free of `process` so it is unit-testable.
  *
- *   The health verb performs two mutations, and neither is a check: `health baseline debt` rewrites
- *   `packages/repo-health/baseline.json` from the current readings, and `health fix <check>` applies the mechanical
- *   repair a check's diagnostics describe. Both are exported by repo-health and left out of the check registry, whose
- *   type admits no writer. this is the only caller of either.
+ *   `health` also performs two mutations outside the check registry, whose type admits no writer:
+ *   `health baseline debt` rewrites `packages/repo-health/baseline.json`, and `health fix <check>` applies a
+ *   check's mechanical repair.
  */
 
 import { prettyJSON, stringifyJSON } from "@mailwoman/core/json"
@@ -38,9 +33,8 @@ import {
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 
 /**
- * How many times `health fix` re-takes a plan before giving up.
- *
- * See {@link runFix} for why one pass is not enough.
+ * How many times `health fix` re-takes a plan before giving up; see {@link runFix} for why one pass is not
+ * enough.
  */
 const MAXIMUM_FIX_PASSES = 8
 
@@ -50,17 +44,14 @@ export interface DispatchIO {
 	repoRoot: string
 	trackedFiles: () => Promise<readonly string[]>
 	/**
-	 * Whether the process holds root.
-	 *
-	 * Resolved by the bin wrapper — dispatch stays free of `process` so it is unit-testable.
+	 * Whether the process holds root, resolved by the bin wrapper so dispatch stays free of `process`.
 	 */
 	root?: boolean
 }
 
 /**
- * `--key value` and `--flag` pairs into an object an operation's `inputSchema` then coerces and validates.
- *
- * Values stay strings here on purpose: the schema is the one place a type is decided.
+ * `--key value` and `--flag` pairs into an object the operation's `inputSchema` coerces and validates, so
+ * values stay strings here and the schema decides the type.
  */
 export function parseOptions(args: readonly string[]): { options: Record<string, string | boolean>; rest: string[] } {
 	const options: Record<string, string | boolean> = {}
@@ -116,28 +107,19 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * One registry as a `mwops` verb.
- *
- * It names where the operations come from, what each one receives beside its input,
- * and how an output decides the exit code.
+ * One registry as a `mwops` verb: its operations, the context each receives, and how an output decides
+ * the exit code.
  */
 interface OperationView<TContext extends OperationContext> {
 	verb: string
 	registry: ReadonlyArray<Operation<string, TContext>>
-	/**
-	 * Build the family's context over the base every operation receives.
-	 */
 	context: (base: OperationContext, io: DispatchIO) => TContext
 	/**
-	 * The exit code an output earns.
-	 * A view without one exits 0.
+	 * The exit code an output earns; a view without one exits 0.
 	 */
 	exitCode?: (output: unknown) => number
 }
 
-/**
- * `mwops release`, `mwops shop`, and `mwops storage`: the same view over three registries.
- */
 const releaseView: OperationView<ReleaseContext> = {
 	verb: "release",
 	registry: operations,
@@ -163,10 +145,7 @@ const storageView: OperationView<StorageContext> = {
 }
 
 /**
- * Run one operation of a registry.
- *
- * Parse the options, find the operation by its bare name or dotted id, build the
- * family's context, validate the input, run, and print.
+ * Run one operation of a registry, found by its bare name or dotted id.
  */
 async function runOperation<TContext extends OperationContext>(
 	view: OperationView<TContext>,
@@ -221,10 +200,8 @@ async function runOperation<TContext extends OperationContext>(
 }
 
 /**
- * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings.
- *
- * `debt` is the only counter set with a baseline.
- * The target is named so a second one has a place to go.
+ * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings, where `debt` is
+ * the only counter set.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -256,14 +233,8 @@ async function runBaseline(
 }
 
 /**
- * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads.
- *
- * Not a check: it answers a report about the tree rather than a verdict on it,
- * and its leads are for a human reviewer to confirm.
- * It sits under `health` for the same reason `baseline` does.
- *
- * It reads the same tracked-file context every check gets, and CI runs a registered
- * entry point rather than a path into a package's `lib/`.
+ * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads,
+ * a report about the tree rather than a verdict on it.
  */
 async function runComments(
 	targets: readonly string[],
@@ -284,12 +255,8 @@ async function runComments(
 }
 
 /**
- * `mwops health fix <check>` — apply the mechanical repair for one check.
- *
- * The plan is built and proven before anything is written, so `--dry-run`
- * reports exactly what the write would do.
- * A plan carrying a specifier with no proven replacement is refused by `applyModuleMoves`,
- * which is why this function has no force flag to offer.
+ * `mwops health fix <check>` — apply the mechanical repair for one check, building and proving the plan
+ * before anything is written so `--dry-run` reports exactly what the write would do.
  */
 async function runFix(
 	targets: readonly string[],
@@ -310,11 +277,8 @@ async function runFix(
 	const dryRun = options["dry-run"] === true
 	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	// A fix can create work for itself: moving `build-outlier-oa.ts` into `build/` leaves
-	// `outlier-oa.ts` beside two siblings that now share `outlier-`.
-	// So the plan is re-taken until the check has no further finding.
-	// The bound is a guard against a rule that never settles rather than an expected
-	// number of passes — the repository's deepest family took two.
+	// A fix can create work for itself, so the plan is re-taken until the check has no further
+	// finding; the bound guards a rule that never settles.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 		const moves = await fix.plan(context)
@@ -435,7 +399,6 @@ async function runHealth(args: readonly string[], io: DispatchIO): Promise<numbe
  * Route one invocation.
  *
  * @returns The exit code.
- * Never touches `process`.
  */
 export async function dispatch(args: readonly string[], io: DispatchIO): Promise<number> {
 	const [verb, ...rest] = args
