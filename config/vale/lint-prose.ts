@@ -200,25 +200,43 @@ async function main(args: readonly string[]): Promise<number> {
 	}
 
 	const vale = await valeCommand(import.meta.url)
+	const checks = [{ config: configFor(selectedSurface), files }]
 
-	try {
-		const result = await runFile(vale.file, [...vale.argv, "--config", configFor(selectedSurface), ...files], {
-			cwd: REPO_ROOT,
-			maxBuffer: 50 * 1024 * 1024,
-		})
+	if (selectedSurface === "code") {
+		const sourceFiles = narrowing.length
+			? files.filter((file) => /\.(?:ts|tsx|py)$/u.test(file))
+			: await workingTreeFiles(REPO_ROOT, ["*.ts", "*.tsx", "*.py"])
 
-		process.stdout.write(result.stdout)
-		process.stderr.write(result.stderr)
-
-		return 0
-	} catch (error: unknown) {
-		if (!isProcessError(error)) throw error
-
-		process.stdout.write(error.stdout)
-		process.stderr.write(error.stderr)
-
-		return typeof error.code === "number" ? error.code : 1
+		// These two lexical rules inspect source nodes, including comments, docstrings,
+		// strings, regular expressions, and identifiers. The prose config remains comment-aware.
+		if (sourceFiles.length) checks.push({ config: "config/vale/.vale-code-terms.ini", files: sourceFiles })
 	}
+
+	let exitCode = 0
+
+	for (const check of checks) {
+		try {
+			const result = await runFile(
+				vale.file,
+				[...vale.argv, "--config", check.config, ...check.files],
+				{
+					cwd: REPO_ROOT,
+					maxBuffer: 50 * 1024 * 1024,
+				}
+			)
+
+			process.stdout.write(result.stdout)
+			process.stderr.write(result.stderr)
+		} catch (error: unknown) {
+			if (!isProcessError(error)) throw error
+
+			process.stdout.write(error.stdout)
+			process.stderr.write(error.stderr)
+			exitCode = Math.max(exitCode, typeof error.code === "number" ? error.code : 1)
+		}
+	}
+
+	return exitCode
 }
 
 process.exitCode = await runCLICommand(() => main(cliArguments()))

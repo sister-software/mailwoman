@@ -1,0 +1,10 @@
+engine: tree-sitter
+scopes:
+  - name: source
+    expr: |
+      (comment) @prose
+      (string) @prose
+      (regex) @prose
+      (template_string (string_fragment) @prose)
+      (identifier) @prose
+      (property_identifier) @prose
