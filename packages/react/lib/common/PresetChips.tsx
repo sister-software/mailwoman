@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `PresetChips` — the "Try:" row of example buttons shared by both explorers. Presentational: it
+ *   `PresetChips` is the "Try:" row of example buttons shared by both explorers. Presentational: it
  *   renders a labelled list and calls `onPick` with the chosen preset's value.
  */
 

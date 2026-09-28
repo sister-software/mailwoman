@@ -9,7 +9,7 @@
  *   builder wrote, and caches the open handle per country. Wire its bound `for` into
  *   `GeocodeDeps.osmExtracts`.
  *
- *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases — see `osm/readme.md` for the
+ *   ⚠ The extracts it opens are ODbL OpenStreetMap Derived Databases. See `osm/readme.md` for the
  *   distribution boundary and the counsel sign-off required before shipping any of them.
  */
 
@@ -35,7 +35,8 @@ export interface OSMExtracts extends Pick<RegionDatabases, "addressPoints"> {
  * `for` is synchronous, so on-disk existence is probed asynchronously once instead of
  * per call. {@linkcode warm} awaits `pathExists` for every supported country's extract
  * and records what exists, and `for` consults that record.
- * Prefer {@linkcode OSMRegionDatabaseProvider.create}, which constructs and warms before answering.
+ * Prefer {@linkcode OSMRegionDatabaseProvider.create}. It constructs the provider and warms it
+ * before answering.
  *
  * A provider constructed directly must be warmed before its first `for`,
  * or it answers `{}` for every country.
