@@ -25,14 +25,12 @@ const HEADER_SIZE = 32
  */
 const MAGIC = 0x00_54_53_46
 
-
 const PROVENANCE_OFFSET_FIELD = 28
 
 /**
  * First serializer version carrying the trailing provenance block; below it a file has no place to put a stamp.
  */
 export const MIN_STAMPED_FORMAT_VERSION = 3
-
 
 const MD5_HEX_LENGTH = 32
 
@@ -80,9 +78,7 @@ export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStam
 	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
 	const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
 
-	// 0 = "this build wrote no trailer" (the serializer's own encoding); anything past EOF is a
-	// truncated file.
-	// Both read as "no stamp", which is what the caller does with them anyway.
+	// 0 means this build wrote no trailer and past-EOF means truncated; both read as no stamp.
 	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
 
 	const jsonLength = (await readFileRange(path, trailerStart, 4)).readUInt32LE(0)
@@ -93,7 +89,6 @@ export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStam
 
 	return { formatVersion, provenance: tryParsingJSON<FSTProvenance>(json.toString("utf8")) ?? undefined }
 }
-
 
 /**
  * The source identity an FST build should stamp, or a check should compare against.
@@ -141,7 +136,6 @@ export async function readWOFSourceIdentity(
 	return identity
 }
 
-
 const sourceIdentityMemo = new Map<string, FSTSourceIdentity>()
 
 /**
@@ -170,7 +164,6 @@ export function fstStaleReason(fields: FSTStampFields | undefined, expected: FST
 	if (provenance.sourceDBMD5 !== expected.source.md5) {
 		return `source db ${provenance.sourceDBMD5.slice(0, 8)} → ${expected.source.md5.slice(0, 8)} (built ${provenance.builtAt})`
 	}
-
 
 	if (provenance.sourceDBBytes !== undefined && provenance.sourceDBBytes !== expected.source.bytes) {
 		return `source db size ${provenance.sourceDBBytes} → ${expected.source.bytes} at a matching md5 — one of the two is misrecorded`
