@@ -3,10 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for `rerankByStreetEvidence` (#727 phase-4c wiring). Drives real k-best hypotheses through
- *   a hand-built grammar + spanScores, a mock classifier trace, and a mock evidence provider —
- *   covering the byte-stable no-span-head fallback, the G1-skip → move correction, and the tree
- *   re-materialization on a move.
+ *   Tests for `rerankByStreetEvidence`. Drives real k-best hypotheses through a hand-built grammar
+ *   and spanScores, a mock classifier trace, and a mock evidence provider, covering the byte-stable
+ *   no-span-head fallback, the G1-skip move correction, and the tree re-materialization on a move.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -30,9 +29,8 @@ const grammar = (): SemiCRFTransitions => {
 }
 
 /**
- * A trace over "Rue Corsier" (2 tokens).
- *
- * `spanScores` optional — omit to exercise the fallback.
+ * A trace over "Rue Corsier" (2 tokens). `spanScores` is optional, and omitting it exercises the
+ * fallback.
  */
 const trace = (spanScores?: number[][][]): NeuralParseTrace =>
 	({
@@ -55,25 +53,20 @@ const mockEvidence = (existing: string[]): StreetLocalityEvidence => {
 }
 
 /**
- * SpanScores[token][length-1][type].
- *
- * Tuned so the top-2 k-best are: H1 (rank-1, score 10): street "Rue" (0,1) + locality
- * "Corsier" (1,1) H2 (rank-2, score 8): street "Rue Corsier" (0,2) margin 2 ≤ 2.5 (G2 ok).
- * Everything else deeply negative.
+ * SpanScores are indexed as `[token][length-1][type]`, tuned so the top two k-best are the rank-1
+ * split and the rank-2 full street with a margin inside 2.5.
  */
 const NEG = -100
 
 function tunedSpanScores(): number[][][] {
-	// token 0: [len1: [O,street,loc]], [len2: [O,street,loc]] token 1:
-	// [len1: [O,street,loc]], [len2 unused (would overflow)]
 	const s: number[][][] = [
 		[
-			[NEG, 5, NEG], // token0 len1: street=5
-			[NEG, 8, NEG], // token0 len2: street "Rue Corsier"=8
+			[NEG, 5, NEG],
+			[NEG, 8, NEG],
 		],
 		[
-			[NEG, NEG, 5], // token1 len1: locality "Corsier"=5
-			[NEG, NEG, NEG], // token1 len2: out of range
+			[NEG, NEG, 5],
+			[NEG, NEG, NEG],
 		],
 	]
 
@@ -86,7 +79,6 @@ describe("rerankByStreetEvidence", () => {
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence([]), grammar())
 		expect(res.moved).toBe(false)
 		expect(res.rank).toBe(0)
-		// The argmax tokens label both as street → the tree's street is the full surface.
 		expect(decodeAsJSON(res.tree).street).toBe("Rue Corsier")
 	})
 
@@ -96,7 +88,6 @@ describe("rerankByStreetEvidence", () => {
 		expect(res.moved).toBe(true)
 		expect(res.rank).toBe(1)
 		expect(foldStreetSurface(res.streetSurface)).toBe("rue corsier")
-		// The re-materialized tree carries the winning segmentation's street.
 		expect(decodeAsJSON(res.tree).street).toBe("Rue Corsier")
 	})
 
@@ -108,10 +99,7 @@ describe("rerankByStreetEvidence", () => {
 	})
 
 	test("anchor check: an argmax region anchor makes the rerank stand down even with a confirmed move", async () => {
-		// Same tuned k-best that would move (see the G1-skip test), but the argmax now carries a region token.
-		// The input is structured.
 		// The rerank must not steal the region-labeled token.
-		// It returns the argmax tree rather than moved.
 		const t = trace(tunedSpanScores())
 		t.tokens[1] = { ...t.tokens[1]!, label: "B-region" }
 		const res = await rerankByStreetEvidence(mockClassifier(t), "Rue Corsier", mockEvidence(["Rue Corsier"]), grammar())

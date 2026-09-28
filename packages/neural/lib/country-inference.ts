@@ -3,39 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Inference-side country-lexicon features (#1104) — the third atlas soft-feed channel, sibling of
- *   the postcode anchor (`anchor-inference.ts`, #239/#240) and the gazetteer anchor
- *   (`gazetteer-inference.ts`, #464). Country is a closed, enumerable class (~250 surfaces) the
- *   learned grammar mislabels in the WOF-admin / resolver hierarchy case ("United States of America,
- *   Wyoming, <locality>" reads as a leading street). This channel injects the atlas prior the tagger
- *   lacks: a per-piece multi-hot clue that the piece is part of a recognized country surface phrase.
- *   The clue informs, the model decides (model-first) — the direct analogue of Pelias's
- *   position-independent `WhosOnFirstClassifier` dictionary lookup, rendered as an additive feature.
+ *   Inference-side country-lexicon features, the third atlas soft-feed channel. Country is a closed,
+ *   enumerable class of about 250 surfaces that the learned grammar mislabels in the WOF-admin and
+ *   resolver hierarchy case, where "United States of America, Wyoming, <locality>" reads as a leading
+ *   street. This channel injects a per-piece multi-hot clue that the piece is part of a recognized
+ *   country surface phrase. The clue informs and the model decides.
  *
- *   The matcher deliberately reuses the gazetteer's phrase-scan (`gazetteerCharPaint`) — one tested
- *   longest-first n-gram algorithm (case-insensitive `entries` + uppercase-exact `code_entries`,
- *   char→piece projection by the first non-whitespace char), two vocabularies. Only the vocabulary
- *   (`country-surface-lexicon-v1.json`, built by
- *   `packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`) and
- *   the emitted 2-dim feature differ. This is the same "the JSON is the single source both consumers
- *   load, so the two implementations cannot drift" discipline as the gazetteer; `country_lexicon.py`
- *   is the Python training-side mirror and `country-inference.test.ts` pins the two together.
+ *   The matcher reuses the gazetteer's phrase-scan (`gazetteerCharPaint`), so the two channels cannot
+ *   drift on how a phrase is matched. Only the vocabulary (`country-surface-lexicon-v1.json`, built
+ *   by `packages/mailwoman/lib/dev-tools/codex/country/surface-lexicon.ts`) and the emitted 2-dim
+ *   feature differ.
  *
- *   The emitted per-piece feature is `[country_surface, country_ambiguous]`:
+ *   The emitted per-piece feature is `[country_surface, country_ambiguous]`. `country_surface` marks
+ *   a piece inside a recognized country surface phrase. `country_ambiguous` marks a homograph that is
+ *   also a US region, such as "Georgia", or a curated common-word name such as "America". The model
+ *   learns to trust the unambiguous long and code forms strongly and the ambiguous forms weakly,
+ *   which keeps recall on a phrase such as "Republic of Georgia".
  *
- *   - `country_surface` (bit 1) — the piece is inside a recognized country surface phrase.
- *   - `country_ambiguous` (bit 2) — the surface is a homograph (also a US region, e.g. "Georgia",
- *     "CA") or a curated common-word name ("America", "England"). A soft false-positive guard: the
- *     model learns to trust `surface & !ambiguous` (unambiguous long/code forms) strongly and
- *     `surface & ambiguous` weakly, using context — the model-first analogue of Pelias's hard
- *     blacklist, without dropping the surface (recall on "Republic of Georgia" is preserved).
- *
- *   why A dedicated channel rather than the gazetteer's existing `country` slot: the gazetteer slot
- *   already carries these surfaces and the shipped model already consumes them, yet the WOF-admin
- *   case still fails (#1104). The country bit is one of a 5-hot vector sharing one projection with
- *   region/po_box/cedex/homograph, and it is zeroed adjacent to a postcode by
- *   `suppressGazetteerNearPostcode` (exactly where "…12345 USA" sits). A separate channel gives
- *   country its own projection + confidence weight and is immune to that suppression.
+ *   The gazetteer's own `country` slot already carries these surfaces and the shipped model already
+ *   consumes them, yet the WOF-admin case still fails. That slot shares one projection with region,
+ *   po_box, cedex and homograph, and it is zeroed next to a postcode by
+ *   `suppressGazetteerNearPostcode`, which is exactly where "…12345 USA" sits. A separate channel
+ *   gives country its own projection and confidence weight, so that suppression cannot reach it.
  */
 
 import {
@@ -47,12 +36,8 @@ import {
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The country feature width.
- *
- * The emitted per-piece row is `[country_surface, country_ambiguous]`.
- * Used for the ONNX zero-fallback when a country-trained model is run with no lexicon supplied.
- *
- * Must match the lexicon JSON's `feature_dim` and the trained model's `country_feature_dim`.
+ * The country feature width, which must match the lexicon JSON's `feature_dim` and the trained
+ * model's `country_feature_dim`.
  */
 export const COUNTRY_FEATURE_DIM = 2
 
@@ -66,18 +51,14 @@ export const COUNTRY_SURFACE_BIT = 1
 export const COUNTRY_AMBIGUOUS_BIT = 2
 
 /**
- * The loaded country lexicon.
- *
- * Structurally identical to a {@linkcode GazetteerLexicon} (the same n-gram phrase-scan shape).
- * The type is reused deliberately so the two channels share one matcher.
- *
- * The `bits`/`slots` describe the lexicon's internal bit layout
- * (`country_surface` / `country_ambiguous`), not a multi-hot emitted vector.
+ * The loaded country lexicon, structurally identical to a {@linkcode GazetteerLexicon} and reused so
+ * the two channels share one matcher.
  */
 export type CountryLexicon = GazetteerLexicon
 
 /**
- * Parse the country lexicon JSON (already `JSON.parse`d — keeps this module browser-safe. The caller reads).
+ * Parse the country lexicon JSON, which the caller has already run through `JSON.parse` so this
+ * module stays browser-safe.
  */
 export function parseCountryLexicon(raw: {
 	feature_dim: number
@@ -91,16 +72,8 @@ export function parseCountryLexicon(raw: {
 }
 
 /**
- * Per-piece country features + confidence for `text`, projected onto its SP `pieces` by the same
- * char→piece rule the labels use (a piece takes the bits of the first non-whitespace char it covers) —
- * so the clue lands on exactly the country phrase's sub-tokens.
- *
- * Returns `(pieces × COUNTRY_FEATURE_DIM)` features (`[country_surface, country_ambiguous]`) +
- * `(pieces,)` confidence (1.0 wherever a country surface fires).
- *
- * Reuses `gazetteerCharPaint`.
- * The country lexicon is the same phrase-scan structure, so the matcher is shared
- * and the two channels cannot drift on how a phrase is matched.
+ * Per-piece country features and confidence for `text`, projected onto its pieces by the same
+ * char-to-piece rule the labels use, so the clue lands on the country phrase's sub-tokens.
  */
 export function buildCountryFeatures(
 	text: string,

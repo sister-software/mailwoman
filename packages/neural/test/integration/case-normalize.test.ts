@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #690 input case-normalization — detection + transform. The essential guarantees: mixed-case and
- *   non-ascii input are never touched (byte-stable, the no-regression-by-construction), and the
- *   transform is length-preserving (token offsets survive).
+ *   Input case-normalization, detection and transform.
+ *   Mixed-case and non-ascii input pass through unchanged, and the transform is length-preserving
+ *   so token offsets survive.
  */
 
 import {
@@ -34,21 +34,22 @@ describe("isAllCapsInput", () => {
 	})
 
 	it("admits accented Latin and refuses any non-Latin letter (the length guard lives in titleCaseInput)", () => {
-		expect(isAllCapsInput("CAFÉ DE PARÍS")).toBe(true) // accented all-caps Latin (#1938)
-		expect(isAllCapsInput("STRASSE GROSSER ZOLLERN ÜBER")).toBe(true) // German Ü
-		expect(isAllCapsInput("МОСКВА УЛИЦА")).toBe(false) // Cyrillic
-		expect(isAllCapsInput("東京都")).toBe(false) // CJK
+		expect(isAllCapsInput("CAFÉ DE PARÍS")).toBe(true)
+		expect(isAllCapsInput("STRASSE GROSSER ZOLLERN ÜBER")).toBe(true)
+		expect(isAllCapsInput("МОСКВА УЛИЦА")).toBe(false)
+		expect(isAllCapsInput("東京都")).toBe(false)
 	})
 })
 
 describe("titleCaseInput", () => {
 	it("title-cases ASCII runs ≥3 letters, preserves ≤2-letter all-caps runs (#252), preserves length", () => {
 		expect(titleCaseInput("PALESTINE")).toBe("Palestine")
-		// #252: ≤2-letter all-caps runs are state codes / suffix abbrevs (TX, RD, ST) — title-casing them (Tx, Rd) corrupted the region signal. Preserve them. The model reads both forms.
+		// A ≤2-letter all-caps run is a state code or suffix abbreviation, and title-casing it
+		// corrupts the region signal.
 		expect(titleCaseInput("214 JONES RD")).toBe("214 Jones RD")
 		expect(titleCaseInput("ELKHART TX")).toBe("Elkhart TX")
 		const caps = "214 JONES RD, ELKHART, TX 75839"
-		expect(titleCaseInput(caps)).toHaveLength(caps.length) // offsets survive
+		expect(titleCaseInput(caps)).toHaveLength(caps.length)
 	})
 })
 
@@ -82,7 +83,7 @@ describe("restoreLowerInput (#829)", () => {
 		expect(restoreLowerInput("washington dc")).toBe("Washington DC")
 		expect(restoreLowerInput("1012 lg amsterdam")).toBe("1012 LG Amsterdam")
 		const lower = "1600 pennsylvania ave nw, washington dc"
-		expect(restoreLowerInput(lower)).toHaveLength(lower.length) // offsets survive
+		expect(restoreLowerInput(lower)).toHaveLength(lower.length)
 	})
 })
 
@@ -108,7 +109,8 @@ describe("normalizeInputCase — the parser hook", () => {
 	it("returns mixed-case and lowercase accented input UNCHANGED; accented shouting title-cases like ASCII", () => {
 		const mixed = "109 Seminary Dr, Mill Valley, CA 94941"
 		expect(normalizeInputCase(mixed)).toBe(mixed)
-		// #1938: the accented shouting form reaches the model as words rather than single-character pieces. `DE` keeps the ≤2-letter rule.
+		// The accented shouting form reaches the model as words rather than single-character pieces,
+		// and `DE` keeps the ≤2-letter rule.
 		expect(normalizeInputCase("CAFÉ DE PARÍS")).toBe("Café DE París")
 		const lowerAccented = "café de parís"
 		expect(normalizeInputCase(lowerAccented)).toBe(lowerAccented)

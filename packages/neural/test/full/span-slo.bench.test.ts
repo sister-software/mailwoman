@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #378 SLO probe for the #727 span output, on the browser runtime (onnxruntime-web wasm EP) rather
- *   than onnxruntime-node — the Phase-2 bench measured the node runtime, which is not what ships.
+ *   Browser-runtime span SLO probe over `onnxruntime-web`'s wasm EP.
  *
- *   Reported rather than asserted: a wall-clock threshold in CI is a flake generator. The number goes in the
- *   Phase-3 verdict. this file exists so it is reproducible.
+ *   The file reports a wall-clock number rather than asserting one, since a timing threshold in
+ *   CI is a flake generator.
  *
- *   Lives in `test/full` rather than `test/unit` because it never runs on the fast leg: it is conditioned on two staged
- *   weights caches under `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, so it always skipped there while still
- *   pulling the onnxruntime web graph into the fast leg's shared module graph at collection time.
+ *   It lives in `test/full` because it needs two staged weights caches under
+ *   `$MAILWOMAN_TEMP_ROOT` that no CI checkout carries, and it would otherwise pull the
+ *   onnxruntime web graph into the fast leg's shared module graph at collection time.
  */
 
 import { tempRootPath } from "@mailwoman/core/data-root"
@@ -24,9 +23,8 @@ import { describe, expect, it } from "vitest"
 /**
  * The two staged weights caches this benchmark compares, under `$MAILWOMAN_TEMP_ROOT`.
  *
- * `weightsCachePackageDir` owns the `node_modules/<package>` segment.
- * The layout belongs to the weights package, and a hand-assembled path into it reads
- * a missing artifact as "absent" rather than "looked in the wrong place".
+ * `weightsCachePackageDir` owns the `node_modules/<package>` segment, so a hand-assembled path
+ * into it would read a missing artifact as absent rather than as a path mistake.
  */
 function stagedModel(cacheName: string): PathBuilder {
 	return weightsCachePackageDir(tempRootPath(cacheName), "en-us")("model.onnx")
@@ -67,8 +65,7 @@ describe.skipIf(!have)("#727 span SLO (onnxruntime-web WASM EP)", () => {
 		console.log(`  NOTE: v301 unflattens spans on EVERY infer here — the full cost, not logits-only.\n`)
 
 		// Timing is reported rather than asserted, being machine-dependent.
-		// What the comparison is actually for — that v264 emits no span scores
-		// and v301 does — is an invariant, and was going unchecked.
+		// The invariant under test is that v264 emits no span scores and v301 does.
 		expect(a.spans).toBe(false)
 		expect(b.spans).toBe(true)
 	}, 300_000)

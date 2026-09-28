@@ -180,13 +180,9 @@ describe("scoreHyphenatedCompound", () => {
 
 describe("scoreStreetPhrase", () => {
 	it("emits STREET_PHRASE for name + suffix, EXCLUDING the leading house number (#565)", () => {
-		// The house number is not part of the street phrase.
-		// The numeric rule proposes it separately, so the reconciler can type the number
-		// and the street as distinct nodes instead of fusing them.
 		const out = scoreStreetPhrase(tokenizeSegment("350 5th Ave", 0), "350 5th Ave")
 		expect(out).toHaveLength(1)
 		expect(out[0]!.span.body).toBe("5th Ave")
-		// A preceding house number is still strong evidence this is a street → high confidence.
 		expect(out[0]!.confidence).toBeGreaterThanOrEqual(0.85)
 	})
 
@@ -200,7 +196,7 @@ describe("scoreStreetPhrase", () => {
 		expect(scoreStreetPhrase(tokenizeSegment("Street", 0), "Street")).toEqual([])
 	})
 
-	// #425 — Romance street pattern: the street type leads ("Via Trento", "Calle Mayor").
+	// Romance street pattern: the street type leads ("Via Trento", "Calle Mayor").
 	it("emits STREET_PHRASE for a prefix-led Italian street (Via Trento)", () => {
 		const out = scoreStreetPhrase(tokenizeSegment("Via Trento", 0), "Via Trento")
 		expect(out.find((p) => p.span.body === "Via Trento")).toBeDefined()
@@ -255,8 +251,8 @@ describe("scoreLocalityPhrase", () => {
 		expect(out.find((p) => p.span.body === "New York")).toBeDefined()
 	})
 
-	// #425 — bridge lowercase place-name particles + apostrophe-fused names so native-order multi-word
-	// localities surface as one span (the gap that fragmented IT/ES/NL under joint-decode, Route A).
+	// Bridge lowercase place-name particles and apostrophe-fused names so native-order multi-word
+	// localities surface as one span.
 	it("bridges a Spanish 'de' particle (Las Palmas de Gran Canaria)", () => {
 		const text = "Las Palmas de Gran Canaria"
 		const bodies = scoreLocalityPhrase(tokenizeSegment(text, 0), text, true).map((p) => p.span.body)
@@ -302,7 +298,7 @@ describe("scoreLocalityPhrase", () => {
 		expect(bodies).toContain("Palmas")
 	})
 
-	// #425 — all-caps intl place head that matches the region-abbreviation shape ("SAN", "DI") must
+	// An all-caps intl place head that matches the region-abbreviation shape ("SAN", "DI") must
 	// still form the multi-word locality rather than get skipped as a US-state abbreviation.
 	it("forms a locality from a region-abbrev-shaped head (SAN NAZARIO)", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("SAN NAZARIO", 0), "SAN NAZARIO", true).map((p) => p.span.body)
@@ -322,7 +318,7 @@ describe("scoreLocalityPhrase", () => {
 		const bodies = scoreLocalityPhrase(tokenizeSegment("Via Trento", 0), "Via Trento", false).map((p) => p.span.body)
 		expect(bodies).not.toContain("Via")
 		expect(bodies).not.toContain("Via Trento")
-		// The street name alone may still surface as a locality candidate — the reconciler arbitrates.
+		// The street name alone may still surface as a locality candidate, and the reconciler arbitrates.
 		expect(bodies).toContain("Trento")
 	})
 })

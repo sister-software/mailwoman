@@ -3,17 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v0.4.0 model-card runtime label-vocabulary loader (issue #116 §5(a)).
+ *   Tests for the v0.4.0 model-card runtime label-vocabulary loader.
  *
- *   Two paths under test:
- *
- *   - `readLabelsFromModelCard` — pure helper. Reads `model-card.json`'s `labels` field, returns the
- *       frozen array on success, returns `undefined` for legacy cards that predate the field (and
- *       for missing / unreadable files), throws on a present-but-malformed `labels` field.
- *   - `resolveWeights` — surfaces `modelCardPath` when a card exists alongside the resolved model.
- *
- *   The end-to-end `loadFromWeights` path is exercised by `weights.test.ts`. Here we keep the tests
- *   hermetic: no model file required, just tmp model-card.json fixtures.
+ *   The tests stay hermetic, needing no model file and only temporary `model-card.json` fixtures.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -91,8 +83,8 @@ describe("readLabelsFromModelCard", () => {
 
 describe("resolveWeights — modelCardPath surface", () => {
 	test("explicit-path mode does not set modelCardPath (caller is responsible)", async () => {
-		// Use the dev tokenizer fixture for the tokenizer path.
-		// Reuse it for modelPath too — existsSync is all the resolver checks for in explicit mode.
+		// The dev tokenizer fixture serves both paths, since explicit mode only checks that the model
+		// path exists.
 		const r = await resolveWeights({ modelPath: TOKENIZER_PATH, tokenizerPath: TOKENIZER_PATH })
 		expect(r.modelCardPath).toBeUndefined()
 		expect(r.source).toBe("explicit")
