@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `german` — the Ortsteil surface (#1946). WOF's `spr.name` for a German neighbourhood is the ascii-folded label,
- *   and the `names` table carries the German spelling beside labels for co-located features. the recipe has to pick the
- *   spelling a German types, and drop the `<city>-` prefix WOF sometimes writes.
  */
 
 import { ortsteilSurface } from "@mailwoman/corpus/de/recipes/locale"

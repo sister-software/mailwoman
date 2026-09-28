@@ -3,32 +3,20 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `ban`: Base Adresse Nationale CSV adapter (FR street-level).
+ * `ban`: Base Adresse Nationale CSV adapter (FR street-level).
  *
- *   Input: a CSV dump from `adresse.data.gouv.fr` (semicolon-separated, ~25M rows nationally). The
- *   adapter only reads the small set of columns needed for the corpus:
+ * Input is a semicolon-separated CSV dump from `adresse.data.gouv.fr`. The adapter reads `numero`
+ * as `house_number`, `rep` as a repetition index appended to it, `nom_voie` as `street`,
+ * `code_postal` as `postcode`, and `nom_commune` as `locality`. BAN carries no region and no
+ * country. The adapter stamps `country: "FR"` on every row and leaves region to the
+ * wof-postalcode and wof-admin cross-reference at corpus build time.
  *
- *   - `numero` → `house_number`
- *   - `rep` → repetition index ("bis", "ter") appended to house_number
- *   - `nom_voie` → `street` (full road name. includes the prefix "Rue", "Avenue", etc.)
- *   - `code_postal` → `postcode`
- *   - `nom_commune` → `locality`
+ * The official BAN is dual-licensed under Licence Ouverte 2.0 and ODbL. This adapter elects
+ * Licence Ouverte 2.0, which permits training with attribution, and stamps it on every row. The
+ * model card must carry the BAN attribution.
  *
- *   `region` and `country` are not in BAN. The adapter stamps `country: "FR"` on every row. region is
- *   left for the wof-postalcode + wof-admin cross-reference at corpus build time (a future pass.
- *   for Phase 1 the row's region is simply absent).
- *
- *   License: the official BAN (adresse.data.gouv.fr) is dual-licensed — Licence Ouverte 2.0 (Etalab,
- *   attribution-only) or ODbL (share-alike). We elect Licence Ouverte 2.0 (issue #26 Tier B:
- *   allowed for training with attribution. the ODbL option's share-alike obligation would defeat
- *   the proprietary-weights goal). Stamped onto every row as `Licence Ouverte 2.0` — not the older
- *   conservative `ODbL-1.0` label, which wrongly read as Tier-C-denied in the corpus license audit.
- *   The model card must carry the BAN attribution (Tier B obligation).
- *
- *   The adapter is streaming-aware: `CSVSpliterator.fromAsync` reads the `;`-delimited dump row by
- *   row, so a 25M-row file never sits in memory. Honors `opts.limit` for fixture / smoke runs,
- *   `opts.signal` for cancellation, and `opts.country` for a self-consistency check (errors if
- *   country !== FR).
+ * The adapter streams with `CSVSpliterator.fromAsync`, so a 25M-row file never sits in memory. It
+ * honors `opts.limit`, `opts.signal`, and `opts.country` (which errors when country is not FR).
  */
 
 import { formatAddressRow } from "@mailwoman/codex/address-format"
