@@ -26,12 +26,7 @@ export type WOFPlacetype =
 	| "address"
 
 /**
- * Describes one ranked match for a place lookup.
- *
- * The `score` field is only meaningful as an ordering.
- * The `distanceKm` field is set only when the query has `near`.
- *
- * The WOF id is stored as `id` so that this shape satisfies `ResolvedPlace` from `@mailwoman/resolver`.
+ * Describes one ranked match for a place lookup, with `id` as the WOF id so the shape satisfies `ResolvedPlace`.
  */
 export interface PlaceCandidate {
 	id: number
@@ -46,55 +41,39 @@ export interface PlaceCandidate {
 	lon: number
 
 	/**
-	 * The place's depth-1 ancestor id from the ancestors sidecar.
-	 *
-	 * The field is absent when the artifact has no sidecar, even for a place with a parent.
-	 * A consumer can use it to tell whether a locality and a `localadmin` of the same name are one settlement.
+	 * The place's depth-1 ancestor id from the ancestors sidecar, absent when the artifact has no sidecar even for a place with a parent.
 	 */
 	parent_id?: number
 	score: number
 	distanceKm?: number
 
 	/**
-	 * Whether the candidate's name or an alias exactly equals the query.
-	 *
-	 * A later re-rank uses it to stay within the exact-match tier.
+	 * Whether the candidate's name or an alias exactly equals the query, used by a later re-rank to stay within the exact-match tier.
 	 */
 	exactMatch?: boolean
 
 	/**
-	 * The population term plus the best proximity-bias term.
-	 *
-	 * The exact tier sorts by this instead of population when the query has `near` or `bias`.
+	 * The population term plus the best proximity-bias term, which the exact tier sorts by instead of population when the query has `near` or `bias`.
 	 */
 	prominence?: number
 
 	/**
-	 * The WOF `wof:population` value.
-	 * An absent value means the population is unknown.
+	 * The WOF `wof:population` value, absent when the population is unknown.
 	 */
 	population?: number
 
 	/**
-	 * The referential likelihood in [0, 1], derived from {@link PlaceCandidate.population}.
-	 *
-	 * It orders candidates the same way population does, and it is absent whenever population is.
+	 * The referential likelihood in [0, 1], derived from {@link PlaceCandidate.population} and absent whenever it is.
 	 */
 	referential?: number
 
 	/**
-	 * The encyclopedia-evidence importance in [0, 1], used for display only.
-	 *
-	 * It is present only when the extract's `place_importance` table has the split columns.
-	 * An absent value means the importance is unknown.
+	 * The encyclopedia-evidence importance in [0, 1], used for display only and present only when the extract's `place_importance` table has the split columns.
 	 */
 	encyclopedic?: number
 
 	/**
-	 * The blended toponym prior in [0, 1] that `rankByImportance` reads for bare toponyms.
-	 *
-	 * Only the candidate-table backend sets it.
-	 * An absent value means the prior is unknown.
+	 * The blended toponym prior in [0, 1] that `rankByImportance` reads for bare toponyms, set only by the candidate-table backend.
 	 */
 	importance?: number
 
@@ -104,34 +83,23 @@ export interface PlaceCandidate {
 	bbox?: LatLonBounds
 
 	/**
-	 * Set by the postcode path when the chosen locality is far from the postcode's own locality.
-	 *
-	 * The candidate is still returned so that callers can lower their confidence.
+	 * Set by the postcode path when the chosen locality is far from the postcode's own locality; the candidate is still returned so callers can lower their confidence.
 	 */
 	mismatch?: boolean
 
 	/**
-	 * Whether the ancestors sidecar places this candidate under the
-	 * query's {@link FindPlaceQuery.regionQualifier}.
-	 *
-	 * The value `false` means the check ran and the candidate is outside the region.
-	 * An absent value means the check did not run.
+	 * Whether the ancestors sidecar places this candidate under the query's {@link FindPlaceQuery.regionQualifier}, with `false` meaning the check ran and an absent value meaning it did not.
 	 */
 	containedByQualifier?: boolean
 
 	/**
-	 * Set when the variant exemption spared the candidate from the cross-country alias penalty.
-	 *
-	 * Only the candidate-table backend sets it.
+	 * Set when the variant exemption spared the candidate from the cross-country alias penalty, by the candidate-table backend only.
 	 */
 	variantAliasExempted?: true
 }
 
 /**
- * Describes a place lookup.
- * Every field except `text` narrows or ranks the search.
- *
- * An extract without the R*Tree index silently ignores `bbox` and `near.maxDistanceKm`.
+ * Describes a place lookup where every field except `text` narrows or ranks the search, and an extract without the R*Tree index silently ignores `bbox` and `near.maxDistanceKm`.
  */
 export interface FindPlaceQuery {
 	text: string
@@ -143,25 +111,17 @@ export interface FindPlaceQuery {
 	country?: string
 
 	/**
-	 * Restricts the typo-fuzzy tier to one ISO 3166-1 alpha-2 country.
-	 * Exact matches stay worldwide.
-	 *
-	 * A fuzzy miss in this country returns no result and does not fall back to a worldwide correction.
-	 * The field is ignored when `country` is set.
+	 * Restricts the typo-fuzzy tier to one ISO 3166-1 alpha-2 country, returning no result on a miss rather than falling back worldwide; ignored when `country` is set.
 	 */
 	fuzzyCountry?: string
 
 	/**
-	 * Whether to match only primary names.
-	 *
-	 * Probes that re-read a token from a longer span set it because that token was never an alias.
+	 * Whether to match only primary names, set by probes that re-read a token from a longer span because that token was never an alias.
 	 */
 	primaryOnly?: boolean
 
 	/**
-	 * Alias name roles, such as `abbr` or `gloss`, that the probe excludes.
-	 *
-	 * Rows with no role, and artifacts without a role column, are unaffected.
+	 * Alias name roles, such as `abbr` or `gloss`, that the probe excludes; rows with no role and artifacts without a role column are unaffected.
 	 */
 	excludeNameRoles?: readonly string[]
 
@@ -171,42 +131,27 @@ export interface FindPlaceQuery {
 	parentID?: number
 
 	/**
-	 * The sibling postcode for a `locality` query.
-	 *
-	 * When a `postcode_locality` table exists, the lookup adds that postcode's localities
-	 * and scores them on a weighted blend of postcode, name and population evidence.
-	 * This finds small localities that a name match misses.
+	 * The sibling postcode for a `locality` query; a `postcode_locality` table adds that postcode's localities and scores them on a weighted blend so small localities a name match misses are found.
 	 */
 	postcode?: string
 
 	/**
-	 * Whether a locality query with `postcode` moves candidates near the postcode's
-	 * centroid to the front, sorted by distance.
-	 * The remaining candidates keep their order.
+	 * Whether a locality query with `postcode` moves candidates near the postcode's centroid to the front, sorted by distance, with the rest keeping their order.
 	 */
 	postcodeContainmentCoherence?: boolean
 
 	/**
-	 * The parsed region qualifier for a locality lookup.
-	 *
-	 * A backend with the ancestors sidecar marks contained candidates and ranks them first.
-	 * It may also add contained candidates that a country scope hid.
-	 * It never removes candidates.
+	 * The parsed region qualifier for a locality lookup; a backend with the ancestors sidecar marks contained candidates, ranks them first, may add ones a country scope hid, and never removes candidates.
 	 */
 	regionQualifier?: string
 
 	/**
-	 * A proximity hint that boosts nearby candidates.
-	 * It filters by radius only when `maxDistanceKm` is set.
+	 * A proximity hint that boosts nearby candidates and filters by radius only when `maxDistanceKm` is set.
 	 */
 	near?: LatLon & { maxDistanceKm?: number }
 
 	/**
-	 * Ordered proximity-bias points, such as a viewport center or user location.
-	 * Each point has an optional weight that defaults to 1.
-	 *
-	 * The bias re-ranks exact-tier candidates by combined prominence and never removes candidates.
-	 * The `near` point counts as a bias point of weight 1.
+	 * Ordered proximity-bias points with an optional weight defaulting to 1; the bias re-ranks exact-tier candidates by combined prominence, never removes them, and counts `near` as weight 1.
 	 */
 	bias?: Array<LatLon & { weight?: number }>
 
@@ -222,9 +167,7 @@ export interface FindPlaceQuery {
 }
 
 /**
- * Resolves a {@link FindPlaceQuery} to ranked {@link PlaceCandidate}s.
- *
- * The method is asynchronous so that a worker-backed implementation can use the same interface.
+ * Resolves a {@link FindPlaceQuery} to ranked {@link PlaceCandidate}s, asynchronously so a worker-backed implementation can share the interface.
  */
 export interface PlaceLookup extends Disposable {
 	findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]>

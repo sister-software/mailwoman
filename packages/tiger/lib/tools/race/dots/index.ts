@@ -3,22 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Race-by-dot-density builder — the Cooper Center "Racial Dot Map" recipe, from the tiger DB the
- *   `mailwoman tiger` CLI produces.
- *
- *   Reads `tabblock20 ⋈ pl_block` (block geometry + Census 2020 P.L. 94-171 table P2 counts) and
- *   scatters one dot per `per` people uniformly at random inside each block, tagged with its
- *   race/ethnicity category. Output is ndjson (one GeoJSON Point Feature per line, with a
- *   `tippecanoe` layer hint) ready for `tippecanoe -o race-dots.pmtiles`.
- *
- *   Point-in-polygon uses `@turf/boolean-contains` (ships with `@mailwoman/tiger`). The dot is a
- *   _representation_ rather than a record: a random position inside the block it belongs to, standing in
- *   for `per` real people of that category. It makes no statement about any individual address.
- *
- *   Build the input DB first: `mailwoman tiger fetch --state 06 --county 059 --out tiger-oc.db` then
- *   `mailwoman tiger redistricting --state 06 --county 059 --out tiger-oc.db`.
- *
- *   Run: `mailwoman tiger race-dots --db tiger-oc.db --per 10 --out /tmp/race-dots.ndjson`
+ *   A dot is a representation rather than a record: a random position inside the block it belongs to,
+ *   making no statement about any individual address.
  */
 
 import { dataRootPath, tempRootPath } from "@mailwoman/core/data-root"
@@ -28,9 +14,6 @@ import { DatabaseClient } from "@mailwoman/sqlite/client"
 
 import type { TIGERDatabase } from "#sdk/schema"
 
-/**
- * Attempts to place a dot inside its polygon by rejection sampling before giving up on it.
- */
 const MAX_PLACEMENT_TRIES = 60
 
 /**
@@ -39,26 +22,18 @@ const MAX_PLACEMENT_TRIES = 60
 export interface RaceDotsOptions {
 	/**
 	 * Tiger SQLite DB (`tabblock20` ⋈ `pl_block`).
-	 *
-	 * Default `$MAILWOMAN_DATA_ROOT/tiger/tiger-oc.db`.
 	 */
 	db?: string
 	/**
 	 * Output ndjson path.
-	 *
-	 * Default `/tmp/race-dots.ndjson`.
 	 */
 	out?: string
 	/**
 	 * People represented by one dot.
-	 *
-	 * Default 10.
 	 */
 	per?: number
 	/**
 	 * Tippecanoe layer name.
-	 *
-	 * Default `dots`.
 	 */
 	layer?: string
 }

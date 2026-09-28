@@ -2,10 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- * Node-side {@link PlaceLookup} for `candidate.db`.
- * Keeps server/CLI behavior aligned with the browser runtime.
- * Uses population-first ranking from `neg_rank` with shared key normalization.
  */
 
 import { expandPlacetypeFilter } from "@mailwoman/codex/placetype-map"
@@ -39,25 +35,16 @@ export { rankByPrimaryPreference } from "#primary-preference"
 export type { RankedRow } from "#primary-preference"
 
 /**
- * Where a {@link WOFCandidateTableLookup} reads from, and how it ranks.
- *
- * The source is a `candidate.db` built by `build-candidate.ts`, opened read-only,
- * or a connection the caller already holds.
+ * Where a {@link WOFCandidateTableLookup} reads from (a read-only `candidate.db` or a caller-held connection) and how it ranks.
  */
 export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<CandidateDatabase> {
 	/**
-	 * #1882 opt-in: exempt `name_role = 'variant'` aliases — the holder's own primary name in another orthography,
-	 * stamped by the build's own-name detector — from the cross-country primary-preference penalty.
-	 *
-	 * No-ops on an artifact without the role column.
-	 * Off by default (D-rule).
+	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty; no-ops without the role column and is off by default.
 	 */
 	variantAliasExemption?: boolean
 }
 
-/**
- * Candidate columns selected by this lookup.
- */
+
 type CandidateRow = Pick<
 	CandidateTable,
 	| "spr_id"
@@ -77,32 +64,21 @@ type CandidateRow = Pick<
 	// Optional because older artifacts may not include `importance`.
 	Partial<Pick<CandidateTable, "importance">>
 
-/**
- * FTS5 trigram over-fetch size before word-level re-rank.
- */
+
 const FUZZY_FETCH = 40
 
-/**
- * Minimum word-level similarity for fuzzy matches.
- */
+
 const WORD_FUZZY_MIN = 0.85
 
-/**
- * Word-level correction similarity.
- */
+
 function wordFuzzySimilarity(a: string, b: string): number {
 	return Math.max(jaroWinkler(a, b), levenshteinSimilarity(a, b))
 }
 
-/**
- * Radius (km) used for postcode-containment re-rank checks.
- */
+
 const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
 
-/**
- * Builds an OR-ed FTS5 trigram match query from `s`.
- * Returns "" if no valid trigrams are available.
- */
+
 function ftsTrigramQuery(s: string): string {
 	const grams = new Set<string>()
 
@@ -125,60 +101,40 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	readonly #idToCountry = new Map<number, string>()
 	readonly #placetypeToID = new Map<string, number>()
 	readonly #idToPlacetype = new Map<number, string>()
-	/**
-	 * Prepared `(name_key, postcode)` probe for postal-city lookup.
-	 */
+
 	readonly #postalCityProbe: ReturnType<DatabaseClient["prepare"]> | undefined
-	/**
-	 * Prepared FTS5 trigram `match` probe for fuzzy fallback.
-	 */
+
 	readonly #ftsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Prepared unfiltered `name_key` existence probe.
-	 *
-	 * Used to ensure fuzzy fallback only runs for true name misses.
+	 * Prepared unfiltered `name_key` existence probe, so fuzzy fallback runs only for true name misses.
 	 */
 	readonly #nameKeyExistsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
-	/**
-	 * Coverage facts declared by the artifact, if available.
-	 */
+
 	readonly artifactCoverage: GazetteerArtifactCoverage | undefined
-	/**
-	 * Select fragment for optional `importance` column.
-	 */
+
 	readonly #importanceSelect: string
-	/**
-	 * Whether the artifact has the `name_role` column.
-	 */
+
 	readonly #hasNameRole: boolean
 	readonly #variantAliasExemption: boolean
-	/**
-	 * Select fragment for optional `name_role` column.
-	 */
+
 	readonly #roleSelect: string
-	/**
-	 * Prepared chain probe over `candidate_ancestor` sidecar.
-	 */
+
 	readonly #ancestorsProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #ancestorsCache = new Map<number, Ancestor[]>()
-	/**
-	 * Prepared interval-label probe over `candidate_interval`.
-	 */
+
 	readonly #intervalProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	readonly #intervalCache = new Map<number, IntervalLabel | null>()
-	/**
-	 * Prepared qualifier probe for region-band rows (+ country).
-	 */
+
 	readonly #qualifierProbe: ReturnType<DatabaseClient["prepare"]> | undefined
 	/**
-	 * Ancestor lineage accessor (nearest-first), when supported by the artifact.
+	 * Ancestor lineage accessor, nearest-first, present only when the artifact supports it.
 	 */
 	readonly ancestors: ((id: number | string) => Ancestor[]) | undefined
 
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		super(opts)
 
-		// Load small country/placetype code tables once at construction.
+
 		for (const r of allRows<CountryCodeTable>(this.database.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
 			this.#countryToID.set(code, Number(r.id))
@@ -190,14 +146,14 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
-		// Prepare postal-city probe only when the side-index table exists.
+
 		if (hasTable(this.database, POSTAL_CITY_CANDIDATE_TABLE)) {
 			this.#postalCityProbe = this.database.prepare(
 				`SELECT spr_id, name, latitude, longitude FROM ${POSTAL_CITY_CANDIDATE_TABLE} WHERE name_key = ? AND postcode = ? LIMIT 1`
 			)
 		}
 
-		// Prepare fuzzy FTS probe only when the trigram index exists.
+
 		if (hasTable(this.database, CANDIDATE_FTS_TABLE)) {
 			this.#ftsProbe = this.database.prepare(
 				`SELECT name_key FROM ${CANDIDATE_FTS_TABLE} WHERE ${CANDIDATE_FTS_TABLE} MATCH ? ORDER BY bm25(${CANDIDATE_FTS_TABLE}) LIMIT ?`
@@ -206,13 +162,13 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			this.#nameKeyExistsProbe = this.database.prepare("SELECT 1 FROM candidate WHERE name_key = ? LIMIT 1")
 		}
 
-		// Detect optional columns once here for hot-path reads.
+		// Optional columns are detected once here for hot-path reads.
 		this.#importanceSelect = hasColumn(this.database, "candidate", "importance") ? ", importance" : ""
 		this.#hasNameRole = hasColumn(this.database, "candidate", "name_role")
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-		// Enable ancestors capability only when its sidecar table exists.
+
 		if (hasTable(this.database, CANDIDATE_ANCESTOR_TABLE)) {
 			this.#ancestorsProbe = this.database.prepare(
 				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
@@ -222,7 +178,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			this.ancestors = (id) => this.#ancestorLineage(id)
 		}
 
-		// Enable admin-containment support when interval sidecar + placetype band are present.
+
 		if (this.#ancestorsProbe && hasTable(this.database, CANDIDATE_INTERVAL_TABLE)) {
 			this.#intervalProbe = this.database.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
 
@@ -237,13 +193,11 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		}
 
-		// Read optional artifact coverage manifest.
+
 		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
 	}
 
-	/**
-	 * Memoized chain read behind {@link ancestors}.
-	 */
+
 	#ancestorLineage(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
 
@@ -269,10 +223,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return lineage
 	}
 
-	/**
-	 * Memoized interval label lookup for one place.
-	 * `null` means no recorded interval label.
-	 */
+
 	#intervalLabel(sprID: number): IntervalLabel | null {
 		if (!this.#intervalProbe) return null
 
@@ -288,10 +239,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return label
 	}
 
-	/**
-	 * Resolve qualifier keys to matching region-band (+ country) row IDs.
-	 * Empty means no known qualifier match.
-	 */
+
 	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
 		const ids = new Set<number>()
 
@@ -309,8 +257,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Checks whether `sprID` is contained by any qualifier row.
-	 * Uses interval labels first, then ancestor-chain fallback.
+	 * Whether `sprID` is contained by any qualifier row, using interval labels first and the ancestor chain as fallback.
 	 */
 	#containedByQualifier(sprID: number, qualifierIDs: ReadonlySet<number>, qualifierLabels: IntervalLabel[]): boolean {
 		if (qualifierIDs.has(sprID)) return true
@@ -323,9 +270,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Applies admin-containment re-rank to the final row set.
-	 *
-	 * Stamps containment, injects contained misses, then partitions contained-first.
+	 * Apply admin-containment re-rank: stamp containment, inject contained misses, then partition contained-first.
 	 */
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
@@ -429,9 +374,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		).slice(0, opts.limit)
 	}
 
-	/**
-	 * Whether the query targets locality-tier results.
-	 */
+
 	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
 		if (!placetype) return true
 		const want = Array.isArray(placetype) ? placetype : [placetype]
@@ -439,10 +382,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return expandPlacetypeFilter(want as readonly string[]).includes("locality")
 	}
 
-	/**
-	 * Returns postcode centroid anchor row for containment re-rank.
-	 * Returns null when missing or unlocated.
-	 */
+
 	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
 		const placetypeID = this.#placetypeToID.get("postalcode")
 
@@ -484,7 +424,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		if (!nameKey) return []
 
-		// Exact postcode + city alias hit short-circuits to one locality.
+
 		if (query.postcode && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
 			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
 				| Pick<PostalCityCandidateTable, "spr_id" | "name" | "latitude" | "longitude">
@@ -508,8 +448,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		const limit = Math.max(1, query.limit ?? 10)
 
-		// Shared filter conditions for exact and stripped probes.
-		// Shape filters are tracked separately from country scope.
+		// Shape filters are tracked separately from the shared country scope for exact and stripped probes.
 		const filters: string[] = []
 		const filterParams: Array<string | number> = []
 		const shapeFilters: string[] = []
@@ -547,18 +486,17 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			shapeFilters.push("is_primary = 1")
 		}
 
-		// Optional role filter.
-		// An artifact lacking `name_role` returns the same rows with it set.
+		// The role filter is skipped on an artifact lacking `name_role`.
 		if (query.excludeNameRoles?.length && this.#hasNameRole) {
 			shapeFilters.push(`(name_role IS NULL OR name_role NOT IN (${query.excludeNameRoles.map(() => "?").join(",")}))`)
 			shapeParams.push(...query.excludeNameRoles)
 		}
 
-		// Main probe conditions: country, then shape.
+
 		filters.push(...shapeFilters)
 		filterParams.push(...shapeParams)
 
-		// Optional region scope via `region_id = parentID`; fallback stays unscoped.
+		// Region scope is optional (`region_id = parentID`); the fallback stays unscoped.
 		const regionParentID = query.parentID || undefined
 
 		const probe = (nk: string, regionID: number | undefined, countryID?: number): Array<RankedRow<CandidateRow>> => {
@@ -570,14 +508,13 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				params.push(regionID)
 			}
 
-			// Optional fuzzy-tier country scope.
+
 			if (typeof countryID === "number") {
 				conds.push("country_id = ?")
 				params.push(countryID)
 			}
 
-			// Population-ordered fetch with over-fetch for bounded primary-preference rerank.
-			// `population` and optional `importance` are carried for output/prior logic.
+			// Population-ordered fetch over-fetches for the bounded primary-preference rerank.
 			const sql =
 				"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, min_lat, min_lon, max_lat, max_lon, neg_rank, is_primary, population" +
 				`${this.#importanceSelect}${this.#roleSelect} FROM candidate WHERE ${conds.join(" AND ")} ORDER BY neg_rank ASC LIMIT ?`
@@ -587,12 +524,12 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
-		// Exact → stripped → fuzzy cascade at a fixed region scope.
+
 		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
 			if (!rows.length) {
-				// Query-side qualifier-strip fallback on exact miss.
+
 				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 				if (strippedKey && strippedKey !== nameKey) {
@@ -601,8 +538,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				}
 			}
 
-			// Typo-tolerant fallback for true name misses only.
-			// Skips postcodes and respects optional fuzzy-country scope.
+			// Typo-tolerant fallback for true name misses only, skipping postcodes and respecting the fuzzy-country scope.
 			const fuzzyCountryID =
 				!query.country && query.fuzzyCountry ? this.#countryToID.get(query.fuzzyCountry.toUpperCase()) : undefined
 
@@ -632,7 +568,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 					for (const h of ranked) {
 						if (seen.has(h.nk)) continue
 						seen.add(h.nk)
-						// Mark rows returned from fuzzy tier.
+
 						rows.push(...probe(h.nk, regionID, fuzzyCountryID).map((r) => ({ ...r, fuzzy: true })))
 
 						if (rows.length >= limit) break
@@ -646,16 +582,16 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		}
 
 		let rows = cascade(regionParentID)
-		// Tracks whether rows came from unscoped region fallback.
+
 		let regionScopeMiss = false
 
-		// If region-scoped cascade misses, retry unscoped.
+
 		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
 			regionScopeMiss = rows.length > 0
 		}
 
-		// Optional postcode-containment coherence re-rank by anchor distance.
+
 		if (
 			query.postcode &&
 			query.postcodeContainmentCoherence === true &&
@@ -686,7 +622,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		}
 
-		// Optional admin-containment re-rank runs last.
+		// Admin-containment re-rank runs last.
 		if (query.regionQualifier?.trim() && this.#qualifierProbe && this.#wantsLocality(query.placetype)) {
 			rows = this.#applyAdminContainment(rows, query.regionQualifier.trim(), query.country, {
 				nameKey,
@@ -705,29 +641,29 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				id: Number(row.spr_id),
 				name: String(row.name ?? ""),
 				placetype: (this.#idToPlacetype.get(Number(row.placetype_id)) ?? "") as WOFPlacetype,
-				// Surface country for postcode-country restriction in cascade.
+
 				country: this.#idToCountry.get(Number(row.country_id)) ?? "",
 				lat: Number(row.latitude),
 				lon: Number(row.longitude),
-				// Include depth-1 ancestor ID when available.
+
 				...(parent ? { parent_id: Number(parent.id) } : {}),
-				// Raw population-based rank.
+
 				score: -Number(row.neg_rank),
-				// Effective rank after bounded primary-preference adjustment.
+
 				prominence: -Number(row.effectiveNegRank),
-				// Exact unless demoted or produced by fuzzy tier.
+
 				exactMatch: !row.demoted && !row.fuzzy,
-				// Mark rows returned via unscoped region fallback.
+
 				...(regionScopeMiss ? { regionScopeMiss: true } : {}),
-				// Admin-containment stamp (emitted when queried).
+
 				...(row.containedByQualifier === undefined ? {} : { containedByQualifier: row.containedByQualifier }),
-				// Marks when variant-alias exemption was applied.
+
 				...(row.variantExempted ? { variantAliasExempted: true as const } : {}),
-				// Carry population + referential score when population is valid.
+
 				...(row.population === null || row.population <= 0
 					? {}
 					: { population: row.population, referential: referentialFromPopulation(row.population) }),
-				// Carry optional fame prior from `importance`.
+
 				...(typeof row.importance === "number" && Number.isFinite(row.importance)
 					? { importance: row.importance }
 					: {}),
@@ -744,7 +680,7 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		})
 
-		// Optional proximity re-rank using shared implementation.
+
 		if (query.bias && query.bias.length) {
 			applyProximityRerank(candidates, query.bias)
 		}

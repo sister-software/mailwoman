@@ -2,30 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   One survey area's attributes, its own metadata, and its mapped footprint.
- *
- *   the footprint is the survey-area outline, never the union OF the rated polygons. `notcom`,
- *   access-denied and `notpub` map units are inside the footprint and carry no rating, so a footprint taken
- *   from the rated set would report them as unmapped when the authority has declared exactly what they are.
- *   The archive ships the outline as its own shapefile — `soilsa_a_<areasymbol>.shp`, one feature — which is
- *   why this layer never has to reconstruct it.
- *
- *   the refresh date is not the survey date, and conflating them is the currency LIE this file exists TO
- *   prevent. `IA153` carries `saverest` 2025-09-09 and version 28, and the fgdc lineage inside the same
- *   archive cites `Soil Survey of Polk County, Iowa`, 1:15,840, **1960**. The dataset's own
- *   time-period-of-content runs 1998-09-22 to 2025-09-09, so a consumer reading that as survey currency
- *   reads it wrong by sixty-five years. Both dates are stored, apart, with the title the older one came
- *   from so it is checkable rather than assertible.
- *
- *   two scales, also different facts. `legend.projectscale` is 12,000 for `IA153`, the scale the map units
- *   were digitized at. The 1960 source citation's own `srcscale` is 15,840, the scale the ground was
- *   walked at. Storing one as the other would answer the enlargement caveat's question wrongly.
- *
- *   the licence is checked PER survey area, against the `useconst` element of the metadata that area ships.
- *   An area whose use constraints no longer say "This is public information" is a licence change, and a
- *   build that absorbed one would ship an artifact under terms nobody checked. The text is boilerplate
- *   repeated across ssurgo, which is why asserting it is cheap and why a change in it is loud.
  */
 
 import { parseJSONStrict, stringifyJSON } from "@mailwoman/core/json"
@@ -46,10 +22,8 @@ import {
 } from "#vocabulary"
 
 /**
- * The declared domains this layer validates against, and stores.
- *
- * `capability_class` is shared by `nirrcapcl`, `irrcapcl` and `muaggatt.niccdcd`,
- * which is why one domain covers three columns.
+ * The declared domains this layer validates against and stores; `capability_class` covers `nirrcapcl`,
+ * `irrcapcl` and `muaggatt.niccdcd`.
  */
 export const STORED_DOMAINS = [
 	"capability_class",
@@ -73,8 +47,8 @@ export interface SurveyAreaAttributes {
 	sourceScale: number | null
 	mappingScale: number | null
 	/**
-	 * The area the authority publishes for this survey area, in acres —
-	 * the independent witness the ring-area check compares against.
+	 * The area the authority publishes for this survey area, in acres — the independent witness the
+	 * ring-area check compares against.
 	 */
 	areaAcres: number | null
 	mapUnits: SoilMapUnitTable[]
@@ -172,9 +146,8 @@ export async function readSurveyAreaAttributes(
 		return {
 			cokey: row.cokey!,
 			mukey: row.mukey!,
-			// A blank `comppct_r` is a component with no declared weight.
-			// Zero is the truthful reading — it contributes no weight to a weighted share —
-			// and it is recorded rather than dropped, so the component still appears.
+			// A blank `comppct_r` is a component with no declared weight, recorded as zero rather
+			// than dropped so the component still appears.
 			comppct_r: row.comppct_r ? Number(row.comppct_r) : 0,
 			compname: nullable(row.compname),
 			compkind: nullable(row.compkind),
@@ -226,15 +199,8 @@ export async function readSurveyAreaAttributes(
 }
 
 /**
- * A polygon the authority drew with no soil mapping behind it.
- *
- * Three signals rather than one, because the source encodes the same fact three ways and each on its
- * own has a gap: the symbol (`notcom`, `notpub`), the name (`Area not surveyed, access denied`),
- * and the structural case of a map unit carrying no components at all.
- * A map unit with no components has no component to rate whatever it is called, and reading
- * it as "assigned no rating" rather than "no mapping" would put it in `unrated_share`.
- *
- * A claim that the survey looked and declined, when it did not look.
+ * A polygon the authority drew with no soil mapping behind it; a map unit with no components has no
+ * component to rate, so it reads as no mapping rather than assigned no rating.
  */
 function isNoMapping(musym: string, muname: string, componentCount: number): boolean {
 	if (SSURGO_NO_MAPPING_SYMBOLS.has(musym.toUpperCase())) return true
@@ -245,13 +211,8 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 }
 
 /**
- * Refuse a value outside the authority's own declared domain.
- *
- * An unknown code is a source-schema change, which is the event a reader most needs to hear about.
- * Coercing it to a nearest neighbour or to NULL converts "the source changed" into "the value is missing".
- *
- * A blank is not a violation: NULL is a real state in every one of these columns and means something
- * specific, for `nirrcapcl` it means the survey did not rate the component, which is not class 8.
+ * Refuse a value outside the authority's own declared domain; a blank is a real NULL state rather
+ * than a violation, recording that the survey did not rate the component.
  */
 function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
 	if (!value) return
@@ -268,13 +229,8 @@ function nullable(value: string | undefined): string | null {
 }
 
 /**
- * The nccpi v3.0 overall index per component.
- *
- * `cointerp` is the largest table in the export — 157,063 rows for `IA153`, read in 0.36 s —
- * and the overall rule is one row per component at {@link COINTERP_OVERALL_RULE_DEPTH}:
- * 369 of 369 components on `IA153`, of which 327 carry a value.
- * Sub-rules at greater depths are the submodels (corn, soybeans, small grains, cotton),
- * which this layer does not carry.
+ * The nccpi v3.0 overall index per component; sub-rules at greater depths are submodels this layer
+ * does not carry.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -307,7 +263,7 @@ async function readNCCPI(
  */
 export interface FGDCMetadata {
 	/**
-	 * The citation's own `pubdate`, as an ISO date — the refresh.
+	 * The citation's own `pubdate` as an ISO date — the refresh, not the survey date.
 	 */
 	publicationDate: string
 	/**
@@ -320,18 +276,6 @@ export interface FGDCMetadata {
 
 /**
  * Read the metadata nrcs ships inside the archive.
- *
- * Targeted extraction rather than a general XML parse, and not for want of a parser —
- * `@mailwoman/core` ships `htmlparser2`.
- * A parser recovers an unclosed element by giving it the rest of the document as its content,
- * and the two values below that throw would then stamp the artifact with that content
- * instead. {@link elementText} answers `undefined` for an element it cannot read,
- * which is what makes the throw reachable.
- *
- * Every value this reader cannot find is reported as `null` except the publication date
- * and the licence sentence, which throw.
- * Those two decide the artifact's vintage and whether it may be shipped at all,
- * and neither has a safe default.
  *
  * @throws {Error} When the metadata carries no publication date, or its use
  * constraints no longer carry the public-information sentence.
@@ -365,15 +309,14 @@ export function readFGDCMetadata(xml: string, areaSymbol: string): FGDCMetadata 
 }
 
 /**
- * The lineage's source citations: what the polygons rest on, and when each was made.
+ * The lineage's source citations — what the polygons rest on and when each was made.
  */
 function readSourceCitations(xml: string): Array<{ date: string; title: string; scale: number | null }> {
 	const citations: Array<{ date: string; title: string; scale: number | null }> = []
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
-		// `caldate` for a single date, `begdate` for a range.
-		// A range's END is when the source stopped being collected.
-		// Its beginning is when the ground was first looked at, which is the fact this layer is carrying.
+		// `caldate` for a single date, `begdate` for a range, whose beginning is the date
+		// this layer carries.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 
 		if (!date) continue
@@ -391,16 +334,8 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 }
 
 /**
- * The text of the first `<name>` element, whitespace left alone.
- *
- * Index scans rather than A regex, and that is A correctness choice rather than A speed one.
- * The obvious form — ``new RegExp(`<${name}>([\\s\\S]*?)</${name}>`)`` —
- * backtracks polynomially on a document whose opening tag has no closing partner:
- * the lazy run re-scans to the end from every candidate start.
- *
- * The input here is a 43,251-character document that arrived over the network inside a downloaded
- * archive, so "a malformed one cannot happen" is not a claim this reader gets to make.
- * Two `indexOf` calls answer the same question in one pass.
+ * The text of the first `<name>` element, whitespace left alone; two `indexOf` calls avoid the
+ * polynomial backtracking a regex takes on a document whose opening tag has no closing partner.
  */
 function elementText(xml: string, name: string): string | undefined {
 	const open = `<${name}>`
@@ -411,16 +346,14 @@ function elementText(xml: string, name: string): string | undefined {
 	const from = start + open.length
 	const end = xml.indexOf(`</${name}>`, from)
 
-	// An element with no closing tag is unreadable rather than empty.
-	// The same answer an absent element gets, because both mean the value could
-	// not be read rather than that it is blank.
+	// An element with no closing tag is unreadable rather than empty, the same answer an absent
+	// element gets.
 	return end === -1 ? undefined : xml.slice(from, end)
 }
 
 /**
- * Every `<name>` element's inner text, in document order.
- *
- * The repeating counterpart of {@link elementText}, and linear for the same reason.
+ * Every `<name>` element's inner text in document order, the repeating counterpart of
+ * {@link elementText}.
  */
 function elementBlocks(xml: string, name: string): string[] {
 	const open = `<${name}>`
@@ -445,11 +378,8 @@ function elementBlocks(xml: string, name: string): string[] {
 }
 
 /**
- * Fgdc dates arrive as `yyyy` or `yyyymmdd`.
- *
- * Both are kept as they are meant.
- * A bare year is a bare year, and padding it to January 1 would invent a
- * precision the citation does not claim.
+ * A bare year stays bare, since padding it to January 1 would invent a precision the citation
+ * does not claim.
  */
 function normalizeFGDCDate(value: string): string {
 	const trimmed = value.trim()

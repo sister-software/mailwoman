@@ -3,47 +3,25 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  * @file H3 cell primitives — the index types and the widen/shorten conversions.
- *
- *   Split out from `./index.ts` because these carry no dependency on `GeoPoint`, while the
- *   point-valued helpers there do. `geometries/point.ts` needs the primitives and is itself imported
- *   by `./index.ts`, so keeping them together closed an import cycle.
+
  */
 
 import { cellToParent, isValidCell } from "h3-js"
 import type { Tagged } from "type-fest"
 
 /**
- * The finest resolution H3 defines.
- *
- * Resolutions run `[0, H3_MAX_RESOLUTION]`.
+ * The finest resolution H3 defines; resolutions run `[0, H3_MAX_RESOLUTION]`.
  */
 export const H3_MAX_RESOLUTION = 15
 
 /**
- * A H3 cell index, full 64 bits.
- *
- * Written as 15 hex characters because the top nibble of a cell index is always zero:
- * bit 63 is reserved, and the 4-bit mode field that follows is `1` for a cell,
- * which lands entirely inside the second nibble.
- * That is why every cell index printed here begins with `8`.
- *
- * @type {string}
- * @title H3 Cell Index
- * @pattern ^[0-9a-f]{15}$
+ * A H3 cell index, full 64 bits, written as 15 lowercase hex characters matching `^[0-9a-f]{15}$`.
  */
 export type H3Cell = Tagged<string, "H3Cell">
 
 /**
- * Is `value` a real H3 cell index?
- *
- * Delegates to h3-js rather than testing the surface shape.
- * The shape is necessary but nowhere near sufficient.
- *
- * `000000000000000`, `fffffffffffffff` and `123456789abcdef` are all fifteen
- * lowercase hex characters and none of them is a cell.
- *
- * A guard that returns `value is H3Cell` on those hands the caller a branded type it has not earned,
- * and the error surfaces later inside h3-js with no reference to where the bad value entered.
+ * Is `value` a real H3 cell index, delegating to h3-js because the hex surface shape is
+ * necessary but not sufficient.
  */
 export function isH3Cell(value: string): value is H3Cell {
 	return isValidCell(value)
@@ -51,15 +29,12 @@ export function isH3Cell(value: string): value is H3Cell {
 
 /**
  * A H3 cell index with its mode and resolution nibbles removed — the low 52 bits, fixed width.
- *
- * @type {string}
- * @title H3 Cell Index (Short)
- * @pattern ^[0-9a-f]{13}$
  */
 export type H3CellShort = Tagged<string, "H3CellShort">
 
 /**
- * Number of hex characters in the short form. 52 bits: a 7-bit base cell followed by fifteen 3-bit digits.
+ * Number of hex characters in the short form: 52 bits, a 7-bit base cell followed by
+ * fifteen 3-bit digits.
  */
 const SHORT_CELL_HEX_LENGTH = 13
 
@@ -69,16 +44,8 @@ const SHORT_CELL_HEX_LENGTH = 13
 const SHORT_CELL_MASK = 0xf_ff_ff_ff_ff_ff_ffn
 
 /**
- * Strip the mode and resolution nibbles off a full H3 cell index, keeping the
- * base cell and the whole digit path.
- *
- * The digits past the cell's own resolution are all `7` in a valid index, so no digit is discarded
- * and no digit is inferred: the short form carries the cell losslessly for every resolution, and
- * {@link expandH3Cell} reverses it exactly once you tell it which resolution the cell was captured at.
- *
- * Zero-padded to a fixed 13 characters, so the hex form orders and compares the
- * same way the integer {@link shortCellToInt} packs does.
- * Base cells 0-7 leave the leading nibble zero, and an unpadded string would both mis-sort and mis-expand.
+ * Strip the mode and resolution nibbles off a full H3 cell index, keeping the base cell and the
+ * whole digit path, zero-padded to a fixed 13 characters so hex order matches integer order.
  */
 export function shortenH3Cell(cell: H3Cell): H3CellShort {
 	const cellBigInt = BigInt(`0x${cell}`)
@@ -88,24 +55,8 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 }
 
 /**
- * Rebuild a full H3 cell index from a short cell captured at `resolution`.
- *
- * The short form drops only the mode and resolution nibbles, so reconstruction is a straight
- * concatenation: `"8"` (cell mode) + the resolution nibble + the 52 bits verbatim.
- * The result is the identical index `latLngToCell` would have produced at that resolution.
- *
- * `resolution` is a required piece of external knowledge.
- * A short cell does not name its own resolution, so the caller has to supply
- * the one the cell was shortened at.
- *
- * Supplying the wrong one is caught rather than tolerated: a mismatch leaves digits
- * past the stated resolution set to something other than `7`, which H3 rejects,
- * and this throws instead of returning an index that downstream `cellToParent` calls
- * would refuse with `Cell arguments had incompatible resolutions`.
- *
- * @throws {RangeError} If `resolution` is not an integer in `[0, 15]`,
- * or `h3CellShort` is wider than 13 hex characters.
- * @throws {Error} If the short cell and resolution do not together name a valid H3 cell.
+ * Rebuild a full H3 cell index from a short cell captured at `resolution`, throwing when the
+ * resolution is out of range or the pair does not name a valid cell.
  */
 export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOLUTION): H3Cell {
 	if (!Number.isInteger(resolution) || resolution < 0 || resolution > H3_MAX_RESOLUTION) {
@@ -132,44 +83,24 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOL
 }
 
 /**
- * The full H3 index for a short cell held as an integer, stored at `resolution`.
- *
- * Through {@link expandH3Cell} rather than a string concatenation, because it validates:
- * a short cell that does not name a valid cell at the stated resolution throws here
- * instead of reaching `compactCells` as a plausible-looking index.
+ * The full H3 index for a short cell held as an integer, stored at `resolution`, through
+ * {@link expandH3Cell} so an invalid pair throws rather than reaching `compactCells`.
  */
 export function expandShortCellInt(shortCell: number, resolution: number): H3Cell {
 	return expandH3Cell(shortCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort, resolution)
 }
 
 /**
- * Pack an H3 cell into the short-cell integer used as a clustered B-tree key
- * across layer databases (poi.db, bdc.db, address-id). 52 bits, so it stays inside
- * `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column alike.
+ * Pack an H3 cell into the short-cell integer used as a clustered B-tree key across layer
+ * databases — 52 bits, inside `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column.
  */
 export function shortCellToInt(cell: H3Cell): number {
 	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }
 
 /**
- * The one resolution a set of stored short cells was captured at.
- *
- * A short cell drops the resolution nibble, so a table of them does not say what resolution it
- * is keyed at, and every `layer_coverage` reader needs that number to derive a probe's coverage cell.
- * It is recoverable because {@link expandH3Cell} validates: a short cell expands to
- * a valid index at exactly one resolution, so trying all sixteen and keeping the one
- * that survives is an exact answer rather than an inference.
- *
- * Shared rather than copied, because both failure modes it names are silent in a second copy.
- * A table that mixes resolutions read at one of them reports every cell at the other as
- * unsurveyed, and an empty table read as "resolution 0" puts every probe in the same cell.
- *
- * `packages/mailwoman/lib/observations/absence-route.ts` re-exports this under its
- * own name; `@mailwoman/coastal` calls it directly.
- *
- * @param context Names the caller in both messages, so a failure says which reader refused.
- * @throws {Error} When `cells` is empty, when a value is not a short cell,
- * or when the set mixes resolutions.
+ * The one resolution a set of stored short cells was captured at, recovered by keeping the
+ * resolution at which a short cell expands to a valid index.
  */
 export function recoverShortCellResolution(cells: readonly number[], context = "layer coverage"): number {
 	if (!cells.length) {
@@ -187,9 +118,7 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 				expandH3Cell(short, resolution)
 				valid.push(resolution)
 			} catch {
-				// A resolution the short cell does not expand at.
-				// Every cell expands at exactly one, so this is the ordinary case for
-				// fifteen of the sixteen probes.
+				// A resolution the short cell does not expand at — every cell expands at exactly one.
 			}
 		}
 
@@ -218,13 +147,8 @@ export function recoverShortCellResolution(cells: readonly number[], context = "
 }
 
 /**
- * Reconstruct a short-cell int's ancestor at a coarser resolution without going through a centroid.
- *
- * The centroid is the wrong input: re-deriving a parent from a stored cell's
- * center can land in a different parent than the original cell belonged to
- * (measured at ~6% of conus blocks between res 9 and res 6), so a coverage read
- * and the build that wrote it disagree on a fraction of cells.
- * Reconstructing from the stored cell itself is exact.
+ * Reconstruct a short-cell int's ancestor at a coarser resolution from the stored cell itself
+ * rather than a centroid, which can land in a different parent.
  */
 export function shortCellToParentInt(shortCell: number, from: number, to: number): number {
 	return shortCellToInt(cellToParent(expandShortCellInt(shortCell, from), to) as H3Cell)

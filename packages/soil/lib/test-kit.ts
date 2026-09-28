@@ -2,34 +2,16 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Hand-built survey areas for the fixture rung: geometry, attributes and an outline, with no network and
- *   no gdal in the loop.
- *
- *   A fixture rung that could only RUN through ogr2ogr would test the conversion on the machines that have
- *   IT and no coverage AT all on the ones that do not. What these fixtures exercise is the whole database half —
- *   the declared-domain check, the cell classification, the area-weighted reduction, the four absence
- *   shares, the coverage rows, the manifest and the seal.
- *
- *   the absence cases are the point, and iowa has none OF them. Every Iowa survey area is fully digitized,
- *   so `notcom`, `notpub` and access-denied map units never appear in the live build — which means the only
- *   place `nodata_share` can be exercised is here. The same is true of a component whose rating is NULL for
- *   the not-rateable reason and of a class-8 rating: both exist in Iowa but sparsely, and a fixture pins the
- *   behaviour rather than hoping a county contains one.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial`.
-// A winding convention rather than this product's geometry, and a second copy of
-// it is a second place for a hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial`; a second copy is a second place for a
+// hole to stop being one.
 import { rectangleRing } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
 import type { SoilDelineation, SoilFeatureSource } from "#sdk/ingest/index"
 import type { SurveyAreaAttributes } from "#sdk/survey-area"
 
-/**
- * Re-exported so a fixture in another workspace builds its rings the same way this one does.
- */
 
 /**
  * Where the fixture geometry sits — central Iowa, so the cells it produces
@@ -38,17 +20,13 @@ import type { SurveyAreaAttributes } from "#sdk/survey-area"
 export const FIXTURE_ORIGIN = { lat: 41.6, lon: -93.6 }
 
 /**
- * Degrees per fixture square side.
- *
- * About 1.6 km at this latitude — several resolution-9 cells across,
- * so a fixture square has both an interior and a fringe.
+ * Degrees per fixture square side, about 1.6 km here — several resolution-9 cells across, so a square has
+ * both an interior and a fringe.
  */
 export const FIXTURE_SIDE = 0.015
 
 /**
- * The fixture map units.
- *
- * Each one exists to exercise exactly one reading.
+ * The fixture map units, each exercising exactly one reading.
  */
 export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 	return [
@@ -121,10 +99,8 @@ export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 }
 
 /**
- * The fixture components.
- *
- * `mu-mixed` is 45/35/20 across three classes, which is the case a winner-class schema
- * would report as "class 2" and this one reports as a mixture.
+ * The fixture components; `mu-mixed` is 45/35/20 across three classes, the case a winner-class schema
+ * would report as class 2 and this one as a mixture.
  */
 export function fixtureComponents(): SoilComponentTable[] {
 	return [
@@ -202,12 +178,8 @@ export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 }
 
 /**
- * The outline covering every fixture delineation, with margin — the survey area's own footprint.
- *
- * The margin is nearly a degree because the coverage test is conservative: `interiorCoverageCellSet`
- * keeps only cells lying wholly inside the outline, and a resolution-6 cell is about 36 km across.
- * An outline the size of the fixture squares yields zero interior cells and the build refuses —
- * correctly, since an artifact with no coverage rows answers unknown everywhere while reporting success.
+ * The outline covering every fixture delineation, with margin because the coverage test keeps only cells
+ * lying wholly inside the outline.
  */
 export function fixtureOutline(margin = 0.75): { type: "Polygon"; coordinates: number[][][] } {
 	const { lat, lon } = FIXTURE_ORIGIN
@@ -239,11 +211,8 @@ export function fixtureSource(delineations: SoilDelineation[], areaSymbol = "XX0
 }
 
 /**
- * One fixture survey area's attributes.
- *
- * `areaAcres` is left NULL on purpose: the area cross-check compares against
- * what the authority publishes, and a fixture that invented an acreage would be
- * checking this package's arithmetic against itself.
+ * One fixture survey area's attributes; `areaAcres` is left NULL on purpose so the area cross-check
+ * compares against the authority rather than this package's own arithmetic.
  */
 export function fixtureAttributes(areaSymbol = "XX001"): SurveyAreaAttributes {
 	return {
