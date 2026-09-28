@@ -84,7 +84,7 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Renders the search panel, result panel, map control rail, and side sheets over the map;
+ * Renders the search panel, result panel, map control rail, and side sheets over the map.
  * on narrow screens the search panel is a bottom drawer the user can drag between detents.
  */
 export function GeocoderControls({
@@ -405,7 +405,7 @@ export function GeocoderControls({
 		<>
 			<MapProgressBar active={bundleLoading} fraction={fraction} label="Loading the geocoder" />
 
-			{/* One panel holds the search, the examples, and the result; on desktop it is a left column sized to
+			{/* One panel holds the search, the examples, and the result. On desktop it is a left column sized to
 			    its content, and on narrow screens a bottom drawer. */}
 			<section
 				className="mw-map-panel"
@@ -539,7 +539,7 @@ export function GeocoderControls({
 				) : null}
 			</section>
 
-			{/* Every floating control lives in this one rail so none can overlap; the compass has its own group
+			{/* Every floating control lives in this one rail so none can overlap. The compass has its own group
 			    because it appears and disappears, and the rail hides while the drawer is raised. */}
 			<MapControlStack label="Map controls" className={drawerRaised ? "mw-map-control-stack--drawer-open" : undefined}>
 				<MapControlGroup>

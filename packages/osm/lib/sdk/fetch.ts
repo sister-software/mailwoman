@@ -7,8 +7,8 @@
  *   bytes are ODbL OpenStreetMap data, see `osm/readme.md`.
  *
  *   RAW `fetch` is deliberate: `agents.md` requires HTTP clients to use `APIClient`, whose pacing, retry and
- *   response caching earn their keep on small repeated API requests, not on a multi-gigabyte body streamed
- *   straight to disk.
+ *   response caching earn their keep on small repeated API requests. A multi-gigabyte body streamed
+ *   straight to disk moves in a single pass, where pacing and retry add overhead.
  */
 
 import { openWriteStream, pipeline, Readable } from "@mailwoman/core/fs/streams"

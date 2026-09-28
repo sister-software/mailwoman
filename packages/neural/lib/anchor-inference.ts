@@ -165,9 +165,11 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
 /**
- * Returns the ship-obligation message when a lookup carries GB unit keys that a card
- * without `span_mode: "shaped"` can never reach — the one artifact-pairing check a
- * runtime can make, since the mode itself is unobservable from the ONNX graph.
+ * Returns the ship-obligation message when a lookup carries GB unit keys that a
+ * card without `span_mode: "shaped"` can never reach.
+ *
+ * The one artifact-pairing check a runtime can make, since the mode itself is
+ * unobservable from the ONNX graph.
  */
 export function shapedKeyerObligationViolation(
 	lookup: AnchorLookup | undefined,
@@ -264,8 +266,8 @@ export function buildAnchorFeatures(
 
 	if (options.spanMode === "shaped") {
 		for (const match of collectMatches(asciiUpper(text))) {
-			// The train painter's normalization verbatim — literal spaces removed and uppercased,
-			// not `\s+` nor the `D-` strip `normalizePostcode` does.
+			// The train painter's normalization verbatim — uppercased with literal spaces removed.
+			// `normalizePostcode` instead collapses `\s+` runs and drops a `D-` prefix.
 			const key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
 			let entry = lookup.get(key)
 

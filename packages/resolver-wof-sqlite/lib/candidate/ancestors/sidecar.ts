@@ -22,7 +22,7 @@ import type { WOFDatabase } from "#schema"
 
 /**
  * Build the ancestors sidecar (closure rows plus interval labels) from the source
- * `ancestors` table, excluding self rows and placetypes outside the containment ladder;
+ * `ancestors` table, excluding self rows and placetypes outside the containment ladder.
  * an edge to a parent with no current `spr` row is dropped and counted.
  */
 export async function buildAncestorsSidecar(ctx: {
@@ -42,8 +42,8 @@ export async function buildAncestorsSidecar(ctx: {
 		`INSERT INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`
 	)
 
-	// One parent per place (the finest containment tier, lowest ancestor id) canonicalizes
-	// the interval tree; all parents stay in the closure rows.
+	// One parent per place (the finest containment tier, lowest ancestor id) canonicalizes the interval tree.
+	// All parents stay in the closure rows.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()
@@ -154,8 +154,8 @@ export async function buildAncestorsSidecar(ctx: {
 			if (kids && top.next < kids.length) {
 				const kid = kids[top.next++]!
 
-				// Each child holds exactly one canonical parent, so a labeled node means
-				// upstream grouping broke; skip rather than corrupt the numbering.
+				// Each child holds exactly one canonical parent, so a labeled node means upstream grouping broke.
+				// Skip rather than corrupt the numbering.
 				if (preOf.has(kid)) continue
 
 				preOf.set(kid, counter++)

@@ -40,8 +40,8 @@ export type { RankedRow } from "#primary-preference"
  */
 export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<CandidateDatabase> {
 	/**
-	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference
-	 * penalty; no-ops without the role column and is off by default.
+	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty.
+	 * No-ops without the role column and is off by default.
 	 */
 	variantAliasExemption?: boolean
 }

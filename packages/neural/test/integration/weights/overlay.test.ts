@@ -9,7 +9,7 @@
  *
  *   Only `model` and `tokenizer` throw, while the sibling artifacts resolve
  *   `existsSync → undefined` by design, so a checkout that finds the two binaries parses while missing
- *   every lexicon and FST, scoring worse and reporting no failure; the artifact report is what keeps
+ *   every lexicon and FST, scoring worse and reporting no failure. The artifact report is what keeps
  *   that from being a quiet failure.
  */
 
@@ -46,8 +46,10 @@ async function weightsDir(root: PathBuilder, locale: string, files: Record<strin
 const BINARIES = { "model.onnx": "onnx", "tokenizer.model": "sp" }
 
 /**
- * A locale with no published package, so module resolution misses and the ladder falls through to
- * the probes under test; a real locale would depend on whether someone had linked dev weights.
+ * A locale with no published package, so module resolution misses and the ladder
+ * falls through to the probes under test.
+ *
+ * A real locale would depend on whether someone had linked dev weights.
  */
 const ABSENT = "xx-xx"
 

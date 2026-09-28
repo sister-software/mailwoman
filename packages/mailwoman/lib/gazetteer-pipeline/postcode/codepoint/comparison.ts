@@ -7,12 +7,12 @@
  * `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
  * This exists because the swap is a data-source change rather than a refresh, and the tool reports
- * rather than decides: a large coordinate delta usually indicts GeoNames, whose GB provenance is the
- * muddled one, not Code-Point Open.
+ * rather than decides: a large coordinate delta usually indicts GeoNames, whose GB provenance is
+ * the muddled one, rather than Code-Point Open.
  *
  * Three questions: which postcodes are in one and not the other, keyed exactly on `spr.name` in the
- * sanitized form; how far apart the shared ones are, reported as a distribution rather than a mean
- * because the mean of a bimodal disagreement describes neither mode; and Northern Ireland, which
+ * sanitized form. How far apart the shared ones are, reported as a distribution rather than a mean
+ * because the mean of a bimodal disagreement describes neither mode. And Northern Ireland, which
  * Code-Point Open omits by product definition and which is counted explicitly.
  */
 
@@ -169,9 +169,10 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
  * Chosen to be individually verifiable and to span England, Scotland
  * and Wales plus both coordinate extremes of the join.
  *
- * A Code-Point centroid is the postcode unit's mean delivery point, so tens of metres of offset
- * is correct behaviour; the three city-centre probes near 500-900 m are loose because their
- * landmark is a district rather than a door, and both databases agree there to within 3 m.
+ * A Code-Point centroid is the postcode unit's mean delivery point,
+ * so tens of metres of offset is correct behaviour.
+ * The three city-centre probes near 500-900 m are loose because their landmark is a district
+ * rather than a door, and both databases agree there to within 3 m.
  *
  * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA` and the incumbent GeoNames
  * snapshot still carries the retired one, which is the terminated-postcode residual in miniature.

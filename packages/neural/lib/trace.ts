@@ -30,13 +30,15 @@ export const TRACE_PRIOR_KINDS = [
 export type TracePriorKind = (typeof TRACE_PRIOR_KINDS)[number]
 
 /**
- * One prior's effect on a decode; the trace has one record for every kind.
+ * One prior's effect on a decode.
+ * The trace has one record for every kind.
  */
 export interface TracePrior {
 	kind: TracePriorKind
 
 	/**
-	 * Whether this prior changed any emission; a configured prior that found no match reports `false`.
+	 * Whether this prior changed any emission.
+	 * A configured prior that found no match reports `false`.
 	 */
 	applied: boolean
 

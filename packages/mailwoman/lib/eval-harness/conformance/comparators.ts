@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The six outcome comparators, which own no equality of their own and keep their axes disjoint so an identity law never falls back to distance.
+ *   The six outcome comparators own no equality of their own and keep their axes disjoint. An identity law therefore never falls back to distance.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"

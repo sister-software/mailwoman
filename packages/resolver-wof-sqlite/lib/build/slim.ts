@@ -78,7 +78,8 @@ export interface BuildSlimResult {
 const ANCESTOR_PLACETYPES = ["country", "region", "county", "borough", "macroregion"] as const
 
 /**
- * Tables copied verbatim (schema + filtered rows) from each source DB; anything else is dropped.
+ * Tables copied verbatim (schema + filtered rows) from each source DB.
+ * Anything else is dropped.
  */
 const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
 
@@ -151,7 +152,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			}
 		}
 
-		// The copied schemas carry the primary keys; this index on `names.id` helps the per-id insert select.
+		// The copied schemas carry the primary keys.
+		// This index on `names.id` helps the per-id insert select.
 		out.exec(`CREATE INDEX IF NOT EXISTS names_id_idx ON names(id);`)
 
 		// Pull rows from each input.
@@ -236,8 +238,8 @@ async function copyFromSource(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// Declaring `src.spr` etc. in `BuildSchema` lets Kysely column-check the cross-schema
-		// select; SQLite reads the dotted identifier as a schema qualifier.
+		// Declaring `src.spr` etc. in `BuildSchema` lets Kysely column-check the cross-schema select.
+		// SQLite reads the dotted identifier as a schema qualifier.
 
 		progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
 
@@ -255,8 +257,8 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-		// Localities without a population row still qualify; without the aux table,
-		// fall back to a deterministic id ordering.
+		// Localities without a population row still qualify.
+		// Without the aux table, fall back to a deterministic id ordering.
 		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
 
 		await kysely

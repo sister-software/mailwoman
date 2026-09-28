@@ -33,8 +33,8 @@ import {
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 
 /**
- * How many times `health fix` re-takes a plan before giving up; see {@link runFix}
- * for why one pass is not enough.
+ * How many times `health fix` re-takes a plan before giving up.
+ * See {@link runFix} for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
 
@@ -115,7 +115,8 @@ interface OperationView<TContext extends OperationContext> {
 	registry: ReadonlyArray<Operation<string, TContext>>
 	context: (base: OperationContext, io: DispatchIO) => TContext
 	/**
-	 * The exit code an output earns; a view without one exits 0.
+	 * The exit code an output earns.
+	 * A view without one exits 0.
 	 */
 	exitCode?: (output: unknown) => number
 }
@@ -277,8 +278,8 @@ async function runFix(
 	const dryRun = options["dry-run"] === true
 	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	// A fix can create work for itself, so the plan is re-taken until the check has no
-	// further finding; the bound guards a rule that never settles.
+	// A fix can create work for itself, so the plan is re-taken until the check has no further finding.
+	// The bound guards a rule that never settles.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 		const moves = await fix.plan(context)

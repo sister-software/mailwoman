@@ -62,8 +62,9 @@ export interface UnresolvedSpecifier {
 	file: string
 	specifier: string
 	/**
-	 * What was tried and why no specifier was accepted; a plan carrying one of
-	 * these is refused rather than applied.
+	 * What was tried and why no specifier was accepted.
+	 *
+	 * A plan carrying one of these is refused rather than applied.
 	 */
 	reason: string
 }
@@ -72,7 +73,8 @@ export interface ModuleMovePlan {
 	moves: ModuleMove[]
 	rewrites: SpecifierRewrite[]
 	/**
-	 * `exports`/`imports` targets the moves invalidate; a subpath KEY never changes.
+	 * `exports`/`imports` targets the moves invalidate.
+	 * A subpath KEY never changes.
 	 */
 	manifestRewrites: ManifestRewrite[]
 	/**

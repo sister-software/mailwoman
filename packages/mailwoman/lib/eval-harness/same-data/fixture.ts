@@ -22,8 +22,9 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistration"
 
 /**
- * The row interface's version; a change to a fixture row's shape bumps it,
- * and a scorer refuses a fixture whose version it does not know.
+ * The row interface's version.
+ *
+ * A change to a fixture row's shape bumps it, and a scorer refuses a fixture whose version it does not know.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
@@ -70,9 +71,10 @@ export interface SameDataLookup {
 export interface SameDataGold {
 	geonameid: string
 	/**
-	 * The distinct WOF ids that denote this place, ascending; a set because the gazetteer
-	 * carries 21 of its 10,738 coherently-joined `cities15000.txt` places twice,
-	 * and a selection naming any member is correct.
+	 * The distinct WOF ids that denote this place, ascending.
+	 *
+	 * A set because the gazetteer carries 21 of its 10,738 coherently-joined `cities15000.txt`
+	 * places twice, and a selection naming any member is correct.
 	 */
 	placeIDs: number[]
 	name: string
@@ -93,14 +95,16 @@ export interface SameDataPanelRow {
 	id: string
 	stratum: string
 	/**
-	 * The raw query, stored exactly as evaluated; no arm normalizes before the fixture is read.
+	 * The raw query, stored exactly as evaluated.
+	 * No arm normalizes before the fixture is read.
 	 */
 	query: string
 	gold: SameDataGold
 	/**
-	 * False in the withheld-gold stratum, where the recorder filtered every member of
-	 * the gold identity set out of the backend's answers; drives which denominator the
-	 * row counts in and is never inferred from an empty pool.
+	 * False in the withheld-gold stratum, where the recorder filtered every member
+	 * of the gold identity set out of the backend's answers.
+	 *
+	 * Drives which denominator the row counts in and is never inferred from an empty pool.
 	 */
 	goldPresent: boolean
 	source: {
@@ -117,8 +121,10 @@ export interface SameDataFixtureRow {
 	id: string
 	schemaVersion: number
 	/**
-	 * The frozen parse, which both resolver arms walk rather than parse so the parser sits
-	 * outside the scored unit; the model version that produced it is recorded in the run receipt.
+	 * The frozen parse.
+	 *
+	 * Both resolver arms walk it rather than parse it, so the parser sits outside the scored unit.
+	 * The model version that produced it is recorded in the run receipt.
 	 */
 	tree: AddressTree
 	lookups: SameDataLookup[]

@@ -43,8 +43,9 @@ export type DesignationDomain = "general" | "healthcare"
  */
 export interface CanonicalizeOptions {
 	/**
-	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that country's
-	 * legal forms to the strip-set; case-insensitive, and unknown codes add no pack.
+	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that
+	 * country's legal forms to the strip-set.
+	 * Case-insensitive, and unknown codes add no pack.
 	 */
 	jurisdiction?: string
 	/**
@@ -56,8 +57,10 @@ export interface CanonicalizeOptions {
 
 /**
  * Universal legal-entity designations, normalized to lowercase without punctuation
- * and stripped as whole tokens; name-meaningful words and the collision-prone forms
- * that live in {@link JURISDICTION_DESIGNATIONS} are deliberately absent.
+ * and stripped as whole tokens.
+ *
+ * Name-meaningful words and the collision-prone forms that live in
+ * {@link JURISDICTION_DESIGNATIONS} are deliberately absent.
  */
 const BASE_DESIGNATIONS = new Set([
 	"inc",
@@ -201,8 +204,10 @@ function canonicalizeFragment(
 
 /**
  * Canonicalize an organization name: split off any `doing business as` clause,
- * then reduce the legal name to a designation-stripped key; returns `null` for empty input,
- * and {@link CanonicalizeOptions} resolves the jurisdiction × domain collision.
+ * then reduce the legal name to a designation-stripped key.
+ *
+ * Returns `null` for empty input, and {@link CanonicalizeOptions} resolves
+ * the jurisdiction × domain collision.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,

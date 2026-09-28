@@ -30,7 +30,8 @@ import type { WordConsistencyOpts } from "#word-consistency"
  */
 export interface NeuralAddressClassifierConfig {
 	/**
-	 * The SentencePiece tokenizer for a subword model; set either this or `charEncoder`.
+	 * The SentencePiece tokenizer for a subword model.
+	 * Set either this or `charEncoder`.
 	 */
 	tokenizer?: MailwomanTokenizer
 
@@ -142,7 +143,8 @@ export interface NeuralAddressClassifierConfig {
 	suppressGazetteerNearPostcode?: boolean
 
 	/**
-	 * The default address-system conventions mode; see `ParseOpts.addressSystemConventions`.
+	 * The default address-system conventions mode.
+	 * See `ParseOpts.addressSystemConventions`.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 
@@ -153,9 +155,10 @@ export interface NeuralAddressClassifierConfig {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * The span proposer configuration, omitted meaning a default built from the codex lexicon
-	 * and `false` disabling it; its proposals add emission priors and annotation
-	 * and quoted spans block punctuation-bridge merges.
+	 * The span proposer configuration, omitted meaning a default built from the
+	 * codex lexicon and `false` disabling it.
+	 *
+	 * Its proposals add emission priors and annotation and quoted spans block punctuation-bridge merges.
 	 */
 	spanProposer?: SpanProposerConfig | false
 
@@ -180,7 +183,8 @@ export interface NeuralAddressClassifierConfig {
 }
 
 /**
- * Configures the span proposer; see `NeuralAddressClassifierConfig.spanProposer`.
+ * Configures the span proposer.
+ * See `NeuralAddressClassifierConfig.spanProposer`.
  */
 export interface SpanProposerConfig extends SpanProposalPriorOpts {
 	/**

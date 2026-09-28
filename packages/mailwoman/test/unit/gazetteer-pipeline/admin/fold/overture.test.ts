@@ -15,8 +15,9 @@ import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/g
 import { describe, expect, test } from "vitest"
 
 /**
- * Real GERS ids are opaque 32-char hex strings; the shape matters only in that
- * the hash sees the whole string.
+ * Real GERS ids are opaque 32-char hex strings.
+ *
+ * The shape matters only in that the hash sees the whole string.
  */
 const GERS = [
 	"08f2ab12c4d5e6f708192a3b4c5d6e7f",
@@ -40,7 +41,7 @@ describe("assignSyntheticIDs", () => {
 	})
 
 	test("a place's id does not move when OTHER places join or leave the build", () => {
-		// An Overture release that adds divisions must not renumber the ones already shipped;
+		// An Overture release that adds divisions must not renumber the ones already shipped.
 		// only a collision can move an existing id, and then only its immediate neighbours.
 		const before = assignSyntheticIDs(GERS)
 		const after = assignSyntheticIDs([...GERS, "08f6ef56a8b9cadb3c4d5e6f7a819203", "08f70f67b9cadbec4d5e6f7a81920314"])

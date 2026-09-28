@@ -28,8 +28,10 @@ const cleanOutput = z.object({
 })
 
 /**
- * `release.clean` — remove generated workspace output, build metadata, and Docker's non-workspace
- * TypeScript output; a package name limits the cleanup to one registered workspace.
+ * `release.clean` — remove generated workspace output, build metadata,
+ * and Docker's non-workspace TypeScript output.
+ *
+ * A package name limits the cleanup to one registered workspace.
  */
 export const cleanOperation = defineOperation({
 	id: "release.clean",
@@ -134,8 +136,8 @@ export const cleanOperation = defineOperation({
 				files.push(displayPath)
 			}
 
-			// The shell goes only when the generated names were all it held;
-			// a dry run discounts the names it would have removed.
+			// The shell goes only when the generated names were all it held. a dry run
+			// discounts the names it would have removed.
 			const generated = new Set<string>([...directoryNames, ...buildMetadataNames])
 
 			const remaining = (

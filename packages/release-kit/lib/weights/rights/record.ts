@@ -126,9 +126,9 @@ export const SourceUse = {
 export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
 
 /**
- * Returns the uses that one attribution entry states in its prose, or `unstated`
- * when no pattern matches; it never defaults to `training`, which would claim the
- * model learned from every unrecognized source.
+ * Returns the uses that one attribution entry states in its prose, or `unstated` when no pattern matches.
+ *
+ * It never defaults to `training`, which would claim the model learned from every unrecognized source.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -154,7 +154,8 @@ export function usesStatedIn(entry: string): SourceUse[] {
  */
 export interface AttributionRecord {
 	/**
-	 * The verbatim entry; a paraphrased rights statement is a different statement.
+	 * The verbatim entry.
+	 * A paraphrased rights statement is a different statement.
 	 */
 	text: string
 	/**
@@ -377,8 +378,9 @@ export async function readWeightsRightsRecords(
  * Follows `mailwoman.baseWeights` from an overlay to the package that owns the
  * model graph and returns that package's attribution.
  *
- * The walk follows every hop because a base may declare its own base; a cycle or a base outside the
- * set stops it and sets `unresolved`, keeping an unresolved lineage distinct from an empty one.
+ * The walk follows every hop because a base may declare its own base.
+ * A cycle or a base outside the set stops it and sets `unresolved`, keeping an
+ * unresolved lineage distinct from an empty one.
  */
 function resolveInherited(
 	record: WeightsRightsRecord,

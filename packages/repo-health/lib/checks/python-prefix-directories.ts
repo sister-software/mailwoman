@@ -11,7 +11,7 @@
  *   (no Python directory here carries a published npm-name interface), and `__init__.py` / `__main__.py` never
  *   joining a group as Python's own names.
  *
- *   Scoped to `corpus-python/`, the one Python tree in the repository; the check reports rather than fixes, because
+ *   Scoped to `corpus-python/`, the one Python tree in the repository. The check reports rather than fixes, because
  *   the TypeScript fix's value is repointing import specifiers and this repository has no equivalent mover for
  *   Python.
  */
@@ -21,13 +21,15 @@ import { DiagnosticSeverity, type RepoCheck } from "#check"
 const CHECK_ID = "python-prefix-directories"
 
 /**
- * The Python tree; a path outside it is not this check's business.
+ * The Python tree.
+ * A path outside it is not this check's business.
  */
 const PYTHON_ROOT = "corpus-python/"
 
 /**
- * How many children must share a prefix before it is a family; two siblings are a
- * coincidence often enough that the TypeScript check uses the same floor.
+ * How many children must share a prefix before it is a family.
+ *
+ * Two siblings are a coincidence often enough that the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3
 
@@ -40,8 +42,9 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a discovery interface rather than a hierarchy; pytest collects
- * `test_*.py` by default, so grouping them would report every test directory
+ * Prefixes that are a discovery interface rather than a hierarchy.
+ *
+ * Pytest collects `test_*.py` by default, so grouping them would report every test directory
  * and propose a `test/` subdirectory pytest would have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])

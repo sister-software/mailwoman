@@ -123,8 +123,9 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces).toHaveLength(4)
 
-		// A strong, already-consistent baseline for "shoreditch" (B-street / I-street / I-street at magnitude 20)
-		// against the prior's calibrated delta of 6.0: 20 > 6, so the encoder must win.
+		// A strong, already-consistent baseline for "shoreditch"
+		// (B-street / I-street / I-street at magnitude 20) against the prior's calibrated
+		// delta of 6.0: 20 exceeds 6, so the baseline label survives.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 20
 		logits[1]![col("I-street")] = 20

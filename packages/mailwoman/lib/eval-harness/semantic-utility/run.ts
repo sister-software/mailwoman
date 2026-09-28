@@ -94,7 +94,8 @@ export interface ProbeReceipt {
 	semanticRoute: ProbeSemanticRouteRecord
 	rows: ProbeRowOutcome[]
 	/**
-	 * Every firing of the injected route, in row order; empty on an un-injected run.
+	 * Every firing of the injected route, in row order.
+	 * Empty on an un-injected run.
 	 */
 	semanticObservations: ProbeRowObservation[]
 	counts: ProbeCounts
@@ -107,8 +108,8 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	arm?: ProbeArm
 	/**
-	 * Override the frozen pre-registration for a synthetic definition;
-	 * a run with no override reads the committed one.
+	 * Override the frozen pre-registration for a synthetic definition. a run with
+	 * no override reads the committed one.
 	 */
 	definitionPath?: string
 	freezePath?: string
@@ -123,8 +124,8 @@ export interface SemanticProbeOptions extends POIBoardOptions {
 	 */
 	gitCommit?: string
 	/**
-	 * Build the one semantic observation route and inject it into the pipeline this run constructs;
-	 * absent or `false` runs the un-injected pipeline, which the frozen baseline was measured against.
+	 * Build the one semantic observation route and inject it into the pipeline this run constructs. absent
+	 * or `false` runs the un-injected pipeline, which the frozen baseline was measured against.
 	 */
 	semanticObservation?: boolean
 }
@@ -188,8 +189,8 @@ export async function runSemanticUtilityProbe(options: SemanticProbeOptions = {}
 }
 
 /**
- * Take everything the route recorded while one row ran, addressed to that row;
- * empty when no route was injected.
+ * Take everything the route recorded while one row ran, addressed to that row. empty
+ * when no route was injected.
  */
 function drainObservations(route: SemanticObservationRoute | undefined, rowID: string): ProbeRowObservation[] {
 	if (!route) return []

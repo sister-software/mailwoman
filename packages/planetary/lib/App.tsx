@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The body's app: the host check first, then the route, so a production host serving the other body's build
- *   renders the error on its first load; a click pushes `/feature/<id>` and the browser's back button closes it.
+ *   renders the error on its first load. A click pushes `/feature/<id>` and the browser's back button closes it.
  */
 
 import "maplibre-gl/dist/maplibre-gl.css"
@@ -71,8 +71,8 @@ export function App() {
 	const config = BODY_CONFIGS[body]
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
-	// The feature most recently picked: a click carries the archive's whole record,
-	// which the artifact lacks, so it is kept beside the route rather than re-read.
+	// The feature most recently picked: a click carries the archive's whole record.
+	// The artifact lacks that record, so it is kept beside the route rather than re-read.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
 	const [map, setMap] = useState<MapInstance | null>(null)
@@ -105,7 +105,8 @@ export function App() {
 
 	const close = useCallback(() => navigate({ kind: "map" }), [navigate])
 
-	// A chip names a feature; only an exact name match selects it, never the closest other feature.
+	// A chip identifies a feature.
+	// Only an exact name match selects it, never the closest other feature.
 	const pickByName = useCallback(
 		(name: string) => {
 			const hit = search.index?.query(name, 1).find((candidate) => candidate.name === name)

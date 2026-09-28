@@ -41,13 +41,14 @@ export interface POIExecutorOpts {
 
 	/**
 	 * Maps a canonical category ID to the Overture leaf IDs stored in poi.db,
-	 * re-tagging each hit with its canonical ID; the default maps each ID to itself.
+	 * re-tagging each hit with its canonical ID.
+	 * The default maps each ID to itself.
 	 */
 	resolveOvertureCategories?: (categoryID: string) => string[]
 
 	/**
-	 * Looks up a result's WOF ancestry, deepest first, and must be synchronous;
-	 * results get no `ancestry` key when it is missing or returns no entries.
+	 * Looks up a result's WOF ancestry, deepest first, and must be synchronous. results
+	 * get no `ancestry` key when it is missing or returns no entries.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }

@@ -9,7 +9,7 @@
  *
  *   A failed verify throws and leaves the artifact unsealed for inspection — do not swap it. On success
  *   the build appends itself to the build log (`data/gazetteer/wof-build-manifest.json`, a log rather
- *   than a recipe; the recipe is `../defaults.ts`).
+ *   than a recipe. The recipe is `../defaults.ts`).
  */
 
 import { dataRootPath, wofReposPath } from "@mailwoman/core/data-root"
@@ -93,7 +93,9 @@ export interface BuildAdminResult {
 }
 
 /**
- * Run the full admin-gazetteer build; the module docstring holds the phase order and why it is fixed.
+ * Run the full admin-gazetteer build.
+ *
+ * The module docstring holds the phase order and why it is fixed.
  */
 export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdminResult> {
 	const t0 = performance.now()
@@ -149,8 +151,9 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 			dataDir,
 			concurrency: opts.concurrency,
 			batchCommitSize: opts.batchCommitSize,
-			// GeoNames-anchored label-point adjudication; reads the same per-country extracts
-			// fold-geonames consumes, and a data root without them degrades to the plain label preference.
+			// GeoNames-anchored label-point adjudication.
+			// Reads the same per-country extracts fold-geonames consumes, and a data root
+			// without them degrades to the plain label preference.
 			anchorLookup: await createGeoNamesAnchorLookup(dataRootPath("geonames")),
 			onProgress: (processed, skipped, total) =>
 				phase(
@@ -257,7 +260,8 @@ export async function buildAdmin(opts: BuildAdminOptions = {}): Promise<BuildAdm
 	await sealDatabase(out)
 
 	// Build log — an auto-appended record of what ran, when, and its fingerprint,
-	// so the manifest cannot lag the artifact; the recipe itself lives in defaults.ts.
+	// so the manifest cannot lag the artifact.
+	// The recipe itself lives in defaults.ts.
 	const buildLogPath = opts.buildLogPath ?? repoRootPath("data", "gazetteer", "wof-build-manifest.json")
 
 	if (await pathExists(buildLogPath)) {

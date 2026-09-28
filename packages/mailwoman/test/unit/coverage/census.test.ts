@@ -105,8 +105,8 @@ describe("readAdmittedCountries", () => {
 			path
 		)
 
-				// `gb` and `fr` are source weights that happen to be two letters;
-				// reading past the block would report them as admitted countries.
+				// `gb` and `fr` are source weights that happen to be two letters. reading
+				// past the block would report them as admitted countries.
 				expect([...(await readAdmittedCountries(path))]).toEqual(["US"])
 	})
 
@@ -328,8 +328,9 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-						// A YAML parser turns a bare `no` key into boolean false, which is the bug
-						// this reader exists to avoid; a quoted "no" must still be counted.
+						// A YAML parser turns a bare `no` key into boolean false,
+						// which is the bug this reader exists to avoid.
+						// A quoted "no" must still be counted.
 								await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.path("c.yaml")
 

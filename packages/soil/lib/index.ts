@@ -70,7 +70,8 @@ export interface SoilCapabilityDistribution {
 	 */
 	noDataShare: number
 	/**
-	 * The share of the truncated minority classes; the class shares and the four other shares sum to 1.
+	 * The share of the truncated minority classes.
+	 * The class shares and the four other shares sum to 1.
 	 */
 	otherShare: number
 	/**
@@ -78,8 +79,10 @@ export interface SoilCapabilityDistribution {
 	 */
 	mappedShare: number
 	/**
-	 * The class with the largest share, absent when the cell has no class; a caller that reads
-	 * `topClass` should also report `topClassShare`, because the top class can hold a small plurality.
+	 * The class with the largest share, absent when the cell has no class.
+	 *
+	 * A caller that reads `topClass` should also report `topClassShare`,
+	 * because the top class can hold a small plurality.
 	 */
 	topClass?: string
 	topClassShare?: number
@@ -138,8 +141,10 @@ export interface SoilCapabilityReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statements of what the product does not cover; every reading includes
-	 * them because the survey supports planning only and does not replace onsite study.
+	 * The authority's own statements of what the product does not cover.
+	 *
+	 * Every reading includes them because the survey supports planning only
+	 * and does not replace onsite study.
 	 */
 	limits: ReadonlyArray<string>
 }
@@ -291,9 +296,9 @@ export class SoilCapabilityLookup implements Disposable {
 	}
 
 	/**
-	 * Returns the first survey area whose bounding rectangle contains the coordinate;
-	 * overlapping rectangles may give the wrong area near a corner, affecting only the
-	 * `surveyArea` label, and the linear scan would need a spatial index for thousands of areas.
+	 * Returns the first survey area whose bounding rectangle contains the coordinate. overlapping
+	 * rectangles may give the wrong area near a corner, affecting only the `surveyArea` label,
+	 * and the linear scan would need a spatial index for thousands of areas.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {

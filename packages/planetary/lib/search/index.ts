@@ -24,8 +24,10 @@ export interface SearchHit {
 	 */
 	featureTypeCode?: string
 	/**
-	 * What the camera needs to choose a zoom; absent for a feature the gazetteer gives
-	 * no diameter, which a caller must read as unknown rather than as zero.
+	 * What the camera needs to choose a zoom.
+	 *
+	 * Absent for a feature the gazetteer gives no diameter, which a caller must
+	 * read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number

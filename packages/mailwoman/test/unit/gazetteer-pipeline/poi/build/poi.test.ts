@@ -101,11 +101,12 @@ describe("buildPOIDatabase", () => {
 
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
-		// `kdb`'s dispose closes the underlying connection; another `using` on the
-		// same DatabaseSync would race it to close().
+		// `kdb`'s dispose closes the underlying connection.
+		// Another `using` on the same DatabaseSync would race it to close().
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
-		// Category codes are assigned on first sight; zero remains uncategorized.
+		// Category codes are assigned on first sight.
+		// Zero remains uncategorized.
 		const codes = (await kdb.selectFrom("poi_category_codes").selectAll().execute()) as POICategoryCodeTable[]
 		expect(codes.map((c) => c.category).toSorted()).toEqual(["cafe", "museum", "restaurant"])
 		expect(codes.every((c) => c.id > 0)).toBe(true)
@@ -188,9 +189,10 @@ describe("buildPOIDatabase", () => {
 })
 
 /**
- * The pure `--source osm` helper that replaces the Overture path's "rows-present
- * ⇒ 1" coverage; the bbox spans several res-6 cells so an empty or single-cluster
- * `rows` list always leaves a cell with `observedRows: 0`.
+ * The pure `--source osm` helper that replaces the Overture path's "rows-present ⇒ 1" coverage.
+ *
+ * The bbox spans several res-6 cells so an empty or single-cluster `rows` list
+ * always leaves a cell with `observedRows: 0`.
  */
 describe("bboxCoverageCells", () => {
 	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }

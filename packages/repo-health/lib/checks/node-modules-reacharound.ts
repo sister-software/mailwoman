@@ -96,9 +96,10 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * The `node_modules` string arguments of every path-building call in one source file,
- * each with its line; both a plain string and a template literal count, since the
- * interpolated form is what a "make it dynamic" refactor reaches for first.
+ * The `node_modules` string arguments of every path-building call in one source file, each with its line.
+ *
+ * Both a plain string and a template literal count, since the interpolated form is
+ * what a "make it dynamic" refactor reaches for first.
  */
 export function findReachArounds(source: string, fileName: string): Array<{ line: number; text: string }> {
 	const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true)
@@ -127,8 +128,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 					: undefined
 
 			// A `PathBuilder` is invoked as a bare function, so a descent through `node_modules`
-			// has no callee name to match and the leading segment is the tell; property calls
-			// are left out because `.includes("node_modules")` is a string test, not a path.
+			// has no callee name to match and the leading segment is the tell.
+			// Property calls are left out because `.includes("node_modules")` is a
+			// string test rather than a path.
 			const firstArgument = node.arguments[0]
 
 			const descendsIntoNodeModules =
@@ -173,7 +175,7 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 		const sources = await listCandidateSources(context)
 
 		// A guard that silently stops looking is worse than no guard: no source found
-		// means the walk is broken, not the tree clean.
+		// means the walk is broken rather than the tree clean.
 		if (!sources.length) {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,

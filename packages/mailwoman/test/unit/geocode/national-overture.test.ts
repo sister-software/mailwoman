@@ -42,9 +42,9 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {
-		// Overture declares no addresses-theme grant, so a CDLA expression here
-		// would assert a places grant; read through `overtureCountryLicense`
-		// because `licenseForOvertureCountry` refuses an unsettled country.
+		// Overture declares no addresses-theme grant, so a CDLA expression here would assert a places grant.
+		// Read through `overtureCountryLicense` because `licenseForOvertureCountry`
+		// refuses an unsettled country.
 		for (const country of supportedOvertureCountries()) {
 			const entry = overtureCountryLicense(country)
 

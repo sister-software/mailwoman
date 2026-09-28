@@ -16,8 +16,9 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Key-count threshold for the gloss anomaly detector; a legitimate famous place is
- * separated by the prominence check rather than this number alone.
+ * Key-count threshold for the gloss anomaly detector.
+ *
+ * A legitimate famous place is separated by the prominence check rather than this number alone.
  */
 export const GLOSS_KEY_THRESHOLD = 50
 
@@ -88,8 +89,8 @@ export function stampNameRoles(ctx: {
 	if (hasSourceNames) {
 		out.exec("BEGIN")
 
-		// WOF's abbreviation/short name kinds qualify by kind alone; everything else
-		// qualifies as a variant in an official language.
+		// WOF's abbreviation/short name kinds qualify by kind alone.
+		// Everything else qualifies as a variant in an official language.
 		for (const r of src
 			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
 			.iterate()) {

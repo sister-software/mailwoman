@@ -26,8 +26,8 @@ export interface FanoutCandidate {
 	lat: number
 	lon: number
 	/**
-	 * WOF population, or 0 when the place has no `place_population` row;
-	 * zero means absent, never a population of nobody.
+	 * WOF population, or 0 when the place has no `place_population` row. zero
+	 * means absent, never a population of nobody.
 	 */
 	population: number
 }
@@ -35,7 +35,8 @@ export interface FanoutCandidate {
 export interface FanoutResolution {
 	verdict: "single" | "coincident" | "population" | "unresolvable"
 	/**
-	 * The place ids that keep this id's Wikipedia importance; empty on `unresolvable`.
+	 * The place ids that keep this id's Wikipedia importance.
+	 * Empty on `unresolvable`.
 	 */
 	keep: number[]
 }
@@ -51,8 +52,9 @@ export interface FanoutResolution {
 export const FANOUT_SPREAD_EPSILON_KM = 5
 
 /**
- * Decide which of `candidates` may carry the Wikidata id's importance; pure
- * and total, a single candidate passes straight through and every multi-candidate
+ * Decide which of `candidates` may carry the Wikidata id's importance.
+ *
+ * Pure and total, a single candidate passes straight through and every multi-candidate
  * group lands in exactly one of the module's branches.
  */
 export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[]): FanoutResolution {

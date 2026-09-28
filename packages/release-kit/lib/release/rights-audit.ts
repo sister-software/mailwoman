@@ -37,7 +37,8 @@ import { weightsRightsRecords } from "#weights/rights/write"
 export interface SourceRegisterAudit {
 	sources: number
 	/**
-	 * Sources with no eligibility problem; zero is a measurement rather than a placeholder.
+	 * Sources with no eligibility problem.
+	 * Zero is a measurement rather than a placeholder.
 	 */
 	eligible: number
 	/**

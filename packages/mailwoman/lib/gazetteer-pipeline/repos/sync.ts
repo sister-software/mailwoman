@@ -10,7 +10,7 @@
  *   clone.
  *
  *   It never re-points a remote silently, never touches a dirty tree or one carrying local commits,
- *   and never forces a shallow clone forward; the plan carries the shallowness because a shallow
+ *   and never forces a shallow clone forward. The plan carries the shallowness because a shallow
  *   checkout has no history to diff against.
  */
 
@@ -106,8 +106,8 @@ export interface RepoSyncPlan {
  * Two remote URLs naming the same repository.
  *
  * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo`
- * and `https://github.com/org/repo`, with or without a `.git` suffix; a string comparison
- * would report a spurious re-point for a clone that is already correct.
+ * and `https://github.com/org/repo`, with or without a `.git` suffix.
+ * A string comparison would report a spurious re-point for a clone that is already correct.
  */
 export function sameRemote(a: string | undefined, b: string | undefined): boolean {
 	if (!a || !b) return false
@@ -126,7 +126,8 @@ export function sameRemote(a: string | undefined, b: string | undefined): boolea
 }
 
 /**
- * Decide what to do with one repo; pure, every input is already measured.
+ * Decide what to do with one repo.
+ * Pure, every input is already measured.
  *
  * Order encodes the priority: refusals come before the re-point question, because reporting
  * a dirty tree as a re-point candidate would invite the action that loses the work.
@@ -225,8 +226,8 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 /**
  * Plan the sync for a set of repos without touching anything.
  *
- * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's
- * actual tip; skipping it would report a stale clone as up-to-date.
+ * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's actual tip.
+ * Skipping it would report a stale clone as up-to-date.
  * It defaults on.
  */
 export async function planReposSync(options: {
@@ -246,8 +247,9 @@ export async function planReposSync(options: {
 				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
-				// An unreachable remote is reported through `behind: undefined` rather than aborting
-				// the whole sweep; one dead remote must not hide the other repos' verdicts.
+				// An unreachable remote is reported through `behind: undefined`
+				// rather than aborting the whole sweep.
+				// One dead remote must not hide the other repos' verdicts.
 			}
 		}
 

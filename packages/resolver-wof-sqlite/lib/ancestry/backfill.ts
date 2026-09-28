@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Repair the truncated ancestry left by the `parent_id` closure; must run after `populateAncestors` and before the build freezes.
+ *   Repair the truncated ancestry left by the `parent_id` closure. Must run after `populateAncestors` and before the build freezes.
  */
 
 import { readWOFFeature } from "@mailwoman/core/resources/whosonfirst"

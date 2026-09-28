@@ -12,7 +12,7 @@
  *
  *   `pair-index-fr.bin` is built from BAN's `nom_ld` (lieu-dit) through `ban/sdk`'s `cleanLieuDit`,
  *   not WOF, whose French neighbourhood records are Paris quartiers that never appear in a postal
- *   address; BAN is a directory of 101 département files, so the guard md5s no file and instead
+ *   address. BAN is a directory of 101 département files, so the guard md5s no file and instead
  *   refuses an artifact below `minimumPlausibleBytes` (the BAN-derived index is ~6 MB, the
  *   admin-DB borough recipe ~1.9 kB).
  */
@@ -28,8 +28,9 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Raw BAN dump the lieu-dit pairs are extracted from; a directory rides `inputs`
- * (existence only), not `sources` (md5).
+ * Raw BAN dump the lieu-dit pairs are extracted from.
+ *
+ * A directory rides `inputs` (existence only), not `sources` (md5).
  */
 const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 

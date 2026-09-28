@@ -57,9 +57,9 @@ export function componentOf(r: GauntletResult, key: string): string | null {
 /**
  * The script families a component value can be written in, for the dual-script comparison below.
  *
- * Grouped rather than per-Unicode-script because one Japanese rendering routinely
- * mixes Han and kana within one word (`表参道ヒルズ`) and splitting there would shred it;
- * an unlisted script collapses to one `"other"` run rather than being shredded.
+ * Grouped rather than per-Unicode-script because one Japanese rendering routinely mixes Han
+ * and kana within one word (`表参道ヒルズ`) and splitting there would shred it. an unlisted
+ * script collapses to one `"other"` run rather than being shredded.
  */
 const SCRIPT_FAMILIES: ReadonlyArray<readonly [string, RegExp]> = [
 	["latin", /\p{Script=Latin}/u],
@@ -89,8 +89,8 @@ function scriptFamilyOf(char: string): string | null {
 /**
  * Split a component value into one rendering per script family, in source order.
  *
- * A mono-script value yields exactly one rendering, so it can never satisfy an interface that
- * lists two; only rows that opt into `expect_component_renderings` (see {@linkcode checkCase})
+ * A mono-script value yields exactly one rendering, so it can never satisfy an interface that lists two.
+ * Only rows that opt into `expect_component_renderings` (see {@linkcode checkCase})
  * reach this, because ordinary component assertions use exact equality.
  */
 export function scriptRenderings(value: string): string[] {
@@ -133,18 +133,19 @@ export function scriptRenderings(value: string): string[] {
 /**
  * Does `got` satisfy the asserted `expected`?
  *
- * Exact case-folded equality with no other rule for every ordinary `expect_components` key;
- * a global fallback over {@linkcode scriptRenderings} was removed because two renderings of a
- * value cannot say whether they are two writings of the same element or two elements that ran
- * together, so the relaxation lives in the per-row `expect_component_renderings` opt-in instead.
+ * Exact case-folded equality with no other rule for every ordinary `expect_components` key. a
+ * global fallback over {@linkcode scriptRenderings} was removed because two renderings of a value
+ * cannot say whether they are two writings of the same element or two elements that ran together,
+ * so the relaxation lives in the per-row `expect_component_renderings` opt-in instead.
  */
 export function componentMatches(got: string, expected: string): boolean {
 	return got.toLowerCase() === expected.toLowerCase()
 }
 
 /**
- * Which of the required renderings are absent from {@linkcode scriptRenderings}`(got)`,
- * case-folded; empty means the interface is satisfied and no other property of `got` is asserted.
+ * Which of the required renderings are absent from {@linkcode scriptRenderings}`(got)`, case-folded.
+ *
+ * Empty means the interface is satisfied and no other property of `got` is asserted.
  */
 function missingRenderings(got: string, required: readonly string[]): string[] {
 	const present = new Set(scriptRenderings(got).map((rendering) => rendering.toLowerCase()))
@@ -213,7 +214,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 				issues.push(`place name "${place.name}" ≠ "${c.expect_place_name}"`)
 			}
 
-			// Exact, unlike the name: a place id is an opaque key, not prose.
+			// Exact, unlike the name: a place id is an opaque key rather than prose.
 			if (c.expect_place_id != null && place.placeID !== c.expect_place_id) {
 				issues.push(`place id "${place.placeID ?? null}" ≠ "${c.expect_place_id}"`)
 			}
@@ -254,7 +255,7 @@ export function checkCase(c: GauntletCaseTable, r: GauntletResult): string[] {
 
 	if (renderinginterface) {
 		for (const [k, required] of Object.entries(renderinginterface)) {
-			// An empty or non-string-array list would assert no rendering while looking asserted;
+			// An empty or non-string-array list would assert no rendering while looking asserted.
 			// the seed schema refuses these on load, so reaching one here means a row bypassed it.
 			if (!Array.isArray(required) || !required.length || required.some((v) => typeof v !== "string")) {
 				throw new Error(

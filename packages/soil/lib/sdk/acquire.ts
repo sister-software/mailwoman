@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Downloads a region's soil survey areas and turns them into builder inputs; the catalogue's `saverest` date picks the archive and the host rejects `HEAD` and ignores `Range`.
+ *   Downloads a region's soil survey areas and turns them into builder inputs. The catalogue's `saverest` date picks the archive and the host rejects `HEAD` and ignores `Range`.
  */
 
 import type { PathBuilderLike } from "path-ts"

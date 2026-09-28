@@ -11,12 +11,13 @@
  *   {@link PremiseLinkageResultRow} persists a salted case identifier, shape class, presence booleans,
  *   and closed-set outcomes with no free-text field for an address to leak through.
  *
- *   Every rate is a numerator and denominator as separate fields; no field stores a precomputed ratio.
+ *   Every rate is a numerator and denominator as separate fields. No field stores a precomputed ratio.
  */
 
 /**
- * How the input was shaped relative to the authoritative record it should link to; the reporting
- * axis that localizes an arm's effect to a register instead of averaging wins and losses.
+ * How the input was shaped relative to the authoritative record it should link to.
+ *
+ * The reporting axis that localizes an arm's effect to a register instead of averaging wins and losses.
  */
 export const PremiseLinkageInputShapeClass = {
 	/**
@@ -68,8 +69,10 @@ export interface PremiseLinkagePresence {
 }
 
 /**
- * One authoritative identifier, named by the scheme it belongs to; the scheme is carried per row
- * so a non-UK register grades against its own namespace without a second row type.
+ * One authoritative identifier, named by the scheme it belongs to.
+ *
+ * The scheme is carried per row so a non-UK register grades against its own
+ * namespace without a second row type.
  */
 export interface PremiseLinkageObjectID {
 	scheme: string
@@ -90,12 +93,13 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
 	 */
 	expectedObjectID: PremiseLinkageObjectID
 	/**
-	 * Truth coordinate, when the row has one; absent means unmeasured, never zero.
+	 * Truth coordinate, when the row has one.
+	 * Absent means unmeasured, never zero.
 	 */
 	expectedLat?: number
 	expectedLon?: number
 	/**
-	 * Whether the provider's terms permit a coordinate error to appear in a published aggregate;
+	 * Whether the provider's terms permit a coordinate error to appear in a published aggregate.
 	 * false keeps the row in every identifier metric and out of every coordinate one.
 	 */
 	coordinatePublishable: boolean
@@ -106,8 +110,9 @@ export interface PremiseLinkageInputRow extends PremiseLinkagePresence {
  * What one arm did with one row: `refused` and `ambiguous` are first-class
  * and never recorded as `wrong`, and an ambiguous answer is never `exact`.
  *
- * `errored` is not an outcome the arm produced — it marks a row that could not be graded
- * at all — and is excluded from every rate and reported as its own count.
+ * `errored` is not an outcome the arm produced.
+ * It marks a row that could not be graded at all — and is excluded from every rate
+ * and reported as its own count.
  */
 export const PremiseLinkageOutcome = {
 	Exact: "exact",
@@ -170,8 +175,8 @@ export interface PremiseLinkageResultRow extends PremiseLinkagePresence {
 	inputShapeClass: PremiseLinkageInputShapeClass
 	outcome: PremiseLinkageOutcome
 	/**
-	 * Carried so the report writer can refuse a coordinate on a row whose terms forbid one;
-	 * a permission flag is not a licensed value.
+	 * Carried so the report writer can refuse a coordinate on a row whose terms
+	 * forbid one. a permission flag is not a licensed value.
 	 */
 	coordinatePublishable: boolean
 	/**
@@ -267,19 +272,23 @@ export interface PremiseLinkageComparison {
 }
 
 /**
- * The publishable aggregate; rows never appear here.
+ * The publishable aggregate.
+ * Rows never appear here.
  */
 export interface PremiseLinkageReport {
 	mode: PremiseLinkageMode
 	mailwomanVersion: string
 	policy: PremiseLinkagePolicy
 	/**
-	 * The minimum agreed with the data provider; a per-class cell below it is removed before publication.
+	 * The minimum agreed with the data provider.
+	 * A per-class cell below it is removed before publication.
 	 */
 	minCellSize: number
 	/**
-	 * How many cells the writer removed; zero means none were removed, which is distinct
-	 * from no cells being small only if this number is visible.
+	 * How many cells the writer removed.
+	 *
+	 * Zero means none were removed, which is distinct from no cells being small
+	 * only if this number is visible.
 	 */
 	suppressedCells: number
 	arms: PremiseLinkageArmReport[]

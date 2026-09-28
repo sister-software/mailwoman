@@ -53,12 +53,13 @@ export interface CandidateTable {
 	is_primary: number | null
 	/**
 	 * Blended place importance in [0, 1], NULL when unmeasured (never zero) and copied
-	 * verbatim from the pre-split score source, not the split `encyclopedic` channel.
+	 * verbatim from the pre-split score source rather than the split `encyclopedic` channel.
 	 */
 	importance: number | null
 	/**
-	 * The name's detected role on this row (`'abbr'`, `'gloss'` or `'variant'`), or NULL
-	 * when no role was detected; the column is write-only in this build generation.
+	 * The name's detected role on this row (`'abbr'`, `'gloss'` or `'variant'`),
+	 * or NULL when no role was detected.
+	 * The column is write-only in this build generation.
 	 */
 	name_role: string | null
 }
@@ -95,14 +96,16 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	country_codes: CountryCodeTable
 	placetype_codes: PlacetypeCodeTable
 	/**
-	 * The capital-status reference carried in-artifact; see capital-schema.ts.
+	 * The capital-status reference carried in-artifact.
+	 * See capital-schema.ts.
 	 */
 	capital: CapitalTable
 }
 
 /**
- * The `candidate`/`cand_stage` columns in clustered-key order, from which the materialization
- * derives its column list; keep in sync with {@link CandidateTable}.
+ * The `candidate`/`cand_stage` columns in clustered-key order, from which the
+ * materialization derives its column list.
+ * Keep in sync with {@link CandidateTable}.
  */
 export const CANDIDATE_COLUMNS = [
 	"name_key",

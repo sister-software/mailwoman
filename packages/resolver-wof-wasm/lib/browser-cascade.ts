@@ -63,8 +63,9 @@ export interface MailwomanLookupLike {
 		}>
 	>
 	/**
-	 * Dual-role partner roles for a resolved place id; absent on lookups built from
-	 * a slim DB that predates the `coincident_roles` relation.
+	 * Dual-role partner roles for a resolved place id.
+	 *
+	 * Absent on lookups built from a slim DB that predates the `coincident_roles` relation.
 	 */
 	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }

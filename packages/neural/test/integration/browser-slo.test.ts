@@ -17,7 +17,7 @@
  *
  *   Budgets are regression tripwires rather than targets: a failure means the quantity moved a lot,
  *   and the repair is to read the receipt rather than widen the constant. Byte budgets assert RAW
- *   bytes, which are the deterministic artifact-size signal; the wire column is reported because it
+ *   bytes, which are the deterministic artifact-size signal. The wire column is reported because it
  *   is the one comparable to a live-demo trace.
  *
  *   Run with the verbose reporter to see the numbers rather than the verdict:
@@ -96,8 +96,9 @@ const WARM_P50_WASM_MS_BUDGET = 140
 const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
- * Http range requests a cold gazetteer session costs; this is what fails when a schema
- * or clustering change turns a probe into a scan.
+ * Http range requests a cold gazetteer session costs.
+ *
+ * This is what fails when a schema or clustering change turns a probe into a scan.
  */
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
@@ -156,8 +157,10 @@ const CANDIDATE_PROBE_LIMIT = 8
 const HTTPVFS_CHUNK_SIZE = 65_536
 
 /**
- * Chromium flags that let the WebGPU arm be attempted at all; the arm skips where no adapter
- * is granted, which is the honest outcome, and the receipt records the adapter's identity.
+ * Chromium flags that let the WebGPU arm be attempted at all.
+ *
+ * The arm skips where no adapter is granted, which is the honest outcome,
+ * and the receipt records the adapter's identity.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
@@ -230,9 +233,10 @@ const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 const BUNDLE_RESOLVE_DIR = repoRootPath()
 
 /**
- * The class a served response is counted against; byte accounting happens on the server
- * rather than in the browser because the server sees exactly what left the socket
- * and cannot be fooled by a cache hit.
+ * The class a served response is counted against.
+ *
+ * Byte accounting happens on the server rather than in the browser because the server
+ * sees exactly what left the socket and cannot be fooled by a cache hit.
  */
 type AssetClass = "model" | "tokenizer" | "ortWasm" | "sqliteRuntime" | "runtimeJS" | "evidence" | "gazetteerRanges"
 
@@ -323,9 +327,10 @@ interface RangeSpec {
 }
 
 /**
- * Parse a single-range `Range: bytes=a-b` header; multi-range is deliberately
- * unimplemented because sql.js-httpvfs never asks for one and half-answering a
- * shape we do not serve would corrupt the measurement.
+ * Parse a single-range `Range: bytes=a-b` header.
+ *
+ * Multi-range is deliberately unimplemented because sql.js-httpvfs never asks for one
+ * and half-answering a shape we do not serve would corrupt the measurement.
  */
 function parseRange(header: string | undefined, size: number): RangeSpec | null {
 	if (!header) return null

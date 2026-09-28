@@ -8,7 +8,7 @@
  *   about, and every consumer treats a plausible answer as the right one.
  *
  *   Tables are discovered rather than listed, because a check that names its subjects cannot see a table somebody
- *   adds; a declaration qualifies when at least two entries pair a country code with a locale tag and those are at
+ *   adds. A declaration qualifies when at least two entries pair a country code with a locale tag and those are at
  *   least half of what it holds.
  *
  *   A table naming a locale that does not ship is deliberately not an error: `FST_LOCALE_BY_COUNTRY` carries
@@ -141,7 +141,7 @@ export async function findLocaleTables(context: {
 	for (const file of sources) {
 		const text = await readLocalTextFile(resolvePath(context.repoRoot, file))
 
-		// Cheap reject before parsing: a country→locale map names the country or locale somewhere in the file.
+		// Cheap reject before parsing: a country→locale map mentions the country or locale somewhere in the file.
 		if (!/COUNTR|LOCALE|[Ll]ocale/u.test(text)) continue
 
 		const source = ts.createSourceFile(

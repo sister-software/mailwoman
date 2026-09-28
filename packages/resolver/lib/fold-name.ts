@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   One shared name fold for the resolver's commune reconciliation, the street tier's locality
- *   comparison and span-rescore's key guards; its own module because those would otherwise import
+ *   comparison and span-rescore's key guards. Its own module because those would otherwise import
  *   each other for it.
  */
 

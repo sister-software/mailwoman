@@ -100,7 +100,7 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 
 		log(`\n${locale}  →  ${relative(dataRoot, dir)}`)
 
-		// The model card is the one artifact from the checkout rather than the data root;
+		// The model card is the one artifact from the checkout rather than the data root.
 		// without it the loader falls back to STAGE2_BIO_LABELS (21) against a 33-logit model
 		// and the first parse throws, so its absence is a broken install rather than a lean one.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")

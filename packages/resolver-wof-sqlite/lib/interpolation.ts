@@ -55,7 +55,8 @@ export interface InterpolationQuery {
 	street: string
 	number: string
 	/**
-	 * ZIP scope; without it common street names abstain.
+	 * ZIP scope.
+	 * Without it common street names abstain.
 	 */
 	postcode?: string
 	/**
@@ -130,8 +131,9 @@ export class StreetInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened; a caller-supplied connection is not in here,
-	 * so disposal cannot reach it.
+	 * Resources this instance opened.
+	 *
+	 * A caller-supplied connection is not in here, so disposal cannot reach it.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #byPostcode:
@@ -167,7 +169,8 @@ export class StreetInterpolator<
 		}
 
 		// The conformal radius multiplier ships in the extract's `interp_calibration` table
-		// and is read once at open time; extracts without that table leave it undefined.
+		// and is read once at open time.
+		// Extracts without that table leave it undefined.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
@@ -193,7 +196,8 @@ export class StreetInterpolator<
 		if (!this.#byPostcode || !this.#byStreet) return null
 		const numberRaw = query.number.trim()
 
-		// Strictly-numeric house numbers only; the ranges do not model hyphenated or alphanumeric schemes.
+		// Strictly-numeric house numbers only.
+		// The ranges do not model hyphenated or alphanumeric schemes.
 		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file What `mailwoman release hf` refuses to upload: a model whose card records no training sources.
  *
- *   The check runs before any byte leaves, and it refuses only when the card records no attribution at all — an entry naming no license is a gap to record and passes.
+ *   The check runs before any byte leaves, and it refuses only when the card records no attribution at all. An entry naming no license is a gap to record and passes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"

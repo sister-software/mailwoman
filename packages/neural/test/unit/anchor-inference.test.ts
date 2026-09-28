@@ -212,7 +212,8 @@ describe("buildAnchorFeatures — span modes", () => {
 			expect(features[i]).toEqual(inside ? gb : new Array(ANCHOR_FEATURE_DIM).fill(0))
 		})
 
-		// Both halves of the unit are painted; the outward-only default paints 2 pieces rather than 4.
+		// Both halves of the unit are painted.
+		// The outward-only default paints 2 pieces rather than 4.
 		expect(confidence.filter((c) => c === 1)).toHaveLength(4)
 	})
 
@@ -229,7 +230,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	})
 
 	it("(c) an unknown GB unit falls back to its outward district, painting the WHOLE unit span", () => {
-		// SW1A 1AA is not in V2 but its outward SW1A is; NI codes behave the same way.
+		// SW1A 1AA is not in V2 but its outward SW1A is.
+		// NI codes behave the same way.
 		const text = "London SW1A 1AA"
 		const spanStart = text.indexOf("SW1A 1AA")
 		const pieces = piecesFor(text)

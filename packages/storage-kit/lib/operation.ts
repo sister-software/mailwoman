@@ -11,7 +11,8 @@ import { type Operation, type OperationContext, operationDefiner } from "@mailwo
  */
 export const StorageEffect = {
 	/**
-	 * Reads block devices, mount state, or filesystem properties; makes no changes and needs no privilege.
+	 * Reads block devices, mount state, or filesystem properties.
+	 * Makes no changes and needs no privilege.
 	 */
 	Read: "read",
 	/**

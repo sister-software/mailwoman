@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The app's routes, read from `location.pathname` with no router; a path the app does not know is a not-found
+ *   The app's routes, read from `location.pathname` with no router. A path the app does not know is a not-found
  *   view, so a stale link fails visibly rather than showing the globe.
  */
 

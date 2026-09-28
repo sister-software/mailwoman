@@ -96,8 +96,8 @@ export function countrySourceMap(lists: {
 }
 
 /**
- * Countries served by more than one source that the baseline does not already record;
- * a WOF conflict is reported regardless.
+ * Countries served by more than one source that the baseline does not already
+ * record. a WOF conflict is reported regardless.
  */
 export function sourceConflicts(sources: readonly CountrySources[]): SourceConflict[] {
 	return sources

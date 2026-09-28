@@ -40,8 +40,8 @@ describe("the shipped recipe", () => {
 	})
 
 	it("still matches the measured baseline exactly", () => {
-		// The baseline is 14 two-source countries, all Overture + GeoNames; if this
-		// drifts the baseline is stale rather than the code wrong.
+		// The baseline is 14 two-source countries, all Overture + GeoNames.
+		// If this drifts the baseline is stale rather than the code wrong.
 		const multi = countrySourceMap(LIVE).filter((e) => e.sources.length > 1)
 
 		expect(multi.map((e) => e.country).toSorted()).toEqual([...ACCEPTED_TWO_SOURCE_COUNTRIES].toSorted())

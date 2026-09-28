@@ -284,7 +284,7 @@ function normalizedDocument(html: string): string {
 }
 
 /**
- * Every case the fabrication audit found, kept so the substring-invariant test runs across them;
+ * Every case the fabrication audit found, kept so the substring-invariant test runs across them.
  * mutating any of the tightenings above regresses at least one back to a name that fails the check.
  */
 const FABRICATION_AUDIT_CASES: Record<string, string> = {

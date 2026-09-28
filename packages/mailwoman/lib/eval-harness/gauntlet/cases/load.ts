@@ -47,7 +47,8 @@ async function loadCorpusFile(source: PathBuilder, expectedCC: string): Promise<
 	const rows: SeedCase[] = []
 	let line = 0
 
-	// `skipEmpty: false` makes the line number true; blank lines are dropped below after they are counted.
+	// `skipEmpty: false` makes the line number true.
+	// Blank lines are dropped below after they are counted.
 	for await (const text of TextSpliterator.fromAsync(path, { skipEmpty: false })) {
 		line++
 
@@ -131,8 +132,8 @@ export async function loadRegressionCases(dir: PathBuilderLike = CASES_DIR): Pro
 /**
  * A content hash of a loaded corpus — canonical row keys, sorted, `sha256`.
  *
- * Order-independent on purpose: it answers whether these are the same cases, not
- * whether they were read in the same order.
+ * Order-independent on purpose: it answers whether these are the same cases,
+ * independent of the order they were read in.
  */
 export function regressionCorpusHash(rows: readonly SeedCase[]): string {
 	return sha256Hex(

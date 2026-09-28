@@ -143,9 +143,9 @@ export function classifyFeatureCells(
 	let touched = new Set<string>()
 	let full = new Set<string>()
 
-	// `estimateCellCount` approximates what h3 will reserve, so an allocation
-	// failure steps the resolution down and retries rather than ending the build;
-	// a feature that fails at {@link MIN_INDEX_RESOLUTION} is refused.
+	// `estimateCellCount` approximates what h3 will reserve, so an allocation failure
+	// steps the resolution down and retries rather than ending the build. a feature
+	// that fails at {@link MIN_INDEX_RESOLUTION} is refused.
 	for (;;) {
 		try {
 			touched = new Set<string>()
@@ -173,8 +173,8 @@ export function classifyFeatureCells(
 					true
 				)
 
-				// An empty answer for a real part is an allocator failure, not a result: every part with
-				// a non-degenerate bounding box touches at least one cell, so zero is impossible as
+				// An empty answer for a real part is an allocator failure rather than a result: every part
+				// with a non-degenerate bounding box touches at least one cell, so zero is impossible as
 				// an answer and checking per feature would silently index a multi-part feature short.
 				if (!overlapping.length) {
 					throw new Error(
@@ -186,9 +186,10 @@ export function classifyFeatureCells(
 					touched.add(cell)
 				}
 
-				// A part narrower than a cell's minimum width cannot contain one, so its `full`
-				// set is empty and asking for it is pure cost; the comparison is permissive
-				// because a missed whole cell becomes a partial one the ray cast still answers.
+				// A part narrower than a cell's minimum width cannot contain one,
+				// so its `full` set is empty and asking for it is pure cost.
+				// The comparison is permissive because a missed whole cell becomes a
+				// partial one the ray cast still answers.
 				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
@@ -220,8 +221,8 @@ export function classifyFeatureCells(
 		)
 	}
 
-	// A cell can be full for one polygon of a MultiPolygon and merely touched by another;
-	// full wins because the point is inside either way.
+	// A cell can be full for one polygon of a MultiPolygon and merely touched by
+	// another. full wins because the point is inside either way.
 	const partial: H3Cell[] = []
 
 	for (const cell of touched) {
@@ -305,8 +306,9 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	for (const cell of cells.partial) {
 		const short = shortCellToInt(cell)
 
-		// A cell cannot be both for one polygon; this subtraction is belt and braces against
-		// a compaction that produced a parent the partial set also names.
+		// A cell cannot be both for one polygon.
+		// This subtraction is belt and braces against a compaction that produced a
+		// parent the partial set also names.
 		if (wholeShort.has(short)) continue
 
 		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })

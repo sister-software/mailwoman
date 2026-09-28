@@ -55,9 +55,10 @@ export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
- * Which per-locale FST the `fst` arm reads for a row's country; unlike the
- * weights-overlay routing it never falls back to en-US, so a country with no FST is
- * counted out of the denominator rather than graded a miss.
+ * Which per-locale FST the `fst` arm reads for a row's country.
+ *
+ * Unlike the weights-overlay routing it never falls back to en-US, so a country with
+ * no FST is counted out of the denominator rather than graded a miss.
  */
 export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 	US: "en-us",
@@ -151,7 +152,8 @@ export interface RowArmReading {
 }
 
 /**
- * Folds rungs into the per-row readings; pure, so the arithmetic is testable without an engine.
+ * Folds rungs into the per-row readings.
+ * Pure, so the arithmetic is testable without an engine.
  */
 export function readRow(rungs: readonly RungReading[], inputLength: number): RowArmReading {
 	const firstIndex = rungs.findIndex((rung) => rung.hit)
@@ -436,7 +438,8 @@ export async function runAutocompleteLadder(
 }
 
 /**
- * The per-arm summary over the headline rows; pure.
+ * The per-arm summary over the headline rows.
+ * Pure.
  */
 export function summarizeArm(arm: LadderArm, rows: readonly LadderRow[]): ArmSummary {
 	const allHeadline = rows.filter((row) => row.headline)

@@ -41,8 +41,9 @@ export interface ForkEntityProbeOpts {
 	 */
 	lookup: POIExecutorLookup
 	/**
-	 * Returns true for a street-type token; the probe rejects a query containing one
-	 * so a street name cannot match a venue.
+	 * Returns true for a street-type token.
+	 *
+	 * The probe rejects a query containing one so a street name cannot match a venue.
 	 */
 	isStreetGeneric: (token: string) => boolean
 }
@@ -71,7 +72,8 @@ export function probeForkEntity(rawQuery: string, opts: ForkEntityProbeOpts): Fo
 	// The limit leaves room to find it.
 	const hits = opts.lookup.search({ name: rawQuery, limit: 24 })
 
-	// Only exact name-key matches count; FTS also returns partial matches such as "Comer Park" for "comer".
+	// Only exact name-key matches count.
+	// FTS also returns partial matches such as "Comer Park" for "comer".
 	const exact = hits.filter((h) => h.name !== null && normalizeLocalityForKey(h.name) === nameKey)
 
 	if (!exact.length) return null
@@ -244,8 +246,8 @@ export function probeVenueNearAnchor(
 }
 
 /**
- * Applies the fork-entity probe, then the optional near-anchor venue refinement;
- * the fork probe runs only for a declared fork with no coordinate, and the refinement only
+ * Applies the fork-entity probe, then the optional near-anchor venue refinement. the
+ * fork probe runs only for a declared fork with no coordinate, and the refinement only
  * when `poiVenueTier` is set and the current tier is `admin` or `street`.
  */
 export function applyEntityTiers(
@@ -342,7 +344,8 @@ function venueHeadSegment(venueRaw: string): string | null {
 
 /**
  * Runs {@link probeVenueNearAnchor}, then retries by comparing {@link venueHeadSegment}
- * of the query and of each row; it still requires a single match within the radius.
+ * of the query and of each row.
+ * It still requires a single match within the radius.
  */
 export function probeVenueNearAnchorFolded(
 	venueRaw: string,

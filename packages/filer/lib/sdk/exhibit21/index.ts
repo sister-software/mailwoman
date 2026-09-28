@@ -28,8 +28,8 @@ import {
 export interface ParsedSubsidiary {
 	name: string
 	/**
-	 * Omitted rather than an empty string when Exhibit 21 gave no jurisdiction for this
-	 * row/line; decision 6 forbids guessing an absent jurisdiction.
+	 * Omitted rather than an empty string when Exhibit 21 gave no jurisdiction for this row/line.
+	 * Decision 6 forbids guessing an absent jurisdiction.
 	 */
 	jurisdiction?: string
 }
@@ -43,8 +43,9 @@ export interface ParsedSubsidiary {
 export interface ParsedExhibit21 {
 	subsidiaries: ParsedSubsidiary[]
 	/**
-	 * Rows/lines this parser recognized as an entry but could not confidently reduce to a
-	 * subsidiary name; decision 6 counts and drops them, and criterion 3 forbids throwing.
+	 * Rows/lines this parser recognized as an entry but could not confidently reduce to a subsidiary name.
+	 *
+	 * Decision 6 counts and drops them, and criterion 3 forbids throwing.
 	 */
 	unparseable: number
 }
@@ -59,9 +60,10 @@ interface ColumnMapping {
 
 /**
  * The narrowest header row that establishes a mapping, counted in the row's own cells
- * before blank columns are dropped; a two-cell header would claim to describe
- * a wider data row it never mentions, which is `exhibit21-mangled.html`'s
- * `Name of Subsidiary`/`State` shape over a third `"Note: ..."` cell.
+ * before blank columns are dropped.
+ *
+ * A two-cell header would claim to describe a wider data row it never mentions, which is
+ * `exhibit21-mangled.html`'s `Name of Subsidiary`/`State` shape over a third `"Note: ..."` cell.
  */
 const MINIMUM_HEADER_ROW_CELLS = 3
 
@@ -101,7 +103,7 @@ function headerColumnMapping(
 }
 
 /**
- * True when the table is a two-across list of entity names with no jurisdiction column;
+ * True when the table is a two-across list of entity names with no jurisdiction column.
  * the whole table abstains, because reading its second column as a jurisdiction would
  * emit one company as another company's place of incorporation.
  *
@@ -113,16 +115,18 @@ function headerColumnMapping(
 const MINIMUM_NAME_OVER_NAME_ROWS = 4
 
 /**
- * More than half the second values must carry a legal designation; a genuine jurisdiction column is
+ * More than half the second values must carry a legal designation. A genuine jurisdiction column is
  * 0/N except where the filer spells the entity type out (Charter's `"Delaware limited liability
  * company"`, 135/135), which {@linkcode DISTINCT_SECOND_VALUE_RATIO} separates.
  */
 const DESIGNATED_SECOND_VALUE_RATIO = 0.5
 
 /**
- * More than 70% of the second values must be distinct; a jurisdiction column repeats
- * (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26) while a second name
- * column does not (IDT 1.00), and dropping this condition loses all 135 Charter subsidiaries.
+ * More than 70% of the second values must be distinct.
+ *
+ * A jurisdiction column repeats (Charter 0.07, Comcast 0.05, Uniti 0.13, T-Mobile 0.15, Lumen 0.26)
+ * while a second name column does not (IDT 1.00), and dropping this condition
+ * loses all 135 Charter subsidiaries.
  */
 const DISTINCT_SECOND_VALUE_RATIO = 0.7
 
@@ -149,9 +153,9 @@ function isNameOverNameTable(rows: readonly TableCell[][]): boolean {
 }
 
 /**
- * The number of one-value rows a table needs to count as a plain single-column
- * name list, where a one-value row is a subsidiary rather than a section heading;
- * a table one cell wide qualifies without them.
+ * The number of one-value rows a table needs to count as a plain single-column name list,
+ * where a one-value row is a subsidiary rather than a section heading. a table
+ * one cell wide qualifies without them.
  */
 const MINIMUM_NAME_LIST_ROWS = 2
 
@@ -416,9 +420,10 @@ function splitCandidateLine(line: string): { name: string; jurisdiction?: string
 const LIST_MARKER_PATTERN = /^[•●▪◦∙·*–—-]+\s*/
 
 /**
- * Whole-line, case-insensitive shapes that are a document title or section heading,
- * never an entity name; whole-string patterns rather than keyword sniffing, because
- * substring sniffing on "subsidiaries" would misfire on a company actually named that.
+ * Whole-line, case-insensitive shapes that are a document title or section heading, never an entity name.
+ *
+ * Whole-string patterns rather than keyword sniffing, because substring sniffing on
+ * "subsidiaries" would misfire on a company actually named that.
  */
 const TITLE_LINE_PATTERNS = [
 	/^exhibit\s*21(\.\d+)?(\s*[-–—:]?\s*list of subsidiaries)?$/i,
@@ -495,8 +500,10 @@ function subsidiariesFromLines(lines: readonly string[]): ParsedExhibit21 {
 
 /**
  * True when every extracted cell of every extracted row is blank, marking a decorative
- * border/spacer table that carries no subsidiary data; committing to the table strategy
- * the instant any `<table>` tag exists would otherwise silence a list stated outside one.
+ * border/spacer table that carries no subsidiary data.
+ *
+ * Committing to the table strategy the instant any `<table>` tag exists would
+ * otherwise silence a list stated outside one.
  */
 function isEntirelyBlankTable(tables: readonly TableCell[][][]): boolean {
 	return tables.every((rows) => rows.every((row) => row.every((cell) => cell.text === "")))
@@ -534,8 +541,9 @@ export interface SECDocumentClient {
 }
 
 /**
- * Fetches one Exhibit 21 document through the shared SEC client's `getDocument` raw-text path
- * and parses it; the caller supplies the URL, since discovering it is out of scope here.
+ * Fetches one Exhibit 21 document through the shared SEC client's `getDocument` raw-text path and parses it.
+ *
+ * The caller supplies the URL, since discovering it is out of scope here.
  */
 export async function fetchExhibit21(client: SECDocumentClient, url: string | URL): Promise<ParsedExhibit21> {
 	const html = await client.getDocument(url)

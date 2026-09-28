@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Recover a dropped or fragmented locality from the raw text when a parse fails to resolve, by
- *   matching contiguous raw-token spans against the same-country gazetteer; default-on with an
+ *   matching contiguous raw-token spans against the same-country gazetteer. Default-on with an
  *   explicit `ResolveOpts.spanRescore: false` opt-out.
  */
 
@@ -27,9 +27,9 @@ export interface SpanRescoreOptions {
 	 */
 	postcode?: string
 	/**
-	 * Reject a candidate whose coordinate is farther than this (km) from the postcode anchor;
-	 * the check fires only when the postcode resolves to a point, so a backend without
-	 * postcode coverage is never penalized, and 0 disables.
+	 * Reject a candidate whose coordinate is farther than this (km) from the postcode
+	 * anchor. the check fires only when the postcode resolves to a point, so a backend
+	 * without postcode coverage is never penalized, and 0 disables.
 	 * Default 50.
 	 */
 	thresholdKm?: number
@@ -46,9 +46,10 @@ export interface SpanRescoreOptions {
 	 */
 	confidentThreshold?: number
 	/**
-	 * When on, the anchor retries with the postcode's code-shaped token subset
-	 * and an unresolved postcode node blocks only those code tokens, leaving the residual
-	 * name tokens as span material; street/affix blocking is untouched.
+	 * When on, the anchor retries with the postcode's code-shaped token subset and an unresolved
+	 * postcode node blocks only those code tokens, leaving the residual name tokens as span material.
+	 *
+	 * Street/affix blocking is untouched.
 	 * Default false.
 	 */
 	postalCompoundRecovery?: boolean
@@ -59,13 +60,15 @@ export interface SpanRescoreOptions {
 	 */
 	bareToponymSoftCountry?: boolean
 	/**
-	 * Weight of that prior, in log10-population units; default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT}
-	 * (2), and 0 removes the locale's say entirely.
+	 * Weight of that prior, in log10-population units.
+	 *
+	 * Default {@link DEFAULT_COUNTRY_PRIOR_WEIGHT} (2), and 0 removes the locale's say entirely.
 	 */
 	bareToponymCountryWeight?: number
 	/**
-	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code
-	 * or a number; see `remainderIsContext` for the rule.
+	 * Admit a proper sub-span only when every token it leaves behind is a subdivision code or a number.
+	 *
+	 * See `remainderIsContext` for the rule.
 	 * Default false.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
@@ -91,7 +94,7 @@ export interface RescoreCandidate {
 	/**
 	 * Whether the postcode-consistency check fired — the postcode resolved to a point
 	 * and the match was validated within `thresholdKm` — deliberately kept out of the
-	 * calibrated `confidence` so the isotonic guarantee holds.
+	 * calibrated `confidence` so the isotonic fit stays monotone.
 	 */
 	postcodeVerified: boolean
 	/**
@@ -177,7 +180,7 @@ function resolvedWeakly(node: AddressNode, reading: WeakResolutionReading): bool
 }
 
 /**
- * True if any node in the tree already carries a resolved place id — the brake on span rescore;
+ * True if any node in the tree already carries a resolved place id — the brake on span rescore.
  * with `weakReading`, a node whose resolution is weak under that reading does not hold it.
  */
 export function hasResolvedPlace(
@@ -190,9 +193,11 @@ export function hasResolvedPlace(
 }
 
 /**
- * Ranges of multi-token `country` / `region` spans, used to block their interior tokens
- * from being re-read as standalone places; the whole span stays probeable, single-token
- * spans are excluded, and the guard is deliberately not confidence-conditioned.
+ * Ranges of multi-token `country` / `region` spans, used to block their interior
+ * tokens from being re-read as standalone places.
+ *
+ * The whole span stays probeable, single-token spans are excluded, and the guard
+ * is deliberately not confidence-conditioned.
  */
 function multiTokenNameInteriors(roots: readonly AddressNode[], raw: string): Array<[number, number]> {
 	const out: Array<[number, number]> = []
@@ -261,8 +266,8 @@ function confidentRanges(
 			Number.isFinite(n.start) &&
 			Number.isFinite(n.end)
 		) {
-			// An unresolved postcode span blocks only its code-shaped tokens; resolved postcodes
-			// and the street family keep the full-range block.
+			// An unresolved postcode span blocks only its code-shaped tokens.
+			// Resolved postcodes and the street family keep the full-range block.
 			if (postalCompoundRecovery && n.tag === "postcode" && !n.placeID) {
 				for (const t of tokenizeRaw(raw.slice(n.start, n.end))) {
 					if (/\d/.test(t.text)) {
@@ -296,8 +301,8 @@ export async function findRescoreCandidate(
 	const country = opts.country
 	const postcode = opts.postcode?.trim() || undefined
 
-	// The postcode-consistency anchor; no candidate leaves it null, so the check
-	// cannot fire and the match is accepted.
+	// The postcode-consistency anchor.
+	// No candidate leaves it null, so the check cannot fire and the match is accepted.
 	let anchor: { lat: number; lon: number } | null = null
 
 	if (postcode && thresholdKm > 0) {
@@ -416,8 +421,8 @@ export async function findRescoreCandidate(
 		// needs an unqualified tree and a caller country.
 		const wholeSpan = !!wholeInput && sp.start === wholeInput.start && sp.end === wholeInput.end
 
-		// A sub-span that drops a word of the name is a corruption rather than a recovery;
-		// see `remainderIsContext`.
+		// A sub-span that drops a word of the name is a corruption rather than a
+		// recovery. see `remainderIsContext`.
 		if (opts.spanRescoreRequireContextRemainder && !wholeSpan && !remainderIsContext(sp)) continue
 
 		const bare = softCountryEligible && wholeSpan
@@ -439,16 +444,16 @@ export async function findRescoreCandidate(
 					placetype: "locality",
 					limit: 5,
 					...(wholeSpan ? {} : { primaryOnly: true }),
-					// The qualifier the sub-span left behind; a backend without the ancestors
-					// sidecar ignores it, which is the same answer as not asking.
+					// The qualifier the sub-span left behind.
+					// A backend without the ancestors sidecar ignores it, which is the same answer as not asking.
 					...(qualifier === undefined ? {} : { regionQualifier: qualifier }),
 				})
 
 		// No primary-name re-check: `exactMatch` is name-or-alias, so re-comparing only
 		// the primary name would exclude the non-Latin-primary class.
 		//
-		// Importance-first within the admitted set; it abstains on an artifact
-		// predating the column and so changes no pick.
+		// Importance-first within the admitted set.
+		// It abstains on an artifact predating the column and so changes no pick.
 		const ranked = rankByImportance(hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0)))
 
 		// The same partition the walk applies: tier-safe, stable and positive-evidence-only,
@@ -492,8 +497,8 @@ export async function findRescoreCandidate(
 
 			if (key.length < 2 || /^\d+$/.test(key)) continue
 			const hits = await backend.findPlace({ text: sp.text, placetype: "locality", limit: 5 })
-			// Same alias-surface admission as the scoped pass; the per-candidate postcode
-			// verification below is the sole admission bar.
+			// Same alias-surface admission as the scoped pass.
+			// The per-candidate postcode verification below is the sole admission bar.
 			const exact = hits.filter((h) => h.exactMatch && (h.lat !== 0 || h.lon !== 0))
 
 			for (const h of exact) {

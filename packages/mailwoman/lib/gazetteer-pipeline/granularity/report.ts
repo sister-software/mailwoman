@@ -70,7 +70,8 @@ function rungCell(country: CountryGranularity, rung: ComponentTag): string {
 
 	if (!synthetic) return measurement.nodes.toLocaleString()
 
-	// Label by whichever synthetic source dominates; a single id-range test would call GeoNames rows Overture.
+	// Label by whichever synthetic source dominates.
+	// A single id-range test would call GeoNames rows Overture.
 	const label = measurement.geonamesBackfilled > measurement.overtureBackfilled ? "gn" : "ovt"
 
 	return `${measurement.nodes.toLocaleString()} (${formatPercent(synthetic / measurement.nodes, 1)} ${label})`

@@ -12,7 +12,8 @@
  */
 
 /**
- * Present so both modules expose the same shape; never read here.
+ * Present so both modules expose the same shape.
+ * Never read here.
  */
 export const DEFAULT_INTRA_OP_THREADS = 2
 

@@ -184,8 +184,8 @@ export function authorityDesignationMarkers(
 }
 
 /**
- * Converts one flood designation observation into a marker; callers normally
- * use {@link authorityDesignationMarkers}.
+ * Converts one flood designation observation into a marker.
+ * Callers normally use {@link authorityDesignationMarkers}.
  */
 export function authorityDesignationMarker(
 	observation: AuthorityDesignationObservation,
@@ -228,8 +228,8 @@ export function soilCapabilityMarkers(
 }
 
 /**
- * Converts one soil-capability observation into a marker; callers normally
- * use {@link soilCapabilityMarkers}.
+ * Converts one soil-capability observation into a marker.
+ * Callers normally use {@link soilCapabilityMarkers}.
  */
 export function soilCapabilityMarker(
 	observation: SoilCapabilityObservation,
@@ -272,8 +272,8 @@ export function coastalErosionMarkers(
 }
 
 /**
- * Converts one coastal-erosion observation into a marker; callers normally
- * use {@link coastalErosionMarkers}.
+ * Converts one coastal-erosion observation into a marker.
+ * Callers normally use {@link coastalErosionMarkers}.
  */
 export function coastalErosionMarker(
 	observation: CoastalErosionObservation,
@@ -316,7 +316,8 @@ export function zoningDesignationMarkers(
 }
 
 /**
- * Converts one zoning observation into a marker; callers normally use {@link zoningDesignationMarkers}.
+ * Converts one zoning observation into a marker.
+ * Callers normally use {@link zoningDesignationMarkers}.
  */
 export function zoningDesignationMarker(
 	observation: ZoningDesignationObservation,
@@ -361,8 +362,8 @@ export interface LayerDesignationRoutes {
 	 */
 	coastalErosionRoute?: CoastalErosionRoute
 	/**
-	 * The Irish zoning route, which fires only on a designation because an absent
-	 * zoning polygon has several indistinguishable causes.
+	 * The Irish zoning route fires only on a designation because an absent zoning
+	 * polygon has several indistinguishable causes.
 	 */
 	zoningDesignationRoute?: ZoningDesignationRoute
 }

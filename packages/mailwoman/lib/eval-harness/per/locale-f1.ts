@@ -19,7 +19,7 @@
  *   The anchor + gazetteer feed channels are fed by default (the standard paths, same as
  *   `score-country-homograph.ts` / `oa-resolver-eval`), because omitting them scores an anchor-trained model
  *   out-of-distribution and silently collapses the admin tags (country→0, region↔locality flips) while
- *   street/venue survive; pass `--no-anchor` to measure the zero-feed path on purpose.
+ *   street/venue survive. Pass `--no-anchor` to measure the zero-feed path on purpose.
  *
  *   `promotion-eval.ts` calls {@linkcode perLocaleF1} in-process and captures the markdown report (the
  *   `report` sink) into `<out-dir>/<tag>-per-locale.md`, the file the verdict assembler regex-reads, while the
@@ -92,14 +92,16 @@ export interface PerLocaleF1Options {
 	bridgeGaps?: boolean
 	outJSON?: string
 	/**
-	 * Disable the all-caps title-case shim (`normalizeCase: false`), the all-caps read; default false.
+	 * Disable the all-caps title-case shim (`normalizeCase: false`), the all-caps read.
+	 * Default false.
 	 */
 	rawCase?: boolean
 	/**
-	 * Parse each row in the register `deriveGeocodeRegister` gives it, which is what the
-	 * geocode path does; default false parses every row with no `inputMode`, which the
-	 * classifier reads as `fragmented` and so feeds both evidence lexicons to every row,
-	 * including the 1,896 of 2,660 `us.jsonl` rows production withholds them from.
+	 * Parse each row in the register `deriveGeocodeRegister` gives it, which is what the geocode path does.
+	 *
+	 * Default false parses every row with no `inputMode`, which the classifier reads
+	 * as `fragmented` and so feeds both evidence lexicons to every row, including the
+	 * 1,896 of 2,660 `us.jsonl` rows production withholds them from.
 	 */
 	productionRegister?: boolean
 }
@@ -202,9 +204,9 @@ function foldToComponents(flat: Partial<Record<ComponentTag, string>>, foldStree
 
 /**
  * Country → `"split"` | `"folded"`, read from the golden version's own `MANIFEST.json`
- * (`convention.street_convention`; the `*` key is the default), looked up in the golden dir
- * and then its parent because the battery points at a split subdir while the manifest
- * sits at the version root; a version with no such block reads as all-folded.
+ * (`convention.street_convention`; the `*` key is the default), looked up in the golden dir and then
+ * its parent because the battery points at a split subdir while the manifest sits at the version root.
+ * A version with no such block reads as all-folded.
  */
 async function readStreetConvention(goldenDir: string): Promise<Record<string, string>> {
 	for (const candidate of [resolvePath(goldenDir, "MANIFEST.json"), resolvePath(goldenDir, "..", "MANIFEST.json")]) {
@@ -336,9 +338,10 @@ function scoreFile(file: string, rows: GoldenRow[], preds: Array<Record<string, 
 // #region Main
 
 /**
- * Score each locale file separately and report per-locale component-F1,
- * exact-match, and the cross-locale macro-F1 spread; the markdown report goes to
- * `report` (one call per line, matching the child stdout the runner captured)
+ * Score each locale file separately and report per-locale component-F1, exact-match,
+ * and the cross-locale macro-F1 spread.
+ *
+ * The markdown report goes to `report` (one call per line, matching the child stdout the runner captured)
  * and the progress narration to `reportError`.
  */
 export async function perLocaleF1(
@@ -377,17 +380,18 @@ export async function perLocaleF1(
 
 	let neural: NeuralAddressClassifier
 
-	// Package-shaped: `--weights-cache <root>` loads model + tokenizer + card + all soft
-	// channels from `<root>/node_modules/@mailwoman/neural-weights-en-us` via loadFromWeights,
-	// exactly as production does; it takes precedence over the explicit `--model` path.
+	// Package-shaped: `--weights-cache <root>` loads model + tokenizer + card + all
+	// soft channels from `<root>/node_modules/@mailwoman/neural-weights-en-us` via
+	// loadFromWeights, exactly as production does.
+	// It takes precedence over the explicit `--model` path.
 	if (args.weightsCache) {
 		reportError(`Weights:    package-shaped from ${args.weightsCache} (loadFromWeights cacheRoot)`)
 
 		neural = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US", cacheRoot: args.weightsCache })
 	} else if (args.modelPath || args.tokenizerPath || args.modelCardPath) {
-		// All three custom-model flags are required together, because a missing
-		// `--tokenizer` silently fell back to the default shipped weights and two different
-		// checkpoints scored byte-identical; refuse to guess.
+		// All three custom-model flags are required together, because a missing `--tokenizer` silently
+		// fell back to the default shipped weights and two different checkpoints scored byte-identical.
+		// Refuse to guess.
 		if (!args.modelPath || !args.tokenizerPath || !args.modelCardPath) {
 			throw new Error(
 				"--model requires --tokenizer AND --model-card together (refusing to silently fall back to " +
@@ -413,8 +417,8 @@ export async function perLocaleF1(
 				? parseAnchorLookup(await readLocalJSONFile(anchorLookupPath))
 				: undefined
 
-		// Fed so a gazetteer-trained model gets its clues; harmless for older models,
-		// since the runner skips inputs the ONNX lacks.
+		// Fed so a gazetteer-trained model gets its clues.
+		// Harmless for older models, since the runner skips inputs the ONNX lacks.
 		const gazetteerLexicon =
 			gazetteerLexiconPath && (await pathExists(gazetteerLexiconPath))
 				? parseGazetteerLexicon(await readLocalJSONFile(gazetteerLexiconPath))
@@ -468,7 +472,7 @@ export async function perLocaleF1(
 
 		const preds: Array<Record<string, string>> = []
 		const t0 = performance.now()
-		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction differs, a diagnostic lens for which surfaces the model drops; harmless when the env is unset.
+		// MAILWOMAN_DUMP_MISS_TAG=<tag>: print every row where gold has <tag> but the prediction differs, a diagnostic lens for which surfaces the model drops. Harmless when the env is unset.
 		const dumpTag = $public.MAILWOMAN_DUMP_MISS_TAG
 
 		for (const row of rows) {
@@ -481,8 +485,9 @@ export async function perLocaleF1(
 			const tree = await neural.parse(row.raw, {
 				postcodeRepair: true,
 				queryShape: rowShape,
-				// Absent, the classifier reads the register as `fragmented` and feeds both evidence
-				// lexicons to every row; production feeds them only where the kind verdict says so.
+				// Absent, the classifier reads the register as `fragmented` and feeds
+				// both evidence lexicons to every row.
+				// Production feeds them only where the kind verdict says so.
 				...(args.productionRegister ? { inputMode: deriveGeocodeRegister(row.raw, rowShape) } : {}),
 				...(wordConsistency ? { enforceWordConsistency: wordConsistency } : {}),
 				// `--raw-case` disables the all-caps title-case shim so the read measures the

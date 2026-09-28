@@ -80,7 +80,8 @@ export async function runConformanceFixtures(
  */
 export interface ConformanceSummary {
 	/**
-	 * Findings from `status: pass` rows that were violated; these, and only these, decide {@linkcode pass}.
+	 * Findings from `status: pass` rows that were violated.
+	 * These, and only these, decide {@linkcode pass}.
 	 */
 	failures: ConformanceFinding[]
 	/**

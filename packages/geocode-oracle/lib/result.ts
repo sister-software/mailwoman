@@ -72,7 +72,8 @@ export interface OracleGeocodeResult<Raw = unknown> {
 	 */
 	placeID: string | null
 	/**
-	 * The Open Location Code (plus code) for the match; Google only.
+	 * The Open Location Code (plus code) for the match.
+	 * Google only.
 	 */
 	plusCode: string | null
 	/**

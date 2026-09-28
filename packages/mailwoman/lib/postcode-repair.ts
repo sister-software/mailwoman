@@ -20,8 +20,10 @@ const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode",
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces; any other tag overlapping the format span vetoes the repair,
- * because the rung replaces a wrong reading and never a plausible one.
+ * The tags the misread produces.
+ *
+ * Any other tag overlapping the format span vetoes the repair, because the rung
+ * replaces a wrong reading and never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street",
@@ -43,9 +45,11 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repairs the tree in place when a high-confidence letter-digit postcode span carries no postcode node
- * and every node inside it is a street/house-number-family misread; a span that already
- * carries a postcode node never repairs, so the alternate-register retry cannot double-fire.
+ * Repairs the tree in place when a high-confidence letter-digit postcode span carries no
+ * postcode node and every node inside it is a street/house-number-family misread.
+ *
+ * A span that already carries a postcode node never repairs, so the
+ * alternate-register retry cannot double-fire.
  *
  * @returns `true` when a repair was applied.
  */

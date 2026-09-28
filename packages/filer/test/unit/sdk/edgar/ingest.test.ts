@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  * @file Tests for the assembled edgar chain.
  *
- * No test performs a live request; the client is an object literal satisfying {@link SECIngestClient}.
+ * No test performs a live request. The client is an object literal satisfying {@link SECIngestClient}.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

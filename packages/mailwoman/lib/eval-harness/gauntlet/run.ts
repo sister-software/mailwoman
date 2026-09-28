@@ -29,9 +29,11 @@ import { runMetamorphicLayer } from "#eval-harness/gauntlet/metamorphic"
 import { type GauntletLayerOptions, runRegressionLayer } from "#eval-harness/gauntlet/regression"
 
 /**
- * The Gauntlet layers; the first three are checks that make up the combined verdict,
- * while `ablation` is a measurement layer reachable only via `--layer ablation`,
- * absent from the combined check, and incapable of blocking a ship.
+ * The Gauntlet layers.
+ *
+ * The first three are checks that make up the combined verdict, while `ablation`
+ * is a measurement layer reachable only via `--layer ablation`, absent from the
+ * combined check, and incapable of blocking a ship.
  */
 export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation"
 
@@ -40,7 +42,9 @@ export type GauntletLayer = "regression" | "metamorphic" | "holdout" | "ablation
  */
 export interface GauntletRunOptions {
 	/**
-	 * Candidate ONNX; omit for the shipped-default self-check (regression + metamorphic only).
+	 * Candidate ONNX.
+	 *
+	 * Omit for the shipped-default self-check (regression + metamorphic only).
 	 */
 	candidate?: string
 	/**
@@ -48,8 +52,10 @@ export interface GauntletRunOptions {
 	 */
 	source?: string
 	/**
-	 * A tokenizer-splice candidate ships a new vocab; forward it so the held-out layer pairs the
-	 * candidate model with the candidate tokenizer and runs production through the shipped trio.
+	 * A tokenizer-splice candidate ships a new vocab.
+	 *
+	 * Forward it so the held-out layer pairs the candidate model with the candidate tokenizer
+	 * and runs production through the shipped trio.
 	 */
 	tokenizer?: string
 	/**
@@ -73,13 +79,16 @@ export interface GauntletRunOptions {
 	 */
 	n?: number
 	/**
-	 * Force `postcodeCountryCoherence` on or off for every layer; `undefined` grades the
-	 * shipped configuration, which is on, so the off pin is the one that carries evidence.
+	 * Force `postcodeCountryCoherence` on or off for every layer; `undefined`
+	 * grades the shipped configuration, which is on.
+	 * The off pin is the one that carries evidence.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * Feed the gazetteer FST prior to the parse; production-default `undefined` is on, and `false`
-	 * withholds it, because forwarding only the truthy half would silently discard the off flag.
+	 * Feed the gazetteer FST prior to the parse.
+	 *
+	 * Production-default `undefined` is on, and `false` withholds it, because forwarding
+	 * only the truthy half would silently discard the off flag.
 	 */
 	gazetteerPrior?: boolean
 	/**
@@ -95,8 +104,10 @@ export interface GauntletRunOptions {
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * Which reading of a weak resolution lifts the span-rescore brake; three readings exist so there is
-	 * no off spelling, and `undefined` is the production default that takes a `placeID` at face value.
+	 * Which reading of a weak resolution lifts the span-rescore brake.
+	 *
+	 * Three readings exist so there is no off spelling, and `undefined` is the
+	 * production default that takes a `placeID` at face value.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -116,8 +127,9 @@ export interface GauntletRunOptions {
 }
 
 /**
- * The ablation layer's options — the shared model/pin ladder plus its own three; pure
- * and exported so a dropped `--components` filter cannot silently run the whole corpus.
+ * The ablation layer's options — the shared model/pin ladder plus its own three.
+ *
+ * Pure and exported so a dropped `--components` filter cannot silently run the whole corpus.
  */
 export function runAblationOptions(options: GauntletRunOptions): AblationLayerOptions {
 	return {
@@ -129,8 +141,8 @@ export function runAblationOptions(options: GauntletRunOptions): AblationLayerOp
 }
 
 /**
- * The resolver pins a run's options describe, or undefined when no option is pinned;
- * pure and exported because the pin-reaches-every-layer mapping is cheap to test,
+ * The resolver pins a run's options describe, or undefined when no option is pinned. pure
+ * and exported because the pin-reaches-every-layer mapping is cheap to test,
  * and the alternative is discovering a dropped pin from two identical pin logs.
  */
 export function runResolverPins(options: GauntletRunOptions): GauntletResolverPins | undefined {
@@ -170,7 +182,8 @@ export function runLayerOptions(options: GauntletRunOptions): GauntletLayerOptio
 }
 
 /**
- * Run a single layer, mapping its result to an exit code; a throw prints and reads as exit 1.
+ * Run a single layer, mapping its result to an exit code.
+ * A throw prints and reads as exit 1.
  */
 async function runLayer(layer: GauntletLayer, options: GauntletRunOptions): Promise<number> {
 	const layerOptions = runLayerOptions(options)

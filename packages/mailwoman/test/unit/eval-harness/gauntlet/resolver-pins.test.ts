@@ -51,8 +51,8 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
-	// The ON pin now restates production, so grading the pre-promotion configuration
-	// requires an OFF pin that is believed.
+	// The on pin now restates production, so grading the pre-promotion configuration
+	// requires an off pin that is believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
@@ -170,7 +170,7 @@ describe("gazetteerPrior pin (#1497)", () => {
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 	// A one-sided forward that handles only the truthy half silently discards
-	// `--gazetteer-prior-off`, grading the default arm under an OFF label.
+	// `--gazetteer-prior-off`, grading the default arm under an off label.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})
@@ -265,7 +265,7 @@ describe("spanRescoreWeakResolution — #2264's pin", () => {
 
 	it("names the READING in the run banner, not an ON", () => {
 		// The three readings grade different configurations, so collapsing them to a
-		// single ON is how two arms produce identical pin logs.
+		// single on/off value is how two arms produce identical pin logs.
 		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
 
 		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(

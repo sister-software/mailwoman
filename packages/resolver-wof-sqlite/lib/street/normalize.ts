@@ -68,8 +68,9 @@ function fold(input: string): string {
 }
 
 /**
- * Normalizes a US or English street name into an address-point key, folding directionals, spelled
- * ordinals, and the USPS street-type suffix; the extract builder and the probe must both call it.
+ * Normalizes a US or English street name into an address-point key, folding directionals,
+ * spelled ordinals, and the USPS street-type suffix.
+ * The extract builder and the probe must both call it.
  */
 export function normalizeStreetForKey(street: string): StreetKey {
 	const tokens = fold(street).split(" ")
@@ -317,8 +318,9 @@ export function normalizeLocalityForKey(locality: string): NameKey {
 
 /**
  * Folds a locality name into a {@link NameKey} with the Han fold for `zh`
- * and {@link normalizeLocalityForKey} otherwise; the Han rule stays out of the
- * shared fold so existing columns are not re-keyed.
+ * and {@link normalizeLocalityForKey} otherwise.
+ *
+ * The Han rule stays out of the shared fold so existing columns are not re-keyed.
  */
 export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
 	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
@@ -362,8 +364,9 @@ export function stripArrondissement(localityNorm: NameKey): NameKey {
 
 /**
  * Strips a disambiguating qualifier from a locality name for a query-side retry,
- * returning an empty string when no text was stripped; the result must be refolded
- * with {@link normalizeLocalityForKey} before probing.
+ * returning an empty string when no text was stripped.
+ *
+ * The result must be refolded with {@link normalizeLocalityForKey} before probing.
  */
 export function stripLocalityQualifier(locality: string): string {
 	let s = locality.trim()

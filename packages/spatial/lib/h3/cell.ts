@@ -10,7 +10,8 @@ import { cellToParent, isValidCell } from "h3-js"
 import type { Tagged } from "type-fest"
 
 /**
- * The finest resolution H3 defines; resolutions run `[0, H3_MAX_RESOLUTION]`.
+ * The finest resolution H3 defines.
+ * Resolutions run `[0, H3_MAX_RESOLUTION]`.
  */
 export const H3_MAX_RESOLUTION = 15
 

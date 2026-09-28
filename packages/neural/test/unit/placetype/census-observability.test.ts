@@ -40,8 +40,9 @@ afterAll(() => fixtures.disposeAsync())
 const LABELS = STAGE2_BIO_LABELS
 
 /**
- * Comma-preserving piece builder; copied rather than exported so a shared export
- * cannot tie two test files' input assumptions together.
+ * Comma-preserving piece builder.
+ *
+ * Copied rather than exported so a shared export cannot tie two test files' input assumptions together.
  */
 function makePiecesWithCommas(text: string): Array<{ piece: string; start: number; end: number }> {
 	const tokens = text.match(/[^\s,]+|,/g) ?? []

@@ -81,8 +81,9 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path, seeded from `from` then overridden; last writer wins,
-	 * which makes `file` a divergence rather than a conflict.
+	 * Staged name → source path, seeded from `from` then overridden.
+	 *
+	 * Last writer wins, which makes `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, PathBuilder>()
 

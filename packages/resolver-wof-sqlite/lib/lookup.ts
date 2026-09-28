@@ -63,24 +63,28 @@ export interface WOFSQLitePlaceLookupOpts {
 	 */
 	database?: DatabaseClient<WOFDatabase>
 	/**
-	 * When true, build the FTS5 `place_search` virtual table on construction if it
-	 * is missing, on the main extract only; default false.
+	 * When true, build the FTS5 `place_search` virtual table on construction if
+	 * it is missing, on the main extract only.
+	 * Default false.
 	 */
 	buildFTS?: boolean
 	/**
-	 * Geographic Rule Engine convention source, either a ready `ConventionSource` or a
-	 * `{ wofID: Convention }` seed map; default empty resolves every query to `WORLD_DEFAULT`.
+	 * Geographic Rule Engine convention source, either a ready `ConventionSource`
+	 * or a `{ wofID: Convention }` seed map.
+	 * Default empty resolves every query to `WORLD_DEFAULT`.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
 	/**
-	 * Opt-in postal-city alias reader; absent, every alias code path is skipped
-	 * and the resolver is byte-identical.
+	 * Opt-in postal-city alias reader.
+	 *
+	 * Absent, every alias code path is skipped and the resolver is byte-identical.
 	 */
 	postalCityAliases?: WOFPostalCityAliasLookup
 }
 
 /**
- * The placetypes `pickExtractsForPlacetype`'s substring rule can route by name, not every WOF placetype.
+ * The placetypes `pickExtractsForPlacetype`'s substring rule can route by name,
+ * a subset of the WOF placetypes.
  */
 const KNOWN_ROUTED_PLACETYPES: ReadonlyArray<string> = [
 	"postalcode",
@@ -107,13 +111,15 @@ const CF_MISMATCH_KM = 50
 export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements PlaceLookup {
 	readonly #weights: RankingWeights
 	/**
-	 * Cached at construction; an extract is considered to have the bbox index
-	 * only if its own R*Tree table exists.
+	 * Cached at construction.
+	 *
+	 * An extract is considered to have the bbox index only if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
 	/**
-	 * Per-extract probe for the `place_population` aux table; when false, the left
-	 * join is omitted and the population boost is 0 for every row.
+	 * Per-extract probe for the `place_population` aux table.
+	 *
+	 * When false, the left join is omitted and the population boost is 0 for every row.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
@@ -172,15 +178,16 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			? [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 			: resolveExtracts(opts.databasePath!)
 
-		// Read-only by default: shipped extracts are sealed 0444 and Docker `:ro` mounts
-		// forbid a write-mode open; only `buildFTS` opens writable.
+		// Read-only by default: shipped extracts are sealed 0444 and Docker `:ro`
+		// mounts forbid a write-mode open.
+		// Only `buildFTS` opens writable.
 		super(opts.database ? { database: opts.database } : { databasePath: extracts[0]!.path }, {
 			readOnly: !opts.buildFTS,
 		})
 
 		this.#extracts = extracts
 
-		// Schema names were validated by resolveExtracts, so interpolating them is safe;
+		// Schema names were validated by resolveExtracts, so interpolating them is safe.
 		// SQLite attach accepts no parameter for a schema name.
 		for (const s of extracts.slice(1)) {
 			this.database.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
@@ -279,7 +286,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	#extractHasTable(schemaName: string, tableName: string): boolean {
-		// Main uses the existing helpers; attached extracts need the schema-qualified `sqlite_master`.
+		// Main uses the existing helpers.
+		// Attached extracts need the schema-qualified `sqlite_master`.
 		if (schemaName === "main") {
 			if (tableName === PLACE_BBOX_TABLE) return placeBboxExists(this.database)
 
@@ -294,8 +302,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
-		// Run the effective convention's candidate strategies in order; the first non-null
-		// result wins and unknown strategy names are skipped.
+		// Run the effective convention's candidate strategies in order.
+		// The first non-null result wins and unknown strategy names are skipped.
 		const convention = this.#conventionFor(query)
 
 		let outcome: PlaceCandidate[] = []
@@ -418,8 +426,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		// Expand the placetype filter through the shared equivalence table so a `locality`
 		// query also reaches `borough` and `localadmin` rows.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
-		// Postcode-typed queries keep the fused name-law shape; everything else splits on
-		// intra-token punctuation so hyphenated names reach the FTS as their real terms.
+		// Postcode-typed queries keep the fused name-law shape.
+		// Everything else splits on intra-token punctuation so hyphenated names
+		// reach the FTS as their real terms.
 		const ftsQuery = sanitizeFTSQuery(query.text, { fuseTokens: placetypes?.includes("postalcode") ?? false })
 
 		if (!ftsQuery) return []
@@ -428,8 +437,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		// and mixed-placetype spread across extracts is unsupported.
 		const firstPlacetype = placetypes?.[0]
 
-		// A country-less query with proximity hints queries every matching extract so cross-extract
-		// ambiguity is visible, bounded to hints, no country, and more than one match.
+		// A country-less query with proximity hints queries every matching extract
+		// so cross-extract ambiguity is visible.
+		// The bound requires hints, an absent country, and more than one matching extract.
 		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 		if (!forceExtract && hasBiasHints && !query.country) {
@@ -623,8 +633,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		for (const cand of merged.values()) {
 			const info = pcInfo.get(cand.id as number)
 			const sPc = info ? (info.containing ? 1 : Math.exp(-info.dist / CF_PC_DECAY_KM)) : 0
-			// Fold postal-city aliases into the soft name match; the map is empty
-			// unless the opt-in reader was supplied, so scoring is unchanged when off.
+			// Fold postal-city aliases into the soft name match.
+			// The map is empty unless the opt-in reader was supplied, so scoring is unchanged when off.
 			const wofAliases = info?.aliases ?? []
 
 			const aliases = postalAliasByGeo.size

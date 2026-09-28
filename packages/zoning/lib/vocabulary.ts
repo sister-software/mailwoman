@@ -203,9 +203,10 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * The provenance grade of a zoning row; a caller must never present an `inferred`
- * row as the authority's designation, each artifact holds one grade only,
- * and ODbL sources cannot be merged into this table without relicensing it.
+ * The provenance grade of a zoning row.
+ *
+ * A caller must never present an `inferred` row as the authority's designation, each artifact
+ * holds one grade only, and ODbL sources cannot be merged into this table without relicensing it.
  */
 export const ProvenanceGrade = {
 	Authoritative: "authoritative",
@@ -247,7 +248,8 @@ export const GZT_COVERAGE_LIMIT =
 	"not yet published — and the product cannot tell those apart, so nothing here supports a claim that no restriction applies."
 
 /**
- * The local code with which an authority explicitly marks land as unzoned; only a row with
- * this code means unzoned, and a location with no row makes no statement about zoning.
+ * The local code with which an authority explicitly marks land as unzoned.
+ *
+ * Only a row with this code means unzoned, and a location with no row makes no statement about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"

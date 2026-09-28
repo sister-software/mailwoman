@@ -127,8 +127,9 @@ export function buildCensusComponents(match: CensusAddressMatch): ComponentDict 
  */
 export function parseCensusAddressMatch<Match extends CensusAddressMatch>(match: Match): OracleGeocodeResult<Match> {
 	const components = buildCensusComponents(match)
-	// `{ x, y }` is `{ longitude, latitude }` in the Census naming; read it explicitly rather
-	// than through `GeoPoint` so a served coordinate is never discarded by an input validator.
+	// `{ x, y }` is `{ longitude, latitude }` in the Census naming.
+	// Read it explicitly rather than through `GeoPoint` so a served coordinate is
+	// never discarded by an input validator.
 	const coordinate = { latitude: match.coordinates.y, longitude: match.coordinates.x }
 
 	const geocode: AddressGeocode = {

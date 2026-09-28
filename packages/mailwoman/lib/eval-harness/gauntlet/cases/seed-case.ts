@@ -49,7 +49,8 @@ export interface SeedCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance in meters; the runner applies a default when it is absent.
+	 * Great-circle tolerance in meters.
+	 * The runner applies a default when it is absent.
 	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
@@ -70,7 +71,7 @@ export interface SeedCase {
 }
 
 /**
- * Key order for emitted JSONL rows, matching {@linkcode SeedCase}'s declaration order;
+ * Key order for emitted JSONL rows, matching {@linkcode SeedCase}'s declaration order.
  * re-keying through this list keeps corpus diffs limited to content changes.
  */
 export const SEED_CASE_KEY_ORDER = [
@@ -130,8 +131,9 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * Compile-time check that {@linkcode SeedCase} and {@linkcode SeedCaseSchema} have the
- * same fields; a mismatch makes the type `never` and `tsc` rejects this line.
+ * Compile-time check that {@linkcode SeedCase} and {@linkcode SeedCaseSchema} have the same fields.
+ *
+ * A mismatch makes the type `never` and `tsc` rejects this line.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
@@ -165,8 +167,9 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 }
 
 /**
- * Converts a seed case to a `gauntlet_case` table row; absent fields become `null`
- * and object-valued fields become JSON strings.
+ * Converts a seed case to a `gauntlet_case` table row.
+ *
+ * Absent fields become `null` and object-valued fields become JSON strings.
  */
 export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 	return {

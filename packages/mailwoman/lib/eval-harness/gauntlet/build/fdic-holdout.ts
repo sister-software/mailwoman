@@ -35,7 +35,9 @@ interface Loc {
 }
 
 /**
- * Sane conus+AK/HI/PR bbox; drops null-island and mis-geocoded rows so the pool is clean truth.
+ * Sane conus+AK/HI/PR bbox.
+ *
+ * Drops null-island and mis-geocoded rows so the pool is clean truth.
  */
 function plausibleUs(lat: number, lon: number): boolean {
 	return (

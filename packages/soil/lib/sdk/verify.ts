@@ -37,8 +37,10 @@ export interface SoilAgreementRow {
 	serviceMukey: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest edge of the delineation the artifact matched; carried on every
-	 * row because it separates a real defect from two channels rendering the same edge differently.
+	 * Metres from the point to the nearest edge of the delineation the artifact matched.
+	 *
+	 * Carried on every row because it separates a real defect from two channels
+	 * rendering the same edge differently.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -67,8 +69,10 @@ export interface VerifySoilResult {
 }
 
 /**
- * Points outside the pilot region; every neighbouring state is included because a
- * footprint clipped to "the Midwest" would pass a one-state check.
+ * Points outside the pilot region.
+ *
+ * Every neighbouring state is included because a footprint clipped to "the
+ * Midwest" would pass a one-state check.
  */
 export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Lincoln, Nebraska", latitude: 40.8136, longitude: -96.7026 },
@@ -159,8 +163,8 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 
 /**
  * The candidate delineations reaching a point, found through the cell index
- * because a bounding-box scan over `soil_map_unit_area` is a full table scan;
- * every stored resolution is probed since the tier is compacted parent-ward.
+ * because a bounding-box scan over `soil_map_unit_area` is a full table scan. every
+ * stored resolution is probed since the tier is compacted parent-ward.
  */
 function candidateDelineations(
 	database: DatabaseClient<SoilDatabase>,
@@ -230,8 +234,9 @@ function localDelineationAt(
 }
 
 /**
- * Metres from a point to the nearest edge of an encoded ring set; decoding here is acceptable
- * because this runs per verification rather than per geocode.
+ * Metres from a point to the nearest edge of an encoded ring set.
+ *
+ * Decoding here is acceptable because this runs per verification rather than per geocode.
  */
 function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number {
 	const { polygons } = decodeRings(blob)

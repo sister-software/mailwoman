@@ -60,8 +60,9 @@ describe("featureCellRows", () => {
 		expect(rows.some((row) => row.containment === "whole")).toBe(true)
 		expect(rows.some((row) => row.containment === "partial")).toBe(true)
 
-		// A cell is never both for one polygon; a parent the partial set also names would
-		// duplicate it and the primary key would reject the second insert mid-build.
+		// A cell is never both for one polygon.
+		// A parent the partial set also names would duplicate it and the primary key
+		// would reject the second insert mid-build.
 		const cells = rows.map((row) => row.h3Cell)
 
 		expect(new Set(cells).size).toBe(cells.length)

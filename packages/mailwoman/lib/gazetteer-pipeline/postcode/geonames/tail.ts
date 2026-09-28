@@ -99,9 +99,10 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump carried on several rows that all named one coordinate,
-	 * which GeoNames averages from neighbouring codes where a name match fails, so the count
-	 * tells a consumer how much of a country's coverage is inherited rather than agreed.
+	 * How many of those codes the dump carried on several rows that all named one coordinate.
+	 *
+	 * GeoNames averages that coordinate from neighbouring codes where a name match fails, so the
+	 * count tells a consumer how much of a country's coverage is inherited rather than agreed.
 	 */
 	singlePointRows: number
 }
@@ -195,8 +196,8 @@ export async function buildPostcodeGeonamesTail(
 		ingest = await ingestGeonamesPostal(db, countries, postalDir)
 		phase("ingest", `${ingest.inserted.toLocaleString()} distinct postcodes`)
 
-		// Every row's parent_id is -1, so this writes the self row per place; the resolver's
-		// parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
+		// Every row's parent_id is -1, so this writes the self row per place.
+		// The resolver's parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 		phase("ancestors", `${ancestorRows.toLocaleString()} rows`)
@@ -225,8 +226,8 @@ export async function buildPostcodeGeonamesTail(
 		phase
 	)
 
-	// The layer interface's manifest beside the `meta` record; the candidate build
-	// reads its tier before folding the database.
+	// The layer interface's manifest beside the `meta` record.
+	// The candidate build reads its tier before folding the database.
 	phase("layer-manifest")
 
 	await stampLayerManifest(

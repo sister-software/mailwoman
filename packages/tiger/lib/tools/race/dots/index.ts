@@ -103,7 +103,8 @@ export async function raceDots(
 	// Heavy dep, lazy-imported so loading the tools barrel stays cheap.
 	const { default: booleanContains } = await import("@turf/boolean-contains")
 
-	// Pick a bbox-area-weighted sub-polygon, then rejection-sample inside it; turf handles holes and winding.
+	// Pick a bbox-area-weighted sub-polygon, then rejection-sample inside it.
+	// Turf handles holes and winding.
 	function randomPointIn(polys: PolygonCoords[], areas: number[], totalArea: number): [number, number] | null {
 		let r = Math.random() * totalArea
 		let pick = 0

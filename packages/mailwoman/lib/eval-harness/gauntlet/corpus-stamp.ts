@@ -31,9 +31,10 @@ import {
 export type CorpusStamp = Pick<GauntletMetaTable, "corpus_hash" | "case_count" | "built_at">
 
 /**
- * Refuse a corpus with no rows, naming the directory that produced none; a compiled tree
- * pointing at a `cases/` directory with no country dirs loads cleanly and builds a valid
- * empty DB that grades 0/0 and passes, which a hash comparison cannot catch.
+ * Refuse a corpus with no rows, naming the directory that produced none.
+ *
+ * A compiled tree pointing at a `cases/` directory with no country dirs loads cleanly
+ * and builds a valid empty DB that grades 0/0 and passes, which a hash comparison cannot catch.
  */
 export function assertCorpusIsNonEmpty(rows: readonly SeedCase[], dir: PathBuilderLike = CASES_DIR): void {
 	if (rows.length) return
@@ -88,13 +89,13 @@ export async function readCorpusStamp(kdb: DatabaseClient<GauntletDatabase>): Pr
 }
 
 /**
- * Throw unless the DB's stamp matches the corpus committed on disk right now;
- * the message names both hashes and the likely cause, because an artifact older than the
- * corpus wants a rebuild while a build from a stale `out/` wants a recompile first.
+ * Throw unless the DB's stamp matches the corpus committed on disk right now. the message
+ * names both hashes and the likely cause, because an artifact older than the corpus
+ * wants a rebuild while a build from a stale `out/` wants a recompile first.
  *
  * @param kdb An open handle on the built DB.
- * @param liveRows The corpus as committed; injectable so a test can pose a different
- * state without touching the repo's own `cases/`.
+ * @param liveRows The corpus as committed.
+ * Injectable so a test can pose a different state without touching the repo's own `cases/`.
  */
 export async function assertCorpusStampFresh(
 	kdb: DatabaseClient<GauntletDatabase>,

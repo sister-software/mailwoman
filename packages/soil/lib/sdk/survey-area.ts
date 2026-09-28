@@ -199,8 +199,10 @@ export async function readSurveyAreaAttributes(
 }
 
 /**
- * A polygon the authority drew with no soil mapping behind it; a map unit with no components
- * has no component to rate, so it reads as no mapping rather than assigned no rating.
+ * A polygon the authority drew with no soil mapping behind it.
+ *
+ * A map unit with no components has no component to rate, so it reads as no mapping
+ * rather than assigned no rating.
  */
 function isNoMapping(musym: string, muname: string, componentCount: number): boolean {
 	if (SSURGO_NO_MAPPING_SYMBOLS.has(musym.toUpperCase())) return true
@@ -211,8 +213,10 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 }
 
 /**
- * Refuse a value outside the authority's own declared domain; a blank is a real NULL state
- * rather than a violation, recording that the survey did not rate the component.
+ * Refuse a value outside the authority's own declared domain.
+ *
+ * A blank is a real NULL state rather than a violation, recording that the
+ * survey did not rate the component.
  */
 function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
 	if (!value) return
@@ -229,8 +233,9 @@ function nullable(value: string | undefined): string | null {
 }
 
 /**
- * The nccpi v3.0 overall index per component; sub-rules at greater depths are
- * submodels this layer does not carry.
+ * The nccpi v3.0 overall index per component.
+ *
+ * Sub-rules at greater depths are submodels this layer does not carry.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -263,7 +268,7 @@ async function readNCCPI(
  */
 export interface FGDCMetadata {
 	/**
-	 * The citation's own `pubdate` as an ISO date — the refresh, not the survey date.
+	 * The citation's own `pubdate` as an ISO date — the refresh rather than the survey date.
 	 */
 	publicationDate: string
 	/**
@@ -333,8 +338,10 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 }
 
 /**
- * The text of the first `<name>` element, whitespace left alone; two `indexOf` calls avoid the
- * polynomial backtracking a regex takes on a document whose opening tag has no closing partner.
+ * The text of the first `<name>` element, whitespace left alone.
+ *
+ * Two `indexOf` calls avoid the polynomial backtracking a regex takes on a document
+ * whose opening tag has no closing partner.
  */
 function elementText(xml: string, name: string): string | undefined {
 	const open = `<${name}>`

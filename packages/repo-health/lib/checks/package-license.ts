@@ -12,7 +12,7 @@
  *   empty obligation list), and a workspace omitting the commercial branch contradicts the public license page.
  *
  *   The root manifest is the reference rather than a constant here, and its own field is checked for admissibility
- *   before it is used; a workspace that needs different terms is a rights question that belongs in
+ *   before it is used. A workspace that needs different terms is a rights question that belongs in
  *   `docs/engineering/reference/artifact-rights-inventory.mdx` and the manifests it governs, never an exception list
  *   here.
  */

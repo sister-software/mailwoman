@@ -52,8 +52,8 @@ export interface ResolvedPostcodeHit {
 	value: string
 	resolverName: string | undefined
 	/**
-	 * ISO-3166 alpha-2 the resolver placed the postcode in rather than a caller's requested scope;
-	 * absent when the postcode did not resolve to a country, which reads as the locality-first default.
+	 * ISO-3166 alpha-2 the resolver placed the postcode in rather than a caller's requested scope. absent
+	 * when the postcode did not resolve to a country, which reads as the locality-first default.
 	 */
 	country?: string
 }
@@ -105,7 +105,8 @@ export interface ResolvedSpecificityInput {
 	 */
 	country?: string
 	/**
-	 * The parsed span; absent for a non-postcode candidate.
+	 * The parsed span.
+	 * Absent for a non-postcode candidate.
 	 */
 	value?: string
 	/**
@@ -131,9 +132,10 @@ export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number
 }
 
 /**
- * The best of a resolved set under {@link resolvedSpecificity}, or `null`
- * when the set is empty; ties keep the first, and `toInput` is explicit
- * because each consumer spells the resolver's hit differently.
+ * The best of a resolved set under {@link resolvedSpecificity}, or `null` when the set is empty.
+ *
+ * Ties keep the first, and `toInput` is explicit because each consumer spells
+ * the resolver's hit differently.
  */
 export function mostSpecificResolved<T>(
 	candidates: readonly T[],

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The compiled CLI ships its register, so no test can hand it a trusted key; every refusal is asserted by its word, and no file may be written on one.
+ *   The compiled CLI ships its register, so no test can hand it a trusted key. Every refusal is asserted by its word, and no file may be written on one.
  */
 
 import { serveNode } from "@mailwoman/api-kit"
@@ -110,8 +110,8 @@ describe("mailwoman license", () => {
 	}
 
 	/**
-	 * The worker's two customer routes and the well-known register as a fetch handler;
-	 * the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
+	 * The worker's two customer routes and the well-known register as a fetch handler. the
+	 * register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {
 		const handler = async (request: Request): Promise<Response> => {

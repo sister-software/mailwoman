@@ -76,15 +76,15 @@ export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
-	// GB via OS Code-Point Open under OGL v3, covering England, Scotland and Wales only;
+	// GB via OS Code-Point Open under OGL v3, covering England, Scotland and Wales only.
 	// Northern Ireland is excluded from every permissive UK grant.
 	"postalcode-gb-codepoint.db",
-	// Northern Ireland (BT), the hole Code-Point Open leaves; a miss on a BT code means
-	// not attested in OSM rather than that the code does not exist.
+	// Northern Ireland (BT), the hole Code-Point Open leaves.
+	// A miss on a BT code means not attested in OSM rather than that the code does not exist.
 	// ODbL 1.0 is share-alike, so this artifact is never published and folds
 	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
-	// Japan's 7-digit codes from WOF; 48,216 carry the 0,0 unlocated sentinel,
+	// Japan's 7-digit codes from WOF. 48,216 carry the 0,0 unlocated sentinel,
 	// which the candidate fold skips by construction.
 	"postalcode-jp.db",
 	// The GeoNames-postal tail database: ten countries in ingest order.
@@ -133,15 +133,15 @@ export async function resolvePostcodeDatabases(
 }
 
 /**
- * Locality databases folded into the candidate build by default, existence-filtered
- * like the postcode set; a machine without one builds without it.
+ * Locality databases folded into the candidate build by default, existence-filtered like the postcode set.
+ * A machine without one builds without it.
  */
 export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	"localities-nz-linz.db",
 	// The Prague municipal districts, the missing locality half of the CZ pair rung.
 	"localities-cz-districts.db",
 	// Taiwan's 鄉鎮市區 from the civil-affairs address register, each row carrying its 縣市's WOF
-	// region as an `ancestors` row so the fold stamps the region scope; the admin artifact's own
+	// region as an `ancestors` row so the fold stamps the region scope. The admin artifact's own
 	// copies of the tier are unusable for a Han query.
 	"localities-tw-districts.db",
 ]
@@ -167,8 +167,10 @@ export async function resolveLocalityDatabases(
 }
 
 /**
- * Resolve the conventional score source, or `undefined` when this machine has none; a deployment
- * without the file must build a candidate DB with an empty `importance` column rather than fail.
+ * Resolve the conventional score source, or `undefined` when this machine has none.
+ *
+ * A deployment without the file must build a candidate DB with an empty
+ * `importance` column rather than fail.
  */
 export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
@@ -201,8 +203,9 @@ export interface FoldOptions {
 	geonamesDir?: PathBuilderLike
 	/**
 	 * The countries to also fold A-class admin (pcli + ADM1) for, linking the
-	 * locality→region→country ancestry; zero-coverage gap countries only,
-	 * since a country that already has WOF admin would double up.
+	 * locality→region→country ancestry.
+	 *
+	 * Zero-coverage gap countries only, since a country that already has WOF admin would double up.
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
@@ -211,8 +214,9 @@ export interface FoldOptions {
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * Override to proceed even when `adminIn` already carries alias rows for countries this run does not
-	 * list; the fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
+	 * Override to proceed even when `adminIn` already carries alias rows for countries this run does not list.
+	 *
+	 * The fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 */
 	allowCoverageLoss?: boolean
 	onCountry?: (event: GeonamesIngestProgress) => void
@@ -220,8 +224,8 @@ export interface FoldOptions {
 }
 
 /**
- * How many dropped country codes the coverage-loss error names before eliding;
- * a dozen plus the count makes the shape of the mistake obvious on one terminal line.
+ * How many dropped country codes the coverage-loss error names before eliding. a dozen
+ * plus the count makes the shape of the mistake obvious on one terminal line.
  */
 const DROPPED_COUNTRIES_SHOWN = 12
 
@@ -240,10 +244,11 @@ export interface FoldResult {
  * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox`.
  *
  * Build-on-copy — `adminIn` is never touched.
- * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale, and the
- * synthetic id is a position in the run, so folding a country set narrower than what
- * `adminIn` already carries drops the difference; the pre-flight below refuses it
- * unless {@link FoldOptions.allowCoverageLoss} says otherwise.
+ * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale,
+ * and the synthetic id is a position in the run, so folding a country set narrower
+ * than what `adminIn` already carries drops the difference.
+ *
+ * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn.toString() === opts.adminOut.toString()) {
@@ -283,8 +288,9 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	}
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
-	// The admin source is sealed 0444 and `copyFileTo` stamps the source mode onto a fresh copy, so
-	// remove any stale copy and restore the write bit: the copy is fold staging, not the sealed artifact.
+	// The admin source is sealed 0444 and `copyFileTo` stamps the source mode onto a fresh copy,
+	// so remove any stale copy and restore the write bit: the writable copy is fold staging.
+	// The sealed artifact keeps its 0444 mode.
 	await removePathIfPresent(opts.adminOut)
 	await copyFileTo(opts.adminIn, opts.adminOut)
 	await changeMode(opts.adminOut, 0o644)
@@ -292,8 +298,8 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
 	// The purge clears the A-class country/region nodes and the locality ancestry too,
-	// so a fold that omits adminForCountries un-parents the zero-coverage localities; default
-	// to the gap set scoped to this run, and the caller opts out by passing an explicit set.
+	// so a fold that omits adminForCountries un-parents the zero-coverage localities.
+	// Default to the gap set scoped to this run, and the caller opts out by passing an explicit set.
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
@@ -400,9 +406,9 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const postcodeDatabases = [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))]
 	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]
 
-	// Each fold's own tier decides whether its rows may enter a gazetteer that could
-	// be published; a fold that states no tier is reported rather than refused,
-	// and its undeclared grant refuses publication of the whole.
+	// Each fold's own tier decides whether its rows may enter a gazetteer that could be published.
+	// A fold that states no tier is reported rather than refused, and its undeclared
+	// grant refuses publication of the whole.
 	const foldTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readFoldTerms(path)))
 	const refusing = foldsRefusingPublication(foldTerms)
 	const unstated = foldTerms.filter((fold) => fold.tier === null)

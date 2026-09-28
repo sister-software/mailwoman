@@ -53,7 +53,9 @@ const PLACETYPE_TO_KEY: Record<string, keyof PhotonProperties> = {
 }
 
 /**
- * A real address fits comfortably; longer input is malformed and would exceed the model's window.
+ * A real address fits comfortably.
+ *
+ * Longer input is malformed and would exceed the model's window.
  */
 const MAX_QUERY_LEN = 512
 
@@ -162,8 +164,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
 
-			// candidates[0] is the primary; its ranked alternatives become extra
-			// features up to the requested `limit`.
+			// candidates[0] is the primary.
+			// Its ranked alternatives become extra features up to the requested `limit`.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)
 

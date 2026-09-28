@@ -92,14 +92,16 @@ export interface SurfaceResult {
 	surface: string
 	ok: boolean
 	/**
-	 * On OK a one-line summary; on failure the actionable remediation, which may be multi-line.
+	 * On OK a one-line summary.
+	 *
+	 * On failure the actionable remediation, which may be multi-line.
 	 */
 	message: string
 }
 
 /**
- * Read the shipped model version — the `version` field of the weights bundle's model card,
- * not npm package.json, so a code-only release is judged against the model it actually ships.
+ * Read the shipped model version from the `version` field of the weights bundle's model card
+ * rather than npm package.json, so a code-only release is judged against the model it actually ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
 	const card = await readLocalJSONFile<{ version?: string }>(cardPath)
@@ -139,8 +141,9 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 }
 
 /**
- * Parse the releases.mdx version matrix into ordered data rows; a global scan is safe
- * because only the "## The matrix" table has version-like first cells.
+ * Parse the releases.mdx version matrix into ordered data rows.
+ *
+ * A global scan is safe because only the "## The matrix" table has version-like first cells.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []

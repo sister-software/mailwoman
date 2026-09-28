@@ -58,8 +58,10 @@ export interface AdminManifestInput {
 	 */
 	buildSHA: string
 	/**
-	 * What each contributing source was at; keys no source contributed are ignored, and a
-	 * contributing source with no recorded vintage is reported as `unknown` rather than omitted.
+	 * What each contributing source was at.
+	 *
+	 * Keys no source contributed are ignored, and a contributing source with no recorded
+	 * vintage is reported as `unknown` rather than omitted.
 	 */
 	vintages?: Partial<Record<keyof IngestCounts, string>>
 	createdAt: string
@@ -69,8 +71,8 @@ export interface AdminManifestInput {
 /**
  * Compose the admin gazetteer's manifest.
  *
- * @throws When no source contributed — a gazetteer built from no source is a
- * failed build, not a layer with an empty manifest.
+ * @throws When no source contributed — a gazetteer built from no source is a failed build,
+ * so it cannot ship as a layer with an empty manifest.
  */
 export function adminLayerManifest(input: AdminManifestInput): LayerManifest {
 	const contributing = contributingSources(input.counts)

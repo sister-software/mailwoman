@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a selector for the available model versions; the host owns loading and selection.
+ *   Renders a selector for the available model versions. The host owns loading and selection.
  */
 
 import type { ReactNode } from "react"

@@ -46,8 +46,9 @@ export interface ResolvedRingRoles {
 	 */
 	exteriorByMagnitude: number
 	/**
-	 * The signed ring sum over the source's rings as published, in square metres, positive under this
-	 * service's clockwise-exterior convention; its sign is the record that the orientation was read.
+	 * The signed ring sum over the source's rings as published, in square metres,
+	 * positive under this service's clockwise-exterior convention.
+	 * Its sign is the record that the orientation was read.
 	 */
 	signedAreaM2: number
 	ringCount: number
@@ -117,8 +118,8 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 
 		signedAreaM2 += signed
 
-		// `ringSignedAreaM2` signs clockwise positive, which is exterior under this service;
-		// a zero-area ring is degenerate and carried as a hole so it can never enclose anything.
+		// `ringSignedAreaM2` signs clockwise positive, which is exterior under this service. a
+		// zero-area ring is degenerate and carried as a hole so it can never enclose anything.
 		if (signed > 0) {
 			exteriors.push({ ring, area: signed, holes: [] })
 		} else {
@@ -149,8 +150,8 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 		exteriorByMagnitude = 1
 	}
 
-	// Smallest containing exterior, so a hole inside an island inside a hole lands on
-	// the island; sorting once makes the choice deterministic on a tie.
+	// Smallest containing exterior, so a hole inside an island inside a hole lands on the island.
+	// Sorting once makes the choice deterministic on a tie.
 	const bySize = [...exteriors].toSorted((left, right) => left.area - right.area)
 
 	let nestedHoles = 0

@@ -2,18 +2,18 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration; the tag reads as a promise that the
+ * @file A `{@link}` or `{@linkcode}` naming a symbol with no declaration. The tag reads as a promise that the
  *   thing exists, and an agent following one implements the name instead of finding the code.
  *
- *   A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — is checked against the set of names the tree
- *   declares or imports anywhere; a URL target, a path, and a `{@link foo | text}` label are left alone, and the name
+ *   A bare identifier target — `{@link foo}`, `{@linkcode Foo.bar}` — is checked against every identifier the tree
+ *   declares or imports anywhere. A URL target, a path, and a `{@link foo | text}` label are left alone, and the name
  *   set is repository-wide because a link to a name declared in another package is correct and common.
  *
  *   A backticked name inside a doc comment is read the same way when it is shaped like a declaration — a call such as
  *   `` `parse()` ``, or a camel-case name with at least two humps such as `` `readPackageJSONFile` `` — while a short
  *   backticked word such as `` `db` ``, `` `lat` ``, a CLI flag, or a wire field is prose and is not judged.
  *
- *   A tag naming a symbol that exists somewhere but not where the reader can reach it still passes; what this refuses
+ *   A tag naming a symbol that exists somewhere but not where the reader can reach it still passes. What this refuses
  *   is the name that exists nowhere at all.
  */
 
@@ -82,8 +82,10 @@ function isDeclarationShaped(target: string): boolean {
 }
 
 /**
- * Every doc comment in the file, as its text; line and plain block comments are left out
- * because only a doc comment's backticked names read as promises about the code.
+ * Every doc comment in the file, as its text.
+ *
+ * Line and plain block comments are left out because only a doc comment's
+ * backticked names read as promises about the code.
  */
 function docComments(text: string, file: string): Array<{ pos: number; text: string }> {
 	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)

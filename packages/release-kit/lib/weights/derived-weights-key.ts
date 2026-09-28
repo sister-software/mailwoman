@@ -22,8 +22,9 @@ import { Globerator } from "spliterator/node/fs"
  * payload enumerated by {@link derivedWeightsInputs}.
  *
  * Each generating source module is paired with its compiled counterpart
- * because the build spawns the compiled CLI; hashing source alone lets a stale
- * compile compute the fixed key and build with the broken code.
+ * because the build spawns the compiled CLI.
+ * Hashing source alone lets a stale compile compute the fixed key and build with the broken code.
+ *
  * Transitive compiled imports are deliberately excluded, or the store would
  * invalidate on every unrelated commit.
  */
@@ -83,7 +84,8 @@ async function postcodePipelinePaths(): Promise<string[]> {
  */
 export interface DerivedWeightsInput {
 	/**
-	 * Repo-relative identity of the input; hashed, and it must not vary by checkout location.
+	 * Repo-relative identity of the input.
+	 * Hashed, and it must not vary by checkout location.
 	 */
 	name: string
 	/**
@@ -109,7 +111,8 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
 /**
  * Hash an explicit input list, sorted by name so the caller's ordering cannot change the key.
  *
- * Exported for testing; production callers want {@link derivedWeightsKey}.
+ * Exported for testing.
+ * Production callers want {@link derivedWeightsKey}.
  *
  * Only the repo-relative name is hashed, never the absolute path, so checkouts at
  * different roots agree on the key over byte-identical inputs.
@@ -157,7 +160,8 @@ export function derivedWeightsDir(key: string): string {
  * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
  * below the lowest calibrated floor for that country — for GB that is the outward floor,
  * so a legitimate outward-granularity bin is never false-refused while an empty or collapsed one is.
- * The calibrated per-granularity check remains the builder's; this one only has the header to read.
+ * The calibrated per-granularity check remains the builder's.
+ * This one only has the header to read.
  *
  * Non-postcode entries pass, because their reader validates a typed header on load.
  */

@@ -6,7 +6,7 @@
  *   says so in its own header.
  *
  *   Mailwoman began as a fork of Pelias Parser under the MIT license, which conditions its grant on the copyright
- *   notice and the permission notice accompanying copies of the covered software; three files must describe the
+ *   notice and the permission notice accompanying copies of the covered software. Three files must describe the
  *   covered modules: the repository notices, the documentation site's page, and the copy inside `@mailwoman/core`
  *   that npm ships.
  *
@@ -21,8 +21,10 @@ import { resolvePath } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
 /**
- * The three notice files, each with the audience that reads it; the `packages/core` copy is the
- * only one in `@mailwoman/core`'s `files` array, so it is the one that reaches an installer.
+ * The three notice files, each with the audience that reads it.
+ *
+ * The `packages/core` copy is the only one in `@mailwoman/core`'s `files` array,
+ * so it is the one that reaches an installer.
  */
 const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 	["THIRD_PARTY_NOTICES.md", "the repository's notices"],

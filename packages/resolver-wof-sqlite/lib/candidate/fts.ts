@@ -15,8 +15,8 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 export const CANDIDATE_FTS_TABLE = "candidate_fts"
 
 /**
- * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table;
- * call after the candidate B-tree is populated or against an existing candidate DB.
+ * Build (or rebuild) {@link CANDIDATE_FTS_TABLE} from the materialized `candidate` table. call
+ * after the candidate B-tree is populated or against an existing candidate DB.
  */
 export function createCandidateFTS<DB>(db: DatabaseClient<DB>): void {
 	db.exec(`DROP TABLE IF EXISTS ${CANDIDATE_FTS_TABLE}`)

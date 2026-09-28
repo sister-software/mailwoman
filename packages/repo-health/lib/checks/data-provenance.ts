@@ -7,7 +7,7 @@
  *   A `data/` directory holds artifacts a build wrote and a human is expected to leave alone, and no automated
  *   pass inspects them: a JSON file looks the same whether a generator produced it or somebody typed it.
  *
- *   `PROVENANCE.md` records per artifact what wrote it and how a reader checks it; the check requires the record to
+ *   `PROVENANCE.md` records per artifact what wrote it and how a reader checks it. The check requires the record to
  *   name every artifact, and does not verify the artifact's contents.
  *
  *   Coverage names every artifact file directly in the directory and every immediate subdirectory, because each of

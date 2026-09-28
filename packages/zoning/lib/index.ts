@@ -111,8 +111,8 @@ export interface ZoningPlan {
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag as published: `1` means not superseded,
-	 * not that the plan is in force today.
+	 * The publisher's `CURRENT_PLAN` flag as published: `1` means the plan is not
+	 * superseded, and it leaves today's force to `validTo`.
 	 */
 	currentPlan: number
 }

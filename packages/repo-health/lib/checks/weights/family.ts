@@ -6,7 +6,7 @@
  *   the artifacts its encoder needs.
  *
  *   `@mailwoman/neural`'s `FAMILIES` declares which model graphs exist and which locales each serves, and the
- *   `neural-weights-*` workspaces are the artifacts that claim must describe; the two can disagree in four ways, each
+ *   `neural-weights-*` workspaces are the artifacts that claim must describe. The two can disagree in four ways, each
  *   silent at compile time because a package manifest is data — a locale package named by no family, a locale named by
  *   two families, a family whose graph package ships no `model.onnx`, and a family whose graph package ships the wrong
  *   vocabulary artifact.

@@ -34,8 +34,10 @@ import {
 } from "#eval-harness/same-data/fixture"
 
 /**
- * Drop the query-verdict fields a fixture may never carry; destructured rather than filtered
- * by key so the compiler checks the return type against `WITHHELD_CANDIDATE_FIELDS`.
+ * Drop the query-verdict fields a fixture may never carry.
+ *
+ * Destructured rather than filtered by key so the compiler checks the return
+ * type against `WITHHELD_CANDIDATE_FIELDS`.
  */
 function stripWithheld(place: ResolvedPlace): SameDataCandidate {
 	const { containedByQualifier, mismatch, regionScopeMiss, resolutionQuality, variantAliasExempted, ...candidate } =
@@ -97,8 +99,9 @@ export interface RecordCensus {
 	 */
 	removedGold: number
 	/**
-	 * Set when an arm's walk raised while recording; the row is still written,
-	 * and the run receipt carries the count.
+	 * Set when an arm's walk raised while recording.
+	 *
+	 * The row is still written, and the run receipt carries the count.
 	 */
 	error?: string
 }
@@ -111,8 +114,10 @@ export interface RecordInputs {
 	 */
 	parse: (query: string) => Promise<AddressTree>
 	/**
-	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions; the production arm's empty
-	 * option bag must be included explicitly, because an omitted default is a missing key at replay.
+	 * Every arm's `ResolveOpts`, so the recording covers each arm's questions.
+	 *
+	 * The production arm's empty option bag must be included explicitly,
+	 * because an omitted default is a missing key at replay.
 	 */
 	armOptions: ReadonlyArray<ResolveOpts>
 	/**
@@ -136,9 +141,9 @@ export interface RecordResult {
 }
 
 /**
- * How far apart two rows with the same folded name may sit and still denote one settlement;
- * 5 km is the radius the `same-data-resolver-v1` correction re-graded at, and the figure
- * moves with the radius, so the radius is stated wherever the figure is.
+ * How far apart two rows with the same folded name may sit and still denote one
+ * settlement. 5 km is the radius the `same-data-resolver-v1` correction re-graded at,
+ * and the figure moves with the radius, so the radius is stated wherever the figure is.
  */
 const SAME_SETTLEMENT_KM = 5
 
@@ -155,9 +160,9 @@ function settlementKey(name: string): string {
 }
 
 /**
- * What the recorder withholds for one row, or null when the row carries its gold;
- * the default is id equality, and {@link RecordInputs.withholdEveryDenotingRow} adds
- * rows whose folded name matches the gold's within {@link SAME_SETTLEMENT_KM}.
+ * What the recorder withholds for one row, or null when the row carries its gold. the
+ * default is id equality, and {@link RecordInputs.withholdEveryDenotingRow} adds rows
+ * whose folded name matches the gold's within {@link SAME_SETTLEMENT_KM}.
  */
 function withholdPredicate(
 	row: SameDataPanelRow,

@@ -10,7 +10,8 @@ import { weightsCachePackageDir } from "@mailwoman/neural/weights"
 import { buildWeightsInstallArgs, probeWeights } from "mailwoman/cli-kit/weights-guard"
 import { afterEach, beforeEach, describe, expect, test } from "vitest"
 
-// Must be a locale no weights package can resolve; this breaks if one is published.
+// Must be a locale no weights package can resolve.
+// This breaks if one is published.
 const LOCALE = "pt-BR"
 
 let cacheRoot: TemporaryDirectory

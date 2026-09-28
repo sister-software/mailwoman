@@ -5,7 +5,7 @@
  *
  *   Diff two geocodes of the same input — the parse diff plus what the resolver did with it.
  *
- *   A distance delta alone says the answer moved, not why. The three ways a geocode changes are
+ *   A distance delta alone says that the answer moved and leaves the cause open. The three ways a geocode changes are
  *   different problems with different fixes: the parse changed (a different question was asked), a
  *   span resolved to a different place (ranking or gazetteer coverage), or the tier changed (a lookup
  *   missed and the same components fell through to a coarser rung).

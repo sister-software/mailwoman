@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the pipeline (parse + resolve) explorer; the runtime is injected as a {@link PipelineRuntime},
+ *   Types for the pipeline (parse + resolve) explorer. The runtime is injected as a {@link PipelineRuntime},
  *   keeping onnxruntime-web, sql.js-httpvfs, and node builtins out of this package's browser graph.
  */
 
@@ -19,15 +19,18 @@ export interface PipelineLoadingState {
 	stepIndex: number
 	/**
 	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1],
-	 * or `null` when no download is in progress or the response declares no length; the step index
-	 * cannot report this download because the model is fetched before the first step begins.
+	 * or `null` when no download is in progress or the response declares no length.
+	 *
+	 * The step index cannot report this download because the model is fetched before the first step begins.
 	 */
 	byteFraction?: number | null
 }
 
 /**
- * The injected parse runtime, which the host implements so this package never
- * imports the model or gazetteer.
+ * The injected parse runtime.
+ *
+ * The host implements this interface and supplies the model and gazetteer,
+ * keeping both imports out of this package.
  */
 export interface PipelineRuntime {
 	/**

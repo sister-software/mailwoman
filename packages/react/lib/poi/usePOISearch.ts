@@ -24,24 +24,27 @@ export interface UsePOISearchOptions {
 	text: string
 
 	/**
-	 * The loader that the hook calls once on mount; it defaults to `loadPOIRuntime`.
+	 * The loader that the hook calls once on mount.
+	 * It defaults to `loadPOIRuntime`.
 	 */
 	loadRuntime?: LoadPOIRuntime
 
 	/**
-	 * The live-search probe; live search is unavailable when it is absent.
+	 * The live-search probe.
+	 * Live search is unavailable when it is absent.
 	 */
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to false;
-	 * enable it only for a server-side backend, since fetching every row for a brand
-	 * over an HTTP range-request database is too slow.
+	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to
+	 * false. enable it only for a server-side backend, since fetching every row for
+	 * a brand over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 
 	/**
-	 * The delay in milliseconds before the text is classified; defaults to 250.
+	 * The delay in milliseconds before the text is classified.
+	 * Defaults to 250.
 	 */
 	debounceMs?: number
 }
@@ -72,7 +75,8 @@ export interface UsePOISearch {
 	canSearchLive: boolean
 
 	/**
-	 * Starts a live search for the current subject; it starts no search when `canSearchLive` is false.
+	 * Starts a live search for the current subject.
+	 * It starts no search when `canSearchLive` is false.
 	 */
 	searchLive: () => Promise<void>
 }
@@ -102,9 +106,10 @@ function buildOverpass(
 }
 
 /**
- * Classifies debounced query text as a POI category or brand request and runs live
- * searches on demand; each result is keyed to the query that produced it, live search
- * requires a non-empty anchor, and brands need `brandLiveSearch` plus a Wikidata ID.
+ * Classifies debounced query text as a POI category or brand request and runs live searches on demand.
+ *
+ * Each result is keyed to the query that produced it, live search requires a non-empty
+ * anchor, and brands need `brandLiveSearch` plus a Wikidata ID.
  */
 export function usePOISearch({
 	text,

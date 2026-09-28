@@ -29,8 +29,9 @@ import { EVIDENCE_LEXICON_FAMILIES } from "#weights/lexicon"
 
 /**
  * The largest F1 drop (`maskOffF1 − maskOnF1`) a conventions mask may cause on a
- * certified tag before {@link createScorer} rejects it; the limit is a difference,
- * so an unchanged F1 passes regardless of its level.
+ * certified tag before {@link createScorer} rejects it.
+ *
+ * The limit is a difference, so an unchanged F1 passes regardless of its level.
  */
 export const CAPABILITY_DELTA_THRESHOLD = 0.05
 
@@ -181,8 +182,9 @@ export interface CreateScorerOpts {
 	fstPath?: PathBuilderLike
 
 	/**
-	 * The postcode anchor lookup, read as a PCB1 binary when the path ends in `.bin` and as JSON
-	 * otherwise; it defaults to {@link DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
+	 * The postcode anchor lookup, read as a PCB1 binary when the path ends in `.bin` and as JSON otherwise.
+	 *
+	 * It defaults to {@link DEFAULT_ANCHOR_LOOKUP} and then to the weights package's lookup,
 	 * except that a card declaring `span_mode: "shaped"` tries the weights package first.
 	 */
 	anchorLookupPath?: PathBuilderLike
@@ -211,8 +213,8 @@ export interface CreateScorerOpts {
 	countryLexiconPath?: string
 
 	/**
-	 * The locale of the weights package that supplies default lexicons and the anchor lookup;
-	 * the model, tokenizer and card are never resolved from it.
+	 * The locale of the weights package that supplies default lexicons and the anchor
+	 * lookup. the model, tokenizer and card are never resolved from it.
 	 */
 	locale?: string
 

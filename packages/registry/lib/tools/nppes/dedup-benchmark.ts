@@ -68,7 +68,8 @@ export interface NPPESDedupBenchmarkOptions {
 	trainEm?: boolean
 	/**
 	 * Reproduce the pre-flip ingest (space-joined address columns with `normalizeCase` off),
-	 * so that with the same data and GBT only the flip is toggled; default off.
+	 * so that with the same data and GBT only the flip is toggled.
+	 * Default off.
 	 */
 	legacyJoin?: boolean
 	/**
@@ -210,7 +211,8 @@ export async function nppesDedupBenchmark(
 
 	report?.(`[D] resolving the setting progression${TRAIN_EM ? " (EM-trained)" : ""}…`)
 
-	// The learned scorer is default-on, so it is pinned off here; otherwise every row would silently be the GBT.
+	// The learned scorer is default-on, so it is pinned off here.
+	// Otherwise every row would silently be the GBT.
 	const progression = buildSettings(addressFrequency).map((l) => {
 		const res = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0, ...l.config })
 
@@ -219,7 +221,7 @@ export async function nppesDedupBenchmark(
 
 	const bestSetting = progression.at(-1)! // the full setting stack
 
-	// The shipped out-of-box default auto-computes an input-scoped address-frequency table;
+	// The shipped out-of-box default auto-computes an input-scoped address-frequency table.
 	// on this sub-sampled corpus it is sparse and F1 collapses to ≈baseline, because IDF is a
 	// corpus statistic, so the CLI passes a corpus-wide table built from the full source files.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })

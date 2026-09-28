@@ -20,8 +20,10 @@ import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 import { trackedSourcePaths } from "#tracked-sources"
 
 /**
- * The kebab-case flag keys of one `spec.options` block, from `options: {` to the `satisfies CommandSpec`
- * that closes the spec; a single-segment flag derives itself and can never disagree.
+ * The kebab-case flag keys of one `spec.options` block, from `options: {` to the
+ * `satisfies CommandSpec` that closes the spec.
+ *
+ * A single-segment flag derives itself and can never disagree.
  */
 const KEBAB_FLAG = /["']([a-z0-9]+(?:-[a-z0-9]+)+)["']\s*:/gu
 

@@ -49,8 +49,9 @@ export interface BundleSourceCensusResult {
 	 */
 	status: "censused" | "none-recorded-in-the-artifacts" | "nothing-on-disk"
 	/**
-	 * Artifacts read, and artifacts the data root does not hold; a census over part of a
-	 * bundle is reported as partial rather than presented as the bundle's composition.
+	 * Artifacts read, and artifacts the data root does not hold.
+	 *
+	 * A census over part of a bundle is reported as partial rather than presented as the bundle's composition.
 	 */
 	artifactsRead: number
 	artifactsAbsent: number

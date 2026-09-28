@@ -5,7 +5,7 @@
  *
  *   The staging + audit half of the release preflight: materialize the release tree in an isolated
  *   staging root, then pack and audit every release workspace there, so a preflight exercises the
- *   exact pack-and-verify path CI publishes with — no tag, no registry write, no dirty source
+ *   exact pack-and-verify path CI publishes with — without a tag, a registry write, or a dirty source
  *   checkout.
  *
  *   A staging tree built by `git archive head` holds tracked files only and lives outside the
@@ -193,7 +193,8 @@ export async function auditStagedWorkspaces(
 		try {
 			await packWorkspaceForPublish(staging(workspace), tarball)
 
-			// Throws listing every violation; caught below so one sweep reports every broken package.
+			// Throws listing every violation.
+			// Caught below so one sweep reports every broken package.
 			const audit = verifyTarball(tarball)
 
 			results.push({

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The browser loader must resolve evidence-lexicon filenames from the model card's
- *   `requires.<channel>.lexicon` declarations exactly as the Node resolver does; the sibling defaults
+ *   `requires.<channel>.lexicon` declarations exactly as the Node resolver does. The sibling defaults
  *   are a legacy fallback for bundles that predate the declarations.
  */
 
@@ -47,8 +47,9 @@ const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loa
 const BASE = "https://cdn.example/mailwoman/v9.1.0"
 
 /**
- * Fetch stub that records every requested URL; the assertion surface is
- * which names were derived rather than what loaded.
+ * Fetch stub that records every requested URL.
+ *
+ * The assertion surface is which names were derived rather than what loaded.
  */
 function makeRecordingFetch(card: object | null, requested: string[]): typeof fetch {
 	return async (input) => {

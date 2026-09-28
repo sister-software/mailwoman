@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Browser-mode render test for the resolved-place and host overlays; the component tree is asserted
+ *   Browser-mode render test for the resolved-place and host overlays. The component tree is asserted
  *   synchronously and the WebGL-dependent assertions are awaited best-effort so a Chromium without software
  *   WebGL skips them rather than flaking.
  */
@@ -100,7 +100,8 @@ test("ResolvedPlaceLayers + OverlayLayers render marker + fill/line/overlay laye
 	const marker = await settle(() => container.querySelector(".maplibregl-marker"))
 	expect(marker).not.toBeNull()
 
-	// The declarative `<Source>`/`<Layer>`s land in the live style once it loads; assert via the map ref.
+	// The declarative `<Source>`/`<Layer>`s land in the live style once it loads.
+	// Assert via the map ref.
 	const getMap = () => mapRef?.getMap()
 	const fill = await settle(() => getMap()?.getLayer("mw-result-fill"))
 	expect(fill).toBeTruthy()

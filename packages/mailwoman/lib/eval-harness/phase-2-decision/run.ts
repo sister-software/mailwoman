@@ -6,7 +6,7 @@
  *   The live half of the phase-2 decision: load the frozen pre-registration, run the instruments its checks read,
  *   and emit one receipt carrying the arithmetic against every bar.
  *
- *   This module decides only what it read; lanes, checks, denominators, bars, artifact pins and the one marker
+ *   This module decides only what it read. Lanes, checks, denominators, bars, artifact pins and the one marker
  *   query all come from `decision-definition.json`, which {@linkcode loadPhase2Definition} refuses to hand over
  *   if its content hash has moved. The runner supplies measurements and no more, and it runs the existing
  *   instruments rather than re-deriving them.
@@ -48,10 +48,11 @@ import { buildSHA } from "#gazetteer-pipeline/stamp-manifest"
 import { createSemanticObservationRoute, semanticObservationMarkers } from "#observations/index"
 
 /**
- * The committed collision census the recognition lane's control checks read; it is read
- * rather than re-run because the census scans every `name_key` in the shipped `poi.db`
- * and takes about eleven minutes, and its recorded lexicon and layer identity are
- * checked against the pins so a stale census becomes a named deviation.
+ * The committed collision census the recognition lane's control checks read.
+ *
+ * It is read rather than re-run because the census scans every `name_key` in the shipped
+ * `poi.db` and takes about eleven minutes, and its recorded lexicon and layer identity
+ * are checked against the pins so a stale census becomes a named deviation.
  */
 export const COLLISION_CENSUS_PATH = "packages/mailwoman/lib/eval-harness/activity-lexicon/collision-census.json"
 
@@ -102,7 +103,7 @@ export interface Phase2LaneReport {
 	blockedBy?: string
 	blockedReason?: string
 	/**
-	 * The rows a blocked lane will read once it is unblocked, and what each reads today;
+	 * The rows a blocked lane will read once it is unblocked, and what each reads today.
 	 * present only on a blocked lane and never counted anywhere.
 	 */
 	plannedChecks?: { id: string; measures: string; todayReads: string }[]
@@ -131,7 +132,7 @@ export interface Phase2Receipt {
 
 export interface Phase2RunOptions extends POIBoardOptions {
 	/**
-	 * Override the frozen pre-registration, for a test that wants a synthetic definition;
+	 * Override the frozen pre-registration, for a test that wants a synthetic definition.
 	 * a run with no override reads the committed one.
 	 */
 	definitionPath?: string
@@ -141,12 +142,13 @@ export interface Phase2RunOptions extends POIBoardOptions {
 	 */
 	boardFixturesPath?: string
 	/**
-	 * The sealed coverage layer the absence lane reads; absent resolves the
-	 * absence pre-registration's own file.
+	 * The sealed coverage layer the absence lane reads.
+	 * Absent resolves the absence pre-registration's own file.
 	 */
 	coverageDatabasePath?: string
 	/**
-	 * The committed collision census; absent reads the one in this repository.
+	 * The committed collision census.
+	 * Absent reads the one in this repository.
 	 */
 	collisionCensusPath?: string
 	/**
@@ -164,7 +166,7 @@ function matches(observed: string | number, pinned: string | number): number {
 }
 
 /**
- * Run every instrument the registered checks read, and answer with one reading per measurement;
+ * Run every instrument the registered checks read, and answer with one reading per measurement.
  * instruments are selected from the checks rather than run unconditionally, so a definition
  * that registers no absence check needs no build-local coverage layer to produce a receipt.
  */
@@ -416,9 +418,10 @@ async function measure(
 	}
 
 	if (needed.has("poi_board")) {
-		// `quiet` because this receipt is the report — the board's own table would print 56 rows
-		// between two of this ruler's lines — and `enforce` is left off because a floor breach
-		// belongs in the verdict rather than in an exit code the ruler would have to interpret.
+		// `quiet` because this receipt is the report.
+		// The board's own table would print 56 rows between two of this ruler's lines —
+		// and `enforce` is left off because a floor breach belongs in the verdict
+		// rather than in an exit code the ruler would have to interpret.
 		const { report } = await runPOIBoard({
 			...options,
 			quiet: true,
@@ -543,10 +546,9 @@ async function measure(
 }
 
 /**
- * Every pinned artifact whose observed identity differs, named with both values;
- * a measurement not taken is not a deviation, because a definition registering no
- * absence check leaves the absence pins unmeasured and reporting that would turn
- * "this ruler did not ask" into "the artifact moved".
+ * Every pinned artifact whose observed identity differs, named with both values. a measurement not
+ * taken is not a deviation, because a definition registering no absence check leaves the absence pins
+ * unmeasured and reporting that would turn "this ruler did not ask" into "the artifact moved".
  */
 function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts): string[] {
 	const deviations: string[] = []
@@ -577,10 +579,12 @@ function comparePins(pins: Phase2ArtifactPins, artifact: Phase2ObservedArtifacts
 }
 
 /**
- * Run the one frozen marker query and count the markers that reach a caller with the
- * registered code and mechanism; this is the only instrument that builds its own pipeline
- * because the probe runner grades an answer but never hands back the query-kind verdict
- * a marker is attached to, and everything the check reads comes from the definition.
+ * Run the one frozen marker query and count the markers that reach a caller
+ * with the registered code and mechanism.
+ *
+ * This is the only instrument that builds its own pipeline because the probe runner
+ * grades an answer but never hands back the query-kind verdict a marker is attached to,
+ * and everything the check reads comes from the definition.
  */
 async function measureMarker(
 	definition: Phase2DecisionDefinition,
@@ -614,8 +618,8 @@ async function measureMarker(
 			detail: `marker kind ${first.kind}, code ${first.code}, mechanism ${first.mechanism}, evidence names assertion ${String((first.evidence as { assertion?: { id?: string } }).assertion?.id)}`,
 		}
 	} finally {
-		// The runtime pipeline never opens the artifact reader itself, so the route owns no
-		// resource to close; draining keeps one query's firings from being attributed to the next.
+		// The runtime pipeline never opens the artifact reader itself, so the route owns no resource to close.
+		// Draining keeps one query's firings from being attributed to the next.
 		route.takeObservations()
 	}
 }
@@ -667,8 +671,10 @@ export async function runPhase2Decision(options: Phase2RunOptions = {}): Promise
 }
 
 /**
- * The human-readable report; it prints the frozen bar beside every measurement,
- * so a reader never has to open the definition to know what the number was compared against.
+ * The human-readable report.
+ *
+ * It prints the frozen bar beside every measurement, so a reader never has to open
+ * the definition to know what the number was compared against.
  */
 export function printPhase2Receipt(receipt: Phase2Receipt): void {
 	console.log(`\nphase-2 decision ${receipt.decisionID} v${receipt.definitionVersion}`)

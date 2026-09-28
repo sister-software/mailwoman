@@ -28,12 +28,13 @@ export interface DebugData {
 	 */
 	mapNote: string | null
 	/**
-	 * The session's decode-path evidence for this run, absent when the session was opened
-	 * without tracing; the evidence rows then say so rather than showing zeros.
+	 * The session's decode-path evidence for this run, absent when the session was opened without tracing.
+	 * The evidence rows then say so rather than showing zeros.
 	 */
 	trace?: GeocodeTrace
 	/**
-	 * The session's per-phase wall clock; absent means the timing section is omitted.
+	 * The session's per-phase wall clock.
+	 * Absent means the timing section is omitted.
 	 */
 	timing?: Record<string, number>
 }
@@ -62,8 +63,9 @@ export interface DebugFrameProps {
 	 */
 	scrollOffset?: number
 	/**
-	 * Map-pane SGR color; callers pass `!$public.NO_COLOR` because raw SGR does
-	 * not honor `NO_COLOR` the way Ink/chalk do.
+	 * Map-pane SGR color.
+	 *
+	 * Callers pass `!$public.NO_COLOR` because raw SGR does not honor `NO_COLOR` the way Ink/chalk do.
 	 */
 	color: boolean
 }
@@ -82,8 +84,9 @@ const FOOTER_ROW_HEIGHT = 1
 const MAP_PANE_CHROME_ROWS = 4
 
 /**
- * MapPane's own left+right border columns; its title and attribution lines run
- * inside that same width and add no column chrome.
+ * MapPane's own left+right border columns.
+ *
+ * Its title and attribution lines run inside that same width and add no column chrome.
  */
 const MAP_PANE_CHROME_COLUMNS = 2
 
@@ -281,8 +284,9 @@ const InputBar = memo(function InputBar(props: {
 })
 
 /**
- * The label column of a field row, including its trailing space; a component nested
- * three deep (` house_number`) is 18 characters.
+ * The label column of a field row, including its trailing space.
+ *
+ * A component nested three deep (` house_number`) is 18 characters.
  */
 const OUTPUT_LABEL_WIDTH = 19
 
@@ -424,8 +428,9 @@ const MapPane = memo(function MapPane(props: {
 })
 
 /**
- * The key hints, in the order a new reader needs them; a static capture has no keyboard
- * and says what it is instead.
+ * The key hints, in the order a new reader needs them.
+ *
+ * A static capture has no keyboard and says what it is instead.
  */
 const KEY_HINTS = "Tab focus   ←↑↓→ pan/scroll   +/- zoom   0 recenter   Enter re-run   q/Esc quit"
 const STATIC_HINT = "static frame — keyboard controls on a TTY"

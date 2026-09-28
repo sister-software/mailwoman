@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Every label and predicate here is US SEC filing vocabulary rather than a fact about html tables;
+ * Every label and predicate here is US SEC filing vocabulary rather than a fact about html tables.
  * it lives in `@mailwoman/filer` because `carriesLegalDesignation` reaches `@mailwoman/record`, whose
  * dependency on `@mailwoman/formatter` and `@mailwoman/core` would close an import cycle inside core.
  */
@@ -19,8 +19,9 @@ const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
 
 /**
- * Column labels that name a jurisdiction column; exactly one of these in a
- * header row licenses a column mapping.
+ * Column labels that name a jurisdiction column.
+ *
+ * Exactly one of these in a header row licenses a column mapping.
  */
 export const JURISDICTION_HEADER_LABELS = new Set<string>([
 	"jurisdiction",
@@ -47,9 +48,9 @@ export const JURISDICTION_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Column labels that name a column which is neither the entity name
- * nor its jurisdiction, such as a trade name, an ownership percentage, or a tax ID;
- * a column mapping skips these when picking the name column.
+ * Column labels that name a column which is neither the entity name nor its jurisdiction,
+ * such as a trade name, an ownership percentage, or a tax ID. a column mapping
+ * skips these when picking the name column.
  */
 export const OTHER_HEADER_LABELS = new Set<string>([
 	"% of ownership",
@@ -99,7 +100,7 @@ const KNOWN_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Recognizes a row/line as a document header or pure-decoration row rather than a data row;
+ * Recognizes a row/line as a document header or pure-decoration row rather than a data row.
  * the exact match rather than substring sniffing avoids misfiring on a company literally named
  * e.g. "Subsidiary Holdings LLC", and an all-blank row is left to the empty-row handling.
  */
@@ -127,10 +128,9 @@ export function carriesLegalDesignation(value: string): boolean {
 }
 
 /**
- * True when one cell holds several entity values the source kept in separate blocks;
- * a block boundary alone is not enough because exporters emit soft line wraps as
- * block boundaries, so both cumulative sides must carry their own legal designation
- * before the cell reads as multiple entities.
+ * True when one cell holds several entity values the source kept in separate blocks. a block
+ * boundary alone is not enough because exporters emit soft line wraps as block boundaries, so both
+ * cumulative sides must carry their own legal designation before the cell reads as multiple entities.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {
 	for (let split = 1; split < blocks.length; split++) {

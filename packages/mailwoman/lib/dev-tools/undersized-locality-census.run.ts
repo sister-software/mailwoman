@@ -33,8 +33,9 @@ const RATIO = Number(args.ratio ?? 10)
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
 /**
- * Placetypes a locality's same-name parent may be; a locality inside a same-name `region`
- * is the ordinary capital-of-its-region shape and is not this defect.
+ * Placetypes a locality's same-name parent may be.
+ *
+ * A locality inside a same-name `region` is the ordinary capital-of-its-region shape and is not this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 

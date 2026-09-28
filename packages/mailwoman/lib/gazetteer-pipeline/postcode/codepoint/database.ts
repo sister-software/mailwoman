@@ -78,8 +78,10 @@ export function codePointLayerManifest(input: {
 }
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row; Code-Point Open is GB-only, and the ONS code
- * distinguishing England/Scotland/Wales is not what `spr.country` means.
+ * ISO-3166-1 alpha-2 stamped on every row.
+ *
+ * Code-Point Open is GB-only, and the ONS code distinguishing England/Scotland/Wales
+ * is not what `spr.country` means.
  */
 const COUNTRY = "GB"
 
@@ -252,8 +254,8 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-		// Every row's parent_id is -1, so this writes the self row per place; the resolver's
-		// parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
+		// Every row's parent_id is -1, so this writes the self row per place.
+		// The resolver's parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 
@@ -285,8 +287,8 @@ export async function buildPostcodeCodePoint(
 
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
-	// The layer interface's manifest beside the `meta` record; the candidate build
-	// reads its tier before folding the database.
+	// The layer interface's manifest beside the `meta` record.
+	// The candidate build reads its tier before folding the database.
 	phase("layer-manifest")
 	await stampLayerManifest(out, codePointLayerManifest({ osVersion, metadata: extracted.metadata, now }))
 

@@ -30,8 +30,9 @@ export const ManifestState = {
 	 */
 	Present: "present",
 	/**
-	 * The artifact is on disk and carries no manifest; it predates the layer interface
-	 * and takes its stamp on the next rebuild.
+	 * The artifact is on disk and carries no manifest.
+	 *
+	 * It predates the layer interface and takes its stamp on the next rebuild.
 	 */
 	Absent: "absent",
 	/**
@@ -58,7 +59,8 @@ export interface ArtifactFreshness {
 	path: string
 	manifest: ManifestState
 	/**
-	 * Why the manifest is absent or unreadable; never set alongside {@link ManifestState.Present}.
+	 * Why the manifest is absent or unreadable.
+	 * Never set alongside {@link ManifestState.Present}.
 	 */
 	reason?: string
 	/**
@@ -81,9 +83,11 @@ export interface ArtifactFreshness {
  */
 export interface FreshnessReport {
 	/**
-	 * The newest `built` epoch across the artifacts that carried one, verbatim, absent
-	 * when no artifact was stamped; answering with the boot time, the newest mtime,
-	 * or zero would answer a question this surface cannot answer.
+	 * The newest `built` epoch across the artifacts that carried one, verbatim,
+	 * absent when no artifact was stamped.
+	 *
+	 * Answering with the boot time, the newest mtime, or zero would answer a
+	 * question this surface cannot answer.
 	 */
 	dataUpdated?: string
 	artifacts: ArtifactFreshness[]
@@ -124,8 +128,8 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 		}
 	}
 
-	// A stamp nobody can date is a freshness fault, not an absence: dropping it out of
-	// the max below would read as an artifact that was never stamped.
+	// A stamp nobody can date is a freshness fault, so it is reported as Unreadable.
+	// Reporting it as absent would read as an artifact that was never stamped.
 	if (Number.isNaN(Date.parse(manifest.created_at))) {
 		return {
 			name,
@@ -146,9 +150,11 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 }
 
 /**
- * Report the provenance of the artifacts a session opened, called once at boot with the paths
- * the process actually resolved; a server holds its database handles open for its whole life,
- * so the artifact it serves from is the one it opened at start, whatever a later symlink swap points at.
+ * Report the provenance of the artifacts a session opened, called once at boot
+ * with the paths the process actually resolved.
+ *
+ * A server holds its database handles open for its whole life, so the artifact it serves
+ * from is the one it opened at start, whatever a later symlink swap points at.
  */
 export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Promise<FreshnessReport> {
 	const read: ArtifactFreshness[] = []

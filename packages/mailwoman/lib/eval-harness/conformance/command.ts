@@ -124,7 +124,8 @@ export async function measureConformance(options: ConformanceCommandOptions = {}
 
 	console.error(`[conformance] suite audit clean (${laws.join(", ")})`)
 
-	// The corpus is read only when a law registers a coverage reading; it is the population every law draws from.
+	// The corpus is read only when a law registers a coverage reading.
+	// It is the population every law draws from.
 	const wantsCoverage = laws.some((law) => suiteForLaw(law)?.coverage)
 	const corpusInputs = wantsCoverage ? (await loadRegressionCases()).map((seedCase) => seedCase.input) : []
 

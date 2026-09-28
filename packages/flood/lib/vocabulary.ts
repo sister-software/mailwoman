@@ -43,13 +43,17 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 ]
 
 /**
- * The declared domain as a membership set; an unknown `flood_zone` value is a source-schema
- * change, and coercing it to a nearest neighbour or null would report no data instead.
+ * The declared domain as a membership set.
+ *
+ * An unknown `flood_zone` value is a source-schema change, and coercing it to a
+ * nearest neighbour or null would report no data instead.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
- * Zone 1, which the product represents by absence rather than a polygon, carried
+ * Zone 1.
+ *
+ * The product represents this zone by absence rather than a polygon, and it is carried
  * so a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
@@ -127,7 +131,9 @@ export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 ]
 
 /**
- * The projected CRS the published geodatabase declares; the file is OSGB36 / British National
- * Grid in metres, so the ingest reprojects and the builder refuses any other declaration.
+ * The projected CRS the published geodatabase declares.
+ *
+ * The file is OSGB36 / British National Grid in metres, so the ingest reprojects
+ * and the builder refuses any other declaration.
  */
 export const EA_SOURCE_EPSG = 27_700

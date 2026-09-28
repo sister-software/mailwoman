@@ -105,7 +105,8 @@ export interface ProbeTargetRow extends POIBoardFixture {
 	 */
 	anchorFrom: string
 	/**
-	 * The activity phrase that replaces the venue noun; the only difference from `anchorFrom`.
+	 * The activity phrase that replaces the venue noun.
+	 * The only difference from `anchorFrom`.
 	 */
 	activityPhrase: string
 	/**
@@ -174,8 +175,9 @@ export interface ProbeThresholds {
 	 */
 	minimumPrimaryNumerator: number
 	/**
-	 * How many rows the primary numerator must gain over the frozen baseline for GO; the delta
-	 * bar is needed because a nonzero baseline could meet the absolute bar with no change.
+	 * How many rows the primary numerator must gain over the frozen baseline for GO.
+	 *
+	 * The delta bar is needed because a nonzero baseline could meet the absolute bar with no change.
 	 */
 	minimumPrimaryDelta: number
 	/**
@@ -273,8 +275,8 @@ export function probeDefinitionHash(definition: SemanticProbeDefinition): string
 }
 
 /**
- * Audits a probe definition without running anything, returning one message per problem;
- * an empty list means the definition can run.
+ * Audits a probe definition without running anything, returning one message per
+ * problem. an empty list means the definition can run.
  */
 export function auditProbeDefinition(definition: SemanticProbeDefinition): string[] {
 	const problems: string[] = []

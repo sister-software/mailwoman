@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Every board row must decode to a structurally coherent tree or appear in the allowlist with a reason;
+ *   Every board row must decode to a structurally coherent tree or appear in the allowlist with a reason.
  *   because the check reads the tree against its own interface, it needs no truth and cannot be satisfied by
  *   pinning a new expectation.
  */

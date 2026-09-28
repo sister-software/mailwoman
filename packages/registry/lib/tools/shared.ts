@@ -39,7 +39,8 @@ export interface SourceSpec {
 	 */
 	inState: (row: Record<string, string>) => boolean
 	/**
-	 * Optional: a row carrying ≥1 addressable entity yields each as its own row; default identity.
+	 * Optional: a row carrying ≥1 addressable entity yields each as its own row.
+	 * Default identity.
 	 */
 	explode?: (row: Record<string, string>) => Record<string, string>[]
 }
@@ -103,7 +104,8 @@ export const std = (xs: readonly number[]): number => {
 
 /**
  * Takes a fraction and omits the percent sign, unlike core `formatPercent`'s
- * numerator/denominator interface; call sites append their own `%`.
+ * numerator/denominator interface.
+ * Call sites append their own `%`.
  */
 export const pct = (x: number): string => (100 * x).toFixed(1)
 
@@ -135,8 +137,8 @@ export const inTXBBOX = (lat: number, lon: number): boolean =>
 	lat >= TX_BBOX.latMin && lat <= TX_BBOX.latMax && lon >= TX_BBOX.lonMin && lon <= TX_BBOX.lonMax
 
 /**
- * NPPES registry column headers, by the short name the probes read them under;
- * no code enumerates this object, so adding a column cannot change a probe's behavior.
+ * NPPES registry column headers, by the short name the probes read them under. no code
+ * enumerates this object, so adding a column cannot change a probe's behavior.
  */
 export const NPPES_COLUMNS = {
 	npi: "NPI",
@@ -159,7 +161,8 @@ export const NPPES_COLUMNS = {
 	isSubpart: "Is Organization Subpart",
 	parentLBN: "Parent Organization LBN",
 	parentTIN: "Parent Organization TIN",
-	// The 15 taxonomy slots; any shared code counts as agreement.
+	// The 15 taxonomy slots.
+	// Any shared code counts as agreement.
 	taxonomy: Array.from({ length: 15 }, (_, i) => `Healthcare Provider Taxonomy Code_${i + 1}`),
 }
 
@@ -175,8 +178,8 @@ export const MIN_GROUP_SIZE = 5
 export const TRAINING_EPOCHS = 400
 
 /**
- * Smallest mean F1 gap counted as a real difference between models rather than seed noise;
- * verdicts inside ±this are reported as a tie.
+ * Smallest mean F1 gap counted as a real difference between models rather than seed
+ * noise. verdicts inside ±this are reported as a tie.
  */
 export const MIN_MEANINGFUL_F1_DELTA = 0.02
 
@@ -244,8 +247,10 @@ export function trainLogisticRegression(
 
 /**
  * `n + 1` evenly-spaced order statistics of an already-sorted sample, de-duplicated,
- * that a GBT node considers as candidate splits; an empty sample yields `[0]`
- * so a degenerate feature still yields one threshold rather than an empty split set.
+ * that a GBT node considers as candidate splits.
+ *
+ * An empty sample yields `[0]` so a degenerate feature still yields one threshold
+ * rather than an empty split set.
  */
 export function uniqueQuantiles(sorted: readonly number[], n: number): number[] {
 	if (!sorted.length) return [0]
@@ -546,7 +551,8 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
-	 * The assembled two-source rows; the caller owns source loading.
+	 * The assembled two-source rows.
+	 * The caller owns source loading.
 	 */
 	rows: readonly CrossSourceRow[]
 	/**
@@ -575,8 +581,9 @@ export interface TrainCrossSourceModelOptions {
 	 */
 	exportPrefix: string
 	/**
-	 * Assemble the emitted `<prefix>_META` object; the caller owns field names and order
-	 * so a retrain diffs cleanly against its committed module.
+	 * Assemble the emitted `<prefix>_META` object.
+	 *
+	 * The caller owns field names and order so a retrain diffs cleanly against its committed module.
 	 */
 	meta: (figures: CrossSourceTrainingFigures) => Record<string, unknown>
 	report?: (line: string) => void

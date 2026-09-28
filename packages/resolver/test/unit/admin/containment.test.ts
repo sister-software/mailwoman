@@ -194,8 +194,8 @@ describe("the walk's deciding site (#1729 reach interface)", () => {
 	})
 
 	it("MUTATION CHECK: with the containment stamps inverted, the same input flips to the namesake", async () => {
-		// The test must fail under an inverted containment term; inverting the stamps here
-		// is the walk-level image of inverting `intervalContains` in the backend.
+		// The test must fail under an inverted containment term.
+		// Inverting the stamps here is the walk-level image of inverting `intervalContains` in the backend.
 		const { locality } = await resolveWith(
 			[
 				{ id: 1, country: "US", importance: 0.9, contained: true },

@@ -176,8 +176,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a jurisdiction with no source as absent on both fields rather than blocked", async () => {
-		// Blocked means somebody looked and something stopped the next step;
-		// a jurisdiction with no source has no role to resolve.
+		// Blocked means somebody looked and something stopped the next step. a
+		// jurisdiction with no source has no role to resolve.
 		const report = await funnel()
 		const antarctica = report.rows.find((row) => row.iso2 === "AQ")
 
@@ -214,8 +214,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads an admitted country the audit never drew as a measured zero, not an unknown", async () => {
-		// An audit's `by_country` enumerates every country it drew, so KE drew zero of
-		// the 250,000 sampled rows — measured, not unknown.
+		// An audit's `by_country` enumerates every country it drew, so KE drew zero
+		// of the 250,000 sampled rows, a measured value.
 		const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,
@@ -229,8 +229,8 @@ describe("readCoverageFunnel", () => {
 	})
 
 	it("reads a country the config never admitted as absent rather than blaming the sampler", async () => {
-		// AQ carries no census row, so it is not admitted and cannot draw; reporting it
-		// as a sampling failure would blame the admission filter.
+		// AQ carries no census row, so it is not admitted and cannot draw.
+		// Reporting it as a sampling failure would blame the admission filter.
 		const report = await funnel({
 			sampledRows: new Map([["US", 250_000]]),
 			sampledTotal: 250_000,

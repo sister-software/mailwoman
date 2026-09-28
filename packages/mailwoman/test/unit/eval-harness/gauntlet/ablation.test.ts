@@ -202,7 +202,7 @@ describe("classifySlot — substitution is not the same as absence", () => {
 		expect(classifySlot("BT3 9QQ", "bt39qq")).toBe("recovered")
 	})
 
-	// A slot refilled by a different token is a substitution, not a hold or an abstention.
+	// A slot refilled by a different token counts as a substitution, with holds and abstentions as separate outcomes.
 	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
 		expect(classifySlot("75005", "1802")).toBe("substituted")

@@ -23,8 +23,10 @@ export const MOUSE_ENABLE = "\u001B[?1000h\u001B[?1002h\u001B[?1006h"
 export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 
 /**
- * A decoded input event; pan and zoom carry direction and magnitude only, since how far
- * a step moves the map is the browser's decision rather than the decoder's.
+ * A decoded input event.
+ *
+ * Pan and zoom carry direction and magnitude only, since how far a step moves the
+ * map is the browser's decision rather than the decoder's.
  */
 export type MapTUIInput =
 	| { kind: "quit" }
@@ -72,8 +74,9 @@ const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
 
 /**
- * Every "unrecognized but complete" sequence, in the order they are tried; one shared
- * list keeps a new family from being added here and forgotten in the incomplete test.
+ * Every "unrecognized but complete" sequence, in the order they are tried.
+ *
+ * One shared list keeps a new family from being added here and forgotten in the incomplete test.
  */
 const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_SEQUENCE_PATTERN] as const
 

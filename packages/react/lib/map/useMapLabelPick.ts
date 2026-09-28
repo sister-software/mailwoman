@@ -22,8 +22,10 @@ const LABEL_LAYER = /_label|^places_/
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
 /**
- * The style's label layer ids; an empty result must stay unqueried, since an empty
- * `layers` option is not the same as an absent one in `queryRenderedFeatures`.
+ * The style's label layer ids.
+ *
+ * An empty result must stay unqueried, since an empty `layers` option is not the
+ * same as an absent one in `queryRenderedFeatures`.
  */
 function labelLayerIDs(map: MapInstance): string[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -57,7 +59,8 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 	useEffect(() => {
 		if (!map) return
 
-		// Recomputed when the style swaps, not once per pointer move.
+		// Recomputed when the style swaps.
+		// Pointer moves read the cached list.
 		let layers = labelLayerIDs(map)
 
 		const readLayers = () => {
@@ -82,7 +85,8 @@ export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) 
 
 				const canvas = map.getCanvas()
 
-				// The drag cursor belongs to the pan gesture; overriding it mid-drag would fight the map for the pointer.
+				// The drag cursor belongs to the pan gesture.
+				// Overriding it mid-drag would fight the map for the pointer.
 				if (canvas.style.cursor === "grabbing") return
 
 				canvas.style.cursor = labelNameAt(map, event.point, layers) ? "pointer" : ""

@@ -56,9 +56,9 @@ export function addRingGeometryColumns<TB extends string, C extends string>(
  * The cell-index columns every polygon summary tier carries: the 48-bit short cell,
  * the resolution it was captured at, the key columns the row names, and its containment.
  *
- * Small fixed-width rows probed by their exact primary key are the `without rowid` shape;
- * the caller adds its own primary-key constraint and the raw `without rowid` modifier
- * because the key differs per layer.
+ * Small fixed-width rows probed by their exact primary key are the `without rowid`
+ * shape. the caller adds its own primary-key constraint and the raw `without rowid`
+ * modifier because the key differs per layer.
  */
 export function addCellIndexColumns<TB extends string, C extends string, K extends string>(
 	builder: CreateTableBuilder<TB, C>,

@@ -43,8 +43,10 @@ const EVAL_VALID_FROM = "2026-01-01"
 const EVAL_BUILD_SHA = "filer-linkage-eval"
 
 /**
- * Counts the ownership-bearing rows in a built artifact, which still holds management-company
- * `filer_family` rows, so the report measures the withholding rather than describes it.
+ * Counts the ownership-bearing rows in a built artifact that still holds
+ * management-company `filer_family` rows.
+ *
+ * That count lets the report measure the withholding rather than describe it.
  */
 export interface LeakageCensus {
 	holdingCompanyNodes: number
@@ -324,8 +326,10 @@ export async function runLinkagePass(options: LinkageEvalPassOptions): Promise<L
 export interface FilerLinkageEvalOptions {
 	outMd?: string
 	/**
-	 * Replaces the date in the report's H1, which defaults to today, so scorecard
-	 * regeneration and reproducibility tests can pin it.
+	 * Replaces the date in the report's H1.
+	 *
+	 * The date defaults to today, and scorecard regeneration and reproducibility
+	 * tests pin it through this option.
 	 */
 	date?: string
 	printMarkdown?: boolean

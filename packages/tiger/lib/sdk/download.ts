@@ -16,8 +16,8 @@ import type { PathBuilderLike } from "path-ts"
 /**
  * Download `url` to `dest` unless a valid copy is already there.
  *
- * "Valid" means every member's CRC-32 checks out; an interrupted download otherwise
- * leaves a plausible file that fails later inside ogr2ogr.
+ * "Valid" means every member's CRC-32 checks out.
+ * An interrupted download otherwise leaves a plausible file that fails later inside ogr2ogr.
  */
 export async function downloadIfNeeded(url: string, dest: PathBuilderLike): Promise<boolean> {
 	if (await pathExists(dest)) {

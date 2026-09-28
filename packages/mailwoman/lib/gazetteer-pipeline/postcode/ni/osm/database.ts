@@ -260,9 +260,10 @@ export async function buildPostcodeNIOSM(options: BuildPostcodeNIOSMOptions = {}
 
 		db.exec("COMMIT")
 
-		// Every row's parent_id is -1, so this writes only the self row; the resolver's parent
-		// constraint scopes a lookup with `spr.id IN (select id from ancestors where ancestor_id = ?)`,
-		// and a place absent from `ancestors` can never satisfy it.
+		// Every row's parent_id is -1, so this writes only the self row.
+		// The resolver's parent constraint scopes a lookup with
+		// `spr.id IN (select id from ancestors where ancestor_id = ?)`, and a place
+		// absent from `ancestors` can never satisfy it.
 		phase("ancestors")
 		ancestorRows = populateAncestors(db)
 
@@ -399,7 +400,8 @@ interface DatabaseMetaInput {
 }
 
 /**
- * Bake the provenance record into the staging DB before vacuum and seal; a shipped DB is never patched.
+ * Bake the provenance record into the staging DB before vacuum and seal.
+ * A shipped DB is never patched.
  */
 async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 	db: DatabaseClient<DB>,

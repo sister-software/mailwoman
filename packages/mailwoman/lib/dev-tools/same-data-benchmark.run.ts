@@ -184,8 +184,8 @@ async function recordPhase(): Promise<void> {
 		{
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
-			// Which withheld-gold rule produced this fixture; the two rules define different
-			// strata, so the benchmark id alone does not identify a run.
+			// Which withheld-gold rule produced this fixture.
+			// The two rules define different strata, so the benchmark id alone does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -476,9 +476,10 @@ async function knobPhase(): Promise<void> {
 		byArm.set(label, results)
 	}
 
-	// A raised floor changes what the walk asks next, so each arm loses a different set of
-	// rows to replay misses, and scoring every arm over its own survivors would compare rates
-	// whose denominators moved; this intersection is what makes the columns comparable.
+	// A raised floor changes what the walk asks next, so each arm loses a different
+	// set of rows to replay misses, and scoring every arm over its own survivors
+	// would compare rates whose denominators moved.
+	// This intersection is what makes the columns comparable.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))
 	)

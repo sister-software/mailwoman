@@ -124,7 +124,7 @@ describe("the US arm's exclusions", () => {
 
 	it("excludes null island without losing the unit from the count", () => {
 		expect(built.excludedUnits["nullIsland"]).toBe(1)
-		// `unitCount` is a claim about the postal system, not about how many coordinates survived hygiene.
+		// `unitCount` counts postal units, regardless of how many coordinates survived hygiene.
 		expect(nodeFor("300")?.unitCount).toBe(2)
 		expect(nodeFor("300")?.lat).toBeCloseTo(1.5, 6)
 	})
@@ -156,8 +156,8 @@ describe("the US arm's ancestry", () => {
 		expect(built.borderStraddlingPrefixes).not.toContain("400")
 	})
 
-	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32;
-	// a `u32` would silently truncate rather than fail.
+	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32. a
+	// `u32` would silently truncate rather than fail.
 	it("carries a region id past 2^32 intact", () => {
 		expect(BETA_ID).toBeGreaterThan(2 ** 32)
 		expect(nodeFor("600")?.ancestors.map((a) => a.wofID)).toEqual([US_COUNTRY_ID, BETA_ID])

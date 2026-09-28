@@ -100,8 +100,8 @@ async function makeBackend(): Promise<ResolverBackend> {
 		return new WOFCandidateTableLookup({ databasePath: path })
 	}
 
-	// The production database set exactly as `wofExtractPaths()` orders it: the FTS leg measures
-	// what a default-on mechanism would see in production, not what a hand-picked list can show.
+	// The production database set exactly as `wofExtractPaths()` orders it: the FTS leg measures what a
+	// default-on mechanism would see in production, rather than what a hand-picked list shows.
 	const paths = await existingWOFDatabasePaths()
 
 	console.error(`[probe] FTS backend over ${paths.length} databases: ${paths.join(", ")}`)

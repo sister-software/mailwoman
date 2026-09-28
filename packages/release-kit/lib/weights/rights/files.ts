@@ -230,8 +230,10 @@ export function provenanceMatches(committed: unknown, record: WeightsRightsRecor
 }
 
 /**
- * The obligations file for one package; it exists per package because npm ships per package,
- * so a consumer who installs one weights overlay finds the terms in its tarball.
+ * The obligations file for one package.
+ *
+ * It exists per package because npm ships per package, so a consumer who installs
+ * one weights overlay finds the terms in its tarball.
  */
 export function renderLicenseFile(record: WeightsRightsRecord): string {
 	return `# License — ${record.packageName}

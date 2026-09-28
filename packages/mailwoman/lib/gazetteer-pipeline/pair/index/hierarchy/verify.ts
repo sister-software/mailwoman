@@ -9,7 +9,7 @@
  * paths converging on the same set is the receipt.
  *
  * Checks, per country: header sanity (country, `delta === 0`, `probeArtifact`, edge, versions);
- * entry-count match against the re-derived set; full membership sweep with tag `locality` and parent
+ * entry-count match against the re-derived set. Full membership sweep with tag `locality` and parent
  * tag `region`; and named receipts including cross-country negative controls.
  *
  * Throws (exits non-zero under `runIfScript`) on any failure.

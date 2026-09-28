@@ -20,7 +20,7 @@
  * `normalizeFSTToken` on both sides under `foldVersion: 1`.
  *
  * Self-verifying: the written bytes are re-read through a fresh `PairIndexResolver` and known
- * per-country pairs are probed; the independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
+ * per-country pairs are probed. The independent ground-truth sweep is `pair-index-hierarchy-verify.ts`.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -73,8 +73,9 @@ export const EDGE_SPEC_BY_COUNTRY: Readonly<
 }
 
 /**
- * Post-write self-check probes, per country; raw surfaces folded through `normalizeFSTToken`
- * at probe time, exactly like a decode-time caller would.
+ * Post-write self-check probes, per country.
+ *
+ * Raw surfaces folded through `normalizeFSTToken` at probe time, exactly like a decode-time caller would.
  */
 const PROBE_PAIRS_BY_COUNTRY: Readonly<Record<string, ReadonlyArray<readonly [child: string, parent: string]>>> = {
 	us: [
@@ -217,8 +218,9 @@ async function main(): Promise<void> {
 			...spec.childWOFPlacetypes
 		)
 
-		// Phase 2: country-scoping the parent side is sound because every ancestor of a US locality
-		// is itself US; a parent outside the scope has no surfaces and its edge is skipped.
+		// Phase 2: country-scoping the parent side is sound because every ancestor
+		// of a US locality is itself US.
+		// A parent outside the scope has no surfaces and its edge is skipped.
 		const childSurfaces = collectSurfaces(db, wofCountry, spec.childWOFPlacetypes)
 		const parentSurfaces = collectSurfaces(db, wofCountry, spec.parentWOFPlacetypes)
 

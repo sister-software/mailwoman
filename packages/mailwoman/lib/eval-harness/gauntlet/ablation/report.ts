@@ -50,7 +50,7 @@ function cellKey(component: string, locale: string): string {
 export function renderAblationMarkdown(
 	cells: readonly AblationCell[],
 	/**
-	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s; pass `[]` to render the matrix alone.
+	 * The per-row outcomes behind `cells`, needed because a global p90 must pool displacements rather than aggregate per-cell p90s. Pass `[]` to render the matrix alone.
 	 */
 	rows: readonly AblationRowOutcome[],
 	meta: {

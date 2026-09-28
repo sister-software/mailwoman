@@ -47,7 +47,8 @@ vi.mock("onnxruntime-web/webgpu", () => {
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
-// Import after the mock declaration and reset; vi.mock is hoisted.
+// Import after the mock declaration and reset.
+// Vi.mock is hoisted.
 const { WebONNXRunner } = await import("@mailwoman/neural/web-onnx-runner")
 
 interface FedTensor {

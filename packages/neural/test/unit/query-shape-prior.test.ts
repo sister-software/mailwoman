@@ -244,7 +244,8 @@ describe("addEmissionMatrix", () => {
 describe("format coverage", () => {
 	const ALL_LABELS = [...LABELS, "B-street", "I-street", "B-house_number", "I-house_number"]
 
-	// One input per `KnownFormat` member; a single input may produce several hits.
+	// One input per `KnownFormat` member.
+	// A single input may produce several hits.
 	const SAMPLES = ["90210", "90210-1234", "SW1A 1AA", "K1A 0B1", "100-0001", "1012 LG", "1012LG", "100 00", "PO Box 74"]
 
 	for (const input of SAMPLES) {

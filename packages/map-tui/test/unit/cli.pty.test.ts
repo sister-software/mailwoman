@@ -42,8 +42,8 @@ const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 40_000
 
 /**
- * `script` here is util-linux's `-e`/`-c` spelling, which macOS's BSD `script`
- * does not accept, so the suite runs only where CI runs.
+ * `script` here is util-linux's `-e`/`-c` spelling. macOS's BSD `script` rejects it,
+ * so the suite runs only where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false

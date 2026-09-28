@@ -16,7 +16,7 @@
  *   vocabulary does not cover.
  *
  *   The pin is a type-only import (`satisfies readonly WhosOnFirstPlacetype[]`) erased at build, so
- *   the compiler refuses an entry WOF does not define at zero bundle cost; a value import of the
+ *   the compiler refuses an entry WOF does not define at zero bundle cost. A value import of the
  *   vocabulary would pull `node:sqlite` through `PlacetypeDataSource` into the span proposer.
  */
 
@@ -24,8 +24,8 @@ import type { WhosOnFirstPlacetype } from "@mailwoman/core/resources/whosonfirst
 
 /**
  * WOF placetypes that name a structure inside a venue rather than a place on the map,
- * deliberately excluding `venue` itself and the `address`/`intersection` grammar anchors;
- * typed against {@link WhosOnFirstPlacetype} so the compiler enforces each entry is a genuine WOF term.
+ * deliberately excluding `venue` itself and the `address`/`intersection` grammar anchors. typed
+ * against {@link WhosOnFirstPlacetype} so the compiler enforces each entry is a genuine WOF term.
  */
 const WOF_VENUE_STRUCTURE_PLACETYPES = [
 	"arcade",

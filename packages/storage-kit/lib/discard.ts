@@ -8,7 +8,8 @@ import { $ } from "zx"
 
 export interface DiscardSupport {
 	/**
-	 * The kernel's published maximum discard bytes; zero means `blkdiscard` will make no change.
+	 * The kernel's published maximum discard bytes.
+	 * Zero means `blkdiscard` will make no change.
 	 */
 	maxBytes: number
 	/**

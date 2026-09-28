@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs and reports each as a diagnostic.
  *
- *   The three remedies rise in cost: an interface-tied name keeps its spelling and needs only backticks, a
- *   modified reference names the check in the preceding word, and a bare reference needs the reader to work out the
+ *   The three repairs rise in cost: an interface-tied name keeps its spelling and needs only backticks, a
+ *   modified reference identifies the check in the preceding word, and a bare reference needs the reader to work out the
  *   meaning from the paragraph.
  */
 
@@ -25,7 +25,7 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Matches an interface-tied name, which keeps its spelling and needs only backticks;
+ * Matches an interface-tied name, which keeps its spelling and needs only backticks.
  * the pattern currently matches no line, and a new name added here needs its
  * reason recorded in `AmbiguousShorthandCode.yml`.
  */
@@ -54,14 +54,16 @@ export interface Hit {
 	word: string
 	remedy: Remedy
 	/**
-	 * The word immediately before the hit, which identifies the intended check when it carries meaning.
+	 * The word immediately before the hit.
+	 *
+	 * When this word carries meaning, it identifies the intended check.
 	 */
 	modifier: string
 }
 
 /**
- * Preceding words that carry no meaning, such as articles, pronouns, and comment markers;
- * a hit after one is a bare reference.
+ * Preceding words that carry no meaning, such as articles, pronouns, and comment
+ * markers. a hit after one is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
 	"the",
@@ -137,7 +139,7 @@ function locate(
 }
 
 /**
- * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines;
+ * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines.
  * the function is pure, and a wrong line offset can mislabel a hit's action but cannot drop the hit.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
@@ -228,7 +230,8 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
- * Path prefixes whose hits do not count, each with the reason; these files spell the banned words as data.
+ * Path prefixes whose hits do not count, each with the reason.
+ * These files spell the banned words as data.
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],

@@ -26,7 +26,8 @@ export type PlaceTier = "address_point" | "interpolated"
  */
 export interface ResolvedMapPlace extends ResolvedPlaceView {
 	/**
-	 * The place's bounding box; postcodes located by an anchor centroid have none.
+	 * The place's bounding box.
+	 * Postcodes located by an anchor centroid have none.
 	 */
 	bbox?: LatLonBounds
 
@@ -41,7 +42,8 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 	uncertaintyM?: number
 
 	/**
-	 * The admin polygon, if the host has already fetched it; when present the outline and camera follow it.
+	 * The admin polygon, if the host has already fetched it.
+	 * When present the outline and camera follow it.
 	 */
 	geometry?: PlaceGeometry
 }

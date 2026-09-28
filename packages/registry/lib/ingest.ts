@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Column mapping and normalization are pure; geocoding is an injected dependency, so this package never imports the neural parser, resolver, or extracts.
+ * Column mapping and normalization are pure. Geocoding is an injected dependency, so this package never imports the neural parser, resolver, or extracts.
  */
 
 import { isPresent } from "@mailwoman/core/objects"
@@ -20,9 +20,10 @@ import type { SourceRecord } from "#types"
 export type GeocodeAddress = (raw: string) => Promise<PostalAddress | null> | PostalAddress | null
 
 /**
- * The column delimiters a tabular source may declare, by name, each the spliterator's
- * own byte; the `satisfies` clause makes a delimiter name spliterator no longer ships
- * a compile error rather than a silently parallel vocabulary.
+ * The column delimiters a tabular source may declare, by name, each the spliterator's own byte.
+ *
+ * The `satisfies` clause makes a delimiter name spliterator no longer ships a compile error
+ * rather than a silently parallel vocabulary.
  */
 const COLUMN_DELIMITERS = {
 	comma: Delimiters.Comma,
@@ -45,8 +46,8 @@ export function delimiterFor(path: string): Delimiter {
  * Stream a delimited file's rows lazily as header-keyed objects.
  *
  * @returns The spliterator's own {@linkcode AsyncSequence}, whose `map`/`filter`
- * fuse into the same pull loop; wrapping this in an `async function*` would cost
- * an async frame per row and take those operators away.
+ * fuse into the same pull loop.
+ * Wrapping this in an `async function*` would cost an async frame per row and take those operators away.
  */
 export function streamRows(
 	source: PathBuilderLike,
@@ -56,8 +57,9 @@ export function streamRows(
 
 	return CSVSpliterator.fromAsync<Record<string, string>>(path, {
 		columnDelimiter: COLUMN_DELIMITERS[opts.delimiter ?? delimiterFor(path)],
-		// A {@linkcode ColumnMapping} names columns in the publisher's spelling, not `facility_name`,
-		// so the keys must arrive as the file writes them; the reader's default normalizes.
+		// A {@linkcode ColumnMapping} holds columns in the publisher's spelling rather than a
+		// normalized key such as `facility_name`, so the keys must arrive as the file writes them.
+		// The reader's default normalizes.
 		normalizeKeys: false,
 	})
 }
@@ -151,7 +153,8 @@ export function inferMapping(header: readonly string[]): ColumnMapping {
  */
 export interface IngestOptions {
 	/**
-	 * The geocoding interface; without it records carry name/org but no resolved address.
+	 * The geocoding interface.
+	 * Without it records carry name/org but no resolved address.
 	 */
 	geocodeAddress?: GeocodeAddress
 	/**
@@ -241,8 +244,8 @@ export async function ingestRows(
 }
 
 /**
- * Stream a delimited file as normalized {@link SourceRecord}s in file order with
- * no geocoding; geocode separately through `geocodeStream`.
+ * Stream a delimited file as normalized {@link SourceRecord}s in file order with no geocoding.
+ * Geocode separately through `geocodeStream`.
  */
 export function normalizeCSV(
 	source: PathBuilderLike,
@@ -274,15 +277,18 @@ type GeocodeComponents = Parameters<typeof toPostalAddress>[0]
  */
 export interface GeocodeDepsBase {
 	/**
-	 * Country (ISO-2 or name) the address is formatted under; when omitted,
-	 * {@link toPostalAddress} reads the parsed `country` component instead.
+	 * Country (ISO-2 or name) the address is formatted under.
+	 *
+	 * When omitted, {@link toPostalAddress} reads the parsed `country` component instead.
 	 */
 	country?: string
 }
 
 /**
- * Two independent calls: parse the address, then geocode it; mailwoman's `geocodeAddress`
- * re-parses internally, so the address is read twice unless the two callbacks share a parser.
+ * Two independent calls: parse the address, then geocode it.
+ *
+ * Mailwoman's `geocodeAddress` re-parses internally, so the address is read twice
+ * unless the two callbacks share a parser.
  */
 export interface TwoStepGeocodeDeps extends GeocodeDepsBase {
 	parse: (raw: string) => Promise<GeocodeComponents> | GeocodeComponents
@@ -304,8 +310,9 @@ export interface OneStepGeocodeDeps extends GeocodeDepsBase {
 export type GeocodeAddressViaDeps = TwoStepGeocodeDeps | OneStepGeocodeDeps
 
 /**
- * Build a {@link GeocodeAddress} from injected parse and geocode primitives; when geocoding
- * can't place the address, the parsed-but-unlocated address is still returned.
+ * Build a {@link GeocodeAddress} from injected parse and geocode primitives.
+ *
+ * When geocoding can't place the address, the parsed-but-unlocated address is still returned.
  */
 export function geocodeAddressVia(deps: GeocodeAddressViaDeps): GeocodeAddress {
 	return async (raw: string): Promise<PostalAddress | null> => {

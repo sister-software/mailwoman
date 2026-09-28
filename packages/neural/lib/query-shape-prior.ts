@@ -36,7 +36,8 @@ export interface KnownFormatHitLike {
 	format: string
 	span: { start: number; end: number }
 	/**
-	 * Confidence in 0..1; ambiguous patterns (5-digit US/FR/DE overlap) score lower.
+	 * Confidence in 0..1.
+	 * Ambiguous patterns (5-digit US/FR/DE overlap) score lower.
 	 */
 	confidence: number
 }
@@ -50,15 +51,18 @@ export interface TokenLike {
 }
 
 /**
- * The BIO label a non-postcode `KnownFormat` biases; postcode formats are decided
- * by name through {@linkcode isPostcodeFormat}, so a format added to the detector's
- * table reaches this prior without a second list to keep in step.
+ * The BIO label a non-postcode `KnownFormat` biases.
+ *
+ * Postcode formats are decided by name through {@linkcode isPostcodeFormat}, so a format
+ * added to the detector's table reaches this prior without a second list to keep in step.
  */
 const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
 
 /**
- * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined`
- * when the format names no label; an uncovered format contributes zero bias and raises no error.
+ * The BIO label {@linkcode buildEmissionPriors} biases for one format hit,
+ * or `undefined` when the format names no label.
+ *
+ * An uncovered format contributes zero bias and raises no error.
  */
 function formatLabel(format: string): string | undefined {
 	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Types for the geocoder map surface; its `react-map-gl/maplibre` imports are type-only, so the module stays node-safe.
+ *   Types for the geocoder map surface. Its `react-map-gl/maplibre` imports are type-only, so the module stays node-safe.
  */
 
 import type { ParseResult, ResolvedPlaceView } from "@mailwoman/core/pipeline/client-result"
@@ -75,7 +75,8 @@ export interface VersionOption {
 	 */
 	version: string
 	/**
-	 * Display label; the picker falls back to `version`.
+	 * Display label.
+	 * The picker falls back to `version`.
 	 */
 	label?: string
 }
@@ -104,8 +105,9 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	initialZoom?: number
 
 	/**
-	 * A bias-aware parse that feeds the current viewport center as a soft prior; absent,
-	 * the host falls back to {@link PipelineRuntime.runParse}.
+	 * A bias-aware parse that feeds the current viewport center as a soft prior.
+	 *
+	 * Absent, the host falls back to {@link PipelineRuntime.runParse}.
 	 */
 	runParseWithBias?: (
 		input: string,
@@ -160,7 +162,7 @@ export interface GeocoderRuntime extends PipelineRuntime {
 }
 
 /**
- * The compare-mode state a {@link GeocoderPanels.compare} render-prop receives;
+ * The compare-mode state a {@link GeocoderPanels.compare} render-prop receives.
  * the second parse itself stays host-side.
  */
 export interface CompareContext {
@@ -176,8 +178,9 @@ export interface CompareContext {
 }
 
 /**
- * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its
- * own result block; the candidate-selection state stays owned by the package (`useGeocode`).
+ * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own result block.
+ *
+ * The candidate-selection state stays owned by the package (`useGeocode`).
  */
 export interface ResultContext {
 	result: ParseResult
@@ -207,9 +210,9 @@ export interface GeocoderPanels {
 	 */
 	footer?: ReactNode
 	/**
-	 * A device-location / proximity-bias control, rendered between the query form
-	 * and the autocomplete list; host-owned because the geolocation permission
-	 * feeds {@link GeocoderRuntime.runParseWithBias}.
+	 * A device-location / proximity-bias control, rendered between the query form and the autocomplete list.
+	 *
+	 * Host-owned because the geolocation permission feeds {@link GeocoderRuntime.runParseWithBias}.
 	 */
 	bias?: ReactNode
 	/**
@@ -217,8 +220,8 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block for content that reads on this answer;
-	 * a control that reads on the model belongs in {@link developerExtras}.
+	 * Rendered just above the result block for content that reads on this answer. a
+	 * control that reads on the model belongs in {@link developerExtras}.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
 	/**
@@ -232,8 +235,8 @@ export interface GeocoderPanels {
 	 */
 	result?: (context: ResultContext) => ReactNode
 	/**
-	 * Rendered in place of the resolved-place panel when no place resolved;
-	 * ignored when {@link result} is set.
+	 * Rendered in place of the resolved-place panel when no place resolved. ignored
+	 * when {@link result} is set.
 	 */
 	failure?: (result: ParseResult) => ReactNode
 	/**

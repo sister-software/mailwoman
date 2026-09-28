@@ -65,8 +65,8 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
 
 	/**
-	 * The extract defaults to the `fr` street-normalization locale; a mismatch with
-	 * the extract's locale makes every key miss.
+	 * The extract defaults to the `fr` street-normalization locale.
+	 * A mismatch with the extract's locale makes every key miss.
 	 */
 	constructor(dbPath: PathBuilderLike, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })

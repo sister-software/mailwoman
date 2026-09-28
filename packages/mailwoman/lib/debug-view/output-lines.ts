@@ -39,8 +39,9 @@ export interface OutputLine {
 }
 
 /**
- * Six decimals ≈ 0.1 m, finer than any tier's uncertainty; trailing zeros are trimmed
- * so a four-decimal centroid still prints as four.
+ * Six decimals ≈ 0.1 m, finer than any tier's uncertainty.
+ *
+ * Trailing zeros are trimmed so a four-decimal centroid still prints as four.
  */
 function formatCoordinate(lat: number | null | undefined, lon: number | null | undefined): string {
 	if (lat == null || lon == null) return "unresolved"
@@ -110,8 +111,9 @@ export interface OutputLinesInput {
 	 */
 	trace?: Pick<GeocodeTrace, "kind">
 	/**
-	 * Per-phase wall clock from the session; absent on a caller that didn't measure,
-	 * the timing section is then omitted rather than showing zeros.
+	 * Per-phase wall clock from the session.
+	 *
+	 * Absent on a caller that didn't measure, the timing section is then omitted rather than showing zeros.
 	 */
 	timing?: Record<string, number>
 	/**

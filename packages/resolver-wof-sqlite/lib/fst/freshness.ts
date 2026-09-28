@@ -28,8 +28,8 @@ const MAGIC = 0x00_54_53_46
 const PROVENANCE_OFFSET_FIELD = 28
 
 /**
- * First serializer version carrying the trailing provenance block;
- * below it a file has no place to put a stamp.
+ * First serializer version carrying the trailing provenance block. below it
+ * a file has no place to put a stamp.
  */
 export const MIN_STAMPED_FORMAT_VERSION = 3
 
@@ -79,7 +79,8 @@ export async function peekFSTStampFields(path: PathBuilderLike): Promise<FSTStam
 	if (formatVersion < MIN_STAMPED_FORMAT_VERSION) return { formatVersion, provenance: undefined }
 	const trailerStart = header.readUInt32LE(PROVENANCE_OFFSET_FIELD)
 
-	// 0 means this build wrote no trailer and past-EOF means truncated; both read as no stamp.
+	// 0 means this build wrote no trailer and past-EOF means truncated.
+	// Both read as no stamp.
 	if (trailerStart === 0 || trailerStart + 4 > size) return { formatVersion, provenance: undefined }
 
 	const jsonLength = (await readFileRange(path, trailerStart, 4)).readUInt32LE(0)

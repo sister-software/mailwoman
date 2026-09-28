@@ -44,8 +44,9 @@ export interface OAResolverEvalOptions {
 	/**
 	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms only,
 	 * since the FST is a decode-time prior applied by `createRuntimePipeline`
-	 * while the bare `neural` arm calls `classifier.parse` directly; omit for the byte-stable
-	 * no-FST default, and note this is the tree's only FST-sensitive eval.
+	 * while the bare `neural` arm calls `classifier.parse` directly.
+	 *
+	 * Omit for the byte-stable no-FST default, and note this is the tree's only FST-sensitive eval.
 	 */
 	adminFST?: string
 	/**
@@ -116,25 +117,29 @@ export interface OAResolverEvalOptions {
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
-	 * Tri-state pin: force `postcodeConsistency` off; paired with
-	 * {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep, because the
-	 * rows whose answer differs from the shipped arm are exactly the ones the pass touched
-	 * and the coordinate distance is how far its fallback moved each.
+	 * Tri-state pin: force `postcodeConsistency` off.
+	 *
+	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep,
+	 * because the rows whose answer differs from the shipped arm are exactly the ones the
+	 * pass touched and the coordinate distance is how far its fallback moved each.
 	 */
 	noPostcodeConsistency?: boolean
 	/**
-	 * How far {@link noPostcodeConsistency}'s pass may move a coordinate onto the
-	 * postcode point; unset is the library default.
+	 * How far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point.
+	 * Unset is the library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name; default-off in the
-	 * library until a measurement carries it, so an unset pin leaves this eval byte-identical.
+	 * A span-rescore sub-span may drop context but never a word of the name.
+	 *
+	 * Default-off in the library until a measurement carries it, so an unset pin
+	 * leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * Which reading of a weak resolution lifts the span-rescore brake; unset is the
-	 * shipped brake, so an unset pin leaves this eval byte-identical.
+	 * Which reading of a weak resolution lifts the span-rescore brake.
+	 *
+	 * Unset is the shipped brake, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
@@ -142,8 +147,10 @@ export interface OAResolverEvalOptions {
 	 */
 	normalizeCase?: boolean
 	/**
-	 * Tri-state pin: force `postcodeCountryCoherence` on; the library default is on, so this is a
-	 * no-op restatement kept because a check leg saying what it graded is the point of a tri-state.
+	 * Tri-state pin: force `postcodeCountryCoherence` on.
+	 *
+	 * The library default is on, so this is a no-op restatement kept because a check
+	 * leg saying what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -187,10 +194,11 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeDatabases?: string
 	/**
-	 * Answer a repeated `findPlace` query from a per-run memo; the databases a run
-	 * reads are sealed and read-only, so a query is a pure function of its arguments
-	 * and the memo cannot go stale, though it does share the hit objects between callers
-	 * (the array itself is fresh each time so an in-place sort stays local).
+	 * Answer a repeated `findPlace` query from a per-run memo.
+	 *
+	 * The databases a run reads are sealed and read-only, so a query is a pure function
+	 * of its arguments and the memo cannot go stale, though it does share the hit objects
+	 * between callers (the array itself is fresh each time so an in-place sort stays local).
 	 */
 	lookupMemo?: boolean
 	/**
@@ -198,8 +206,8 @@ export interface OAResolverEvalOptions {
 	 * `neural.parse` / `resolver.resolveTree` split.
 	 *
 	 * The promotion comparator reads every file under the output directory byte-for-byte,
-	 * so this path must name somewhere outside it; omitted, the harness writes no file
-	 * and costs two `performance.now()` calls per row.
+	 * so this path must name somewhere outside it.
+	 * Omitted, the harness writes no file and costs two `performance.now()` calls per row.
 	 */
 	profileJSON?: string
 	/**

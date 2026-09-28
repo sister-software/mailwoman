@@ -37,8 +37,9 @@ describe("the #1024 shipped-model guard", () => {
 	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// A `--candidate` run is exempt on purpose; if that exemption widened to the default,
-		// the guard would be off for every run and no other check in the suite would notice.
+		// A `--candidate` run is exempt on purpose.
+		// If that exemption widened to the default, the guard would be off for every run
+		// and no other check in the suite would notice.
 		expect(source).toContain("if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot)")
 		expect(source).toContain("assertShippedModelMatchesCard(md5)")
 	})

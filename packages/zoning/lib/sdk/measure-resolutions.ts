@@ -23,7 +23,8 @@ export interface MeasureResolutionsOptions extends ZoningIngestOptions, Resoluti
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself; a run whose streamed total differs read a truncated file.
+	 * The count the source declares for itself.
+	 * A run whose streamed total differs read a truncated file.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]

@@ -51,7 +51,7 @@ export const CensusBenchmarkName = {
 } as const
 
 /**
- * The benchmark names a Census request can carry.
+ * The benchmark identifier a Census request can carry.
  */
 export type CensusBenchmarkName = (typeof CensusBenchmarkName)[keyof typeof CensusBenchmarkName]
 
@@ -68,7 +68,7 @@ export const CensusVintageName = {
 } as const
 
 /**
- * The vintage names a `geographies/*` lookup can carry.
+ * The vintage identifier a `geographies/*` lookup can carry.
  */
 export type CensusVintageName = (typeof CensusVintageName)[keyof typeof CensusVintageName]
 

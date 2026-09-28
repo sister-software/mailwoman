@@ -20,8 +20,8 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory, not its
- * source basename: `resolveFromPackageDir` finds siblings by fixed name, so an artifact
+ * `shippedName` is the filename the artifact must carry in a weights directory rather than
+ * its source basename: `resolveFromPackageDir` finds siblings by fixed name, so an artifact
  * placed under its source name resolves to no path and reports absence rather than failing.
  */
 export interface LinkableArtifact {
@@ -30,9 +30,11 @@ export interface LinkableArtifact {
 }
 
 /**
- * An artifact the recipe names that must be built rather than copied; kept separate from
- * {@link LinkableArtifact} because a consumer that treated it as linkable would place a database
- * where the resolver expects a binary, and the resolver would then report it missing rather than wrong.
+ * An artifact the recipe names that must be built rather than copied.
+ *
+ * Kept separate from {@link LinkableArtifact} because a consumer that treated
+ * it as linkable would place a database where the resolver expects a binary,
+ * and the resolver would then report it missing rather than wrong.
  */
 export interface BuildableArtifact {
 	shippedName: string
@@ -57,8 +59,10 @@ export interface WeightsRecipe {
 	lineage?: string
 	softFeed: SoftFeedRecipe
 	/**
-	 * Files this recipe names for a locale; absent entries are omitted, so a release that
-	 * ships without a channel is a supported lean install rather than an error.
+	 * Files this recipe names for a locale.
+	 *
+	 * Absent entries are omitted, so a release that ships without a channel is a
+	 * supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
@@ -86,8 +90,8 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through; matching that here
-	// keeps the two readers from disagreeing about what a leading slash means.
+	// `copy-weights.ts` lets an absolute config entry pass through.
+	// Matching that here keeps the two readers from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
 		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
@@ -111,8 +115,8 @@ export async function readWeightsRecipe(
 		}
 
 		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts`
-		// does not ship them, so their absence is not a lean install — it silently resolves
-		// the gazetteer and street-context priors off, a scoring change with no error.
+		// does not ship them, so their absence is not a lean install.
+		// It silently resolves the gazetteer and street-context priors off, a scoring change with no error.
 		out.push(
 			{
 				shippedName: `fst-${locale}.bin`,

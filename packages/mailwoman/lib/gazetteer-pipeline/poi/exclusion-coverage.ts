@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate
- * into the coverage cells a layer writes; the only path in this pipeline that reaches
+ * into the coverage cells a layer writes. The only path in this pipeline that reaches
  * {@link CoverageBasis.Surveyed}.
  *
  * Pure: the IO belongs to the command, so the arithmetic behind a completeness claim is testable over

@@ -33,8 +33,9 @@ const COARSEST_DIAGNOSTIC_BAND = PLACETYPE_SPECIFICITY["country"]!
 
 /**
  * The admin placetypes from country to microhood that `ResolveOpts.diagnoseUnreachable`
- * re-probes, coarse to fine; the list derives from `PLACETYPE_SPECIFICITY`,
- * so a new placetype in that range is probed automatically.
+ * re-probes, coarse to fine.
+ *
+ * The list derives from `PLACETYPE_SPECIFICITY`, so a new placetype in that range is probed automatically.
  */
 export const DIAGNOSTIC_BANDS: readonly string[] = Object.entries(PLACETYPE_SPECIFICITY)
 	.filter(([, rank]) => rank !== undefined && rank <= FINEST_DIAGNOSTIC_BAND && rank >= COARSEST_DIAGNOSTIC_BAND)
@@ -354,7 +355,7 @@ export function pickCompletion(candidates: readonly CoincidentLocality[]): Coinc
 }
 
 /**
- * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes;
+ * Returns the first postcode value anywhere in the tree, skipping shape-excluded postcodes.
  * a locality lookup uses it because the postcode node is usually a sibling.
  */
 export function firstPostcodeValue(roots: readonly AddressNode[]): string | undefined {
@@ -366,8 +367,10 @@ export function firstPostcodeValue(roots: readonly AddressNode[]): string | unde
 }
 
 /**
- * Recovers a locality from raw-text spans when the tree resolved no place, appending a resolved
- * `locality` node on a hit; when no span matches, it tries the postcode node's code part.
+ * Recovers a locality from raw-text spans when the tree resolved no place,
+ * appending a resolved `locality` node on a hit.
+ *
+ * When no span matches, it tries the postcode node's code part.
  */
 export async function applySpanRescore(
 	roots: AddressNode[],

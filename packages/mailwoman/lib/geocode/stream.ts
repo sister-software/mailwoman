@@ -23,7 +23,8 @@ export interface GeocodeStreamConfig {
 	 */
 	wofDBPath: string
 	/**
-	 * Mailwoman data root; geometry databases live under here.
+	 * Mailwoman data root.
+	 * Geometry databases live under here.
 	 */
 	dataRoot: string
 	/**
@@ -38,7 +39,8 @@ export interface GeocodeStreamConfig {
 
 export interface GeocodeStreamOptions {
 	/**
-	 * The same {@link ColumnMapping} used to normalize; the worker recomputes the address from it.
+	 * The same {@link ColumnMapping} used to normalize.
+	 * The worker recomputes the address from it.
 	 */
 	mapping: ColumnMapping
 	/**
@@ -46,7 +48,9 @@ export interface GeocodeStreamOptions {
 	 */
 	geocode: GeocodeStreamConfig
 	/**
-	 * Worker pool size; keep it small, because throughput peaks at about 2 workers and degrades past that,
+	 * Worker pool size.
+	 *
+	 * Keep it small, because throughput peaks at about 2 workers and degrades past that,
 	 * and each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
@@ -55,7 +59,9 @@ export interface GeocodeStreamOptions {
 	 */
 	batchSize?: number
 	/**
-	 * Override the worker module; tests inject a fake.
+	 * Override the worker module.
+	 *
+	 * Tests inject a fake.
 	 * Defaults to the real geocode worker.
 	 */
 	worker?: string | URL

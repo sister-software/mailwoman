@@ -8,7 +8,7 @@
  *   Text rather than an AST rewrite: a codemod could reproduce the arrays' values but not the comments
  *   above their entries, and those comments are why the entries are defensible.
  *
- *   A removal that would orphan a comment block is refused with the lines quoted rather than guessed at;
+ *   A removal that would orphan a comment block is refused with the lines quoted rather than guessed at.
  *   a person moves the prose.
  *
  *   No step here writes to disk — the caller gets the new source and decides whether to apply it.
@@ -92,8 +92,9 @@ export function addCountry(source: string, listName: string, country: string): R
 		return { ok: true, source, changed: false, note: `${cc} is already in ${listName}` }
 	}
 
-	// The first entry that sorts after the new one; comment lines are skipped as sort keys
-	// but stay attached to whatever follows them, so inserting before a comment block would separate it.
+	// The first entry that sorts after the new one.
+	// Comment lines are skipped as sort keys but stay attached to whatever follows them,
+	// so inserting before a comment block would separate it.
 	let insertAt = lines.length
 
 	for (const [i, line] of lines.entries()) {

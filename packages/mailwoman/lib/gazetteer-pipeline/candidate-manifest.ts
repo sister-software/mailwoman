@@ -224,7 +224,8 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		buildCmd: "mailwoman gazetteer build candidate",
 		buildSHA: input.buildSHA,
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
-		// `spr_id` is the join back to the admin gazetteer; the id means something only against a known ancestor.
+		// `spr_id` is the join back to the admin gazetteer.
+		// The id means something only against a known ancestor.
 		spineKeys: { wofID: "spr_id" },
 		createdAt: input.createdAt,
 	}

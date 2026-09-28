@@ -19,8 +19,9 @@ import { trackedSourcePaths } from "#tracked-sources"
  */
 export const MODULE_COHESION_THRESHOLDS = {
 	/**
-	 * The minimum Newman modularity of the best partition found; a module whose
-	 * helpers all feed one entry point scores near zero.
+	 * The minimum Newman modularity of the best partition found.
+	 *
+	 * A module whose helpers all feed one entry point scores near zero.
 	 */
 	modularity: 0.35,
 	/**
@@ -28,8 +29,9 @@ export const MODULE_COHESION_THRESHOLDS = {
 	 */
 	communityMembers: 2,
 	/**
-	 * The minimum number of distinct imported specifiers in a community that counts toward
-	 * a reported pair; a facade of wrappers that each read one import stays below it.
+	 * The minimum number of distinct imported specifiers in a community that counts toward a reported pair.
+	 *
+	 * A facade of wrappers that each read one import stays below it.
 	 */
 	communitySpecifiers: 2,
 } as const
@@ -39,8 +41,9 @@ const MAX_PASSES = 20
 const GAIN_EPSILON = 1e-9
 
 /**
- * One top-level declaration that holds a value; type declarations are omitted
- * because a type every group references would join all the groups into one.
+ * One top-level declaration that holds a value.
+ *
+ * Type declarations are omitted because a type every group references would join all the groups into one.
  */
 interface ValueDeclaration {
 	name: string
@@ -56,8 +59,9 @@ export interface DeclarationCommunity {
 	names: readonly string[]
 	exported: boolean
 	/**
-	 * The module specifiers that this community's members read; two communities with
-	 * disjoint specifiers depend on different things.
+	 * The module specifiers that this community's members read.
+	 *
+	 * Two communities with disjoint specifiers depend on different things.
 	 */
 	specifiers: ReadonlySet<string>
 	line: number
@@ -105,8 +109,8 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 }
 
 /**
- * Maps every value binding that an import introduces to its module specifier;
- * type-only imports are skipped because they are erased at compile time.
+ * Maps every value binding that an import introduces to its module specifier. type-only
+ * imports are skipped because they are erased at compile time.
  */
 function importedBindings(source: ts.SourceFile): Map<string, string> {
 	const bindings = new Map<string, string>()

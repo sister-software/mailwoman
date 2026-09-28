@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Zod schemas for the Nominatim-compatible API; key names and envelopes match Nominatim and must not
+ *   Zod schemas for the Nominatim-compatible API. Key names and envelopes match Nominatim and must not
  *   change, the query schemas shape only the OpenAPI document, and `routes.ts` does the parsing.
  */
 
@@ -84,9 +84,10 @@ export const NominatimFeatureCollectionSchema = z
 	.openapi("NominatimFeatureCollection")
 
 /**
- * One served database with the contents of its embedded `layer_manifest`; `manifest: "absent"`
- * marks one built before layer manifests existed, which the status still lists
- * so a reader can tell it apart from a database that was never opened.
+ * One served database with the contents of its embedded `layer_manifest`.
+ *
+ * A `manifest: "absent"` marks one built before layer manifests existed.
+ * The status still lists it so a reader can tell it apart from a database that was never opened.
  */
 const NominatimStatusArtifactSchema = z
 	.object({
@@ -165,8 +166,10 @@ export const SchemaOrgPlaceSchema = z
 	.openapi("SchemaOrgPlace")
 
 /**
- * A jsonv2 or json result with the optional `engine` stamp; it carries an OpenAPI name
- * because a generated client would otherwise label an inlined union member by its position.
+ * A jsonv2 or json result with the optional `engine` stamp.
+ *
+ * It carries an OpenAPI name because a generated client would otherwise label
+ * an inlined union member by its position.
  */
 export const StampedNominatimResultSchema = stampedResponseSchema(NominatimResultSchema, "StampedNominatimResult")
 

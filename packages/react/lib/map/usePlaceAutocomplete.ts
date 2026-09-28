@@ -14,17 +14,20 @@ import type { Suggestion } from "#map/types"
  */
 export interface UsePlaceAutocompleteOptions {
 	/**
-	 * The controlled input text; the segment after the last comma is the query.
+	 * The controlled input text.
+	 * The segment after the last comma is the query.
 	 */
 	text: string
 
 	/**
-	 * Sets the input text; a pick calls it with the last segment replaced.
+	 * Sets the input text.
+	 * A pick calls it with the last segment replaced.
 	 */
 	setText: (text: string) => void
 
 	/**
-	 * Fetches suggestions for a query; without it the hook never suggests anything.
+	 * Fetches suggestions for a query.
+	 * Without it the hook never suggests anything.
 	 */
 	autocomplete?: (query: string) => Promise<Suggestion[]>
 
@@ -112,8 +115,8 @@ function replaceSegment(current: string, name: string): string {
 }
 
 /**
- * Fetches debounced place suggestions for the text after the input's last comma;
- * a pick replaces only that segment, and a digit-leading segment never reaches `autocomplete`.
+ * Fetches debounced place suggestions for the text after the input's last comma. a pick
+ * replaces only that segment, and a digit-leading segment never reaches `autocomplete`.
  */
 export function usePlaceAutocomplete({
 	text,

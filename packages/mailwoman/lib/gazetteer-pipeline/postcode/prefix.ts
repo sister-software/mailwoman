@@ -60,7 +60,8 @@ export interface BuildPostcodePrefixOptions {
 	country: string
 	level: PostcodePrefixLevel
 	/**
-	 * WOF polygon DB the US arm tests region containment against; required for `country: "us"`.
+	 * WOF polygon DB the US arm tests region containment against.
+	 * Required for `country: "us"`.
 	 *
 	 * GB ancestry comes from a documented area table rather than from geometry.
 	 */
@@ -81,7 +82,8 @@ export interface BuildPostcodePrefixResult {
 	 */
 	unitRows: number
 	/**
-	 * Rows whose `name` was too short to cleave a prefix from; reported rather than dropped.
+	 * Rows whose `name` was too short to cleave a prefix from.
+	 * Reported rather than dropped.
 	 */
 	skippedShort: number
 	coordinateTier: PostcodePrefixCoordinateTier
@@ -154,8 +156,8 @@ function prefixOf(compact: string, level: PostcodePrefixLevel): string | null {
 /**
  * WOF names of the four UK constituent countries, keyed by the codex's `UkCountryCode`.
  *
- * They are `macroregion`s in WOF, not `region`s; the `region` tier under GB is
- * the ~200 unitary authorities and council areas.
+ * WOF records them as `macroregion`s.
+ * The `region` tier under GB is the ~200 unitary authorities and council areas.
  */
 const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
 	ENG: "England",
@@ -168,8 +170,9 @@ const UK_COUNTRY_WOF_NAME: Record<UkCountryCode, string> = {
  * Resolve the GB admin surfaces a postcode-area assertion needs: the United Kingdom
  * itself plus the four constituent countries.
  *
- * @throws When one is missing — a silently dropped ancestor would ship nodes asserting less
- * than the source supports, indistinguishable to a reader from a prefix that asserts no fact.
+ * @throws When one is missing.
+ * A silently dropped ancestor would ship nodes asserting less than the source supports,
+ * indistinguishable to a reader from a prefix that asserts no fact.
  */
 function resolveGBAncestry(adminPath: PathBuilderLike): {
 	country: PostcodePrefixAncestor
@@ -431,8 +434,8 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 	}
 
 	// A coordinate carrying units from different prefixes is a placeholder,
-	// never a real one, since two sectional centres do not share a point;
-	// same-prefix sharing is ordinary and deliberately not excluded.
+	// never a real one, since two sectional centres do not share a point. same-prefix
+	// sharing is ordinary and deliberately not excluded.
 	const byCoordinate = new Map<string, Set<string>>()
 
 	for (const row of rows) {
@@ -561,8 +564,9 @@ function buildUSPostcodePrefixIndex(options: BuildPostcodePrefixOptions): BuildP
 /**
  * The WOF `country` row a US prefix asserts.
  *
- * Every code here is USPS-issued, so the country holds even for territories WOF models as countries
- * of their own; no finer unit is claimed because their units land in no US region polygon.
+ * Every code here is USPS-issued, so the country holds even for territories
+ * WOF models as countries of their own.
+ * No finer unit is claimed because their units land in no US region polygon.
  */
 function resolveUSCountry(adminPath: PathBuilderLike): PostcodePrefixAncestor {
 	using db = new DatabaseClient<WOFDatabase>(adminPath, { readOnly: true })

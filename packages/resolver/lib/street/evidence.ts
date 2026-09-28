@@ -12,9 +12,9 @@ import type { Exclusion } from "@mailwoman/evidence"
  */
 export interface StreetLocalityEvidence {
 	/**
-	 * Returns whether the raw street surface exists as a street name, within `scope` when given;
-	 * the implementation folds the surface itself and must return `false` on a missing index
-	 * or a read error, because a `false` answer only withholds promotion.
+	 * Returns whether the raw street surface exists as a street name, within `scope`
+	 * when given. the implementation folds the surface itself and must return `false` on a
+	 * missing index or a read error, because a `false` answer only withholds promotion.
 	 */
 	hasStreetName(streetSurface: string, scope?: StreetEvidenceScope): boolean
 
@@ -100,8 +100,9 @@ export function isPureTypeVocabulary(foldedSurface: string): boolean {
  */
 export interface StreetCandidate<T = unknown> {
 	/**
-	 * The candidate's raw street surface; an empty string means the parse found no street,
-	 * and evidence then skips the candidate.
+	 * The candidate's raw street surface.
+	 *
+	 * An empty string means the parse found no street, and evidence then skips the candidate.
 	 */
 	streetSurface: string
 
@@ -126,15 +127,16 @@ export interface PickByStreetEvidenceOpts {
 	scope?: StreetEvidenceScope
 
 	/**
-	 * The largest score gap below rank 1 at which evidence may still promote a candidate;
+	 * The largest score gap below rank 1 at which evidence may still promote a candidate.
 	 * it defaults to 2.5 and needs refitting when the span head is retrained.
 	 */
 	marginCap?: number
 
 	/**
-	 * One entry per candidate, in the same order; a non-null entry moves that
-	 * candidate behind every non-excluded one without removing it, and when every
-	 * candidate is excluded the fallback pick is rank 1.
+	 * One entry per candidate, in the same order.
+	 *
+	 * A non-null entry moves that candidate behind every non-excluded one without removing it,
+	 * and when every candidate is excluded the fallback pick is rank 1.
 	 */
 	exclusions?: ReadonlyArray<Exclusion | null>
 }
@@ -167,8 +169,10 @@ export interface StreetEvidencePick<T = unknown> {
 
 /**
  * Picks the first candidate, in score order, whose street name exists in the evidence index,
- * holds more than street type words, and scores within `marginCap` of rank 1; excluded candidates
- * are checked after all others, and the first non-excluded candidate wins when none qualifies.
+ * holds more than street type words, and scores within `marginCap` of rank 1.
+ *
+ * Excluded candidates are checked after all others, and the first non-excluded
+ * candidate wins when none qualifies.
  *
  * @param candidates Parse candidates sorted by score, rank 1 first.
  * @throws When `candidates` is empty.

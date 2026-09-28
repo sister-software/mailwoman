@@ -10,7 +10,7 @@
  *   {@link MAX_LOCALITY_PHRASE_TOKENS} — unbounded, it costs quadratic time for the identical proposals its
  *   clamped results already produce.
  *
- *   Correctness tests cannot catch that, because bounded and unbounded walks emit the same proposals; only the
+ *   Correctness tests cannot catch that, because bounded and unbounded walks emit the same proposals. Only the
  *   growth curve separates them, measured as token reads through a `Proxy` rather than as wall-clock time that
  *   moves with the host.
  */
@@ -35,8 +35,9 @@ import { describe, expect, test } from "vitest"
 const CAPS_RUN_UNIT = "Aa "
 
 /**
- * A doubled input doubles a linear read count and quadruples a quadratic one; the bound sits
- * above 2.0 to absorb the run's tail, where the last start indices find fewer tokens to read.
+ * A doubled input doubles a linear read count and quadruples a quadratic one.
+ *
+ * The bound sits above 2.0 to absorb the run's tail, where the last start indices find fewer tokens to read.
  */
 const MAX_LINEAR_GROWTH = 2.2
 

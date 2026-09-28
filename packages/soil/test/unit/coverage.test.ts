@@ -34,8 +34,9 @@ const { lat, lon } = FIXTURE_ORIGIN
 const COUNTY_HALF_WIDTH = 0.9
 
 /**
- * The shared edge the two fixture counties tile along; cells straddling it are
- * interior to the union and to neither county alone.
+ * The shared edge the two fixture counties tile along.
+ *
+ * Cells straddling it are interior to the union and to neither county alone.
  */
 const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
 

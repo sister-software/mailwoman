@@ -5,7 +5,8 @@
  */
 
 /**
- * The prefix of every soil layer name; the reader rejects an artifact whose layer name lacks it.
+ * The prefix of every soil layer name.
+ * The reader rejects an artifact whose layer name lacks it.
  */
 export const SOIL_LAYER_NAME_PREFIX = "soil-capability-nrcs-ssurgo-"
 
@@ -34,8 +35,10 @@ export const SSURGO_ATTRIBUTION = "U.S. Department of Agriculture, Natural Resou
 export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
 
 /**
- * The public-information grant quoted from each survey area's FGDC use constraints; the survey-area
- * loader rejects an area whose metadata lacks it, since its absence signals a licence change.
+ * The public-information grant quoted from each survey area's FGDC use constraints.
+ *
+ * The survey-area loader rejects an area whose metadata lacks it, since its
+ * absence signals a licence change.
  */
 export const SSURGO_PUBLIC_INFORMATION_SENTENCE = "This is public information"
 
@@ -130,8 +133,9 @@ export function farmlandScope(value: string | null | undefined): FarmlandScope {
 export const SSURGO_NO_MAPPING_SYMBOLS: ReadonlySet<string> = new Set(["NOTCOM", "NOTPUB"])
 
 /**
- * The lower-case map-unit names that mark a delineation without soil mapping when its symbol
- * does not; the match uses the whole name, since a prefix could also match a real soil name.
+ * The lower-case map-unit names that mark a delineation without soil mapping when its symbol does not.
+ *
+ * The match uses the whole name, since a prefix could also match a real soil name.
  */
 export const SSURGO_NO_MAPPING_NAMES: ReadonlySet<string> = new Set([
 	"area not surveyed, access denied",
@@ -151,9 +155,10 @@ export const NCCPI_V3_RULE_NAME = "NCCPI - National Commodity Crop Productivity 
 export const COINTERP_OVERALL_RULE_DEPTH = "0"
 
 /**
- * The code of the area-times-component-percentage weighting that produced the per-cell
- * shares; component percentages have no location, so a share says how much of a cell
- * lies in rated map units and not where the rating applies.
+ * The code of the area-times-component-percentage weighting that produced the per-cell shares.
+ *
+ * Component percentages have no location, so a share says how much of a cell lies
+ * in rated map units and not where the rating applies.
  */
 export const SOIL_SHARE_WEIGHTING = "cell_area_x_comppct_r"
 

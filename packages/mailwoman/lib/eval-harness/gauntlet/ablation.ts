@@ -86,8 +86,8 @@ export {
 } from "#eval-harness/gauntlet/ablation/types"
 
 /**
- * How many substitutions the console summary lists before it truncates: a terminal-legibility cap only, because
- * the full list is always in the artifact's `rows` and the summary says how many it withheld.
+ * How many substitutions the console summary lists before it truncates: a terminal-legibility cap only,
+ * because the full list is always in the artifact's `rows` and the summary says how many it withheld.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
 
@@ -98,9 +98,11 @@ function isWordChar(c: string | undefined): boolean {
 }
 
 /**
- * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets, where boundary-safe
- * means the character on each side is not a letter or digit. This is the guard that keeps a locality `York` from
- * being carved out of a region `New York`, which a plain `indexOf` silently mutilates.
+ * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets,
+ * where boundary-safe means the character on each side is not a letter or digit.
+ *
+ * This is the guard that keeps a locality `York` from being carved out of a region
+ * `New York`, which a plain `indexOf` silently mutilates.
  */
 export function boundedOccurrences(input: string, value: string): number[] {
 	if (!value) return []
@@ -128,8 +130,9 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately literal:
- * a `\b\d{5}\b` pattern deletes house numbers on the 4-digit postal systems.
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind.
+ *
+ * Deliberately literal: a `\b\d{5}\b` pattern deletes house numbers on the 4-digit postal systems.
  */
 export function deleteSpan(input: string, at: number, length: number): string {
 	return (

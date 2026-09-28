@@ -278,8 +278,8 @@ export class AblationGazetteer implements AblationGazetteerProbe {
 	containingChain(lat: number, lon: number): AblationPlace[] {
 		if (!this.#reverse) return []
 
-		// The reverse hierarchy is already deepest-first; each id is re-read off `spr`
-		// so every rung carries the bbox the reverse candidate shape lacks.
+		// The reverse hierarchy is already deepest-first.
+		// Each id is re-read off `spr` so every rung carries the bbox the reverse candidate shape lacks.
 		return this.#reverse
 			.reverseGeocodeSync(lat, lon)
 			.hierarchy.map((h) => this.place(h.id))

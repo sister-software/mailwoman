@@ -11,7 +11,7 @@
  * artifact rather than guarded at decode time, so it cannot misfire on lowercase, comma-free,
  * any-locale input. The resolver's candidate tables are untouched, so excluded places stay findable.
  *
- * Exclusion sources are the shipped libpostal dictionaries; the language set is uniform across locales
+ * Exclusion sources are the shipped libpostal dictionaries. The language set is uniform across locales
  * because a FR query hits the en-us FST on the default path.
  *
  * Provenance (policy string + excluded-insertion count) is recorded in the artifact trailer, and
@@ -70,8 +70,10 @@ export const EXCLUSION_POLICY_ID =
 	"degenerate-surface-exclusion v1.1 (libpostal stopwords+street_types, 17 langs, + supplemental)"
 
 /**
- * Function-word surfaces the libpostal dictionaries miss; a candidate belongs here only when it is a
- * common function word in a served language whose libpostal stopword file lacks the bare form.
+ * Function-word surfaces the libpostal dictionaries miss.
+ *
+ * A candidate belongs here only when it is a common function word in a served
+ * language whose libpostal stopword file lacks the bare form.
  */
 export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 	// Dutch/Danish preposition ("op de hoek", "op til"), absent from nl/da stopwords.txt as a bare word.
@@ -79,8 +81,10 @@ export const SUPPLEMENTAL_DEGENERATE_SURFACES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * The shipped per-locale FST set; an overlay absent here ships with no FST,
- * so `--gazetteer-prior` is a silent no-op for it and the run degrades to the base model.
+ * The shipped per-locale FST set.
+ *
+ * An overlay absent here ships with no FST, so `--gazetteer-prior` is a silent
+ * no-op for it and the run degrades to the base model.
  */
 export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
 	["en-us", ["US"]],
@@ -100,8 +104,8 @@ export const FST_LOCALES: ReadonlyMap<string, string[]> = new Map([
  * Every FST artifact that is a projection of the WOF admin DB, relative to the wof data-root dir.
  *
  * `fst-street-morphology.bin` and the retired `fst-global-priority.bin` are deliberately absent
- * so they cannot generate freshness rows that read as a rebuild obligation; the CJK three
- * are listed despite having no {@link FST_LOCALES} entry because no tool can rebuild them.
+ * so they cannot generate freshness rows that read as a rebuild obligation.
+ * The CJK three are listed despite having no {@link FST_LOCALES} entry because no tool can rebuild them.
  */
 export const ADMIN_DERIVED_FST_ARTIFACTS: readonly string[] = [
 	"fst-per-locale/fst-en-us.bin",
@@ -122,7 +126,8 @@ export interface FSTFreshnessRow {
 	artifact: string
 	present: boolean
 	/**
-	 * `undefined` = current; otherwise the prose from `fstStaleReason`.
+	 * `undefined` = current.
+	 * Otherwise the prose from `fstStaleReason`.
 	 */
 	staleReason?: string
 	builtAt?: string
@@ -278,8 +283,8 @@ async function scanDegenerateSurfaces(
  * Surface-ambiguity scan: one pass over the whole admin DB (every country, the builder's default placetypes)
  * producing normalized-surface → distinct-country count.
  *
- * The count is deliberately global so a US-scoped FST still knows a surface is also
- * a place elsewhere; primary spr names and all alt names feed it.
+ * The count is deliberately global so a US-scoped FST still knows a surface is also a place elsewhere.
+ * Primary spr names and all alt names feed it.
  */
 export async function computeSurfaceCountryCounts(source: PathBuilderLike): Promise<Map<string, number>> {
 	const dbPath = resolvePath(source)
@@ -299,7 +304,7 @@ export async function computeSurfaceCountryCounts(source: PathBuilderLike): Prom
  * Memo for {@link computeSurfaceCountryCounts}, keyed on (path, mtimeMs, size) because the WOF admin
  * DB is a sealed readonly artifact a rebuild replaces, so a path-only key would serve a stale scan.
  *
- * The returned map is shared with every caller, which treats it as read-only;
+ * The returned map is shared with every caller, which treats it as read-only.
  * a future mutating caller must copy first.
  */
 const surfaceCountryCountsMemo = new Map<string, Map<string, number>>()
@@ -404,8 +409,9 @@ export async function buildLocaleFSTs(opts: BuildLocaleFSTsOpts = {}): Promise<B
 		)
 	}
 
-	// Ambiguity classes ride the curated builds only; the uncurated control stays a pure
-	// pre-curation byte baseline, and one global scan is shared by every locale.
+	// Ambiguity classes ride the curated builds only.
+	// The uncurated control stays a pure pre-curation byte baseline, and one
+	// global scan is shared by every locale.
 	const surfaceCountryCounts = opts.uncurated ? undefined : await computeSurfaceCountryCounts(dbPath)
 
 	if (surfaceCountryCounts) {

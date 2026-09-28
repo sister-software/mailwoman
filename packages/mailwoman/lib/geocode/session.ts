@@ -63,8 +63,8 @@ export interface GeocodeSessionOptions {
 	locale: string
 
 	/**
-	 * An npm `--prefix` cache root to load weights from instead of the installed package;
-	 * session creation fails when this root lacks the locale's package because it never falls back.
+	 * An npm `--prefix` cache root to load weights from instead of the installed package. session
+	 * creation fails when this root lacks the locale's package because it never falls back.
 	 */
 	weightsCacheRoot?: string
 	bias?: string
@@ -108,7 +108,8 @@ export interface GeocodeSessionOptions {
 	adminContainmentRerank?: boolean
 
 	/**
-	 * Deprecated; the session ignores this option.
+	 * Deprecated.
+	 * The session ignores this option.
 	 */
 	retryAlternateRegister?: boolean
 	placeCountryThreshold: number

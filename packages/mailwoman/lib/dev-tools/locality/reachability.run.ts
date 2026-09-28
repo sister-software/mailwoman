@@ -28,8 +28,8 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		"candidate-db": { type: "string", default: wofDatabasePath("candidate.db").toString() },
 		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
-		// The country a panel row belongs to when the panel carries none per row; it selects
-		// the codex layout the row is written through before it is a scope decision.
+		// The country a panel row belongs to when the panel carries none per row.
+		// It selects the codex layout the row is written through before it is a scope decision.
 		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},

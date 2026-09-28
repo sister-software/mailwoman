@@ -18,7 +18,8 @@ export interface MeasureResolutionsOptions extends FloodIngestOptions, Resolutio
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself; a streamed total that differs means a truncated read.
+	 * The count the source declares for itself.
+	 * A streamed total that differs means a truncated read.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]

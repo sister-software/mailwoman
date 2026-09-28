@@ -68,7 +68,8 @@ export function finestResolvedCoordinate(tree: AddressTree): ResolvedCoordinate 
 
 /**
  * Lists coarse per-country bounding boxes, as `[latMin, latMax, lonMin, lonMax]`,
- * for artifacts whose manifest declares none; a country without a box never trips the guard.
+ * for artifacts whose manifest declares none.
+ * A country without a box never trips the guard.
  */
 export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, number, number]>> = {
 	US: [18, 72, -180, -66],
@@ -146,8 +147,10 @@ export interface PlausibilityVerdict {
  */
 export interface PlausibilityOpts {
 	/**
-	 * The ISO 3166-1 alpha-2 country the resolution should land in; setting it enables the
-	 * bounding-box check that catches cross-country jumps the country-centroid check cannot.
+	 * The ISO 3166-1 alpha-2 country the resolution should land in.
+	 *
+	 * Setting it enables the bounding-box check that catches cross-country jumps
+	 * the country-centroid check cannot.
 	 */
 	expectedCountry?: string
 
@@ -160,8 +163,9 @@ export interface PlausibilityOpts {
 
 /**
  * Decides whether a resolved tree's coordinate is implausible: a bare country centroid,
- * or a point outside `expectedCountry`'s bounding box; an unresolved tree is plausible
- * because it serves no coordinate.
+ * or a point outside `expectedCountry`'s bounding box.
+ *
+ * An unresolved tree is plausible because it serves no coordinate.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

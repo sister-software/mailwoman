@@ -12,9 +12,9 @@ import { weightsFamilyCheck } from "@mailwoman/repo-health/checks/weights/family
 import { expect, test } from "vitest"
 
 /**
- * Writes a temporary checkout that holds only the given `neural-weights-*` manifests,
- * keyed by locale; the directory is moved out of the disposal scope because the
- * check reads it after this function returns.
+ * Writes a temporary checkout that holds only the given `neural-weights-*` manifests, keyed by locale.
+ *
+ * The directory is moved out of the disposal scope because the check reads it after this function returns.
  */
 async function fixtureContext(manifests: Record<string, unknown>): Promise<RepoContext> {
 	const temporary = (await temporaryDirectory("weights-family-")).move()

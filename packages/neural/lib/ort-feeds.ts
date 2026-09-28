@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Pure channel packing + output decode shared by both ONNX runners, so the fixed-length tensor
- *   feeds and the `logits`/`locale_logits`/`span_scores` reads cannot drift; it imports no
+ *   feeds and the `logits`/`locale_logits`/`span_scores` reads cannot drift. It imports no
  *   `onnxruntime-*` because each runner constructs its own `ort.Tensor`s from the packed
  *   `{data, dims}` pairs.
  */
@@ -54,14 +54,16 @@ export interface InferResult {
 	logits: number[][]
 	numLabels: number
 	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order) when the
-	 * model exports it; consumers must treat undefined as no address-system detection available.
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order)
+	 * when the model exports it.
+	 *
+	 * Consumers must treat undefined as no address-system detection available.
 	 */
 	localeLogits?: number[]
 	/**
 	 * Per-span type scores from the semi-Markov span head, indexed
-	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1` tokens;
-	 * absent on bundles without the head, so consumers fall back to the BIO path.
+	 * `spanScores[tokenIdx][lengthIdx][segmentTypeIdx]` for a segment of `lengthIdx + 1`
+	 * tokens. absent on bundles without the head, so consumers fall back to the BIO path.
 	 */
 	spanScores?: number[][][]
 	/**
@@ -298,8 +300,9 @@ export function decodeInferOutput(
 /**
  * Back-compat inference of the required soft-feature channels from a model's declared input names:
  * a graph exporting `<channel>_features` declared that channel mandatory at train time,
- * so cards without a `requires` block route through here and the fail-closed guard still
- * guards them; conventions/bridge have no dedicated input and stay undeclared.
+ * so cards without a `requires` block route through here and the fail-closed guard still guards them.
+ *
+ * Conventions/bridge have no dedicated input and stay undeclared.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
 	const names = new Set(inputNames)

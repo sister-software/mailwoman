@@ -25,25 +25,28 @@ export interface LegTiming {
 }
 
 /**
- * Collects one entry per timed leg, in completion order, writing the ledger
- * when the scope holding it ends; hold it with `await using` so a battery that fails
- * part way through still writes what it collected before the throw.
+ * Collects one entry per timed leg, in completion order, writing the ledger when the scope holding it ends.
+ *
+ * Hold it with `await using` so a battery that fails part way through still
+ * writes what it collected before the throw.
  */
 export class LegProfile implements AsyncDisposable {
 	readonly #timings: LegTiming[] = []
 	readonly #path: string
 
 	/**
-	 * @param path Where to write the ledger; an empty path writes none, and a non-empty
-	 * one must sit outside the battery's output directory.
+	 * @param path Where to write the ledger.
+	 * An empty path writes none, and a non-empty one must sit outside the battery's output directory.
 	 */
 	constructor(path: string) {
 		this.#path = path
 	}
 
 	/**
-	 * Run `work`, record its wall time, and hand back whatever it returned; a leg that throws
-	 * is still recorded, because the time it spent before failing is the number a reader wants.
+	 * Run `work`, record its wall time, and hand back whatever it returned.
+	 *
+	 * A leg that throws is still recorded, because the time it spent
+	 * before failing is the number a reader wants.
 	 */
 	async time<T>(leg: string, tag: string | undefined, work: () => Promise<T>): Promise<T> {
 		const startedAt = performance.now()

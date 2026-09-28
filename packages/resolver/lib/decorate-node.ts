@@ -61,7 +61,8 @@ export function decorateNode(
 	node.placeID = `wof:${resolved.id}` // v1: only WOF resolvers. the URI scheme stays this simple
 	node.metadata = { ...node.metadata, resolver_score: resolved.score, resolver_name: resolved.name }
 
-	// Additive metadata only; no part of the resolve reads it back.
+	// Additive metadata only.
+	// No part of the resolve reads it back.
 	if (resolved.prominence !== undefined) {
 		node.metadata["resolver_prominence"] = resolved.prominence
 	}
@@ -90,8 +91,8 @@ export function decorateNode(
 		node.metadata["postcode_city_mismatch"] = true
 	}
 
-	// A broader admin tier stood in for the true region/county because no exact-type
-	// candidate existed; additive annotation only.
+	// A broader admin tier stood in for the true region/county because no exact-type candidate existed.
+	// Additive annotation only.
 	if (resolved.resolutionQuality) {
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}

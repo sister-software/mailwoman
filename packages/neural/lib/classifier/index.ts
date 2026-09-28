@@ -219,7 +219,8 @@ export class NeuralAddressClassifier {
 
 	/**
 	 * Loads a {@link ScriptRoutedClassifier} whose primary classifier uses the caller's locale,
-	 * routing another family's script to a lazily loaded classifier; this method works only in Node.
+	 * routing another family's script to a lazily loaded classifier.
+	 * This method works only in Node.
 	 */
 	static async loadRoutedFromWeights(
 		...args: Parameters<typeof import("#classifier/loader").loadScriptRoutedClassifier>
@@ -772,9 +773,10 @@ export class NeuralAddressClassifier {
 	}
 
 	/**
-	 * Throws when the model emits more logits per token than there are labels, since Viterbi
-	 * would otherwise index past the transition matrix; fewer logits than labels is allowed
-	 * because each label set extends the previous stage's set as a prefix.
+	 * Throws when the model emits more logits per token than there are labels,
+	 * since Viterbi would otherwise index past the transition matrix.
+	 *
+	 * Fewer logits than labels is allowed because each label set extends the previous stage's set as a prefix.
 	 */
 	private assertEmissionWidth(logits: readonly number[][]): void {
 		if (!logits.length) return

@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   Importance is `min(1, log2(1 + pop/1000) / 14)`, so `ONE_TOKEN_IMPORTANCE_FLOOR` inverts to
- *   pop ≥ 10,314 and `PERSON_NAME_IMPORTANCE_FLOOR` to pop ≥ 77,793; which floor applies depends on
+ *   pop ≥ 10,314 and `PERSON_NAME_IMPORTANCE_FLOOR` to pop ≥ 77,793. Which floor applies depends on
  *   whether libpostal carries the surface as a person name.
  */
 

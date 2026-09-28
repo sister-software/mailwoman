@@ -90,7 +90,8 @@ export type BuildZoningInput =
 
 export type BuildZoningOptions = BuildZoningInput & {
 	/**
-	 * Where the sealed artifact lands; the build writes beside it and swaps.
+	 * Where the sealed artifact lands.
+	 * The build writes beside it and swaps.
 	 */
 	out: PathBuilderLike
 	/**
@@ -113,13 +114,14 @@ export type BuildZoningOptions = BuildZoningInput & {
 	 */
 	coverageResolution: number
 	/**
-	 * The publisher's own `Shape__Area` sum in square metres, read from the live service;
+	 * The publisher's own `Shape__Area` sum in square metres, read from the live service.
 	 * supplied, the build asserts its encoded rings agree with it.
 	 */
 	expectedSourceAreaM2?: number
 	/**
-	 * The feature count the live service reports; supplied, the build asserts
-	 * its own streamed total against it.
+	 * The feature count the live service reports.
+	 *
+	 * Supplied, the build asserts its own streamed total against it.
 	 */
 	expectedFeatureCount?: number
 	/**
@@ -516,8 +518,9 @@ function assertAreaAgreement(
 ): BuildZoningResult["area"] {
 	const signedKM2 = streamed.area.signedM2 / M2_PER_KM2
 
-	// The publisher's figure is absent rather than defaulted; filling it with this build's
-	// own reading would make the receipt print "0.000% apart" for a check that never ran.
+	// The publisher's figure is absent rather than defaulted.
+	// Filling it with this build's own reading would make the receipt print "0.000%
+	// apart" for a check that never ran.
 	const reading = areaAgreementFrom(
 		{ nestedM2: streamed.area.nestedM2, allExteriorM2: streamed.area.allExteriorM2 },
 		expectedSourceAreaM2

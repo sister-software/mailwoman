@@ -81,8 +81,9 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 		now: new Date("2026-08-05T00:00:00.000Z"),
 	})
 
-	// Two postcodes survive; the malformed value and the coordinate-less relation are
-	// dropped, and the untagged node never counts as tagged.
+	// Two postcodes survive.
+	// The malformed value and the coordinate-less relation are dropped,
+	// and the untagged node never counts as tagged.
 	expect(result.inserted).toBe(2)
 	expect(result.stats.elements).toBe(8)
 	expect(result.stats.tagged).toBe(7)
@@ -123,7 +124,7 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	const typo = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name LIKE 'BT36%'").get() as { n: number }
 	expect(typo.n).toBe(0)
 
-	// Medoid law: the centroid is one of the member points, not a mean that would land on no mapped address.
+	// Medoid law: the centroid is one of the member points, so it always lands on a mapped address.
 	const bt3 = db.prepare("SELECT latitude, longitude FROM spr WHERE name='BT39QQ'").get() as {
 		latitude: number
 		longitude: number

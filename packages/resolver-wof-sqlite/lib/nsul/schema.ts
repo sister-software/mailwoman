@@ -94,8 +94,9 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 }
 
 /**
- * The `pcds_compact` index the `uprnsForPostcode` probe reads; there is no index on the
- * spaced `pcds` because it is derivable through {@link compactPostcode}.
+ * The `pcds_compact` index the `uprnsForPostcode` probe reads.
+ *
+ * There is no index on the spaced `pcds` because it is derivable through {@link compactPostcode}.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_postcode_pcds_compact").on("uprn_postcode").column("pcds_compact").execute()

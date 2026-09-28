@@ -20,8 +20,9 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	 */
 	createTables: (database: DatabaseClient<DB>) => Promise<void>
 	/**
-	 * The in-process ingest, run under the first handle; return `undefined` to defer
-	 * to {@link batched}, keeping any writes made before deferring.
+	 * The in-process ingest, run under the first handle.
+	 *
+	 * Return `undefined` to defer to {@link batched}, keeping any writes made before deferring.
 	 */
 	ingest: (database: DatabaseClient<DB>) => Promise<Streamed | undefined>
 	/**
@@ -31,8 +32,9 @@ export interface BuildSealedArtifactOptions<DB, Streamed, Result> {
 	batched?: (tmpPath: string) => Promise<Streamed>
 	/**
 	 * Post-ingest work under the second handle: assertions over what was streamed,
-	 * index/coverage/manifest writes, dropping any scratch table; the artifact's on-disk
-	 * size is measurable only after this returns and the swap lands.
+	 * index/coverage/manifest writes, dropping any scratch table.
+	 *
+	 * The artifact's on-disk size is measurable only after this returns and the swap lands.
 	 */
 	finish: (database: DatabaseClient<DB>, streamed: Streamed) => Promise<Result>
 }

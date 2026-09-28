@@ -29,8 +29,8 @@ export interface ReleasePreflightOptions {
 	 */
 	version?: string
 	/**
-	 * The caller's staging directory, written into and never removed; absent,
-	 * a scratch directory is made and owned here.
+	 * The caller's staging directory, written into and never removed.
+	 * Absent, a scratch directory is made and owned here.
 	 */
 	staging?: string
 	/**
@@ -66,8 +66,9 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// The caller's `--staging` root is written into and never removed; a scratch root this operation
-	// makes is its own, and `--keep` withholds its removal so the staged tree survives for inspection.
+	// The caller's `--staging` root is written into and never removed.
+	// A scratch root this operation makes is its own, and `--keep` withholds its removal
+	// so the staged tree survives for inspection.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {

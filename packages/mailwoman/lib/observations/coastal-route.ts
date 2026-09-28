@@ -85,8 +85,10 @@ export interface CoastalErosionRoute extends Disposable {
 
 export interface CoastalErosionRouteOptions {
 	/**
-	 * The sealed layer to read; required, because a route that guessed a default would
-	 * report a designation from an authority nobody asked about.
+	 * The sealed layer to read.
+	 *
+	 * Required, because a route that guessed a default would report a designation
+	 * from an authority nobody asked about.
 	 */
 	databasePath: PathBuilderLike
 	/**

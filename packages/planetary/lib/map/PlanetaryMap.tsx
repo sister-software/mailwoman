@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  *   The globe: the body's style over `MapCanvas`, a click on a label selecting the feature beneath it, the
- *   selection ring bound to the selected id, and the camera framing a selection by its diameter; the style is
+ *   selection ring bound to the selected id, and the camera framing a selection by its diameter. The style is
  *   composed once per config and a selection changes only a layer filter.
  */
 
@@ -30,7 +30,7 @@ export interface PlanetaryMapProps {
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
 	/**
-	 * The live map once react-map-gl has instantiated it, and `null` on unmount;
+	 * The live map once react-map-gl has instantiated it, and `null` on unmount.
 	 * the chrome outside this component cannot reach the handle through `useMap()`,
 	 * so the compass reads its direction from here.
 	 */
@@ -62,8 +62,9 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live source once it
-	// resolves its TileJSON; the two bodies differ, so a constant clamp would over-zoom one of them.
+	// The deepest zoom the body's terrain archive carries, read from the live
+	// source once it resolves its TileJSON.
+	// The two bodies differ, so a constant clamp would over-zoom one of them.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 
 	useEffect(() => {

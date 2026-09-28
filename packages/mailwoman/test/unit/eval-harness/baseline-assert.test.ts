@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The two baseline rows replay known-bad readings; if either ever passes, the mechanism is decorative.
+ *   The two baseline rows replay known-bad readings. If either ever passes, the mechanism is decorative.
  */
 
 import {
@@ -131,8 +131,9 @@ describe("profiles", () => {
 	})
 
 	it("never mixes harnesses within one profile", async () => {
-		// A profile must not mix harnesses; the token@1 row is the one legitimate crossover,
-		// so `js-ship-config` is shared and everything else is single-harness.
+		// A profile must not mix harnesses.
+		// The token@1 row is the one legitimate crossover, so `js-ship-config` is shared
+		// and everything else is single-harness.
 		for (const name of await listProfiles()) {
 			const profile = await resolveProfile(name)
 
@@ -149,8 +150,8 @@ describe("profiles", () => {
 	})
 
 	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
-		// The summed-BIO stand-in and the learned span decode are different numbers on the
-		// same weights; collapsing them would make every span-head claim uninterpretable.
+		// The summed-BIO stand-in and the learned span decode are different numbers on the same weights.
+		// Collapsing them would make every span-head claim uninterpretable.
 		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
 		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 

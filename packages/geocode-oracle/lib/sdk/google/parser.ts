@@ -51,7 +51,8 @@ interface ComponentRule {
 const COMPONENT_RULES: readonly ComponentRule[] = [
 	{ types: ["street_number"], tag: "house_number", form: "short" },
 	{ types: ["route"], tag: "street", form: "long" },
-	// Google splits a unit designator across three types; any of them is the unit line, first present wins.
+	// Google splits a unit designator across three types.
+	// Any of them is the unit line, first present wins.
 	{ types: ["subpremise"], tag: "unit", form: "short" },
 	{ types: ["room"], tag: "unit", form: "short" },
 	{ types: ["floor"], tag: "unit", form: "short" },

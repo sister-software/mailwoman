@@ -22,7 +22,8 @@ import { PathBuilder, type PathBuilderLike } from "path-ts"
 
 export interface EnrichAdminOptions {
 	/**
-	 * Chromium-i18n ssl-address spec dir; defaults to the dataset packaged with `@mailwoman/core`.
+	 * Chromium-i18n ssl-address spec dir.
+	 * Defaults to the dataset packaged with `@mailwoman/core`.
 	 */
 	specsDir?: PathBuilderLike
 }
@@ -34,8 +35,8 @@ export interface EnrichAdminResult {
 }
 
 /**
- * Enrich an admin staging DB with region-abbreviation `names` rows
- * and the `place_abbr` join table; idempotent.
+ * Enrich an admin staging DB with region-abbreviation `names` rows and the `place_abbr` join table.
+ * Idempotent.
  */
 export async function enrichAdmin<DB>(
 	db: DatabaseClient<DB>,

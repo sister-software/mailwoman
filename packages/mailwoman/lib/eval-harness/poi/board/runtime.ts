@@ -25,7 +25,8 @@ export interface POIBoardOptions {
 	weightsCacheRoot?: string
 	fixturesPath?: string
 	/**
-	 * Sealed `poi.db` to query; defaults to the data-root POI layer path.
+	 * Sealed `poi.db` to query.
+	 * Defaults to the data-root POI layer path.
 	 */
 	db?: PathBuilderLike
 	/**
@@ -37,11 +38,13 @@ export interface POIBoardOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * Whether to suppress the human-readable table; the CLI's `--json` mode sets it.
+	 * Whether to suppress the human-readable table.
+	 * The CLI's `--json` mode sets it.
 	 */
 	quiet?: boolean
 	/**
-	 * Whether a floor breach returns a non-zero exit code; the floors print either way.
+	 * Whether a floor breach returns a non-zero exit code.
+	 * The floors print either way.
 	 */
 	enforce?: boolean
 	/**

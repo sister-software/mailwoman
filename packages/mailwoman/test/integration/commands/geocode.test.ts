@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests gated on live database files being present.
+ *   Tests for the `mailwoman geocode` command: unconditional argument-validation tests plus DB-conditional integration tests that run only when live database files are present.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"

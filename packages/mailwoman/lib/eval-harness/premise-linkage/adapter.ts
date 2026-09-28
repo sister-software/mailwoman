@@ -69,13 +69,16 @@ const SYNTHETIC_ADMIN_LON = -0.1
 interface SyntheticCase {
 	row: PremiseLinkageInputRow
 	/**
-	 * Substring of the normalized query the provider keys on; unique per case,
-	 * because the fixture answers with the first rule that hits, so an overlapping
-	 * key silently reassigns another case's answer.
+	 * Substring of the normalized query the provider keys on.
+	 *
+	 * Unique per case, because the fixture answers with the first rule that hits,
+	 * so an overlapping key silently reassigns another case's answer.
 	 */
 	matchOn: string
 	/**
-	 * The provider's answer; absent means no rule, which the fixture answers as a refusal.
+	 * The provider's answer.
+	 *
+	 * Absent means no rule, which the fixture answers as a refusal.
 	 */
 	response?: AuthoritativeResponse
 	/**

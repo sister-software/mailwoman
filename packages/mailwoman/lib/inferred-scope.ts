@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  *
  * The conditional-scope check: a locale-inferred country filter yields when the model's own locale head
- * confidently reads the text as a different country's addressing. It only ever drops the scope — the head's
+ * confidently reads the text as a different country's addressing. It only ever drops the scope. The head's
  * country is evidence the text is foreign-shaped, never a resolved country — and it never fires on an explicit
  * caller scope, which belongs to the pre-scope.
  */

@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Shared Gauntlet harness: build the full-pipeline geocode deps (optionally with a candidate model, so an eval can compare candidate-vs-production on the same inputs) and run one address end-to-end; the Gauntlet grades the assembled output — coordinate + tier — not raw parse F1.
+ *   Shared Gauntlet harness: build the full-pipeline geocode deps (optionally with a candidate model, so an eval can compare candidate-vs-production on the same inputs) and run one address end-to-end. The Gauntlet grades the assembled output — coordinate + tier — not raw parse F1.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -45,13 +45,15 @@ export interface GauntletDeps extends Disposable {
 		opts?: GauntletGeocodeOpts
 	): Promise<{ result: GeocodeResult; resolver: ResolveNodeTrace[] }>
 	/**
-	 * Report-only access to the exact classifier, overlay, parse options, and FST selected by
-	 * the Gauntlet path; it performs no resolution and does not alter the check's geocode path.
+	 * Report-only access to the exact classifier, overlay, parse options,
+	 * and FST selected by the Gauntlet path.
+	 *
+	 * It performs no resolution and does not alter the check's geocode path.
 	 */
 	diagnoseParse(input: string, opts?: GauntletGeocodeOpts): Promise<{ trace: NeuralParseTrace; fst?: FSTMatcherLike }>
 	/**
-	 * Whether a row routed to `caseCountry` graded without that country's weights overlay;
-	 * a base-only pass is not evidence that the production path passes, so a caller turning a passing
+	 * Whether a row routed to `caseCountry` graded without that country's weights overlay. a
+	 * base-only pass is not evidence that the production path passes, so a caller turning a passing
 	 * row into a durable claim must ask this first and withhold the claim when it answers true.
 	 *
 	 * Overlays load lazily on the first row of their country, so ask after grading that row.
@@ -86,9 +88,10 @@ export interface GauntletDepsOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * Override the card's near-postcode gazetteer choreography for this run; a declared
-	 * ablation that pairs with the train-time half, so serving a model trained with it
-	 * under `false` is a deliberate mismatch and never a shipping configuration.
+	 * Override the card's near-postcode gazetteer choreography for this run.
+	 *
+	 * A declared ablation that pairs with the train-time half, so serving a model trained
+	 * with it under `false` is a deliberate mismatch and never a shipping configuration.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 	/**
@@ -120,13 +123,15 @@ export interface GauntletResolverPins {
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
-	 * Feed the gazetteer FST prior to the parse; unlike the boolean pins this one carries an artifact,
-	 * so the harness loads it rather than `resolverPinDeps`, and only an explicit `false` withholds it.
+	 * Feed the gazetteer FST prior to the parse.
+	 *
+	 * Unlike the boolean pins this one carries an artifact, so the harness loads it
+	 * rather than `resolverPinDeps`, and only an explicit `false` withholds it.
 	 */
 	gazetteerPrior?: boolean
 	/**
 	 * The admin-containment re-rank: a parsed region qualifier participates in
-	 * locality-candidate selection through the candidate gazetteer's ancestors sidecar;
+	 * locality-candidate selection through the candidate gazetteer's ancestors sidecar.
 	 * default off, so `true` is the pin that carries evidence.
 	 */
 	adminContainmentRerank?: boolean
@@ -138,34 +143,35 @@ export interface GauntletResolverPins {
 	 */
 	capitalTier?: boolean
 	/**
-	 * Exempt own-name `variant` aliases from the cross-country primary-preference penalty;
-	 * the stamp lives in the candidate build's own-name detector, so against a
-	 * candidate.db without it the exemption matches no row.
+	 * Exempt own-name `variant` aliases from the cross-country primary-preference
+	 * penalty. the stamp lives in the candidate build's own-name detector,
+	 * so against a candidate.db without it the exemption matches no row.
 	 */
 	variantAliasExemption?: boolean
 	/**
 	 * The opt-in venue tier: upgrade a venue-led address's admin or street answer to
-	 * the poi.db entity with the venue's name near the resolved anchor; default off,
-	 * and `true` degrades to the incumbent answer on a machine without poi.db.
+	 * the poi.db entity with the venue's name near the resolved anchor.
+	 *
+	 * Default off, and `true` degrades to the incumbent answer on a machine without poi.db.
 	 */
 	poiVenueTier?: boolean
 	/**
-	 * A span-rescore sub-span may drop context but never a word of the name;
-	 * default off, so `true` is the pin that carries evidence.
+	 * A span-rescore sub-span may drop context but never a word of the name. default off,
+	 * so `true` is the pin that carries evidence.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * Which reading of a weak resolution lifts the span-rescore brake;
-	 * three readings exist and the shipped brake is the absence of all of them,
-	 * so `undefined` is the production arm and there is no off pin.
+	 * Which reading of a weak resolution lifts the span-rescore brake. three readings exist
+	 * and the shipped brake is the absence of all of them, so `undefined` is the
+	 * production arm and there is no off pin.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 }
 
 /**
- * The geocode deps a pin set turns into, spread into every {@linkcode geocodeAddress}
- * call the run makes; pure and exported so the pin-reaches-the-pipeline interface
- * is testable without the full database set.
+ * The geocode deps a pin set turns into, spread into every {@linkcode geocodeAddress} call the run makes.
+ *
+ * Pure and exported so the pin-reaches-the-pipeline interface is testable without the full database set.
  */
 export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 	postcodeCountryCoherence?: boolean
@@ -192,20 +198,21 @@ export function resolverPinDeps(pins: GauntletResolverPins | undefined): {
 }
 
 /**
- * One-line description of the pins for the run banner; it prints on the unpinned run too,
- * so two gauntlet logs can be told apart, because an off/on pair whose logs are
- * indistinguishable is not evidence about the pin.
+ * One-line description of the pins for the run banner.
+ *
+ * It prints on the unpinned run too, so two gauntlet logs can be told apart,
+ * because an off/on pair whose logs are indistinguishable is not evidence about the pin.
  */
 export function describeResolverPins(pins: GauntletResolverPins | undefined): string {
-	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins, so every pin
-	// is named here rather than only the boolean ones; a non-boolean pin prints its value
-	// instead of collapsing three different configurations to `on`.
+	// `resolverPinDeps` is pure and cannot see the artifact-carrying pins,
+	// so every pin is named here rather than only the boolean ones.
+	// A non-boolean pin prints its value instead of collapsing three different configurations to `on`.
 	const entries: string[] = Object.entries(resolverPinDeps(pins)).map(([k, v]) =>
 		typeof v === "boolean" ? `${k}=${v ? "ON" : "OFF"}` : `${k}=${v}`
 	)
 
-	// Printed only when pinned away from the production default; an unset pin prints no line,
-	// so "no flag" reads as "grade whatever production does".
+	// Printed only when pinned away from the production default.
+	// An unset pin prints no line, so "no flag" reads as "grade whatever production does".
 	if (pins?.gazetteerPrior !== undefined) {
 		entries.push(`gazetteerPrior=${pins.gazetteerPrior ? "ON" : "OFF"}`)
 	}
@@ -283,12 +290,13 @@ async function assertShippedModelMatchesCard(materializedMd5: string): Promise<v
 /**
  * Assert that every locale this run can route to has the anchor binary its own weights card declares.
  *
- * A grading environment states its artifact expectations up front because a missing `postcode-us.bin`
- * does not error — the anchor channel resolves to off and the operator reads a model regression.
+ * A grading environment states its artifact expectations up front because a
+ * missing `postcode-us.bin` does not error.
+ * The anchor channel resolves to off and the operator reads a model regression.
  *
- * Expectations come from each package's own card, never a hardcoded list,
- * so en-gb's deliberate absence and en-nz's missing source are not called broken;
- * a package that does not resolve at all is `classifierFor`'s base-only fallback instead.
+ * Expectations come from each package's own card, never a hardcoded list, so en-gb's
+ * deliberate absence and en-nz's missing source are not called broken. a package that
+ * does not resolve at all is `classifierFor`'s base-only fallback instead.
  */
 export async function assertDeclaredAnchorBins(locales: readonly string[], cacheRoot?: PathBuilderLike): Promise<void> {
 	const missing: string[] = []
@@ -326,8 +334,8 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 /**
  * Build the geocode deps.
  *
- * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate
- * against production fairly; omit it for the shipped default.
+ * `modelPath` swaps only the ONNX, so the held-out check can grade a candidate against production fairly.
+ * Omit it for the shipped default.
  *
  * `tokenizerPath` (+ optional `modelCardPath`) additionally swaps the vocab, required for a
  * tokenizer-splice candidate whose model has extra embedding rows that a plain `modelPath`
@@ -336,17 +344,17 @@ export async function assertDeclaredAnchorBins(locales: readonly string[], cache
 export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise<GauntletDeps> {
 	const resolverMod = await import("@mailwoman/resolver-wof-sqlite")
 
-	// A package-shaped candidate weights dir; prefer this over `modelPath` when the vocab
-	// differs, because `loadFromWeights({cacheRoot})` resolves the model, tokenizer,
-	// card, and anchor/gazetteer siblings as production does, while a bare `modelPath`
-	// swap feeds no soft channels and keeps the shipped tokenizer.
+	// A package-shaped candidate weights dir.
+	// Prefer this over `modelPath` when the vocab differs, because `loadFromWeights({cacheRoot})`
+	// resolves the model, tokenizer, card, and anchor/gazetteer siblings as production does,
+	// while a bare `modelPath` swap feeds no soft channels and keeps the shipped tokenizer.
 	const cacheModel = opts.weightsCacheRoot
 		? resolvePath(weightsCachePackageDir(opts.weightsCacheRoot, "en-us"), "model.onnx")
 		: undefined
 
-	// Stamp the model under test so a stale dev symlink is never silent; the default path asks
-	// `resolveWeights`, which answers with the file `loadFromWeights` will actually open,
-	// rather than naming a package directory that may not be materialized.
+	// Stamp the model under test so a stale dev symlink is never silent.
+	// The default path asks `resolveWeights`, which answers with the file `loadFromWeights`
+	// will actually open, rather than naming a package directory that may not be materialized.
 	const resolvedModel = opts.modelPath ? undefined : (await resolveWeights({ locale: "en-us" })).modelPath
 	const effModel = cacheModel ?? (opts.modelPath ? resolvePath(opts.modelPath) : resolvedModel!)
 
@@ -467,8 +475,9 @@ export async function buildGauntletDeps(opts: GauntletDepsOptions = {}): Promise
 		return { ...verdict, kind: opts.forceQueryKind }
 	}
 
-	// The database set is the paths that exist; presence is materialized up front
-	// so the filter below stays a synchronous read over facts already gathered.
+	// The database set is the paths that exist.
+	// Presence is materialized up front so the filter below stays a synchronous
+	// read over facts already gathered.
 	const wofDatabasePresence = await Promise.all(
 		wofExtractPaths().map(async (path) => ({ path, present: await pathExists(path) }))
 	)
@@ -678,12 +687,13 @@ export interface GauntletResult {
 	venue: string | null
 	dependent_locality: string | null
 	/**
-	 * The parsed unit / sub-venue span, asserted by the sub-venue cases; no result field
-	 * carried it before, so `componentOf` threw until it was added.
+	 * The parsed unit / sub-venue span, asserted by the sub-venue cases.
+	 *
+	 * No result field carried it before, so `componentOf` threw until it was added.
 	 */
 	unit: string | null
 	/**
-	 * The country the coherence pass scoped this row to, or null when it overrode no country;
+	 * The country the coherence pass scoped this row to, or null when it overrode no country.
 	 * not asserted by any case, it is the firing count so a pinned run can count activity
 	 * instead of inferring it from an unchanged verdict.
 	 */
@@ -719,8 +729,8 @@ export async function runOne(input: string, deps: GauntletDeps, opts?: GauntletG
 }
 
 /**
- * Project an assembled geocode into the projection the graders assert on;
- * separate from {@linkcode runOne} so a caller holding its own warm session grades
+ * Project an assembled geocode into the projection the graders assert on. separate
+ * from {@linkcode runOne} so a caller holding its own warm session grades
  * through this mapping rather than a second copy, because a field renamed here
  * and not there would make two graders disagree about the same run.
  */

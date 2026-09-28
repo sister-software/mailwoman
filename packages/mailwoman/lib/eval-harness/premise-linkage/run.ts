@@ -52,8 +52,9 @@ export const OPEN_ARM_NAME = "open"
 export const AUTHORITATIVE_ARM_NAME = "authoritative"
 
 /**
- * What the open arm records in the provider slot; an empty name would read as a
- * provider whose name was lost, and this arm consulted none.
+ * What the open arm records in the provider slot.
+ *
+ * An empty name would read as a provider whose name was lost, and this arm consulted none.
  */
 const OPEN_PROVIDER_NAME = "none"
 
@@ -67,8 +68,8 @@ const DEFAULT_COORDINATE_THRESHOLDS_M: readonly number[] = [5, 25, 100]
 
 /**
  * The ladder improvement and regression are measured on: a confidently wrong identifier
- * ranks worst, an abstention next, candidates next, and a committed correct identifier best;
- * ungradable rows have no rank and are excluded from the comparison.
+ * ranks worst, an abstention next, candidates next, and a committed correct identifier
+ * best. ungradable rows have no rank and are excluded from the comparison.
  */
 const OUTCOME_RANK: Readonly<Record<string, number>> = {
 	[PremiseLinkageOutcome.Wrong]: 0,
@@ -86,7 +87,8 @@ export interface PremiseLinkageGrade {
 }
 
 /**
- * Map one arm's authoritative block onto the outcome vocabulary; the only place an outcome is decided.
+ * Map one arm's authoritative block onto the outcome vocabulary.
+ * The only place an outcome is decided.
  */
 export function outcomeFor(
 	assertion: AuthoritativeAssertion | undefined,
@@ -347,7 +349,9 @@ function compareArms(
 }
 
 /**
- * The pieces a controlled run supplies; a private config module or the synthetic self-check builds them.
+ * The pieces a controlled run supplies.
+ *
+ * A private config module or the synthetic self-check builds them.
  */
 export interface PremiseLinkageRunConfig {
 	adapter: PremiseLinkageAdapter
@@ -409,7 +413,8 @@ export async function runPremiseLinkage(options: PremiseLinkageRunOptions): Prom
 		mailwomanVersion: options.mailwomanVersion,
 		policy: options.policy,
 		minCellSize: options.minCellSize,
-		// Set by the report writer, which is what removes cells; zero here states no cell has been removed yet.
+		// Set by the report writer, which is what removes cells.
+		// Zero here states no cell has been removed yet.
 		suppressedCells: 0,
 		arms: [
 			aggregateArm(OPEN_ARM_NAME, openRows, options.policy, thresholds),
@@ -428,8 +433,10 @@ function hasRunConfigShape(value: unknown): value is PremiseLinkageRunConfig {
 }
 
 /**
- * Validate what a private config module exported, before a licensed file is opened; a factory is accepted
- * because opening a gazetteer and a provider connection at import time makes `--help` do both.
+ * Validate what a private config module exported, before a licensed file is opened.
+ *
+ * A factory is accepted because opening a gazetteer and a provider connection
+ * at import time makes `--help` do both.
  */
 export async function resolvePremiseLinkageConfig(
 	exported: unknown,

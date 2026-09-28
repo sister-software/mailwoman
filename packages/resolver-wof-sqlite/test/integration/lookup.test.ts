@@ -27,7 +27,7 @@ interface FixturePlace {
 	 */
 	alt_names?: string[]
 	/**
-	 * Ancestor chain, not including self, used to seed the `ancestors` table.
+	 * Ancestor chain without self, used to seed the `ancestors` table.
 	 */
 	ancestor_ids?: number[]
 }

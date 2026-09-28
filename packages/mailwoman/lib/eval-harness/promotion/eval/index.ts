@@ -50,8 +50,10 @@ interface ThresholdSpec {
 	requires_conventions?: string
 	requires_bridge?: boolean
 	/**
-	 * Answer-key path for per-locale grading, spec-declared for comparability; omitted uses the
-	 * per-locale-f1 default, and changing it means floors must be re-anchored on fresh measurements.
+	 * Answer-key path for per-locale grading, spec-declared for comparability.
+	 *
+	 * Omitted uses the per-locale-f1 default, and changing it means floors must
+	 * be re-anchored on fresh measurements.
 	 */
 	golden_dir?: string
 	floors?: Record<string, unknown>
@@ -70,7 +72,8 @@ export interface PromotionEvalOptions {
 	 */
 	model?: string
 	/**
-	 * Quantized int8 sibling; re-runs per-tag checks and enforces the delta cap.
+	 * Quantized int8 sibling.
+	 * Re-runs per-tag checks and enforces the delta cap.
 	 */
 	int8?: string
 	/**
@@ -78,11 +81,14 @@ export interface PromotionEvalOptions {
 	 */
 	check?: string
 	/**
-	 * Tokenizer path; defaults to the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * Tokenizer path.
+	 *
+	 * Defaults to the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
-	 * Model-card JSON; defaults to `neural-weights-en-us/model-card.json`.
+	 * Model-card JSON.
+	 * Defaults to `neural-weights-en-us/model-card.json`.
 	 */
 	card?: string
 	/**
@@ -93,7 +99,8 @@ export interface PromotionEvalOptions {
 	gazetteerLexicon?: string
 	/**
 	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us`,
-	 * which feeds anchor+gazetteer+country via loadFromWeights; takes precedence over --model/--int8.
+	 * which feeds anchor+gazetteer+country via loadFromWeights.
+	 * Takes precedence over --model/--int8.
 	 */
 	weightsCache?: string
 	/**
@@ -103,12 +110,15 @@ export interface PromotionEvalOptions {
 	 */
 	int8WeightsCache?: string
 	/**
-	 * Battery output dir; defaults to `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
+	 * Battery output dir.
+	 *
+	 * Defaults to `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
 	 * Optional per-leg wall-time ledger path, which must be outside {@linkcode PromotionEvalOptions.outDir}
-	 * because receipt comparison expects stable bytes under outDir; omitted, the run writes no file.
+	 * because receipt comparison expects stable bytes under outDir.
+	 * Omitted, the run writes no file.
 	 */
 	profileJSON?: string
 }
@@ -119,8 +129,9 @@ export interface PromotionEvalOptions {
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
 /**
- * Workspaces used by this battery for compiled-freshness checks; keep it broad
- * enough to cover parse+resolve paths end-to-end.
+ * Workspaces used by this battery for compiled-freshness checks.
+ *
+ * Keep it broad enough to cover parse+resolve paths end-to-end.
  */
 const EVAL_HARNESS_WORKSPACES = [
 	"packages/mailwoman",
@@ -226,8 +237,8 @@ async function runLoreGuards(env: {
 
 	const md5 = async (p: string): Promise<string> => md5File(p)
 
-	// --weights-cache single-arm logs provenance only; paired caches get the same
-	// fp32/int8 mislabel checks as the --model flow.
+	// --weights-cache single-arm logs provenance only.
+	// Paired caches get the same fp32/int8 mislabel checks as the --model flow.
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
 
@@ -304,8 +315,10 @@ async function runLoreGuards(env: {
 }
 
 /**
- * Demo-cascade smoke: whole-stack parse→reconcile→resolve coverage on the ship artifact against
- * the slim hot DB; a missing DB warns and skips, and a spec floor declared on this leg then fails.
+ * Demo-cascade smoke: whole-stack parse→reconcile→resolve coverage on the ship
+ * artifact against the slim hot DB.
+ *
+ * A missing DB warns and skips, and a spec floor declared on this leg then fails.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
@@ -455,7 +468,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// A paired run treats fp32 as the arm that does not ship; an unpaired run ships this arm.
+		// A paired run treats fp32 as the arm that does not ship.
+		// An unpaired run ships this arm.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
 		const plOptions = wc
@@ -625,7 +639,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				)
 			)
 		} catch (error) {
-			// A non-zero exit maps to a throw; the output still reaches arenas.md.
+			// A non-zero exit maps to a throw.
+			// The output still reaches arenas.md.
 			arenaErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			arenaFailed = true
 		}

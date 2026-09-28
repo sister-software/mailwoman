@@ -62,7 +62,8 @@ export interface RerankResult<T = unknown> {
 }
 
 /**
- * Resolve a tree; structural, so any `Resolver`-shaped thing satisfies it.
+ * Resolve a tree.
+ * Structural, so any `Resolver`-shaped thing satisfies it.
  */
 export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
@@ -73,9 +74,9 @@ export interface RerankOpts {
 	 */
 	maxResolve?: number
 	/**
-	 * ISO-2 country the resolutions are expected to land in, threaded to
-	 * {@link isImplausibleResolution} as guard B so a coordinate outside that country's
-	 * coarse box is vetoed; omitted, only the bare-country-centroid guard runs.
+	 * ISO-2 country the resolutions are expected to land in, threaded to {@link isImplausibleResolution}
+	 * as guard B so a coordinate outside that country's coarse box is vetoed.
+	 * Omitted, only the bare-country-centroid guard runs.
 	 */
 	expectedCountry?: string
 	/**
@@ -85,9 +86,11 @@ export interface RerankOpts {
 }
 
 /**
- * Rerank a k-best parse list on resolution evidence: resolve up to `maxResolve` candidates in model
- * order and return the first plausible one; candidates beyond `maxResolve` are never resolved
- * and never vetoed, and when every resolved candidate is implausible the model's rank-1 wins.
+ * Rerank a k-best parse list on resolution evidence: resolve up to `maxResolve`
+ * candidates in model order and return the first plausible one.
+ *
+ * Candidates beyond `maxResolve` are never resolved and never vetoed, and
+ * when every resolved candidate is implausible the model's rank-1 wins.
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,

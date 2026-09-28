@@ -11,7 +11,9 @@ import { percentile } from "@mailwoman/core/stats"
 import { ABLATION_GRADES, type AblationGrade, emptyGrades } from "#eval-harness/gauntlet/ablation/expectation"
 
 /**
- * The component classes this runner deletes; adding one means adding the field to `GauntletResult` first.
+ * The component classes this runner deletes.
+ *
+ * Adding one means adding the field to `GauntletResult` first.
  */
 export const ABLATABLE_COMPONENTS = [
 	"postcode",
@@ -44,13 +46,15 @@ export interface AblationCell {
 	 */
 	locale: string
 	/**
-	 * Board rows that carry this component in this locale; `support: 0` means
-	 * not measured here, not a zero score.
+	 * Board rows that carry this component in this locale.
+	 *
+	 * `support: 0` means unmeasured here rather than a zero score.
 	 */
 	support: number
 	/**
-	 * Rows whose assembled coordinate moved further than the row's tolerance once the
-	 * component was deleted; a row whose ablated arm produced no coordinate counts as broken.
+	 * Rows whose assembled coordinate moved further than the row's tolerance once the component was deleted.
+	 *
+	 * A row whose ablated arm produced no coordinate counts as broken.
 	 */
 	brokenCount: number
 	displacementKmP50: number
@@ -64,8 +68,8 @@ export interface AblationCell {
 	 */
 	unresolvedCount: number
 	/**
-	 * Rows where the deleted component's slot was refilled by a different span;
-	 * a refill can leave the coordinate intact and still make a completion nudge unsafe.
+	 * Rows where the deleted component's slot was refilled by a different span. a refill
+	 * can leave the coordinate intact and still make a completion nudge unsafe.
 	 */
 	substitutedCount: number
 	/**
@@ -74,7 +78,8 @@ export interface AblationCell {
 	 */
 	toleranceKm: number
 	/**
-	 * Which board this was measured on, and when; a cell without both is not a measurement.
+	 * Which board this was measured on, and when.
+	 * A cell without both is not a measurement.
 	 */
 	boardID: string
 	measuredAt: string
@@ -84,8 +89,8 @@ export interface AblationCell {
 	 */
 	recoveredCount: number
 	/**
-	 * Rows excluded from the displacement percentiles because the row's own anchor
-	 * never resolved; not a failure of the deletion.
+	 * Rows excluded from the displacement percentiles because the row's own anchor never resolved.
+	 * Not a failure of the deletion.
 	 */
 	anchorUnresolvedCount: number
 	/**
@@ -224,8 +229,9 @@ export interface AblationVariant {
 }
 
 /**
- * One component's roll-up across every locale; a global p90 is taken over the
- * pooled displacements, never over the per-cell p90s.
+ * One component's roll-up across every locale.
+ *
+ * A global p90 is taken over the pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {
 	component: AblatableComponent

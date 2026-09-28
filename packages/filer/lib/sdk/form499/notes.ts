@@ -10,8 +10,9 @@
  */
 
 /**
- * The cessation vocabulary, keyed to the eight note templates; a plain const object
- * because `erasableSyntaxOnly` is on repo-wide.
+ * The cessation vocabulary, keyed to the eight note templates.
+ *
+ * A plain const object because `erasableSyntaxOnly` is on repo-wide.
  */
 export const Form499CessationReason = {
 	/**
@@ -61,8 +62,9 @@ export type Form499CessationReasonValue = (typeof Form499CessationReason)[keyof 
  */
 export interface Form499Lifecycle {
 	/**
-	 * Every non-empty note, verbatim and in column order; the source text is never discarded
-	 * because a reason code is a lossy summary of it.
+	 * Every non-empty note, verbatim and in column order.
+	 *
+	 * The source text is never discarded because a reason code is a lossy summary of it.
 	 */
 	notes: string[]
 	/**
@@ -75,13 +77,17 @@ export interface Form499Lifecycle {
 	 */
 	replacedByForm499ID?: string
 	/**
-	 * Every recognized reason, deduplicated, in the order first seen; a filer commonly carries two
-	 * or three, since a date, a replacement, and a reason are three separate notes on the same row.
+	 * Every recognized reason, deduplicated, in the order first seen.
+	 *
+	 * A filer commonly carries two or three, since a date, a replacement,
+	 * and a reason are three separate notes on the same row.
 	 */
 	reasons: Form499CessationReasonValue[]
 	/**
-	 * Notes matching none of the eight templates; counted rather than silently dropped, so the `0` this
-	 * 2025-12-07 vintage shows becomes a measured rise when a later vintage adds a ninth template.
+	 * Notes matching none of the eight templates.
+	 *
+	 * Counted rather than silently dropped, so the `0` this 2025-12-07 vintage shows
+	 * becomes a measured rise when a later vintage adds a ninth template.
 	 */
 	unrecognized: number
 }
@@ -105,8 +111,9 @@ const FIXED_NOTE_PATTERNS = [
 	],
 	[/^all assets of this company have been sold to another party\.$/i, Form499CessationReason.AssetsSold],
 	[
-		// `accout` is the source's typo and is matched as spelled; a tolerant `accou?nt` would silently
-		// admit a corrected future spelling, which should instead surface as an `unrecognized` count.
+		// `accout` is the source's typo and is matched as spelled.
+		// A tolerant `accou?nt` would silently admit a corrected future spelling,
+		// which should instead surface as an `unrecognized` count.
 		/^this legal entity accout has been closed because their form \d+ filing is now submitted on a consolidated basis\.$/i,
 		Form499CessationReason.AccountConsolidated,
 	],
@@ -191,7 +198,7 @@ export function parseForm499Notes(rawNotes: ReadonlyArray<string | null | undefi
 }
 
 /**
- * True when this filer's notes state it is no longer an active Form 499 filer;
+ * True when this filer's notes state it is no longer an active Form 499 filer.
  * deliberately not `reasons.length > 0`, because `AccountConsolidated` and `ExitedTelecom`
  * leave a live company that can still be somebody's parent.
  */

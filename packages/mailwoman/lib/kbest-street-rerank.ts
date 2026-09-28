@@ -7,8 +7,8 @@
  * the pick policy (`pickByStreetEvidence`), and an injected street-name index (`StreetLocalityEvidence`).
  *
  * Three properties make it golden-safe: the rerank fires only on an anchorless fragment, the class it was
- * measured on; the winning segmentation's street tokens are spliced into the argmax tree rather than replacing
- * it, because the span head decodes locality/region/postcode far worse than the BIO argmax head; and the splice
+ * measured on. The winning segmentation's street tokens are spliced into the argmax tree rather than replacing
+ * it, because the span head decodes locality/region/postcode far worse than the BIO argmax head. And the splice
  * fires only for a street the atlas confirms exists, so an unconfirmed street never overrides the model. A model
  * with no span scores returns exactly `buildAddressTree(trace.text, trace.tokens)`, byte-stable.
  *
@@ -57,7 +57,8 @@ export interface StreetRerankOpts {
 	 */
 	marginCap?: number
 	/**
-	 * Locality/postcode scope for the evidence probe; fragments usually carry none.
+	 * Locality/postcode scope for the evidence probe.
+	 * Fragments usually carry none.
 	 */
 	scope?: StreetEvidenceScope
 	/**
@@ -114,8 +115,8 @@ function hypothesisStreetSurface(
  * segmentation assigns to the street family and leaving every other token's argmax label untouched.
  *
  * The span head is a street-boundary specialist and decodes locality/region/postcode
- * far worse than the full BIO argmax head, so rebuilding the whole tree would trade
- * the street win for a locality/postcode collapse.
+ * far worse than the full BIO argmax head, so rebuilding the whole tree would replace
+ * the correctly decoded street boundary with a locality/postcode collapse.
  */
 function spliceStreetTree(
 	hyp: SegmentationHypothesis,
@@ -217,8 +218,8 @@ export async function rerankByStreetEvidence(
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 
-	// Only an atlas-confirmed street may override the argmax tree's street;
-	// the model owns every call the atlas cannot confirm wrong, and on a clean address
+	// Only an atlas-confirmed street may override the argmax tree's street. the
+	// model owns every call the atlas cannot confirm wrong, and on a clean address
 	// the two streets agree so the splice is a no-op.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)

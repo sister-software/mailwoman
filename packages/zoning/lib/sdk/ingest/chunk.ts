@@ -149,8 +149,8 @@ export async function ingestZoningChunk(
 	let adjacentHoles = 0
 
 	/**
-	 * Record one observed vocabulary value, letting the first label win so no later
-	 * row's description edits the publisher's vocabulary.
+	 * Record one observed vocabulary value, keeping the first label so a later row's
+	 * description leaves the publisher's vocabulary unchanged.
 	 */
 	const observe = (scheme: string, code: string, label: string): void => {
 		const key = `${scheme}\u0000${code}`

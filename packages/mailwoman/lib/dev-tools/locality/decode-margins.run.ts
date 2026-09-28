@@ -6,7 +6,7 @@
  *   `traceParse` carries both readings of a token — `logits`, the model's raw emission, and
  *   `emissions`, what viterbi decoded over after every prior wrote into it — so a row whose raw
  *   emission already refuses the locality is a training result while one whose raw emission
- *   favours it and whose post-prior matrix does not names the prior that took it.
+ *   favours it and whose post-prior matrix does not favour it reveals the prior that took it.
  */
 
 import { matchSubdivisionIn } from "@mailwoman/codex/country"
@@ -278,8 +278,8 @@ if (values["swap-postcode"]) {
 
 const swapped = swaps.join(", ")
 
-// Without `--weights-cache` the run grades the installed weights, which are not
-// interchangeable with a candidate's, so the header names which one the table came from.
+// Without `--weights-cache` the run grades the installed weights.
+// Those differ from a candidate's, so the header states which one the table came from.
 const weights = values["weights-cache"]
 	? `candidate ${values["weights-cache"]}`
 	: "INSTALLED weights (no --weights-cache)"

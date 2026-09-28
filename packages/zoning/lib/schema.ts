@@ -130,7 +130,8 @@ export interface ZoningPlanTable {
 	 */
 	valid_to: string | null
 	/**
-	 * `CURRENT_PLAN`, carried as published: `1` means not superseded, not in force today, which is `valid_to`.
+	 * `CURRENT_PLAN`, carried as published: `1` means the plan is not superseded,
+	 * and `valid_to` marks whether it is in force today.
 	 */
 	current_plan: number
 }
@@ -175,8 +176,10 @@ export interface ZoningVocabularyTable {
 	 */
 	definition_url: string | null
 	/**
-	 * `1` where the publisher declares this code in its own domain, `0` where the code appears
-	 * only in the data; folding the two would hide a source-schema change or invent a declaration.
+	 * `1` where the publisher declares this code in its own domain, `0`
+	 * where the code appears only in the data.
+	 *
+	 * Folding the two would hide a source-schema change or invent a declaration.
 	 */
 	declared: number
 	/**

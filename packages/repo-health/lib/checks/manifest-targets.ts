@@ -30,8 +30,8 @@ interface WorkspaceManifest {
 const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
 
 /**
- * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written;
- * a config lacking either field admits every source, and `extends` is not followed
+ * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written. a
+ * config lacking either field admits every source, and `extends` is not followed
  * because every emitting workspace states both locally.
  */
 export interface CompileScope {

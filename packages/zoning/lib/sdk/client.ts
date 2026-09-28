@@ -192,8 +192,7 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * Ask the Hub for a bulk GeoJSON export and return the result URL, which 302s
-	 * and therefore has to be followed.
+	 * Ask the Hub for a bulk GeoJSON export and return the result URL, a 302 that the caller has to follow.
 	 *
 	 * @throws {Error} When the job is not `Completed`, or names no result URL.
 	 * A partial job that answered with a status and no URL would otherwise present as an empty download.

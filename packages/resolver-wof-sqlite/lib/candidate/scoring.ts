@@ -52,8 +52,8 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost applies only when the query carries `near` and the candidate has
-	// real coordinates; the decay is tunable via proximityBoost + proximityScaleKm.
+	// Proximity boost applies only when the query carries `near` and the candidate has real coordinates.
+	// The decay is tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` and every `bias` point wins, each scaled by its weight.
 	let proximityTerm = 0
@@ -122,7 +122,7 @@ export function candidateFromSearchRow(
 		candidate.encyclopedic = row.encyclopedic
 	}
 
-	// Candidate bbox for parity with the wasm lookup; without it the Node backend's
+	// Candidate bbox for parity with the wasm lookup. Without it the Node backend's
 	// region→bbox constraint is dead and disambiguation falls to population ranking.
 	if (row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null) {
 		candidate.bbox = {
@@ -168,8 +168,8 @@ export function rankCandidates<DB>(
 		}
 
 		if (exactIDs.size) {
-			// Within the exact tier, population is the primary key and the score only breaks ties;
-			// a name-exact candidate outranks an alias-exact one.
+			// Within the exact tier, population is the primary key and the score only breaks
+			// ties. a name-exact candidate outranks an alias-exact one.
 			const needle = foldQueryText(query.text)
 
 			// An official name counts as the place's own name for the sub-tier, floor-conditioned on the holder's population.
@@ -192,8 +192,9 @@ export function rankCandidates<DB>(
 				return officialIDs?.has(c.id as number) ? 2 : 1
 			}
 
-			// With proximity hints, prominence replaces raw population as the within-tier key; without them,
-			// referential ordering decides, and encyclopedic importance must not become an input here.
+			// With proximity hints, prominence replaces raw population as the within-tier key.
+			// Without them, referential ordering decides, and encyclopedic importance
+			// must not become an input here.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 			candidates.sort((a, b) => {

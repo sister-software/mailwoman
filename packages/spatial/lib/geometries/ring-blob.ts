@@ -124,8 +124,8 @@ function openRings(blob: Uint8Array): {
 		throw new Error(`ring blob: blob declares ${expected} bytes of geometry, holds ${blob.byteLength}`)
 	}
 
-	// The header is a multiple of eight by construction, so the coordinate run is 8-byte
-	// aligned; a misaligned source buffer is copied rather than rejected.
+	// The header is a multiple of eight by construction, so the coordinate run is 8-byte aligned.
+	// A misaligned source buffer is copied rather than rejected.
 	const absoluteOffset = blob.byteOffset + headerBytes
 
 	const coordinates =

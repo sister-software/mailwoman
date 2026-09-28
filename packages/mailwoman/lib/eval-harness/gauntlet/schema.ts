@@ -5,7 +5,7 @@
  *
  *   The Gauntlet — a full-pipeline integration-test corpus (`input → expected assembled output`). This is the
  *   curated regression layer: the executable memory of fixed bugs. Its check is regression-only — "must not
- *   break what already passed" — and its pass-rate is never a ship gauge; generalization is conditional
+ *   break what already passed" — and its pass-rate is never a ship gauge. Generalization is conditional
  *   elsewhere, in the held-out fresh-draw runner (`holdout.ts`) and the metamorphic invariants
  *   (`metamorphic.ts`), which need no stored expected values and so cannot be over-fit.
  *
@@ -81,8 +81,9 @@ export interface GauntletCaseTable {
 	 */
 	expect_tolerance_m: number | null
 	/**
-	 * Expected resolution tier; a result that drifts `address_point`→`admin` is
-	 * a regression even within tolerance.
+	 * Expected resolution tier.
+	 *
+	 * A result that drifts `address_point`→`admin` is a regression even within tolerance.
 	 */
 	expect_tier: ResolutionTier | null
 	/**
@@ -106,14 +107,17 @@ export interface GauntletCaseTable {
 	 * derived graceful-degradation ladder for this row (`{"country": "region"}`, `{"region": "abstain"}`),
 	 * where `rung` is `abstain`, `base`, or a WOF placetype.
 	 *
-	 * Absent means the derived ladder decides; the pin exists for the two classes no threshold fixes —
-	 * territories, whose ancestry is politically rather than geographically shaped, and dual-role places,
-	 * where one name is both a locality and its own county and the ladder double-counts a rung.
+	 * Absent means the derived ladder decides.
+	 * The pin exists for the two classes no threshold fixes — territories, whose ancestry
+	 * is politically rather than geographically shaped, and dual-role places, where one
+	 * name is both a locality and its own county and the ladder double-counts a rung.
 	 */
 	ablation_expect: string | null
 	/**
-	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default; the runner
-	 * derives the weights overlay from its region subtag, mirroring production's locale-hint routing.
+	 * The CLI locale this row runs under (`en-NZ`), or null for the harness default.
+	 *
+	 * The runner derives the weights overlay from its region subtag,
+	 * mirroring production's locale-hint routing.
 	 *
 	 * It is a locale hint, never a country constraint — `country` above stays the truth's
 	 * country, so `Paris` under `en-US` is an FR row run with the US overlay.
@@ -122,16 +126,18 @@ export interface GauntletCaseTable {
 	/**
 	 * 1 = this row's expected outcome is no coordinate, so the resolver abstains rather than answering and any resolved coordinate fails the row.
 	 *
-	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain rather than
-	 * fall through to a world-fuzzy candidate; the abstain pin is the interface, and lands
-	 * re-pinned to real coordinates once coverage arrives (the row's note says which artifact).
+	 * For the fuzzy-scope class, a scoped-empty typo correction must abstain
+	 * rather than fall through to a world-fuzzy candidate.
+	 *
+	 * The abstain pin is the interface, and lands re-pinned to real coordinates once
+	 * coverage arrives (the row's note says which artifact).
 	 */
 	expect_abstain: number | null
 }
 
 /**
- * The build stamp — one row, describing the committed corpus the DB was built from;
- * it exists because `regression.db` is a derived artifact with no link back to its source,
+ * The build stamp — one row, describing the committed corpus the DB was built from. it exists
+ * because `regression.db` is a derived artifact with no link back to its source,
  * and no record in the DB could contradict a wrong build.
  */
 export interface GauntletMetaTable {
@@ -146,9 +152,10 @@ export interface GauntletMetaTable {
 	 */
 	corpus_hash: string
 	/**
-	 * How many rows were written; redundant with the hash for detection
-	 * but required for the diagnosis, since "0 cases" reads as an empty loader
-	 * and "306 vs 192" as a corpus that moved under the artifact.
+	 * How many rows were written.
+	 *
+	 * Redundant with the hash for detection but required for the diagnosis, since "0 cases"
+	 * reads as an empty loader and "306 vs 192" as a corpus that moved under the artifact.
 	 */
 	case_count: number
 	/**

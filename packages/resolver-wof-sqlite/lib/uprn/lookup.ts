@@ -119,7 +119,7 @@ export class UPRNLookup implements Disposable {
 
 		// The loop terminates because the break bound is at most radiusM, which the RangeError above caps.
 		for (let ring = 0; ; ring++) {
-			// Once this bound exceeds the best hit so far, or the radius, no further ring can improve the answer.
+			// Once this bound exceeds the best hit so far, or the radius, further rings cannot improve the answer.
 			const closestPossibleM = ring * RES9_CENTER_SPACING_FLOOR_M - RES9_CELL_RADIUS_CEILING_M
 
 			if (closestPossibleM > Math.min(radiusM, best?.distanceM ?? radiusM)) break
