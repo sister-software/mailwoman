@@ -3,13 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The address-id consumer for the matcher (#259). Derives a stable {@link PostalAddressID} from a
- *   resolved {@link SourceRecord} and exposes it as a blocking key — the deterministic,
+ *   The address-id consumer for the matcher. Derives a stable {@link PostalAddressID} from a
+ *   resolved {@link SourceRecord} and exposes it as a blocking key, the deterministic
  *   exact-canonical-address complement to the fuzzy Fellegi-Sunter / GBT scoring. Two uses:
  *
  *   - **As a pre-dedup / join key:** `group BY postalAddressID(record)` collapses records that resolve
- *       to the same place and share a canonical address with no scoring at all — the cheap, certain
- *       part of dedup before the matcher does the fuzzy rest.
+ *       to the same place and share a canonical address with no scoring at all. That is the cheap,
+ *       certain part of dedup before the matcher does the fuzzy rest.
  *   - **As a blocking key:** {@link addressIDBlockingKey} adds the address-id to the blocking union, so
  *       records sharing one are guaranteed to be compared.
  */
@@ -20,10 +20,9 @@ import { type BlockingKey, exactKey } from "@mailwoman/match"
 import type { SourceRecord } from "#types"
 
 /**
- * The stable address primary key for a record, or null when it isn't geocoded
- * (no coordinate → no locality cell) or carries no raw address to hash.
+ * The stable address primary key for a record, or null when it is not geocoded
+ * (no coordinate means no locality cell) or carries no raw address to hash.
  *
- * Uses the resolved coordinate + the raw address.
  * The state prefix is plucked from the address when present.
  */
 export function postalAddressID(record: SourceRecord): PostalAddressID | null {
@@ -36,7 +35,7 @@ export function postalAddressID(record: SourceRecord): PostalAddressID | null {
 }
 
 /**
- * A blocking key on the {@link postalAddressID} — records that resolve to the same
+ * A blocking key on the {@link postalAddressID}. Records that resolve to the same
  * place with the same canonical address block together.
  *
  * Add it to {@link defaultBlockingKeys}'s union when an exact address join should never be missed.
