@@ -5,10 +5,10 @@
  */
 
 /**
- * The fallback separates a sequence this decoder recognizes (consumed and acted on), a complete but
- * unrecognized sequence (consumed whole so a `q` inside it cannot quit the app), and a chunk that ends
- * mid-sequence (returned as {@link DecodedInput.pending} rather than decoded), emitting quit only for
- * an ESC whose following byte cannot continue a sequence.
+ * The fallback separates a sequence this decoder recognizes (consumed and acted on), a complete
+ * but unrecognized sequence (consumed whole so a `q` inside it cannot quit the app), and a
+ * chunk that ends mid-sequence (returned as {@link DecodedInput.pending} rather than decoded),
+ * emitting quit only for an ESC whose following byte cannot continue a sequence.
  */
 
 /**
@@ -17,11 +17,14 @@
  */
 export const MOUSE_ENABLE = "\u001B[?1000h\u001B[?1002h\u001B[?1006h"
 
+/**
+ * Disables the three mouse-reporting modes {@link MOUSE_ENABLE} turns on.
+ */
 export const MOUSE_DISABLE = "\u001B[?1006l\u001B[?1002l\u001B[?1000l"
 
 /**
- * A decoded input event; pan and zoom carry direction and magnitude only, since how far a step moves
- * the map is the browser's decision rather than the decoder's.
+ * A decoded input event; pan and zoom carry direction and magnitude only, since how far
+ * a step moves the map is the browser's decision rather than the decoder's.
  */
 export type MapTUIInput =
 	| { kind: "quit" }
@@ -53,8 +56,7 @@ const MOUSE_SGR_PATTERN = /\u001B\[<(\d+);(\d+);(\d+)([Mm])/y
 const ARROW_PATTERN = /\u001B(?:\[|O)([ABCD])/y
 
 /**
- * Any other CSI sequence, consumed whole and ignored so an unhandled body is not re-scanned as key
- * presses.
+ * Any other CSI sequence, consumed whole and ignored so an unhandled body is not re-scanned as key presses.
  */
 const UNKNOWN_CSI_PATTERN = /\u001B\[[\d;<>?]*[\u0020-\u002F]*[\u0040-\u007E]/y
 
@@ -64,20 +66,20 @@ const UNKNOWN_CSI_PATTERN = /\u001B\[[\d;<>?]*[\u0020-\u002F]*[\u0040-\u007E]/y
 const UNKNOWN_SS3_PATTERN = /\u001BO[\u0040-\u007E]/y
 
 /**
- * The string-sequence family (OSC, DCS, SOS, PM, APC), each running to a BEL or an ST, sent unasked by
- * a terminal with no key pressed.
+ * The string-sequence family (OSC, DCS, SOS, PM, APC), each running to a BEL
+ * or an ST, sent unasked by a terminal with no key pressed.
  */
 const STRING_SEQUENCE_PATTERN = /\u001B[P\]X^_][\s\S]*?(?:\u0007|\u001B\\)/y
 
 /**
- * Every "unrecognized but complete" sequence, in the order they are tried; one shared list keeps a new
- * family from being added here and forgotten in the incomplete test.
+ * Every "unrecognized but complete" sequence, in the order they are tried; one shared
+ * list keeps a new family from being added here and forgotten in the incomplete test.
  */
 const UNRECOGNIZED_PATTERNS = [UNKNOWN_CSI_PATTERN, UNKNOWN_SS3_PATTERN, STRING_SEQUENCE_PATTERN] as const
 
 /**
- * A chunk that stops inside a sequence, each end-anchored pattern requiring the whole remainder of the
- * chunk to be a legal prefix and no more.
+ * A chunk that stops inside a sequence, each end-anchored pattern requiring the whole
+ * remainder of the chunk to be a legal prefix and no more.
  */
 const PARTIAL_PATTERNS = [/\u001BO?$/y, /\u001B\[[\d;<>?]*[\u0020-\u002F]*$/y, /\u001B[P\]X^_][^\u0007]*$/y] as const
 
@@ -97,8 +99,8 @@ const BUTTON_MASK = 3
 const LEFT_BUTTON = 0
 
 /**
- * The longest fragment held for the next chunk (64 KB), bounding an unterminated string sequence
- * rather than a real key.
+ * The longest fragment held for the next chunk (64 KB), bounding an unterminated
+ * string sequence rather than a real key.
  */
 const MAX_PENDING_LENGTH = 65_536
 
@@ -135,8 +137,8 @@ const CHARACTER_INPUTS: Record<string, MapTUIInput> = {
 export interface DecodedInput {
 	events: MapTUIInput[]
 	/**
-	 * An unresolved escape fragment from the end of the chunk to prepend to the next, empty when the
-	 * chunk ended cleanly.
+	 * An unresolved escape fragment from the end of the chunk to prepend to the next,
+	 * empty when the chunk ended cleanly.
 	 */
 	pending: string
 }
@@ -174,8 +176,8 @@ function mouseInput(button: number, column: number, row: number, final: string):
 }
 
 /**
- * Decodes one raw-mode stdin chunk into input events, dropping unrecognized bytes and returning an
- * unresolved trailing escape fragment as `pending`.
+ * Decodes one raw-mode stdin chunk into input events, dropping unrecognized bytes
+ * and returning an unresolved trailing escape fragment as `pending`.
  */
 export function decodeInputChunk(chunk: string, pending = ""): DecodedInput {
 	const events: MapTUIInput[] = []
