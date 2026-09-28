@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Render map identity and loading status in a footer strip.
- *   Keep source attributions available in a compact, expandable list.
+ * Render map identity and loading status in a footer strip, with source attributions in a compact, expandable list.
  */
 
 import { type ReactNode, useEffect, useId, useRef, useState } from "react"
@@ -17,15 +16,11 @@ export interface MapFooterProps {
 	 */
 	identity?: ReactNode
 	/**
-	 * Beside the identity: what is loading right now.
-	 *
-	 * Absent when no load is in progress.
+	 * What is loading right now, beside the identity.
 	 */
 	status?: ReactNode
 	/**
-	 * The credits, one entry per source.
-	 *
-	 * Shown in the popover the attribution button opens.
+	 * The credits, one entry per source, shown in the popover the attribution button opens.
 	 */
 	attribution?: ReactNode[]
 	/**
@@ -46,7 +41,6 @@ export function MapFooter({
 	const popoverID = useId()
 	const root = useRef<HTMLElement>(null)
 
-	// A popover closes when the conversation moves elsewhere: a press outside it, or Escape.
 	useEffect(() => {
 		if (!open) return
 

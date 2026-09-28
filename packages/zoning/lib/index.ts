@@ -41,10 +41,6 @@ export { GZT_LAYER_NAME, ProvenanceGrade } from "#vocabulary"
 
 /**
  * The kinds of answer the layer gives for a coordinate.
- *
- * The layer has no absence kind.
- * A point with no zoning polygon may be outside every plan area, on land that a plan leaves unzoned,
- * or in a jurisdiction whose records are unpublished, and the source does not distinguish these cases.
  */
 export const ZoningReadingKind = {
 	/**

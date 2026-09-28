@@ -33,19 +33,8 @@ const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
  * affordance provenance and the coverage layer's evidence for the cell.
  */
 export interface AbsenceObservation {
-	/**
-	 * The answered POI category ID, which is the mapping's `externalID` for the concept.
-	 */
 	categoryID: string
-
-	/**
-	 * The ID of the concept the category maps to in the compiled model.
-	 */
 	concept: string
-
-	/**
-	 * The activity the concept affords, which the observation states is not obtainable in the cell.
-	 */
 	activity: string
 	assertion: {
 		id: string
@@ -60,10 +49,6 @@ export interface AbsenceObservation {
 		provenance: SourceProvenance
 	}
 	modelVersion: string
-
-	/**
-	 * The coverage side of the claim: which cell, on what basis, and what the layer holds there.
-	 */
 	coverage: {
 		/**
 		 * The short-cell integer the coverage table is keyed by; `h3CellIndex` is the full index it expands to.
@@ -76,9 +61,7 @@ export interface AbsenceObservation {
 		observedRows: number
 
 		/**
-		 * The single class the coverage layer holds, read from its `poi_category_codes`.
-		 *
-		 * It always equals `categoryID`; it is recorded so a reader can check that guard.
+		 * The single class the coverage layer holds, always equal to `categoryID` so a reader can check that guard.
 		 */
 		surveyedCategoryID: string
 		layer: {
@@ -95,26 +78,17 @@ export interface AbsenceObservation {
 		}
 		databasePath: string
 	}
-
-	/**
-	 * The point the POI executor centred its search on, as `resolvePOISearchCenter` returns it.
-	 */
 	searchCenter: { latitude: number; longitude: number }
 
 	/**
-	 * How many rows the answer returned in total.
-	 *
-	 * `resultsInCell` is always zero on an observation, because a returned row inside
-	 * the cell contradicts the coverage row and the route refuses instead.
+	 * `resultsInCell` is always zero because a returned row inside the cell contradicts the coverage row and the route refuses instead.
 	 */
 	resultsReturned: number
 	resultsInCell: number
 }
 
 /**
- * Lists the named reasons a query can produce no absence observation.
- *
- * Each silence is named so that a receipt can tell a correct refusal from an unexplained one.
+ * Names the reasons a query can produce no absence observation, so a receipt can tell a correct refusal from an unexplained one.
  */
 export const ABSENCE_REFUSALS = [
 	"no_poi_answer",
@@ -156,17 +130,9 @@ export type AbsenceDecision =
  */
 export interface AbsenceRouteIdentity {
 	modelVersion: string
-
-	/**
-	 * Every POI category ID the model both maps and asserts an affordance for, in code-point order.
-	 */
 	affordingCategoryIDs: string[]
 	coverageDatabasePath: string
 	coverageLayer: LayerManifest
-
-	/**
-	 * The single class the coverage layer holds, and the only category this route may speak about.
-	 */
 	surveyedCategoryID: string
 	coverageResolution: number
 	coverageCells: number
@@ -179,15 +145,13 @@ export interface AbsenceRouteIdentity {
 }
 
 /**
- * Represents an open absence route that decides, for each POI outcome,
- * whether to record an absence observation or a named refusal.
- * Dispose it to close the coverage database.
+ * An open absence route that decides, for each POI outcome, whether to record an absence observation or a named refusal, and that closes the coverage database when disposed.
  */
 export interface AbsenceObservationRoute extends Disposable {
 	identity: AbsenceRouteIdentity
 
 	/**
-	 * Decides one answered query from the outcome and the coverage layer, without changing the outcome.
+	 * Decides one answered query without changing the outcome.
 	 */
 	observe: (outcome: POIIntentOutcome | undefined) => Promise<AbsenceDecision>
 }
@@ -198,15 +162,9 @@ export interface AbsenceObservationRoute extends Disposable {
  */
 export interface AbsenceObservationRouteOptions {
 	/**
-	 * The sealed single-class layer whose `layer_coverage` rows qualify the absence.
-	 *
-	 * It has no default, because a guessed layer would qualify an absence against a survey nobody chose.
+	 * The sealed single-class layer whose `layer_coverage` rows qualify the absence, with no default because a guessed layer would qualify an absence against a survey nobody chose.
 	 */
 	coverageDatabasePath: PathBuilderLike
-
-	/**
-	 * A compiled model to use instead of the committed one, typically a synthetic model in tests.
-	 */
 	model?: CompiledGeographicModel
 }
 
@@ -258,9 +216,7 @@ async function readSurveyedCategories(db: DatabaseClient<POIDatabase>): Promise<
 }
 
 /**
- * Opens an absence route against one compiled model and one sealed single-class coverage layer.
- *
- * It throws at construction on any configuration that would otherwise make the route silently never fire.
+ * Opens an absence route against one compiled model and one sealed single-class coverage layer, and throws at construction on any configuration that would otherwise make the route silently never fire.
  */
 export async function createAbsenceObservationRoute(
 	options: AbsenceObservationRouteOptions
