@@ -3,29 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Stage 2 of the confidence-calibration pipeline (task #59). Runs the shipped model over the
- *   calibration set (`build-calibration-set.py`) and emits one record per predicted span pairing
- *   its raw softmax confidence with a correct/incorrect label — the `(score, correct?)` pairs the
- *   isotonic fitter (`fit-isotonic-calibration.py`) consumes.
+ *   Stage 2 of the confidence-calibration pipeline. Runs the shipped model over the calibration set
+ *   (`build-calibration-set.py`) and emits one record per predicted span pairing its raw softmax
+ *   confidence with a correct/incorrect label, the `(score, correct?)` pairs the isotonic fitter
+ *   (`fit-isotonic-calibration.py`) consumes.
  *
- *   Calibration is over predictions (spans the model emitted), conditioning on "the model said tag T
- *   at confidence C — how often is it right?". So we iterate the decoded tree's spans rather than the
- *   gold.
+ *   Calibration is over predictions (spans the model emitted), conditioning on how often the model is
+ *   right when it said tag T at confidence C. So we iterate the decoded tree's spans, and the gold is
+ *   used only to label them.
  *
  *   The span confidence is the decoder's own per-node value (`AddressNode.confidence`, the mean of
- *   the span's per-token softmax probabilities — `core/decoder/build-tree.ts`). That is exactly the
- *   `conf=` a resolver or a human reads off the XML, so it is the right quantity to calibrate — not
- *   the raw per-token probability the older `probe-confidence.ts` bucketed.
+ *   the span's per-token softmax probabilities, in `core/decoder/build-tree.ts`). That is exactly the
+ *   `conf=` a resolver or a human reads off the XML, so it is the quantity to calibrate.
  *
  *   The model is constructed exactly as `oa-resolver-eval.ts` builds it (same parseOpts), so the
  *   confidences match the canonical eval path.
  *
  *   Matching (`correct?`):
  *
- *   - OA rows (`partial:true`) grade only {locality, region, postcode} — the tags OA gold carries. A
- *       predicted tag OA can't see is unlabelable and skipped (OA's silence is not a negative).
- *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. a predicted
- *       tag the address lacks is a hallucination → wrong.
+ *   - OA rows (`partial:true`) grade only {locality, region, postcode}, the tags OA gold carries. A
+ *       predicted tag OA can't see is unlabelable and skipped, since OA's silence is not a negative.
+ *   - Corpus rows (`partial:false`) grade every predicted span against the full BIO gold. A predicted
+ *       tag the address lacks is wrong.
  *   - The street family {street, street_prefix, street_suffix} is one equivalence class so the model's
  *       street decomposition isn't penalized against the corpus's coarse `street` gold.
  *   - Value match is normalized exact or either-direction substring (handles fragmentation like "Saint"
@@ -115,7 +114,6 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 
 		if (!goldVals.length) return null
 
-		// OA row lacks this tag entirely → unlabelable
 		return goldVals.some((g) => valueMatch(predValue, g))
 	}
 
@@ -124,7 +122,6 @@ function gradeSpan(predTag: string, predValue: string, row: CalibRow): boolean |
 
 	if (!goldVals.length) return false
 
-	// hallucinated tag the address doesn't have
 	return goldVals.some((g) => valueMatch(predValue, g))
 }
 
@@ -148,8 +145,8 @@ async function main(): Promise<void> {
 		ONNXRunner.create(values["model"] || "packages/neural-weights-en-us/model.onnx"),
 	])
 
-	// Ship-config channels (v4.4.0): the calibrator must describe the model AS deployed —
-	// anchor + gazetteer (+ suppression), conventions, and the span bridge all change span confidences.
+	// Ship-config channels: the calibrator must describe the model as deployed, since anchor,
+	// gazetteer, suppression, conventions, and the span bridge all change span confidences.
 	const { parseAnchorLookup, parseGazetteerLexicon } = await import("@mailwoman/neural")
 	const anchorPath = values["anchor-lookup"] || dataRootPath("anchor", "pilot-anchor-lookup.json")
 	const gazPath = values["gazetteer-lexicon"] || "data/gazetteer/anchor-lexicon-v1.json"
@@ -178,12 +175,9 @@ async function main(): Promise<void> {
 			console.error(`  ${i}/${rows.length}  (${records.length} gradable spans)`)
 		}
 
-		// onnxruntime-node accumulates native tensor memory across runs faster than JS
-		// GC reclaims it (~380-parse sigkill on the lab box).
-		// Periodic forced GC reclaims it.
-		// Run with `node --expose-gc` for full calibration sets (8000 rows).
-		// No-op without the flag.
-		// (#787 pattern.)
+		// onnxruntime-node accumulates native tensor memory across runs faster than JS GC reclaims
+		// it, so periodic forced GC is required. Run with `node --expose-gc` for full calibration sets
+		// (8000 rows). This is a no-op without the flag.
 		if (i % 50 === 0) {
 			;(globalThis as { gc?: () => void }).gc?.()
 		}

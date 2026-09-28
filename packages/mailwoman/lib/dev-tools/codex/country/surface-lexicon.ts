@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- * Build a country-surface lexicon for the country soft-feed channel (#1104).
+ * Build a country-surface lexicon for the country soft-feed channel.
  *
- * This channel is a dictionary-style signal (not a grammar rule). It helps the
- * model spot country phrases like "United States of America" that can otherwise
- * be misread as street-like text.
+ * This channel is a dictionary-style signal. It helps the model spot country phrases like "United
+ * States of America" that can otherwise be misread as street-like text.
  *
- * We reuse the gazetteer's phrase matcher and only change the vocabulary and
- * emitted feature. Each matched piece gets two bits:
+ * We reuse the gazetteer's phrase matcher and only change the vocabulary and emitted feature. Each
+ * matched piece gets two bits:
  * - `country_surface` (bit 1): part of a known country surface.
- * - `country_ambiguous` (bit 2): a risky surface (for example, a US region
- *   homograph like "Georgia"/"IN", or common words like "America").
+ * - `country_ambiguous` (bit 2): a risky surface (for example, a US region homograph like
+ *   "Georgia"/"IN", or common words like "America").
  *
  * Data source: `@mailwoman/codex` (`COUNTRY_SURFACE_FORMS` + `ISO2_TO_NAME`).
  *
@@ -41,17 +40,8 @@ const MAX_ABBREVIATION_LETTERS = 3
 const BIT = { country_surface: 1, country_ambiguous: 2 }
 const SLOTS = ["country_surface", "country_ambiguous"]
 
-/**
- * Output path written by this script.
- */
 const OUTPUT = repoRootPath("data", "gazetteer", "country-surface-lexicon-v1.json")
 
-/**
- * Shared normalization rule for entries and scanned tokens.
- *
- * For each whitespace word: strip non-letter/digit chars at the edges, keep internal
- * punctuation (like "u.s.a" or "timor-leste"), then rejoin.
- */
 /**
  * Short alphabetic code (<= 3 letters after punctuation removal).
  * These are matched with exact uppercase keys.
@@ -109,7 +99,6 @@ function add(surface: string): void {
 	entries.set(key, (entries.get(key) ?? 0) | bits)
 }
 
-// Add curated forms first, then canonical English names from ISO2_TO_NAME.
 for (const forms of Object.values(COUNTRY_SURFACE_FORMS)) {
 	for (const f of forms) {
 		add(f)

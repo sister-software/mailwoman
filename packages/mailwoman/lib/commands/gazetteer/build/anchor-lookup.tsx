@@ -3,16 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build anchor-lookup` — the postcode→anchor JSON lookup (#239/#240. live
- *   consumer: `@mailwoman/neural`'s scorer + the eval harnesses). JSON artifact, write-once semantics
+ *   `mailwoman gazetteer build anchor-lookup`: the postcode→anchor JSON lookup. Live
+ *   consumer: `@mailwoman/neural`'s scorer + the eval harnesses. JSON artifact, write-once semantics
  *   (regenerate, don't edit).
  *
- *   `--include` picks the country set. It defaults to the DE/FR/US pilot — the set every shipped
- *   recipe trained against, and the set whose 67,708 keys are all five digits, which is why the
- *   encoder's GB/JP/ES/IT/NL anchor slots never took a gradient
- *   (`docs/records/evals/2026-08-05-en-gb-anchor-off.md`). Pass `--include DE,FR,US,GB,NL,ES,IT` for
- *   the letter-containing v2 set. Widening the lookup only pays off on a run that also carries the
- *   inference-side parity fix — see the pipeline module docstring.
+ *   `--include` picks the country set. It defaults to the DE/FR/US pilot. Pass
+ *   `--include DE,FR,US,GB,NL,ES,IT` for the letter-containing v2 set. Widening the lookup only
+ *   pays off on a run that also carries the inference-side parity fix. See the pipeline module
+ *   docstring.
  */
 
 import { extractDelimited } from "@mailwoman/core/scripting/arguments"

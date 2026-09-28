@@ -32,10 +32,7 @@ import {
 import type { AssetLoadProgress, FSTMatcherLike, MailwomanClassifierLike } from "#browser-runtime/types"
 
 /**
- * What one release loads to: every field a host may read.
- *
- * A host that resolves admin-only ignores `anchorLookup`, and loading it is free because the
- * anchor binaries are already fetched by the classifier load for an anchor-trained bundle.
+ * What one release loads to, with every field a host may read.
  */
 export interface ReleaseAssets {
 	classifier: MailwomanClassifierLike
@@ -46,19 +43,17 @@ export interface ReleaseAssets {
 	fstMatcher: FSTMatcherLike | null
 	fstProvenance: FSTProvenance | null
 	/**
-	 * The street-morphology matcher — the #1315 street-context check's signal source, the node/browser parity
-	 * fix (scope invariant 2: node runtimes wire this by default. The browser previously never could).
+	 * The street-morphology matcher, the signal source for the street-context check.
 	 *
-	 * Loaded with the FST gazetteer because the check needs both
-	 * (core's `streetContextRequirementFor` only fires when the two stages are present).
-	 * `null` when the release ships no `fst-street-morphology.bin` (pre-artifact bundles) —
-	 * the demo then parses without the check, byte-identical to before.
+	 * Loaded with the FST gazetteer because the check needs both (core's
+	 * `streetContextRequirementFor` only fires when the two stages are present).
+	 * `null` when the release ships no `fst-street-morphology.bin`, in which case the demo parses
+	 * with the check off.
 	 */
 	streetMorphologyMatcher: FSTMatcherLike | null
 	/**
-	 * The byte-range gazetteer lookup.
-	 *
-	 * `null` when the release ships no gazetteer, when the host asked for none, or when the load failed.
+	 * The byte-range gazetteer lookup, `null` when the release ships no gazetteer, when the host
+	 * asked for none, or when the load failed.
 	 */
 	lookup: MailwomanLookupLike | null
 	/**
@@ -73,15 +68,12 @@ export interface ReleaseAssets {
 	release: () => Promise<void>
 	calibrator: Calibrator | null
 	/**
-	 * Per-parse placetype-pair prior selection (placetype-pair-prior arc, #1278).
+	 * Per-parse placetype-pair prior selection.
 	 *
-	 * Runs locale-check over the input text and returns the loaded index whose header
-	 * country matches (or `undefined` → byte-stable no-prior).
-	 * Both demo parse paths thread this into `runClassifyStage` so a GB/NZ input
-	 * gets its dependent_locality-resurrecting prior.
-	 *
-	 * `null` when no pair index was staged/loaded for this release (older bundles) —
-	 * the loader then behaves exactly as before.
+	 * Runs locale-check over the input text and returns the loaded index whose header country
+	 * matches, or `undefined` for a byte-stable no-prior result. Both demo parse paths thread this
+	 * into `runClassifyStage` so a GB/NZ input gets its dependent_locality-resurrecting prior.
+	 * `null` when no pair index was staged or loaded for this release.
 	 */
 	selectPairIndex: SelectPairIndex | null
 }
@@ -97,10 +89,9 @@ export interface LoadReleaseAssetsOptions {
 }
 
 /**
- * Load the classifier, calibration, FST and gazetteer bundle for one release.
- *
- * Reports staged progress through `progress`; the host owns the terminal ready/error state
- * and reveals the returned bundle atomically.
+ * Load the classifier, calibration, FST and gazetteer bundle for one release, reporting staged
+ * progress through `progress`. The host owns the terminal ready/error state and reveals the
+ * returned bundle atomically.
  *
  * @param release The selected release descriptor (drives which optional assets are fetched).
  * @param progress The host's progress and abort surface.
@@ -115,7 +106,6 @@ export async function loadReleaseAssets(
 
 	progress.setProgress(`Loading ${release.version} model (~${release.modelSize ?? "?"})…`)
 
-	// Build staged step labels based on what this release includes.
 	const steps: string[] = ["Loading classifier"]
 
 	if (release.hasFST) {
@@ -138,8 +128,8 @@ export async function loadReleaseAssets(
 	// so the neural package's own classifier type never enters a host bundle.
 	const { loadNeuralClassifierFromURLs } = await import("@mailwoman/neural/web-loader")
 
-	// The model is the only artifact here whose transfer a visitor waits on — tens of megabytes
-	// against kilobytes for every lexicon beside it — so it is the only one whose bytes reach the bar.
+	// The model is the only artifact whose transfer a visitor waits on, tens of megabytes against
+	// kilobytes for every lexicon beside it, so it is the only one whose bytes reach the bar.
 	// Reporting the small ones too would send the bar backwards each time one started.
 	const reportBytes = progress.setByteFraction
 
@@ -179,10 +169,7 @@ export async function loadReleaseAssets(
 		diagnostics ? `${diagnostics.backend} (${(diagnostics.modelBytes / 1024 / 1024).toFixed(0)} MB int8)` : "unknown"
 	)
 
-	// The model is in.
-	// What follows is the lexicons and the optional gazetteer.
-	// It the step index reports.
-	// Therefore, the byte channel goes quiet rather than holding its last value at 100%.
+	// The model is in, so the byte channel goes quiet rather than holding its last value at 100%.
 	progress.setByteFraction?.(null)
 	progress.setStepIndex(0)
 
@@ -197,7 +184,7 @@ export async function loadReleaseAssets(
 			calibrator = createCalibrator((await calRes.json()) as CalibrationTable)
 		}
 	} catch {
-		// No calibration table for this version — raw scores it is.
+		// No calibration table for this version, so raw scores it is.
 	}
 
 	let fstMatcher: FSTMatcherLike | null = null
@@ -220,8 +207,7 @@ export async function loadReleaseAssets(
 			try {
 				streetMorphologyMatcher = await loadStreetMorphologyFST(DEFAULT_LOCALE, release.version)
 			} catch {
-				// Corrupt/unfetchable artifact.
-				// Treat as absent (check off).
+				// A corrupt or unfetchable artifact leaves the check off.
 			}
 		}
 	}

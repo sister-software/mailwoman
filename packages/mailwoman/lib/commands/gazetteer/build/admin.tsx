@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman gazetteer build admin` — the turnkey admin-gazetteer build: WOF ingest → Overture
- *   divisions (real `division_area` extents + country nodes, #1015) → GeoNames folds → freeze →
- *   enrich (region abbrevs + place_abbr) → FTS → the structural verify check (#1026 node census,
+ *   `mailwoman gazetteer build admin`: the turnkey admin-gazetteer build: WOF ingest → Overture
+ *   divisions (real `division_area` extents + country nodes) → GeoNames folds → freeze →
+ *   enrich (region abbrevs + place_abbr) → FTS → the structural verify check (node census,
  *   reverse EU panel) → seal 0444. Builds to a staging path. swapping over the live DB is a separate,
  *   deliberate step (releasing.md). The coverage recipe lives in `gazetteer-pipeline/defaults.ts`.
  */

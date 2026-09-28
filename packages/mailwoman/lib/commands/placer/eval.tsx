@@ -3,11 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mailwoman placer eval <kind>` — the coarse placer (#244) eval suite, one enum command. Kinds:
+ *   `mailwoman placer eval <kind>` — the coarse placer eval suite, one enum command. Kinds:
  *   `in-distribution` (accuracy + per-class + ECE + multi-script abstention), `openset` (the M2
  *   post-hoc open-set score Pareto), `latin-offmap` (the M3 Latin off-map handled-rate), and
- *   `quant-compare` (int8 vs fp32 check). Every kind emits its report to stdout. all need the
- *   dataset + model artifacts locally — operator-run rather than CI.
+ *   `quant-compare` (int8 vs fp32 check). Every kind emits its report to stdout. All need the
+ *   dataset and model artifacts locally, so they are operator-run rather than CI.
  */
 
 import {

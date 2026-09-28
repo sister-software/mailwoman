@@ -4,20 +4,21 @@
  * @author Teffen Ellis, et al.
  *
  *   Build a coordinate-containing held-out eval set for a non-US locale from a standard-schema
- *   OpenAddresses country dump (#229 Phase A).
+ *   OpenAddresses country dump.
  *
- *   Label-F1 on non-US is confounded by labeling convention — where a Spanish "Calle Mayor" street
- *   boundary falls is a judgement rather than a fact — so these rows carry the truth lat/lon and are graded
- *   on the assembled coordinate by `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
+ *   Label-F1 on non-US is confounded by labeling convention, since where a Spanish "Calle Mayor"
+ *   street boundary falls is a judgement. These rows therefore carry the truth lat/lon and are graded
+ *   on the assembled coordinate by
+ *   `packages/mailwoman/lib/dev-tools/fr/admin/split/eval.run.ts --default-country <CC>`.
  *
  *   Expects a countrywide CSV with `LON,LAT,number,street,city,postcode[,region]` (IT/FR/most OA
  *   collections). The Spanish dump uses a cadastral schema and is not handled here.
  *
- *   Rows are bucketed by region — or the postcode's first two characters when region is absent — so
- *   the set spans the country rather than whichever province leads the file, and rendered in three
- *   natural orders so the model is not graded against one rigid template.
+ *   Rows are bucketed by region, or by the postcode's first two characters when region is absent, so
+ *   the set spans the country. They are rendered in three natural orders so the model does not see one
+ *   rigid template.
  *
- *   The seeded shuffle is distribution-faithful to the Python original but not CPython-bit-identical
+ *   The seeded shuffle matches the Python original in distribution. It is not bit-identical to CPython
  *   (see `python-random.ts`), so a set rebuilt here will not match one built by the retired script
  *   row for row.
  *
@@ -39,13 +40,11 @@ import { dirname } from "path-ts"
 import { titleCaseIfUpper, CSVSpliterator, type CSVSpliteratorInit } from "spliterator"
 import { Globerator } from "spliterator/node/fs"
 
-// #region CSV source
-
 /**
  * Approximates Python's default `csv.DictReader` dialect.
  *
- * `normalizeKeys: false` keeps the source's own header spelling, which is what the
- * row reader indexes by — OpenAddresses ships all-caps headers.
+ * `normalizeKeys: false` keeps the source's own header spelling, which is what the row reader indexes
+ * by, since OpenAddresses ships all-caps headers.
  */
 const CSV_OPTIONS = {
 	normalizeKeys: false,
@@ -53,23 +52,13 @@ const CSV_OPTIONS = {
 
 type CSVRecord = Record<string, string | undefined>
 
-/**
- * Stream header-keyed records from one member of a ZIP archive.
- */
 function csvRecordsFromZip(zipPath: string, entry: string): AsyncIterable<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(readZipEntry(zipPath, entry), CSV_OPTIONS)
 }
 
-/**
- * Stream header-keyed records from a CSV file.
- */
 function csvRecordsFromFile(filePath: string): AsyncIterable<CSVRecord> {
 	return CSVSpliterator.fromAsync<CSVRecord>(openReadStream(filePath), CSV_OPTIONS)
 }
-
-// #endregion
-
-// #region Sampling
 
 /**
  * The address orders a row can be rendered in, cycled so no single template dominates the set.
@@ -90,9 +79,9 @@ interface Address {
 /**
  * A usable address, or `null` for a row missing a field the eval needs.
  *
- * The street must open with a letter: OA rows whose street is a bare number
- * or a lone punctuation mark are parse noise rather than addresses.
- * House number `"0"` is the dump's placeholder for "no number known".
+ * The street must open with a letter, since OA rows whose street is a bare number or a lone
+ * punctuation mark are parse noise. House number `"0"` is the dump's placeholder for "no number
+ * known".
  */
 function parseRow(row: CSVRecord): Address | null {
 	const num = row.NUMBER ?? ""
@@ -125,22 +114,17 @@ interface SampleOptions {
 	 */
 	target: number
 	/**
-	 * Sample each bucket uniformly across the whole stream rather than taking its first `perBucket` rows.
+	 * Sample each bucket uniformly across the whole stream. The default fill takes a bucket's rows from
+	 * wherever its key first appears in file order, so municipality-ordered dumps (OA CZ/PL)
+	 * concentrate every bucket on one city and under-disperse the localities the wrong-city metric
+	 * needs.
 	 *
-	 * The default fill takes a bucket's rows from wherever its key first appears in file order.
-	 * Municipality-ordered dumps (OA CZ/PL) therefore concentrate every bucket on one city,
-	 * which under-disperses the localities the wrong-city metric needs (#291).
-	 *
-	 * Reservoir mode costs a full pass.
-	 * Selection stays deterministic per seed and input order.
+	 * Reservoir mode costs a full pass. Selection stays deterministic per seed and input order.
 	 */
 	reservoir: boolean
 	rng: SeededRandom
 }
 
-/**
- * Bucket the stream, capping each bucket at `perBucket`.
- */
 async function collectBuckets(rows: AsyncIterable<CSVRecord>, opts: SampleOptions): Promise<Map<string, Address[]>> {
 	const buckets = new Map<string, Address[]>()
 	const seenPerBucket = new Map<string, number>()
@@ -201,8 +185,8 @@ function render(a: Address, order: Order): string {
 }
 
 /**
- * Flatten the buckets into eval rows, cycling the render order across the whole set
- * rather than within a bucket, so no region is rendered in one shape.
+ * Flatten the buckets into eval rows, cycling the render order across the whole set so no region is
+ * rendered in one shape.
  */
 function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<string, unknown>[] {
 	const rows: Record<string, unknown>[] = []
@@ -227,8 +211,6 @@ function toEvalRows(buckets: Map<string, Address[]>, country: string): Record<st
 
 	return rows
 }
-
-// #endregion
 
 const { values } = parseArguments({
 	options: {
@@ -273,7 +255,7 @@ async function* sourceRows(): AsyncIterable<CSVRecord> {
 
 const buckets = await collectBuckets(sourceRows(), {
 	perBucket: Number(values["per-bucket"]),
-	// Twice the target, so the shuffle has slack to draw a spread from rather than emitting the first n.
+	// Twice the target, so the shuffle has slack to draw a spread from.
 	target: n * 2,
 	reservoir: values.reservoir,
 	rng,

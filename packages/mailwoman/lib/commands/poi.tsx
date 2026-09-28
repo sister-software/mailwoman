@@ -74,7 +74,7 @@ type Options = OptionsOf<typeof spec>
  *
  * Lazy + optional: an absent gazetteer or an unbuilt `@mailwoman/resolver-wof-sqlite`
  * peer degrades to no resolver (today's pre-wiring behavior) rather than failing
- * the probe — a stderr note explains what's missing.
+ * the probe. A stderr note explains what's missing.
  * Caller owns closing the returned handle's backend lookup.
  */
 async function tryLoadResolver(options: Options): Promise<({ resolver: Resolver } & Disposable) | undefined> {
@@ -223,7 +223,8 @@ async function formatOutcome(outcome: POIIntentOutcome, options: Options): Promi
 async function runPOI(input: string, options: Options): Promise<string> {
 	const { createRuntimePipeline } = await import("#index")
 
-	// #1108: an attempted-but-failed encoder load is never silent — absent weights get an install hint, a corrupt bundle surfaces its underlying error. Stderr only. Stdout stays the probe output.
+	// An attempted-but-failed encoder load always reports its failure. Absent weights get an install
+	// hint, and a corrupt bundle surfaces its underlying error. Stderr only. Stdout stays the probe output.
 	const classifier = await loadClassifierTolerant(options.locale, { onDegrade: reportToStderr })
 	const resolverHandle = await tryLoadResolver(options)
 
@@ -266,7 +267,7 @@ const PoiCommand: ParsedCommandComponent<Options> = ({ options, args }) => {
 		return <CommandTaskResult state={state} running={<Spinner />} />
 	}
 
-	// --json dumps raw JSON — bypass Ink's word-wrapping <Text> renderer, which corrupts
+	// --json dumps raw JSON. Bypass Ink's word-wrapping <Text> renderer, which corrupts
 	// long lines at 80 cols when piped (see writeRawStdout).
 	if (options.json) {
 		return writeRawStdout(state.result)

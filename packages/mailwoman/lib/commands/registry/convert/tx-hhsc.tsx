@@ -4,8 +4,8 @@
  * @author Teffen Ellis, et al.
  *
  *   `mailwoman registry convert tx-hhsc` — convert the TX hhsc nursing-facilities TSV (which ships
- *   an authoritative `Geo Location` per facility) into the OaRow jsonl the resolver eval consumes
- *   (#619), so the geocoder can be graded against provided coordinates via
+ *   an authoritative `Geo Location` per facility) into the OaRow jsonl the resolver eval consumes,
+ *   so the geocoder can be graded against provided coordinates via
  *   `oa-resolver-eval --address-points`.
  */
 

@@ -7,12 +7,12 @@
  *
  *   Assemble a sampled, component-labeled Australian address set from the G-NAF (Geocoded National
  *   Address File) relational PSV distribution — joining ADDRESS_DETAIL → STREET_LOCALITY → locality
- *   and reservoir-sampling across states. Streams via the house `PSVSpliterator`; memory stays
+ *   and reservoir-sampling across states. Streams via the house `PSVSpliterator`. Memory stays
  *   bounded (the two lookup tables as Maps, the 16.9M address rows sampled in one pass).
  *
  *   The output jsonl is the input to the `gnaf` corpus adapter (`mailwoman corpus build`), which
- *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout
- *   (#208). `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
+ *   renders each tuple in multiple word orders to teach the model AU's postcode-first layout.
+ *   `--holdout` excludes the benchmark addresses by (street, locality, postcode) so the
  *   training database never overlaps the eval. Open G-NAF licence — attribute "Geoscape Australia".
  */
 
