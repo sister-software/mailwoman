@@ -35,10 +35,8 @@ export {
 export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl"
 
 /**
- * Row statuses.
- *
- * Only `pass` rows count toward the floors.
- * A `known_fail` row needs a repair, and an `improvement_target` row needs a new capability.
+ * Row statuses. Only `pass` rows count toward the floors; a `known_fail` row needs a repair, and an
+ * `improvement_target` row needs a new capability.
  */
 export const POI_BOARD_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 
@@ -53,8 +51,7 @@ export interface POIBoardFixture {
 	locale?: string
 	expect: POIBoardExpect
 	/**
-	 * Row status.
-	 * It defaults to `pass`.
+	 * Row status; defaults to `pass`.
 	 */
 	status?: POIBoardStatus
 	/**
@@ -66,8 +63,7 @@ export interface POIBoardFixture {
 	 */
 	rowRef?: string
 	/**
-	 * Authoring note.
-	 * The board does not grade it.
+	 * Authoring note; the board does not grade it.
 	 */
 	note?: string
 }
