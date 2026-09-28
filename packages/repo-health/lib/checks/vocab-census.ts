@@ -4,10 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file Classifies every `Mailwoman.AmbiguousShorthand` hit by the action it needs and reports each as a diagnostic.
  *
- *   The three actions rise in cost. An interface-tied name keeps its spelling and needs only backticks, because Vale
- *   skips inline code. A modified reference has the check's real name in the preceding word, so `street-context gate`
- *   becomes "the street-context check". A bare reference needs a reader to work out the meaning from the surrounding
- *   paragraph.
+ *   The three remedies rise in cost: an interface-tied name keeps its spelling and needs only backticks, a
+ *   modified reference names the check in the preceding word, and a bare reference needs the reader to work out the
+ *   meaning from the paragraph.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -26,10 +25,8 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Matches a line that contains an interface-tied name, which keeps its spelling and needs only backticks.
- *
- * The pattern matches no line because no interface-tied identifier currently contains a banned word.
- * A new name added here needs its reason recorded in `AmbiguousShorthandCode.yml`.
+ * Matches an interface-tied name, which keeps its spelling and needs only backticks; the pattern currently matches
+ * no line, and a new name added here needs its reason recorded in `AmbiguousShorthandCode.yml`.
  */
 const INTERFACE_TOKEN = /(?!)/
 
@@ -56,15 +53,14 @@ export interface Hit {
 	word: string
 	remedy: Remedy
 	/**
-	 * The word immediately before the hit.
-	 * It identifies the intended check when it carries meaning.
+	 * The word immediately before the hit, which identifies the intended check when it carries meaning.
 	 */
 	modifier: string
 }
 
 /**
- * Preceding words that carry no meaning, such as articles, pronouns and comment markers.
- * A hit after one of them is a bare reference.
+ * Preceding words that carry no meaning, such as articles, pronouns, and comment markers; a hit after one is a
+ * bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
 	"the",
@@ -105,17 +101,14 @@ const EMPTY_MODIFIERS = new Set([
 ])
 
 /**
- * The number of lines on each side of Vale's reported line to search for the matched word.
- *
- * Empty `//` comment lines shift Vale's reported line numbers.
- * The census searches this window to find the real line for the modifier and the diagnostic.
+ * The number of lines on each side of Vale's reported line to search for the matched word, because empty `//`
+ * comment lines shift Vale's reported line numbers.
  */
 const LINE_DRIFT_WINDOW = 3
 
 /**
- * Finds the line nearest to Vale's reported line that contains `word`.
- *
- * It falls back to the reported line when the window does not contain the word, so no hit is dropped.
+ * Finds the line nearest to Vale's reported line that contains `word`, falling back to the reported line when the
+ * window does not contain it so no hit is dropped.
  */
 function locate(
 	lines: readonly string[],
@@ -143,10 +136,8 @@ function locate(
 }
 
 /**
- * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines.
- *
- * The function is pure, so tests pass their cases inline.
- * A wrong line offset can mislabel a hit's action, but it cannot drop the hit.
+ * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines; the function
+ * is pure, and a wrong line offset can mislabel a hit's action but cannot drop the hit.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []
@@ -177,10 +168,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Returns the banned word that a match belongs to.
- *
- * The search covers the whole token because the code rule matches whole compounds,
- * where the banned word may not come first.
+ * Returns the banned word that a match belongs to, searching the whole token because the code rule matches whole
+ * compounds where the banned word may not come first.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 	const lower = word.toLowerCase()
@@ -200,9 +189,8 @@ export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
 
 /**
- * Runs Vale over every tracked source file and returns its `--output line` records.
- *
- * The census resolves Vale through the workspace, so it runs the same binary as `yarn lint:prose`.
+ * Runs Vale over every tracked source file and returns its `--output line` records, resolving Vale through the
+ * workspace so it runs the same binary as `yarn lint:prose`.
  */
 async function collectHits(context: RepoContext): Promise<string[]> {
 	const root = context.repoRoot
@@ -211,17 +199,13 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 		relative(root, path)
 	)
 
-	// The enforcing config exempts the Vale fixtures.
-	// The census config includes them so the positive control can trip.
-	// Knip cannot see the `@vvago/vale` specifier passed to the resolver,
-	// so `knip.json` marks that devDependency as used.
+	// The census config includes the Vale fixtures the enforcing config exempts, so the positive control can trip.
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
-	// Vale must run from the repo root because the paths are repo-relative.
-	// From another directory it resolves no files and exits 0.
-	// Vale exits non-zero when it reports alerts, so a process error carries the expected output.
-	// Any other error is rethrown so it cannot read as zero hits.
+	// Vale must run from the repo root because the paths are repo-relative, and a process error carries the expected
+	// output since Vale exits non-zero when it reports alerts, while any other error is rethrown rather than read as
+	// zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -237,15 +221,12 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * A permanent fixture that must always produce hits.
- *
- * It distinguishes a clean tree from a run that resolved no files.
+ * A permanent fixture that must always produce hits, distinguishing a clean tree from a run that resolved no files.
  */
 const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
 /**
- * Path prefixes whose hits do not count, each with the reason.
- * These files spell the banned words as data.
+ * Path prefixes whose hits do not count, each with the reason; these files spell the banned words as data.
  */
 const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 	["config/vale/fixtures/", "the rule's own fixtures; the dirty one must keep failing forever"],
@@ -256,10 +237,8 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 ]
 
 /**
- * The `vocab-census` check.
- *
- * It reports one error for each ambiguous-shorthand hit outside {@link UNMEASURED},
- * with the action the hit needs.
+ * The `vocab-census` check: one error for each ambiguous-shorthand hit outside {@link UNMEASURED}, with the action
+ * the hit needs.
  */
 export const vocabCensusCheck: RepoCheck = {
 	id: "vocab-census",

@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Organization-name canonicalization — reduce a company name to a stable, comparable key.
- *
- *   Removes legal designations and normalizes DBA clauses, punctuation, accents, connectives, and a
- *   leading article. Jurisdiction adds legal forms. domain protection prevents ambiguous terms from
- *   being stripped.
+ *   Organization-name canonicalization: removes legal designations and normalizes DBA clauses, punctuation,
+ *   accents, connectives, and a leading article, with jurisdiction adding legal forms and domain protection
+ *   keeping ambiguous terms from being stripped.
  */
 
 import { foldForKey } from "@mailwoman/codex/address-key"
@@ -35,54 +33,31 @@ export interface OrganizationName {
 }
 
 /**
- * A domain pack name.
- *
- * Each guards the abbreviations that are meaningful in that domain from being
- * stripped as legal forms (see {@link DOMAIN_PROTECTED}).
- * `general` guards no form — the explicit "no domain" choice.
- *
- * Add a pack here (and to {@link DOMAIN_PROTECTED}) per ingest domain.
+ * A domain pack name: each guards the abbreviations meaningful in that domain from being stripped as legal
+ * forms, and `general` guards no form.
  */
 export type DesignationDomain = "general" | "healthcare"
 
 /**
- * Context for {@link canonicalizeOrganizationName}.
- *
- * Omit both fields for the universal base behavior.
+ * Context for {@link canonicalizeOrganizationName}; omit both fields for the universal base behavior.
  */
 export interface CanonicalizeOptions {
 	/**
-	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction (typically the resolved address country).
-	 *
-	 * Adds that country's legal forms — including collision-prone ones held out
-	 * of the base — to the strip-set.
-	 * Case-insensitive.
-	 * Unknown codes add no pack.
+	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that country's legal forms to the
+	 * strip-set; case-insensitive, and unknown codes add no pack.
 	 */
 	jurisdiction?: string
 	/**
-	 * Ingest domain.
-	 *
-	 * Guards domain-meaningful abbreviations (e.g. `healthcare` guards `pt` / `sca` / `scs`)
-	 * from being stripped, overriding any jurisdiction pack that would add them.
+	 * Ingest domain, which guards domain-meaningful abbreviations (e.g. `healthcare` guards `pt` / `sca` / `scs`)
+	 * from being stripped, overriding any jurisdiction pack.
 	 */
 	domain?: DesignationDomain
 }
 
 /**
- * Universal legal-entity designations.
- *
- * The forms that are safe to strip regardless of jurisdiction or domain
- * because they don't collide with common domain abbreviations.
- *
- * Normalized to lowercase with punctuation removed (so `L.L.C.` → `llc`).
- * Drawn from the ISO 20275 register + `cleanco`'s common set.
- *
- * Stripped as whole tokens wherever they occur.
- * Deliberately excludes name-meaningful words (`group`, `holdings`, `partners`, `associates`)
- * and the collision-prone forms (`pt`, `sca`, `scs`).
- *
- * Those last live in {@link JURISDICTION_DESIGNATIONS}, admitted only behind a known jurisdiction.
+ * Universal legal-entity designations, normalized to lowercase without punctuation and stripped as whole
+ * tokens; name-meaningful words and the collision-prone forms that live in
+ * {@link JURISDICTION_DESIGNATIONS} are deliberately absent.
  */
 const BASE_DESIGNATIONS = new Set([
 	"inc",
@@ -134,7 +109,7 @@ const BASE_DESIGNATIONS = new Set([
 	"doo",
 	"ood",
 	"ead",
-	// Belgian forms — safe to add to the base (no domain collision).
+	// Belgian forms, safe in the base because they collide with no domain.
 	"bvba",
 	"sprl",
 ])

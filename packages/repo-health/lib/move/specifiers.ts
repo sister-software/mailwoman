@@ -5,13 +5,8 @@
  * @file Where a replacement specifier comes from: the package's own `imports`/`exports` patterns for a mapped
  *   specifier, and the path arithmetic for a relative one.
  *
- *   Recomputing a path is the wrong operation. TypeScript's `getEditsForFileRename` recomputes, and on a corpus
- *   recipe move it answered `#lib/recipes/fr-fragment` for a test file that had written
- *   `@mailwoman/corpus/recipes/fr/fragment`: it changed the specifier's family — a public export subpath for a
- *   package-private `#` import — and the `#` form it minted resolves to `packages/corpus/lib/lib/recipes/…`, since
- *   the `#*` pattern already carries the `lib` segment. Both halves of that edit are refused here by construction. A
- *   mapped specifier is re-derived by running the same pattern that produced it, so a form the maps cannot express is
- *   a form this module cannot emit.
+ * A mapped specifier is re-derived by running the same pattern that produced it, so a form the maps cannot express is
+ * a form this module cannot emit.
  */
 
 import { dirname, relative } from "path-ts"
@@ -34,10 +29,7 @@ export interface PackageManifest {
  */
 export interface PackageSpecifiers {
 	/**
-	 * `#`-prefixed, from the package's `imports` map.
-	 *
-	 * Package-private.
-	 * A test file may not write one.
+	 * `#`-prefixed, from the package's `imports` map, and package-private so a test file may not write one.
 	 */
 	internal: string[]
 	/**
@@ -47,11 +39,7 @@ export interface PackageSpecifiers {
 }
 
 /**
- * The three ways a specifier can name a module here.
- *
- * The family decides who may write it — a `#` import is package-private,
- * a bare specifier is the public interface, a relative path is internal to a directory —
- * so a replacement never crosses from one to another.
+ * A replacement never crosses families, because the family decides who may write the specifier.
  */
 export const SpecifierFamily = {
 	Relative: "relative",
@@ -64,10 +52,8 @@ export type SpecifierFamily = (typeof SpecifierFamily)[keyof typeof SpecifierFam
 const SOURCE_EXTENSION = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * Which family a specifier belongs to.
- *
- * A replacement that changes family changes who is allowed to write it, so this is the
- * predicate a rewrite is filtered by rather than a description of one.
+ * A replacement that changes family changes who is allowed to write it, so this is the predicate a rewrite is
+ * filtered by rather than a description of one.
  */
 export function specifierFamily(specifier: string): SpecifierFamily {
 	if (specifier.startsWith(".")) return SpecifierFamily.Relative
@@ -77,10 +63,6 @@ export function specifierFamily(specifier: string): SpecifierFamily {
 	return SpecifierFamily.Bare
 }
 
-/**
- * Every target string a subpath map entry can carry: a string, a condition object,
- * or a fallback array of either.
- */
 function conditionTargets(value: unknown): string[] {
 	if (typeof value === "string") return [value]
 
@@ -92,10 +74,8 @@ function conditionTargets(value: unknown): string[] {
 }
 
 /**
- * The subpath key that names `target`, or no key when this entry does not match.
- *
- * A pattern entry substitutes exactly one `*`, as Node does: the target's text before and
- * after the star must bracket the path, and what is left in the middle is what the key's star becomes.
+ * A pattern entry substitutes exactly one `*`, as Node does: the target's text before and after the star must
+ * bracket the path, and the middle becomes the key's star.
  */
 function subpathKeyFor(key: string, target: string, packageRelative: string): string | undefined {
 	const star = target.indexOf("*")
@@ -121,10 +101,8 @@ function packageRelativeTarget(manifest: PackageManifest, file: string): string 
 }
 
 /**
- * Every specifier that names `file` under `manifest`'s own maps, in map order.
- *
- * `file` is repo-relative and so is `manifest.dir`; a file outside the package answers
- * an empty list, which is how a caller learns it asked the wrong package.
+ * Every specifier that names `file` under `manifest`'s own maps, where a file outside the package answers an empty
+ * list because both paths are repo-relative.
  */
 export function packageSpecifiersFor(manifest: PackageManifest, file: string): PackageSpecifiers {
 	const packageRelative = packageRelativeTarget(manifest, file)
@@ -161,11 +139,8 @@ export function packageSpecifiersFor(manifest: PackageManifest, file: string): P
 }
 
 /**
- * The relative specifier that reaches `target` from `containingFile`, both repo-relative.
- *
- * `keepExtension` mirrors what the specifier being replaced wrote.
- * Source in this repository runs under Node's type stripping, so a relative import carries an
- * explicit `.ts`; a rewrite that dropped it would break the running form and typecheck anyway.
+ * The relative specifier that reaches `target` from `containingFile`, with `keepExtension` mirroring the replaced
+ * specifier because a relative import carries an explicit `.ts` under Node's type stripping.
  */
 export function relativeSpecifier(containingFile: string, target: string, keepExtension: boolean): string {
 	const path: string = relative(dirname(containingFile), target)
@@ -182,11 +157,8 @@ export function hasSourceExtension(specifier: string): boolean {
 }
 
 /**
- * Candidates ordered by how little they change: the one sharing the longest prefix with
- * the specifier being replaced comes first, and a shorter specifier wins a tie.
- *
- * Ordering decides which proven candidate is written, so it is the difference between
- * `#recipes/fr/order` and a technically-correct `#recipes/fr/order.ts` that no sibling line resembles.
+ * Candidates ordered so the one sharing the longest prefix with the specifier being replaced comes first and a
+ * shorter specifier wins a tie, since ordering decides which proven candidate is written.
  */
 export function orderByLikeness(specifier: string, candidates: readonly string[]): string[] {
 	const sharedPrefix = (candidate: string): number => {
