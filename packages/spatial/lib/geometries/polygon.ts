@@ -10,29 +10,10 @@ import type { GeoObjectLiteral } from "#objects"
 
 /**
  * An array of positions forming a closed shape, such as a country or a lake.
- *
- * @example
- * 	A polygon without holes:
- *
- * 	```json
- * 	{
- * 	"type": "Polygon",
- * 	"coordinates": [
- * 	[
- * 	[100, 0],
- * 	[101, 0],
- * 	[101, 1],
- * 	[100, 1],
- * 	[100, 0]
- * 	]
- * 	]
- * 	}
- * 	```
  */
 export type SolidPolygonPath = [
 	/**
-	 * - A linear ring is a closed LineString with four or more positions.
-	 * - The first and last positions are equivalent (they represent equivalent points).
+	 * A linear ring is a closed LineString with four or more positions.
 	 */
 	exteriorRing: LineStringPath,
 ]
@@ -40,50 +21,17 @@ export type SolidPolygonPath = [
 /**
  * An array of positions forming a closed shape with holes, such as a country
  * with islands or a lake with islands.
- *
- * @example
- * 	A polygon with holes:
- *
- * 	```json
- * 	{
- * 	"type": "Polygon",
- * 	"coordinates": [
- * 	[
- * 	[100.0, 0.0],
- * 	[101.0, 0.0],
- * 	[101.0, 1.0],
- * 	[100.0, 1.0],
- * 	[100.0, 0.0]
- * 	],
- * 	[
- * 	[100.8, 0.8],
- * 	[100.8, 0.2],
- * 	[100.2, 0.2],
- * 	[100.2, 0.8],
- * 	[100.8, 0.8]
- * 	]
- * 	]
- * 	}
- * 	```
  */
 export type NestedPolygonPath = [
 	/**
-	 * - A linear ring is a closed LineString with four or more positions.
-	 * - The first and last positions are equivalent (they represent equivalent points).
+	 * A linear ring is a closed LineString with four or more positions.
 	 */
 	exteriorRing: LineStringPath,
-	/**
-	 * - The interior rings are arrays of positions forming holes in the polygon.
-	 */
 	...interiorRings: LineStringPath[],
 ]
 
 /**
  * A polygon geometry.
- *
- * @see {@linkcode PolygonLiteral} for applicable JSON schema.
- * @see {@linkcode SolidPolygonPath} for more information.
- * @see {@linkcode NestedPolygonPath} for more information.
  */
 export type PolygonPath = SolidPolygonPath | NestedPolygonPath
 
@@ -91,17 +39,7 @@ export type PolygonPath = SolidPolygonPath | NestedPolygonPath
  * An array of positions forming a closed shape, such as a country or a lake.
  */
 export interface PolygonLiteral<P extends PolygonPath = PolygonPath> extends GeoObjectLiteral {
-	/**
-	 * Declares the type of GeoJSON object as a `Polygon` geometry.
-	 */
 	type: "Polygon"
-	/**
-	 * An array of positions for each point in the geometry.
-	 *
-	 * @see {@link https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.6 | RFC 7946 Section 3.1.6}
-	 * @see {@linkcode SolidPolygonPath}
-	 * @see {@linkcode NestedPolygonPath}
-	 */
 	coordinates: P
 }
 
@@ -117,29 +55,19 @@ export function isPolygonLiteral<P extends PolygonPath = PolygonPath>(input: unk
 /**
  * Predicate for checking if a polygon geometry is a solid, i.e. it has no holes.
  */
-// The parameter admits both paths because distinguishing them is the function's job:
-// defaulted to `SolidPolygonPath`, it cannot be asked about a polygon with holes
-// without the caller asserting past the signature.
+// The parameter admits both paths because distinguishing them is the function's job.
 export function isSolidPolygonPath(input: PolygonLiteral<PolygonPath>): boolean {
 	return input.coordinates.length === 1
 }
 
 /**
- * A linear ring as the containment predicates read it: positions of `[lon, lat, …]`.
- *
- * Deliberately looser than {@link LineStringPath}.
- * The ray cast only ever indexes `[0]` and `[1]`, and the callers arrive with different
- * position types (`[number, number, ...number[]]` from the resolver's GeoJSON reader,
- * plain `number[][]` from a `JSON.parse` of a stored geometry column).
- *
- * A tight tuple type here would force a cast at every call site and add no information the predicate uses.
+ * A linear ring as the containment predicates read it, deliberately looser than
+ * {@link LineStringPath} because callers arrive with different position types.
  */
 export type ContainmentRing = readonly (readonly number[])[]
 
 /**
  * One polygon's rings: `[exterior, ...holes]`.
- *
- * A `Polygon`'s `coordinates`, read loosely (see {@linkcode ContainmentRing}).
  */
 export type PolygonRings = readonly ContainmentRing[]
 
@@ -150,13 +78,8 @@ export type PolygonRings = readonly ContainmentRing[]
 export type MultiPolygonRings = readonly PolygonRings[]
 
 /**
- * Ray-cast a point against one linear ring — the even-odd crossing count.
- *
- * Shoot a ray along +lon and toggle on every edge crossing.
- *
- * Points exactly on an edge are implementation-defined.
- * Either side is acceptable for geocoding, where admin boundaries are
- * Douglas-Peucker–simplified before they ever reach us.
+ * Ray-cast a point against one linear ring — the even-odd crossing count, with
+ * points exactly on an edge left implementation-defined.
  */
 export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {
 	let inside = false
@@ -177,12 +100,8 @@ export function pointInRing(lon: number, lat: number, ring: ContainmentRing): bo
 }
 
 /**
- * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`).
- *
- * Being inside an odd number of rings means inside the polygon, which handles holes —
- * and islands inside holes — without depending on ring winding order.
- * GeoJSON nominally specifies orientation, but the gazetteer sources do not reliably
- * honour it, so the orientation-free rule is the one that survives real data.
+ * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`), independent
+ * of ring winding order because the gazetteer sources do not honour it reliably.
  */
 export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): boolean {
 	let inside = false
@@ -213,33 +132,19 @@ export function pointInMultiPolygon(
 export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extends GeoObjectLiteral {
 	type: "MultiPolygon"
 
-	/**
-	 * One ring array per polygon — `coordinates[polygon][ring][position]`,
-	 * matching a `Polygon`'s `coordinates` lifted by exactly one level.
-	 *
-	 * @see {@link https://datatracker.ietf.org/doc/html/rfc7946#section-3.1.7 | RFC 7946 Section 3.1.7}
-	 */
 	coordinates: P[]
 }
 
-// #region Ring-list geometry — the parsed-GeoJSON shape
 
 /**
- * A geometry as it arrives from `JSON.parse`, or a typed literal.
- *
- * No validation has checked the arity of a position and `type` is whatever the source wrote,
- * so a reader narrows on `type` and casts `coordinates` — {@linkcode arealPolygons}
- * is the one place that happens for the areal types.
+ * A geometry as it arrives from `JSON.parse`, or a typed literal, with `type`
+ * unchecked and no arity validation on `coordinates`.
  */
 export type ParsedGeometry = GeometryLiteral | { type: string; coordinates?: unknown }
 
 /**
- * A geometry's polygons in the `MultiPolygon` coordinate shape, whichever areal type it arrived as.
- *
- * `null` when the geometry is not areal (a Point or a LineString bounds no area).
- *
- * The one place a `Polygon` is lifted to `[rings]`; a caller that must refuse a
- * non-areal geometry does so on the `null`, with its own message.
+ * A geometry's polygons in the `MultiPolygon` coordinate shape, with a bare `Polygon`
+ * lifted to `[rings]` and `null` for any non-areal geometry.
  */
 export function arealPolygons(geometry: ParsedGeometry | null | undefined): MultiPolygonRings | null {
 	if (!geometry) return null
@@ -252,12 +157,8 @@ export function arealPolygons(geometry: ParsedGeometry | null | undefined): Mult
 }
 
 /**
- * The polygons of a geometry that must be areal — {@linkcode arealPolygons} with
- * the refusal every polygon ingest was writing for itself.
- *
- * @param subject Names the feature in the refusal, e.g. `feature 41209`.
- * @param context Names the calling ingest, so a build log says which layer stopped.
- * @throws {Error} When the geometry is neither a `Polygon` nor a `MultiPolygon`.
+ * The polygons of a geometry that must be areal, throwing when the geometry is not
+ * a `Polygon` or `MultiPolygon`.
  */
 export function requireArealPolygons(geometry: ParsedGeometry, subject: string, context: string): MultiPolygonRings {
 	const polygons = arealPolygons(geometry)
@@ -268,18 +169,8 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
 }
 
 /**
- * Does an areal GeoJSON geometry contain the point?
- *
- * The three-valued return is the point of the function.
- * `null` means the geometry is not areal — a Point or a LineString cannot contain anything — and a
- * caller must read that as "no polygon on record", the same as a missing geometry, never as a rejection.
- *
- * Collapsing it to `false` is how a place with a point-only record gets excluded from
- * a containment pass instead of falling through to the approximate path.
- *
- * `scripts/eval/pip-containment.py` grades the same containment truth against its
- * own ray cast and has to be matched BY hand if this one changes.
- * It is the one copy no import can reach.
+ * Does an areal GeoJSON geometry contain the point, returning `null` for a non-areal
+ * geometry rather than `false`.
  */
 export function geometryContains(
 	geometry: ParsedGeometry | null | undefined,
@@ -294,16 +185,8 @@ export function geometryContains(
 }
 
 /**
- * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order
- * and counter-clockwise — the exterior winding.
- *
- * Shared because the winding is A convention and A second copy is A second place FOR IT TO drift.
- * Three layer builders hand-build rectangles for their fixture rungs, and each
- * pairs this with {@link reversedRing} to make a hole.
- *
- * A copy whose hole is wound the same way as its exterior produces a fixture that
- * passes every structural check and tests no aspect of hole handling, which is the
- * exact failure the area cross-check exists to catch in production data.
+ * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and
+ * counter-clockwise.
  */
 export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
 	return [
@@ -327,5 +210,3 @@ export function reversedRing(minLon: number, minLat: number, maxLon: number, max
 		[minLon, minLat],
 	]
 }
-
-// #endregion

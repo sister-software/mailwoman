@@ -115,7 +115,6 @@ describe("ImportanceIndex.find", () => {
 
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.05, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Zürich", "CH", "locality", 47.3769 + 0.5, 8.5417)).toBeNull()
-		// Sanity on the constant the two cases straddle.
 		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeGreaterThan(5.6)
 		expect(IMPORTANCE_JOIN_RADIUS_KM).toBeLessThan(55)
 	})
@@ -123,8 +122,6 @@ describe("ImportanceIndex.find", () => {
 	test("the key is the SHARED fold — diacritics and non-Latin scripts reach their scores", () => {
 		const index = loadImportanceIndex(sourcePath)
 
-		// "Zurich" and "Zürich" fold to the same key.
-		// Cyrillic survives the fold intact.
 		expect(index.find("Zurich", "CH", "locality", 47.3769, 8.5417)).toBeCloseTo(0.6216, 4)
 		expect(index.find("Москва", "RU", "locality", 55.7558, 37.6173)).toBeCloseTo(0.953, 4)
 	})
@@ -141,7 +138,6 @@ describe("ImportanceIndex.find", () => {
 
 		expect(index.find("Whitby", "US", "locality", 54.4796, -0.6251)).toBeNull()
 		expect(index.find("Nowhereton", "US", "locality", 0, 0)).toBeNull()
-		// An empty-folding name can't be keyed either, and must not throw.
 		expect(index.find("  ", "US", "locality", 0, 0)).toBeNull()
 	})
 })
