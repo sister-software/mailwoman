@@ -3,11 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the #1042 street-centroid tier: the shared `stripArrondissement` folder and the
- *   `StreetCentroidSqliteLookup` reader. Seeds a temp-file `street_centroid` fixture (the schema the
- *   `ban/scripts/build-street-centroid-extract.ts` roll-up writes) and asserts postcode-scope probing,
- *   base-commune probing, arrondissement folding, the cross-row weighted centroid aggregate, the
- *   extent-derived uncertainty, and the exact-match miss.
+ * Tests for the street-centroid tier: the shared `stripArrondissement` folder and the
+ * `StreetCentroidSqliteLookup` reader.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -126,7 +123,6 @@ describe("StreetCentroidSqliteLookup", () => {
 				max_lon: 4.851,
 				point_count: 30,
 			},
-			// A plain non-arrondissement commune.
 			{
 				street_norm: "cours de lintendance",
 				postcode: "33000",
@@ -159,8 +155,6 @@ describe("StreetCentroidSqliteLookup", () => {
 	})
 
 	it("probes by base commune, folding a query arrondissement, and WEIGHTED-aggregates across rows", () => {
-		// (10 @ 4.83 + 30 @ 4.85) / 40 = 4.845.
-		// The point-count-weighted centroid rather than the plain mean 4.84.
 		const hit = lookup.find({ street: "Place Bellecour", locality: "Lyon 2e Arrondissement" })
 		expect(hit).not.toBeNull()
 		expect(hit!.lon).toBeCloseTo(4.845, 4)
@@ -168,7 +162,6 @@ describe("StreetCentroidSqliteLookup", () => {
 	})
 
 	it("folds the FR street normalizer on both sides (apostrophe/accents)", () => {
-		// "Cours de l'Intendance" and its normalized key agree by construction.
 		expect(lookup.find({ street: "cours de l'intendance", locality: "Bordeaux" })).not.toBeNull()
 	})
 
