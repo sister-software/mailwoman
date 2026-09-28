@@ -3,45 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which WOF place does a Wikidata id actually mean? (#1497)
+ * Which WOF place does a Wikidata id actually mean?
  *
- *   the defect. `gazetteer importance` joins Nominatim's Wikipedia importance onto WOF through the
- *   `concordances` table, and that join is not a function: on the 2026-08-04 admin DB, **7,061
- *   Wikidata ids name more than one current WOF place**, covering 15,216 places. Every one of them
- *   received the same importance. Population importance could never do this — population is a
- *   property of the WOF row and cannot be misjoined — so the defect arrives with the Wikipedia
- *   signal, and it arrives large: `Q1874` (Odessa, ukraine) put 0.7138 on a 104-person Minnesota
- *   village, outranking Odessa, Texas (pop 114,000) at 0.5840. `neural/fst-prior.ts` makes the bias
- *   linear in importance, so a bad join is not a rounding error, it is near-maximum decode bias on
- *   the wrong place.
+ * `gazetteer importance` joins Wikipedia importance onto WOF through `concordances`, and that join
+ * is not a function: one Wikidata id can name several current WOF places, all of which receive the
+ * same score, and the FST bias is linear in importance. The rule is coincident → keep all, else
+ * decisive population → keep the winner, else drop, with coincidence checked first because WOF does
+ * not populate every role's row.
  *
- *   why not just drop every fanned-OUT ID. Because measuring first showed that most of the fan-out is
- *   not an error at all. Of the 7,061 groups:
- *
- *   - **5,044 (71.4%, 10,186 places) are coincident** — one real place that WOF models at several
- *     placetypes at one point. `Q61` is region "District of Columbia" + locality "Washington" +
- *     county "District of Columbia", all at 38.9047/-77.0163 with the same population. Dropping
- *     those would delete the importance of every city-state and consolidated city-county in the
- *     gazetteer.
- *   - **1,619 (22.9%) are population-resolvable** — genuinely different places, one decisively
- *     larger. `Q18125` (Manchester, England) is also on Manchester, Pennsylvania (2,788) and
- *     Manchester, Minnesota (53); 547,627 wins.
- *   - **398 (5.6%, 1,009 places) are unresolvable** — no population signal or a tie between distant
- *     candidates. `Q340` (Montréal, Canada) sits on two French communes 182 km apart, neither with a
- *     population row. No field here says which, and both are wrong, so the id goes.
- *
- *   So the rule is: **coincident → keep all. else decisive population → keep the winner. else drop.**
- *   Net effect 3,411 places lose a wrong score and fall back to the population proxy, while 10,186
- *   legitimate multi-role rows keep theirs.
- *
- *   order matters: coincidence is checked before population. WOF does not populate every role's row,
- *   so a city-state whose region row has population 0 would otherwise lose that row to its own
- *   locality.
- *
- *   what this does not FIX. A wrong concordance with fan-out of one is invisible here — `Q1874` above
- *   is exactly that shape, a single bad edge, and it survives this guard. Catching those needs
- *   evidence this table does not carry (the TSV has only language/type/title/importance/wikidata_id —
- *   no geography), so it is a separate problem and not silently folded in.
+ * A wrong concordance with fan-out of one is invisible here: catching it needs evidence the TSV does
+ * not carry.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -55,10 +26,8 @@ export interface FanoutCandidate {
 	lat: number
 	lon: number
 	/**
-	 * WOF population, or 0 when the place has no `place_population` row.
-	 *
-	 * Zero means absent, never "a population of nobody" — {@link resolveConcordanceFanout}
-	 * refuses to treat it as a winner.
+	 * WOF population, or 0 when the place has no `place_population` row;
+	 * zero means absent, never a population of nobody.
 	 */
 	population: number
 }
@@ -66,33 +35,25 @@ export interface FanoutCandidate {
 export interface FanoutResolution {
 	verdict: "single" | "coincident" | "population" | "unresolvable"
 	/**
-	 * The place ids that keep this id's Wikipedia importance.
-	 *
-	 * Empty on `unresolvable`.
+	 * The place ids that keep this id's Wikipedia importance; empty on `unresolvable`.
 	 */
 	keep: number[]
 }
 
 /**
- * How close candidates must be to read as one place modelled several times,
- * rather than as different places sharing a Wikidata id.
+ * How close candidates must be to read as one place modelled several times
+ * rather than different places sharing a Wikidata id.
  *
- * Measured rather than guessed.
- * Intra-group max spread across the 7,061 fanned-out groups: p10 0.12 km, p25 0.91,
- * p50 2.61, p75 5.80, p90 35.84, max 8,848.
- *
- * The distribution has a knee here — 5,044 groups sit at ≤5 km and only 1,168 more appear by 25 km —
- * so 5 km separates "the same settlement described twice" from "two towns with one article between them".
- * Frankfurt's city/neighbourhood pair at 12 km falls outside deliberately:
- * they are different places, and population picks the city.
+ * Intra-group max spread across the 7,061 fanned-out groups: p50 2.61 km, p75 5.80,
+ * p90 35.84, with 5,044 groups at ≤5 km and only 1,168 more appearing by 25 km,
+ * so the distribution has a knee at 5 km.
  */
 export const FANOUT_SPREAD_EPSILON_KM = 5
 
 /**
- * Decide which of `candidates` may carry the Wikidata id's importance.
- *
- * Pure and total: a single candidate passes straight through, and every multi-candidate
- * group lands in exactly one of the three branches documented in the module header.
+ * Decide which of `candidates` may carry the Wikidata id's importance; pure
+ * and total, a single candidate passes straight through and every multi-candidate
+ * group lands in exactly one of the module's branches.
  */
 export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[]): FanoutResolution {
 	if (candidates.length <= 1) {
@@ -121,9 +82,8 @@ export function resolveConcordanceFanout(candidates: readonly FanoutCandidate[])
 	const top = sorted[0]!
 	const runnerUp = sorted[1]!
 
-	// A zero maximum is an absent population rather than a small one.
-	// A tie is not evidence.
-	// Either way, picking a winner would be picking by row order.
+	// A zero maximum is an absent population rather than a small one, and a tie is not evidence,
+	// so picking a winner either way would be picking by row order.
 	if (top.population > 0 && top.population > runnerUp.population) {
 		return { verdict: "population", keep: [top.id] }
 	}
@@ -153,10 +113,7 @@ export function emptyFanoutStats(): FanoutStats {
 }
 
 /**
- * Fold one group's resolution into `stats`.
- *
- * Singletons are not counted.
- * They are not fan-out.
+ * Fold one group's resolution into `stats`; singletons are not fan-out and are not counted.
  */
 export function recordFanout(
 	stats: FanoutStats,

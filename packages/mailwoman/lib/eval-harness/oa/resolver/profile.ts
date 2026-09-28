@@ -5,7 +5,7 @@
  * @file Wall-time attribution for one OA resolver run, written beside the run rather than into it.
  *
  *   The promotion comparator reads every file under a promotion output directory byte-for-byte, and a timing number
- *   differs between two runs of the same artifact. So a profile path must name somewhere outside that directory, and a
+ *   differs between two runs of the same artifact; so a profile path must name somewhere outside that directory, and a
  *   run that passes no path writes no file.
  */
 
@@ -45,10 +45,9 @@ function round(ms: number): number {
 }
 
 /**
- * Write one run's attribution, or no file when `path` is empty.
- *
- * A row that throws inside `neural.parse` contributes to neither per-row total,
- * so `parse_ms + resolve_ms` is a floor on the loop rather than its total.
+ * Write one run's attribution, or no file when `path` is empty; a row that throws inside
+ * `neural.parse` contributes to neither per-row total, so `parse_ms + resolve_ms`
+ * is a floor on the loop rather than its total.
  */
 export async function writeRunProfile(path: string, facts: RunProfileFacts): Promise<void> {
 	if (!path) return

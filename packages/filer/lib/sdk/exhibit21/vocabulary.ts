@@ -2,37 +2,25 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The vocabulary an SEC Exhibit 21 filing states about its own columns and rows.
  *
- *   Every label, pattern and predicate here is US SEC filing vocabulary — "state or other jurisdiction of
- *   incorporation" is a phrase from a disclosure form rather than a fact about html tables. It sits in `@mailwoman/filer`
- *   beside the parser that reads it, and the generic grid machinery it is applied to sits in
- *   `@mailwoman/core/html/tables` with no knowledge of any of it.
- *
- *   `carriesLegalDesignation` is why this separation is required rather than tidy: it reaches
- *   `@mailwoman/record`. It depends on `@mailwoman/formatter`, which depends on `@mailwoman/core`. Therefore, the same
- *   predicate inside core closes an import cycle across three packages.
+ * Every label and predicate here is US SEC filing vocabulary rather than a fact about html tables;
+ * it lives in `@mailwoman/filer` because `carriesLegalDesignation` reaches `@mailwoman/record`, whose
+ * dependency on `@mailwoman/formatter` and `@mailwoman/core` would close an import cycle inside core.
  */
 
 import { canonicalizeOrganizationName } from "@mailwoman/record"
 
 /**
- * Matches a cell value made only of punctuation and whitespace.
- *
- * A decorative rule row (`"----"`, `"======="`), which no legal entity name can be.
+ * Matches a cell value made only of punctuation and whitespace, which no legal entity
+ * name can be (a decorative rule row such as `"----"` or `"======="`).
  */
 const DECORATIVE_ONLY_PATTERN = /^[^a-z0-9]*$/i
 
-/**
- * Matches any letter or digit — tests whether a value carries real text at all.
- */
 const LETTER_OR_DIGIT_PATTERN = /[a-z0-9]/i
 
 /**
- * Column labels that name a jurisdiction column.
- *
- * Exactly one of these in a header row is what licenses a column mapping.
- * The document says which column means what, so reading it is not guessing.
+ * Column labels that name a jurisdiction column; exactly one of these in a
+ * header row licenses a column mapping.
  */
 export const JURISDICTION_HEADER_LABELS = new Set<string>([
 	"jurisdiction",
@@ -59,11 +47,9 @@ export const JURISDICTION_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Column labels that name a column which is neither the entity name nor its jurisdiction.
- * A trade name, an ownership percentage, a tax ID.
- *
- * A column mapping skips these when picking the name column, and every one of
- * them is also a header label in its own right.
+ * Column labels that name a column which is neither the entity name
+ * nor its jurisdiction, such as a trade name, an ownership percentage, or a tax ID;
+ * a column mapping skips these when picking the name column.
  */
 export const OTHER_HEADER_LABELS = new Set<string>([
 	"% of ownership",
@@ -82,8 +68,7 @@ export const OTHER_HEADER_LABELS = new Set<string>([
 
 /**
  * Column labels that name the entity name column, plus the section headings
- * and document titles edgar filings state as a `<td>` row of their own
- * ("Domestic Subsidiaries", "Subsidiaries of the Registrant").
+ * and document titles edgar filings state as a `<td>` row of their own.
  */
 const NAME_HEADER_LABELS = new Set<string>([
 	"name",
@@ -107,9 +92,6 @@ const NAME_HEADER_LABELS = new Set<string>([
 	"registrant",
 ])
 
-/**
- * Every label a header row may use: jurisdiction, name and 'other' labels.
- */
 const KNOWN_HEADER_LABELS = new Set<string>([
 	...JURISDICTION_HEADER_LABELS,
 	...OTHER_HEADER_LABELS,
@@ -117,16 +99,9 @@ const KNOWN_HEADER_LABELS = new Set<string>([
 ])
 
 /**
- * Recognizes a row/line as a document header or pure-decoration row rather than a
- * data row — deliberately not substring/keyword sniffing, which would misfire on a
- * company literally named e.g. "Subsidiary Holdings LLC".
- *
- * Two narrow checks, both applied to every non-blank value: pure decoration
- * (no letter or digit anywhere in it, which no legal entity name can be),
- * or an exact case-insensitive match against the short fixed list of literal
- * boilerplate phrases edgar Exhibit 21 filings actually use.
- * All-blank input is not a header/decoration row
- * (that is the empty-row/blank-name handling's job rather than this one's).
+ * Recognizes a row/line as a document header or pure-decoration row rather than a data row;
+ * the exact match rather than substring sniffing avoids misfiring on a company literally named
+ * e.g. "Subsidiary Holdings LLC", and an all-blank row is left to the empty-row handling.
  */
 export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 	const nonBlank = values.filter((value) => value !== "")
@@ -137,58 +112,25 @@ export function isHeaderOrDecorationRow(values: readonly string[]): boolean {
 }
 
 /**
- * A row whose first non-blank value is only a footnote marker — `(1)`, `[2]`, `3`, `*`, `***`.
- *
- * The row is the footnote's own text rather than a subsidiary: `widepoint-2025.htm`'s
- * second table is `[(1), "In January 2019, WidePoint Solutions Corp. Was merged into…"]`,
- * and `echostar-2025.htm`/`atn-international-2025.htm` state one such table per footnote.
- * Checked before any column mapping is consulted, so a footnote table trailing a
- * labelled list never inherits that list's mapping.
+ * Matches a row whose first non-blank value is only a footnote marker (`(1)`, `[2]`, `3`, `*`, `***`);
+ * checked before any column mapping so a footnote table never inherits a preceding list's mapping.
  */
 export const FOOTNOTE_MARKER_PATTERN = /^[([]?\d{1,3}[)\]]?$|^\*{1,3}$/
 
 /**
- * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited").
- *
- * `canonicalizeOrganizationName` (`@mailwoman/record`) returns a non-empty
- * `designations` array exactly then.
- * Verified against the corpus on 2026-08-03: `"IDT Payment Services, Inc*. (DE)"` →
- * `["inc"]`, while `"South Carolina"`, `"Delaware"`, `"British Columbia, Canada"`,
- * `"England and Wales"` and `"DE"` all → `[]`.
- *
- * Used by {@linkcode isMultiValueCell} and the name-over-name table rule to tell an entity
- * name from a place, never on its own, always alongside a second condition, because a
- * jurisdiction can carry one (Charter writes `"Delaware limited liability company"`).
+ * True when `value` carries a corporate legal designation ("Inc.", "LLC", "Limited"); used only
+ * alongside a second condition, because a jurisdiction can carry one (Charter writes `"Delaware
+ * limited liability company"`).
  */
 export function carriesLegalDesignation(value: string): boolean {
 	return (canonicalizeOrganizationName(value)?.designations.length ?? 0) > 0
 }
 
 /**
- * True when one cell holds several entity values the source kept in separate blocks.
- *
- * A split point with a complete legal entity name on both sides of it.
- * `ooma-2025.htm`'s last row is a single `<td>` holding five `<p>` blocks.
- *
- * Reading it as one string runs them together into
- * `"Trunking.IO, LLC FluentStream Corp. FluentStream Intermediate, LLC …"` against a jurisdiction of
- * `"Delaware Delaware Delaware Colorado Delaware"`, which is five fabricated claims rather than one.
- * Decision 6: the row states more than this parser can align, so it abstains.
- *
- * A block boundary alone is not enough, and this is the rule's whole difficulty: edgar's
- * Word/Workiva exporters also emit a soft line wrap as a block boundary, so `att-2025.htm`
- * states one name as `<div>Illinois Bell Telephone</div><div>&#160.&#160.Company, LLC</div>` —
- * text in both blocks, one entity.
- * What separates the two is that each half of a genuine multi-value cell is a
- * whole legal name carrying its own designation (`canonicalizeOrganizationName` —
- * `"Trunking.IO, LLC"` / `"FluentStream Corp. …"` both do), whereas a wrap splits one
- * name's designation off the front half (`"Illinois Bell Telephone"` carries none).
- *
- * Ten of AT&T's nineteen subsidiaries are stated on wrapped rows.
- *
- * Each side is cumulative rather than the adjacent block: a name may itself wrap
- * across two blocks, and the question is whether the cell can be split in two
- * rather than whether two neighbours happen to look complete.
+ * True when one cell holds several entity values the source kept in separate blocks;
+ * a block boundary alone is not enough because exporters emit soft line wraps as
+ * block boundaries, so both cumulative sides must carry their own legal designation
+ * before the cell reads as multiple entities.
  */
 export function isMultiValueCell(blocks: readonly string[]): boolean {
 	for (let split = 1; split < blocks.length; split++) {

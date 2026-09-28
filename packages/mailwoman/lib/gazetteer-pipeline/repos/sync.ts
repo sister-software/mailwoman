@@ -3,27 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Clone and refresh the WOF repos root through {@link resolveWOFRepoOrigin}, so a machine cannot quietly rebuild from
- *   upstream over a correction we depend on.
+ *   Clone and refresh the WOF repos root through {@link resolveWOFRepoOrigin}, so a machine cannot
+ *   quietly rebuild from upstream over a correction we depend on.
  *
- *   `repos-audit` reports what is on disk and `wof-repo-origin` answers where a repo should come from. No tool joined
- *   them, so the join happened by hand — and a hand-run clone is how the fork gets bypassed: the pull succeeds, the
- *   build succeeds, and the artifact silently loses every record the fork corrects. the directory is the recipe
- *   (`repos-audit`'s docstring explains why), so what lands here decides what the next build believes.
+ *   Split into a pure planner and an executor, so every refusal can be tested without a network or a
+ *   clone.
  *
- *   Split into a pure planner and an executor. Every refusal below is a decision about someone's working tree, and a
- *   decision worth making is worth testing without a network or a 2 GB clone.
- *
- *   Three things it will not do, each for a reason that has already cost something:
- *
- *   - **Never re-point a remote silently.** Changing `origin` changes what the next build ingests. A checkout aimed at
- *       upstream while a fork exists is reported, and re-pointing is a separate opt-in.
- *   - **Never touch a dirty tree or a clone carrying local commits.** Corrections are authored in these directories
- *       before they are pushed. a helpful `git reset` here destroys work that exists nowhere else.
- *   - **Never force a shallow clone forward.** Every WOF checkout in the lab is `--depth 1`, which is not merely small:
- *       `git show <commit> --name-status` on one reports every file as `A`. Therefore, a diff against it reads as "this commit
- *       added 72,679 files". The plan carries the shallowness so a reader knows the history they are about to consult
- *       is not there.
+ *   It never re-points a remote silently, never touches a dirty tree or one carrying local commits,
+ *   and never forces a shallow clone forward; the plan carries the shallowness because a shallow
+ *   checkout has no history to diff against.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -77,7 +65,6 @@ export type SyncAction = (typeof SyncAction)[keyof typeof SyncAction]
 /**
  * The observable state of one checkout.
  *
- * Every field is read, never inferred.
  * `undefined` means the question could not be answered here, which is different from a negative answer.
  */
 export interface CloneState {
@@ -119,9 +106,8 @@ export interface RepoSyncPlan {
  * Two remote URLs naming the same repository.
  *
  * GitHub is reachable as `ssh://git@github.com/org/repo`, `git@github.com:org/repo`
- * and `https://github.com/org/repo`, with or without a `.git` suffix.
- * Comparing the strings would report a re-point for a clone that is already correct,
- * and a spurious re-point prompt trains a reader to approve them.
+ * and `https://github.com/org/repo`, with or without a `.git` suffix; a string comparison
+ * would report a spurious re-point for a clone that is already correct.
  */
 export function sameRemote(a: string | undefined, b: string | undefined): boolean {
 	if (!a || !b) return false
@@ -140,14 +126,10 @@ export function sameRemote(a: string | undefined, b: string | undefined): boolea
 }
 
 /**
- * Decide what to do with one repo.
- * Pure: every input is already measured.
+ * Decide what to do with one repo; pure, every input is already measured.
  *
- * Order matters and encodes the priority.
- * Refusals come first, before the re-point question.
- *
- * A dirty tree is a reason to make no change at all, and reporting it as a re-point
- * candidate would invite exactly the action that loses the work.
+ * Order encodes the priority: refusals come before the re-point question, because reporting
+ * a dirty tree as a re-point candidate would invite the action that loses the work.
  */
 export function planRepoSync(origin: RepoOrigin, directory: string, state: CloneState): RepoSyncPlan {
 	const plan = (action: SyncAction, reason: string): RepoSyncPlan => ({
@@ -213,12 +195,9 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 		}
 	}
 
-	// Compared against origin's branch rather than `@{u}`.
-	// `git remote rename origin upstream` rewrites `branch.<name>.remote`, so after a re-point
-	// the tracked upstream is the remote we moved away from, and a clone sitting exactly level
-	// with its fork reports as carrying unpushed commits, which the planner then refuses to touch.
-	// Measured on the GB checkout the moment the re-point landed: `head...@{u}` answered `35 0`
-	// while `head` and `origin/master` were the same sha.
+	// Compared against origin's branch rather than `@{u}`: `git remote rename origin upstream`
+	// rewrites `branch.<name>.remote`, so after a re-point the tracked upstream is the remote we
+	// moved away from, and a clone level with its fork would report as carrying unpushed commits.
 	const branch = read(["rev-parse", "--abbrev-ref", "HEAD"])
 
 	const counts =
@@ -246,12 +225,9 @@ export async function inspectClone(directory: string): Promise<CloneState> {
 /**
  * Plan the sync for a set of repos without touching anything.
  *
- * `fetchFirst` updates remote-tracking refs so `behind` is measured against the
- * remote's actual tip rather than whatever this machine last heard.
- * Skipping it reports a stale clone as up-to-date, which is the failure the
- * whole command exists to prevent .
- *
- * Therefore, it defaults on, and turning it off is for offline inspection.
+ * `fetchFirst` updates remote-tracking refs so `behind` is measured against the remote's
+ * actual tip; skipping it would report a stale clone as up-to-date.
+ * It defaults on.
  */
 export async function planReposSync(options: {
 	repos: readonly string[]
@@ -263,7 +239,6 @@ export async function planReposSync(options: {
 
 	for (const repo of options.repos) {
 		const origin = await resolveWOFRepoOrigin(repo, options.probe)
-		// A string, because the plan records it.
 		const directory = options.directoryFor(repo).toString()
 
 		if (options.fetchFirst !== false && (await pathExists(directory))) {
@@ -271,9 +246,8 @@ export async function planReposSync(options: {
 				// Depth-preserving: a shallow clone stays shallow, and an unshallow one is not truncated.
 				git(directory, ["fetch", "--quiet", "origin"])
 			} catch {
-				// An unreachable remote is a state the plan reports through `behind: undefined`,
-				// not a reason to abort the whole sweep.
-				// One dead remote must not hide the other twelve repos' verdicts.
+				// An unreachable remote is reported through `behind: undefined` rather than aborting
+				// the whole sweep; one dead remote must not hide the other repos' verdicts.
 			}
 		}
 

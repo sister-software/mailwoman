@@ -4,20 +4,9 @@
  * @author Teffen Ellis, et al.
  * @file The US Census Bureau geocoder's JSON response, as this package consumes it.
  *
- *   the census geocoder is tiger with an http front door. Every match it returns is an interpolation
- *   along a tiger/Line address range — `tigerLine.tigerLineId` names the segment, `side` says which
- *   kerb, and `addressComponents.fromAddress`/`toAddress` are the range's endpoints. That is why the
- *   response types below are built almost entirely out of `@mailwoman/tiger`'s existing branded types
- *   (`FIPSBlockGeoID`, `TIGERClassCode`, `LegalStatisticalAreaDescription`, …) rather than fresh ones:
- *   the fields are tiger fields, and this package depends on `@mailwoman/tiger` rather than the
- *   reverse so the published package takes no dependency on an oracle client.
- *
- *   It also means {@linkcode CensusAddressMatch} can never be a rooftop geocode. See
- *   `census-parser.ts`'s tier note.
- *
- *   Ported from `isp-nexus/universe/mailwoman/sdk/census/index.ts`. Three shape corrections were made
- *   against the live API, each noted at the field it affects: the response envelope's nesting,
- *   the missing `preDirection` component, and the type of `matchedAddress`.
+ *   The Census geocoder is tiger with an http front door: every match is an interpolation along a
+ *   tiger/Line address range, so the response types are built from `@mailwoman/tiger`'s branded types and
+ *   this package depends on `@mailwoman/tiger` rather than the reverse.
  */
 
 import type {
@@ -47,41 +36,31 @@ import type {
  *
  * Benchmarks are re-issued twice yearly.
  *
- * A const object rather than an `enum` (the isp-nexus original used one) —
- * `erasableSyntaxOnly` is on repo-wide.
+ * A const object rather than an `enum`, because `erasableSyntaxOnly` is on repo-wide.
  */
 export const CensusBenchmarkName = {
 	/**
-	 * Public Address Ranges — Current Benchmark.
-	 *
-	 * The default: whatever mtdb extract is newest.
+	 * Public Address Ranges — Current Benchmark: the default, whatever mtdb extract is newest.
 	 */
 	Current: "Public_AR_Current",
-	/**
-	 * Public Address Ranges — ACS2023 Benchmark.
-	 */
 	ACS2023: "Public_AR_ACS2023",
 	/**
-	 * Public Address Ranges — Census 2020 Benchmark.
-	 *
-	 * The one to pair with the 2020 vintage.
+	 * Public Address Ranges — Census 2020 Benchmark, to pair with the 2020 vintage.
 	 */
 	Census2020: "Public_AR_Census2020",
 } as const
 
 /**
- * Which mtdb vintage the locator searches.
+ * The benchmark names a Census request can carry.
  */
 export type CensusBenchmarkName = (typeof CensusBenchmarkName)[keyof typeof CensusBenchmarkName]
 
 /**
  * Which geography vintage a `geographies/*` lookup reports blocks/tracts against.
  *
- * Benchmark and vintage must agree.
- * `Public_AR_Current` pairs with `Current_Current`, and `Public_AR_Census2020` with
- * `Census2020_Census2020`; a mismatched pair is rejected by the API.
- *
- * The client's two methods each pin a compatible pair rather than exposing them as independent knobs.
+ * Benchmark and vintage must agree — `Public_AR_Current` pairs with `Current_Current`
+ * and `Public_AR_Census2020` with `Census2020_Census2020` — and the client's two methods
+ * each pin a compatible pair rather than exposing them as independent knobs.
  */
 export const CensusVintageName = {
 	Current: "Current_Current",
@@ -89,7 +68,7 @@ export const CensusVintageName = {
 } as const
 
 /**
- * Which geography vintage a `geographies/*` lookup reports blocks/tracts against.
+ * The vintage names a `geographies/*` lookup can carry.
  */
 export type CensusVintageName = (typeof CensusVintageName)[keyof typeof CensusVintageName]
 
@@ -117,16 +96,9 @@ export interface CensusVintageMetadata {
  * The tiger/Line segment a match was interpolated along.
  */
 export interface CensusTigerLine {
-	/**
-	 * Which side of the segment the address falls on.
-	 */
 	side: "L" | "R"
 	/**
-	 * The tiger/Line segment identifier.
-	 *
-	 * Note the wire key is `tigerLineId` with a lowercase `d`.
-	 * A string interface, so the house acronym-casing rule does not apply to it.
-	 * The TS property name must match the wire.
+	 * The tiger/Line segment identifier, whose wire key is `tigerLineId` with a lowercase `d`.
 	 *
 	 * @pattern ^\d+$
 	 */
@@ -137,11 +109,10 @@ export interface CensusTigerLine {
 /**
  * The Census geocoder's decomposition of a matched street address.
  *
- * Every value comes back uppercase.
- * That is the provider's form (USPS Publication 28), not a normalization this package applies —
- * contrast `google-parser.ts`, which explicitly removed the original's uppercasing because it was ours.
+ * Every value comes back uppercase because that is the provider's form (USPS Publication 28),
+ * not a normalization this package applies.
  *
- * Seven slots, and mailwoman's `ComponentTag` vocabulary has four for the same span.
+ * Seven slots, and mailwoman's `ComponentTag` vocabulary has four for the same span;
  * `census-parser.ts` documents the fold.
  */
 export interface CensusAddressComponents {
@@ -151,10 +122,6 @@ export interface CensusAddressComponents {
 	preQualifier: string
 	/**
 	 * The directional preceding the street name — the `N` in `123 N Main St`.
-	 *
-	 * Absent from the isp-nexus interface, which listed `preType` but not this.
-	 * The live API returns it, so a US address with a pre-directional had that directional
-	 * silently dropped from every parse the original produced.
 	 */
 	preDirection: DirectionalAbbreviation | string
 	/**
@@ -178,9 +145,7 @@ export interface CensusAddressComponents {
 	 */
 	suffixQualifier: string
 	/**
-	 * The city, uppercase.
-	 *
-	 * `locality` in mailwoman's vocabulary.
+	 * The city, uppercase; `locality` in mailwoman's vocabulary.
 	 */
 	city: string
 	/**
@@ -188,10 +153,8 @@ export interface CensusAddressComponents {
 	 */
 	state: AdminLevel1Abbreviation | string
 	/**
-	 * The ZIP code.
-	 *
-	 * The geocoder returns the five-digit form.
-	 * The plus-four variant is admitted for completeness.
+	 * The ZIP code: the geocoder returns the five-digit form, with the plus-four
+	 * variant admitted for completeness.
 	 */
 	zip: ZipCode | ZipCodePlusFour | string
 	/**
@@ -211,32 +174,20 @@ export interface CensusAddressMatch {
 	/**
 	 * The address as matched — the USPS-normalized single line,
 	 * e.g. `4600 silver hill RD, washington, DC, 20233`.
-	 *
-	 * Typed `string`, unlike the isp-nexus original, which annotated this field
-	 * as `PostalAddressPart.FormattedAddress`.
-	 * An enum member used in type position, which is the literal type of that member's value.
-	 *
-	 * The field was therefore declared to hold the string `"formattedAddress"` rather than an address.
-	 *
-	 * It typechecked because every consumer only passed it on to something taking a `string`.
 	 */
 	matchedAddress: string
 	addressComponents: CensusAddressComponents
 	tigerLine: CensusTigerLine
 	/**
-	 * `{ x: longitude, y: latitude }`.
-	 *
-	 * The Census geocoder's own axis naming, which is `InternalPointCoordinates` in
-	 * `@mailwoman/spatial` and is accepted directly by `GeoPoint`'s constructor.
+	 * `{ x: longitude, y: latitude }` — the Census geocoder's own axis naming,
+	 * which is `InternalPointCoordinates` in `@mailwoman/spatial`.
 	 */
 	coordinates: InternalPointCoordinates
 }
 
 /**
- * A `Census Blocks` entry from a `geographies/*` lookup.
- *
- * Every field is a tiger attribute.
- * The types come from `@mailwoman/tiger`.
+ * A `Census Blocks` entry from a `geographies/*` lookup, whose every field is a
+ * tiger attribute typed by `@mailwoman/tiger`.
  */
 export interface CensusBlockGeography {
 	/**
@@ -288,11 +239,7 @@ export interface CensusGeographyMatch extends CensusAddressMatch {
 }
 
 /**
- * The response envelope.
- *
- * `input` is nested inside `result`.
- * The isp-nexus original declared it as a sibling (`{ input, result: { addressMatches } }`),
- * which typechecked only because no code ever read it.
+ * The response envelope, whose `input` is nested inside `result`.
  */
 export interface CensusGeocodeResponse<Match extends CensusAddressMatch = CensusAddressMatch> {
 	result: {

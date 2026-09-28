@@ -3,49 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Promotion eval runner (#479).
- *   Runs the standard battery, checks spec floors, and writes one machine-readable verdict.
+ *   Promotion eval runner: runs the standard battery, checks spec floors, and writes one
+ *   machine-readable verdict. `--model` compares raw artifacts, where delta checks are valid and
+ *   absolute floors are not; `--weights-cache` is the in-distribution path.
  *
- *   Usage: mailwoman eval promote\
- *   --model <fp32.onnx> [--int8 <int8.onnx>]\
- *   | --weights-cache <fp32-pkg-root> [--int8-weights-cache <int8-pkg-root>]\
- *   --spec packages/mailwoman/lib/eval-harness/specs/<spec>.json\
- *   [--tokenizer <tokenizer.model>] [--card <model-card.json>]\
- *   [--gazetteer-lexicon <lexicon.json>] [--out-dir <temp-root>/eval-<label>]
- *
- *   --model compares raw artifacts: delta checks are valid, absolute floors are not.
- *   --weights-cache is the in-distribution path, and a paired cache run (#47) checks
- *   floors and fp32↔int8 deltas together.
- *
- *   Behavior:
- *
- *   - Runs per-locale-f1, score-affix (+unit), country-homograph, de-order, and preset compare.
- *     With --int8, re-runs per-tag checks and enforces the fp32↔int8 delta cap.
- *   - Runs demo-cascade smoke (#524) when the hot DB exists.
- *     A missing DB warns and skips the leg.
- *     Optional floor key: `cascade.demo_smoke`.
- *   - Runs mask regression (#718) when requires_conventions is set.
- *     A tag drop over 2pp fails the leg.
- *   - Collects headline numbers into <out-dir>/verdict.json with per-floor pass/fail.
- *   - Exit 0 = every floor met and the mask-regression lock held. exit 1 = any miss.
- *
- *   All legs run in-process now (no child processes).
- *   Artifacts are preserved because sinks reproduce line output byte-for-byte.
- *
- *   Error handling behavior is kept per leg.
- *   `nothrow` maps to try/catch.
- *   Throw-on-nonzero still throws, and an aborting leg still aborts.
- *   Legs that merged stdout+stderr still do so in that order.
- *
- *   One intentional change: some previously swallowed stderr now prints to runner stderr.
- *   Written `.md` artifacts are unchanged.
- *
- *   Key guardrails (see CONTRIBUTING_MODEL_WORK.mdx):
- *
- *   - Tokenizer path must match the card tokenizer version.
- *   - If requires_gazetteer_lexicon is set, scorers get gazetteer flags.
- *   - Warn when compiled output is stale.
- *   - Grade affix floors from score-affix (not folded per-locale output).
+ *   Every leg runs in-process, and written `.md` artifacts are byte-for-byte identical to prior child
+ *   stdout capture.
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -74,11 +37,8 @@ import { scoreCountryHomograph } from "#eval-harness/score/country-homograph"
 import { resolveWOFHotDB } from "#eval-harness/wof-hot-db"
 
 /**
- * Render sink lines with one trailing newline per `report()` call.
- *
- * Keeps `.md` artifacts byte-compatible with prior child stdout capture.
- *
- * Exported for `promotion-eval-sinks.test.ts`.
+ * Render sink lines with one trailing newline per `report()` call, keeping `.md`
+ * artifacts byte-compatible with prior child stdout capture.
  */
 export function renderLines(lines: readonly string[]): string {
 	return lines.map((line) => `${line}\n`).join("")
@@ -90,12 +50,8 @@ interface ThresholdSpec {
 	requires_conventions?: string
 	requires_bridge?: boolean
 	/**
-	 * Answer key path for per-locale grading, e.g. `data/eval/golden/v0.1.3/dev`.
-	 *
-	 * Spec-declared for comparability.
-	 * Omitted = per-locale-f1 default (v0.1.2/dev).
-	 *
-	 * If this changes, floors must be re-anchored on fresh measurements.
+	 * Answer-key path for per-locale grading, spec-declared for comparability; omitted uses the
+	 * per-locale-f1 default, and changing it means floors must be re-anchored on fresh measurements.
 	 */
 	golden_dir?: string
 	floors?: Record<string, unknown>
@@ -110,28 +66,23 @@ interface ModelCard {
  */
 export interface PromotionEvalOptions {
 	/**
-	 * Candidate fp32 ONNX (required).
+	 * Candidate fp32 ONNX, required.
 	 */
 	model?: string
 	/**
-	 * Quantized int8 sibling.
-	 * Re-runs per-tag checks and enforces delta cap.
+	 * Quantized int8 sibling; re-runs per-tag checks and enforces the delta cap.
 	 */
 	int8?: string
 	/**
-	 * Check-spec JSON path, or bare name resolved from bundled specs (required).
+	 * Check-spec JSON path or bare name resolved from bundled specs, required.
 	 */
 	check?: string
 	/**
-	 * Tokenizer path.
-	 *
-	 * Default: the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
+	 * Tokenizer path; defaults to the v0.6.0-a0 tokenizer under `$MAILWOMAN_DATA_ROOT`.
 	 */
 	tokenizer?: string
 	/**
-	 * Model-card JSON.
-	 *
-	 * Default `neural-weights-en-us/model-card.json`.
+	 * Model-card JSON; defaults to `neural-weights-en-us/model-card.json`.
 	 */
 	card?: string
 	/**
@@ -141,59 +92,35 @@ export interface PromotionEvalOptions {
 	 */
 	gazetteerLexicon?: string
 	/**
-	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us`.
-	 *
-	 * #718-safe path that feeds anchor+gazetteer+country via loadFromWeights.
-	 *
-	 * Alternative to --model/--int8.
-	 * Takes precedence.
+	 * Package-shaped candidate weights dir `<root>/node_modules/@mailwoman/neural-weights-en-us`,
+	 * which feeds anchor+gazetteer+country via loadFromWeights; takes precedence over --model/--int8.
 	 */
 	weightsCache?: string
 	/**
-	 * Package-shaped INT8 dir, same layout as {@linkcode PromotionEvalOptions.weightsCache}.
-	 *
-	 * Pairing runs a fully package-shaped fp32+int8 battery (#47).
-	 *
-	 * Requires {@linkcode PromotionEvalOptions.weightsCache} and excludes --model/--int8.
-	 *
-	 * Makes floors and deltas valid in one run.
+	 * Package-shaped INT8 dir, same layout as {@linkcode PromotionEvalOptions.weightsCache};
+	 * pairing requires weightsCache, excludes --model/--int8, and makes floors
+	 * and fp32/int8 deltas valid in one run.
 	 */
 	int8WeightsCache?: string
 	/**
-	 * Battery output dir.
-	 *
-	 * Default `<temp-root>/eval-<label>-<hhmm>`, under `$MAILWOMAN_TEMP_ROOT`.
+	 * Battery output dir; defaults to `<temp-root>/eval-<label>-<hhmm>` under `$MAILWOMAN_TEMP_ROOT`.
 	 */
 	outDir?: PathBuilderLike
 	/**
-	 * Optional per-leg wall-time ledger path.
-	 *
-	 * Must be outside {@linkcode PromotionEvalOptions.outDir}.
-	 * Receipt comparison expects stable bytes under outDir.
-	 * Omitted, the run writes no file.
+	 * Optional per-leg wall-time ledger path, which must be outside {@linkcode PromotionEvalOptions.outDir}
+	 * because receipt comparison expects stable bytes under outDir; omitted, the run writes no file.
 	 */
 	profileJSON?: string
 }
 
-/**
- * Resolve a `--spec` value to a real file.
- *
- * A path that exists wins verbatim.
- * Otherwise, basename lookup is done in the shipped specs dir.
- *
- * Works in source and compiled trees.
- *
- * `.json` suffix is optional.
- */
 /**
  * Eval specs directory in source tree.
  */
 const SPECS_DIR = resolvePackagePath("mailwoman", "lib", "eval-harness", "specs")
 
 /**
- * Workspaces used by this battery for compiled-freshness checks.
- *
- * Keep this list broad enough to cover parse+resolve paths end-to-end.
+ * Workspaces used by this battery for compiled-freshness checks; keep it broad
+ * enough to cover parse+resolve paths end-to-end.
  */
 const EVAL_HARNESS_WORKSPACES = [
 	"packages/mailwoman",
@@ -209,6 +136,10 @@ const EVAL_HARNESS_WORKSPACES = [
 	"packages/codex",
 ] as const
 
+/**
+ * Resolve a `--spec` value to a real file: an existing path wins verbatim, otherwise
+ * the basename is looked up in the shipped specs dir, with `.json` optional.
+ */
 export async function resolveThresholdSpecPath(check: string): Promise<string> {
 	if (await pathExists(check)) return check
 
@@ -225,8 +156,6 @@ export async function resolveThresholdSpecPath(check: string): Promise<string> {
 
 /**
  * List shipped eval specs, sorted.
- *
- * For `--spec` errors and tooling.
  */
 export async function listEvalSpecs(): Promise<string[]> {
 	return (
@@ -238,12 +167,8 @@ export async function listEvalSpecs(): Promise<string[]> {
 }
 
 /**
- * Pre-flight guards before battery: tokenizer comparability, compiled freshness
- * warning, and artifact provenance.
- *
- * Returns an exit code to propagate, or `null` when the run may proceed.
- *
- * Provenance ensures failures can be tied to exact graded bytes.
+ * Pre-flight guards before the battery: tokenizer comparability, a compiled-freshness warning,
+ * and artifact provenance, returning an exit code to propagate or `null` when the run may proceed.
  */
 async function runLoreGuards(env: {
 	WC: string
@@ -256,11 +181,9 @@ async function runLoreGuards(env: {
 	card: ModelCard
 }): Promise<number | null> {
 	const { WC, WC_MODEL, WC8_MODEL, MODEL, INT8, TOK, OUT_DIR, card } = env
-	// Ensure tokenizer version matches the card.
 	const CARD_TOK = card.training.tokenizer_version
 
-	// Skip this check for --weights-cache.
-	// That path resolves the tokenizer and the model card from the package.
+	// --weights-cache resolves the tokenizer and card from the package, so skip the path check.
 	if (!WC && !TOK.includes(CARD_TOK)) {
 		console.error(
 			`✗ tokenizer path '${TOK}' does not contain card tokenizer_version '${CARD_TOK}' — F1 would be incomparable`
@@ -269,18 +192,13 @@ async function runLoreGuards(env: {
 		return 2
 	}
 
-	// Warn when compiled output is stale versus source.
 	const freshness = await checkCompiledFreshness(repoRootPath(), EVAL_HARNESS_WORKSPACES)
 
 	if (!freshness.fresh && freshness.reason) {
 		console.error(`⚠ ${freshness.reason}`)
 	}
 
-	// Write provenance (md5 + DynamicQuantizeLinear line-count fingerprint).
-	// Also enforce obvious fp32/int8 labeling checks.
-	//
-	// Mirrors old `grep -c -a DynamicQuantizeLinear <path>` behavior: counts
-	// matching newline-delimited chunks in raw bytes.
+	// Provenance fingerprint: md5 plus a per-line count of `DynamicQuantizeLinear` hits.
 	const dql = async (p: string): Promise<string> => {
 		const needle = Buffer.from("DynamicQuantizeLinear", "latin1")
 		const buffer = await readLocalBuffer(p)
@@ -308,8 +226,8 @@ async function runLoreGuards(env: {
 
 	const md5 = async (p: string): Promise<string> => md5File(p)
 
-	// --weights-cache single-arm: log provenance only.
-	// Paired caches (#47): enforce same fp32/int8 mislabel checks as --model flow.
+	// --weights-cache single-arm logs provenance only; paired caches get the same
+	// fp32/int8 mislabel checks as the --model flow.
 	if (WC) {
 		const wcDql = await dql(WC_MODEL)
 
@@ -361,8 +279,6 @@ async function runLoreGuards(env: {
 		await writeLocalFile(provenance, `${OUT_DIR}/provenance.txt`) // tee to file ...
 		process.stdout.write(provenance)
 
-		// ... and stdout
-
 		if (modelDql !== "0") {
 			console.error(`✗ --model '${MODEL}' carries int8 quant nodes — it is not an fp32 artifact`)
 
@@ -388,14 +304,8 @@ async function runLoreGuards(env: {
 }
 
 /**
- * Demo-cascade smoke (#524): whole-stack parse→reconcile→resolve coverage.
- *
- * Runs on the ship artifact against the slim hot DB.
- * A missing DB warns and skips.
- *
- * A spec floor declared on this leg then fails, which is the intended outcome.
- *
- * Kept separate for readability and statement count.
+ * Demo-cascade smoke: whole-stack parse→reconcile→resolve coverage on the ship artifact against
+ * the slim hot DB; a missing DB warns and skips, and a spec floor declared on this leg then fails.
  */
 async function runDemoCascadeLeg(env: {
 	outDir: PathBuilderLike
@@ -416,8 +326,7 @@ async function runDemoCascadeLeg(env: {
 		return
 	}
 
-	// nothrow parity: refusal and throw both map to non-zero.
-	// Only stdout sink is written to the .md.
+	// nothrow parity: a refusal and a throw both map to non-zero, and only the stdout sink reaches the `.md`.
 	const cascadeLines: string[] = []
 	let cascadeExit: number
 
@@ -452,10 +361,8 @@ async function runDemoCascadeLeg(env: {
 }
 
 /**
- * Run the full promotion-eval battery.
- *
- * Returns the process exit code: 0 = every floor met and the mask-regression lock held,
- * 1 = any miss, 2 = usage / lore-guard refusal.
+ * Run the full promotion-eval battery, returning the process exit code: 0 = every floor met
+ * and the mask-regression lock held, 1 = any miss, 2 = usage or lore-guard refusal.
  */
 export async function runPromotionEval(options: PromotionEvalOptions): Promise<number> {
 	const MODEL = options.model ?? ""
@@ -470,15 +377,15 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	// Thread tuning was measured and intentionally left at library defaults.
 
-	// Package-shaped mode (#718-safe): resolve model/tokenizer/card from cache package siblings.
-	// Use explicit package-dir paths to avoid silent fallback to installed/workspace package.
+	// Package-shaped mode resolves model/tokenizer/card from cache package siblings, using
+	// explicit package-dir paths to avoid a silent fallback to the installed/workspace package.
 	const WC = options.weightsCache ?? ""
 	const WC_PACKAGE = WC ? weightsCachePackageDir(WC, "en-us") : ""
 	const WC_MODEL = WC ? resolvePath(WC_PACKAGE, "model.onnx") : ""
 	const EFF_TOK = WC ? resolvePath(WC_PACKAGE, "tokenizer.model") : TOK
 	const EFF_CARD = WC ? resolvePath(WC_PACKAGE, "model-card.json") : CARD
 
-	// INT8 arm for package-shaped pair (#47), resolved the same way.
+	// INT8 arm for the package-shaped pair, resolved the same way.
 	const WC8 = options.int8WeightsCache ?? ""
 	const WC8_PACKAGE = WC8 ? weightsCachePackageDir(WC8, "en-us") : ""
 	const WC8_MODEL = WC8 ? resolvePath(WC8_PACKAGE, "model.onnx") : ""
@@ -502,7 +409,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 	}
 
 	const check = await readLocalJSONFile<ThresholdSpec>(CHECK)
-	// Fallback label if spec omits it.
 	const LABEL = check.label ?? basename(CHECK).replace(/\.json$/, "")
 	const hhmm = String(new Date().getUTCHours()).padStart(2, "0") + String(new Date().getUTCMinutes()).padStart(2, "0")
 
@@ -517,7 +423,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	if (guardExit !== null) return guardExit
 
-	// Shared spec-declared channel options for scorers.
 	const channelOptions: Pick<
 		ScoreAffixOptions,
 		"gazetteerLexicon" | "suppressGazNearPostcode" | "conventions" | "bridgeGaps"
@@ -528,14 +433,12 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		channelOptions.suppressGazNearPostcode = true
 	}
 
-	// Conventions channel (#511 Tier A): apply declared mask mode to scorers.
 	const CONV_MODE = check.requires_conventions ?? ""
 
 	if (CONV_MODE) {
 		channelOptions.conventions = CONV_MODE
 	}
 
-	// Span-bridge channel: spec-declared like conventions.
 	let BRIDGE_MODE = ""
 
 	if (check.requires_bridge === true) {
@@ -543,34 +446,28 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		BRIDGE_MODE = "1"
 	}
 
-	// Answer key is part of ship config.
 	if (check.golden_dir) {
 		console.log(`golden dir: ${check.golden_dir} (spec-declared)`)
 	}
 
-	// Ship artifact: paired int8, else single cache, else --model flow int8/fp32.
 	const shipModel = WC ? WC8_MODEL || WC_MODEL : INT8 || MODEL
 
 	const runBattery = async (m: string, tag: string, wc: string = WC): Promise<void> => {
 		console.log(`== battery [${tag}] ${m} ==`)
 
-		// A paired run treats fp32 as the arm that does not ship.
-		// An unpaired run ships this arm.
+		// A paired run treats fp32 as the arm that does not ship; an unpaired run ships this arm.
 		const pairedNonShipArm = tag === "fp32" && Boolean(WC8 || INT8)
 
-		// Package-shaped probes load all channels from the selected arm cache.
 		const plOptions = wc
 			? { weightsCache: wc }
 			: { modelPath: m, tokenizerPath: TOK, modelCardPath: CARD, modelAnchorLookupPath: LK }
 
 		const probeOptions = wc ? { weightsCache: wc } : { model: m }
 
-		// De-order takes explicit arm-specific tokenizer/card paths.
 		const armPackage = wc ? weightsCachePackageDir(wc, "en-us") : ""
 		const armTok = wc ? resolvePath(armPackage, "tokenizer.model") : EFF_TOK
 		const armCard = wc ? resolvePath(armPackage, "model-card.json") : EFF_CARD
 
-		// Capture each leg's output into `.md` with child-stdout-compatible newlines.
 		// Throw behavior on non-zero remains unchanged for metric probes.
 		const perLocaleLines: string[] = []
 
@@ -592,7 +489,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(perLocaleLines), `${OUT_DIR}/${tag}-per-locale.md`)
 
-		// Helper for repeated score-affix legs.
 		const runAffix = async (mdName: string, extra: ScoreAffixOptions): Promise<void> => {
 			const lines: string[] = []
 
@@ -617,7 +513,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				{
 					...probeOptions,
 					...channelOptions,
-					// Country probe always suppresses gaz clues near postcode.
 					suppressGazNearPostcode: true,
 					json: `${OUT_DIR}/${tag}-country.json`,
 				},
@@ -627,7 +522,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 		await writeLocalFile(renderLines(countryLines), `${OUT_DIR}/${tag}-country.md`)
 
-		// v4.4.0 floors: po_box/cedex + intersections.
 		await runAffix(`${tag}-pobox.md`, {
 			file: "data/eval/external/po-box-cedex-val.jsonl",
 			json: `${OUT_DIR}/${tag}-pobox.json`,
@@ -638,13 +532,11 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 			json: `${OUT_DIR}/${tag}-intersection.json`,
 		})
 
-		// Watch lenses (v4.4.0+), recorded but not floored.
-		// No JSON sidecar.
+		// Watch lenses, recorded but not floored, with no JSON sidecar.
 		await runAffix(`${tag}-watch-intersection-vt.md`, { file: "data/eval/external/intersection-golden-vt.jsonl" })
 		await runAffix(`${tag}-watch-glue.md`, { file: "data/eval/external/glue-rows-perturb.jsonl" })
 
-		// de-order tolerates a non-zero regression exit.
-		// Keep nothrow parity and the merged output.
+		// de-order tolerates a non-zero regression exit while keeping nothrow parity and the merged output.
 		const deorderOut: string[] = []
 		const deorderErr: string[] = []
 
@@ -657,7 +549,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 						tokenizer: armTok,
 						anchorLookup: LK,
 						out: `${OUT_DIR}/${tag}-deorder`,
-						// Memoize repeated gazetteer lookups for this run.
 						lookupMemo: true,
 						// On paired non-ship arm, run only the floored/delta-capped de-native-on case.
 						...(pairedNonShipArm ? { runs: ["de-native-on" as const] } : {}),
@@ -673,10 +564,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		await writeLocalTextFile(`${renderLines(deorderOut)}${renderLines(deorderErr)}`, `${OUT_DIR}/${tag}-deorder.md`)
 	}
 
-	// Run batteries by selected mode:
-	// - weights-cache single-arm
-	// - paired weights-cache fp32+int8
-	// - --model fp32 (+optional int8)
 	if (WC) {
 		await runBattery(WC_MODEL, "fp32")
 
@@ -691,7 +578,7 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		}
 	}
 
-	// Preset compare: in-process, tolerant on failure, captured to presets.md.
+	// Preset compare is in-process and tolerant on failure.
 	const presetLines: string[] = []
 
 	try {
@@ -704,7 +591,6 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 
 	await writeLocalTextFile(presetLines.map((line) => `${line}\n`).join(""), `${OUT_DIR}/presets.md`)
 
-	// Demo-cascade smoke (#524): whole-stack check, skipped with warning if DB is absent.
 	await profile.time("demo-cascade", undefined, () =>
 		runDemoCascadeLeg({
 			outDir: OUT_DIR,
@@ -715,10 +601,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		})
 	)
 
-	// Arena leg (v4.4.0+): heavy, ship artifact only, enabled by floor presence.
+	// Arena leg: heavy and ship-artifact-only, enabled by floor presence.
 	if ("arena.perturb" in (check.floors ?? {})) {
-		// Uses typed options.
-		// Behavior matches the untyped call this replaced.
 		const arenaOut: string[] = []
 		const arenaErr: string[] = []
 		let arenaFailed = false
@@ -741,25 +625,21 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 				)
 			)
 		} catch (error) {
-			// A non-zero exit maps to a throw.
-			// The output still reaches arenas.md.
+			// A non-zero exit maps to a throw; the output still reaches arenas.md.
 			arenaErr.push(error instanceof Error ? (error.stack ?? error.message) : String(error))
 			arenaFailed = true
 		}
 
 		await writeLocalTextFile(`${renderLines(arenaOut)}${renderLines(arenaErr)}`, `${OUT_DIR}/arenas.md`)
 
-		// Abort on arena failure.
 		if (arenaFailed) {
 			return 1
 		}
 	}
 
-	// FR bare-street floor (#949): parse frozen sample and enforce bare-intact floor.
 	const bareStreetFloor = (check.floors ?? {})["fr.bare_street_intact"]
 
 	if (bareStreetFloor !== undefined) {
-		// In-process call runs under current runner environment.
 		const bareOut: string[] = []
 		const bareErr: string[] = []
 		let barePassed: boolean
@@ -799,9 +679,8 @@ export async function runPromotionEval(options: PromotionEvalOptions): Promise<n
 		console.log(`✓ fr.bare_street_intact PASS (floor ${bareStreetFloor}%)`)
 	}
 
-	// Mask-regression is the second promotion lock.
-	// Runs only when conventions mode is declared.
-	// It writes the report and feeds the final verdict.
+	// Mask-regression is the second promotion lock, runs only under conventions mode,
+	// and feeds the final verdict.
 	let MASK_CHECK_STATUS = 0
 
 	if (CONV_MODE) {

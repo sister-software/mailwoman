@@ -3,34 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Can the gazetteer answer the key the decode asked with? (#2309)
- *
- *   A locality miss has two causes that a rate cannot tell apart. ranking: the right place is in the candidate set and
- *   something else outranked it. reachability: the right place carries no row under that key, so no ranking could have
- *   reached it at any position. The fixes are opposite. One is a weight, the other is data — and every board rate in
- *   this repository pools them.
- *
- *   `La Grange, IL 60525` is the reachability case. The decode labels `La` a street and asks the backend for `Grange`;
- *   WOF `85940805` (population 15,667) carries 19 `name_key` rows and none of them is bare `grange`, so the three rows
- *   that come back are score-0 rural places and the pick among them is arbitrary. Re-weighting changes no pick there.
- *
- *   So this asks, per panel row: the key the resolver was sent (`ResolveNodeTrace.value`, not the input and not the
- *   parse), and whether the gold place carries that key. The gold place is identified by its own name and the panel's
- *   coordinate, never by what the run answered — reading the answer back would make every row reachable by
- *   construction.
- *
- *   The question is not American, so neither is the rendering. A row is written through
- *   `formatAddress(components, country, { singleLine: true })` — the per-country layouts in `@mailwoman/codex` — rather
- *   than a template literal. `${locality}, ${region} ${postcode}` is the United States postal order and no other order:
- *   it prints Japan's admin run backwards, drops the country's own separator convention, and puts a postcode after a
- *   region in the 60-odd systems that lead with it. A country whose layout names no `country` slot renders no line and
- *   the row is reported as unrenderable, which is a measured absence rather than an invented order.
- *
- *   Usage:
- *
- *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts
- *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts --country FR --eval <panel.jsonl>
- *       node packages/mailwoman/lib/dev-tools/locality/reachability.run.ts --weights-cache <dir> --out-json <path>
+ *   A locality miss has two causes a rate cannot tell apart: ranking, where the right place is in
+ *   the candidate set and was outranked, and reachability, where the right place carries no row
+ *   under the asked key so no ranking could have reached it at any position.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -53,17 +28,14 @@ const { values } = parseArguments({
 		"weights-cache": { type: "string" },
 		"candidate-db": { type: "string", default: wofDatabasePath("candidate.db").toString() },
 		eval: { type: "string", default: dataRootPath("eval", "coord", "us.jsonl").toString() },
-		// The country a panel row belongs to, when the panel does not carry one per row.
-		// It selects the codex layout the row is written through, so it is a rendering
-		// decision before it is a scope one.
+		// The country a panel row belongs to when the panel carries none per row; it selects
+		// the codex layout the row is written through before it is a scope decision.
 		country: { type: "string", default: "US" },
 		limit: { type: "string" },
 	},
 })
 
 /**
- * How a row's locality lookup ended, in the two-cause vocabulary this probe exists to separate.
- *
  * `not_asked` is its own class rather than a miss: the decode emitted no locality span,
  * so the backend was never given a chance to answer and neither cause applies.
  */
@@ -77,14 +49,10 @@ const { localities: panel, qualifiersStripped } = await readCoordPanel(values.ev
 using db = new DatabaseClient<CandidateDatabase>(values["candidate-db"]!)
 
 /**
- * How far a candidate row may sit from the panel's own coordinate and still be that row's gold place.
- *
- * Wide enough for a centroid-vs-rooftop offset on a large locality, narrow enough
- * to refuse a namesake one region over — 21 US localities are named Ramsey,
- * and the panel coordinate is the only thing that says which one a row means.
- * A place the panel cannot identify within it is reported as `gold_not_found`
- * rather than folded into a miss, because "we could not name the right answer"
- * and "the run named the wrong one" are different findings.
+ * How far a candidate row may sit from the panel's own coordinate and still be that
+ * row's gold place: wide enough for a centroid-vs-rooftop offset, narrow enough to
+ * refuse a namesake one region over, with a place the panel cannot identify within
+ * it reported as `gold_not_found` rather than folded into a miss.
  */
 const GOLD_MAX_KM = 25
 
@@ -95,10 +63,8 @@ const LOCALITY_PLACETYPE_ID = 3
 
 /**
  * The gold place for one panel row: the locality whose key is the row's own name
- * and whose coordinate is nearest the panel's.
- *
- * Nearest-by-coordinate rather than highest-population, because the panel row is the disambiguation —
- * 21 US localities are named Ramsey, and the one this row means is the one at its coordinate.
+ * and whose coordinate is nearest the panel's, chosen by coordinate rather than population
+ * because the panel row is the disambiguation.
  */
 async function goldPlace(place: PanelLocality): Promise<number | null> {
 	const key = normalizeLocalityForKey(place.locality)
@@ -127,10 +93,6 @@ async function goldPlace(place: PanelLocality): Promise<number | null> {
 	return best && best.km <= GOLD_MAX_KM ? best.id : null
 }
 
-/**
- * Whether `sprID` carries a row under `key` — the reachability question,
- * asked of the artifact the run probed.
- */
 async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 	const row = await db
 		.selectFrom("candidate")
@@ -145,10 +107,8 @@ async function carriesKey(sprID: number, key: NameKey): Promise<boolean> {
 const deps = await buildGauntletDeps(values["weights-cache"] ? { weightsCacheRoot: values["weights-cache"] } : {})
 
 /**
- * Rows whose country has no layout able to write them.
- *
- * Counted and reported rather than dropped: a panel that shrank silently would
- * move every rate below it without saying why.
+ * Rows whose country has no layout able to write them, counted and reported
+ * rather than dropped so the rates below keep their denominator.
  */
 let unrenderable = 0
 
@@ -169,8 +129,8 @@ const outcomes: Array<{
 for (const place of panel) {
 	const input = renderAdmin(place)
 
-	// A country whose layout writes no line answers "" rather than an invented order.
-	// A row nobody can write is reported as its own class, never graded as a miss.
+	// A country whose layout writes no line answers "" rather than an invented order,
+	// and the row is reported as its own class instead of being graded as a miss.
 	if (!input) {
 		unrenderable++
 
@@ -236,8 +196,7 @@ console.log(`| --- | --: | --: |`)
 for (const verdict of ["matched", "reachable_not_picked", "unreachable", "not_asked", "gold_not_found"] as const) {
 	const n = tally.get(verdict) ?? 0
 
-	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked
-	// and counting it would move every share below by an amount the table does not explain.
+	// Denominated on graded rows rather than on the panel: an unrenderable row was never asked.
 	console.log(`| ${verdict} | ${n} | ${formatPercent(n, outcomes.length)} |`)
 }
 
@@ -268,8 +227,8 @@ for (const [name, bucket] of shapes) {
 }
 
 /**
- * Rows below this are not reported per word: a rate over fewer places than this reads the draw rather
- * than the word, and the 581-row panel this replaced had 24 of its 34 tail words at one or two rows.
+ * Below this many rows a word is not reported per word: a rate over fewer places
+ * reads the draw rather than the word.
  */
 const MIN_ROWS_PER_WORD = 10
 

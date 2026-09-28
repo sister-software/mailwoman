@@ -26,34 +26,22 @@ export interface SeedCase {
 	addressKind: AddressKind
 	country: string
 	status: CaseStatus
-	/**
-	 * Resolver country prior as an ISO 3166-1 alpha-2 code.
-	 * It is passed to `geocodeAddress` as `defaultCountry`.
-	 */
 	defaultCountry?: string
 	/**
-	 * CLI locale for the row, such as `en-NZ`.
-	 *
-	 * The runner picks the weights overlay from its region subtag.
-	 *
-	 * The locale is a hint and does not constrain the country.
-	 * The `country` field keeps the expected country, so `Paris` under `en-US`
-	 * is an FR row run with the US overlay.
+	 * CLI locale for the row, such as `en-NZ`; it selects the weights overlay from
+	 * its region subtag and does not constrain `country`.
 	 */
 	locale?: string
 	/**
-	 * Expected component values such as `country`, `region`, and `locality`.
-	 * The grader compares them case-insensitively.
+	 * Expected component values, such as `country`, `region`, and `locality`,
+	 * compared case-insensitively by the grader.
 	 */
 	expectComponents?: Record<string, string>
 	/**
 	 * Expected renderings per component key for input that holds a span in two or more scripts,
-	 * for example `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`.
-	 *
-	 * For each listed key, the grader requires `scriptRenderings(got)` to contain
-	 * every rendering after case folding.
-	 * The same key in {@linkcode expectComponents} is then ignored.
-	 * The schema rejects an empty list.
+	 * such as `{ venue: ["Gandantegchinlen Monastery", "Гандантэгчинлэн хийд"] }`; the grader
+	 * requires each listed rendering to appear in `scriptRenderings(got)` after case folding,
+	 * and a key listed here supersedes the same key in {@linkcode expectComponents}.
 	 */
 	expectComponentRenderings?: Record<string, string[]>
 	expectPlaceID?: string
@@ -61,16 +49,13 @@ export interface SeedCase {
 	expectLat?: number
 	expectLon?: number
 	/**
-	 * Great-circle tolerance in meters.
-	 * The runner applies a default when it is absent.
+	 * Great-circle tolerance in meters; the runner applies a default when it is absent.
 	 */
 	expectToleranceM?: number
 	expectTier?: ResolutionTier
 	/**
-	 * Whether the resolver must abstain.
-	 * Any resolved coordinate fails the row.
-	 *
-	 * The grader rejects a row that also sets `expectLat` or `expectLon`.
+	 * Whether the resolver must abstain — any resolved coordinate fails the row,
+	 * and the grader rejects a row that also sets `expectLat` or `expectLon`.
 	 */
 	expectAbstain?: boolean
 	addedAt: string
@@ -78,21 +63,15 @@ export interface SeedCase {
 	note?: string
 	/**
 	 * Hand-pinned ablation rung per deleted component, such as `{ country: "region" }`
-	 * or `{ region: "abstain" }`.
-	 *
-	 * Values are `abstain`, `base`, or a WOF placetype.
-	 * When it is absent, the derived ladder decides.
-	 *
-	 * The `ablation_expect` column in `schema.ts` describes the cases that need it.
+	 * or `{ region: "abstain" }`; values are `abstain`, `base`, or a WOF placetype,
+	 * and the derived ladder decides when it is absent.
 	 */
 	ablationExpect?: Record<string, string>
 }
 
 /**
- * Key order for emitted JSONL rows, matching {@linkcode SeedCase}'s declaration order.
- *
- * Emission re-keys each row through this list because hand-written rows do not share a key order.
- * A stable order keeps corpus diffs limited to content changes.
+ * Key order for emitted JSONL rows, matching {@linkcode SeedCase}'s declaration order;
+ * re-keying through this list keeps corpus diffs limited to content changes.
  */
 export const SEED_CASE_KEY_ORDER = [
 	"id",
@@ -119,10 +98,8 @@ export const SEED_CASE_KEY_ORDER = [
 ] as const satisfies readonly (keyof SeedCase)[]
 
 /**
- * Runtime schema for {@linkcode SeedCase}, applied to each JSONL row on load.
- *
- * The schema is strict so that a misspelled key such as `expectLon` fails the load
- * instead of silently dropping an assertion.
+ * Runtime schema for {@linkcode SeedCase}, applied to each JSONL row on load and strict
+ * so a misspelled key fails the load instead of silently dropping an assertion.
  */
 export const SeedCaseSchema = zod.strictObject({
 	id: zod.string().min(1),
@@ -153,17 +130,15 @@ export const SeedCaseSchema = zod.strictObject({
 })
 
 /**
- * Compile-time check that {@linkcode SeedCase} and {@linkcode SeedCaseSchema} have the same fields.
- *
- * A mismatch makes the type `never`, and `tsc` rejects this line.
+ * Compile-time check that {@linkcode SeedCase} and {@linkcode SeedCaseSchema} have the
+ * same fields; a mismatch makes the type `never` and `tsc` rejects this line.
  */
 export const SCHEMA_MATCHES_TYPE = true satisfies SameShape<zod.infer<typeof SeedCaseSchema>, SeedCase>
 
 /**
- * Compile-time check that {@linkcode SEED_CASE_KEY_ORDER} lists every {@linkcode SeedCase} key.
- *
- * The `satisfies` clause on the array only checks that each entry is a valid key.
- * A missing key would drop that field from every emitted row and from the content hash.
+ * Compile-time check that {@linkcode SEED_CASE_KEY_ORDER} lists every
+ * {@linkcode SeedCase} key; `satisfies` alone checks only that each entry is valid,
+ * so a missing key would drop that field from every emitted row.
  */
 export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 	(typeof SEED_CASE_KEY_ORDER)[number],
@@ -171,9 +146,8 @@ export const KEY_ORDER_IS_EXHAUSTIVE = true satisfies MutuallyAssignable<
 >
 
 /**
- * Returns the case with keys in {@linkcode SEED_CASE_KEY_ORDER} and undefined fields removed.
- *
- * The emitter and the corpus content hash both use it, so the hash depends only on content.
+ * Returns the case with keys in {@linkcode SEED_CASE_KEY_ORDER} and undefined fields removed,
+ * which makes the corpus content hash depend only on content.
  */
 export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 	const out: Partial<SeedCase> = {}
@@ -191,12 +165,8 @@ export function canonicalizeSeedCase(c: SeedCase): SeedCase {
 }
 
 /**
- * Converts a seed case to a `gauntlet_case` table row.
- *
- * Absent fields become `null`, and object-valued fields become JSON strings.
- *
- * The regression database builder and candidate-row grading both use this conversion,
- * so they read seed fields the same way.
+ * Converts a seed case to a `gauntlet_case` table row; absent fields become `null`
+ * and object-valued fields become JSON strings.
  */
 export function seedCaseToTableRow(c: SeedCase): GauntletCaseTable {
 	return {

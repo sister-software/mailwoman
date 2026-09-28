@@ -3,21 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which data is a running process serving — read out of the artifacts themselves.
+ *   Which data a running process is serving, read out of the artifacts themselves.
  *
- *   A geocode answers from a specific set of sealed databases, and no field on the wire said which:
- *   `data_updated` was declared in the Nominatim interface and fed by no source (#997). An operator whose
- *   gazetteer predates a source swap had no surface that would tell them.
+ *   The stamp lives in the artifact, never beside it: a record kept next to a database goes stale on the
+ *   first promotion, so the only source read here is each database's own `layer_manifest` row, written by
+ *   its builder before the seal.
  *
- *   the stamp lives IN the artifact, never beside it. A record kept next to a database goes stale on the
- *   first promotion — `mailwoman data status` reports `wof/candidate.db: stale — 2.9 GB on disk vs 1.7 GB
- *   (recorded)`, where the artifact is current and the record is what drifted. So the only source read
- *   here is each database's own `layer_manifest` row, written by its builder before the seal.
- *
- *   an unstamped artifact reports its own absence. Every artifact the caller names appears in the report,
- *   and one carrying no manifest says so — never omitted, and never given a date guessed from its mtime or
- *   its filename. On the wire an omitted entry and a guessed epoch are both indistinguishable from a
- *   measured answer, and whether a measured answer exists is the whole question `/status` is asked.
+ *   An unstamped artifact reports its own absence: every artifact the caller names appears in the report,
+ *   and one carrying no manifest says so rather than being omitted or given a date guessed from its mtime
+ *   or filename.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -27,11 +21,8 @@ import type { PathBuilderLike } from "path-ts"
 import { probeManifest } from "#data/inventory"
 
 /**
- * Whether an artifact could state its own provenance.
- *
- * Three states rather than two, for the reason `data-inventory.ts` keeps four:
- * "we could not open it" is not "it has no manifest", and collapsing them would
- * report a locked or truncated database as a plain provenance gap.
+ * Whether an artifact could state its own provenance — three states rather than two,
+ * because "we could not open it" is not "it has no manifest".
  */
 export const ManifestState = {
 	/**
@@ -39,16 +30,13 @@ export const ManifestState = {
 	 */
 	Present: "present",
 	/**
-	 * The artifact is on disk and carries no manifest.
-	 *
-	 * It predates the layer interface, and takes its stamp on the next rebuild.
+	 * The artifact is on disk and carries no manifest; it predates the layer interface
+	 * and takes its stamp on the next rebuild.
 	 */
 	Absent: "absent",
 	/**
-	 * The artifact could not be opened, or its manifest could not be dated.
-	 *
-	 * Reported apart from {@link ManifestState.Absent} because it is a fault to chase
-	 * rather than a rebuild to schedule.
+	 * The artifact could not be opened, or its manifest could not be dated, reported apart from
+	 * {@link ManifestState.Absent} because it is a fault to chase rather than a rebuild to schedule.
 	 */
 	Unreadable: "unreadable",
 } as const
@@ -62,9 +50,6 @@ export interface ArtifactFreshness {
 	/**
 	 * The role this artifact plays for the running process (`gazetteer`, `reverse-admin`),
 	 * not its filename, which the caller can read off `path`.
-	 *
-	 * A reader wants to know which of the databases in front of them is stale,
-	 * and the role is how they know which one to rebuild.
 	 */
 	name: string
 	/**
@@ -73,9 +58,7 @@ export interface ArtifactFreshness {
 	path: string
 	manifest: ManifestState
 	/**
-	 * Why the manifest is absent or unreadable.
-	 *
-	 * Never set alongside {@link ManifestState.Present}.
+	 * Why the manifest is absent or unreadable; never set alongside {@link ManifestState.Present}.
 	 */
 	reason?: string
 	/**
@@ -83,17 +66,12 @@ export interface ArtifactFreshness {
 	 */
 	built?: string
 	/**
-	 * `<layer name>@<layer version>`.
-	 *
-	 * The artifact's own identity, which is what a reproduction asks for.
+	 * `<layer name>@<layer version>`, the artifact's own identity.
 	 */
 	version?: string
 	/**
-	 * What it was built from: the manifest's `source` then its `source_vintage`.
-	 *
-	 * Two entries rather than one string because the candidate gazetteer's source is a
-	 * chain (it names its ancestor admin build) and the vintage carries the database
-	 * counts that make one candidate build different from another.
+	 * What it was built from — the manifest's `source` then its `source_vintage` — kept as two entries
+	 * because the candidate gazetteer's source is a chain and the vintage carries the database counts.
 	 */
 	sources?: string[]
 }
@@ -103,13 +81,9 @@ export interface ArtifactFreshness {
  */
 export interface FreshnessReport {
 	/**
-	 * The newest `built` epoch across the artifacts that carried one, verbatim.
-	 *
-	 * Absent when no artifact was stamped.
-	 * A `/status` that answered with the boot time, the newest mtime, or an epoch
-	 * zero would be answering a question it cannot answer.
-	 *
-	 * The field is optional in the Nominatim interface precisely so it can be left out.
+	 * The newest `built` epoch across the artifacts that carried one, verbatim, absent
+	 * when no artifact was stamped; answering with the boot time, the newest mtime,
+	 * or zero would answer a question this surface cannot answer.
 	 */
 	dataUpdated?: string
 	artifacts: ArtifactFreshness[]
@@ -124,19 +98,11 @@ export interface FreshnessArtifact {
 }
 
 /**
- * Read one artifact's `layer_manifest`.
- *
- * Reuses `data-inventory`'s {@link probeManifest} — the package's one home for "read this
- * database's manifest, or say why not" — rather than opening a second reader over the same table.
- * It deliberately does not run the interface's `readLayerManifest` validator:
- * that eval enforces the spine-key and tier invariants, which govern how a layer is joined,
- * and a layer whose spine declaration is wrong still has a build date this surface can report.
- *
- * Rejecting the date over an unrelated field would report absence where a fact exists,
- * which is the failure this whole reader is built against.
+ * Read one artifact's `layer_manifest` via `data-inventory`'s {@link probeManifest}, deliberately not
+ * running the interface's `readLayerManifest` validator: that enforces spine-key and tier invariants,
+ * and a layer with a wrong spine declaration still has a build date this surface can report.
  */
 async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Promise<ArtifactFreshness> {
-	// The report carries the path as a string field.
 	const path = artifactPath.toString()
 
 	if (!(await pathExists(path))) {
@@ -158,9 +124,8 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 		}
 	}
 
-	// A stamp nobody can date is not a freshness answer.
-	// It is reported as a fault rather than silently dropped out of the max below,
-	// where it would read as an artifact that was simply never stamped.
+	// A stamp nobody can date is a freshness fault, not an absence: dropping it out of
+	// the max below would read as an artifact that was never stamped.
 	if (Number.isNaN(Date.parse(manifest.created_at))) {
 		return {
 			name,
@@ -181,12 +146,9 @@ async function readArtifact({ name, path: artifactPath }: FreshnessArtifact): Pr
 }
 
 /**
- * Report the provenance of the artifacts a session opened.
- *
- * Call this once, at boot, with the paths the process actually resolved
- * rather than with everything in the data root.
- * A server holds its database handles open for its whole life, so the artifact it is
- * serving from is the one it opened at start, whatever a later symlink swap points at.
+ * Report the provenance of the artifacts a session opened, called once at boot with the paths
+ * the process actually resolved; a server holds its database handles open for its whole life,
+ * so the artifact it serves from is the one it opened at start, whatever a later symlink swap points at.
  */
 export async function readFreshness(artifacts: readonly FreshnessArtifact[]): Promise<FreshnessReport> {
 	const read: ArtifactFreshness[] = []

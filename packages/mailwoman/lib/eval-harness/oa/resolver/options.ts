@@ -12,19 +12,19 @@ import type { PathBuilderLike } from "path-ts"
  * Options for {@linkcode oaResolverEval}.
  *
  * Keys mirror the command's kebab flags (`--out-md` → `outMd`); booleans default off,
- * tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
+ * and tri-states are the paired on/off flags the eval legs pin (`adminCoherence`/`noAdminCoherence`).
  */
 export interface OAResolverEvalOptions {
 	/**
-	 * #722 baseline: ablate to anchor-only (gazetteer + conventions off).
+	 * Ablate to anchor-only (gazetteer + conventions off).
 	 */
 	ablateToAnchor?: boolean
 	/**
-	 * #476 street-level exact-point database (single-state).
+	 * Street-level exact-point database (single-state).
 	 */
 	addressPoints?: string
 	/**
-	 * #895 tri-state pin: force adminCoherence on.
+	 * Tri-state pin: force `adminCoherence` on.
 	 */
 	adminCoherence?: boolean
 	/**
@@ -34,30 +34,22 @@ export interface OAResolverEvalOptions {
 	 */
 	anchorMinConf?: number
 	/**
-	 * #887 declared ablation of the model's postcode-anchor input channel.
+	 * Declared ablation of the model's postcode-anchor input channel.
 	 */
 	anchorOff?: boolean
 	/**
-	 * #369 S8: feed the anchor's country posterior into the locality re-rank.
+	 * Feed the anchor's country posterior into the locality re-rank.
 	 */
 	anchorRerank?: boolean
 	/**
-	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms (#1497).
-	 *
-	 * Only the assembled arms can use it.
-	 * The FST is a decode-time prior applied by `createRuntimePipeline`,
-	 * and the bare `neural` arm calls `classifier.parse` directly.
-	 * Omit for the byte-stable no-FST default.
-	 *
-	 * This is the tree's only FST-sensitive eval.
-	 * `eval gauntlet` grades through `parseForGeocode`, which takes no FST at all.
-	 *
-	 * Therefore, an FST change is invisible to it.
-	 * See the note on `assembledPipeline` below.
+	 * Per-locale FST gazetteer (`fst-<locale>.bin`) for the assembled arms only,
+	 * since the FST is a decode-time prior applied by `createRuntimePipeline`
+	 * while the bare `neural` arm calls `classifier.parse` directly; omit for the byte-stable
+	 * no-FST default, and note this is the tree's only FST-sensitive eval.
 	 */
 	adminFST?: string
 	/**
-	 * #478 leg 2: add the assembled (pipeline) arms.
+	 * Add the assembled (pipeline) arms.
 	 */
 	assembled?: boolean
 	/**
@@ -65,7 +57,7 @@ export interface OAResolverEvalOptions {
 	 */
 	candidateDB?: string
 	/**
-	 * #718 situs-eval: grade the production coordinate cascade (per-state databases).
+	 * Grade the production coordinate cascade (per-state databases).
 	 */
 	cascade?: boolean
 	/**
@@ -91,11 +83,11 @@ export interface OAResolverEvalOptions {
 	 */
 	eval?: string
 	/**
-	 * #405: recover the locality dropped for a dual-role place.
+	 * Recover the locality dropped for a dual-role place.
 	 */
 	hierarchyCompletion?: boolean
 	/**
-	 * #483 house-number interpolation database (single-state).
+	 * House-number interpolation database (single-state).
 	 */
 	interpolation?: string
 	/**
@@ -115,51 +107,43 @@ export interface OAResolverEvalOptions {
 	 */
 	modelCard?: string
 	/**
-	 * #895 tri-state pin: force adminCoherence off.
+	 * Tri-state pin: force `adminCoherence` off.
 	 */
 	noAdminCoherence?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence off — the pre-2026-08-05 configuration. This is the leg that
-	 * measures whether letting a coherent (postcode, locality) pair override `defaultCountry`
-	 * is byte-flat on a US panel, which is the one number the default-on promotion needed
-	 * and could not get from a confound board.
+	 * Tri-state pin: force `postcodeCountryCoherence` off, the leg that measures whether a
+	 * coherent (postcode, locality) pair overriding `defaultCountry` is byte-flat on a US panel.
 	 */
 	noPostcodeCountryCoherence?: boolean
 	/**
-	 * #370 tri-state pin: force postcodeConsistency off. The configuration before the pass was promoted.
-	 *
-	 * Paired with {@link postcodeConsistencyMaxMoveKm} this prices #2301's cap without a sweep:
-	 * the rows whose answer differs between this arm and the shipped one are exactly the rows the pass
-	 * touched, and the distance between the two coordinates is how far its fallback moved each one.
-	 *
-	 * A cap at K removes the moves above K, so one pair of runs prices every K,
-	 * and the truth coordinate says which of them were wins.
+	 * Tri-state pin: force `postcodeConsistency` off; paired with
+	 * {@link postcodeConsistencyMaxMoveKm} this prices the cap without a sweep, because the
+	 * rows whose answer differs from the shipped arm are exactly the ones the pass touched
+	 * and the coordinate distance is how far its fallback moved each.
 	 */
 	noPostcodeConsistency?: boolean
 	/**
-	 * #2301 pin: how far {@link noPostcodeConsistency}'s pass may move a coordinate onto the postcode point. Unset is the
-	 * library default.
+	 * How far {@link noPostcodeConsistency}'s pass may move a coordinate onto the
+	 * postcode point; unset is the library default.
 	 */
 	postcodeConsistencyMaxMoveKm?: number
 	/**
-	 * #2266 pin: a span-rescore sub-span may drop context but never a word of the name. Default-off in the library until
-	 * a measurement carries it, so an unset pin leaves this eval byte-identical.
+	 * A span-rescore sub-span may drop context but never a word of the name; default-off in the
+	 * library until a measurement carries it, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreRequireContextRemainder?: boolean
 	/**
-	 * #2264 pin: which reading of a weak resolution lifts the #685 span-rescore brake. Unset is the shipped brake, so an
-	 * unset pin leaves this eval byte-identical.
+	 * Which reading of a weak resolution lifts the span-rescore brake; unset is the
+	 * shipped brake, so an unset pin leaves this eval byte-identical.
 	 */
 	spanRescoreWeakResolution?: WeakResolutionReading
 	/**
-	 * #690/#895 tri-state pin: force normalizeCase on.
+	 * Tri-state pin: force `normalizeCase` on.
 	 */
 	normalizeCase?: boolean
 	/**
-	 * #42 tri-state pin: force postcodeCountryCoherence on. The library default has been on since 2026-08-05, so this pin
-	 * is now a no-op restatement.
-	 *
-	 * It stays because a check leg that says what it graded is the point of a tri-state.
+	 * Tri-state pin: force `postcodeCountryCoherence` on; the library default is on, so this is a
+	 * no-op restatement kept because a check leg saying what it graded is the point of a tri-state.
 	 */
 	postcodeCountryCoherence?: boolean
 	/**
@@ -179,11 +163,11 @@ export interface OAResolverEvalOptions {
 	 */
 	outRows?: string
 	/**
-	 * #743: production-representative placer (soft country prior).
+	 * Production-representative placer (soft country prior).
 	 */
 	placeCountry?: boolean
 	/**
-	 * #194/#743: promote a confident placer guess to a hard country filter (safelist-conditional).
+	 * Promote a confident placer guess to a hard country filter (safelist-conditional).
 	 */
 	placeCountryHard?: boolean
 	/**
@@ -191,7 +175,7 @@ export interface OAResolverEvalOptions {
 	 */
 	placeCountryHardAll?: boolean
 	/**
-	 * #475 opt-in postal-city alias scorer on the FTS path.
+	 * Opt-in postal-city alias scorer on the FTS path.
 	 */
 	postalCityAliasDB?: string
 	/**
@@ -203,29 +187,23 @@ export interface OAResolverEvalOptions {
 	 */
 	postcodeDatabases?: string
 	/**
-	 * Answer a repeated `findPlace` query from a per-run memo instead of querying the gazetteer again.
-	 *
-	 * The databases a run reads are sealed and read-only, so a query is a pure
-	 * function of its arguments and the memo cannot go stale.
-	 * It does hand two callers the same hit list: the memo returns a fresh array each time
-	 * so an in-place sort stays local, but the hit objects themselves are shared.
-	 *
-	 * On 2,000 US rows the run makes 22,109 calls over 6,872 distinct queries, at 2.2 ms per call.
+	 * Answer a repeated `findPlace` query from a per-run memo; the databases a run
+	 * reads are sealed and read-only, so a query is a pure function of its arguments
+	 * and the memo cannot go stale, though it does share the hit objects between callers
+	 * (the array itself is fresh each time so an in-place sort stays local).
 	 */
 	lookupMemo?: boolean
 	/**
-	 * Write a wall-time attribution JSON here: rig setup, and the per-row
+	 * Write a wall-time attribution JSON here: rig setup and the per-row
 	 * `neural.parse` / `resolver.resolveTree` split.
 	 *
-	 * Profiling only.
 	 * The promotion comparator reads every file under the output directory byte-for-byte,
-	 * so this path must name somewhere outside it.
-	 *
-	 * Omitted (the default) the harness writes no file and costs two `performance.now()` calls per row.
+	 * so this path must name somewhere outside it; omitted, the harness writes no file
+	 * and costs two `performance.now()` calls per row.
 	 */
 	profileJSON?: string
 	/**
-	 * #690/#895 tri-state pin: force normalizeCase off.
+	 * Tri-state pin: force `normalizeCase` off.
 	 */
 	rawCase?: boolean
 	/**

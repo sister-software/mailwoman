@@ -5,24 +5,14 @@
  *
  *   Diff two geocodes of the same input — the parse diff plus what the resolver did with it.
  *
- *   A distance delta on its own is the geocoding equivalent of a component map: it says the answer moved and not why.
- *   The three ways a geocode changes are different problems with different fixes, and only a per-span view separates
- *   them:
+ *   A distance delta alone says the answer moved, not why. The three ways a geocode changes are
+ *   different problems with different fixes: the parse changed (a different question was asked), a
+ *   span resolved to a different place (ranking or gazetteer coverage), or the tier changed (a lookup
+ *   missed and the same components fell through to a coarser rung).
  *
- *   1. **The parse changed**, so the resolver was asked a different question. No retrieval fault exists.
- *   2. **The parse held and a span resolved to a different place** — same text, same tag, new `placeID`. That is a
- *      ranking or a gazetteer-coverage problem.
- *   3. **The parse held, the places held, and the tier changed** — the same components fell through to a coarser rung
- *      because a rooftop or interpolation lookup missed. That is a data-coverage problem and no amount of model work
- *      touches it.
- *
- *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs `haversineKm`, and
- *   `@mailwoman/spatial` depends on `@mailwoman/core` — putting it in core would close a cycle. Re-implementing the
- *   haversine to avoid the move is the other wrong answer; `agents.md` names spatial as its one home.
- *
- *   The retrieval breadth per span is carried for the same reason a per-span confidence is: a span that resolved to the
- *   same place from 40 candidates instead of 2 is one gazetteer edit away from moving, and an answer that did not
- *   change yet is not the same as an answer that is stable.
+ *   It lives in `mailwoman` rather than beside the parse diff in `core` because it needs
+ *   `haversineKm`, and `@mailwoman/spatial` depends on `@mailwoman/core`, so putting it in core would
+ *   close a cycle.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -74,8 +64,7 @@ export interface GeocodeDiff {
 	/**
 	 * The span-level parse story.
 	 *
-	 * A geocode change whose `parse.identical` is false was asked a different question,
-	 * and the resolver is not the suspect.
+	 * When `parse.identical` is false the resolver was asked a different question and is not the suspect.
 	 */
 	parse: ParseDiff
 	spanGeo: SpanGeoDelta[]
@@ -98,8 +87,7 @@ export interface GeocodeDiff {
 	/**
 	 * Which of the three explanations the evidence supports.
 	 *
-	 * Stated rather than left to the reader, because the whole point is that a
-	 * distance delta alone cannot choose between them.
+	 * Stated rather than left to the reader, since a distance delta alone cannot choose between them.
 	 */
 	attribution:
 		| "parse-changed"

@@ -3,27 +3,19 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate into
- *   the coverage cells a layer writes. The only path in this pipeline that reaches
- *   {@link CoverageBasis.Surveyed}.
+ * Compose a region outline, one class's rows from two inventories, and a capture-recapture estimate
+ * into the coverage cells a layer writes; the only path in this pipeline that reaches
+ * {@link CoverageBasis.Surveyed}.
  *
- *   Pure. The IO (ogr2ogr for the outline and the OSM rows, SQLite for the reference inventory) belongs to
- *   the command. everything decided here is decided from data already in memory, so the arithmetic behind a
- *   completeness claim is testable over synthetic points.
+ * Pure: the IO belongs to the command, so the arithmetic behind a completeness claim is testable over
+ * synthetic points. Three rules connect each conclusion to its evidence:
  *
- *   Three rules connect each conclusion to its evidence:
- *
- *   1. **Every interior cell gets a row, including the empty ones.** A cell with `observedRows: 0` under a
- *      surveyed basis is the storable form of "surveyed, and there is none here" — the whole reason
- *      exclusion-grade coverage exists. A cell left OUT of the table means unknown, and the two must never
- *      collapse into each other.
- *   2. **Cells outside the region are never written.** Not at completeness 0 rather than at all: the region is
- *      what was measured, and the measurement makes no statement about its outside.
- *   3. **One region, one completeness.** The estimate is regional, so it is recorded regionally rather than
- *      dressed up as per-cell precision it does not have. Per-cell variation needs a per-cell denominator.
- *      measured against the pilot's own départements the pooled and stratified populations agreed to within
- *      0.7% (4,055 vs 4,042 under the primary protocol), which is what licenses the uniform value here and
- *      is not a result that transfers to another region unmeasured.
+ * 1. Every interior cell gets a row, including empty ones: `observedRows: 0` under a surveyed basis
+ *    means "surveyed, and there is none here", while a cell left out of the table means unknown.
+ * 2. Cells outside the region are never written, because the region is what was measured.
+ * 3. One region, one completeness: the estimate is regional, and per-cell variation would need a
+ *    per-cell denominator. The pilot's départements agreed to within 0.7%, which licenses the uniform
+ *    value here but does not transfer to another region unmeasured.
  */
 
 import { CoverageBasis } from "@mailwoman/evidence"

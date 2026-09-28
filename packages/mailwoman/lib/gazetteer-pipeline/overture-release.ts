@@ -3,20 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Does a pinned Overture release still exist?
+ * Does a pinned Overture release still exist?
  *
- *   Overture deletes releases from the bucket on roughly a monthly window — a 2026-08-19 listing held two. Every build
- *   that reads Overture carries its own pin (divisions for admin, places for POI, addresses for the corpus ingest.
- *   independent on purpose, because bumping one is a new-vintage decision for that artifact alone), and each pin dies
- *   silently when its release is pruned.
+ * Overture deletes releases from the bucket on roughly a monthly window, and every build that reads
+ * Overture carries its own pin, so each pin dies silently when its release is pruned. The cost of
+ * finding out late is why this exists: the admin build reaches `fold-overture` only after the WOF
+ * ingest, so a dead pin surfaced after ~30 minutes as an `IO Error` that reads like a network fault.
  *
- *   The cost of finding out late is the reason this exists. The admin build reaches `fold-overture` only after the WOF
- *   ingest, so a dead pin surfaced after 2.9 million records and ~30 minutes as `IO Error: No files found that match
- *   the pattern` — a message that reads like a network fault rather than an expired pin. The bucket listing answers in
- *   one request.
- *
- *   Anonymous http against the public bucket rather than the S3 SDK or DuckDB: this must be answerable before any heavy
- *   optional dependency loads and the same listing a human would check.
+ * Anonymous http against the public bucket rather than the S3 SDK or DuckDB, so this is answerable
+ * before any heavy optional dependency loads and is the same listing a human would check.
  */
 
 import { APIClient } from "@mailwoman/core/api"
@@ -24,9 +19,6 @@ import { elementText, elementTexts } from "@mailwoman/core/html/document"
 
 const BUCKET_URL = "https://overturemaps-us-west-2.s3.amazonaws.com"
 
-/**
- * Releases currently in the bucket, oldest first.
- */
 /**
  * What this function needs from an http client: one `fetch`.
  *
@@ -142,11 +134,8 @@ export async function checkOvertureRelease(release: string, client?: OvertureLis
 		}
 	}
 
-	// An empty listing is not an empty bucket.
-	// Overture has never held zero releases, so an empty result means the query was wrong
-	// or the response was not the listing, and the first version of this file proved the
-	// point by dropping its own query parameters and then reporting a live pin as pruned.
-	// Zero is treated as no answer, never as absence.
+	// An empty listing is not an empty bucket — Overture has never held zero releases —
+	// so zero is treated as no answer, never as absence.
 	if (!available.length) {
 		return {
 			release,

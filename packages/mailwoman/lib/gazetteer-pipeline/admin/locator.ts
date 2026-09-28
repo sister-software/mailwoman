@@ -2,16 +2,15 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Which admin place contains this point — a build-time point-in-polygon locator over a WOF polygon database.
+ * @file Which admin place contains this point — a build-time point-in-polygon locator over a WOF polygon
+ * database.
  *
- *   Built for the question a gazetteer join answers badly. Asking WOF which region a US postcode's `parent_id` leads to
- *   contradicts the ZIP numbering plan on 8.46% of placed codes. asking which region polygon contains the code's own
- *   coordinate contradicts it on 0.69%, a 12× improvement, using only data already shipped under permissive licences.
- *   The residual is inherited rather than produced: 264 of those 286 sit on a coordinate that is not a location.
+ *   Built for the question a gazetteer join answers badly: asking WOF which region a US postcode's
+ *   `parent_id` leads to contradicts the ZIP numbering plan on 8.46% of placed codes, while the
+ *   containing region polygon contradicts it on 0.69%.
  *
- *   A uniform grid over polygon bounding boxes keeps a lookup to a few ring tests. The naive cross product — every
- *   point against every polygon — does not finish at gazetteer scale, and the grid is the whole reason this is a
- *   sub-second pass rather than an overnight one.
+ *   A uniform grid over polygon bounding boxes keeps a lookup to a few ring tests; the naive cross
+ *   product does not finish at gazetteer scale.
  */
 
 import { tryParsingJSON } from "@mailwoman/core/json"
@@ -40,10 +39,8 @@ interface Shape extends LocatedAdmin {
 }
 
 /**
- * Grid cell size in degrees. 0.25° is small enough that a US state's bbox spans a few
- * hundred cells and a dense metro cell holds a handful of candidates.
- *
- * The tradeoff is index build time against candidates per probe, and both stay negligible at admin scale.
+ * Grid cell size in degrees; 0.25° keeps a US state's bbox to a few hundred cells and a dense
+ * metro cell to a handful of candidates, trading index build time against candidates per probe.
  */
 const CELL_DEGREES = 0.25
 
@@ -53,10 +50,8 @@ export interface AdminLocatorOptions {
 	 */
 	adminPath: PathBuilderLike
 	/**
-	 * WOF polygon DB — supplies the geometry.
-	 *
-	 * A place present in the admin DB with no row here cannot be located, and the locator
-	 * counts that rather than treating it as a miss at probe time.
+	 * WOF polygon DB supplying the geometry; a place present in the admin DB with no row here
+	 * cannot be located, and the locator counts that rather than treating it as a probe-time miss.
 	 */
 	polygonPath: PathBuilderLike
 	placetype: string
@@ -76,11 +71,8 @@ export class AdminLocator {
 	 */
 	readonly located: number
 	/**
-	 * Places present in the admin DB whose geometry the polygon DB does not carry.
-	 *
-	 * A caller reporting coverage needs this: a probe that finds no place may mean the
-	 * point is outside every polygon or that the containing place has no polygon at all,
-	 * and only this number separates them.
+	 * Places present in the admin DB whose geometry the polygon DB does not carry; only this
+	 * number separates a point outside every polygon from a containing place with no polygon.
 	 */
 	readonly withoutGeometry: number
 
@@ -123,8 +115,7 @@ export class AdminLocator {
 				let maxLat = Number.NEGATIVE_INFINITY
 
 				for (const polygon of polygons) {
-					// The outer ring bounds the polygon.
-					// Holes are inside it by definition.
+					// The outer ring bounds the polygon; holes are inside it by definition.
 					for (const [lon, lat] of polygon[0] ?? []) {
 						minLon = Math.min(minLon, lon!)
 						maxLon = Math.max(maxLon, lon!)
@@ -167,10 +158,8 @@ export class AdminLocator {
 	}
 
 	/**
-	 * The place containing this point, or `null` when no loaded polygon does.
-	 *
-	 * Ties go to the first shape loaded — overlapping admin polygons of one placetype
-	 * are a source defect rather than something to arbitrate here.
+	 * The place containing this point, or `null` when no loaded polygon does; ties go to the first
+	 * shape loaded, because overlapping admin polygons of one placetype are a source defect.
 	 */
 	locate(lon: number, lat: number): LocatedAdmin | null {
 		const candidates = this.#grid.get(`${Math.floor(lon / CELL_DEGREES)}:${Math.floor(lat / CELL_DEGREES)}`)

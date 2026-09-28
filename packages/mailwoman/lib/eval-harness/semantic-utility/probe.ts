@@ -68,8 +68,7 @@ export const PROBE_COMPARATORS = ["poi_board_assembled_answer"] as const
 export type ProbeComparatorName = (typeof PROBE_COMPARATORS)[number]
 
 /**
- * Grades one row with a registered comparator.
- * It throws for an unregistered name.
+ * Grades one row with a registered comparator, throwing for an unregistered name.
  */
 export function gradeWithComparator(
 	comparator: ProbeComparatorName,
@@ -106,8 +105,7 @@ export interface ProbeTargetRow extends POIBoardFixture {
 	 */
 	anchorFrom: string
 	/**
-	 * The activity phrase that replaces the venue noun.
-	 * It is the only difference from `anchorFrom`.
+	 * The activity phrase that replaces the venue noun; the only difference from `anchorFrom`.
 	 */
 	activityPhrase: string
 	/**
@@ -132,10 +130,8 @@ export const PROBE_CONTROL_GROUPS = ["same_category", "adjacent"] as const
 export type ProbeControlGroup = (typeof PROBE_CONTROL_GROUPS)[number]
 
 /**
- * A frozen control row that refers by ID to a row in a committed fixture file.
- *
- * The row repeats the fixture's contents so {@linkcode resolveControlRows} can
- * detect a fixture that has changed.
+ * A frozen control row that refers by ID to a row in a committed fixture file, repeating
+ * the fixture's contents so {@linkcode resolveControlRows} can detect one that has changed.
  */
 export interface ProbeControlRow {
 	id: string
@@ -148,9 +144,8 @@ export interface ProbeControlRow {
 	locale?: string
 	expect: POIBoardExpect
 	/**
-	 * The grade the row holds at baseline and must keep.
-	 *
-	 * `controlRegressionTolerance` limits how many rows may lose it.
+	 * The grade the row holds at baseline and must keep; `controlRegressionTolerance`
+	 * limits how many rows may lose it.
 	 */
 	expectedGrade: "pass"
 	/**
@@ -179,9 +174,8 @@ export interface ProbeThresholds {
 	 */
 	minimumPrimaryNumerator: number
 	/**
-	 * How many rows the primary numerator must gain over the frozen baseline for GO.
-	 *
-	 * The delta bar is needed because a nonzero baseline could meet the absolute bar with no change.
+	 * How many rows the primary numerator must gain over the frozen baseline for GO; the delta
+	 * bar is needed because a nonzero baseline could meet the absolute bar with no change.
 	 */
 	minimumPrimaryDelta: number
 	/**
@@ -279,10 +273,8 @@ export function probeDefinitionHash(definition: SemanticProbeDefinition): string
 }
 
 /**
- * Audits a probe definition without running anything.
- *
- * It returns one message per problem, identifying the field or row ID.
- * An empty list means the definition can run.
+ * Audits a probe definition without running anything, returning one message per problem;
+ * an empty list means the definition can run.
  */
 export function auditProbeDefinition(definition: SemanticProbeDefinition): string[] {
 	const problems: string[] = []
@@ -421,9 +413,8 @@ export async function loadProbeDefinition(
 }
 
 /**
- * Resolves each control row to its committed fixture.
- *
- * It throws when a fixture is missing or differs from the frozen copy.
+ * Resolves each control row to its committed fixture, throwing when a fixture is missing
+ * or differs from the frozen copy.
  */
 export function resolveControlRows(
 	definition: SemanticProbeDefinition,
@@ -486,9 +477,7 @@ export interface ProbeCounts {
 }
 
 /**
- * Counts a run's outcomes.
- *
- * The denominators come from the definition's registered row counts.
+ * Counts a run's outcomes, with denominators from the definition's registered row counts.
  */
 export function computeProbeCounts(
 	definition: SemanticProbeDefinition,
@@ -520,11 +509,8 @@ export interface ProbeVerdict {
 }
 
 /**
- * Applies the frozen thresholds.
- *
- * Control regressions above tolerance give STOP-REDESIGN.
- * Otherwise the primary bars give GO, the diagnostic bars give DIAGNOSTIC-ONLY,
- * and anything else gives STOP-REDESIGN.
+ * Applies the frozen thresholds: control regressions above tolerance give STOP-REDESIGN, otherwise
+ * the primary bars give GO, the diagnostic bars DIAGNOSTIC-ONLY, and anything else STOP-REDESIGN.
  */
 export function decideProbe(definition: SemanticProbeDefinition, counts: ProbeCounts): ProbeVerdict {
 	const thresholds = definition.thresholds

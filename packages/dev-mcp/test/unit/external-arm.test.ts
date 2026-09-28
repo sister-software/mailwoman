@@ -2,8 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   Tests external geocoder parsing and refusals against scripted responses, with no network access.
  */
 
 import { createFakeClock } from "@mailwoman/core/api/test-clocks"
@@ -83,7 +81,6 @@ describe("ExternalGeocoderClient.search", () => {
 	})
 
 	it("refuses a transposed position instead of scoring the distance to it", async () => {
-		// After the swap the latitude is -120.4, which is out of range.
 		const swapped = {
 			features: [{ type: "Feature", geometry: { type: "Point", coordinates: [37.3, -120.4] }, properties: {} }],
 		}
@@ -159,7 +156,6 @@ describe("ExternalGeocoderClient.probeIdentity", () => {
 
 describe("ExternalGeocoderClient pacing", () => {
 	it("spaces dispatches at the configured interval, which is the check that actually holds a rate", async () => {
-		// The test measures dispatch times, because a configured rate alone makes no statement about pacing.
 		const clock = createFakeClock()
 		const transport = stubTransport([{ body: PELIAS_HIT }], { clock })
 

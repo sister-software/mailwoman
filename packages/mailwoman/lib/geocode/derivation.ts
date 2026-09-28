@@ -14,8 +14,8 @@ import { type DerivationNode, type DerivationProjection, observation, projectDer
 export const TRACE_SOURCE = "gazetteer"
 
 /**
- * Converts one resolve-trace record into a derivation node that says
- * which place was picked, or why no place was.
+ * Convert one resolve-trace record into a derivation node stating which place
+ * was picked, or why no place was.
  */
 export function traceToDerivationNode(record: ResolveNodeTrace): DerivationNode {
 	const label = `${record.tag}=${record.value}`

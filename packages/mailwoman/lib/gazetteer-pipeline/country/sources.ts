@@ -3,35 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Which source serves a country's admin coverage, and what it costs when more than one does.
+ * Which source serves a country's admin coverage, and what it costs when more than one does.
  *
- *   Three sources feed the admin gazetteer and each is selected differently: the WOF leg is
- *   presence-driven (`ingestWOF` globs `**\/data\/**\/*.geojson` over the repos root and reads no list),
- *   while Overture and GeoNames are list-driven from `defaults.ts`. So adding a country by cloning is half
- *   the job. the other half is removing it from whichever list serves it today, and no check enforced the
- *   pairing.
- *
- *   the invariant is not "one country, one source", and that matters because the runbook this came from
- *   states it as though it were. Measured against the shipped `admin-global-priority.db` on 2026-08-17:
- *   245 countries, 231 single-source, **14 two-source** (all Overture + GeoNames), 0 three-source. The
- *   fourteen are not drift — the config lists agree with the artifact exactly.
- *
- *   Nor are they simply waste. Name overlap between the two folds, per country:
- *
- *   | Country | GeoNames names | Overture names | Shared |
- *   | ------- | -------------- | -------------- | ------ |
- *   | CZ      | 11,904         | 11,918         | 9,800  |
- *   | FI      | 20,759         | 9,744          | 8,668  |
- *   | PL      | 33,484         | 61,802         | 26,490 |
- *
- *   So 79–89% of each GeoNames set is already in Overture — real duplication, and it is what produces the
- *   coincident same-name rows the resolver then has to arbitrate. But FI gains roughly 12,000 names
- *   Overture does not carry, so dropping the fold wholesale would lose coverage. Both facts are true, and
- *   a check that refused two sources would be refusing a deliberate trade.
- *
- *   Hence the rule this module encodes: the fourteen are accepted and recorded. a fifteenth is refused.
- *   An existing trade someone measured is not the same thing as a country silently acquiring a second
- *   source because a clone landed and a list was never edited.
+ * The WOF leg is presence-driven while Overture and GeoNames are list-driven, so the fourteen
+ * baseline Overture + GeoNames pairs are accepted and a fifteenth is refused.
  */
 
 /**
@@ -40,8 +15,6 @@
 export const AdminSource = {
 	/**
 	 * Cloned WOF GeoJSON repos, ingested by presence.
-	 *
-	 * Not list-driven — see the module docstring.
 	 */
 	WOF: "wof",
 	/**
@@ -49,10 +22,8 @@ export const AdminSource = {
 	 */
 	Overture: "overture",
 	/**
-	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`.
-	 *
-	 * Despite the ingest function's name it writes `spr` places rather than only
-	 * alternate names: the rows are `locality` with `parent_id = -1`.
+	 * The GeoNames fold, `DEFAULT_GEONAMES_COUNTRIES`; it writes `spr` places
+	 * (`locality` with `parent_id = -1`) rather than only alternate names.
 	 */
 	GeoNames: "geonames",
 } as const
@@ -60,15 +31,8 @@ export const AdminSource = {
 export type AdminSource = (typeof AdminSource)[keyof typeof AdminSource]
 
 /**
- * The countries measured as two-source on 2026-08-17, with Overture + GeoNames,
- * against both the config lists and the shipped artifact.
- *
- * A baseline rather than a permission slip.
- * It exists so a new double-listing is distinguishable from the fourteen that were already
- * there — the difference between a trade someone made and an accident nobody noticed.
- *
- * Removing an entry is a coverage decision (see the overlap table above);
- * adding one is what this module refuses.
+ * The countries accepted as two-source (Overture + GeoNames); removing an entry is
+ * a coverage decision and adding one is what this module refuses.
  */
 export const ACCEPTED_TWO_SOURCE_COUNTRIES: ReadonlySet<string> = new Set([
 	"AT",
@@ -104,13 +68,8 @@ export interface SourceConflict {
 /**
  * Map every country to the sources that serve it, from the three lists.
  *
- * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES`
- * because that list is a declaration and the WOF leg is presence-driven:
- * what actually gets ingested is whatever is cloned.
- * A caller checking a build should pass what is on disk.
- * A caller checking the recipe should pass the list.
- *
- * Conflating them is how a clone that nobody declared, or a declaration nobody cloned, reads as fine.
+ * `wofCountries` is passed in rather than read from `DEFAULT_WOF_PRIORITY_COUNTRIES` because the WOF
+ * leg is presence-driven: a build check passes what is on disk, a recipe check passes the list.
  */
 export function countrySourceMap(lists: {
 	wofCountries: readonly string[]
@@ -137,12 +96,8 @@ export function countrySourceMap(lists: {
 }
 
 /**
- * Countries served by more than one source that the baseline does not already record.
- *
- * A WOF conflict is reported regardless of the baseline: every entry in
- * {@link ACCEPTED_TWO_SOURCE_COUNTRIES} is Overture + GeoNames, so a country that gains
- * WOF coverage while staying on a list is the #267 case the comments warned about.
- * The clone landed and the list was never edited.
+ * Countries served by more than one source that the baseline does not already record;
+ * a WOF conflict is reported regardless.
  */
 export function sourceConflicts(sources: readonly CountrySources[]): SourceConflict[] {
 	return sources

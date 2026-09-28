@@ -3,24 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Report, per surface, the gazetteer bias each FST arm hands the decoder. This is the curation
- *   instrument behind the hard-case board (`build/hard-case-board.run.ts` calls the same collapse) and
- *   the first thing to reach for when an arm comparison moves and you need to know whether the FST
- *   could have caused it.
- *
- *   what IT prints, and why that is the right quantity. `neural/fst-prior.ts`'s `applyBias` does not use
- *   the accepting entries individually: it collapses them to `max(importance)` PER BIO TAG, and only
- *   four placetypes reach a tag at all (`PLACETYPE_TO_BIO` — country / region / locality / postalcode).
- *   A `localadmin`, `county`, `borough` or `neighbourhood` entry is walked, deduped, and then dropped
- *   without ever touching the emission matrix. So the per-place ranking inside a name — the thing the
- *   Saint-Denis pair is about — is invisible to the decoder. only the max is not. Printing anything else
- *   would overstate what an importance swap can do here.
- *
- *   `miss` means the FST does not accept the surface at all: the gazetteer has no entry, which is
- *   absence and not a zero bias. A printed `0` means the FST does know the surface and scores it zero.
- *   The two are different facts and the output keeps them apart.
- *
- *   Usage: node packages/mailwoman/lib/dev-tools/probe/fst-bias.run.ts [--locale en-us] [--raw] <surface>...
+ *   Report, per surface, the gazetteer bias each FST arm hands the decoder: `applyBias` collapses
+ *   accepting entries to the max importance per BIO tag, so a place's per-place ranking is invisible
+ *   and only the four placetypes that reach a tag matter, while `miss` is absence and a printed
+ *   `0` is a scored zero.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -35,19 +21,16 @@ const { values, positionals } = parseArguments({
 	options: {
 		locale: { type: "string", default: "en-us" },
 		/**
-		 * Print every accepting entry at full precision instead of the per-tag max —
-		 * how you tell "the arms agree" from "the arms agree to four decimal places".
+		 * Print every accepting entry at full precision rather than the per-tag max,
+		 * to tell agreement from agreement at four decimal places.
 		 */
 		raw: { type: "boolean", default: false },
 	},
 })
 
 /**
- * The arms, by the artifact each one is.
- *
- * `pop` fell back to population because its source DB has no `place_importance` table;
- * `imp` carries the real Wikipedia join.
- * Both stamps are readable in the binaries' provenance tails.
+ * The arms, by the artifact each is: `pop` fell back to population because its source DB
+ * has no `place_importance` table, while `imp` carries the real Wikipedia join.
  */
 const ARMS: Record<string, PathBuilder> = {
 	pop: wofDatabasePath("fst-per-locale"),

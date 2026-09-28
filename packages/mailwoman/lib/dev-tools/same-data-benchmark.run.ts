@@ -3,37 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The same-data controlled resolver benchmark (#2261) — the measurement that needs the model and the
- *   gazetteer. Three phases, run separately so the expensive one happens once:
- *
- *     panel   Execute the frozen selection rules over GeoNames and write the panel.
- *     record  Parse every query with the shipped model, drive the real backend once per arm option set,
- *             and freeze every answer. This is the only phase that touches a gazetteer.
- *     run     Replay the frozen fixture through the three arms, score, and write the results.
- *     sweep   Re-grade the frozen results under an abstention threshold and write the trade curve (#2264).
- *     knob    Replay the frozen fixture at a matrix of `ResolveOpts` arms — the shipped knob (#2264, #2265).
- *
- *   No step after `record` reads a database, so a difference the `run` phase reports cannot come from
- *   retrieval, an index vintage, or a data footprint: every arm reads the same frozen bytes, and
- *   `replayBackend` raises rather than inventing an answer.
- *
- *   Run:
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts panel
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts record
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts run
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts score
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts sweep
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob
- *     node packages/mailwoman/lib/dev-tools/same-data-benchmark.run.ts knob --arms <arms.json> --knob-out <report.md>
- *
- *   `knob --arms` replays a JSON array of `{ "label", "opts" }` arms in place of the default floor matrix and writes
- *   its table to `--knob-out`. `readKnobArms` rejects an option name that is not a `ResolveOpts` field.
- *
- *   `record --withhold-every-denoting-row` removes every row denoting the gold settlement instead of every id the
- *   concordance links. The gazetteer carries 10.6% of its populated localities at two admin tiers, so under the
- *   concorded-id rule an arm answering the twin is graded as selecting where no correct candidate exists. The two
- *   rules define different strata and their rates are not comparable. `benchmark-freeze.json` admits a rule change
- *   only as a successor definition, so the receipt records which rule produced the fixture.
+ *   The same-data controlled resolver benchmark: no step after `record` reads a database, so a
+ *   difference the `run` phase reports cannot come from retrieval, an index vintage, or a data
+ *   footprint, and `replayBackend` raises rather than inventing an answer.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -107,28 +79,17 @@ const { values, positionals } = parseArguments({
 
 const GEONAMES = values.geonames || dataRootPath("geonames")
 /**
- * The FTS gazetteer, read for its `concordances` + `spr` tables — the identity join.
- *
- * The candidate backend below carries no concordance table, which is why the
- * two are separate flags rather than one.
+ * The FTS gazetteer, read for its `concordances` and `spr` tables: the candidate backend below
+ * carries no concordance table, which is why the two are separate flags rather than one.
  */
 const GAZETTEER = values.gazetteer || wofDatabasePath("admin-global-priority.db")
-/**
- * The backend the recording drives.
- *
- * Defaults to the promoted candidate table, which is what the shipped geocoder reads.
- */
 const BACKEND = values.backend || wofDatabasePath("candidate.db").toString()
 const OUT = values.out || repoRootPath("docs", "static", "benchmarks").toString()
 
 /**
- * The panel, named separately from `--out` so a successor construction can read the
- * frozen panel while writing its own fixture elsewhere.
- *
- * One path for both would force a successor to overwrite the frozen artifacts to change
- * the withheld-gold rule, which is the one thing `benchmark-freeze.json` exists to refuse.
- * Comparability runs the other way too: a successor that re-executed the selection
- * rules would be measuring a different panel and a different rule at once.
+ * Named separately from `--out` so a successor construction can read the frozen panel
+ * while writing its own fixture, since one path for both would force it to overwrite
+ * the frozen artifacts to change the withheld-gold rule.
  */
 const PANEL_PATH = values.panel || `${OUT}/same-data-panel.jsonl`
 const FIXTURE_PATH = `${OUT}/same-data-candidates.jsonl`
@@ -223,8 +184,8 @@ async function recordPhase(): Promise<void> {
 		{
 			benchmarkID: withholdEveryDenotingRow ? `${definition.benchmarkID}-denoting` : definition.benchmarkID,
 			definitionVersion: definition.version,
-			// Which withheld-gold rule produced this fixture.
-			// The two rules define different strata, so the benchmark id alone does not identify a run.
+			// Which withheld-gold rule produced this fixture; the two rules define different
+			// strata, so the benchmark id alone does not identify a run.
 			withheldGoldRule: withholdEveryDenotingRow ? "every-denoting-row" : "concorded-ids",
 			recordedAt: isoSeconds(),
 			gitHead: await gitHead(repoRootPath()),
@@ -247,10 +208,9 @@ async function recordPhase(): Promise<void> {
 }
 
 /**
- * Every arm's `ResolveOpts`, production first.
- *
- * The production arm's empty bag is listed explicitly: an omitted default is a missing
- * replay key, and `replayBackend` would then raise on the arm the benchmark is about.
+ * Every arm's `ResolveOpts`, production first: the production arm's empty bag
+ * is listed explicitly because an omitted default is a missing replay key
+ * and `replayBackend` would raise on the arm the benchmark is about.
  */
 function armOptionSets(): ResolveOpts[] {
 	return [{}, ABLATION_RESOLVE_OPTS]
@@ -300,21 +260,17 @@ const BOOTSTRAP = { resamples: 10_000, seed: 20_260_913 } as const
 const REQUIRED_MARGIN_POINTS = 8
 
 /**
- * What the receipt says about the fixture these results came from, or a stated absence.
- *
- * Read rather than assumed, because the two withheld-gold rules define different strata
- * and their abstention rates are not comparable.
- * The definition alone names neither, so a report headed by the definition would
- * label a successor's numbers with the frozen benchmark's id — two constructions,
- * one heading, and a reader with no way to tell them apart.
+ * What the receipt says about the fixture these results came from, read rather than assumed
+ * because the two withheld-gold rules define different strata and a report headed by the
+ * definition alone would label a successor's numbers with the frozen benchmark's id.
  */
 async function recordedUnder(): Promise<{ benchmarkID: string; withheldGoldRule: string }> {
 	const receipt = await tryReadLocalJSONFile<{ benchmarkID?: string; withheldGoldRule?: string }>(RECEIPT_PATH)
 
 	return {
 		benchmarkID: receipt?.benchmarkID ?? "(no receipt beside these results)",
-		// A fixture recorded before the rule was named carries no field.
-		// That is the v1 rule, and saying so is not the same as staying silent.
+		// A fixture recorded before the rule was named carries no field,
+		// which is the v1 rule rather than a silent absence.
 		withheldGoldRule: receipt?.withheldGoldRule ?? "concorded-ids (receipt predates the field)",
 	}
 }
@@ -383,7 +339,7 @@ async function scorePhase(): Promise<void> {
 	]
 
 	// `lines` must not end with an empty element: `oxfmt` strips a trailing blank line,
-	// so a generated file carrying one fails `yarn lint` as soon as it is committed.
+	// so a generated file carrying one fails `yarn lint`.
 	await writeLocalTextFile(lines, SCORE_PATH)
 
 	console.log(lines.join("\n"))
@@ -468,12 +424,9 @@ async function sweepPhase(): Promise<void> {
 }
 
 /**
- * The option sets the knob replay walks.
- *
- * The candidate backend's score is a log-population rank, measured over this fixture's pools
- * at min 0, median 2.55 and max 9.14, so the floors walk the populated half of that range.
- * The `spanRescore` arms are here because a floor on its own barely moves the false-selection
- * rate and the pair moves it a long way: `applySpanRescore` returns early only
+ * The option sets the knob replay walks: the candidate backend's score is a log-population
+ * rank measured over this fixture's pools at min 0, median 2.55 and max 9.14,
+ * and the `spanRescore` arms are here because `applySpanRescore` returns early only
  * when the tree already holds a resolved place (`resolve/passes.ts`), so a floor's refusal
  * leaves exactly the state that invites the recovery pass to answer instead.
  */
@@ -523,11 +476,9 @@ async function knobPhase(): Promise<void> {
 		byArm.set(label, results)
 	}
 
-	// A raised floor changes what the walk asks next, so each arm loses a different
-	// set of rows to replay misses.
-	// Scoring every arm over its own survivors would compare rates whose denominators moved.
-	// This intersection is what makes the columns comparable, and the count of
-	// rows it drops is reported beside them.
+	// A raised floor changes what the walk asks next, so each arm loses a different set of
+	// rows to replay misses, and scoring every arm over its own survivors would compare rates
+	// whose denominators moved; this intersection is what makes the columns comparable.
 	const errored = new Set(
 		[...byArm.values()].flatMap((results) => results.filter((result) => result.error).map((result) => result.rowID))
 	)

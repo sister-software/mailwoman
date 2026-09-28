@@ -2,9 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The footprint: what a boundary file may hold, and what the outline must yield before a coverage claim
- *   is written from it.
  */
 
 import { outlineFromGeoJSON, realizeFloodMapExtent } from "@mailwoman/flood/sdk/extent"
@@ -58,17 +55,13 @@ describe("realizeFloodMapExtent", () => {
 		const extent = realize(GEOMETRY)
 
 		expect(extent.coverageCells.size).toBeGreaterThan(0)
-		// The conservative interior test drops the fringe, so the footprint is strictly
-		// smaller than a raw polyfill of the same rectangle would be.
-		// A cell wrongly called interior claims a determination nobody made.
+		// The conservative interior test drops the fringe, so the footprint never claims a cell nobody determined.
 		expect(extent.bbox).toEqual({ minLat: 52, minLon: -1, maxLat: 53, maxLon: 0 })
 	})
 
 	it("refuses an outline that yields no interior cell rather than building a silent no-op", () => {
-		// Resolution 2 cells are hundreds of thousands of square kilometres,
-		// so no cell lies wholly inside this rectangle.
-		// A zero-cell footprint would write no coverage rows and answer "unknown"
-		// everywhere while reporting success.
+		// Resolution 2 cells are hundreds of thousands of square kilometres, so no cell lies wholly
+		// inside this rectangle and the build must refuse rather than report success with no coverage.
 		expect(() => realize(GEOMETRY, 2)).toThrow(/no interior cell/u)
 	})
 })

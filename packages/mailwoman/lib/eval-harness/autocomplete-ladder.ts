@@ -2,18 +2,7 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The autocomplete ladder (#2154): every board row truncated at every prefix boundary, each rung graded against the
- *   row's own truth, on two arms — the parse → resolve path today's Photon `/api` runs on a partial query, and the FST
- *   autocomplete tier. Four readings per row per arm: the first-HIT rung (how many characters before the truth enters
- *   the top-k), stability (once in, does it stay in on every later rung), latency per rung-length band, and abstention
- *   on the one- and two-character rungs where the right answer is no answer.
- *
- *   the locale hint is part OF the input. A finished address carries its own country evidence; `Ru` carries none, and a
- *   first-hit rung measured without the hint grades the gazetteer's population prior rather than autocomplete. Every
- *   rung therefore runs under the row's country, and a row with none is refused rather than graded.
- *
- *   no new truth. The ladder is derived from rows that already carry a coordinate and a tolerance. the full-string rung
- *   is the ordinary board grade for that row, and a difference there is a harness defect rather than a finding.
+ * @file The autocomplete ladder over two arms — parse→resolve and FST — where every rung runs under the row's country, and a row with no country is refused rather than graded.
  */
 
 import { pathExists, readLocalBuffer } from "@mailwoman/core/fs/readers"
@@ -32,10 +21,8 @@ import { buildGauntletDeps, type GauntletDepsOptions, type GauntletGeocodeOpts }
 import { routeCountry } from "#eval-harness/gauntlet/routing"
 
 /**
- * The two arms.
- *
- * `parse_resolve` is what `@mailwoman/photon`'s `/api` runs on a prefix today and answers
- * one coordinate; `fst` is the autocomplete tier, answering up to `topK` suggestions.
+ * The two arms: `parse_resolve` answers one coordinate, and `fst` answers up
+ * to {@link LADDER_TOP_K} suggestions.
  */
 export const LADDER_ARMS = ["parse_resolve", "fst"] as const
 
@@ -68,14 +55,9 @@ export const ABSTAIN_EXPECTED_MAX_CHARS = 2
 export const HEADLINE_MAX_TOLERANCE_M = 25_000
 
 /**
- * Which per-locale FST the `fst` arm reads for a row's country.
- *
- * This is not the weights-overlay routing (`OVERLAY_LOCALE_BY_COUNTRY`), which falls back
- * to en-US for every country without an overlay: an FST is country-scoped by construction,
- * and grading a French row against the US FST would report "never" for `Paris` as
- * a property of the tier rather than of the artifact chosen.
- * A country with no FST here answers no query on that arm and is counted out of
- * its denominator, never graded as a miss.
+ * Which per-locale FST the `fst` arm reads for a row's country; unlike the
+ * weights-overlay routing it never falls back to en-US, so a country with no FST is
+ * counted out of the denominator rather than graded a miss.
  */
 export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 	US: "en-us",
@@ -90,22 +72,14 @@ export const FST_LOCALE_BY_COUNTRY: Readonly<Record<string, string>> = {
 }
 
 /**
- * How many single-character rungs open the ladder before token boundaries take over:
- * the first three keystrokes are where an autocomplete front decides whether to answer at all,
- * and beyond three a per-character rung adds latency samples without adding a decision.
+ * How many single-character rungs open the ladder before token boundaries take over,
+ * past which a per-character rung adds latency samples without adding a decision.
  */
 export const FIRST_KEYSTROKE_RUNGS = 3
 
 /**
- * The prefixes of one input, shortest first, ending with the full string.
- *
- * The first three single characters stand in for the first keystrokes.
- * After that a rung opens at every token boundary — a run of whitespace
- * or a comma — so `Rua Augusta 100, Lisboa` yields `R`, `Ru`, `Rua`, `Rua Augusta`,
- * `Rua Augusta 100`, `Rua Augusta 100, Lisboa`.
- *
- * Trailing separators are trimmed, because a user's screen does not send the space
- * until the next letter arrives.
+ * The prefixes of one input, shortest first, ending with the full string, with a rung
+ * opening at each token boundary and trailing separators trimmed.
  */
 export function ladderRungs(input: string): string[] {
 	const rungs: string[] = []
@@ -141,14 +115,7 @@ export function ladderRungs(input: string): string[] {
 export interface RungReading {
 	prefix: string
 	chars: number
-	/**
-	 * Every coordinate the arm answered, top first — one for `parse_resolve`,
-	 * up to {@link LADDER_TOP_K} for `fst`.
-	 */
 	answers: Array<{ lat: number; lon: number }>
-	/**
-	 * Whether any answer is within the row's tolerance of the truth.
-	 */
 	hit: boolean
 	latencyMs: number
 }
@@ -184,9 +151,7 @@ export interface RowArmReading {
 }
 
 /**
- * Fold rungs into the per-row readings.
- *
- * Pure, so the arithmetic is testable without an engine.
+ * Folds rungs into the per-row readings; pure, so the arithmetic is testable without an engine.
  */
 export function readRow(rungs: readonly RungReading[], inputLength: number): RowArmReading {
 	const firstIndex = rungs.findIndex((rung) => rung.hit)
@@ -216,9 +181,8 @@ export interface LadderRow {
 	 */
 	headline: boolean
 	/**
-	 * The FST locale the `fst` arm read, or `null` when the row's country has none.
-	 *
-	 * The arm then answered no query and the row is outside that arm's denominators.
+	 * The FST locale the `fst` arm read, or `null` when the row's country has none,
+	 * leaving the row outside that arm's denominators.
 	 */
 	fstLocale: string | null
 	arms: Record<LadderArm, RowArmReading>
@@ -291,15 +255,12 @@ export interface AutocompleteLadderOptions extends GauntletDepsOptions {
 	quiet?: boolean
 }
 
-/**
- * Locale tag → FST filename, lower-cased on both halves because that is what the builder writes.
- */
 function fstFileName(locale: string): string {
 	return `fst-${locale}.bin`
 }
 
 /**
- * Run the ladder over the board.
+ * Runs the ladder over the board.
  */
 export async function runAutocompleteLadder(
 	options: AutocompleteLadderOptions = {}
@@ -393,8 +354,7 @@ export async function runAutocompleteLadder(
 		const matcher = fstLocale ? await matcherFor(fstLocale) : null
 		const rungs = ladderRungs(row.input)
 
-		// The first request of a process pays engine construction.
-		// It is not a rung's latency.
+		// The first request of a process pays engine construction, which is not a rung's latency.
 		if (!warmed) {
 			await deps.geocode(rungs.at(-1)!, geoOpts)
 			warmed = true
@@ -476,9 +436,7 @@ export async function runAutocompleteLadder(
 }
 
 /**
- * The per-arm summary over the headline rows.
- *
- * Pure.
+ * The per-arm summary over the headline rows; pure.
  */
 export function summarizeArm(arm: LadderArm, rows: readonly LadderRow[]): ArmSummary {
 	const allHeadline = rows.filter((row) => row.headline)

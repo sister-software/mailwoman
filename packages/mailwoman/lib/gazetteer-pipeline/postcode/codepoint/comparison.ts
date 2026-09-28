@@ -3,26 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
- *   `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
+ * `promotion-eval.ts` for the Code-Point Open GB database: compare it against the incumbent GeoNames
+ * `GB_full` rows before anything swaps in `DEFAULT_POSTCODE_DATABASES`.
  *
- *   This exists because the swap is a data-source change rather than a refresh. The two sources disagree on
- *   which postcodes exist and on where each one is, and both kinds of disagreement have to be looked at
- *   before the shipped database moves. What this tool does not do is decide: a large coordinate delta is a
- *   finding, and the finding usually indicts GeoNames (whose GB provenance is the muddled one — see
- *   `geonames-tail.ts`'s `GB_LICENSE_NOTE`), not Code-Point Open, which is the authoritative upstream
- *   both datasets ultimately derive from.
+ * This exists because the swap is a data-source change rather than a refresh, and the tool reports
+ * rather than decides: a large coordinate delta usually indicts GeoNames, whose GB provenance is the
+ * muddled one, not Code-Point Open.
  *
- *   Three questions, three sections of {@link CodePointCheckReport}:
- *
- *   1. **Which postcodes are in one and not the other.** The join key is `spr.name`, which both databases
- *      store in the #920 sanitized form (`SW1A1AA`). Therefore, the comparison is exact rather than fuzzy.
- *   2. **How far apart the shared ones are.** Haversine metres per joined postcode, reported as a
- *      distribution rather than a mean — the mean of a bimodal disagreement is a number that describes
- *      neither mode.
- *   3. **Northern Ireland.** Code-Point Open has no `BT` rows by product definition. The incumbent does.
- *      That difference is the single largest coverage consequence of the swap and it gets counted
- *      explicitly rather than left inside the general "only in incumbent" bucket.
+ * Three questions: which postcodes are in one and not the other, keyed exactly on `spr.name` in the
+ * sanitized form; how far apart the shared ones are, reported as a distribution rather than a mean
+ * because the mean of a bimodal disagreement describes neither mode; and Northern Ireland, which
+ * Code-Point Open omits by product definition and which is counted explicitly.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -173,30 +164,17 @@ const CROWN_DEPENDENCY_AREAS = ["IM", "GY", "JE"] as const
 
 /**
  * Hand-checked probes — postcodes whose real-world location is independently known,
- * so a coordinate can be judged as right or wrong rather than merely as different.
+ * so a coordinate can be judged right or wrong rather than merely different.
  *
- * Chosen for (a) being individually verifiable by a reader, and (b) spanning England,
- * Scotland and Wales plus both coordinate extremes of the join.
- * `expected` is the landmark's own position.
+ * Chosen to be individually verifiable and to span England, Scotland
+ * and Wales plus both coordinate extremes of the join.
  *
- * A Code-Point centroid is the postcode unit's mean delivery point, so tens of
- * metres of offset is correct behaviour and not error.
+ * A Code-Point centroid is the postcode unit's mean delivery point, so tens of metres of offset
+ * is correct behaviour; the three city-centre probes near 500-900 m are loose because their
+ * landmark is a district rather than a door, and both databases agree there to within 3 m.
  *
- * The looser entries (the three city-centre probes near 500-900 m) are loose
- * because the landmark coordinate is a district rather than a door.
- * Both databases agree with each other there to within 3 m, which is the
- * comparison this list is actually making.
- *
- * The Senedd probe is `CF99 1SN` and that is not a typo.
- * It was originally `CF99 1NA`, which the first eval run reported absent from
- * Code-Point Open and present in the incumbent.
- *
- * Chasing it found the real story rather than a bug: the Senedd's postcode changed from
- * `CF99 1NA` to `CF99 1SN` in 2021, Code-Point Open 2026-05 carries only the current one,
- * and the incumbent GeoNames snapshot still carries the retired one 114 m away.
- * That single row is the whole 33,761-postcode "only in incumbent" residual in miniature.
- *
- * Those are terminated postcodes rather than missing coverage.
+ * `CF99 1SN` is not a typo: the Senedd's postcode changed from `CF99 1NA` and the incumbent GeoNames
+ * snapshot still carries the retired one, which is the terminated-postcode residual in miniature.
  */
 export const CODEPOINT_PROBES = [
 	{ postcode: "SW1A 1AA", landmark: "Buckingham Palace, London", latitude: 51.5014, longitude: -0.1419 },
@@ -212,11 +190,11 @@ export const CODEPOINT_PROBES = [
 ] as const
 
 /**
- * The #920 sanitized form — every non-letter/number stripped.
+ * Every non-letter/number stripped — the sanitized form both databases store
+ * as `spr.name`, so it is the join key.
  *
- * Both databases store this as `spr.name`, so it is the join key.
  * Duplicated from `resolver-wof-sqlite/geonames-postal.ts` rather than imported
- * because that package is an optional peer and this check must run without it.
+ * because that package is an optional peer.
  */
 function normalizeName(raw: string): string {
 	return raw.replaceAll(/[^\p{L}\p{N}]/gu, "").toUpperCase()
@@ -339,11 +317,8 @@ export function runCodePointCheck(options: RunCodePointCheckOptions): CodePointC
 
 		phase("stats", `${deltas.length.toLocaleString()} joined postcodes`)
 
-		// Sorted once here.
-		// `percentile` copies-and-sorts internally, which is the right default for a small sample
-		// and the wrong one for 1.7 M values read four times.
-		// So the quantiles are taken off this array directly.
-		// `percentile` is still used for the shape of the index arithmetic.
+		// Sorted once here: `percentile` copies-and-sorts internally, which is wrong for 1.7
+		// M values read four times, so the quantiles are taken off this array directly.
 		deltas.sort((a, b) => a - b)
 
 		const quantile = (p: number): number => percentile(deltas, p) ?? 0

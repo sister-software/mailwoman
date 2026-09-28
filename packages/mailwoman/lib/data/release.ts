@@ -3,14 +3,13 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Versioned data-artifact addressing + atomic switchover (#485 piece 4). Database DBs are addressed as
- *   `db/<family>/<family>-us-<slug>-<version>.db`, with a `releases.json` manifest at the data root
- *   pinning each family to its current version. So a new build publishes alongside the old,
- *   flipping the manifest (one atomic file write) switches traffic over, and the build provenance (the
- *   version) travels in the filename — "what data is deployed" is a read of one JSON.
+ *   Databases are addressed as `db/<family>/<family>-us-<slug>-<version>.db`, with a `releases.json`
+ *   manifest at the data root pinning each family to its current version, so a new build publishes
+ *   alongside the old and flipping the manifest (one atomic file write) switches traffic over with the
+ *   version travelling in the filename.
  *
- *   Back-compat: with no manifest (or a family unlisted) resolution falls back to the legacy
- *   unversioned `<family>-us-<slug>.db`, so the current national build output works unchanged.
+ *   With no manifest, or a family unlisted, resolution falls back to the legacy unversioned
+ *   `<family>-us-<slug>.db`, so the current national build output works unchanged.
  *
  *   Example `releases.json`: { "address-points": "2026-05-20.0", "interpolation": "TIGER2023" }
  */
@@ -89,9 +88,8 @@ export async function resolveDatabasePath(
 }
 
 /**
- * The path a `us`-family artifact already occupies on disk (versioned or legacy, via
- * {@link resolveDatabasePath}), or the artifact's own resolved path for a non-family artifact.
- * `null` when no artifact is there yet.
+ * The path a `us`-family artifact already occupies on disk (versioned or legacy), or the
+ * artifact's own resolved path for a non-family artifact, or `null` when no artifact is there yet.
  *
  * Shared by `data pull` and `data status`, so "already present" means the same thing to both.
  */

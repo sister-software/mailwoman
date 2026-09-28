@@ -3,17 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The frozen candidate fixture every arm of the same-data benchmark reads (#2261): the row interface, the
+ *   The frozen candidate fixture every arm of the same-data benchmark reads: the row interface, the
  *   replay key, the digests, and the validator that refuses a fixture two arms could read differently.
  *
- *   Evidence is keyed per lookup rather than per row: one input costs the walk up to `maxLookups` backend
- *   calls (default 10), each with its own text, placetype and scope. So a row holds a map from canonical
- *   query to answer, plus the pool — the deduplicated union of every answer, which is the ordered candidate
- *   set the row offered. Which of the pool an arm consults is its own query policy and part of what is being
- *   measured. the pool is what must be equal, and `assertEqualEvidence` checks that.
+ *   Evidence is keyed per lookup rather than per row, so a row holds a map from canonical query to
+ *   answer plus the pool, the deduplicated union of every answer. The pool is what must be equal, and
+ *   `assertEqualEvidence` checks that.
  *
- *   `replayBackend` raises on a key it does not hold rather than answering `[]`. An empty answer is a state
- *   the resolver absorbs silently, so the arm would report an abstention the fixture produced.
+ *   `replayBackend` raises on a key it does not hold rather than answering `[]`, because an empty
+ *   answer is a state the resolver absorbs silently and the arm would report an abstention the
+ *   fixture produced.
  */
 
 import type { AddressTree } from "@mailwoman/core/decoder"
@@ -23,23 +22,15 @@ import { compareByCodePoint } from "@mailwoman/core/strings/compare"
 import { canonicalJSON, definitionContentHash } from "#eval-harness/preregistration"
 
 /**
- * The row interface's version.
- *
- * A change to the shape of a fixture row bumps it, and a scorer refuses a
- * fixture whose version it does not know.
- * A silently reinterpreted field is the failure this number exists to prevent.
+ * The row interface's version; a change to a fixture row's shape bumps it,
+ * and a scorer refuses a fixture whose version it does not know.
  */
 export const SAME_DATA_SCHEMA_VERSION = 1
 
 /**
- * Candidate fields the fixture never carries, because each is a verdict the backend
- * already computed about the query rather than a fact about the place.
- *
- * Carrying one hands every arm a partly solved row.
- *
- * This tuple is the one home: {@link SameDataCandidate} is derived from it,
- * and the frozen definition's own list is audited against it, so the type
- * and the ruler cannot disagree about what equal evidence means.
+ * Candidate fields the fixture never carries, because each is a verdict the backend already
+ * computed about the query rather than a fact about the place; {@link SameDataCandidate}
+ * and the frozen definition's own list are both derived from this tuple.
  */
 export const WITHHELD_CANDIDATE_FIELDS = [
 	"containedByQualifier",
@@ -64,10 +55,8 @@ export type SameDataQuery = Parameters<ResolverBackend["findPlace"]>[0]
  */
 export interface SameDataLookup {
 	/**
-	 * The canonical query key — {@link canonicalQueryKey} of {@link SameDataLookup.query}.
-	 *
-	 * Stored beside the query rather than derived at read time so a hand-edited query
-	 * is caught by the validator instead of silently re-keying.
+	 * The canonical query key, stored beside the query so a hand-edited query is
+	 * caught by the validator rather than silently re-keying.
 	 */
 	key: string
 	query: SameDataQuery
@@ -81,12 +70,9 @@ export interface SameDataLookup {
 export interface SameDataGold {
 	geonameid: string
 	/**
-	 * The distinct WOF ids that denote this place, ascending.
-	 *
-	 * A SET because the gazetteer carries 21 of its 10,738 coherently-joined `cities15000.txt` places twice.
-	 *
-	 * A selection naming any member is correct.
-	 * Grading against one arbitrary member would measure which duplicate an arm returned.
+	 * The distinct WOF ids that denote this place, ascending; a set because the gazetteer
+	 * carries 21 of its 10,738 coherently-joined `cities15000.txt` places twice,
+	 * and a selection naming any member is correct.
 	 */
 	placeIDs: number[]
 	name: string
@@ -107,18 +93,14 @@ export interface SameDataPanelRow {
 	id: string
 	stratum: string
 	/**
-	 * The raw query, stored exactly as evaluated.
-	 *
-	 * No arm normalizes before the fixture is read.
+	 * The raw query, stored exactly as evaluated; no arm normalizes before the fixture is read.
 	 */
 	query: string
 	gold: SameDataGold
 	/**
 	 * False in the withheld-gold stratum, where the recorder filtered every member of
-	 * the gold identity set out of the backend's answers as it recorded.
-	 *
-	 * Drives which denominator the row counts in, and is never inferred from an empty pool.
-	 * A pool can be empty because the gazetteer holds no place, which is a different fact.
+	 * the gold identity set out of the backend's answers; drives which denominator the
+	 * row counts in and is never inferred from an empty pool.
 	 */
 	goldPresent: boolean
 	source: {
@@ -135,20 +117,13 @@ export interface SameDataFixtureRow {
 	id: string
 	schemaVersion: number
 	/**
-	 * The frozen parse.
-	 *
-	 * Both resolver arms walk this tree rather than parsing, which puts the parser outside the scored unit.
-	 * The claim is about resolution.
-	 *
-	 * The model version that produced it is recorded in the run receipt.
+	 * The frozen parse, which both resolver arms walk rather than parse so the parser sits
+	 * outside the scored unit; the model version that produced it is recorded in the run receipt.
 	 */
 	tree: AddressTree
 	lookups: SameDataLookup[]
 	/**
-	 * The deduplicated union of every lookup's candidates, in canonical order:
-	 * the ordered candidate set this row offered.
-	 *
-	 * Sorted by id as a string, which is a total order over both id forms `ResolvedPlace` allows.
+	 * The deduplicated union of every lookup's candidates in canonical order, sorted by id as a string.
 	 */
 	pool: SameDataCandidate[]
 }
@@ -219,10 +194,10 @@ export interface FixtureProblem {
 /**
  * Whether the fixture is one every arm must read identically.
  *
- * Six refusals: an unknown schema version, a duplicate row id, a withheld verdict field
+ * Six refusals — an unknown schema version, a duplicate row id, a withheld verdict field
  * present on a candidate, a lookup key that does not match its own query, a pool that is not
- * the canonical union of the lookups, and a panel row with no fixture row (or the reverse).
- * Each is a way two arms could end up reading different evidence while both reporting success.
+ * the canonical union of the lookups, and a panel row with no fixture row (or the reverse) —
+ * each a way two arms could read different evidence while both reporting success.
  */
 export function validateFixture(
 	panel: readonly SameDataPanelRow[],
@@ -294,8 +269,7 @@ export function validateFixture(
 }
 
 /**
- * What one arm observed of one row's evidence.
- * The receipt the equality check reads.
+ * What one arm observed of one row's evidence, the receipt the equality check reads.
  */
 export interface ArmEvidenceObservation {
 	arm: string
@@ -307,12 +281,8 @@ export interface ArmEvidenceObservation {
 }
 
 /**
- * Whether every arm read the same evidence for every row.
- *
- * Compares the row digest, the pool size, the candidate id set and the candidate field-name set,
- * and reports the first arm as the reference so a difference names both sides.
- * This is the check the brief's acceptance criterion asks for, and it runs over what
- * the arms actually read rather than over the file they were handed.
+ * Whether every arm read the same evidence for every row, comparing the row digest, pool size,
+ * candidate id set, and candidate field-name set over what the arms actually read.
  */
 export function assertEqualEvidence(observations: readonly ArmEvidenceObservation[]): FixtureProblem[] {
 	const problems: FixtureProblem[] = []
@@ -383,15 +353,9 @@ export function observeEvidence(arm: string, row: SameDataFixtureRow): ArmEviden
 /**
  * A backend that answers only from the fixture.
  *
- * A key the fixture does not hold raises **and** is appended to `misses`.
- * Both are needed, and the second is the one that matters: `resolveTree` catches a
- * backend throw on purpose — "a backend failure should not abort the whole tree walk" —
- * records `backend_error` on the trace and emits `picked: null`.
- *
- * So a raise alone reaches the arm as an abstention, and the arm would report the
- * resolver refusing when it was the fixture that refused.
- * The caller reads `misses` after the walk and turns a non-empty list into a harness error,
- * which the scorer excludes from every metric.
+ * A key it does not hold raises and is appended to `misses`, because `resolveTree` catches a backend
+ * throw on purpose and records `backend_error`; a raise alone reaches the arm as an abstention,
+ * so the caller reads `misses` after the walk and turns a non-empty list into a harness error.
  */
 export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): ResolverBackend {
 	const byKey = new Map(row.lookups.map((lookup) => [lookup.key, lookup.candidates]))
@@ -409,11 +373,9 @@ export function replayBackend(row: SameDataFixtureRow, misses: string[] = []): R
 				)
 			}
 
-			// A fresh array and a fresh object per candidate.
-			// The array copy stops an in-place sort inside the walk from reordering the frozen evidence.
-			// The per-candidate copy stops the walk writing to it, because the resolver stamps
-			// verdict fields onto the candidates it is handed (`containedByQualifier`, `mismatch`).
-			// A shared object would leave one arm reading evidence another arm edited.
+			// A fresh array and a fresh object per candidate: the array copy stops an in-place
+			// sort from reordering the frozen evidence, and the per-candidate copy stops the
+			// walk stamping verdict fields onto a shared object another arm reads.
 			return hit.map((candidate) => ({ ...candidate }))
 		},
 	}

@@ -3,17 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The candidate-gazetteer build → promote → publish pipeline, as reusable functions the `mailwoman
- *   gazetteer` commands compose. This is the codified version of the 2026-06-27 manual rebuild
- *   (releasing.md Step 5): the durable GeoNames-alias upstream fold, the candidate build with the
- *   FTS5-trigram fuzzy index baked in, the local convention-path promotion, and the R2 + demo
- *   publish — every decision that needed a question last time is a default here.
+ * The candidate-gazetteer build → promote → publish pipeline, as reusable functions the `mailwoman
+ * gazetteer` commands compose.
  *
- *   `fold` and `build` reuse the canonical package functions (`ingestGeonamesAliases`,
- *   `buildPlaceSearchFTS`, `buildCandidateTable`) so the CLI, the standalone scripts, and a future
- *   `build-unified-wof --geonames-countries` all share one implementation. `publish` uses the same
- *   TypeScript R2 publisher as the standalone release tool and bumps the demo's `ADMIN_GAZETTEER_VERSION`.
- *   The demo resource file is the only repo-coupled path, so callers pass it in.
+ * `fold` and `build` reuse the canonical package functions so the CLI, the standalone scripts, and a
+ * future `build-unified-wof --geonames-countries` all share one implementation. `publish` uses the
+ * same TypeScript R2 publisher as the standalone release tool and bumps the demo's
+ * `ADMIN_GAZETTEER_VERSION`; the demo resource file is the only repo-coupled path, so callers pass
+ * it in.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"
@@ -32,11 +29,9 @@ import { repoRootPath, repoRootPathBuilder } from "@mailwoman/core/paths"
 import { GEONAMES_ID_BASE, GEONAMES_POSTAL_ID_BASE } from "@mailwoman/core/resolver/synthetic-id-ranges"
 import { CommandError } from "@mailwoman/core/scripting/command"
 import { isoDate } from "@mailwoman/core/utils"
-// resolver-wof-sqlite's runtime modules are imported inside the functions that use them.
-// `mailwoman --help` imports every command, and a module-level value import would
-// evaluate the resolver's module graph on that path.
-// Type-only imports are erased, and `@mailwoman/resolver-wof-sqlite/paths`
-// imports only core's path builders.
+// resolver-wof-sqlite's runtime modules are imported inside the functions that use them,
+// because `mailwoman --help` imports every command and a module-level value import
+// would evaluate the resolver's module graph on that path.
 import type { GeonamesIngestProgress } from "@mailwoman/resolver-wof-sqlite"
 import type { BuildCandidateResult } from "@mailwoman/resolver-wof-sqlite/build-candidate"
 import type { CapitalPoint } from "@mailwoman/resolver-wof-sqlite/capitals"
@@ -64,80 +59,42 @@ import { buildSHA, stampLayerManifest } from "#gazetteer-pipeline/stamp-manifest
 import { publishDemoAssets } from "#release-tools/publish/demo-assets"
 
 /**
- * The canonical postcode-database set (filenames under `<data-root>/db/wof/`):
- * US + the WOF intl database (NL/FR/DE/ES/IT)
+ * The canonical postcode-database set (filenames under `<data-root>/db/wof/`);
+ * missing databases are skipped rather than fatal.
  *
- * - The GeoNames intl database (PT/AU) + the OS Code-Point Open GB database + the OSM
- *   Northern Ireland database + the GeoNames-postal tail database (nine countries) +
- *   Overture postcode centroids (CA + the EU-coverage locales).
- *   Missing databases are skipped rather than fatal.
- *
- * That skip is tolerance rather than enforcement.
+ * Every member is spelled `postalcode-` because that is a routing interface: `deriveSchemaName`
+ * turns the filename into the attached SQL schema name and `pickExtractsForPlacetype`
+ * tests it against the placetype, so a database named `postcode-<cc>.db` builds fine
+ * and is then unreachable to `findPlace({ placetype: "postalcode" })`.
+ * The `postcode-locality-<cc>.db` family holds a `postcode_locality` relation table
+ * and no `spr`, so it is never routed as a place database.
  *
  * `postalcode-ni-osm.db` is ODbL and is never published, so on every machine but the one
- * that built it the `pathExists` filter in {@link resolvePostcodeDatabases} removes it
- * and the set degrades to the permissive databases alone.
- * On the machine that built it, the file is present and {@link buildCandidate} reads its
- * recorded tier before folding: a `build-local` fold is refused unless the build asks for it,
- * and the candidate's manifest records how many were included.
- *
- * What is left out: the WOF **`postalcode-gb.db`** (2,719,772 rows, 694 MB —
- * superseded by Code-Point Open, the same underlying survey under a clean licence).
- *
- * Every member is spelled `postalcode-`, and that is a routing interface rather than a house style.
- * `deriveSchemaName` (`resolver-wof-sqlite/extracts.ts`) turns the filename into
- * the attached SQL schema name, and `pickExtractsForPlacetype` selects by testing
- * that name against the placetype, which is `postalcode`.
- *
- * A database added here as `postcode-<cc>.db` builds the candidate table
- * fine (the builders read `spr` directly) and is then unreachable to any
- * `findPlace({ placetype: "postalcode" })`, returning zero hits rather than an error.
- * The `postcode-locality-<cc>.db` family is the deliberate exception and is not a
- * member of this list: those hold a `postcode_locality` relation table and no `spr`,
- * so they are never routed as place databases at all.
+ * that built it the `pathExists` filter in {@link resolvePostcodeDatabases} removes it.
  */
 export const DEFAULT_POSTCODE_DATABASES = [
 	"postalcode-us.db",
 	"postalcode-intl.db",
 	"postalcode-geonames-intl.db",
-	// GB via OS Code-Point Open under OGL v3 (operator licence ruling 2026-08-05):
-	// 1,746,976 unit postcodes, England+Scotland+Wales — no Northern Ireland
-	// (excluded from every permissive UK grant. See the codepoint builder's NI note).
-	// Replaces the GeoNames GB rows, which the 2026-08-05 parity check measured as the same
-	// survey (max coordinate delta 6.6 m over 1.75M joined rows) under a muddled licence.
-	// Rebuild: `mailwoman gazetteer build postcode-codepoint`.
+	// GB via OS Code-Point Open under OGL v3, covering England, Scotland and Wales only;
+	// Northern Ireland is excluded from every permissive UK grant.
 	"postalcode-gb-codepoint.db",
-	// Northern Ireland (BT), the hole Code-Point Open leaves — 4,757 of 50,032 live NI postcodes (9.5 %),
-	// 250/886 sectors, 80/80 districts, from OpenStreetMap `addr:postcode` (2026-08-05 extract).
-	// A miss on a BT code means not attested IN OSM rather than that the code does not exist.
-	// Since #1480 an unknown postcode abstains, so the partial database is strictly additive.
-	//
-	// build-local tier — ODbL 1.0 is share-alike on a Derived Database, so this
-	// artifact is never published to npm, R2 or the demo.
-	// It is present only on a machine that built it: a deployment without the file has
-	// no NI coverage, and a build on the machine that has it folds the rows only under
-	// `includeBuildLocalFolds`, because its manifest records `tier = build-local`.
-	// Rebuild: `mailwoman gazetteer build postcode-ni-osm` (add `--offline` to rebuild from
-	// the saved Overpass response rather than re-querying a volunteer endpoint).
+	// Northern Ireland (BT), the hole Code-Point Open leaves; a miss on a BT code means
+	// not attested in OSM rather than that the code does not exist.
+	// ODbL 1.0 is share-alike, so this artifact is never published and folds
+	// only under `includeBuildLocalFolds`.
 	"postalcode-ni-osm.db",
-	// Japan's 7-digit codes from WOF (142,604 rows. 48,216 carry the 0,0 unlocated sentinel,
-	// which the candidate fold skips by construction).
-	// The located 94,388 answer a 町域 centroid: on 637 postcode-containing JP board
-	// rows the centroid sits 0.52 km (p50) / 2.31 km (p90) from the entrance point,
-	// against the 15–19 km municipality centroid the admin walk otherwise reaches.
-	// Every located row passes @15 km and 36 of 2,000 that failed on the municipality pass on the code.
-	// The fold arrives with the next candidate rebuild.
+	// Japan's 7-digit codes from WOF; 48,216 carry the 0,0 unlocated sentinel,
+	// which the candidate fold skips by construction.
 	"postalcode-jp.db",
-	// #920: the GeoNames-postal tail database. TEN countries in ingest order FI/CZ/SK/SI/DK/no/HR/PL/SE/be (57,221 rows. Belgium joined 2026-08-12 with 1,146 codes after the Overture Belgium parquet measured too thin — 203 codes, none of the eu-mixed panel's). GB rode in this database 2026-07-03 → 2026-08-05 and moved to Code-Point Open above. The swap is parity-conditional: the nine prior countries re-joined byte-identical (56,075 rows, worst coordinate delta 0). Rebuild: `mailwoman gazetteer build postcode-geonames --countries FI,CZ,SK,SI,DK,no,HR,PL,SE,be`.
+	// The GeoNames-postal tail database: ten countries in ingest order.
 	"postalcode-geonames-tail.db",
 	"postalcode-ca-overture.db",
 	...["at", "be", "ch", "cz", "dk", "es", "fi", "hr", "lt", "lu", "lv", "no", "pl", "pt", "si", "sk"].map(
 		(cc) => `postalcode-${cc}-overture.db`
 	),
-	// Singapore: a six-digit postcode names one building, so the per-postcode centroid of the Overture
-	// rows (123,883 codes from the OneMap / Singapore Land Authority register, Singapore Open Data
-	// Licence 1.0 under Overture's cdla-Permissive-2.0) answers at rooftop grade with no training.
-	// Rebuild: `mailwoman eval es-postcode-centroids --country SG --pc-len 0 --parquet <overture>/addresses-sg.parquet`.
+	// Singapore: a six-digit postcode names one building, so the per-postcode
+	// Overture centroid answers at rooftop grade.
 	"postalcode-sg-overture.db",
 ]
 
@@ -149,7 +106,7 @@ export function geonamesDir(dataRoot: PathBuilderLike = dataRootPath()): string 
 }
 
 /**
- * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir (#936 language tags).
+ * `<data-root>/geonames-alternate`, the per-country alternateNamesV2 dump dir.
  */
 export function geonamesAlternateDir(dataRoot: PathBuilderLike = dataRootPath()): string {
 	return resolvePath(dataRoot, "geonames-alternate")
@@ -176,22 +133,16 @@ export async function resolvePostcodeDatabases(
 }
 
 /**
- * Locality databases folded into the candidate build by default, existence-filtered like the
- * postcode set — today the linz-derived NZ suburb database (#1564; `gazetteer build nz-localities`).
- *
- * A machine without the database builds without it, and the artifact's NZ locality
- * namespace stays exactly as thin as the sources that fed it.
+ * Locality databases folded into the candidate build by default, existence-filtered
+ * like the postcode set; a machine without one builds without it.
  */
 export const DEFAULT_LOCALITY_DATABASES: readonly string[] = [
 	"localities-nz-linz.db",
-	// The Prague municipal districts (`Praha 9` — the #42 pair rung's missing locality
-	// half. 22 rows from GeoNames CZ, `gazetteer build cz-districts`).
-	// Verified 2026-08-12: the Chabeřická panel row moved from a 6,733 km US answer to CZ at ~400 m.
+	// The Prague municipal districts, the missing locality half of the CZ pair rung.
 	"localities-cz-districts.db",
-	// Taiwan's 鄉鎮市區 from the civil-affairs address register (`gazetteer build tw-districts`),
-	// each row carrying its 縣市's WOF region as an `ancestors` row so the fold stamps the region scope.
-	// The admin artifact's own copies of the tier are unusable for a Han query:
-	// the Han-keyed record has no parent, the parented one no Han name.
+	// Taiwan's 鄉鎮市區 from the civil-affairs address register, each row carrying its 縣市's WOF
+	// region as an `ancestors` row so the fold stamps the region scope; the admin artifact's own
+	// copies of the tier are unusable for a Han query.
 	"localities-tw-districts.db",
 ]
 
@@ -216,12 +167,8 @@ export async function resolveLocalityDatabases(
 }
 
 /**
- * Resolve the conventional score source, or `undefined` when this machine has none.
- *
- * Same tolerate-and-degrade shape as {@link resolvePostcodeDatabases}, and the same reason:
- * the scores are a build-local artifact on the machine that derived them, and a deployment
+ * Resolve the conventional score source, or `undefined` when this machine has none; a deployment
  * without the file must build a candidate DB with an empty `importance` column rather than fail.
- * Absent is unmeasured, which is what the consumer already handles.
  */
 export async function resolveImportanceDB(
 	filename: string = DEFAULT_IMPORTANCE_DB,
@@ -253,26 +200,19 @@ export interface FoldOptions {
 	 */
 	geonamesDir?: PathBuilderLike
 	/**
-	 * #267: the countries to also fold A-class admin (pcli + ADM1) for, linking the locality→region→country ancestry.
-	 * Zero-coverage gap countries only (the coverage-expansion targets).
-	 *
-	 * A country that already has WOF admin would double up, so the EU alias set is left off.
-	 *
-	 * Without it the gap localities are orphans and "Tbilisi, GE" can't resolve.
+	 * The countries to also fold A-class admin (pcli + ADM1) for, linking the
+	 * locality→region→country ancestry; zero-coverage gap countries only,
+	 * since a country that already has WOF admin would double up.
 	 */
 	adminForCountries?: ReadonlySet<string>
 	/**
-	 * #936: dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}) — tags alias rows with
-	 * language / privateuse / `official`.
-	 *
-	 * Countries without a file fold untagged, exactly as before.
+	 * Dir holding `<CC>.txt` alternateNamesV2 dumps (default {@link geonamesAlternateDir}),
+	 * tagging alias rows with language / privateuse / `official`; countries without a file fold untagged.
 	 */
 	alternateDir?: PathBuilderLike
 	/**
-	 * #1514 override: proceed even when `adminIn` already carries alias rows for countries this run does not list. The
-	 * fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
-	 *
-	 * Only pass this when shrinking the fold is the point.
+	 * Override to proceed even when `adminIn` already carries alias rows for countries this run does not
+	 * list; the fold owns its whole id range and rewrites it wholesale, so those countries are dropped.
 	 */
 	allowCoverageLoss?: boolean
 	onCountry?: (event: GeonamesIngestProgress) => void
@@ -280,11 +220,8 @@ export interface FoldOptions {
 }
 
 /**
- * How many of the dropped country codes the coverage-loss error names before eliding.
- *
- * The realistic miss is the whole fold minus a handful (161 → 14 in the #1514 incident),
- * so the list is there to make the shape of the mistake obvious rather than to enumerate it.
- * A dozen codes plus the count does that on one terminal line.
+ * How many dropped country codes the coverage-loss error names before eliding;
+ * a dozen plus the count makes the shape of the mistake obvious on one terminal line.
  */
 const DROPPED_COUNTRIES_SHOWN = 12
 
@@ -299,19 +236,14 @@ export interface FoldResult {
 }
 
 /**
- * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places +
- * Latin alt-names into its canonical `spr`/`names`/`place_population`, then rebuild
- * `place_search`/`place_bbox` so the candidate build carries them.
+ * Durable GeoNames upstream fold: copy the admin DB, fold the GeoNames places + Latin alt-names
+ * into its canonical `spr`/`names`/`place_population`, then rebuild `place_search`/`place_bbox`.
  *
  * Build-on-copy — `adminIn` is never touched.
- *
- * #1514: the fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale. The synthetic id is a position in the
- * run, so a partial rewrite binds one run's names to another run's places.
- * Folding a country set narrower than what `adminIn` already carries therefore drops the
- * difference, and since `buildAdmin` bakes the full `DEFAULT_GEONAMES_COUNTRIES` fold into
- * every admin artifact it builds, that is the normal case here rather than an exotic one.
- *
- * The pre-flight below refuses it unless {@link FoldOptions.allowCoverageLoss} says otherwise.
+ * The fold owns the id range `[9e12, 9.5e12)` and rewrites it wholesale, and the
+ * synthetic id is a position in the run, so folding a country set narrower than what
+ * `adminIn` already carries drops the difference; the pre-flight below refuses it
+ * unless {@link FoldOptions.allowCoverageLoss} says otherwise.
  */
 export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResult> {
 	if (opts.adminIn.toString() === opts.adminOut.toString()) {
@@ -324,7 +256,6 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 
 	const countries = [...(opts.countries ?? DEFAULT_FOLD_COUNTRIES)]
 
-	// Pre-flight on the source, before the copy: what does it already carry in the fold's range?
 	opts.onPhase?.("preflight", "reading the source's existing alias-fold coverage")
 	using source = new DatabaseClient<WOFDatabase>(opts.adminIn, { readOnly: true })
 
@@ -352,17 +283,17 @@ export async function foldGeonamesIntoAdmin(opts: FoldOptions): Promise<FoldResu
 	}
 
 	opts.onPhase?.("copy", `copying admin DB → ${opts.adminOut}`)
-	// The admin source is sealed 0444 (sealDatabase is every builder's last step), and copyFileTo stamps
-	// the source mode onto a fresh copy, or writes through an existing destination keeping its mode.
-	// Remove any stale copy, then restore the write bit: the copy is fold staging rather than the
-	// sealed artifact (2026-08-04: first candidate build against a sealed admin died on this).
+	// The admin source is sealed 0444 and `copyFileTo` stamps the source mode onto a fresh copy, so
+	// remove any stale copy and restore the write bit: the copy is fold staging, not the sealed artifact.
 	await removePathIfPresent(opts.adminOut)
 	await copyFileTo(opts.adminIn, opts.adminOut)
 	await changeMode(opts.adminOut, 0o644)
 
 	using db = new DatabaseClient<WOFDatabase>(opts.adminOut)
 
-	// #1026 + #1514: the purge clears the A-class country/region nodes and the locality ancestry too, so a fold that does not pass adminForCountries un-parents the 95 zero-coverage locales' localities. Default it to the same gap set `buildAdmin` uses, scoped to this run — the caller opts OUT by passing an explicit set.
+	// The purge clears the A-class country/region nodes and the locality ancestry too,
+	// so a fold that omits adminForCountries un-parents the zero-coverage localities; default
+	// to the gap set scoped to this run, and the caller opts out by passing an explicit set.
 	const adminForCountries =
 		opts.adminForCountries ?? new Set(geonamesAdminGapCountries().filter((cc) => requested.has(cc)))
 
@@ -405,13 +336,10 @@ export interface BuildOptions {
 	 */
 	importanceDB?: string | false
 	/**
-	 * Countries judged by the cross-source currency backfill (#1737 — deprecated-with-no-successor
-	 * WOF localities resurrected only under a GeoNames attestation. See `resurrectCurrencyHoles`).
-	 *
-	 * Default: the WOF-priority set.
-	 * The only countries whose admin comes from WOF repos, so the only ones that can carry this hole class.
-	 *
-	 * Countries without a `<data-root>/geonames/<CC>.txt` dump are skipped loudly by the pass.
+	 * Countries judged by the cross-source currency backfill
+	 * (WOF localities resurrected only under a GeoNames attestation); default is
+	 * the WOF-priority set, the only countries whose admin comes from WOF repos,
+	 * and a country without a `<data-root>/geonames/<CC>.txt` dump is skipped loudly.
 	 *
 	 * Pass `false` to disable.
 	 */
@@ -445,15 +373,14 @@ function foldRefusalMessage(refusing: readonly FoldTerms[]): string {
 /**
  * Build the byte-range candidate gazetteer from an admin DB + postcode databases.
  *
- * The FTS5-trigram fuzzy index is baked in by `buildCandidateTable`; the coverage manifest
- * (survey candidate #2 — the artifact's own hard-filter coverage record + guard-B bboxes,
- * see `coverage-manifest.ts`) is baked in before the seal.
+ * The FTS5-trigram fuzzy index and the coverage manifest
+ * (the artifact's own hard-filter coverage record + guard-B bboxes) are baked in before the seal.
  */
 export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidateResult> {
 	const { buildCandidateTable } = await import("@mailwoman/resolver-wof-sqlite/build-candidate")
 
-	// `undefined` means "use the convention"; `false` means "the caller chose an empty column".
-	// Only the second may skip the resolve — collapsing them would make a missing artifact
+	// `undefined` means "use the convention"; `false` means "the caller chose an empty
+	// column", and only the second may skip the resolve, so a missing artifact is not
 	// indistinguishable from a deliberate opt-out in the build log.
 	const importance = opts.importanceDB === false ? undefined : (opts.importanceDB ?? (await resolveImportanceDB()))
 
@@ -462,7 +389,8 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 			? undefined
 			: (opts.currencyBackfillCountries ?? DEFAULT_WOF_PRIORITY_COUNTRIES)
 
-	// #1880's distribution home: carry the committed capitals reference in-artifact so `capital_tier` works for npm consumers who pulled candidate.db (published packages do not ship the repo file). A dev checkout that predates the reference simply builds without the table — the session loader says which source it used.
+	// Carry the committed capitals reference in-artifact so `capital_tier` works for npm
+	// consumers who pulled candidate.db (published packages do not ship the repo file).
 	const capitalsPath = repoRootPathBuilder("data", "gazetteer", "capitals-v1.json")
 
 	const capitals = (await pathExists(capitalsPath))
@@ -472,9 +400,9 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 	const postcodeDatabases = [...(opts.postcodeDatabases ?? (await resolvePostcodeDatabases()))]
 	const localityDatabases = [...(opts.localityDatabases ?? (await resolveLocalityDatabases()))]
 
-	// Each fold's own tier decides whether its rows may enter a gazetteer that could be published.
-	// A fold that states no tier is reported rather than refused: its undeclared grant reaches the
-	// manifest's expression as `LicenseRef-Undeclared-Input`, which refuses publication of the whole.
+	// Each fold's own tier decides whether its rows may enter a gazetteer that could
+	// be published; a fold that states no tier is reported rather than refused,
+	// and its undeclared grant refuses publication of the whole.
 	const foldTerms = await Promise.all([...postcodeDatabases, ...localityDatabases].map((path) => readFoldTerms(path)))
 	const refusing = foldsRefusingPublication(foldTerms)
 	const unstated = foldTerms.filter((fold) => fold.tier === null)
@@ -509,17 +437,13 @@ export async function buildCandidate(opts: BuildOptions): Promise<BuildCandidate
 		onProgress: opts.onProgress,
 	})
 
-	// Coverage manifest (survey candidate #2): facts about the artifact live IN the artifact —
-	// bake the measured hard-filter coverage record + guard-B bboxes so consumers read
-	// them at open instead of falling back to the code constants.
-	// Must run pre-seal (a shipped DB is never patched — rebuild).
+	// Facts about the artifact live IN the artifact: bake the measured hard-filter coverage
+	// record and guard-B bboxes pre-seal, because a shipped DB is never patched.
 	opts.onProgress?.("coverage-manifest", "baking country coverage + bbox manifest")
 	await emitCoverageManifest({ dbPath: opts.out })
 
-	// The layer interface's manifest, alongside the coverage one and for the same reason:
-	// facts about the artifact live IN the artifact.
-	// It names its ancestor rather than restating the ancestor's sources.
-	// See candidate-manifest.ts for why a derived layer's provenance has to be a chain.
+	// The layer manifest names its ancestor rather than restating the ancestor's sources,
+	// because a derived layer's provenance has to be a chain.
 	opts.onProgress?.("layer-manifest", "stamping provenance")
 	const sha = buildSHA(repoRootPath())
 
@@ -560,9 +484,7 @@ export async function promoteCandidate(
 		if (await statLink(linkPath)) {
 			await removePath(linkPath)
 		}
-	} catch {
-		// no link there yet
-	}
+	} catch {}
 
 	await createSymbolicLink(candidateDB, linkPath)
 
@@ -687,9 +609,7 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 
 	try {
 		await removePath(staged)
-	} catch {
-		// fresh
-	}
+	} catch {}
 
 	await createSymbolicLink(opts.candidateDB, staged)
 
@@ -720,9 +640,8 @@ export async function publishGazetteer(opts: PublishOptions): Promise<PublishRes
 }
 
 /**
- * A dated, immutable gazetteer version: `yyyy-MM-DD` + a lowercase suffix letter, e.g. `2026-06-27a`.
- *
- * Pass a `Date` (the CLI does. The module never reads the clock implicitly).
+ * A dated, immutable gazetteer version: `yyyy-MM-DD` plus a lowercase suffix letter,
+ * e.g. `2026-06-27a`; pass a `Date`, as the module never reads the clock implicitly.
  */
 export function defaultGazetteerVersion(now: Date, suffix = "a"): string {
 	const y = now.getUTCFullYear()
