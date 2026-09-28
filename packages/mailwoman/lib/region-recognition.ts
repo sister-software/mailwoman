@@ -228,7 +228,7 @@ function correctNode(node: AddressNode): AddressNode {
  * context, and Georgia-the-country is "GE").
  *
  * A full name is genuinely ambiguous ("Tbilisi, Georgia" is the country, "Atlanta, Georgia" the
- * state), so full names are left to resolve on their own name-match evidence and are never pinned.
+ * state), so full-name tokens are left to resolve on their own name-match evidence and are never pinned.
  */
 function annotateUSRegions(roots: readonly AddressNode[]): void {
 	for (const node of walkNodes(roots)) {

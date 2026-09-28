@@ -4,15 +4,15 @@
  * @author Teffen Ellis, et al.
  *
  *   Probe-1 read-out (parity campaign): score a checkpoint on the held-out fragment-dev split with
- *   the pre-registered separator metrics (campaign runbook / DeepSeek prediction 2):
+ *   the pre-registered separator metrics:
  *
- *   - Token-level tag accuracy vs span-level exact match — a token-F1 rise with a lagging
- *       span-exact-match confirms the #727 span-head ceiling.
- *   - Trailing-number→postcode rate on street+number rows — persistence above noise confirms the
- *       numeric-neighbor confusion survives data.
+ *   - Token-level tag accuracy against span-level exact match, where a token-F1 rise with a lagging
+ *       span-exact-match confirms the span-head ceiling.
+ *   - Trailing-number-to-postcode rate on street and number rows, where persistence above noise
+ *       confirms the numeric-neighbor confusion survives data.
  *
- *   Fixture: fragment-dev.jsonl (rows never trained on. schema = corpus rows). Grade candidates via
- *   `--weights-cache` package-shaped dirs only (#718 zero-fill trap).
+ *   Fixture: fragment-dev.jsonl (rows never trained on, schema matching corpus rows). Grade candidates
+ *   via `--weights-cache` package-shaped dirs only (the zero-fill trap).
  */
 
 import { groupTuplesByTag } from "@mailwoman/core/decoder"
@@ -67,8 +67,7 @@ export async function runFragmentDev(options: FragmentDevOptions): Promise<{
 		const gold = row.span_tags.map((tag, i) => [tag, row.raw.slice(row.span_starts[i], row.span_ends[i])] as const)
 		const byTag = groupTuplesByTag(await classifier.parse(row.raw, { postcodeRepair: true }))
 
-		// Span-exact: every gold span present under its tag with the exact folded value,
-		// and no extra values under the gold tags.
+		// Span-exact: every gold span appears under its tag with the exact folded value.
 		let exact = true
 
 		for (const [tag, value] of gold) {

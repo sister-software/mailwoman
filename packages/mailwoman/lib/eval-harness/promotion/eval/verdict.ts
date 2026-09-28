@@ -121,7 +121,6 @@ function tableCell(md: string, headerPattern: RegExp, column: string, row: strin
 	return undefined
 }
 
-
 /**
  * Parsed scorer sidecar JSON, with only the fields this check reads modeled.
  */

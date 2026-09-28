@@ -68,7 +68,7 @@ const MIN_GROUP_POINTS = 5
  * NZ geographic sanity envelope, WGS-84, generous around the mainland plus the Chathams
  * (~-44, -176.5) and the subantarctic islands (Campbell Island ~-52.5).
  *
- * A point outside it is source noise (a wrong-hemisphere or null-island row), not a New Zealand address.
+ * A point outside it is source noise, such as a wrong-hemisphere or null-island row.
  */
 const NZ_LAT_MIN = -53
 const NZ_LAT_MAX = -29

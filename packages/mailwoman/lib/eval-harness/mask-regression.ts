@@ -109,7 +109,6 @@ export interface MaskRegressionOptions {
 	json?: string
 }
 
-
 /**
  * The per-tag vocabulary scored, unfolded (street parts split, mirroring score-affix.ts and
  * capability-manifest.ts).
@@ -117,8 +116,6 @@ export interface MaskRegressionOptions {
  * Every tag here gets a mask-off↔mask-on delta computed.
  */
 const TAGS = UNFOLDED_ADDRESS_TAGS
-
-
 
 interface Delta {
 	locale: SystemCode
@@ -261,4 +258,3 @@ export async function maskRegressionCheck(
 
 	return { pass: true, violations }
 }
-

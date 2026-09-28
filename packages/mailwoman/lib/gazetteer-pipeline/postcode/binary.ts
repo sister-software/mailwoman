@@ -86,7 +86,7 @@ export interface PostcodeDatabaseRow {
 
 export interface BuildPostcodeBinaryOptions {
 	/**
-	 * GB key granularity (default: `unit`; ignored for non-GB).
+	 * GB key granularity. The default is `unit`, and non-GB builds ignore it.
 	 */
 	gbGranularity?: GBGranularity
 }
@@ -139,7 +139,7 @@ function isPlaced(lat: number, lon: number): boolean {
 /**
  * Builds PCB1 entries for one country from database rows.
  *
- * GB supports `unit` and `outward`; others serialize directly.
+ * GB supports `unit` and `outward`, and others serialize directly.
  */
 export function buildPostcodeBinaryEntries(
 	country: string,

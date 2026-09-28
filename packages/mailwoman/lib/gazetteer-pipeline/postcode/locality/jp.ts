@@ -18,7 +18,7 @@
  *
  *   Output is the standard `postcode_locality` table, so the existing `postcode_area_resolution`
  *   resolver strategy consumes it unchanged (is_containing=1 for the name-matched municipality).
- *   The authoritative names come from the national postal file (JP = KEN_ALL, Japan Post), and
+ *   The authoritative name data comes from the national postal file (JP = KEN_ALL, Japan Post), and
  *   points from GeoNames. Both are source material rather than prebuilt dumps.
  *
  *   Usage (JP): node scripts/build-postcode-locality-cjk.ts --country JP\

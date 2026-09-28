@@ -3,27 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Ported tests for `api-engine.ts` — the wired `MailwomanAPIEngine` for `mailwoman serve` (Phase
- *   4b). Carries forward every assertion from the express-era `test/geocode-router.test.ts` and
- *   `test/health-router.test.ts` onto `createMailwomanAPI((await createServeEngine()).engine)` +
- *   `app.request()`.
+ *   Ported tests for `api-engine.ts`, the wired `MailwomanAPIEngine` behind `mailwoman serve`.
  *
- *   `test/resolve-router.test.ts` (the `/api/resolve` XML-tree-viewer endpoint, `ResolveRouter.ts`)
- *   does not port — that endpoint retires with the debug pages, and its coverage is unrelated
- *   to `resolveTreeHandler`/`/v1/resolve` (a different express router, `GeocodeRouter.ts`), which this
- *   file does cover (ported from `geocode-router.test.ts`'s RemoteResolver round-trip test).
- *
- *   The generic timing-metrics algorithm (percentiles, tier partition, reservoir) also does not
- *   re-port here — `api-kit/metrics.test.ts` already exhaustively covers the identical
- *   `recordTimed`/`metricsSnapshot` logic this engine delegates to. This file only exercises the
- *   `/metrics` http surface reflecting a real wired call (the integration behavior rather than the algorithm).
- *
- *   The engine is built once (`beforeAll`) and reused across every test in this file — unlike
- *   express's per-request lazy `getDeps()`, `createServeEngine()` does the (slow: model + SQLite)
- *   setup work eagerly, so paying that cost once per file (not once per test) matters. Error-path
- *   assertions run unconditionally: the validation-layer 400s never reach the engine, so they pass
- *   whether or not real WOF + database data is present on this host. Success-path assertions check on
- *   real WOF + TX databases being present (`describeIfStack`), same as the express predecessor.
+ *   The engine is built once because `createServeEngine()` performs its slow model and SQLite setup
+ *   eagerly. The validation-layer 400 responses never reach the engine, so the error-path
+ *   assertions run whether or not WOF and address-point data are present on this host.
  */
 
 import { createMailwomanAPI } from "@mailwoman/api"
@@ -46,18 +30,12 @@ const describeIfStack = describe.skipIf(!hasStack)
 
 /**
  * `/v1/parse` needs only the model weights.
- *
- * Check its own tests independently of the WOF/TX stack above.
  */
 async function weightsPresent(): Promise<boolean> {
 	try {
-		// ASK the resolver.
-		// This probed `packages/neural-weights-en-us/model.onnx` directly,
-		// which is true only while the dev linker materializes binaries into that package,
-		// and a skip-guard that stops matching does not fail, it skips.
-		// Therefore, the suite disappears from the run reporting success.
-		// The repo has already paid for this once: the workspace regroup left this literal behind
-		// and both this suite and `api-engine.test.ts` went quiet until someone counted the skips.
+		// Ask the resolver rather than probing a package path literal directly. A skip guard that
+		// stops matching does not fail, it skips, so the suite disappears from the run while the run
+		// reports success.
 		return await pathExists((await resolveWeights({ locale: "en-us" })).modelPath)
 	} catch {
 		return false
@@ -88,8 +66,6 @@ async function postJSON(path: string, body: unknown): Promise<{ status: number; 
 	return { status: res.status, body: (await res.json()) as Record<string, unknown> }
 }
 
-// MARK: /v1/geocode + /v1/batch — error paths
-
 describe("api-engine — error paths (run unconditionally)", () => {
 	test("POST /v1/geocode: 400 when `address` is missing", async () => {
 		const r = await postJSON("/v1/geocode", {})
@@ -109,8 +85,6 @@ describe("api-engine — error paths (run unconditionally)", () => {
 	})
 })
 
-// MARK: /health — answers without the geocode stack
-
 describe("api-engine — /health (run unconditionally, never throws)", () => {
 	test("GET /health: returns status + data shape", async () => {
 		const res = await app.request("/health")
@@ -126,20 +100,17 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 		expect(typeof body.data.interpolation_states).toBe("number")
 	})
 
-	// `readModelCard`'s first non-env candidate is `import.meta.resolve` of the weights package's card.
-	// Pin the resolver itself rather than just the observable: the third candidate is a CWD-relative
-	// dev-tree path (`neural-weights-en-us/model-card.json`) which happens to exist when the suite
-	// runs from the repo root, so the /health assertion below would survive a broken resolution.
-	// This one would not.
+	// The resolver itself is pinned rather than only its observable. The third candidate is a
+	// CWD-relative dev-tree path that happens to exist when the suite runs from the repo root, so
+	// the /health assertion below would survive a broken resolution.
 	test("the weights card resolves through the package graph, not the CWD-relative dev fallback", () => {
 		expect(resolveModulePath("@mailwoman/neural-weights-en-us/model-card.json")).toBe(
 			workspacePath("neural-weights-en-us", "model-card.json")
 		)
 	})
 
-	// The `model` block is `readModelCard`'s only observable.
-	// Deterministic in a checkout without dev weights linked: the card is one of the
-	// metadata files the weights workspace commits (the binaries are not).
+	// The `model` block is `readModelCard`'s only observable, and deterministic in a checkout
+	// without dev weights linked, because the card is committed while the binaries are not.
 	test("GET /health: the model block comes from the resolved weights package's card", async () => {
 		const res = await app.request("/health")
 		const body = (await res.json()) as { model: { name?: unknown; locale?: unknown; labels?: unknown } | null }
@@ -151,8 +122,6 @@ describe("api-engine — /health (run unconditionally, never throws)", () => {
 	})
 })
 
-// /v1/parse — native neural output. needs only the model weights rather than the gazetteer,
-// so it's conditioned on `weightsPresent()` rather than `hasStack` — a WOF-less boot still answers this.
 
 describeIfWeights(
 	"api-engine — /v1/parse (native neural output)",
@@ -183,8 +152,6 @@ describeIfWeights(
 	},
 	60_000
 )
-
-// MARK: Success paths — real WOF + TX databases
 
 describeIfStack("api-engine — success path against real WOF + TX databases", () => {
 	test("POST /v1/geocode: resolves a TX address to a street-level coordinate", async () => {
@@ -223,7 +190,8 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 		expect(results[0]!.input).toBe(addresses[0])
 		expect(results[1]!.input).toBe(addresses[1])
 
-		// #485 4a handoff: per-row metrics land in the engine rather than just the route's whole-call "batch" tier.
+		// Per-row metrics land in the engine under their own tiers while the route records a
+		// whole-call `batch` tier.
 		const snapshot = metricsSnapshot()
 
 		const perRowTotal = Object.entries(snapshot.timings.tiers)
@@ -266,7 +234,6 @@ describeIfStack("api-engine — success path against real WOF + TX databases", (
 
 		resolved.roots.forEach(walk)
 		const street = flat.find((n) => n.tag === "street")
-		// The resolver service wired its own databases → the street node carries a coordinate tier.
 		expect(street?.metadata?.["resolution_tier"]).toBeDefined()
 	}, 60_000)
 })

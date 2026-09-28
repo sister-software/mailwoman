@@ -3,7 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The three arms of the same-data benchmark (#2261), each reading one frozen fixture row and answering
+ *   The three arms of the same-data benchmark, each reading one frozen fixture row and answering
  *   with a selection, a confidence, and a machine-readable reason.
  *
  *   `observeEvidence` runs before the arm resolves and its receipt travels with the result, so the equality
@@ -12,12 +12,12 @@
  *
  *   All three report confidence the same way: the winner's margin over the runner-up within that arm's own
  *   considered set, normalized into [0, 1], and 1 when there was no runner-up. The arms score on different
- *   scales, so bins are not comparable between them — calibration asks whether an arm's confidence tracks
- *   its own accuracy.
+ *   scales, so bins are not comparable between them, and calibration asks whether an arm's confidence
+ *   tracks its own accuracy.
  *
  *   `picked: null` on every trace, or no admin node carrying a `placeID`, is recorded as an abstention with
- *   the checks that produced it. A row that raised is a harness failure carried in `error`, never scored as
- *   an abstention.
+ *   the checks that produced it. A row that raised is a harness failure carried in `error`, and is never
+ *   scored as an abstention.
  */
 
 import { collectNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -40,7 +40,7 @@ import {
 export const WRONG_AREA_KM = 25
 
 /**
- * The ablation arm's pinned options — the six library defaults it turns off.
+ * The ablation arm's pinned options, the six library defaults it turns off.
  *
  * Read from the frozen definition at run time.
  * This constant exists so a unit test can assert the two agree.
@@ -65,15 +65,15 @@ export interface ArmRowResult {
 	/**
 	 * True when the selection equals the row's gold place id.
 	 *
-	 * Always false for an abstention, including in the withheld-gold stratum — abstention
-	 * is scored there through the abstention metrics rather than by calling it a selection.
+	 * Always false for an abstention, including in the withheld-gold stratum, where abstention
+	 * is scored through the abstention metrics rather than by calling it a selection.
 	 */
 	correct: boolean
 	/**
 	 * True when the selection lies more than {@link WRONG_AREA_KM} from the gold coordinate.
 	 *
-	 * Null when the arm abstained or the selected candidate carries no coordinate —
-	 * absence of a distance is not a distance of zero.
+	 * Null when the arm abstained or the selected candidate carries no coordinate,
+	 * since absence of a distance is not a distance of zero.
 	 */
 	wrongArea: boolean | null
 	distanceKm: number | null
@@ -211,7 +211,7 @@ export async function runResolverArm(
 
 		// Read before the result is built.
 		// `resolveTree` catches a backend throw by design, so a replay miss reaches this point looking
-		// exactly like a resolver that refused — the one confusion the abstention strata exist to measure.
+		// exactly like a resolver that refused, the one confusion the abstention strata exist to measure.
 		if (misses.length) {
 			return {
 				arm,

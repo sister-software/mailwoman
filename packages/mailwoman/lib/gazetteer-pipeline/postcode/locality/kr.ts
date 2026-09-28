@@ -1,5 +1,40 @@
-// Hangul name confirmation: a name-matched locality that is also nearby, the same
-// proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
+/**
+ * @copyright Sister Software
+ * @license AGPL-3.0
+ * @author Teffen Ellis, et al.
+ *
+ *   Build a KR postcode → WOF locality table by point-primary match.
+ *
+ *   This is the South-Korea sibling of `build-postcode-locality-cjk.ts` (Japan). It emits the same
+ *   `postcode_locality` table, so the existing `postcode_area_resolution` resolver strategy
+ *   consumes it unchanged. KR's data shape is the inverse of Japan's, so the build is inverted too.
+ *
+ *   Japan is name-primary: KEN_ALL supplies the municipality name, GeoNames supplies the point, and
+ *   the name is matched with a proximity tiebreak against romanized `spr.name`. Korea is
+ *   point-primary: the GeoNames postal file already carries postcode to (place_name, admin1, lat,
+ *   lon) in one source. `spr.name` is romanized, but the WOF `names` table carries Hangul (`kor`
+ *   plus Hangul-containing `und`) variants, so the nearest locality point resolves the postcode and
+ *   the Hangul name confirms it where it exists.
+ *
+ *   Tiering (same schema and semantics as the JP builder):
+ *
+ *   - Is_containing=1 : Hangul name-confirmed locality, the precise tier
+ *   - Is_containing=0 : point-nearest fallback, with the province and coordinate correct
+ *
+ *   The province (admin1 to WOF region, Hangul-exact) is recorded in `meta` as the reliable coarse
+ *   anchor. The build uses GeoNames postal KR plus our custom WOF admin-kr.db from the
+ *   whosonfirst-data-admin-kr repo.
+ *
+ *   Usage: node scripts/build-postcode-locality-kr.ts\
+ *   --geonames $MAILWOMAN_DATA_ROOT/geonames/KR.txt\
+ *   --admin-db $MAILWOMAN_DATA_ROOT/db/wof/dbs-per-country/admin-kr.db\
+ *   --output $MAILWOMAN_DATA_ROOT/db/wof/postcode-locality-kr.db
+ *
+ *   With no polygons there is no point-in-polygon step. Matching is point-nearest through
+ *   `@mailwoman/spatial`'s `haversineKm` (asin form, matching Python), with
+ *   proximity-constrained Hangul name confirmation. The output is written directly to
+ *   `--output` as a full single-country rebuild.
+ */
 
 import { pyRound } from "@mailwoman/core/numeric"
 import { isoSecondsUTC } from "@mailwoman/core/utils"
@@ -114,7 +149,7 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 	/**
 	 * All localities within MATCH_RADIUS_KM, sorted nearest-first.
 	 *
-	 * Korean place names repeat heavily across the country, so a Hangul name match must be
+	 * Many Korean localities share a name across the country, so a Hangul name match must be
 	 * constrained to nearby candidates. Matching globally and then taking the nearest homonym
 	 * lands hundreds of km away.
 	 */
@@ -159,9 +194,8 @@ export async function buildPostcodeLocalityKR(args: PostcodeLocalityKROptions): 
 				provinceOk++
 			}
 
-			// Hangul name confirmation: a name-matched locality that is also nearby
-			// (two signals agreeing — the same proximity-constrained match the JP builder uses).
-			// is_containing=1 marks the precise tier.
+			// Hangul name confirmation: a name-matched locality that is also nearby, the same
+			// proximity-constrained match the JP builder uses. is_containing=1 marks the precise tier.
 			const nameIDs = nameIdx.get(bare(place)) ?? new Set<number>()
 			const named = nb.find(({ pid }) => nameIDs.has(pid))
 
