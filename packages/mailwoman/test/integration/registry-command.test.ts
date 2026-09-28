@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Unit tests for the `registry` command's pure pieces (#613). The full cascade is
- *   operator-verifiable (it needs the weights + databases), so here we only pin the column-mapping
- *   resolution — the one bit of command-specific logic that doesn't touch the heavy runtime.
+ *   Tests for the `registry` command's pure pieces. The full cascade needs the weights and the
+ *   databases, so this file pins only the column-mapping resolution, the command-specific logic
+ *   that avoids the heavy runtime.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -31,7 +31,6 @@ describe("registry command — loadMapping", () => {
 		const m = await loadMapping('{ "address": ["addr"], "name": "contact_name" }', undefined)
 		expect(m.address).toEqual(["addr"])
 		expect(m.name).toBe("contact_name")
-		// untouched fields keep the default
 		expect(m.email).toBe(DEFAULT_MAPPING.email)
 		expect(m.organization).toEqual(DEFAULT_MAPPING.organization)
 	})
