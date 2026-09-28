@@ -3,19 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `mwops release preflight` — the #1894 dispatch-free release exercise: stage the tracked tree in an
- *   isolated root, materialize the weights artifacts there, then pack and audit all release
- *   workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with.
- *   Performs zero git, GitHub, npm-registry, R2, or Hugging Face writes. an interrupted run leaves
- *   every tracked file byte-identical because no code ever writes into the checkout (see
- *   `stage.ts` for why staging rather than try/finally, is the mechanism).
- *
- *   Two sources, one audit. `--source repo` (the default) materializes weights from the machine's data
- *   root via the same `copyWeights` recipe the release path runs; `--source hf` reads the public
- *   Hugging Face bucket via the same `fetchHFWeights` recipe the publish workflow runs. Both are
- *   pointed at the staging tree instead of the checkout, and both hand the identical tree to the
- *   identical audit — that sharing is the point. `--source hf` needs no credentials and reads the
- *   version from the base package's model card unless `--version` names another.
+ *   `mwops release preflight` stages the tracked tree in an isolated root, materializes the weights artifacts there, then packs and audits all release workspaces with the same `packWorkspaceForPublish` + `verifyTarball` path CI publishes with, performing no git, GitHub, npm-registry, R2, or Hugging Face writes.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -26,9 +14,7 @@ import { copyWeights } from "#weights/copy-weights"
 import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
 
 /**
- * Where the staged weights artifacts come from.
- *
- * `repo` reads this machine's data root, `hf` reads the public bucket CI publishes from.
+ * Where the staged weights artifacts come from: `repo` reads this machine's data root, `hf` reads the public bucket CI publishes from.
  */
 export const WEIGHTS_SOURCES = ["repo", "hf"] as const
 
@@ -42,9 +28,7 @@ export interface ReleasePreflightOptions {
 	 */
 	version?: string
 	/**
-	 * The caller'S staging directory: written into and never removed.
-	 *
-	 * Absent, a scratch directory is made and owned here.
+	 * The caller's staging directory, written into and never removed; absent, a scratch directory is made and owned here.
 	 */
 	staging?: string
 	/**
@@ -66,11 +50,7 @@ export interface ReleasePreflightReport {
 }
 
 /**
- * Stage, materialize, pack and audit every release workspace.
- *
- * Answers the report.
- * The verdict is `fail` when any release workspace does not pack to a tarball honoring
- * its manifest, or when the release list's named-absence identity does not hold.
+ * Stage, materialize, pack and audit every release workspace, returning a report whose verdict is `FAIL` when any workspace does not pack to a tarball honoring its manifest or when the release list's named-absence identity does not hold.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {
 	const { repoRoot, source, log } = options
@@ -82,10 +62,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// Two ownership rules, and they are separate.
-	// A `--staging` root is the caller'S directory: this operation writes into it and never removes it.
-	// The one it makes itself is its own, and `--keep` withholds removal so the staged tree survives
-	// for inspection — registering it is what decides that, rather than a branch at the far end.
+	// The caller's `--staging` root is written into and never removed; a scratch root this operation makes is its own, and `--keep` withholds its removal so the staged tree survives for inspection.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {
@@ -98,8 +75,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 		stagingRoot = scratch.path.toString()
 	}
 
-	// 1. The named-absence identity.
-	//    Every workspace outside the release list must be sanctioned by name.
+	// Every workspace outside the release list must be sanctioned by name.
 	const identity = await checkReleaseListIdentity(repoRoot)
 
 	const releaseListProblems = [
@@ -122,9 +98,7 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 
 	log(`release list: ${identity.publishCount} workspaces`)
 
-	// 2. Stage + materialize + audit.
-	//    Both sources write into the staging tree only, so the two legs differ
-	// in where the bytes come from and in no other way the audit can see.
+	// Both sources write into the staging tree only, so the two legs differ in where the bytes come from and in no other way the audit can see.
 	log(`staging tracked tree → ${stagingRoot}`)
 	await stageReleaseTree(repoRoot, stagingRoot)
 

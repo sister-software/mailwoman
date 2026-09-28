@@ -34,9 +34,8 @@ export const CODEPOINT_LICENSE = "Open Government Licence v3.0"
 export const CODEPOINT_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * Builds the attribution OS requires for redistributing Code-Point Open.
- *
- * `year` is the year of redistribution, which can differ from the OS release year.
+ * Builds the attribution OS requires for redistributing Code-Point Open, where `year` is the year of
+ * redistribution and can differ from the OS release year.
  */
 export function codePointAttribution(year: number): string {
 	return [
@@ -72,9 +71,7 @@ export interface CodePointDownload {
 	format: string
 
 	/**
-	 * The coverage area.
-	 *
-	 * Code-Point Open publishes only `GB`, which excludes Northern Ireland.
+	 * The coverage area, where Code-Point Open publishes only `GB` and excludes Northern Ireland.
 	 */
 	area: string
 
@@ -92,18 +89,15 @@ export interface CodePointProduct {
 	name: string
 
 	/**
-	 * The OS release label, such as `2026-05`.
-	 *
-	 * It differs from the dataset version in the archive's `Doc/metadata.txt`.
+	 * The OS release label, such as `2026-05`, which differs from the dataset version in the archive's
+	 * `Doc/metadata.txt`.
 	 */
 	version: string
 }
 
 /**
- * A note stating that Code-Point Open covers England, Scotland, and Wales only.
- *
- * The missing `BT` postcodes are a licensing gap.
- * Reports must state the gap instead of filling it from another source.
+ * A note stating that Code-Point Open covers England, Scotland, and Wales only, a licensing gap that reports
+ * must state rather than fill from another source.
  */
 export const CODEPOINT_COVERAGE_NOTE =
 	"Code-Point Open covers England, Scotland and Wales only (country codes E92000001/S92000003/W92000004). " +
@@ -112,10 +106,8 @@ export const CODEPOINT_COVERAGE_NOTE =
 	"See NORTHERN_IRELAND_OPTIONS_NOTE for why the gap cannot be filled from a free source."
 
 /**
- * A note explaining why no free source can fill Northern Ireland postcode centroids,
- * and which options remain.
- *
- * ONSPD and NSPL exclude their `BT` coordinates from the OGL, so this published database keeps its `BT` gap.
+ * A note explaining that ONSPD and NSPL carve their `BT` coordinates out of the OGL, so this published
+ * database keeps its `BT` gap.
  */
 export const NORTHERN_IRELAND_OPTIONS_NOTE =
 	"Northern Ireland (BT) postcode centroids CANNOT be filled from a free source. ONSPD/NSPL carry BT coordinates " +
@@ -174,17 +166,13 @@ export async function fetchCodePointDownloads(
  */
 export interface DownloadCodePointOptions {
 	/**
-	 * The directory for the archive, its `.md5` sidecar, and `acquisition.json`.
-	 *
-	 * A later download into the same directory overwrites these files.
-	 * Use a new directory per acquisition to keep earlier ones.
+	 * The directory for the archive, its `.md5` sidecar, and `acquisition.json`; a later download into the same
+	 * directory overwrites them, so use a new directory per acquisition.
 	 */
 	destDir: PathBuilderLike
 
 	/**
-	 * The archive format.
-	 *
-	 * Defaults to `CSV`, the only format the database builder parses.
+	 * The archive format, defaulting to `CSV`, the only format the database builder parses.
 	 */
 	format?: "CSV" | "GeoPackage"
 
@@ -194,8 +182,7 @@ export interface DownloadCodePointOptions {
 	client?: APIClient
 
 	/**
-	 * Whether to skip the download when the existing file already matches the upstream MD5.
-	 * Defaults to `true`.
+	 * Whether to skip the download when the existing file already matches the upstream MD5, defaulting to `true`.
 	 */
 	reuseExisting?: boolean
 	onPhase?: (phase: string, detail?: string) => void
@@ -234,10 +221,9 @@ export interface DownloadCodePointResult {
 }
 
 /**
- * Downloads a Code-Point Open archive into `destDir` and verifies its MD5 against the Downloads API record.
- *
- * It also writes an `.md5` sidecar and an `acquisition.json` provenance file beside the archive.
- * A reused archive gets neither file rewritten.
+ * Downloads a Code-Point Open archive into `destDir`, verifies its MD5 against the Downloads API record, and
+ * writes an `.md5` sidecar and `acquisition.json` provenance file beside it, which a reused archive does not
+ * rewrite.
  */
 export async function downloadCodePointOpen(options: DownloadCodePointOptions): Promise<DownloadCodePointResult> {
 	const { format = "CSV", reuseExisting = true } = options

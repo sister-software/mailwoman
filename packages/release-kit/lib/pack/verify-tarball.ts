@@ -47,10 +47,7 @@ function isShipped(entry: string, shipped: Set<string>): boolean {
 }
 
 /**
- * Returns a manifest's literal `files` entries, dropping globs and `!` negations.
- *
- * The Hugging Face weights fetch plan shares this predicate so that it materializes
- * exactly the entries this audit later requires.
+ * Returns a manifest's literal `files` entries, dropping globs and `!` negations, the predicate the Hugging Face weights fetch plan also uses so it materializes exactly the entries this audit requires.
  */
 export function literalFilesEntries(files: unknown): string[] {
 	if (!Array.isArray(files)) return []
@@ -90,10 +87,7 @@ function collectBinTargets(bin: unknown): string[] {
 }
 
 /**
- * Returns the `bin` targets that the tarball does not contain.
- *
- * No other check reconciles `bin` with `files`, so an unbuilt target would publish
- * cleanly and fail only when a user runs it.
+ * Returns the `bin` targets the tarball does not contain; since no other check reconciles `bin` with `files`, an unbuilt target would otherwise publish cleanly and fail only when a user runs it.
  */
 export function collectMissingBinTargets(bin: unknown, shipped: Set<string>): string[] {
 	return collectBinTargets(bin).filter((target) => !isShipped(normalizeEntry(target), shipped))
@@ -147,10 +141,7 @@ export interface TarballAudit {
 }
 
 /**
- * Audits a packed tarball against its manifest's `files`, `exports`, `imports`
- * and `bin` entries, throwing with every missing path listed.
- *
- * Callers publish only when this returns, because a published version cannot be withdrawn.
+ * Audits a packed tarball against its manifest's `files`, `exports`, `imports` and `bin` entries, throwing with every missing path listed; callers publish only when this returns because a published version cannot be withdrawn.
  */
 export function verifyTarball(tarballPath: PathBuilderLike): TarballAudit {
 	const { manifest, shipped } = readTarball(tarballPath)
