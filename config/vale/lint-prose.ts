@@ -123,7 +123,7 @@ async function runChecks(vale: ValeCommand, checks: readonly ValeCheck[]): Promi
 			process.stdout.write(body)
 			process.stderr.write(stderr)
 
-			counts.forEach((count, index) => (totals[index] = (totals[index] ?? 0) + count))
+			counts.forEach((count, index) => (totals[index] += count))
 			exitCode = Math.max(exitCode, code)
 		}
 
