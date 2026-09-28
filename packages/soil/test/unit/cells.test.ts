@@ -2,14 +2,6 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- *
- *   The cell index this layer keeps, and the arithmetic the batched path cannot reach from a fixture build.
- *
- *   the inversion is pinned here AS A property rather than AS A number. A polygon smaller than a cell produces
- *   only `partial` cells. That is what makes this layer's containment index answer nearly no point probe on its
- *   own — while a polygon several cells across produces an interior that compacts. The measured shares on
- *   the real product are in the workspace readme. what this file pins is that the two shapes behave
- *   differently at all, which is the fact the resolution choice rests on.
  */
 
 import { aggregateChunks } from "@mailwoman/soil/sdk/build-soil"
@@ -23,8 +15,7 @@ const { lat, lon } = FIXTURE_ORIGIN
 
 describe("SoilCellIndex", () => {
 	it("gives a sub-cell delineation only partial cells, which is why the index answers nothing alone", () => {
-		// About 11 m across — far smaller than a resolution-9 cell, and typical:
-		// 85.4% of IA153's 17,966 delineations are smaller than one.
+		// About 11 m across — far smaller than a resolution-9 cell, which is the typical size.
 		const tiny = [[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)]]
 		const index = new SoilCellIndex(9)
 
@@ -54,7 +45,7 @@ describe("SoilCellIndex", () => {
 		const index = new SoilCellIndex(9)
 		const box = [[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)]]
 
-		// Two delineations over the same ground: a cell they both reach names both.
+
 		index.add("a:0", classifyDelineationCells(box, 9, "a:0"))
 		index.add("a:1", classifyDelineationCells(box, 9, "a:1"))
 
@@ -81,10 +72,8 @@ function chunk(partial: Partial<SoilChunkResult>): SoilChunkResult {
 
 describe("aggregateChunks", () => {
 	it("ADDS coverage-cell counts across chunks rather than replacing them", () => {
-		// A coverage cell straddles chunk boundaries.
-		// A range of feature ids is not a region, and a coverage cell can straddle two survey areas.
-		// Taking the last chunk's value would report a dense county as holding only its final
-		// few delineations, which is a well-formed artifact that under-reports what it holds.
+		// A coverage cell can straddle two survey areas, so taking the last chunk's value would make a dense
+		// county under-report what it holds.
 		const result = aggregateChunks([
 			chunk({ delineations: 3, observedByCoverageCell: [[11, 3]], mappedByCoverageCell: [[11, 2]] }),
 			chunk({ delineations: 4, observedByCoverageCell: [[11, 4]], mappedByCoverageCell: [[11, 4]] }),

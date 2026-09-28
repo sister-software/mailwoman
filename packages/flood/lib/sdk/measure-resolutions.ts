@@ -3,18 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The index resolution is a measurement this layer takes rather than a number argued to.
- *
- *   The share of cells that come out `partial` decides whether the index answers most probes on its own
- *   or whether the ray cast is the common path, and it is a property of England's floodplain geometry
- *   that no reasoning about cell areas produces. This module streams the real source at each candidate
- *   resolution and reports the table the choice is made from; `build-flood.ts` then builds at the chosen
- *   one.
- *
- *   one stream, every resolution. Re-reading a 367 MB geodatabase per candidate costs minutes each and
- *   adds no information. The classification is per feature, so every candidate index folds the same feature in
- *   turn. The cost is memory: each resolution holds its own cell sets, and the finest candidate dominates.
- *   A caller that runs out of headroom runs the candidates in separate invocations.
+ * Each resolution holds its own cell sets and the finest candidate dominates memory, so a caller that
+ * runs out of headroom runs the candidates in separate invocations.
  */
 
 import type { ResolutionMeasurementOptions } from "@mailwoman/core/layers"
@@ -28,9 +18,7 @@ export interface MeasureResolutionsOptions extends FloodIngestOptions, Resolutio
 export interface ResolutionMeasurementReport {
 	features: number
 	/**
-	 * The count the source declares for itself.
-	 *
-	 * A run whose streamed total differs read a truncated file.
+	 * The count the source declares for itself; a streamed total that differs means a truncated read.
 	 */
 	declaredFeatureCount: number
 	measurements: CellIndexMeasurement[]
@@ -39,11 +27,8 @@ export interface ResolutionMeasurementReport {
 const DEFAULT_PROGRESS_EVERY = 50_000
 
 /**
- * Measure every candidate resolution over the real source.
- *
- * @throws {Error} When the streamed feature count does not match the count the source declares.
- * A short read produces a well-formed table describing a smaller England,
- * which is the partial result that must throw.
+ * Measure every candidate resolution over the real source, throwing when the streamed feature count
+ * does not match the count the source declares.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions
@@ -86,10 +71,7 @@ export async function measureFloodCellResolutions(
 }
 
 /**
- * The measurement as markdown table rows.
- *
- * What a build receipt carries, one line per element so a caller printing them
- * never has to split a joined string back apart.
+ * The measurement as markdown table rows, one line per element.
  */
 export function formatResolutionMeasurementRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

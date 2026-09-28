@@ -3,9 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   One chunk of the zoning ingest, as its own process — spawned by `buildZoningDatabase`, never run by
- *   hand. The process boundary and the stdout interface live with `runIngestChunkScript`; what stays here is
- *   only this product's flags and its feature-source constructor.
+ *   One chunk of the zoning ingest, as its own process — spawned by `buildZoningDatabase`, never run by hand.
  */
 
 import { requiredArgument } from "@mailwoman/core/scripting/arguments"
@@ -30,9 +28,8 @@ await runIngestChunkScript({
 				exportPath: requiredArgument("zoning ingest-chunk", "export", values.export),
 				...(values["object-id-from"] === undefined ? {} : { objectIDFrom: Number(values["object-id-from"]) }),
 				...(values["object-id-to"] === undefined ? {} : { objectIDTo: Number(values["object-id-to"]) }),
-				// A range's own count is not knowable up front.
-				// The source reports a layer's total and no narrower figure, so the chunk asserts
-				// no fact about its size and the parent checks the sum against the whole file.
+				// A range's count is not knowable up front: the source reports only the layer total, so the
+				// parent checks the sum against the whole file.
 				declaredFeatureCount: 0,
 			}),
 			indexResolution: chunk.indexResolution,
