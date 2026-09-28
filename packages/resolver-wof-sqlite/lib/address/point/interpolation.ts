@@ -3,34 +3,30 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Address-point interpolation — "Method 2" of the resolution ladder (#483, Phase 1 of
- *   `docs/articles/plan/2026-06-11-resolution-ladder.md`): when the exact address-point tier (#476)
- *   misses a house number, bracket the number with real neighbor points on the same street from the
- *   same #476 extract and interpolate linearly in house-number space between them. Real occupancy
- *   replaces tiger's uniform-spacing assumption — the dominant error term of the tiger pilot's check
- *   miss. tiger range interpolation (`StreetInterpolator`) demotes to the fallback for streets too
- *   sparse to bracket.
+ *   Address-point interpolation, the second method of the resolution ladder. When the exact
+ *   address-point tier misses a house number, bracket the number with real neighbor points on the
+ *   same street and interpolate linearly in house-number space between them. Real occupancy
+ *   replaces the tiger range tier's uniform-spacing assumption. Tiger range interpolation
+ *   (`StreetInterpolator`) is the fallback for streets too sparse to bracket.
  *
- *   Matching key is `street_key` — the shared normalizer plus the route fold
- *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and
- *   query time, by construction. Scope is postcode-first like the segment tier. a query without a
- *   postcode goes straight to the fallback (which carries its own statewide-ambiguity abstention).
+ *   The matching key is `street_key`, the shared normalizer plus the route fold
+ *   (`canonicalizeRouteKey`), identical at build time (`mailwoman situs address-points`) and query
+ *   time by construction. Scope is postcode-first like the segment tier. A query without a postcode
+ *   goes straight to the fallback, which carries its own statewide-ambiguity abstention.
  *
- *   Bracketing interface:
+ *   Neighbor candidates never include the queried number itself, so production never overrides an
+ *   on-file number and grading against the same extract is non-circular.
  *
- *   - Neighbor candidates never include the queried number itself (any unit/duplicate row of it) — in
- *       production the exact tier would already have answered an on-file number, and in the eval
- *       this is what makes grading against the same extract non-circular by construction.
  *   - Both-sided bracket (`bracket: "both"`): linear interpolation between the nearest known number
- *       below and above; `uncertaintyM` = half the distance between them.
- *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest known numbers on
- *       that side, capped at one pair-span beyond the nearest point (`t ≤ 2` — beyond that the line
- *       carries no evidence and the query falls through); `uncertaintyM` = the pair distance plus
- *       the extrapolated overshoot, explicitly larger than the both-sided radius.
- *   - No bracket (no neighbors, a single known number, or past the extrapolation cap): fall through to
- *       the tiger fallback when configured, else null.
+ *       below and above. `uncertaintyM` is half the distance between them.
+ *   - Single-sided (`bracket: "single"`): linear extrapolation along the two nearest known numbers
+ *       on that side, capped at one pair-span beyond the nearest point (`t ≤ 2`, past which the line
+ *       carries no evidence and the query falls through). `uncertaintyM` is the pair distance plus
+ *       the extrapolated overshoot, larger than the both-sided radius.
+ *   - No bracket, meaning no neighbors, a single known number, or past the extrapolation cap: fall
+ *       through to the tiger fallback when configured, else null.
  *
- *   Standalone like the segment tier — core wiring rides the Phase 2 ordered `spatialTiers` list.
+ *   Standalone like the segment tier, wired through the ordered `spatialTiers` list.
  */
 
 import type { InterpolationLookup } from "@mailwoman/core/resolver"
@@ -42,10 +38,8 @@ import type { InterpolatedHit, InterpolationQuery, StreetInterpolator } from "#i
 import { hasTable, prepareAll, type PreparedAll } from "#sqlite-utils"
 import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/normalize"
 /**
- * Extrapolation cap for a single-sided bracket: at most one pair-span beyond
- * the nearest known point (`t = 2`).
- *
- * Past it, the two-point line carries no evidence about the query number.
+ * Extrapolation cap for a single-sided bracket: at most one pair-span beyond the nearest known
+ * point (`t = 2`). Past it, the two-point line carries no evidence about the query number.
  */
 const MAX_EXTRAPOLATION_T = 2
 
@@ -73,10 +67,8 @@ export class AddressPointInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened.
-	 *
-	 * A connection handed in by a caller is not in here, so disposal cannot reach it —
-	 * ownership is membership rather than a flag a later branch has to check.
+	 * Resources this instance opened. A connection handed in by a caller is not in here, so
+	 * disposal cannot reach it. Ownership is membership rather than a flag a later branch checks.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #fallback: StreetInterpolator | undefined
@@ -93,11 +85,9 @@ export class AddressPointInterpolator<
 
 		this.#fallback = opts.fallback
 
-		// Degrade gracefully on an empty/tableless extract (#568): with no `address_point` table this
-		// tier is skipped, deferring to the segment fallback rather than crashing at construction.
+		// Degrade gracefully on an extract without an `address_point` table. The tier is skipped and
+		// defers to the segment fallback rather than crashing at construction.
 		if (hasTable(this.#db, "address_point")) {
-			// Strictly-numeric neighbor numbers on the route-folded street key within the ZIP.
-			// The queried number itself is excluded here (see module doc: non-circular by construction).
 			this.#byPostcode = prepareAll(
 				this.#db,
 				`SELECT CAST(number AS INTEGER) AS n, lat, lon, source, release
@@ -115,10 +105,9 @@ export class AddressPointInterpolator<
 		if (!/^\d+$/.test(numberRaw)) return null
 		const n = Number(numberRaw)
 
-		// No own table (empty extract) or no postcode → defer to the segment fallback rather than query.
 		if (!this.#byPostcode || !query.postcode) return this.#fallback?.find(query) ?? null
 
-		// Key-variant ladder (see `streetKeyVariants`) — same probe order as the exact-point reader.
+		// Key-variant ladder (see `streetKeyVariants`), the same probe order as the exact-point reader.
 		let rows: PointRow[] = []
 
 		for (const variant of streetKeyVariants(query.street)) {
@@ -169,7 +158,7 @@ function anchorsByNumber(rows: readonly PointRow[]): NumberAnchor[] {
 function interpolateFromNeighbors(rows: readonly PointRow[], n: number): InterpolatedHit | null {
 	const anchors = anchorsByNumber(rows)
 
-	// Nearest known number below and above the query (the rows never contain n itself).
+	// Nearest known number below and above the query. The rows never contain n itself.
 	let below: NumberAnchor | undefined
 	let above: NumberAnchor | undefined
 
@@ -200,8 +189,7 @@ function interpolateFromNeighbors(rows: readonly PointRow[], n: number): Interpo
 	}
 
 	// Single-sided: extrapolate along the two nearest known numbers on the populated side.
-	// `near` is the anchor closest to n, `far` the next one out.
-	// T > 1 by construction.
+	// `t > 1` by construction because n lies outside the span.
 	const side = below ? anchors.slice(-2) : anchors.slice(0, 2)
 
 	if (side.length < 2) return null

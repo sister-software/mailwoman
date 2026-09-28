@@ -3,24 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the ORG-level cross-source link scorer (#655 follow-on, 2026-07-06). The practitioner
- *   cross-source GBT does not transfer to organization records (its person-name features go dark),
- *   so the org-level cross-dataset flows pin the FS baseline. The org anchor: **CMS Provider of
- *   Services joins Care Compare by CCN** — the same facility in two separately-maintained CMS
- *   systems (certification vs quality reporting), each with independently-entered name + address.
- *   Measured drift across the national join (n≈5.4k): 12.2% name, 4.9% address — the rename /
- *   system-vs-facility / acquisition class the org objective exists for.
+ *   Train the organization-level cross-source link scorer. The practitioner cross-source GBT does
+ *   not transfer to organization records (its person-name features go dark), so the org-level
+ *   cross-dataset flows pin the FS baseline. The anchor is CMS Provider of Services, which joins
+ *   Care Compare by CCN: the same facility in two separately maintained CMS systems, each with
+ *   independently entered name and address.
  *
- *   Pipeline: national CCN join → one record per source per facility (Phases A/B here), then the
- *   shared `trainCrossSourceModel` runs Phases C–F — geocode → block the union, keep only
- *   cross-source pairs → the shared featurizer → label by CCN → held-out-CCN calibration (max
- *   recall s.t. precision ≥ bar) → train on all pairs → emit
+ *   The pipeline runs a national CCN join into one record per source per facility, then the shared
+ *   `trainCrossSourceModel` geocodes, blocks the union, keeps only cross-source pairs, featurizes
+ *   with the shared featurizer, labels by CCN, calibrates on held-out CCNs, and emits
  *   `registry/models/org-crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, direct CSVs):
  *
- *   - `cms-pos_hospital-other_*.csv` — Provider of Services (PRVDR_NUM, FAC_NAME, ST_ADR…).
- *   - `cms-carecompare_hospital-general_*.csv` — Care Compare (Facility ID, Facility Name, Address…).
+ *   - `cms-pos_hospital-other_*.csv`: Provider of Services (PRVDR_NUM, FAC_NAME, ST_ADR…).
+ *   - `cms-carecompare_hospital-general_*.csv`: Care Compare (Facility ID, Facility Name, Address…).
  *
  *   Run: `mailwoman registry train-scorer org-cross-gbt [--cap 6000] [--precision-bar 0.95]
  *   [--wof <admin.db>] [--data-root <dir>] [--out registry/models/org-crosssource-gbt-en-us.ts]`
@@ -39,7 +36,7 @@ import { addr, norm, trainCrossSourceModel, type CrossSourceRow } from "#tools/s
  */
 export interface TrainOrgCrossSourceGBTOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -67,7 +64,7 @@ export interface TrainOrgCrossSourceGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 * Max cross-source recall subject to this held-out pairwise precision. Default 0.95.
 	 */
 	precisionBar?: number
 	/**
@@ -79,10 +76,10 @@ export interface TrainOrgCrossSourceGBTOptions {
 }
 
 /**
- * Train + emit the org-level cross-source link GBT — see the module doc.
+ * Train and emit the org-level cross-source link GBT.
  *
- * The CCN is the cross-system facility key.
- * It rides {@link CrossSourceRow.npi} → `record.id` as the held-out label.
+ * The CCN is the cross-system facility key, and it rides {@link CrossSourceRow.npi} to `record.id`
+ * as the held-out label.
  */
 export async function trainOrgCrossSourceGBT(
 	options: TrainOrgCrossSourceGBTOptions,
@@ -92,14 +89,13 @@ export async function trainOrgCrossSourceGBT(
 	const CAP = options.cap ?? 6000
 	const OUT = options.out || "packages/registry/lib/models/org-crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
-	// #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
+	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95
 	const TRAIN_DATE = options.date || isoDate()
 
 	const POS = `${SOURCES}/cms-pos_hospital-other_2026q1.csv`
 	const CARE_COMPARE = `${SOURCES}/cms-carecompare_hospital-general_20260706.csv`
 
-	// Build Care Compare facility records with facility ID, name, and address.
 	report?.("[A] streaming Care Compare…")
 	const ccByID = new Map<string, CrossSourceRow>()
 
@@ -115,7 +111,6 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${ccByID.size} Care Compare facilities`)
 
-	// Join the same CCNs from POS with the corpus-wide address-frequency table.
 	report?.("[B] streaming POS + building the frequency table…")
 	const rows: CrossSourceRow[] = []
 	const joined = new Set<string>()
@@ -154,8 +149,6 @@ export async function trainOrgCrossSourceGBT(
 
 	report?.(`    ${joined.size} CCN-joined facilities → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
-	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,

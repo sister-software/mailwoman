@@ -3,15 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regression guard for the open mode `WOFSQLitePlaceLookup` chooses on the `databasePath` branch: read-only by
- *   default (every serve/query path), read-write only when `buildFTS` is requested (the FTS5 index build — the sole
- *   writer). Shipped extracts are sealed 0444 and Docker `:ro` mounts forbid write-mode opens (#1213).
+ * Regression guard for the open mode WOFSQLitePlaceLookup chooses on the databasePath branch:
+ * read-only by default on every serve and query path, read-write only when buildFTS is requested
+ * because the FTS5 index build is the sole writer. Shipped extracts are sealed 0444 and Docker :ro
+ * mounts forbid write-mode opens.
  *
- *   Why this needs a construction spy rather than a plain 0444 open: SQLite silently downgrades a write-mode open to
- *   read-only on an owned read-only file, so a 0444 open succeeds under the old `readOnly: false` too and cannot
- *   distinguish old code from new. Recording the `readOnly` option actually passed to `DatabaseSync` is the reliable
- *   signal. (`lookup.test.ts` keeps an end-to-end 0444 smoke test proving a sealed file resolves. this file proves the
- *   invariant.)
+ * SQLite silently downgrades a write-mode open to read-only on an owned read-only file, so a 0444
+ * open succeeds under a write-mode option too. Recording the readOnly option passed to DatabaseSync
+ * is the reliable signal.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -35,7 +34,7 @@ vi.mock("node:sqlite", async (importOriginal) => {
 		constructor(path: string, options?: { readOnly?: boolean }) {
 			spy.opens.push({ path, readOnly: options?.readOnly })
 
-			// node:sqlite rejects an explicit `undefined` options arg — forward only when actually passed.
+			// node:sqlite rejects an explicit `undefined` options arg, so forward only when actually passed.
 			if (options === undefined) {
 				super(path)
 			} else {
@@ -47,26 +46,23 @@ vi.mock("node:sqlite", async (importOriginal) => {
 	return { ...actual, DatabaseSync: RecordingDatabaseSync }
 })
 
-// vi.resetModules() before importing the module under test: the root vitest config runs
-// `isolate: false` (one shared module graph per worker), so `node:sqlite` / `./lookup.ts` may
-// already sit in the shared cache — evaluated with the real DatabaseSync by an earlier file.
-// A cached module is never re-evaluated, so this file's vi.mock factory would never run and the construction
-// spy would stay empty (the failure this guards against reads as "expected [] to have a length of 1").
-// Reset on the way in so the chain re-evaluates against the mock, and on the way out
+// The root vitest config runs `isolate: false` with one shared module graph per worker, so
+// `node:sqlite` or `./lookup.ts` may already sit in the cache, evaluated with the real DatabaseSync
+// by an earlier file. The mock factory would never run for a cached module and the construction spy
+// would stay empty. Reset on the way in so the chain re-evaluates against the mock, and on the way
+// out so the next file never inherits our RecordingDatabaseSync.
 // so the next file in this fork never inherits our RecordingDatabaseSync from the cache.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
 // Dynamic imports after the reset (and after the hoisted vi.mock registration above) so the
 // module-under-test chain evaluates against the RecordingDatabaseSync mock.
-// oxlint-disable-next-line no-restricted-imports -- this probe records the construction, so it must name the builtin
+// oxlint-disable-next-line no-restricted-imports -- this probe records the construction, so it must import the builtin directly
 await import("node:sqlite")
 const { WOFSQLitePlaceLookup } = await import("@mailwoman/resolver-wof-sqlite/lookup")
 
 /**
- * Seed a minimal on-disk WOF fixture (schema + one place), without the FTS index.
- *
- * Writable.
+ * Seed a minimal on-disk WOF fixture (schema and one place) without the FTS index. Writable.
  */
 function seedFixture(path: PathBuilder): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

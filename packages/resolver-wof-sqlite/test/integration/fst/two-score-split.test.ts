@@ -3,8 +3,8 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Format v5 — the two-score split (ROAD_TO_V9 §2 R1). Round-trip, the meaning-of-zero rule on the
- *   encyclopedic channel, v4 back-compat, and the freshness guard's format verdict.
+ * Format v5, the two-score split: round-trip, the meaning-of-zero rule, v4 back-compat, and
+ * the freshness guard's format verdict.
  */
 
 import {
@@ -18,10 +18,8 @@ import {
 import { describe, expect, it } from "vitest"
 
 /**
- * The v4 place-entry stride.
- *
- * Hard-coded rather than imported: the point of {@link downgradeToV4} is to write
- * bytes the current serializer no longer can.
+ * The v4 place-entry stride, hard-coded because {@link downgradeToV4} must write bytes the
+ * current serializer no longer can.
  */
 const V4_PLACE_ENTRY_SIZE = 56
 
@@ -31,8 +29,8 @@ const V4_PLACE_ENTRY_SIZE = 56
 const V5_PLACE_ENTRY_SIZE = 60
 
 /**
- * A one-place matcher carrying `referential` and, optionally, `encyclopedic` —
- * the Saint-Denis suburb's real numbers.
+ * A one-place matcher carrying `referential` and, optionally, `encyclopedic`, with the
+ * Saint-Denis suburb's real numbers.
  */
 function splitMatcher(encyclopedic?: number): FSTMatcher {
 	const nodes: FSTNode[] = [
@@ -58,10 +56,9 @@ function splitMatcher(encyclopedic?: number): FSTMatcher {
 }
 
 /**
- * Rewrite a v5 buffer's place table at the v4 stride (no encyclopedic float)
- * and stamp the header back to 4.
- *
- * The only way to produce a genuine pre-split artifact now that the serializer writes v5.
+ * Rewrite a v5 buffer's place table at the v4 stride (no encyclopedic float) and stamp the
+ * header back to 4, the only way to produce a genuine pre-split artifact now that the
+ * serializer writes v5.
  */
 function downgradeToV4(v5: Buffer): Buffer {
 	const headerSize = 32
@@ -84,7 +81,6 @@ function downgradeToV4(v5: Buffer): Buffer {
 	}
 
 	out.writeUInt16LE(4, 4)
-	// This fixture carries no trailer.
 	// Zero the offset so a reader reports no provenance.
 	out.writeUInt32LE(0, 28)
 
@@ -114,18 +110,16 @@ describe("two-score split — format v5", () => {
 	})
 
 	it("an encyclopedic score of exactly 0 survives as a RECORDED zero", () => {
-		// The other half of the same rule.
-		// A place whose article scored 0 is not a place with no article, and the
-		// per-place presence bit is what keeps them apart.
+		// A place whose article scored 0 has an article, and the per-place presence bit keeps
+		// that apart from a place with no article.
 		const entry = deserializeFST(serializeFST(splitMatcher(0))).query("Saint-Denis").accepting[0]!
 
 		expect(entry.encyclopedic).toBe(0)
 	})
 
 	it("a v4 artifact still reads, with its single float as referential and NO encyclopedic channel", () => {
-		// Back-compat is real: the shipped fst-per-locale set is v4 and must keep loading.
-		// What it must not do is invent an encyclopedic score.
-		// A v4 file has no such data and nowhere to put it.
+		// The shipped fst-per-locale set is v4 and must keep loading. A v4 file has no
+		// encyclopedic data, so the reader reports the channel absent.
 		const entry = deserializeFST(downgradeToV4(serializeFST(splitMatcher(0.1173)))).query("Saint-Denis").accepting[0]!
 
 		expect(entry.referential).toBeCloseTo(0.4863, 5)
@@ -133,9 +127,8 @@ describe("two-score split — format v5", () => {
 	})
 
 	it("the freshness guard reports a v4 artifact as format-stale", () => {
-		// §2 R1's stamp requirement (#1488 discipline): a pre-split binary's single float
-		// is unattributable — population proxy or Wikipedia score, the bytes do not say —
-		// so it must not read as current merely because its source md5 still matches.
+		// A pre-split binary's single float is unattributable, so it must not read as current
+		// merely because its source md5 still matches.
 		const stale = fstStaleReason(
 			{ formatVersion: 4, provenance: undefined },
 			{ source: { md5: "0".repeat(32), bytes: 1 } }

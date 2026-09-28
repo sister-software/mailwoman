@@ -3,13 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Schema for the unified WOF SQLite database we build from cloned WOF GeoJSON repos
- *   (`scripts/build-unified-wof.ts`). This is the canonical gazetteer — we never use the
- *   off-the-shelf geocode.earth prebuilt dumps (they assign different WOF ids to the same place.
- *   see the `feedback-custom-wof-db-only` memory). The table/column names match the resolver's
- *   expectations (`lookup.ts`) so `WOFSQLitePlaceLookup` works unchanged, including the `ancestors`
- *   table (which lookup.ts's parent-constraint subquery needs) — see `populateAncestors`. The
- *   `place_search` FTS5 + `place_bbox` R*Tree are built separately by `build-fts` (fts.ts).
+ * Schema for the unified WOF SQLite database built from cloned WOF GeoJSON repos
+ * (`scripts/build-unified-wof.ts`). The table and column names match the resolver's
+ * expectations (`lookup.ts`) so `WOFSQLitePlaceLookup` works unchanged, and the `ancestors`
+ * table is what lookup.ts's parent-constraint subquery reads (see `populateAncestors`).
+ * The `place_search` FTS5 and `place_bbox` R*Tree tables are built separately by `build-fts` (fts.ts).
  */
 
 import type { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -17,14 +15,13 @@ import type { DatabaseClient } from "@mailwoman/sqlite/client"
 import type { WOFDatabase } from "#schema"
 
 export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Promise<void> {
-	// PRAGMAs stay raw — not Kysely-modelled, and these tune the bulk build.
+	// PRAGMAs run raw because Kysely does not model them, and they tune the bulk build.
 	db.exec("PRAGMA journal_mode = WAL")
 	db.exec("PRAGMA busy_timeout = 10000")
 	db.exec("PRAGMA synchronous = OFF")
 
-	// `db` wraps `db` for the DDL (the house idiom); the caller owns `db`'s lifecycle,
-	// so we don't destroy it here.
-	// The bulk INSERTs (populateAncestors + build-unified-wof) stay on the raw handle.
+	// The caller owns `db`'s lifecycle, so this function does not destroy it.
+	// The bulk INSERTs (populateAncestors + build-unified-wof) run on the raw handle.
 
 	await db.schema
 		.createTable("spr")
@@ -48,13 +45,13 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 		.addColumn("lastmodified", "integer", (c) => c.notNull().defaultTo(0))
 		.execute()
 
-	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) / GeoNames'
+	// `privateuse` carries WOF's x_<variant> kind (preferred | variant) or GeoNames'
 	// isPreferredName ("preferred" | "").
-	// `official` is the #936 ingest bit: 1 when the row's language is an official language
-	// of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form —
+	// `official` is the ingest bit. It is 1 when the row's language is an official language
+	// of the place's country (codex OFFICIAL_LANGUAGES) and the row is a preferred form.
 	// x_variant rows tagged with an official language ("MSP", "Frisco") stay 0.
-	// Primary-name mirror rows stay 0 too: the name-exact tier already consults spr.name;
-	// `official` only marks the aliases eligible to join it.
+	// Primary-name mirror rows stay 0 too. The name-exact tier already consults spr.name,
+	// and `official` only marks the aliases eligible to join it.
 	// Both are ingest-time facts, never computed at query time.
 	await db.schema
 		.createTable("names")
@@ -102,16 +99,8 @@ export async function createUnifiedSchema(db: DatabaseClient<WOFDatabase>): Prom
 }
 
 /**
- * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr`
- * (transitive closure, including the place itself).
- *
- * Idempotent: drops + rebuilds the table contents.
- * Returns the row count.
- *
- * Run after `spr` is fully ingested (build-unified-wof freeze phase) or standalone
- * on an existing unified DB (`scripts/add-ancestors.ts`).
- * Sentinel/negative parent_ids and cycles terminate the walk. ~4 rows/place average.
- * A transaction keeps the ~5M inserts fast.
+ * Populate the `ancestors` table by walking each place's `parent_id` chain in `spr` to a
+ * transitive closure that includes the place itself, and run it once `spr` is fully ingested.
  */
 export function populateAncestors<DB>(db: DatabaseClient<DB>): number {
 	db.exec("DELETE FROM ancestors")
@@ -135,7 +124,6 @@ export function populateAncestors<DB>(db: DatabaseClient<DB>): number {
 	for (const r of rows) {
 		insert.run(r.id, r.id, r.placetype)
 
-		// self
 		count++
 		const seen = new Set<number>([r.id])
 		let cur = r.parent_id
@@ -178,7 +166,7 @@ export async function createUnifiedIndexes(db: DatabaseClient<WOFDatabase>): Pro
 		.columns(["other_source", "other_id"])
 		.execute()
 
-	// ancestor_id is the hot column (parent-constraint queries `where ancestor_id = ?`); id supports the reverse lookup.
+	// ancestor_id is the hot column for parent-constraint queries, and id supports the reverse lookup.
 	await db.schema.createIndex("ancestors_by_ancestor").ifNotExists().on("ancestors").column("ancestor_id").execute()
 	await db.schema.createIndex("ancestors_by_id").ifNotExists().on("ancestors").column("id").execute()
 }

@@ -3,17 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Regenerate every version-stamped generated document after a release bump (#1891): the man page
- *   (which embeds `mailwoman <version>` in its `.TH` line, so every bump stales it) and the docs CLI
- *   reference (no version stamp today, but generated from the same help tree — regenerating both
- *   keeps one sequence). v9.2.0's release PR failed its `test` run on exactly this: the freshness
- *   guard compared the committed man page's 9.1.0 stamp against the bumped tree.
+ *   Regenerate every version-stamped generated document after a release bump. The man page embeds
+ *   `mailwoman <version>` in its `.TH` line, so every bump stales it. The docs CLI reference carries
+ *   no version stamp today, but it is generated from the same help tree, so regenerating both keeps
+ *   one sequence.
  *
- *   Runs after `mwops release prepare-version` and requires a compiled tree — the generators
- *   spawn the compiled CLI (the Ink commands cannot run under bare type-stripping), and the caller
- *   compiles rather than trusting whatever `out/` a runner left behind. Reports each generated file's
- *   changed/unchanged state so the prepare job can stage exactly what moved. a second run on the
- *   same tree is a no-op by construction (the generators are deterministic over the compiled CLI).
+ *   Runs after `mwops release prepare-version` and requires a compiled tree. The generators spawn
+ *   the compiled CLI (the Ink commands cannot run under bare type-stripping), and the caller
+ *   compiles instead of trusting whatever `out/` a runner left behind. Reports each generated file's
+ *   changed/unchanged state so the prepare job can stage exactly what moved. A second run on the
+ *   same tree is a no-op by construction, since the generators are deterministic over the compiled
+ *   CLI.
  */
 
 import { pathExists } from "@mailwoman/core/fs/readers"
@@ -24,8 +24,8 @@ import { $ } from "zx"
 /**
  * The generated surfaces, each with the generator that owns it.
  *
- * Adding a version-stamped generated document means adding a row here —
- * the prepare job stages exactly these paths.
+ * Adding a version-stamped generated document means adding a row here. The prepare job stages
+ * exactly these paths.
  */
 const GENERATED_SURFACES: ReadonlyArray<{ file: string; generator: readonly string[] }> = [
 	{

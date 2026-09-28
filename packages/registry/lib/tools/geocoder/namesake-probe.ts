@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Admin-tier wrong-region probe (#619 tail) — the geocoder-vs-provided-coords eval found an
- *   admin-tier tail to 11143 km (p99 2189 km). Hypothesis: when no street extract covers the address,
- *   the admin cascade resolves the locality by name and (when the region/postcode constraint is
- *   weak) picks the population-dominant foreign namesake — Paris→France, Athens→Greece — instead of
- *   the in-state Texas city. This probes a curated set of TX namesake cities, with and without ZIP,
- *   and flags any result outside the Texas bounding box.
+ *   Admin-tier wrong-region probe. When no street extract covers an address, the admin cascade can
+ *   resolve the locality by name and, when the region or postcode constraint is weak, pick the
+ *   population-dominant foreign namesake instead of the in-state Texas city. This probes a curated
+ *   set of TX namesake cities, with and without ZIP, and flags any result outside the Texas bounding
+ *   box.
  *
  *   Run: `mailwoman registry scorer-eval namesake-probe`
  */
@@ -23,7 +22,7 @@ import { inTXBBOX } from "#tools/shared"
  */
 export interface GeocoderNamesakeProbeOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 }
@@ -43,9 +42,7 @@ const CASES: Array<{ city: string; zip: string; tx: [number, number]; namesake: 
 ]
 
 /**
- * Admin-tier wrong-region probe (#619 tail) — see the module doc.
- *
- * Prints one line per variant to stdout.
+ * Probe a curated set of TX namesake cities and print one line per variant to stdout.
  */
 export async function geocoderNamesakeProbe(
 	options: GeocoderNamesakeProbeOptions,

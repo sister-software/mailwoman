@@ -3,23 +3,24 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The proximity re-rank (#938): with bias hints — the demo's map viewport, a user location — re-order exact-match
- *   candidates by population and nearness on one additive scale, so an in-view namesake wins a tie without a hard
- *   filter. Byte-identical to plain population order when no bias is passed.
+ *   Re-order exact-match candidates by population and nearness on one additive scale when bias hints
+ *   are present (the demo's map viewport, a user location), so an in-view namesake wins a tie
+ *   without a hard filter. With no bias the order is plain population order, byte-identical.
  *
- *   This lives in its own platform-free module because it has to run identically in two places: the Node candidate
- *   reader and the browser byte-range twin. That is the #861 server↔demo parity interface and the second thing
- *   here held by construction rather than by comment (`primary-preference.ts` was the first). Constants alone were not
- *   enough — the two copies agreed on every literal and still diverged on which field the population term reads and on
- *   whether the combined value is written back, which is the half that actually decides the answer.
+ *   This lives in its own platform-free module because it has to run identically in two places, the
+ *   Node candidate reader and the browser byte-range twin. That is the server and demo parity
+ *   interface held by construction. Constants alone were not enough, since the two copies agreed on
+ *   every literal and still diverged on which field the population term reads and on whether the
+ *   combined value is written back.
  *
  *   Two properties are required and easy to lose when transcribing:
  *
- *   1. The population base is `prominence ?? score`, not `score`. `prominence` carries the bounded cross-country
- *      primary preference, so reading raw score lets a coincidental foreign alias ride population back over a primary
- *      whenever a viewport hint happens to be present.
- *   2. The combined value is persisted into `prominence`. The resolver walk re-sorts by `prominence ?? score`, so a
- *      caller that only returns the array in bias order has its ordering silently discarded downstream.
+ *   1. The population base is `prominence ?? score`. `prominence` carries the bounded cross-country
+ *      primary preference, so reading raw score lets a coincidental foreign alias ride population
+ *      back over a primary whenever a viewport hint happens to be present.
+ *   2. The combined value is persisted into `prominence`. The resolver walk re-sorts by
+ *      `prominence ?? score`, so a caller that only returns the array in bias order has its
+ *      ordering silently discarded downstream.
  */
 
 import { haversineKm } from "@mailwoman/spatial"
@@ -35,26 +36,23 @@ export const BIAS_BOOST = 4
 export const POP_BOOST = 4
 
 /**
- * `log10(population + 1)` at which the population term saturates — 6 means a population of
- * one million warrants the whole {@link POP_BOOST}, and larger populations warrant no more.
+ * `log10(population + 1)` at which the population term saturates. A value of 6 means a population
+ * of one million warrants the whole {@link POP_BOOST}, and larger populations warrant no more.
  */
 export const POP_SCALE_LOG10 = 6
 
 /**
  * Distance at which the nearness term halves.
  *
- * Sharper than the FTS reader's 100 km on purpose: the candidate backend's score is
- * log-population alone, with no bm25 document term, so the population signal is weaker
- * relative to the bias and a gentle 100 km decay let a 230 km-distant alias-exact township
- * ("Paris Township", OH) edge out a global city ("Paris", FR) from a nearby view.
- * At ~30 km the boost reaches only candidates the user is actually looking at:
- * an in-view namesake still wins (Dublin, OH from an Ohio view), a distant one no
- * longer does (Paris stays FR from a Michigan view).
+ * Sharper than the FTS reader's 100 km on purpose, because the candidate backend's score is
+ * log-population alone with no bm25 document term, which weakens the population signal relative to
+ * the bias. At around 30 km the boost reaches only candidates the user is actually looking at, so
+ * an in-view namesake still wins and a distant one does not.
  */
 export const PROX_SCALE_KM = 30
 
 /**
- * One bias hint — a coordinate the user is looking at or standing on, optionally weighted.
+ * One bias hint, a coordinate the user is looking at or standing on, optionally weighted.
  */
 export interface ProximityBias {
 	lat: number
@@ -65,8 +63,8 @@ export interface ProximityBias {
 /**
  * The candidate fields the re-rank reads and writes.
  *
- * Structural rather than a concrete candidate type, so the Node reader's `PlaceCandidate`
- * and the browser twin's row shape both satisfy it without an adapter.
+ * This is structural, so the Node reader's `PlaceCandidate` and the browser twin's row shape both
+ * satisfy it without an adapter.
  */
 export interface ProximityRerankable {
 	lat: number
@@ -86,8 +84,8 @@ export function combinedProminence(candidate: ProximityRerankable, bias: readonl
 	const popTerm = POP_BOOST * Math.min(1, Math.max(0, popBase) / POP_SCALE_LOG10)
 	let proxTerm = 0
 
-	// A candidate at the null island has no coordinate rather than a coordinate at 0,0 —
-	// it warrants no nearness term rather than an enormous one.
+	// A candidate at the null island carries no coordinate, so it warrants no nearness term.
+	// Treating the 0,0 pair as a real coordinate would give it an enormous one.
 	if (!(candidate.lat === 0 && candidate.lon === 0)) {
 		for (const b of bias) {
 			const d = haversineKm(b.lat, b.lon, candidate.lat, candidate.lon)

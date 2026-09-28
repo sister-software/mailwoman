@@ -206,7 +206,7 @@ describe("resolveTree + postcodeConsistency (Change A)", () => {
 
 		const loc = out.roots.find((n) => n.tag === "locality")!
 
-		expect(loc.placeID).toBe("wof:1") // the far one — untouched without the change
+		expect(loc.placeID).toBe("wof:1")
 		expect(loc.lat).toBeCloseTo(44)
 	})
 

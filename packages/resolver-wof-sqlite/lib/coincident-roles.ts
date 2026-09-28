@@ -3,39 +3,37 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `buildCoincidentRoles` — derives the **coincident-roles relation** (#403, epic #402) into the
- *   unified gazetteer.
+ *   `buildCoincidentRoles` derives the coincident-roles relation into the unified gazetteer.
  *
- *   Many places occupy multiple admin tiers under one name: German city-states (Berlin/Hamburg/Bremen
- *   = city == state), Italian provinces named after their capital (Milano, Varese…), Spanish
- *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals
- *   (Utrecht/Groningen), Shanghai. When an address surfaces only the admin role (the parser drops
- *   the locality span), the resolver has no locality to place. The hierarchy-completion step (#405)
- *   repairs that by consulting this relation. the table replaces #387's hardcoded 15 km constant
- *   with the gazetteer's own structure, so the runtime is an O(1) membership lookup with no
- *   distance math.
+ *   Many places occupy multiple admin tiers under one name: German city-states (Berlin, Hamburg,
+ *   Bremen), Italian provinces named after their capital (Milano, Varese), Spanish
+ *   provinces-after-capitals, UK unitary authorities, JP prefectures, NL province-capitals (Utrecht,
+ *   Groningen), and Shanghai. When an address surfaces only the admin role because the parser
+ *   dropped the locality span, the resolver has no locality to place. The hierarchy-completion step
+ *   consults this relation. The table carries the gazetteer's own structure, so the runtime is an
+ *   O(1) membership lookup with no distance math.
  *
- *   V1 is region-tier only (admin.placetype = `region`): the ~124 places matching the census across 9
- *   countries (IT/ES/GB/JP/KR/FR/DE/NL/CN). County-tier same-name coincidences are deliberately
- *   excluded — they're dominated by French cantons and JP counties (admin subdivisions named after
- *   a seat town rather than dual-role cities) that don't hit the parser-drops-locality failure. genuine
- *   consolidated city-counties (US SF/Denver) are a separate follow-up needing a relative-size
- *   filter.
+ *   V1 is region-tier only (admin.placetype = `region`), the ~124 places matching the census across
+ *   nine countries. County-tier same-name coincidences are excluded because they are dominated by
+ *   French cantons and JP counties, admin subdivisions named after a seat town that do not hit the
+ *   parser-drops-locality failure. Consolidated city-counties (US SF, Denver) are a separate
+ *   follow-up needing a relative-size filter.
  *
- *   A pair `(admin, locality)` is recorded when all hold: same `name` (case-insensitive), the
- *   locality is a `descendant` of the admin (via the `ancestors` table), and their centroids are
- *   within a relative tolerance — `toleranceFraction × admin-bbox-diagonal`, floored at
- *   `minToleranceKm`. The relative term lets a large Italian province admit a city ~tens of km from
- *   its centroid while a tiny city-state stays tight. the floor catches city-states whose bbox is
- *   small (Bremen's centroids sit 9.3 km apart). The tolerance lives only here at build time — it
- *   never enters the resolver hot path.
+ *   A pair `(admin, locality)` is recorded when all hold: the same `name` (case-insensitive), the
+ *   locality a descendant of the admin via the `ancestors` table, and their centroids within a
+ *   relative tolerance of `toleranceFraction × admin-bbox-diagonal`, floored at `minToleranceKm`.
+ *   The relative term lets a large Italian province admit a city tens of km from its centroid while
+ *   a tiny city-state stays tight. The floor catches city-states whose bbox is small (Bremen's
+ *   centroids sit 9.3 km apart). The tolerance lives only here at build time and never enters the
+ *   resolver hot path.
  *
- *   `relationship_type` is recorded for debuggability / deferred per-type behavior. v1 completion is
- *   uniform (see #405). It's a coarse classification rather than critical.
+ *   `relationship_type` is recorded for debuggability and deferred per-type behavior. V1 completion
+ *   is uniform. It is a coarse classification.
  *
- *   Mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFTS`). Run incrementally
- *   against an existing `admin-global-priority.db` via `build-coincident-roles-cli.ts`; should also
- *   be wired as a post-step of the main `scripts/build-unified-wof.ts`.
+ *   This mirrors the derived-table builder pattern in `fts.ts` (`buildPlaceSearchFTS`). It runs
+ *   incrementally against an existing `admin-global-priority.db` via
+ *   `build-coincident-roles-cli.ts`, and it should also be wired as a post-step of the main
+ *   `scripts/build-unified-wof.ts`.
  */
 
 import type { CoincidentLocality } from "@mailwoman/core/resolver"
@@ -54,7 +52,7 @@ import type { WOFDatabase } from "#schema"
 export const COINCIDENT_ROLES_TABLE = "coincident_roles"
 
 /**
- * A place that plays multiple admin roles — one row of the relation, keyed by `admin_id`.
+ * A place that plays multiple admin roles, one row of the relation keyed by `admin_id`.
  */
 export interface CoincidentRole {
 	localityID: number
@@ -118,9 +116,8 @@ interface CandidateRow {
 /**
  * Derive the coincident-roles relation into `db`.
  *
- * Additive — only creates/replaces the `coincident_roles` table.
- * Never touches `spr`/`names`/`ancestors`.
- * Idempotent.
+ * Additive, only creating or replacing the `coincident_roles` table. It never touches `spr`,
+ * `names`, or `ancestors`. Idempotent.
  */
 export function buildCoincidentRoles(
 	db: DatabaseClient<WOFDatabase>,
@@ -140,11 +137,9 @@ export function buildCoincidentRoles(
 
 	onProgress("creating", COINCIDENT_ROLES_TABLE)
 
-	// Raw DDL by design: this is a sync builder consumed by a sync CLI (build-coincident-roles-cli)
-	// and 6 sync unit tests, so routing one table through async Kysely would cascade
-	// async through all of them for no real gain.
+	// Raw DDL by design: this is a sync builder consumed by a sync CLI and six sync unit tests, so
+	// routing one table through async Kysely would cascade async through all of them.
 	// See agents.md "Database / inline SQL".
-	// (The select + insert loop below are likewise the raw hot path.)
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS ${COINCIDENT_ROLES_TABLE} (
 			admin_id INTEGER NOT NULL,
@@ -159,10 +154,10 @@ export function buildCoincidentRoles(
 
 	onProgress("scanning")
 
-	// Admin (region/county tier) ⋈ same-name descendant locality.
-	// `place_population` is optional (left join → 0 when absent).
-	// The relative-tolerance filter + relationship classification happen in JS so the SQL stays a plain join.
-	// `spr` exposes the bbox columns we need for the diagonal.
+	// Admin (region or county tier) joined to a same-name descendant locality. `place_population` is
+	// optional, so the left join yields 0 when absent. The relative-tolerance filter and the
+	// relationship classification happen in JS so the SQL stays a plain join, and `spr` exposes the
+	// bbox columns the diagonal needs.
 	const candidates = allRows<CandidateRow>(
 		db.prepare(
 			`SELECT r.id AS admin_id, r.placetype AS admin_placetype, r.country AS country, l.id AS locality_id,
@@ -198,12 +193,12 @@ export function buildCoincidentRoles(
 			const tolerance = Math.max(toleranceFraction * diag, minToleranceKm)
 
 			if (dist > tolerance) continue
-			// v1 is region-tier only: a place is a `city-state` when its centroid
-			// coincides with the region's (Berlin/Hamburg), else `capital-seat`
-			// (a region named after its principal city, e.g. Milano province → Milano comune).
-			// `consolidated-county` is reserved for a future county-tier pass (US SF/Denver) —
-			// excluded from v1 because county-tier same-name coincidences are dominated by
-			// French cantons / JP counties that don't hit the parser-drops-locality failure.
+			// v1 is region-tier only: a place is `city-state` when its centroid coincides with the
+			// region's (Berlin, Hamburg), otherwise `capital-seat` (a region named after its
+			// principal city, such as Milano province and Milano comune). `consolidated-county` is
+			// reserved for a future county-tier pass (US SF, Denver), excluded from v1 because
+			// county-tier same-name coincidences are dominated by French cantons and JP counties
+			// that do not hit the parser-drops-locality failure.
 			const relationshipType = dist <= cityStateMaxKm ? "city-state" : "capital-seat"
 			insert.run(c.admin_id, c.locality_id, relationshipType, c.admin_placetype, dist, c.pop)
 
@@ -234,11 +229,10 @@ export function coincidentRolesExists<DB>(db: DatabaseClient<DB>): boolean {
 }
 
 /**
- * Load the relation into an in-memory map keyed by `admin_id` for O(1) runtime lookup (#405).
+ * Load the relation into an in-memory map keyed by `admin_id` for an O(1) runtime lookup.
  *
- * Each admin may map to multiple same-name descendants.
- * The consumer disambiguates (min distance → population → abstain).
- * Returns an empty map when the table is absent.
+ * Each admin may map to multiple same-name descendants. The consumer disambiguates by minimum
+ * distance, then population, then abstains. Returns an empty map when the table is absent.
  */
 export function loadCoincidentRoles<DB>(db: DatabaseClient<DB>): Map<number, CoincidentRole[]> {
 	const map = new Map<number, CoincidentRole[]>()

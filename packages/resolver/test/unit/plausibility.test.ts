@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the v7 hybrid-check resolution-plausibility guard (#38). The guard trips only when a
- *   resolved tree's finest place is a bare country centroid — the garbage-geocode archetype the
- *   coordinate-parity study surfaced (`California` / `6000, NSW, Australia` → a country centroid).
+ *   Tests for the resolution-plausibility guard. The guard trips only when a resolved tree's finest
+ *   place is a bare country centroid, the garbage-geocode archetype the coordinate-parity study
+ *   surfaced (`California` / `6000, NSW, Australia`).
  */
 
 import type { AddressNode, AddressTree } from "@mailwoman/core/decoder"
@@ -81,9 +81,8 @@ describe("isImplausibleResolution", () => {
 	})
 
 	test("guard B: a coordinate outside the expected country's bbox is implausible (the cross-country jump)", () => {
-		// The V1 finding (PR #1147): "1210a IA 10 W IA" resolved ~10,000 km outside the US —
-		// locality-tier, so guard A (country-centroid) structurally cannot catch it.
-		// Guard B does, given the expected country.
+		// A locality-tier coordinate can land far outside the expected country, and guard A
+		// (country-centroid) cannot catch it. Guard B does, given the expected country.
 		const t = tree(
 			[node({ tag: "locality", value: "Ia", lat: -6.3, lon: 155.6, placeID: "wof:ia-png" })],
 			"1210a IA 10 W IA"
@@ -132,7 +131,6 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 	})
 
 	test("no bboxes argument → the code constant, byte-identical (the pre-manifest fallback)", () => {
-		// Every constant entry answers identically through the 3-arg legacy call and the explicit-undefined call.
 		for (const [cc, b] of Object.entries(COUNTRY_BBOX)) {
 			const inside: [number, number] = [(b[0] + b[1]) / 2, (b[2] + b[3]) / 2]
 			const outside: [number, number] = [b[1] + 5, b[3] + 5]
@@ -147,10 +145,8 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 	test("artifact boxes REPLACE the constant wholesale — an artifact-absent country fails open even when the constant has a box", () => {
 		const artifact = new Map([["FR", fact("FR", 41, 51.5, -5.5, 9.8)]])
 
-		// FR present in the artifact: behaves like the constant.
 		expect(outsideExpectedCountry("FR", 48.86, 2.35, artifact)).toBe(false)
 		expect(outsideExpectedCountry("FR", -6.3, 155.6, artifact)).toBe(true)
-		// US absent from the artifact's table → fail-open, even though the constant carries a US box.
 		expect(outsideExpectedCountry("US", -6.3, 155.6, artifact)).toBe(false)
 		expect(outsideExpectedCountry("US", -6.3, 155.6)).toBe(true)
 	})
@@ -163,7 +159,6 @@ describe("outsideExpectedCountry — artifact-declared bboxes (survey candidate 
 			"outside-expected-country"
 		)
 
-		// An artifact without a US box → fail-open, overriding the constant.
 		expect(isImplausibleResolution(t, { expectedCountry: "US", countryBBoxes: new Map() }).implausible).toBe(false)
 	})
 })

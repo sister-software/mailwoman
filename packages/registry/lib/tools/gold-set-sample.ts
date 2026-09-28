@@ -3,18 +3,17 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gold-set P3 (#625) — sample the hard stratum for adjudication. The programmatic entity truth
- *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart + parent
- *   LBN/TIN); it can't settle the genuinely-ambiguous co-located collisions: distinct NPIs at one
- *   address with near-identical names that are not flagged subparts of the same parent. Those are
- *   where NPI-truth and any programmatic rule disagree — exactly the pairs a frozen adjudicated
- *   gold set must cover.
+ *   Gold-set sampling for adjudication. The programmatic entity truth
+ *   (`nppes-dedup-benchmark.ts`) collapses only NPPES-flagged subparts (Is-Subpart plus parent
+ *   LBN/TIN), so it cannot settle the genuinely ambiguous co-located collisions: distinct NPIs at
+ *   one address with near-identical name text and no subpart flag for the same parent. Those
+ *   are where NPI-truth and any programmatic rule disagree, and exactly the pairs a frozen
+ *   adjudicated gold set must cover.
  *
- *   This finds them (over the full TX registry, geocode-free — the shared co-location scan
- *   `dedup-ceiling.ts` also runs) and writes each as a jsonl row carrying both records' fields (org
- *   name, address, authorized official, taxonomy, subpart/parent flags) plus the programmatic
- *   verdict, so an adjudicator (human or LLM-as-judge, flagged as such) can label "same real-world
- *   entity? yes/no" and we can measure how often the programmatic truth matches judgment.
+ *   This finds them over the full TX registry, geocode-free, and writes each as a jsonl row carrying
+ *   both records' fields (org name, address, authorized official, taxonomy, subpart and parent
+ *   flags) plus the programmatic verdict. An adjudicator (human or LLM-as-judge, flagged as such)
+ *   can then label same real-world entity or not.
  *
  *   Run: `mailwoman registry gold-set-sample [--cap 200000] [--state TX] [--tau 0.7] [--n 300]
  *   [--out-jsonl <path>]`
@@ -78,11 +77,11 @@ interface HardPair {
 	sameTaxonomy: boolean
 	bothSubpartSameParent: boolean
 	programmaticVerdict: "same-entity" | "distinct"
-	adjudication: null // ← to be filled: "same-entity" | "distinct"
+	adjudication: null,
 }
 
 /**
- * Gold-set P3 (#625) — sample the hard co-located name-collision stratum for adjudication.
+ * Sample the hard co-located name-collision stratum for adjudication.
  */
 export async function goldSetSample(
 	options: GoldSetSampleOptions = {},
@@ -100,9 +99,6 @@ export async function goldSetSample(
 	const { byAddr, kept } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    ${kept} providers at ${byAddr.size} addresses`)
 
-	// Hard pairs: co-located, name-similar (≥τ), distinct NPIs that programmatic truth
-	// can't confidently collapse (not subparts of the same parent).
-	// Tag the programmatic verdict so adjudication can grade it.
 	const hard: HardPair[] = []
 
 	for (const { a, b } of colocatedDistinctPairs(byAddr)) {
@@ -111,7 +107,7 @@ export async function goldSetSample(
 		if (sim < TAU) continue
 		const sameParent = a.subpart && b.subpart && a.parent === b.parent && a.parent !== "|"
 
-		if (sameParent) continue // programmatic truth already collapses these — not the hard stratum
+		if (sameParent) continue
 		const sameAuth = a.auth !== "" && a.auth === b.auth
 		const sameTax = a.taxonomy !== "" && a.taxonomy === b.taxonomy
 
@@ -125,10 +121,7 @@ export async function goldSetSample(
 			sameAuthorizedOfficial: sameAuth,
 			sameTaxonomy: sameTax,
 			bothSubpartSameParent: false,
-			// Programmatic heuristic verdict (what an entity-level rule would say, beyond the flagged subparts):
-			// same authorized official ⇒ likely one org.
-			// Different official + different specialty ⇒ likely distinct.
-			// The whole point is to adjudicate whether this is right.
+				// The verdict records what an entity-level rule would say, so adjudication can grade it.
 			programmaticVerdict: sameAuth ? "same-entity" : "distinct",
 			adjudication: null,
 		})
@@ -136,7 +129,7 @@ export async function goldSetSample(
 
 	report?.(`    ${hard.length} hard co-located name-collision pairs (non-flagged-subpart)`)
 
-	// Deterministic spread sample of N (stride rather than head — avoid file-order bias, the dedup-ceiling lesson).
+	// A deterministic stride sample avoids file-order bias in the adjudication set.
 	const stride = Math.max(1, Math.floor(hard.length / N))
 	const sample = hard.filter((_, i) => i % stride === 0).slice(0, N)
 	report?.(`    sampling ${sample.length} (stride ${stride}) for adjudication`)

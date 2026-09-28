@@ -3,28 +3,16 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #625 ceiling measurement — "how good is good enough" for dedup, derived from the data instead of
- *   asserted as a round number (DeepSeek consult, issue #625). The residual dedup error is
- *   over-merge: distinct co-located providers (different NPIs at one clinic/billing address) fused
- *   because a shared address outvotes a disagreeing name. The irreducible part of that — the
- *   **Bayes error** — is the set of co-located distinct-NPI pairs whose names are also ~identical:
- *   no name/org feature can separate them, so any address-aware matcher over-merges them. That
- *   floor caps precision.
+ *   Dedup ceiling measurement, answering how good is good enough for dedup from the data rather
+ *   than from a round number. The residual dedup error is over-merge: distinct co-located providers
+ *   (different NPIs at one address) fused because a shared address outvotes a disagreeing name. The
+ *   irreducible part is the set of co-located distinct-NPI pairs whose name text is also near
+ *   identical, so no name or organization feature can separate them.
  *
- *   This measures it directly and label-free, using NPI as the distinctness truth (different NPI =
- *   different provider). Geocode-free on purpose: the question is the data's separability rather than the
- *   geocoder — so we can run at large N (tens of thousands of TX providers) in seconds. We key
- *   "same address" with the matcher's own `addressFrequencyKey`, and "same name" with a normalized
- *   token Jaccard over the legal business name.
- *
- *   Reports, over co-located distinct-NPI pairs (the over-merge population):
- *
- *   - Co-location prevalence (addresses hosting ≥2 distinct NPIs. providers at shared addresses)
- *   - The org-name-similarity distribution of those pairs
- *   - The collision rate: fraction with org-sim ≥ τ (irreducible over-merge) — the precision floor
- *   - Whether a shared phone would help (it doesn't: institutional switchboards) — among collisions,
- *       how often the two distinct NPIs also share a phone (so phone over-links, can't separate)
- *       …and derives a precision/F1 ceiling under stated assumptions, with the caveats called out.
+ *   This measures that floor directly and without labels, using NPI as the distinctness truth. It
+ *   is geocode-free on purpose, so it can run at large N in seconds. "Same address" uses the
+ *   matcher's own `addressFrequencyKey`, and "same name" uses a normalized token Jaccard over the
+ *   legal business name.
  *
  *   Run: `mailwoman registry dedup-ceiling [--cap 50000] [--state TX] [--sources <dir>] [--tau 0.7]
  *   [--out-md <md>]`
@@ -77,7 +65,8 @@ export interface DedupCeilingOptions {
 }
 
 /**
- * #625 ceiling measurement — see the module doc. Emits the markdown report to stdout.
+ * Measure the irreducible over-merge of co-located providers, and emit the markdown report to
+ * stdout.
  */
 export async function dedupCeiling(
 	options: DedupCeilingOptions = {},
@@ -90,23 +79,19 @@ export async function dedupCeiling(
 	const OUT_MD = options.outMd || ""
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 
-	// Stream Texas organization providers, retaining one primary practice-address record per NPI.
 	report?.(`[A] streaming ${STATE} org providers (cap ${CAP})…`)
 	const { byAddr, kept, scanned } = await scanColocatedProviders({ registryPath: REGISTRY, state: STATE, cap: CAP })
 	report?.(`    scanned ${scanned} rows → ${kept} ${STATE} org providers at ${byAddr.size} distinct addresses`)
 
-	// Measure organization similarity and collision rate for co-located distinct-NPI pairs.
 	let sharedAddresses = 0
 	let providersAtSharedAddr = 0
 	let pairs = 0
-	let collide = 0 // org-sim ≥ τ — name-indistinguishable co-located distinct NPIs
-	let mid = 0 // τ > sim ≥ 0.3 — partially separable
-	let separable = 0 // sim < 0.3 — clearly different names
-	let collideSharePhone = 0 // of collisions, also share a phone (phone can't separate either)
-	// Of the collisions, split NPI-over-segmentation (one org, many NPIs — merge is correct)
-	// from genuinely-distinct co-located providers (the true irreducible over-merge):
-	let collideSameAuth = 0 // share an authorized official ⇒ one org, multiple NPIs ⇒ correct to merge
-	let collideDistinct = 0 // different official and different specialty ⇒ genuinely different providers
+	let collide = 0
+	let mid = 0
+	let separable = 0
+	let collideSharePhone = 0
+	let collideSameAuth = 0
+	let collideDistinct = 0
 	const PAIR_BUDGET = 5_000_000
 
 	// guard against a pathological mega-address (PO-box farms)
@@ -148,16 +133,10 @@ export async function dedupCeiling(
 		}
 	}
 
-	// Derive the precision ceiling from co-located distinct-NPI records.
-	// Pairs, either merge (wrong) or hold them apart using name/org.
-	// It can separate the `separable` (and most `mid`) pairs but not the `collide` ones.
-	// So the irreducible false-merge rate among co-located distinct pairs is collide/pairs.
-	// An oracle's precision on the co-located decision is bounded by how many
-	// merges it makes that are correct.
-	// We report the collision rate directly and a precision-ceiling band
-	// (optimistic: only `collide` over-merge. Conservative: `collide` + half of `mid`).
-	// Recall is not the binding constraint here (NPPES same-NPI records almost always share
-	// either address or org), so the F1 ceiling tracks the precision ceiling. ---
+	// The irreducible false-merge rate among co-located distinct pairs is collide/pairs. Report the
+	// collision rate directly with a precision-ceiling band: optimistic counts only `collide`, and
+	// conservative counts `collide` plus half of `mid`. Recall is not binding here, so the F1 ceiling
+	// tracks the precision ceiling.
 	const pct = formatPercent
 
 	const lines: string[] = [

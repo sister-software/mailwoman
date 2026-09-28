@@ -3,13 +3,14 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Typed schema for poi.db — spatial layer #1 (spec §3.4). One clustered `without rowid` B-tree
- *   keyed `(h3_cell, category_id, neg_rank, rowid_key)` so "everything near this res-9 cell" is a
- *   contiguous key range (the byte-range/httpvfs access pattern, same discipline as the candidate
- *   gazetteer). Rows carry denormalized name/brand/coords. category ids are small ints via the
- *   `poi_category_codes` dictionary (poi-taxonomy category ids are the string side). The DB also
- *   embeds the layer-interface tables from `@mailwoman/core/layers` — the builder writes the
- *   manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell coverage.
+ *   Typed schema for poi.db, the first spatial layer (spec §3.4). One clustered `without rowid`
+ *   B-tree keyed `(h3_cell, category_id, neg_rank, rowid_key)`, so everything near a res-9 cell is
+ *   a contiguous key range. This is the byte-range and httpvfs access pattern, the same discipline
+ *   as the candidate gazetteer. Rows carry denormalized name, brand and coordinates. Category ids
+ *   are small ints through the `poi_category_codes` dictionary, and poi-taxonomy category ids are
+ *   the string side. The DB also embeds the layer-interface tables from `@mailwoman/core/layers`,
+ *   and the builder writes the manifest (tier `shipped`, spine `h3` res 9) and per-res-6-cell
+ *   coverage.
  */
 
 import type { layerschemadatabase } from "@mailwoman/core/layers"
@@ -61,14 +62,15 @@ export interface POITable {
 	 */
 	confidence: number
 	/**
-	 * Gers id — nullable metadata only, never a key (the #470 rule).
+	 * Gers id. Nullable metadata, never a key.
 	 */
 	gers_id: string | null
 }
 
 /**
- * Staging mirror — every column nullable except the coords
- * (the loader fills positionally. The materialize select enforces completeness).
+ * Staging mirror. Every column is nullable except the coords.
+ *
+ * The loader fills positionally, and the materialize select enforces completeness.
  */
 export interface POIStageTable {
 	h3_cell: number | null
@@ -172,19 +174,16 @@ export async function createPOINameKeyIndex(db: Kysely<POIDatabase>): Promise<vo
 }
 
 /**
- * Secondary index for the brand path — a brand-wide fetch by `brand_wikidata` (no `h3_cell` prefix).
+ * Secondary index for the brand path, a brand-wide fetch by `brand_wikidata` with no `h3_cell`
+ * prefix.
  *
- * Brand rows are globally sparse (~0.31% of poi.db, median nearest tagged instance ~110 km),
- * so the k-ring walk can never reach them.
- * The reader instead fetches all of a brand's rows and distance-sorts.
+ * Brand rows are globally sparse, so the k-ring walk can never reach them and the reader instead
+ * fetches all of a brand's rows and distance-sorts. Without this index that fetch is a full-table
+ * scan, while with it the fetch is a range-scan. The partial index
+ * (`where brand_wikidata is not NULL`) keeps the mostly unbranded rows out of the B-tree.
  *
- * Without this index that is a full-table scan (~600 ms); with it, a range-scan (<1 ms p50).
- * Partial (`where brand_wikidata is not NULL`) so the ~99.7% of rows that
- * carry no QID never enter the B-tree.
- * The index holds only the ~43k branded rows.
- *
- * Builders call this after the bulk materialize (index-after-load),
- * same phase as {@link createPOINameKeyIndex}.
+ * Builders call this after the bulk materialize (index-after-load), same phase as
+ * {@link createPOINameKeyIndex}.
  */
 export async function createPOIBrandIndex(db: Kysely<POIDatabase>): Promise<void> {
 	await db.schema

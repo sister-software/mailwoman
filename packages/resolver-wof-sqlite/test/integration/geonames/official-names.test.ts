@@ -3,11 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #936 ingest bit — `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the
- *   alternateNamesV2 language tag, `privateuse` ("preferred"), and the `official` bit (language is
- *   CLDR-official for the country. colloquial/historic never qualify). The Turku fixture mirrors
- *   the motivating row: "Åbo" is Turku's official Swedish name rather than a mere alias. Without the V2
- *   file the fold is byte-identical to the pre-#936 untagged behavior.
+ * `ingestGeonamesAliases({ alternateDir })` decorates alias rows with the alternateNamesV2 language
+ * tag, `privateuse` ("preferred"), and the `official` bit, set when the language is CLDR-official for
+ * the country. Colloquial and historic forms never qualify. Without the V2 file the fold is untagged.
  */
 
 import { temporaryDirectory, type TemporaryDirectory } from "@mailwoman/core/fs/temporary"
@@ -89,19 +87,18 @@ beforeAll(async () => {
 		dir.path("FI.txt")
 	)
 
-	// "Santa Isabel" reproduces the Malabo shape: one language-tagged unflagged row + a
-	// separate language-less row carrying the historic evidence (isHistoric + a `to` date).
-	// Historic-ness is a fact about the name.
-	// The unflagged row must not classify official.
+	// "Santa Isabel" has one language-tagged unflagged row and a separate language-less row
+	// carrying the historic evidence (isHistoric and a `to` date). Historic-ness is a fact about
+	// the name, so the unflagged row must not classify official.
 	const santaIsabelHistoric = ["1", "633679", "", "Santa Isabel", "", "", "", "1", "", "1973"].join("\t")
 
 	await writeLocalTextFile(
 		[
-			altRow("633679", "sv", "Åbo"), // official Swedish — deliberately not preferred-flagged (the real FI row isn't)
-			altRow("633679", "el", "Tourkou"), // Greek transliteration — not official in FI
-			altRow("633679", "la", "Aboa", { 7: "1" }), // historic — never official
+			altRow("633679", "sv", "Åbo"), // official Swedish, deliberately not flagged preferred (the real FI row is not)
+			altRow("633679", "el", "Tourkou"), // Greek transliteration (not official in FI)
+			altRow("633679", "la", "Aboa", { 7: "1" }), // historic, never official
 			altRow("633679", "sv", "Santa Isabel"), // official language, unflagged row…
-			santaIsabelHistoric, // …but a sibling row marks the NAME historic
+			santaIsabelHistoric, // but a sibling row marks the name historic
 		].join("\n"),
 		altDir.path("FI.txt")
 	)
@@ -126,9 +123,9 @@ test("V2 tags mark the official-language preferred name; transliterations and hi
 	expect(byName("Åbo")).toEqual({ language: "sv", privateuse: "", official: 1 })
 	expect(byName("Tourkou")).toEqual({ language: "el", privateuse: "", official: 0 })
 	expect(byName("Aboa")).toEqual({ language: "la", privateuse: "", official: 0 })
-	// The Malabo shape: the historic evidence lives on a different row than the language tag.
+	// The historic evidence lives on a different row than the language tag.
 	expect(byName("Santa Isabel")).toEqual({ language: "sv", privateuse: "", official: 0 })
-	// The primary-name mirror row stays untagged — spr.name already is the name-exact tier.
+	// The primary-name mirror row stays untagged, and spr.name already is the name-exact tier.
 	expect(byName("Turku")).toEqual({ language: "", privateuse: "", official: 0 })
 })
 

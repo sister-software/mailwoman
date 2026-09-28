@@ -3,12 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #936 option 3 — `officialNameExact`: an official name (preferred form in an official language
- *   of the place's country, `names.official = 1` from the #940 ingest bit) joins the name-exact
- *   sub-tier instead of the alias-exact one, floor-conditioned on the holder's population. The Åbo
- *   fixture mirrors the motivating row: unscoped "Åbo" must reach Turku (its official Swedish
- *   name, pop 207k) rather than a hamlet literally named Åbo — while Paris Township's plain alias
- *   still loses to Paris' own name, and pre-#940 gazetteers (no `official` column) fail soft.
+ * `officialNameExact`: an official name (preferred form in an official language of the place's
+ * country, `names.official = 1`) joins the name-exact sub-tier instead of the alias-exact one,
+ * floor-conditioned on the holder's population. Unscoped "Åbo" must reach Turku, its official
+ * Swedish name, rather than a hamlet whose primary is "Åbo", while a plain alias still loses to
+ * the name holder and a gazetteer without the `official` column fails soft.
  */
 
 import type { RankingWeights } from "@mailwoman/resolver-wof-sqlite/lookup"
@@ -22,19 +21,13 @@ interface SeedPlace {
 	name: string
 	country: string
 	population?: number
-	/**
-	 * Plain aliases (official = 0).
-	 */
+	/** Plain aliases (official = 0). */
 	aliases?: string[]
-	/**
-	 * Official-language aliases (official = 1) — the #940 ingest bit.
-	 */
+	/** Official-language aliases (official = 1). */
 	officialAliases?: string[]
 }
 
-/**
- * Same production shape as the exact-match-tiering fixture, plus the #940 `official` column.
- */
+/** The production schema shape plus the `official` column. */
 function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): DatabaseClient<WOFDatabase> {
 	const db = DatabaseClient.temp<WOFDatabase>()
 
@@ -92,10 +85,9 @@ function buildDB(places: SeedPlace[], opts?: { omitOfficialColumn?: boolean }): 
 	return db
 }
 
-// Turku holds "Åbo" as its official Swedish name.
-// The hamlet holds "Åbo" as its own primary.
-// Under the plain #912 sub-tier the hamlet's primary wins.
-// Under option 3 Turku joins the name-exact sub-tier and its population decides.
+// Turku holds "Åbo" as its official Swedish name, and the hamlet holds "Åbo" as its own primary.
+// Under the default sub-tier the hamlet's primary wins. Under option 3 Turku joins the name-exact
+// sub-tier and its population decides.
 const TURKU_ABO: SeedPlace[] = [
 	{ id: 1, name: "Åbo", country: "SE", population: 300 },
 	{ id: 2, name: "Turku", country: "FI", population: 207_000, officialAliases: ["Åbo"] },

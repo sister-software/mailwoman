@@ -72,7 +72,6 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	progress("open", dbPath)
 	using db = new DatabaseClient<WOFDatabase>(dbPath, { open: true })
 
-	// Phase 1: Load all matching SPR rows.
 	progress("spr", `Loading places for countries=[${countries}], placetypes=[${placetypes}]`)
 	const placeholders = (arr: string[]) => arr.map(() => "?").join(",")
 
@@ -87,21 +86,18 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const sprRows = allRows<SprRow>(sprStmt, ...countries, ...placetypes)
 	progress("spr", `Loaded ${sprRows.length} places`)
 
-	// Phase 2: Build a lookup for parent chain resolution.
 	const sprByID = new Map<number, SprRow>()
 
 	for (const row of sprRows) {
 		sprByID.set(row.id, row)
 	}
 
-	// Also load parent rows that might be outside our placetype filter (e.g., country for region).
+	// Load parent rows that might be outside the placetype filter, such as a country for a region.
 	const parentStmt = db.prepare("SELECT id, name, placetype, parent_id, latitude, longitude FROM spr WHERE id = ?")
 
-	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table.
-	// Read in chunked `IN (…)` batches once — the point-query version fired per orphan row,
-	// and on a global build the orphans run to six figures.
-	// Ordering is county → region → country, preserved by the same case the per-row
-	// query used, with `id` leading so one pass groups the rows.
+	// Fallback for a sentinel parent_id (-1, -4, …): the ancestors table, read in chunked `IN (…)`
+	// batches once. Ordering is county → region → country, with `id` leading so one pass groups the
+	// rows.
 	const ancestorsByID = new Map<number, number[]>()
 
 	try {
@@ -142,12 +138,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 		if (!row) return []
 
-		// If parent_id is a sentinel (≤ 0), use ancestors table.
 		if (row.parent_id <= 0) {
 			return (ancestorsByID.get(id) ?? []).filter((ancestorID) => ancestorID !== id)
 		}
 
-		// Normal case: walk parent_id chain.
 		const chain: number[] = []
 		let current = row.parent_id
 		const seen = new Set<number>([id])
@@ -175,14 +169,12 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return chain
 	}
 
-	// Phase 3: Load both scores (ROAD_TO_V9 §2 R1, the two-score split).
-	//
-	// Referential is always population-anchored and never read out of a legacy
-	// `place_importance` column, because a legacy row that got a Wikipedia score overwrote
-	// whatever population would have said and the two are indistinguishable afterwards.
-	// Encyclopedic rides along for consumers and is never handed to the decoder.
-	// `loadImportanceSplit` handles all four schema generations.
-	// The source it reports is stamped into provenance so an artifact says which one it read.
+	// Load both scores (the two-score split). Referential is always population-anchored and never
+	// read out of a legacy `place_importance` column, because a legacy row that got a Wikipedia
+	// score overwrote whatever population would have said and the two are indistinguishable
+	// afterwards. Encyclopedic rides along for consumers and is never handed to the decoder.
+	// `loadImportanceSplit` handles all four schema generations, and the source it reports is
+	// stamped into provenance so an artifact says which one it read.
 	progress("importance", "Loading referential + encyclopedic scores")
 	const split = loadImportanceSplit(db)
 
@@ -193,7 +185,6 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			")"
 	)
 
-	// Phase 4: Load names for matching places.
 	progress("names", "Loading name variants")
 	const placeIDs = sprRows.map((r) => r.id)
 	const namesByPlace = new Map<number, string[]>()
@@ -227,7 +218,6 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 
 	progress("names", `Loaded names for ${namesByPlace.size} places`)
 
-	// Phase 5: Build the trie.
 	progress("trie", "Building trie")
 	const nodes: FSTNode[] = [{ edges: new Map(), places: [] }]
 
@@ -248,10 +238,9 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 		return false
 	}
 
-	// Surface-ambiguity classes (survey #4): a per-surface fact, so the entry
-	// is cloned per insertion with its accepting surface's count attached
-	// (the same place under "nyc" and "new york city" records each surface's own ambiguity).
-	// Absent map → entries carry no count (back-compat bytes).
+	// Surface-ambiguity classes are a per-surface fact, so the entry is cloned per insertion with its
+	// accepting surface's count attached, and the same place under "nyc" and "new york city" records
+	// each surface's own ambiguity. An absent map means entries carry no count for back-compat bytes.
 	const surfaceCountryCounts = opts.surfaceCountryCounts
 
 	function insertName(tokens: string[], entry: PlaceEntry): boolean {
@@ -278,7 +267,6 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			stateID = next
 		}
 
-		// Deduplicate: don't add the same wofID twice at the same state.
 		const existing = nodes[stateID]!.places
 
 		if (!existing.some((p) => p.wofID === entry.wofID && p.placetype === entry.placetype)) {
@@ -306,22 +294,19 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 			name: row.name,
 			parentChain,
 			referential: split.referential.get(row.id) ?? 0,
-			// Spread rather than assigned: a place with no Wikipedia article must
-			// carry no field rather than a zero.
-			// The serializer's per-place presence bit reads `!== undefined`.
+			// Spread rather than assigned, so a place with no Wikipedia article carries no field
+			// instead of a zero. The serializer's per-place presence bit reads `!== undefined`.
 			...(encyclopedic === undefined ? {} : { encyclopedic }),
 			lat: row.latitude,
 			lon: row.longitude,
 		}
 
-		// Insert the primary name from spr.
 		const primaryTokens = normalizeTokens(row.name)
 
 		if (insertName(primaryTokens, entry)) {
 			insertCount++
 		}
 
-		// Insert alt names from the names table.
 		const altNames = namesByPlace.get(row.id) ?? []
 
 		for (const altName of altNames) {
@@ -343,14 +328,10 @@ export async function buildFSTFromWOF(opts: BuildFSTOpts): Promise<{
 	const edgeCount = nodes.reduce((sum, n) => sum + n.edges.size, 0)
 	const matcher = FSTMatcher.fromNodes(nodes)
 
-	// The build stamp (2026-08-05).
-	// `sourceDB` alone was never enough to tell a reader whether this artifact
-	// matches the database at that path.
-	// The admin DB is sealed and replaced by a rebuild, so the path is constant across every generation of it.
-	// Hashing costs 7.3 s for the 5.27 GB admin DB and is free whenever the `.md5`
-	// sidecar is current, which the admin build already writes.
-	// `sourceIdentity` lets a caller that already knows the digest
-	// (or is building from something that is not a file at all) supply it instead.
+	// The build stamp. `sourceDB` alone cannot tell a reader whether this artifact matches the
+	// database at that path, because the admin database is sealed and replaced by a rebuild so the
+	// path is constant across every generation. `sourceIdentity` lets a caller that already knows
+	// the digest, or is building from something that is not a file at all, supply it instead.
 	progress("stamp", `Reading source identity for ${dbPath}`)
 	const source = opts.sourceIdentity ?? (await readWOFSourceIdentity(dbPath))
 

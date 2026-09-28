@@ -6,24 +6,18 @@ import { basename, PathBuilder, type PathBuilderLike } from "path-ts"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Multi-extract support for `WOFSQLitePlaceLookup` — opens multiple WOF SQLite distributions on one
- *   connection via `attach database`, and routes queries to the right extract based on placetype.
+ *   Multi-extract support for `WOFSQLitePlaceLookup`: open multiple WOF SQLite distributions on one
+ *   connection via `attach database`, and route queries to the right extract based on placetype.
  *
- *   ## The FTS5 syntax rule that drove this design
- *
- *   The naive `select … from pc.place_search where pc.place_search match ?` fails — SQLite parses the
- *   schema-qualified table on the left of `match` as "column place_search of table pc". Discovered in
- *   the spike at PR review time. documented as `_EXTRACT_RULE.md` should it ever bite again.
- *
- *   The working form: schema-qualified in `from`, bare table name in `match`:
+ *   SQLite parses a schema-qualified table on the left of `match` as "column place_search of table
+ *   pc", so the working form is schema-qualified in `from` and a bare table name in `match`:
  *
  *   ```sql
  *   select … from pc.place_search where place_search match ?
  * ```
  *
- *   Identical table names across attached extracts (which is what we have — every extract ships its own
- *   `place_search` + `place_bbox`) are fine because the bare-name `match` resolves against `from`
- *   scope.
+ *   Identical table names across attached extracts are fine, because the bare-name `match` resolves
+ *   against `from` scope. Every extract ships its own `place_search` and `place_bbox`.
  */
 
 /**
@@ -72,8 +66,8 @@ export interface ExtractConfig {
 	/**
 	 * Override the auto-derived schema name.
 	 *
-	 * Useful when the filename doesn't match WOF convention or when you want a memorable handle.
-	 * Must be a valid SQLite identifier — `[a-zA-Z_][a-zA-Z0-9_]*`.
+	 * Useful when the filename does not match WOF convention or when you want a memorable handle.
+	 * Must be a valid SQLite identifier matching `[a-zA-Z_][a-zA-Z0-9_]*`.
 	 */
 	schemaName?: string
 	/**
@@ -99,19 +93,12 @@ export interface ResolvedExtract {
 }
 
 /**
- * SQLite identifier regex — `[A-Za-z_][A-Za-z0-9_]*`.
+ * SQLite identifier regex matching `[A-Za-z_][A-Za-z0-9_]*`.
  */
 const SQLITE_IDENT_RE = /^[A-Za-z_][A-Za-z0-9_]*$/u
 
 /**
- * Normalize the user-provided `databasePath` opt (which may be a single string, an array
- * of strings, or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
- *
- * The first extract becomes `main` regardless of its derived schema name — that's the SQLite convention.
- * Subsequent extracts keep their derived (or override) schema name.
- */
-/**
- * Whether a `databasePath` entry is a path rather than an {@link ExtractConfig}.
+ * Whether a `databasePath` entry is a path or an {@link ExtractConfig}.
  *
  * A builder is a `String` object, so `typeof` alone reads it as an object.
  */
@@ -119,6 +106,13 @@ function isPathBuilderLike(value: unknown): value is PathBuilderLike {
 	return typeof value === "string" || value instanceof PathBuilder
 }
 
+/**
+ * Normalize the user-provided `databasePath` opt (which may be a single string, an array of strings,
+ * or an array of `ExtractConfig` objects) into a uniform `ResolvedExtract[]`.
+ *
+ * The first extract becomes `main` regardless of its derived schema name, the SQLite convention.
+ * Subsequent extracts keep their derived or overridden schema name.
+ */
 export function resolveExtracts(
 	input: PathBuilderLike | ReadonlyArray<PathBuilderLike | ExtractConfig>
 ): ResolvedExtract[] {
@@ -142,9 +136,8 @@ export function resolveExtracts(
 			)
 		}
 
-		// The first extract is always main per SQLite semantics.
-		// Its derived name is informational only.
-		// Subsequent extracts must have unique non-main names.
+		// The first extract is always main per SQLite semantics, and its derived name is informational
+		// only. Subsequent extracts must have unique non-main names.
 		const schemaName = i === 0 ? "main" : derived
 
 		if (i > 0 && (schemaName === "main" || seen.has(schemaName))) {
@@ -167,26 +160,10 @@ export function resolveExtracts(
 }
 
 /**
- * Pick the extract to route a query to given the requested placetype(s).
- *
- * Routing rules, in order:
- *
- * 1. If any extract has explicit `placetypes` that includes the requested placetype, use it.
- * 2. Otherwise, if a non-main extract's `schemaName` matches the placetype
- *    (e.g. `postalcode_us` matches `postalcode`), use it.
- * 3. Otherwise, fall back to `main`.
- *
- * This deliberately doesn't union across extracts.
- * BM25 scores aren't comparable across separately- indexed corpora, and the typical
- * mailwoman query has a single placetype anyway.
- *
- * If a caller needs cross-extract results they can issue two `findPlace` calls.
- */
-/**
  * All placetype-matching extracts, in routing order (the country-aware pick chooses among these).
  *
- * Used by the bias path: a country-less postcode query with proximity hints fans out across
- * every matching extract and merges, because single-extract routing would hide the cross-country
+ * Used by the bias path: a country-less postcode query with proximity hints fans out across every
+ * matching extract and merges, because single-extract routing would hide the cross-country
  * ambiguity the hints exist to resolve ("48026" lives in postalcode-us and postalcode-intl).
  */
 export function pickExtractsForPlacetype(
@@ -217,21 +194,29 @@ export function pickExtractsForPlacetype(
 	return matches.length ? matches : [extracts[0]!]
 }
 
+/**
+ * Pick the extract to route a query to given the requested placetype(s).
+ *
+ * Routing rules, in order:
+ *
+ * 1. If any extract has explicit `placetypes` that includes the requested placetype, use it.
+ * 2. Otherwise, if a non-main extract's `schemaName` matches the placetype
+ *    (e.g. `postalcode_us` matches `postalcode`), use it.
+ * 3. Otherwise, fall back to `main`.
+ *
+ * This deliberately does not union across extracts. BM25 scores are not comparable across
+ * separately indexed corpora, and the typical mailwoman query has a single placetype anyway. If a
+ * caller needs cross-extract results they can issue two `findPlace` calls.
+ */
 export function pickExtractForPlacetype(
 	extracts: ResolvedExtract[],
 	placetype: string | undefined,
 	opts?: {
 		/**
-		 * #920: the query's country constraint, when the caller has one. With multiple extracts matching a placetype
-		 * (postalcode-us + postalcode-geonames-tail), first-match routing sent every
-		 * postcode query to the first extract and starved the rest.
-		 * A FI postcode could never reach the tail extract.
-		 *
-		 * When `country` is given and a matching extract's probed country set contains it, that extract wins.
-		 *
-		 * Extracts without the country are skipped.
-		 * The placetype-match order remains the tiebreak when no extract claims
-		 * the country (or none was probed).
+		 * The query's country constraint, when the caller has one. When `country` is given and a
+		 * matching extract's probed country set contains it, that extract wins, and extracts without
+		 * the country are skipped. The placetype-match order remains the tiebreak when no extract
+		 * claims the country (or none was probed).
 		 */
 		country?: string
 		/**
@@ -253,9 +238,9 @@ export function pickExtractForPlacetype(
 	for (const s of extracts) {
 		if (s.schemaName === "main" || matches.includes(s)) continue
 
-		// Substring match: `postalcode_us` matches `postalcode`.
-		// Conservative — requires the placetype to appear at a word boundary in the schema
-		// name to avoid false hits like `region` matching `arboregion`.
+		// Substring match: `postalcode_us` matches `postalcode`. Conservative, requiring the
+		// placetype at a word boundary in the schema name to avoid false hits like `region`
+		// matching `arboregion`.
 		if (
 			s.schemaName === placetype ||
 			s.schemaName.startsWith(`${placetype}_`) ||

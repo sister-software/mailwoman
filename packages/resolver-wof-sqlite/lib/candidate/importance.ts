@@ -3,41 +3,28 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The score side of the candidate build (#28) — load a WOF admin database's `place_importance` into
- *   a lookup the candidate builder can probe per place, so every candidate row can carry the
+ *   The score side of the candidate build: load a WOF admin database's `place_importance` into a
+ *   lookup the candidate builder probes per place, so every candidate row can carry the
  *   toponym-fame prior a bare city name is decided on.
  *
- *   ## Why this joins on the name and not on the id
+ *   The join key is `(name_key, country, placetype)`, the same {@link normalizeLocalityForKey} the
+ *   candidate build uses for its probe key, so the two sides fold identically. An id join is wrong
+ *   here, because the score source (`admin-global-priority-importance.db`) and the candidate build's
+ *   admin source are different snapshots whose ids disagree. An id join silently drops rows and
+ *   leaves the ranking inert on the queries the prior exists for.
  *
- *   The obvious join is `candidate.spr_id = place_importance.id`, and it is wrong here. The score
- *   source (`admin-global-priority-importance.db`) and the candidate build's admin source are
- *   different snapshots, and they disagree about ids for exactly the rows that matter: Whitby,
- *   Ontario is `8143502164401` in the shipped `candidate.db` and `8000001156384` in the score source
- *   — the Overture-sourced rows were re-keyed between the two. An id join silently drops every one of
- *   them, which means it drops precisely the foreign homonyms the fame prior exists to demote, and it
- *   drops them invisibly: the build succeeds, the column is populated, and the ranking is inert on
- *   the queries it was built for.
+ *   The key alone is not enough. `(warwick, US, locality)` covers eleven different places, and taking
+ *   the group's max would give every Warwick in America the fame of Warwick, Rhode Island. The group
+ *   is therefore disambiguated geographically: the nearest centroid wins, and only within
+ *   {@link IMPORTANCE_JOIN_RADIUS_KM}. Two artifacts describing the same settlement put its centroid
+ *   in almost the same place. Two same-named towns in one country do not.
  *
- *   So the join key is `(name_key, country, placetype)` — the same {@link normalizeLocalityForKey} the
- *   candidate build uses for its probe key, so the two sides fold identically by construction.
+ *   `place_importance.importance` lands in the column verbatim, the pre-split conflation that is
+ *   encyclopedia-derived where the concordance matched and a population-derived proxy everywhere
+ *   else. See {@link CandidateTable.importance} for why the split `encyclopedic` channel is not what
+ *   is written here.
  *
- *   ## Why the key alone is not enough
- *
- *   `(warwick, US, locality)` names eleven different places. Taking the group's max would give every
- *   Warwick in America the fame of Warwick, Rhode Island, which is the fan-out defect
- *   `importance-fanout.ts` documents one layer up, re-introduced at the join. So the group is
- *   disambiguated geographically: the nearest centroid wins, and only within
- *   {@link IMPORTANCE_JOIN_RADIUS_KM}. Two artifacts describing the same settlement put its centroid in
- *   almost the same place. two same-named towns in one country do not.
- *
- *   ## What lands in the column
- *
- *   `place_importance.importance` verbatim — the pre-split conflation (encyclopedia-derived where
- *   the concordance matched, a population-derived proxy everywhere else). See
- *   {@link CandidateTable.importance} for why the split `encyclopedic` channel is deliberately not
- *   what is written here, with the measurement that settled it.
- *
- *   A place with no match gets NULL. NULL is unmeasured, never zero — the consumer
+ *   A place with no match gets NULL. NULL is unmeasured, never zero, and the consumer
  *   (`resolver/toponym-prior.ts`) leaves an unmeasured candidate exactly where population put it.
  */
 
@@ -51,27 +38,11 @@ import { normalizeLocalityForKey } from "#street/normalize"
 /**
  * How far apart two artifacts may put the same place's centroid and still be read as the same place.
  *
- * Measured rather than guessed (2026-08-10, `admin-global-priority.db` ×
- * `admin-global-priority-importance.db`; 4,476,245 current locality-tier places against 676,790
- * scored ones, 1,020,099 of which matched a scored group by `(name_key, country, placetype)`).
- * The nearest-centroid distance is **exactly 0.00 km for 577,080 of them (56.6%)** —
- * the two snapshots agree to the bit — and 656,755 (64.4%) are inside 500 m.
- *
- * What sets the radius is where that mode ends, and the per-kilometre density states.
- * It falls from 1,076 places/km over 3–5 km to a trough of **441 places/km over 7–10 km**, then
- * climbs back and flattens onto a plateau of 760–780 places/km from 30 km out to 100 km and beyond.
- *
- * That plateau is the background rate of two different towns wearing one name in
- * one country, and it does not decay with distance because there is no reason it
- * should. 10 km is the floor between the two populations.
- * Admitting it scores 679,163 places (66.6% of the matched set); pushing the radius to 25 km
- * provides 8,722 more, and by then better than half of each additional kilometre is the wrong town.
- *
- * The four-row bare-GB board is insensitive across this whole range — 5 km
- * and 25 km were both measured and select identical rows — so the value is chosen
- * by what the join means rather than by what it scores.
- * The radius is the definition of "this is the same place"; widening it past the
- * floor starts handing one town's fame to another.
+ * Measured from two admin snapshots. The nearest-centroid distances separate into a mode where the
+ * two snapshots agree and a background rate of two different towns wearing one name in one country.
+ * The background rate does not decay with distance, so 10 km is the floor between the two
+ * populations, and the value is chosen by what the join means. Widening the radius past the floor
+ * starts handing one town's fame to another.
  */
 export const IMPORTANCE_JOIN_RADIUS_KM = 10
 
@@ -109,8 +80,8 @@ export interface ImportanceIndexStats {
 /**
  * `(name_key, country, placetype)` → the scored places under it.
  *
- * The separator is U+0000, which no WOF name carries and no fold can produce.
- * Therefore, the three fields can't smear into one another.
+ * The separator is U+0000, a character no WOF name carries and no fold can produce, so the three
+ * fields cannot smear into one another.
  */
 function groupKey(nameKey: string, country: string | null, placetype: string | null): string {
 	return `${nameKey}\u0000${(country ?? "").toUpperCase()}\u0000${placetype ?? ""}`
@@ -127,15 +98,12 @@ export class ImportanceIndex {
 	 */
 	matched = 0
 	/**
-	 * Places {@link find} refused.
+	 * Places {@link find} refused. The key matched a scored group, but the nearest member was
+	 * outside the radius, so it is a different place wearing the same name.
 	 *
-	 * The key matched a scored group, but the nearest member of it was outside the radius,
-	 * so it is a different place wearing the same name.
-	 *
-	 * This is the number worth watching across rebuilds.
-	 * A jump means the score source and the admin source have drifted apart
-	 * and the join is being asked to guess.
-	 * It does not mean the radius is too tight.
+	 * This is the number worth watching across rebuilds. A jump means the score source and the admin
+	 * source have drifted apart and the join is being asked to guess. It does not mean the radius is
+	 * too tight.
 	 */
 	refused = 0
 
@@ -148,11 +116,9 @@ export class ImportanceIndex {
 	 * The importance of the scored place nearest `(lat, lon)` sharing `name`'s folded key, `country`
 	 * and `placetype`, or null when there is no such place within {@link IMPORTANCE_JOIN_RADIUS_KM}.
 	 *
-	 * Null is unmeasured.
-	 * Never substitute a zero, and never fall back to a population-derived value here.
-	 *
-	 * The source column already carries that fallback where it has one, and inventing a
-	 * second one would make an absence indistinguishable from a measurement.
+	 * Null is unmeasured. Never substitute a zero, and never fall back to a population-derived value
+	 * here. The source column already carries that fallback where it has one, and inventing a second
+	 * one would make an absence indistinguishable from a measurement.
 	 */
 	find(name: string, country: string | null, placetype: string | null, lat: number, lon: number): number | null {
 		const nameKey = normalizeLocalityForKey(name)
@@ -188,20 +154,15 @@ export class ImportanceIndex {
 }
 
 /**
- * Read `place_importance` (joined to `spr` for the name/country/placetype/centroid)
- * out of a WOF admin database into an {@link ImportanceIndex}.
+ * Read `place_importance`, joined to `spr` for the name, country, placetype, and centroid, out of a
+ * WOF admin database into an {@link ImportanceIndex}.
  *
- * Only current, non-deprecated places are indexed.
- * A superseded row's score belongs to a place the gazetteer no longer carries,
- * and letting it win the nearest-centroid contest would hand a live place a dead one's fame.
+ * Only current, non-deprecated places are indexed. A superseded row's score belongs to a place the
+ * gazetteer no longer carries, and letting it win the nearest-centroid contest would hand a live
+ * place a dead one's fame.
  *
- * The whole table is held in memory on purpose.
- * The 2026-08-10 source holds 676,790 scored places in 544,823 groups, and the
- * build probes it once for every one of its ~4.8 M places.
- *
- * The alternative is a prepared statement per place against a 3.7 GB database.
- *
- * Measured end to end, loading the index plus probing all 4.48 M locality-tier places takes 25 s.
+ * The whole table is held in memory on purpose, because the build probes it once for every place and
+ * the alternative is a prepared statement per place against a multi-gigabyte database.
  */
 export function loadImportanceIndex(databasePath: PathBuilderLike): ImportanceIndex {
 	using db = new DatabaseClient<CandidateDatabase>(databasePath, { readOnly: true })

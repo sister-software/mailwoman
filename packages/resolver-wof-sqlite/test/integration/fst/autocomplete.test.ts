@@ -76,11 +76,7 @@ describe.skipIf(!HAS_WOF)("FST autocomplete — integration", () => {
 	})
 })
 
-// Synthetic-FST unit tests (no WOF DB needed → always run in CI).
-// Cover the #587 char-level partial-last-token completion + dedupeByName.
-// The trie: root --new--> [york -> New York. London -> New London ×2 (city+county)]
-//        --san--> [francisco -> San Francisco]
-//        --chicago--> Chicago
+// Synthetic-FST unit tests need no WOF DB, so they always run in CI.
 describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	const place = (wofID: number, name: string, placetype: PlacetypeID, referential: number): PlaceEntry => ({
 		wofID,
@@ -126,9 +122,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a complete-token walk must not SHADOW the partial interpretation: 'chic' with a real place named Chic still reaches Chicago", () => {
-		// The live en-us artifact holds a place literally named "Chic", with it, the typed prefix
-		// is both a complete edge and a partial of "chicago", and the walk's success silently
-		// dropped every longer completion (the prod typeahead offered only "Chic" for "Chic").
+		// A complete edge can also be a prefix of a longer word, so the walker must return the
+		// partial interpretations as well and reach both surfaces.
 		const shadowed = new FSTMatcher([
 			{
 				edges: new Map([
@@ -165,7 +160,6 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(without.suggestions.filter((s) => s.name === "New London")).toHaveLength(2)
 		const withDedupe = autocomplete(matcher, "new london", { dedupeByName: true })
 		expect(withDedupe.suggestions.filter((s) => s.name === "New London")).toHaveLength(1)
-		// keeps the higher-importance one (the locality, 0.5 > the county's 0.4)
 		expect(withDedupe.suggestions[0]?.placetype).toBe("locality")
 	})
 
@@ -174,10 +168,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a dense branch does not starve a high-importance sibling (#587 per-branch cap)", () => {
-		// "go" → "diego" (12 low-importance places) + "tham" (one high-importance Gotham).
-		// Without the per-branch cap, the 12 "Go Diego"s blow the budget before "tham"
-		// is ever visited, so Gotham (the place a user most likely wants) is dropped —
-		// the real "new → New London not New York" bug.
+		// A dense branch can starve a high-importance sibling, so the per-branch cap must keep
+		// the sibling within maxSuggestions.
 		const dense = new FSTMatcher([
 			{ edges: new Map([["go", 1]]), places: [] },
 			{
@@ -198,10 +190,8 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 		expect(r.suggestions[0]?.name).toBe("Gotham")
 	})
 
-	// Robustness interface for the demo typeahead (#190/#585): the box feeds raw,
-	// half-typed input on every keystroke, so the function must never throw
-	// and must return [] (not garbage) for input it can't complete.
-	// These lock that in so a future refactor can't reintroduce the "Denver for New Yor" class of bug.
+	// The demo typeahead feeds raw, half-typed input on every keystroke, so the function must
+	// never throw and must return an empty list for input it cannot complete.
 	it("empty / whitespace-only query → no suggestions, depth 0", () => {
 		for (const q of ["", "   ", "\t"]) {
 			const r = autocomplete(matcher, q)
@@ -211,19 +201,16 @@ describe("FST autocomplete — char-level + dedupe (synthetic)", () => {
 	})
 
 	it("a partial last token that matches no continuation → [] (not a wrong completion)", () => {
-		// "new" walks to a real state, but "zzz" prefixes none of its edges (york/london).
 		expect(autocomplete(matcher, "new zzz").suggestions).toEqual([])
 	})
 
 	it("respects maxSuggestions (caps a branch with more matches than the limit)", () => {
-		// "new" → New York + two New Londons (3 places); cap to 1.
 		const r = autocomplete(matcher, "new", { maxSuggestions: 1 })
 		expect(r.suggestions).toHaveLength(1)
 	})
 
 	it("never throws on single-character input", () => {
 		expect(() => autocomplete(matcher, "n")).not.toThrow()
-		// 'n' prefixes 'new' from the root → at least surfaces the New* places, none mis-typed.
 		const r = autocomplete(matcher, "n")
 		expect(r.suggestions.every((s) => typeof s.name === "string")).toBe(true)
 	})

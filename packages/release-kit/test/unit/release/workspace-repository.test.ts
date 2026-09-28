@@ -7,17 +7,11 @@ import { resolvePath } from "path-ts"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #757 — fail-fast guard for the npm-provenance `repository` requirement.
- *
- *   Since the repo went public (v4.8.0) every npm publish is provenance-signed, and sigstore
- *   provenance verification rejects (http 422) any workspace whose `package.json` lacks a
- *   `repository.url` matching the source repo. This is invisible until release, and has bitten
- *   twice on new/edited workspaces — `spatial` (#660, v4.10.0) and `tiger` (#739, v4.12.0) — each
- *   costing a recovery cycle. (Writing this test immediately caught a third + fourth: the two
- *   `neural-weights-*` workspaces had a `.git`-less url and no `directory`.)
- *
- *   This asserts every workspace in the `.release-it.json` publish set carries the canonical
- *   `repository` block, so a drift fails at PR/CI time instead of mid-release.
+ *   Fail-fast guard for the npm-provenance `repository` requirement. Every npm publish is
+ *   provenance-signed, and sigstore provenance verification rejects (http 422) any workspace
+ *   whose `package.json` lacks a `repository.url` matching the source repo. This asserts every
+ *   workspace in the `.release-it.json` publish set carries the canonical `repository` block, so a
+ *   drift fails at PR/CI time instead of mid-release.
  */
 import { describe, expect, it } from "vitest"
 
@@ -32,10 +26,8 @@ describe("#757 release provenance: every published workspace declares its reposi
 
 		const repo = pkg.repository
 
-		// npm also accepts a shorthand string here.
-		// It carries no `directory`.
-		// Therefore, it cannot satisfy the block below.
-		// A missing or empty repository.url is what npm provenance rejects with E422.
+		// npm accepts a shorthand string here, but that form carries no `directory`. A missing or
+		// empty repository.url is what npm provenance rejects with E422.
 		if (typeof repo !== "object") {
 			throw new TypeError(`${ws}/package.json must declare "repository" as an object, not ${typeof repo}`)
 		}

@@ -3,26 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Train the cross-source link scorer (#655 option 2 — unblocked 2026-07-06). The dedup GBT (#603)
- *   is trained on within-NPPES labels, so its strongest feature (`spatial-exact × name-disagree`)
- *   rejects the prototypical cross-source pair ("same provider, different operational text across
- *   registries") — the reason the cross-dataset flows pin the FS baseline. The 2026-06-16
- *   feasibility doc blocked a cross-source retrain on "no non-circular anchor"; the anchor exists:
- *   **CMS Open Payments joins NPPES by NPI** — the same practitioner in two independent registries,
- *   each with independently human-entered name + address. Same-NPI cross-source pairs are
- *   ground-truth positives labeled by a key the matcher's features never see.
+ *   Train the cross-source link scorer. The dedup GBT is trained on within-NPPES labels, so its
+ *   strongest feature (`spatial-exact × name-disagree`) rejects the prototypical cross-source pair,
+ *   the same provider under different operational text across registries. CMS Open Payments joins
+ *   NPPES by NPI, which gives ground-truth positives labeled by a key the matcher's features never
+ *   see.
  *
- *   Pipeline: assemble NPPES + Open Payments TX records for the same NPI population (Phases A/B
- *   here), then the shared `trainCrossSourceModel` runs Phases C–F — geocode through the standard
- *   ingest → block the union, keep only cross-source candidate pairs → the shared
- *   `createMatchFeaturizer` (train ≡ inference) → label by NPI → held-out-NPI calibration (the #655
- *   threshold rule: max recall subject to a pairwise-precision bar, reported alongside F1-max) →
- *   train the shipped model on all pairs → emit `registry/models/crosssource-gbt-en-us.ts`.
+ *   The pipeline assembles NPPES and Open Payments TX records for the same NPI population, then the
+ *   shared `trainCrossSourceModel` geocodes through the standard ingest, blocks the union, keeps only
+ *   cross-source candidate pairs, and trains the shipped model into
+ *   `registry/models/crosssource-gbt-en-us.ts`.
  *
  *   Sources (both public domain, `.notes/data-sources.md`):
  *
- *   - `nppes_npi-registry_*.tsv` — the practice-location + primary-name records.
- *   - `openpayments_covered-recipient-profile_*.csv` — the OP profile supplement (NPI, profile
+ *   - `nppes_npi-registry_*.tsv`: the practice-location and primary-name records.
+ *   - `openpayments_covered-recipient-profile_*.csv`: the OP profile supplement (NPI, profile
  *       first/last, profile practice address).
  *
  *   Run: `mailwoman registry train-scorer cross-gbt [--state TX] [--npis 2000]
@@ -43,7 +38,7 @@ import { addr, norm, NPPES_COLUMNS as N, stateOption, trainCrossSourceModel, typ
  */
 export interface TrainCrossSourceGBTOptions {
 	/**
-	 * The injected geocoder factory (the command wires `mailwoman/geocode-core`; see `./eval-geocoder.ts`).
+	 * The injected geocoder factory. The command wires `mailwoman/geocode-core`, as `./eval-geocoder.ts` does.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -77,7 +72,7 @@ export interface TrainCrossSourceGBTOptions {
 	 */
 	locale?: string
 	/**
-	 * #655 threshold rule: max cross-source recall subject to this held-out pairwise precision. Default 0.95.
+	 * Max cross-source recall subject to this held-out pairwise precision. Default 0.95.
 	 */
 	precisionBar?: number
 	/**
@@ -89,7 +84,7 @@ export interface TrainCrossSourceGBTOptions {
 }
 
 /**
- * Train + emit the cross-source link GBT — see the module doc.
+ * Train and emit the cross-source link GBT.
  */
 export async function trainCrossSourceGBT(
 	options: TrainCrossSourceGBTOptions,
@@ -100,14 +95,13 @@ export async function trainCrossSourceGBT(
 	const NPIS = options.npis ?? 2000
 	const OUT = options.out || "packages/registry/lib/models/crosssource-gbt-en-us.ts"
 	const LOCALE = options.locale || "en-US"
-	// #655 threshold rule: max cross-source recall subject to this held-out pairwise precision.
+	// Max cross-source recall subject to this held-out pairwise precision.
 	const PRECISION_BAR = options.precisionBar ?? 0.95
 	const TRAIN_DATE = options.date || isoDate()
 
 	const REGISTRY = `${SOURCES}/nppes_npi-registry_20260607.tsv`
 	const OP_PROFILE = `${SOURCES}/openpayments_covered-recipient-profile_20260603.csv`
 
-	// Build Open Payments practitioner records with NPI, profile name, and profile address.
 	report?.(`[A] streaming the OP profile supplement (${STATE})…`)
 	const opByNPI = new Map<string, CrossSourceRow>()
 
@@ -134,8 +128,6 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${opByNPI.size} OP ${STATE} practitioners`)
 
-	// Join the same NPPES NPIs with practice address, legal name, and corpus-wide
-	// address-frequency table (one full registry pass, identical to train-gbt). ---
 	report?.("[B] full registry pass: address-frequency table + the NPI-joined NPPES rows…")
 	const rows: CrossSourceRow[] = []
 	const joined = new Set<string>()
@@ -170,8 +162,6 @@ export async function trainCrossSourceGBT(
 		rows.push({ npi, name, org: "", address: practice, source: "nppes" })
 	}
 
-	// Keep only NPIs present in both sources.
-	// Every record has a cross-source counterpart.
 	for (const npi of joined) {
 		rows.push(opByNPI.get(npi)!)
 	}
@@ -184,8 +174,6 @@ export async function trainCrossSourceGBT(
 
 	report?.(`    ${joined.size} NPI-joined pairs → ${rows.length} records`)
 
-	// Run the shared cross-source trainer: geocode, form pairs, calibrate,
-	// and train. → shipped model → committed module). ---
 	return trainCrossSourceModel({
 		createGeocoder: options.createGeocoder,
 		rows,
