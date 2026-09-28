@@ -202,20 +202,59 @@ export async function* walkFeatures(
 }
 
 /**
- * An in-memory ancestry index: `Map<wof_id, [parent, grandparent, ...]>`,
- * walking `parent_id` upward and stopping at the first missing link.
+ * The component tags a variant builder looks an ancestor up by.
  *
- * A cycle guard halts at any re-visit — defensive, since WOF data is acyclic by construction
- * but a corrupt fixture should not infinite-loop the adapter — and records whose
- * ancestors are absent from `byID` get a shorter chain rather than failing.
+ * Measured over both adapters on 2026-09-28: `variantsFor` reads the nearest `region`
+ * and `country` ancestor, `postcodeVariantsFor` reads the nearest `locality`, `region` and `country`,
+ * and each one reads the ancestor's `placetype` to classify it and its `name` to use it.
+ * No caller reads an ancestor's `nameVariants`, `id`, `parent_id` or `country`.
  */
-export type AncestryIndex = Map<number, WOFRecord[]>
+export const ANCESTOR_NAME_TAGS = ["locality", "region", "country"] as const
 
-export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex {
-	const index: AncestryIndex = new Map()
+/**
+ * The nearest ancestor's `wof:name` per tag in {@linkcode ANCESTOR_NAME_TAGS}.
+ *
+ * A tag with no ancestor carries no key, which is the state `ancestry.find(…) === undefined` used to express.
+ */
+export type AncestorNames = Partial<Record<(typeof ANCESTOR_NAME_TAGS)[number], string>>
+
+/**
+ * The ancestor names each record needs, keyed by `wof:id`.
+ *
+ * The predecessor index held one array of record references per record, so a run over the 13,274,691
+ * admin records of `v0.7.0-de-holdout` allocated 13.3 million arrays alongside the record index.
+ * This holds at most three strings per record instead, and each string is the same object the
+ * ancestor already holds, so the index costs one small object per record without copying a name.
+ *
+ * The adapter's second pass reads only this.
+ * `wof-postalcode` keeps admin records in its record index solely so postcode ancestry
+ * resolves, and it can release them once this index is built.
+ *
+ * Nearest wins: the walk goes upward from the record's parent and the first ancestor
+ * carrying a tag sets it, matching the `ancestry.find` the builders used.
+ */
+export type AncestorNameIndex = Map<number, AncestorNames>
+
+/**
+ * Resolves {@linkcode AncestorNameIndex} from a record index.
+ *
+ * `tagOf` maps a WOF placetype to a component tag, or returns a value outside
+ * {@linkcode ANCESTOR_NAME_TAGS} for a placetype no builder looks up.
+ * It is a parameter because `placetypeToTag` lives with the adapters and this module does not import them.
+ *
+ * The walk stops at the first `parent_id` absent from `byID`, and a cycle guard halts at any re-visit.
+ * WOF data is acyclic by construction, and the guard keeps a corrupt fixture from looping the adapter.
+ *
+ * A record whose ancestors are absent resolves the tags it can reach rather than failing.
+ */
+export function buildAncestorNameIndex(
+	byID: ReadonlyMap<number, WOFRecord>,
+	tagOf: (placetype: string) => string | null | undefined
+): AncestorNameIndex {
+	const index: AncestorNameIndex = new Map()
 
 	for (const [id, rec] of byID) {
-		const chain: WOFRecord[] = []
+		const names: AncestorNames = {}
 		const guard = new Set<number>([id])
 		let cur: number | null = rec.parent_id
 
@@ -225,12 +264,20 @@ export function buildAncestryIndex(byID: Map<number, WOFRecord>): AncestryIndex 
 			if (!parent) break
 
 			if (guard.has(parent.id)) break
-			chain.push(parent)
+
+			const tag = tagOf(parent.placetype)
+
+			for (const wanted of ANCESTOR_NAME_TAGS) {
+				if (tag === wanted && names[wanted] === undefined) {
+					names[wanted] = parent.name
+				}
+			}
+
 			guard.add(parent.id)
 			cur = parent.parent_id
 		}
 
-		index.set(id, chain)
+		index.set(id, names)
 	}
 
 	return index

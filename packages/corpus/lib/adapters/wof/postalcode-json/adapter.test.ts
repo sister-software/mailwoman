@@ -35,11 +35,7 @@ describe("postcodeVariantsFor (pure)", () => {
 	it("postcode with full ancestry yields 4 variants", () => {
 		const v = postcodeVariantsFor(
 			rec({ name: "97214" }),
-			[
-				rec({ id: 10, name: "Portland", placetype: "locality" }),
-				rec({ id: 20, name: "Oregon", placetype: "region" }),
-				rec({ id: 30, name: "United States", placetype: "country" }),
-			],
+			{ locality: "Portland", region: "Oregon", country: "United States" },
 			"97214"
 		)
 
@@ -60,13 +56,13 @@ describe("postcodeVariantsFor (pure)", () => {
 	})
 
 	it("postcode without locality yields self only", () => {
-		const v = postcodeVariantsFor(rec({ name: "12345" }), [], "12345")
+		const v = postcodeVariantsFor(rec({ name: "12345" }), {}, "12345")
 		expect(v).toHaveLength(1)
 		expect(v[0]!.components).toEqual({ postcode: "12345" })
 	})
 
 	it("skips non-postcode placetypes", () => {
-		const v = postcodeVariantsFor(rec({ placetype: "locality" }), [], "X")
+		const v = postcodeVariantsFor(rec({ placetype: "locality" }), {}, "X")
 		expect(v).toEqual([])
 	})
 })

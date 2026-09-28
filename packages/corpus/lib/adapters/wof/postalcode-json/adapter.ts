@@ -29,7 +29,7 @@ import {
 import { SourceRegister } from "#registers"
 import { AddressRole, type AdapterOptions, type CanonicalRow, type CorpusAdapter, SurfaceOrigin } from "#types"
 import { US_STATE_BY_ABBREVIATION } from "#us/fips-state"
-import { buildAncestryIndex, walkFeatures, type WOFRecord } from "#utils"
+import { buildAncestorNameIndex, walkFeatures, type AncestorNames, type WOFRecord } from "#utils"
 
 /**
  * Maps a lowercase US state name to its USPS code.
@@ -81,27 +81,27 @@ function placetypeToTag(placetype: WhosOnFirstPlacetype | string): ComponentTag 
  *
  * `selfName` is the postcode text for the current name slot.
  */
-export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfName: string): WOFVariantSpec[] {
+export function postcodeVariantsFor(row: WOFRecord, ancestry: AncestorNames, selfName: string): WOFVariantSpec[] {
 	if (placetypeToTag(row.placetype) !== "postcode") return []
 
-	const locality = ancestry.find((a) => placetypeToTag(a.placetype) === "locality")
-	const region = ancestry.find((a) => placetypeToTag(a.placetype) === "region")
-	const country = ancestry.find((a) => placetypeToTag(a.placetype) === "country")
-	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country?.name ?? row.country
+	const locality = ancestry.locality
+	const region = ancestry.region
+	const country = ancestry.country
+	const countryDisplay = COUNTRY_DISPLAY_NAME[row.country] ?? country ?? row.country
 
 	const variants: WOFVariantSpec[] = [{ suffix: "self", components: { postcode: selfName } }]
 
 	if (locality) {
 		variants.push({
 			suffix: "with-locality",
-			components: { postcode: selfName, locality: locality.name },
+			components: { postcode: selfName, locality },
 		})
 	}
 
 	if (locality && region) {
 		variants.push({
 			suffix: "with-locality-region",
-			components: { postcode: selfName, locality: locality.name, region: region.name },
+			components: { postcode: selfName, locality, region },
 		})
 	}
 
@@ -110,8 +110,8 @@ export function postcodeVariantsFor(row: WOFRecord, ancestry: WOFRecord[], selfN
 			suffix: "with-locality-region-country",
 			components: {
 				postcode: selfName,
-				locality: locality.name,
-				region: regionSurface(row.country, region.name),
+				locality,
+				region: regionSurface(row.country, region),
 				country: countryDisplay,
 			},
 		})
@@ -161,7 +161,17 @@ export function createWOFPostalcodeAdapter(): CorpusAdapter {
 				byID.set(rec.id, rec)
 			}
 
-			const ancestry = buildAncestryIndex(byID)
+			const ancestry = buildAncestorNameIndex(byID, placetypeToTag)
+
+			// The admin records were read only so that postcode ancestry resolves, and the index
+			// above now holds the three ancestor names each postcode's variants read.
+			// Dropping them here releases every admin record's `nameVariants` map
+			// before the emit pass, and `shouldEmit` skipped them anyway.
+			for (const [id, record] of byID) {
+				if (placetypeToTag(record.placetype) !== "postcode") {
+					byID.delete(id)
+				}
+			}
 
 			yield* emitWOFJSONRows({
 				records: byID,
