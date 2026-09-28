@@ -17,7 +17,6 @@ import { $public } from "mailwoman/env"
 import { createGeocodeCommandOptions } from "mailwoman/geocode"
 import { describe, expect, test } from "vitest"
 
-
 const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
 const wofPath = $public.MAILWOMAN_WOF_DB ?? DEFAULT_WOF_PATH
 const hasWOFDB = await pathExists(wofPath)
@@ -49,7 +48,6 @@ if (!canRun) {
 				.join("; ")
 	)
 }
-
 
 describe.skipIf(!canRun)("runStaticDebug", () => {
 	test("renders a captured DebugFrame for a real address, tier line + map ink + echoed input", async () => {
@@ -87,7 +85,6 @@ describe.skipIf(!canRun)("runStaticDebug", () => {
 	})
 })
 
-
 describe("runStaticDebug --debug-size floor", () => {
 	test("a --debug-size below 60x20 rejects with the minimum-size guidance, not a map-tui RangeError", async () => {
 		const options = createGeocodeCommandOptions({ debugSize: "100x5" })
@@ -99,7 +96,8 @@ describe("runStaticDebug --debug-size floor", () => {
 	})
 
 	test("the floor is exactly the frame's fixed chrome plus a 6-row map pane", async () => {
-		// 19 rows leaves the map pane 5 content rows and 20 leaves it 6, so asserting the pair keeps the constant and `mapPaneCellSize` from drifting apart.
+		// 19 rows leaves the map pane 5 content rows and 20 leaves it 6, so asserting the
+		// pair keeps the constant and `mapPaneCellSize` from drifting apart.
 		expect(mapPaneCellSize(60, 20).rows).toBe(6)
 		expect(mapPaneCellSize(60, 19).rows).toBe(5)
 
@@ -109,16 +107,15 @@ describe("runStaticDebug --debug-size floor", () => {
 	})
 })
 
-
 describe("runStaticDebug empty input", () => {
 	test("an empty input rejects with the one-shot path's missing-argument message, not a junk frame", async () => {
-		// The empty-input guard runs before the format and size floors and before `createGeocodeSession`, so this rejects even without a resolvable session.
+		// The empty-input guard runs before the format and size floors and before
+		// `createGeocodeSession`, so this rejects even without a resolvable session.
 		await expect(runStaticDebug("", createGeocodeCommandOptions())).rejects.toThrow(
 			'geocode requires a positional address argument  (e.g. mailwoman geocode "350 5th Ave, New York, NY")'
 		)
 	})
 })
-
 
 describe("runStaticDebug --debug format guard", () => {
 	test("a --format shorthand alongside --debug rejects, not a silent pick", async () => {

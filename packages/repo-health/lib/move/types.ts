@@ -21,7 +21,8 @@ export interface SpecifierRewrite {
 	specifier: string
 	replacement: string
 	/**
-	 * The file both spellings name, which the replacement was proven against and a verification pass re-resolves once the move is on disk.
+	 * The file both spellings name, which the replacement was proven against
+	 * and a verification pass re-resolves once the move is on disk.
 	 */
 	target: string
 	/**
@@ -61,7 +62,8 @@ export interface UnresolvedSpecifier {
 	file: string
 	specifier: string
 	/**
-	 * What was tried and why no specifier was accepted; a plan carrying one of these is refused rather than applied.
+	 * What was tried and why no specifier was accepted; a plan carrying one of
+	 * these is refused rather than applied.
 	 */
 	reason: string
 }
@@ -74,7 +76,8 @@ export interface ModuleMovePlan {
 	 */
 	manifestRewrites: ManifestRewrite[]
 	/**
-	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:` line — that the moves invalidate and no check reads.
+	 * Repo-relative paths written as text — a hook command, a lint glob, a `Usage:`
+	 * line — that the moves invalidate and no check reads.
 	 */
 	pathLiterals: PathLiteralRewrite[]
 	unresolved: UnresolvedSpecifier[]

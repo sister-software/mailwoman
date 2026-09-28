@@ -101,8 +101,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 5.06,
 		exactMatch: true,
 	},
-	// Weimar / Thüringen: a 2-token span containing a real exact match must not outrank the 1-token
-	// gold.
+	// Weimar / Thüringen: a 2-token span containing a real exact match must not outrank the 1-token gold.
 	{
 		id: 8,
 		name: "Weimar",
@@ -125,8 +124,7 @@ const PLACES: ResolvedPlace[] = [
 		prominence: 3.3606,
 		exactMatch: true,
 	},
-	// A postcode → point for the not-bare guard, sitting on Berlin, Wisconsin (id 5) so the check
-	// admits it.
+	// A postcode → point for the not-bare guard, sitting on Berlin, Wisconsin (id 5) so the check admits it.
 	{ id: 900, name: "54923", placetype: "postalcode", country: "US", lat: 43.97, lon: -88.95, score: 1 },
 ]
 
@@ -266,8 +264,8 @@ describe("bare-toponym soft country prior (#17)", () => {
 })
 
 /**
- * The other half of the bare-toponym class: queries the model tags `locality`, which reach the admin
- * walk instead of span-rescore, so importance is the only key that separates them.
+ * The other half of the bare-toponym class: queries the model tags `locality`, which reach
+ * the admin walk instead of span-rescore, so importance is the only key that separates them.
  */
 describe("importance key in the admin walk (#17)", () => {
 	const WHITBY: ResolvedPlace[] = [
@@ -322,8 +320,8 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("stands down when a postcode anchor already pinned the country", async () => {
-		// Fame is the prior of last resort; an anchor posterior is derived from the address's own
-		// postcode, and evidence outranks a prior.
+		// Fame is the prior of last resort; an anchor posterior is derived from the
+		// address's own postcode, and evidence outranks a prior.
 		const withScores = WHITBY.map((c, i) => ({ ...c, importance: i === 0 ? 0.5089 : 0.5496 }))
 		const out = await walk(withScores, { anchorPosterior: { CA: 1 } })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
@@ -340,8 +338,8 @@ describe("importance key in the admin walk (#17)", () => {
 	})
 
 	it("is additive, never a filter — a dominant foreign bearer still wins", async () => {
-		// The prior is additive, never a filter: `weight: 0` is the identity, so the prior cannot make a
-		// place the gazetteer never returned appear.
+		// The prior is additive, never a filter: `weight: 0` is the identity,
+		// so the prior cannot make a place the gazetteer never returned appear.
 		const out = await walk(WHITBY, { localeCountryPrior: "GB", localeCountryPriorWeight: 0 })
 		expect(out.roots[0]?.metadata?.["resolver_country"]).toBe("CA")
 	})
@@ -358,9 +356,9 @@ describe("importance key in the admin walk (#17)", () => {
 })
 
 /**
- * The bare-country class: a lone bare locality-tagged country name also races the `country` placetype,
- * and an inferred scope is withheld from `country`-placetype lookups while an explicit scope stays
- * supreme.
+ * The bare-country class: a lone bare locality-tagged country name also races the
+ * `country` placetype, and an inferred scope is withheld from `country`-placetype lookups
+ * while an explicit scope stays supreme.
  */
 describe("bare-country class", () => {
 	const WORLD: ResolvedPlace[] = [
@@ -534,8 +532,8 @@ describe("bare-country class", () => {
 	})
 
 	it("scopes the country race by the inferred filter's own query country only when explicit", async () => {
-		// Under the inferred posture the caller has already withheld the scope for the bare-locality
-		// shape, so the race runs worldwide.
+		// Under the inferred posture the caller has already withheld the scope for the
+		// bare-locality shape, so the race runs worldwide.
 		const calls: Array<{ text: string; placetype?: unknown; country?: string }> = []
 
 		await createWOFResolver(backend(calls)).resolveTree(bareTree("locality", "Japan"))

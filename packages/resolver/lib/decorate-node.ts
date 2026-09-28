@@ -20,9 +20,9 @@ export function isResolvedWithCoord(n: AddressNode): boolean {
 }
 
 /**
- * Stamp a node with resolver-supplied attribution, displacing any prior classifier `source` /
- * `sourceID` into `metadata.classifier_source` / `metadata.classifier_source_id` and surfacing
- * runner-up candidates on `alternatives`.
+ * Stamp a node with resolver-supplied attribution, displacing any prior classifier `source`
+ * / `sourceID` into `metadata.classifier_source` / `metadata.classifier_source_id`
+ * and surfacing runner-up candidates on `alternatives`.
  */
 export function decorateNode(
 	node: AddressNode,
@@ -70,8 +70,8 @@ export function decorateNode(
 		node.metadata["resolver_country"] = resolved.country
 	}
 
-	// Written only when the backend supplies a value, because `resolver_*: 0` would assert a
-	// measurement nobody made.
+	// Written only when the backend supplies a value, because `resolver_*: 0`
+	// would assert a measurement nobody made.
 	if (resolved.referential !== undefined) {
 		node.metadata["resolver_referential"] = resolved.referential
 	}
@@ -90,8 +90,8 @@ export function decorateNode(
 		node.metadata["postcode_city_mismatch"] = true
 	}
 
-	// A broader admin tier stood in for the true region/county because no exact-type candidate
-	// existed; additive annotation only.
+	// A broader admin tier stood in for the true region/county because no exact-type
+	// candidate existed; additive annotation only.
 	if (resolved.resolutionQuality) {
 		node.metadata["resolution_quality"] = resolved.resolutionQuality
 	}

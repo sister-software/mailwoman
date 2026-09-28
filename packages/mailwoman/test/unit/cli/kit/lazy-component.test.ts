@@ -48,7 +48,7 @@ describe("lazyComponent — a rejected import", () => {
 
 		expect(code).toBe(1)
 		expect(stdout).toMatch(/Cannot find package 'not-installed-peer'/u)
-				expect(stderr).toBe("")
+		expect(stderr).toBe("")
 	}, 30_000)
 
 	test("renders a CommandError as guidance, with no stack", async () => {
@@ -59,7 +59,7 @@ describe("lazyComponent — a rejected import", () => {
 		expect(code).toBe(1)
 		expect(stdout).toMatch(/geocode --debug requires the optional @mailwoman\/map-tui package/u)
 		// Expected command guidance omits a stack; unexpected errors retain theirs.
-				expect(stdout).not.toMatch(/\s+at\s/u)
+		expect(stdout).not.toMatch(/\s+at\s/u)
 		expect(stderr).toBe("")
 	}, 30_000)
 })

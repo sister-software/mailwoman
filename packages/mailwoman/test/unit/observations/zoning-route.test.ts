@@ -26,12 +26,14 @@ function node(partial: Partial<AddressNode> & Pick<AddressNode, "tag" | "value">
 }
 
 /**
- * The kind the mock classifier reports: a designation marker must name the verdict's own top kind because a designation is not raised by intent.
+ * The kind the mock classifier reports: a designation marker must name the verdict's
+ * own top kind because a designation is not raised by intent.
  */
 const TEST_VERDICT_KIND: QueryKind = "locality_only"
 
 /**
- * A minimal always-resolves engine answering at `latitude`/`longitude`, so the coordinate the route is handed is the one the test chose.
+ * A minimal always-resolves engine answering at `latitude`/`longitude`,
+ * so the coordinate the route is handed is the one the test chose.
  */
 function testDeps(latitude: number, longitude: number): GeocodeDeps {
 	const classifier: GeocodeClassifier = {
@@ -184,7 +186,8 @@ describe("#1995: the zoning route on the geocode path", () => {
 				expect(designation.provenanceGrade).toBe("authoritative")
 			}
 
-			// The one-line description carries the authority, the code and the plan, so a receipt cannot lose which of them spoke.
+			// The one-line description carries the authority, the code and the plan,
+			// so a receipt cannot lose which of them spoke.
 			expect(describeZoningDesignation(decision.observation)).toMatch(/Fixture County Council/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/R2 - Existing Residential/u)
 			expect(describeZoningDesignation(decision.observation)).toMatch(/build-local/u)
@@ -223,7 +226,9 @@ describe("#1995: the zoning route on the geocode path", () => {
 				zoningDesignationRoute: route,
 			})
 
-			// An advisory here would be a determination nobody made, since the location may be outside any plan area, unzoned land inside one, in a jurisdiction that has never zoned, or in one nobody has published.
+			// An advisory here would be a determination nobody made, since the location
+			// may be outside any plan area, unzoned land inside one, in a jurisdiction
+			// that has never zoned, or in one nobody has published.
 			expect(result.intent_markers).toEqual([])
 
 			const decision = route.observe(NO_DESIGNATION.latitude, NO_DESIGNATION.longitude)

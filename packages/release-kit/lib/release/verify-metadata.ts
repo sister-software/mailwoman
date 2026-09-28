@@ -64,8 +64,8 @@ export interface VerifyReleaseMetadataOptions {
 }
 
 /**
- * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`); a status page outside
- * it is not a page a reader opens, so citing the shipped model there establishes no published fact.
+ * The directory `docs/docusaurus.config.ts` publishes (`path: "articles"`); a status page outside it
+ * is not a page a reader opens, so citing the shipped model there establishes no published fact.
  */
 const PUBLISHED_DOCS_ROOT = "docs/articles/"
 
@@ -75,8 +75,8 @@ const PUBLISHED_DOCS_ROOT = "docs/articles/"
 const PUBLISHED_STATUS_PAGE = `${PUBLISHED_DOCS_ROOT}developers/status.mdx`
 
 /**
- * Refuse a status path outside the published tree, so a check cannot report success by resolving a
- * page the site does not publish.
+ * Refuse a status path outside the published tree, so a check cannot report success
+ * by resolving a page the site does not publish.
  */
 function assertPublishedStatusPage(statusPath: string): void {
 	if (statusPath.startsWith(PUBLISHED_DOCS_ROOT)) return
@@ -98,8 +98,8 @@ export interface SurfaceResult {
 }
 
 /**
- * Read the shipped model version — the `version` field of the weights bundle's model card, not npm
- * package.json, so a code-only release is judged against the model it actually ships.
+ * Read the shipped model version — the `version` field of the weights bundle's model card,
+ * not npm package.json, so a code-only release is judged against the model it actually ships.
  */
 async function readModelVersion(cardPath: string): Promise<string> {
 	const card = await readLocalJSONFile<{ version?: string }>(cardPath)
@@ -139,8 +139,8 @@ async function checkLedger(version: string, ledgerPath: string): Promise<Surface
 }
 
 /**
- * Parse the releases.mdx version matrix into ordered data rows; a global scan is safe because only
- * the "## The matrix" table has version-like first cells.
+ * Parse the releases.mdx version matrix into ordered data rows; a global scan is safe
+ * because only the "## The matrix" table has version-like first cells.
  */
 function parseMatrixRows(markdown: string): MatrixRow[] {
 	const rows: MatrixRow[] = []

@@ -13,7 +13,8 @@ import { describe, expect, it, vi } from "vitest"
 
 describe("attributionReport", () => {
 	it("reads the installed weights packages rather than the source register", async () => {
-		// The register lists sources research resolved, not the ones an installation carries; reporting it here would claim attribution for rows the operator does not have.
+		// The register lists sources research resolved, not the ones an installation carries;
+		// reporting it here would claim attribution for rows the operator does not have.
 		const report = await attributionReport("AGPL-3.0-only OR LicenseRef-Commercial")
 
 		expect(report.engineLicense).toBe("AGPL-3.0-only OR LicenseRef-Commercial")
@@ -59,7 +60,9 @@ describe("renderAttributionReport", () => {
 	})
 
 	it("reports the same upstream sources under a commercial key as under the open-source branch", async () => {
-		// A commercial agreement covers only the code and model artifacts Sister Software authors, so reporting fewer sources once a key is present would claim the key discharged an obligation it cannot reach.
+		// A commercial agreement covers only the code and model artifacts Sister Software
+		// authors, so reporting fewer sources once a key is present would claim the
+		// key discharged an obligation it cannot reach.
 		const open = await attributionReport("AGPL-3.0-only")
 		const commercial = await attributionReport("LicenseRef-Commercial")
 
@@ -72,7 +75,8 @@ describe("renderAttributionReport", () => {
 	})
 
 	it("reports the same sources with no reference data on disk at all", async () => {
-		// The lineage is fixed at training time and read through module resolution rather than the data root, so deleting every downloaded database cannot remove an entry.
+		// The lineage is fixed at training time and read through module resolution rather than
+		// the data root, so deleting every downloaded database cannot remove an entry.
 		await using empty = await temporaryDirectory("mw-no-data-root-")
 		const before = await attributionReport("AGPL-3.0-only")
 

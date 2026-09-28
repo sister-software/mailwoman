@@ -24,8 +24,8 @@ export interface SearchHit {
 	 */
 	featureTypeCode?: string
 	/**
-	 * What the camera needs to choose a zoom; absent for a feature the gazetteer gives no diameter, which
-	 * a caller must read as unknown rather than as zero.
+	 * What the camera needs to choose a zoom; absent for a feature the gazetteer gives
+	 * no diameter, which a caller must read as unknown rather than as zero.
 	 */
 	diameterKm?: number
 	centerLon: number
@@ -33,8 +33,8 @@ export interface SearchHit {
 }
 
 /**
- * The payload the build wrote beside every entry, read through the schema so a mismatched artifact fails
- * at load rather than as `undefined` in the panel.
+ * The payload the build wrote beside every entry, read through the schema
+ * so a mismatched artifact fails at load rather than as `undefined` in the panel.
  */
 const SearchPayloadSchema = z.object({
 	id: z.string().min(1),
@@ -50,14 +50,14 @@ const SearchPayloadSchema = z.object({
 const DEFAULT_LIMIT = 8
 
 /**
- * The BFS collects a surplus so the rank-descending sort has real choices when a name and its alias
- * collapse to one hit.
+ * The BFS collects a surplus so the rank-descending sort has real choices
+ * when a name and its alias collapse to one hit.
  */
 const CANDIDATE_MULTIPLIER = 3
 
 /**
- * How many tokens past the typed prefix a suggestion may run, so a first-token prefix reaches a whole
- * several-word nomenclature name.
+ * How many tokens past the typed prefix a suggestion may run, so a first-token
+ * prefix reaches a whole several-word nomenclature name.
  */
 const MAX_EXPANSION_DEPTH = 6
 

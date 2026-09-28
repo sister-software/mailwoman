@@ -22,8 +22,8 @@ import {
 } from "#vocabulary"
 
 /**
- * The declared domains this layer validates against and stores; `capability_class` covers `nirrcapcl`,
- * `irrcapcl` and `muaggatt.niccdcd`.
+ * The declared domains this layer validates against and stores; `capability_class`
+ * covers `nirrcapcl`, `irrcapcl` and `muaggatt.niccdcd`.
  */
 export const STORED_DOMAINS = [
 	"capability_class",
@@ -47,8 +47,8 @@ export interface SurveyAreaAttributes {
 	sourceScale: number | null
 	mappingScale: number | null
 	/**
-	 * The area the authority publishes for this survey area, in acres — the independent witness the
-	 * ring-area check compares against.
+	 * The area the authority publishes for this survey area, in acres —
+	 * the independent witness the ring-area check compares against.
 	 */
 	areaAcres: number | null
 	mapUnits: SoilMapUnitTable[]
@@ -146,8 +146,8 @@ export async function readSurveyAreaAttributes(
 		return {
 			cokey: row.cokey!,
 			mukey: row.mukey!,
-			// A blank `comppct_r` is a component with no declared weight, recorded as zero rather
-			// than dropped so the component still appears.
+			// A blank `comppct_r` is a component with no declared weight, recorded as zero
+			// rather than dropped so the component still appears.
 			comppct_r: row.comppct_r ? Number(row.comppct_r) : 0,
 			compname: nullable(row.compname),
 			compkind: nullable(row.compkind),
@@ -199,8 +199,8 @@ export async function readSurveyAreaAttributes(
 }
 
 /**
- * A polygon the authority drew with no soil mapping behind it; a map unit with no components has no
- * component to rate, so it reads as no mapping rather than assigned no rating.
+ * A polygon the authority drew with no soil mapping behind it; a map unit with no components
+ * has no component to rate, so it reads as no mapping rather than assigned no rating.
  */
 function isNoMapping(musym: string, muname: string, componentCount: number): boolean {
 	if (SSURGO_NO_MAPPING_SYMBOLS.has(musym.toUpperCase())) return true
@@ -211,8 +211,8 @@ function isNoMapping(musym: string, muname: string, componentCount: number): boo
 }
 
 /**
- * Refuse a value outside the authority's own declared domain; a blank is a real NULL state rather
- * than a violation, recording that the survey did not rate the component.
+ * Refuse a value outside the authority's own declared domain; a blank is a real NULL state
+ * rather than a violation, recording that the survey did not rate the component.
  */
 function assertDeclared(declared: ReadonlySet<string>, value: string | undefined, domain: string, where: string): void {
 	if (!value) return
@@ -229,8 +229,8 @@ function nullable(value: string | undefined): string | null {
 }
 
 /**
- * The nccpi v3.0 overall index per component; sub-rules at greater depths are submodels this layer
- * does not carry.
+ * The nccpi v3.0 overall index per component; sub-rules at greater depths are
+ * submodels this layer does not carry.
  */
 async function readNCCPI(
 	tabularDirectory: PathBuilderLike,
@@ -315,8 +315,7 @@ function readSourceCitations(xml: string): Array<{ date: string; title: string; 
 	const citations: Array<{ date: string; title: string; scale: number | null }> = []
 
 	for (const body of elementBlocks(xml, "srcinfo")) {
-		// `caldate` for a single date, `begdate` for a range, whose beginning is the date
-		// this layer carries.
+		// `caldate` for a single date, `begdate` for a range, whose beginning is the date this layer carries.
 		const date = elementText(body, "caldate") ?? elementText(body, "begdate")
 
 		if (!date) continue
@@ -346,14 +345,12 @@ function elementText(xml: string, name: string): string | undefined {
 	const from = start + open.length
 	const end = xml.indexOf(`</${name}>`, from)
 
-	// An element with no closing tag is unreadable rather than empty, the same answer an absent
-	// element gets.
+	// An element with no closing tag is unreadable rather than empty, the same answer an absent element gets.
 	return end === -1 ? undefined : xml.slice(from, end)
 }
 
 /**
- * Every `<name>` element's inner text in document order, the repeating counterpart of
- * {@link elementText}.
+ * Every `<name>` element's inner text in document order, the repeating counterpart of {@link elementText}.
  */
 function elementBlocks(xml: string, name: string): string[] {
 	const open = `<${name}>`
@@ -378,8 +375,8 @@ function elementBlocks(xml: string, name: string): string[] {
 }
 
 /**
- * A bare year stays bare, since padding it to January 1 would invent a precision the citation
- * does not claim.
+ * A bare year stays bare, since padding it to January 1 would invent a precision
+ * the citation does not claim.
  */
 function normalizeFGDCDate(value: string): string {
 	const trimmed = value.trim()

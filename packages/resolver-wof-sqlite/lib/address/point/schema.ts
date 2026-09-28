@@ -9,7 +9,8 @@ import type { Kysely } from "kysely"
 import type { NameKey, RouteKey, StreetKey } from "#street/normalize"
 
 /**
- * One rooftop address point; `(street_norm, number)` within a `postcode` or `locality_norm` scope is the lookup.
+ * One rooftop address point; `(street_norm, number)` within a `postcode`
+ * or `locality_norm` scope is the lookup.
  */
 export interface AddressPointTable {
 	/**
@@ -17,7 +18,8 @@ export interface AddressPointTable {
 	 */
 	street_norm: StreetKey
 	/**
-	 * `canonicalizeRouteKey(street_norm)` — the route-fold key, branded so it cannot be interchanged with `street_norm`.
+	 * `canonicalizeRouteKey(street_norm)` — the route-fold key, branded
+	 * so it cannot be interchanged with `street_norm`.
 	 */
 	street_key: RouteKey
 	/**
@@ -41,11 +43,13 @@ export interface AddressPointTable {
 
 	release: string
 	/**
-	 * The source register's stable administrative key for the point's commune or municipality — BAN's `code_insee`; the coverage basis is computed per this key.
+	 * The source register's stable administrative key for the point's commune or municipality —
+	 * BAN's `code_insee`; the coverage basis is computed per this key.
 	 */
 	admin_code: string | null
 	/**
-	 * The register's own certification flag for the point (BAN `certification_commune`: 1 certified, 0 not), never inferred from a share.
+	 * The register's own certification flag for the point
+	 * (BAN `certification_commune`: 1 certified, 0 not), never inferred from a share.
 	 */
 	certified: number | null
 }
@@ -58,7 +62,8 @@ export interface AddressPointDatabase {
 }
 
 /**
- * The subset of a Kysely handle the DDL touches, narrowed to `schema` because Kysely is invariant in its schema parameter.
+ * The subset of a Kysely handle the DDL touches, narrowed to `schema`
+ * because Kysely is invariant in its schema parameter.
  */
 export type AddressPointSchemaHandle = Pick<Kysely<AddressPointDatabase>, "schema">
 
@@ -121,6 +126,7 @@ export async function createAddressPointIndexes(db: AddressPointSchemaHandle): P
 		.execute()
 
 	await db.schema.createIndex("idx_ap_streetkey").on("address_point").columns(["postcode", "street_key"]).execute()
-	// Street-first index for the bbox scope: OSM points often carry no postcode or locality, so the reader scopes a `(street_norm, number)` probe by the resolved locality's bbox.
+	// Street-first index for the bbox scope: OSM points often carry no postcode or locality,
+	// so the reader scopes a `(street_norm, number)` probe by the resolved locality's bbox.
 	await db.schema.createIndex("idx_ap_street").on("address_point").columns(["street_norm", "number"]).execute()
 }

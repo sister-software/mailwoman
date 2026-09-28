@@ -23,7 +23,8 @@ import { SqliteDialect } from "#dialect/index"
 /**
  * A connection's non-Kysely surface: the statements Kysely does not model, plus ending the connection.
  *
- * Schema-agnostic because Kysely is invariant in `DB`: a parameter typed `DatabaseClient` would reject every real client.
+ * Schema-agnostic because Kysely is invariant in `DB`: a parameter typed
+ * `DatabaseClient` would reject every real client.
  */
 export type RawStatements = Pick<DatabaseClient, "exec" | "prepare" | "function" | "destroy"> & Disposable
 
@@ -99,7 +100,8 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	/**
 	 * Register a user-defined SQL function on this client's connection, callable from any statement it runs.
 	 *
-	 * SQLite resolves the name at statement-compile time, so registration must precede the first query that uses it.
+	 * SQLite resolves the name at statement-compile time, so registration must
+	 * precede the first query that uses it.
 	 */
 	function(name: string, options: FunctionOptions, fn: (...args: SQLOutputValue[]) => SQLInputValue): void
 	function(name: string, fn: (...args: SQLOutputValue[]) => SQLInputValue): void
@@ -120,7 +122,8 @@ export class DatabaseClient<DB = Database> extends Kysely<DB> implements Disposa
 	/**
 	 * End the connection at scope exit, synchronously.
 	 *
-	 * `destroy()` returns a promise that `Symbol.dispose` cannot await, and `node:sqlite`'s `close()` is synchronous.
+	 * `destroy()` returns a promise that `Symbol.dispose` cannot await,
+	 * and `node:sqlite`'s `close()` is synchronous.
 	 */
 	[Symbol.dispose](): void {
 		this.#database[Symbol.dispose]()

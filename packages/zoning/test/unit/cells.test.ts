@@ -60,7 +60,8 @@ describe("featureCellRows", () => {
 		expect(rows.some((row) => row.containment === "whole")).toBe(true)
 		expect(rows.some((row) => row.containment === "partial")).toBe(true)
 
-		// A cell is never both for one polygon; a parent the partial set also names would duplicate it and the primary key would reject the second insert mid-build.
+		// A cell is never both for one polygon; a parent the partial set also names would
+		// duplicate it and the primary key would reject the second insert mid-build.
 		const cells = rows.map((row) => row.h3Cell)
 
 		expect(new Set(cells).size).toBe(cells.length)
@@ -96,7 +97,8 @@ describe("ZoningCellIndex", () => {
 
 		unmeasured.add(classifyFeatureCells(SLIVER, 9, "sliver", "zoning cells"))
 
-		// Absent rather than zero: a column reporting "0 dropped" with no measurement reads as the good news the measurement exists to establish.
+		// Absent rather than zero: a column reporting "0 dropped" with no measurement
+		// reads as the good news the measurement exists to establish.
 		expect(unmeasured.finish().polyfillZeroCellFeatures).toBeUndefined()
 	})
 

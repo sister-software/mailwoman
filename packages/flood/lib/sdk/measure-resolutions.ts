@@ -27,8 +27,8 @@ export interface ResolutionMeasurementReport {
 const DEFAULT_PROGRESS_EVERY = 50_000
 
 /**
- * Measure every candidate resolution over the real source, throwing when the streamed feature count
- * does not match the count the source declares.
+ * Measure every candidate resolution over the real source, throwing when the streamed
+ * feature count does not match the count the source declares.
  */
 export async function measureFloodCellResolutions(
 	options: MeasureResolutionsOptions

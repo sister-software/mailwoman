@@ -68,7 +68,6 @@ describe("parsePersonName", () => {
 	})
 
 	it("does not treat a trailing particle-looking token as a particle", () => {
-
 		expect(parsePersonName("Robert Di")).toEqual({ given: "Robert", family: "Di" })
 	})
 })
@@ -87,7 +86,8 @@ describe("formatPersonName", () => {
 	it("keeps the particle with the surname in both styles", () => {
 		const name = parsePersonName("Dr Jane Q. Xavier de la Vega III")
 
-		// The parser stores the particle separately for the matcher, so printing it apart would produce a name nobody wrote.
+		// The parser stores the particle separately for the matcher, so printing it
+		// apart would produce a name nobody wrote.
 		expect(formatPersonName(name, "short")).toBe("Jane de la Vega")
 	})
 

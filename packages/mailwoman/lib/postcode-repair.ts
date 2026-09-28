@@ -11,14 +11,17 @@ import { collectNodes, firstNodeWhere, walkNodes } from "@mailwoman/core/decoder
 import type { QueryShape } from "@mailwoman/query-shape"
 
 /**
- * Postcode formats whose surface is structurally distinguishable from anything else an address writes, excluding five-digit families whose digits can be house numbers and `nl_postcode` whose shape can be a house number plus a directional.
+ * Postcode formats whose surface is structurally distinguishable from anything else
+ * an address writes, excluding five-digit families whose digits can be house numbers
+ * and `nl_postcode` whose shape can be a house number plus a directional.
  */
 const REPAIRABLE_POSTCODE_FORMATS: ReadonlySet<string> = new Set(["uk_postcode", "ca_postcode"])
 
 const MIN_FORMAT_CONFIDENCE = 0.9
 
 /**
- * The tags the misread produces; any other tag overlapping the format span vetoes the repair, because the rung replaces a wrong reading and never a plausible one.
+ * The tags the misread produces; any other tag overlapping the format span vetoes the repair,
+ * because the rung replaces a wrong reading and never a plausible one.
  */
 const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street",
@@ -26,7 +29,8 @@ const MISREAD_TAGS: ReadonlySet<string> = new Set([
 	"street_suffix",
 	"street_prefix",
 	"unit",
-	// A real PO Box surface can never match a letter-digit postcode format span, so replacing a `po_box` reading such as `PO33 4DE` is safe.
+	// A real PO Box surface can never match a letter-digit postcode format span,
+	// so replacing a `po_box` reading such as `PO33 4DE` is safe.
 	"po_box",
 ])
 
@@ -39,7 +43,9 @@ function within(node: AddressNode, start: number, end: number): boolean {
 }
 
 /**
- * Repairs the tree in place when a high-confidence letter-digit postcode span carries no postcode node and every node inside it is a street/house-number-family misread; a span that already carries a postcode node never repairs, so the alternate-register retry cannot double-fire.
+ * Repairs the tree in place when a high-confidence letter-digit postcode span carries no postcode node
+ * and every node inside it is a street/house-number-family misread; a span that already
+ * carries a postcode node never repairs, so the alternate-register retry cannot double-fire.
  *
  * @returns `true` when a repair was applied.
  */

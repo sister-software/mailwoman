@@ -34,8 +34,9 @@ export interface UsePOISearchOptions {
 	runLiveSearch?: POILiveSearch
 
 	/**
-	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to false; enable it only for a
-	 * server-side backend, since fetching every row for a brand over an HTTP range-request database is too slow.
+	 * Whether the probe can search for brand subjects by Wikidata ID, defaulting to false;
+	 * enable it only for a server-side backend, since fetching every row for a brand
+	 * over an HTTP range-request database is too slow.
 	 */
 	brandLiveSearch?: boolean
 
@@ -55,7 +56,8 @@ export interface UsePOISearch {
 	runtimeReady: boolean
 
 	/**
-	 * The classification for the current debounced text, `null` for empty text and while classification is pending.
+	 * The classification for the current debounced text, `null` for empty text
+	 * and while classification is pending.
 	 */
 	result: POIExplorerResult | null
 
@@ -100,9 +102,9 @@ function buildOverpass(
 }
 
 /**
- * Classifies debounced query text as a POI category or brand request and runs live searches on demand; each
- * result is keyed to the query that produced it, live search requires a non-empty anchor, and brands need
- * `brandLiveSearch` plus a Wikidata ID.
+ * Classifies debounced query text as a POI category or brand request and runs live
+ * searches on demand; each result is keyed to the query that produced it, live search
+ * requires a non-empty anchor, and brands need `brandLiveSearch` plus a Wikidata ID.
  */
 export function usePOISearch({
 	text,

@@ -9,7 +9,8 @@
  */
 
 /**
- * `{@linkcode scorePairwiseGrouping}`'s result, with every count taken over unordered pairs drawn from the `ids` passed in.
+ * `{@linkcode scorePairwiseGrouping}`'s result, with every count taken over
+ * unordered pairs drawn from the `ids` passed in.
  */
 export interface PairwiseGroupingScore {
 	/**
@@ -45,14 +46,16 @@ export interface PairwiseGroupingScore {
 	 */
 	recall: number | null
 	/**
-	 * `null` whenever `precision` or `recall` is `null`, and `0` when both are defined and `truePositivePairs === 0`; otherwise the harmonic mean of `precision` and `recall`.
+	 * `null` whenever `precision` or `recall` is `null`, and `0` when both are defined
+	 * and `truePositivePairs === 0`; otherwise the harmonic mean of `precision` and `recall`.
 	 */
 	f1: number | null
 }
 
 /**
- * Scores a `predictedSame` pairwise predicate against a `truthSame` one over every unordered pair drawn from `ids`
- * (O(n²), eval-scale only), accepting predicates rather than group-id maps because a predicted grouping need not be a partition.
+ * Scores a `predictedSame` pairwise predicate against a `truthSame` one over every
+ * unordered pair drawn from `ids` (O(n²), eval-scale only), accepting predicates
+ * rather than group-id maps because a predicted grouping need not be a partition.
  */
 export function scorePairwiseGrouping<ID>(
 	ids: readonly ID[],
@@ -110,7 +113,8 @@ export function scorePairwiseGrouping<ID>(
 }
 
 /**
- * Builds a `truthSame`/`predictedSame`-shaped predicate from a group-id map, treating a missing assignment as never `same` rather than comparing two `undefined` values equal.
+ * Builds a `truthSame`/`predictedSame`-shaped predicate from a group-id map, treating a
+ * missing assignment as never `same` rather than comparing two `undefined` values equal.
  */
 export function groupPredicateFromMap<ID>(groupOf: ReadonlyMap<ID, string>): (a: ID, b: ID) => boolean {
 	return (a, b) => {

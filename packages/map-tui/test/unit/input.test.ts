@@ -46,8 +46,8 @@ describe("decodeInputChunk", () => {
 
 	it("separates quit from interrupt", () => {
 		expect(eventsOf("q")).toEqual([{ kind: "quit" }])
-		// An ESC whose next byte cannot continue a sequence is the Esc KEY, so this chunk quits twice —
-		// once for the Esc, once for the `q`.
+		// An ESC whose next byte cannot continue a sequence is the Esc KEY,
+		// so this chunk quits twice — once for the Esc, once for the `q`.
 		expect(eventsOf(`${ESC}q`)).toEqual([{ kind: "quit" }, { kind: "quit" }])
 		expect(eventsOf("\u0003")).toEqual([{ kind: "interrupt" }])
 	})
@@ -80,8 +80,8 @@ describe("decodeInputChunk", () => {
 		})
 	})
 
-	// An unhandled escape sequence must be consumed whole, because re-scanning its body as characters
-	// would read the `q` in a cursor-position report as a quit.
+	// An unhandled escape sequence must be consumed whole, because re-scanning its body
+	// as characters would read the `q` in a cursor-position report as a quit.
 	it("swallows an unrecognized CSI sequence rather than reading its body as keys", () => {
 		expect(eventsOf(`${ESC}[200~`)).toEqual([])
 		expect(eventsOf(`${ESC}[?1;2q`)).toEqual([])
@@ -133,8 +133,8 @@ describe("decodeInputChunk", () => {
 		})
 
 		it("stops holding a fragment that has stopped being plausible", () => {
-			// An unterminated string sequence would otherwise grow the held fragment for the life of the
-			// process, so dropping it emits no event rather than reading its body as keys.
+			// An unterminated string sequence would otherwise grow the held fragment for the life
+			// of the process, so dropping it emits no event rather than reading its body as keys.
 			const runaway = decodeInputChunk(`${ESC}]52;c;${"A".repeat(70_000)}`)
 
 			expect(runaway.events).toEqual([])

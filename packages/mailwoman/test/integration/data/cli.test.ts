@@ -19,7 +19,8 @@ import { afterAll, describe, expect, test } from "vitest"
 const cliBin = await mailwomanCLIPath()
 
 /**
- * A directory that exists but holds no files, so `data --list` reports destinations under it without any bundle appearing installed.
+ * A directory that exists but holds no files, so `data --list` reports destinations
+ * under it without any bundle appearing installed.
  */
 const emptyDataRoot = await temporaryDirectory("mw-data-cli-")
 const emptyDataRootPath = emptyDataRoot.path.toString()

@@ -23,7 +23,8 @@ const place = (over: Partial<ResolvedPlace> & Pick<ResolvedPlace, "id" | "name" 
 	...over,
 })
 
-// The live rows: prominence is candidate.db's -neg_rank (log10(population + 1)), importance comes from admin-global-priority-importance.db.
+// The live rows: prominence is candidate.db's -neg_rank (log10(population + 1)),
+// importance comes from admin-global-priority-importance.db.
 const WHITBY: ResolvedPlace[] = [
 	place({ id: 8_143_502_164_401, name: "Whitby", country: "CA", prominence: 5.1085, importance: 0.5089 }),
 	place({ id: 101_874_191, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -48,7 +49,8 @@ describe("rankByImportance", () => {
 	})
 
 	it("ABSTAINS when only ONE candidate carries a measured score (positive evidence only)", () => {
-		// A missing importance means the score source never measured the place, never 0, so a lone measured 0.55 must not be read as beating an unmeasured megacity.
+		// A missing importance means the score source never measured the place, never 0,
+		// so a lone measured 0.55 must not be read as beating an unmeasured megacity.
 		const partial = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -100,7 +102,8 @@ describe("rankByImportance", () => {
 	})
 
 	it("preserves incoming order on a same-country pair tied on BOTH importance and size (the seat corridor)", () => {
-		// Preserve the backend's incoming order for a tied same-country pair: inverting that seat tiebreak moves bare `Pu-cheng-hsien` 1,100 km end-to-end.
+		// Preserve the backend's incoming order for a tied same-country pair: inverting
+		// that seat tiebreak moves bare `Pu-cheng-hsien` 1,100 km end-to-end.
 		const seatFirst = [
 			place({ id: 1, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
 			place({ id: 2, name: "Pucheng", country: "CN", prominence: 4.777, importance: 0.4233 }),
@@ -121,7 +124,8 @@ describe("rankByImportance", () => {
 })
 
 describe("rankByImportance same-country tie band (Springfield decision, 2026-08-11)", () => {
-	// The band makes a same-country chained trio fall back to size order, pinning the bare query to the referential answer (MO).
+	// The band makes a same-country chained trio fall back to size order,
+	// pinning the bare query to the referential answer (MO).
 	const SPRINGFIELD: ResolvedPlace[] = [
 		place({ id: 85_940_429, name: "Springfield", country: "US", prominence: 5.0513, importance: 0.612605 }),
 		place({ id: 85_950_393, name: "Springfield", country: "US", prominence: 5.1866, importance: 0.611142 }),
@@ -133,7 +137,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("does NOT band cross-country pairs — Windsor's 0.0042 gap still flips to GB", () => {
-		// The band must never compare across countries: any width covering Springfield's 0.0164 gap also covers Windsor's, which would regress the accepted flips.
+		// The band must never compare across countries: any width covering Springfield's
+		// 0.0164 gap also covers Windsor's, which would regress the accepted flips.
 		expect(rankByImportance(WINDSOR).map((c) => c.country)).toEqual(["GB", "CA", "US"])
 	})
 
@@ -178,7 +183,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: a bearer with NO recorded population never heads its country over one the gazetteer counted", () => {
-		// `blendImportance` returns the encyclopedic score uncapped when `referential <= 0`, so an article-only row can outscore a counted municipality.
+		// `blendImportance` returns the encyclopedic score uncapped when `referential <= 0`,
+		// so an article-only row can outscore a counted municipality.
 		const anderlecht: ResolvedPlace[] = [
 			place({ id: 1, name: "Anderlecht", country: "BE", prominence: 5.2, population: 160_553, importance: 0.524 }),
 			place({ id: 2, name: "Anderlecht", country: "BE", prominence: 0, importance: 0.5665 }),
@@ -188,7 +194,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: the partition is SAME-COUNTRY — an uncounted foreign bearer still wins on fame", () => {
-		// The partition is same-country deliberately: across borders an article-only score is the only evidence there is, so that branch stays uncapped.
+		// The partition is same-country deliberately: across borders an article-only score
+		// is the only evidence there is, so that branch stays uncapped.
 		const crossBorder: ResolvedPlace[] = [
 			place({ id: 1, name: "Whitby", country: "CA", prominence: 5.1085, population: 128_377, importance: 0.5089 }),
 			place({ id: 2, name: "Whitby", country: "GB", prominence: 4.1183, importance: 0.5496 }),
@@ -198,7 +205,8 @@ describe("rankByImportance same-country tie band (Springfield decision, 2026-08-
 	})
 
 	it("#2272: two uncounted same-country bearers still separate on importance", () => {
-		// The partition must not touch two uncounted same-country bearers: neither was measured, so importance is all there is.
+		// The partition must not touch two uncounted same-country bearers:
+		// neither was measured, so importance is all there is.
 		const neitherCounted: ResolvedPlace[] = [
 			place({ id: 1, name: "Bonito", country: "BR", prominence: 0, importance: 0.31 }),
 			place({ id: 2, name: "Bonito", country: "BR", prominence: 0, importance: 0.44 }),
@@ -305,7 +313,8 @@ describe("promoteCapitals (#1880 — bounded capital promotion after the fame ke
 	})
 
 	it("never promotes an admin-1 seat — the ratified referential decisions hold (Springfield stays MO)", () => {
-		// An admin-1 seat is never promoted: even a 1-log10-unit seat margin flipped Springfield to Illinois, so level 1 promotes no candidate.
+		// An admin-1 seat is never promoted: even a 1-log10-unit seat margin flipped
+		// Springfield to Illinois, so level 1 promotes no candidate.
 		const seat = (p: { lat: number }): number => (p.lat === 39.8 ? 1 : 0)
 
 		const ranked = promoteCapitals(

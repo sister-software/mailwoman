@@ -17,7 +17,8 @@ let scratch: TemporaryDirectory
 let sourcePath: PathBuilder
 
 /**
- * A score source shaped like `admin-global-priority-importance.db`, with ids deliberately unlike a candidate build's so the join cannot depend on them.
+ * A score source shaped like `admin-global-priority-importance.db`, with ids deliberately
+ * unlike a candidate build's so the join cannot depend on them.
  */
 function buildFixtureSource(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)

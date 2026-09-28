@@ -41,10 +41,10 @@ export type VersionSeries = (typeof VersionSeries)[keyof typeof VersionSeries]
 /**
  * The kind of an artifact, which determines which sources it derives from.
  *
- * The files in one package have unrelated provenance: `model.onnx` derives from the training corpus,
- * `tokenizer.model` from the tokenizer text, and a pair index or postcode binary from one named
- * register. {@link roleForArtifact} derives the role from the file name, and an unrecognized name
- * maps to `other`.
+ * The files in one package have unrelated provenance: `model.onnx` derives from
+ * the training corpus, `tokenizer.model` from the tokenizer text, and a pair index
+ * or postcode binary from one named register. {@link roleForArtifact} derives the
+ * role from the file name, and an unrecognized name maps to `other`.
  */
 export const ArtifactRole = {
 	ModelGraph: "model-graph",
@@ -126,9 +126,9 @@ export const SourceUse = {
 export type SourceUse = (typeof SourceUse)[keyof typeof SourceUse]
 
 /**
- * Returns the uses that one attribution entry states in its prose, or `unstated` when no pattern
- * matches; it never defaults to `training`, which would claim the model learned from every
- * unrecognized source.
+ * Returns the uses that one attribution entry states in its prose, or `unstated`
+ * when no pattern matches; it never defaults to `training`, which would claim the
+ * model learned from every unrecognized source.
  */
 export function usesStatedIn(entry: string): SourceUse[] {
 	const uses: SourceUse[] = []
@@ -168,9 +168,9 @@ export interface AttributionRecord {
 }
 
 /**
- * The attribution that an overlay inherits from the package that owns its model graph, repeated so a
- * consumer of the overlay alone can read it and labeled as the base's because the overlay's own
- * artifacts did not contribute to that model.
+ * The attribution that an overlay inherits from the package that owns its model graph,
+ * repeated so a consumer of the overlay alone can read it and labeled as the base's
+ * because the overlay's own artifacts did not contribute to that model.
  */
 export interface InheritedLineage {
 	package: string
@@ -374,8 +374,8 @@ export async function readWeightsRightsRecords(
 }
 
 /**
- * Follows `mailwoman.baseWeights` from an overlay to the package that owns the model graph and
- * returns that package's attribution.
+ * Follows `mailwoman.baseWeights` from an overlay to the package that owns the
+ * model graph and returns that package's attribution.
  *
  * The walk follows every hop because a base may declare its own base; a cycle or a base outside the
  * set stops it and sets `unresolved`, keeping an unresolved lineage distinct from an empty one.

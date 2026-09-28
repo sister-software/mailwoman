@@ -19,8 +19,8 @@ import { trackedSourcePaths } from "#tracked-sources"
  */
 export const MODULE_COHESION_THRESHOLDS = {
 	/**
-	 * The minimum Newman modularity of the best partition found; a module whose helpers all feed one entry point
-	 * scores near zero.
+	 * The minimum Newman modularity of the best partition found; a module whose
+	 * helpers all feed one entry point scores near zero.
 	 */
 	modularity: 0.35,
 	/**
@@ -28,8 +28,8 @@ export const MODULE_COHESION_THRESHOLDS = {
 	 */
 	communityMembers: 2,
 	/**
-	 * The minimum number of distinct imported specifiers in a community that counts toward a reported pair; a
-	 * facade of wrappers that each read one import stays below it.
+	 * The minimum number of distinct imported specifiers in a community that counts toward
+	 * a reported pair; a facade of wrappers that each read one import stays below it.
 	 */
 	communitySpecifiers: 2,
 } as const
@@ -39,8 +39,8 @@ const MAX_PASSES = 20
 const GAIN_EPSILON = 1e-9
 
 /**
- * One top-level declaration that holds a value; type declarations are omitted because a type every group
- * references would join all the groups into one.
+ * One top-level declaration that holds a value; type declarations are omitted
+ * because a type every group references would join all the groups into one.
  */
 interface ValueDeclaration {
 	name: string
@@ -56,8 +56,8 @@ export interface DeclarationCommunity {
 	names: readonly string[]
 	exported: boolean
 	/**
-	 * The module specifiers that this community's members read; two communities with disjoint specifiers depend on
-	 * different things.
+	 * The module specifiers that this community's members read; two communities with
+	 * disjoint specifiers depend on different things.
 	 */
 	specifiers: ReadonlySet<string>
 	line: number
@@ -105,8 +105,8 @@ function topLevelValues(source: ts.SourceFile): ValueDeclaration[] {
 }
 
 /**
- * Maps every value binding that an import introduces to its module specifier; type-only imports are skipped
- * because they are erased at compile time.
+ * Maps every value binding that an import introduces to its module specifier;
+ * type-only imports are skipped because they are erased at compile time.
  */
 function importedBindings(source: ts.SourceFile): Map<string, string> {
 	const bindings = new Map<string, string>()
@@ -144,8 +144,8 @@ function importedBindings(source: ts.SourceFile): Map<string, string> {
 }
 
 /**
- * Runs one level of Louvain over an unweighted undirected graph, moving each node to the neighbouring community
- * that raises modularity most until no node moves.
+ * Runs one level of Louvain over an unweighted undirected graph, moving each node to
+ * the neighbouring community that raises modularity most until no node moves.
  */
 function partitionByModularity(adjacency: ReadonlyArray<ReadonlySet<number>>): {
 	modularity: number
@@ -299,8 +299,8 @@ function describe(community: DeclarationCommunity): string {
 }
 
 /**
- * The `module-cohesion` check: a warning when a module's declarations split into two groups with disjoint imports,
- * listing both groups and their dependencies.
+ * The `module-cohesion` check: a warning when a module's declarations split into two
+ * groups with disjoint imports, listing both groups and their dependencies.
  */
 export const moduleCohesionCheck: RepoCheck = {
 	id: "module-cohesion",

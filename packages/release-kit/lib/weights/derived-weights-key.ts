@@ -21,9 +21,10 @@ import { Globerator } from "spliterator/node/fs"
  * Repo-relative files the derived binaries are a function of, beyond the `data/gazetteer`
  * payload enumerated by {@link derivedWeightsInputs}.
  *
- * Each generating source module is paired with its compiled counterpart because the build spawns
- * the compiled CLI; hashing source alone lets a stale compile compute the fixed key and build with
- * the broken code. Transitive compiled imports are deliberately excluded, or the store would
+ * Each generating source module is paired with its compiled counterpart
+ * because the build spawns the compiled CLI; hashing source alone lets a stale
+ * compile compute the fixed key and build with the broken code.
+ * Transitive compiled imports are deliberately excluded, or the store would
  * invalidate on every unrelated commit.
  */
 export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
@@ -39,8 +40,8 @@ export const DERIVED_WEIGHTS_INPUTS: readonly string[] = [
 ]
 
 /**
- * The `data/gazetteer` payload, enumerated rather than hardcoded so a new extract joins the key
- * without a code change.
+ * The `data/gazetteer` payload, enumerated rather than hardcoded so a new extract
+ * joins the key without a code change.
  */
 async function gazetteerDataPaths(): Promise<string[]> {
 	const dir = repoRootPathBuilder("data", "gazetteer")
@@ -110,9 +111,10 @@ async function derivedWeightsInputs(): Promise<DerivedWeightsInput[]> {
  *
  * Exported for testing; production callers want {@link derivedWeightsKey}.
  *
- * Only the repo-relative name is hashed, never the absolute path, so checkouts at different roots
- * agree on the key over byte-identical inputs. A missing input contributes a `\0absent` marker
- * rather than an empty contribution, so a gone file and an empty file do not collide.
+ * Only the repo-relative name is hashed, never the absolute path, so checkouts at
+ * different roots agree on the key over byte-identical inputs.
+ * A missing input contributes a `\0absent` marker rather than an empty contribution,
+ * so a gone file and an empty file do not collide.
  */
 export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput[]): Promise<string> {
 	const hash = createHash("sha256")
@@ -135,8 +137,8 @@ export async function derivedWeightsKeyFrom(inputs: readonly DerivedWeightsInput
 }
 
 /**
- * The key for this checkout's derived weights, identical across checkouts with identical input
- * content wherever they live on disk.
+ * The key for this checkout's derived weights, identical across checkouts with
+ * identical input content wherever they live on disk.
  */
 export async function derivedWeightsKey(): Promise<string> {
 	return derivedWeightsKeyFrom(await derivedWeightsInputs())
@@ -153,9 +155,10 @@ export function derivedWeightsDir(key: string): string {
  * The reason a store entry must not be served (or stashed), or `null` when it looks like a product.
  *
  * A `postcode-<cc>.bin` is refused when its PCB1 header is malformed or its record count sits
- * below the lowest calibrated floor for that country — for GB that is the outward floor, so a
- * legitimate outward-granularity bin is never false-refused while an empty or collapsed one is.
+ * below the lowest calibrated floor for that country — for GB that is the outward floor,
+ * so a legitimate outward-granularity bin is never false-refused while an empty or collapsed one is.
  * The calibrated per-granularity check remains the builder's; this one only has the header to read.
+ *
  * Non-postcode entries pass, because their reader validates a typed header on load.
  */
 /**

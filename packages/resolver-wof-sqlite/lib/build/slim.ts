@@ -36,7 +36,8 @@ export interface BuildSlimOptions {
 	 */
 	topLocalitiesPerCountry?: number
 	/**
-	 * Drop the `names` table after the FTS index is built; `place_search` is self-contained and the resolver never reads `names` at runtime.
+	 * Drop the `names` table after the FTS index is built; `place_search` is self-contained
+	 * and the resolver never reads `names` at runtime.
 	 */
 	dropNames?: boolean
 
@@ -86,14 +87,14 @@ const COPIED_TABLES = ["spr", "names", PLACE_POPULATION_TABLE] as const
  */
 const PLACE_POPULATION_DDL = `CREATE TABLE ${PLACE_POPULATION_TABLE} (id INTEGER PRIMARY KEY, population INTEGER NOT NULL DEFAULT 0)`
 
-
 interface PlacePopulationTable {
 	id: number
 	population: number
 }
 
 /**
- * Kysely schema for the build phase, including the ATTACHed `src.*` tables so row-copying queries can name the source schema.
+ * Kysely schema for the build phase, including the ATTACHed `src.*` tables
+ * so row-copying queries can name the source schema.
  */
 interface BuildSchema {
 	spr: SprTable
@@ -109,7 +110,7 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 	const topLocalities = opts.topLocalitiesPerCountry ?? 1000
 	const progress = opts.onProgress ?? (() => {})
 
-// An empty string marks an input that isn't built yet, so empties are skipped and every remaining path must exist.
+	// An empty string marks an input that isn't built yet, so empties are skipped and every remaining path must exist.
 	const inputs = opts.inputs.map((input) => input.toString()).filter((p) => p.length)
 
 	if (!inputs.length) throw new Error("no input WOF dbs provided")
@@ -124,7 +125,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 		await removePath(opts.output)
 	}
 
-// The output schema is replayed from the first input's sqlite_master so column ordering and affinity survive; `create table AS select` would flatten types to dynamic.
+	// The output schema is replayed from the first input's sqlite_master so column ordering
+	// and affinity survive; `create table AS select` would flatten types to dynamic.
 	const out = new DatabaseClient<BuildSchema>(opts.output)
 	let result: BuildSlimResult
 
@@ -157,7 +159,8 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			await copyFromSource(out, out, inputPath, countries, topLocalities, progress)
 		}
 
-		// `place_search` and `place_bbox` derive purely from `spr` + `names`, and the population aux table is not rebuilt because it was copied verbatim.
+		// `place_search` and `place_bbox` derive purely from `spr` + `names`, and the
+		// population aux table is not rebuilt because it was copied verbatim.
 		progress("fts", "building place_search / place_bbox on slim DB")
 
 		buildPlaceSearchFTS(out, {
@@ -165,13 +168,13 @@ export async function buildSlimWOFDatabase(opts: BuildSlimOptions): Promise<Buil
 			onProgress: (phase, name) => progress("fts", `${phase} ${name}`),
 		})
 
-		// `place_abbr` is materialized before `names` is dropped and always created, even empty, so the resolver can query it unconditionally.
+		// `place_abbr` is materialized before `names` is dropped and always created,
+		// even empty, so the resolver can query it unconditionally.
 		progress("place_abbr", "materializing region abbreviations")
 		out.exec(`CREATE TABLE IF NOT EXISTS place_abbr (id INTEGER NOT NULL, abbr TEXT NOT NULL)`)
 		out.exec(`INSERT INTO place_abbr (id, abbr) SELECT id, name FROM names WHERE language = 'abbr'`)
 		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_abbr ON place_abbr (abbr COLLATE NOCASE)`)
 		out.exec(`CREATE INDEX IF NOT EXISTS place_abbr_by_id ON place_abbr (id)`)
-
 
 		const namesRows = countRows(out, "names")
 
@@ -219,7 +222,8 @@ async function copyFromSource(
 	topLocalities: number,
 	progress: NonNullable<BuildSlimOptions["onProgress"]>
 ): Promise<void> {
-	// A fresh scratch copy is attached so read-only WOF distributions get the writable journal they need without mutating the canonical files.
+	// A fresh scratch copy is attached so read-only WOF distributions get the writable
+	// journal they need without mutating the canonical files.
 	await using tmpScratch = await temporaryDirectory("mailwoman-slim-src-")
 	const scratchPath = tmpScratch.path("src.db")
 
@@ -228,13 +232,12 @@ async function copyFromSource(
 	out.exec(`ATTACH DATABASE '${scratchPath.toString().replaceAll("'", "''")}' AS src;`)
 
 	try {
-
 		const srcHasPopulation = Boolean(
 			out.prepare(`SELECT 1 FROM src.sqlite_master WHERE type = 'table' AND name = '${PLACE_POPULATION_TABLE}'`).get()
 		)
 
-		// Declaring `src.spr` etc. in `BuildSchema` lets Kysely column-check the cross-schema select; SQLite reads the dotted identifier as a schema qualifier.
-
+		// Declaring `src.spr` etc. in `BuildSchema` lets Kysely column-check the cross-schema
+		// select; SQLite reads the dotted identifier as a schema qualifier.
 
 		progress("country", `${inputPath}: ancestor placetypes in (${countries.join(",")})`)
 
@@ -252,7 +255,8 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-		// Localities without a population row still qualify; without the aux table, fall back to a deterministic id ordering.
+		// Localities without a population row still qualify; without the aux table,
+		// fall back to a deterministic id ordering.
 		progress("locality", `${inputPath}: top-${topLocalities} localities by population`)
 
 		await kysely
@@ -272,7 +276,6 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-
 		progress("postcode", `${inputPath}: all postcodes`)
 
 		await kysely
@@ -289,7 +292,6 @@ async function copyFromSource(
 			.onConflict((oc) => oc.doNothing())
 			.execute()
 
-
 		progress("names", `${inputPath}: names rows for selected IDs`)
 
 		await kysely
@@ -297,7 +299,6 @@ async function copyFromSource(
 			.expression((eb) => eb.selectFrom("src.names").selectAll().where("id", "in", eb.selectFrom("spr").select("id")))
 			.onConflict((oc) => oc.doNothing())
 			.execute()
-
 
 		if (srcHasPopulation) {
 			progress("place_population", `${inputPath}: population rows for selected IDs`)
@@ -311,7 +312,8 @@ async function copyFromSource(
 				.execute()
 		}
 
-		// `ancestors` is intentionally not copied, so the derived `coincident_roles` table is carried and filtered to surviving spr ids.
+		// `ancestors` is intentionally not copied, so the derived `coincident_roles`
+		// table is carried and filtered to surviving spr ids.
 		const relationSchema = out
 			.prepare(`SELECT sql FROM src.sqlite_master WHERE type = 'table' AND name = 'coincident_roles'`)
 			.get() as { sql?: string } | undefined

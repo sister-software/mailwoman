@@ -15,8 +15,8 @@ export const StorageEffect = {
 	 */
 	Read: "read",
 	/**
-	 * Writes host state outside the checkout — partition tables, filesystems, `/etc/fstab`, mounts — and
-	 * requires root, so it is reachable only after the CLI wrapper has elevated.
+	 * Writes host state outside the checkout — partition tables, filesystems, `/etc/fstab`,
+	 * mounts — and requires root, so it is reachable only after the CLI wrapper has elevated.
 	 */
 	HostWrite: "host-write",
 } as const
@@ -28,8 +28,8 @@ export type StorageEffect = (typeof StorageEffect)[keyof typeof StorageEffect]
  */
 export interface StorageContext extends OperationContext {
 	/**
-	 * Whether the current process holds root, supplied by the caller rather than read from `process`
-	 * so a unit test can drive both paths.
+	 * Whether the current process holds root, supplied by the caller rather than read
+	 * from `process` so a unit test can drive both paths.
 	 */
 	root: boolean
 }
@@ -42,8 +42,8 @@ export type StorageOperation<In = unknown, Out = unknown> = Operation<StorageEff
 export const defineOperation = operationDefiner<StorageEffect, StorageContext>()
 
 /**
- * Throw unless the process holds root, so a missing elevation is a clear error rather than a half-applied
- * partition table.
+ * Throw unless the process holds root, so a missing elevation is a clear error
+ * rather than a half-applied partition table.
  */
 export function assertRoot(context: StorageContext, operationID: string): void {
 	if (context.root) return

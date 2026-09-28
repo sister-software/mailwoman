@@ -31,7 +31,8 @@ import { localeToCountry } from "#country-scope"
 import { readCommittedModel } from "#observations/committed-model"
 
 /**
- * The only relation this route reads, with construction failing when the model does not define it so a missing relation is never reported as an absence of affordances.
+ * The only relation this route reads, with construction failing when the model does not
+ * define it so a missing relation is never reported as an absence of affordances.
  */
 const AFFORDS_RELATION = "affords"
 
@@ -41,7 +42,8 @@ const AFFORDS_RELATION = "affords"
 const POI_TAXONOMY_VOCABULARY = "poi-taxonomy"
 
 /**
- * One firing of the route, recorded beside the answer with the provenance of each link from phrase to POI category.
+ * One firing of the route, recorded beside the answer with the provenance of
+ * each link from phrase to POI category.
  */
 export interface SemanticObservation {
 	/**
@@ -53,7 +55,8 @@ export interface SemanticObservation {
 	phraseLexiconVersion: string
 	phraseProvenance: SourceProvenance
 	/**
-	 * The record that attests the phrase itself, explaining why the phrase refers to the activity rather than why a concept affords it.
+	 * The record that attests the phrase itself, explaining why the phrase refers to
+	 * the activity rather than why a concept affords it.
 	 */
 	phraseAttestation: {
 		kind: string
@@ -68,7 +71,8 @@ export interface SemanticObservation {
 	 */
 	declaredLocales: string[] | null
 	/**
-	 * The country from the caller's locale, or `null`; the assertion's country scope is tested against the resolved anchor's country instead.
+	 * The country from the caller's locale, or `null`; the assertion's country scope
+	 * is tested against the resolved anchor's country instead.
 	 */
 	localeCountry: string | null
 	activity: string
@@ -94,14 +98,16 @@ export interface SemanticObservation {
 	 */
 	categoryID: string
 	/**
-	 * The number of mapped entity kinds the activity reached, with each reached kind getting its own observation carrying the same count.
+	 * The number of mapped entity kinds the activity reached, with each reached kind
+	 * getting its own observation carrying the same count.
 	 */
 	mappedKindCount: number
 	modelVersion: string
 }
 
 /**
- * Identifies the model and lexicon a route was built from and the categories it can reach, recorded in receipts so a run with the route can be told apart from one where it was silently missing.
+ * Identifies the model and lexicon a route was built from and the categories it can reach, recorded
+ * in receipts so a run with the route can be told apart from one where it was silently missing.
  */
 export interface SemanticRouteIdentity {
 	phraseLexiconID: string
@@ -119,12 +125,14 @@ export interface SemanticRouteIdentity {
  */
 export interface SemanticObservationRoute {
 	/**
-	 * Matches a phrase against the lexicon, returning `[]` for a phrase that does not end in a declared phrase admitted by the locale.
+	 * Matches a phrase against the lexicon, returning `[]` for a phrase that does
+	 * not end in a declared phrase admitted by the locale.
 	 */
 	lookup: POIPhraseLookup
 	identity: SemanticRouteIdentity
 	/**
-	 * Returns the observations recorded since the last call, deduplicated and cleared, because one query calls the lookup several times over the input and its anchor prefixes.
+	 * Returns the observations recorded since the last call, deduplicated and cleared,
+	 * because one query calls the lookup several times over the input and its anchor prefixes.
 	 */
 	takeObservations: () => SemanticObservation[]
 }
@@ -156,7 +164,8 @@ interface ReachedKind {
 }
 
 /**
- * Returns the entity kinds that assert `affords` for the activity and map into a POI category, sorted by concept ID for stability only, with country scope applied later by the intent stage.
+ * Returns the entity kinds that assert `affords` for the activity and map into a POI category,
+ * sorted by concept ID for stability only, with country scope applied later by the intent stage.
  */
 function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKind[] {
 	const mappings = new Map<string, ExternalMappingRecord>()
@@ -187,7 +196,8 @@ function reachKinds(model: CompiledGeographicModel, activity: string): ReachedKi
 }
 
 /**
- * Returns one message per problem found checking a lexicon against a model, because each would make a phrase match silently and produce no category, so construction fails on any.
+ * Returns one message per problem found checking a lexicon against a model, because each
+ * would make a phrase match silently and produce no category, so construction fails on any.
  */
 function auditRoute(
 	model: CompiledGeographicModel,
@@ -238,7 +248,8 @@ function observationKey(observation: SemanticObservation): string {
 }
 
 /**
- * Returns the attestation kind and reference, using the base entry where a `derived-form` attestation refers to it.
+ * Returns the attestation kind and reference, using the base entry where a
+ * `derived-form` attestation refers to it.
  */
 function attestationOf(entry: ActivityPhraseEntry): { kind: string; reference: string } {
 	const { attestation } = entry
@@ -328,7 +339,8 @@ export async function createSemanticObservationRoute(
 				kind: "category",
 				categoryID: String(mapping.externalID),
 				matchedPhrase: declared.entry.phrase,
-				// The confidence selects a query kind and never orders candidates: 1 for an unscoped phrase or an exact locale match, half that when only the language matches.
+				// The confidence selects a query kind and never orders candidates: 1 for an unscoped
+				// phrase or an exact locale match, half that when only the language matches.
 				confidence: localeMatch.confidence,
 				searchAsSet: true,
 				// The intent stage applies the country scope after it parses the anchor.

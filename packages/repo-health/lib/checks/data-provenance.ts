@@ -27,8 +27,8 @@ const ARTIFACT_EXTENSIONS: ReadonlySet<string> = new Set([".json", ".jsonl", ".c
 const DOCUMENTATION_FILES: ReadonlySet<string> = new Set(["PROVENANCE.md", "README.md", "LICENSE.md", "LICENSE"])
 
 /**
- * The names of the directories committed directly inside `directory`, derived from the tracked-file list so an
- * untracked scratch directory a build left behind is not reported as undocumented.
+ * The names of the directories committed directly inside `directory`, derived from the tracked-file
+ * list so an untracked scratch directory a build left behind is not reported as undocumented.
  */
 function immediateSubdirectories(trackedFiles: readonly string[], directory: string): string[] {
 	const prefix = `${directory}/`
@@ -49,8 +49,8 @@ function immediateSubdirectories(trackedFiles: readonly string[], directory: str
 }
 
 /**
- * Reads every package's `data` directory that already carries a `PROVENANCE.md` and reports each artifact the
- * file does not name.
+ * Reads every package's `data` directory that already carries a `PROVENANCE.md`
+ * and reports each artifact the file does not name.
  */
 export const dataProvenanceCheck: RepoCheck = {
 	id: "data-provenance",

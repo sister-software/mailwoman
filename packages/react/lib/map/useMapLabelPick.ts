@@ -10,17 +10,20 @@ import { useEffect, useEffectEvent } from "react"
 import type { MapInstance, MapLayerMouseEvent } from "react-map-gl/maplibre"
 
 /**
- * The protomaps label layers (`<theme>_label`, `places_*`); other layers are geometry rather than readable place names.
+ * The protomaps label layers (`<theme>_label`, `places_*`); other layers are geometry
+ * rather than readable place names.
  */
 const LABEL_LAYER = /_label|^places_/
 
 /**
- * Properties a label carries its text under, in trust order; `name` is protomaps' own, and the localized variants appear on script-specific styles.
+ * Properties a label carries its text under, in trust order; `name` is protomaps' own,
+ * and the localized variants appear on script-specific styles.
  */
 const NAME_KEYS = ["name", "name:en", "name_en"] as const
 
 /**
- * The style's label layer ids; an empty result must stay unqueried, since an empty `layers` option is not the same as an absent one in `queryRenderedFeatures`.
+ * The style's label layer ids; an empty result must stay unqueried, since an empty
+ * `layers` option is not the same as an absent one in `queryRenderedFeatures`.
  */
 function labelLayerIDs(map: MapInstance): string[] {
 	const layers = map.getStyle()?.layers ?? []
@@ -47,7 +50,8 @@ function labelNameAt(map: MapInstance, point: MapLayerMouseEvent["point"], layer
  * Routes clicks on map labels to `onPick` with the clicked label's own name.
  */
 export function useMapLabelPick(map: MapInstance | null, onPick: (name: string) => void): void {
-	// The subscription depends on the map alone; `onPick` is fresh every render, and `useEffectEvent` reads it without becoming a reactive dependency.
+	// The subscription depends on the map alone; `onPick` is fresh every render,
+	// and `useEffectEvent` reads it without becoming a reactive dependency.
 	const pick = useEffectEvent((name: string) => onPick(name))
 
 	useEffect(() => {

@@ -23,22 +23,22 @@ import { DebugFrame, mapPaneCellSize, outputPaneCapacity, type DebugData, type D
 
 export interface DebugSessionAppProps {
 	/**
-	 * The address the command was invoked with, geocoded once at mount and used as the input row's
-	 * starting text.
+	 * The address the command was invoked with, geocoded once at mount
+	 * and used as the input row's starting text.
 	 */
 	initialInput: string
 	options: GeocodeCommandOptions
 }
 
 /**
- * `loading` covers session open and the first geocode; `busy` is a re-run with a result already on
- * screen; `fatal` is terminal and reachable only from `loading`.
+ * `loading` covers session open and the first geocode; `busy` is a re-run with a result
+ * already on screen; `fatal` is terminal and reachable only from `loading`.
  */
 type SessionPhase = "loading" | "ready" | "busy" | "fatal"
 
 /**
- * What the map pane is looking at; a null viewport follows the result, re-derived by
- * {@link resultViewport} so a fresh query re-centers.
+ * What the map pane is looking at; a null viewport follows the result, re-derived
+ * by {@link resultViewport} so a fresh query re-centers.
  */
 interface Viewport {
 	centerLon: number
@@ -47,8 +47,8 @@ interface Viewport {
 }
 
 /**
- * The session's long-lived handles; `renderer` is null when there is no usable tile archive, and
- * `mapNote` is what the map pane shows in its place.
+ * The session's long-lived handles; `renderer` is null when there is no usable tile archive,
+ * and `mapNote` is what the map pane shows in its place.
  */
 interface Resources {
 	session: GeocodeSession
@@ -58,8 +58,8 @@ interface Resources {
 }
 
 /**
- * One geocode plus the query text that produced it; the input row renders `input`, not the
- * geocoder's own `result.input` echo.
+ * One geocode plus the query text that produced it; the input row renders `input`,
+ * not the geocoder's own `result.input` echo.
  */
 interface SessionRun extends GeocodeRun {
 	input: string
@@ -71,20 +71,19 @@ const NO_TILES_NOTE = "no tiles: set $MAILWOMAN_TILES or --tiles"
 const UNRESOLVED_NOTE = "unresolved: no coordinate"
 
 /**
- * One arrow keypress in map-tui device pixels; the renderer's grid is 2 device pixels per braille
- * cell across and 4 down.
+ * One arrow keypress in map-tui device pixels; the renderer's grid is 2 device
+ * pixels per braille cell across and 4 down.
  */
 const PAN_STEP_PIXELS = 12
 
 /**
- * Web-Mercator's latitude cutoff; panning past it returns a non-finite world pixel, so the center
- * is clamped.
+ * Web-Mercator's latitude cutoff; panning past it returns a non-finite world pixel,
+ * so the center is clamped.
  */
 const MAX_MERCATOR_LATITUDE = 85.05112878
 
 /**
- * The zoom ceiling used when no tile archive is open; the bound only has to keep the stored
- * viewport sane.
+ * The zoom ceiling used when no tile archive is open; the bound only has to keep the stored viewport sane.
  */
 const FALLBACK_MAX_ZOOM = 22
 
@@ -110,8 +109,8 @@ function clampViewport(view: Viewport): Viewport {
 }
 
 /**
- * Shift the center by device pixels at the current zoom, so a keypress moves the same number of
- * cells whatever the scale.
+ * Shift the center by device pixels at the current zoom, so a keypress moves
+ * the same number of cells whatever the scale.
  */
 function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 	const world = lonLatToWorldPx(view.centerLon, view.centerLat, view.zoom)
@@ -121,8 +120,8 @@ function pannedViewport(view: Viewport, dx: number, dy: number): Viewport {
 }
 
 /**
- * Zoom by whole steps, clamped to the archive's own range so the stored zoom matches the one
- * `MapRenderer` renders at.
+ * Zoom by whole steps, clamped to the archive's own range so the stored zoom
+ * matches the one `MapRenderer` renders at.
  */
 function zoomedViewport(view: Viewport, delta: number, source: TileSource | null): Viewport {
 	return {
@@ -132,12 +131,12 @@ function zoomedViewport(view: Viewport, delta: number, source: TileSource | null
 }
 
 /**
- * Open the session and tile archive and geocode the starting query; tile trouble degrades to a
- * note while anything else throws.
+ * Open the session and tile archive and geocode the starting query; tile trouble
+ * degrades to a note while anything else throws.
  */
 async function openResources(options: GeocodeCommandOptions): Promise<Resources> {
-	// `trace: true` is the debug view's own opt-in; it costs one extra decode per input that no
-	// other caller of the session should pay for.
+	// `trace: true` is the debug view's own opt-in; it costs one extra decode per
+	// input that no other caller of the session should pay for.
 	const session = await createGeocodeSession({ ...options, trace: true })
 	const tilesPath = await resolveTilesPath(options.tiles)
 
@@ -148,8 +147,8 @@ async function openResources(options: GeocodeCommandOptions): Promise<Resources>
 
 		return { session, source, renderer: new MapRenderer(source), mapNote: null }
 	} catch (error) {
-		// A corrupt or unreadable archive costs the map pane rather than the session, whose parse
-		// and resolution are still the answer the user came for.
+		// A corrupt or unreadable archive costs the map pane rather than the session,
+		// whose parse and resolution are still the answer the user came for.
 		return { session, source: null, renderer: null, mapNote: `tiles unavailable: ${messageOf(error)}` }
 	}
 }
@@ -160,8 +159,8 @@ function closeResources(resources: Resources | null): void {
 	resources.session[Symbol.dispose]()
 
 	void resources.source?.[Symbol.asyncDispose]().catch(() => {
-		// Teardown is best-effort: this runs after the terminal is restored and while the process
-		// exits, so a rejected close has nobody left to tell.
+		// Teardown is best-effort: this runs after the terminal is restored and
+		// while the process exits, so a rejected close has nobody left to tell.
 	})
 }
 
@@ -187,8 +186,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 	const [viewport, setViewport] = useState<Viewport | null>(null)
 	const [scrollOffset, setScrollOffset] = useState(0)
 
-	// Monotonic request IDs: every async completion below discards its result when a newer
-	// request has started.
+	// Monotonic request IDs: every async completion below discards its result
+	// when a newer request has started.
 	const frameRequestRef = useRef(0)
 	const runRequestRef = useRef(0)
 
@@ -240,8 +239,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		return () => {
 			disposed = true
 
-			// Symmetric with the frame effect's cleanup: an in-flight geocode that settles after
-			// teardown finds a counter it can no longer match.
+			// Symmetric with the frame effect's cleanup: an in-flight geocode that settles
+			// after teardown finds a counter it can no longer match.
 			runRequestRef.current++
 
 			closeResources(opened)
@@ -266,8 +265,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [stdout])
 
-	// Exiting with the error rather than rendering it: Ink restores the primary buffer and
-	// rejects `waitUntilExit()`, where `command.tsx` prints the message.
+	// Exiting with the error rather than rendering it: Ink restores the primary buffer
+	// and rejects `waitUntilExit()`, where `command.tsx` prints the message.
 	useEffect(() => {
 		if (phase !== "fatal") return
 
@@ -296,8 +295,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		const violation = debugSizeFloorViolation(size.columns, size.rows)
 
 		if (violation) {
-			// A live terminal below the floor is the user's to fix by resizing; `mapPaneCellSize`'s row
-			// math is already non-positive here and would reach `MapRenderer` as a `RangeError`.
+			// A live terminal below the floor is the user's to fix by resizing; `mapPaneCellSize`'s
+			// row math is already non-positive here and would reach `MapRenderer` as a `RangeError`.
 			setFrame(null)
 			setMapNote(`terminal ${violation}`)
 
@@ -340,8 +339,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		}
 	}, [run, viewport, resources, size.columns, size.rows])
 
-	// Stable across a keystroke so the memoized input field is too; a fresh handler identity
-	// would drag the whole frame with it.
+	// Stable across a keystroke so the memoized input field is too; a fresh handler
+	// identity would drag the whole frame with it.
 	const submit = useCallback(
 		(value: string): void => {
 			const query = value.trim()
@@ -349,8 +348,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 			if (!resources || phase === "busy" || !query) return
 
 			setPhase("busy")
-			// The previous attempt's failure is stale the moment a new one starts; leaving it up
-			// through the busy window reads as if this query had already failed.
+			// The previous attempt's failure is stale the moment a new one starts;
+			// leaving it up through the busy window reads as if this query had already failed.
 			setErrorNote(null)
 
 			const requestID = ++runRequestRef.current
@@ -360,8 +359,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 					if (requestID !== runRequestRef.current) return
 
 					setRun({ input: query, ...reran })
-					// A new result re-centers the map and re-anchors the output pane, so a pan against
-					// the previous answer cannot leave the marker off screen.
+					// A new result re-centers the map and re-anchors the output pane,
+					// so a pan against the previous answer cannot leave the marker off screen.
 					setViewport(null)
 					setScrollOffset(0)
 					setPhase("ready")
@@ -416,8 +415,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 
 		if (!key.downArrow) return
 
-		// Only the down arrow needs the bound, clamped against the pane's own lines and capacity so
-		// the scroll cannot run past what the pane shows.
+		// Only the down arrow needs the bound, clamped against the pane's own lines
+		// and capacity so the scroll cannot run past what the pane shows.
 		const lineCount = run
 			? outputLines({
 					result: run.result,
@@ -464,8 +463,8 @@ export function DebugSessionApp({ initialInput, options }: DebugSessionAppProps)
 		{ isActive: phase === "ready" || phase === "busy" }
 	)
 
-	// Memoized because `DebugFrame`'s panes are memoized; the scroll offset deliberately rides
-	// its own prop so scrolling leaves `data` identical.
+	// Memoized because `DebugFrame`'s panes are memoized; the scroll offset deliberately
+	// rides its own prop so scrolling leaves `data` identical.
 	const data = useMemo<DebugData | null>(
 		() =>
 			run

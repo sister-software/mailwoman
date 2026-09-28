@@ -11,8 +11,8 @@ import type { GeocodeResult } from "#geocode/result"
 import type { GeocodeTrace } from "#geocode/session"
 
 /**
- * One rendered row of the output pane; `tag` colors the label from the shared component palette and
- * `confidence` draws the demo's confidence chip.
+ * One rendered row of the output pane; `tag` colors the label from the shared component
+ * palette and `confidence` draws the demo's confidence chip.
  */
 export interface OutputLine {
 	/**
@@ -32,15 +32,15 @@ export interface OutputLine {
 	 */
 	badge?: string
 	/**
-	 * Badge background, carried here rather than derived at render time because only this module
-	 * knows an `admin` tier is a weaker answer than a rooftop.
+	 * Badge background, carried here rather than derived at render time because only
+	 * this module knows an `admin` tier is a weaker answer than a rooftop.
 	 */
 	badgeColor?: string
 }
 
 /**
- * Six decimals ≈ 0.1 m, finer than any tier's uncertainty; trailing zeros are trimmed so a
- * four-decimal centroid still prints as four.
+ * Six decimals ≈ 0.1 m, finer than any tier's uncertainty; trailing zeros are trimmed
+ * so a four-decimal centroid still prints as four.
  */
 function formatCoordinate(lat: number | null | undefined, lon: number | null | undefined): string {
 	if (lat == null || lon == null) return "unresolved"
@@ -49,16 +49,16 @@ function formatCoordinate(lat: number | null | undefined, lon: number | null | u
 }
 
 /**
- * Milliseconds at one decimal, enough to tell a 3 ms decode from a 40 ms resolve without implying
- * microseconds.
+ * Milliseconds at one decimal, enough to tell a 3 ms decode from a 40 ms
+ * resolve without implying microseconds.
  */
 function formatMsFixed(ms: number): string {
 	return `${ms.toFixed(1)} ms`
 }
 
 /**
- * Whether the per-span script is worth printing: the tree holds more than one writing system, with
- * `Zyyy` excluded because a house number or postcode answers it.
+ * Whether the per-span script is worth printing: the tree holds more than one writing system,
+ * with `Zyyy` excluded because a house number or postcode answers it.
  */
 function scriptsWorthShowing(tree: AddressTree): boolean {
 	const scripts = new Set<string>()
@@ -73,8 +73,8 @@ function scriptsWorthShowing(tree: AddressTree): boolean {
 }
 
 /**
- * Depth-first, parents before children, in span order, with children indented so a street's
- * prefix/suffix stay visibly subordinate.
+ * Depth-first, parents before children, in span order, with children indented
+ * so a street's prefix/suffix stay visibly subordinate.
  */
 function componentLines(tree: AddressTree): OutputLine[] {
 	const lines: OutputLine[] = []
@@ -110,13 +110,13 @@ export interface OutputLinesInput {
 	 */
 	trace?: Pick<GeocodeTrace, "kind">
 	/**
-	 * Per-phase wall clock from the session; absent on a caller that didn't measure, the timing
-	 * section is then omitted rather than showing zeros.
+	 * Per-phase wall clock from the session; absent on a caller that didn't measure,
+	 * the timing section is then omitted rather than showing zeros.
 	 */
 	timing?: Record<string, number>
 	/**
-	 * A failed re-run's message, rendered first and red above a result that is deliberately still
-	 * the previous one.
+	 * A failed re-run's message, rendered first and red above a result that is
+	 * deliberately still the previous one.
 	 */
 	errorNote?: string | null
 }
@@ -154,8 +154,8 @@ export function outputLines(input: OutputLinesInput): OutputLine[] {
 		}
 	}
 
-	// Advisories, never a second opinion about the answer, carried on the result so they
-	// survive even when there is no kind verdict above them.
+	// Advisories, never a second opinion about the answer, carried on the result
+	// so they survive even when there is no kind verdict above them.
 	for (const marker of result.intent_markers ?? []) {
 		lines.push({ kind: "field", label: `  ${marker.code}`, value: marker.mechanism, detail: marker.message })
 	}

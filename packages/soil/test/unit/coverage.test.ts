@@ -28,20 +28,20 @@ afterAll(() => fixtures.disposeAsync())
 const { lat, lon } = FIXTURE_ORIGIN
 
 /**
- * Half the width of each fixture county, wide enough that resolution-6 cells fit wholly inside one, so a
- * per-area build is not vacuously empty.
+ * Half the width of each fixture county, wide enough that resolution-6 cells fit
+ * wholly inside one, so a per-area build is not vacuously empty.
  */
 const COUNTY_HALF_WIDTH = 0.9
 
 /**
- * The shared edge the two fixture counties tile along; cells straddling it are interior to the union and to
- * neither county alone.
+ * The shared edge the two fixture counties tile along; cells straddling it are
+ * interior to the union and to neither county alone.
  */
 const SHARED_EDGE_LON = lon + 5 * FIXTURE_SIDE
 
 /**
- * How far the second delineation band sits from the shared edge, beyond a resolution-6 cell's ~0.06°, so a
- * single county still yields coverage rather than zero.
+ * How far the second delineation band sits from the shared edge, beyond a resolution-6
+ * cell's ~0.06°, so a single county still yields coverage rather than zero.
  */
 const INTERIOR_BAND_OFFSET = 0.3
 
@@ -120,8 +120,8 @@ function coverageCellCount(databasePath: PathBuilder): number {
 
 describe("the coverage footprint over adjacent survey areas", () => {
 	it("covers the shared border, which a per-area interior test drops", async () => {
-		// Two counties tile along `SHARED_EDGE_LON`, each carrying a band of delineations against that edge, so the
-		// cells straddling it are reached from both sides.
+		// Two counties tile along `SHARED_EDGE_LON`, each carrying a band of delineations
+		// against that edge, so the cells straddling it are reached from both sides.
 		const [westOnly, eastOnly, both] = await Promise.all([
 			build([westCounty()]).then(coverageCellCount),
 			build([eastCounty()]).then(coverageCellCount),
@@ -131,8 +131,8 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		expect(westOnly).toBeGreaterThan(0)
 		expect(eastOnly).toBeGreaterThan(0)
 
-		// The excess is the border strip: cells wholly inside the union and neither county alone, which a per-area
-		// test cannot produce however many areas it is given.
+		// The excess is the border strip: cells wholly inside the union and neither county alone,
+		// which a per-area test cannot produce however many areas it is given.
 		expect(both).toBeGreaterThan(westOnly + eastOnly)
 	})
 
@@ -141,8 +141,8 @@ describe("the coverage footprint over adjacent survey areas", () => {
 		const lookup = new SoilCapabilityLookup({ databasePath })
 
 		try {
-			// Well outside the single county built, where there is no coverage row — the truthful answer rather than a
-			// low capability reading.
+			// Well outside the single county built, where there is no coverage row —
+			// the truthful answer rather than a low capability reading.
 			const reading = lookup.lookup(lat + 5, lon + 5)
 
 			expect(reading.kind).toBe(SoilReadingKind.Unknown)

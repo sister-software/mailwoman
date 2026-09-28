@@ -40,8 +40,8 @@ export interface UseParsePipeline {
 	 */
 	selectedCandidate: ResolvedPlaceView | null
 	/**
-	 * Parse and resolve the current text, safe to bind to a form's `onSubmit`; pass `query` to submit a value
-	 * the field has not re-rendered with yet.
+	 * Parse and resolve the current text, safe to bind to a form's `onSubmit`;
+	 * pass `query` to submit a value the field has not re-rendered with yet.
 	 */
 	submit: (query?: string) => Promise<void>
 	/**
@@ -61,7 +61,8 @@ export function useParsePipeline({ runtime, defaultText }: UseParsePipelineOptio
 	const [selectedCandidateIndex, setSelectedCandidateIndex] = useState(0)
 	const [parseError, setParseError] = useState<string | null>(null)
 
-	// `setText` does not reach this closure before the call after it runs, so a caller that already knows the query passes it.
+	// `setText` does not reach this closure before the call after it runs,
+	// so a caller that already knows the query passes it.
 	const submit = useCallback(
 		async (query?: string) => {
 			if (!runtime.ready || busy) return

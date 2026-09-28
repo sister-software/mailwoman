@@ -57,7 +57,8 @@ function splitAnchor(text: string): { localityText: string; regionText?: string 
 }
 
 /**
- * Resolves an anchor such as "Springfield, IL" to a locality center using only the admin candidate gazetteer.
+ * Resolves an anchor such as "Springfield, IL" to a locality center using
+ * only the admin candidate gazetteer.
  *
  * @returns `null` when no place resolves.
  */

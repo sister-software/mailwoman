@@ -20,8 +20,8 @@ export const H3_MAX_RESOLUTION = 15
 export type H3Cell = Tagged<string, "H3Cell">
 
 /**
- * Is `value` a real H3 cell index, delegating to h3-js because the hex surface shape is
- * necessary but not sufficient.
+ * Is `value` a real H3 cell index, delegating to h3-js because the hex surface
+ * shape is necessary but not sufficient.
  */
 export function isH3Cell(value: string): value is H3Cell {
 	return isValidCell(value)
@@ -33,8 +33,7 @@ export function isH3Cell(value: string): value is H3Cell {
 export type H3CellShort = Tagged<string, "H3CellShort">
 
 /**
- * Number of hex characters in the short form: 52 bits, a 7-bit base cell followed by
- * fifteen 3-bit digits.
+ * Number of hex characters in the short form: 52 bits, a 7-bit base cell followed by fifteen 3-bit digits.
  */
 const SHORT_CELL_HEX_LENGTH = 13
 
@@ -44,8 +43,8 @@ const SHORT_CELL_HEX_LENGTH = 13
 const SHORT_CELL_MASK = 0xf_ff_ff_ff_ff_ff_ffn
 
 /**
- * Strip the mode and resolution nibbles off a full H3 cell index, keeping the base cell and the
- * whole digit path, zero-padded to a fixed 13 characters so hex order matches integer order.
+ * Strip the mode and resolution nibbles off a full H3 cell index, keeping the base cell
+ * and the whole digit path, zero-padded to a fixed 13 characters so hex order matches integer order.
  */
 export function shortenH3Cell(cell: H3Cell): H3CellShort {
 	const cellBigInt = BigInt(`0x${cell}`)
@@ -55,8 +54,8 @@ export function shortenH3Cell(cell: H3Cell): H3CellShort {
 }
 
 /**
- * Rebuild a full H3 cell index from a short cell captured at `resolution`, throwing when the
- * resolution is out of range or the pair does not name a valid cell.
+ * Rebuild a full H3 cell index from a short cell captured at `resolution`, throwing
+ * when the resolution is out of range or the pair does not name a valid cell.
  */
 export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOLUTION): H3Cell {
 	if (!Number.isInteger(resolution) || resolution < 0 || resolution > H3_MAX_RESOLUTION) {
@@ -83,24 +82,24 @@ export function expandH3Cell(h3CellShort: H3CellShort, resolution = H3_MAX_RESOL
 }
 
 /**
- * The full H3 index for a short cell held as an integer, stored at `resolution`, through
- * {@link expandH3Cell} so an invalid pair throws rather than reaching `compactCells`.
+ * The full H3 index for a short cell held as an integer, stored at `resolution`,
+ * through {@link expandH3Cell} so an invalid pair throws rather than reaching `compactCells`.
  */
 export function expandShortCellInt(shortCell: number, resolution: number): H3Cell {
 	return expandH3Cell(shortCell.toString(16).padStart(SHORT_CELL_HEX_LENGTH, "0") as H3CellShort, resolution)
 }
 
 /**
- * Pack an H3 cell into the short-cell integer used as a clustered B-tree key across layer
- * databases — 52 bits, inside `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column.
+ * Pack an H3 cell into the short-cell integer used as a clustered B-tree key across layer databases —
+ * 52 bits, inside `Number.MAX_SAFE_INTEGER` and SQLite's signed 64-bit integer column.
  */
 export function shortCellToInt(cell: H3Cell): number {
 	return Number(BigInt(`0x${shortenH3Cell(cell)}`))
 }
 
 /**
- * The one resolution a set of stored short cells was captured at, recovered by keeping the
- * resolution at which a short cell expands to a valid index.
+ * The one resolution a set of stored short cells was captured at, recovered by keeping
+ * the resolution at which a short cell expands to a valid index.
  */
 export function recoverShortCellResolution(cells: readonly number[], context = "layer coverage"): number {
 	if (!cells.length) {

@@ -15,7 +15,8 @@ import { assignSyntheticIDs, foldedPlacetype, prepareInserts } from "mailwoman/g
 import { describe, expect, test } from "vitest"
 
 /**
- * Real GERS ids are opaque 32-char hex strings; the shape matters only in that the hash sees the whole string.
+ * Real GERS ids are opaque 32-char hex strings; the shape matters only in that
+ * the hash sees the whole string.
  */
 const GERS = [
 	"08f2ab12c4d5e6f708192a3b4c5d6e7f",
@@ -39,8 +40,8 @@ describe("assignSyntheticIDs", () => {
 	})
 
 	test("a place's id does not move when OTHER places join or leave the build", () => {
-		// An Overture release that adds divisions must not renumber the ones already shipped; only a
-		// collision can move an existing id, and then only its immediate neighbours.
+		// An Overture release that adds divisions must not renumber the ones already shipped;
+		// only a collision can move an existing id, and then only its immediate neighbours.
 		const before = assignSyntheticIDs(GERS)
 		const after = assignSyntheticIDs([...GERS, "08f6ef56a8b9cadb3c4d5e6f7a819203", "08f70f67b9cadbec4d5e6f7a81920314"])
 
@@ -57,8 +58,8 @@ describe("assignSyntheticIDs", () => {
 
 		for (const id of ids) {
 			expect(id).toBeGreaterThanOrEqual(OVERTURE_ID_BASE)
-			// The GeoNames alias fold owns everything from 9e12 up, and overlapping it would make one
-			// source's rows silently readable as the other's.
+			// The GeoNames alias fold owns everything from 9e12 up, and overlapping it would
+			// make one source's rows silently readable as the other's.
 			expect(id).toBeLessThan(9_000_000_000_000)
 		}
 	})
@@ -109,8 +110,8 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 		expect(db.prepare("SELECT population FROM place_population WHERE id = ?").get(id)).toEqual({ population: 1234 })
 		expect(db.prepare("SELECT name FROM names WHERE id = ?").get(id)).toEqual({ name: "Testville" })
 
-		// The Wikidata concordance must ride the same `wd:id` source the WOF ingest writes and the
-		// `gazetteer importance` join reads, so the predicate is asserted literally.
+		// The Wikidata concordance must ride the same `wd:id` source the WOF ingest writes
+		// and the `gazetteer importance` join reads, so the predicate is asserted literally.
 		expect(db.prepare("SELECT other_id FROM concordances WHERE id = ? AND other_source = 'wd:id'").get(id)).toEqual({
 			other_id: "Q140147",
 		})
@@ -132,15 +133,15 @@ describe("the bulk-write statements bind against the real unified schema", () =>
 
 describe("foldedPlacetype", () => {
 	test("Singapore's planning areas become boroughs, which a locality query already reaches", () => {
-		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never to `county`,
-		// so Singapore's planning areas are unreachable unless folded to borough.
+		// `PLACETYPE_FILTER_GROUPS.locality` expands to locality|borough|localadmin and never
+		// to `county`, so Singapore's planning areas are unreachable unless folded to borough.
 		expect(foldedPlacetype("county", "SG")).toBe("borough")
 		expect(foldedPlacetype("county", "sg")).toBe("borough")
 	})
 
 	test("leaves every other country's county alone, including the two that look like Singapore", () => {
-		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's are
-		// Doha zone numbers, so both clear a count test but would attest surfaces nobody writes.
+		// Kuwait's counties are underscore-joined ASCII names with Arabic on `locality`, and Qatar's
+		// are Doha zone numbers, so both clear a count test but would attest surfaces nobody writes.
 		expect(foldedPlacetype("county", "KW")).toBe("county")
 		expect(foldedPlacetype("county", "QA")).toBe("county")
 		expect(foldedPlacetype("county", "US")).toBe("county")

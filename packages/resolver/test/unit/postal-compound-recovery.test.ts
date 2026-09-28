@@ -109,7 +109,8 @@ describe("postal-compound recovery (#942)", () => {
 		expect(locality!.lat).toBeCloseTo(45.8, 1)
 		expect(locality!.metadata?.span_rescore).toBe(true)
 		expect(locality!.metadata?.rescore_postcode_verified).toBe(true)
-		// The postcode node stays undecorated when a locality was recovered: its medoid centroid is coarser than the village pin, and postcode-over-locality consumers must not trade down.
+		// The postcode node stays undecorated when a locality was recovered: its medoid centroid is
+		// coarser than the village pin, and postcode-over-locality consumers must not trade down.
 		const pc = out.roots.find((n) => n.tag === "postcode")
 
 		expect(pc?.placeID).toBeFalsy()
@@ -178,7 +179,8 @@ describe("postal-compound recovery (#942)", () => {
 })
 
 describe("#961 joint country recovery — the locale-default trap", () => {
-	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
+	// The joint pass probes spans unscoped and verifies each candidate against the postcode resolved in
+	// the candidate's own country — cross-country promotion only postcode-verified, never unrestricted.
 	it("recovers under a WRONG defaultCountry via the postcode-verified joint pass", async () => {
 		const resolver = createWOFResolver(await makeBackend())
 		const out = await resolver.resolveTree(failingTree(), { defaultCountry: "US" })

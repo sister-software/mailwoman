@@ -30,8 +30,9 @@ export interface PlanetaryMapProps {
 	selected: SelectedFeature | null
 	onSelect: (feature: SelectedFeature) => void
 	/**
-	 * The live map once react-map-gl has instantiated it, and `null` on unmount; the chrome outside this
-	 * component cannot reach the handle through `useMap()`, so the compass reads its direction from here.
+	 * The live map once react-map-gl has instantiated it, and `null` on unmount;
+	 * the chrome outside this component cannot reach the handle through `useMap()`,
+	 * so the compass reads its direction from here.
 	 */
 	onMapReady?: (map: ReturnType<MapRef["getMap"]> | null) => void
 }
@@ -39,8 +40,8 @@ export interface PlanetaryMapProps {
 export function PlanetaryMap({ config, selected, onSelect, onMapReady }: PlanetaryMapProps) {
 	const mapRef = useRef<MapRef>(null)
 
-	// The chrome outside this component cannot re-render from a ref, so the handle goes up to the parent as
-	// state.
+	// The chrome outside this component cannot re-render from a ref,
+	// so the handle goes up to the parent as state.
 	const publishMap = useCallback(
 		(event: { target: ReturnType<MapRef["getMap"]> }) => onMapReady?.(event.target),
 		[onMapReady]
@@ -61,8 +62,8 @@ export function PlanetaryMap({ config, selected, onSelect, onMapReady }: Planeta
 	// Read once: a viewport in the URL wins over the body's opening view for the first render only.
 	const initial = useMemo(() => viewportFromSearch(location.search) ?? config.initialView, [config])
 
-	// The deepest zoom the body's terrain archive carries, read from the live source once it resolves its
-	// TileJSON; the two bodies differ, so a constant clamp would over-zoom one of them.
+	// The deepest zoom the body's terrain archive carries, read from the live source once it
+	// resolves its TileJSON; the two bodies differ, so a constant clamp would over-zoom one of them.
 	const [maxTerrainZoom, setMaxTerrainZoom] = useState<number | undefined>(undefined)
 
 	useEffect(() => {

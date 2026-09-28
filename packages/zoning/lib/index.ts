@@ -111,8 +111,8 @@ export interface ZoningPlan {
 	validFrom: string | null
 	validTo: string | null
 	/**
-	 * The publisher's `CURRENT_PLAN` flag as published: `1` means not superseded, not that the plan is in
-	 * force today.
+	 * The publisher's `CURRENT_PLAN` flag as published: `1` means not superseded,
+	 * not that the plan is in force today.
 	 */
 	currentPlan: number
 }
@@ -306,8 +306,8 @@ export class ZoningLookup implements Disposable {
 
 		this.#selectCell = this.#database.prepare("SELECT area_id, containment FROM zoning_cell WHERE h3_cell = ?")
 
-		// Read without the ring blob: the bounding box rejects most polygons before the ray cast needs
-		// rings, and a whole cell never reads the blob.
+		// Read without the ring blob: the bounding box rejects most polygons before the
+		// ray cast needs rings, and a whole cell never reads the blob.
 		this.#selectArea = this.#database.prepare(
 			"SELECT area_id, jurisdiction_id, plan_id, local_code, local_description, local_code_url, crosswalk_code, " +
 				"crosswalk_scheme, crosswalk_description, crosswalk_rollup, provenance_grade, min_lat, min_lon, max_lat, max_lon " +

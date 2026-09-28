@@ -13,7 +13,8 @@ import { describe, expect, it } from "vitest"
 const TEXT = "3215 SE Clinton St"
 
 /**
- * A whole query shape carrying only the formats a case wants to state, built rather than cast so the annotated return type checks that a `format` name is one the detector can emit.
+ * A whole query shape carrying only the formats a case wants to state, built rather than cast
+ * so the annotated return type checks that a `format` name is one the detector can emit.
  */
 function queryShapeOf(knownFormats: GeocodeTrace["queryShape"]["knownFormats"] = []): GeocodeTrace["queryShape"] {
 	return {

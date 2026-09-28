@@ -24,14 +24,14 @@ import { trackedSourcePaths } from "#tracked-sources"
 const REGISTER = "docs/engineering/reference/runtime-flags.mdx"
 
 /**
- * A register that parses fewer flags than this means the parser matched no flag and every assertion below would
- * be vacuously true.
+ * A register that parses fewer flags than this means the parser matched no flag
+ * and every assertion below would be vacuously true.
  */
 const PLAUSIBLE_REGISTER_SIZE = 20
 
 /**
- * Register rows name their flag in leading backticks; a struck row (`~~`flag`~~`) is skipped as a record of
- * something that no longer exists.
+ * Register rows name their flag in leading backticks; a struck row (`~~`flag`~~`)
+ * is skipped as a record of something that no longer exists.
  */
 export function registerFlags(markdown: string): string[] {
 	const flags = new Set<string>()
@@ -51,14 +51,14 @@ export function registerFlags(markdown: string): string[] {
 }
 
 /**
- * Flags with no test, each with the reason it is allowed to have none; an entry is a debt with a name rather than
- * an exemption, and the list stays short enough that every line carries who owes what.
+ * Flags with no test, each with the reason it is allowed to have none; an entry is a debt with a name
+ * rather than an exemption, and the list stays short enough that every line carries who owes what.
  */
 const UNCOVERED_ALLOWLIST: Record<string, string> = {}
 
 /**
- * The `runtime-flags` check: one error per registered flag no test under `packages/` touches, plus one per
- * stale allowlist entry.
+ * The `runtime-flags` check: one error per registered flag no test under `packages/`
+ * touches, plus one per stale allowlist entry.
  */
 export const runtimeFlagsCheck: RepoCheck = {
 	id: "runtime-flags",

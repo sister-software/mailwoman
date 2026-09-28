@@ -29,60 +29,61 @@ import { trackedSourcePaths } from "#tracked-sources"
 const MINIMUM_REASON_LENGTH = 20
 
 /**
- * The path-building functions this guard watches — `node:path`'s two composers and path-ts's, in bare or `path.`
- * qualified form, plus the `TemporaryDirectory` builder called as `scratch.path("node_modules", …)`.
+ * The path-building functions this guard watches — `node:path`'s two composers
+ * and path-ts's, in bare or `path.` qualified form, plus the `TemporaryDirectory`
+ * builder called as `scratch.path("node_modules", …)`.
  *
- * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past, the accepted hole that
- * closing would require resolving imports.
+ * The check is on the name alone, so a rename-import (`join as pathJoin`) slips past,
+ * the accepted hole that closing would require resolving imports.
  */
 const PATH_BUILDERS = new Set(["join", "path", "resolve", "resolvePath", "resolvePathBuilder"])
 
 /**
- * Every site allowed to spell a `node_modules` path by hand, keyed by repo-relative path, with the reason it is
- * not a reach-around.
+ * Every site allowed to spell a `node_modules` path by hand, keyed by repo-relative path,
+ * with the reason it is not a reach-around.
  */
 const ALLOWED: Record<string, string> = {
-	// The oracle for that layout: a fixture built with the implementation's own helper cannot fail when the
-	// implementation is wrong, so this file spells the path independently.
+	// The oracle for that layout: a fixture built with the implementation's own helper cannot fail
+	// when the implementation is wrong, so this file spells the path independently.
 	"packages/neural/test/integration/weights/cache.test.ts":
 		"pins the cache layout independently of the helper that builds it",
-	// Probes a foreign scratch project it just created with `npm install`, reading the install layout from outside
-	// because `import.meta.resolve` would answer from the monorepo's graph.
+	// Probes a foreign scratch project it just created with `npm install`, reading the install
+	// layout from outside because `import.meta.resolve` would answer from the monorepo's graph.
 	"packages/release-kit/lib/release/smoke/clean-install.ts":
 		"inspects a scratch project's install layout from outside, by design",
 	"packages/release-kit/lib/release/smoke/installed-bin.ts":
 		"reads the bin entry from a scratch project's installed manifest, for both clean-install smokes",
-	// Builds the node_modules symlink farm a git worktree lacks rather than reading one, so there is no path to
-	// resolve until this code creates the directory.
+	// Builds the node_modules symlink farm a git worktree lacks rather than reading one,
+	// so there is no path to resolve until this code creates the directory.
 	"packages/dev-mcp/lib/worktree/arm.ts": "constructs the worktree's node_modules farm; nothing exists to resolve yet",
-	// The oracle for that farm: a fixture built with the implementation's own helper cannot fail when the
-	// implementation is wrong.
+	// The oracle for that farm: a fixture built with the implementation's own helper
+	// cannot fail when the implementation is wrong.
 	"packages/dev-mcp/test/unit/worktree-arm.test.ts": "pins the farm layout independently of the code that builds it",
-	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves the way yarn
-	// makes it resolve, which a fixture with no install layout cannot exercise.
+	// Builds a scratch workspace's node_modules link so a bare `@fixture/recipes` specifier resolves
+	// the way yarn makes it resolve, which a fixture with no install layout cannot exercise.
 	"packages/repo-health/test/unit/move/plan.test.ts":
 		"builds the scratch workspace's install link; nothing exists to resolve yet",
-	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads, spelled out so the cache rung's
-	// test stays independent of the helper it exercises.
+	// Writes a fixture cache in the npm-prefix layout `weightsCachePackageDir` reads,
+	// spelled out so the cache rung's test stays independent of the helper it exercises.
 	"packages/neural/test/integration/weights/overlay.test.ts":
 		"builds a fixture cache in the npm-prefix layout, independently",
-	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution of the launcher and
-	// binary from an installed layout can be tested.
+	// Plants a fake `@vvago/vale` install under a scratch root so `valeCommand`'s resolution
+	// of the launcher and binary from an installed layout can be tested.
 	"packages/core/test/unit/vale.test.ts": "builds a fake @vvago/vale install for the resolver under test",
-	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s project context, addressing no
-	// package-owned path by hand.
+	// Links the checkout's own node_modules into the staging tree for `yarn pack`'s
+	// project context, addressing no package-owned path by hand.
 	"packages/release-kit/lib/release/stage.ts":
 		"symlinks the checkout's node_modules into the staging tree; not a package lookup",
-	// `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one: the directory does not
-	// exist yet when the layout is needed, so there is no path to resolve.
+	// `weightsCachePackageDir` is the inverse of a resolution rather than a substitute for one:
+	// the directory does not exist yet when the layout is needed, so there is no path to resolve.
 	"packages/neural/lib/weights/index.ts": "weightsCachePackageDir — the single home for the npm-prefix cache layout",
 }
 
 /**
  * Every tracked source that mentions `node_modules` at all.
  *
- * "Ours" is the set git tracks, because scratchpad probes, agent worktrees, and local build output must not fail a
- * guard CI cannot reproduce.
+ * "Ours" is the set git tracks, because scratchpad probes, agent worktrees,
+ * and local build output must not fail a guard CI cannot reproduce.
  */
 async function listCandidateSources(context: RepoContext): Promise<string[]> {
 	const tracked = await trackedSourcePaths(context, { existingOnly: true })
@@ -95,9 +96,9 @@ async function listCandidateSources(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * The `node_modules` string arguments of every path-building call in one source file, each with its line; both a
- * plain string and a template literal count, since the interpolated form is what a "make it dynamic" refactor
- * reaches for first.
+ * The `node_modules` string arguments of every path-building call in one source file,
+ * each with its line; both a plain string and a template literal count, since the
+ * interpolated form is what a "make it dynamic" refactor reaches for first.
  */
 export function findReachArounds(source: string, fileName: string): Array<{ line: number; text: string }> {
 	const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.Latest, true)
@@ -107,8 +108,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 		// `isStringLiteralLike` already covers a no-substitution template.
 		if (ts.isStringLiteralLike(node)) return node.text
 
-		// An interpolated template is spliced with a NUL standing in for each `${…}` so the segment test sees the chunks
-		// rather than the raw source, whose leading backtick could never match the leading-segment anchor.
+		// An interpolated template is spliced with a NUL standing in for each `${…}`
+		// so the segment test sees the chunks rather than the raw source, whose leading
+		// backtick could never match the leading-segment anchor.
 		if (ts.isTemplateExpression(node)) {
 			return node.head.text + node.templateSpans.map((span) => `\0${span.literal.text}`).join("")
 		}
@@ -124,9 +126,9 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 					? node.expression.text
 					: undefined
 
-			// A `PathBuilder` is invoked as a bare function, so a descent through `node_modules` has no callee name to match
-			// and the leading segment is the tell; property calls are left out because `.includes("node_modules")` is a string
-			// test, not a path.
+			// A `PathBuilder` is invoked as a bare function, so a descent through `node_modules`
+			// has no callee name to match and the leading segment is the tell; property calls
+			// are left out because `.includes("node_modules")` is a string test, not a path.
 			const firstArgument = node.arguments[0]
 
 			const descendsIntoNodeModules =
@@ -140,8 +142,8 @@ export function findReachArounds(source: string, fileName: string): Array<{ line
 				for (const argument of node.arguments) {
 					const text = argumentText(argument)
 
-					// A `node_modules` path segment rather than the bare word, so an exclude glob like `**/node_modules/**` inside a
-					// `join` does not fire.
+					// A `node_modules` path segment rather than the bare word, so an exclude
+					// glob like `**/node_modules/**` inside a `join` does not fire.
 					if (text && /(^|[/\\])node_modules([/\\]|$)/.test(text) && !text.startsWith("**")) {
 						const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
 
@@ -170,8 +172,8 @@ export const nodeModulesReacharoundCheck: RepoCheck = {
 		const diagnostics: Diagnostic[] = []
 		const sources = await listCandidateSources(context)
 
-		// A guard that silently stops looking is worse than no guard: no source found means the walk is broken, not the
-		// tree clean.
+		// A guard that silently stops looking is worse than no guard: no source found
+		// means the walk is broken, not the tree clean.
 		if (!sources.length) {
 			diagnostics.push({
 				severity: DiagnosticSeverity.Error,

@@ -16,7 +16,8 @@ const isLatin = (s: string): boolean => /^[\p{Script=Latin}\p{N}\p{P}\s]+$/u.tes
 
 describe("admitting an Overture division name", () => {
 	it("admits a name in the script its country writes", () => {
-		// Singapore, Sri Lanka and Malaysia: their Overture primary is already Latin, so `common` is the only place their own script appears.
+		// Singapore, Sri Lanka and Malaysia: their Overture primary is already Latin,
+		// so `common` is the only place their own script appears.
 		expect(isDivisionName("新加坡")).toBe(true)
 		expect(isDivisionName("சிங்கப்பூர்")).toBe(true)
 		expect(isDivisionName("ශ්‍රී ලංකාව")).toBe(true)

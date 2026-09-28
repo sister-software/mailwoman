@@ -36,8 +36,8 @@ const LINK_TAG = /\{@link(?:code|plain)?\s+(?<target>[^}\s|]+)/gu
 const BACKTICKED_NAME = /`(?<target>[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)*(?:\(\))?)`/gu
 
 /**
- * A capital that opens a new camel-case component: one after a lowercase letter or digit, or one closing a run
- * of capitals before a lowercase letter.
+ * A capital that opens a new camel-case component: one after a lowercase letter
+ * or digit, or one closing a run of capitals before a lowercase letter.
  */
 const HUMP = /(?<=[a-z0-9])[A-Z]|(?<=[A-Z])[A-Z](?=[a-z])/gu
 
@@ -61,11 +61,12 @@ function isJudgeable(target: string): boolean {
 const FILE_EXTENSION_TAIL = /\.[a-z0-9]{1,4}$/u
 
 /**
- * Whether a backticked name is shaped like a declaration: a camel-case name with at least {@linkcode HUMP_FLOOR}
- * humps, or a call with at least one, judged by its head since the head is what resolves.
+ * Whether a backticked name is shaped like a declaration: a camel-case name
+ * with at least {@linkcode HUMP_FLOOR} humps, or a call with at least one,
+ * judged by its head since the head is what resolves.
  *
- * A single word, called or not, is prose and prose may spell anything, and a name with no lowercase letter is a code
- * such as a postcode.
+ * A single word, called or not, is prose and prose may spell anything, and a name
+ * with no lowercase letter is a code such as a postcode.
  */
 function isDeclarationShaped(target: string): boolean {
 	if (FILE_EXTENSION_TAIL.test(target)) return false
@@ -81,8 +82,8 @@ function isDeclarationShaped(target: string): boolean {
 }
 
 /**
- * Every doc comment in the file, as its text; line and plain block comments are left out because only a doc
- * comment's backticked names read as promises about the code.
+ * Every doc comment in the file, as its text; line and plain block comments are left out
+ * because only a doc comment's backticked names read as promises about the code.
  */
 function docComments(text: string, file: string): Array<{ pos: number; text: string }> {
 	const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS)
@@ -148,8 +149,8 @@ function docTargets(text: string, file: string): DocTarget[] {
 }
 
 /**
- * Every identifier the file spells, in a declaration or a use, including a name the code reaches on an
- * external library, which a doc comment may point at as readily as a local declaration.
+ * Every identifier the file spells, in a declaration or a use, including a name the code reaches
+ * on an external library, which a doc comment may point at as readily as a local declaration.
  */
 function spelledNames(text: string, file: string, into: Set<string>): void {
 	const source = ts.createSourceFile(
@@ -191,14 +192,15 @@ export interface DanglingLink {
 }
 
 /**
- * This module's own repo-relative path, excluded from the sweep it performs because the header spells the tag
- * shapes it looks for and an example there is not a promise.
+ * This module's own repo-relative path, excluded from the sweep it performs because the
+ * header spells the tag shapes it looks for and an example there is not a promise.
  */
 const SELF = "packages/repo-health/lib/checks/doc-link-targets.ts"
 
 /**
- * Declaration-shaped identifiers of another project that a doc comment may spell — a library's export, a
- * service's wire field, a compiler option — keyed by the head of a dotted name, each entry stating its owner.
+ * Declaration-shaped identifiers of another project that a doc comment may spell —
+ * a library's export, a service's wire field, a compiler option — keyed by the
+ * head of a dotted name, each entry stating its owner.
  *
  * An entry no judged doc comment spells is reported, so the register cannot outlive the prose it admits.
  */
@@ -231,8 +233,8 @@ interface DocLinkSweep {
  * Every doc target the tree never declares, and every register entry the tree no longer needs.
  */
 async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
-	// The vocabulary is read from every tracked TypeScript file, tests included, while only a doc comment under
-	// `packages/*/lib` is judged against it.
+	// The vocabulary is read from every tracked TypeScript file, tests included,
+	// while only a doc comment under `packages/*/lib` is judged against it.
 	const paths = await trackedSourcePaths(context, { existingOnly: true })
 	const judged = /^packages\/[^/]+\/lib\/.*\.ts$/u
 
@@ -269,8 +271,8 @@ async function sweepDocLinks(context: RepoContext): Promise<DocLinkSweep> {
 
 			if (known.has(head) || isKeyword(head)) continue
 
-			// A language built-in is a legitimate target and belongs to no file, asked of the runtime rather than kept as
-			// a list that would go stale.
+			// A language built-in is a legitimate target and belongs to no file,
+			// asked of the runtime rather than kept as a list that would go stale.
 			if (head in globalThis) continue
 
 			// oxlint-disable-next-line mailwoman/prefer-spliterator -- counting newlines in a string already resident.
@@ -297,8 +299,8 @@ export async function findDanglingLinks(context: RepoContext): Promise<DanglingL
 }
 
 /**
- * Each dangling link as a warning, because a tag promising a symbol that does not exist is how a name gets
- * implemented instead of imported.
+ * Each dangling link as a warning, because a tag promising a symbol that does not
+ * exist is how a name gets implemented instead of imported.
  */
 export const docLinkTargetsCheck: RepoCheck = {
 	id: "doc-link-targets",

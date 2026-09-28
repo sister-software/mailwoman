@@ -29,9 +29,9 @@ const overlay = await readLocalJSONFile<CuratedOverlay>(
 	repoRootPath("packages", "poi-taxonomy", "data", "curated-overlay.json")
 )
 
-	/**
-	 * Both halves are required: the file is what a reader greps, the record is what a test resolves.
-	 */
+/**
+ * Both halves are required: the file is what a reader greps, the record is what a test resolves.
+ */
 function splitReference(reference: string): { file: string; record: string } {
 	const index = reference.lastIndexOf("#")
 

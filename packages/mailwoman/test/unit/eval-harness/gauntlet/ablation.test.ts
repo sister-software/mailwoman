@@ -25,9 +25,9 @@ import type { GauntletResult } from "mailwoman/eval-harness/gauntlet/harness"
 import { runAblationOptions } from "mailwoman/eval-harness/gauntlet/run"
 import { describe, expect, it } from "vitest"
 
-		/**
-		 * A minimal assembled result with only the fields a given assertion reads overridden.
-		 */
+/**
+ * A minimal assembled result with only the fields a given assertion reads overridden.
+ */
 function result(over: Partial<GauntletResult> = {}): GauntletResult {
 	return {
 		lat: 40.7484,
@@ -58,8 +58,9 @@ describe("boundedOccurrences — the guard that keeps a deletion attributable", 
 		expect(boundedOccurrences("350 5th ave, NEW YORK, NY", "New York")).toEqual([13])
 	})
 
-			// `York` is a substring of `New York`, and an indexOf-based stripper would carve it out and attribute the damage to the locality.
-		it("refuses an occurrence glued to a letter on either side", () => {
+	// `York` is a substring of `New York`, and an indexOf-based stripper would carve it out
+	// and attribute the damage to the locality.
+	it("refuses an occurrence glued to a letter on either side", () => {
 		expect(boundedOccurrences("350 5th Ave, New York, NY", "York")).toEqual([17])
 		expect(boundedOccurrences("Yorkshire Road, Leeds", "York")).toEqual([])
 		expect(boundedOccurrences("New Yorkshire, Leeds", "York")).toEqual([])
@@ -121,8 +122,9 @@ describe("ablationVariants — one variant per attributable component", () => {
 		expect(variants[0]!.component).toBe("postcode")
 	})
 
-				// An empty asserted value means the slot stays empty, so counting it as a deletion would manufacture support for a cell nobody measured.
-		it("refuses an empty asserted value rather than counting it as support", () => {
+	// An empty asserted value means the slot stays empty, so counting it as a deletion
+	// would manufacture support for a cell nobody measured.
+	it("refuses an empty asserted value rather than counting it as support", () => {
 		const { variants, skips } = ablationVariants("1600 Pennsylvania Ave NW, Washington DC", {
 			postcode: "",
 			region: "DC",
@@ -160,8 +162,8 @@ describe("ablationVariants — one variant per attributable component", () => {
 		])
 	})
 
-			// Deleting `York` out of `New York` would report a two-component deletion under the locality's name.
-		it("refuses a value nested inside another asserted component", () => {
+	// Deleting `York` out of `New York` would report a two-component deletion under the locality's name.
+	it("refuses a value nested inside another asserted component", () => {
 		const { variants, skips } = ablationVariants("350 5th Ave, New York, NY", {
 			locality: "New York",
 			dependent_locality: "York",
@@ -200,8 +202,8 @@ describe("classifySlot — substitution is not the same as absence", () => {
 		expect(classifySlot("BT3 9QQ", "bt39qq")).toBe("recovered")
 	})
 
-			// A slot refilled by a different token is a substitution, not a hold or an abstention.
-			it("reads a different token in the slot as a substitution", () => {
+	// A slot refilled by a different token is a substitution, not a hold or an abstention.
+	it("reads a different token in the slot as a substitution", () => {
 		expect(classifySlot("94043", "1600")).toBe("substituted")
 		expect(classifySlot("75005", "1802")).toBe("substituted")
 		expect(classifySlot("BT3 9QQ", "W4")).toBe("substituted")
@@ -219,8 +221,8 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 	})
 
 	it("breaks when the deletion moves the coordinate past the row's own tolerance", () => {
-				// ~1.1 km north of the anchor: inside the 5 km band and outside the 80 m pin.
-				const moved = result({ lat: 40.7584 })
+		// ~1.1 km north of the anchor: inside the 5 km band and outside the 80 m pin.
+		const moved = result({ lat: 40.7584 })
 
 		expect(scoreAblation(result(), moved, "75013", "postcode", 5).broken).toBe(false)
 		expect(scoreAblation(result(), moved, "75013", "postcode", 0.08).broken).toBe(true)
@@ -234,8 +236,9 @@ describe("scoreAblation — one deletion against its own anchor", () => {
 		expect(scored.unresolved).toBe(true)
 	})
 
-			// A row whose own anchor never resolved measures no distance, so reporting it as held would be the meaning-of-zero trap.
-		it("returns broken=null when the anchor itself never resolved", () => {
+	// A row whose own anchor never resolved measures no distance, so reporting it
+	// as held would be the meaning-of-zero trap.
+	it("returns broken=null when the anchor itself never resolved", () => {
 		const scored = scoreAblation(result({ lat: null, lon: null }), result(), "75013", "postcode", 5)
 
 		expect(scored.broken).toBeNull()
@@ -262,9 +265,9 @@ describe("isTierDrop — coarsening costs the user precision even at zero displa
 	})
 })
 
-		/**
-		 * A row outcome carrying the fields a cell aggregates, with the rest filler.
-		 */
+/**
+ * A row outcome carrying the fields a cell aggregates, with the rest filler.
+ */
 function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 	return {
 		caseID: "case",
@@ -287,8 +290,8 @@ function row(over: Partial<AblationRowOutcome>): AblationRowOutcome {
 		unresolved: false,
 		slot: "absent",
 		emitted: null,
-						// Omitting these would let `aggregateCells` count an undefined grade and grow a histogram bucket nobody reads.
-						expectedRung: "base",
+		// Omitting these would let `aggregateCells` count an undefined grade and grow a histogram bucket nobody reads.
+		expectedRung: "base",
 		expectedRungDepth: 0,
 		expectedWhy: "fixture",
 		expectedSource: "derived",
@@ -346,7 +349,7 @@ describe("aggregateCells", () => {
 	})
 
 	// An unmeasured pair must not exist as a zero-support cell a consumer could average into a ranking.
-		it("emits no cell at all for a (component, locale) pair with no rows", () => {
+	it("emits no cell at all for a (component, locale) pair with no rows", () => {
 		const cells = aggregateCells([row({ component: "postcode", locale: "GB" })], meta)
 
 		expect(cells.some((c) => c.component === "street")).toBe(false)
@@ -372,8 +375,8 @@ describe("the support-0-is-absence rendering rule", () => {
 	it("renders a measured cell as broken/support — including a genuine zero BROKEN count", () => {
 		const [cell] = aggregateCells([row({ broken: false }), row({ caseID: "b", broken: false })], meta)
 
-				// 0 of 2 broken is a measurement, and it must not read like the unmeasured cell above.
-				expect(formatAblationCell(cell)).toBe("0/2")
+		// 0 of 2 broken is a measurement, and it must not read like the unmeasured cell above.
+		expect(formatAblationCell(cell)).toBe("0/2")
 		expect(formatAblationCell(cell)).not.toBe(ABLATION_ABSENT)
 	})
 
@@ -393,8 +396,9 @@ describe("the support-0-is-absence rendering rule", () => {
 		expect(md).toContain(`\`${ABLATION_ABSENT}\` means NOT MEASURED`)
 	})
 
-			// Folding is only acceptable because the thin locales are printed, and a zero-column matrix must say why it is empty rather than emit a headerless table.
-			it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
+	// Folding is only acceptable because the thin locales are printed, and a zero-column
+	// matrix must say why it is empty rather than emit a headerless table.
+	it("says so when no locale cleared the matrix threshold, instead of rendering an empty table", () => {
 		const md = renderAblationMarkdown(aggregateCells([row({})], meta), [], {
 			...meta,
 			caseCount: 1,
@@ -426,7 +430,7 @@ describe("the support-0-is-absence rendering rule", () => {
 			minLocaleRows: 1,
 		})
 
-			// street was measured in GB and not in FR, so the FR column must be the absence marker rather than 0/0.
+		// street was measured in GB and not in FR, so the FR column must be the absence marker rather than 0/0.
 		expect(md).toContain(`| street | 0/1 | ${ABLATION_ABSENT} |`)
 		expect(md).not.toContain("0/0")
 	})
@@ -451,9 +455,10 @@ describe("ablationBoardID — a cell without a board is not a measurement", () =
 	})
 })
 
-		/**
-		 * A dropped option does not throw, so a dropped `--components` would run the whole corpus and a dropped `--limit` would turn a smoke run into a forty-minute one.
-		 */
+/**
+ * A dropped option does not throw, so a dropped `--components` would run the whole corpus
+ * and a dropped `--limit` would turn a smoke run into a forty-minute one.
+ */
 describe("runAblationOptions — a CLI flag reaches the layer", () => {
 	it("carries the three ablation options alongside the shared model/pin ladder", () => {
 		const options = runAblationOptions({
@@ -471,8 +476,9 @@ describe("runAblationOptions — a CLI flag reaches the layer", () => {
 		expect(options.limit).toBe(12)
 	})
 
-	// An `outDir: undefined` own property would defeat the `??` default and an empty `components` array would filter every tag out.
-		it("omits each option entirely when its flag was never set", () => {
+	// An `outDir: undefined` own property would defeat the `??` default and an empty
+	// `components` array would filter every tag out.
+	it("omits each option entirely when its flag was never set", () => {
 		const options = runAblationOptions({})
 
 		expect("outDir" in options).toBe(false)

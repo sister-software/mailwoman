@@ -23,8 +23,8 @@ describe("renderLines — child stdout parity", () => {
 	})
 
 	test("a multi-line argument stays ONE record and gains ONE newline", () => {
-		// score-affix prints its table header in one call containing an embedded newline, so recording
-		// it as two lines would add a byte.
+		// score-affix prints its table header in one call containing an embedded newline,
+		// so recording it as two lines would add a byte.
 		expect(renderLines(["| tag |\n| --- |"])).toBe("| tag |\n| --- |\n")
 	})
 
@@ -123,8 +123,8 @@ describe("error semantics — the per-leg table", () => {
 	})
 
 	test("the legs that merge stderr into their .md declare a SECOND sink", () => {
-		// `Function.length` cannot see a `reportError` parameter that has a default, so the check reads
-		// the declaration and fails loudly if someone drops the error sink.
+		// `Function.length` cannot see a `reportError` parameter that has a default,
+		// so the check reads the declaration and fails loudly if someone drops the error sink.
 		for (const row of LEG_SEMANTICS) {
 			if (!row.mergesStderr) continue
 

@@ -50,15 +50,15 @@ export interface TokenLike {
 }
 
 /**
- * The BIO label a non-postcode `KnownFormat` biases; postcode formats are decided by name through
- * {@linkcode isPostcodeFormat}, so a format added to the detector's table reaches this prior
- * without a second list to keep in step.
+ * The BIO label a non-postcode `KnownFormat` biases; postcode formats are decided
+ * by name through {@linkcode isPostcodeFormat}, so a format added to the detector's
+ * table reaches this prior without a second list to keep in step.
  */
 const FORMAT_TO_LABEL: ReadonlyMap<string, string> = new Map([["po_box", "B-po_box"]])
 
 /**
- * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined` when the
- * format names no label; an uncovered format contributes zero bias and raises no error.
+ * The BIO label {@linkcode buildEmissionPriors} biases for one format hit, or `undefined`
+ * when the format names no label; an uncovered format contributes zero bias and raises no error.
  */
 function formatLabel(format: string): string | undefined {
 	return isPostcodeFormat(format) ? "B-postcode" : FORMAT_TO_LABEL.get(format)
@@ -77,8 +77,8 @@ export interface BuildPriorsOpts {
 
 /**
  * Build a `[seqLen][numLabels]` matrix of additive log-bias for encoder emissions before Viterbi
- * decoding, where each token overlapping a format hit receives `hit.confidence × biasScale` on the
- * format's mapped label and the matrix is all zeros when `shape.knownFormats` is empty.
+ * decoding, where each token overlapping a format hit receives `hit.confidence × biasScale` on
+ * the format's mapped label and the matrix is all zeros when `shape.knownFormats` is empty.
  */
 export function buildEmissionPriors(
 	shape: QueryShapeLike,
@@ -120,9 +120,9 @@ export function buildEmissionPriors(
 }
 
 /**
- * The scoped locality bias, which fires only on the bare admin doubleton (a region-ambiguous name
- * immediately before its abbreviation) and only when the input holds no digits, the abbreviation is
- * the final token, and at most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
+ * The scoped locality bias, which fires only on the bare admin doubleton
+ * (a region-ambiguous name immediately before its abbreviation) and only when the input holds no digits,
+ * the abbreviation is the final token, and at most {@link MAX_PRIOR_CANDIDATES} tokens precede it.
  */
 function applyScopedLocalityBias(
 	matrix: number[][],

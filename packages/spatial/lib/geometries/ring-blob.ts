@@ -21,8 +21,8 @@ const HEADER_BYTES = 8
 const RING_ENTRY_BYTES = 8
 
 /**
- * Positions a linear ring needs to bound an area: three distinct vertices plus the
- * repeat that closes it (RFC 7946 §3.1.6).
+ * Positions a linear ring needs to bound an area: three distinct vertices plus
+ * the repeat that closes it (RFC 7946 §3.1.6).
  */
 const MINIMUM_RING_POSITIONS = 4
 
@@ -35,8 +35,8 @@ export interface DecodedRings {
 }
 
 /**
- * Pack a GeoJSON `MultiPolygon`/`Polygon` coordinate tree into the stored blob, throwing when the
- * geometry carries no ring or a ring carries fewer than four positions.
+ * Pack a GeoJSON `MultiPolygon`/`Polygon` coordinate tree into the stored blob, throwing
+ * when the geometry carries no ring or a ring carries fewer than four positions.
  */
 export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 	const entries: Array<{ pointCount: number; polygonIndex: number }> = []
@@ -87,8 +87,8 @@ export function encodeRings(polygons: MultiPolygonRings): Uint8Array {
 }
 
 /**
- * The ring table plus a `Float64Array` over the coordinates, throwing when the blob's version is
- * not {@linkcode RING_BLOB_VERSION} or its declared ring table does not account for the bytes present.
+ * The ring table plus a `Float64Array` over the coordinates, throwing when the blob's version is not
+ * {@linkcode RING_BLOB_VERSION} or its declared ring table does not account for the bytes present.
  */
 function openRings(blob: Uint8Array): {
 	ringCount: number
@@ -124,8 +124,8 @@ function openRings(blob: Uint8Array): {
 		throw new Error(`ring blob: blob declares ${expected} bytes of geometry, holds ${blob.byteLength}`)
 	}
 
-	// The header is a multiple of eight by construction, so the coordinate run is 8-byte aligned;
-	// a misaligned source buffer is copied rather than rejected.
+	// The header is a multiple of eight by construction, so the coordinate run is 8-byte
+	// aligned; a misaligned source buffer is copied rather than rejected.
 	const absoluteOffset = blob.byteOffset + headerBytes
 
 	const coordinates =
@@ -137,8 +137,8 @@ function openRings(blob: Uint8Array): {
 }
 
 /**
- * Is the point inside the stored geometry, even-odd within each polygon's own ring list and
- * inside-any-polygon across them, without allocating the ring arrays.
+ * Is the point inside the stored geometry, even-odd within each polygon's own ring list
+ * and inside-any-polygon across them, without allocating the ring arrays.
  */
 export function pointInEncodedRings(blob: Uint8Array, lon: number, lat: number): boolean {
 	const { ringCount, pointCounts, polygonIndices, coordinates } = openRings(blob)
@@ -216,8 +216,8 @@ export function decodeRings(blob: Uint8Array): DecodedRings {
 const EARTH_RADIUS_M = 6_371_008.8
 
 /**
- * Signed spherical area of one linear ring, in square metres, with clockwise positive and
- * counter-clockwise negative.
+ * Signed spherical area of one linear ring, in square metres, with clockwise positive
+ * and counter-clockwise negative.
  */
 export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number {
 	let total = 0
@@ -234,8 +234,8 @@ export function ringSignedAreaM2(ring: ReadonlyArray<readonly number[]>): number
 }
 
 /**
- * Both readings of one feature's area, in square metres: `nested` respects ring orientation
- * (holes subtract) and `allExterior` does not (holes add).
+ * Both readings of one feature's area, in square metres: `nested` respects ring
+ * orientation (holes subtract) and `allExterior` does not (holes add).
  */
 export function ringAreaReadings(polygons: MultiPolygonRings): {
 	nested: number
@@ -262,8 +262,8 @@ export function ringAreaReadings(polygons: MultiPolygonRings): {
 }
 
 /**
- * Refuse a feature whose reprojected vertices fall outside the publisher's own declared extent,
- * throwing on the first vertex outside it.
+ * Refuse a feature whose reprojected vertices fall outside the publisher's own
+ * declared extent, throwing on the first vertex outside it.
  */
 export function assertRingsInsideExtent(
 	polygons: MultiPolygonRings,

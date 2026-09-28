@@ -17,8 +17,9 @@ describe("the #1024 shipped-model guard", () => {
 	it("derives the graded model from the resolver, never from a package path literal", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// The card path is deliberately not matched: a model-card is committed to its package, so
-		// reading it there is a fact about the repo rather than an assumption about where binaries were materialized.
+		// The card path is deliberately not matched: a model-card is committed to its package,
+		// so reading it there is a fact about the repo rather than an assumption about
+		// where binaries were materialized.
 		const literals = [...source.matchAll(/["'`][^"'`]*neural-weights-[a-z-]+\/(?:model\.onnx|tokenizer\.model)/g)]
 
 		expect(
@@ -36,8 +37,8 @@ describe("the #1024 shipped-model guard", () => {
 	it("keeps the assertion reachable — it runs only for the SHIPPED default, and that branch still exists", async () => {
 		const source = await readLocalTextFile(HARNESS)
 
-		// A `--candidate` run is exempt on purpose; if that exemption widened to the default, the
-		// guard would be off for every run and no other check in the suite would notice.
+		// A `--candidate` run is exempt on purpose; if that exemption widened to the default,
+		// the guard would be off for every run and no other check in the suite would notice.
 		expect(source).toContain("if (!opts.modelPath && !opts.tokenizerPath && !opts.weightsCacheRoot)")
 		expect(source).toContain("assertShippedModelMatchesCard(md5)")
 	})

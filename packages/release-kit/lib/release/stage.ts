@@ -48,8 +48,8 @@ export const SANCTIONED_RELEASE_ABSENCES: Readonly<Record<string, string>> = {
 /**
  * Refuse to publish a workspace this repository holds out of the release, naming the recorded reason.
  *
- * Every entry is refused rather than the rights-held ones alone, so one rule cannot drift from a
- * classification it does not carry.
+ * Every entry is refused rather than the rights-held ones alone, so one rule cannot
+ * drift from a classification it does not carry.
  */
 export function assertWorkspacePublishable(workspacePath: string): void {
 	const workspace = workspacePath.replace(/^\.\//, "").replace(/\/$/, "")
@@ -127,12 +127,12 @@ export async function checkReleaseListIdentity(repoRoot: PathBuilderLike): Promi
 }
 
 /**
- * Materialize the release tree into `stagingRoot`, replacing any existing tree and leaving the
- * caller to own its lifecycle.
+ * Materialize the release tree into `stagingRoot`, replacing any existing tree
+ * and leaving the caller to own its lifecycle.
  *
  * `git archive head` supplies tracked files only, each release workspace's compiled `out/` is
- * copied in because tarballs ship compiled JS + `.d.ts`, and the checkout's `node_modules` is
- * symlinked because `yarn pack` needs the project context and never writes it.
+ * copied in because tarballs ship compiled JS + `.d.ts`, and the checkout's `node_modules`
+ * is symlinked because `yarn pack` needs the project context and never writes it.
  */
 export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilderLike): Promise<void> {
 	const staging = PathBuilder.from(stagingRoot)
@@ -157,8 +157,8 @@ export async function stageReleaseTree(repoRoot: string, stagingRoot: PathBuilde
 /**
  * One workspace's pack-and-audit outcome.
  *
- * A pack that could not produce a tarball reports the thrown message as its single failure rather
- * than aborting the sweep.
+ * A pack that could not produce a tarball reports the thrown message as its
+ * single failure rather than aborting the sweep.
  */
 export interface WorkspaceAuditResult {
 	workspace: string
@@ -171,8 +171,8 @@ export interface WorkspaceAuditResult {
 }
 
 /**
- * Pack and audit every release workspace in the staged tree, collecting every failure so one run
- * reports every broken package instead of stopping at the first.
+ * Pack and audit every release workspace in the staged tree, collecting every failure
+ * so one run reports every broken package instead of stopping at the first.
  */
 export async function auditStagedWorkspaces(
 	stagingRoot: PathBuilderLike,
@@ -185,8 +185,8 @@ export async function auditStagedWorkspaces(
 
 	const results: WorkspaceAuditResult[] = []
 
-	// Sequential and awaited: the pack edits and restores the workspace manifest, so it must finish
-	// before the audit opens the tarball.
+	// Sequential and awaited: the pack edits and restores the workspace manifest,
+	// so it must finish before the audit opens the tarball.
 	for (const workspace of workspaces) {
 		const tarball = tarballDir(`${workspace.replaceAll("/", "__")}.tgz`)
 

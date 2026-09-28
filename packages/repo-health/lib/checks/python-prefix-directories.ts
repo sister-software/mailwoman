@@ -26,8 +26,8 @@ const CHECK_ID = "python-prefix-directories"
 const PYTHON_ROOT = "corpus-python/"
 
 /**
- * How many children must share a prefix before it is a family; two siblings are a coincidence often enough that
- * the TypeScript check uses the same floor.
+ * How many children must share a prefix before it is a family; two siblings are a
+ * coincidence often enough that the TypeScript check uses the same floor.
  */
 const GROUP_THRESHOLD = 3
 
@@ -40,9 +40,9 @@ const SOURCE_FILE = /\.py$/u
 const RESERVED = new Set(["__init__.py", "__main__.py"])
 
 /**
- * Prefixes that are a discovery interface rather than a hierarchy; pytest collects `test_*.py` by default, so
- * grouping them would report every test directory and propose a `test/` subdirectory pytest would have to be
- * retaught to find.
+ * Prefixes that are a discovery interface rather than a hierarchy; pytest collects
+ * `test_*.py` by default, so grouping them would report every test directory
+ * and propose a `test/` subdirectory pytest would have to be retaught to find.
  */
 const RESERVED_PREFIXES = new Set(["test"])
 
@@ -74,9 +74,9 @@ function isSource(file: string): boolean {
 }
 
 /**
- * Every directory-with-children view of the Python tree as one member list per parent directory, admitting a
- * directory child only when it carries a tracked `.py` file beneath it so a data directory mirroring someone else's
- * names stays out.
+ * Every directory-with-children view of the Python tree as one member list per parent directory,
+ * admitting a directory child only when it carries a tracked `.py` file beneath it
+ * so a data directory mirroring someone else's names stays out.
  */
 function directoryChildren(trackedFiles: readonly string[]): Map<string, PythonPrefixMember[]> {
 	const pythonFiles = trackedFiles.filter((file) => file.startsWith(PYTHON_ROOT) && !file.includes("/.venv/"))
@@ -139,8 +139,8 @@ export function findPythonPrefixGroups(trackedFiles: readonly string[]): PythonP
 			byPrefix.set(prefix, [...(byPrefix.get(prefix) ?? []), member])
 		}
 
-		// A sibling named for the prefix itself heads the family rather than sitting beside it, since leaving
-		// `splice.py` out splits the family across two levels.
+		// A sibling named for the prefix itself heads the family rather than sitting beside it,
+		// since leaving `splice.py` out splits the family across two levels.
 		for (const [prefix, grouped] of byPrefix) {
 			const head = stems.get(prefix)
 

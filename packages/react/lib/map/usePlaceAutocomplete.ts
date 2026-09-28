@@ -112,7 +112,8 @@ function replaceSegment(current: string, name: string): string {
 }
 
 /**
- * Fetches debounced place suggestions for the text after the input's last comma; a pick replaces only that segment, and a digit-leading segment never reaches `autocomplete`.
+ * Fetches debounced place suggestions for the text after the input's last comma;
+ * a pick replaces only that segment, and a digit-leading segment never reaches `autocomplete`.
  */
 export function usePlaceAutocomplete({
 	text,

@@ -23,7 +23,8 @@ import {
 } from "#street/normalize"
 
 /**
- * The weighted centroid, extent, and provenance an aggregate probe returns; `lat` is null when no row matched.
+ * The weighted centroid, extent, and provenance an aggregate probe returns;
+ * `lat` is null when no row matched.
  */
 interface AggRow {
 	lat: number | null
@@ -37,7 +38,8 @@ interface AggRow {
 }
 
 /**
- * The aggregate columns that weight each row's centroid by `point_count` to reconstruct the combined centroid.
+ * The aggregate columns that weight each row's centroid by `point_count` to
+ * reconstruct the combined centroid.
  */
 const AGG_SELECT =
 	"SUM(lat * point_count) / SUM(point_count) AS lat, " +
@@ -53,7 +55,8 @@ function extentRadiusM(minLat: number, maxLat: number, minLon: number, maxLon: n
 }
 
 /**
- * Finds a street's centroid and extent-based uncertainty by street name, scoped by postcode and then by base commune.
+ * Finds a street's centroid and extent-based uncertainty by street name,
+ * scoped by postcode and then by base commune.
  */
 export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #db: DatabaseClient<StreetCentroidDatabase>
@@ -62,7 +65,8 @@ export class StreetCentroidSqliteLookup implements StreetCentroidLookup {
 	readonly #byLocality: PreparedGet<[locality: NameKey, street: StreetKey], AggRow> | undefined
 
 	/**
-	 * The extract defaults to the `fr` street-normalization locale; a mismatch with the extract's locale makes every key miss.
+	 * The extract defaults to the `fr` street-normalization locale; a mismatch with
+	 * the extract's locale makes every key miss.
 	 */
 	constructor(dbPath: PathBuilderLike, opts: { streetLocale?: StreetLocale } = {}) {
 		this.#db = new DatabaseClient<StreetCentroidDatabase>(dbPath, { readOnly: true })

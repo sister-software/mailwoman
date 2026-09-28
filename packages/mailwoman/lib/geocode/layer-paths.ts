@@ -16,8 +16,8 @@ import type { PathBuilder, PathBuilderLike } from "path-ts"
 import { Globerator } from "spliterator/node/fs"
 
 /**
- * The layer databases the session attaches when present, keyed by the layer's short id and each naming its
- * directory through the owning package's `paths` export.
+ * The layer databases the session attaches when present, keyed by the layer's short id
+ * and each naming its directory through the owning package's `paths` export.
  */
 const LAYER_DATABASES = {
 	flood: { label: "Flood zones (EA England)", directory: floodDatabaseRoot, filename: "flood.db" },
@@ -62,8 +62,8 @@ export function layerDatabases(dataRoot: PathBuilderLike): LayerDatabaseRef[] {
 }
 
 /**
- * The `.db` files in a layer's directory that are not the file the session attaches, so the doctor reads an
- * alternate name as a name mismatch rather than a coverage fact.
+ * The `.db` files in a layer's directory that are not the file the session attaches,
+ * so the doctor reads an alternate name as a name mismatch rather than a coverage fact.
  */
 export async function layerDatabaseAlternates(dataRoot: PathBuilderLike, id: LayerID): Promise<string[]> {
 	const { directory, filename: canonical } = LAYER_DATABASES[id]

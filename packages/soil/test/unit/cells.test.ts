@@ -45,7 +45,6 @@ describe("SoilCellIndex", () => {
 		const index = new SoilCellIndex(9)
 		const box = [[rectangleRing(lon, lat, lon + 0.0001, lat + 0.0001)]]
 
-
 		index.add("a:0", classifyDelineationCells(box, 9, "a:0"))
 		index.add("a:1", classifyDelineationCells(box, 9, "a:1"))
 
@@ -72,8 +71,8 @@ function chunk(partial: Partial<SoilChunkResult>): SoilChunkResult {
 
 describe("aggregateChunks", () => {
 	it("ADDS coverage-cell counts across chunks rather than replacing them", () => {
-		// A coverage cell can straddle two survey areas, so taking the last chunk's value would make a dense
-		// county under-report what it holds.
+		// A coverage cell can straddle two survey areas, so taking the last chunk's value
+		// would make a dense county under-report what it holds.
 		const result = aggregateChunks([
 			chunk({ delineations: 3, observedByCoverageCell: [[11, 3]], mappedByCoverageCell: [[11, 2]] }),
 			chunk({ delineations: 4, observedByCoverageCell: [[11, 4]], mappedByCoverageCell: [[11, 4]] }),

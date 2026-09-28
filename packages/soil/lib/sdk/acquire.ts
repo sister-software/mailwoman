@@ -20,7 +20,8 @@ import { readSurveyAreaAttributes, readSurveyAreaOutline } from "#sdk/survey-are
 export interface AcquireRegionOptions {
 	client: SoilDataAccessClient
 	/**
-	 * The survey-area symbol prefix, where a state code such as `IA` selects a whole state and a full symbol such as `IA153` selects one area.
+	 * The survey-area symbol prefix, where a state code such as `IA` selects a whole state
+	 * and a full symbol such as `IA153` selects one area.
 	 */
 	prefix: string
 	/**

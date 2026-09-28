@@ -9,7 +9,9 @@
 import { type Operation, type OperationContext, operationDefiner } from "@mailwoman/core/scripting"
 
 /**
- * What a release operation does to the world, declared rather than inferred; `external-write` names the operations that publish (npm, Hugging Face, R2) and are reachable only through the plan → execute interface.
+ * What a release operation does to the world, declared rather than inferred;
+ * `external-write` names the operations that publish (npm, Hugging Face, R2)
+ * and are reachable only through the plan → execute interface.
  */
 export const OperationEffect = {
 	/**
@@ -21,7 +23,8 @@ export const OperationEffect = {
 	 */
 	LocalWrite: "local-write",
 	/**
-	 * Writes to a system outside this machine; irreversible, credentialed, and reachable only through the plan → execute interface.
+	 * Writes to a system outside this machine; irreversible, credentialed,
+	 * and reachable only through the plan → execute interface.
 	 */
 	ExternalWrite: "external-write",
 } as const

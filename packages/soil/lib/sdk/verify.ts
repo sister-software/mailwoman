@@ -37,8 +37,8 @@ export interface SoilAgreementRow {
 	serviceMukey: string | null
 	outcome: "agree" | "disagree" | "boundary_tolerance"
 	/**
-	 * Metres from the point to the nearest edge of the delineation the artifact matched; carried on
-	 * every row because it separates a real defect from two channels rendering the same edge differently.
+	 * Metres from the point to the nearest edge of the delineation the artifact matched; carried on every
+	 * row because it separates a real defect from two channels rendering the same edge differently.
 	 */
 	nearestEdgeMetres?: number
 }
@@ -67,8 +67,8 @@ export interface VerifySoilResult {
 }
 
 /**
- * Points outside the pilot region; every neighbouring state is included because a footprint clipped to
- * "the Midwest" would pass a one-state check.
+ * Points outside the pilot region; every neighbouring state is included because a
+ * footprint clipped to "the Midwest" would pass a one-state check.
  */
 export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: number; longitude: number }> = [
 	{ label: "Lincoln, Nebraska", latitude: 40.8136, longitude: -96.7026 },
@@ -82,8 +82,8 @@ export const OUTSIDE_PILOT_POINTS: ReadonlyArray<{ label: string; latitude: numb
 ]
 
 /**
- * One metre, far below the median delineation, so a disagreement within it is the two channels rendering
- * the same edge differently rather than a conversion defect.
+ * One metre, far below the median delineation, so a disagreement within it is the two
+ * channels rendering the same edge differently rather than a conversion defect.
  */
 const BOUNDARY_TOLERANCE_METRES = 1
 
@@ -105,8 +105,8 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 	const database = new DatabaseClient<SoilDatabase>(options.databasePath, { readOnly: true })
 	const lookup = new SoilCapabilityLookup({ databasePath: options.databasePath })
 
-	// Read once: the stored index is mixed-resolution, so a probe that assumed one resolution would read
-	// every row at the others as an absence.
+	// Read once: the stored index is mixed-resolution, so a probe that assumed one
+	// resolution would read every row at the others as an absence.
 	const resolutions = (
 		database.prepare("SELECT DISTINCT resolution FROM soil_map_unit_cell ORDER BY resolution").all() as Array<{
 			resolution: number
@@ -158,9 +158,9 @@ export async function verifySoilDatabase(options: VerifySoilOptions): Promise<Ve
 }
 
 /**
- * The candidate delineations reaching a point, found through the cell index because a bounding-box scan
- * over `soil_map_unit_area` is a full table scan; every stored resolution is probed since the tier is
- * compacted parent-ward.
+ * The candidate delineations reaching a point, found through the cell index
+ * because a bounding-box scan over `soil_map_unit_area` is a full table scan;
+ * every stored resolution is probed since the tier is compacted parent-ward.
  */
 function candidateDelineations(
 	database: DatabaseClient<SoilDatabase>,
@@ -186,8 +186,8 @@ function candidateDelineations(
 			mukey: string
 			rings: Uint8Array
 		}>) {
-			// Dedupe on the delineation rather than its map unit, since two different delineations of one
-			// map unit cover different ground and both must be tested.
+			// Dedupe on the delineation rather than its map unit, since two different delineations
+			// of one map unit cover different ground and both must be tested.
 			if (seen.has(row.area_id)) continue
 
 			seen.add(row.area_id)
@@ -199,8 +199,8 @@ function candidateDelineations(
 }
 
 /**
- * Which map unit the artifact's own geometry puts at a point, and the distance to that delineation's
- * nearest edge.
+ * Which map unit the artifact's own geometry puts at a point, and the distance
+ * to that delineation's nearest edge.
  */
 function localDelineationAt(
 	database: DatabaseClient<SoilDatabase>,
@@ -230,8 +230,8 @@ function localDelineationAt(
 }
 
 /**
- * Metres from a point to the nearest edge of an encoded ring set; decoding here is acceptable because
- * this runs per verification rather than per geocode.
+ * Metres from a point to the nearest edge of an encoded ring set; decoding here is acceptable
+ * because this runs per verification rather than per geocode.
  */
 function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number {
 	const { polygons } = decodeRings(blob)
@@ -259,8 +259,8 @@ function nearestEdgeDistance(blob: Uint8Array, lon: number, lat: number): number
 }
 
 /**
- * Draw a reproducible sample of points from the artifact, a deterministic stride over the primary key so
- * a re-run compares the same points.
+ * Draw a reproducible sample of points from the artifact, a deterministic stride
+ * over the primary key so a re-run compares the same points.
  */
 export function sampleAgreementPoints(
 	databasePath: PathBuilderLike,
@@ -272,8 +272,8 @@ export function sampleAgreementPoints(
 	const total = (database.prepare("SELECT count(*) AS n FROM soil_map_unit_area").get() as { n: number }).n
 	const stride = Math.max(1, Math.floor(total / Math.max(1, count)))
 
-	// One offset probe per sample point rather than a materialized key list, which would hold every
-	// primary key to keep sixty.
+	// One offset probe per sample point rather than a materialized key list,
+	// which would hold every primary key to keep sixty.
 	const selectByOffset = database.prepare(
 		"SELECT area_id, mukey, min_lat, min_lon, max_lat, max_lon, rings FROM soil_map_unit_area ORDER BY area_id LIMIT 1 OFFSET ?"
 	)

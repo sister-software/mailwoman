@@ -31,8 +31,9 @@ export interface ReleaseManifest<TRelease extends ReleaseBase = ReleaseBase> {
 }
 
 /**
- * The abort signal and progress setters that the hook passes to a host's `loadAssets`; the setters have no
- * effect once the load is aborted or superseded, and the hook sets the final ready or error state itself.
+ * The abort signal and progress setters that the hook passes to a host's `loadAssets`;
+ * the setters have no effect once the load is aborted or superseded, and the hook
+ * sets the final ready or error state itself.
  */
 export interface AssetsLoadContext {
 	/**
@@ -63,9 +64,9 @@ export interface AssetsLoadContext {
 	setBackend: (backend: string) => void
 
 	/**
-	 * Reports the fraction of the current download received so far, in [0, 1], or `null` when no download is in
-	 * progress or the response declares no length; the step index cannot show it because the model is fetched
-	 * before the first step begins.
+	 * Reports the fraction of the current download received so far, in [0, 1], or `null`
+	 * when no download is in progress or the response declares no length; the step index
+	 * cannot show it because the model is fetched before the first step begins.
 	 */
 	setByteFraction: (fraction: number | null) => void
 }
@@ -75,22 +76,22 @@ export interface AssetsLoadContext {
  */
 export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
-	 * Fetches the releases manifest once on mount; it returns `null` when no manifest is available, and the hook
-	 * reports a rejection through `errorMessage`.
+	 * Fetches the releases manifest once on mount; it returns `null` when no manifest is
+	 * available, and the hook reports a rejection through `errorMessage`.
 	 */
 	loadManifest: (signal: AbortSignal) => Promise<ReleaseManifest<TRelease> | null>
 
 	/**
-	 * Loads the asset bundle for one release and reports progress through `ctx`; the hook calls it on every version
-	 * or `forceWASM` change, reports a rejection through `errorMessage`, and disposes a result that resolves after
-	 * `ctx.signal` aborts.
+	 * Loads the asset bundle for one release and reports progress through `ctx`;
+	 * the hook calls it on every version or `forceWASM` change, reports a rejection through
+	 * `errorMessage`, and disposes a result that resolves after `ctx.signal` aborts.
 	 */
 	loadAssets: (release: TRelease, ctx: AssetsLoadContext) => Promise<TAssets>
 
 	/**
-	 * Releases resources the garbage collector does not own, such as an ONNX session's WASM heap or a GPU buffer;
-	 * the hook calls it for a replaced bundle, a bundle that resolved after abort, and on unmount, and without it
-	 * every reload leaves a model resident.
+	 * Releases resources the garbage collector does not own, such as an ONNX session's WASM heap
+	 * or a GPU buffer; the hook calls it for a replaced bundle, a bundle that resolved
+	 * after abort, and on unmount, and without it every reload leaves a model resident.
 	 */
 	disposeAssets?: (assets: TAssets) => void | Promise<void>
 
@@ -101,8 +102,8 @@ export interface ReleaseRuntimeConfig<TAssets, TRelease extends ReleaseBase = Re
 }
 
 /**
- * The release-loading state that {@link useReleaseRuntime} returns; a host pairs it with its map surface to
- * build a `GeocoderRuntime`.
+ * The release-loading state that {@link useReleaseRuntime} returns; a host pairs
+ * it with its map surface to build a `GeocoderRuntime`.
  */
 export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = ReleaseBase> {
 	/**
@@ -140,8 +141,8 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	loadingStepLabels: string[]
 
 	/**
-	 * The fraction of the current download received so far, in [0, 1], or `null` when no download is in progress
-	 * or the length is unknown.
+	 * The fraction of the current download received so far, in [0, 1], or `null`
+	 * when no download is in progress or the length is unknown.
 	 */
 	loadingByteFraction: number | null
 
@@ -151,7 +152,8 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 	errorMessage: string | null
 
 	/**
-	 * The backend the neural runtime resolved to, such as `webgpu (27 MB int8)`; it is `""` before the backend is known.
+	 * The backend the neural runtime resolved to, such as `webgpu (27 MB int8)`;
+	 * it is `""` before the backend is known.
 	 */
 	activeBackend: string
 
@@ -172,9 +174,9 @@ export interface ReleaseLoaderState<TAssets, TRelease extends ReleaseBase = Rele
 }
 
 /**
- * Loads the release manifest on mount and the selected release's assets whenever the version or `forceWASM`
- * changes; each reload aborts the previous load and disposes the old assets, and `ready` becomes true only after
- * the new assets fully load.
+ * Loads the release manifest on mount and the selected release's assets whenever the version
+ * or `forceWASM` changes; each reload aborts the previous load and disposes the old assets,
+ * and `ready` becomes true only after the new assets fully load.
  */
 export function useReleaseRuntime<TAssets, TRelease extends ReleaseBase = ReleaseBase>(
 	config: ReleaseRuntimeConfig<TAssets, TRelease>

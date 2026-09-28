@@ -46,8 +46,8 @@ const MERCATOR_LATITUDE_LIMIT = 85.05112878
 const COORDINATE_DIGITS = 4
 
 /**
- * The subset of a readable stream the browser uses, kept structural so that `process.stdin` and
- * test doubles both satisfy it.
+ * The subset of a readable stream the browser uses, kept structural so that
+ * `process.stdin` and test doubles both satisfy it.
  */
 export interface BrowserInput {
 	setRawMode?(mode: boolean): unknown
@@ -100,8 +100,8 @@ function clipToCells(text: string, cells: number): string {
 }
 
 /**
- * A full-screen terminal map browser built on `MapRenderer` that owns terminal modes, viewport state
- * and output, leaving the bottom row as a status bar.
+ * A full-screen terminal map browser built on `MapRenderer` that owns terminal modes,
+ * viewport state and output, leaving the bottom row as a status bar.
  */
 export class MapBrowser {
 	private readonly source: TileSource
@@ -126,8 +126,8 @@ export class MapBrowser {
 	private resolveExit: ((code: number) => void) | null = null
 
 	/**
-	 * Trailing bytes of an incomplete escape sequence, carried to the next `decodeInputChunk` so a
-	 * mouse report split across reads does not decode as an Esc keypress.
+	 * Trailing bytes of an incomplete escape sequence, carried to the next `decodeInputChunk`
+	 * so a mouse report split across reads does not decode as an Esc keypress.
 	 */
 	private pendingInput = ""
 
@@ -182,8 +182,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Asks the browser to exit with a code, ignoring calls after the first so that a signal handler
-	 * may call it.
+	 * Asks the browser to exit with a code, ignoring calls after the first
+	 * so that a signal handler may call it.
 	 */
 	requestExit(code: number): void {
 		const resolve = this.resolveExit
@@ -260,8 +260,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Moves the center by a cell delta in world pixels, so one step covers the same screen distance at
-	 * every latitude.
+	 * Moves the center by a cell delta in world pixels, so one step covers the
+	 * same screen distance at every latitude.
 	 */
 	private panByCells(columns: number, rows: number): void {
 		const center = lonLatToWorldPx(this.centerLon, this.centerLat, this.zoom)
@@ -344,8 +344,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Pans relative to the drag's starting point, because summing per-report deltas would drift as each
-	 * report is rounded to a whole cell.
+	 * Pans relative to the drag's starting point, because summing per-report deltas
+	 * would drift as each report is rounded to a whole cell.
 	 */
 	private continueDrag(column: number, row: number): void {
 		const anchor = this.drag
@@ -397,8 +397,8 @@ export class MapBrowser {
 	}
 
 	/**
-	 * Requests a frame, collapsing requests that arrive during a render into one follow-up so renders
-	 * never overlap.
+	 * Requests a frame, collapsing requests that arrive during a render into one
+	 * follow-up so renders never overlap.
 	 */
 	private scheduleRender(): void {
 		if (this.renderInFlight) {

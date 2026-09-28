@@ -51,8 +51,8 @@ function specFlags(source: string): string[] {
 }
 
 /**
- * A flag whose derived property no tracked source mentions fails here rather than parsing, validating, and having
- * no effect.
+ * A flag whose derived property no tracked source mentions fails here
+ * rather than parsing, validating, and having no effect.
  */
 export const cliFlagPropertiesCheck: RepoCheck = {
 	id: "cli-flag-properties",

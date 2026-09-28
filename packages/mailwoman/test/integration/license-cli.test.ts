@@ -109,8 +109,9 @@ describe("mailwoman license", () => {
 		return { kid, token }
 	}
 
-		/**
-	 * The worker's two customer routes and the well-known register as a fetch handler; the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
+	/**
+	 * The worker's two customer routes and the well-known register as a fetch handler;
+	 * the register lists no key, so the publication reads `unlisted` without reaching mailwoman.ai.
 	 */
 	async function stubWorker(token: string) {
 		const handler = async (request: Request): Promise<Response> => {

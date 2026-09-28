@@ -46,7 +46,8 @@ export interface ManifestMove {
 }
 
 /**
- * Rewrites for one package's manifest, edited as text rather than reserialized so key order and formatting survive.
+ * Rewrites for one package's manifest, edited as text rather than reserialized
+ * so key order and formatting survive.
  */
 export function manifestRewritesIn(file: string, text: string, moves: readonly ManifestMove[]): ManifestRewrite[] {
 	const rewrites: ManifestRewrite[] = []
@@ -78,8 +79,8 @@ export function manifestRewritesIn(file: string, text: string, moves: readonly M
 }
 
 /**
- * Every manifest target the moves invalidate, reading only the manifests a move lands in because
- * `packageDirectories` is already known to the caller.
+ * Every manifest target the moves invalidate, reading only the manifests a move lands in
+ * because `packageDirectories` is already known to the caller.
  */
 export async function planManifestRewrites(
 	repoRoot: string,

@@ -82,8 +82,8 @@ async function main(): Promise<void> {
 		.map((entry) => entry.row)
 
 	const locale = values.locale
-	// The country the board's rows are in is derived from the locale's region subtag rather than a
-	// per-country table, so it stays in step with the boards.
+	// The country the board's rows are in is derived from the locale's region subtag
+	// rather than a per-country table, so it stays in step with the boards.
 	const country = (values.country ?? locale.split("-").at(-1) ?? "").toUpperCase()
 
 	if (country.length !== 2) {

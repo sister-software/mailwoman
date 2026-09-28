@@ -13,8 +13,8 @@ import type { AddressNode } from "@mailwoman/core/decoder"
 import { PLACETYPE_SPECIFICITY } from "@mailwoman/core/resources/whosonfirst/specificity"
 
 /**
- * The admin fallback order when the postcode leads, with the JP rungs beside their Latin
- * counterparts and `municipality` above `district`.
+ * The admin fallback order when the postcode leads, with the JP rungs beside their
+ * Latin counterparts and `municipality` above `district`.
  */
 export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 	"postcode",
@@ -29,8 +29,8 @@ export const ADMIN_LADDER_POSTCODE_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The admin fallback order everywhere else: the locality tiers lead and the postcode sits
- * between them and `region`.
+ * The admin fallback order everywhere else: the locality tiers lead
+ * and the postcode sits between them and `region`.
  */
 export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 	"locality",
@@ -45,8 +45,8 @@ export const ADMIN_LADDER_LOCALITY_FIRST: ReadonlyArray<string> = [
 ]
 
 /**
- * The resolved postcode a ladder decision reads: the parsed span, the resolver's own hit, and the
- * country the resolver placed it in.
+ * The resolved postcode a ladder decision reads: the parsed span, the resolver's own hit,
+ * and the country the resolver placed it in.
  */
 export interface ResolvedPostcodeHit {
 	value: string
@@ -59,8 +59,8 @@ export interface ResolvedPostcodeHit {
 }
 
 /**
- * Pick the admin fallback order for one resolved tree: postcode-first when the code is unit-grade or
- * the address system's area-grade codes are finer than its localities.
+ * Pick the admin fallback order for one resolved tree: postcode-first when the code is
+ * unit-grade or the address system's area-grade codes are finer than its localities.
  */
 export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): ReadonlyArray<string> {
 	if (postcode === undefined) return ADMIN_LADDER_LOCALITY_FIRST
@@ -72,8 +72,8 @@ export function adminLadderFor(postcode: ResolvedPostcodeHit | undefined): Reado
 }
 
 /**
- * The ladder for a flat list of resolved nodes, reading `country` from the resolver's placement
- * rather than a caller's requested scope.
+ * The ladder for a flat list of resolved nodes, reading `country` from the resolver's
+ * placement rather than a caller's requested scope.
  */
 export function adminLadderForNodes(nodes: readonly AddressNode[]): ReadonlyArray<string> {
 	const node = nodes.find((n) => n.tag === "postcode" && n.lat != null && n.lon != null)
@@ -115,8 +115,8 @@ export interface ResolvedSpecificityInput {
 }
 
 /**
- * Rank a resolved place for "whose coordinate answers the query": `PLACETYPE_SPECIFICITY`, except
- * that a `postalcode` is ranked by its hit and an unranked placetype returns `-Infinity`.
+ * Rank a resolved place for "whose coordinate answers the query": `PLACETYPE_SPECIFICITY`,
+ * except that a `postalcode` is ranked by its hit and an unranked placetype returns `-Infinity`.
  */
 export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number {
 	if (candidate.placetype !== "postalcode") {
@@ -131,9 +131,9 @@ export function resolvedSpecificity(candidate: ResolvedSpecificityInput): number
 }
 
 /**
- * The best of a resolved set under {@link resolvedSpecificity}, or `null` when the set is empty;
- * ties keep the first, and `toInput` is explicit because each consumer spells the resolver's hit
- * differently.
+ * The best of a resolved set under {@link resolvedSpecificity}, or `null`
+ * when the set is empty; ties keep the first, and `toInput` is explicit
+ * because each consumer spells the resolver's hit differently.
  */
 export function mostSpecificResolved<T>(
 	candidates: readonly T[],

@@ -28,7 +28,8 @@ export const ABLATABLE_COMPONENTS = [
 export type AblatableComponent = (typeof ABLATABLE_COMPONENTS)[number]
 
 /**
- * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m` — rows that do assert one are graded against theirs.
+ * Fallback displacement band, in km, for a row that asserts no `expect_tolerance_m` —
+ * rows that do assert one are graded against theirs.
  */
 export const DEFAULT_ABLATION_TOLERANCE_KM = 5
 
@@ -38,15 +39,18 @@ export const DEFAULT_ABLATION_TOLERANCE_KM = 5
 export interface AblationCell {
 	component: AblatableComponent
 	/**
-	 * ISO-3166 alpha-2, matching the board's own `country` column — stated by the corpus row, never inferred from the input.
+	 * ISO-3166 alpha-2, matching the board's own `country` column — stated by the
+	 * corpus row, never inferred from the input.
 	 */
 	locale: string
 	/**
-	 * Board rows that carry this component in this locale; `support: 0` means not measured here, not a zero score.
+	 * Board rows that carry this component in this locale; `support: 0` means
+	 * not measured here, not a zero score.
 	 */
 	support: number
 	/**
-	 * Rows whose assembled coordinate moved further than the row's tolerance once the component was deleted; a row whose ablated arm produced no coordinate counts as broken.
+	 * Rows whose assembled coordinate moved further than the row's tolerance once the
+	 * component was deleted; a row whose ablated arm produced no coordinate counts as broken.
 	 */
 	brokenCount: number
 	displacementKmP50: number
@@ -60,11 +64,13 @@ export interface AblationCell {
 	 */
 	unresolvedCount: number
 	/**
-	 * Rows where the deleted component's slot was refilled by a different span; a refill can leave the coordinate intact and still make a completion nudge unsafe.
+	 * Rows where the deleted component's slot was refilled by a different span;
+	 * a refill can leave the coordinate intact and still make a completion nudge unsafe.
 	 */
 	substitutedCount: number
 	/**
-	 * The fallback band ({@linkcode DEFAULT_ABLATION_TOLERANCE_KM}); a row asserting its own `expect_tolerance_m` was graded against that instead.
+	 * The fallback band ({@linkcode DEFAULT_ABLATION_TOLERANCE_KM}); a row asserting
+	 * its own `expect_tolerance_m` was graded against that instead.
 	 */
 	toleranceKm: number
 	/**
@@ -73,11 +79,13 @@ export interface AblationCell {
 	boardID: string
 	measuredAt: string
 	/**
-	 * Rows where the ablated arm re-emitted the same value the deletion removed — the resolver recovered it from the gazetteer.
+	 * Rows where the ablated arm re-emitted the same value the deletion removed —
+	 * the resolver recovered it from the gazetteer.
 	 */
 	recoveredCount: number
 	/**
-	 * Rows excluded from the displacement percentiles because the row's own anchor never resolved; not a failure of the deletion.
+	 * Rows excluded from the displacement percentiles because the row's own anchor
+	 * never resolved; not a failure of the deletion.
 	 */
 	anchorUnresolvedCount: number
 	/**
@@ -85,11 +93,13 @@ export interface AblationCell {
 	 */
 	gradedCount: number
 	/**
-	 * Rows this cell could grade against a degradation ladder, the denominator of every `grades` count; `0` means the expectation model never spoke here.
+	 * Rows this cell could grade against a degradation ladder, the denominator of every
+	 * `grades` count; `0` means the expectation model never spoke here.
 	 */
 	ladderGradedCount: number
 	/**
-	 * The full verdict histogram, keyed by {@linkcode AblationGrade}; every key is present so a zero within a graded cell is a measurement.
+	 * The full verdict histogram, keyed by {@linkcode AblationGrade}; every key is present
+	 * so a zero within a graded cell is a measurement.
 	 */
 	grades: Record<AblationGrade, number>
 	/**
@@ -102,12 +112,14 @@ export interface AblationCell {
 	 */
 	correctlyAbstainedCount: number
 	/**
-	 * How far down the ladder the passing rows landed (0 = held at the base); `null` when no row in this cell was graded, never 0.
+	 * How far down the ladder the passing rows landed (0 = held at the base); `null`
+	 * when no row in this cell was graded, never 0.
 	 */
 	degradedRungsP50: number | null
 	degradedRungsMax: number | null
 	/**
-	 * Rows where the model declined to constrain the answer because a venue or street survived the deletion and it has no index for either ({@linkcode UNCONSTRAINED_RUNG}).
+	 * Rows where the model declined to constrain the answer because a venue or street survived
+	 * the deletion and it has no index for either ({@linkcode UNCONSTRAINED_RUNG}).
 	 */
 	unconstrainedCount: number
 }
@@ -121,7 +133,8 @@ export interface AblationRowOutcome {
 	locale: string
 	status: string
 	/**
-	 * The exact substring removed, as it appeared in the input (not as asserted — the search is case-insensitive).
+	 * The exact substring removed, as it appeared in the input
+	 * (not as asserted — the search is case-insensitive).
 	 */
 	deleted: string
 	anchorInput: string
@@ -146,25 +159,30 @@ export interface AblationRowOutcome {
 	 */
 	emitted: string | null
 	/**
-	 * `expectedRung` is `abstain`, `base`, or the WOF placetype of the rung the surviving components still pin; `expectedWhy` is the derivation.
+	 * `expectedRung` is `abstain`, `base`, or the WOF placetype of the rung the surviving
+	 * components still pin; `expectedWhy` is the derivation.
 	 */
 	expectedRung: string
 	expectedRungDepth: number | null
 	expectedWhy: string
 	/**
-	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect` pin, or no expectation (no ladder).
+	 * Where the expectation came from: the derived ladder, a per-case `ablation_expect` pin,
+	 * or no expectation (no ladder).
 	 */
 	expectedSource: "derived" | "override" | "no-ladder"
 	/**
-	 * What rung 0 of the ladder is: the corpus's asserted coordinate, or the pipeline's undeleted answer for a row that asserts none; `null` when there is no ladder.
+	 * What rung 0 of the ladder is: the corpus's asserted coordinate, or the pipeline's
+	 * undeleted answer for a row that asserts none; `null` when there is no ladder.
 	 */
 	ladderAnchor: "corpus-expected" | "pipeline-anchor" | null
 	/**
-	 * The rung the undeleted answer reached; `null` means the anchor is off its own ladder, which makes the row `ungraded`.
+	 * The rung the undeleted answer reached; `null` means the anchor is off its
+	 * own ladder, which makes the row `ungraded`.
 	 */
 	anchorRungDepth: number | null
 	/**
-	 * The deepest rung the ablated answer actually landed in, and its depth; `null` when it abstained or landed outside every rung.
+	 * The deepest rung the ablated answer actually landed in, and its depth; `null`
+	 * when it abstained or landed outside every rung.
 	 */
 	achievedRung: string | null
 	achievedRungDepth: number | null
@@ -174,7 +192,8 @@ export interface AblationRowOutcome {
 	degradedRungs: number | null
 	grade: AblationGrade
 	/**
-	 * The ladder this row was graded against, one entry per rung, plus the rungs the ancestry could not support.
+	 * The ladder this row was graded against, one entry per rung, plus the rungs
+	 * the ancestry could not support.
 	 */
 	ladder: string[]
 	ladderGaps: string[]
@@ -186,7 +205,8 @@ export interface AblationRowOutcome {
 export type SlotOutcome = "absent" | "recovered" | "substituted"
 
 /**
- * A component the row asserts but this runner refused to delete, reported per reason so a thin cell is attributable to the corpus rather than to the pipeline.
+ * A component the row asserts but this runner refused to delete, reported per reason
+ * so a thin cell is attributable to the corpus rather than to the pipeline.
  */
 export interface AblationSkip {
 	component: AblatableComponent
@@ -204,7 +224,8 @@ export interface AblationVariant {
 }
 
 /**
- * One component's roll-up across every locale; a global p90 is taken over the pooled displacements, never over the per-cell p90s.
+ * One component's roll-up across every locale; a global p90 is taken over the
+ * pooled displacements, never over the per-cell p90s.
  */
 export interface AblationComponentAggregate {
 	component: AblatableComponent
@@ -222,7 +243,8 @@ export interface AblationComponentAggregate {
 }
 
 /**
- * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order, omitting components with no cell so an unmeasured component never renders as a row of zeros.
+ * Aggregate the deletion map per component, in {@linkcode ABLATABLE_COMPONENTS} order,
+ * omitting components with no cell so an unmeasured component never renders as a row of zeros.
  */
 export function aggregateAblationComponents(
 	cells: readonly AblationCell[],

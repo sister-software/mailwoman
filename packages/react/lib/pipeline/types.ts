@@ -18,15 +18,16 @@ export interface PipelineLoadingState {
 	stepLabels: string[]
 	stepIndex: number
 	/**
-	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1], or `null` when no
-	 * download is in progress or the response declares no length; the step index cannot report this download
-	 * because the model is fetched before the first step begins.
+	 * Bytes received over bytes expected for the asset being fetched right now, in [0, 1],
+	 * or `null` when no download is in progress or the response declares no length; the step index
+	 * cannot report this download because the model is fetched before the first step begins.
 	 */
 	byteFraction?: number | null
 }
 
 /**
- * The injected parse runtime, which the host implements so this package never imports the model or gazetteer.
+ * The injected parse runtime, which the host implements so this package never
+ * imports the model or gazetteer.
  */
 export interface PipelineRuntime {
 	/**
@@ -53,8 +54,8 @@ export interface PipelineRuntime {
 }
 
 /**
- * Optional host-injected panels, kept as `ReactNode` thunks so this package needs neither the host's
- * components nor their data types.
+ * Optional host-injected panels, kept as `ReactNode` thunks so this package needs
+ * neither the host's components nor their data types.
  */
 export interface PipelinePanels {
 	/**

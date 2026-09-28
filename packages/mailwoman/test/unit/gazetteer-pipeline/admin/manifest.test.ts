@@ -52,8 +52,8 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 	})
 
 	it("gives the Overture fold its Divisions grant rather than the Places theme's", () => {
-		// Overture licenses per theme: Divisions' grant is `License for theme: ODbL`, where
-		// `CDLA-Permissive-2.0` is the Places theme's grant.
+		// Overture licenses per theme: Divisions' grant is `License for theme: ODbL`,
+		// where `CDLA-Permissive-2.0` is the Places theme's grant.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 0, overture: 5, geonames: 0 } })
 
 		expect(manifest.license).toBe("ODbL-1.0")
@@ -61,8 +61,8 @@ describe("adminLayerManifest — the license is a conjunction", () => {
 	})
 
 	it("records the Who's On First records as a LicenseRef rather than electing one of its 102 sources", () => {
-		// Who's On First states CC0 over "the format and structure" while the records are a modification of
-		// sources with their own terms, so CC0 or ODbL would each claim a grant its text never states.
+		// Who's On First states CC0 over "the format and structure" while the records are a modification
+		// of sources with their own terms, so CC0 or ODbL would each claim a grant its text never states.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 3, overture: 0, geonames: 0 } })
 
 		expect(manifest.license).toBe("LicenseRef-WhosOnFirst-Mixed")
@@ -108,8 +108,8 @@ describe("adminLayerManifest — vintages", () => {
 
 describe("adminLayerManifest — the fields a reader acts on", () => {
 	it("names a build command that is a real CLI verb, not a path", () => {
-		// `data inventory` flags a build_cmd whose path tokens do not resolve, so a CLI verb is what
-		// survives a workspace regroup.
+		// `data inventory` flags a build_cmd whose path tokens do not resolve,
+		// so a CLI verb is what survives a workspace regroup.
 		const manifest = adminLayerManifest({ ...BASE, counts: { wof: 1, overture: 0, geonames: 0 } })
 
 		expect(manifest.buildCmd).toBe("mailwoman gazetteer build admin")

@@ -25,7 +25,8 @@ export function renderUdevRule(vendorID: string, productID: string): string {
 /**
  * A passwordless-sudo rule for the mwops CLI.
  *
- * The wildcard matches any argument list, so anything running as the target user can take root without a prompt.
+ * The wildcard matches any argument list, so anything running as the target
+ * user can take root without a prompt.
  */
 export function renderSudoersRule(targetUser: string, nodePath: string, cliPath: string): string {
 	return [

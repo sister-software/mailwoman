@@ -101,7 +101,8 @@ describe("buildPOIDatabase", () => {
 
 		expect((await statPath(out)).mode & 0o222).toBe(0)
 
-		// `kdb`'s dispose closes the underlying connection; another `using` on the same DatabaseSync would race it to close().
+		// `kdb`'s dispose closes the underlying connection; another `using` on the
+		// same DatabaseSync would race it to close().
 		using kdb = new DatabaseClient<POIDatabase>(out, { readOnly: true })
 
 		// Category codes are assigned on first sight; zero remains uncategorized.
@@ -121,7 +122,6 @@ describe("buildPOIDatabase", () => {
 		expect(group).toHaveLength(5)
 		const clusterCell = group[0]!.h3_cell
 		expect(group.every((r) => r.h3_cell === clusterCell)).toBe(true)
-
 
 		const firstPhysicalRow = await kdb
 			.selectFrom("poi")
@@ -188,7 +188,9 @@ describe("buildPOIDatabase", () => {
 })
 
 /**
- * The pure `--source osm` helper that replaces the Overture path's "rows-present ⇒ 1" coverage; the bbox spans several res-6 cells so an empty or single-cluster `rows` list always leaves a cell with `observedRows: 0`.
+ * The pure `--source osm` helper that replaces the Overture path's "rows-present
+ * ⇒ 1" coverage; the bbox spans several res-6 cells so an empty or single-cluster
+ * `rows` list always leaves a cell with `observedRows: 0`.
  */
 describe("bboxCoverageCells", () => {
 	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -228,7 +230,9 @@ describe("bboxCoverageCells", () => {
 })
 
 /**
- * The `--source osm` build-local branch: `source`/`tier` swap the manifest to build-local/ODbL and `coverageCellsOverride` replaces the rows-derived coverage, including a zero-observed-rows cell that must round-trip rather than be conflated with "unsurveyed".
+ * The `--source osm` build-local branch: `source`/`tier` swap the manifest to build-local/ODbL
+ * and `coverageCellsOverride` replaces the rows-derived coverage, including a
+ * zero-observed-rows cell that must round-trip rather than be conflated with "unsurveyed".
  */
 describe("buildPOIDatabase — --source osm build-local branch", () => {
 	const bbox: LatLonBounds = { minLon: -89.7, minLat: 39.7, maxLon: -89.6, maxLat: 39.85 }
@@ -362,7 +366,9 @@ describe("buildPOIDatabase — --source osm build-local branch", () => {
 })
 
 /**
- * `bboxCoverageCells` must key a row's observed count off `cellToParent(res9Cell, 6)`, never a direct `latLngToCell(row, 6)`, because H3's hierarchy is not geometrically exact and a builder that disagrees with its readers puts the count on a neighbouring cell.
+ * `bboxCoverageCells` must key a row's observed count off `cellToParent(res9Cell, 6)`,
+ * never a direct `latLngToCell(row, 6)`, because H3's hierarchy is not geometrically exact
+ * and a builder that disagrees with its readers puts the count on a neighbouring cell.
  */
 const DIVERGENT_POINT = { latitude: 37.119, longitude: -79.6658 }
 

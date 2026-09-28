@@ -22,8 +22,8 @@ export function tagAlias(key: string): string {
 }
 
 /**
- * The SQL expression reading a tag's value on `layer`: a bare column when that layer promotes the key,
- * an `other_tags` hstore lookup otherwise.
+ * The SQL expression reading a tag's value on `layer`: a bare column when that layer
+ * promotes the key, an `other_tags` hstore lookup otherwise.
  *
  * @throws on a layer with no promoted-key list, where an hstore fallback would run and match no row.
  */
@@ -41,23 +41,23 @@ export function tagSelectExpr(promotedKeysByLayer: PromotedKeysByLayer, layer: s
 }
 
 /**
- * OSM tag key/value shape — letters, digits, underscore, colon, dot, hyphen — which every token is checked
- * against before it reaches an ogrsql template, since a value such as `a' or 1=1 --` would otherwise inject
- * SQL.
+ * OSM tag key/value shape — letters, digits, underscore, colon, dot, hyphen —
+ * which every token is checked against before it reaches an ogrsql template,
+ * since a value such as `a' or 1=1 --` would otherwise inject SQL.
  */
 const SAFE_TAG_TOKEN = /^[A-Za-z0-9_:.-]+$/
 
 /**
- * A tag-rule table entry as this module reads it: a conjunction (`and`) of `[key, value]` pairs, with `or`
- * across tags expressed as multiple rules in the table.
+ * A tag-rule table entry as this module reads it: a conjunction (`and`) of `[key, value]`
+ * pairs, with `or` across tags expressed as multiple rules in the table.
  */
 export interface TagRuleLike {
 	all: ReadonlyArray<[key: string, value: string]>
 }
 
 /**
- * Throws if any rule in `rules` carries a key or value outside {@link SAFE_TAG_TOKEN}, called at the top of
- * each SQL builder so a hostile rule table is refused before any string concatenation.
+ * Throws if any rule in `rules` carries a key or value outside {@link SAFE_TAG_TOKEN}, called at
+ * the top of each SQL builder so a hostile rule table is refused before any string concatenation.
  *
  * `label` names the refusing builder in the error.
  */

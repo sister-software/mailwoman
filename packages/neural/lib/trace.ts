@@ -11,8 +11,8 @@ import type { PlacetypeCensusObservation } from "#placetype/pair-prior"
 import type { SoftFeatureChannel } from "#soft-features"
 
 /**
- * Every prior kind the decode path records, in the order it records them; `"placetypeCensus"` only
- * observes and adds no emission bias, so its record always has `applied: false`.
+ * Every prior kind the decode path records, in the order it records them; `"placetypeCensus"`
+ * only observes and adds no emission bias, so its record always has `applied: false`.
  */
 export const TRACE_PRIOR_KINDS = [
 	"queryShape",
@@ -54,8 +54,7 @@ export interface TracePrior {
 
 	/**
 	 * The number of distinct parent names probed against the census, the denominator for
-	 * {@link TracePrior.census}; an empty `census` with a positive count means the census held none
-	 * of them.
+	 * {@link TracePrior.census}; an empty `census` with a positive count means the census held none of them.
 	 */
 	censusProbedParents?: number
 }
@@ -72,8 +71,8 @@ export type TraceRepairPass =
 	| "spanBridge"
 
 /**
- * One repair pass that changed labels, with per-piece label arrays index-aligned with `pieces`;
- * passes that changed no label are omitted.
+ * One repair pass that changed labels, with per-piece label arrays index-aligned
+ * with `pieces`; passes that changed no label are omitted.
  */
 export interface TraceRepair {
 	pass: TraceRepairPass

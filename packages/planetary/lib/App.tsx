@@ -71,8 +71,8 @@ export function App() {
 	const config = BODY_CONFIGS[body]
 
 	const [route, setRoute] = useState<PlanetaryRoute | null>(() => routeForPath(location.pathname))
-	// The feature most recently picked: a click carries the archive's whole record, which the artifact lacks,
-	// so it is kept beside the route rather than re-read.
+	// The feature most recently picked: a click carries the archive's whole record,
+	// which the artifact lacks, so it is kept beside the route rather than re-read.
 	const [picked, setPicked] = useState<SelectedFeature | null>(null)
 	const search = useSearchIndex(config.artifacts.searchIndexURL)
 	const [map, setMap] = useState<MapInstance | null>(null)

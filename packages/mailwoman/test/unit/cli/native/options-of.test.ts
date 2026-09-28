@@ -14,24 +14,25 @@ const fixture = {
 	name: "probe",
 	description: "Every option shape the derivation must carry.",
 	options: {
-				locale: { type: "string", default: "en-US", description: "Weights package locale" },
+		locale: { type: "string", default: "en-US", description: "Weights package locale" },
 		json: { type: "boolean", default: false, description: "Print JSON" },
 		failing: { type: "number", default: 0, description: "List the first N disagreements" },
-				needed: { type: "string", required: true, description: "Must be supplied" },
-				"weights-cache": { type: "string", description: "Candidate weights dir" },
-				"resolve-db": { type: "string", description: "WOF admin databases" },
+		needed: { type: "string", required: true, description: "Must be supplied" },
+		"weights-cache": { type: "string", description: "Candidate weights dir" },
+		"resolve-db": { type: "string", description: "WOF admin databases" },
 		"out-json": { type: "string", description: "Wall-time attribution JSON" },
 		"gb-ids": { type: "string", description: "Two acronym segments in one flag" },
-				mode: { type: "string", choices: ["bulk", "featureserver"], description: "Fetch mode" },
-				tags: { type: "string", multiple: true, description: "Repeatable tag" },
+		mode: { type: "string", choices: ["bulk", "featureserver"], description: "Fetch mode" },
+		tags: { type: "string", multiple: true, description: "Repeatable tag" },
 	},
 } as const satisfies CommandSpec
 
 type Options = OptionsOf<typeof fixture>
 
-		/**
-		 * The type and the runtime are checked against this list rather than against each other, so a failure names which half moved.
-		 */
+/**
+ * The type and the runtime are checked against this list rather than against each other,
+ * so a failure names which half moved.
+ */
 const EXPECTED_PROPERTIES = [
 	"locale",
 	"json",

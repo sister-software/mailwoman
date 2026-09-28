@@ -92,8 +92,8 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 		const recipe = await readWeightsRecipe(repoRoot, dataRoot)
 
-		// The config names `postalcode-us.db` while the resolver looks for `postcode-us.bin`; treating the entry
-		// as linkable would report the artifact absent rather than wrong.
+		// The config names `postalcode-us.db` while the resolver looks for `postcode-us.bin`;
+		// treating the entry as linkable would report the artifact absent rather than wrong.
 		expect(recipe.linkableFor("en-us").some((a) => a.shippedName.startsWith("postcode-"))).toBe(false)
 
 		const postcode = recipe.buildableFor("en-us").find((a) => a.shippedName === "postcode-us.bin")
@@ -119,8 +119,8 @@ describe("readWeightsRecipe — buildable is not linkable", () => {
 
 describe("readWeightsRecipe — the dev-only FSTs", () => {
 	it("names both FSTs even though the release config does not", async () => {
-		// They are dev-only — `copy-weights.ts` ships neither — so their absence resolves the gazetteer and
-		// street-context priors off with no error.
+		// They are dev-only — `copy-weights.ts` ships neither — so their absence resolves
+		// the gazetteer and street-context priors off with no error.
 		const { repoRoot, dataRoot } = await fixture(CONFIG)
 
 		const names = (await readWeightsRecipe(repoRoot, dataRoot)).linkableFor("en-gb").map((a) => a.shippedName)

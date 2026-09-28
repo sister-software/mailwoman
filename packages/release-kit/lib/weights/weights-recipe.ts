@@ -20,9 +20,9 @@ import { resolvePath, type PathBuilder, type PathBuilderLike } from "path-ts"
 /**
  * A file the recipe names that can be materialized by copying or linking it.
  *
- * `shippedName` is the filename the artifact must carry in a weights directory, not its source
- * basename: `resolveFromPackageDir` finds siblings by fixed name, so an artifact placed under its
- * source name resolves to no path and reports absence rather than failing.
+ * `shippedName` is the filename the artifact must carry in a weights directory, not its
+ * source basename: `resolveFromPackageDir` finds siblings by fixed name, so an artifact
+ * placed under its source name resolves to no path and reports absence rather than failing.
  */
 export interface LinkableArtifact {
 	shippedName: string
@@ -57,13 +57,13 @@ export interface WeightsRecipe {
 	lineage?: string
 	softFeed: SoftFeedRecipe
 	/**
-	 * Files this recipe names for a locale; absent entries are omitted, so a release that ships
-	 * without a channel is a supported lean install rather than an error.
+	 * Files this recipe names for a locale; absent entries are omitted, so a release that
+	 * ships without a channel is a supported lean install rather than an error.
 	 */
 	linkableFor: (locale: string) => LinkableArtifact[]
 	/**
-	 * Artifacts this recipe names for a locale that a build step must produce, reported rather than
-	 * silently skipped so a consumer can say which channels a directory will lack.
+	 * Artifacts this recipe names for a locale that a build step must produce, reported
+	 * rather than silently skipped so a consumer can say which channels a directory will lack.
 	 */
 	buildableFor: (locale: string) => BuildableArtifact[]
 }
@@ -71,9 +71,9 @@ export interface WeightsRecipe {
 /**
  * Read and resolve the recipe.
  *
- * `overrides` carries the publish-time environment escapes and their dev twins, so a caller
- * experimenting with a non-default model passes it here rather than each consumer re-reading the
- * environment and disagreeing about precedence.
+ * `overrides` carries the publish-time environment escapes and their dev twins,
+ * so a caller experimenting with a non-default model passes it here rather than each
+ * consumer re-reading the environment and disagreeing about precedence.
  */
 export async function readWeightsRecipe(
 	repoRoot: PathBuilder,
@@ -86,8 +86,8 @@ export async function readWeightsRecipe(
 	const model = overrides.model ?? resolvePath(dataRoot, config.weights.model)
 	const tokenizer = overrides.tokenizer ?? resolvePath(dataRoot, config.weights.tokenizer)
 
-	// `copy-weights.ts` lets an absolute config entry pass through; matching that here keeps the two
-	// readers from disagreeing about what a leading slash means.
+	// `copy-weights.ts` lets an absolute config entry pass through; matching that here
+	// keeps the two readers from disagreeing about what a leading slash means.
 	const underDataRoot = (rel: string, base: PathBuilder = dataRoot): string =>
 		rel.startsWith("/") ? rel : resolvePath(base, rel)
 
@@ -110,9 +110,9 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts` does not
-		// ship them, so their absence is not a lean install — it silently resolves the gazetteer and
-		// street-context priors off, a scoring change with no error.
+		// The FSTs are DEV-only: `release.config.json` does not name them and `copy-weights.ts`
+		// does not ship them, so their absence is not a lean install — it silently resolves
+		// the gazetteer and street-context priors off, a scoring change with no error.
 		out.push(
 			{
 				shippedName: `fst-${locale}.bin`,
@@ -143,9 +143,10 @@ export async function readWeightsRecipe(
 			})
 		}
 
-		// Presence rather than a path: the pair-index entries are heterogeneous — `gb` names a `source`,
-		// `us` only a `boroughDB`, and each country carries its own tuning — and the build that reads
-		// them lives in `buildPairIndexOverlay`. Report that a build is owed and leave it where it lives.
+		// Presence rather than a path: the pair-index entries are heterogeneous — `gb` names
+		// a `source`, `us` only a `boroughDB`, and each country carries its own tuning —
+		// and the build that reads them lives in `buildPairIndexOverlay`.
+		// Report that a build is owed and leave it where it lives.
 		if (softFeed.pairIndexByCountry?.[country]) {
 			out.push({
 				shippedName: `pair-index-${country}.bin`,

@@ -15,8 +15,8 @@ import { createRuntimePipeline } from "#index"
 const SOURCE = "operator:world-structures-2026-08-10"
 
 /**
- * The street family is assembled because a row asserts the whole attested street name and a
- * correct parse may split it across prefix/particle/name/suffix spans.
+ * The street family is assembled because a row asserts the whole attested street name
+ * and a correct parse may split it across prefix/particle/name/suffix spans.
  */
 
 const fixtures = (await loadRegressionCases()).filter((row) => row.source === SOURCE)

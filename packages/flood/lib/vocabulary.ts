@@ -43,14 +43,14 @@ export const EA_FLOOD_ZONE_DEFINITIONS: ReadonlyArray<FloodZoneDefinition> = [
 ]
 
 /**
- * The declared domain as a membership set; an unknown `flood_zone` value is a source-schema change,
- * and coercing it to a nearest neighbour or null would report no data instead.
+ * The declared domain as a membership set; an unknown `flood_zone` value is a source-schema
+ * change, and coercing it to a nearest neighbour or null would report no data instead.
  */
 export const EA_FLOOD_ZONE_CODES: ReadonlySet<string> = new Set(EA_FLOOD_ZONE_DEFINITIONS.map((zone) => zone.code))
 
 /**
- * Zone 1, which the product represents by absence rather than a polygon, carried so a
- * designated-absence answer can quote the definition it rests on.
+ * Zone 1, which the product represents by absence rather than a polygon, carried
+ * so a designated-absence answer can quote the definition it rests on.
  */
 export const FLOOD_ZONE_1: FloodZoneDefinition = {
 	code: "FZ1",
@@ -76,8 +76,8 @@ export const EA_FLOOD_DATASET_ID = "04532375-a198-476e-985e-0579a0a11b47"
 export const EA_FLOOD_LAYER = "Flood_Zones_2_3_Rivers_and_Sea"
 
 /**
- * The attribution string the ISO metadata specifies, carrying the OGL v3.0 acknowledgement
- * condition into `layer_manifest.attribution`.
+ * The attribution string the ISO metadata specifies, carrying the OGL v3.0
+ * acknowledgement condition into `layer_manifest.attribution`.
  */
 export const EA_FLOOD_ATTRIBUTION = "© Environment Agency copyright and/or database right 2025. All rights reserved."
 
@@ -92,8 +92,9 @@ export const EA_FLOOD_LICENSE = "OGL-UK-3.0"
 export const EA_FLOOD_LICENSE_URL = "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/"
 
 /**
- * The authority's coverage statement: the union of hazard polygons is not the mapped area, so
- * `flood_map_extent` must derive Zone 1 as the mapped area minus the polygons rather than report it unmapped.
+ * The authority's coverage statement: the union of hazard polygons is not the mapped area,
+ * so `flood_map_extent` must derive Zone 1 as the mapped area minus the polygons
+ * rather than report it unmapped.
  */
 export const EA_COVERAGE_STATEMENT =
 	"The mapping of Flood Zone datasets covers all of England, down to catchments with an area of 3km2. " +
@@ -105,8 +106,8 @@ export const EA_COVERAGE_STATEMENT =
 export const EA_COVERAGE_STATEMENT_URL = `https://environment.data.gov.uk/dataset/${EA_FLOOD_DATASET_ID}`
 
 /**
- * What the product does not cover, in the authority's own words, carried into the observation so
- * a reading can be seen for what it is silent about.
+ * What the product does not cover, in the authority's own words, carried into the
+ * observation so a reading can be seen for what it is silent about.
  */
 export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Flood Zones are a planning tool and they do not necessarily mean somewhere will or will not flood.",
@@ -117,9 +118,9 @@ export const EA_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * The bounding box the OGC API Features collection declares for the published layer,
- * in CRS84 order `[minLon, minLat, maxLon, maxLat]`, read from
- * `https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones/ogc/features/v1/collections`.
+ * The bounding box the OGC API Features collection declares for the
+ * published layer, in CRS84 order `[minLon, minLat, maxLon, maxLat]`, read
+ * from `https://environment.data.gov.uk/spatialdata/flood-map-for-planning-flood-zones/ogc/features/v1/collections`.
  */
 export const EA_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-6.9869611877272115, 49.881520456225346, 2.0738245399754374, 55.81077481587207,

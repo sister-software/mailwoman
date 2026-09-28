@@ -80,7 +80,8 @@ describe("applyPostcodeShapeCoherence — CONFIRMED (B1-1)", () => {
 	})
 
 	it("confirms a DE/FR shape-native 5-digit span — M-1 finding #1, the documented limit", () => {
-		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the intersection is non-empty and the shape confirms rather than excludes.
+		// A 5-digit house number is shape-native to US/DE/FR, so with a DE signal the
+		// intersection is non-empty and the shape confirms rather than excludes.
 		const roots = [postcodeNode("50733"), node({ tag: "country", value: "Germany" })]
 
 		const verdict = applyPostcodeShapeCoherence(roots)
@@ -186,7 +187,8 @@ describe("applyPostcodeShapeCoherence — ABSTENTIONS (B1-2 documented, B1-3 con
 
 		const verdict = applyPostcodeShapeCoherence(roots)
 
-		// The region's ES signal is filtered out of the SystemCode universe, so no confident siblings remain and the span abstains rather than false-excludes.
+		// The region's ES signal is filtered out of the SystemCode universe, so no confident
+		// siblings remain and the span abstains rather than false-excludes.
 		expect(verdict.abstained).toEqual(["15 07691"])
 		expect(roots[0]!.tag).toBe("postcode")
 	})

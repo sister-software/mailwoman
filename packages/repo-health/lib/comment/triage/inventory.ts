@@ -26,8 +26,8 @@ export interface TriageInventoryReport extends InventoryResult {
 }
 
 /**
- * `.d.ts` carries generated declarations and `out/` the compiled tree, so both would inventory comments this
- * repository did not write and cannot edit.
+ * `.d.ts` carries generated declarations and `out/` the compiled tree, so both would
+ * inventory comments this repository did not write and cannot edit.
  */
 function isInventorySource(path: string): boolean {
 	const isPython = path.startsWith("corpus-python/") && path.endsWith(".py")

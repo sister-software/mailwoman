@@ -16,7 +16,8 @@ import { canonicalizeRouteKey, type RouteKey, streetKeyVariants } from "#street/
 import type { StreetSegmentDatabase } from "#street/segment-schema"
 
 /**
- * How an interpolated answer was computed, `address_point` for bracketed neighbor points and `tiger_range` for linear position within a tiger segment.
+ * How an interpolated answer was computed, `address_point` for bracketed neighbor points
+ * and `tiger_range` for linear position within a tiger segment.
  */
 export type InterpolationMethod = "address_point" | "tiger_range"
 
@@ -31,7 +32,8 @@ export interface InterpolatedHit {
 
 	method: InterpolationMethod
 	/**
-	 * True when the matched segment side's parity agrees with the house number (or the side is `mixed`); false is an opposite-side fallback.
+	 * True when the matched segment side's parity agrees with the house number
+	 * (or the side is `mixed`); false is an opposite-side fallback.
 	 */
 	parityMatched?: boolean
 	/**
@@ -39,7 +41,8 @@ export interface InterpolatedHit {
 	 */
 	bracket?: "both" | "single"
 	/**
-	 * Uncertainty radius in meters: half the matched segment length for `tiger_range`, half the bracket span for `address_point`/`both`, or a larger extrapolation penalty for `single`.
+	 * Uncertainty radius in meters: half the matched segment length for `tiger_range`, half the
+	 * bracket span for `address_point`/`both`, or a larger extrapolation penalty for `single`.
 	 */
 	uncertaintyM: number
 
@@ -56,13 +59,15 @@ export interface InterpolationQuery {
 	 */
 	postcode?: string
 	/**
-	 * The resolved locality's coordinate, tie-breaking when no postcode was given and several postcodes survive parity.
+	 * The resolved locality's coordinate, tie-breaking when no postcode was given
+	 * and several postcodes survive parity.
 	 */
 	near?: { lat: number; lon: number }
 }
 
 /**
- * Acceptance geometry for the `near` tie-break: the winning group must be within this many kilometres and the runner-up at least {@link NEAR_DOMINANCE} times farther.
+ * Acceptance geometry for the `near` tie-break: the winning group must be within this
+ * many kilometres and the runner-up at least {@link NEAR_DOMINANCE} times farther.
  */
 const NEAR_MAX_KM = 25
 
@@ -125,7 +130,8 @@ export class StreetInterpolator<
 > implements InterpolationLookup {
 	readonly #db: DatabaseClient<DB>
 	/**
-	 * Resources this instance opened; a caller-supplied connection is not in here, so disposal cannot reach it.
+	 * Resources this instance opened; a caller-supplied connection is not in here,
+	 * so disposal cannot reach it.
 	 */
 	readonly #resources = new DisposableStack()
 	readonly #byPostcode:
@@ -160,7 +166,8 @@ export class StreetInterpolator<
 			)
 		}
 
-		// The conformal radius multiplier ships in the extract's `interp_calibration` table and is read once at open time; extracts without that table leave it undefined.
+		// The conformal radius multiplier ships in the extract's `interp_calibration` table
+		// and is read once at open time; extracts without that table leave it undefined.
 		if (hasTable(this.#db, "interp_calibration")) {
 			const row = this.#db.prepare("SELECT radius_multiplier FROM interp_calibration LIMIT 1").get() as
 				| { radius_multiplier: unknown }
@@ -175,7 +182,8 @@ export class StreetInterpolator<
 	}
 
 	/**
-	 * The artifact's own conformal radius multiplier, read from the extract at construction; `undefined` when the extract predates the table or carries no valid row.
+	 * The artifact's own conformal radius multiplier, read from the extract at construction;
+	 * `undefined` when the extract predates the table or carries no valid row.
 	 */
 	get radiusCalibration(): number | undefined {
 		return this.#radiusCalibration
@@ -220,7 +228,8 @@ export class StreetInterpolator<
 		let pool = preferred.length ? preferred : rows
 		const parityMatched = preferred.length > 0
 
-		// Without a postcode the covering ranges must agree on one postcode or the lookup abstains, counted over the parity pool.
+		// Without a postcode the covering ranges must agree on one postcode
+		// or the lookup abstains, counted over the parity pool.
 		if (!query.postcode) {
 			const postcodes = new Set(pool.map((r) => r.postcode ?? ""))
 

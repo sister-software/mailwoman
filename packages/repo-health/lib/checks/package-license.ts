@@ -71,8 +71,8 @@ export const packageLicenseCheck: RepoCheck = {
 		const rootDeclared = await readDeclaredLicense(context.repoRoot, "package.json")
 
 		if (typeof rootDeclared !== "string") {
-			// Without the root's expression there is no basis for comparison, and one failure per workspace would bury the
-			// one that has to be fixed first.
+			// Without the root's expression there is no basis for comparison, and one failure
+			// per workspace would bury the one that has to be fixed first.
 			return [rootDeclared]
 		}
 

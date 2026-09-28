@@ -21,8 +21,8 @@ import { resolvePath } from "path-ts"
 import { type Diagnostic, DiagnosticSeverity, type RepoCheck } from "#check"
 
 /**
- * The three notice files, each with the audience that reads it; the `packages/core` copy is the only one in
- * `@mailwoman/core`'s `files` array, so it is the one that reaches an installer.
+ * The three notice files, each with the audience that reads it; the `packages/core` copy is the
+ * only one in `@mailwoman/core`'s `files` array, so it is the one that reaches an installer.
  */
 const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 	["THIRD_PARTY_NOTICES.md", "the repository's notices"],
@@ -36,32 +36,32 @@ const NOTICE_FILES: ReadonlyArray<readonly [path: string, audience: string]> = [
 const DERIVED_PACKAGE = "packages/core"
 
 /**
- * The module paths a notice names, as `lib/tokenization/<name>.ts`; matching the path rather than a module name is
- * what makes a rename fail the check, since the notice is what a licensee reads.
+ * The module paths a notice names, as `lib/tokenization/<name>.ts`; matching the path rather than
+ * a module name is what makes a rename fail the check, since the notice is what a licensee reads.
  */
 function derivedModulePaths(text: string): Set<string> {
 	return new Set(text.match(/lib\/tokenization\/[A-Za-z]+\.ts/gu))
 }
 
 /**
- * The sentence a header carries to record the derivation, because a file's own header is where its reader looks
- * and a notice elsewhere in the tree does not reach them.
+ * The sentence a header carries to record the derivation, because a file's own header is
+ * where its reader looks and a notice elsewhere in the tree does not reach them.
  */
 const HEADER_MARKER = "Pelias Parser, MIT"
 
 /**
- * The condition MIT attaches to its grant as the license states it, which the shipped copy must reproduce rather
- * than link to, since a consumer holds the tarball and not the upstream repository.
+ * The condition MIT attaches to its grant as the license states it, which the shipped copy must
+ * reproduce rather than link to, since a consumer holds the tarball and not the upstream repository.
  */
 const PERMISSION_NOTICE = "shall be included in all copies or substantial portions of the Software"
 
 /**
- * The text with its blockquote markers stripped and every whitespace run folded to one space, because the
- * repository formatter rewraps the quoted license and matching the raw file would fail on a reflow that changed no
- * text a licensee reads.
+ * The text with its blockquote markers stripped and every whitespace run folded to one space,
+ * because the repository formatter rewraps the quoted license and matching the raw
+ * file would fail on a reflow that changed no text a licensee reads.
  *
- * `@mailwoman/normalize`'s `collapseWhitespace` keeps newlines as segment separators and returns an offset map for
- * address text, so it is a different operation.
+ * `@mailwoman/normalize`'s `collapseWhitespace` keeps newlines as segment separators
+ * and returns an offset map for address text, so it is a different operation.
  */
 function foldQuotedProse(text: string): string {
 	return text.replaceAll(/^[\t >]+/gmu, "").replaceAll(/\s+/gu, " ")

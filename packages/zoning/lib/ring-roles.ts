@@ -12,8 +12,8 @@ import { pointInRing, ringSignedAreaM2, type MultiPolygonRings } from "@mailwoma
 /**
  * How many of a hole's vertices are tested against a candidate exterior.
  *
- * One vertex is not enough: holes share vertices with their exterior, and a ray cast on an edge is
- * implementation-defined.
+ * One vertex is not enough: holes share vertices with their exterior,
+ * and a ray cast on an edge is implementation-defined.
  */
 const HOLE_VERTEX_SAMPLES = 9
 
@@ -33,15 +33,16 @@ export interface ResolvedRingRoles {
 	 */
 	nestedHoles: number
 	/**
-	 * Holes no exterior contains a majority of, placed under the smallest exterior of the same feature and
-	 * counted here: they are carried rather than dropped, because dropping one would add ground the plan carved out.
+	 * Holes no exterior contains a majority of, placed under the smallest exterior
+	 * of the same feature and counted here: they are carried rather than dropped,
+	 * because dropping one would add ground the plan carved out.
 	 */
 	adjacentHoles: number
 	/**
 	 * `1` where the feature's exterior was chosen by magnitude because no ring read as one by orientation.
 	 *
-	 * The largest ring becomes the exterior, which is also correct for a feature published wholly
-	 * inverted, and the count rides on the receipt rather than being implied to be zero.
+	 * The largest ring becomes the exterior, which is also correct for a feature published
+	 * wholly inverted, and the count rides on the receipt rather than being implied to be zero.
 	 */
 	exteriorByMagnitude: number
 	/**
@@ -53,8 +54,8 @@ export interface ResolvedRingRoles {
 }
 
 /**
- * Flatten a feature's rings, discarding the arriving nesting because orientation is the only signal
- * that means the same thing in both encodings.
+ * Flatten a feature's rings, discarding the arriving nesting because orientation is
+ * the only signal that means the same thing in both encodings.
  */
 function flattenRings(polygons: MultiPolygonRings): ReadonlyArray<ReadonlyArray<readonly number[]>> {
 	const rings: Array<ReadonlyArray<readonly number[]>> = []
@@ -116,8 +117,8 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 
 		signedAreaM2 += signed
 
-		// `ringSignedAreaM2` signs clockwise positive, which is exterior under this service; a zero-area
-		// ring is degenerate and carried as a hole so it can never enclose anything.
+		// `ringSignedAreaM2` signs clockwise positive, which is exterior under this service;
+		// a zero-area ring is degenerate and carried as a hole so it can never enclose anything.
 		if (signed > 0) {
 			exteriors.push({ ring, area: signed, holes: [] })
 		} else {
@@ -148,8 +149,8 @@ export function resolveRingRoles(polygons: MultiPolygonRings, featureID: string)
 		exteriorByMagnitude = 1
 	}
 
-	// Smallest containing exterior, so a hole inside an island inside a hole lands on the island; sorting
-	// once makes the choice deterministic on a tie.
+	// Smallest containing exterior, so a hole inside an island inside a hole lands on
+	// the island; sorting once makes the choice deterministic on a tie.
 	const bySize = [...exteriors].toSorted((left, right) => left.area - right.area)
 
 	let nestedHoles = 0

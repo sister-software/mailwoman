@@ -33,9 +33,9 @@ export async function workspaceDirectories(repoRoot: PathBuilderLike): Promise<M
 }
 
 /**
- * The seeds plus every workspace they reach through a `workspace:` dependency, optional or peer
- * dependency, transitively, computed so a package added to a seed's graph is picked up without
- * editing a list.
+ * The seeds plus every workspace they reach through a `workspace:` dependency,
+ * optional or peer dependency, transitively, computed so a package added to a
+ * seed's graph is picked up without editing a list.
  *
  * @throws When a seed or a reached dependency names no workspace: a `workspace:`
  * specifier that resolves nowhere is a broken manifest rather than an absence.

@@ -14,8 +14,8 @@ import { arealPolygons, geometryContains, type ParsedGeometry, type PolygonRings
 import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
- * The rings a polyfill walks: every polygon's outer ring, with holes deliberately not subtracted
- * because the interior test re-checks vertices against the full geometry.
+ * The rings a polyfill walks: every polygon's outer ring, with holes deliberately not
+ * subtracted because the interior test re-checks vertices against the full geometry.
  */
 function outerRings(geometry: ParsedGeometry): PolygonRings {
 	const polygons = arealPolygons(geometry)
@@ -28,8 +28,8 @@ function outerRings(geometry: ParsedGeometry): PolygonRings {
 }
 
 /**
- * The outline's bounding rectangle, for pre-clipping a reference inventory that can only be probed
- * by range — a coarse filter that contains the outline and is never the outline.
+ * The outline's bounding rectangle, for pre-clipping a reference inventory that can only
+ * be probed by range — a coarse filter that contains the outline and is never the outline.
  */
 export function geometryBBox(geometry: ParsedGeometry): {
 	minLon: number
@@ -70,8 +70,8 @@ export function geometryBBox(geometry: ParsedGeometry): {
 }
 
 /**
- * Every cell whose centre falls inside `geometry`, at `resolution` — the raw polyfill that
- * {@link interiorCoverageCells} narrows.
+ * Every cell whose centre falls inside `geometry`, at `resolution` — the raw
+ * polyfill that {@link interiorCoverageCells} narrows.
  */
 export function regionCoverageCells(geometry: ParsedGeometry, resolution: number): H3Cell[] {
 	const cells = new Set<string>()
@@ -109,8 +109,8 @@ export function interiorCoverageCells(geometry: ParsedGeometry, resolution: numb
 }
 
 /**
- * The 48-bit short-cell form of {@link interiorCoverageCells}, as a membership set — the shape
- * both a row clipper and a coverage writer probe.
+ * The 48-bit short-cell form of {@link interiorCoverageCells}, as a membership set —
+ * the shape both a row clipper and a coverage writer probe.
  */
 export function interiorCoverageCellSet(geometry: ParsedGeometry, resolution: number): Set<number> {
 	return new Set(interiorCoverageCells(geometry, resolution).map((cell) => shortCellToInt(cell)))

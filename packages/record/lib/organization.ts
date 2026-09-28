@@ -33,8 +33,8 @@ export interface OrganizationName {
 }
 
 /**
- * A domain pack name: each guards the abbreviations meaningful in that domain from being stripped as legal
- * forms, and `general` guards no form.
+ * A domain pack name: each guards the abbreviations meaningful in that domain from
+ * being stripped as legal forms, and `general` guards no form.
  */
 export type DesignationDomain = "general" | "healthcare"
 
@@ -43,21 +43,21 @@ export type DesignationDomain = "general" | "healthcare"
  */
 export interface CanonicalizeOptions {
 	/**
-	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that country's legal forms to the
-	 * strip-set; case-insensitive, and unknown codes add no pack.
+	 * ISO 3166-1 alpha-2 country code of the org's jurisdiction, adding that country's
+	 * legal forms to the strip-set; case-insensitive, and unknown codes add no pack.
 	 */
 	jurisdiction?: string
 	/**
-	 * Ingest domain, which guards domain-meaningful abbreviations (e.g. `healthcare` guards `pt` / `sca` / `scs`)
-	 * from being stripped, overriding any jurisdiction pack.
+	 * Ingest domain, which guards domain-meaningful abbreviations (e.g. `healthcare` guards
+	 * `pt` / `sca` / `scs`) from being stripped, overriding any jurisdiction pack.
 	 */
 	domain?: DesignationDomain
 }
 
 /**
- * Universal legal-entity designations, normalized to lowercase without punctuation and stripped as whole
- * tokens; name-meaningful words and the collision-prone forms that live in
- * {@link JURISDICTION_DESIGNATIONS} are deliberately absent.
+ * Universal legal-entity designations, normalized to lowercase without punctuation
+ * and stripped as whole tokens; name-meaningful words and the collision-prone forms
+ * that live in {@link JURISDICTION_DESIGNATIONS} are deliberately absent.
  */
 const BASE_DESIGNATIONS = new Set([
 	"inc",
@@ -115,8 +115,8 @@ const BASE_DESIGNATIONS = new Set([
 ])
 
 /**
- * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms) added only when the jurisdiction is known,
- * holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base must not strip.
+ * Jurisdiction-conditional legal forms (ISO 3166-1 alpha-2 → forms) added only when the jurisdiction
+ * is known, holding the collision-prone tokens (`pt`, `sca`, `scs`) that the base must not strip.
  */
 const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 	ID: ["pt", "tbk", "ud"], // Perseroan Terbatas / Terbuka (listed) / Usaha Dagang
@@ -128,8 +128,8 @@ const JURISDICTION_DESIGNATIONS: Record<string, readonly string[]> = {
 }
 
 /**
- * Domain guard-sets (domain → tokens never stripped) that override any jurisdiction pack, e.g. `healthcare`
- * keeps `pt`, `sca`, and `scs` from being stripped as legal forms.
+ * Domain guard-sets (domain → tokens never stripped) that override any jurisdiction pack,
+ * e.g. `healthcare` keeps `pt`, `sca`, and `scs` from being stripped as legal forms.
  */
 const DOMAIN_PROTECTED: Record<DesignationDomain, readonly string[]> = {
 	general: [],
@@ -200,9 +200,9 @@ function canonicalizeFragment(
 }
 
 /**
- * Canonicalize an organization name: split off any `doing business as` clause, then reduce the legal name to a
- * designation-stripped key; returns `null` for empty input, and {@link CanonicalizeOptions} resolves the
- * jurisdiction × domain collision.
+ * Canonicalize an organization name: split off any `doing business as` clause,
+ * then reduce the legal name to a designation-stripped key; returns `null` for empty input,
+ * and {@link CanonicalizeOptions} resolves the jurisdiction × domain collision.
  */
 export function canonicalizeOrganizationName(
 	input: string | null | undefined,

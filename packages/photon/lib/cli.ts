@@ -65,8 +65,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			port: { type: "string", default: "2322" },
 			host: { type: "string", default: "0.0.0.0" },
 			"candidate-db": { type: "string" },
-			// Permissive CORS is on by default for upstream Photon parity; `--no-cors` turns it off where a
-			// reverse proxy already sets the headers.
+			// Permissive CORS is on by default for upstream Photon parity; `--no-cors` turns it off
+			// where a reverse proxy already sets the headers.
 			cors: { type: "boolean", default: true },
 		},
 		allowNegative: true,
@@ -85,8 +85,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 	const resolver = createWOFResolver(backend)
 	const extracts = await USStateDatabaseProvider.create(resolverMod, dataRootPath())
 	const postcodeOfLocality = await createLocalityPostcodeLookup()
-	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse, a no-op when
-	// the extract is absent.
+	// National open-register rooftop tier: BAN-FR ahead of the OSM tier for a non-US parse,
+	// a no-op when the extract is absent.
 	const { BANRegionDatabaseProvider } = await import("@mailwoman/ban/sdk")
 	const banExtracts = await BANRegionDatabaseProvider.create(dataRootPath())
 	const reverseGeo = adminDBPath ? new resolverMod.WOFReverseGeocoder({ adminDBPath }) : undefined
@@ -96,12 +96,12 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			const query = params.q?.trim()
 
 			if (!query || query.length > MAX_QUERY_LEN) return photonCollection([])
-			// Forward the client's viewport as a proximity bias, a soft re-rank the resolver folds into
-			// candidate scoring, only when both coords are present.
+			// Forward the client's viewport as a proximity bias, a soft re-rank the resolver
+			// folds into candidate scoring, only when both coords are present.
 			const bias = params.lat != null && params.lon != null ? [{ lat: params.lat, lon: params.lon }] : undefined
 
-			// No country constraint: the placer routes the query's own country, and forcing `US` here would
-			// resolve every non-US query to its US namesake.
+			// No country constraint: the placer routes the query's own country, and forcing
+			// `US` here would resolve every non-US query to its US namesake.
 			const result = await geocodeAddress(query, {
 				classifier,
 				resolver,
@@ -113,32 +113,33 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 			})
 
 			if (result.lat == null || result.lon == null) return photonCollection([])
-			// Decorate from the resolved place — proper-cased ancestry names, the resolved country, and
-			// osm_key/value/type — with state/county only on an ancestry-capable backend.
+			// Decorate from the resolved place — proper-cased ancestry names, the resolved country,
+			// and osm_key/value/type — with state/county only on an ancestry-capable backend.
 			const country = matchCountry(result.countryCode)
 
-			// A rooftop or interpolated tier is house-grade: carry the parsed housenumber and street so
-			// photonForwardProperties decorates it `type: house` rather than the admin locality's `type: city`.
+			// A rooftop or interpolated tier is house-grade: carry the parsed housenumber
+			// and street so photonForwardProperties decorates it `type: house`
+			// rather than the admin locality's `type: city`.
 			const houseGrade =
 				result.resolution_tier === "address_point" ||
 				result.resolution_tier === "interpolated" ||
 				result.resolution_tier === "plus_code"
 
-			// The street-centroid tier is street-grade: the full assembled street name in `name` plus
-			// highway/street osm tags.
+			// The street-centroid tier is street-grade: the full assembled street name
+			// in `name` plus highway/street osm tags.
 			const streetGrade = result.resolution_tier === "street"
 
-			// The register row's own locality decorates a house-grade answer whose hierarchy carries no
-			// locality, title-cased because extracts store no display-cased locality.
+			// The register row's own locality decorates a house-grade answer whose hierarchy
+			// carries no locality, title-cased because extracts store no display-cased locality.
 			const places = result.hierarchy.map((h) => ({ tag: h.tag, name: h.name }))
 
 			if (result.rooftop?.localityNorm && !places.some((p) => p.tag === "locality")) {
 				places.push({ tag: "locality", name: titleCase(result.rooftop.localityNorm) })
 			}
 
-			// Locality→postcode enrichment: an admin answer whose containing postcode is unambiguous
-			// (exactly one, keyed by the resolved place's WOF id) carries it, and a multi-postcode city
-			// gets none.
+			// Locality→postcode enrichment: an admin answer whose containing postcode is
+			// unambiguous (exactly one, keyed by the resolved place's WOF id) carries it,
+			// and a multi-postcode city gets none.
 			let enrichedPostcode: string | undefined
 
 			if (!result.postcode && !result.rooftop?.postcode) {
@@ -161,8 +162,8 @@ async function serve(engineStamp: ResolvedEngineStamp): Promise<void> {
 				...(streetGrade ? { street: { name: result.street } } : {}),
 			}
 
-			// candidates[0] is the primary; its ranked alternatives become extra features up to the requested
-			// `limit`.
+			// candidates[0] is the primary; its ranked alternatives become extra
+			// features up to the requested `limit`.
 			const alternatives = result.candidates.slice(1).map((c) => {
 				const cc = matchCountry(c.countryCode)
 

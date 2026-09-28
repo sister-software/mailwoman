@@ -15,8 +15,8 @@ import { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 import { collectMatches } from "#postcode/repair"
 import type { TokenizedPiece } from "#tokenizer"
 
-// The pinned class order lives in `#labels`, and this alias name is kept because the anchor feature
-// layout indexes it.
+// The pinned class order lives in `#labels`, and this alias name is kept
+// because the anchor feature layout indexes it.
 export { LOCALE_COUNTRIES as LOCALE_ORDER } from "#labels"
 
 /**
@@ -65,8 +65,8 @@ export function anchorFeatureVector(posterior: Record<string, number>, lat: numb
 }
 
 /**
- * Parses the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`) into a
- * Map, taking the parsed object rather than a path so this module stays browser-safe.
+ * Parses the pilot postcode→anchor lookup JSON (`{postcode: [posterior, lat, lon, source?]}`)
+ * into a Map, taking the parsed object rather than a path so this module stays browser-safe.
  */
 export function parseAnchorLookup(
 	raw: Record<string, [Record<string, number>, number, number, (string | null)?]>
@@ -81,22 +81,22 @@ export function parseAnchorLookup(
 }
 
 /**
- * `alnum-run` scans `[A-Za-z0-9]+` runs and so can never key a space-joined postcode (`SW1A 2AA`),
- * while `shaped` takes the postcode-shaped spans from {@linkcode collectMatches} and keys them
- * `span.replace(" ", "").toUpperCase()` like the train painter.
+ * `alnum-run` scans `[A-Za-z0-9]+` runs and so can never key a space-joined postcode
+ * (`SW1A 2AA`), while `shaped` takes the postcode-shaped spans from {@linkcode collectMatches}
+ * and keys them `span.replace(" ", "").toUpperCase()` like the train painter.
  */
 export type AnchorSpanMode = "alnum-run" | "shaped"
 
 /**
- * The GB unit-postcode key shape, space-stripped (`SW1A2AA`), used only to derive the outward code for
- * the fallback below.
+ * The GB unit-postcode key shape, space-stripped (`SW1A2AA`), used only to derive
+ * the outward code for the fallback below.
  */
 const GB_UNIT_KEY = /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/
 
 /**
- * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index into `text`
- * and `String.prototype.toUpperCase` is not length-preserving (`ß` → `SS`), which would shift every
- * subsequent span and paint the anchor onto the wrong pieces.
+ * Ascii-only uppercase is used rather than `toUpperCase()` because the match offsets index
+ * into `text` and `String.prototype.toUpperCase` is not length-preserving (`ß` → `SS`),
+ * which would shift every subsequent span and paint the anchor onto the wrong pieces.
  */
 function asciiUpper(text: string): string {
 	return text.replaceAll(/[a-z]/g, (c) => c.toUpperCase())
@@ -108,8 +108,8 @@ function asciiUpper(text: string): string {
 const GB_INWARD_LENGTH = 3
 
 /**
- * Merges per-binary anchor lookups by unioning the country posteriors per postcode and meaning the
- * centroids, treating a `(0,0)` centroid as a placeholder that is never averaged in.
+ * Merges per-binary anchor lookups by unioning the country posteriors per postcode and meaning
+ * the centroids, treating a `(0,0)` centroid as a placeholder that is never averaged in.
  */
 export function mergeAnchorLookups(lookups: readonly AnchorLookup[]): AnchorLookup {
 	if (lookups.length === 1) return lookups[0]!
@@ -159,15 +159,15 @@ export function countShapedOnlyKeys(lookup: AnchorLookup): number {
 }
 
 /**
- * The scan cap for {@linkcode countShapedOnlyKeys}, since the answer is only used as "any, and roughly
- * how many" in an error message.
+ * The scan cap for {@linkcode countShapedOnlyKeys}, since the answer is only used as "any,
+ * and roughly how many" in an error message.
  */
 export const SHAPED_ONLY_KEY_SCAN_LIMIT = 1000
 
 /**
- * Returns the ship-obligation message when a lookup carries GB unit keys that a card without
- * `span_mode: "shaped"` can never reach — the one artifact-pairing check a runtime can make, since the
- * mode itself is unobservable from the ONNX graph.
+ * Returns the ship-obligation message when a lookup carries GB unit keys that a card
+ * without `span_mode: "shaped"` can never reach — the one artifact-pairing check a
+ * runtime can make, since the mode itself is unobservable from the ONNX graph.
  */
 export function shapedKeyerObligationViolation(
 	lookup: AnchorLookup | undefined,
@@ -192,15 +192,15 @@ export function shapedKeyerObligationViolation(
 }
 
 /**
- * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}, since a mispackaged bundle is a
- * property of the artifact set worth saying once per process.
+ * One-shot latch for {@linkcode warnShapedKeyerObligationOnce}, since a mispackaged
+ * bundle is a property of the artifact set worth saying once per process.
  */
 let warnedShapedObligation = false
 
 /**
- * Emits {@linkcode shapedKeyerObligationViolation} at most once per process from `buildSoftFeatures`,
- * the only site holding both the loaded lookup and the card-declared mode, so it covers every
- * construction path rather than only a loader-side one.
+ * Emits {@linkcode shapedKeyerObligationViolation} at most once per process from
+ * `buildSoftFeatures`, the only site holding both the loaded lookup and the card-declared mode,
+ * so it covers every construction path rather than only a loader-side one.
  */
 export function warnShapedKeyerObligationOnce(
 	lookup: AnchorLookup | undefined,
@@ -224,8 +224,8 @@ export interface BuildAnchorFeaturesOptions {
 }
 
 /**
- * Projects per-piece anchor features onto `pieces` by the same char→piece rule the labels use — a
- * piece takes the anchor of the postcode span its first non-whitespace char falls inside.
+ * Projects per-piece anchor features onto `pieces` by the same char→piece rule the labels use —
+ * a piece takes the anchor of the postcode span its first non-whitespace char falls inside.
  */
 export function buildAnchorFeatures(
 	text: string,
@@ -264,13 +264,13 @@ export function buildAnchorFeatures(
 
 	if (options.spanMode === "shaped") {
 		for (const match of collectMatches(asciiUpper(text))) {
-			// The train painter's normalization verbatim — literal spaces removed and uppercased, not
-			// `\s+` nor the `D-` strip `normalizePostcode` does.
+			// The train painter's normalization verbatim — literal spaces removed and uppercased,
+			// not `\s+` nor the `D-` strip `normalizePostcode` does.
 			const key = text.slice(match.start, match.end).replaceAll(" ", "").toUpperCase()
 			let entry = lookup.get(key)
 
-			// An unknown GB unit still anchors from its outward district, painting the whole unit span so
-			// the painted extent matches what a known unit would have produced.
+			// An unknown GB unit still anchors from its outward district, painting the whole unit span
+			// so the painted extent matches what a known unit would have produced.
 			if (!entry && GB_UNIT_KEY.test(key)) {
 				entry = lookup.get(key.slice(0, -GB_INWARD_LENGTH))
 			}

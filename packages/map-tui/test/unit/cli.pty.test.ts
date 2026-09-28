@@ -5,9 +5,9 @@
  */
 
 /**
- * A pty is required because the app only takes over the screen when stdin can be put in raw mode, and
- * `script` supplies one with `stty` setting a window size since a controlling-terminal-less pty
- * reports 0x0.
+ * A pty is required because the app only takes over the screen when stdin can be
+ * put in raw mode, and `script` supplies one with `stty` setting a window size
+ * since a controlling-terminal-less pty reports 0x0.
  */
 
 import { isExecutable } from "@mailwoman/core/fs/readers"
@@ -26,8 +26,8 @@ const MOUSE_SGR_DISABLE = `${ESC}[?1006l`
 const BRAILLE_PATTERN = /[⠀-⣿]/u
 
 /**
- * The status bar's coordinate/zoom field, whose first appearance means a frame has rendered and raw
- * mode is on, so keystrokes will land.
+ * The status bar's coordinate/zoom field, whose first appearance means a frame has
+ * rendered and raw mode is on, so keystrokes will land.
  */
 const STATUS_PATTERN = /-?\d+\.\d{4},-?\d+\.\d{4} z\d+/g
 
@@ -42,8 +42,8 @@ const KEYSTROKE_GAP_MS = 250
 const TEST_TIMEOUT_MS = 40_000
 
 /**
- * `script` here is util-linux's `-e`/`-c` spelling, which macOS's BSD `script` does not accept, so
- * the suite runs only where CI runs.
+ * `script` here is util-linux's `-e`/`-c` spelling, which macOS's BSD `script`
+ * does not accept, so the suite runs only where CI runs.
  */
 async function hasLinuxScript(): Promise<boolean> {
 	if (process.platform !== "linux") return false

@@ -21,7 +21,6 @@ import { $public } from "mailwoman/env"
 import { withCLISpawnLockAsync } from "mailwoman/test-kit/cli-spawn-lock"
 import { describe, expect, test, vi } from "vitest"
 
-
 const CLI_PATH = await mailwomanCLIPath()
 
 const DEFAULT_WOF_PATH = wofDatabasePath("admin-global-priority.db")
@@ -31,7 +30,8 @@ const TX_ADDRESS_POINTS_DB = addressPointDatabasePath("address-points-us-tx.db")
 const TX_INTERPOLATION_DB = interpolationDatabasePath("interpolation-us-tx.db")
 
 /**
- * Wall-clock budget for a CLI spawn, set to absorb the eight concurrent spawns vitest can run rather than a single-spawn cost.
+ * Wall-clock budget for a CLI spawn, set to absorb the eight concurrent spawns
+ * vitest can run rather than a single-spawn cost.
  */
 const CLI_SPAWN_TIMEOUT_MS = 45_000
 
@@ -41,7 +41,8 @@ const CLI_SPAWN_TIMEOUT_MS = 45_000
 const CLI_TEST_TIMEOUT_MS = 120_000
 
 /**
- * Vitest's per-test budget for this whole file, set at file scope because every test spawns the compiled CLI and queues behind {@link withCLISpawnLockAsync}.
+ * Vitest's per-test budget for this whole file, set at file scope because every test
+ * spawns the compiled CLI and queues behind {@link withCLISpawnLockAsync}.
  */
 vi.setConfig({ testTimeout: CLI_TEST_TIMEOUT_MS })
 
@@ -49,7 +50,6 @@ const hasWOFDB = await pathExists(wofPath)
 const hasCLICompiled = await pathExists(CLI_PATH)
 const hasTxAddressPoints = await pathExists(TX_ADDRESS_POINTS_DB)
 const hasTxInterpolation = await pathExists(TX_INTERPOLATION_DB)
-
 
 describe("geocode argument validation", () => {
 	test("a bare `mailwoman geocode` prints the command's help and still exits 1", async () => {
@@ -147,7 +147,8 @@ describe("geocode argument validation", () => {
 			await withCLISpawnLockAsync(() =>
 				runFile(process.execPath, [CLI_PATH, "geocode", "123 Main St, Anytown, TX 78000"], {
 					encoding: "utf8",
-					// Unset the env var and point the data root at an empty dir so the error interface is reached, since a default database set would otherwise be auto-attached.
+					// Unset the env var and point the data root at an empty dir so the error interface
+					// is reached, since a default database set would otherwise be auto-attached.
 					env: childEnv({ MAILWOMAN_WOF_DB: undefined, MAILWOMAN_DATA_ROOT: emptyDataRoot }),
 					timeout: CLI_SPAWN_TIMEOUT_MS,
 				})
@@ -163,7 +164,6 @@ describe("geocode argument validation", () => {
 		expect(output).toMatch(/MAILWOMAN_WOF_DB|resolve-db|wof/i)
 	})
 })
-
 
 const hasTxDatabases = hasTxAddressPoints && hasTxInterpolation
 

@@ -45,8 +45,8 @@ export async function downloadExtract(regionPath: string, destPath: string): Pro
 		},
 	})
 
-	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download never lands at
-	// the final path looking like a complete extract.
+	// Write to a `.tmp` sibling and rename, so an interrupted multi-gigabyte download
+	// never lands at the final path looking like a complete extract.
 	const tmpPath = destPath + ".tmp"
 
 	await pipeline(Readable.fromWeb(res.body.pipeThrough(counter)), openWriteStream(tmpPath))

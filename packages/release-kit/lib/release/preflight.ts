@@ -14,7 +14,8 @@ import { copyWeights } from "#weights/copy-weights"
 import { fetchHFWeights, reportHFMaterialization } from "#weights/fetch-hf-weights/index"
 
 /**
- * Where the staged weights artifacts come from: `repo` reads this machine's data root, `hf` reads the public bucket CI publishes from.
+ * Where the staged weights artifacts come from: `repo` reads this machine's data root,
+ * `hf` reads the public bucket CI publishes from.
  */
 export const WEIGHTS_SOURCES = ["repo", "hf"] as const
 
@@ -28,7 +29,8 @@ export interface ReleasePreflightOptions {
 	 */
 	version?: string
 	/**
-	 * The caller's staging directory, written into and never removed; absent, a scratch directory is made and owned here.
+	 * The caller's staging directory, written into and never removed; absent,
+	 * a scratch directory is made and owned here.
 	 */
 	staging?: string
 	/**
@@ -50,7 +52,9 @@ export interface ReleasePreflightReport {
 }
 
 /**
- * Stage, materialize, pack and audit every release workspace, returning a report whose verdict is `FAIL` when any workspace does not pack to a tarball honoring its manifest or when the release list's named-absence identity does not hold.
+ * Stage, materialize, pack and audit every release workspace, returning a report whose
+ * verdict is `FAIL` when any workspace does not pack to a tarball honoring its manifest
+ * or when the release list's named-absence identity does not hold.
  */
 export async function releasePreflight(options: ReleasePreflightOptions): Promise<ReleasePreflightReport> {
 	const { repoRoot, source, log } = options
@@ -62,7 +66,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 	const startedAt = performance.now()
 	await using resources = new AsyncDisposableStack()
 
-	// The caller's `--staging` root is written into and never removed; a scratch root this operation makes is its own, and `--keep` withholds its removal so the staged tree survives for inspection.
+	// The caller's `--staging` root is written into and never removed; a scratch root this operation
+	// makes is its own, and `--keep` withholds its removal so the staged tree survives for inspection.
 	let stagingRoot = options.staging
 
 	if (!stagingRoot) {
@@ -98,7 +103,8 @@ export async function releasePreflight(options: ReleasePreflightOptions): Promis
 
 	log(`release list: ${identity.publishCount} workspaces`)
 
-	// Both sources write into the staging tree only, so the two legs differ in where the bytes come from and in no other way the audit can see.
+	// Both sources write into the staging tree only, so the two legs differ in
+	// where the bytes come from and in no other way the audit can see.
 	log(`staging tracked tree → ${stagingRoot}`)
 	await stageReleaseTree(repoRoot, stagingRoot)
 

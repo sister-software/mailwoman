@@ -11,22 +11,22 @@
  * One open batched transaction over a connection.
  */
 export interface BatchedTransaction {
-/**
- * Record one written row, committing and reopening the transaction every `rowsPerCommit` rows and
- * answering `true` on the call that committed.
- */
+	/**
+	 * Record one written row, committing and reopening the transaction every `rowsPerCommit`
+	 * rows and answering `true` on the call that committed.
+	 */
 	rowWritten(): boolean
 	commit(): void
-/**
- * Best-effort `rollback` that must never replace the real error, so the caller still sees why the
- * ingest stopped.
- */
+	/**
+	 * Best-effort `rollback` that must never replace the real error, so the caller
+	 * still sees why the ingest stopped.
+	 */
 	rollbackQuietly(): void
 }
 
 /**
- * Open a transaction that commits and reopens itself every `rowsPerCommit` written rows, with the
- * batch size left to the caller.
+ * Open a transaction that commits and reopens itself every `rowsPerCommit` written rows,
+ * with the batch size left to the caller.
  */
 export function beginBatched(
 	database: { exec(sql: string): void },

@@ -16,7 +16,8 @@ import { buildPostcodePrefixIndex } from "mailwoman/gazetteer-pipeline/postcode/
 import { afterAll, beforeAll, describe, expect, it } from "vitest"
 
 /**
- * Arbitrary but distinct, with one above 2^32, because the format carries ids as `f64` and a real US region id is 8 digits while NI synthetic postcode ids run to 9.8e12.
+ * Arbitrary but distinct, with one above 2^32, because the format carries ids as `f64`
+ * and a real US region id is 8 digits while NI synthetic postcode ids run to 9.8e12.
  */
 const US_COUNTRY_ID = 85_633_793
 const ALPHA_ID = 85_688_001
@@ -51,7 +52,8 @@ beforeAll(async () => {
 
 	using source = new DatabaseClient<WOFDatabase>(sourcePath)
 
-	// Deliberately no `meta` table: the real database has none, and the coordinate-tier rule must not read a declaration out of its absence.
+	// Deliberately no `meta` table: the real database has none, and the coordinate-tier
+	// rule must not read a declaration out of its absence.
 	source.exec(`
 		CREATE TABLE spr (
 			id INTEGER PRIMARY KEY, name TEXT, placetype TEXT, latitude REAL, longitude REAL
@@ -154,7 +156,8 @@ describe("the US arm's ancestry", () => {
 		expect(built.borderStraddlingPrefixes).not.toContain("400")
 	})
 
-	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32; a `u32` would silently truncate rather than fail.
+	// `PostcodePrefixAncestor.wofID` is an `f64` because a WOF id exceeds 2^32;
+	// a `u32` would silently truncate rather than fail.
 	it("carries a region id past 2^32 intact", () => {
 		expect(BETA_ID).toBeGreaterThan(2 ** 32)
 		expect(nodeFor("600")?.ancestors.map((a) => a.wofID)).toEqual([US_COUNTRY_ID, BETA_ID])

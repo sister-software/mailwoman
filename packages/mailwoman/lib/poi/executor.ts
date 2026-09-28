@@ -9,7 +9,8 @@ import type { POIIntent, POIIntentOutcome, POIResult } from "@mailwoman/core/pip
 import type { POISearchHit, POISearchQuery } from "@mailwoman/resolver-wof-sqlite/poi"
 
 /**
- * The single `POILookup` method the executor calls, implemented by test stubs because the class's private fields prevent structural matching.
+ * The single `POILookup` method the executor calls, implemented by test stubs
+ * because the class's private fields prevent structural matching.
  */
 export interface POIExecutorLookup {
 	search(query: POISearchQuery): POISearchHit[]
@@ -39,18 +40,22 @@ export interface POIExecutorOpts {
 	requiresBuildLocal: (categoryID: string) => boolean
 
 	/**
-	 * Maps a canonical category ID to the Overture leaf IDs stored in poi.db, re-tagging each hit with its canonical ID; the default maps each ID to itself.
+	 * Maps a canonical category ID to the Overture leaf IDs stored in poi.db,
+	 * re-tagging each hit with its canonical ID; the default maps each ID to itself.
 	 */
 	resolveOvertureCategories?: (categoryID: string) => string[]
 
 	/**
-	 * Looks up a result's WOF ancestry, deepest first, and must be synchronous; results get no `ancestry` key when it is missing or returns no entries.
+	 * Looks up a result's WOF ancestry, deepest first, and must be synchronous;
+	 * results get no `ancestry` key when it is missing or returns no entries.
 	 */
 	reverseGeocode?: (latitude: number, longitude: number) => ReadonlyArray<POIAncestryEntry> | undefined
 }
 
 /**
- * Builds the function that `createPOIIntentStage` calls to search for a matched POI subject, abstaining with `requires_build_local_layer` for a build-local category with no lookup or rows and `anchor_required` for a category or brand search with no center.
+ * Builds the function that `createPOIIntentStage` calls to search for a matched POI subject,
+ * abstaining with `requires_build_local_layer` for a build-local category with no lookup
+ * or rows and `anchor_required` for a category or brand search with no center.
  */
 export function createPOIExecutor(opts: POIExecutorOpts): (intent: POIIntent) => POIIntentOutcome {
 	const { lookup, requiresBuildLocal, reverseGeocode } = opts
@@ -146,7 +151,8 @@ function decorateAncestry(result: POIResult, reverseGeocode: POIExecutorOpts["re
 }
 
 /**
- * Returns the center of a POI search: the first child of an anchor root with a coordinate, else the first root with one, else the caller's `biasPoint`.
+ * Returns the center of a POI search: the first child of an anchor root with a coordinate,
+ * else the first root with one, else the caller's `biasPoint`.
  */
 export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; longitude: number } | undefined {
 	const tree = intent.anchor?.tree
@@ -161,7 +167,8 @@ export function resolvePOISearchCenter(intent: POIIntent): { latitude: number; l
 }
 
 /**
- * Returns the uppercase country code of the POI search center, or `null` when neither that node nor the roots carry one.
+ * Returns the uppercase country code of the POI search center, or `null`
+ * when neither that node nor the roots carry one.
  */
 export function resolvePOIAnchorCountry(intent: POIIntent): string | null {
 	const tree = intent.anchor?.tree

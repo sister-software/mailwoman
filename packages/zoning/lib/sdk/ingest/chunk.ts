@@ -22,10 +22,10 @@ import type { ZoningFeatureSource, ZoningSourceFeature } from "#sdk/ingest/index
 import { GZT_CROSSWALK_SCHEME, GZT_PROVENANCE_GRADE, GZT_ROLLUP_SCHEME, localSchemeFor } from "#vocabulary"
 
 /**
- * Rows per bulk-insert transaction, chosen for the geometry table whose rows carry a blob because a larger transaction grows the write-ahead file without improving throughput.
+ * Rows per bulk-insert transaction, chosen for the geometry table whose rows carry a blob
+ * because a larger transaction grows the write-ahead file without improving throughput.
  */
 const INSERT_TRANSACTION_ROWS = 5000
-
 
 const PROGRESS_STRIDE = 5000
 
@@ -41,7 +41,8 @@ export type ObservedTerm = [scheme: string, code: string, label: string, rows: n
 export type CrosswalkPair = [authorityCode: string, localCode: string, crosswalkCodes: string[]]
 
 /**
- * What one chunk produced, every field JSON-serializable because a chunk normally reports across a process boundary.
+ * What one chunk produced, every field JSON-serializable because a chunk normally
+ * reports across a process boundary.
  */
 export interface ZoningChunkResult {
 	features: number
@@ -60,7 +61,8 @@ export interface ZoningChunkResult {
 	 */
 	observedByCoverageCell: Array<[number, number]>
 	/**
-	 * Square metres, with `signed` the raw ring sum as published, `nested` the per-polygon hole-aware reading, and `allExterior` what the same rings say read without their holes.
+	 * Square metres, with `signed` the raw ring sum as published, `nested` the per-polygon
+	 * hole-aware reading, and `allExterior` what the same rings say read without their holes.
 	 */
 	area: { signedM2: number; nestedM2: number; allExteriorM2: number }
 	/**
@@ -126,7 +128,9 @@ export async function ingestZoningChunk(
 	const jurisdictions = new Map<string, string>()
 	const plans = new Map<string, ZoningChunkResult["plans"][number]>()
 
-	// Keyed on a NUL-joined pair and never split back apart, because a local code is free text that routinely contains spaces and a key a reader had to re-split would mangle the vocabulary this layer carries verbatim.
+	// Keyed on a NUL-joined pair and never split back apart, because a local code is
+	// free text that routinely contains spaces and a key a reader had to re-split
+	// would mangle the vocabulary this layer carries verbatim.
 	const vocabulary = new Map<string, { scheme: string; code: string; label: string; rows: number }>()
 	const crosswalkPairs = new Map<string, { authorityCode: string; localCode: string; codes: Set<string> }>()
 
@@ -145,7 +149,8 @@ export async function ingestZoningChunk(
 	let adjacentHoles = 0
 
 	/**
-	 * Record one observed vocabulary value, letting the first label win so no later row's description edits the publisher's vocabulary.
+	 * Record one observed vocabulary value, letting the first label win so no later
+	 * row's description edits the publisher's vocabulary.
 	 */
 	const observe = (scheme: string, code: string, label: string): void => {
 		const key = `${scheme}\u0000${code}`
@@ -188,7 +193,9 @@ export async function ingestZoningChunk(
 				feature.crosswalkCode === null ? null : GZT_CROSSWALK_SCHEME,
 				feature.crosswalkDescription,
 				feature.crosswalkRollup,
-				// One grade per claim: every row of this artifact is `authoritative`, and an observed land-use layer is a different database with a different `layer_manifest.name` rather than a row with a second grade in this table.
+				// One grade per claim: every row of this artifact is `authoritative`,
+				// and an observed land-use layer is a different database with a different
+				// `layer_manifest.name` rather than a row with a second grade in this table.
 				GZT_PROVENANCE_GRADE,
 				bbox.minLat,
 				bbox.minLon,
@@ -220,7 +227,8 @@ export async function ingestZoningChunk(
 				}
 			}
 
-			// Coverage is derived from the uncompacted classification rather than the stored rows, since the classification is the one compaction cannot change.
+			// Coverage is derived from the uncompacted classification rather than the stored rows,
+			// since the classification is the one compaction cannot change.
 			const coverageCells = new Set<number>()
 
 			for (const cell of classified.whole) {

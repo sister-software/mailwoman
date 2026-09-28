@@ -16,7 +16,8 @@ import type { BoundsTuple, PlaceGeometry } from "#map/geometry"
 export type LngLat = [number, number]
 
 /**
- * How a street-level result was located: `address_point` is an exact building point and `interpolated` an estimate from a TIGER address range.
+ * How a street-level result was located: `address_point` is an exact building point
+ * and `interpolated` an estimate from a TIGER address range.
  */
 export type PlaceTier = "address_point" | "interpolated"
 
@@ -46,7 +47,8 @@ export interface ResolvedMapPlace extends ResolvedPlaceView {
 }
 
 /**
- * Only a `center` target can be applied declaratively through {@link cameraToViewState}; fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
+ * Only a `center` target can be applied declaratively through {@link cameraToViewState};
+ * fitting bounds needs the map's pixel size, so `<ResultCamera>` applies it imperatively.
  */
 export type MapCameraTarget =
 	| { kind: "center"; center: LngLat; zoom: number }
@@ -82,7 +84,8 @@ const FIT_PADDING = 40
 const MIN_EXTENT_DEG = 0.001
 
 /**
- * Computes the markers, outline and camera target for a resolved place without loading data, so the caller must put any fetched polygon in `place.geometry` first.
+ * Computes the markers, outline and camera target for a resolved place without loading data,
+ * so the caller must put any fetched polygon in `place.geometry` first.
  */
 export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRenderSpec {
 	const markers: LngLat[] = [[place.lon, place.lat]]
@@ -133,7 +136,8 @@ export function computeMapPlaceRenderSpec(place: ResolvedMapPlace): MapPlaceRend
 }
 
 /**
- * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`, returning `null` for a `bounds` target that `<ResultCamera>` must fit imperatively.
+ * Converts a `center` camera target into a `viewState` patch for a controlled `<MapCanvas>`,
+ * returning `null` for a `bounds` target that `<ResultCamera>` must fit imperatively.
  */
 export function cameraToViewState(
 	camera: MapCameraTarget

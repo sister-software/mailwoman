@@ -55,8 +55,8 @@ describe("the family registry", () => {
 	})
 
 	it("keeps a claimed language clear of another family's packaged locales", () => {
-		// The packaged lookup runs first, so a language claimed by one family while another packages a
-		// locale in it would make the language claim cover no locale.
+		// The packaged lookup runs first, so a language claimed by one family while another
+		// packages a locale in it would make the language claim cover no locale.
 		for (const family of FAMILIES) {
 			for (const language of family.languages ?? []) {
 				for (const other of FAMILIES) {
@@ -103,8 +103,8 @@ describe("the family registry", () => {
 	})
 
 	it("answers undefined for a locale no family serves, rather than defaulting to Latin", () => {
-		// Reading an undeclared locale as the Latin family would decode its rows on a graph no family
-		// declares for them.
+		// Reading an undeclared locale as the Latin family would decode its rows on
+		// a graph no family declares for them.
 		expect(familyForLocale("pt-br")).toBeUndefined()
 		expect(familyForScript("Cyrl")).toBeUndefined()
 	})

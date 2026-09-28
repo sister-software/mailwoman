@@ -18,7 +18,8 @@ import type { MapCanvasStyle } from "./MapCanvas.tsx"
 /**
  * An alias for {@link LngLat}.
  *
- * @deprecated Alias kept for existing imports — {@link LngLat} (from `@mailwoman/react/map`) is the canonical name.
+ * @deprecated Alias kept for existing imports — {@link LngLat}
+ * (from `@mailwoman/react/map`) is the canonical name.
  */
 export type LngLatTuple = LngLat
 
@@ -85,7 +86,8 @@ export interface VersionOption {
 export type InferenceBackend = "webgpu" | "wasm"
 
 /**
- * The injected geocoder runtime, which extends {@link PipelineRuntime} with the map and version/backend surface.
+ * The injected geocoder runtime, which extends {@link PipelineRuntime} with the map
+ * and version/backend surface.
  *
  * The package imports no `@mailwoman/cartographer`, `@mailwoman/neural` web loader, httpvfs, or Docusaurus.
  */
@@ -102,7 +104,8 @@ export interface GeocoderRuntime extends PipelineRuntime {
 	initialZoom?: number
 
 	/**
-	 * A bias-aware parse that feeds the current viewport center as a soft prior; absent, the host falls back to {@link PipelineRuntime.runParse}.
+	 * A bias-aware parse that feeds the current viewport center as a soft prior; absent,
+	 * the host falls back to {@link PipelineRuntime.runParse}.
 	 */
 	runParseWithBias?: (
 		input: string,
@@ -157,7 +160,8 @@ export interface GeocoderRuntime extends PipelineRuntime {
 }
 
 /**
- * The compare-mode state a {@link GeocoderPanels.compare} render-prop receives; the second parse itself stays host-side.
+ * The compare-mode state a {@link GeocoderPanels.compare} render-prop receives;
+ * the second parse itself stays host-side.
  */
 export interface CompareContext {
 	/**
@@ -172,7 +176,8 @@ export interface CompareContext {
 }
 
 /**
- * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its own result block; the candidate-selection state stays owned by the package (`useGeocode`).
+ * The state a {@link GeocoderPanels.result} render-prop receives, so a host can render its
+ * own result block; the candidate-selection state stays owned by the package (`useGeocode`).
  */
 export interface ResultContext {
 	result: ParseResult
@@ -185,7 +190,8 @@ export interface ResultContext {
 }
 
 /**
- * Host-injected panels for {@link Geocoder}, the map analogue of `PipelinePanels`; each is an already-rendered `ReactNode` or a thunk, and every field is optional.
+ * Host-injected panels for {@link Geocoder}, the map analogue of `PipelinePanels`;
+ * each is an already-rendered `ReactNode` or a thunk, and every field is optional.
  */
 export interface GeocoderPanels {
 	/**
@@ -201,7 +207,9 @@ export interface GeocoderPanels {
 	 */
 	footer?: ReactNode
 	/**
-	 * A device-location / proximity-bias control, rendered between the query form and the autocomplete list; host-owned because the geolocation permission feeds {@link GeocoderRuntime.runParseWithBias}.
+	 * A device-location / proximity-bias control, rendered between the query form
+	 * and the autocomplete list; host-owned because the geolocation permission
+	 * feeds {@link GeocoderRuntime.runParseWithBias}.
 	 */
 	bias?: ReactNode
 	/**
@@ -209,19 +217,23 @@ export interface GeocoderPanels {
 	 */
 	extras?: (result: ParseResult) => ReactNode
 	/**
-	 * Rendered just above the result block for content that reads on this answer; a control that reads on the model belongs in {@link developerExtras}.
+	 * Rendered just above the result block for content that reads on this answer;
+	 * a control that reads on the model belongs in {@link developerExtras}.
 	 */
 	aboveResult?: (context: { result: ParseResult | null }) => ReactNode
 	/**
-	 * Host controls appended to the Developer sheet — the opt-in display toggles, whose state and renderers belong to the host.
+	 * Host controls appended to the Developer sheet — the opt-in display toggles,
+	 * whose state and renderers belong to the host.
 	 */
 	developerExtras?: ReactNode
 	/**
-	 * Replaces the package's default {@link ResultPanel}; absent → the built-in panel renders, and when provided the host renders from {@link ResultContext}.
+	 * Replaces the package's default {@link ResultPanel}; absent → the built-in panel renders,
+	 * and when provided the host renders from {@link ResultContext}.
 	 */
 	result?: (context: ResultContext) => ReactNode
 	/**
-	 * Rendered in place of the resolved-place panel when no place resolved; ignored when {@link result} is set.
+	 * Rendered in place of the resolved-place panel when no place resolved;
+	 * ignored when {@link result} is set.
 	 */
 	failure?: (result: ParseResult) => ReactNode
 	/**
@@ -229,7 +241,8 @@ export interface GeocoderPanels {
 	 */
 	compare?: (context: CompareContext) => ReactNode
 	/**
-	 * The model-visualizer / debug drawer mounted beside the map, as a render-prop receiving the live result and returning `null` when closed.
+	 * The model-visualizer / debug drawer mounted beside the map, as a render-prop
+	 * receiving the live result and returning `null` when closed.
 	 */
 	debugDrawer?: (context: { result: ParseResult | null }) => ReactNode
 	/**
@@ -237,7 +250,8 @@ export interface GeocoderPanels {
 	 */
 	mapControls?: ReactNode
 	/**
-	 * A layer control rendered in the chrome's top column, as a render-prop over the live map handle (null until the map instantiates).
+	 * A layer control rendered in the chrome's top column, as a render-prop over the
+	 * live map handle (null until the map instantiates).
 	 */
 	layers?: (context: { map: MapInstance | null }) => ReactNode
 	/**

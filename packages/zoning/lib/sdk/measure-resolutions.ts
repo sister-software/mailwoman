@@ -14,7 +14,8 @@ import { readZoningFeatures, readZoningSourceIdentity, type ZoningIngestOptions 
 
 export interface MeasureResolutionsOptions extends ZoningIngestOptions, ResolutionMeasurementOptions {
 	/**
-	 * Also runs a centre-in-polygon polyfill per feature per resolution at the cost of one extra h3 call per feature.
+	 * Also runs a centre-in-polygon polyfill per feature per resolution at the
+	 * cost of one extra h3 call per feature.
 	 */
 	measurePolyfill?: boolean
 }
@@ -61,7 +62,8 @@ export async function measureZoningCellResolutions(
 		}
 	}
 
-	// A range or authority selector narrows the population on purpose, so the declared total is only checked on a whole pass.
+	// A range or authority selector narrows the population on purpose,
+	// so the declared total is only checked on a whole pass.
 	const narrowed =
 		options.limit !== undefined || options.authorityCode !== undefined || options.objectIDFrom !== undefined
 

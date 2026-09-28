@@ -15,8 +15,8 @@ function dms(degrees: number, minutes: number, seconds: number): number {
 }
 
 /**
- * Rough metres-per-degree at GB latitudes, for turning an angular residual into the metres the
- * accuracy claim is stated in.
+ * Rough metres-per-degree at GB latitudes, for turning an angular residual into
+ * the metres the accuracy claim is stated in.
  */
 function offsetMeters(a: { latitude: number; longitude: number }, b: { latitude: number; longitude: number }): number {
 	const dNorth = (a.latitude - b.latitude) * 111_132
@@ -33,8 +33,8 @@ const ANNEXE_C_GRID = { easting: 651_409.903, northing: 313_177.27 }
 const ANNEXE_C_OSGB36 = { latitude: dms(52, 39, 27.2531), longitude: dms(1, 43, 4.5177) }
 
 /**
- * OS's Annexe D worked example for the seven-parameter Helmert, carried from ETRS89 geodetic to
- * National Grid E/N, which pins the datum shift.
+ * OS's Annexe D worked example for the seven-parameter Helmert, carried from ETRS89
+ * geodetic to National Grid E/N, which pins the datum shift.
  */
 const ANNEXE_D_GRID = { easting: 422_297.792, northing: 412_878.741 }
 const ANNEXE_D_OSGB36 = { latitude: dms(53, 36, 42.2972), longitude: -dms(1, 39, 46.5416) }
@@ -92,8 +92,8 @@ test("the Helmert stays inside 5 m of OSTN15 truth across the GB extremes", () =
 })
 
 test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
-	// The bar is 100 m because a Code-Point centroid is the mean of a postcode unit's delivery
-	// points while the landmark is a single door.
+	// The bar is 100 m because a Code-Point centroid is the mean of a postcode unit's
+	// delivery points while the landmark is a single door.
 	const cases = [
 		{ name: "SW1A 1AA (Buckingham Palace)", grid: { easting: 529_090, northing: 179_645 }, lat: 51.5014, lon: -0.1419 },
 		{ name: "SW1A 2AA (10 Downing Street)", grid: { easting: 530_047, northing: 179_951 }, lat: 51.5034, lon: -0.1276 },
@@ -113,8 +113,8 @@ test("osgb36ToWGS84 places known GB landmarks where they actually are", () => {
 })
 
 test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
-	// Redfearn's series is a truncated expansion in distance from the central meridian, so pin the
-	// corners as well as London.
+	// Redfearn's series is a truncated expansion in distance from the central meridian,
+	// so pin the corners as well as London.
 	const scilly = osgb36ToWGS84({ easting: 90_000, northing: 10_000 })
 
 	expect(scilly.latitude).toBeGreaterThan(49.8)
@@ -128,8 +128,8 @@ test("osgb36ToWGS84 spans the GB extent without the series diverging", () => {
 })
 
 test("the grid origin is a real Atlantic coordinate, not a sentinel", () => {
-	// Code-Point Open writes 0,0 for its no-coordinate rows, but 0,0 is a valid grid point the
-	// module must not treat as a sentinel.
+	// Code-Point Open writes 0,0 for its no-coordinate rows, but 0,0 is a valid grid
+	// point the module must not treat as a sentinel.
 	const origin = osgb36ToWGS84({ easting: 0, northing: 0 })
 
 	expect(origin.latitude).toBeCloseTo(49.7668, 3)

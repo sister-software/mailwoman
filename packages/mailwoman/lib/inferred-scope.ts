@@ -12,12 +12,16 @@
 import type { AddressTree } from "@mailwoman/core/decoder"
 
 /**
- * Whether a locale-inferred `defaultCountry` should be withheld from the resolve: true only when the scope is
- * inferred and the address's own evidence points away from it, on either of two independent signals. The locale
- * head reads the text as a different country's addressing, or the postcode's format implies a country set that
- * excludes the inferred country. The format signal speaks only on distinctive shapes, so an ambiguous bare
- * 5-digit postcode yields the empty set and keeps the scope. An absent verdict on both signals keeps the scope:
- * unknown is not foreign.
+ * Whether a locale-inferred `defaultCountry` should be withheld from the resolve:
+ * true only when the scope is inferred and the address's own evidence points away
+ * from it, on either of two independent signals.
+ *
+ * The locale head reads the text as a different country's addressing, or the postcode's
+ * format implies a country set that excludes the inferred country.
+ * The format signal speaks only on distinctive shapes, so an ambiguous bare 5-digit
+ * postcode yields the empty set and keeps the scope.
+ *
+ * An absent verdict on both signals keeps the scope: unknown is not foreign.
  */
 export function shouldDropInferredScope(
 	tree: AddressTree,

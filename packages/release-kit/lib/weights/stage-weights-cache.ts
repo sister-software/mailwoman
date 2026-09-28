@@ -69,8 +69,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 	if (!options.out) throw new Error("--out <dir> is required")
 
 	const cacheRoot = resolvePath(repoRoot, options.out)
-	// The layout comes from the resolver's own `weightsCachePackageDir` rather than a re-typed literal,
-	// so the two cannot drift.
+	// The layout comes from the resolver's own `weightsCachePackageDir`
+	// rather than a re-typed literal, so the two cannot drift.
 	const packageDir = weightsCachePackageDir(cacheRoot, options.locale)
 
 	if (options.clean && (await pathExists(cacheRoot))) {
@@ -81,8 +81,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 
 	const omit = new Set(options.omit)
 	/**
-	 * Staged name → source path, seeded from `from` then overridden; last writer wins, which makes
-	 * `file` a divergence rather than a conflict.
+	 * Staged name → source path, seeded from `from` then overridden; last writer wins,
+	 * which makes `file` a divergence rather than a conflict.
 	 */
 	const staged = new Map<string, PathBuilder>()
 
@@ -92,8 +92,8 @@ export async function stageWeightsCache(options: StageWeightsCacheOptions): Prom
 		for await (const entry of Globerator.from("*", { cwd: fromDir, absolute: false })) {
 			const source = fromDir(entry)
 
-			// Files only: a directory in a workspace package is not part of the artifact set a loader
-			// reads, and symlinking one into the layout invites a stale walk.
+			// Files only: a directory in a workspace package is not part of the artifact set
+			// a loader reads, and symlinking one into the layout invites a stale walk.
 			if (await isFile(source)) {
 				staged.set(entry, source)
 			}

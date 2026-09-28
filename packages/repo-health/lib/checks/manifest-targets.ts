@@ -30,8 +30,9 @@ interface WorkspaceManifest {
 const CONVENTIONAL_EMPTY_PATTERNS = new Set(["#*"])
 
 /**
- * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written; a config lacking either field
- * admits every source, and `extends` is not followed because every emitting workspace states both locally.
+ * The `include` and `exclude` globs of a workspace `tsconfig.json`, as written;
+ * a config lacking either field admits every source, and `extends` is not followed
+ * because every emitting workspace states both locally.
  */
 export interface CompileScope {
 	include?: readonly string[]
@@ -39,8 +40,9 @@ export interface CompileScope {
 }
 
 /**
- * Converts a tsconfig glob to a matcher over workspace-relative paths, where `**` spans directories, `*` matches
- * within one segment, and an entry without a wildcard matches that path and everything under it.
+ * Converts a tsconfig glob to a matcher over workspace-relative paths,
+ * where `**` spans directories, `*` matches within one segment, and an entry without
+ * a wildcard matches that path and everything under it.
  */
 export function tsconfigGlob(glob: string): RegExp {
 	const normalized = glob.replace(/^\.\//u, "").replace(/\/$/u, "")
@@ -62,8 +64,8 @@ export function tsconfigGlob(glob: string): RegExp {
 }
 
 /**
- * Returns whether `tsc` emits the workspace-relative `path` under `scope`: it must match an `include` glob when
- * the config has any, and no `exclude` glob.
+ * Returns whether `tsc` emits the workspace-relative `path` under `scope`:
+ * it must match an `include` glob when the config has any, and no `exclude` glob.
  */
 export function compilerAdmits(scope: CompileScope, path: string): boolean {
 	const included = !scope.include || scope.include.some((glob) => tsconfigGlob(glob).test(path))
@@ -73,8 +75,8 @@ export function compilerAdmits(scope: CompileScope, path: string): boolean {
 }
 
 /**
- * Reads a workspace's compile scope, returning an empty scope that admits every source when there is no
- * `tsconfig.json`; TypeScript's own parser reads the file because the configs contain comments.
+ * Reads a workspace's compile scope, returning an empty scope that admits every source when there
+ * is no `tsconfig.json`; TypeScript's own parser reads the file because the configs contain comments.
  */
 export async function readCompileScope(repoRoot: string, workspace: string): Promise<CompileScope> {
 	const configPath = resolvePath(repoRoot, workspace, "tsconfig.json")
@@ -110,8 +112,8 @@ function* targetStrings(value: ExportValue | undefined): Generator<string> {
 }
 
 /**
- * Returns the repo-relative files that can satisfy a target without a pattern, mapping an `out/` target back to
- * its source files.
+ * Returns the repo-relative files that can satisfy a target without a pattern,
+ * mapping an `out/` target back to its source files.
  */
 export function sourceCandidates(workspace: string, target: string): string[] {
 	const path = target.replace(/^\.\//u, "")
@@ -130,8 +132,8 @@ export function sourceCandidates(workspace: string, target: string): string[] {
 }
 
 /**
- * Returns the repo-relative directory that holds a pattern target's files, mapping an `out/` prefix back to the
- * source directory.
+ * Returns the repo-relative directory that holds a pattern target's files,
+ * mapping an `out/` prefix back to the source directory.
  */
 export function patternDirectory(workspace: string, target: string): string {
 	const prefix = target.replace(/^\.\//u, "").split("*")[0]!
@@ -141,8 +143,8 @@ export function patternDirectory(workspace: string, target: string): string {
 }
 
 /**
- * Returns a diagnostic for one target, or null when a tracked file satisfies it and, for an `out/` target, the
- * compile scope emits that file.
+ * Returns a diagnostic for one target, or null when a tracked file satisfies it and,
+ * for an `out/` target, the compile scope emits that file.
  */
 function judgeTarget(
 	workspace: string,

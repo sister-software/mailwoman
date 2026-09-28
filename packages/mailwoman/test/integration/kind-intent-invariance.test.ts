@@ -28,9 +28,10 @@ import { loadRegressionCases } from "mailwoman/eval-harness/gauntlet/cases/load"
 import { poiTaxonomyLookup } from "mailwoman/poi"
 import { beforeAll, describe, expect, test } from "vitest"
 
-	/**
-	 * The pre-intent scorer set `classifyKindSync` can reach, minus the intent scorers and the lexicon-restricted POI pair.
-	 */
+/**
+ * The pre-intent scorer set `classifyKindSync` can reach, minus the intent scorers
+ * and the lexicon-restricted POI pair.
+ */
 const PRE_INTENT_SCORERS: ReadonlyArray<{
 	kind: QueryKind
 	score: (i: NormalizedInputLite, s: QueryShapeLike) => number
@@ -56,9 +57,9 @@ function classifyPreIntent(input: NormalizedInputLite, shape: QueryShapeLike): Q
 	return { kind: top.kind, confidence: top.confidence, alternatives: scored.slice(1) }
 }
 
-				/**
-				 * Compared as a string so a failure prints the whole verdict rather than three separate assertion messages.
-				 */
+/**
+ * Compared as a string so a failure prints the whole verdict rather than three separate assertion messages.
+ */
 function routingKey(text: string, classify: (i: NormalizedInputLite, s: QueryShapeLike) => QueryKindResult): string {
 	const input: NormalizedInputLite = { raw: text, normalized: text }
 	const verdict = classify(input, computeQueryShape(text))
@@ -76,9 +77,10 @@ beforeAll(async () => {
 	CATEGORY_QUERY_INPUTS = new Set(cases.filter((c) => c.id.includes("-cat-")).map((c) => c.input))
 })
 
-		/**
-		 * A floor rather than the current count: a truncated read would make every zero-reclassification claim below vacuous, while corpus growth is normal.
-		 */
+/**
+ * A floor rather than the current count: a truncated read would make every
+ * zero-reclassification claim below vacuous, while corpus growth is normal.
+ */
 const CORPUS_FLOOR = 550
 
 describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", () => {
@@ -92,8 +94,8 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 			const drift: Array<{ input: string; before: string; after: string }> = []
 
 			for (const raw of corpus) {
-					 // Category-query rows are thing-queries excluded from the address-shaped zero-reclassification claim.
-								if (CATEGORY_QUERY_INPUTS.has(raw)) continue
+				// Category-query rows are thing-queries excluded from the address-shaped zero-reclassification claim.
+				if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 				const text = register === "lowercase" ? raw.toLowerCase() : raw
 				const before = routingKey(text, classifyPreIntent)
 				const after = routingKey(text, classifyKindSync)
@@ -108,8 +110,9 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 	)
 
 	test("the LEXICON-WIRED classifier's top slot is byte-identical on every corpus row (#1649)", async () => {
-			 // A lexicon-wired classifier that flipped an address-shaped row to a poi kind would silently abstain from geocoding.
-								const classify = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
+		// A lexicon-wired classifier that flipped an address-shaped row to a poi
+		// kind would silently abstain from geocoding.
+		const classify = createKindClassifier({ poiLexicon: poiTaxonomyLookup })
 		const flipped: Array<{ input: string; sync: string; wired: string }> = []
 
 		for (const raw of corpus) {
@@ -150,10 +153,12 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		expect(claimed).toEqual([])
 	})
 
-						/**
-					 * The measured residual, pinned by name: `route_pair` cannot be separated from a two-token place name by structure alone, and the list is exhaustive so a future rule change that grows the fork population fails here.
-					 */
-											const EXPECTED_FORK_ROWS = [
+	/**
+	 * The measured residual, pinned by name: `route_pair` cannot be separated
+	 * from a two-token place name by structure alone, and the list is exhaustive
+	 * so a future rule change that grows the fork population fails here.
+	 */
+	const EXPECTED_FORK_ROWS = [
 		"Antigua Guatemala",
 		"Avenida Alvear",
 		"Avenida Atlântica",
@@ -176,7 +181,7 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 
 		for (const raw of corpus) {
 			// Category-query rows carry intent markers by design and are excluded from this address-shaped fork list.
-									if (CATEGORY_QUERY_INPUTS.has(raw)) continue
+			if (CATEGORY_QUERY_INPUTS.has(raw)) continue
 
 			for (const text of [raw, raw.toLowerCase()]) {
 				const verdict = classifyKindSync({ raw: text, normalized: text }, computeQueryShape(text))
@@ -188,13 +193,13 @@ describe("ROAD_TO_V9 §4 — zero reclassification over the regression corpus", 
 		}
 
 		// Compared as sets of distinct inputs because the corpus may carry one surface in two boards.
-								expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
+		expect([...new Set(marked.map((m) => m.input))].toSorted()).toEqual(
 			[...EXPECTED_FORK_ROWS, ...EXPECTED_FORK_ROWS.map((r) => r.toLowerCase())].toSorted()
 		)
 
-						expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
+		expect(new Set(marked.flatMap((m) => m.codes))).toEqual(new Set(["declared_fork"]))
 
 		// `scoreVenueLandmark` requires a capital letter, so the kinds split by register.
-														expect(new Set(marked.map((m) => m.kind))).toEqual(new Set<QueryKind>(["landmark", "locality_only"]))
+		expect(new Set(marked.map((m) => m.kind))).toEqual(new Set<QueryKind>(["landmark", "locality_only"]))
 	})
 })

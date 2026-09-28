@@ -16,12 +16,14 @@ import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
 /**
- * Key-count threshold for the gloss anomaly detector; a legitimate famous place is separated by the prominence check rather than this number alone.
+ * Key-count threshold for the gloss anomaly detector; a legitimate famous place is
+ * separated by the prominence check rather than this number alone.
  */
 export const GLOSS_KEY_THRESHOLD = 50
 
 /**
- * Placetypes the gloss detector never flags: a country or region legitimately carries a name in every language, so key volume carries no signal there.
+ * Placetypes the gloss detector never flags: a country or region legitimately carries
+ * a name in every language, so key volume carries no signal there.
  */
 export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 	"country",
@@ -35,7 +37,8 @@ export const GLOSS_EXCLUDED_PLACETYPES: ReadonlySet<string> = new Set([
 ])
 
 /**
- * Stamp `name_role` on non-primary rows: `abbr` by provenance, `variant` by own-name verdict, then `gloss` by key-volume anomaly.
+ * Stamp `name_role` on non-primary rows: `abbr` by provenance, `variant` by
+ * own-name verdict, then `gloss` by key-volume anomaly.
  *
  * @returns The stamp counts plus the census the prototype exists to report:
  * how much of the ≥-threshold key tail carries any role.
@@ -69,7 +72,6 @@ export function stampNameRoles(ctx: {
 
 		if (GLOSS_EXCLUDED_PLACETYPES.has(ptNameByID.get(a.ptid) ?? "")) continue
 
-
 		if ((a.pop ?? 0) > 0 || a.imp != null) continue
 		glossSids.push(sid)
 	}
@@ -86,7 +88,8 @@ export function stampNameRoles(ctx: {
 	if (hasSourceNames) {
 		out.exec("BEGIN")
 
-		// WOF's abbreviation/short name kinds qualify by kind alone; everything else qualifies as a variant in an official language.
+		// WOF's abbreviation/short name kinds qualify by kind alone; everything else
+		// qualifies as a variant in an official language.
 		for (const r of src
 			.prepare("SELECT id, name, language FROM names WHERE privateuse = 'variant' OR language IN ('abbr', 'short')")
 			.iterate()) {
@@ -123,7 +126,8 @@ export function stampNameRoles(ctx: {
 			.run().changes
 	)
 
-	// Runs before gloss on purpose: the place's own name is not a translation, and an uncovered script answers no-verdict.
+	// Runs before gloss on purpose: the place's own name is not a translation,
+	// and an uncovered script answers no-verdict.
 	out.exec(
 		"CREATE TEMP TABLE variant_key (spr_id INTEGER NOT NULL, name_key TEXT NOT NULL, PRIMARY KEY (spr_id, name_key)) WITHOUT ROWID"
 	)

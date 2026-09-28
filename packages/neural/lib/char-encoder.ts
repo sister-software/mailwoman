@@ -17,8 +17,8 @@ import { familyFallbackFor } from "#weights/families"
 export const PAD_CHAR_ID = 0
 
 /**
- * The unknown id, fixed at 1 by `build_char_vocab`, which writes `<unk>` second so every real
- * character follows in code-point order.
+ * The unknown id, fixed at 1 by `build_char_vocab`, which writes `<unk>` second
+ * so every real character follows in code-point order.
  */
 export const UNK_CHAR_ID = 1
 
@@ -67,8 +67,8 @@ export interface CharEncoding {
 }
 
 /**
- * Encodes one string under the interface, with every real unit one code point of `raw` and only the
- * first S kept.
+ * Encodes one string under the interface, with every real unit one code point of `raw`
+ * and only the first S kept.
  */
 export function encodeCharUnits(
 	raw: string,
@@ -111,9 +111,9 @@ export function encodeCharUnits(
 }
 
 /**
- * Validates a parsed `char-vocab-*.json` into a vocabulary, refusing anything but a flat
- * `{ character: integer }` map with the reserved ids in place because a malformed vocabulary encodes
- * every character as UNK.
+ * Validates a parsed `char-vocab-*.json` into a vocabulary, refusing anything
+ * but a flat `{ character: integer }` map with the reserved ids in place
+ * because a malformed vocabulary encodes every character as UNK.
  */
 export function parseCharVocabulary(parsed: unknown, source: string): CharVocabulary {
 	if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
@@ -155,9 +155,9 @@ export type EncoderDescriptor =
 	  }
 
 /**
- * Reads a parsed card's `encoder` block, refusing a char card that omits the vocabulary sibling or the
- * `(S, W, ctx)` interface rather than defaulting a value that would encode every row differently from
- * training.
+ * Reads a parsed card's `encoder` block, refusing a char card that omits the
+ * vocabulary sibling or the `(S, W, ctx)` interface rather than defaulting a value
+ * that would encode every row differently from training.
  */
 export function encoderDescriptorFromCard(
 	card: Record<string, unknown> | undefined,
@@ -199,9 +199,9 @@ export function encoderDescriptorFromCard(
 }
 
 /**
- * Returns the base package a locale falls back to when it has no package of its own — the CJK
- * char-path base for Japanese, Chinese and Korean — delegating to `#weights/families` so the language
- * set has one home.
+ * Returns the base package a locale falls back to when it has no package of its own —
+ * the CJK char-path base for Japanese, Chinese and Korean — delegating to
+ * `#weights/families` so the language set has one home.
  */
 export function scriptFamilyBase(locale: string): string | undefined {
 	return familyFallbackFor(locale)

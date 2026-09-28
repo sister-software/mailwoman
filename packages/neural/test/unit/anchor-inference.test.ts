@@ -86,8 +86,8 @@ describe("buildAnchorFeatures — alignment onto SP pieces", () => {
  */
 describe("buildAnchorFeatures — span modes", () => {
 	/**
-	 * `buildAnchorFeatures`'s span collection as it stood before the fix, verbatim — the oracle for
-	 * obligation 1.
+	 * `buildAnchorFeatures`'s span collection as it stood before the fix,
+	 * verbatim — the oracle for obligation 1.
 	 */
 	function legacyBuildAnchorFeatures(
 		text: string,
@@ -127,8 +127,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered by more than
-	 * one piece — the geometry that makes a wrong paint extent visible.
+	 * Split `text` into non-whitespace runs, each halved, so every anchor span is covered
+	 * by more than one piece — the geometry that makes a wrong paint extent visible.
 	 */
 	function piecesFor(text: string): TokenizedPiece[] {
 		const out: TokenizedPiece[] = []
@@ -149,7 +149,8 @@ describe("buildAnchorFeatures — span modes", () => {
 	}
 
 	/**
-	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing ones only a widened build produces.
+	 * A v2-shaped lookup: the five-digit pilot keys plus the letter-containing
+	 * ones only a widened build produces.
 	 */
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
 		["10115", { posterior: { DE: 0.5, US: 0.5 }, lat: 52.5323, lon: 13.3846 }],
@@ -255,13 +256,13 @@ describe("buildAnchorFeatures — span modes", () => {
 })
 
 /**
- * The shaped keyer and the lowercase register: `POSTCODE_PATTERNS`' alphanumeric shapes require
- * `[A-Z]`, so `collectMatches` finds no match in raw lowercase and the shaped keyer fired 0/120 on
- * the gb-golden board when case normalization was off.
+ * The shaped keyer and the lowercase register: `POSTCODE_PATTERNS`' alphanumeric shapes
+ * require `[A-Z]`, so `collectMatches` finds no match in raw lowercase and the shaped
+ * keyer fired 0/120 on the gb-golden board when case normalization was off.
  *
- * The default parse path never saw it because `normalizeInputCase` restores GB postcode casing
- * first, but lowercase is the user register and a `normalizeCase: false` parse lost the entire
- * GB/NL anchor channel in silence.
+ * The default parse path never saw it because `normalizeInputCase` restores GB postcode
+ * casing first, but lowercase is the user register and a `normalizeCase: false`
+ * parse lost the entire GB/NL anchor channel in silence.
  */
 describe("buildAnchorFeatures — shaped mode case-folds before shape detection (#1512)", () => {
 	const V2: AnchorLookup = new Map<string, AnchorEntry>([
@@ -305,8 +306,8 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 	})
 
 	it("the fold is LENGTH-PRESERVING, so a `ß` upstream cannot shift the painted span", () => {
-		// `"ß".toUpperCase()` is "SS", and a naive uppercase would slide every later offset by one and
-		// paint the wrong pieces, which ascii-only folding cannot.
+		// `"ß".toUpperCase()` is "SS", and a naive uppercase would slide every later offset by one
+		// and paint the wrong pieces, which ascii-only folding cannot.
 		const text = "straße 1, amsterdam 1012 lg"
 		const pieces = piecesFor(text)
 		const { confidence } = buildAnchorFeatures(text, pieces, V2, { spanMode: "shaped" })
@@ -331,9 +332,9 @@ describe("buildAnchorFeatures — shaped mode case-folds before shape detection 
 })
 
 /**
- * The ship obligation check: a lookup carrying keys only the shaped keyer can reach, next to a card
- * that does not declare `span_mode: "shaped"`, is a channel that loads clean and feeds zeros on
- * every row it exists for.
+ * The ship obligation check: a lookup carrying keys only the shaped keyer can reach,
+ * next to a card that does not declare `span_mode: "shaped"`, is a channel that
+ * loads clean and feeds zeros on every row it exists for.
  */
 describe("shapedKeyerObligationViolation", () => {
 	const withUnits: AnchorLookup = new Map<string, AnchorEntry>([

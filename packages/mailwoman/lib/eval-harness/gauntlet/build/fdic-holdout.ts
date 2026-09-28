@@ -49,9 +49,10 @@ function plausibleUs(lat: number, lon: number): boolean {
 }
 
 /**
- * Retry is on because the page loop is all-or-none: one throttled page aborted the whole build, and the
- * tmp-then-rename tail discards a partial run rather than publishing it. No `minRequestIntervalMs`, because
- * strictly sequential 10,000-row pages already pace themselves.
+ * Retry is on because the page loop is all-or-none: one throttled page aborted the whole build,
+ * and the tmp-then-rename tail discards a partial run rather than publishing it.
+ *
+ * No `minRequestIntervalMs`, because strictly sequential 10,000-row pages already pace themselves.
  */
 const fdicClient = new APIClient({ displayName: "fdic", retry: true })
 

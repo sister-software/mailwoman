@@ -59,7 +59,8 @@ describe("normalizeArrowListColumn", () => {
 
 describe("readAdmittedCountries", () => {
 	it("keeps a bare NO as the string it is", async () => {
-				// YAML 1.1 resolves a bare `no` to boolean false, which would report Norway as un-admitted while the config lists it.
+				// YAML 1.1 resolves a bare `no` to boolean false, which would report Norway
+				// as un-admitted while the config lists it.
 						const path = root("norway.yaml")
 
 		await writeLocalTextFile(
@@ -104,12 +105,14 @@ describe("readAdmittedCountries", () => {
 			path
 		)
 
-				// `gb` and `fr` are source weights that happen to be two letters; reading past the block would report them as admitted countries.
+				// `gb` and `fr` are source weights that happen to be two letters;
+				// reading past the block would report them as admitted countries.
 				expect([...(await readAdmittedCountries(path))]).toEqual(["US"])
 	})
 
 	it("throws on a missing config rather than answering with an empty admitted set", async () => {
-			// An empty set is a real answer, so returning it for a file nobody could open would give one value for two different facts.
+			// An empty set is a real answer, so returning it for a file nobody could open
+			// would give one value for two different facts.
 								await expect(readAdmittedCountries(root("nope.yaml"))).rejects.toThrow(/no training config at/)
 	})
 })
@@ -138,7 +141,8 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("counts PASSING rows apart from tracked ones", async () => {
-				// A country whose rows are all `improvement_target` has no verified row, so its row count must not read as coverage.
+				// A country whose rows are all `improvement_target` has no verified row,
+				// so its row count must not read as coverage.
 				const board = await readBoardCoverage(root("cases"))
 
 		expect(board.get("GB")).toEqual({ rows: 2, passed: 1 })
@@ -149,7 +153,8 @@ describe("readBoardCoverage", () => {
 	})
 
 	it("attributes a row by its own country field, not its directory", async () => {
-			// Board rows live in a directory by convention but carry their country explicitly, and the two disagree in practice.
+			// Board rows live in a directory by convention but carry their country explicitly,
+			// and the two disagree in practice.
 				expect((await readBoardCoverage(root("cases"))).get("IE")).toEqual({ rows: 1, passed: 1 })
 	})
 
@@ -175,10 +180,12 @@ const CORPUS = dataRootPath(
 
 describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real database", () => {
 	it("counts street rows on a database whose PROJECTION drops the labels column", async () => {
-				// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's databases, so a dropped label column must not read as "this country has no street rows".
+				// `getCursor(["country", "labels"])` returns `{country}` alone on the v0.17.0-era writer's
+				// databases, so a dropped label column must not read as "this country has no street rows".
 												const manifest = await readLocalJSONFile<Record<string, unknown>>(CORPUS)
 
-				// The manifest key has two live spellings on disk, so the test accepts either rather than skipping on the ones it cannot name.
+				// The manifest key has two live spellings on disk, so the test accepts either
+				// rather than skipping on the ones it cannot name.
 								const entries = (manifest["slices"] ?? manifest["sh" + "ards"]) as
 			| Array<{ split?: string; path: string }>
 			| undefined
@@ -192,7 +199,8 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 		await using directory = await temporaryDirectory("mw-census-real-")
 		const scratch = directory.path("MANIFEST.json")
 
-				// Only the one file under the current key: spreading the manifest would leave its full list in place and the census would read all of it.
+				// Only the one file under the current key: spreading the manifest would leave
+				// its full list in place and the census would read all of it.
 				await writeLocalJSONFile({ corpus_version: manifest["corpus_version"], slices: one }, scratch)
 
 		const census = await buildCorpusCensus(scratch)
@@ -204,7 +212,8 @@ describe.skipIf(!(await pathExists(CORPUS)))("buildCorpusCensus against a real d
 
 describe("buildCorpusCensus refuses an empty count", () => {
 	it("throws rather than reporting zero rows for a manifest that lists train files", async () => {
-			// A manifest naming train files and a total of zero cannot both be true, so the zero is the instrument failing rather than a measurement.
+			// A manifest naming train files and a total of zero cannot both be true,
+			// so the zero is the instrument failing rather than a measurement.
 								await using directory = await temporaryDirectory("mw-census-empty-")
 		const scratch = directory.path("MANIFEST.json")
 
@@ -220,7 +229,8 @@ describe("buildCorpusCensus refuses an empty count", () => {
 	})
 
 	it("refuses to pick between two manifests sharing the newest modification time", async () => {
-			// An mtime tie is what a fresh checkout or bulk copy produces, so this returns neither rather than one arm's numbers under the other's name.
+			// An mtime tie is what a fresh checkout or bulk copy produces, so this returns neither
+			// rather than one arm's numbers under the other's name.
 						await using directory = await temporaryDirectory("mw-census-tie-")
 		const versionedRoot = directory.path("corpus", "versioned")
 		const paths: string[] = []
@@ -248,7 +258,8 @@ describe("buildCorpusCensus refuses an empty count", () => {
 	})
 
 	it("answers zero for a manifest that lists no train files at all", async () => {
-				// A corpus whose manifest names no train file holds no train rows, so zero is the measurement rather than a failure to read.
+				// A corpus whose manifest names no train file holds no train rows,
+				// so zero is the measurement rather than a failure to read.
 				await using directory = await temporaryDirectory("mw-census-none-")
 		const scratch = directory.path("MANIFEST.json")
 
@@ -264,7 +275,8 @@ describe("buildCorpusCensus refuses an empty count", () => {
 
 describe("sameCorpusVersion", () => {
 	it("reads the prefixed and unprefixed spellings of one corpus as the same corpus", () => {
-				// A manifest writes `v0.31.0-region-code-and-unit` and `readConfiguredCorpusVersion` strips the prefix, so a raw comparison would declare a mismatch on every correct pairing.
+				// A manifest writes `v0.31.0-region-code-and-unit` and `readConfiguredCorpusVersion` strips
+				// the prefix, so a raw comparison would declare a mismatch on every correct pairing.
 						expect(sameCorpusVersion("0.31.0-region-code-and-unit", "v0.31.0-region-code-and-unit")).toBe(true)
 		expect(sameCorpusVersion("v0.31.0-region-code-and-unit", "0.31.0-region-code-and-unit")).toBe(true)
 		expect(sameCorpusVersion("v8-cjk-2026-09-05", "v8-cjk-2026-09-05")).toBe(true)
@@ -290,7 +302,8 @@ describe("readConfiguredCorpusVersion", () => {
 	}
 
 	it("reads the version out of a versioned corpus_dir", async () => {
-		// The config names 0.27.0 while a cached census counted 0.26.0, so every row count would silently answer about the corpus that was counted.
+		// The config names 0.27.0 while a cached census counted 0.26.0, so every row count
+		// would silently answer about the corpus that was counted.
 						await using scratch = await config(
 			"data:\n  corpus_dir: /data/corpus/versioned/v0.27.0-house-venue-intl/corpus-v0.27.0-house-venue-intl\n"
 		)
@@ -315,7 +328,8 @@ describe("readConfiguredCorpusVersion", () => {
 
 describe("readAdmittedCountries — the Norway shape", () => {
 	it("keeps a QUOTED NO as the string it is, and counts it", async () => {
-						// A YAML parser turns a bare `no` key into boolean false, which is the bug this reader exists to avoid; a quoted "no" must still be counted.
+						// A YAML parser turns a bare `no` key into boolean false, which is the bug
+						// this reader exists to avoid; a quoted "no" must still be counted.
 								await using scratch = await temporaryDirectory("mw-cfg-no-")
 		const path = scratch.path("c.yaml")
 
@@ -381,7 +395,8 @@ describe("resolveTrainingConfig", () => {
 	})
 
 	it("throws for a family the register does not name, rather than answering with another family's config", () => {
-		// Answering with the Latin config would report 25 Latin admissions under a third family's name, which no later stage would disagree with.
+		// Answering with the Latin config would report 25 Latin admissions under a third
+		// family's name, which no later stage would disagree with.
 				expect(() => resolveTrainingConfig(scope, { family: "deva" })).toThrow(/names no training config/)
 	})
 })

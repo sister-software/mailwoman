@@ -25,8 +25,9 @@ import { trackedSourcePaths } from "#tracked-sources"
 const HIT_PATTERN = /^(.*?):(\d+):(\d+):Mailwoman\.AmbiguousShorthand(?:Code)?:'([^']+)'/
 
 /**
- * Matches an interface-tied name, which keeps its spelling and needs only backticks; the pattern currently matches
- * no line, and a new name added here needs its reason recorded in `AmbiguousShorthandCode.yml`.
+ * Matches an interface-tied name, which keeps its spelling and needs only backticks;
+ * the pattern currently matches no line, and a new name added here needs its
+ * reason recorded in `AmbiguousShorthandCode.yml`.
  */
 const INTERFACE_TOKEN = /(?!)/
 
@@ -59,8 +60,8 @@ export interface Hit {
 }
 
 /**
- * Preceding words that carry no meaning, such as articles, pronouns, and comment markers; a hit after one is a
- * bare reference.
+ * Preceding words that carry no meaning, such as articles, pronouns, and comment markers;
+ * a hit after one is a bare reference.
  */
 const EMPTY_MODIFIERS = new Set([
 	"the",
@@ -101,14 +102,14 @@ const EMPTY_MODIFIERS = new Set([
 ])
 
 /**
- * The number of lines on each side of Vale's reported line to search for the matched word, because empty `//`
- * comment lines shift Vale's reported line numbers.
+ * The number of lines on each side of Vale's reported line to search for the matched word,
+ * because empty `//` comment lines shift Vale's reported line numbers.
  */
 const LINE_DRIFT_WINDOW = 3
 
 /**
- * Finds the line nearest to Vale's reported line that contains `word`, falling back to the reported line when the
- * window does not contain it so no hit is dropped.
+ * Finds the line nearest to Vale's reported line that contains `word`, falling back to
+ * the reported line when the window does not contain it so no hit is dropped.
  */
 function locate(
 	lines: readonly string[],
@@ -136,8 +137,8 @@ function locate(
 }
 
 /**
- * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines; the function
- * is pure, and a wrong line offset can mislabel a hit's action but cannot drop the hit.
+ * Classifies each Vale `--output line` record against `sources`, a map from each path to its lines;
+ * the function is pure, and a wrong line offset can mislabel a hit's action but cannot drop the hit.
  */
 export function classify(hitLines: readonly string[], sources: ReadonlyMap<string, readonly string[]>): Hit[] {
 	const hits: Hit[] = []
@@ -168,8 +169,8 @@ export function classify(hitLines: readonly string[], sources: ReadonlyMap<strin
 }
 
 /**
- * Returns the banned word that a match belongs to, searching the whole token because the code rule matches whole
- * compounds where the banned word may not come first.
+ * Returns the banned word that a match belongs to, searching the whole token because the
+ * code rule matches whole compounds where the banned word may not come first.
  */
 export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 	const lower = word.toLowerCase()
@@ -189,8 +190,8 @@ export function wordFamily(word: string): "gate" | "seam" | "shard" | "cut" {
 const TRACKED_GLOBS = ["*.ts", "*.tsx", "corpus-python/*.py"] as const
 
 /**
- * Runs Vale over every tracked source file and returns its `--output line` records, resolving Vale through the
- * workspace so it runs the same binary as `yarn lint:prose`.
+ * Runs Vale over every tracked source file and returns its `--output line` records,
+ * resolving Vale through the workspace so it runs the same binary as `yarn lint:prose`.
  */
 async function collectHits(context: RepoContext): Promise<string[]> {
 	const root = context.repoRoot
@@ -203,9 +204,9 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 	const vale = await valeCommand(import.meta.url)
 	const config = resolvePath(root, "config/vale/.vale-code-census.ini")
 
-	// Vale must run from the repo root because the paths are repo-relative, and a process error carries the expected
-	// output since Vale exits non-zero when it reports alerts, while any other error is rethrown rather than read as
-	// zero hits.
+	// Vale must run from the repo root because the paths are repo-relative, and a process
+	// error carries the expected output since Vale exits non-zero when it reports alerts,
+	// while any other error is rethrown rather than read as zero hits.
 	const result = await runFile(vale.file, [...vale.argv, "--config", config, "--output", "line", ...files], {
 		cwd: root,
 		maxBuffer: 1 << 28,
@@ -221,7 +222,8 @@ async function collectHits(context: RepoContext): Promise<string[]> {
 }
 
 /**
- * A permanent fixture that must always produce hits, distinguishing a clean tree from a run that resolved no files.
+ * A permanent fixture that must always produce hits, distinguishing a clean
+ * tree from a run that resolved no files.
  */
 const POSITIVE_CONTROL = "config/vale/fixtures/dirty.ts"
 
@@ -237,8 +239,8 @@ const UNMEASURED: ReadonlyArray<readonly [path: string, reason: string]> = [
 ]
 
 /**
- * The `vocab-census` check: one error for each ambiguous-shorthand hit outside {@link UNMEASURED}, with the action
- * the hit needs.
+ * The `vocab-census` check: one error for each ambiguous-shorthand hit outside
+ * {@link UNMEASURED}, with the action the hit needs.
  */
 export const vocabCensusCheck: RepoCheck = {
 	id: "vocab-census",

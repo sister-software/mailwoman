@@ -26,8 +26,8 @@ async function weightsPresent(): Promise<boolean> {
 }
 
 /**
- * Adding an entry requires the defect written down first, because a row added here silently converts a defect
- * into a permanent exemption.
+ * Adding an entry requires the defect written down first, because a row added here
+ * silently converts a defect into a permanent exemption.
  */
 const SG_GENERIC_FIRST_STREET =
 	"The Malay generic-first street (`Jalan Sukachita`, `Lengkong Empat`) reads as locality, so the house number has no street anchor. The shipped Latin model has no Singapore register; the `sg-register` corpus recipe (#1931) targets it, and the board row is `improvement_target`."

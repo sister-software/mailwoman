@@ -28,7 +28,8 @@ function node(id: number, postcode: string, lat: number, lon: number): Record<st
 }
 
 /**
- * A way element under `out center` carries its coordinate as `center`, the shape a reader that only handles nodes silently drops.
+ * A way element under `out center` carries its coordinate as `center`,
+ * the shape a reader that only handles nodes silently drops.
  */
 function way(id: number, postcode: string, lat: number, lon: number): Record<string, unknown> {
 	return { type: "way", id, center: { lat, lon }, tags: { "addr:postcode": postcode, building: "yes" } }
@@ -47,11 +48,13 @@ beforeAll(async () => {
 			copyright: "The data included in this document is from www.openstreetmap.org.",
 		},
 		elements: [
-			// BT3 9QQ across three elements, two of them ways: the medoid must land on one of the three and the mean is deliberately not a member.
+			// BT3 9QQ across three elements, two of them ways: the medoid must land on one
+			// of the three and the mean is deliberately not a member.
 			node(1, "BT3 9QQ", 54.6, -5.88),
 			way(2, "BT3 9QQ", 54.61, -5.89),
 			way(3, "BT3 9QQ", 54.62, -5.9),
-			// Lowercase and a doubled inner space normalize to the same code, so these are one postcode with two attestations.
+			// Lowercase and a doubled inner space normalize to the same code,
+			// so these are one postcode with two attestations.
 			node(4, "bt1 5gs", 54.597, -5.93),
 			node(5, "BT1  5GS", 54.598, -5.931),
 			// The malformed value the real acquisition contains exactly one of.
@@ -78,7 +81,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 		now: new Date("2026-08-05T00:00:00.000Z"),
 	})
 
-	// Two postcodes survive; the malformed value and the coordinate-less relation are dropped, and the untagged node never counts as tagged.
+	// Two postcodes survive; the malformed value and the coordinate-less relation are
+	// dropped, and the untagged node never counts as tagged.
 	expect(result.inserted).toBe(2)
 	expect(result.stats.elements).toBe(8)
 	expect(result.stats.tagged).toBe(7)
@@ -102,7 +106,8 @@ test("buildPostcodeNIOSM: #920 laws, the malformed drop, and the ODbL/meaning-of
 	// Name law: `spr.name` is the sanitized-query token shape and the display form is an alt `names` row.
 	const names = db.prepare("SELECT id, name FROM spr ORDER BY name").all() as Array<{ id: number; name: string }>
 	expect(names.map((n) => n.name)).toEqual(["BT15GS", "BT39QQ"])
-	// Ids come from this database's own range, a function of the postcode set rather than of the response's element order.
+	// Ids come from this database's own range, a function of the postcode set
+	// rather than of the response's element order.
 	expect(names.map((n) => n.id)).toEqual([NI_OSM_ID_BASE, NI_OSM_ID_BASE + 1])
 
 	const alt = db.prepare("SELECT COUNT(*) AS n FROM names WHERE name = 'BT3 9QQ'").get() as { n: number }

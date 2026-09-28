@@ -64,8 +64,8 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("stays silent for a package that declares no anchor artifact — the #1476 en-gb posture", async () => {
-		// The en-gb card sets `requires.anchor.required` true while `files` carries only a comment, so a guard
-		// keyed on `requires` would call it broken and one keyed on `files` would not.
+		// The en-gb card sets `requires.anchor.required` true while `files` carries only a comment,
+		// so a guard keyed on `requires` would call it broken and one keyed on `files` would not.
 		const root = await fixtureWeights("zz-zz", {
 			requires: { anchor: { required: true } },
 			files: { $comment_postcode_anchor: "NONE — this overlay ships no postcode-zz.bin (deliberate)" },
@@ -87,8 +87,9 @@ describe("the anchor-artifact presence assertion", () => {
 	})
 
 	it("reports EVERY missing package, not just the first", async () => {
-		// One fixture root cannot hold two locales' packages in the cache layout `resolveWeights` probes, so
-		// the multi-locale case is two calls against one root and the message must carry a per-locale tag.
+		// One fixture root cannot hold two locales' packages in the cache layout
+		// `resolveWeights` probes, so the multi-locale case is two calls against one root
+		// and the message must carry a per-locale tag.
 		const root = await fixtureWeights("zz-zz", { files: { postcode_anchor: "postcode-zz.bin" } })
 
 		await expect(assertDeclaredAnchorBins(["zz-zz"], root)).rejects.toThrow(/✗ zz-zz:/)

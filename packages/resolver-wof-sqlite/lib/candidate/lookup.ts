@@ -35,15 +35,16 @@ export { rankByPrimaryPreference } from "#primary-preference"
 export type { RankedRow } from "#primary-preference"
 
 /**
- * Where a {@link WOFCandidateTableLookup} reads from (a read-only `candidate.db` or a caller-held connection) and how it ranks.
+ * Where a {@link WOFCandidateTableLookup} reads from
+ * (a read-only `candidate.db` or a caller-held connection) and how it ranks.
  */
 export interface WOFCandidateTableLookupOpts extends SQLiteLookupOptions<CandidateDatabase> {
 	/**
-	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference penalty; no-ops without the role column and is off by default.
+	 * Exempt `name_role = 'variant'` aliases from the cross-country primary-preference
+	 * penalty; no-ops without the role column and is off by default.
 	 */
 	variantAliasExemption?: boolean
 }
-
 
 type CandidateRow = Pick<
 	CandidateTable,
@@ -64,20 +65,15 @@ type CandidateRow = Pick<
 	// Optional because older artifacts may not include `importance`.
 	Partial<Pick<CandidateTable, "importance">>
 
-
 const FUZZY_FETCH = 40
 
-
 const WORD_FUZZY_MIN = 0.85
-
 
 function wordFuzzySimilarity(a: string, b: string): number {
 	return Math.max(jaroWinkler(a, b), levenshteinSimilarity(a, b))
 }
 
-
 const POSTCODE_CONTAINMENT_THRESHOLD_KM = 25
-
 
 function ftsTrigramQuery(s: string): string {
 	const grams = new Set<string>()
@@ -134,7 +130,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	constructor(opts: WOFCandidateTableLookupOpts) {
 		super(opts)
 
-
 		for (const r of allRows<CountryCodeTable>(this.database.prepare("SELECT id, code FROM country_codes"))) {
 			const code = String(r.code).toUpperCase()
 			this.#countryToID.set(code, Number(r.id))
@@ -146,13 +141,11 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			this.#idToPlacetype.set(Number(r.id), String(r.placetype))
 		}
 
-
 		if (hasTable(this.database, POSTAL_CITY_CANDIDATE_TABLE)) {
 			this.#postalCityProbe = this.database.prepare(
 				`SELECT spr_id, name, latitude, longitude FROM ${POSTAL_CITY_CANDIDATE_TABLE} WHERE name_key = ? AND postcode = ? LIMIT 1`
 			)
 		}
-
 
 		if (hasTable(this.database, CANDIDATE_FTS_TABLE)) {
 			this.#ftsProbe = this.database.prepare(
@@ -168,7 +161,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		this.#variantAliasExemption = opts.variantAliasExemption === true
 		this.#roleSelect = this.#hasNameRole ? ", name_role" : ""
 
-
 		if (hasTable(this.database, CANDIDATE_ANCESTOR_TABLE)) {
 			this.#ancestorsProbe = this.database.prepare(
 				`SELECT parent_spr_id, parent_placetype_id, parent_name FROM ${CANDIDATE_ANCESTOR_TABLE}` +
@@ -177,7 +169,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 			this.ancestors = (id) => this.#ancestorLineage(id)
 		}
-
 
 		if (this.#ancestorsProbe && hasTable(this.database, CANDIDATE_INTERVAL_TABLE)) {
 			this.#intervalProbe = this.database.prepare(`SELECT pre, post FROM ${CANDIDATE_INTERVAL_TABLE} WHERE spr_id = ?`)
@@ -193,10 +184,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			}
 		}
 
-
 		this.artifactCoverage = readGazetteerCoverageManifest(this.database)
 	}
-
 
 	#ancestorLineage(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
@@ -223,7 +212,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		return lineage
 	}
 
-
 	#intervalLabel(sprID: number): IntervalLabel | null {
 		if (!this.#intervalProbe) return null
 
@@ -238,7 +226,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		return label
 	}
-
 
 	#qualifierRegionIDs(qualifier: string, country: string | undefined): Set<number> {
 		const ids = new Set<number>()
@@ -257,7 +244,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Whether `sprID` is contained by any qualifier row, using interval labels first and the ancestor chain as fallback.
+	 * Whether `sprID` is contained by any qualifier row, using interval labels first
+	 * and the ancestor chain as fallback.
 	 */
 	#containedByQualifier(sprID: number, qualifierIDs: ReadonlySet<number>, qualifierLabels: IntervalLabel[]): boolean {
 		if (qualifierIDs.has(sprID)) return true
@@ -270,7 +258,8 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 	}
 
 	/**
-	 * Apply admin-containment re-rank: stamp containment, inject contained misses, then partition contained-first.
+	 * Apply admin-containment re-rank: stamp containment, inject contained misses,
+	 * then partition contained-first.
 	 */
 	#applyAdminContainment(
 		rows: Array<RankedRow<CandidateRow>>,
@@ -374,14 +363,12 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		).slice(0, opts.limit)
 	}
 
-
 	#wantsLocality(placetype: FindPlaceQuery["placetype"]): boolean {
 		if (!placetype) return true
 		const want = Array.isArray(placetype) ? placetype : [placetype]
 
 		return expandPlacetypeFilter(want as readonly string[]).includes("locality")
 	}
-
 
 	#postcodeAnchor(postcode: string, country?: string): { lat: number; lon: number } | null {
 		const placetypeID = this.#placetypeToID.get("postalcode")
@@ -423,7 +410,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 		const nameKey = normalizeLocalityForKey(text)
 
 		if (!nameKey) return []
-
 
 		if (query.postcode && this.#postalCityProbe && this.#wantsLocality(query.placetype)) {
 			const hit = this.#postalCityProbe.get(nameKey, query.postcode.trim()) as
@@ -492,7 +478,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			shapeParams.push(...query.excludeNameRoles)
 		}
 
-
 		filters.push(...shapeFilters)
 		filterParams.push(...shapeParams)
 
@@ -507,7 +492,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 				conds.push("region_id = ?")
 				params.push(regionID)
 			}
-
 
 			if (typeof countryID === "number") {
 				conds.push("country_id = ?")
@@ -524,12 +508,10 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 			return rankByPrimaryPreference(fetched, limit, undefined, this.#idToPlacetype, this.#variantAliasExemption)
 		}
 
-
 		const cascade = (regionID: number | undefined): Array<RankedRow<CandidateRow>> => {
 			let rows = probe(nameKey, regionID)
 
 			if (!rows.length) {
-
 				const strippedKey = normalizeLocalityForKey(stripLocalityQualifier(text))
 
 				if (strippedKey && strippedKey !== nameKey) {
@@ -585,12 +567,10 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 
 		let regionScopeMiss = false
 
-
 		if (!rows.length && regionParentID !== undefined) {
 			rows = cascade(undefined)
 			regionScopeMiss = rows.length > 0
 		}
-
 
 		if (
 			query.postcode &&
@@ -679,7 +659,6 @@ export class WOFCandidateTableLookup extends SQLiteLookup<CandidateDatabase> imp
 					: {}),
 			}
 		})
-
 
 		if (query.bias && query.bias.length) {
 			applyProximityRerank(candidates, query.bias)

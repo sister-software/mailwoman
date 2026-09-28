@@ -13,8 +13,7 @@ async function writeToClipboard(value: string): Promise<void> {
 		await navigator.clipboard.writeText(value)
 
 		return
-	} catch {
-	}
+	} catch {}
 
 	const textarea = document.createElement("textarea")
 	textarea.value = value

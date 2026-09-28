@@ -15,13 +15,15 @@ const LOCK_DIR = tempRootPathBuilder("mailwoman-cli-spawn.lock")
 const PID_FILE = LOCK_DIR("pid")
 
 /**
- * How long to wait for the lock before giving up and running anyway, deliberately not infinite so a wedged lock degrades to contention rather than a hang.
+ * How long to wait for the lock before giving up and running anyway, deliberately not
+ * infinite so a wedged lock degrades to contention rather than a hang.
  */
 const ACQUIRE_TIMEOUT_MS = 120_000
 const POLL_MS = 50
 
 /**
- * Removes the lock directory while tolerating every failure, because a failed removal degrades to the next acquirer reclaiming it as stale while a throwing lock would turn contention into a test failure.
+ * Removes the lock directory while tolerating every failure, because a failed removal degrades to the
+ * next acquirer reclaiming it as stale while a throwing lock would turn contention into a test failure.
  */
 async function releaseQuietly(): Promise<void> {
 	try {

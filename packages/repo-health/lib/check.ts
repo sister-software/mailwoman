@@ -25,8 +25,8 @@ export interface Diagnostic {
 	file?: string
 	line?: number
 	/**
-	 * The sites behind a count print indented under the message and ride along in `--json`, because a count on its
-	 * own leaves a reader to find the growth.
+	 * The sites behind a count print indented under the message and ride along in `--json`,
+	 * because a count on its own leaves a reader to find the growth.
 	 */
 	details?: readonly string[]
 }

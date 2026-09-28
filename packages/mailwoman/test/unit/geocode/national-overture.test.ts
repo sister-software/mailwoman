@@ -42,7 +42,9 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("carries the upstream register's license alone, without an Overture addresses-theme grant", () => {
-		// Overture declares no addresses-theme grant, so a CDLA expression here would assert a places grant; read through `overtureCountryLicense` because `licenseForOvertureCountry` refuses an unsettled country.
+		// Overture declares no addresses-theme grant, so a CDLA expression here
+		// would assert a places grant; read through `overtureCountryLicense`
+		// because `licenseForOvertureCountry` refuses an unsettled country.
 		for (const country of supportedOvertureCountries()) {
 			const entry = overtureCountryLicense(country)
 
@@ -57,7 +59,8 @@ describe("OvertureNationalDatabaseProvider", () => {
 	})
 
 	it("refuses Taiwan's grant, because two documents name different licenses over the same rows", () => {
-		// Two documents name different licenses over the same municipal 門牌 rows, so recording the stricter one would state a grant nobody established.
+		// Two documents name different licenses over the same municipal 門牌 rows,
+		// so recording the stricter one would state a grant nobody established.
 		expect(() => licenseForOvertureCountry("tw")).toThrow(/unsettled: CC-BY-4\.0 or OGDL-Taiwan-1\.0/)
 		expect(() => licenseForOvertureCountry("tw")).toThrow(/counsel-dossier/)
 	})

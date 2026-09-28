@@ -15,7 +15,9 @@ import type { RawSearchRow } from "#search-fetch"
 import type { FindPlaceQuery, PlaceCandidate, WOFPlacetype } from "#types"
 
 /**
- * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated BM25 baseline, the placetype / country / parent boosts, the length penalty, the proximity and population terms, and the carried fields consumers read.
+ * Score one raw FTS row into a `PlaceCandidate`: the weighted sum over the negated BM25
+ * baseline, the placetype / country / parent boosts, the length penalty, the proximity
+ * and population terms, and the carried fields consumers read.
  */
 export function candidateFromSearchRow(
 	row: RawSearchRow,
@@ -50,7 +52,8 @@ export function candidateFromSearchRow(
 	const extraLen = Math.max(0, row.name.length - queryLen - 3)
 	score -= (weights.lengthPenaltyWeight * extraLen) / 10
 
-	// Proximity boost applies only when the query carries `near` and the candidate has real coordinates; the decay is tunable via proximityBoost + proximityScaleKm.
+	// Proximity boost applies only when the query carries `near` and the candidate has
+	// real coordinates; the decay is tunable via proximityBoost + proximityScaleKm.
 	let distanceKm: number | undefined
 	// The best decayed-distance term over `near` and every `bias` point wins, each scaled by its weight.
 	let proximityTerm = 0
@@ -87,7 +90,8 @@ export function candidateFromSearchRow(
 	const popTerm = populationBoostTerm(row.population, weights)
 	score += popTerm
 
-	// Combined prominence for the exact-tier sort: population and nearness in the same additive units, so hints can win a cross-country postcode tie without a hard filter.
+	// Combined prominence for the exact-tier sort: population and nearness in the same
+	// additive units, so hints can win a cross-country postcode tie without a hard filter.
 	const prominence = popTerm + proximityTerm
 
 	const candidate: PlaceCandidate = {
@@ -108,7 +112,8 @@ export function candidateFromSearchRow(
 
 	if (row.population !== null && row.population > 0) {
 		candidate.population = row.population
-		// The referential ranking key is derived as a pure function of this row's population, so it cannot drift from the ordering.
+		// The referential ranking key is derived as a pure function of this row's population,
+		// so it cannot drift from the ordering.
 		candidate.referential = referentialFromPopulation(row.population)
 	}
 
@@ -117,7 +122,8 @@ export function candidateFromSearchRow(
 		candidate.encyclopedic = row.encyclopedic
 	}
 
-	// Candidate bbox for parity with the wasm lookup; without it the Node backend's region→bbox constraint is dead and disambiguation falls to population ranking.
+	// Candidate bbox for parity with the wasm lookup; without it the Node backend's
+	// region→bbox constraint is dead and disambiguation falls to population ranking.
 	if (row.min_latitude != null && row.max_latitude != null && row.min_longitude != null && row.max_longitude != null) {
 		candidate.bbox = {
 			minLat: row.min_latitude,
@@ -131,7 +137,8 @@ export function candidateFromSearchRow(
 }
 
 /**
- * Order `candidates` in place, exact-match tier first when the extract can answer the name probes, and stamp every candidate's `exactMatch` flag.
+ * Order `candidates` in place, exact-match tier first when the extract can answer
+ * the name probes, and stamp every candidate's `exactMatch` flag.
  */
 export function rankCandidates<DB>(
 	candidates: PlaceCandidate[],
@@ -144,7 +151,8 @@ export function rankCandidates<DB>(
 ): void {
 	const { db, schemaName, query, weights } = options
 
-	// Exact-match tiering ranks a case-folded full match above a partial one, and runs even for a single candidate so `exactMatch` is stamped consistently.
+	// Exact-match tiering ranks a case-folded full match above a partial one,
+	// and runs even for a single candidate so `exactMatch` is stamped consistently.
 	if (weights.exactMatchTiering && candidates.length) {
 		const exactIDs = exactMatchIDs(
 			db,
@@ -153,13 +161,15 @@ export function rankCandidates<DB>(
 			query.text
 		)
 
-		// Stamp the tier onto every candidate so a downstream re-rank's country pin cannot cross the exact/partial boundary.
+		// Stamp the tier onto every candidate so a downstream re-rank's country pin
+		// cannot cross the exact/partial boundary.
 		for (const c of candidates) {
 			c.exactMatch = exactIDs.has(c.id as number)
 		}
 
 		if (exactIDs.size) {
-			// Within the exact tier, population is the primary key and the score only breaks ties; a name-exact candidate outranks an alias-exact one.
+			// Within the exact tier, population is the primary key and the score only breaks ties;
+			// a name-exact candidate outranks an alias-exact one.
 			const needle = foldQueryText(query.text)
 
 			// An official name counts as the place's own name for the sub-tier, floor-conditioned on the holder's population.
@@ -182,7 +192,8 @@ export function rankCandidates<DB>(
 				return officialIDs?.has(c.id as number) ? 2 : 1
 			}
 
-			// With proximity hints, prominence replaces raw population as the within-tier key; without them, referential ordering decides, and encyclopedic importance must not become an input here.
+			// With proximity hints, prominence replaces raw population as the within-tier key; without them,
+			// referential ordering decides, and encyclopedic importance must not become an input here.
 			const hasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 			candidates.sort((a, b) => {

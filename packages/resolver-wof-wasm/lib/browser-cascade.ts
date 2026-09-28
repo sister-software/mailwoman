@@ -12,7 +12,8 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
- * One additional admin role a resolved place also fulfils, such as Berlin's federal-state role beside its locality role.
+ * One additional admin role a resolved place also fulfils, such as Berlin's
+ * federal-state role beside its locality role.
  */
 export interface DualRole {
 	id: number
@@ -37,7 +38,8 @@ export interface MailwomanLookupLike {
 		limit?: number
 		postcode?: string
 		/**
-		 * Soft proximity hints that re-rank exact-tier candidates by nearness, never a hard filter, with population-first order when absent.
+		 * Soft proximity hints that re-rank exact-tier candidates by nearness,
+		 * never a hard filter, with population-first order when absent.
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 	}) => Promise<
@@ -53,14 +55,16 @@ export interface MailwomanLookupLike {
 			lon: number
 			score: number
 			/**
-			 * True when the candidate's name, abbreviation, or an alias exactly matched the query rather than partially.
+			 * True when the candidate's name, abbreviation, or an alias exactly matched
+			 * the query rather than partially.
 			 */
 			exactMatch?: boolean
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
 	/**
-	 * Dual-role partner roles for a resolved place id; absent on lookups built from a slim DB that predates the `coincident_roles` relation.
+	 * Dual-role partner roles for a resolved place id; absent on lookups built from
+	 * a slim DB that predates the `coincident_roles` relation.
 	 */
 	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }
@@ -99,7 +103,8 @@ const WOF_RANK_LOCALITY = 5
 const WOF_RANK_REGION = 4
 
 /**
- * Area-class postcodes rank below the whole locality tier because a postcode centroid is coarser than the locality it sits in.
+ * Area-class postcodes rank below the whole locality tier because a postcode
+ * centroid is coarser than the locality it sits in.
  */
 const PIN_RANK: Record<string, number> = {
 	locality: 5,
@@ -115,7 +120,9 @@ const PIN_RANK: Record<string, number> = {
 }
 
 /**
- * The rank a postcode takes when it leads, above locality and matching Node's `ADMIN_LADDER_POSTCODE_FIRST`, reached by a unit-grade exact hit or an area-grade system whose codes are finer than its localities.
+ * The rank a postcode takes when it leads, above locality and matching Node's
+ * `ADMIN_LADDER_POSTCODE_FIRST`, reached by a unit-grade exact hit or an area-grade
+ * system whose codes are finer than its localities.
  */
 const PIN_RANK_POSTCODE_FIRST = 6
 
@@ -270,7 +277,8 @@ export async function runCascade(
 
 	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
 
-	// An ambiguous international postcode must not out-pin the parsed city across countries, so the locality wins the pin and the postcode stays in the list.
+	// An ambiguous international postcode must not out-pin the parsed city across countries,
+	// so the locality wins the pin and the postcode stays in the list.
 	const top = collected[0]!
 	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
 

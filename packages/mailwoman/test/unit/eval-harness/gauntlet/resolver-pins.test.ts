@@ -51,8 +51,8 @@ describe("runResolverPins — CLI options → pin set", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: true })).toEqual({ postcodeCountryCoherence: true })
 	})
 
-	// The ON pin now restates production, so grading the pre-promotion configuration requires an OFF
-	// pin that is believed.
+	// The ON pin now restates production, so grading the pre-promotion configuration
+	// requires an OFF pin that is believed.
 	it("carries an OFF pin", () => {
 		expect(runResolverPins({ postcodeCountryCoherence: false })).toEqual({ postcodeCountryCoherence: false })
 	})
@@ -141,8 +141,8 @@ describe("end-to-end plumbing: a CLI flag becomes a geocode dep", () => {
 })
 
 describe("gazetteerPrior pin (#1497)", () => {
-	// The pin carries an artifact, so the pure `resolverPinDeps` cannot see it and only the banner
-	// can announce it.
+	// The pin carries an artifact, so the pure `resolverPinDeps` cannot see it
+	// and only the banner can announce it.
 	it("is announced even though resolverPinDeps cannot carry it", () => {
 		expect(describeResolverPins({ gazetteerPrior: true })).toContain("gazetteerPrior=ON")
 	})
@@ -169,8 +169,8 @@ describe("gazetteerPrior pin (#1497)", () => {
 })
 
 describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
-	// A one-sided forward that handles only the truthy half silently discards `--gazetteer-prior-off`,
-	// grading the default arm under an OFF label.
+	// A one-sided forward that handles only the truthy half silently discards
+	// `--gazetteer-prior-off`, grading the default arm under an OFF label.
 	it("keeps an explicit false", () => {
 		expect(runResolverPins({ gazetteerPrior: false })).toEqual({ gazetteerPrior: false })
 	})
@@ -185,8 +185,8 @@ describe("runResolverPins forwards BOTH halves of the prior tri-state", () => {
 })
 
 describe("adminContainmentRerank pin (#1717 stage 2)", () => {
-	// Two-sided from day one: a one-sided forwarding compiles, passes every other test, and produces
-	// an off-labelled log that graded the default arm.
+	// Two-sided from day one: a one-sided forwarding compiles, passes every other test,
+	// and produces an off-labelled log that graded the default arm.
 	it("maps the ON pin onto the geocode dep of the same name", () => {
 		expect(resolverPinDeps({ adminContainmentRerank: true })).toEqual({ adminContainmentRerank: true })
 	})
@@ -264,8 +264,8 @@ describe("spanRescoreWeakResolution — #2264's pin", () => {
 	})
 
 	it("names the READING in the run banner, not an ON", () => {
-		// The three readings grade different configurations, so collapsing them to a single ON is how two
-		// arms produce identical pin logs.
+		// The three readings grade different configurations, so collapsing them to a
+		// single ON is how two arms produce identical pin logs.
 		expect(describeResolverPins({ spanRescoreWeakResolution: "score" })).toContain("spanRescoreWeakResolution=score")
 
 		expect(describeResolverPins({ spanRescoreWeakResolution: "containment" })).toContain(

@@ -46,8 +46,8 @@ export interface GeocodeStreamOptions {
 	 */
 	geocode: GeocodeStreamConfig
 	/**
-	 * Worker pool size; keep it small, because throughput peaks at about 2 workers and degrades past that, and
-	 * each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
+	 * Worker pool size; keep it small, because throughput peaks at about 2 workers and degrades past that,
+	 * and each worker loads the model and opens the DB. @default Math.min(4, availableParallelism())
 	 */
 	concurrency?: number
 	/**
@@ -55,20 +55,21 @@ export interface GeocodeStreamOptions {
 	 */
 	batchSize?: number
 	/**
-	 * Override the worker module; tests inject a fake. Defaults to the real geocode worker.
+	 * Override the worker module; tests inject a fake.
+	 * Defaults to the real geocode worker.
 	 */
 	worker?: string | URL
 }
 
 /**
- * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests): `lib/` and
- * `out/` are siblings, so `../` is the package root either way.
+ * The compiled worker, resolved whether this runs from `out/` (prod) or `.ts` source (tests):
+ * `lib/` and `out/` are siblings, so `../` is the package root either way.
  */
 const GEOCODE_WORKER_URL = new URL("../out/geocode-worker.js", import.meta.url)
 
 /**
- * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s (with `address` populated)
- * in completion order.
+ * Geocode `records` across a worker pool, yielding enriched {@link SourceRecord}s
+ * (with `address` populated) in completion order.
  */
 export function geocodeStream(
 	records: AsyncIterable<SourceRecord> | Iterable<SourceRecord>,

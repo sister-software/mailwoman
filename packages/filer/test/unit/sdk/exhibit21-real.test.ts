@@ -26,7 +26,8 @@ interface ExpectedFixtures {
 
 const FIXTURE_DIRECTORY = resolvePackageDirectory("@mailwoman/filer")("test-fixtures", "edgar")
 
-// A corrupt expected.json must fail the suite loudly rather than degrade to a fallback, since it is the interface every assertion below is measured against.
+// A corrupt expected.json must fail the suite loudly rather than degrade to a fallback,
+// since it is the interface every assertion below is measured against.
 const expected = await readLocalJSONFile<ExpectedFixtures>(FIXTURE_DIRECTORY("expected.json"))
 
 const FIXTURE_NAMES = Object.keys(expected.fixtures).toSorted()
@@ -36,14 +37,17 @@ async function fixture(name: string): Promise<string> {
 }
 
 /**
- * The document as the parser's own preprocessing leaves it, which the substring invariant is measured against.
+ * The document as the parser's own preprocessing leaves it, which the substring
+ * invariant is measured against.
  */
 function normalized(html: string): string {
 	return normalizeWhitespace(htmlToLayoutText(html))
 }
 
 /**
- * `alti-global-2025.htm` separates its entries with only a double space, so abstaining entirely is its required answer, while zero subsidiaries from any other document is a parser failure rather than an abstention.
+ * `alti-global-2025.htm` separates its entries with only a double space,
+ * so abstaining entirely is its required answer, while zero subsidiaries from any
+ * other document is a parser failure rather than an abstention.
  */
 const EXPECTED_TO_ABSTAIN_ENTIRELY = new Set(["alti-global-2025.htm"])
 
@@ -81,7 +85,8 @@ describe("parseExhibit21 — real EDGAR filings", () => {
 
 describe("parseExhibit21 — real EDGAR filings, fabrication audit", () => {
 	/**
-	 * These are all literal substrings of their documents, so the substring invariant admits every one of them, which is why this assertion exists separately from it.
+	 * These are all literal substrings of their documents, so the substring invariant admits
+	 * every one of them, which is why this assertion exists separately from it.
 	 */
 	const NEVER_A_SUBSIDIARY_NAME = [
 		/^ex-?21(\.\d+)?$/i,

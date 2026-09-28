@@ -28,7 +28,8 @@ const cleanOutput = z.object({
 })
 
 /**
- * `release.clean` — remove generated workspace output, build metadata, and Docker's non-workspace TypeScript output; a package name limits the cleanup to one registered workspace.
+ * `release.clean` — remove generated workspace output, build metadata, and Docker's non-workspace
+ * TypeScript output; a package name limits the cleanup to one registered workspace.
  */
 export const cleanOperation = defineOperation({
 	id: "release.clean",
@@ -58,7 +59,8 @@ export const cleanOperation = defineOperation({
 			buildMetadataNames.map((fileName) => workspaces.packagePathBuilder(packageName, fileName).toString())
 		)
 
-		// `docker` is a root TypeScript project but deliberately not a Yarn workspace: its manifest consumes published npm packages.
+		// `docker` is a root TypeScript project but deliberately not a Yarn workspace:
+		// its manifest consumes published npm packages.
 		if (!input.workspace) {
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "out"))
 			directoryTargets.push(resolvePath(context.repoRoot, "docker", "dist"))
@@ -66,7 +68,8 @@ export const cleanOperation = defineOperation({
 			fileTargets.push(resolvePath(context.repoRoot, "docker", "tsconfig.test.tsbuildinfo"))
 		}
 
-		// Retired workspaces are swept separately because `cleanDirectory` recreates what it empties, which would leave the empty shell this sweep exists to remove.
+		// Retired workspaces are swept separately because `cleanDirectory` recreates what
+		// it empties, which would leave the empty shell this sweep exists to remove.
 		const retired = input.workspace ? [] : await retiredWorkspaceDirectories(context.repoRoot)
 		const retiredRoots = retired.map((directory) => resolvePath(context.repoRoot, directory).toString())
 
@@ -131,7 +134,8 @@ export const cleanOperation = defineOperation({
 				files.push(displayPath)
 			}
 
-			// The shell goes only when the generated names were all it held; a dry run discounts the names it would have removed.
+			// The shell goes only when the generated names were all it held;
+			// a dry run discounts the names it would have removed.
 			const generated = new Set<string>([...directoryNames, ...buildMetadataNames])
 
 			const remaining = (

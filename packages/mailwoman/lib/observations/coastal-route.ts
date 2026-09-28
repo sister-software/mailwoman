@@ -59,7 +59,8 @@ export interface CoastalErosionObservation {
 export const COASTAL_REFUSALS = [
 	"no_coordinate",
 	/**
-	 * Not an absence claim: the location may be inland or on the coast outside the mapped risk area, and ncerm publishes no data that tells those apart.
+	 * Not an absence claim: the location may be inland or on the coast outside the mapped
+	 * risk area, and ncerm publishes no data that tells those apart.
 	 */
 	"no_designation_here",
 ] as const
@@ -84,17 +85,20 @@ export interface CoastalErosionRoute extends Disposable {
 
 export interface CoastalErosionRouteOptions {
 	/**
-	 * The sealed layer to read; required, because a route that guessed a default would report a designation from an authority nobody asked about.
+	 * The sealed layer to read; required, because a route that guessed a default would
+	 * report a designation from an authority nobody asked about.
 	 */
 	databasePath: PathBuilderLike
 	/**
-	 * The scenario to answer under, defaulting to the least projected of the twelve (`DEFAULT_NCERM_SCENARIO`).
+	 * The scenario to answer under, defaulting to the least projected of the
+	 * twelve (`DEFAULT_NCERM_SCENARIO`).
 	 */
 	scenarioKey?: string
 }
 
 /**
- * Builds the route against one sealed layer, refusing at construction anything that would make it answer a well-formed wrong thing, above all a coverage row whose basis would support an exclusion.
+ * Builds the route against one sealed layer, refusing at construction anything that would make it
+ * answer a well-formed wrong thing, above all a coverage row whose basis would support an exclusion.
  */
 export function createCoastalErosionRoute(options: CoastalErosionRouteOptions): CoastalErosionRoute {
 	const lookup = new CoastalErosionLookup({ databasePath: options.databasePath })
@@ -142,7 +146,8 @@ function toObservation(
 }
 
 /**
- * What the authority's mapping assigns, in one wording shared by the one-line description and the marker message.
+ * What the authority's mapping assigns, in one wording shared by the one-line
+ * description and the marker message.
  */
 export function coastalErosionAssignmentClause(observation: CoastalErosionObservation): string {
 	const first = observation.designations[0]

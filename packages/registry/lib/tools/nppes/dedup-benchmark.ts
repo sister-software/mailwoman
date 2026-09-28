@@ -42,7 +42,8 @@ import { stateOption } from "#tools/shared"
  */
 export interface NPPESDedupBenchmarkOptions {
 	/**
-	 * The injected geocoder factory, wired by the command to `mailwoman/geocode-core`; model-swap overrides (`--model`/`--tokenizer`/`--model-card`) are its factory config rather than tool options.
+	 * The injected geocoder factory, wired by the command to `mailwoman/geocode-core`; model-swap
+	 * overrides (`--model`/`--tokenizer`/`--model-card`) are its factory config rather than tool options.
 	 */
 	createGeocoder: EvalGeocoderFactory
 	/**
@@ -66,11 +67,13 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	trainEm?: boolean
 	/**
-	 * Reproduce the pre-flip ingest (space-joined address columns with `normalizeCase` off), so that with the same data and GBT only the flip is toggled; default off.
+	 * Reproduce the pre-flip ingest (space-joined address columns with `normalizeCase` off),
+	 * so that with the same data and GBT only the flip is toggled; default off.
 	 */
 	legacyJoin?: boolean
 	/**
-	 * Optional A/B: a path to a trained dedup-gbt TS module exporting DEDUP_GBT_MODEL + DEDUP_GBT_META, scored alongside the shipped GBT at both truth levels.
+	 * Optional A/B: a path to a trained dedup-gbt TS module exporting DEDUP_GBT_MODEL +
+	 * DEDUP_GBT_META, scored alongside the shipped GBT at both truth levels.
 	 */
 	candidate?: string
 	/**
@@ -82,7 +85,9 @@ export interface NPPESDedupBenchmarkOptions {
 	 */
 	h3Res?: number
 	/**
-	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of the serial in-process path, which parallelizes the heavy per-row ONNX parse and WOF SQLite work with identical coordinates.
+	 * Geocode the sample across a worker pool ({@linkcode geocodeStream}) instead of
+	 * the serial in-process path, which parallelizes the heavy per-row ONNX parse
+	 * and WOF SQLite work with identical coordinates.
 	 */
 	parallelGeocode?: boolean
 	/**
@@ -130,7 +135,8 @@ export async function nppesDedupBenchmark(
 		name: "name",
 		organization: "org",
 		address: "address",
-		// `entityTruth` rides as an attribute purely for scoring, never as a discriminator in matching, carrying the site-level label alongside the NPI.
+		// `entityTruth` rides as an attribute purely for scoring, never as a discriminator
+		// in matching, carrying the site-level label alongside the NPI.
 		attributes: { authorizedOfficial: "auth", taxonomy: "taxonomy", entityTruth: "entityID" },
 		source: "nppes",
 	}
@@ -139,7 +145,8 @@ export async function nppesDedupBenchmark(
 	let records: SourceRecord[]
 
 	if (PARALLEL_GEOCODE) {
-		// `address` is a single pre-joined column on this path, so `--legacy-join` is a no-op and `normalizeCase` follows the worker default (on).
+		// `address` is a single pre-joined column on this path, so `--legacy-join` is a no-op
+		// and `normalizeCase` follows the worker default (on).
 		if (!options.geocodeStream) {
 			throw new Error("parallelGeocode requires the injected geocodeStream (see ./eval-geocoder.ts)")
 		}
@@ -156,7 +163,8 @@ export async function nppesDedupBenchmark(
 			}
 		}
 
-		// Restore input order because `geocodeStream` yields in completion order and downstream cluster tie-breaks must be byte-stable.
+		// Restore input order because `geocodeStream` yields in completion order
+		// and downstream cluster tie-breaks must be byte-stable.
 		geocoded.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 		records = geocoded
 	} else {
@@ -187,7 +195,8 @@ export async function nppesDedupBenchmark(
 	// Every grain scores against the same record population, so the ARI expectation is fixed for the run.
 	const score = (entities: readonly ResolvedEntity[], labelOf: TruthLabel): Score => scoreEntities(entities, labelOf, N)
 
-	// Scoring the same clusters at NPI and entity level isolates how much of the apparent over-merge is NPI over-segmentation rather than model error.
+	// Scoring the same clusters at NPI and entity level isolates how much of the apparent
+	// over-merge is NPI over-segmentation rather than model error.
 	const npiLabel = (rec: SourceRecord) => rec.id
 	const entityLabel = (rec: SourceRecord) => rec.attributes?.["entityTruth"] ?? rec.id
 	const orgNameLabel = buildOrgNameGrain(npiPrimary)
@@ -210,7 +219,9 @@ export async function nppesDedupBenchmark(
 
 	const bestSetting = progression.at(-1)! // the full setting stack
 
-	// The shipped out-of-box default auto-computes an input-scoped address-frequency table; on this sub-sampled corpus it is sparse and F1 collapses to ≈baseline, because IDF is a corpus statistic, so the CLI passes a corpus-wide table built from the full source files.
+	// The shipped out-of-box default auto-computes an input-scoped address-frequency table;
+	// on this sub-sampled corpus it is sparse and F1 collapses to ≈baseline, because IDF is a
+	// corpus statistic, so the CLI passes a corpus-wide table built from the full source files.
 	const defaultRes = resolveEntities(records, { learnedScorer: false, trainEM: TRAIN_EM, threshold: 0 })
 	const defaultOutOfBox = score(defaultRes.entities, npiLabel)
 

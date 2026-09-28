@@ -54,7 +54,6 @@ describe("canonicalizeOrganizationName", () => {
 
 describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#668)", () => {
 	it("byte-stable default: never strips collision-prone tokens without context", () => {
-
 		expect(canonicalizeOrganizationName("Lakeside PT")?.canonical).toBe("lakeside pt")
 		expect(canonicalizeOrganizationName("Lakeside PT")?.designations).toEqual([])
 		expect(canonicalizeOrganizationName("Cardiac SCA Clinic")?.canonical).toBe("cardiac sca clinic")
@@ -66,7 +65,6 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 		const org = canonicalizeOrganizationName("Maju Bersama PT", { jurisdiction: "ID" })
 		expect(org?.canonical).toBe("maju bersama")
 		expect(org?.designations).toEqual(["pt"])
-
 
 		expect(canonicalizeOrganizationName("Maju Bersama PT", { jurisdiction: "ID", domain: "general" })?.canonical).toBe(
 			"maju bersama"
@@ -93,7 +91,6 @@ describe("canonicalizeOrganizationName — jurisdiction × domain collisions (#6
 		expect(canonicalizeOrganizationName("Compagnie Générale SCA", { jurisdiction: "FR" })?.designations).toEqual([
 			"sca",
 		])
-
 
 		expect(
 			canonicalizeOrganizationName("Cardiac SCA Clinic", { jurisdiction: "FR", domain: "healthcare" })?.canonical

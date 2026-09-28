@@ -54,8 +54,8 @@ export interface LinkWeightsOverlayReport {
 }
 
 /**
- * The digest a weights package records for an artifact it ships, or `undefined` when the package
- * records none.
+ * The digest a weights package records for an artifact it ships, or `undefined`
+ * when the package records none.
  *
  * Read from the package's committed `model-card.json`, the same register the release re-verifies
  * against the published tarball, so linking against it checks the release's own claim.
@@ -100,13 +100,13 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 
 		log(`\n${locale}  →  ${relative(dataRoot, dir)}`)
 
-		// The model card is the one artifact from the checkout rather than the data root; without it
-		// the loader falls back to STAGE2_BIO_LABELS (21) against a 33-logit model and the first
-		// parse throws, so its absence is a broken install rather than a lean one.
+		// The model card is the one artifact from the checkout rather than the data root;
+		// without it the loader falls back to STAGE2_BIO_LABELS (21) against a 33-logit model
+		// and the first parse throws, so its absence is a broken install rather than a lean one.
 		const cardSource = resolvePath(workspacePath(`neural-weights-${locale}`), "model-card.json")
 
-		// Copied rather than linked: a symlink would make the overlay depend on one working tree, and
-		// a worktree removed after linking would leave it resolving a dangling card.
+		// Copied rather than linked: a symlink would make the overlay depend on one working tree,
+		// and a worktree removed after linking would leave it resolving a dangling card.
 		if ((await pathExists(cardSource)) && !plan) {
 			await makeDirectories(dir)
 			await removePathIfPresent(resolvePath(dir, "model-card.json"))
@@ -147,9 +147,9 @@ export async function linkWeightsOverlay(options: LinkWeightsOverlayOptions): Pr
 			log(`  ${plan ? "·" : "✓"} ${shippedName}${recorded ? "  digest ok" : "  (no recorded digest)"}`)
 		}
 
-		// Reported, never linked: the per-locale `link-dev-weights.ts` scripts build these into the
-		// overlay directly, and each channel degrades to `undefined` at resolve time, so absence is
-		// only visible if it is said here.
+		// Reported, never linked: the per-locale `link-dev-weights.ts` scripts build these
+		// into the overlay directly, and each channel degrades to `undefined` at resolve time,
+		// so absence is only visible if it is said here.
 		const buildable: BuildableArtifact[] = recipe.buildableFor(locale)
 
 		for (const { shippedName, buildCommand, inputPath } of buildable) {

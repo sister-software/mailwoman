@@ -13,12 +13,14 @@ import type { Tagged } from "type-fest"
 export type NameKey = Tagged<string, "NameKey">
 
 /**
- * A street name folded by {@link normalizeStreetForKey} or {@link normalizeStreetForKeyLocale}, the form an address-point `street_norm` column stores, and not interchangeable with {@link RouteKey}.
+ * A street name folded by {@link normalizeStreetForKey} or {@link normalizeStreetForKeyLocale},
+ * the form an address-point `street_norm` column stores, and not interchangeable with {@link RouteKey}.
  */
 export type StreetKey = Tagged<string, "StreetKey">
 
 /**
- * A street key that has also passed {@link canonicalizeRouteKey}; binding a plain {@link StreetKey} to a route-folded column silently misses rows whose route spelling differs.
+ * A street key that has also passed {@link canonicalizeRouteKey}; binding a plain
+ * {@link StreetKey} to a route-folded column silently misses rows whose route spelling differs.
  */
 export type RouteKey = Tagged<string, "RouteKey">
 
@@ -66,7 +68,8 @@ function fold(input: string): string {
 }
 
 /**
- * Normalizes a US or English street name into an address-point key, folding directionals, spelled ordinals, and the USPS street-type suffix; the extract builder and the probe must both call it.
+ * Normalizes a US or English street name into an address-point key, folding directionals, spelled
+ * ordinals, and the USPS street-type suffix; the extract builder and the probe must both call it.
  */
 export function normalizeStreetForKey(street: string): StreetKey {
 	const tokens = fold(street).split(" ")
@@ -128,7 +131,8 @@ export function normalizeStreetForKey(street: string): StreetKey {
 }
 
 /**
- * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street name into an address-point key.
+ * Names the rule set {@link normalizeStreetForKeyLocale} uses to fold a street
+ * name into an address-point key.
  */
 export type StreetLocale = "us" | "en" | "es" | "fr" | "de" | "it" | "nl" | "pl" | "vn" | "id" | "zh"
 
@@ -137,7 +141,8 @@ function foldHan(input: string): string {
 }
 
 /**
- * Creates a country-to-street-locale lookup for an acquisition SDK, throwing rather than falling back so a misregistered locale cannot key every street wrongly.
+ * Creates a country-to-street-locale lookup for an acquisition SDK, throwing
+ * rather than falling back so a misregistered locale cannot key every street wrongly.
  */
 export function createStreetLocaleRegistry(
 	registry: ReadonlyMap<string, StreetLocale>,
@@ -205,7 +210,9 @@ const IT_STREET_TYPE_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Spanish street-type abbreviations whose expansion is the same token in every language the register writes after `fold`; `c/`, `av`, and `pl` are deliberately absent because they expand differently by region.
+ * Spanish street-type abbreviations whose expansion is the same token in every language
+ * the register writes after `fold`; `c/`, `av`, and `pl` are deliberately absent
+ * because they expand differently by region.
  */
 const ES_STREET_TYPE_ABBREV = new Map<string, string>([
 	["ctra", "carretera"],
@@ -223,7 +230,8 @@ const ID_STREET_ABBREV = new Map<string, string>([
 ])
 
 /**
- * Normalizes a street name into an address-point key under the given locale, delegating `us` and `en` to {@link normalizeStreetForKey}; the extract builder and the probe must both call it.
+ * Normalizes a street name into an address-point key under the given locale, delegating `us`
+ * and `en` to {@link normalizeStreetForKey}; the extract builder and the probe must both call it.
  */
 export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale): StreetKey {
 	if (locale === "us" || locale === "en") return normalizeStreetForKey(street)
@@ -254,13 +262,15 @@ export function normalizeStreetForKeyLocale(street: string, locale: StreetLocale
 			}
 			break
 		case "it":
-			// The leading type is expanded and kept, unlike `pl`, because dropping it merges distinct streets that share a name.
+			// The leading type is expanded and kept, unlike `pl`, because dropping it
+			// merges distinct streets that share a name.
 			if (tokens.length > 1) {
 				tokens[0] = IT_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}
 			break
 		case "es":
-			// Keep the leading type, as `it` does and more strongly, because `Calle Mayor` and `Plaza Mayor` often share a municipio.
+			// Keep the leading type, as `it` does and more strongly, because `Calle Mayor`
+			// and `Plaza Mayor` often share a municipio.
 			if (tokens.length > 1) {
 				tokens[0] = ES_STREET_TYPE_ABBREV.get(tokens[0]!) ?? tokens[0]!
 			}
@@ -306,14 +316,17 @@ export function normalizeLocalityForKey(locality: string): NameKey {
 }
 
 /**
- * Folds a locality name into a {@link NameKey} with the Han fold for `zh` and {@link normalizeLocalityForKey} otherwise; the Han rule stays out of the shared fold so existing columns are not re-keyed.
+ * Folds a locality name into a {@link NameKey} with the Han fold for `zh`
+ * and {@link normalizeLocalityForKey} otherwise; the Han rule stays out of the
+ * shared fold so existing columns are not re-keyed.
  */
 export function normalizeLocalityForKeyLocale(locality: string, locale: StreetLocale): NameKey {
 	return locale === "zh" ? (foldHan(locality) as NameKey) : normalizeLocalityForKey(locality)
 }
 
 /**
- * Folds a house number into an address-point key, additionally width-folding and dropping the trailing 號 for `zh`.
+ * Folds a house number into an address-point key, additionally width-folding
+ * and dropping the trailing 號 for `zh`.
  */
 export function normalizeHouseNumberForKey(number: string, locale: StreetLocale): string {
 	if (locale === "zh") {
@@ -329,14 +342,17 @@ const FRENCH_LEAD_TYPE =
 	/^(?:rue|ruelle|av|ave|avenue|boul|bd|boulevard|ch|che|chemin|all[ée]e|imp|impasse|mont[ée]e|c[ôo]te|pl|place|prom|promenade|rang|rte|route|autoroute|carr[eé]|croissant|terrasse|sentier)(?=[\s.-]|$)/i
 
 /**
- * Routes an `en` street surface leading with a French type word to the `fr` locale and returns any other base unchanged, routing on the surface rather than the province so bilingual Canadian extracts fold consistently.
+ * Routes an `en` street surface leading with a French type word to the `fr` locale
+ * and returns any other base unchanged, routing on the surface rather than the province
+ * so bilingual Canadian extracts fold consistently.
  */
 export function streetLocaleForSurface(street: string, base: StreetLocale): StreetLocale {
 	return base === "en" && FRENCH_LEAD_TYPE.test(street.trimStart()) ? "fr" : base
 }
 
 /**
- * Strips a trailing French arrondissement designator from a folded commune key, returning the input unchanged when the strip would leave no text.
+ * Strips a trailing French arrondissement designator from a folded commune key,
+ * returning the input unchanged when the strip would leave no text.
  */
 export function stripArrondissement(localityNorm: NameKey): NameKey {
 	const stripped = localityNorm.replace(/\s+\d+(?:er|e)\s+arrondissement$/, "").trim() as NameKey
@@ -345,7 +361,9 @@ export function stripArrondissement(localityNorm: NameKey): NameKey {
 }
 
 /**
- * Strips a disambiguating qualifier from a locality name for a query-side retry, returning an empty string when no text was stripped; the result must be refolded with {@link normalizeLocalityForKey} before probing.
+ * Strips a disambiguating qualifier from a locality name for a query-side retry,
+ * returning an empty string when no text was stripped; the result must be refolded
+ * with {@link normalizeLocalityForKey} before probing.
  */
 export function stripLocalityQualifier(locality: string): string {
 	let s = locality.trim()
@@ -397,7 +415,8 @@ export function stripLocalityQualifier(locality: string): string {
 }
 
 /**
- * Folds a numbered-route designator in a street key to `us route N` or `state route N`; only digit-leading numbers after a `us`, `state`, or two-letter prefix fold.
+ * Folds a numbered-route designator in a street key to `us route N` or `state route N`;
+ * only digit-leading numbers after a `us`, `state`, or two-letter prefix fold.
  */
 export function canonicalizeRouteKey(streetNorm: StreetKey): RouteKey {
 	const match = /^(us|state|[a-z]{2}) (?:route|rte|rt|highway|hwy) (\d.*)$/.exec(streetNorm)
@@ -412,7 +431,8 @@ const CANONICAL_TYPE_WORDS: ReadonlySet<string> = new Set(
 )
 
 /**
- * Lists the lookup keys to probe for a street span, most literal first, adding doubled-type and Saint/St-swap recovery forms for `us` and `en`.
+ * Lists the lookup keys to probe for a street span, most literal first, adding doubled-type
+ * and Saint/St-swap recovery forms for `us` and `en`.
  */
 export function streetKeyVariants(street: string, locale: StreetLocale = "us"): StreetKey[] {
 	const primary = locale === "us" ? normalizeStreetForKey(street) : normalizeStreetForKeyLocale(street, locale)

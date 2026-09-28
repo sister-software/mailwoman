@@ -11,7 +11,8 @@ import { useMap } from "react-map-gl/maplibre"
 import type { MapCameraTarget } from "#map/place-render"
 
 /**
- * Builds `fitBounds` options without an undefined `duration` key, which MapLibre checks for existence and can turn into a NaN camera move.
+ * Builds `fitBounds` options without an undefined `duration` key, which MapLibre
+ * checks for existence and can turn into a NaN camera move.
  */
 export function fitBoundsOptionsFor(padding: number, animate: boolean): FitBoundsOptions {
 	return animate ? { padding } : { padding, duration: 0 }

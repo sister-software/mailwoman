@@ -87,7 +87,8 @@ export interface StreetRerankResult {
 }
 
 /**
- * Extract the street surface (raw text) of a segmentation hypothesis from the trace's per-token char offsets.
+ * Extract the street surface (raw text) of a segmentation hypothesis from the
+ * trace's per-token char offsets.
  */
 function hypothesisStreetSurface(
 	hyp: SegmentationHypothesis,
@@ -109,11 +110,12 @@ function hypothesisStreetSurface(
 }
 
 /**
- * Splice the winning hypothesis's street span into the argmax tree, overriding only the tokens the segmentation
- * assigns to the street family and leaving every other token's argmax label untouched.
+ * Splice the winning hypothesis's street span into the argmax tree, overriding only the tokens the
+ * segmentation assigns to the street family and leaving every other token's argmax label untouched.
  *
- * The span head is a street-boundary specialist and decodes locality/region/postcode far worse than the full BIO
- * argmax head, so rebuilding the whole tree would trade the street win for a locality/postcode collapse.
+ * The span head is a street-boundary specialist and decodes locality/region/postcode
+ * far worse than the full BIO argmax head, so rebuilding the whole tree would trade
+ * the street win for a locality/postcode collapse.
  */
 function spliceStreetTree(
 	hyp: SegmentationHypothesis,
@@ -121,8 +123,8 @@ function spliceStreetTree(
 	grammar: SemiCRFTransitions
 ): AddressTree {
 	const tokens: DecoderToken[] = trace.tokens.map((t) => ({ ...t }))
-	// Argmax street-family token indices, cleared as the segmentation's street is installed so a shrunk or
-	// moved span does not leave orphaned argmax street tokens behind.
+	// Argmax street-family token indices, cleared as the segmentation's street is installed
+	// so a shrunk or moved span does not leave orphaned argmax street tokens behind.
 	const argmaxStreetIdx = new Set<number>()
 
 	for (let i = 0; i < tokens.length; i++) {
@@ -153,8 +155,8 @@ function spliceStreetTree(
 		}
 	}
 
-	// An argmax street token the new span does not cover is stale and drops to O: the reranked span is
-	// authoritative for the street.
+	// An argmax street token the new span does not cover is stale and drops to O:
+	// the reranked span is authoritative for the street.
 	for (const idx of argmaxStreetIdx) {
 		tokens[idx]!.label = "O"
 	}
@@ -168,8 +170,8 @@ function spliceStreetTree(
  * @param evidence The injected street-name index.
  * @param grammar The segment-transition grammar from the weights bundle's `semi-crf-transitions.json`.
  *
- * @returns The winning tree and whether evidence moved the pick, falling back to the plain argmax tree when the
- * model exports no span scores or the evidence keeps rank-1.
+ * @returns The winning tree and whether evidence moved the pick, falling back to the plain
+ * argmax tree when the model exports no span scores or the evidence keeps rank-1.
  */
 export async function rerankByStreetEvidence(
 	// Only `traceParse` is called; `Pick` says so, and a test double is then an object rather than an assertion.
@@ -190,9 +192,10 @@ export async function rerankByStreetEvidence(
 		}
 	}
 
-	// The rerank arbitrates a street only on an anchorless fragment, the class it was measured on: with a
-	// country or region anchor the model is on structured input and a name-index collision steals a correct
-	// token. Postcode is not an anchor, because treating a 4-digit year as one kills the date-name board.
+	// The rerank arbitrates a street only on an anchorless fragment, the class it was
+	// measured on: with a country or region anchor the model is on structured input
+	// and a name-index collision steals a correct token.
+	// Postcode is not an anchor, because treating a 4-digit year as one kills the date-name board.
 	if (trace.tokens.some((t) => ANCHOR_TAGS.has(bareBIOTag(t.label)))) {
 		return { tree: buildAddressTree(trace.text, trace.tokens), moved: false, rank: 0, streetSurface: "" }
 	}
@@ -214,8 +217,9 @@ export async function rerankByStreetEvidence(
 		...(opts.scope ? { scope: opts.scope } : {}),
 	})
 
-	// Only an atlas-confirmed street may override the argmax tree's street; the model owns every call the
-	// atlas cannot confirm wrong, and on a clean address the two streets agree so the splice is a no-op.
+	// Only an atlas-confirmed street may override the argmax tree's street;
+	// the model owns every call the atlas cannot confirm wrong, and on a clean address
+	// the two streets agree so the splice is a no-op.
 	const confirmed =
 		pick.candidate.streetSurface !== "" && evidence.hasStreetName(pick.candidate.streetSurface, opts.scope)
 

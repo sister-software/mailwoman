@@ -50,7 +50,8 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 }
 
 /**
- * Only a hand-built fixture that skips the loader can reach a comparator with an unknown name, which is the path under test.
+ * Only a hand-built fixture that skips the loader can reach a comparator with
+ * an unknown name, which is the path under test.
  */
 function comparatorName(value: string): ConformanceFixture["outcomeComparator"] {
 	return value as ConformanceFixture["outcomeComparator"]
@@ -323,8 +324,8 @@ describe("candidate_admissibility", () => {
 		expect(reading.differences[0]).toContain("tracing being off")
 	})
 
-			// An empty walk is a reading and an absent trace is not, so two runs that performed no lookup are undecidable.
-				it("keeps an empty walk apart from an absent trace", () => {
+	// An empty walk is a reading and an absent trace is not, so two runs that performed no lookup are undecidable.
+	it("keeps an empty walk apart from an absent trace", () => {
 		const reading = compareOutcomes(REFINEMENT, traced([]), traced([]))
 
 		expect(reading.observed).toBe("undecidable")

@@ -29,8 +29,8 @@ const CORPUS_SIZE = 1029
 const CORPUS_HASH = "73038d2b417d33aa963abd21726c7a55edfbfbb2e66efa7ab777c4020f0df031"
 
 /**
- * The id is content-addressed rather than order-addressed, so it holds across file reorganization but
- * moves when rows are added or removed.
+ * The id is content-addressed rather than order-addressed, so it holds across file
+ * reorganization but moves when rows are added or removed.
  */
 const BOARD_ID = "gauntlet-regression@1029:3738dde391ac"
 
@@ -88,8 +88,8 @@ describe("the committed corpus", () => {
 
 describe("the row schema", () => {
 	it("rejects an unknown key rather than ignoring it", () => {
-		// A typo'd `expectLon` that parses as "coordinate not asserted" still runs and passes while
-		// asserting half the row, which is what the strictness is for.
+		// A typo'd `expectLon` that parses as "coordinate not asserted" still runs and passes
+		// while asserting half the row, which is what the strictness is for.
 		const result = SeedCaseSchema.safeParse({ ...SAMPLE, expectLonn: 2.3 })
 
 		expect(result.success).toBe(false)

@@ -142,8 +142,8 @@ describe("the place-identity check (#1507)", () => {
 	})
 
 	it("grades place identity off the RESOLVED place, not the echoed query span", () => {
-		// The parse can be perfect and `locality` echo it while the resolver returned another place, so
-		// only reading `hierarchy[0].name` sees the failure.
+		// The parse can be perfect and `locality` echo it while the resolver returned
+		// another place, so only reading `hierarchy[0].name` sees the failure.
 		const c = storedCase({
 			expect_components: stringifyJSON({ locality: "Gaborone" }),
 			expect_place_name: "Gaborone",
@@ -198,8 +198,8 @@ describe("the place-identity check (#1507)", () => {
 })
 
 describe("the component check is exact — multi-script truth is a per-row opt-in (#34)", () => {
-	// Dual-script truth is a per-row `expect_component_renderings` opt-in, never a global relaxation
-	// that lets a cross-tag bleed grade as a pass.
+	// Dual-script truth is a per-row `expect_component_renderings` opt-in, never a
+	// global relaxation that lets a cross-tag bleed grade as a pass.
 	it("fails a cross-script bleed against a plain expect_components truth — the Manchester case", () => {
 		// With no rendering interface on the row, a locality that swallowed the CJK venue next door must fail.
 		const c = storedCase({ expect_components: stringifyJSON({ locality: "Manchester" }) })
@@ -260,8 +260,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("lets an interface key supersede the same key in expect_components", () => {
-		// An interface key supersedes the same key in `expect_components` while leaving unrelated exact
-		// keys to grade through it.
+		// An interface key supersedes the same key in `expect_components`
+		// while leaving unrelated exact keys to grade through it.
 		const c = storedCase({
 			expect_components: stringifyJSON({ venue: "Gandantegchinlen Monastery", postcode: "16040" }),
 			expect_component_renderings: stringifyJSON({
@@ -300,8 +300,8 @@ describe("the component check is exact — multi-script truth is a per-row opt-i
 	})
 
 	it("leaves a SAME-script concatenation failing — the plus-code row's error must stay visible", () => {
-		// A model that types the Open Location Code as `postcode` emits two spans next to the real 14200,
-		// and with no interface listing them the exact comparison must keep failing.
+		// A model that types the Open Location Code as `postcode` emits two spans next to the
+		// real 14200, and with no interface listing them the exact comparison must keep failing.
 		const c = storedCase({ expect_components: stringifyJSON({ postcode: "14200" }) })
 
 		expect(checkCase(c, result({ postcode: "WWF9+6H6 14200" }))).toEqual([`postcode "WWF9+6H6 14200" ≠ "14200"`])

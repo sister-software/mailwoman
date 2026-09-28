@@ -78,8 +78,8 @@ export type PolygonRings = readonly ContainmentRing[]
 export type MultiPolygonRings = readonly PolygonRings[]
 
 /**
- * Ray-cast a point against one linear ring — the even-odd crossing count, with
- * points exactly on an edge left implementation-defined.
+ * Ray-cast a point against one linear ring — the even-odd crossing count,
+ * with points exactly on an edge left implementation-defined.
  */
 export function pointInRing(lon: number, lat: number, ring: ContainmentRing): boolean {
 	let inside = false
@@ -100,8 +100,8 @@ export function pointInRing(lon: number, lat: number, ring: ContainmentRing): bo
 }
 
 /**
- * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`), independent
- * of ring winding order because the gazetteer sources do not honour it reliably.
+ * Even-odd containment over a polygon's ring list (`[outer, hole₁, …]`), independent of
+ * ring winding order because the gazetteer sources do not honour it reliably.
  */
 export function pointInPolygon(lon: number, lat: number, rings: PolygonRings): boolean {
 	let inside = false
@@ -135,10 +135,9 @@ export interface MultiPolygonLiteral<P extends PolygonPath = PolygonPath> extend
 	coordinates: P[]
 }
 
-
 /**
- * A geometry as it arrives from `JSON.parse`, or a typed literal, with `type`
- * unchecked and no arity validation on `coordinates`.
+ * A geometry as it arrives from `JSON.parse`, or a typed literal, with `type` unchecked
+ * and no arity validation on `coordinates`.
  */
 export type ParsedGeometry = GeometryLiteral | { type: string; coordinates?: unknown }
 
@@ -157,8 +156,8 @@ export function arealPolygons(geometry: ParsedGeometry | null | undefined): Mult
 }
 
 /**
- * The polygons of a geometry that must be areal, throwing when the geometry is not
- * a `Polygon` or `MultiPolygon`.
+ * The polygons of a geometry that must be areal, throwing when the geometry
+ * is not a `Polygon` or `MultiPolygon`.
  */
 export function requireArealPolygons(geometry: ParsedGeometry, subject: string, context: string): MultiPolygonRings {
 	const polygons = arealPolygons(geometry)
@@ -169,8 +168,8 @@ export function requireArealPolygons(geometry: ParsedGeometry, subject: string, 
 }
 
 /**
- * Does an areal GeoJSON geometry contain the point, returning `null` for a non-areal
- * geometry rather than `false`.
+ * Does an areal GeoJSON geometry contain the point, returning `null` for a
+ * non-areal geometry rather than `false`.
  */
 export function geometryContains(
 	geometry: ParsedGeometry | null | undefined,
@@ -185,8 +184,7 @@ export function geometryContains(
 }
 
 /**
- * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and
- * counter-clockwise.
+ * An axis-aligned rectangle as a closed ring, in GeoJSON `[lon, lat]` order and counter-clockwise.
  */
 export function rectangleRing(minLon: number, minLat: number, maxLon: number, maxLat: number): number[][] {
 	return [

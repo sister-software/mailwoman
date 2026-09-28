@@ -14,8 +14,6 @@ import { isoDate } from "@mailwoman/core/utils"
 
 import { GZT_ATTRIBUTION, GZT_ITEM_ID, GZT_SERVICE_URL, GZT_SOURCE_EPSG } from "#vocabulary"
 
-
-
 /**
  * The ArcGIS Online sharing API, where the item's licence and attribution fields are readable.
  */
@@ -27,12 +25,14 @@ export const ARCGIS_ITEM_API_BASE_URL = "https://www.arcgis.com/sharing/rest/con
 export const HUB_DOWNLOAD_API_BASE_URL = "https://hub.arcgis.com/api/download/v1/items"
 
 /**
- * Minimum spacing between requests to the Department's hosts, courtesy pacing because the Department publishes no rate limit for this service.
+ * Minimum spacing between requests to the Department's hosts, courtesy pacing
+ * because the Department publishes no rate limit for this service.
  */
 export const GZT_MIN_REQUEST_INTERVAL_MS = 500
 
 /**
- * How long a cached metadata response stays fresh, six hours because the item's `modified` date and the data's latest `UPLOAD_DATE` move only a handful of times a year.
+ * How long a cached metadata response stays fresh, six hours because the item's `modified` date
+ * and the data's latest `UPLOAD_DATE` move only a handful of times a year.
  */
 const GZT_CACHE_TTL_MS = 6 * 60 * 60 * 1000
 
@@ -53,7 +53,8 @@ export interface ZoningItemRecord {
 	 */
 	accessInformation: string
 	/**
-	 * `licenseInfo`, verbatim with its markup stripped, read rather than trusted from the constant so a change in the terms is visible at build time.
+	 * `licenseInfo`, verbatim with its markup stripped, read rather than trusted from
+	 * the constant so a change in the terms is visible at build time.
 	 */
 	licenseInfo: string
 	/**
@@ -161,7 +162,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The sum of the Department's own `Shape__Area` column in square metres, which has to come from the service because the bulk export drops the column.
+	 * The sum of the Department's own `Shape__Area` column in square metres, which has
+	 * to come from the service because the bulk export drops the column.
 	 */
 	public async readShapeAreaSum(): Promise<number> {
 		const { data } = await this.fetch<{ features?: Array<{ attributes?: Record<string, number> }> }>({
@@ -190,7 +192,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * Ask the Hub for a bulk GeoJSON export and return the result URL, which 302s and therefore has to be followed.
+	 * Ask the Hub for a bulk GeoJSON export and return the result URL, which 302s
+	 * and therefore has to be followed.
 	 *
 	 * @throws {Error} When the job is not `Completed`, or names no result URL.
 	 * A partial job that answered with a status and no URL would otherwise present as an empty download.
@@ -216,7 +219,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 	}
 
 	/**
-	 * The features the service publishes near a point, queried with `outSR=4326` because it answers in Irish Transverse Mercator otherwise.
+	 * The features the service publishes near a point, queried with `outSR=4326`
+	 * because it answers in Irish Transverse Mercator otherwise.
 	 */
 	public async readFeaturesNear(
 		latitude: number,
@@ -253,7 +257,8 @@ export class GZTClient extends APIClient<APIClientConfig> {
 }
 
 /**
- * Refuse an attribution the published item no longer matches, checking the Department's credit line and the Tailte Éireann clause separately.
+ * Refuse an attribution the published item no longer matches, checking the Department's
+ * credit line and the Tailte Éireann clause separately.
  *
  * @throws {Error} When either half of {@link GZT_ATTRIBUTION} is no longer in the item's own fields.
  */

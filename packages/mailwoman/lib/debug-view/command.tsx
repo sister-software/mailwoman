@@ -106,8 +106,8 @@ function GeocodeDebugStatic(props: { input: string; options: GeocodeCommandOptio
 }
 
 /**
- * Ink keeps one renderer per stdout, so the command tree unmounts before the session renders
- * rather than mounting a second renderer.
+ * Ink keeps one renderer per stdout, so the command tree unmounts before the session
+ * renders rather than mounting a second renderer.
  */
 /* oxlint-disable react-hooks/exhaustive-deps -- One-shot by interface, like `useCommandTask`: the handoff happens
 	 once at mount, and a fresh `options` object per render must not repeat it. The empty deps array is the point. */
@@ -130,8 +130,8 @@ function DebugSessionHandoff(props: { input: string; options: GeocodeCommandOpti
 				patchConsole: false,
 			})
 
-			// A fatal is reported on stderr because Ink discards alternate-screen teardown
-			// output, so a message rendered inside the session would not survive the switch.
+			// A fatal is reported on stderr because Ink discards alternate-screen teardown output,
+			// so a message rendered inside the session would not survive the switch.
 			void session.waitUntilExit().then(
 				() => process.exit(process.exitCode ?? 0),
 				(error: unknown) => {

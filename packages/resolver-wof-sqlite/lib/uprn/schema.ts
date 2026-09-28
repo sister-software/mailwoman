@@ -17,7 +17,8 @@ import type { Kysely } from "kysely"
 export const UPRN_H3_RESOLUTION = 9
 
 /**
- * Resolution of the layer's `layer_coverage` cells, coarse per the layer interface and shared with the other spines.
+ * Resolution of the layer's `layer_coverage` cells, coarse per the layer interface
+ * and shared with the other spines.
  */
 export const UPRN_COVERAGE_H3_RESOLUTION = 6
 
@@ -38,13 +39,15 @@ export interface UPRNTable {
 	 */
 	lon: number
 	/**
-	 * 48-bit short H3 cell at {@link UPRN_H3_RESOLUTION} — the layer-interface spine key and the `nearestUPRN` probe index.
+	 * 48-bit short H3 cell at {@link UPRN_H3_RESOLUTION} — the layer-interface spine key
+	 * and the `nearestUPRN` probe index.
 	 */
 	h3_cell: number
 }
 
 /**
- * Build-provenance key/value pairs the fixed `layer_manifest` columns have no room for, including the upstream licence text verbatim.
+ * Build-provenance key/value pairs the fixed `layer_manifest` columns have no room for,
+ * including the upstream licence text verbatim.
  */
 export interface UPRNMetaTable {
 	key: string
@@ -57,14 +60,16 @@ export interface UPRNDatabase extends layerschemadatabase {
 }
 
 /**
- * The full res-9 cell for a uprn point, and the one derivation the builder and its consumers share so their cells cannot disagree.
+ * The full res-9 cell for a uprn point, and the one derivation the builder
+ * and its consumers share so their cells cannot disagree.
  */
 export function uprnFullCell(latitude: number, longitude: number): H3Cell {
 	return latLngToCell(latitude, longitude, UPRN_H3_RESOLUTION) as H3Cell
 }
 
 /**
- * The `h3_cell` column value for a uprn point, packing {@link uprnFullCell} to the shared 48-bit short-cell integer.
+ * The `h3_cell` column value for a uprn point, packing {@link uprnFullCell} to
+ * the shared 48-bit short-cell integer.
  */
 export function uprnH3Cell(latitude: number, longitude: number): number {
 	return shortCellToInt(uprnFullCell(latitude, longitude))

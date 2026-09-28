@@ -10,8 +10,7 @@
 
 /**
  * Case/diacritic-insensitive fold for commune-name comparison: marks are deleted, never spaced, so
- * `Besançon` does not key as `besanc on`; a letter with no decomposition is dropped rather than
- * folded.
+ * `Besançon` does not key as `besanc on`; a letter with no decomposition is dropped rather than folded.
  */
 export function foldName(s: string): string {
 	return s

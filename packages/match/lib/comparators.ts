@@ -65,8 +65,8 @@ export function jaro(a: string, b: string): number {
 }
 
 /**
- * Jaro-Winkler similarity in [0, 1]: Jaro plus a shared-prefix bonus, boosting only when Jaro already
- * clears the 0.7 threshold, with Winkler's standard prefix cap 4 and weight 0.1.
+ * Jaro-Winkler similarity in [0, 1]: Jaro plus a shared-prefix bonus, boosting only when Jaro
+ * already clears the 0.7 threshold, with Winkler's standard prefix cap 4 and weight 0.1.
  */
 export function jaroWinkler(
 	a: string,
@@ -92,8 +92,8 @@ export function jaroWinkler(
 }
 
 /**
- * Jaccard similarity `|a ∩ b| / |a ∪ b|` over two token sets, where an empty side scores 0 rather than
- * 1 because treating no evidence as perfect agreement floods a blocking pass with false pairs.
+ * Jaccard similarity `|a ∩ b| / |a ∪ b|` over two token sets, where an empty side scores 0 rather than 1
+ * because treating no evidence as perfect agreement floods a blocking pass with false pairs.
  */
 export function jaccard(a: ReadonlySet<string>, b: ReadonlySet<string>): number {
 	if (!a.size || !b.size) return 0
@@ -121,9 +121,9 @@ export function levenshteinSimilarity(a: string, b: string): number {
 }
 
 /**
- * Name-aware similarity in [0, 1] that floors the score at 0.9 when one name's tokens are a strict
- * subset of the other's, and otherwise returns the better of Jaro-Winkler and normalized edit
- * similarity, case- and whitespace-insensitively.
+ * Name-aware similarity in [0, 1] that floors the score at 0.9 when one name's tokens
+ * are a strict subset of the other's, and otherwise returns the better of Jaro-Winkler
+ * and normalized edit similarity, case- and whitespace-insensitively.
  */
 export function nameSimilarity(a: string, b: string): number {
 	const x = a.trim().toLowerCase().replaceAll(/\s+/g, " ")

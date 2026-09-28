@@ -33,8 +33,8 @@ import {
 import { storageOperations, type StorageContext } from "@mailwoman/storage-kit"
 
 /**
- * How many times `health fix` re-takes a plan before giving up; see {@link runFix} for why one pass is not
- * enough.
+ * How many times `health fix` re-takes a plan before giving up; see {@link runFix}
+ * for why one pass is not enough.
  */
 const MAXIMUM_FIX_PASSES = 8
 
@@ -50,8 +50,8 @@ export interface DispatchIO {
 }
 
 /**
- * `--key value` and `--flag` pairs into an object the operation's `inputSchema` coerces and validates, so
- * values stay strings here and the schema decides the type.
+ * `--key value` and `--flag` pairs into an object the operation's `inputSchema` coerces
+ * and validates, so values stay strings here and the schema decides the type.
  */
 export function parseOptions(args: readonly string[]): { options: Record<string, string | boolean>; rest: string[] } {
 	const options: Record<string, string | boolean> = {}
@@ -107,8 +107,8 @@ function usage(io: DispatchIO): number {
 }
 
 /**
- * One registry as a `mwops` verb: its operations, the context each receives, and how an output decides
- * the exit code.
+ * One registry as a `mwops` verb: its operations, the context each receives,
+ * and how an output decides the exit code.
  */
 interface OperationView<TContext extends OperationContext> {
 	verb: string
@@ -200,8 +200,8 @@ async function runOperation<TContext extends OperationContext>(
 }
 
 /**
- * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings, where `debt` is
- * the only counter set.
+ * `mwops health baseline <counter-set>` — rewrite a baseline from the current readings,
+ * where `debt` is the only counter set.
  */
 async function runBaseline(
 	targets: readonly string[],
@@ -233,8 +233,8 @@ async function runBaseline(
 }
 
 /**
- * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic review leads,
- * a report about the tree rather than a verdict on it.
+ * `mwops health comments [path]` — rebuild the source-comment inventory and its heuristic
+ * review leads, a report about the tree rather than a verdict on it.
  */
 async function runComments(
 	targets: readonly string[],
@@ -255,8 +255,8 @@ async function runComments(
 }
 
 /**
- * `mwops health fix <check>` — apply the mechanical repair for one check, building and proving the plan
- * before anything is written so `--dry-run` reports exactly what the write would do.
+ * `mwops health fix <check>` — apply the mechanical repair for one check, building and proving
+ * the plan before anything is written so `--dry-run` reports exactly what the write would do.
  */
 async function runFix(
 	targets: readonly string[],
@@ -277,8 +277,8 @@ async function runFix(
 	const dryRun = options["dry-run"] === true
 	const passes: Array<{ moves: number; rewrites: number; manifests: number; literals: number; verified: number }> = []
 
-	// A fix can create work for itself, so the plan is re-taken until the check has no further
-	// finding; the bound guards a rule that never settles.
+	// A fix can create work for itself, so the plan is re-taken until the check has no
+	// further finding; the bound guards a rule that never settles.
 	for (let pass = 0; pass < MAXIMUM_FIX_PASSES; pass++) {
 		const context: RepoContext = { repoRoot: io.repoRoot, trackedFiles: await io.trackedFiles() }
 		const moves = await fix.plan(context)

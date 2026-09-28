@@ -48,8 +48,8 @@ describe("loadSuite", () => {
 	})
 
 	it("every declared transform id is a real transform (no fixture typos)", async () => {
-		// `loadSuite` does not validate transform ids — `runInvarianceSuite` does — so exercising it with
-		// a no-op parser makes a fixture typo fail here rather than in a grading run.
+		// `loadSuite` does not validate transform ids — `runInvarianceSuite` does — so exercising
+		// it with a no-op parser makes a fixture typo fail here rather than in a grading run.
 		const rows = await loadSuite()
 		const noop: ParseFn = async (): Promise<Record<string, string>> => ({})
 
@@ -165,8 +165,8 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("--baseline severity check: candidate LOST where baseline only DEGRADED is a NEW (enforcing) violation, not pre-existing", async () => {
-		// A candidate verdict worse than the baseline's on the same (row, transform) must count as a new
-		// violation, which severity-blind matching would wrongly call pre-existing.
+		// A candidate verdict worse than the baseline's on the same (row, transform) must count
+		// as a new violation, which severity-blind matching would wrongly call pre-existing.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -190,8 +190,8 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("the violation report line prints the baseline's ACTUAL verdict, not a hardcoded 'held INVARIANT' claim", async () => {
-		// A violation line that hardcodes "baseline held invariant" is false when the baseline was
-		// degraded, so the line must read the baseline's actual verdict.
+		// A violation line that hardcodes "baseline held invariant" is false when the baseline
+		// was degraded, so the line must read the baseline's actual verdict.
 		const brokenRow: InvarianceRow = { ...row, transforms: ["comma-drop"] }
 
 		const candidateParse: ParseFn = async (raw): Promise<Record<string, string>> =>
@@ -237,9 +237,9 @@ describe("runInvarianceSuite", () => {
 	})
 
 	it("wires abbreviation-swap through the canonicalizing comparator (typo-in-id dispatch regression guard)", async () => {
-		// Comparing raw values would flag a correctly echoed "Ave" as a false `lost`, so
-		// `compareForTransform` canonicalizes both sides to long form, and this test exercises the real
-		// transform id so a typo in that dispatch fails here.
+		// Comparing raw values would flag a correctly echoed "Ave" as a false `lost`,
+		// so `compareForTransform` canonicalizes both sides to long form, and this test
+		// exercises the real transform id so a typo in that dispatch fails here.
 		const abbrevRow: InvarianceRow = {
 			id: "abbrev-wiring-row",
 			raw: "350 Fifth Avenue, New York, NY",
@@ -295,8 +295,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 			},
 		]
 
-		// Transformed raws will not equal any original raw, so key on a token each row keeps under every
-		// transform, matched case-insensitively.
+		// Transformed raws will not equal any original raw, so key on a token each row
+		// keeps under every transform, matched case-insensitively.
 		const localeByToken = new Map([
 			["montmartre", "fr-FR"],
 			["the grange", "en-GB"],
@@ -317,8 +317,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: a pair the candidate holds but the baseline violated is GAINED — reported, non-blocking", async () => {
-		// The baseline's original parse never emits the row's critical components, so the row is a gained
-		// capability, and this pair also flips candidate-invariant where baseline degraded.
+		// The baseline's original parse never emits the row's critical components, so the row is a
+		// gained capability, and this pair also flips candidate-invariant where baseline degraded.
 		const row: InvarianceRow = {
 			id: "gb-quoted-gain",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",
@@ -359,8 +359,8 @@ describe("per-row locale + gained-capability class (#1516)", () => {
 	})
 
 	it("--baseline: violations on a row the baseline never parsed are gained-capability residuals — reported, non-blocking", async () => {
-		// The baseline never emits the venue's street in any register, so residual lost/degraded pairs on
-		// the register-flat tail are gains rather than regressions.
+		// The baseline never emits the venue's street in any register, so residual lost/degraded
+		// pairs on the register-flat tail are gains rather than regressions.
 		const row: InvarianceRow = {
 			id: "gb-quoted-residual",
 			raw: "The Grange, Fishburn, Stockton-on-Tees",

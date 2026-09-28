@@ -50,11 +50,13 @@ export interface SoilCellIndexMeasurement {
 	 */
 	partialCells: number
 	/**
-	 * `partialCells / touchedCells`, the share of in-layer probes that cannot be answered from the index alone.
+	 * `partialCells / touchedCells`, the share of in-layer probes that cannot
+	 * be answered from the index alone.
 	 */
 	partialShare: number
 	/**
-	 * Whole cells after `compactCells`, expected to be close to `wholeCells` here because small delineations do not produce a uniform interior.
+	 * Whole cells after `compactCells`, expected to be close to `wholeCells` here
+	 * because small delineations do not produce a uniform interior.
 	 */
 	compactedWholeCells: number
 	/**
@@ -62,7 +64,8 @@ export interface SoilCellIndexMeasurement {
 	 */
 	cellDelineationPairs: number
 	/**
-	 * The mean number of delineations reaching a cell, which measures how mixed a cell is before any rating is read and rises as the resolution coarsens.
+	 * The mean number of delineations reaching a cell, which measures how mixed a cell is
+	 * before any rating is read and rises as the resolution coarsens.
 	 */
 	meanDelineationsPerCell: number
 	/**
@@ -76,7 +79,9 @@ export interface SoilCellIndexMeasurement {
 }
 
 /**
- * Accumulates one resolution's cell index over a stream of delineations, held as short-cell strings because `compactCells` needs full h3-js indexes and round-tripping through the integer form would cost more.
+ * Accumulates one resolution's cell index over a stream of delineations,
+ * held as short-cell strings because `compactCells` needs full h3-js indexes
+ * and round-tripping through the integer form would cost more.
  */
 export class SoilCellIndex {
 	readonly resolution: number
@@ -84,7 +89,8 @@ export class SoilCellIndex {
 	readonly #whole = new Set<string>()
 	readonly #touched = new Set<string>()
 	/**
-	 * `cell → delineation ids` for every touched cell, so the mean is over the real population rather than the fringe alone.
+	 * `cell → delineation ids` for every touched cell, so the mean is over the
+	 * real population rather than the fringe alone.
 	 */
 	readonly #byCell = new Map<string, Set<string>>()
 
@@ -127,7 +133,8 @@ export class SoilCellIndex {
 	}
 
 	/**
-	 * Compacts the whole-cell set and reports the measurement, applying compaction to the whole set only because a partial cell's parent would claim fringe ground.
+	 * Compacts the whole-cell set and reports the measurement, applying compaction to the
+	 * whole set only because a partial cell's parent would claim fringe ground.
 	 */
 	finish(): SoilCellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole)
@@ -163,7 +170,8 @@ export class SoilCellIndex {
 }
 
 /**
- * The measurement as markdown table rows, one line per element so a caller never has to split a joined string back apart.
+ * The measurement as markdown table rows, one line per element so a caller never
+ * has to split a joined string back apart.
  */
 export function formatSoilResolutionRows(
 	measurements: ReadonlyArray<SoilCellIndexMeasurement & { mixedCellShare?: number }>

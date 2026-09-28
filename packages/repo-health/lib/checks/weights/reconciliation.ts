@@ -76,10 +76,11 @@ export const weightsReconciliationCheck: RepoCheck = {
 				continue
 			}
 
-			// A digest for an artifact the manifest no longer declares describes a tarball this package stopped shipping.
+			// A digest for an artifact the manifest no longer declares describes a
+			// tarball this package stopped shipping.
 			//
-			// A `$`-prefixed key is the annotation convention these cards use and names no file, so reading one as
-			// a filename would report a defect in every card that documents itself.
+			// A `$`-prefixed key is the annotation convention these cards use and names no file,
+			// so reading one as a filename would report a defect in every card that documents itself.
 			for (const digested of Object.keys(card.files_md5 ?? {})) {
 				if (digested.startsWith("$")) continue
 

@@ -40,11 +40,11 @@ export function useBuildInfo(url = "/build.json"): BuildInfoRecord | null {
 				if (!response.ok) return
 
 				const record = (await response.json()) as BuildInfoRecord
+
 				if (!controller.signal.aborted && record?.revision) {
 					setInfo(record)
 				}
-			} catch {
-			}
+			} catch {}
 		})()
 
 		return () => controller.abort()

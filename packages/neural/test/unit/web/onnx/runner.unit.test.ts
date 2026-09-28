@@ -41,9 +41,9 @@ vi.mock("onnxruntime-web/webgpu", () => {
 	}
 })
 
-// Shared-graph guard: the root vitest config runs `isolate: false`, so reset modules on the way in and
-// out, or a cached `./web-onnx-runner.ts` evaluates without this file's ORT mock and the next file
-// inherits it.
+// Shared-graph guard: the root vitest config runs `isolate: false`, so reset modules
+// on the way in and out, or a cached `./web-onnx-runner.ts` evaluates without
+// this file's ORT mock and the next file inherits it.
 vi.resetModules()
 afterAll(() => vi.resetModules())
 
@@ -348,8 +348,8 @@ describe("defaultCountryLexiconURL", () => {
 
 describe("cross-runner parity (#727 span read)", () => {
 	test("the web runner's span unflatten matches the node ONNXRunner's, byte for byte", async () => {
-		// The (token, length, type) unflatten is duplicated across two hosts, so the same flat buffer
-		// must produce the same nested array on both sides.
+		// The (token, length, type) unflatten is duplicated across two hosts, so the same
+		// flat buffer must produce the same nested array on both sides.
 		const SEQ_LEN = 2
 		const L = 3
 		const T = 4
@@ -363,8 +363,8 @@ describe("cross-runner parity (#727 span read)", () => {
 		const web = await WebONNXRunner.fromBytes(new Uint8Array([1]), { useWebGPU: false })
 		const webResult = await web.infer([5, 6])
 
-		// The node runner's read, replicated: if that file's loop changes and this expectation still
-		// passes, the two hosts have diverged.
+		// The node runner's read, replicated: if that file's loop changes and this
+		// expectation still passes, the two hosts have diverged.
 		const expected: number[][][] = []
 
 		for (let t = 0; t < SEQ_LEN; t++) {

@@ -24,7 +24,7 @@ describe("baseline registry", () => {
 	})
 
 	it("demands a reproducible provenance on every row", async () => {
-				for (const baseline of await listBaselines()) {
+		for (const baseline of await listBaselines()) {
 			expect(baseline.commit, `${baseline.id} has no commit`).toBeTruthy()
 			expect(baseline.command, `${baseline.id} has no command`).toBeTruthy()
 			expect(baseline.note, `${baseline.id} has no note`).toBeTruthy()
@@ -89,7 +89,7 @@ describe("assertBaselines", () => {
 	})
 
 	it("refuses an unregistered id rather than passing it", async () => {
-				const verdict = await assertBaselines([{ id: "nope.not.a.baseline@v999", observed: 0.5 }])
+		const verdict = await assertBaselines([{ id: "nope.not.a.baseline@v999", observed: 0.5 }])
 
 		expect(verdict.ok).toBe(false)
 		expect(verdict.violations[0]!.kind).toBe("unregistered")
@@ -131,8 +131,9 @@ describe("profiles", () => {
 	})
 
 	it("never mixes harnesses within one profile", async () => {
-				// A profile must not mix harnesses; the token@1 row is the one legitimate crossover, so `js-ship-config` is shared and everything else is single-harness.
-																		for (const name of await listProfiles()) {
+		// A profile must not mix harnesses; the token@1 row is the one legitimate crossover,
+		// so `js-ship-config` is shared and everything else is single-harness.
+		for (const name of await listProfiles()) {
 			const profile = await resolveProfile(name)
 
 			const harnesses = new Set(
@@ -148,8 +149,9 @@ describe("profiles", () => {
 	})
 
 	it("keeps the summed-BIO stand-in and the learned span decode on separate ids", async () => {
-				// The summed-BIO stand-in and the learned span decode are different numbers on the same weights; collapsing them would make every span-head claim uninterpretable.
-				const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
+		// The summed-BIO stand-in and the learned span decode are different numbers on the
+		// same weights; collapsing them would make every span-head claim uninterpretable.
+		const standIn = (await findBaseline("parity.street.seg_at_1@v301-summed-bio"))!
 		const learned = (await findBaseline("parity.street.seg_at_1@v301-span"))!
 
 		expect(standIn.harness).toBe("js-summed-bio-segdecode")

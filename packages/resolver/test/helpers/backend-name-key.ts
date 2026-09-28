@@ -8,8 +8,8 @@
  */
 
 /**
- * Fold diacritics away (`Zürich` → `zurich`) the way `normalizeLocalityForKey` does, deleting the
- * combining mark rather than replacing it with a space.
+ * Fold diacritics away (`Zürich` → `zurich`) the way `normalizeLocalityForKey` does,
+ * deleting the combining mark rather than replacing it with a space.
  */
 export function backendNameKey(s: string): string {
 	return s

@@ -52,8 +52,8 @@ export type SpecifierFamily = (typeof SpecifierFamily)[keyof typeof SpecifierFam
 const SOURCE_EXTENSION = /\.(?:m|c)?[jt]sx?$/u
 
 /**
- * A replacement that changes family changes who is allowed to write it, so this is the predicate a rewrite is
- * filtered by rather than a description of one.
+ * A replacement that changes family changes who is allowed to write it, so this is the
+ * predicate a rewrite is filtered by rather than a description of one.
  */
 export function specifierFamily(specifier: string): SpecifierFamily {
 	if (specifier.startsWith(".")) return SpecifierFamily.Relative
@@ -74,8 +74,8 @@ function conditionTargets(value: unknown): string[] {
 }
 
 /**
- * A pattern entry substitutes exactly one `*`, as Node does: the target's text before and after the star must
- * bracket the path, and the middle becomes the key's star.
+ * A pattern entry substitutes exactly one `*`, as Node does: the target's text before
+ * and after the star must bracket the path, and the middle becomes the key's star.
  */
 function subpathKeyFor(key: string, target: string, packageRelative: string): string | undefined {
 	const star = target.indexOf("*")
@@ -101,8 +101,8 @@ function packageRelativeTarget(manifest: PackageManifest, file: string): string 
 }
 
 /**
- * Every specifier that names `file` under `manifest`'s own maps, where a file outside the package answers an empty
- * list because both paths are repo-relative.
+ * Every specifier that names `file` under `manifest`'s own maps, where a file outside
+ * the package answers an empty list because both paths are repo-relative.
  */
 export function packageSpecifiersFor(manifest: PackageManifest, file: string): PackageSpecifiers {
 	const packageRelative = packageRelativeTarget(manifest, file)
@@ -139,8 +139,9 @@ export function packageSpecifiersFor(manifest: PackageManifest, file: string): P
 }
 
 /**
- * The relative specifier that reaches `target` from `containingFile`, with `keepExtension` mirroring the replaced
- * specifier because a relative import carries an explicit `.ts` under Node's type stripping.
+ * The relative specifier that reaches `target` from `containingFile`,
+ * with `keepExtension` mirroring the replaced specifier because a relative import
+ * carries an explicit `.ts` under Node's type stripping.
  */
 export function relativeSpecifier(containingFile: string, target: string, keepExtension: boolean): string {
 	const path: string = relative(dirname(containingFile), target)
@@ -157,8 +158,8 @@ export function hasSourceExtension(specifier: string): boolean {
 }
 
 /**
- * Candidates ordered so the one sharing the longest prefix with the specifier being replaced comes first and a
- * shorter specifier wins a tie, since ordering decides which proven candidate is written.
+ * Candidates ordered so the one sharing the longest prefix with the specifier being replaced comes first
+ * and a shorter specifier wins a tie, since ordering decides which proven candidate is written.
  */
 export function orderByLikeness(specifier: string, candidates: readonly string[]): string[] {
 	const sharedPrefix = (candidate: string): number => {

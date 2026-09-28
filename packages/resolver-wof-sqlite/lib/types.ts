@@ -26,7 +26,8 @@ export type WOFPlacetype =
 	| "address"
 
 /**
- * Describes one ranked match for a place lookup, with `id` as the WOF id so the shape satisfies `ResolvedPlace`.
+ * Describes one ranked match for a place lookup, with `id` as the WOF id
+ * so the shape satisfies `ResolvedPlace`.
  */
 export interface PlaceCandidate {
 	id: number
@@ -41,19 +42,22 @@ export interface PlaceCandidate {
 	lon: number
 
 	/**
-	 * The place's depth-1 ancestor id from the ancestors sidecar, absent when the artifact has no sidecar even for a place with a parent.
+	 * The place's depth-1 ancestor id from the ancestors sidecar, absent when the
+	 * artifact has no sidecar even for a place with a parent.
 	 */
 	parent_id?: number
 	score: number
 	distanceKm?: number
 
 	/**
-	 * Whether the candidate's name or an alias exactly equals the query, used by a later re-rank to stay within the exact-match tier.
+	 * Whether the candidate's name or an alias exactly equals the query, used by a
+	 * later re-rank to stay within the exact-match tier.
 	 */
 	exactMatch?: boolean
 
 	/**
-	 * The population term plus the best proximity-bias term, which the exact tier sorts by instead of population when the query has `near` or `bias`.
+	 * The population term plus the best proximity-bias term, which the exact tier sorts by
+	 * instead of population when the query has `near` or `bias`.
 	 */
 	prominence?: number
 
@@ -63,17 +67,20 @@ export interface PlaceCandidate {
 	population?: number
 
 	/**
-	 * The referential likelihood in [0, 1], derived from {@link PlaceCandidate.population} and absent whenever it is.
+	 * The referential likelihood in [0, 1], derived from {@link PlaceCandidate.population}
+	 * and absent whenever it is.
 	 */
 	referential?: number
 
 	/**
-	 * The encyclopedia-evidence importance in [0, 1], used for display only and present only when the extract's `place_importance` table has the split columns.
+	 * The encyclopedia-evidence importance in [0, 1], used for display only and present only
+	 * when the extract's `place_importance` table has the split columns.
 	 */
 	encyclopedic?: number
 
 	/**
-	 * The blended toponym prior in [0, 1] that `rankByImportance` reads for bare toponyms, set only by the candidate-table backend.
+	 * The blended toponym prior in [0, 1] that `rankByImportance` reads for bare toponyms,
+	 * set only by the candidate-table backend.
 	 */
 	importance?: number
 
@@ -83,23 +90,28 @@ export interface PlaceCandidate {
 	bbox?: LatLonBounds
 
 	/**
-	 * Set by the postcode path when the chosen locality is far from the postcode's own locality; the candidate is still returned so callers can lower their confidence.
+	 * Set by the postcode path when the chosen locality is far from the postcode's own locality;
+	 * the candidate is still returned so callers can lower their confidence.
 	 */
 	mismatch?: boolean
 
 	/**
-	 * Whether the ancestors sidecar places this candidate under the query's {@link FindPlaceQuery.regionQualifier}, with `false` meaning the check ran and an absent value meaning it did not.
+	 * Whether the ancestors sidecar places this candidate under the query's
+	 * {@link FindPlaceQuery.regionQualifier}, with `false` meaning the check ran
+	 * and an absent value meaning it did not.
 	 */
 	containedByQualifier?: boolean
 
 	/**
-	 * Set when the variant exemption spared the candidate from the cross-country alias penalty, by the candidate-table backend only.
+	 * Set when the variant exemption spared the candidate from the cross-country
+	 * alias penalty, by the candidate-table backend only.
 	 */
 	variantAliasExempted?: true
 }
 
 /**
- * Describes a place lookup where every field except `text` narrows or ranks the search, and an extract without the R*Tree index silently ignores `bbox` and `near.maxDistanceKm`.
+ * Describes a place lookup where every field except `text` narrows or ranks the search,
+ * and an extract without the R*Tree index silently ignores `bbox` and `near.maxDistanceKm`.
  */
 export interface FindPlaceQuery {
 	text: string
@@ -111,17 +123,20 @@ export interface FindPlaceQuery {
 	country?: string
 
 	/**
-	 * Restricts the typo-fuzzy tier to one ISO 3166-1 alpha-2 country, returning no result on a miss rather than falling back worldwide; ignored when `country` is set.
+	 * Restricts the typo-fuzzy tier to one ISO 3166-1 alpha-2 country, returning no result
+	 * on a miss rather than falling back worldwide; ignored when `country` is set.
 	 */
 	fuzzyCountry?: string
 
 	/**
-	 * Whether to match only primary names, set by probes that re-read a token from a longer span because that token was never an alias.
+	 * Whether to match only primary names, set by probes that re-read a token from
+	 * a longer span because that token was never an alias.
 	 */
 	primaryOnly?: boolean
 
 	/**
-	 * Alias name roles, such as `abbr` or `gloss`, that the probe excludes; rows with no role and artifacts without a role column are unaffected.
+	 * Alias name roles, such as `abbr` or `gloss`, that the probe excludes; rows with no role
+	 * and artifacts without a role column are unaffected.
 	 */
 	excludeNameRoles?: readonly string[]
 
@@ -131,17 +146,21 @@ export interface FindPlaceQuery {
 	parentID?: number
 
 	/**
-	 * The sibling postcode for a `locality` query; a `postcode_locality` table adds that postcode's localities and scores them on a weighted blend so small localities a name match misses are found.
+	 * The sibling postcode for a `locality` query; a `postcode_locality` table adds that postcode's
+	 * localities and scores them on a weighted blend so small localities a name match misses are found.
 	 */
 	postcode?: string
 
 	/**
-	 * Whether a locality query with `postcode` moves candidates near the postcode's centroid to the front, sorted by distance, with the rest keeping their order.
+	 * Whether a locality query with `postcode` moves candidates near the postcode's centroid
+	 * to the front, sorted by distance, with the rest keeping their order.
 	 */
 	postcodeContainmentCoherence?: boolean
 
 	/**
-	 * The parsed region qualifier for a locality lookup; a backend with the ancestors sidecar marks contained candidates, ranks them first, may add ones a country scope hid, and never removes candidates.
+	 * The parsed region qualifier for a locality lookup; a backend with the ancestors
+	 * sidecar marks contained candidates, ranks them first, may add ones a country
+	 * scope hid, and never removes candidates.
 	 */
 	regionQualifier?: string
 
@@ -151,7 +170,8 @@ export interface FindPlaceQuery {
 	near?: LatLon & { maxDistanceKm?: number }
 
 	/**
-	 * Ordered proximity-bias points with an optional weight defaulting to 1; the bias re-ranks exact-tier candidates by combined prominence, never removes them, and counts `near` as weight 1.
+	 * Ordered proximity-bias points with an optional weight defaulting to 1; the bias re-ranks
+	 * exact-tier candidates by combined prominence, never removes them, and counts `near` as weight 1.
 	 */
 	bias?: Array<LatLon & { weight?: number }>
 
@@ -167,7 +187,8 @@ export interface FindPlaceQuery {
 }
 
 /**
- * Resolves a {@link FindPlaceQuery} to ranked {@link PlaceCandidate}s, asynchronously so a worker-backed implementation can share the interface.
+ * Resolves a {@link FindPlaceQuery} to ranked {@link PlaceCandidate}s, asynchronously
+ * so a worker-backed implementation can share the interface.
  */
 export interface PlaceLookup extends Disposable {
 	findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]>

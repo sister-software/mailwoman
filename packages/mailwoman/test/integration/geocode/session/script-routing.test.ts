@@ -16,7 +16,7 @@ const CANDIDATE_DB = wofDatabasePath("candidate.db")
 const haveArtifacts =
 	(await pathExists(CANDIDATE_DB)) && (await pathExists(dataRootPath("weights", "cjk", "model.onnx")))
 
-	// Kamiichi's entrance point for the JP board row; the served municipality centroid sits 4.9 km from it.
+// Kamiichi's entrance point for the JP board row; the served municipality centroid sits 4.9 km from it.
 const KAMIICHI = { lat: 36.658101, lon: 137.384089 }
 
 describe.skipIf(!haveArtifacts)("createGeocodeSession — a bare kanji line under --locale en-US (#2164 routing)", () => {

@@ -26,13 +26,13 @@ export interface StreetMorphologyPriorOpts {
 	 */
 	biasScale?: number
 	/**
-	 * Maximum bias magnitude (logits) on the affix span itself, default 3.0 — equal to the admin FST
-	 * because the morphology signal is structurally less ambiguous.
+	 * Maximum bias magnitude (logits) on the affix span itself, default 3.0 — equal to the
+	 * admin FST because the morphology signal is structurally less ambiguous.
 	 */
 	maxAffixBias?: number
 	/**
-	 * Maximum bias magnitude (logits) on adjacent tokens for the `street` label, default 2.0 — weaker
-	 * than the affix bias because the neighbour is inferred from adjacency rather than matched.
+	 * Maximum bias magnitude (logits) on adjacent tokens for the `street` label, default 2.0 —
+	 * weaker than the affix bias because the neighbour is inferred from adjacency rather than matched.
 	 */
 	maxNeighbourStreetBias?: number
 	/**
@@ -42,8 +42,8 @@ export interface StreetMorphologyPriorOpts {
 }
 
 /**
- * Build a `[seqLen][numLabels]` bias matrix from street-morphology FST matches, composing with the
- * admin FST bias matrix through {@linkcode addEmissionMatrix}.
+ * Build a `[seqLen][numLabels]` bias matrix from street-morphology FST matches,
+ * composing with the admin FST bias matrix through {@linkcode addEmissionMatrix}.
  */
 export function buildStreetMorphologyEmissionPriors(
 	fst: FSTMatcherLike,
@@ -186,8 +186,8 @@ export function buildStreetMorphologyEmissionPriors(
 }
 
 /**
- * Walk word groups outward from `fromGroupIdx` in `direction`, skipping empty groups (whitespace /
- * punctuation), and return the first non-empty neighbour or `null`.
+ * Walk word groups outward from `fromGroupIdx` in `direction`, skipping empty groups
+ * (whitespace / punctuation), and return the first non-empty neighbour or `null`.
  */
 function findNeighbour(groups: WordGroup[], fromGroupIdx: number, direction: 1 | -1): WordGroup | null {
 	for (let i = fromGroupIdx + direction; i >= 0 && i < groups.length; i += direction) {

@@ -16,7 +16,8 @@ import {
 import { polygonToCells } from "h3-js"
 
 /**
- * Whether a centre-in-polygon polyfill would return no cell for this feature, the measurement that forced the index to take cell-touches-polygon.
+ * Whether a centre-in-polygon polyfill would return no cell for this feature,
+ * the measurement that forced the index to take cell-touches-polygon.
  */
 export function polyfillFindsNothing(polygons: MultiPolygonRings, resolution: number): boolean {
 	for (const rings of polygons) {
@@ -65,7 +66,8 @@ export interface CellIndexMeasurement {
 	multiCandidateCells: number
 	multiCandidateShare: number
 	/**
-	 * Features a centre-in-polygon polyfill would have returned no cell for — see {@link polyfillFindsNothing} — and `undefined` where the measurement did not run it.
+	 * Features a centre-in-polygon polyfill would have returned no cell for —
+	 * see {@link polyfillFindsNothing} — and `undefined` where the measurement did not run it.
 	 */
 	polyfillZeroCellFeatures?: number
 	/**
@@ -73,13 +75,16 @@ export interface CellIndexMeasurement {
 	 */
 	coarsenedFeatures: number
 	/**
-	 * Features this index returned no cell for, always zero while `classifyFeatureCells` throws rather than returning an empty set.
+	 * Features this index returned no cell for, always zero while `classifyFeatureCells`
+	 * throws rather than returning an empty set.
 	 */
 	zeroCellFeatures: number
 }
 
 /**
- * Accumulate one resolution's cell index over a stream of features, holding whole cells as short-cell strings and the candidate counter by 48-bit integer because `compactCells` is an h3-js function over full indexes.
+ * Accumulate one resolution's cell index over a stream of features, holding
+ * whole cells as short-cell strings and the candidate counter by 48-bit integer
+ * because `compactCells` is an h3-js function over full indexes.
  */
 export class ZoningCellIndex {
 	readonly resolution: number
@@ -97,7 +102,6 @@ export class ZoningCellIndex {
 	constructor(resolution: number) {
 		this.resolution = resolution
 	}
-
 
 	add(cells: FeatureCells): void {
 		this.#features++
@@ -121,7 +125,6 @@ export class ZoningCellIndex {
 		}
 	}
 
-
 	addPolyfillProbe(foundNothing: boolean): void {
 		this.#measuredPolyfill = true
 
@@ -131,7 +134,8 @@ export class ZoningCellIndex {
 	}
 
 	/**
-	 * The measurement, whose compacted count is a lower bound on the stored rows because it compacts the union of features rather than each feature.
+	 * The measurement, whose compacted count is a lower bound on the stored rows
+	 * because it compacts the union of features rather than each feature.
 	 */
 	finish(): CellIndexMeasurement {
 		const compacted = compactAcrossResolutions(this.#whole).length
@@ -194,7 +198,8 @@ export class ZoningCellIndex {
 }
 
 /**
- * The measurement as markdown table rows, one line per element, with the zero-cell column first after the counts because it is the column the resolution is chosen on.
+ * The measurement as markdown table rows, one line per element, with the zero-cell column first
+ * after the counts because it is the column the resolution is chosen on.
  */
 export function formatResolutionRows(measurements: readonly CellIndexMeasurement[]): string[] {
 	return [

@@ -28,8 +28,8 @@ export interface DebugData {
 	 */
 	mapNote: string | null
 	/**
-	 * The session's decode-path evidence for this run, absent when the session was opened without
-	 * tracing; the evidence rows then say so rather than showing zeros.
+	 * The session's decode-path evidence for this run, absent when the session was opened
+	 * without tracing; the evidence rows then say so rather than showing zeros.
 	 */
 	trace?: GeocodeTrace
 	/**
@@ -52,18 +52,18 @@ export interface DebugFrameProps {
 	inputField?: React.ReactNode
 	busy?: boolean
 	/**
-	 * A failed re-run's message, rendered red at the top of the output pane because the interactive
-	 * session keeps the previous result on screen when a geocode rejects.
+	 * A failed re-run's message, rendered red at the top of the output pane because the
+	 * interactive session keeps the previous result on screen when a geocode rejects.
 	 */
 	errorNote?: string | null
 	/**
-	 * First visible line of the output pane's list, owned by the pane so the caller's `data`
-	 * identity stays stable across a scroll.
+	 * First visible line of the output pane's list, owned by the pane so the caller's
+	 * `data` identity stays stable across a scroll.
 	 */
 	scrollOffset?: number
 	/**
-	 * Map-pane SGR color; callers pass `!$public.NO_COLOR` because raw SGR does not honor
-	 * `NO_COLOR` the way Ink/chalk do.
+	 * Map-pane SGR color; callers pass `!$public.NO_COLOR` because raw SGR does
+	 * not honor `NO_COLOR` the way Ink/chalk do.
 	 */
 	color: boolean
 }
@@ -76,14 +76,14 @@ const INPUT_ROW_HEIGHT = 9
 const FOOTER_ROW_HEIGHT = 1
 
 /**
- * MapPane's own top+bottom border rows, plus its title line, plus its attribution line, counted
- * off {@link MapPane}'s render tree.
+ * MapPane's own top+bottom border rows, plus its title line, plus its attribution line,
+ * counted off {@link MapPane}'s render tree.
  */
 const MAP_PANE_CHROME_ROWS = 4
 
 /**
- * MapPane's own left+right border columns; its title and attribution lines run inside that same
- * width and add no column chrome.
+ * MapPane's own left+right border columns; its title and attribution lines run
+ * inside that same width and add no column chrome.
  */
 const MAP_PANE_CHROME_COLUMNS = 2
 
@@ -97,8 +97,8 @@ function paneRowHeight(rows: number): number {
 }
 
 /**
- * The map pane's usable content-cell budget for the map-tui renderer viewport, exported so a live
- * command can request a frame already sized to fit MapPane.
+ * The map pane's usable content-cell budget for the map-tui renderer viewport, exported
+ * so a live command can request a frame already sized to fit MapPane.
  */
 export function mapPaneCellSize(columns: number, rows: number): { columns: number; rows: number } {
 	return {
@@ -108,8 +108,8 @@ export function mapPaneCellSize(columns: number, rows: number): { columns: numbe
 }
 
 /**
- * How many output lines are visible at once, exported so a caller clamping its scroll offset uses
- * the pane's own arithmetic rather than a second copy.
+ * How many output lines are visible at once, exported so a caller clamping its scroll
+ * offset uses the pane's own arithmetic rather than a second copy.
  */
 export function outputPaneCapacity(rows: number): number {
 	return Math.max(0, paneRowHeight(rows) - OUTPUT_PANE_CHROME_ROWS)
@@ -281,8 +281,8 @@ const InputBar = memo(function InputBar(props: {
 })
 
 /**
- * The label column of a field row, including its trailing space; a component nested three deep
- * (` house_number`) is 18 characters.
+ * The label column of a field row, including its trailing space; a component nested
+ * three deep (` house_number`) is 18 characters.
  */
 const OUTPUT_LABEL_WIDTH = 19
 
@@ -290,8 +290,8 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 	const { line } = props
 
 	if (line.kind === "error") {
-		// `@inkjs/ui`'s StatusMessage is deliberately not used: its message `<Text>` carries no wrap
-		// mode, so a long resolver error would wrap and push a row out of a fixed-height pane.
+		// `@inkjs/ui`'s StatusMessage is deliberately not used: its message `<Text>` carries no
+		// wrap mode, so a long resolver error would wrap and push a row out of a fixed-height pane.
 		return (
 			<Text color="red" wrap="truncate">
 				✖ {line.label}
@@ -328,8 +328,8 @@ function OutputRow(props: { line: OutputLine }): React.ReactElement {
 }
 
 /**
- * Takes the fields it reads rather than the whole {@link DebugData} bag, so `memo` sees stable
- * props across a pan.
+ * Takes the fields it reads rather than the whole {@link DebugData} bag,
+ * so `memo` sees stable props across a pan.
  */
 const OutputPane = memo(function OutputPane(props: {
 	result: GeocodeResult
@@ -384,8 +384,8 @@ const OutputPane = memo(function OutputPane(props: {
 })
 
 /**
- * The expensive pane, taking the fields it reads rather than the shared {@link DebugData} bag so
- * `memo` sees stable props across a keystroke.
+ * The expensive pane, taking the fields it reads rather than the shared {@link DebugData} bag
+ * so `memo` sees stable props across a keystroke.
  */
 const MapPane = memo(function MapPane(props: {
 	frame: MapFrame | null
@@ -424,8 +424,8 @@ const MapPane = memo(function MapPane(props: {
 })
 
 /**
- * The key hints, in the order a new reader needs them; a static capture has no keyboard and says
- * what it is instead.
+ * The key hints, in the order a new reader needs them; a static capture has no keyboard
+ * and says what it is instead.
  */
 const KEY_HINTS = "Tab focus   ←↑↓→ pan/scroll   +/- zoom   0 recenter   Enter re-run   q/Esc quit"
 const STATIC_HINT = "static frame — keyboard controls on a TTY"

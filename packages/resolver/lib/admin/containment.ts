@@ -10,8 +10,8 @@
 import { firstNodeWhere, type AddressNode } from "@mailwoman/core/decoder"
 
 /**
- * Find the first non-empty region-tagged span anywhere in a tree — the qualifier
- * the walk threads onto locality lookups, deliberately the same node the admin-coherence
+ * Find the first non-empty region-tagged span anywhere in a tree — the qualifier the
+ * walk threads onto locality lookups, deliberately the same node the admin-coherence
  * verdicts read so the two populations coincide.
  */
 export function firstRegionQualifier(roots: readonly AddressNode[]): string | undefined {
@@ -19,9 +19,9 @@ export function firstRegionQualifier(roots: readonly AddressNode[]): string | un
 }
 
 /**
- * Stable, tier-safe, positive-evidence-only partition: within each match tier, candidates the
- * containment source vouched for (`isContained`) move ahead of the rest, and both groups keep
- * their incoming relative order.
+ * Stable, tier-safe, positive-evidence-only partition: within each match tier,
+ * candidates the containment source vouched for (`isContained`) move ahead of the rest,
+ * and both groups keep their incoming relative order.
  */
 export function partitionByContainment<T>(
 	rows: readonly T[],
@@ -53,9 +53,9 @@ export function partitionByContainment<T>(
 }
 
 /**
- * The trace verdict for one locality pick, stamped as `metadata.admin_containment`: any `true` →
- * `"contained"`; stamps present but none true → `"no_contained_candidate"`; no stamps at all →
- * `"unavailable"`.
+ * The trace verdict for one locality pick, stamped as `metadata.admin_containment`:
+ * any `true` → `"contained"`; stamps present but none true → `"no_contained_candidate"`;
+ * no stamps at all → `"unavailable"`.
  */
 export function adminContainmentVerdict(
 	candidates: ReadonlyArray<{ containedByQualifier?: boolean | undefined }>

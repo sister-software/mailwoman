@@ -16,7 +16,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * Write a tree of `path → contents` and return the check's context over it; `trackedFiles` is every planted path because the check reads git's list rather than the filesystem.
+ * Write a tree of `path → contents` and return the check's context over it; `trackedFiles`
+ * is every planted path because the check reads git's list rather than the filesystem.
  */
 async function plant(files: Record<string, string>) {
 	const root = fixtures.use(await temporaryDirectory("data-provenance-")).path

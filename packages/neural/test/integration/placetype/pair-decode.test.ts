@@ -58,8 +58,8 @@ function fixedPairIndex(
 	return {
 		delta,
 		...(transitionBeta !== undefined ? { transitionBeta } : {}),
-		// No `parentDelta`: a parent write would move the spans these child-side decode-order tests
-		// assert on for reasons unrelated to what they measure.
+		// No `parentDelta`: a parent write would move the spans these child-side decode-order
+		// tests assert on for reasons unrelated to what they measure.
 		probe: (c, p) => (c === child && p === parent ? { tag, parentTag: "locality" } : undefined),
 	}
 }
@@ -76,8 +76,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces.map((p) => p.piece)).toEqual(["▁Shore", "d", "itch", "▁London"])
 
-		// A weak, internally-fragmented baseline for "shoreditch" (B-street / O / B-locality at
-		// magnitude 1) is the exact BIO fragmentation class `enforceWordConsistency` heals.
+		// A weak, internally-fragmented baseline for "shoreditch" (B-street / O / B-locality at magnitude 1)
+		// is the exact BIO fragmentation class `enforceWordConsistency` heals.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 1
 		logits[1]![col("O")] = 1
@@ -94,8 +94,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const baseline = await classifier.traceParse(text, { spanProposer: false })
 		expect(baseline.repairs.find((r) => r.pass === "wordConsistency")).toBeDefined()
 
-		// With the prior's B-first/I-rest write at delta 6.0, "shoreditch"'s three pieces are already
-		// unanimous before `enforceWordConsistency` runs, leaving the heal no work.
+		// With the prior's B-first/I-rest write at delta 6.0, "shoreditch"'s three pieces are
+		// already unanimous before `enforceWordConsistency` runs, leaving the heal no work.
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
 
 		const biased = await classifier.traceParse(text, {
@@ -123,8 +123,8 @@ describe("placetype-pair prior — decode-order integration", () => {
 		const { pieces } = tokenizer.encode(text)
 		expect(pieces).toHaveLength(4)
 
-		// A strong, already-consistent baseline for "shoreditch" (B-street / I-street / I-street at
-		// magnitude 20) against the prior's calibrated delta of 6.0: 20 > 6, so the encoder must win.
+		// A strong, already-consistent baseline for "shoreditch" (B-street / I-street / I-street at magnitude 20)
+		// against the prior's calibrated delta of 6.0: 20 > 6, so the encoder must win.
 		const logits = [zeroRow(), zeroRow(), zeroRow(), zeroRow()]
 		logits[0]![col("B-street")] = 20
 		logits[1]![col("I-street")] = 20
@@ -133,7 +133,6 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(logits) })
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
-
 
 		const trace = await classifier.traceParse(text, {
 			spanProposer: false,
@@ -156,10 +155,12 @@ describe("placetype-pair prior — decode-order integration", () => {
 
 describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusion fixture)", () => {
 	/**
-	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) does not win because
-	 * "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased dependent_locality reading
-	 * (6 + 6 + 6 = 18) by 4, so a beta-less decode keeps the fused path and the transitionBeta
-	 * artifact flips it. Comma-free input with `probeMode` omitted, so the auto chain's anchored leg
+	 * The path-fusion lattice on the fixture tokenizer: the emission-side δ (6.0) does not win
+	 * because "shoreditch"'s fused street run (8 + 7 + 7 = 22) outscores the biased
+	 * dependent_locality reading (6 + 6 + 6 = 18) by 4, so a beta-less decode keeps
+	 * the fused path and the transitionBeta artifact flips it.
+	 *
+	 * Comma-free input with `probeMode` omitted, so the auto chain's anchored leg
 	 * fires as it does on the production population.
 	 */
 	function fusedLogits(): number[][] {
@@ -176,7 +177,6 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 		const tokenizer = await loadTokenizer()
 		const classifier = new NeuralAddressClassifier({ tokenizer, runner: new FakeRunner(fusedLogits()) })
 		const index = fixedPairIndex("shoreditch", "london", "dependent_locality")
-
 
 		const trace = await classifier.traceParse("Shoreditch London", {
 			spanProposer: false,
@@ -215,8 +215,8 @@ describe("placetype-pair prior — TRANSITION-BETA chain integration (path-fusio
 			col("B-locality"),
 		])
 
-		// The beta is a decoder term: the post-prior emission matrices are byte-identical across the
-		// two runs, and only the transition side moved.
+		// The beta is a decoder term: the post-prior emission matrices are byte-identical
+		// across the two runs, and only the transition side moved.
 		expect(withBeta.emissions).toEqual(betaLess.emissions)
 
 		// And the flip lands in the tree the user sees.

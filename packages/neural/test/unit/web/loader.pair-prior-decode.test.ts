@@ -62,8 +62,8 @@ function col(label: string): number {
 }
 
 /**
- * The path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s fused
- * street run, row 3 a decisive "london" locality; rows past the real pieces stay zero.
+ * The path-fusion lattice as a canned [1, SEQ, L] logits tensor: rows 0-2 are "shoreditch"'s
+ * fused street run, row 3 a decisive "london" locality; rows past the real pieces stay zero.
  */
 function fusedLatticeSession(): void {
 	const flat = new Float32Array(SEQ * L)

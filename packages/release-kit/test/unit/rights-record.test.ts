@@ -376,8 +376,8 @@ describe("the records this repository holds today", () => {
 
 		expect(records).toHaveLength(12)
 
-		// `pair-index-gb.bin` ships here with its OGL v3.0 attribution, so a consumer who installs
-		// the overlay alone receives the attribution with the artifact.
+		// `pair-index-gb.bin` ships here with its OGL v3.0 attribution, so a consumer who
+		// installs the overlay alone receives the attribution with the artifact.
 		const gb = records.find((record) => record.packageName === "@mailwoman/neural-weights-en-gb")
 
 		expect(gb?.attribution.map((entry) => entry.licenseNamed)).toEqual(["OGL v3.0"])

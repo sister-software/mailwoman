@@ -33,8 +33,8 @@ export async function createLocalityPostcodeLookup(): Promise<LocalityPostcodeLo
 		try {
 			const db = new DatabaseClient<PostcodeLocalityDatabase>(path, { readOnly: true })
 
-			// No `is_containing` filter: villages routinely carry 0, so the exactly-one distinct rule below
-			// is the entire ambiguity guard.
+			// No `is_containing` filter: villages routinely carry 0, so the exactly-one
+			// distinct rule below is the entire ambiguity guard.
 			statements.set(
 				suffix,
 				db.prepare(`SELECT DISTINCT postcode FROM postcode_locality WHERE locality_id = ? LIMIT 2`)

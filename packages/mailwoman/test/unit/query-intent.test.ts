@@ -58,8 +58,8 @@ function treeOf(winner: PlaceFixture, alternatives: PlaceFixture[]): AddressTree
 const BARE: QueryKind[] = ["locality_only", "bare_toponym", "vague"]
 
 /**
- * The 144-bearer namesake class: log10 populations 5.10 / 5.05 give a 0.05 margin, an order of
- * magnitude under the threshold.
+ * The 144-bearer namesake class: log10 populations 5.10 / 5.05 give a 0.05 margin,
+ * an order of magnitude under the threshold.
  */
 const SPRINGFIELD = treeOf({ name: "Springfield", lat: 37.2153, lon: -93.2982, prominence: 5.1 }, [
 	{ name: "Springfield", lat: 42.1015, lon: -72.5898, prominence: 5.05 },
@@ -90,8 +90,8 @@ describe("declaredAmbiguityMarker", () => {
 	})
 
 	test("collapses the coincident WOF twin before measuring — the trap that would fire on every capital", () => {
-		// Paris the `locality` and Paris the `localadmin` are ~0.3 km apart, so only the 10 km collapse
-		// keeps a raw 0.01 top-2 margin from marking every capital ambiguous.
+		// Paris the `locality` and Paris the `localadmin` are ~0.3 km apart, so only the 10
+		// km collapse keeps a raw 0.01 top-2 margin from marking every capital ambiguous.
 		const tree = treeOf({ name: "Paris", lat: 48.8566, lon: 2.3522, prominence: 6.32 }, [
 			{ name: "Paris", placetype: "localadmin", lat: 48.8589, lon: 2.347, prominence: 6.31 },
 			{ name: "Paris", lat: 33.6609, lon: -95.5555, prominence: 4.4 },
@@ -132,9 +132,9 @@ describe("declaredAmbiguityMarker", () => {
 })
 
 /**
- * `coarserAnswerMarker` reports answers coarser than the question asked: an interpolated answer
- * locates a house number and no layer here locates a unit, so a floor for either would fire on
- * correct answers.
+ * `coarserAnswerMarker` reports answers coarser than the question asked:
+ * an interpolated answer locates a house number and no layer here locates a unit,
+ * so a floor for either would fire on correct answers.
  */
 describe("coarserAnswerMarker", () => {
 	const STRUCTURED: QueryKind[] = ["structured_address"]
@@ -188,8 +188,8 @@ describe("coarserAnswerMarker", () => {
 	})
 
 	test("a postcode alone is met by a street-grade answer", () => {
-		// A postcode centroid is street-grade in most address systems, so a finer floor would report a
-		// shortfall on every correct Dutch result.
+		// A postcode centroid is street-grade in most address systems, so a finer floor
+		// would report a shortfall on every correct Dutch result.
 		expect(
 			coarserAnswerMarker({ kinds: STRUCTURED, components: { postcode: "30601" }, reachedTier: "street" })
 		).toBeNull()

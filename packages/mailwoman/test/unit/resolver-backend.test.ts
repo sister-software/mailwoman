@@ -39,8 +39,8 @@ test("resolveCandidateDBPath: returns an explicit/env path only when it exists o
 })
 
 test("resolveCandidateDBPath: falls back to the convention path under the data root, and 'none' pins the FTS backend", async () => {
-	// The fallback is what makes the candidate table the default backend, so the path it reaches has
-	// to be the one `data pull candidate` writes.
+	// The fallback is what makes the candidate table the default backend, so the path
+	// it reaches has to be the one `data pull candidate` writes.
 	const root = resolvePackagePath("mailwoman", "lib", "test-fixtures", "candidate-root")
 	const conventionPath = wofDatabaseRoot(root)("candidate.db").toString()
 
@@ -51,8 +51,8 @@ test("resolveCandidateDBPath: falls back to the convention path under the data r
 
 	expect(await resolveCandidateDBPath(THIS_FILE)).toBe(THIS_FILE)
 
-	// `none` must beat the convention path, or there is no way back to the FTS backend on a machine
-	// that has pulled the gazetteer.
+	// `none` must beat the convention path, or there is no way back to the FTS
+	// backend on a machine that has pulled the gazetteer.
 	expect(await resolveCandidateDBPath("none")).toBeUndefined()
 	setEnv("MAILWOMAN_CANDIDATE_DB", "none")
 	expect(await resolveCandidateDBPath()).toBeUndefined()

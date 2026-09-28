@@ -43,8 +43,8 @@ if (!(await pathExists(modelPath))) {
 const BASE_LOCALE = "en-us"
 
 /**
- * Locales staged by default: the base plus every overlay the gauntlet's board can route to, which
- * is the set whose absence the harness warns about; `routing.ts` is the authority on routing.
+ * Locales staged by default: the base plus every overlay the gauntlet's board can route to,
+ * which is the set whose absence the harness warns about; `routing.ts` is the authority on routing.
  */
 const DEFAULT_LOCALES = [BASE_LOCALE, "en-gb", "en-nz", "de-de", "en-in", "es-es", "it-it"]
 
@@ -72,12 +72,12 @@ for (const locale of locales) {
 	}
 
 	const manifest = await readPackageJSON(manifestPath)
-	// The npm-prefix layout has one home, and this is a caller of it: the directory does not exist
-	// yet, so there is no path to resolve and spelling it out would put a second copy beside the first.
+	// The npm-prefix layout has one home, and this is a caller of it: the directory does not exist yet,
+	// so there is no path to resolve and spelling it out would put a second copy beside the first.
 	const packageDirectory = weightsCachePackageDir(outRoot, locale)
 
-	// The manifest's `files` mixes concrete data siblings with globs and negations, and a glob has no
-	// file to link, so only the concrete siblings belong in a cache.
+	// The manifest's `files` mixes concrete data siblings with globs and negations,
+	// and a glob has no file to link, so only the concrete siblings belong in a cache.
 	const declared = (manifest.files ?? []).filter(
 		(entry) => !entry.startsWith("!") && !entry.includes("*") && entry !== "README.md"
 	)

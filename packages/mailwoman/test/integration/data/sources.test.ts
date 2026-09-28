@@ -18,7 +18,8 @@ const fixtures = new AsyncDisposableStack()
 afterAll(() => fixtures.disposeAsync())
 
 /**
- * A bundle declaring one artifact per given local path, with a census over `address_point.source` and a rights declaration required to compile.
+ * A bundle declaring one artifact per given local path, with a census over
+ * `address_point.source` and a rights declaration required to compile.
  */
 function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCensus"]): DataBundle {
 	return {
@@ -38,7 +39,8 @@ function bundleOver(localPaths: readonly string[], census: DataBundle["sourceCen
 async function plant(rowsBySource: Record<string, number>, localPath = "points.db") {
 	const scratch = fixtures.use(await temporaryDirectory("mw-data-sources-"))
 	const dataRoot = scratch.path
-	// Plant through the same builder the census resolves with, so a database-group change moves the fixture and the reader together.
+	// Plant through the same builder the census resolves with, so a database-group
+	// change moves the fixture and the reader together.
 	const path = databaseRootPath(dataRoot)(localPath)
 
 	await makeDirectories(dirname(path))
@@ -102,7 +104,8 @@ describe("censusBundleSources", () => {
 
 		const rendered = renderSourceCensus(result, ["A Publisher"]).join("\n")
 
-		// A percentage over part of a bundle describes only that part, so printing `100.0%` would claim something a partial copy cannot establish.
+		// A percentage over part of a bundle describes only that part, so printing `100.0%`
+		// would claim something a partial copy cannot establish.
 		expect(rendered).toContain("the shares below are withheld")
 		expect(rendered).not.toContain("%")
 	})
@@ -133,7 +136,8 @@ describe("censusBundleSources", () => {
 
 		const result = await censusBundleSources(bundle, dataRoot)
 
-		// The interpolation artifact is a different shape rather than a missing or broken one, so it is neither absent nor a problem.
+		// The interpolation artifact is a different shape rather than a missing
+		// or broken one, so it is neither absent nor a problem.
 		expect(result.artifactsOutOfScope).toBe(1)
 		expect(result.artifactsAbsent).toBe(0)
 		expect(result.problems).toEqual([])

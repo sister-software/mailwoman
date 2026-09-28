@@ -44,7 +44,8 @@ export const FIXTURE_SIDE = 0.01
 export const FIXTURE_AUTHORITY = { code: "Fx", name: "Fixture County Council" } as const
 
 /**
- * The two plans the fixture set uses, shaped like the real product's, with dates carried as published in the source's own RFC 1123 form.
+ * The two plans the fixture set uses, shaped like the real product's, with dates
+ * carried as published in the source's own RFC 1123 form.
  */
 export const FIXTURE_PLANS = {
 	development: {
@@ -96,7 +97,8 @@ export function fixtureFeature(
 }
 
 /**
- * The fixture set: two adjacent zones (one holed the way this service encodes holes), a second plan over the same ground, a zone smaller than a cell, and a zone the authority states as unzoned.
+ * The fixture set: two adjacent zones (one holed the way this service encodes holes), a second
+ * plan over the same ground, a zone smaller than a cell, and a zone the authority states as unzoned.
  */
 export function fixtureFeatures(): ZoningSourceFeature[] {
 	const { lon, lat } = FIXTURE_ORIGIN
@@ -117,7 +119,8 @@ export function fixtureFeatures(): ZoningSourceFeature[] {
 		],
 	]
 
-	// Smaller than a res-11 cell, so `polygonToCells` returns no cell and the index must cover it by cell-touches-polygon rather than centre-in-polygon.
+	// Smaller than a res-11 cell, so `polygonToCells` returns no cell and the index must
+	// cover it by cell-touches-polygon rather than centre-in-polygon.
 	const sliver = exteriorRing(lon + 3 * FIXTURE_SIDE, lat, lon + 3 * FIXTURE_SIDE + 0.00005, lat + 0.00005)
 
 	const unzoned = exteriorRing(lon + 4 * FIXTURE_SIDE, lat, lon + 5 * FIXTURE_SIDE, lat + FIXTURE_SIDE)

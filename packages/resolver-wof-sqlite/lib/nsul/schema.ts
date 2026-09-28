@@ -10,12 +10,14 @@ import type { layerschemadatabase } from "@mailwoman/core/layers"
 import { sql, type Kysely } from "kysely"
 
 /**
- * Resolution of the `h3_cell` column, matching the res-9 spine `uprn.db` keys on because the value is copied from it.
+ * Resolution of the `h3_cell` column, matching the res-9 spine `uprn.db` keys on
+ * because the value is copied from it.
  */
 export const NSUL_H3_RESOLUTION = 9
 
 /**
- * Resolution of the layer's `layer_coverage` cells, matching `uprn.db`'s so both coverage tables describe the same cells.
+ * Resolution of the layer's `layer_coverage` cells, matching `uprn.db`'s
+ * so both coverage tables describe the same cells.
  */
 export const NSUL_COVERAGE_H3_RESOLUTION = 6
 
@@ -32,7 +34,8 @@ export interface UPRNPostcodeTable {
 	 */
 	pcds: string
 	/**
-	 * {@link pcds} with the space removed (`RG404HR`), the form Code-Point Open's `spr.name` carries and `uprnsForPostcode` probes.
+	 * {@link pcds} with the space removed (`RG404HR`), the form Code-Point Open's
+	 * `spr.name` carries and `uprnsForPostcode` probes.
 	 */
 	pcds_compact: string
 	/**
@@ -91,7 +94,8 @@ export async function createNSULMetaTable(db: Kysely<NSULDatabase>): Promise<voi
 }
 
 /**
- * The `pcds_compact` index the `uprnsForPostcode` probe reads; there is no index on the spaced `pcds` because it is derivable through {@link compactPostcode}.
+ * The `pcds_compact` index the `uprnsForPostcode` probe reads; there is no index on the
+ * spaced `pcds` because it is derivable through {@link compactPostcode}.
  */
 export async function createNSULIndexes(db: Kysely<NSULDatabase>): Promise<void> {
 	await db.schema.createIndex("uprn_postcode_pcds_compact").on("uprn_postcode").column("pcds_compact").execute()

@@ -26,9 +26,10 @@ import {
 } from "mailwoman/eval-harness/conformance/run"
 import { describe, expect, it } from "vitest"
 
-		/**
-		 * Quoted verbatim rather than loaded so a failure shows the exact text; `case-folding-suite.test.ts` proves these still match the corpus.
-		 */
+/**
+ * Quoted verbatim rather than loaded so a failure shows the exact text;
+ * `case-folding-suite.test.ts` proves these still match the corpus.
+ */
 const TR_STREET = "Istiklal Avenue"
 const JP_NATIVE = "りんりん, 〒506-0025 岐阜県高山市天満町3丁目 57"
 const DE_SHARP_S = "Friedrichstraße"
@@ -75,7 +76,7 @@ describe("case transformations", () => {
 describe("caseFoldKey", () => {
 	it("matches the German sharp s against its uppercase expansion", () => {
 		expect(caseFoldKey(DE_SHARP_S)).toBe(caseFoldKey("FRIEDRICHSTRASSE"))
-			// A bare lowercase fold does not match the sharp s to its expansion.
+		// A bare lowercase fold does not match the sharp s to its expansion.
 		expect(DE_SHARP_S.toLowerCase()).not.toBe("FRIEDRICHSTRASSE".toLowerCase())
 	})
 
@@ -138,8 +139,8 @@ describe("caseApplicability", () => {
 	)
 
 	it("reports the identity rule first when both bear on the same row", () => {
-				// The Turkish row is already title case, so `mixed` changes no character and the identity rule fires first.
-						expect(caseApplicability(TR_STREET, "mixed", "TR").rule).toBe("identity-transformation")
+		// The Turkish row is already title case, so `mixed` changes no character and the identity rule fires first.
+		expect(caseApplicability(TR_STREET, "mixed", "TR").rule).toBe("identity-transformation")
 	})
 
 	it("excludes the same text under Azeri and admits it under French", () => {
@@ -228,9 +229,10 @@ describe("auditCaseFoldingSuite", () => {
 })
 
 describe("a seeded case regression", () => {
-					/**
-				 * Fails only on the uppercase arm, the shape both live findings take, so the failure line is exercised without waiting for a real regression.
-				 */
+	/**
+	 * Fails only on the uppercase arm, the shape both live findings take, so the failure
+	 * line is exercised without waiting for a real regression.
+	 */
 	const observe: ConformanceObserver = async (query) => {
 		const upper = query === query.toUpperCase()
 
@@ -263,9 +265,9 @@ describe("a seeded case regression", () => {
 
 		expect(pass).toBe(false)
 
-				expect(rendered).toContain("cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore")
-				expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
-				expect(rendered).toContain('locality: ∅ → "RUE"')
+		expect(rendered).toContain("cases/fr/street-name-boundaries.jsonl#fr-street-name-rue-du-faubourg-saint-honore")
+		expect(rendered).toContain("parse_whole_strict expected equivalent, observed diverges")
+		expect(rendered).toContain('locality: ∅ → "RUE"')
 		// The transformation, which the report line derives rather than storing.
 		expect(describeCaseTransformation(findings[0]!.fixture)).toBe("upper")
 	})

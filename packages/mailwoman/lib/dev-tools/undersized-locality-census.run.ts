@@ -27,20 +27,20 @@ const { values: args } = parseArguments({
 const RATIO = Number(args.ratio ?? 10)
 
 /**
- * At or below this many same-name localities in the country, a tiny population under a huge
- * same-name parent reads as a mis-recorded settlement rather than a village.
+ * At or below this many same-name localities in the country, a tiny population under a
+ * huge same-name parent reads as a mis-recorded settlement rather than a village.
  */
 const RARE_NAME_MAX = Number(args.bearers ?? 3)
 
 /**
- * Placetypes a locality's same-name parent may be; a locality inside a same-name `region` is the
- * ordinary capital-of-its-region shape and is not this defect.
+ * Placetypes a locality's same-name parent may be; a locality inside a same-name `region`
+ * is the ordinary capital-of-its-region shape and is not this defect.
  */
 const PARENT_PLACETYPES = ["county", "localadmin", "borough"]
 
 /**
- * Aurangabad, Maharashtra (renamed Chhatrapati Sambhajinagar), the row this detector must reach,
- * reported at the end so a run says whether it still does.
+ * Aurangabad, Maharashtra (renamed Chhatrapati Sambhajinagar), the row this detector
+ * must reach, reported at the end so a run says whether it still does.
  */
 const AURANGABAD_MAHARASHTRA = 102_030_887
 
@@ -100,16 +100,16 @@ const candidates = db
 
 const sameName = candidates.filter((row) => nameKey(row.name) === nameKey(row.parentName))
 
-// How many reported rows carry the `gn:id` link a second register would be read through, counted
-// rather than followed because the GeoNames population file is a separate download.
+// How many reported rows carry the `gn:id` link a second register would be read through,
+// counted rather than followed because the GeoNames population file is a separate download.
 const wanted = new Set(sameName.map((row) => row.id))
 
 const linked = (
 	db.prepare(`SELECT id FROM concordances WHERE other_source = 'gn:id'`).all() as Array<{ id: number }>
 ).filter((link) => wanted.has(link.id)).length
 
-// Counted in SQL on the exact name because folding every one of `spr`'s 4,386,926 named localities
-// in JS to key a map costs the whole scan.
+// Counted in SQL on the exact name because folding every one of `spr`'s 4,386,926
+// named localities in JS to key a map costs the whole scan.
 const bearerCount = db.prepare(
 	`SELECT COUNT(*) AS n FROM spr WHERE placetype = 'locality' AND country = ? AND name = ?`
 )

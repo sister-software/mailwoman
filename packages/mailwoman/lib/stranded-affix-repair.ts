@@ -9,17 +9,21 @@
 import { type AddressNode, type AddressTree, collectNodes } from "@mailwoman/core/decoder"
 
 /**
- * Affix tags that cannot stand without a `street`; `house_number` is deliberately absent because absorbing a number into a place name would invent a name that was never written.
+ * Affix tags that cannot stand without a `street`; `house_number` is deliberately absent
+ * because absorbing a number into a place name would invent a name that was never written.
  */
 const STRANDED_AFFIX_TAGS: ReadonlySet<string> = new Set(["street_suffix", "street_prefix"])
 
 /**
- * Name-containing place tags a stranded affix may be absorbed into, whose surface can legitimately end in a street-type word; `dependent_locality` belongs here for the same reason as `locality` and `venue`.
+ * Name-containing place tags a stranded affix may be absorbed into, whose surface
+ * can legitimately end in a street-type word; `dependent_locality` belongs here
+ * for the same reason as `locality` and `venue`.
  */
 const ABSORBING_TAGS: ReadonlySet<string> = new Set(["locality", "venue", "dependent_locality"])
 
 /**
- * Absorbs a stranded street affix into the place name it abuts, mutating `tree` in place and returning whether anything moved.
+ * Absorbs a stranded street affix into the place name it abuts, mutating `tree` in place
+ * and returning whether anything moved.
  */
 export function repairStrandedAffix(tree: AddressTree): boolean {
 	const all = collectNodes(tree.roots, () => true)

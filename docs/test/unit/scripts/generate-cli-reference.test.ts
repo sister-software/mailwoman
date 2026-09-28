@@ -71,14 +71,13 @@ describe("generate-cli-reference", () => {
 			| ------------- | -------- | ---------------------------------------------- |
 			| \`<bundle...>\` | Yes      | Bundle name(s) to pull: candidate, poi, fr, us |
 
-			| Flag                      | Type                          | Default | Description                                                                                                                                                 |
-			| ------------------------- | ----------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-			| \`--dry-run\`               | boolean                       | \`false\` | Print the download plan; touch no network and write no data                                                                                                 |
-			| \`--only [only]\`           | string                        | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
-			| \`--force\`                 | boolean                       | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
-			| \`--data-root [data-root]\` | string                        | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
-			| \`--host [host]\`           | string                        | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |
-			| \`--refuse [refuse...]\`    | \`share-alike\` \\| \`unresolved\` | —       | Decline a bundle whose recorded expression carries this class of obligation (share-alike, unresolved); repeatable. Default: $MAILWOMAN_REFUSE_OBLIGATIONS   |"
+			| Flag                      | Type    | Default | Description                                                                                                                                                 |
+			| ------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+			| \`--dry-run\`               | boolean | \`false\` | Print the download plan; touch no network and write no data                                                                                                 |
+			| \`--only [only]\`           | string  | —       | Only pull artifacts whose remote/local path or state slug contains this substring (e.g. --only nh)                                                          |
+			| \`--force\`                 | boolean | \`false\` | Re-download even when a local copy already appears present                                                                                                  |
+			| \`--data-root [data-root]\` | string  | —       | Override the data root for this pull (default: $MAILWOMAN_DATA_ROOT or the built-in default)                                                                |
+			| \`--host [host]\`           | string  | —       | Mirror or private-registry base URL serving the same object keys as the public bucket (e.g. https://mirror.example/mailwoman/). Default: the public bucket. |"
 		`)
 	})
 

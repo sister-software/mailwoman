@@ -4,14 +4,13 @@
  * @author Teffen Ellis, et al.
  */
 
-// The exterior and hole ring builders live in `@mailwoman/spatial`; a second copy is a second place for a
-// hole to stop being one.
+// The exterior and hole ring builders live in `@mailwoman/spatial`; a second copy
+// is a second place for a hole to stop being one.
 import { rectangleRing } from "@mailwoman/spatial"
 
 import type { SoilComponentTable, SoilMapUnitTable } from "#schema"
 import type { SoilDelineation, SoilFeatureSource } from "#sdk/ingest/index"
 import type { SurveyAreaAttributes } from "#sdk/survey-area"
-
 
 /**
  * Where the fixture geometry sits — central Iowa, so the cells it produces
@@ -20,8 +19,8 @@ import type { SurveyAreaAttributes } from "#sdk/survey-area"
 export const FIXTURE_ORIGIN = { lat: 41.6, lon: -93.6 }
 
 /**
- * Degrees per fixture square side, about 1.6 km here — several resolution-9 cells across, so a square has
- * both an interior and a fringe.
+ * Degrees per fixture square side, about 1.6 km here — several resolution-9 cells across,
+ * so a square has both an interior and a fringe.
  */
 export const FIXTURE_SIDE = 0.015
 
@@ -99,8 +98,8 @@ export function fixtureMapUnits(areaSymbol = "XX001"): SoilMapUnitTable[] {
 }
 
 /**
- * The fixture components; `mu-mixed` is 45/35/20 across three classes, the case a winner-class schema
- * would report as class 2 and this one as a mixture.
+ * The fixture components; `mu-mixed` is 45/35/20 across three classes, the case a
+ * winner-class schema would report as class 2 and this one as a mixture.
  */
 export function fixtureComponents(): SoilComponentTable[] {
 	return [
@@ -178,8 +177,8 @@ export function fixtureDelineations(areaSymbol = "XX001"): SoilDelineation[] {
 }
 
 /**
- * The outline covering every fixture delineation, with margin because the coverage test keeps only cells
- * lying wholly inside the outline.
+ * The outline covering every fixture delineation, with margin because the coverage
+ * test keeps only cells lying wholly inside the outline.
  */
 export function fixtureOutline(margin = 0.75): { type: "Polygon"; coordinates: number[][][] } {
 	const { lat, lon } = FIXTURE_ORIGIN
@@ -211,8 +210,8 @@ export function fixtureSource(delineations: SoilDelineation[], areaSymbol = "XX0
 }
 
 /**
- * One fixture survey area's attributes; `areaAcres` is left NULL on purpose so the area cross-check
- * compares against the authority rather than this package's own arithmetic.
+ * One fixture survey area's attributes; `areaAcres` is left NULL on purpose so the area
+ * cross-check compares against the authority rather than this package's own arithmetic.
  */
 export function fixtureAttributes(areaSymbol = "XX001"): SurveyAreaAttributes {
 	return {

@@ -68,14 +68,14 @@ export type ResolveTree = (tree: AddressTree) => Promise<AddressTree>
 
 export interface RerankOpts {
 	/**
-	 * Resolve at most this many candidates (default 5); each costs a resolver round-trip, so this is
-	 * the latency knob.
+	 * Resolve at most this many candidates (default 5); each costs a resolver round-trip,
+	 * so this is the latency knob.
 	 */
 	maxResolve?: number
 	/**
-	 * ISO-2 country the resolutions are expected to land in, threaded to {@link isImplausibleResolution}
-	 * as guard B so a coordinate outside that country's coarse box is vetoed; omitted, only the
-	 * bare-country-centroid guard runs.
+	 * ISO-2 country the resolutions are expected to land in, threaded to
+	 * {@link isImplausibleResolution} as guard B so a coordinate outside that country's
+	 * coarse box is vetoed; omitted, only the bare-country-centroid guard runs.
 	 */
 	expectedCountry?: string
 	/**
@@ -86,8 +86,8 @@ export interface RerankOpts {
 
 /**
  * Rerank a k-best parse list on resolution evidence: resolve up to `maxResolve` candidates in model
- * order and return the first plausible one; candidates beyond `maxResolve` are never resolved and
- * never vetoed, and when every resolved candidate is implausible the model's rank-1 wins.
+ * order and return the first plausible one; candidates beyond `maxResolve` are never resolved
+ * and never vetoed, and when every resolved candidate is implausible the model's rank-1 wins.
  */
 export async function rerankByResolution<T>(
 	candidates: ReadonlyArray<RerankCandidate<T>>,
@@ -112,8 +112,8 @@ export async function rerankByResolution<T>(
 		try {
 			resolved = await resolveTree(candidate.tree)
 		} catch {
-			// A resolver failure is not evidence against the parse, so the model's rank stands rather
-			// than vetoing a possibly-correct hypothesis on an outage.
+			// A resolver failure is not evidence against the parse, so the model's rank stands
+			// rather than vetoing a possibly-correct hypothesis on an outage.
 			ranked.push({ ...candidate, resolved: null, implausible: false })
 
 			continue

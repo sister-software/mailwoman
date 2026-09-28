@@ -45,38 +45,43 @@ import { type Browser, chromium } from "playwright"
 import { afterAll, beforeAll, describe, expect, test } from "vitest"
 
 /**
- * Raw bytes of `model.onnx`, budgeted to leave room for a quantization change but not an fp32 export (~4× larger).
+ * Raw bytes of `model.onnx`, budgeted to leave room for a quantization change
+ * but not an fp32 export (~4× larger).
  */
 const MODEL_RAW_BYTES_BUDGET = 56_000_000
 
 const TOKENIZER_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`, covering whichever variant ORT picks at load.
+ * Raw bytes of the onnxruntime-web `.wasm` the runtime requests from `wasmPaths`,
+ * covering whichever variant ORT picks at load.
  */
 const ORT_WASM_RAW_BYTES_BUDGET = 40_000_000
 
 const SQLITE_RUNTIME_RAW_BYTES_BUDGET = 8_000_000
 
 /**
- * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural runner + the SentencePiece core, minified).
+ * Raw bytes of the bundled browser runtime JS (onnxruntime-web + the neural
+ * runner + the SentencePiece core, minified).
  */
 const RUNTIME_JS_RAW_BYTES_BUDGET = 4_000_000
 
 /**
- * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped web loader fetches beside the model.
+ * Raw bytes of the evidence lexicons plus the retrieval binaries the shipped
+ * web loader fetches beside the model.
  */
 const EVIDENCE_RAW_BYTES_BUDGET = 32_000_000
 
 /**
- * Session init on the wasm arm — tokenizer load plus ORT session creation, warm-up infer included, with the model bytes already in memory.
+ * Session init on the wasm arm — tokenizer load plus ORT session creation,
+ * warm-up infer included, with the model bytes already in memory.
  */
 const INIT_WASM_MS_BUDGET = 12_000
 
 /**
- * Session init on the WebGPU arm, asserted only when the browser granted an adapter and the runner's
- * diagnostics report `webgpu`; the receipt prints the adapter's identity because a software adapter
- * and a discrete GPU are different arms wearing the same name.
+ * Session init on the WebGPU arm, asserted only when the browser granted an adapter
+ * and the runner's diagnostics report `webgpu`; the receipt prints the adapter's identity
+ * because a software adapter and a discrete GPU are different arms wearing the same name.
  */
 const INIT_WEBGPU_MS_BUDGET = 20_000
 
@@ -91,17 +96,20 @@ const WARM_P50_WASM_MS_BUDGET = 140
 const WARM_P95_WASM_MS_BUDGET = 220
 
 /**
- * Http range requests a cold gazetteer session costs; this is what fails when a schema or clustering change turns a probe into a scan.
+ * Http range requests a cold gazetteer session costs; this is what fails when a schema
+ * or clustering change turns a probe into a scan.
  */
 const GAZETTEER_RANGE_REQUESTS_BUDGET = 120
 
 /**
- * Peak `performance.memory.usedJSHeapSize` across the whole browser session, bounding the JS side only since V8 accounts ArrayBuffers and wasm memory outside the heap.
+ * Peak `performance.memory.usedJSHeapSize` across the whole browser session, bounding the
+ * JS side only since V8 accounts ArrayBuffers and wasm memory outside the heap.
  */
 const PEAK_HEAP_BYTES_BUDGET = 268_435_456
 
 /**
- * The warm-inference input set: four board-register en-US rows and the same four in lowercase, because lowercase is what users type.
+ * The warm-inference input set: four board-register en-US rows and the same four
+ * in lowercase, because lowercase is what users type.
  */
 const WARM_INPUTS = [
 	"1600 Pennsylvania Ave NW, Washington, DC 20500",
@@ -130,7 +138,8 @@ const WARM_ITERATIONS = 64
 const WARM_WARMUP_ITERATIONS = 8
 
 /**
- * `name_key` probes issued against the candidate table — the shape `WOFCandidateTableLookup` runs per resolve, enough to touch more than one region of a multi-gigabyte file.
+ * `name_key` probes issued against the candidate table — the shape `WOFCandidateTableLookup`
+ * runs per resolve, enough to touch more than one region of a multi-gigabyte file.
  */
 const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage", "london"] as const
 
@@ -140,24 +149,29 @@ const CANDIDATE_PROBE_KEYS = ["washington", "newyork", "cupertino", "anchorage",
 const CANDIDATE_PROBE_LIMIT = 8
 
 /**
- * Bytes per http range request, matching the demo's sql.js-httpvfs configuration (16 SQLite pages at the candidate DB's 8 KiB page size); changing it changes the request count by construction.
+ * Bytes per http range request, matching the demo's sql.js-httpvfs configuration
+ * (16 SQLite pages at the candidate DB's 8 KiB page size); changing it changes
+ * the request count by construction.
  */
 const HTTPVFS_CHUNK_SIZE = 65_536
 
 /**
- * Chromium flags that let the WebGPU arm be attempted at all; the arm skips where no adapter is granted, which is the honest outcome, and the receipt records the adapter's identity.
+ * Chromium flags that let the WebGPU arm be attempted at all; the arm skips where no adapter
+ * is granted, which is the honest outcome, and the receipt records the adapter's identity.
  */
 const WEBGPU_LAUNCH_ARGS = ["--enable-unsafe-webgpu"] as const
 
 /**
- * The candidate-table probe: a contiguous probe on the `without rowid` B-tree keyed by `name_key`, whose access pattern decides the range-fetch count rather than the select list.
+ * The candidate-table probe: a contiguous probe on the `without rowid` B-tree keyed by
+ * `name_key`, whose access pattern decides the range-fetch count rather than the select list.
  */
 const CANDIDATE_PROBE_SQL =
 	"SELECT spr_id, name, country_id, placetype_id, latitude, longitude, neg_rank, is_primary, population " +
 	`FROM candidate WHERE name_key = ? ORDER BY neg_rank ASC LIMIT ${CANDIDATE_PROBE_LIMIT}`
 
 /**
- * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights, or without Playwright's browser, skips this suite rather than failing it.
+ * Artifact-conditional exactly like `weights.test.ts`: a checkout without the dev weights,
+ * or without Playwright's browser, skips this suite rather than failing it.
  */
 const requireFromHere = createRequire(import.meta.url)
 
@@ -170,7 +184,8 @@ async function tryResolveWeights(): Promise<ResolvedWeights | null> {
 }
 
 /**
- * Ask a package where one of its files lives, never assembling a path into another package's install directory by hand.
+ * Ask a package where one of its files lives, never assembling a path into
+ * another package's install directory by hand.
  */
 async function tryResolveFile(specifier: string): Promise<string | null> {
 	try {
@@ -197,7 +212,8 @@ const haveModel = weights !== null && (await pathExists(weights.modelPath)) && (
 const haveBrowser = (await tryChromiumExecutable()) !== null
 
 /**
- * A locator for the onnxruntime-web asset directory rather than the file the runtime will fetch: the whole directory is mounted at `/ort/` so whichever `.wasm` variant ORT picks is served and counted.
+ * A locator for the onnxruntime-web asset directory rather than the file the runtime will fetch: the
+ * whole directory is mounted at `/ort/` so whichever `.wasm` variant ORT picks is served and counted.
  */
 const ORT_DIST_LOCATOR = await tryResolveFile("onnxruntime-web/ort-wasm-simd-threaded.jsep.wasm")
 
@@ -208,12 +224,15 @@ const haveGazetteer = SQLJS_ENTRY_FILE !== null && (await pathExists(CANDIDATE_D
 const canRun = haveModel && haveBrowser && ORT_DIST_LOCATOR !== null
 
 /**
- * Directory the browser entry is resolved from — the repo root, so `@mailwoman/neural/*` and `onnxruntime-web` both resolve through the workspace's own module graph.
+ * Directory the browser entry is resolved from — the repo root, so `@mailwoman/neural/*`
+ * and `onnxruntime-web` both resolve through the workspace's own module graph.
  */
 const BUNDLE_RESOLVE_DIR = repoRootPath()
 
 /**
- * The class a served response is counted against; byte accounting happens on the server rather than in the browser because the server sees exactly what left the socket and cannot be fooled by a cache hit.
+ * The class a served response is counted against; byte accounting happens on the server
+ * rather than in the browser because the server sees exactly what left the socket
+ * and cannot be fooled by a cache hit.
  */
 type AssetClass = "model" | "tokenizer" | "ortWasm" | "sqliteRuntime" | "runtimeJS" | "evidence" | "gazetteerRanges"
 
@@ -273,7 +292,8 @@ const CONTENT_TYPES: Record<string, string> = {
 }
 
 /**
- * Extensions worth compressing; `.onnx`, `.model` and `.bin` are already entropy-dense and the live demo serves them identity-encoded too.
+ * Extensions worth compressing; `.onnx`, `.model` and `.bin` are already entropy-dense
+ * and the live demo serves them identity-encoded too.
  */
 const COMPRESSIBLE_EXTENSIONS = new Set([".html", ".js", ".mjs", ".json", ".wasm", ".map"])
 
@@ -303,7 +323,9 @@ interface RangeSpec {
 }
 
 /**
- * Parse a single-range `Range: bytes=a-b` header; multi-range is deliberately unimplemented because sql.js-httpvfs never asks for one and half-answering a shape we do not serve would corrupt the measurement.
+ * Parse a single-range `Range: bytes=a-b` header; multi-range is deliberately
+ * unimplemented because sql.js-httpvfs never asks for one and half-answering a
+ * shape we do not serve would corrupt the measurement.
  */
 function parseRange(header: string | undefined, size: number): RangeSpec | null {
 	if (!header) return null

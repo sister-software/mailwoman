@@ -34,8 +34,8 @@ export const SSURGO_ATTRIBUTION = "U.S. Department of Agriculture, Natural Resou
 export const SSURGO_LICENSE = "LicenseRef-USGov-Public-Domain"
 
 /**
- * The public-information grant quoted from each survey area's FGDC use constraints; the
- * survey-area loader rejects an area whose metadata lacks it, since its absence signals a licence change.
+ * The public-information grant quoted from each survey area's FGDC use constraints; the survey-area
+ * loader rejects an area whose metadata lacks it, since its absence signals a licence change.
  */
 export const SSURGO_PUBLIC_INFORMATION_SENTENCE = "This is public information"
 
@@ -50,8 +50,8 @@ export const SSURGO_USE_CONSTRAINTS =
 	"responsible for the appropriate application."
 
 /**
- * The limitations NRCS states for SSURGO, quoted verbatim and carried by every reading, which
- * describes the map unit covering a point rather than a site-specific determination.
+ * The limitations NRCS states for SSURGO, quoted verbatim and carried by every reading,
+ * which describes the map unit covering a point rather than a site-specific determination.
  */
 export const SSURGO_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"The depicted soil boundaries, interpretations, and analysis derived from them do not eliminate the need for onsite sampling, testing, and detailed study of specific sites for intensive uses. Thus, these data and their interpretations are intended for planning purposes only.",
@@ -86,8 +86,8 @@ export const SSURGO_SOURCE = "nrcs.usda.gov/SSURGO"
 export const SSURGO_SOURCE_EPSG = 4326
 
 /**
- * The authorities that can set a farmland classification's criteria; `None` covers not-prime farmland and
- * land with no classification.
+ * The authorities that can set a farmland classification's criteria; `None` covers
+ * not-prime farmland and land with no classification.
  */
 export const FarmlandScope = {
 	Federal: "federal",
@@ -105,8 +105,8 @@ export const FarmlandScope = {
 export type FarmlandScope = (typeof FarmlandScope)[keyof typeof FarmlandScope]
 
 /**
- * Classifies a `farmlndcl` value into a {@link FarmlandScope} by the phrase the regulation uses, so a
- * conditional value such as `Farmland of statewide importance, if …` still gets the right scope.
+ * Classifies a `farmlndcl` value into a {@link FarmlandScope} by the phrase the regulation uses,
+ * so a conditional value such as `Farmland of statewide importance, if …` still gets the right scope.
  */
 export function farmlandScope(value: string | null | undefined): FarmlandScope {
 	if (!value) return FarmlandScope.None
@@ -130,8 +130,8 @@ export function farmlandScope(value: string | null | undefined): FarmlandScope {
 export const SSURGO_NO_MAPPING_SYMBOLS: ReadonlySet<string> = new Set(["NOTCOM", "NOTPUB"])
 
 /**
- * The lower-case map-unit names that mark a delineation without soil mapping when its symbol does not;
- * the match uses the whole name, since a prefix could also match a real soil name.
+ * The lower-case map-unit names that mark a delineation without soil mapping when its symbol
+ * does not; the match uses the whole name, since a prefix could also match a real soil name.
  */
 export const SSURGO_NO_MAPPING_NAMES: ReadonlySet<string> = new Set([
 	"area not surveyed, access denied",
@@ -151,9 +151,9 @@ export const NCCPI_V3_RULE_NAME = "NCCPI - National Commodity Crop Productivity 
 export const COINTERP_OVERALL_RULE_DEPTH = "0"
 
 /**
- * The code of the area-times-component-percentage weighting that produced the per-cell shares;
- * component percentages have no location, so a share says how much of a cell lies in rated map units and
- * not where the rating applies.
+ * The code of the area-times-component-percentage weighting that produced the per-cell
+ * shares; component percentages have no location, so a share says how much of a cell
+ * lies in rated map units and not where the rating applies.
  */
 export const SOIL_SHARE_WEIGHTING = "cell_area_x_comppct_r"
 

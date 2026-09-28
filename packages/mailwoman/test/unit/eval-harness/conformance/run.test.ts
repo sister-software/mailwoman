@@ -32,9 +32,9 @@ function fixture(over: Partial<ConformanceFixture> = {}): ConformanceFixture {
 	}
 }
 
-				/**
-				 * Absent queries answer with an empty parse.
-				 */
+/**
+ * Absent queries answer with an empty parse.
+ */
 function tableObserver(table: Record<string, Record<string, string>>): {
 	observe: ConformanceObserver
 	calls: string[]
@@ -285,9 +285,10 @@ describe("gauntletObserver", () => {
 		expect(outcome.result.tier).toBe("address_point")
 		expect(outcome.result.country).toBe("United Kingdom")
 		expect(outcome.result.hierarchy[0]?.placeID).toBe("wof:101750367")
-			// The observer supplies no shape vocabulary, so `mechanismShapes` and `candidates` are absent rather than empty — the distinction `candidate_admissibility` reads.
-						expect(outcome.mechanismShapes).toBeUndefined()
-								expect(outcome.candidates).toBeUndefined()
+		// The observer supplies no shape vocabulary, so `mechanismShapes` and `candidates`
+		// are absent rather than empty — the distinction `candidate_admissibility` reads.
+		expect(outcome.mechanismShapes).toBeUndefined()
+		expect(outcome.candidates).toBeUndefined()
 	})
 })
 
@@ -369,9 +370,10 @@ describe("tracedGauntletObserver", () => {
 })
 
 describe("the unmeasured verdict bucket", () => {
-					/**
-				 * The one shape that reads `unmeasured` rather than deciding: a refined table at its window with a base candidate missing.
-				 */
+	/**
+	 * The one shape that reads `unmeasured` rather than deciding: a refined table
+	 * at its window with a base candidate missing.
+	 */
 	const unmeasuredObserver: ConformanceObserver = async (query) => ({
 		result: (await tableObserver(HELD_TABLE).observe(query, undefined)).result,
 		candidates: [

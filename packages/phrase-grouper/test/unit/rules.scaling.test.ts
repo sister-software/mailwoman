@@ -29,21 +29,21 @@ import {
 import { describe, expect, test } from "vitest"
 
 /**
- * Every token is capitalized place-name content and no token terminates the run, the worst case for a
- * forward walk.
+ * Every token is capitalized place-name content and no token terminates the run,
+ * the worst case for a forward walk.
  */
 const CAPS_RUN_UNIT = "Aa "
 
 /**
- * A doubled input doubles a linear read count and quadruples a quadratic one; the bound sits above 2.0 to
- * absorb the run's tail, where the last start indices find fewer tokens to read.
+ * A doubled input doubles a linear read count and quadruples a quadratic one; the bound sits
+ * above 2.0 to absorb the run's tail, where the last start indices find fewer tokens to read.
  */
 const MAX_LINEAR_GROWTH = 2.2
 
 /**
- * Token reads the locality walk may spend per start index: three head reads, a `MAX_LOCALITY_PHRASE_TOKENS - 1`
- * lookahead and two endpoint reads per proposal length total 20 at the shipped cap, and four reads per cap
- * token leaves room for that shape to change.
+ * Token reads the locality walk may spend per start index: three head reads,
+ * a `MAX_LOCALITY_PHRASE_TOKENS - 1` lookahead and two endpoint reads per proposal length total
+ * 20 at the shipped cap, and four reads per cap token leaves room for that shape to change.
  */
 const MAX_LOCALITY_READS_PER_TOKEN = 4 * MAX_LOCALITY_PHRASE_TOKENS
 

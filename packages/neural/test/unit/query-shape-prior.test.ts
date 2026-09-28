@@ -122,8 +122,8 @@ describe("buildEmissionPriors", () => {
 })
 
 describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", () => {
-	// The scoped rebuild fires only on a bare admin doubleton: no digits, abbreviation last, at most
-	// four preceding tokens, and a name that is not the region's own name.
+	// The scoped rebuild fires only on a bare admin doubleton: no digits, abbreviation last,
+	// at most four preceding tokens, and a name that is not the region's own name.
 	const bLoc = LABELS.indexOf("B-locality")
 	const iLoc = LABELS.indexOf("I-locality")
 
@@ -170,8 +170,8 @@ describe("buildEmissionPriors — SCOPED locality bias (2026-07-17 rebuild)", ()
 	})
 
 	it("fires for Washington, DC and — deliberately — for Washington, WA (the old name-IS-region guard was dead in production)", () => {
-		// The bias is soft (+2.0 log-odds), so a confident region emission on a true state-restatement still
-		// wins.
+		// The bias is soft (+2.0 log-odds), so a confident region emission on a
+		// true state-restatement still wins.
 		for (const [text, span] of [
 			["Washington, DC", "DC"],
 			["Washington, WA", "WA"],

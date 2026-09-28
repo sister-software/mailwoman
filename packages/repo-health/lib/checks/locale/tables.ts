@@ -30,11 +30,11 @@ const COUNTRY_CODE = /^[A-Za-z]{2}$/u
 const LOCALE_TAG = /^[a-z]{2}-[A-Za-z]{2}$/u
 
 /**
- * The threshold for recognizing a country→locale map: at least two entries pair a country code with a locale
- * tag, and those are at least half of what the declaration holds.
+ * The threshold for recognizing a country→locale map: at least two entries pair a country
+ * code with a locale tag, and those are at least half of what the declaration holds.
  *
- * Both halves are required — two pairs alone admits a table of something else carrying a couple, and the ratio alone
- * admits a two-entry map of anything.
+ * Both halves are required — two pairs alone admits a table of something else carrying
+ * a couple, and the ratio alone admits a two-entry map of anything.
  */
 const MINIMUM_LOCALE_PAIRS = 2
 
@@ -130,8 +130,8 @@ export async function findLocaleTables(context: {
 	repoRoot: string
 	trackedFiles: readonly string[]
 }): Promise<LocaleTable[]> {
-	// `existingOnly` because this walk opens every path it is given, and a staged rename the index still names
-	// would throw ENOENT for a reason unrelated to the tables.
+	// `existingOnly` because this walk opens every path it is given, and a staged rename
+	// the index still names would throw ENOENT for a reason unrelated to the tables.
 	const sources = (await trackedSourcePaths(context, { existingOnly: true }))
 		.map((path) => relative(context.repoRoot, path))
 		.filter((file) => !/\/test\/|\.test\.tsx?$/u.test(file))
@@ -159,7 +159,8 @@ export async function findLocaleTables(context: {
 }
 
 /**
- * The `locale-tables` check: one error per entry whose country key disagrees with its locale's region subtag.
+ * The `locale-tables` check: one error per entry whose country key disagrees
+ * with its locale's region subtag.
  */
 export const localeTablesCheck: RepoCheck = {
 	id: "locale-tables",

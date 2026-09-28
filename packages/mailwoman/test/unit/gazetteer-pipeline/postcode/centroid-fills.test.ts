@@ -57,7 +57,8 @@ test("parent-borrow fills a (0,0) postcode from the admin gazetteer; real coordi
 })
 
 test("GeoNames postal names each postcode's delivery city, including territories filed under their own ISO code", async () => {
-	// A delivery city is not the geographic locality: 11201 is Brooklyn inside New York, and Queens uses neighbourhood names.
+	// A delivery city is not the geographic locality: 11201 is Brooklyn inside New York,
+	// and Queens uses neighbourhood names.
 	await using dirDirectory = await temporaryDirectory("centroid-names-")
 	const dir = dirDirectory.path
 	const databasePath = dir("postalcode-us.db")
@@ -73,7 +74,8 @@ test("GeoNames postal names each postcode's delivery city, including territories
 	ins.run(2, -1, "11375", "postalcode", "US", 40.72, -73.85) // Queens: a neighbourhood delivery city
 	ins.run(3, -1, "00601", "postalcode", "US", 0, 0) // Puerto Rico, filed as US in WOF
 
-	// GeoNames files a US territory under PR while the database files it under US, so reading only `US` rows leaves territory postcodes unnamed.
+	// GeoNames files a US territory under PR while the database files it under US,
+	// so reading only `US` rows leaves territory postcodes unnamed.
 	const geonamesDir = dir("geonames-postal")
 
 	await makeDirectories(geonamesDir)

@@ -35,8 +35,10 @@ export {
 export const POI_BOARD_FIXTURES = "packages/mailwoman/lib/eval-harness/fixtures/poi-board.jsonl"
 
 /**
- * Row statuses. Only `pass` rows count toward the floors; a `known_fail` row needs a repair, and an
- * `improvement_target` row needs a new capability.
+ * Row statuses.
+ *
+ * Only `pass` rows count toward the floors; a `known_fail` row needs a repair,
+ * and an `improvement_target` row needs a new capability.
  */
 export const POI_BOARD_STATUSES = ["pass", "known_fail", "improvement_target"] as const
 

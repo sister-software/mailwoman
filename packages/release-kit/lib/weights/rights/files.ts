@@ -117,8 +117,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		questions.push(`One attribution entry names no license: ${entry.text}`)
 	}
 
-	// Training, tokenizer and evaluation contributions run together in one list, so naming the split
-	// lets a reader see which entries describe rows the model never learned from.
+	// Training, tokenizer and evaluation contributions run together in one list, so naming
+	// the split lets a reader see which entries describe rows the model never learned from.
 	const evaluationOnly = record.attribution.filter(
 		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
 	)
@@ -153,8 +153,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 /**
  * How many attribution entries state each use, in a fixed key order so the document is reproducible.
  *
- * A use that no entry states is omitted rather than written as zero, because zero would read as the
- * measurement "no source was used for evaluation" where the truth is that no entry said so.
+ * A use that no entry states is omitted rather than written as zero, because zero would read as
+ * the measurement "no source was used for evaluation" where the truth is that no entry said so.
  */
 function countUses(attribution: readonly AttributionRecord[]): Record<string, number> {
 	const counts = new Map<string, number>()
@@ -222,16 +222,16 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 }
 
 /**
- * Whether a committed provenance document equals the one this record renders, compared as parsed
- * JSON rather than text so the repository formatter may lay the file out as it likes.
+ * Whether a committed provenance document equals the one this record renders, compared as
+ * parsed JSON rather than text so the repository formatter may lay the file out as it likes.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
 	return stringifyJSON(committed) === stringifyJSON(renderProvenance(record))
 }
 
 /**
- * The obligations file for one package; it exists per package because npm ships per package, so a
- * consumer who installs one weights overlay finds the terms in its tarball.
+ * The obligations file for one package; it exists per package because npm ships per package,
+ * so a consumer who installs one weights overlay finds the terms in its tarball.
  */
 export function renderLicenseFile(record: WeightsRightsRecord): string {
 	return `# License — ${record.packageName}

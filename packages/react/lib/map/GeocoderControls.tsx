@@ -84,8 +84,8 @@ const DRAG_TRAVEL_PX = 3
 const OVERSCROLL_PROMOTE_PX = 8
 
 /**
- * Renders the search panel, result panel, map control rail, and side sheets over the map; on narrow screens the
- * search panel is a bottom drawer the user can drag between detents.
+ * Renders the search panel, result panel, map control rail, and side sheets over the map;
+ * on narrow screens the search panel is a bottom drawer the user can drag between detents.
  */
 export function GeocoderControls({
 	runtime,

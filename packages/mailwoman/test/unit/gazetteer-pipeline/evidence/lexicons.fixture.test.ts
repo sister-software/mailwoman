@@ -22,8 +22,8 @@ let scratch: TemporaryDirectory
 function buildFixtureAdmin(path: PathBuilderLike): void {
 	using db = new DatabaseClient<WOFDatabase>(path)
 
-	// Durability is worthless in a throwaway fixture, and the autocommit PRAGMAs are what keep this
-	// layer cheap enough to run on every PR.
+	// Durability is worthless in a throwaway fixture, and the autocommit PRAGMAs are
+	// what keep this layer cheap enough to run on every PR.
 	db.exec(`
 		PRAGMA synchronous = OFF;
 		PRAGMA journal_mode = MEMORY;
@@ -114,8 +114,8 @@ beforeEach(async () => {
 afterEach(() => scratch[Symbol.asyncDispose]())
 
 /**
- * Both halves are spelled `entries` — `built.entries` is a count while the lexicon file's `entries`
- * is the surface→bitmask map — so the map comes back as `surfaces` rather than a second `entries`.
+ * Both halves are spelled `entries` — `built.entries` is a count while the lexicon file's `entries` is
+ * the surface→bitmask map — so the map comes back as `surfaces` rather than a second `entries`.
  */
 let buildSeq = 0
 
@@ -164,8 +164,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		const { built, surfaces } = await buildAgainstFixture(["FR"], ["locality", "localadmin"])
 
 		expect(surfaces.smallville).toBeUndefined()
-		// Only `smallville` (under the 0.25 floor) and `joseph` (over it but under the 0.45 person-name
-		// tier) fail, so a third here means a law changed scope.
+		// Only `smallville` (under the 0.25 floor) and `joseph` (over it but under the 0.45 person-name tier)
+		// fail, so a third here means a law changed scope.
 		expect(built.skippedProminence).toBe(2)
 	})
 
@@ -191,8 +191,8 @@ describe("locality-surface build — fixture (four laws end to end)", () => {
 		}
 
 		expect(surfaces["east nashville"]).toBeDefined()
-		// No US row is refused on prominence, unlike the FR set, because these rows are seeded at their
-		// real magnitudes.
+		// No US row is refused on prominence, unlike the FR set, because these rows
+		// are seeded at their real magnitudes.
 		expect(built.skippedProminence).toBe(0)
 	})
 

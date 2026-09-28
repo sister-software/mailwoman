@@ -96,8 +96,8 @@ export const COUNTRY_BBOX: Readonly<Record<string, readonly [number, number, num
 }
 
 /**
- * Reports whether a coordinate lies outside the country's bounding box, using `bboxes`
- * in place of {@link COUNTRY_BBOX} when supplied and returning `false` for a country with no box.
+ * Reports whether a coordinate lies outside the country's bounding box, using `bboxes` in
+ * place of {@link COUNTRY_BBOX} when supplied and returning `false` for a country with no box.
  */
 export function outsideExpectedCountry(
 	countryCode: string,
@@ -129,8 +129,8 @@ export interface PlausibilityVerdict {
 	implausible: boolean
 
 	/**
-	 * Why the resolution is implausible, set only when `implausible` is true: `country-centroid`
-	 * or `outside-expected-country`.
+	 * Why the resolution is implausible, set only when `implausible` is true:
+	 * `country-centroid` or `outside-expected-country`.
 	 */
 	reason?: "country-centroid" | "outside-expected-country"
 
@@ -159,8 +159,9 @@ export interface PlausibilityOpts {
 }
 
 /**
- * Decides whether a resolved tree's coordinate is implausible: a bare country centroid, or a point
- * outside `expectedCountry`'s bounding box; an unresolved tree is plausible because it serves no coordinate.
+ * Decides whether a resolved tree's coordinate is implausible: a bare country centroid,
+ * or a point outside `expectedCountry`'s bounding box; an unresolved tree is plausible
+ * because it serves no coordinate.
  */
 export function isImplausibleResolution(tree: AddressTree, opts: PlausibilityOpts = {}): PlausibilityVerdict {
 	const coordinate = finestResolvedCoordinate(tree)

@@ -26,7 +26,8 @@ import { SOIL_LAYER_NAME_PREFIX, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 export { FarmlandScope, farmlandScope, SSURGO_PRODUCT_LIMITS } from "#vocabulary"
 
 /**
- * The kinds of answer the layer gives for a coordinate, where `DesignatedNoRating` and `Unknown` must stay apart.
+ * The kinds of answer the layer gives for a coordinate, where `DesignatedNoRating`
+ * and `Unknown` must stay apart.
  */
 export const SoilReadingKind = {
 	/**
@@ -77,7 +78,8 @@ export interface SoilCapabilityDistribution {
 	 */
 	mappedShare: number
 	/**
-	 * The class with the largest share, absent when the cell has no class; a caller that reads `topClass` should also report `topClassShare`, because the top class can hold a small plurality.
+	 * The class with the largest share, absent when the cell has no class; a caller that reads
+	 * `topClass` should also report `topClassShare`, because the top class can hold a small plurality.
 	 */
 	topClass?: string
 	topClassShare?: number
@@ -136,7 +138,8 @@ export interface SoilCapabilityReading {
 	 */
 	indexCellIndex: string
 	/**
-	 * The authority's own statements of what the product does not cover; every reading includes them because the survey supports planning only and does not replace onsite study.
+	 * The authority's own statements of what the product does not cover; every reading includes
+	 * them because the survey supports planning only and does not replace onsite study.
 	 */
 	limits: ReadonlyArray<string>
 }
@@ -171,7 +174,8 @@ export interface SoilCapabilityLookupOptions {
 }
 
 /**
- * Reads a sealed `soil.db`, throwing at construction on a manifest for a different product, an empty coverage table, an empty class vocabulary, or a missing share weighting.
+ * Reads a sealed `soil.db`, throwing at construction on a manifest for a different product,
+ * an empty coverage table, an empty class vocabulary, or a missing share weighting.
  */
 export class SoilCapabilityLookup implements Disposable {
 	readonly identity: SoilLayerIdentity
@@ -241,7 +245,8 @@ export class SoilCapabilityLookup implements Disposable {
 			| undefined
 
 		if (!row) {
-			// At a survey-area edge the coarser coverage cell is covered and this index cell has no delineation, so the location may be outside the survey.
+			// At a survey-area edge the coarser coverage cell is covered and this index cell
+			// has no delineation, so the location may be outside the survey.
 			return {
 				kind: SoilReadingKind.Unknown,
 				coverage,
@@ -286,7 +291,9 @@ export class SoilCapabilityLookup implements Disposable {
 	}
 
 	/**
-	 * Returns the first survey area whose bounding rectangle contains the coordinate; overlapping rectangles may give the wrong area near a corner, affecting only the `surveyArea` label, and the linear scan would need a spatial index for thousands of areas.
+	 * Returns the first survey area whose bounding rectangle contains the coordinate;
+	 * overlapping rectangles may give the wrong area near a corner, affecting only the
+	 * `surveyArea` label, and the linear scan would need a spatial index for thousands of areas.
 	 */
 	#surveyAreaAt(latitude: number, longitude: number): SoilSurveyAreaRecord | undefined {
 		for (const [index, bounds] of this.#bounds.entries()) {
@@ -316,7 +323,8 @@ function readIdentity(
 		Record<string, string | number | null>
 	>
 
-	// The layer name ends with the region the build covers, so the reader checks only the prefix rather than `parseManifestRows`, which compares whole names.
+	// The layer name ends with the region the build covers, so the reader checks only the prefix
+	// rather than `parseManifestRows`, which compares whole names.
 	const row = singleManifestRow(manifestRows, `soil reader: ${databasePath}`)
 	const name = String(row.name)
 

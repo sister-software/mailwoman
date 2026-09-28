@@ -41,7 +41,8 @@ test("CLI secrets stay private and package-owned", () => {
 })
 
 /**
- * A blank environment variable must mean the same as an absent one: `z.coerce` turns it into `0`, which a `.positive()` or `.min()` constraint then rejects.
+ * A blank environment variable must mean the same as an absent one: `z.coerce` turns
+ * it into `0`, which a `.positive()` or `.min()` constraint then rejects.
  */
 const COERCED_NUMERIC_KEYS = ["MAILWOMAN_BATCH_MAX"] as const
 
@@ -63,8 +64,9 @@ describe("blank env values are treated as absent", () => {
 		})
 
 		test(`${key} still REJECTS a genuinely invalid value`, () => {
-			// The blank exemption must not become a general tolerance: a caller who sets 0 or a word has made a mistake worth surfacing.
-						expect(() => PublicMailwomanEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
+			// The blank exemption must not become a general tolerance: a caller who sets 0
+			// or a word has made a mistake worth surfacing.
+			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "0" })).toThrow(/expected/i)
 			expect(() => PublicMailwomanEnvSchema.parse({ [key]: "banana" })).toThrow(/expected/i)
 		})
 	}

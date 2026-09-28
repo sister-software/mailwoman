@@ -38,9 +38,9 @@ import { buildSHA, foldLayerManifest, stampLayerManifest } from "#gazetteer-pipe
 export { DEFAULT_GEONAMES_TAIL_COUNTRIES } from "#gazetteer-pipeline/defaults"
 
 /**
- * The terms the artifact's `layer_manifest` records for a given country list, carrying
- * `LicenseRef-Undeclared-Input` at `build-local` because GB's Northern Ireland rows have no documented
- * provenance.
+ * The terms the artifact's `layer_manifest` records for a given country list,
+ * carrying `LicenseRef-Undeclared-Input` at `build-local` because GB's Northern
+ * Ireland rows have no documented provenance.
  */
 export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTier; license: string } {
 	if (countries.includes("GB")) {
@@ -54,16 +54,16 @@ export function geonamesTailTerms(countries: readonly string[]): { tier: LayerTi
 }
 
 /**
- * Kysely read/write interface for the database's provenance table, read at open so the licence obligation
- * and source fingerprints travel with the database.
+ * Kysely read/write interface for the database's provenance table, read at open
+ * so the licence obligation and source fingerprints travel with the database.
  */
 export interface DatabaseMetaDatabase {
 	meta: ExtractMetaTable
 }
 
 /**
- * Create the provenance `meta` table, co-located with {@link DatabaseMetaDatabase} so a column added to one
- * is a compile error against the other.
+ * Create the provenance `meta` table, co-located with {@link DatabaseMetaDatabase}
+ * so a column added to one is a compile error against the other.
  */
 export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(db: DatabaseClient<DB>): Promise<void> {
 	const kdb = db
@@ -77,8 +77,8 @@ export async function createDatabaseMetaTable<DB extends DatabaseMetaDatabase>(d
 }
 
 /**
- * Upsert provenance rows into a `meta` table the caller has already created, one implementation for every
- * database and postcode-locality builder.
+ * Upsert provenance rows into a `meta` table the caller has already created,
+ * one implementation for every database and postcode-locality builder.
  */
 export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<readonly [string, string]>): void {
 	const insert = db.prepare("INSERT OR REPLACE INTO meta (key, value) VALUES (?, ?)")
@@ -89,8 +89,8 @@ export function writeMetaRows<DB>(db: DatabaseClient<DB>, rows: ReadonlyArray<re
 }
 
 /**
- * What a source dump contributed, fingerprinted, where `rows` is the distinct normalized-postcode count
- * well below the dump's line count wherever GeoNames carries one row per (postcode, settlement).
+ * What a source dump contributed, fingerprinted, where `rows` is the distinct normalized-postcode
+ * count well below the dump's line count wherever GeoNames carries one row per (postcode, settlement).
  */
 export interface GeonamesPostalSourceFact {
 	country: string
@@ -99,9 +99,9 @@ export interface GeonamesPostalSourceFact {
 	md5: string
 	rows: number
 	/**
-	 * How many of those codes the dump carried on several rows that all named one coordinate, which GeoNames
-	 * averages from neighbouring codes where a name match fails, so the count tells a consumer how much of a
-	 * country's coverage is inherited rather than agreed.
+	 * How many of those codes the dump carried on several rows that all named one coordinate,
+	 * which GeoNames averages from neighbouring codes where a name match fails, so the count
+	 * tells a consumer how much of a country's coverage is inherited rather than agreed.
 	 */
 	singlePointRows: number
 }
@@ -112,8 +112,8 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 */
 	countries?: readonly string[]
 	/**
-	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip), defaulting to
-	 * `<data-root>/geonames-postal`.
+	 * GeoNames postal dump dir holding `<CC>.txt` (download.geonames.org/export/zip),
+	 * defaulting to `<data-root>/geonames-postal`.
 	 */
 	postalDir?: PathBuilderLike
 	/**
@@ -122,8 +122,8 @@ export interface BuildPostcodeGeonamesTailOptions {
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Build clock, stamped into `meta.built_at` and the default output name, passed in so the module never
-	 * reads the clock implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock, stamped into `meta.built_at` and the default output name, passed in
+	 * so the module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -138,8 +138,8 @@ export interface BuildPostcodeGeonamesTailResult {
 	inserted: number
 	byCountry: Record<string, number>
 	/**
-	 * Countries whose `<CC>.txt` was absent, reported rather than fatal because the parity check decides
-	 * whether the partial database may be promoted.
+	 * Countries whose `<CC>.txt` was absent, reported rather than fatal because the
+	 * parity check decides whether the partial database may be promoted.
 	 */
 	missing: string[]
 	sources: GeonamesPostalSourceFact[]
@@ -225,8 +225,8 @@ export async function buildPostcodeGeonamesTail(
 		phase
 	)
 
-	// The layer interface's manifest beside the `meta` record; the candidate build reads its tier before
-	// folding the database.
+	// The layer interface's manifest beside the `meta` record; the candidate build
+	// reads its tier before folding the database.
 	phase("layer-manifest")
 
 	await stampLayerManifest(
@@ -263,8 +263,8 @@ export async function buildPostcodeGeonamesTail(
 }
 
 /**
- * Fingerprint each present source dump, giving a missing country no fact row rather than a zeroed one
- * because `rows: 0` would read as measured-empty rather than never present.
+ * Fingerprint each present source dump, giving a missing country no fact row rather than
+ * a zeroed one because `rows: 0` would read as measured-empty rather than never present.
  */
 async function collectSourceFacts(
 	countries: readonly string[],
@@ -298,9 +298,9 @@ async function collectSourceFacts(
 const GEONAMES_ATTRIBUTION = "Contains data from GeoNames (geonames.org), © GeoNames contributors, CC-BY 4.0"
 
 /**
- * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey Code-Point Open under OGL
- * v3, whose OS attribution block a redistributor must carry, while the ~48,990 `BT` rows plus IM/GY/JE have
- * no documented provenance.
+ * GB is not plain GeoNames provenance: the GB rows derive from Ordnance Survey
+ * Code-Point Open under OGL v3, whose OS attribution block a redistributor must carry,
+ * while the ~48,990 `BT` rows plus IM/GY/JE have no documented provenance.
  */
 const GB_LICENSE_NOTE =
 	"GB rows come from the GeoNames GB_full dump, whose GB (England/Scotland/Wales) portion derives from Ordnance " +
@@ -322,8 +322,8 @@ interface DatabaseMetaInput {
 }
 
 /**
- * Bake the provenance record into the staging DB before vacuum and seal, since a shipped DB is never
- * patched, with `sources` stored as JSON so the per-file md5s stay machine-readable.
+ * Bake the provenance record into the staging DB before vacuum and seal, since a shipped DB
+ * is never patched, with `sources` stored as JSON so the per-file md5s stay machine-readable.
  */
 async function writeDatabaseMeta<DB extends DatabaseMetaDatabase>(
 	db: DatabaseClient<DB>,

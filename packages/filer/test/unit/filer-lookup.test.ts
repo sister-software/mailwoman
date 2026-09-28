@@ -119,7 +119,8 @@ function minimalForm499Row(overrides: Partial<Form499Row> = {}): Form499Row {
 
 describe("§7-3a criteria", () => {
 	describe("1. Provenance completeness (required)", () => {
-		// The `satisfies` clause forces a reviewer to decide whether a new `FilerEdgeTable` field is required provenance, though only `yarn typecheck:tests` checks it because Vitest strips types.
+		// The `satisfies` clause forces a reviewer to decide whether a new `FilerEdgeTable` field is
+		// required provenance, though only `yarn typecheck:tests` checks it because Vitest strips types.
 		type FilerEdgeInsert = Insertable<FilerEdgeTable>
 
 		const FILER_EDGE_INSERT_FIELDS = {
@@ -425,7 +426,8 @@ describe("§7-3a criteria", () => {
 			expect(after.cluster).toEqual({ cluster_id: "authoritative:C", members: [FRN_C, FORM_C].toSorted() })
 		})
 
-		// The two rows differ only in the graded fields, so dropping either from the projection would let `.distinct()` merge them.
+		// The two rows differ only in the graded fields, so dropping either from the
+		// projection would let `.distinct()` merge them.
 		it("filerLookup.families reports an INFERRED family membership separately from an AUTHORITATIVE one for the same family — never folded together (criterion 2, on filer_family)", async () => {
 			using db = openMemory()
 			await createAllTables(db)
@@ -895,7 +897,8 @@ describe("§7-3a criteria", () => {
 
 describe("§7-3b criteria", () => {
 	describe("1. Family and entity cluster are never conflated (required)", () => {
-		// `FilerLookupCluster` and `FilerLookupFamily` share no fields, so assigning one to the other fails to compile, though only `yarn typecheck:tests` catches it.
+		// `FilerLookupCluster` and `FilerLookupFamily` share no fields, so assigning one to
+		// the other fails to compile, though only `yarn typecheck:tests` catches it.
 		it("FilerLookupCluster and FilerLookupFamily are structurally incompatible types", () => {
 			const clusterShaped: FilerLookupCluster = { cluster_id: "authoritative:x", members: ["a", "b"] }
 
@@ -1005,7 +1008,8 @@ describe("§7-3b criteria", () => {
 			])
 		})
 
-		// `readAuthoritativeGroups` must follow only `same_entity` edges; following `HoldingCompany` edges would merge the three filers into one cluster.
+		// `readAuthoritativeGroups` must follow only `same_entity` edges; following
+		// `HoldingCompany` edges would merge the three filers into one cluster.
 		it("REAL builder + REAL clusterAuthoritativeComponents: 3 FRNs sharing one holding company yield 3 distinct entity clusters and 1 shared family — never merged", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.path("filer.db")
@@ -1113,7 +1117,8 @@ describe("§7-3b criteria", () => {
 			expect(memberFRNValues.toSorted()).toEqual(frnNodeIDs.toSorted())
 		})
 
-		// "Acme Corp" and "Acme Corporation, LLC" canonicalize to the same family, so both spellings must appear in `display_names`, sorted.
+		// "Acme Corp" and "Acme Corporation, LLC" canonicalize to the same family,
+		// so both spellings must appear in `display_names`, sorted.
 		it("REAL builder, multi-spelling family: two raw holding-company spellings that canonicalize identically both survive in display_names, sorted — never collapsed to one", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.path("filer.db")
@@ -1242,7 +1247,8 @@ describe("§7-3b criteria", () => {
 			expect(memberNodeIDs).toEqual([frnNodeID, frnNodeID])
 		})
 
-		// With two holding-company edges sharing a source and date, each family must list only the name of its own holding company.
+		// With two holding-company edges sharing a source and date, each family must
+		// list only the name of its own holding company.
 		it("display_names never leaks across a DIFFERENT family: REAL builder, provider-list path — one providerID with two DIFFERENT holding companies under the same source+valid_from never cross-contaminates each family's display_names", async () => {
 			await using scratch = await temporaryDirectory("filer-lookup-check1-")
 			const out = scratch.path("filer.db")
@@ -1332,7 +1338,8 @@ describe("§7-3b criteria", () => {
 	})
 
 	describe("2. Relationship kind + provenance mandatory on every family row", () => {
-		// The `satisfies` clause forces a reviewer to decide whether a new `FilerFamilyTable` field is required, though only `yarn typecheck:tests` checks it.
+		// The `satisfies` clause forces a reviewer to decide whether a new `FilerFamilyTable`
+		// field is required, though only `yarn typecheck:tests` checks it.
 		type FilerFamilyInsert = Insertable<FilerFamilyTable>
 
 		const FILER_FAMILY_INSERT_FIELDS = {
@@ -1632,7 +1639,8 @@ describe("§7-3b criteria", () => {
 			const rollup = await familyRollup(db, { familyID: cikNodeID, asOf })
 			expect(rollup).toHaveLength(1)
 
-			// The `source` alone cannot mark the row as inferred because the EDGAR source also writes an authoritative disclosure edge.
+			// The `source` alone cannot mark the row as inferred because the EDGAR source
+			// also writes an authoritative disclosure edge.
 			expect(rollup[0]?.members).toEqual([
 				{
 					node_id: `${FilerIdentifierType.FRN}:${FRN_SUBSIDIARY}`,

@@ -7,8 +7,8 @@
 import type { TokenizedPiece } from "#tokenizer"
 
 /**
- * The width of the gazetteer candidate-tag channel, which must match the lexicon's `feature_dim` and
- * the model's `gazetteer_feature_dim`.
+ * The width of the gazetteer candidate-tag channel, which must match the lexicon's
+ * `feature_dim` and the model's `gazetteer_feature_dim`.
  */
 export const GAZETTEER_FEATURE_DIM = 5
 
@@ -42,16 +42,16 @@ export interface GazetteerLexicon {
 	codeEntries: Map<string, number>
 
 	/**
-	 * Whether a matched span paints no tag when a span word or its nearest non-empty neighbor contains
-	 * a decimal digit, read from the artifact's `rules.digit_guard` so training and inference apply the
-	 * same rule.
+	 * Whether a matched span paints no tag when a span word or its nearest non-empty
+	 * neighbor contains a decimal digit, read from the artifact's `rules.digit_guard`
+	 * so training and inference apply the same rule.
 	 */
 	digitGuard: boolean
 }
 
 /**
- * Validates an already-parsed gazetteer lexicon object into a {@link GazetteerLexicon}, taking parsed
- * JSON rather than a path so the module stays browser-safe.
+ * Validates an already-parsed gazetteer lexicon object into a {@link GazetteerLexicon},
+ * taking parsed JSON rather than a path so the module stays browser-safe.
  */
 export function parseGazetteerLexicon(raw: {
 	feature_dim: number
@@ -237,9 +237,9 @@ export function gazetteerCharPaint(text: string, lexicon: GazetteerLexicon): num
 }
 
 /**
- * Returns a copy of the gazetteer features with the clue zeroed on pieces within `window` of any piece
- * with `anchorConfidence > 0`, because a region clue just before a US postcode otherwise strengthens
- * `B-region` enough to cost the postcode its tag.
+ * Returns a copy of the gazetteer features with the clue zeroed on pieces within
+ * `window` of any piece with `anchorConfidence > 0`, because a region clue just
+ * before a US postcode otherwise strengthens `B-region` enough to cost the postcode its tag.
  */
 export function suppressGazetteerNearPostcode(
 	gazetteer: { features: number[][]; confidence: number[] },
@@ -270,9 +270,9 @@ export function suppressGazetteerNearPostcode(
 }
 
 /**
- * Projects per-character bitmasks onto `pieces`, giving each piece the bits of its first
- * non-whitespace character or `0` if it has none, so every channel built on {@link gazetteerCharPaint}
- * matches the label projection.
+ * Projects per-character bitmasks onto `pieces`, giving each piece the bits of its
+ * first non-whitespace character or `0` if it has none, so every channel built on
+ * {@link gazetteerCharPaint} matches the label projection.
  */
 export function projectCharBitsToPieces(
 	text: string,

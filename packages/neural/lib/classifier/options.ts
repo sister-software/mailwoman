@@ -35,21 +35,21 @@ export interface NeuralAddressClassifierConfig {
 	tokenizer?: MailwomanTokenizer
 
 	/**
-	 * The character vocabulary and encoder interface for a character-input model, whose runner must
-	 * implement `inferChars`.
+	 * The character vocabulary and encoder interface for a character-input model,
+	 * whose runner must implement `inferChars`.
 	 */
 	charEncoder?: { vocabulary: CharVocabulary; interface: CharEncoderInterface }
 	runner: NeuralRunner
 
 	/**
-	 * The label vocabulary in the order the model emits it, defaulting to the Stage 2 BIO labels, of
-	 * which the Stage 1 labels are a prefix.
+	 * The label vocabulary in the order the model emits it, defaulting to the Stage
+	 * 2 BIO labels, of which the Stage 1 labels are a prefix.
 	 */
 	labels?: readonly string[]
 
 	/**
-	 * The decoding strategy, defaulting to `viterbi`, which applies the BIO structural mask so it never
-	 * emits an orphan `I-*` label.
+	 * The decoding strategy, defaulting to `viterbi`, which applies the BIO structural mask
+	 * so it never emits an orphan `I-*` label.
 	 */
 	decode?: "viterbi" | "argmax"
 
@@ -70,14 +70,14 @@ export interface NeuralAddressClassifierConfig {
 	endTransitions?: number[]
 
 	/**
-	 * The semi-Markov segment-transition grammar from `semi-crf-transitions.json`, set by
-	 * `loadFromWeights` when the bundle includes the file.
+	 * The semi-Markov segment-transition grammar from `semi-crf-transitions.json`,
+	 * set by `loadFromWeights` when the bundle includes the file.
 	 */
 	semiCRFGrammar?: SemiCRFTransitions
 
 	/**
-	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) in the resolved weights package,
-	 * which the runtime pipeline loads into `ParseOpts.fst`.
+	 * The path to the per-locale FST gazetteer (`fst-<locale>.bin`) in the resolved
+	 * weights package, which the runtime pipeline loads into `ParseOpts.fst`.
 	 */
 	fstPath?: PathBuilderLike
 
@@ -87,8 +87,8 @@ export interface NeuralAddressClassifierConfig {
 	streetMorphologyPath?: string
 
 	/**
-	 * The path to the loaded `model.onnx`, reported through `resolvedWeights` because weight resolution
-	 * tries several locations.
+	 * The path to the loaded `model.onnx`, reported through `resolvedWeights`
+	 * because weight resolution tries several locations.
 	 */
 	modelPath?: string
 
@@ -117,27 +117,27 @@ export interface NeuralAddressClassifierConfig {
 	gazetteerLexicon?: GazetteerLexicon
 
 	/**
-	 * The country-surface lexicon for a model trained with the `country_features` and
-	 * `country_confidence` inputs, which `suppressGazetteerNearPostcode` leaves unchanged.
+	 * The country-surface lexicon for a model trained with the `country_features`
+	 * and `country_confidence` inputs, which `suppressGazetteerNearPostcode` leaves unchanged.
 	 */
 	countryLexicon?: CountryLexicon
 
 	/**
-	 * The street-type evidence lexicon for a model trained with the `street_type_*` inputs, withheld
-	 * when `ParseOpts.inputMode` is `formatted`.
+	 * The street-type evidence lexicon for a model trained with the `street_type_*` inputs,
+	 * withheld when `ParseOpts.inputMode` is `formatted`.
 	 */
 	streetTypeLexicon?: GazetteerLexicon
 
 	/**
-	 * The locality-surface evidence lexicon for a model trained with the `locality_surface_*` inputs,
-	 * withheld when `ParseOpts.inputMode` is `formatted`.
+	 * The locality-surface evidence lexicon for a model trained with the `locality_surface_*`
+	 * inputs, withheld when `ParseOpts.inputMode` is `formatted`.
 	 */
 	localitySurfaceLexicon?: GazetteerLexicon
 
 	/**
-	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit, needing both
-	 * `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a model trained with the matching
-	 * `data.gazetteer_choreography`.
+	 * Whether to zero the gazetteer channel on pieces next to a postcode-anchor hit,
+	 * needing both `gazetteerLexicon` and `postcodeAnchorLookup` and set only for a
+	 * model trained with the matching `data.gazetteer_choreography`.
 	 */
 	suppressGazetteerNearPostcode?: boolean
 
@@ -147,34 +147,34 @@ export interface NeuralAddressClassifierConfig {
 	addressSystemConventions?: "auto" | SystemCode
 
 	/**
-	 * Whether to merge adjacent same-tag spans separated only by short punctuation, which the model
-	 * splits because the corpus label format cannot mark punctuation inside a span.
+	 * Whether to merge adjacent same-tag spans separated only by short punctuation, which the
+	 * model splits because the corpus label format cannot mark punctuation inside a span.
 	 */
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * The span proposer configuration, omitted meaning a default built from the codex lexicon and
-	 * `false` disabling it; its proposals add emission priors and annotation and quoted spans block
-	 * punctuation-bridge merges.
+	 * The span proposer configuration, omitted meaning a default built from the codex lexicon
+	 * and `false` disabling it; its proposals add emission priors and annotation
+	 * and quoted spans block punctuation-bridge merges.
 	 */
 	spanProposer?: SpanProposerConfig | false
 
 	/**
-	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair` and
-	 * set by `loadFromWeights` only when the weights include a `pair-index-<cc>.bin`.
+	 * The default placetype-pair prior options, overridden per parse by `ParseOpts.placetypePair`
+	 * and set by `loadFromWeights` only when the weights include a `pair-index-<cc>.bin`.
 	 */
 	placetypePair?: PlacetypePairPriorOpts
 
 	/**
-	 * The default placetype census, which never changes the decode and is probed only while tracing with
-	 * the placetype-pair prior active.
+	 * The default placetype census, which never changes the decode and is probed only
+	 * while tracing with the placetype-pair prior active.
 	 */
 	placetypeCensus?: PlacetypeCensusLike
 
 	/**
-	 * The default for the repair that gives every piece of a whitespace-delimited word one tag by a
-	 * confidence-weighted vote, defaulting to `WORD_CONSISTENCY_SHIP_DEFAULT` and never running on the
-	 * character path.
+	 * The default for the repair that gives every piece of a whitespace-delimited word one
+	 * tag by a confidence-weighted vote, defaulting to `WORD_CONSISTENCY_SHIP_DEFAULT`
+	 * and never running on the character path.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
 }
@@ -213,8 +213,8 @@ export interface ParseOpts {
 	queryShapeBiasScale?: number
 
 	/**
-	 * The input register, defaulting to `fragmented`, where `formatted` withholds the street-type and
-	 * locality-surface lexicons because those channels help fragments and hurt full-address parses.
+	 * The input register, defaulting to `fragmented`, where `formatted` withholds the street-type
+	 * and locality-surface lexicons because those channels help fragments and hurt full-address parses.
 	 */
 	inputMode?: "fragmented" | "formatted"
 
@@ -238,24 +238,24 @@ export interface ParseOpts {
 	fstImportanceLengthScaleMode?: ImportanceLengthScaleMode
 
 	/**
-	 * The multiplier on the positive FST bias when a matched place name sits in a street position,
-	 * defaulted to 0.25 by the FST prior and 0 by the runtime pipeline.
+	 * The multiplier on the positive FST bias when a matched place name sits in a street
+	 * position, defaulted to 0.25 by the FST prior and 0 by the runtime pipeline.
 	 *
 	 * @internal
 	 */
 	fstStreetContextPositiveScale?: number
 
 	/**
-	 * Whether the FST street-context check runs, defaulting to true so `false` keeps the street-morphology
-	 * prior without the check.
+	 * Whether the FST street-context check runs, defaulting to true so `false` keeps
+	 * the street-morphology prior without the check.
 	 *
 	 * @internal
 	 */
 	fstStreetContextRequirement?: boolean
 
 	/**
-	 * The street-morphology FST matcher, whose prior biases matched street-type affixes toward
-	 * `street_prefix` or `street_suffix` and adjacent name tokens toward `street`.
+	 * The street-morphology FST matcher, whose prior biases matched street-type affixes
+	 * toward `street_prefix` or `street_suffix` and adjacent name tokens toward `street`.
 	 */
 	fstStreetMorphology?: FSTMatcherLike
 
@@ -265,32 +265,32 @@ export interface ParseOpts {
 	fstStreetMorphologyOpts?: StreetMorphologyPriorOpts
 
 	/**
-	 * Whether to snap or add postcode spans matching a known shape after decoding, also run whenever the
-	 * detected address system declares a postcode shape.
+	 * Whether to snap or add postcode spans matching a known shape after decoding,
+	 * also run whenever the detected address system declares a postcode shape.
 	 */
 	postcodeRepair?: boolean
 
 	/**
-	 * A per-parse override of the config's `enforceWordConsistency`, where an options object sets the
-	 * vote thresholds and `true` runs the unthresholded vote.
+	 * A per-parse override of the config's `enforceWordConsistency`, where an options
+	 * object sets the vote thresholds and `true` runs the unthresholded vote.
 	 */
 	enforceWordConsistency?: boolean | WordConsistencyOpts
 
 	/**
-	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12" or "#104" after decoding,
-	 * defaulting to false.
+	 * Whether to snap or add secondary-unit spans such as "Apt 4B", "Ste 12"
+	 * or "#104" after decoding, defaulting to false.
 	 */
 	unitRepair?: boolean
 
 	/**
-	 * Whether to title-case all-caps ASCII input before inference, defaulting to true, since the model
-	 * trains on mixed-case text and mixed-case input is left unchanged.
+	 * Whether to title-case all-caps ASCII input before inference, defaulting to true,
+	 * since the model trains on mixed-case text and mixed-case input is left unchanged.
 	 */
 	normalizeCase?: boolean
 
 	/**
-	 * A calibrator that maps each decoded span's confidence to a calibrated probability of correctness,
-	 * omitted to keep the raw softmax confidence.
+	 * A calibrator that maps each decoded span's confidence to a calibrated probability
+	 * of correctness, omitted to keep the raw softmax confidence.
 	 */
 	calibrate?: Calibrator
 
@@ -300,14 +300,14 @@ export interface ParseOpts {
 	bridgePunctuationGaps?: boolean
 
 	/**
-	 * Whether to run the configured span proposer for this parse, defaulting to true, though `true`
-	 * cannot enable a proposer the config disabled.
+	 * Whether to run the configured span proposer for this parse, defaulting to true,
+	 * though `true` cannot enable a proposer the config disabled.
 	 */
 	spanProposer?: boolean
 
 	/**
-	 * The address-system conventions to enforce, `auto` detecting the system from the model's locale head
-	 * at a probability of 0.8 or higher and a `SystemCode` pinning it.
+	 * The address-system conventions to enforce, `auto` detecting the system from the model's
+	 * locale head at a probability of 0.8 or higher and a `SystemCode` pinning it.
 	 */
 	addressSystemConventions?: "auto" | SystemCode
 
@@ -318,8 +318,8 @@ export interface ParseOpts {
 	placetypePair?: PlacetypePairPriorOpts | false
 
 	/**
-	 * A per-parse override of the config's `placetypeCensus`, `false` disabling it, which changes only
-	 * what `traceParse` records.
+	 * A per-parse override of the config's `placetypeCensus`, `false` disabling it,
+	 * which changes only what `traceParse` records.
 	 */
 	placetypeCensus?: PlacetypeCensusLike | false
 }

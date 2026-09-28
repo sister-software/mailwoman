@@ -34,8 +34,8 @@ afterEach(() => {
 })
 
 /**
- * A schema-less empty db is a faithful "file present" fixture for both callers because they only re-open
- * read-only and never query.
+ * A schema-less empty db is a faithful "file present" fixture for both callers
+ * because they only re-open read-only and never query.
  */
 async function emptySqliteFile(name: string): Promise<PathBuilder> {
 	scratch = await temporaryDirectory("mcp-layer-guards-")

@@ -81,7 +81,8 @@ describe("outputLines", () => {
 	})
 
 	it("omits the sections whose source produced nothing", () => {
-		// Omitted rather than rendered empty, because an empty `kind` section would read as the classifier having no opinion rather than nobody asking it.
+		// Omitted rather than rendered empty, because an empty `kind` section would read
+		// as the classifier having no opinion rather than nobody asking it.
 		const lines = outputLines({ result: { ...RESULT, hierarchy: [], candidates: [] }, tree: TREE })
 
 		expect(labels(lines)).toEqual(["components", "resolved"])
@@ -104,7 +105,8 @@ describe("outputLines", () => {
 	})
 
 	it("reads the resolved place off the DEEPEST hierarchy entry, not the candidate head", () => {
-		// On a rooftop tier the candidate head is the resolver's primary node, often the region, not the place the query resolved to.
+		// On a rooftop tier the candidate head is the resolver's primary node,
+		// often the region, not the place the query resolved to.
 		const result = {
 			...RESULT,
 			candidates: [

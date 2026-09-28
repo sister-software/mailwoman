@@ -31,8 +31,8 @@ export interface InferEvidenceChannels {
 }
 
 /**
- * The shared `infer()` signature implemented by `ONNXRunner.infer`, `WebONNXRunner.infer` and the
- * classifier's `NeuralRunner` interface.
+ * The shared `infer()` signature implemented by `ONNXRunner.infer`, `WebONNXRunner.infer`
+ * and the classifier's `NeuralRunner` interface.
  */
 export type InferFunction = (
 	tokenIDs: number[],
@@ -54,8 +54,8 @@ export interface InferResult {
 	logits: number[][]
 	numLabels: number
 	/**
-	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order) when the model
-	 * exports it; consumers must treat undefined as no address-system detection available.
+	 * Pooled locale-head posterior (`locale_logits` output, LOCALE_COUNTRIES order) when the
+	 * model exports it; consumers must treat undefined as no address-system detection available.
 	 */
 	localeLogits?: number[]
 	/**
@@ -71,7 +71,8 @@ export interface InferResult {
 }
 
 /**
- * A packed tensor payload: the typed-array data plus the dims a runner hands to its `ort.Tensor` constructor.
+ * A packed tensor payload: the typed-array data plus the dims a runner hands
+ * to its `ort.Tensor` constructor.
  */
 export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32Array> {
 	data: Data
@@ -79,8 +80,8 @@ export interface PackedFeed<Data extends Float32Array | BigInt64Array = Float32A
 }
 
 /**
- * The `{data, dims}` view of an output tensor `decodeInferOutput` reads, structurally satisfied by
- * an `ort.Tensor` whose float32 dtype the export interface guarantees.
+ * The `{data, dims}` view of an output tensor `decodeInferOutput` reads, structurally
+ * satisfied by an `ort.Tensor` whose float32 dtype the export interface guarantees.
  */
 export interface OutputTensor {
 	readonly data: Float32Array
@@ -88,9 +89,9 @@ export interface OutputTensor {
 }
 
 /**
- * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair — pad to
- * `fixedSeqLen` with id 0 + mask 0 and truncate if longer — and return the real (unpadded)
- * `seqLen` every downstream read trims to.
+ * Pack the token ids into the fixed-length `input_ids`/`attention_mask` pair —
+ * pad to `fixedSeqLen` with id 0 + mask 0 and truncate if longer — and return the
+ * real (unpadded) `seqLen` every downstream read trims to.
  */
 export function packTokenFeed(
 	tokenIDs: number[],
@@ -113,8 +114,8 @@ export function packTokenFeed(
 }
 
 /**
- * Pack a char-path encoding into the two int64 tensors the char graph declares; `seqLen` is the
- * count of real units the logits are trimmed back to.
+ * Pack a char-path encoding into the two int64 tensors the char graph declares;
+ * `seqLen` is the count of real units the logits are trimmed back to.
  */
 export function packCharFeed(
 	charIDs: ReadonlyArray<readonly number[]>,
@@ -149,8 +150,8 @@ export function packCharFeed(
 
 /**
  * Pack one soft-feed channel into its `<prefix>_features` + `<prefix>_confidence` tensors,
- * zero-padded to `fixedSeqLen`; an `undefined` channel packs the confidence=0 identity the model
- * treats as channel-off.
+ * zero-padded to `fixedSeqLen`; an `undefined` channel packs the confidence=0
+ * identity the model treats as channel-off.
  */
 function packChannelFeed(
 	channel: InferChannel | undefined,
@@ -181,9 +182,9 @@ function packChannelFeed(
 }
 
 /**
- * Pack every soft-feed channel the graph declares, in feed-name order: a supplied channel the graph
- * does not declare is never fed (an undeclared feed crashes ORT), and a declared channel the caller
- * omitted gets the zero-fill confidence=0 identity.
+ * Pack every soft-feed channel the graph declares, in feed-name order: a supplied
+ * channel the graph does not declare is never fed (an undeclared feed crashes ORT),
+ * and a declared channel the caller omitted gets the zero-fill confidence=0 identity.
  */
 export function packSoftChannelFeeds(
 	inputNames: readonly string[],
@@ -227,8 +228,8 @@ export function packSoftChannelFeeds(
 }
 
 /**
- * Decode a session's outputs into an {@link InferResult} trimmed to the real `seqLen` (the pad tail
- * is never real); absent tensors yield absent fields.
+ * Decode a session's outputs into an {@link InferResult} trimmed to the real `seqLen`
+ * (the pad tail is never real); absent tensors yield absent fields.
  */
 export function decodeInferOutput(
 	output: { logits?: OutputTensor; localeLogits?: OutputTensor; spanScores?: OutputTensor },
@@ -296,9 +297,9 @@ export function decodeInferOutput(
 
 /**
  * Back-compat inference of the required soft-feature channels from a model's declared input names:
- * a graph exporting `<channel>_features` declared that channel mandatory at train time, so cards
- * without a `requires` block route through here and the fail-closed guard still guards them;
- * conventions/bridge have no dedicated input and stay undeclared.
+ * a graph exporting `<channel>_features` declared that channel mandatory at train time,
+ * so cards without a `requires` block route through here and the fail-closed guard still
+ * guards them; conventions/bridge have no dedicated input and stay undeclared.
  */
 export function inferRequiredChannelsFromInputs(inputNames: readonly string[]): RequiredChannels {
 	const names = new Set(inputNames)

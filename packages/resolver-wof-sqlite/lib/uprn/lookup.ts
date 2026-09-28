@@ -15,17 +15,20 @@ import type { PathBuilderLike } from "path-ts"
 import type { UPRNDatabase } from "#uprn/schema"
 import { uprnFullCell } from "#uprn/schema"
 /**
- * Conservative floor, in metres, on the centre distance one unit of res-9 grid distance buys, so multiplying a grid distance under-states reach and can never end the ring walk early.
+ * Conservative floor, in metres, on the centre distance one unit of res-9 grid distance buys,
+ * so multiplying a grid distance under-states reach and can never end the ring walk early.
  */
 const RES9_CENTER_SPACING_FLOOR_M = 150
 
 /**
- * Conservative ceiling, in metres, on a res-9 cell's centre-to-vertex distance, so a point within `radiusM` of the query sits in a cell whose centre is within `radiusM` plus this.
+ * Conservative ceiling, in metres, on a res-9 cell's centre-to-vertex distance, so a point
+ * within `radiusM` of the query sits in a cell whose centre is within `radiusM` plus this.
  */
 const RES9_CELL_RADIUS_CEILING_M = 300
 
 /**
- * Hard ceiling on `radiusM` that keeps the probe bounded, since a caller wanting a wider search than "which property is this coordinate" has outgrown this reader.
+ * Hard ceiling on `radiusM` that keeps the probe bounded, since a caller wanting a wider
+ * search than "which property is this coordinate" has outgrown this reader.
  */
 export const UPRN_MAX_NEAREST_RADIUS_M = 10_000
 
@@ -67,7 +70,8 @@ interface UPRNRow {
 export class UPRNLookup implements Disposable {
 	#db: DatabaseClient<UPRNDatabase>
 	/**
-	 * Ownership is membership: a connection handed in by a caller is not in here, so disposal cannot reach it.
+	 * Ownership is membership: a connection handed in by a caller is not in here,
+	 * so disposal cannot reach it.
 	 */
 	readonly #resources = new DisposableStack()
 
@@ -95,7 +99,8 @@ export class UPRNLookup implements Disposable {
 	}
 
 	/**
-	 * The single nearest uprn within `radiusM` metres of the query point, or `null` when no uprn lies inside the radius.
+	 * The single nearest uprn within `radiusM` metres of the query point, or `null`
+	 * when no uprn lies inside the radius.
 	 *
 	 * @throws {RangeError} When `radiusM` is not a positive finite number, or exceeds the cap.
 	 */

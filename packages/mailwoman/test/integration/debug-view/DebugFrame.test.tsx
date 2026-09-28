@@ -158,7 +158,8 @@ describe("DebugFrame", () => {
 			140
 		)
 
-		// The rows keep their place and each says it has no evidence rather than a fabricated system, an empty token list, or a zeroed channel.
+		// The rows keep their place and each says it has no evidence rather than a
+		// fabricated system, an empty token list, or a zeroed channel.
 		expect(text).toContain("locale-head")
 		expect(text).not.toContain("us (auto)")
 		expect(text).not.toContain("not fed")
@@ -236,7 +237,8 @@ describe("DebugFrame", () => {
 		const rows = 30
 		const cellSize = mapPaneCellSize(columns, rows)
 		const cellCount = cellSize.columns * cellSize.rows
-		// Every cell inked with a distinctive marker char, because a total-line-count check cannot tell a rendered row from one Ink silently drops to fit its declared height.
+		// Every cell inked with a distinctive marker char, because a total-line-count check
+		// cannot tell a rendered row from one Ink silently drops to fit its declared height.
 		const MARKER_CODEPOINT = "#".codePointAt(0)!
 
 		const frame = {
@@ -261,7 +263,8 @@ describe("DebugFrame", () => {
 		const lines = frameLines(text)
 		const markedLineCount = lines.filter((line) => line.includes("#")).length
 
-		// Every requested frame row actually rendered, since an undercounted chrome budget clips rows to fit MapPane's declared box height.
+		// Every requested frame row actually rendered, since an undercounted chrome
+		// budget clips rows to fit MapPane's declared box height.
 		expect(markedLineCount).toBe(cellSize.rows)
 		expect(text).toContain("map")
 		expect(text).toContain("test attribution")
@@ -269,7 +272,8 @@ describe("DebugFrame", () => {
 	})
 
 	it("keeps the pane budgets in step with the frame's fixed chrome", async () => {
-		// The two exported budgets subtract the same input area (9) plus footer (1) before their own chrome, so asserting the pair catches a row added to one without the other.
+		// The two exported budgets subtract the same input area (9) plus footer (1) before
+		// their own chrome, so asserting the pair catches a row added to one without the other.
 		expect(mapPaneCellSize(100, 30)).toEqual({ columns: 48, rows: 16 })
 		expect(outputPaneCapacity(30)).toBe(17)
 

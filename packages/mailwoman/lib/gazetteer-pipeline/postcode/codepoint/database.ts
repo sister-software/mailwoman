@@ -54,8 +54,8 @@ function attributionYear(metadata: CodePointMetadata, now: Date): number {
 }
 
 /**
- * Compose the artifact's `layer_manifest` from the release it reproduces, at the `shipped` tier because
- * OGL v3 carries attribution and no share-alike term.
+ * Compose the artifact's `layer_manifest` from the release it reproduces, at the
+ * `shipped` tier because OGL v3 carries attribution and no share-alike term.
  */
 export function codePointLayerManifest(input: {
 	osVersion: string
@@ -78,15 +78,15 @@ export function codePointLayerManifest(input: {
 }
 
 /**
- * ISO-3166-1 alpha-2 stamped on every row; Code-Point Open is GB-only, and the ONS code distinguishing
- * England/Scotland/Wales is not what `spr.country` means.
+ * ISO-3166-1 alpha-2 stamped on every row; Code-Point Open is GB-only, and the ONS code
+ * distinguishing England/Scotland/Wales is not what `spr.country` means.
  */
 const COUNTRY = "GB"
 
 export interface BuildPostcodeCodePointOptions {
 	/**
-	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted `Data/CSV` tree,
-	 * defaulting to `<data-root>/codepoint/<yyyy-MM-DD>`.
+	 * Acquisition directory holding (or to hold) `codepo_gb.zip` and its extracted
+	 * `Data/CSV` tree, defaulting to `<data-root>/codepoint/<yyyy-MM-DD>`.
 	 */
 	sourceDir?: PathBuilderLike
 	/**
@@ -95,12 +95,13 @@ export interface BuildPostcodeCodePointOptions {
 	 */
 	out?: PathBuilderLike
 	/**
-	 * Skip the network entirely and use whatever is already in `sourceDir`, failing if the CSVs are not there.
+	 * Skip the network entirely and use whatever is already in `sourceDir`,
+	 * failing if the CSVs are not there.
 	 */
 	offline?: boolean
 	/**
-	 * Build clock — stamped into `meta.built_at` and the default paths, passed in so the module never reads
-	 * the clock implicitly (the `defaultGazetteerVersion` convention).
+	 * Build clock — stamped into `meta.built_at` and the default paths, passed in so the
+	 * module never reads the clock implicitly (the `defaultGazetteerVersion` convention).
 	 */
 	now?: Date
 	onPhase?: (phase: string, detail?: string) => void
@@ -122,8 +123,8 @@ export interface BuildPostcodeCodePointResult {
 	 */
 	metadata: CodePointMetadata
 	/**
-	 * Areas whose parsed count differs from the manifest, as `area: manifest→parsed`, empty when every
-	 * area agrees after accounting for the no-coordinate drops.
+	 * Areas whose parsed count differs from the manifest, as `area: manifest→parsed`,
+	 * empty when every area agrees after accounting for the no-coordinate drops.
 	 */
 	manifestMismatches: string[]
 	ancestorRows: number
@@ -154,8 +155,8 @@ export async function buildPostcodeCodePoint(
 	const sourceDir = PathBuilder.from(options.sourceDir ?? dataRootPath("codepoint", stamp))
 	const out = (options.out ?? wofDatabasePath(`postalcode-gb-codepoint-${stamp}.db`)).toString()
 
-	// An offline build must not record blank provenance: the `acquisition.json` sidecar recovers the release
-	// label and md5, and an absent sidecar is recorded in words rather than an empty string.
+	// An offline build must not record blank provenance: the `acquisition.json` sidecar recovers
+	// the release label and md5, and an absent sidecar is recorded in words rather than an empty string.
 	let archiveMD5: string
 	let osVersion: string
 
@@ -251,7 +252,6 @@ export async function buildPostcodeCodePoint(
 		db.exec("COMMIT")
 		phase("ingest", `${inserted.toLocaleString()} unit postcodes`)
 
-
 		// Every row's parent_id is -1, so this writes the self row per place; the resolver's
 		// parent-constraint reads `ancestors`, and a place absent from it can never satisfy it.
 		phase("ancestors")
@@ -285,8 +285,8 @@ export async function buildPostcodeCodePoint(
 
 	const fts: BuildFTSResult = await buildDatabaseFTS(out, (path) => new DatabaseClient<WOFDatabase>(path), phase)
 
-	// The layer interface's manifest beside the `meta` record; the candidate build reads its tier before
-	// folding the database.
+	// The layer interface's manifest beside the `meta` record; the candidate build
+	// reads its tier before folding the database.
 	phase("layer-manifest")
 	await stampLayerManifest(out, codePointLayerManifest({ osVersion, metadata: extracted.metadata, now }))
 
@@ -310,9 +310,9 @@ export async function buildPostcodeCodePoint(
 }
 
 /**
- * Compare per-area parsed counts against the archive's `Doc/metadata.txt` manifest, where the identity is
- * `manifest[area] === parsed[area] + noCoordinateDrops[area]` and the tolerance is the no-coordinate drops
- * alone so a malformed row cannot widen the slack it is meant to catch.
+ * Compare per-area parsed counts against the archive's `Doc/metadata.txt` manifest, where the
+ * identity is `manifest[area] === parsed[area] + noCoordinateDrops[area]` and the tolerance is
+ * the no-coordinate drops alone so a malformed row cannot widen the slack it is meant to catch.
  */
 function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointParseStats): string[] {
 	const mismatches: string[] = []
@@ -332,8 +332,8 @@ function compareAgainstManifest(metadata: CodePointMetadata, stats: CodePointPar
 		}
 	}
 
-	// The national identity no per-area check implies: every manifest row is yielded or explicitly dropped
-	// for a known reason.
+	// The national identity no per-area check implies: every manifest row is yielded
+	// or explicitly dropped for a known reason.
 	const accounted = stats.yielded + stats.skippedNoCoordinate + stats.skippedMalformed
 
 	if (accounted !== metadata.totalRows) {
@@ -360,7 +360,8 @@ interface DatabaseMetaInput {
 }
 
 /**
- * Bake the provenance record into the staging DB before vacuum and seal, since a shipped DB is never patched.
+ * Bake the provenance record into the staging DB before vacuum and seal,
+ * since a shipped DB is never patched.
  */
 async function writeDatabaseMeta(db: DatabaseClient<WOFDatabase>, input: DatabaseMetaInput): Promise<void> {
 	await createDatabaseMetaTable(db)

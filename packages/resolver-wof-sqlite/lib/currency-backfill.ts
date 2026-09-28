@@ -19,14 +19,13 @@ import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 import { normalizeLocalityForKey } from "#street/normalize"
 
-
 const CURRENCY_BACKFILL_RADIUS_KM = 10
-
 
 const CURRENCY_BACKFILL_POP_FLOOR = 1000
 
 /**
- * Restore a deprecated locality only when no nearby live namesake exists and GeoNames attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
+ * Restore a deprecated locality only when no nearby live namesake exists and GeoNames
+ * attests the same folded name above {@link CURRENCY_BACKFILL_POP_FLOOR}.
  */
 export interface CurrencyBackfillOutcomes {
 	judged: number
@@ -37,7 +36,8 @@ export interface CurrencyBackfillOutcomes {
 }
 
 /**
- * One country's read of the check — every dead name judged, by outcome and by the dead row's placetype — so a census can say what a wider query admits.
+ * One country's read of the check — every dead name judged, by outcome and by the dead
+ * row's placetype — so a census can say what a wider query admits.
  */
 export interface CurrencyBackfillCountryReport extends CurrencyBackfillOutcomes {
 	country: string
@@ -129,7 +129,8 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Dead rows are read first so a country with no dead names never loads its national dump, which is heap pressure on a build near its ceiling.
+		// Dead rows are read first so a country with no dead names never loads its national dump,
+		// which is heap pressure on a build near its ceiling.
 		const dead = deadStmt.all(cc, ...deadPlacetypes)
 
 		if (!dead.length) {
@@ -139,7 +140,8 @@ export async function resurrectCurrencyHoles(ctx: {
 			continue
 		}
 
-		// Only the dead names' own folded keys can ever be probed, so the rest of the national dump streams through without residency.
+		// Only the dead names' own folded keys can ever be probed, so the rest of the
+		// national dump streams through without residency.
 		const deadKeys = new Set<string>()
 
 		for (const d of dead) {
@@ -194,19 +196,20 @@ export async function resurrectCurrencyHoles(ctx: {
 
 			if (!pkey || seen.has(pkey)) continue
 			seen.add(pkey)
-			// The query admits whatever `deadPlacetypes` names, so the rank comparison judges each candidate against its own dead rung.
+			// The query admits whatever `deadPlacetypes` names, so the rank comparison
+			// judges each candidate against its own dead rung.
 			const deadPlacetype = String(d.placetype ?? "locality")
 
 			count(deadPlacetype, "judged")
 			const dLat = Number(d.latitude)
 			const dLon = Number(d.longitude)
 
-			// A live row blocks unless it is strictly finer than the dead one, and an unranked placetype blocks because this check's failure mode is inventing a place.
+			// A live row blocks unless it is strictly finer than the dead one, and an unranked
+			// placetype blocks because this check's failure mode is inventing a place.
 			const liveNear = liveStmt.all(cc, name).some((row) => {
 				if (haversineKm(dLat, dLon, Number(row.latitude), Number(row.longitude)) > CURRENCY_BACKFILL_RADIUS_KM) {
 					return false
 				}
-
 
 				return isStrictlyFiner(String(row.placetype ?? ""), deadPlacetype) !== true
 			})

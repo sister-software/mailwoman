@@ -17,8 +17,7 @@ export interface AbbreviationResult {
 }
 
 /**
- * Expand known abbreviations, mapping every expanded character back to its source token's first
- * character.
+ * Expand known abbreviations, mapping every expanded character back to its source token's first character.
  */
 export function expandAbbreviations(input: string, locale?: string): AbbreviationResult {
 	const dict = abbreviationDictionary(locale)

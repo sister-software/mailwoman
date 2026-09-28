@@ -11,7 +11,8 @@ import type { CapitalTable } from "#capital-schema"
 import type { NameKey } from "#street/normalize"
 
 /**
- * One candidate row; `name_key` plus the four small int keys, `neg_rank` and `spr_id` form the clustered primary key, and the rest is denormalized so a resolve is one probe.
+ * One candidate row; `name_key` plus the four small int keys, `neg_rank` and `spr_id` form
+ * the clustered primary key, and the rest is denormalized so a resolve is one probe.
  */
 export interface CandidateTable {
 	/**
@@ -51,11 +52,13 @@ export interface CandidateTable {
 	 */
 	is_primary: number | null
 	/**
-	 * Blended place importance in [0, 1], NULL when unmeasured (never zero) and copied verbatim from the pre-split score source, not the split `encyclopedic` channel.
+	 * Blended place importance in [0, 1], NULL when unmeasured (never zero) and copied
+	 * verbatim from the pre-split score source, not the split `encyclopedic` channel.
 	 */
 	importance: number | null
 	/**
-	 * The name's detected role on this row (`'abbr'`, `'gloss'` or `'variant'`), or NULL when no role was detected; the column is write-only in this build generation.
+	 * The name's detected role on this row (`'abbr'`, `'gloss'` or `'variant'`), or NULL
+	 * when no role was detected; the column is write-only in this build generation.
 	 */
 	name_role: string | null
 }
@@ -77,7 +80,8 @@ export interface PlacetypeCodeTable {
 }
 
 /**
- * The candidate database schema, extending the ancestors sidecar so one typed client covers every table in the artifact.
+ * The candidate database schema, extending the ancestors sidecar so one typed
+ * client covers every table in the artifact.
  */
 export interface CandidateDatabase extends CandidateAncestorsDatabase {
 	/**
@@ -97,7 +101,8 @@ export interface CandidateDatabase extends CandidateAncestorsDatabase {
 }
 
 /**
- * The `candidate`/`cand_stage` columns in clustered-key order, from which the materialization derives its column list; keep in sync with {@link CandidateTable}.
+ * The `candidate`/`cand_stage` columns in clustered-key order, from which the materialization
+ * derives its column list; keep in sync with {@link CandidateTable}.
  */
 export const CANDIDATE_COLUMNS = [
 	"name_key",
@@ -121,7 +126,8 @@ export const CANDIDATE_COLUMNS = [
 ] as const
 
 /**
- * Create the code dictionaries and the transient staging table; `cand_stage` mirrors {@link CandidateTable} with every column nullable because the loader fills them positionally.
+ * Create the code dictionaries and the transient staging table; `cand_stage` mirrors
+ * {@link CandidateTable} with every column nullable because the loader fills them positionally.
  */
 export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema
@@ -159,7 +165,8 @@ export async function createCandidateStagingTables(db: Kysely<CandidateDatabase>
 }
 
 /**
- * Create the clustered `without rowid` lookup table, whose first six columns form the primary key (population-ranked via `neg_rank`).
+ * Create the clustered `without rowid` lookup table, whose first six columns form
+ * the primary key (population-ranked via `neg_rank`).
  */
 export async function createCandidateTable(db: Kysely<CandidateDatabase>): Promise<void> {
 	await db.schema

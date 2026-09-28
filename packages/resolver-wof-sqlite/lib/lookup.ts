@@ -54,7 +54,8 @@ import type { FindPlaceQuery, PlaceCandidate, PlaceLookup, WOFPlacetype } from "
 
 export interface WOFSQLitePlaceLookupOpts {
 	/**
-	 * Path to the WOF SQLite distribution on disk, mutually exclusive with `database`; an array opens the first entry as main and ATTACHes the rest.
+	 * Path to the WOF SQLite distribution on disk, mutually exclusive with `database`;
+	 * an array opens the first entry as main and ATTACHes the rest.
 	 */
 	databasePath?: PathBuilderLike | ReadonlyArray<PathBuilderLike | ExtractConfig>
 	/**
@@ -62,15 +63,18 @@ export interface WOFSQLitePlaceLookupOpts {
 	 */
 	database?: DatabaseClient<WOFDatabase>
 	/**
-	 * When true, build the FTS5 `place_search` virtual table on construction if it is missing, on the main extract only; default false.
+	 * When true, build the FTS5 `place_search` virtual table on construction if it
+	 * is missing, on the main extract only; default false.
 	 */
 	buildFTS?: boolean
 	/**
-	 * Geographic Rule Engine convention source, either a ready `ConventionSource` or a `{ wofID: Convention }` seed map; default empty resolves every query to `WORLD_DEFAULT`.
+	 * Geographic Rule Engine convention source, either a ready `ConventionSource` or a
+	 * `{ wofID: Convention }` seed map; default empty resolves every query to `WORLD_DEFAULT`.
 	 */
 	conventions?: ConventionSource | Record<number, Convention>
 	/**
-	 * Opt-in postal-city alias reader; absent, every alias code path is skipped and the resolver is byte-identical.
+	 * Opt-in postal-city alias reader; absent, every alias code path is skipped
+	 * and the resolver is byte-identical.
 	 */
 	postalCityAliases?: WOFPostalCityAliasLookup
 }
@@ -90,30 +94,36 @@ const KNOWN_ROUTED_PLACETYPES: ReadonlyArray<string> = [
 const POSTCODE_LOCALITY_TABLE = "postcode_locality"
 
 /**
- * Tunables for the coordinate-first locality soft-score `Score = pc·S_pc + name·S_name + pop·S_pop` (each S in [0,1]).
+ * Tunables for the coordinate-first locality soft-score
+ * `Score = pc·S_pc + name·S_name + pop·S_pop` (each S in [0,1]).
  */
 const CF_PC_DECAY_KM = 8
 /**
- * The chosen locality must be within this distance of the postcode's containing locality or the `mismatch` flag fires.
+ * The chosen locality must be within this distance of the postcode's containing
+ * locality or the `mismatch` flag fires.
  */
 const CF_MISMATCH_KM = 50
 
 export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements PlaceLookup {
 	readonly #weights: RankingWeights
 	/**
-	 * Cached at construction; an extract is considered to have the bbox index only if its own R*Tree table exists.
+	 * Cached at construction; an extract is considered to have the bbox index
+	 * only if its own R*Tree table exists.
 	 */
 	readonly #hasBboxIndex: Map<string, boolean>
 	/**
-	 * Per-extract probe for the `place_population` aux table; when false, the left join is omitted and the population boost is 0 for every row.
+	 * Per-extract probe for the `place_population` aux table; when false, the left
+	 * join is omitted and the population boost is 0 for every row.
 	 */
 	readonly #hasPopulationIndex: Map<string, boolean>
 	/**
-	 * Per-extract select term and left join for the two-score split's `encyclopedic` carry, probed and built once at construction.
+	 * Per-extract select term and left join for the two-score split's `encyclopedic` carry,
+	 * probed and built once at construction.
 	 */
 	readonly #encyclopedicClauses: Map<string, { select: string; join: string }>
 	/**
-	 * Per-extract probe for the `postcode_locality` table, cached at construction and null when absent so the coord-first path no-ops.
+	 * Per-extract probe for the `postcode_locality` table, cached at construction
+	 * and null when absent so the coord-first path no-ops.
 	 */
 	readonly #postcodeLocalityExtract: string | null
 	/**
@@ -125,7 +135,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	 */
 	readonly #extractCountries: Map<string, ReadonlySet<string>>
 	/**
-	 * The Geographic Rule Engine: `#conventionSource` supplies per-WOF-polygon profiles, `#strategies` is the named-primitive registry, and `#countryWOFIdCache` memoizes the country-code to country-WOF-id lookup.
+	 * The Geographic Rule Engine: `#conventionSource` supplies per-WOF-polygon profiles,
+	 * `#strategies` is the named-primitive registry, and `#countryWOFIdCache`
+	 * memoizes the country-code to country-WOF-id lookup.
 	 */
 	readonly #conventionSource: ConventionSource
 	readonly #strategies: Map<string, Strategy>
@@ -160,14 +172,16 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			? [{ path: ":memory:", schemaName: "main", placetypes: [] }]
 			: resolveExtracts(opts.databasePath!)
 
-		// Read-only by default: shipped extracts are sealed 0444 and Docker `:ro` mounts forbid a write-mode open; only `buildFTS` opens writable.
+		// Read-only by default: shipped extracts are sealed 0444 and Docker `:ro` mounts
+		// forbid a write-mode open; only `buildFTS` opens writable.
 		super(opts.database ? { database: opts.database } : { databasePath: extracts[0]!.path }, {
 			readOnly: !opts.buildFTS,
 		})
 
 		this.#extracts = extracts
 
-		// Schema names were validated by resolveExtracts, so interpolating them is safe; SQLite attach accepts no parameter for a schema name.
+		// Schema names were validated by resolveExtracts, so interpolating them is safe;
+		// SQLite attach accepts no parameter for a schema name.
 		for (const s of extracts.slice(1)) {
 			this.database.exec(`ATTACH DATABASE '${s.path.replaceAll("'", "''")}' AS ${s.schemaName}`)
 		}
@@ -192,7 +206,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			this.#encyclopedicClauses.set(s.schemaName, encyclopedicClauses(this.database, s.schemaName))
 		}
 
-		// An extract is guarded when it is named for a routed placetype or carries `spr`, and must then carry `place_search`; testing only one of those would let an empty file through or exempt a build input.
+		// An extract is guarded when it is named for a routed placetype or carries `spr`,
+		// and must then carry `place_search`; testing only one of those would let an
+		// empty file through or exempt a build input.
 		for (const s of this.#extracts) {
 			if (s.schemaName === "main") continue
 
@@ -220,7 +236,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			)
 		}
 
-		// Probe each non-main extract's country set once at construction so two postcode extracts route by the query's country instead of first-match starving the second.
+		// Probe each non-main extract's country set once at construction so two postcode
+		// extracts route by the query's country instead of first-match starving the second.
 		this.#extractCountries = new Map()
 
 		for (const sh of this.#extracts) {
@@ -242,7 +259,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		this.#postalCityAliases = opts.postalCityAliases ?? null
 
-		// Precedence: explicit `opts.conventions` wins, else an attached build-from-source convention asset, else empty so EU rides `WORLD_DEFAULT`.
+		// Precedence: explicit `opts.conventions` wins, else an attached build-from-source
+		// convention asset, else empty so EU rides `WORLD_DEFAULT`.
 		const conventionExtract =
 			this.#extracts.find((s) => this.#extractHasTable(s.schemaName, ADDRESS_CONVENTION_TABLE))?.schemaName ?? null
 
@@ -276,7 +294,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	async findPlace(query: FindPlaceQuery): Promise<PlaceCandidate[]> {
-		// Run the effective convention's candidate strategies in order; the first non-null result wins and unknown strategy names are skipped.
+		// Run the effective convention's candidate strategies in order; the first non-null
+		// result wins and unknown strategy names are skipped.
 		const convention = this.#conventionFor(query)
 
 		let outcome: PlaceCandidate[] = []
@@ -301,7 +320,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 
 		if (outcome.length) return outcome
 
-		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem, restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
+		// On a postcode-typed NL-shape miss, retry with the whitespace-joined form then the 4-digit stem,
+		// restricted to NL so the same shape elsewhere cannot coarsen to another system's code.
 		if (
 			query.country?.toUpperCase() === "NL" &&
 			(normalizePlacetypes(query.placetype)?.includes("postalcode") ?? false) &&
@@ -340,7 +360,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	/**
-	 * The ancestor lineage of a place, ordered nearest-first with self excluded, or `[]` when it has no recorded ancestry.
+	 * The ancestor lineage of a place, ordered nearest-first with self excluded,
+	 * or `[]` when it has no recorded ancestry.
 	 */
 	ancestors(id: number | string): Ancestor[] {
 		const pid = typeof id === "number" ? id : Number(id)
@@ -362,7 +383,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	/**
-	 * Warn once per unknown strategy name rather than throwing, so a convention built against a newer revision degrades instead of stopping resolution.
+	 * Warn once per unknown strategy name rather than throwing, so a convention built
+	 * against a newer revision degrades instead of stopping resolution.
 	 */
 	#warnUnknownStrategy(name: string): void {
 		if (this.#warnedUnknownStrategies.has(name)) return
@@ -376,7 +398,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	/**
-	 * The coordinate-first locality strategy, returning `null` when its postcode, table, or locality conditions are unmet.
+	 * The coordinate-first locality strategy, returning `null` when its postcode,
+	 * table, or locality conditions are unmet.
 	 */
 	#postcodeAreaResolution(query: FindPlaceQuery, convention: ResolvedConvention): Promise<PlaceCandidate[] | null> {
 		if (!(query.postcode && this.#postcodeLocalityExtract && this.#isLocalityQuery(query))) {
@@ -392,17 +415,21 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	async #fuzzyNameMatch(query: FindPlaceQuery, forceExtract?: ResolvedExtract): Promise<PlaceCandidate[]> {
 		const limit = query.limit ?? 10
 
-		// Expand the placetype filter through the shared equivalence table so a `locality` query also reaches `borough` and `localadmin` rows.
+		// Expand the placetype filter through the shared equivalence table so a `locality`
+		// query also reaches `borough` and `localadmin` rows.
 		const placetypes = expandPlacetypeFilter(normalizePlacetypes(query.placetype)) as WOFPlacetype[] | null
-		// Postcode-typed queries keep the fused name-law shape; everything else splits on intra-token punctuation so hyphenated names reach the FTS as their real terms.
+		// Postcode-typed queries keep the fused name-law shape; everything else splits on
+		// intra-token punctuation so hyphenated names reach the FTS as their real terms.
 		const ftsQuery = sanitizeFTSQuery(query.text, { fuseTokens: placetypes?.includes("postalcode") ?? false })
 
 		if (!ftsQuery) return []
 
-		// Multi-extract routing is placetype-driven, a query without `placetype` goes to main, and mixed-placetype spread across extracts is unsupported.
+		// Multi-extract routing is placetype-driven, a query without `placetype` goes to main,
+		// and mixed-placetype spread across extracts is unsupported.
 		const firstPlacetype = placetypes?.[0]
 
-		// A country-less query with proximity hints queries every matching extract so cross-extract ambiguity is visible, bounded to hints, no country, and more than one match.
+		// A country-less query with proximity hints queries every matching extract so cross-extract
+		// ambiguity is visible, bounded to hints, no country, and more than one match.
 		const hasBiasHints = !!query.near || (query.bias?.length ?? 0) > 0
 
 		if (!forceExtract && hasBiasHints && !query.country) {
@@ -526,7 +553,9 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 	}
 
 	/**
-	 * Coordinate-first locality resolution: union the postcode's containing and nearby localities with the FTS name candidates and soft-score them, returning null when the postcode is not in the table.
+	 * Coordinate-first locality resolution: union the postcode's containing
+	 * and nearby localities with the FTS name candidates and soft-score them,
+	 * returning null when the postcode is not in the table.
 	 */
 	async #findLocalityCoordFirst(
 		query: FindPlaceQuery,
@@ -558,7 +587,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			pcInfo.set(r.id, { dist: r.dist, containing: r.containing === 1, aliases: r.aliases ? r.aliases.split("|") : [] })
 		}
 
-		// Observed postal-city aliases for this postcode keyed by geographic locality name, empty when the reader is not supplied.
+		// Observed postal-city aliases for this postcode keyed by geographic locality name,
+		// empty when the reader is not supplied.
 		const postalAliasByGeo = new Map<string, string[]>()
 
 		if (this.#postalCityAliases) {
@@ -593,7 +623,8 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 		for (const cand of merged.values()) {
 			const info = pcInfo.get(cand.id as number)
 			const sPc = info ? (info.containing ? 1 : Math.exp(-info.dist / CF_PC_DECAY_KM)) : 0
-			// Fold postal-city aliases into the soft name match; the map is empty unless the opt-in reader was supplied, so scoring is unchanged when off.
+			// Fold postal-city aliases into the soft name match; the map is empty
+			// unless the opt-in reader was supplied, so scoring is unchanged when off.
 			const wofAliases = info?.aliases ?? []
 
 			const aliases = postalAliasByGeo.size
@@ -605,10 +636,12 @@ export class WOFSQLitePlaceLookup extends SQLiteLookup<WOFDatabase> implements P
 			scored.push({ ...cand, score: w.pc * sPc + w.name * sName + w.pop * sPop, exact: sName >= 1 })
 		}
 
-		// An exact name or alias match tiers above coordinate-only candidates, with the soft score breaking ties within a tier.
+		// An exact name or alias match tiers above coordinate-only candidates,
+		// with the soft score breaking ties within a tier.
 		scored.sort((a, b) => Number(b.exact) - Number(a.exact) || b.score - a.score)
 
-		// When the chosen locality is not the postcode's containing locality and sits far from it, flag `mismatch` rather than overriding the name.
+		// When the chosen locality is not the postcode's containing locality and sits far
+		// from it, flag `mismatch` rather than overriding the name.
 		const top = scored[0]
 
 		if (top) {

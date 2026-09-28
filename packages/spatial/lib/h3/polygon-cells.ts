@@ -26,20 +26,20 @@ import { ringsBoundingBox } from "#geometries/ring-blob"
 import { shortCellToInt, type H3Cell } from "#h3/cell"
 
 /**
- * The largest bounding-box cell estimate a single polyfill may reserve, a memory ceiling because
- * h3-js allocates its output buffer from the polygon's bounding box before walking.
+ * The largest bounding-box cell estimate a single polyfill may reserve, a memory ceiling
+ * because h3-js allocates its output buffer from the polygon's bounding box before walking.
  */
 export const CELL_ESTIMATE_BUDGET = 2_000_000
 
 /**
- * The coarsest resolution a feature may be pushed down to, below which a cell is tens of thousands
- * of square kilometres and the index stops summarizing anything.
+ * The coarsest resolution a feature may be pushed down to, below which a cell is tens
+ * of thousands of square kilometres and the index stops summarizing anything.
  */
 export const MIN_INDEX_RESOLUTION = 4
 
 /**
- * A degree box's height and width in metres, longitude scaled at the box's mid-latitude so the
- * two are comparable.
+ * A degree box's height and width in metres, longitude scaled at the box's
+ * mid-latitude so the two are comparable.
  */
 function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number } {
 	const midLat = ((box.minLat + box.maxLat) / 2) * (Math.PI / 180)
@@ -51,8 +51,8 @@ function boxExtentMetres(box: LatLonBounds): { heightM: number; widthM: number }
 }
 
 /**
- * The single cell containing this whole bounding box, or `undefined` when it spans more than one —
- * exact because an H3 cell is convex.
+ * The single cell containing this whole bounding box, or `undefined` when it spans
+ * more than one — exact because an H3 cell is convex.
  */
 function enclosingCell(box: LatLonBounds, resolution: number): string | undefined {
 	if (!Number.isFinite(box.minLat)) return undefined
@@ -71,8 +71,8 @@ function enclosingCell(box: LatLonBounds, resolution: number): string | undefine
 }
 
 /**
- * Could a shape this size contain a whole cell — false when either bounding-box dimension is under
- * `edge × √3`, compared permissively because a wrong `true` only costs one polyfill call.
+ * Could a shape this size contain a whole cell — false when either bounding-box dimension is
+ * under `edge × √3`, compared permissively because a wrong `true` only costs one polyfill call.
  */
 function canContainCell(box: LatLonBounds, resolution: number): boolean {
 	if (!Number.isFinite(box.minLat)) return false
@@ -88,8 +88,8 @@ function canContainCell(box: LatLonBounds, resolution: number): boolean {
  */
 export interface FeatureCells {
 	/**
-	 * The resolution this feature was indexed at — the target, or coarser where the target's
-	 * estimate did not fit.
+	 * The resolution this feature was indexed at — the target, or coarser
+	 * where the target's estimate did not fit.
 	 */
 	resolution: number
 	/**
@@ -103,8 +103,8 @@ export interface FeatureCells {
 }
 
 /**
- * How many cells at `resolution` the feature's bounding box spans — the same quantity h3 reserves
- * its buffer from, approximate on purpose.
+ * How many cells at `resolution` the feature's bounding box spans — the same quantity
+ * h3 reserves its buffer from, approximate on purpose.
  */
 export function estimateCellCount(polygons: MultiPolygonRings, resolution: number): number {
 	const box = ringsBoundingBox(polygons)
@@ -130,8 +130,8 @@ export function resolutionForFeature(polygons: MultiPolygonRings, target: number
 }
 
 /**
- * Classify one feature's cells at `targetResolution` or the coarsest resolution its bounding box
- * allows, throwing when the feature reaches no cell at all.
+ * Classify one feature's cells at `targetResolution` or the coarsest resolution its
+ * bounding box allows, throwing when the feature reaches no cell at all.
  */
 export function classifyFeatureCells(
 	polygons: MultiPolygonRings,
@@ -143,23 +143,23 @@ export function classifyFeatureCells(
 	let touched = new Set<string>()
 	let full = new Set<string>()
 
-	// `estimateCellCount` approximates what h3 will reserve, so an allocation failure steps the
-	// resolution down and retries rather than ending the build; a feature that fails at
-	// {@link MIN_INDEX_RESOLUTION} is refused.
+	// `estimateCellCount` approximates what h3 will reserve, so an allocation
+	// failure steps the resolution down and retries rather than ending the build;
+	// a feature that fails at {@link MIN_INDEX_RESOLUTION} is refused.
 	for (;;) {
 		try {
 			touched = new Set<string>()
 			full = new Set<string>()
 
 			for (const rings of polygons) {
-				// `isGeoJSON = true`: the rings are already `[lon, lat]`, so converting would put a
-				// transposition between the geometry and the index.
+				// `isGeoJSON = true`: the rings are already `[lon, lat]`, so converting would
+				// put a transposition between the geometry and the index.
 				const geoJSONRings = rings as number[][][]
 				const box = ringsBoundingBox([rings])
 				const enclosing = enclosingCell(box, resolution)
 
-				// A part that fits inside one cell is answered without the allocator: an H3 cell is
-				// convex, so a rectangle whose corners share a cell lies entirely within it.
+				// A part that fits inside one cell is answered without the allocator: an H3 cell
+				// is convex, so a rectangle whose corners share a cell lies entirely within it.
 				if (enclosing) {
 					touched.add(enclosing)
 
@@ -173,9 +173,9 @@ export function classifyFeatureCells(
 					true
 				)
 
-				// An empty answer for a real part is an allocator failure, not a result: every part
-				// with a non-degenerate bounding box touches at least one cell, so zero is impossible
-				// as an answer and checking per feature would silently index a multi-part feature short.
+				// An empty answer for a real part is an allocator failure, not a result: every part with
+				// a non-degenerate bounding box touches at least one cell, so zero is impossible as
+				// an answer and checking per feature would silently index a multi-part feature short.
 				if (!overlapping.length) {
 					throw new Error(
 						`${layerLabel}: part of feature ${featureID} spanning ${box.minLat},${box.minLon} to ${box.maxLat},${box.maxLon} returned no cell at resolution ${resolution} — a part always touches at least one, so this is an allocator failure reported as an answer`
@@ -186,9 +186,9 @@ export function classifyFeatureCells(
 					touched.add(cell)
 				}
 
-				// A part narrower than a cell's minimum width cannot contain one, so its `full` set is
-				// empty and asking for it is pure cost; the comparison is permissive because a missed
-				// whole cell becomes a partial one the ray cast still answers.
+				// A part narrower than a cell's minimum width cannot contain one, so its `full`
+				// set is empty and asking for it is pure cost; the comparison is permissive
+				// because a missed whole cell becomes a partial one the ray cast still answers.
 				if (!canContainCell(box, resolution)) continue
 
 				for (const cell of polygonToCellsExperimental(
@@ -220,8 +220,8 @@ export function classifyFeatureCells(
 		)
 	}
 
-	// A cell can be full for one polygon of a MultiPolygon and merely touched by another; full wins
-	// because the point is inside either way.
+	// A cell can be full for one polygon of a MultiPolygon and merely touched by another;
+	// full wins because the point is inside either way.
 	const partial: H3Cell[] = []
 
 	for (const cell of touched) {
@@ -234,8 +234,8 @@ export function classifyFeatureCells(
 }
 
 /**
- * Split a cell set into same-resolution groups — what `compactCells` requires and an
- * adaptively-indexed layer cannot assume it already has.
+ * Split a cell set into same-resolution groups — what `compactCells` requires
+ * and an adaptively-indexed layer cannot assume it already has.
  */
 export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 	const groups = new Map<number, string[]>()
@@ -255,8 +255,8 @@ export function groupCellsByResolution(cells: Iterable<string>): string[][] {
 }
 
 /**
- * Compact a cell set that may span several resolutions by grouping it before compaction rather
- * than pooling, which would throw inside h3.
+ * Compact a cell set that may span several resolutions by grouping it before compaction
+ * rather than pooling, which would throw inside h3.
  */
 export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 	const compacted: string[] = []
@@ -269,8 +269,8 @@ export function compactAcrossResolutions(cells: Iterable<string>): string[] {
 }
 
 /**
- * The cells a probe walks for one index cell: the cell itself at the index resolution, and its
- * parent at every other resolution the layer stores.
+ * The cells a probe walks for one index cell: the cell itself at the index resolution,
+ * and its parent at every other resolution the layer stores.
  */
 export function ancestorChainCells(
 	indexCell: H3Cell,
@@ -283,8 +283,8 @@ export function ancestorChainCells(
 }
 
 /**
- * One classified feature's cell rows, ready for insertion — the whole set compacted, the partial
- * set left at its own resolution.
+ * One classified feature's cell rows, ready for insertion — the whole set compacted,
+ * the partial set left at its own resolution.
  */
 export function featureCellRows(cells: FeatureCells): Array<{
 	h3Cell: number
@@ -305,8 +305,8 @@ export function featureCellRows(cells: FeatureCells): Array<{
 	for (const cell of cells.partial) {
 		const short = shortCellToInt(cell)
 
-		// A cell cannot be both for one polygon; this subtraction is belt and braces against a
-		// compaction that produced a parent the partial set also names.
+		// A cell cannot be both for one polygon; this subtraction is belt and braces against
+		// a compaction that produced a parent the partial set also names.
 		if (wholeShort.has(short)) continue
 
 		rows.push({ h3Cell: short, resolution: cells.resolution, containment: "partial" })
@@ -316,16 +316,16 @@ export function featureCellRows(cells: FeatureCells): Array<{
 }
 
 /**
- * The coverage cell a row at `cell` belongs to, derived with `cellToParent` rather than a fresh
- * `latLngToCell` so a fringe row does not land in a neighbouring coverage cell.
+ * The coverage cell a row at `cell` belongs to, derived with `cellToParent` rather than a
+ * fresh `latLngToCell` so a fringe row does not land in a neighbouring coverage cell.
  */
 export function coverageCellFor(cell: H3Cell, coverageResolution: number): H3Cell {
 	return cellToParent(cell, coverageResolution) as H3Cell
 }
 
 /**
- * Record the coverage cells one index cell falls in, so an adaptively-coarsened cell coarser than
- * the coverage resolution counts against every child rather than one arbitrary child.
+ * Record the coverage cells one index cell falls in, so an adaptively-coarsened cell coarser
+ * than the coverage resolution counts against every child rather than one arbitrary child.
  */
 export function addCoverageCells(
 	into: Set<number>,

@@ -21,7 +21,9 @@ import type { CandidateDatabase } from "#candidate/schema"
 import type { WOFDatabase } from "#schema"
 
 /**
- * Build the ancestors sidecar (closure rows plus interval labels) from the source `ancestors` table, excluding self rows and placetypes outside the containment ladder; an edge to a parent with no current `spr` row is dropped and counted.
+ * Build the ancestors sidecar (closure rows plus interval labels) from the source
+ * `ancestors` table, excluding self rows and placetypes outside the containment ladder;
+ * an edge to a parent with no current `spr` row is dropped and counted.
  */
 export async function buildAncestorsSidecar(ctx: {
 	src: DatabaseClient<WOFDatabase>
@@ -40,7 +42,8 @@ export async function buildAncestorsSidecar(ctx: {
 		`INSERT INTO ${CANDIDATE_ANCESTOR_TABLE} VALUES (${CANDIDATE_ANCESTOR_COLUMNS.map(() => "?").join(", ")})`
 	)
 
-	// One parent per place (the finest containment tier, lowest ancestor id) canonicalizes the interval tree; all parents stay in the closure rows.
+	// One parent per place (the finest containment tier, lowest ancestor id) canonicalizes
+	// the interval tree; all parents stay in the closure rows.
 	const canonicalParentOf = new Map<number, number>()
 	const childrenOf = new Map<number, number[]>()
 	const forest = new Set<number>()
@@ -56,7 +59,8 @@ export async function buildAncestorsSidecar(ctx: {
 	const flush = (): void => {
 		if (childID < 0 || !edges.length) return
 
-		// Deterministic nearest-first: containment depth descending, then ancestor id ascending, matching the FTS backend's `ancestorLineage` ordering across rebuilds.
+		// Deterministic nearest-first: containment depth descending, then ancestor id ascending,
+		// matching the FTS backend's `ancestorLineage` ordering across rebuilds.
 		edges.sort((a, b) => placetypeDepth(b.apt) - placetypeDepth(a.apt) || a.aid - b.aid)
 
 		if (edges.length > MAX_ANCESTOR_DEPTH) {
@@ -122,7 +126,8 @@ export async function buildAncestorsSidecar(ctx: {
 	flush()
 	out.exec("COMMIT")
 
-	// Interval labels are a pre/post-order DFS over the canonical-parent forest, with root and child order id-ascending so labels stay stable across rebuilds.
+	// Interval labels are a pre/post-order DFS over the canonical-parent forest, with root
+	// and child order id-ascending so labels stay stable across rebuilds.
 	const preOf = new Map<number, number>()
 	const postOf = new Map<number, number>()
 
@@ -149,7 +154,8 @@ export async function buildAncestorsSidecar(ctx: {
 			if (kids && top.next < kids.length) {
 				const kid = kids[top.next++]!
 
-				// Each child holds exactly one canonical parent, so a labeled node means upstream grouping broke; skip rather than corrupt the numbering.
+				// Each child holds exactly one canonical parent, so a labeled node means
+				// upstream grouping broke; skip rather than corrupt the numbering.
 				if (preOf.has(kid)) continue
 
 				preOf.set(kid, counter++)
@@ -161,7 +167,8 @@ export async function buildAncestorsSidecar(ctx: {
 		}
 	}
 
-	// A canonical-parent cycle leaves its members unreachable from any root, so they receive no label and containment against them reads unverifiable.
+	// A canonical-parent cycle leaves its members unreachable from any root,
+	// so they receive no label and containment against them reads unverifiable.
 	const cycleSkipped = forest.size - preOf.size
 
 	const insInterval = out.prepare(`INSERT INTO ${CANDIDATE_INTERVAL_TABLE} VALUES (?, ?, ?)`)

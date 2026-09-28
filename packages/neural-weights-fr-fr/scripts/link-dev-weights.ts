@@ -28,8 +28,8 @@ import {
 } from "@mailwoman/resolver-wof-sqlite/weights-overlay-linker"
 
 /**
- * Raw BAN dump the lieu-dit pairs are extracted from; a directory rides `inputs` (existence only),
- * not `sources` (md5).
+ * Raw BAN dump the lieu-dit pairs are extracted from; a directory rides `inputs`
+ * (existence only), not `sources` (md5).
  */
 const BAN_DIR = dataRootPath("corpus", "sources", "ban")
 

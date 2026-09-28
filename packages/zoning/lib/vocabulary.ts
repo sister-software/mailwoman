@@ -37,14 +37,16 @@ export const GZT_ITEM_URL = `https://www.arcgis.com/home/item.html?id=${GZT_ITEM
 export const GZT_MAP_VIEWER_URL = "https://www.myplan.ie/zoning-map-viewer/"
 
 /**
- * The item's `accessInformation` credit line followed by the Tailte Éireann clause from its `licenseInfo`, whose all-rights-reserved clause keeps this layer at the `build-local` tier.
+ * The item's `accessInformation` credit line followed by the Tailte Éireann clause from its
+ * `licenseInfo`, whose all-rights-reserved clause keeps this layer at the `build-local` tier.
  */
 export const GZT_ATTRIBUTION =
 	"Department of Housing, Local Government, and Heritage (Generalised Zoning Types, MyPlan.ie). " +
 	"© Copyright 2011 DHLGH. All rights reserved. © Tailte Éireann. All rights reserved. Licence No. 2023/OSi_NMA_073"
 
 /**
- * The licence expression written to `layer_manifest.license`; `assertTierMatchesLicense` in `@mailwoman/core/layers` rejects a `shipped` build while this value is set.
+ * The licence expression written to `layer_manifest.license`; `assertTierMatchesLicense`
+ * in `@mailwoman/core/layers` rejects a `shipped` build while this value is set.
  */
 export const GZT_LICENSE = "NOASSERTION"
 
@@ -60,12 +62,15 @@ export const GZT_LICENSE_CONTRADICTION =
 	"A shipped layer needs one grant it can quote, so this one is built locally and never redistributed."
 
 /**
- * The projected CRS that the service and its bulk export declare — IRENET95 / Irish Transverse Mercator, in metres — which the ingest reprojects from and rejects any other code for.
+ * The projected CRS that the service and its bulk export declare — IRENET95 / Irish Transverse
+ * Mercator, in metres — which the ingest reprojects from and rejects any other code for.
  */
 export const GZT_SOURCE_EPSG = 2157
 
 /**
- * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]` in CRS84, which the ingest checks every reprojected vertex against to catch the source's projected metres read as degrees.
+ * The extent that the Department declares for the item, as `[minLon, minLat, maxLon, maxLat]`
+ * in CRS84, which the ingest checks every reprojected vertex against to catch
+ * the source's projected metres read as degrees.
  */
 export const GZT_DECLARED_BBOX: readonly [number, number, number, number] = [
 	-10.54553193079905, 51.452765583177616, -5.947766999109422, 54.47387941831219,
@@ -82,12 +87,14 @@ export const GZT_DECLARED_FEATURE_COUNT = 85_330
 export const GZT_CROSSWALK_SCHEME = "IE-GZT"
 
 /**
- * The scheme of the Department's coarser national code, `SZO` (Standardised Zoning Objective), stored as published because the Department may change it.
+ * The scheme of the Department's coarser national code, `SZO` (Standardised Zoning Objective),
+ * stored as published because the Department may change it.
  */
 export const GZT_ROLLUP_SCHEME = "IE-SZO"
 
 /**
- * Returns the vocabulary scheme for one local authority's zone codes, since the same code can mean different things in different plans.
+ * Returns the vocabulary scheme for one local authority's zone codes, since the
+ * same code can mean different things in different plans.
  */
 export function localSchemeFor(authorityCode: string): string {
 	return `IE-LOCAL:${authorityCode}`
@@ -105,7 +112,8 @@ export interface ZoningTermDefinition {
 }
 
 /**
- * The Department's declared generic-type domain, copied verbatim from the service's `GZT Code` coded-value domain, omitting the observed-but-undeclared `N/A`.
+ * The Department's declared generic-type domain, copied verbatim from the service's
+ * `GZT Code` coded-value domain, omitting the observed-but-undeclared `N/A`.
  */
 export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "P1", label: "Agriculture" },
@@ -170,7 +178,8 @@ export const GZT_DECLARED_CODES: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_DECLARED_CODE_SET: ReadonlySet<string> = new Set(GZT_DECLARED_CODES.map((term) => term.code))
 
 /**
- * The `PLAN_LEVEL` domain, verbatim, including `SDZ` because the Department declares it although no current row uses it.
+ * The `PLAN_LEVEL` domain, verbatim, including `SDZ` because the Department declares it
+ * although no current row uses it.
  */
 export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 	{ code: "DP", label: "Development Plan" },
@@ -184,7 +193,8 @@ export const GZT_PLAN_LEVELS: ReadonlyArray<ZoningTermDefinition> = [
 export const GZT_PLAN_LEVEL_SET: ReadonlySet<string> = new Set(GZT_PLAN_LEVELS.map((term) => term.code))
 
 /**
- * The `CURRENT_PLAN` domain, verbatim, keyed by the published integer, where 1 means the plan is not superseded and its validity window is stored separately on `zoning_plan`.
+ * The `CURRENT_PLAN` domain, verbatim, keyed by the published integer, where 1 means the
+ * plan is not superseded and its validity window is stored separately on `zoning_plan`.
  */
 export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 	[1, "Current plan"],
@@ -193,7 +203,9 @@ export const GZT_CURRENT_PLAN_VALUES: ReadonlyMap<number, string> = new Map([
 ])
 
 /**
- * The provenance grade of a zoning row; a caller must never present an `inferred` row as the authority's designation, each artifact holds one grade only, and ODbL sources cannot be merged into this table without relicensing it.
+ * The provenance grade of a zoning row; a caller must never present an `inferred`
+ * row as the authority's designation, each artifact holds one grade only,
+ * and ODbL sources cannot be merged into this table without relicensing it.
  */
 export const ProvenanceGrade = {
 	Authoritative: "authoritative",
@@ -212,7 +224,8 @@ export type ProvenanceGrade = (typeof ProvenanceGrade)[keyof typeof ProvenanceGr
 export const GZT_PROVENANCE_GRADE: ProvenanceGrade = ProvenanceGrade.Authoritative
 
 /**
- * The Department's own statements of what the product does not state, which every reading includes and which report what a plan assigns at a location, never what may be built there.
+ * The Department's own statements of what the product does not state, which every reading
+ * includes and which report what a plan assigns at a location, never what may be built there.
  */
 export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 	"Myplan.ie data are not published here as legal definitions of the current actuality with regard to Local Authority zoning or their geographic extents.",
@@ -223,7 +236,9 @@ export const GZT_PRODUCT_LIMITS: ReadonlyArray<string> = [
 ]
 
 /**
- * The explanation of why this layer's coverage supports no negative claim, because land without a polygon may be outside every plan area, unzoned by a plan, in a jurisdiction without zoning, or in one whose records are unpublished.
+ * The explanation of why this layer's coverage supports no negative claim,
+ * because land without a polygon may be outside every plan area, unzoned by a plan,
+ * in a jurisdiction without zoning, or in one whose records are unpublished.
  */
 export const GZT_COVERAGE_LIMIT =
 	"The Department publishes zoning polygons and states its coverage detail only inside a map viewer, so this layer " +
@@ -232,6 +247,7 @@ export const GZT_COVERAGE_LIMIT =
 	"not yet published — and the product cannot tell those apart, so nothing here supports a claim that no restriction applies."
 
 /**
- * The local code with which an authority explicitly marks land as unzoned; only a row with this code means unzoned, and a location with no row makes no statement about zoning.
+ * The local code with which an authority explicitly marks land as unzoned; only a row with
+ * this code means unzoned, and a location with no row makes no statement about zoning.
  */
 export const GZT_UNZONED_LOCAL_CODE = "UNZ - Unzoned"

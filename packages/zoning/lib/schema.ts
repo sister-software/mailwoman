@@ -31,7 +31,8 @@ export type ZoningCellContainment = (typeof ZoningCellContainment)[keyof typeof 
  */
 export interface ZoningAreaTable {
 	/**
-	 * The authority's own feature id, as published and unique across the product, so it needs no scoping prefix.
+	 * The authority's own feature id, as published and unique across the product,
+	 * so it needs no scoping prefix.
 	 */
 	area_id: string
 	/**
@@ -169,13 +170,13 @@ export interface ZoningVocabularyTable {
 	 */
 	definition: string | null
 	/**
-	 * NULL for the Irish generic types: their definitions were not retrievable, and this column is never
-	 * filled with a plausible one.
+	 * NULL for the Irish generic types: their definitions were not retrievable,
+	 * and this column is never filled with a plausible one.
 	 */
 	definition_url: string | null
 	/**
-	 * `1` where the publisher declares this code in its own domain, `0` where the code appears only in the
-	 * data; folding the two would hide a source-schema change or invent a declaration.
+	 * `1` where the publisher declares this code in its own domain, `0` where the code appears
+	 * only in the data; folding the two would hide a source-schema change or invent a declaration.
 	 */
 	declared: number
 	/**
@@ -189,8 +190,8 @@ export interface ZoningVocabularyTable {
 /**
  * A publisher's own mapping between two schemes, where it publishes one as a table.
  *
- * Empty for Ireland: the mapping is not a function of the (authority, local code) pair, so it lives
- * on `zoning_area` per row and {@linkcode assertCrosswalkIsNotATable} refuses a build that writes edges.
+ * Empty for Ireland: the mapping is not a function of the (authority, local code) pair, so it lives on
+ * `zoning_area` per row and {@linkcode assertCrosswalkIsNotATable} refuses a build that writes edges.
  */
 export interface ZoningCrosswalkEdgeTable {
 	from_scheme: string
@@ -208,8 +209,8 @@ export interface ZoningCrosswalkEdgeTable {
 /**
  * Per (cell, polygon): does the polygon cover the whole cell, or only part of it?
  *
- * Keyed on the polygon rather than a code, because a zoning answer is the polygon and two authorities'
- * plans can name the same code for different things.
+ * Keyed on the polygon rather than a code, because a zoning answer is the polygon
+ * and two authorities' plans can name the same code for different things.
  */
 export interface ZoningCellTable {
 	/**
@@ -235,8 +236,8 @@ export interface ZoningCellTable {
 /**
  * The authority's own statement of what it mapped.
  *
- * One row per statement, never derived from the zoning polygons: the union of zoned areas is not the area
- * the authority examined, and deriving a footprint from it is forbidden.
+ * One row per statement, never derived from the zoning polygons: the union of zoned areas
+ * is not the area the authority examined, and deriving a footprint from it is forbidden.
  */
 export interface ZoningMappedExtentTable {
 	extent_id: string

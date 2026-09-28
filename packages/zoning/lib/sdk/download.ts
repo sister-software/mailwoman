@@ -18,7 +18,8 @@ export const GZT_EXPORT_FILE = "gzt-current-plan.geojson"
 
 export interface DownloadZoningExportOptions {
 	/**
-	 * The Hub job's `resultUrl`, read rather than assembled because it carries a generated file id that a hard-coded URL would outlive.
+	 * The Hub job's `resultUrl`, read rather than assembled because it carries a
+	 * generated file id that a hard-coded URL would outlive.
 	 */
 	url: string
 	/**
@@ -30,7 +31,8 @@ export interface DownloadZoningExportOptions {
 }
 
 /**
- * Download the bulk export for one product vintage and return the path of the GeoJSON file, renaming a `.part` file only on a clean finish so an interrupted transfer never presents as a complete export.
+ * Download the bulk export for one product vintage and return the path of the GeoJSON file, renaming a
+ * `.part` file only on a clean finish so an interrupted transfer never presents as a complete export.
  */
 export async function downloadZoningExport(options: DownloadZoningExportOptions): Promise<string> {
 	const vintageDir = PathBuilder.from(options.cacheRoot)(options.vintage)

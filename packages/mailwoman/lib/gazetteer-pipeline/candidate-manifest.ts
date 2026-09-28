@@ -19,8 +19,8 @@ import { basename, type PathBuilderLike } from "path-ts"
 import { probeManifest } from "#data/inventory"
 
 /**
- * The ancestor's identity as this manifest records it, where `unknown` is a measured absence rather
- * than a recorded version.
+ * The ancestor's identity as this manifest records it, where `unknown` is a
+ * measured absence rather than a recorded version.
  */
 export async function ancestorIdentity(adminDBPath: PathBuilderLike): Promise<string> {
 	if (!(await pathExists(adminDBPath))) return "unknown (admin gazetteer not found)"
@@ -49,16 +49,15 @@ export interface CandidateManifestInput {
 	 */
 	adminDBPath: PathBuilderLike
 	/**
-	 * Every postcode and locality database whose rows this candidate carries, whose paths compose the
-	 * manifest's license expression and whose count reaches `sourceVintage`.
+	 * Every postcode and locality database whose rows this candidate carries, whose paths
+	 * compose the manifest's license expression and whose count reaches `sourceVintage`.
 	 */
 	contributingDatabases: {
 		postcodes: readonly PathBuilderLike[]
 		localities: readonly PathBuilderLike[]
 	}
 	/**
-	 * Whether an importance database was folded in, which changes ranking in a way the schema does not
-	 * show.
+	 * Whether an importance database was folded in, which changes ranking in a way the schema does not show.
 	 */
 	importance: boolean
 	buildSHA: string
@@ -67,15 +66,15 @@ export interface CandidateManifestInput {
 }
 
 /**
- * The identifier that stands for a fold whose own terms this build could not read, deliberately
- * absent from `KNOWN_OBLIGATIONS` so `summarizeLicense` reports it as unrecognized and
- * `refusalsForPublication` refuses the layer.
+ * The identifier that stands for a fold whose own terms this build could not read,
+ * deliberately absent from `KNOWN_OBLIGATIONS` so `summarizeLicense` reports it as
+ * unrecognized and `refusalsForPublication` refuses the layer.
  */
 export const UNDECLARED_INPUT_LICENSE = "LicenseRef-Undeclared-Input"
 
 /**
- * Where a contributing database recorded its terms, with `none` meaning it records no terms or could
- * not be read.
+ * Where a contributing database recorded its terms, with `none` meaning it
+ * records no terms or could not be read.
  */
 export const FoldTermsRecord = {
 	LayerManifest: "layer_manifest",
@@ -109,8 +108,7 @@ export interface FoldTerms {
 }
 
 /**
- * The key/value tables a builder wrote its terms into before the manifest existed, consulted in this
- * order.
+ * The key/value tables a builder wrote its terms into before the manifest existed, consulted in this order.
  */
 const TERMS_TABLES = [FoldTermsRecord.Meta, FoldTermsRecord.DatabaseMeta] as const
 
@@ -211,12 +209,14 @@ export async function candidateLayerManifest(input: CandidateManifestInput): Pro
 		name: "candidate",
 		version: input.version,
 		schemaVersion: 1,
-		// Never `shipped`: the admin ancestor is `build-local`, this file carries its rows, and the postcode folds add share-alike sources.
+		// Never `shipped`: the admin ancestor is `build-local`, this file carries its rows,
+		// and the postcode folds add share-alike sources.
 		tier: LayerTier.BuildLocal,
 		license: [...identifiers].toSorted().join(" AND "),
 		attribution: "derived from the mailwoman admin gazetteer and its postcode folds; see each layer's manifest",
 		source: ancestor,
-		// `build-local-folds` is the count a publish decision reads without re-opening the inputs: a fold whose own tier permits no publication was folded in.
+		// `build-local-folds` is the count a publish decision reads without re-opening the inputs:
+		// a fold whose own tier permits no publication was folded in.
 		sourceVintage:
 			`admin=${ancestor} postcode-databases=${input.contributingDatabases.postcodes.length} ` +
 			`locality-databases=${input.contributingDatabases.localities.length} ` +
