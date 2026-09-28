@@ -3,58 +3,21 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete
- *   that component from the input and re-run the full pipeline: the displacement from the row's own
- *   undeleted anchor says what the component was worth. Aggregated per (component, locale) it answers the
- *   operator's question directly — "where does the pipeline falter when a part of the address is missing?"
- *   — and hands the suggestion layer its per-(component, locale) prior on nudge value
- *   (`docs/superpowers/plans/2026-08-05-suggestion-layer.md` §C.5, which specifies `AblationCell`).
+ * Gauntlet ablation layer — the required map. For every corpus row that asserts a component, delete that component
+ * from the input and re-run the full pipeline: the displacement from the row's own undeleted anchor says what the
+ * component was worth, aggregated per (component, locale).
  *
- *   This is a measurement layer rather than a check. It never joins the combined verdict (`run.ts` lists only
- *   regression + metamorphic), it has no stored expected values, and its verdict says only whether the
- *   instrument ran. A map of all-zero cells is "not measured", never "no check failed" (meaning-of-zero).
+ * This is a measurement layer rather than a check: it never joins the combined verdict, it has no stored expected
+ * values, and its verdict says only whether the instrument ran. A map of all-zero cells is "not measured", never
+ * "no check failed".
  *
- *   Three ancestors, generalized rather than duplicated:
+ * Every variant grades against a graceful-degradation ladder synthesized per row from the gazetteer, with the
+ * expected rung computed from the components the deletion left behind rather than from the variant's own output.
+ * Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
+ * justifies, or it abstained where the surviving evidence justifies no pick. Substitution is a hard fail at every
+ * rung, because a coordinate cannot redeem a slot refilled by the wrong token.
  *
- *   - `metamorphic.ts`'s DIR class deletes a `\b\d{5}\b` postcode from 3 hand-listed bases and asserts ≤5 km.
- *       That is one component, one tolerance, seven rows, and a regex — which on the 4-digit systems deletes
- *       house numbers. Here the deletion is literal (the asserted span, boundary-checked), every component
- *       the row asserts is deleted in turn, and the tolerance is the row's own.
- *   - `check-case.ts`'s `componentOf` maps an `expect_components` key to the assembled-result field. Reused
- *       verbatim (exported for this), so the slot a deletion is scored against is the same slot the check grades.
- *   - S-2 (`scripts/diagnostic/suggestion/s2-postcode-free.ts`, the suggestion arc's postcode column) is this
- *       runner's postcode column, and its finding 3 is why `substitutedCount` exists: 16 of 139 postcode
- *       deletions did not yield "no postcode", they yielded a different token in the postcode slot (house
- *       numbers, a venue's year, a plus code) and 0 of 139 recovered the deleted code.
- *
- *   link every overlay before YOU believe A number here. The first full run (2026-08-05, 177 cases → 667 variants)
- *   reproduced S-2's postcode column exactly in FR, US, IE, MX and ES — and differed on 13 of 47 GB rows, because the
- *   worktree S-2 ran in carried no `neural-weights-en-gb` artifacts and graded GB base-only. With the overlay linked,
- *   GB postcode-free goes 48.9% → 55.3% within 5 km, 42.6% → 36.2% beyond 100 km, p50 5.70 → 1.97 km. Five locales
- *   agreeing to the digit is what makes the sixth's disagreement attributable. run
- *   `node neural-weights-<locale>/scripts/link-dev-weights.ts` for every overlay first, or the map measures the
- *   instrument.
- *
- *   ## The grading is normative since 2026-08-05 — see `ablation-expectation.ts`
- *
- *   The first version graded every deletion variant against the undeleted case's single anchor and single tolerance,
- *   which reports "confidently wrong" and "correctly degraded to the next-best answer" as the same red cell. It now
- *   grades against a graceful-degradation ladder synthesized per row from the gazetteer — the row's own asserted
- *   coordinate, then the admin chain containing it, each rung with a centroid and a radius — and the expected rung is
- *   computed from the components the deletion left behind, never from the variant's own output, which would be
- *   circular.
- *
- *   Three outcomes are passes: the answer held at the base rung, it coarsened to a rung the surviving evidence still
- *   justifies, or it abstained where the surviving evidence justifies no pick (bare `Springfield`: 144 distinct places,
- *   no population winner). Substitution stays a hard fail at every rung — a coordinate cannot redeem a slot refilled by
- *   the wrong token.
- *
- *   The pre-2026-08-05 fields (`brokenCount`, `unresolvedCount`, `displacementKm*`) are unchanged and still computed
- *   against the anchor: the two gradings sit side by side in every artifact, which is what makes the regrade
- *   comparable. `unresolvedCount` is not split in place; `correctlyAbstainedCount` and `lostCount` are the split, added
- *   alongside it (meaning-of-zero: an abstention asks the operator for no action, a loss asks for a recall fix).
- *
- *   Run: mailwoman eval gauntlet --layer ablation [--components postcode,street] [--limit 20] [--out DIR]
+ * Link every weights overlay before believing a number here, or the map measures the instrument.
  */
 
 import { dataRootPath, tempRootPathBuilder } from "@mailwoman/core/data-root"
@@ -76,9 +39,7 @@ import {
 	PASSING_GRADES,
 } from "#eval-harness/gauntlet/ablation/expectation"
 import { AblationGazetteer } from "#eval-harness/gauntlet/ablation/gazetteer"
-// The renderer and the data shapes moved out when the expectation model pushed
-// this file past the 750-line cap.
-// Both are re-exported below, from their historical home, so every importer and every test keeps its path.
+// Re-exported from their historical home so every importer and test keeps its path.
 import { renderAblationMarkdown } from "#eval-harness/gauntlet/ablation/report"
 import { aggregateCells, scoreAblation } from "#eval-harness/gauntlet/ablation/scoring"
 import {
@@ -125,13 +86,8 @@ export {
 } from "#eval-harness/gauntlet/ablation/types"
 
 /**
- * How many substitutions the console summary lists before it truncates.
- *
- * Purely a terminal-legibility cap.
- * The full list is always in the artifact's `rows`, and the summary says how many it withheld.
- *
- * Sized against the S-2 baseline (16 substitutions on the postcode column alone),
- * so a run whose substitution rate is normal prints in full.
+ * How many substitutions the console summary lists before it truncates: a terminal-legibility cap only, because
+ * the full list is always in the artifact's `rows` and the summary says how many it withheld.
  */
 const SUBSTITUTION_PRINT_LIMIT = 60
 
@@ -142,16 +98,9 @@ function isWordChar(c: string | undefined): boolean {
 }
 
 /**
- * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets.
- *
- * Boundary-safe means the character on each side is not a letter or digit.
- * This is the guard that keeps a locality `York` from being carved out of a region `New York`.
- *
- * The class of defect that survives review precisely because it needs a corpus row where one asserted
- * span nests inside another, and this corpus has them (`New York` / `NY`, `Brooklyn` / `Park Slope`).
- *
- * A plain `indexOf`, which is what S-2's single-component stripper could afford,
- * silently mutilates the neighbour.
+ * Every boundary-safe, case-insensitive occurrence of `value` in `input`, as start offsets, where boundary-safe
+ * means the character on each side is not a letter or digit. This is the guard that keeps a locality `York` from
+ * being carved out of a region `New York`, which a plain `indexOf` silently mutilates.
  */
 export function boundedOccurrences(input: string, value: string): number[] {
 	if (!value) return []
@@ -179,11 +128,8 @@ export function boundedOccurrences(input: string, value: string): number[] {
 }
 
 /**
- * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind.
- *
- * Deliberately literal — the whole reason this runner does not reuse metamorphic's
- * `\b\d{5}\b` stripper is that a pattern deletes house numbers on the 4-digit postal
- * systems (the postcode arc's M-1 finding, in reverse).
+ * Delete `[at, at + length)` and tidy the separator debris the deletion leaves behind. Deliberately literal:
+ * a `\b\d{5}\b` pattern deletes house numbers on the 4-digit postal systems.
  */
 export function deleteSpan(input: string, at: number, length: number): string {
 	return (
