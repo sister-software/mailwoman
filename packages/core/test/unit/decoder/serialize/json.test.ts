@@ -6,12 +6,11 @@ import type { AddressNode, AddressTree } from "@mailwoman/core/decoder/types"
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The opt-in `dropped` surface (#1755) — which spans the flat projection could not represent.
+ *   The opt-in `dropped` surface, which reports spans the flat projection could not represent.
  *
- *   `decodeAsJSON` holds one value per tag, so a tree carrying two `locality` spans emits one and the other ceases
- *   to exist. Without a report, `region: null` means both "the input named no region" and "it named one and we
- *   deleted it". The #1748 trailing region is the worked case: parsed, mistagged `locality`, deleted here — which
- *   is why no decode change could ever move that class.
+ *   `decodeAsJSON` holds one value per tag, so a tree carrying two `locality` spans emits one and
+ *   drops the other. Without a report, `region: null` means both that the input carried no region
+ *   and that it carried one which was dropped.
  */
 import { describe, expect, it } from "vitest"
 
@@ -26,8 +25,8 @@ function tree(raw: string, roots: AddressNode[]): AddressTree {
 /**
  * `country › locality "Portopetro" › postcode`, plus a second `locality` sibling.
  *
- * That sibling is the #1748 trailing region as the shipped model actually parses it.
- * The span exists, carries the right text, and wears the wrong tag.
+ * That sibling is a trailing region as the shipped model parses it. The span exists, carries the
+ * right text, and holds the wrong tag.
  */
 const TWO_LOCALITIES = tree("07691 Portopetro, Illes Balears, Spain", [
 	node("country", "Spain", [

@@ -3,42 +3,32 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a real address tuple into the surface its locale writes. First introduced for German
- *   coverage (night-shift 2026-06-02, DE-1), now shared by country-oriented recipes.
+ *   Renders a real address tuple into the surface its locale writes.
  *
- *   IT RENDERS RATHER THAN INVENTS, and the directory name says so because the old one did not.
  *   Every caller supplies tuples from a published register: OpenAddresses Berlin and Saxony for DE,
  *   HM Land Registry Price Paid Data for GB, OpenAddresses countrywide for NL and IT, the CNIG
- *   export for ES, a LINZ-derived extract for NZ. What this file composes is the ORDER and the
- *   punctuation, through the OpenCage template for the country.
+ *   export for ES, a LINZ-derived extract for NZ. This file composes the ORDER and the punctuation
+ *   through the OpenCage template for the country.
  *
- *   This lived under `synthesizers/` until 2026-09-22, beside the recipes that do invent a surface
- *   to teach a form — `po-box.ts`, `intersection.ts`, `boundary-stress.ts`, `no-street.ts`. A reader
- *   took the directory at its word and published twice that GB's street rows were fabricated, when
- *   they are 25,674,049 Land Registry addresses sampled to 800,000. The two kinds of recipe now sit
- *   in two directories.
+ *   The `synth-*` source ids the recipes emit stay unchanged. A source id is a wire identifier stored
+ *   on every row of every built corpus and addressed by the `source_weights` keys of 225 training
+ *   configs, so renaming one breaks loading a corpus that already exists.
+ *   `docs/engineering/reference/locale-supply.mdx` states what each `synth-` id reads.
  *
- *   The `synth-*` source ids the recipes emit are unchanged and stay unchanged. A source id is a
- *   wire identifier: it is stored on every row of every built corpus and addressed by the
- *   `source_weights` keys of 225 training configs, so renaming one breaks loading a corpus that
- *   already exists. `docs/engineering/reference/locale-supply.mdx` states what each `synth-` id
- *   reads.
- *
- *   The neural model is out-of-distribution on German: it truncates `Straußstraße`→`Strau` (exits at
- *   the ß-piece boundary), absorbs the house number into the street (`Hauptstraße 5` → one span),
- *   and mis-tags the native-order house number as a postcode (`Prenzlauer Allee 36, 10405 Berlin` →
+ *   The neural model is out-of-distribution on German. It truncates `Straußstraße`→`Strau` (exits at
+ *   the ß-piece boundary), absorbs the house number into the street (`Hauptstraße 5` → one span), and
+ *   mis-tags the native-order house number as a postcode (`Prenzlauer Allee 36, 10405 Berlin` →
  *   postcode `36`). The cause is order: the model was trained US+FR (house-number-first,
- *   postcode-after-city), and never saw the German convention (house-number-after-street,
+ *   postcode-after-city) and never saw the German convention (house-number-after-street,
  *   postcode-before-city). DE-0 confirmed the tokenizer round-trips German orthography cleanly, so
  *   this is a coverage gap rather than a tokenizer ceiling.
  *
- *   The original German generator produced the missing signal as a small targeted supplement source
- *   (synthesis-as-supplement discipline: weight < 0.25, one-and-done). It does not synthesize
- *   German street names (German morphology is hard to fake) — it takes real German component tuples
- *   (from OpenAddresses Berlin/Saxony) and renders them in idiomatic German order via the OpenCage
- *   `DE` template (`formatAddress(..., "DE")` → `"Straußstraße 27, 12623 Berlin"`). The corpus
- *   aligner turns the row into BIO labels. every emitted component surface form occurs verbatim in
- *   `raw` so alignment lands. Its locale-neutral API now also serves the international recipe.
+ *   The German generator supplies the missing signal as a small targeted supplement (weight below
+ *   0.25, one-and-done). It takes real German component tuples (from OpenAddresses Berlin/Saxony) and
+ *   renders them in idiomatic German order via the OpenCage `DE` template
+ *   (`formatAddress(..., "DE")` → `"Straußstraße 27, 12623 Berlin"`). The corpus aligner turns the row
+ *   into BIO labels. Every emitted component surface form occurs verbatim in `raw` so alignment lands.
+ *   Its locale-neutral API also serves the international recipe.
  */
 
 import { formatAddress } from "@mailwoman/codex/address-format"
@@ -105,27 +95,27 @@ export interface LocaleRenderOpts {
 	 * Postcode surface shape.
 	 *
 	 * `"conventional"` (default) canonicalizes to the country's rendered form
-	 * (NL: OA's glued `1011AB` → the spaced `1011 AB`); `"as-source"` keeps the source's own surface.
+	 * (NL: OA's glued `1011AB` → the spaced `1011 AB`). `"as-source"` keeps the source's own surface.
 	 * The form OA (and the OA-derived evals) feed, which for NL is 100% glued.
 	 *
 	 * Only NL differs today.
 	 * Every other country passes through identically either way.
 	 *
-	 * Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape
-	 * (#241 — the model currently glues the suffix onto the city).
+	 * Mixing both teaches the two-letter-suffix `1012 LM` shape and the glued feed shape, so the
+	 * model learns to keep the suffix separate from the city.
 	 */
 	postcodeShape?: "conventional" | "as-source"
 	/**
 	 * How the native-order render joins street and house number.
 	 *
-	 * The OpenCage ES template comma-joins (`Calle Mayor, 12` — the official Spanish convention); OA-derived
-	 * feeds and our ES eval space-join (`calle mayor 12`, the observed form on all 3,000 eval rows).
-	 * `"template"` (default) keeps the template's own join; `"space"` collapses
+	 * The OpenCage ES template comma-joins (`Calle Mayor, 12`, the official Spanish convention).
+	 * OA-derived feeds and our ES eval space-join (`calle mayor 12`, the observed form on all
+	 * 3,000 eval rows). `"template"` (default) keeps the template's own join. `"space"` collapses
 	 * `<street>, <house_number>` → `<street> <house_number>` after rendering.
 	 *
 	 * Countries whose template already space-joins (DE/IT/NL) render identically under both.
-	 * Mixing both stops an ES recipe output from teaching the comma as the street→house
-	 * boundary signal (#241 format-diversity audit).
+	 * Mixing both keeps an ES recipe output from teaching the comma as the street→house
+	 * boundary signal.
 	 *
 	 * International order ignores this (the US template is already house-first space-joined).
 	 */
@@ -134,11 +124,11 @@ export interface LocaleRenderOpts {
 	 * The string between rendered address lines.
 	 *
 	 * `", "` (default) is the template's own join.
-	 * `" "` renders the comma-free single-line register — dictation, a copy out of a
-	 * one-field form — `Neusser Str. 12 Nippes 50733 Köln` for the same components.
+	 * `" "` renders the comma-free single-line register for dictation or a copy out of a
+	 * one-field form, as in `Neusser Str. 12 Nippes 50733 Köln` for the same components.
 	 *
 	 * Stage 2 segments the comma form into three and the comma-free form into one, and a single segment
-	 * starves the placetype-pair prior, which is how the comma-free form loses `Nippes` (#1946).
+	 * starves the placetype-pair prior, which is how the comma-free form loses `Nippes`.
 	 * Only the native order reads it.
 	 * The international layout keeps its own separator.
 	 */
@@ -201,20 +191,20 @@ function tokenPresent(raw: string, value: string): boolean {
 
 /**
  * Render one real tuple into an idiomatic, locale-ordered `{raw, components}` row via
- * the OpenCage `country` template (DE → house-after-street + postcode-before-city.
- * ES/IT the same. GB house-first. NL carries the `1012 LM` postcode), with light
- * variation (drop house number / postcode some of the time).
+ * the OpenCage `country` template (DE → house-after-street and postcode-before-city,
+ * ES/IT the same, GB house-first, NL carries the `1012 LM` postcode), with light
+ * variation (drop house number or postcode some of the time).
  *
- * Returns `null` when the tuple is too thin or a component wouldn't align cleanly.
+ * Returns `null` when the tuple is too thin or a component would not align cleanly.
  *
- * Region handling is order-dependent: native order omits it
- * (the native template absorbs the admin region into the postcode/city line, so it rarely
- * renders verbatim and would break BIO alignment), while international order includes it
- * in the tail ("City, Region Postcode" — the US/feed layout the eval uses. v0.9.3 / #327).
+ * Region handling is order-dependent. Native order omits it, because the native template absorbs the
+ * admin region into the postcode/city line, so it rarely renders verbatim and would break BIO
+ * alignment. International order includes it in the tail ("City, Region Postcode", the US/feed layout
+ * the eval uses).
  *
- * Pass `opts.order: "international"` to render the same components house-first / postcode-after-city
- * instead (see {@link LocaleRenderOpts.order}) — the layout international feeds impose on
- * foreign addresses, and the one a native-order-trained model treats as a "collapse."
+ * Pass `opts.order: "international"` to render the same components house-first and postcode-after-city
+ * instead (see {@link LocaleRenderOpts.order}), the layout international feeds impose on
+ * foreign addresses, and the one a native-order-trained model treats as a collapse.
  */
 export function renderLocaleRow(
 	base: LocaleBaseTuple,
@@ -248,12 +238,9 @@ export function renderLocaleRow(
 		components.postcode = normalizePostcode(base.postcode, country)
 	}
 
-	// International order carries the region in the tail ("City, Region Postcode").
-	// The layout real US/feed renderings (and our OA eval) use. v0.9.2 rendered international
-	// order without the region, so the model never learned to segment the tail and mangled it at
-	// eval (region absorbed into the locality / locality dropped); v0.9.3 closes that gap (#327).
-	// Native order still drops the region (the native template absorbs it into the
-	// city line, which would break verbatim alignment).
+	// International order carries the region in the tail ("City, Region Postcode"), the layout real
+	// US/feed renderings (and our OA eval) use. Native order omits the region, because the native
+	// template absorbs it into the city line, which would break verbatim alignment.
 	if (order === "international" && base.region) {
 		components.region = base.region
 	}

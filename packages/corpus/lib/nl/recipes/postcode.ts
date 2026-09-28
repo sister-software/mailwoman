@@ -3,19 +3,18 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `nl-postcode` — the Dutch full-form postcode recipe (#924). The model reads the digits-first NL
- *   postcode "1012 LG" as a house number + a 2-letter street ("1012 LG Amsterdam" → house_number
- *   1012 / street "LG" / locality Amsterdam), and that spurious street context then pulls the
- *   locality into the US situs tier (Amsterdam → Amsterdam, NY). Letters-first postcodes (UK
- *   "SW1A 1AA") parse natively. the `\d{4} [A-Z]{2}` shape does not, and the soft query-shape prior
- *   (0.9 log-odds) can't overcome the strong house-number reading of a leading 4-digit token.
+ * `nl-postcode`: the Dutch full-form postcode recipe.
  *
- *   This is the model-first fix as data (the #723/#901 discipline — teach the boundary, don't
- *   override the decoder): real NL (street, number, postcode, city) tuples in the orders Dutch
- *   addresses actually use, with the full postcode tagged as one postcode span. Both the spaced
- *   ("1012 LG", the failing form — a 2-token span) and unspaced ("1012LG", 1 token) forms are
- *   emitted so the model learns the digits-first postcode regardless of spacing. the three orders
- *   keep polarity balanced (the v1.9.9 lesson).
+ * The model reads the digits-first NL postcode "1012 LG" as a house number plus a two-letter
+ * street, so "1012 LG Amsterdam" becomes house_number 1012, street "LG", locality Amsterdam. That
+ * spurious street context then pulls the locality into the US situs tier. The `\d{4} [A-Z]{2}`
+ * shape does not parse natively, and the soft query-shape prior cannot overcome the strong
+ * house-number reading of a leading four-digit token.
+ *
+ * This recipe is the model-first fix as data. It supplies real NL (street, number, postcode, city)
+ * tuples in the orders Dutch addresses use, with the full postcode tagged as one postcode span. Both
+ * the spaced and unspaced forms are emitted so the model learns the digits-first postcode regardless
+ * of spacing, and the three orders keep polarity balanced.
  */
 
 import { isNLPostcodeKey } from "@mailwoman/codex/nl"
@@ -36,9 +35,6 @@ function spacePostcode(pc: string): string {
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const nlPostcodeRecipe: CorpusRecipe = {
 	name: "nl-postcode",

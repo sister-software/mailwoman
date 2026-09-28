@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The CN organizational-unit reader (#2034): the rows the issue's census found, read into rungs, and split from
- *   their named heads the way the corpus labeler needs.
+ * @file The CN organizational-unit reader. It reads rows into rungs and splits them from their named
+ *   heads the way the corpus labeler needs.
  */
 
 import { isCNUnitChain, readCNUnits, splitCNUnitChain } from "@mailwoman/core/locale/zh-cn-units"

@@ -3,13 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Int8-quantize the #244 coarse-placer (milestone 3). The placer is a linear classifier, so the
- *   only weight is a dense [class][feature] fp32 matrix (12×65536 = 3.0 MB). Per-class symmetric
- *   int8 quantization — `scale[c] = max(|W[c]|) / 127`, `q = round(W / scale)` clamped to [-127,
- *   127] — shrinks it to 0.75 MB (4×) while preserving the linear math exactly up to rounding (the
- *   logit is `bias[c] + scale[c] * Σ int8`, dequantized on load by `CoarsePlacer.fromArtifactDir`).
- *   Per-class scales matter because class weight magnitudes differ (other's outlier-exposure rows
- *   push bigger weights than the in-map countries).
+ *   Int8-quantize the coarse-placer. The placer is a linear classifier with a dense
+ *   [class][feature] fp32 weight matrix. Per-class symmetric int8 quantization shrinks the
+ *   artifact while preserving the linear math exactly up to rounding. Per-class scales matter
+ *   because class weight magnitudes differ (other's outlier-exposure rows push bigger weights than
+ *   the in-map countries).
  *
  *   Measure the accuracy cost with `mailwoman placer eval quant-compare` (target: within ~1pp).
  *
@@ -58,7 +56,7 @@ export interface QuantizeCoarsePlacerResult {
 }
 
 /**
- * Coarse-placer int8 quantizer — see the module doc.
+ * Coarse-placer int8 quantizer. See the module doc.
  */
 export async function quantizeCoarsePlacer(
 	options: QuantizeCoarsePlacerOptions = {},
@@ -103,7 +101,6 @@ export async function quantizeCoarsePlacer(
 				q = -127
 			}
 
-			// symmetric range.
 			// Avoid -128 so |q|≤127
 			int8[base + i] = q
 			const err = Math.abs(q * scale - w[base + i]!)

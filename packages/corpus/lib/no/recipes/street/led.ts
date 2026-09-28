@@ -3,17 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   `no-street-led` — the Norwegian street-led recipe, third orthography of the #901
- *   leading-name-boundary family. The post-#920 no row-read measured the residual as
- *   order-sensitive decode: street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a 30%
- *   residual vs pc-first's 7% — the diacritic street head (…vegen/…veien with ø/å/æ) is the same
- *   leading-name-before-comma boundary the FR bare-street and SI village forms exercise, in a
- *   third orthography. All three real orders cycle per tuple (balanced polarity — the v1.9.9
- *   lesson: a one-order gradient loses at convergence):
+ * `no-street-led`: the Norwegian street-led recipe.
  *
- *   1. canonical  "«st» «n», «pc» «city»"   (the 30% residual class — the lesson)
- *   2. city-first "«city», «pc», «st» «n»"
- *   3. pc-first   "«pc» «city», «st» «n»"   (the 7% floor — the anchor the others converge to)
+ * Street-led forms ("Tangavegen 40, 5620 Tørvikbygd") carry a larger residual than the pc-first
+ * form, and the diacritic street head (…vegen/…veien with ø/å/æ) is a leading-name-before-comma
+ * boundary. All three real orders cycle per tuple so the polarity stays balanced.
+ *
+ * 1. canonical  "«st» «n», «pc» «city»"   (the larger residual class)
+ * 2. city-first "«city», «pc», «st» «n»"
+ * 3. pc-first   "«pc» «city», «st» «n»"   (the floor the others converge to)
  */
 
 import { mulberry32 as makeMulberry32 } from "@mailwoman/core/utils"
@@ -31,9 +29,6 @@ import { SurfaceOrigin } from "#types"
 
 /**
  * Recipe registered with the corpus builder.
- *
- * See the file header for the parse behaviour it exists to exercise,
- * and `description` below for the surface form it generates.
  */
 export const noStreetLedRecipe: CorpusRecipe = {
 	name: "no-street-led",
@@ -50,12 +45,8 @@ export const noStreetLedRecipe: CorpusRecipe = {
 	async run(opts, write) {
 		makeMulberry32(opts.seed)
 
-		// the split (ported from fr-fragment, #727 T2).
-		// Without it this recipe trains on all 10,697 Norwegian surfaces, 1,952 of
-		// which the digit board reserves.
-		// So a Norway retrain would grade memorization of `Hallingrudveien`
-		// while claiming to measure the boundary form.
-		// There is no safe default: source-disjoint by street surface is the discipline, so the flag throws.
+		// The split excludes every surface the digit board reserves, so a retrain grades the
+		// boundary form on unseen streets. There is no safe default, so the flag throws.
 		const excludePath = opts.excludeSurfaces
 
 		if (!excludePath) {

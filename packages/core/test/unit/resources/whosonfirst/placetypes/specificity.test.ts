@@ -3,9 +3,9 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the placetype specificity scale. The required case is the one that created the file: a
- *   `neighbourhood` must not count as covering a `locality`, because reading a surviving child as covering its own
- *   dead parent is what #1746 was.
+ *   Tests for the placetype specificity scale. The required case is that a `neighbourhood` must not
+ *   count as covering a `locality`, because a surviving child must not read as covering its own
+ *   dead parent.
  */
 
 import {
@@ -50,13 +50,9 @@ describe("isAtLeastAsSpecific", () => {
 	})
 
 	it("puts a borough BELOW localadmin rather than level with it", () => {
-		// This pair was tied on the reasoning that WOF uses both for the same tier
-		// in different countries, which is true.
-		// An Alaska borough is county-tier — but a tie is not a neutral answer.
-		// It made each cover the other, and one rung up that same tie let a live
-		// NYC-shaped borough cover its own dead parent locality.
-		// WOF's own containment ladder commits to sub-locality.
-		// A scale that has to pick one answer picks that one, and the Alaska reading stays wrong either way.
+		// WOF uses both placetypes for the same tier in different countries, yet a tie lets each
+		// cover the other. WOF's own containment ladder places a borough inside its locality, so the
+		// scale picks that answer.
 		expect(isAtLeastAsSpecific("borough", "localadmin")).toBe(true)
 		expect(isAtLeastAsSpecific("localadmin", "borough")).toBe(false)
 	})
@@ -75,24 +71,23 @@ describe("isAtLeastAsSpecific", () => {
 describe("isStrictlyFiner", () => {
 	it("separates a child rung from the SAME rung — the distinction a negated isAtLeastAsSpecific loses", () => {
 		expect(isStrictlyFiner("neighbourhood", "locality")).toBe(true)
-		// The equal case is the one that matters: a live locality covers a dead locality, so it is not strictly finer.
+		// The equal case matters. A live locality covers a dead locality, so it is not strictly finer.
 		expect(isStrictlyFiner("locality", "locality")).toBe(false)
 		expect(isStrictlyFiner("region", "locality")).toBe(false)
 	})
 
 	it("checks differently from a negated isAtLeastAsSpecific at the EQUAL rung — the 955-row conflation", () => {
-		// The currency backfill blocks a resurrection when a live row covers the dead one.
-		// Written the wrong way round it reads "block when the live row is strictly coarser",
-		// which stops a live locality from blocking a dead locality of the same name.
-		// Measured on the real artifact that took blocked rows 973 → 18.
+		// The check blocks a resurrection when a live row covers the dead one. A negated
+		// `isAtLeastAsSpecific` asks the wrong question and lets a live locality stop blocking a
+		// dead locality of the same name.
 		const wrong = (live: string, dead: string) => isAtLeastAsSpecific(live, dead) !== true
 		const right = (live: string, dead: string) => isStrictlyFiner(live, dead) !== true
 
-		// The equal rung is where they diverge, and where the damage was.
+		// The equal rung is where the two checks diverge.
 		expect(wrong("locality", "locality")).toBe(false)
 		expect(right("locality", "locality")).toBe(true)
 
-		// They agree everywhere else, which is why the bug survived a read.
+		// They agree everywhere else.
 		for (const [live, dead] of [
 			["neighbourhood", "locality"],
 			["region", "locality"],
@@ -109,12 +104,10 @@ describe("isStrictlyFiner", () => {
 
 describe("the table", () => {
 	it("carries no duplicate rank except the rungs documented as deliberate ties", () => {
-		// Two survive, and neither is an admin rung.
-		// `building+campus+venue` are three names for a thing at an address,
-		// and `country+dependency` is WOF's own sovereignty hedge.
-		// The admin ladder itself is now strictly ordered, because a tie there is
-		// a silent disagreement with containment.
-		// See the agreement suite below.
+		// Two ties remain, and neither is an admin rung. `building+campus+venue` are three tags for a
+		// thing at an address, and `country+dependency` is WOF's own sovereignty hedge. The admin
+		// ladder itself is strictly ordered, because a tie there is a silent disagreement with
+		// containment. See the agreement suite below.
 		const byRank = new Map<number, string[]>()
 
 		for (const [placetype, rank] of Object.entries(PLACETYPE_SPECIFICITY)) {
