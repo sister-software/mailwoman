@@ -122,6 +122,11 @@
 			"node": "./lib/address/key.ts",
 			"default": "./out/address/key.js"
 		},
+		"./abbreviations": {
+			"types": "./out/abbreviations.d.ts",
+			"node": "./lib/abbreviations.ts",
+			"default": "./out/abbreviations.js"
+		},
 		"./component": {
 			"types": "./out/component.d.ts",
 			"node": "./lib/component.ts",

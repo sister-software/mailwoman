@@ -94,6 +94,7 @@
 		"access": "public"
 	},
 	"dependencies": {
+		"@mailwoman/codex": "workspace:*",
 		"spliterator": "^8.1.0"
 	}
 }

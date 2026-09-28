@@ -3,132 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Abbreviation expansion — a small bounded dictionary per locale: en-US street suffixes +
- *   directional prefixes, fr-FR and es-* street types, plus a locale-unknown set for the geocode path,
- *   which has to expand before the parse that would establish the locale. Others added as needed.
+ *   Abbreviation expansion over the per-locale tables in `@mailwoman/codex/abbreviations`.
  *
- *   This is the inverse of the corpus synthesis pass (which produces `Ave` from `Avenue` for
- *   augmentation). Both sides should eventually share dictionaries. for v1 this dict is duplicated
- *   intentionally — refactoring sharing is a separate task.
+ *   This is the inverse of the corpus synthesis pass, which produces `Ave` from `Avenue` for
+ *   augmentation.
  */
+
+import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
 
 import type { SpanRange } from "#types"
-
-export interface AbbreviationEntry {
-	from: string // short form (case-insensitive match)
-	to: string // canonical long form
-}
-
-const EN_US_DICT: ReadonlyArray<AbbreviationEntry> = [
-	// Directional prefixes / suffixes
-	{ from: "N", to: "North" },
-	{ from: "S", to: "South" },
-	{ from: "E", to: "East" },
-	{ from: "W", to: "West" },
-	{ from: "NE", to: "Northeast" },
-	{ from: "NW", to: "Northwest" },
-	{ from: "SE", to: "Southeast" },
-	{ from: "SW", to: "Southwest" },
-	// Street suffixes
-	{ from: "St", to: "Street" },
-	{ from: "Ave", to: "Avenue" },
-	{ from: "Blvd", to: "Boulevard" },
-	{ from: "Rd", to: "Road" },
-	{ from: "Dr", to: "Drive" },
-	{ from: "Ct", to: "Court" },
-	{ from: "Ln", to: "Lane" },
-	{ from: "Pl", to: "Place" },
-	{ from: "Pkwy", to: "Parkway" },
-	{ from: "Hwy", to: "Highway" },
-	{ from: "Sq", to: "Square" },
-	{ from: "Ter", to: "Terrace" },
-]
-
-const FR_FR_DICT: ReadonlyArray<AbbreviationEntry> = [
-	{ from: "R", to: "Rue" },
-	{ from: "Bd", to: "Boulevard" },
-	{ from: "Av", to: "Avenue" },
-	{ from: "Bvd", to: "Boulevard" },
-	{ from: "Pl", to: "Place" },
-	{ from: "Imp", to: "Impasse" },
-	{ from: "Sq", to: "Square" },
-]
-
-const ES_ES_DICT: ReadonlyArray<AbbreviationEntry> = [
-	// Spanish writes Avenida short as `Av.`, `Avda.` or `Avd.`.
-	// English never abbreviates it `Av` (it uses `Ave`), so there is no en collision,
-	// but french does, and there it means Avenue.
-	// That collision is why this table has to exist rather than the entry being folded into a shared set:
-	// the same three letters resolve to different words, and only the locale can decide which.
-	{ from: "Av", to: "Avenida" },
-	{ from: "Avda", to: "Avenida" },
-	{ from: "Avd", to: "Avenida" },
-]
-
-/**
- * #1002: the locale-unknown expansion set — the entries safe to apply when the input's locale hasn't been established
- * yet (the geocode path expands before the parse, which is what determines the locale).
- * Safe = multi-char, collision-free across the locale dictionaries, and never a plausible
- * standalone token in the other locale (FR `Bd`/`Bvd`/`Imp` have no EN reading).
- * Deliberately excluded: the FR single letters (`R` → Rue would fire on Washington DC's literal "R St")
- * and the EN suffixes (`St`, `Ave`, `Dr`, … — the model is trained-robust on those,
- * and `St`/`Dr` are ambiguous with Saint/Doctor).
- *
- * `Av` violates that criterion and is here anyway — a tracked defect rather than an oversight.
- * It was admitted on the claim that it "reads Avenue in both", which is true of en/fr
- * and false of es/pt, where it is Avenida.
- *
- * So Spanish input through the geocode path acquires an english street type:
- * the 2026-08-05 gauntlet batch caught "Av.
- * Los Meros" → "Avenue Los Meros" and "Av.
- *
- * Aurelio Ortega" → "Avenue Aurelio Ortega", and both rows (`pr-op3-place-at-the-sea-ponce`,
- * `mx-op3-san-miguel-canada-zapopan`) had to leave `street` unasserted because of it.
- * Dropping the entry is not a table edit: `fr-op3-halles-market-bonneuil` is a passing row
- * that asserts street "Avenue de la Convention" and an `address_point` tier, so it pins
- * the current behaviour and a removal has to be measured on a resolver-gauntlet run.
- *
- * The real repair is upstream — the geocode path hardcodes `locale: "und"` because Stage 1 precedes
- * the parse, and `@mailwoman/locale-hint` cannot presently detect Spanish (it scores script
- * class + known postcode formats, and a 5-digit ES/MX code is indistinguishable from a US ZIP).
- */
-const LOCALE_UNKNOWN_DICT: ReadonlyArray<AbbreviationEntry> = [
-	{ from: "Bd", to: "Boulevard" },
-	{ from: "Bvd", to: "Boulevard" },
-	{ from: "Boul", to: "Boulevard" },
-	{ from: "Av", to: "Avenue" },
-	{ from: "Imp", to: "Impasse" },
-]
-
-function getDictionary(locale: string | undefined): ReadonlyArray<AbbreviationEntry> {
-	const lc = (locale ?? "en-US").toLowerCase()
-
-	// BCP-47 "und" (undetermined).
-	// The caller knows it does not know the locale yet (the geocode path expands before the parse).
-	// Only the collision-free multi-locale set applies; `undefined` keeps its historical en-US default.
-	if (lc === "und") return LOCALE_UNKNOWN_DICT
-
-	if (lc.startsWith("fr")) return FR_FR_DICT
-
-	// Every `es-*` region: es-ES, es-MX, es-AR, … all abbreviate Avenida the same way.
-	// Before this existed they fell through to en-US, whose table has no `Av` entry,
-	// so `Av.` simply survived.
-	// The visible symptom was "no change happens", which is why the collision only surfaced on the `und` path.
-	if (lc.startsWith("es")) return ES_ES_DICT
-
-	return EN_US_DICT
-}
-
-/**
- * The per-locale abbreviation table (short↔long), exposed so consumers can reuse
- * the same data instead of duplicating it.
- *
- * The metamorphic gauntlet inverts this table to generate expanded→abbreviated perturbations
- * (`Avenue`→`Ave`); the "no required trivia" rule means that data lives in exactly one place — here.
- */
-export function abbreviationDictionary(locale?: string): ReadonlyArray<AbbreviationEntry> {
-	return getDictionary(locale)
-}
 
 export interface AbbreviationResult {
 	text: string
@@ -148,7 +31,7 @@ export interface AbbreviationResult {
  * Output form preserves the dictionary's canonical casing (`St` → `Street`, `st` → `Street`, `ST` → `Street`).
  */
 export function expandAbbreviations(input: string, locale?: string): AbbreviationResult {
-	const dict = getDictionary(locale)
+	const dict = abbreviationDictionary(locale)
 	const lookup = new Map<string, string>()
 
 	for (const entry of dict) {

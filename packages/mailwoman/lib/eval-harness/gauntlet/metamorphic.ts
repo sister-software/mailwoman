@@ -4,7 +4,7 @@
  * @author Teffen Ellis, et al.
  */
 
-import { abbreviationDictionary } from "@mailwoman/normalize"
+import { abbreviationDictionary } from "@mailwoman/codex/abbreviations"
 import { haversineKm } from "@mailwoman/spatial"
 
 import { buildGauntletDeps, runOne } from "#eval-harness/gauntlet/harness"
