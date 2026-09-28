@@ -82,6 +82,38 @@ export interface ProvenanceDocument {
 	}
 	attribution_recorded_in_another_package: Array<{ artifact: string; recorded_in: string; text: string }>
 	corpus_version: string | null
+	/**
+	 * Which of the corpus's sources one config's audited epoch drew from, read from the
+	 * effective training manifest committed under `packages/corpus/data/training-manifests/`.
+	 *
+	 * `corpus_version` is the corpus a card names, and the corpus manifest states what that corpus holds.
+	 * Neither states what reached the trainer, and the two differ by the country filter, the source
+	 * weights, a zero weight, the sampler and every overlay merged after the corpus manifest was written.
+	 * This block carries the difference.
+	 *
+	 * `null` means the repository holds no effective manifest for the corpus this card names,
+	 * which is a statement about the checkout rather than about the model.
+	 */
+	effective_training_sources: {
+		config: string
+		seed: number
+		draws_realized: number
+		/**
+		 * Sources the audited epoch drew rows from, with the rows it emitted for each after augmentation.
+		 */
+		drew: Array<{ source: string; license: string; corpus_rows: number; emitted_rows: number }>
+		/**
+		 * Sources the corpus holds that the epoch drew no row from, with why.
+		 */
+		excluded: Array<{ source: string; because: string }>
+		/**
+		 * Sources the epoch emitted that the corpus manifest does not name, with their emitted rows.
+		 *
+		 * A non-empty list means this block covers part of what trained the model.
+		 */
+		emitted_but_unrecorded: Array<{ source: string; emitted_rows: number }>
+		total_emitted_rows: number
+	} | null
 	tokenizer_version: string | null
 	unresolved: string[]
 }
@@ -158,8 +190,26 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		)
 	}
 
+	if (!record.effectiveTraining) {
+		questions.push(
+			"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		)
+
+		return questions
+	}
+
+	const unrecorded = Object.entries(record.effectiveTraining.emittedButUnrecorded)
+
+	if (unrecorded.length) {
+		const rows = unrecorded.reduce((sum, [, count]) => sum + count, 0)
+
+		questions.push(
+			`effective_training_sources covers part of what trained this model. The audited epoch emitted ${unrecorded.length} source(s) the corpus's frozen manifest does not name, ${rows.toLocaleString()} of ${record.effectiveTraining.totalEmittedRows.toLocaleString()} rows. Those sources reached the corpus through overlays merged after that manifest was written, so their terms are recorded nowhere this document reads.`
+		)
+	}
+
 	questions.push(
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		`effective_training_sources reads one epoch of ${record.effectiveTraining.config} at seed ${record.effectiveTraining.seed}. A training run draws a different sample per epoch, so the source set it names is what one audited epoch drew rather than the union over every epoch the model saw.`
 	)
 
 	return questions
@@ -240,6 +290,29 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 			text: foreign.text,
 		})),
 		corpus_version: record.corpusVersion,
+		effective_training_sources: record.effectiveTraining
+			? {
+					config: record.effectiveTraining.config,
+					seed: record.effectiveTraining.seed,
+					draws_realized: record.effectiveTraining.drawsRealized,
+					drew: record.effectiveTraining.sources
+						.filter((source) => source.excludedBecause === null)
+						.map((source) => ({
+							source: source.source,
+							license: source.license,
+							corpus_rows: source.corpusRows,
+							emitted_rows: source.emittedRows,
+						})),
+					excluded: Object.entries(record.effectiveTraining.excludedSources).map(([source, because]) => ({
+						source,
+						because,
+					})),
+					emitted_but_unrecorded: Object.entries(record.effectiveTraining.emittedButUnrecorded).map(
+						([source, rows]) => ({ source, emitted_rows: rows })
+					),
+					total_emitted_rows: record.effectiveTraining.totalEmittedRows,
+				}
+			: null,
 		tokenizer_version: record.tokenizerVersion,
 		unresolved: unresolvedQuestions(record),
 	}

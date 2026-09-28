@@ -123,8 +123,8 @@
 				"uses": ["training"]
 			},
 			{
-				"text": "Overture Maps Foundation — Addresses theme (CDLA-Permissive-2.0): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike.",
-				"license_named": "CDLA-Permissive-2.0",
+				"text": "Overture Maps Foundation — Addresses theme (per-country register license; Overture declares no identifier of its own for this theme, so the terms are the upstream register's): the `overture-latam` CA/MX training extract (456,230 rows, 6.6.0). Attribution-only, not share-alike. Read 2026-09-25 from https://docs.overturemaps.org/attribution/.",
+				"license_named": "456,230 rows, 6.6.0",
 				"uses": ["training"]
 			},
 			{
@@ -162,6 +162,7 @@
 	},
 	"attribution_recorded_in_another_package": [],
 	"corpus_version": "v0.13.0-latam (v385's own feed, VERBATIM data section incl. punct_drop 0.3 + all source weights except synth-po-box-cedex 1.5→3.0 — the fine-tune replay boost) — the deploc additions (synth-gb 10.0 / nz / es-pedania / fr-lieudit) are PROBE PASSENGERS removed after the v3.22 feed attribution (GB street-boundary transfer + CA po-box dilution).",
+	"effective_training_sources": null,
 	"tokenizer_version": "0.9.0-multisplice",
 	"unresolved": [
 		"No digest is recorded for 8 of 12 declared artifacts: calibration.json, calibration-per-locale.json, postcode-us.bin, pair-index-us.bin, fst-en-us.bin, fst-street-morphology.bin, anchor-lexicon-v1.json, country-surface-lexicon-v1.json. An unrecorded digest is not a verified one.",
@@ -169,6 +170,6 @@
 		"One attribution entry names no license: See THIRD_PARTY_NOTICES.md for the standing OpenAddresses / GeoNames / WOF attribution.",
 		"4 of 10 attribution entries describe evaluation or tokenizer text rather than training rows, so they attribute data this package's model did not learn from: OpenAddresses CZ — ČÚZK RÚIAN (CC-BY 4.0); OpenAddresses PL — GUGiK / PRG (public, BDOT-derived); OpenAddresses SK — MINV/ZBGIS (CC-0/CC-BY per OA source); OpenAddresses SI — GURS (CC-BY per OA source).",
 		"1 of 10 attribution entries do not say how the source was used, so whether it trained this model is unrecorded.",
-		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, and no released model was built from a corpus carrying one. The corpus named above is the recipe's corpus rather than a record of what reached the model."
+		"Which records trained the model this package ships or inherits is unresolved. `buildCorpus` writes a frozen `TRAINING_SOURCES.json` naming every source that contributed and under which terms, `effective-manifest.run.ts` derives from it and an `audit_epoch_mixture` output what one config's epoch drew, and no released model was built from a corpus carrying either. The corpus named above is the recipe's corpus rather than a record of what reached the model."
 	]
 }

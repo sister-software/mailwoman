@@ -63,6 +63,15 @@ export interface FoldLayerManifestInput {
 	buildSHA: string
 	createdAt: string
 	spineKeys: SpineKeys
+	/**
+	 * Input record count per publisher, counted during the build.
+	 *
+	 * Leaving it out records that the build did not count, which is what every
+	 * artifact built before the field carries.
+	 * Overture removes a release from its bucket once a newer one lands, so a count
+	 * omitted here cannot be recovered from the input afterwards.
+	 */
+	sourceRecords?: Readonly<Record<string, number>>
 }
 
 /**
@@ -116,6 +125,7 @@ export function foldLayerManifest(input: FoldLayerManifestInput): LayerManifest 
 		freshnessPolicy: LayerFreshnessPolicy.Sealed,
 		spineKeys: input.spineKeys,
 		createdAt: input.createdAt,
+		...(input.sourceRecords === undefined ? {} : { sourceRecords: input.sourceRecords }),
 	}
 }
 

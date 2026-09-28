@@ -7,6 +7,7 @@
  */
 
 import { pathExists, readLink, isSymbolicLink, statPath, type Dirent } from "@mailwoman/core/fs/readers"
+import { tryParsingJSON } from "@mailwoman/core/json"
 import type { layerschemadatabase } from "@mailwoman/core/layers/schema"
 import { getRow } from "@mailwoman/core/utils"
 import { DatabaseClient } from "@mailwoman/sqlite/client"
@@ -80,6 +81,14 @@ export interface LayerManifest {
 	build_cmd: string
 	build_sha: string
 	created_at: string
+	/**
+	 * JSON object of publisher name to the record count that publisher supplied to the build.
+	 *
+	 * A row written before the column existed, and a build that recorded no count, both leave it undefined.
+	 * The count is of the build's input rather than of the rows the artifact kept, and it cannot
+	 * be recovered afterwards because Overture removes a release from its bucket once a newer one lands.
+	 */
+	source_records?: string
 }
 
 export interface InventoryEntry {
@@ -343,6 +352,35 @@ export function licenseHint(entry: InventoryEntry): string | null {
 	const attribution = manifest.attribution ? ` — attribution: ${manifest.attribution}` : ""
 
 	return `${license}${attribution}`
+}
+
+/**
+ * The input record counts a manifested artifact records, as one line for the text report.
+ *
+ * Returns `null` when the artifact records no count at all, so the caller omits
+ * the line rather than printing a zero.
+ * An artifact built before the `source_records` column exists is in that state,
+ * and so is one whose build did not count its inputs.
+ */
+export function sourceRecordsHint(entry: InventoryEntry): string | null {
+	if (entry.provenance !== Provenance.Manifested) return null
+
+	const recorded = entry.manifest!.source_records
+
+	if (!recorded) return null
+
+	const counts = tryParsingJSON<Record<string, number>>(recorded)
+
+	if (!counts) return `source_records is present and unreadable: ${recorded}`
+
+	const entries = Object.entries(counts)
+
+	if (!entries.length) return "the build counted its inputs and recorded no publisher"
+
+	return entries
+		.toSorted((left, right) => right[1] - left[1])
+		.map(([publisher, rows]) => `${publisher} ${rows.toLocaleString()}`)
+		.join(", ")
 }
 
 export function rebuildHint(entry: InventoryEntry): string {
