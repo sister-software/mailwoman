@@ -4,15 +4,12 @@
  * @author Teffen Ellis, et al.
  *
  *   Build a per-country OSM rooftop address-point extract from a Geofabrik `.osm.pbf` extract, on the
- *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`) so the existing
- *   `AddressPointSqliteLookup` reads it with zero changes. Address-point-first by design: we write the
- *   exact `addr:housenumber` coordinate (node, or building-polygon centroid). Points with no
- *   `addr:street` are counted and skipped (the association gap DeepSeek flagged) — we size that gap
- *   before deciding whether to build the `associatedStreet` / point-in-polygon recovery pass.
+ *   shared situs schema (`@mailwoman/resolver-wof-sqlite/address-point-schema`). The existing
+ *   `AddressPointSqliteLookup` reads it with zero changes.
  *
  *   ⚠ ODbL: the output extract is an OpenStreetMap Derived Database (share-alike). This code carries no
- *   OSM bytes. the obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
- *   `osm/readme.md` for the licensing boundary + the counsel sign-off required before any extract ships.
+ *   OSM bytes. The obligation rides on the built `.db`. Source = `openstreetmap:<cc>`. See
+ *   `osm/readme.md` for the licensing boundary and the counsel sign-off required before any extract ships.
  *
  *   Usage:
  *     node packages/osm/lib/scripts/build-rooftop-database.ts \
@@ -65,7 +62,7 @@ interface BuildArgs {
 	buildSHA: string
 	output: string
 	/**
-	 * #250: recover the street for no-`addr:street` points from the nearest named highway.
+	 * Recover the street for points with no `addr:street` from the nearest named highway.
 	 */
 	recover: boolean
 	recoverRadiusKm: number
@@ -97,7 +94,7 @@ async function parse(): Promise<BuildArgs> {
 	}
 
 	if (!(await pathExists(pbf))) throw new Error(`PBF not found: ${pbf}`)
-	// Throws for an unsupported country — fail loud, never key with the wrong normalizer.
+	// Throws for an unsupported country, so the build fails loud and never keys with the wrong normalizer.
 	streetLocaleForCountry(country)
 	const slug = values.slug?.toLowerCase() || country
 	const release = values.release || "unknown"
@@ -121,7 +118,6 @@ async function main(): Promise<void> {
 	const locale = streetLocaleForCountry(args.country)
 	const source = `openstreetmap:${args.country}`
 	const recoverSource = `${source}#recovered`
-	// #250: build the nearest-named-highway index up front (validated ~88% precision @30m on FR ground truth).
 	const recoveryIndex = args.recover ? await buildStreetRecoveryIndex(args.pbf) : null
 
 	if (recoveryIndex) {
@@ -168,7 +164,6 @@ async function main(): Promise<void> {
 				continue
 			}
 
-			// #250: a point with no addr:street recovers its street from the nearest named highway (when --recover).
 			let street = rec.street
 			let rowSource = source
 
@@ -187,9 +182,8 @@ async function main(): Promise<void> {
 				recovered++
 			}
 
-			// Per-surface locale routing (the Québec finishing move): a French-lead surface
-			// folds under the fr rules whatever the country default.
-			// The probe side routes with the same shared function.
+			// Per-surface locale routing. A French-lead surface folds under the fr rules whatever the
+			// country default, and the probe side routes with the same shared function.
 			const streetNorm = normalizeStreetForKeyLocale(street, streetLocaleForSurface(street, locale))
 			const number = rec.housenumber.trim().toLowerCase()
 
@@ -262,7 +256,7 @@ async function main(): Promise<void> {
 		kdb.exec("ANALYZE")
 	}
 
-	// Build-on-copy: only now swap the freshly-built extract into place.
+	// Build-on-copy. The freshly-built extract is swapped into place only after the build completes.
 	await swapDatabaseIntoPlace(tmp, args.output)
 	await sealDatabase(args.output)
 

@@ -3,13 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1509 — the two defects `mailwoman gazetteer postcode-binary` shipped, pinned as tests.
- *
- *   1. The GB outward derivation split `name` on a space, so the licence-clean Code-Point Open database
- *      (`postalcode-gb-codepoint.db`, names stored space-stripped as `AB101AB`) yielded null on every
- *      one of its 1,746,976 rows.
- *   2. The command wrote the resulting zero-key binary and exited 0 — a valid, empty, silently-fed
- *      channel, which is the #1467 defect class again.
+ *   Tests for the postcode binary outward derivation, key form and key floors.
  */
 
 import {
@@ -24,10 +18,10 @@ import { describe, expect, it } from "vitest"
 
 describe("gbOutwardFromKey — shape, not space-split (#1509)", () => {
 	it("derives the outward from the SPACE-STRIPPED form both databases can produce", () => {
-		// Code-Point Open's storage form (the database the defect was found against) …
+		// Code-Point Open's storage form, with names stored space-stripped.
 		expect(gbOutwardFromKey("AB101AB")).toBe("AB10")
 		expect(gbOutwardFromKey("SW1A2AA")).toBe("SW1A")
-		// … and the retired GeoNames-lineage database's spaced display form, keyed identically.
+		// The spaced display form, keyed identically.
 		expect(gbOutwardFromKey("SW1A 2AA")).toBe("SW1A")
 		expect(gbOutwardFromKey("so4 3rx")).toBe("SO4")
 	})
@@ -62,7 +56,7 @@ describe("buildPostcodeBinaryEntries", () => {
 	it("GB `unit` granularity emits every unit PLUS one outward district per prefix", () => {
 		const { entries, skipped } = buildPostcodeBinaryEntries("GB", GB_ROWS, { gbGranularity: "unit" })
 
-		expect(skipped).toBe(1) // NOTAPOSTCODE
+		expect(skipped).toBe(1)
 		expect(entries.map((e) => e.postcode).toSorted()).toEqual(["AB10", "AB101AB", "AB101AF", "SW1A", "SW1A2AA"])
 
 		// The outward centroid is the mean of its placed units, matching `anchor-lookup.ts::addGBOutwardKeys`.

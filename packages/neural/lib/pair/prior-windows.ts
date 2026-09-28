@@ -135,7 +135,7 @@ export function buildWindows(nonEmptyGroups: readonly WordGroup[], maxWords: num
  * Compute the segment index of every entry in `nonEmptyGroups`, by counting literal `,` and newline
  * characters in `inputText` that fall strictly before each group's first piece's start offset.
  *
- * Counting offsets rather than piece text is robust to how the tokenizer attaches a punctuation
+ * Counting offsets rather than piece text is unaffected by how the tokenizer attaches a
  * piece to its neighbouring word group.
  * Without `inputText`, every group falls in segment 0.
  */
@@ -156,7 +156,8 @@ export function computeGroupSegments(
 		}
 	}
 
-	// boundaryOffsets is built in ascending order, so `boundaryIdx` only ever advances — one linear pass across both.
+	// boundaryOffsets is built in ascending order, so `boundaryIdx` only ever advances in one linear
+	// pass across both.
 	let boundaryIdx = 0
 
 	return nonEmptyGroups.map((group) => {
@@ -221,7 +222,6 @@ export function segmentParentPostcodeShape(country: string | undefined): RegExp 
  * The guards: only a trailing run, the longest suffix of at most {@link MAX_TRAILING_POSTCODE_WORDS}
  * tokens whose bare concatenation full-matches `shape` (longest-first so a two-token GB postcode
  * strips whole), never the entire segment, and only when `shape` is defined.
- * No trailing postcode means the input array is returned.
  */
 export function trailingSegmentPostcodeTake(tokens: readonly string[], shape: RegExp | undefined): number {
 	if (shape === undefined || tokens.length < 2) return 0
@@ -320,7 +320,7 @@ export function disjoint(a: CandidateWindow, b: CandidateWindow): boolean {
  * Whether two candidates fold to an identical key under any of their fold forms, which is the
  * identity test behind the repeated-name convention.
  *
- * Two genuinely different places collide here only when their folds collide, since the same name
+ * Two different places collide here only when their folds collide, since the same name
  * text folds the same way.
  */
 export function sharesFoldForm(a: CandidateWindow, b: CandidateWindow): boolean {

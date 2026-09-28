@@ -3,10 +3,11 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   #1905: the GeoNames-anchored label-point choice. The rule table pins the census's four classes —
- *   the Washington shape (label wrong, geometric point at the settlement), the Chinese
- *   prefecture-city shape (label at the urban seat, centroid far), the anchorless record, and the
- *   agreeing pair — plus the lazy country-file lookup's absence semantics.
+ *   The GeoNames-anchored label-point choice. The rule table pins the census's four classes: the
+ *   Washington shape, where the label is wrong and the geometric point sits at the settlement, the
+ *   Chinese prefecture-city shape, where the label sits at the urban seat and the centroid is far,
+ *   the anchorless record, and the agreeing pair. It also pins the lazy country-file lookup's
+ *   absence semantics.
  */
 
 import { temporaryDirectory } from "@mailwoman/core/fs/temporary"
