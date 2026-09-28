@@ -2,9 +2,9 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file The #1895 pin implementation: the committed constants read back exactly, a surgical rewrite touches only the three
- *   constant lines (the pin test's dated history comments survive byte-identically), a same-values rewrite is a no-op,
- *   and a reshaped test file refuses instead of being partially rewritten.
+ * @file The pin implementation: the committed constants read back exactly, a rewrite touches only
+ *   the three constant lines, a same-values rewrite is a no-op, and a reshaped test file refuses
+ *   rather than being partially rewritten.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"

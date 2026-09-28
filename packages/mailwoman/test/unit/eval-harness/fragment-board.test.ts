@@ -3,11 +3,10 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the fragment board's interval math and fixture interface (#727 stage-2, Tier 1c).
+ *   Tests for the fragment board's interval math and fixture interface.
  *
- *   The interval is the whole reason this board exists. It is what turns "3/15" into "somewhere
- *   between 4% and 48%, so stop quoting it". If the math is wrong the board is worse than no board,
- *   because it launders an anecdote into a decimal.
+ *   The interval is the reason this board exists. It turns "3/15" into "somewhere between 4% and
+ *   48%", and if the math is wrong the board launders an anecdote into a decimal.
  */
 
 import { readLocalTextFile } from "@mailwoman/core/fs/readers"
@@ -30,7 +29,6 @@ describe("wilson", () => {
 		// centre=0.32805, spread=1.96*sqrt(0.010667+0.004268)=0.23953 =>
 		// [(0.32805-0.23953)/1.25611, (0.32805+0.23953)/1.25611] = [0.070474, 0.451859]
 		// i.e. "3/15" means "somewhere between 7% and 45%".
-		// That is not a measurement, and the whole point of this board is to stop anyone quoting it as one.
 		const ci = wilson(3, 15)
 
 		expect(ci.low).toBeCloseTo(0.070474, 5)

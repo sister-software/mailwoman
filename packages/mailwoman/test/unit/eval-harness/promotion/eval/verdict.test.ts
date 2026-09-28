@@ -3,15 +3,15 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tests for the arena summary parser in promotion-eval-verdict.ts. The arena table shape changed when the #1151
- *   rules-parser deletion dropped the v0 comparison columns; `arenaColumn` must read the `neural` score by header on
- *   both the pre- and post-#1151 shapes, so a check run on the current tree stops misreading `fail` as `neural`.
+ *   Tests for the arena summary parser in promotion-eval-verdict.ts. The arena table has two shapes
+ *   since the v0 comparison columns were dropped, and `arenaColumn` must read the `neural` score by
+ *   header on both so a check run on the current tree does not misread `fail` as `neural`.
  */
 
 import { arenaColumn } from "mailwoman/eval-harness/promotion/eval/verdict"
 import { describe, expect, test } from "vitest"
 
-// Post-#1151: summarize-arenas.ts emits the neural-only shape.
+// The neural-only shape emitted by summarize-arenas.ts.
 // `neural` is the first %-column after n.
 const NEURAL_ONLY = [
 	"| arena | n | neural | fail | tree-valid |",
@@ -21,7 +21,7 @@ const NEURAL_ONLY = [
 	"| postal | 38 | 13% | 87% | 95% |",
 ].join("\n")
 
-// Pre-#1151: the v0 comparison columns were present; `neural` is the second %-column after n.
+// The v0 comparison shape. The v0 columns precede `neural`, so it is the second %-column after n.
 const WITH_V0 = [
 	"| arena | n | v0 | neural | both | neural-only | v0-only | both-fail | tree-valid |",
 	"| --- | --: | --: | --: | --: | --: | --: | --: | --: |",

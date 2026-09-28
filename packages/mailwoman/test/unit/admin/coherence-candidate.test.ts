@@ -3,13 +3,12 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The #1717 path, end to end on the candidate backend: a fixture candidate.db (built through the
- *   real {@link buildCandidateTable}, ancestors sidecar included) behind the real resolver walk,
- *   with the admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult`
- *   reads them. This is the flip the sidecar exists for — the Weimar-class winner's `region`
- *   verdict moves from `unverifiable` (no ancestry to check) to a decided verdict, while the
- *   ranking itself stays untouched (flag-only: the wrong winner still wins. the verdict now says
- *   so).
+ *   The candidate backend end to end: a fixture candidate.db built through the real
+ *   {@link buildCandidateTable} with its ancestors sidecar, behind the real resolver walk, with the
+ *   admin-coherence verdicts read off the resolved tree the way `extractGeocodeResult` reads them.
+ *   The sidecar moves the Weimar-class winner's `region` verdict from `unverifiable` to a decided
+ *   verdict, while the ranking itself stays untouched. The wrong winner still wins and the verdict
+ *   now says so.
  */
 
 import { walkNodes, type AddressNode, type AddressTree } from "@mailwoman/core/decoder"
@@ -111,9 +110,8 @@ afterEach(async () => {
 /**
  * Resolve the Weimar tree and read the verdicts the way the geocode assembly does.
  *
- * `adminCoherence: false` pins the #263 re-pick out of the way.
- * This test is about the stamp and the verdict rather than about any mechanism
- * that might one day fix the pick.
+ * `adminCoherence: false` keeps the re-pick out of the way, since this test is about the stamp
+ * and the verdict.
  */
 async function verdictFor(regionValue: string, includeAncestors: boolean) {
 	const resolver = createWOFResolver(lookup)
@@ -133,20 +131,17 @@ describe("admin coherence over the candidate backend's ancestors sidecar", () =>
 	test("the qualifier the ranking ignored becomes a DECIDED contradiction — the flip from unverifiable", async () => {
 		const { winner, fragment } = await verdictFor("Thüringen", true)
 
-		// The ranking is untouched: population-first still answers Weimar, Texas,
-		// with the disambiguator in the input.
-		// That is the #1717 defect, faithfully reproduced.
+		// The ranking is untouched: population-first still answers Weimar, Texas, with the
+		// disambiguator in the input.
 		const stamped = winner as AddressNode
 
 		expect(stamped.lat).toBeCloseTo(29.7, 1)
 
-		// But the winner now carries its containment lineage, stamped from the sidecar…
 		expect(stamped.metadata?.["ancestors"]).toEqual([
 			{ id: TEXAS, placetype: "region", name: "Texas" },
 			{ id: USA, placetype: "country", name: "United States" },
 		])
 
-		// …so the verdict is decided: the parsed region contradicts the winner's ancestry.
 		expect(fragment.admin_coherence!.region).toBe("contradicted")
 	})
 

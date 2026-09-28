@@ -2,8 +2,8 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file Coverage for the OpenAddresses resolver eval's pure halves — the tree walkers that decide which place a row
- *   resolved to, and the region predicate that decides whether it counts.
+ * @file Coverage for the OpenAddresses resolver eval's pure halves: the tree walkers that decide
+ *   which place a row resolved to, and the region predicate that decides whether it counts.
  */
 
 import type { ComponentTag } from "@mailwoman/codex/component"
@@ -155,7 +155,8 @@ describe("mostSpecific", () => {
 		expect(mostSpecific([unranked])).toBe(unranked)
 	})
 
-	// #1773: the postcode rung is the one that is not a constant, and this harness had no postcode case at all — which is how a flat scale graded every panel on the arm production takes for only some of them.
+	// The postcode rung is the one that varies by panel, so the harness needs both an area-grade and
+	// a unit-grade postcode case.
 	const areaPostcode: Resolved = {
 		id: 5,
 		name: "62701",

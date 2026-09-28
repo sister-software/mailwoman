@@ -7,8 +7,8 @@
  *
  *   `createGeocodeSession` resolves gazetteer artifacts under `options.dataRoot`, and weights
  *   resolution is a ladder of which only the overlay rung is governed by `dataRoot`. A bogus root
- *   with a real candidate.db passes the gazetteer check, which is resolved first, so the session's
- *   next stop is weights and the bogus root must then fail.
+ *   with a real candidate.db passes the gazetteer check. That check runs first, so the session's next stop is
+ *   weights, and the bogus root must then fail.
  */
 
 import { dataRootPath } from "@mailwoman/core/data-root"

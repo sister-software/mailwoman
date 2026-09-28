@@ -3,29 +3,22 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The venue-structure confound board (#1423), run as a check.
+ *   The venue-structure confound board, run as a check.
  *
  *   `venueStructureBiasScale` pushes venue-interior designators ("concourse", "terminal", "gate",
- *   "wing", …) toward `unit` harder than the postal designators they share a vocabulary with. The
- *   risk that provides is false units on surfaces where one of those words appears without being a
- *   designator: the GB `-gate` street names, "Gate House" venues, "Terminal" industrial estates,
- *   "Wing" as a personal or business name, and designators used as street names.
+ *   "wing") toward `unit` harder than the postal designators they share a vocabulary with. That
+ *   risks false units on surfaces where one of those words appears without being a designator: GB
+ *   `-gate` street names, "Gate House" venues, "Terminal" industrial estates, "Wing" as a personal
+ *   or business name, and designators used as street names.
  *
  *   The board is `fixtures/venue-structure-confounds.jsonl`, pre-registered before the change was
- *   measured. Its bar is absolute — zero `unit` emissions — because every row is a surface where a
- *   unit is simply wrong rather than one where a unit is merely unlikely.
+ *   measured. Its bar is absolute, zero `unit` emissions, because every row is a surface where a
+ *   unit is wrong.
  *
- *   why this lives here and not beside the classifier. It has to run the path a user runs.
- *   `enforceWordConsistency` defaults to off on `NeuralAddressClassifier` (so a bare classifier
- *   decode stays byte-identical) and is switched on by `geocode-core.ts` via
- *   `WORD_CONSISTENCY_SHIP_DEFAULT`. A board run against the raw classifier therefore measures an
- *   UN-healed decode, and it will report failures that no consumer of the shipped pipeline can
- *   reach — which is exactly what happened while this change was being measured: `1 Building Society
- *   Place, Leeds` read `unit="Buil"`, a sub-token fragment, and was written up as a pre-existing
- *   product defect. It is not one. `Building` tokenizes to `B`/`uil`/`ding`, the model labelled
- *   those `B-unit`/`I-unit`/`B-street` — three components inside one word, a sequence no valid parse
- *   can have — and the heal collapses it to `unit="Building"` the moment it is on. The bug was in
- *   the harness, and the fix is to make the check incapable of choosing the wrong path.
+ *   The board runs the path a user runs. `enforceWordConsistency` defaults to off on
+ *   `NeuralAddressClassifier` and is switched on by `geocode-core.ts` via
+ *   `WORD_CONSISTENCY_SHIP_DEFAULT`, so a board run against the raw classifier would measure an
+ *   unhealed decode and report failures no consumer of the shipped pipeline can reach.
  */
 
 import { decodeAsJSON } from "@mailwoman/core/decoder"
@@ -42,9 +35,8 @@ interface ConfoundRow {
 	/**
 	 * Set when a row is known to fail, carrying the reason.
 	 *
-	 * Tracked rather than hidden: the row keeps running, and if it ever starts passing the test
-	 * fails and says to remove the marker — the gauntlet's xfail discipline, which exists.
-	 * Therefore, a fix can never land silently and leave a stale exemption behind.
+	 * The row keeps running, and the inverted assertion below turns the suite red if it ever
+	 * starts passing, so a stale exemption cannot land silently.
 	 */
 	xfail?: string
 }
@@ -58,8 +50,7 @@ let classifier: NeuralAddressClassifier | undefined
 try {
 	classifier = await NeuralAddressClassifier.loadFromWeights({ locale: "en-US" })
 } catch {
-	// Lean checkout with no materialized weights.
-	// The suite skips rather than fails, matching the other model-conditional suites in this leg.
+	// A lean checkout with no materialized weights skips the suite rather than failing it.
 	classifier = undefined
 }
 
@@ -71,7 +62,7 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 
 	async function emitted(row: ConfoundRow): Promise<string | undefined> {
 		const tree = await classifier!.parse(row.raw, {
-			// The shipped configuration, by construction — see the module header.
+			// The shipped configuration, by construction.
 			enforceWordConsistency: WORD_CONSISTENCY_SHIP_DEFAULT,
 		})
 
@@ -84,9 +75,6 @@ describe.skipIf(!classifier)("venue-structure confound board", () => {
 		})
 	}
 
-	// `test.fails` inverts the assertion, so a row listed here that starts passing
-	// turns the suite red, which is the point.
-	// An xfail nobody is forced to revisit is just a deleted test with extra steps.
 	for (const row of rows.filter((r) => r.xfail)) {
 		test.fails(`[${row.class}] XFAIL (${row.xfail}): ${row.raw}`, async () => {
 			expect(await emitted(row)).toBeUndefined()

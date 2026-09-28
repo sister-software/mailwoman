@@ -2,10 +2,11 @@
  * @copyright Sister Software
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
- * @file `classifyRescueRow` — the pure half of the retrieval-rescue census (#1878).
+ * @file `classifyRescueRow`, the pure half of the retrieval-rescue census.
  *
- *   Each case pins a distinction the summary would otherwise blur. The comer pair is the live instance the census
- *   exists for: a wrong delivered answer with the correct entity on hand, silenced by the incumbent-resolved check.
+ *   Each case pins a distinction the summary would otherwise blur. The comer pair is the case the
+ *   census exists for: a wrong delivered answer with the correct entity on hand, silenced by the
+ *   incumbent-resolved check.
  */
 
 import { classifyRescueRow, type RescueRowInput, summarizeRescue } from "mailwoman/eval-harness/retrieval-rescue-census"
@@ -20,8 +21,8 @@ function row(overrides: Partial<RescueRowInput>): RescueRowInput {
 
 describe("classifyRescueRow", () => {
 	it("classifies the COMER placebo shape: wrong resolvable pick, correct entity conditional off", () => {
-		// The placebo delivered Comer, Georgia, US (34.062167, -83.126341) — ~7,000 km from
-		// truth — while the unconditional probe holds the restaurant 6 m away.
+		// The placebo delivered Comer, Georgia, US (34.062167, -83.126341), about 7,000 km from
+		// truth, while the unconditional probe holds the restaurant 6 m away.
 		const graded = classifyRescueRow(
 			row({
 				...PARIS,
