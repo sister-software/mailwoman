@@ -22,7 +22,7 @@
  *   of 38,056 there.
  *
  *   Usage:
- *   node packages/mailwoman/lib/dev-tools/corpus/holdout-overlap.run.ts --corpus <corpus dir> [--json <out>]
+ *   node packages/mailwoman/lib/dev-tools/corpus/holdout/overlap.run.ts --corpus <corpus dir> [--json <out>]
  */
 
 import { writeLocalJSONFile } from "@mailwoman/core/fs/writers"
