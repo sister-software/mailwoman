@@ -31,7 +31,7 @@ export interface VersionPickerProps {
 	 */
 	disabled?: boolean
 	/**
-	 * The field label. @default "Model version"
+	 * @default "Model version"
 	 */
 	label?: string
 }

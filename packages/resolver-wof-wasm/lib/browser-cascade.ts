@@ -3,11 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Tree resolution over a browser-side place lookup: the browser half of the same resolve cascade the
- *   node path runs, with no host-specific part.
- *
- *   The lookup is structural (`MailwomanLookupLike`) rather than a concrete class, so the httpvfs lookup,
- *   the wasm lookup here, and any future one all satisfy it.
+ *   Tree resolution over a browser-side place lookup, with the lookup kept structural (`MailwomanLookupLike`).
  */
 
 import { areaPostcodeLeadsLocality, isUnitGradePostcodeHit } from "@mailwoman/codex"
@@ -16,10 +12,7 @@ import type { ResolvedPlace, ResolverBackend } from "@mailwoman/core/resolver"
 import { createWOFResolver } from "@mailwoman/resolver/resolve"
 
 /**
- * One additional admin role a resolved place also fulfils — the dual-role / city-state relation (#402).
- *
- * Berlin resolves as a locality but `role: "region"` here surfaces that it is also a federal state.
- * `relationshipType` is the gazetteer-derived class (`city-state`, `capital-seat`, …).
+ * One additional admin role a resolved place also fulfils, such as Berlin's federal-state role beside its locality role.
  */
 export interface DualRole {
 	id: number
@@ -33,26 +26,18 @@ export interface MailwomanLookupLike {
 	findPlace: (q: {
 		text: string
 		/**
-		 * Requested placetype(s).
-		 *
-		 * Widened from the demo's original locality/postalcode/region union for the #861
-		 * shared-resolver convergence: `resolveTree` + its coherence passes also query `country`,
-		 * `county`, and pass arrays (the placetype-equivalence groups).
+		 * Requested placetype(s); arrays express the placetype-equivalence groups.
 		 */
 		placetype?: string | string[] | undefined
 		country?: string
 		/**
-		 * Point-in-bbox filter — constrains candidates to a parsed region/state's bounds.
+		 * Constrains candidates to a parsed region/state's bounds.
 		 */
 		bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		limit?: number
 		postcode?: string
 		/**
-		 * Soft proximity hints (#938 — the demo's map viewport / user location).
-		 *
-		 * With bias present, exact-tier candidates near a hint sort ahead of distant ones.
-		 * Never a hard filter.
-		 * Absent → population-first order.
+		 * Soft proximity hints that re-rank exact-tier candidates by nearness, never a hard filter, with population-first order when absent.
 		 */
 		bias?: Array<{ lat: number; lon: number; weight?: number }>
 	}) => Promise<
@@ -61,27 +46,21 @@ export interface MailwomanLookupLike {
 			name: string
 			placetype: string
 			/**
-			 * ISO country code of the resolved place — lets the cascade country-restrict an ambiguous postcode.
+			 * ISO country code of the resolved place, used to country-restrict an ambiguous postcode.
 			 */
 			country?: string
 			lat: number
 			lon: number
 			score: number
 			/**
-			 * True when the candidate's name, abbreviation, or an alias exactly matched
-			 * the query (vs a partial token match).
-			 *
-			 * The cascade accepts alias-exact hits ("New York City" → New York) the
-			 * same way it accepts canonical-name matches.
+			 * True when the candidate's name, abbreviation, or an alias exactly matched the query rather than partially.
 			 */
 			exactMatch?: boolean
 			bbox?: { minLat: number; maxLat: number; minLon: number; maxLon: number }
 		}>
 	>
 	/**
-	 * Dual-role partner roles for a resolved place id (#402).
-	 *
-	 * Optional — absent on lookups built from a slim DB that predates the `coincident_roles` relation.
+	 * Dual-role partner roles for a resolved place id; absent on lookups built from a slim DB that predates the `coincident_roles` relation.
 	 */
 	coincidentRolesFor?: (placeID: number) => Promise<DualRole[]>
 }
@@ -89,7 +68,7 @@ export interface MailwomanLookupLike {
 type CascadeHits = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>
 
 /**
- * Soft proximity hints (#938 `bias[]`): ordered, weighted, never a hard filter.
+ * Soft proximity hints: ordered, weighted, never a hard filter.
  */
 export type ResolveBias = Array<{ lat: number; lon: number; weight?: number }>
 
@@ -97,18 +76,12 @@ type LookupHit = Awaited<ReturnType<MailwomanLookupLike["findPlace"]>>[number]
 
 type BBox = NonNullable<LookupHit["bbox"]>
 
-/**
- * What the adapter remembers about every candidate it has surfaced, keyed by place id.
- */
 interface CandidateMeta {
 	bbox?: BBox
 	country?: string
 	placetype: string
 }
 
-/**
- * Minimal structural view of a decorated `AddressTree` node (decoupled from core's types).
- */
 interface ResolvedTreeNode {
 	source?: string
 	sourceID?: string
@@ -121,47 +94,18 @@ interface ResolvedTreeNode {
 	children?: ResolvedTreeNode[]
 }
 
-/**
- * WOF hierarchy rank of a locality.
- */
 const WOF_RANK_LOCALITY = 5
 
-/**
- * WOF hierarchy rank of a region, one step up from a locality.
- */
 const WOF_RANK_REGION = 4
 
 /**
- * How the demo picks the pin from a resolved tree: prefer the most address-precise resolved node —
- * under the locality-first epoch convention the Node ladder follows (`extractGeocodeResult`):
- * an area-class postcode (an FR 5-digit zone, an SI 4-digit code) is coarser than the
- * locality it sits in, so it ranks below locality and pins only when no finer place resolved.
- *
- * Before 2026-08-11 this table put every postcode first (the old cascade's tier order) —
- * the staged-repoint e2e measured the demo pinning the SI `6250` area centroid where Node
- * pins the Zabiče locality, the exact drift the #861 convergence exists to prevent.
- *
- * The rows here are the demo's own ordering and deliberately not `PLACETYPE_SPECIFICITY`:
- * `neighbourhood` sits below `locality` because that is the pin a viewer wants,
- * where the shared scale ranks it above because it covers less ground.
- * What is not the demo's own is where a postcode sits against the locality.
- *
- * That question has one answer, and it comes from `@mailwoman/codex` for both
- * sides (see {@link PIN_RANK_POSTCODE_FIRST}).
+ * Area-class postcodes rank below the whole locality tier because a postcode centroid is coarser than the locality it sits in.
  */
 const PIN_RANK: Record<string, number> = {
 	locality: 5,
 	borough: 4,
 	localadmin: 4,
 	neighbourhood: 4,
-	// An area-class postcode sits below the whole locality tier rather than below `locality` alone.
-	// `borough` and `localadmin` are not peers of that tier, they are it.
-	// `PLACETYPE_FILTER_GROUPS.locality` is `{locality, borough, localadmin}`
-	// because a New England civil town is `localadmin` in WOF.
-	// Ranked at 4.5 this pinned the postcode on 404 of 2,000 US panel rows where Node returns the
-	// town, and the town was closer on 65.6% of them: `344 East Sheldon Rd, Sheldon, VT 05450`
-	// read 10.73 km from its ZIP centroid and 1.49 km from Sheldon.
-	// It still outranks `county`, so a bare-postcode query pins.
 	postalcode: 3.5,
 	county: 3,
 	macrocounty: 3,
@@ -171,11 +115,7 @@ const PIN_RANK: Record<string, number> = {
 }
 
 /**
- * The rank a postcode takes when it leads — above locality, the same position
- * Node's `ADMIN_LADDER_POSTCODE_FIRST` gives it.
- *
- * Two routes reach it, exactly as on the Node side: a unit-grade exact hit (#977/#22), or an address
- * system whose area-grade codes are finer than its localities (`areaPostcodeLeadsLocality`, #1780).
+ * The rank a postcode takes when it leads, above locality and matching Node's `ADMIN_LADDER_POSTCODE_FIRST`, reached by a unit-grade exact hit or an area-grade system whose codes are finer than its localities.
  */
 const PIN_RANK_POSTCODE_FIRST = 6
 
@@ -188,7 +128,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 	}
 
 	/**
-	 * The memoized bbox/country/placetype of a previously returned candidate (for hit assembly).
+	 * The memoized bbox/country/placetype of a previously returned candidate.
 	 */
 	metaFor(id: number): CandidateMeta | undefined {
 		return this.#meta.get(id)
@@ -201,18 +141,13 @@ export class CandidateResolverBackend implements ResolverBackend {
 		if (query.parentID !== undefined) {
 			const parent = this.#meta.get(Number(query.parentID))
 
-			// A parent the table can't scope by: answer "no descendants" and let the
-			// resolver's parentFallback retry unscoped.
-			// Silent unscoped results here would defeat the descent test.
+			// A parent the table cannot scope by answers "no descendants" so the resolver's parentFallback retries unscoped.
 			if (!parent) return []
 
 			if (parent.placetype === "country" && parent.country) {
 				country = parent.country
 			} else if (parent.bbox) {
 				bbox = parent.bbox
-
-				// A region's country still constrains — "Springfield under Georgia (US state)"
-				// must not admit Georgian (GE) rows that happen to fall in the bbox overlap.
 				country ??= parent.country
 			} else if (parent.country) {
 				country = parent.country
@@ -228,8 +163,6 @@ export class CandidateResolverBackend implements ResolverBackend {
 			bbox,
 			postcode: query.postcode,
 			limit: query.limit,
-			// #938: forward the proximity hints (map viewport / user location) so the candidate lookup
-			// re-ranks the exact tier by nearness — dropped here, the demo's viewport bias was inert.
 			bias: query.bias,
 		})
 
@@ -243,8 +176,7 @@ export class CandidateResolverBackend implements ResolverBackend {
 				lat: h.lat,
 				lon: h.lon,
 				score: h.score,
-				// ResolvedPlace requires a country; "" is the honest unknown (matches no ISO code,
-				// so the coherence passes treat it as un-scopable rather than accidentally matching).
+				// ResolvedPlace requires a country; "" matches no ISO code, so coherence passes treat it as un-scopable.
 				country: h.country ?? "",
 				exactMatch: h.exactMatch,
 			}
@@ -263,14 +195,7 @@ export async function runCascade(
 	const backend = new CandidateResolverBackend(lookup)
 	const resolver = createWOFResolver(backend)
 
-	// adminCoherence is the point of the convergence (the passes the old cascade approximated);
-	// spanRescore + hierarchyCompletion ride their shared defaults.
-	// No defaultCountry — the demo is global by design
-	// (the placer/population ranking routes, never a hardcoded country).
-	// Bias (#938): the map viewport (and optional geolocation) as soft proximity hints.
-	// An in-view namesake sorts ahead of a distant one at equal exact-tier, and no-bias stays
-	// byte-identical (48026 → Fraser MI vs Russi IT, the rule the library check pins).
-	// Omitted when empty.
+	// adminCoherence carries the convergence and no defaultCountry is deliberate, because the demo ranks globally.
 	const resolved = (await resolver.resolveTree(tree, {
 		adminCoherence: true,
 		...(bias && bias.length ? { bias } : {}),
@@ -278,7 +203,6 @@ export async function runCascade(
 		roots: ResolvedTreeNode[]
 	}
 
-	// Collect every resolver-decorated node, best-pin first.
 	const collected: Array<{ hit: CascadeHits[number]; rank: number }> = []
 	const alternativesOf = new Map<number, CascadeHits>()
 
@@ -302,10 +226,7 @@ export async function runCascade(
 			}
 
 			if (!(hit.lat === 0 && hit.lon === 0)) {
-				// Both routes to the top rank are read here rather than one, because the
-				// Node ladder reads both and a demo that knew only about the shape would pin
-				// the locality where the server pins the postcode — the
-				// #861 drift, one country at a time.
+				// Both routes to the top rank are read so the demo pins where the Node ladder pins.
 				const postcodeLeads =
 					placetype === "postalcode" &&
 					(isUnitGradePostcodeHit(String(node.value ?? ""), String(node.metadata?.["resolver_name"] ?? "")) ||
@@ -344,18 +265,12 @@ export async function runCascade(
 	}
 
 	if (!collected.length) {
-		// No place in the tree resolved (span-rescore included) — the old cascade's last resort.
 		return usable(await lookup.findPlace({ text: rawText, limit: 5 }))
 	}
 
 	collected.sort((a, b) => b.rank - a.rank || b.hit.score - a.hit.score)
 
-	// Cross-country postcode check, carried over from the old cascade: an ambiguous
-	// international postcode (10115 = Berlin DE and a New York US ZIP shape) must
-	// not out-pin the parsed city across countries.
-	// When the top pin is a postcode whose country differs from the resolved locality's,
-	// the locality wins the pin.
-	// The postcode stays in the list.
+	// An ambiguous international postcode must not out-pin the parsed city across countries, so the locality wins the pin and the postcode stays in the list.
 	const top = collected[0]!
 	const localityEntry = collected.find((c) => c.rank === WOF_RANK_LOCALITY || c.rank === WOF_RANK_REGION)
 

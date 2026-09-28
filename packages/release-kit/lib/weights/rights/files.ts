@@ -7,14 +7,8 @@
  *   repository grants, and `PROVENANCE.json`, where the artifacts came from and what the repository does not know
  *   about them.
  *
- *   They are two files because they answer to different parties. `LICENSE.md` is our own grant, and its text is the
- *   same for every package because the expression is. `PROVENANCE.json` is a record about other people's data, it
- *   differs per package, and a consumer's build should be able to read it without parsing prose. Folding the second
- *   into the first produced the state the inventory found: one `data_attribution` list, in one package, covering
- *   artifacts that ship in others.
- *
- *   Neither file asserts clearance. `PROVENANCE.json` records what the model card records and marks the rest
- *   unresolved, and `LICENSE.md` says in as many words that the commercial grant does not reach third-party inputs.
+ *   Neither file asserts clearance: `PROVENANCE.json` records what the model card records and marks the rest
+ *   unresolved, and `LICENSE.md` states that the commercial grant does not reach third-party inputs.
  */
 
 import { stringifyJSON } from "@mailwoman/core/json"
@@ -123,9 +117,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 		questions.push(`One attribution entry names no license: ${entry.text}`)
 	}
 
-	// A list that runs training, tokenizer and evaluation contributions together reads as
-	// though every source in it trained the model.
-	// Naming the split lets a reader see which entries describe rows the model never learned from.
+	// Training, tokenizer and evaluation contributions run together in one list, so naming the split
+	// lets a reader see which entries describe rows the model never learned from.
 	const evaluationOnly = record.attribution.filter(
 		(entry) => entry.uses.includes("evaluation") && !entry.uses.includes("training")
 	)
@@ -160,9 +153,8 @@ function unresolvedQuestions(record: WeightsRightsRecord): string[] {
 /**
  * How many attribution entries state each use, in a fixed key order so the document is reproducible.
  *
- * A use that no entry states is omitted rather than written as zero.
- * Zero would read as a measurement — "no source was used for evaluation" — where the truth is that no
- * entry said so, and these entries are prose a reader wrote rather than a field a build filled.
+ * A use that no entry states is omitted rather than written as zero, because zero would read as the
+ * measurement "no source was used for evaluation" where the truth is that no entry said so.
  */
 function countUses(attribution: readonly AttributionRecord[]): Record<string, number> {
 	const counts = new Map<string, number>()
@@ -230,22 +222,16 @@ export function renderProvenance(record: WeightsRightsRecord): ProvenanceDocumen
 }
 
 /**
- * Whether a committed provenance document equals the one this record renders.
- *
- * Parsed JSON is compared rather than text, so the repository formatter may lay the file out
- * as it likes — the same reason `license-register` compares the well-known key file that way.
+ * Whether a committed provenance document equals the one this record renders, compared as parsed
+ * JSON rather than text so the repository formatter may lay the file out as it likes.
  */
 export function provenanceMatches(committed: unknown, record: WeightsRightsRecord): boolean {
 	return stringifyJSON(committed) === stringifyJSON(renderProvenance(record))
 }
 
 /**
- * The obligations file for one package.
- *
- * Every published mailwoman package carries the same expression, so this text does not
- * vary with the package beyond its name and the pointer to its own provenance record.
- * It exists per package because npm ships per package: a consumer who installs one weights overlay
- * and reads its tarball finds the terms there rather than in a repository they were never sent to.
+ * The obligations file for one package; it exists per package because npm ships per package, so a
+ * consumer who installs one weights overlay finds the terms in its tarball.
  */
 export function renderLicenseFile(record: WeightsRightsRecord): string {
 	return `# License — ${record.packageName}
