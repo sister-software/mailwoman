@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   The map chrome over a stand-in map. Every story sits on a coloured ground rather than white, because glass is a
- *   material over something — reviewed on a blank page it makes no statement about whether it is readable in place.
+ * The map chrome over a stand-in map, with every story on a coloured ground rather than white because glass is a material over something.
  */
 
 import type { Meta, StoryObj } from "@storybook/react-vite"
@@ -27,10 +26,6 @@ const EXAMPLES = [
 	{ label: "Paris (street fall-through)" },
 ]
 
-/**
- * A stand-in for a map: a ground with enough tonal range that a translucent
- * panel has something to be translucent over.
- */
 function MapGround({ children }: { children: React.ReactNode }) {
 	return (
 		<div

@@ -3,8 +3,7 @@
  * @license AGPL-3.0
  * @author Teffen Ellis, et al.
  *
- *   Renders a compare-mode checkbox and a selector for the second model version. The host runs the
- *   comparison.
+ * Renders a compare-mode checkbox and a selector for the second model version, leaving the comparison itself to the host.
  */
 
 import type { ReactNode } from "react"
@@ -15,43 +14,18 @@ import type { VersionOption } from "#map/types"
  * Props for {@link CompareToggle}.
  */
 export interface CompareToggleProps {
-	/**
-	 * The selectable model versions.
-	 */
 	versions: ReadonlyArray<VersionOption>
-	/**
-	 * The primary version, which the compare list leaves out.
-	 */
 	primaryVersion: string | null
-	/**
-	 * Whether compare mode is on.
-	 */
 	compareMode: boolean
-	/**
-	 * Called when the visitor toggles compare mode.
-	 */
 	onCompareModeChange: (compareMode: boolean) => void
-	/**
-	 * The version to compare against, or `null` when none is chosen.
-	 */
 	compareVersion: string | null
-	/**
-	 * Called with the chosen version, or with `null` when the visitor picks the empty option.
-	 */
 	onCompareVersionChange: (version: string | null) => void
-	/**
-	 * Disables the version select, for example while a parse runs.
-	 */
 	disabled?: boolean
-	/**
-	 * A status line shown under the select, such as the compare backend or a loading message.
-	 */
 	status?: ReactNode
 }
 
 /**
- * Renders the compare checkbox and, in compare mode, the version selector.
- * It renders no control when fewer than two versions exist.
+ * Renders the compare checkbox and, in compare mode, the version selector, and no control at all when fewer than two versions exist.
  */
 export function CompareToggle({
 	versions,
